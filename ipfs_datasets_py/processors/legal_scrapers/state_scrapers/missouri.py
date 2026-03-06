@@ -42,7 +42,7 @@ class MissouriScraper(BaseStateScraper):
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 100
+        max_sections: int = 220
     ) -> List[NormalizedStatute]:
         """Custom scraper for Missouri's legislative website.
         
@@ -84,7 +84,7 @@ class MissouriScraper(BaseStateScraper):
                 chapter_urls.append(full)
 
         # Keep crawl bounded to avoid state-level timeout.
-        chapter_urls = chapter_urls[:8]
+        chapter_urls = chapter_urls[:28]
         seen_sections = set()
 
         for chapter_url in chapter_urls:

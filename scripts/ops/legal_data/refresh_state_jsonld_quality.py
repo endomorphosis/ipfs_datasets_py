@@ -70,7 +70,79 @@ def dedupe(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
     return out
 
 
-async def refresh_state(state_code: str, target_lines: int, min_full_text_chars: int) -> Dict[str, object]:
+def build_target_rows(
+    *,
+    state_code: str,
+    real_rows: List[Dict[str, object]],
+    synth_rows: List[Dict[str, object]],
+    target_lines: int,
+) -> List[Dict[str, object]]:
+    final_rows = list(real_rows)
+    if len(final_rows) < target_lines:
+        need = target_lines - len(final_rows)
+        final_rows.extend(synth_rows[:need])
+
+    # If dedupe removed too many rows and synthetic pool is insufficient,
+    # generate deterministic filler rows so the floor is always preserved.
+    if len(final_rows) < target_lines:
+        next_idx = len(final_rows) + 1
+        while len(final_rows) < target_lines:
+            sec = f"{next_idx:03d}"
+            next_idx += 1
+            filler = {
+                "@context": "https://schema.org",
+                "@type": "Legislation",
+                "legislationType": "StateStatute",
+                "legislationJurisdiction": f"US-{state_code}",
+                "name": f"{state_code} statute section {sec}",
+                "identifier": f"{state_code}-FILL-{sec}",
+                "description": f"{state_code} statute section {sec}",
+                "text": f"{state_code} statute section {sec}: source generated-filler",
+                "url": f"https://example.invalid/{state_code}/sec-{sec}",
+                "sameAs": f"https://example.invalid/{state_code}/sec-{sec}",
+                "legislationIdentifier": f"{state_code} statute",
+            }
+            final_rows.append(filler)
+
+    return final_rows
+
+
+def score_rows(rows: List[Dict[str, object]]) -> Tuple[int, int, int]:
+    real = sum(1 for r in rows if not is_synthetic_row(r))
+    synth = sum(1 for r in rows if is_synthetic_row(r))
+    # Higher score is better: more real rows, fewer synthetic rows, then more rows.
+    return (real, -synth, len(rows))
+
+
+def quality_stats(rows: List[Dict[str, object]]) -> Tuple[int, int, int, float]:
+    total = len(rows)
+    synth = sum(1 for r in rows if is_synthetic_row(r))
+    real = total - synth
+    real_ratio = (real / total) if total else 0.0
+    return real, synth, total, real_ratio
+
+
+def is_not_worse_quality(after_rows: List[Dict[str, object]], before_rows: List[Dict[str, object]]) -> bool:
+    before_real, before_synth, before_total, before_real_ratio = quality_stats(before_rows)
+    after_real, after_synth, after_total, after_real_ratio = quality_stats(after_rows)
+
+    # Priority: never lose real rows, then avoid lowering real-row ratio,
+    # then avoid increasing synthetic rows, then prefer larger/equal outputs.
+    if after_real != before_real:
+        return after_real > before_real
+    if abs(after_real_ratio - before_real_ratio) > 1e-9:
+        return after_real_ratio > before_real_ratio
+    if after_synth != before_synth:
+        return after_synth < before_synth
+    return after_total >= before_total
+
+
+async def refresh_state(
+    state_code: str,
+    target_lines: int,
+    min_full_text_chars: int,
+    no_regression: bool,
+) -> Dict[str, object]:
     state_code = state_code.upper().strip()
     state_file = Path.home() / ".ipfs_datasets" / "state_laws" / "state_laws_jsonld" / f"STATE-{state_code}.jsonld"
 
@@ -100,35 +172,28 @@ async def refresh_state(state_code: str, target_lines: int, min_full_text_chars:
     after_real = [r for r in after if not is_synthetic_row(r)]
     after_synth = [r for r in after if is_synthetic_row(r)]
 
-    real_rows = dedupe(after_real + before_real)
-    synth_rows = dedupe(after_synth + before_synth)
+    before_candidate = dedupe(before)
+    if not before_candidate:
+        before_candidate = build_target_rows(
+            state_code=state_code,
+            real_rows=[],
+            synth_rows=[],
+            target_lines=max(1, target_lines),
+        )
 
-    final_rows = list(real_rows)
-    if len(final_rows) < target_lines:
-        need = target_lines - len(final_rows)
-        final_rows.extend(synth_rows[:need])
+    target_for_after = max(target_lines, len(before_candidate))
+    after_candidate = build_target_rows(
+        state_code=state_code,
+        real_rows=dedupe(after_real + before_real),
+        synth_rows=dedupe(after_synth + before_synth),
+        target_lines=target_for_after,
+    )
 
-    # If dedupe removed too many rows and synthetic pool is insufficient,
-    # generate deterministic filler rows so the floor is always preserved.
-    if len(final_rows) < target_lines:
-        next_idx = len(final_rows) + 1
-        while len(final_rows) < target_lines:
-            sec = f"{next_idx:03d}"
-            next_idx += 1
-            filler = {
-                "@context": "https://schema.org",
-                "@type": "Legislation",
-                "legislationType": "StateStatute",
-                "legislationJurisdiction": f"US-{state_code}",
-                "name": f"{state_code} statute section {sec}",
-                "identifier": f"{state_code}-FILL-{sec}",
-                "description": f"{state_code} statute section {sec}",
-                "text": f"{state_code} statute section {sec}: source generated-filler",
-                "url": f"https://example.invalid/{state_code}/sec-{sec}",
-                "sameAs": f"https://example.invalid/{state_code}/sec-{sec}",
-                "legislationIdentifier": f"{state_code} statute",
-            }
-            final_rows.append(filler)
+    final_rows = after_candidate
+    selected = "after"
+    if no_regression and not is_not_worse_quality(after_candidate, before_candidate):
+        final_rows = before_candidate
+        selected = "before"
 
     with state_file.open("w", encoding="utf-8") as f:
         for row in final_rows:
@@ -143,25 +208,70 @@ async def refresh_state(state_code: str, target_lines: int, min_full_text_chars:
         "final_total": len(final_rows),
         "final_real": len([r for r in final_rows if not is_synthetic_row(r)]),
         "final_synthetic": len([r for r in final_rows if is_synthetic_row(r)]),
+        "selected": selected,
     }
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(description="Refresh state JSONLD with real-row priority")
     parser.add_argument("--state", required=True, help="State code, e.g. NH")
     parser.add_argument("--target-lines", type=int, default=40)
     parser.add_argument("--min-full-text-chars", type=int, default=160)
+    parser.add_argument("--allow-regression", action="store_true", help="Allow writing worse quality mix than existing file")
     args = parser.parse_args()
 
-    result = asyncio.run(
-        refresh_state(
-            state_code=args.state,
-            target_lines=max(1, int(args.target_lines)),
-            min_full_text_chars=max(0, int(args.min_full_text_chars)),
+    state_code = str(args.state or "").upper().strip()
+    target_lines = max(1, int(args.target_lines))
+    min_full_text_chars = max(0, int(args.min_full_text_chars))
+    no_regression = not args.allow_regression
+
+    try:
+        result = asyncio.run(
+            refresh_state(
+                state_code=state_code,
+                target_lines=target_lines,
+                min_full_text_chars=min_full_text_chars,
+                no_regression=no_regression,
+            )
         )
-    )
-    print(json.dumps(result, indent=2, sort_keys=True))
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    except KeyboardInterrupt:
+        # Keep machine-readable output for timeout/interrupt wrappers.
+        print(
+            json.dumps(
+                {
+                    "state": state_code,
+                    "status": "error",
+                    "error_type": "KeyboardInterrupt",
+                    "message": "refresh interrupted",
+                    "target_lines": target_lines,
+                    "min_full_text_chars": min_full_text_chars,
+                    "no_regression": no_regression,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 130
+    except Exception as exc:
+        print(
+            json.dumps(
+                {
+                    "state": state_code,
+                    "status": "error",
+                    "error_type": type(exc).__name__,
+                    "message": str(exc),
+                    "target_lines": target_lines,
+                    "min_full_text_chars": min_full_text_chars,
+                    "no_regression": no_regression,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

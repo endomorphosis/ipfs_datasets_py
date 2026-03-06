@@ -43,7 +43,17 @@ class MarylandScraper(BaseStateScraper):
         ]
 
         seen = set()
-        best: List[NormalizedStatute] = []
+        merged: List[NormalizedStatute] = []
+        merged_keys = set()
+
+        def _merge(items: List[NormalizedStatute]) -> None:
+            for statute in items:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in merged_keys:
+                    continue
+                merged_keys.add(key)
+                merged.append(statute)
+
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -61,22 +71,20 @@ class MarylandScraper(BaseStateScraper):
             except Exception:
                 statutes = []
 
-            if len(statutes) > len(best):
-                best = statutes
-            if len(statutes) >= 30:
-                return statutes
+            _merge(statutes)
+            if len(merged) >= 30:
+                return merged
 
             try:
                 generic = await self._generic_scrape(code_name, candidate, "Md. Code Ann.", max_sections=260)
             except Exception:
                 generic = []
 
-            if len(generic) > len(best):
-                best = generic
-            if len(generic) >= 30:
-                return generic
+            _merge(generic)
+            if len(merged) >= 30:
+                return merged
 
-        return best
+        return merged
 
 
 # Register this scraper with the registry

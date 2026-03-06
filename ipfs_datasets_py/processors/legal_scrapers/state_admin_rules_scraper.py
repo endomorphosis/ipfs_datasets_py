@@ -48,6 +48,58 @@ _LEGAL_CONTENT_SIGNAL_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Curated admin-rules entrypoints for states that remain hard to recover via generic discovery.
+_STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
+    "AL": [
+        "https://www.alabamaadministrativecode.state.al.us/",
+        "https://www.sos.alabama.gov/alabama-administrative-code",
+    ],
+    "AZ": [
+        "https://apps.azsos.gov/public_services/Title_00.htm",
+        "https://apps.azsos.gov/public_services/",
+    ],
+    "GA": [
+        "https://rules.sos.ga.gov/gac",
+        "https://rules.sos.ga.gov/",
+    ],
+    "HI": [
+        "https://ag.hawaii.gov/admin-rules/",
+        "https://ltgov.hawaii.gov/the-office/administrative-rules/",
+    ],
+    "LA": [
+        "https://www.doa.la.gov/doa/osr/lac/",
+        "https://www.doa.la.gov/doa/osr/",
+    ],
+    "MS": [
+        "https://www.sos.ms.gov/adminsearch/Pages/default.aspx",
+        "https://www.sos.ms.gov/adminsearch/",
+    ],
+    "NH": [
+        "https://www.gencourt.state.nh.us/rules/state_agencies/",
+        "https://www.gencourt.state.nh.us/rules/",
+    ],
+    "NM": [
+        "https://www.srca.nm.gov/nmac-home/",
+        "https://www.srca.nm.gov/",
+    ],
+    "NY": [
+        "https://dos.ny.gov/new-york-codes-rules-and-regulations-nycrr",
+        "https://govt.westlaw.com/nycrr",
+    ],
+    "OK": [
+        "https://www.sos.ok.gov/rules/default.aspx",
+        "https://www.sos.ok.gov/rules/",
+    ],
+    "TN": [
+        "https://publications.tnsosfiles.com/rules/",
+        "https://www.tn.gov/sos/rules-and-regulations.html",
+    ],
+    "WY": [
+        "https://rules.wyo.gov/",
+        "https://rules.wyo.gov/Search.aspx",
+    ],
+}
+
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
     legal_area = str(statute.get("legal_area") or "")
@@ -264,6 +316,8 @@ def _agentic_query_for_state(state_code: str) -> str:
 def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
     urls: List[str] = []
     try:
+        urls.extend(_STATE_ADMIN_SOURCE_MAP.get(str(state_code or "").upper(), []))
+
         from .state_scrapers import GenericStateScraper, get_scraper_for_state
 
         scraper = get_scraper_for_state(state_code, state_name)

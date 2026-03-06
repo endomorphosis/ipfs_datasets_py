@@ -13,6 +13,8 @@ import argparse
 import html
 import json
 import re
+import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -387,6 +389,9 @@ def run(
     base_jsonl: Optional[Path],
     sleep_s: float,
     target_states: Optional[List[str]],
+    post_cleanup_merged: bool = False,
+    post_cleanup_require_equal_coverage: bool = True,
+    fail_on_post_cleanup_error: bool = True,
 ) -> Dict[str, Any]:
     if target_states:
         targets = sorted({s.upper() for s in target_states if s.upper() in US_STATES})
@@ -442,6 +447,10 @@ def run(
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     merged_count = None
+    cleanup_report_path: Optional[str] = None
+    cleanup_exit_code: Optional[int] = None
+    cleanup_invoked = False
+    post_cleanup_ok: Optional[bool] = None
     if merged_output_jsonl and base_jsonl and base_jsonl.exists():
         merged_output_jsonl.parent.mkdir(parents=True, exist_ok=True)
         seen = set()
@@ -470,6 +479,48 @@ def run(
                 handle.write(json.dumps(row, ensure_ascii=False) + "\n")
         merged_count = len(merged_rows)
 
+        if post_cleanup_merged:
+            cleanup_script = Path(__file__).with_name("cleanup_procedural_rules_merged.py")
+            cleanup_output = merged_output_jsonl
+            cleanup_report = merged_output_jsonl.with_suffix(".cleanup_report.json")
+            cleanup_invoked = True
+            cleanup_report_path = str(cleanup_report)
+            cmd = [
+                sys.executable,
+                str(cleanup_script),
+                "--input",
+                str(merged_output_jsonl),
+                "--output",
+                str(cleanup_output),
+                "--report-json",
+                str(cleanup_report),
+                "--in-place",
+            ]
+            if post_cleanup_require_equal_coverage:
+                cmd.append("--require-equal-coverage")
+            cleanup_proc = subprocess.run(cmd, capture_output=True, text=True)
+            cleanup_exit_code = int(cleanup_proc.returncode)
+            post_cleanup_ok = cleanup_exit_code == 0
+
+            if fail_on_post_cleanup_error and cleanup_exit_code != 0:
+                return {
+                    "status": "error",
+                    "targets": targets,
+                    "targets_count": len(targets),
+                    "supplemental_records": len(supplemental),
+                    "states_with_hits_count": len(states_with_hits),
+                    "states_with_hits": states_with_hits,
+                    "errors_count": len(errors),
+                    "errors_sample": dict(list(errors.items())[:20]),
+                    "supplemental_output": str(output_jsonl),
+                    "merged_output": str(merged_output_jsonl) if merged_output_jsonl else None,
+                    "merged_count": merged_count,
+                    "post_cleanup_invoked": cleanup_invoked,
+                    "post_cleanup_report": cleanup_report_path,
+                    "post_cleanup_exit_code": cleanup_exit_code,
+                    "post_cleanup_ok": post_cleanup_ok,
+                }
+
     return {
         "status": "success",
         "targets": targets,
@@ -482,6 +533,10 @@ def run(
         "supplemental_output": str(output_jsonl),
         "merged_output": str(merged_output_jsonl) if merged_output_jsonl else None,
         "merged_count": merged_count,
+        "post_cleanup_invoked": cleanup_invoked,
+        "post_cleanup_report": cleanup_report_path,
+        "post_cleanup_exit_code": cleanup_exit_code,
+        "post_cleanup_ok": post_cleanup_ok,
     }
 
 
@@ -505,6 +560,21 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--sleep-s", type=float, default=0.1)
     parser.add_argument(
+        "--post-cleanup-merged",
+        action="store_true",
+        help="Run cleanup_procedural_rules_merged.py on merged output after merge",
+    )
+    parser.add_argument(
+        "--no-post-cleanup-require-equal-coverage",
+        action="store_true",
+        help="Do not enforce equal-or-better coverage when post-cleaning merged output",
+    )
+    parser.add_argument(
+        "--no-fail-on-post-cleanup-error",
+        action="store_true",
+        help="Do not fail run when post-cleanup command exits nonzero",
+    )
+    parser.add_argument(
         "--states",
         nargs="*",
         default=None,
@@ -522,6 +592,9 @@ def main() -> int:
         base_jsonl=Path(args.base_jsonl).expanduser().resolve(),
         sleep_s=float(args.sleep_s),
         target_states=args.states,
+        post_cleanup_merged=bool(args.post_cleanup_merged),
+        post_cleanup_require_equal_coverage=not bool(args.no_post_cleanup_require_equal_coverage),
+        fail_on_post_cleanup_error=not bool(args.no_fail_on_post_cleanup_error),
     )
     print(json.dumps(report, indent=2))
     return 0

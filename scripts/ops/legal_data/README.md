@@ -42,9 +42,28 @@ Notes:
 - Run `check_state_law_coverage.py` to enforce state-law file completeness and
 	minimum per-state depth from local JSON-LD outputs.
 	Examples:
-	`python scripts/ops/legal_data/check_state_law_coverage.py`
-	`python scripts/ops/legal_data/check_state_law_coverage.py --min-records 20`
-	`python scripts/ops/legal_data/check_state_law_coverage.py --states AL,CT,GA,NM --min-records 5`
+	`python3 scripts/ops/legal_data/check_state_law_coverage.py`
+	`python3 scripts/ops/legal_data/check_state_law_coverage.py --min-records 20`
+	`python3 scripts/ops/legal_data/check_state_law_coverage.py --states AL,CT,GA,NM --min-records 5`
+- `refresh_state_jsonld_quality.py` now emits structured JSON even on failures
+	(interrupt/exception) so loop wrappers can persist diagnostics to `*.refresh.json`.
+	Exit codes: `0` success, `1` generic error, `130` interrupt.
+- Run `cleanup_procedural_rules_merged.py` to remove obvious non-substantive
+	rows from merged procedural-rules JSONL and emit a cleanup report.
+	Examples:
+	`python3 scripts/ops/legal_data/cleanup_procedural_rules_merged.py`
+	`python3 scripts/ops/legal_data/cleanup_procedural_rules_merged.py --in-place --backup ~/.ipfs_datasets/state_laws/procedural_rules/us_state_procedural_rules_merged_with_rjina.pre_cleanup_backup.jsonl`
+	`python3 scripts/ops/legal_data/cleanup_procedural_rules_merged.py --require-equal-coverage`
+	When `--in-place` is used, coverage-regression protection is enforced automatically and replacement is blocked if `full_both` decreases or `partial`/`none` increase.
+- `supplement_procedural_rules_via_rjina.py` can run cleanup automatically after merge:
+	`python3 scripts/ops/legal_data/supplement_procedural_rules_via_rjina.py --states HI KY MI --post-cleanup-merged`
+	By default this enforces equal-or-better coverage during cleanup; override only for diagnostics with `--no-post-cleanup-require-equal-coverage`.
+	The supplement run fails fast on nonzero post-cleanup exit by default; use `--no-fail-on-post-cleanup-error` only when you need diagnostics without failing the run.
+- Run `run_procedural_rules_guarded_smoke.sh` for a one-command safety check that executes:
+	1) compile checks, 2) focused unit tests, 3) guarded supplement smoke run, and 4) state-law coverage check.
+	Examples:
+	`bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
+	`STATES="MI" MIN_RECORDS=20 bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
 	`run_formal_logic_regression_check.sh` to auto-export
 	`proof_certificate_audit.json` after conversion/analysis complete.

@@ -4,6 +4,7 @@ This module contains the scraper for Utah statutes from the official state legis
 """
 
 from typing import List, Dict
+from urllib.parse import quote
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
@@ -38,31 +39,71 @@ class UtahScraper(BaseStateScraper):
             f"{self.get_base_url()}/xcode/",
             f"{self.get_base_url()}/xcode/Title01/",
             "https://law.justia.com/codes/utah/",
-            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/",
-            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title01/",
-            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title10/",
-            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title17/",
-            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title76/",
-            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title78B/",
+            "https://web.archive.org/web/20250101000000/https://law.justia.com/codes/utah/",
         ]
-
-        for title in range(1, 33):
-            candidate_urls.append(f"https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title{title:02d}/")
+        for archived in await self._discover_archived_title_urls(limit=220):
+            if archived not in candidate_urls:
+                candidate_urls.append(archived)
 
         seen = set()
-        best_statutes: List[NormalizedStatute] = []
+        merged: List[NormalizedStatute] = []
+        merged_keys = set()
+
+        def _merge(items: List[NormalizedStatute]) -> None:
+            for statute in items:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in merged_keys:
+                    continue
+                merged_keys.add(key)
+                merged.append(statute)
+
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=360)
-            if len(statutes) > len(best_statutes):
-                best_statutes = statutes
-            if len(statutes) >= 40:
-                return statutes
+            statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=260)
+            _merge(statutes)
+            if len(merged) >= 40:
+                return merged
 
-        return best_statutes
+        return merged
+
+    async def _discover_archived_title_urls(self, limit: int = 180) -> List[str]:
+        cdx_url = (
+            "https://web.archive.org/cdx/search/cdx"
+            "?url=le.utah.gov/xcode/Title*"
+            "&output=json&filter=statuscode:200"
+            f"&limit={max(1, int(limit))}"
+        )
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+            rows = self._parse_json_rows(payload)
+        except Exception:
+            return []
+
+        out: List[str] = []
+        seen = set()
+        for row in rows:
+            if len(row) < 3:
+                continue
+            ts = str(row[1] or "").strip()
+            original = str(row[2] or "").strip()
+            if not ts or not original:
+                continue
+            lower_original = original.lower()
+            if "/xcode/title" not in lower_original:
+                continue
+            replay = f"https://web.archive.org/web/{ts}/{quote(original, safe=':/?=&._-')}"
+            if replay in seen:
+                continue
+            seen.add(replay)
+            out.append(replay)
+            if len(out) >= limit:
+                break
+
+        return out
 
 
 # Register this scraper with the registry

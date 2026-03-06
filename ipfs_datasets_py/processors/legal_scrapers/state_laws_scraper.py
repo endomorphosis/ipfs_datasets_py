@@ -1036,6 +1036,13 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
         out_path = jsonld_dir / f"STATE-{state_code}.jsonld"
         prior_exists = out_path.exists()
         prior_size = out_path.stat().st_size if prior_exists else 0
+        prior_lines = 0
+        if prior_exists and prior_size > 0:
+            try:
+                with out_path.open("r", encoding="utf-8", errors="ignore") as prior_handle:
+                    prior_lines = sum(1 for line in prior_handle if line.strip())
+            except Exception:
+                prior_lines = 0
         tmp_path = out_path.with_suffix(".jsonld.tmp")
         lines_written = 0
         with tmp_path.open("w", encoding="utf-8") as handle:
@@ -1059,8 +1066,13 @@ def _write_state_jsonld_files(scraped_statutes: List[Dict[str, Any]], jsonld_dir
                 lines_written += 1
 
         if lines_written > 0:
-            tmp_path.replace(out_path)
-            written.append(str(out_path))
+            if prior_exists and prior_lines > lines_written:
+                # Keep best-known state output when a run returns fewer records.
+                tmp_path.unlink(missing_ok=True)
+                written.append(str(out_path))
+            else:
+                tmp_path.replace(out_path)
+                written.append(str(out_path))
         else:
             tmp_path.unlink(missing_ok=True)
             if prior_exists and prior_size > 0:

@@ -38,22 +38,33 @@ class ArkansasScraper(BaseStateScraper):
             "https://law.justia.com/codes/arkansas/",
             "https://web.archive.org/web/20231201000000/https://law.justia.com/codes/arkansas/",
             "https://www.arkleg.state.ar.us/",
+            "https://www.arkleg.state.ar.us/ArkansasCode/",
+            "https://web.archive.org/web/20240101000000/https://www.arkleg.state.ar.us/ArkansasCode/",
         ]
 
         seen = set()
-        best_statutes: List[NormalizedStatute] = []
+        merged: List[NormalizedStatute] = []
+        merged_keys = set()
+
+        def _merge(items: List[NormalizedStatute]) -> None:
+            for statute in items:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in merged_keys:
+                    continue
+                merged_keys.add(key)
+                merged.append(statute)
+
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
 
             statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=260)
-            if len(statutes) > len(best_statutes):
-                best_statutes = statutes
-            if len(statutes) >= 30:
-                return statutes
+            _merge(statutes)
+            if len(merged) >= 30:
+                return merged
 
-        return best_statutes
+        return merged
 
 
 # Register this scraper with the registry

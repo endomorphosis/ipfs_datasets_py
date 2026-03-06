@@ -89,14 +89,14 @@ class NorthDakotaScraper(BaseStateScraper):
             if not href:
                 continue
             abs_url = urljoin(homepage, href)
-            if not re.search(r"/cencode/t\d{1,2}c\d{1,2}\.pdf$", abs_url, re.IGNORECASE):
+            if not re.search(r"/cencode/t\d{1,3}c\d{1,3}\.pdf$", abs_url, re.IGNORECASE):
                 continue
             if abs_url in seen:
                 continue
             seen.add(abs_url)
 
             file_name = abs_url.rsplit("/", 1)[-1]
-            m = re.search(r"t(\d{1,2})c(\d{1,2})\.pdf$", file_name, re.IGNORECASE)
+            m = re.search(r"t(\d{1,3})c(\d{1,3})\.pdf$", file_name, re.IGNORECASE)
             title_no = m.group(1) if m else ""
             chapter_no = m.group(2) if m else ""
             label = f"Title {title_no} Chapter {chapter_no}".strip()

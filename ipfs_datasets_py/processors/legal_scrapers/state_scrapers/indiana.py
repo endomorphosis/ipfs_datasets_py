@@ -50,12 +50,84 @@ class IndianaScraper(BaseStateScraper):
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
         archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=20)
-        if archival:
-            self.logger.info(f"Indiana archival fallback: Scraped {len(archival)} sections")
-            return archival
+        title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=40)
+
+        merged: List[NormalizedStatute] = []
+        merged_keys = set()
+
+        def _merge(items: List[NormalizedStatute]) -> None:
+            for statute in items:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in merged_keys:
+                    continue
+                merged_keys.add(key)
+                merged.append(statute)
+
+        _merge(archival)
+        _merge(title_page_statutes)
+
+        if merged:
+            self.logger.info(f"Indiana archival fallback: Scraped {len(merged)} sections")
+            return merged
 
         # Keep a final generic fallback for resilience.
         return await self._generic_scrape(code_name, code_url, "Ind. Code")
+
+    async def _scrape_archived_title_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        title_urls = await self._discover_archived_title_urls(limit=180)
+        out: List[NormalizedStatute] = []
+        seen = set()
+
+        for title_url in title_urls:
+            if len(out) >= max_statutes:
+                break
+            try:
+                statutes = await self._generic_scrape(code_name, title_url, "Ind. Code", max_sections=80)
+            except Exception:
+                statutes = []
+            for statute in statutes:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                out.append(statute)
+                if len(out) >= max_statutes:
+                    break
+
+        return out
+
+    async def _discover_archived_title_urls(self, limit: int = 160) -> List[str]:
+        cdx_url = (
+            "https://web.archive.org/cdx/search/cdx"
+            "?url=iga.in.gov/legislative/laws/*/ic/titles/*"
+            "&output=json&filter=statuscode:200"
+            f"&limit={max(1, int(limit))}"
+        )
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+            rows = self._parse_json_rows(payload)
+        except Exception:
+            return []
+
+        out: List[str] = []
+        seen = set()
+        for row in rows:
+            if len(row) < 3:
+                continue
+            ts = str(row[1] or "").strip()
+            original = str(row[2] or "").strip()
+            if not ts or not original:
+                continue
+            replay = f"https://web.archive.org/web/{ts}/{quote(original, safe=':/?=&._-')}"
+            if replay in seen:
+                continue
+            seen.add(replay)
+            out.append(replay)
+            if len(out) >= limit:
+                break
+
+        return out
 
     async def _scrape_archived_chapter_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
@@ -125,7 +197,11 @@ class IndianaScraper(BaseStateScraper):
 
         full_text = self._extract_pdf_text(pdf_bytes, max_chars=14000)
         if len(full_text) < 280:
-            return None
+            # Preserve discoverable archived statute PDFs even when extraction is partial.
+            full_text = (
+                f"Archived Indiana Code document for {doc_id}. "
+                "Source PDF was reachable but full text extraction was limited in this run."
+            )
 
         section_name = f"Indiana Code {doc_id}"
         return NormalizedStatute(
