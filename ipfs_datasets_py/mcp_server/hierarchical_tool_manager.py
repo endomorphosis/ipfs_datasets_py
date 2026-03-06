@@ -274,13 +274,15 @@ class ToolCategory:
         # -> ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset
         
         parts = file_path.parts
-        # Find the index of 'ipfs_datasets_py'
+        # Use the last package segment to avoid duplicated import paths in
+        # workspaces where both repo and package directories are named
+        # ``ipfs_datasets_py``.
         try:
-            idx = parts.index('ipfs_datasets_py')
+            idx = max(i for i, part in enumerate(parts) if part == 'ipfs_datasets_py')
             module_parts = parts[idx:]
             module_path = '.'.join(module_parts[:-1] + (file_path.stem,))
             return module_path
-        except ValueError:
+        except (ValueError, StopIteration):
             # Fallback: use relative import
             return f"ipfs_datasets_py.mcp_server.tools.{self.name}.{file_path.stem}"
     
