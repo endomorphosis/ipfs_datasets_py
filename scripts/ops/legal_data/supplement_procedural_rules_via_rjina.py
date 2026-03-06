@@ -55,6 +55,8 @@ def _page_context_family(seed_url: str, markdown_text: str) -> Optional[str]:
     context = f"{seed_lower}\n{text_head}"
     if "district-of-columbia/title-13" in seed_lower:
         return "civil_procedure"
+    if "circuit-courts-civil-justice-improvement-rules" in seed_lower:
+        return "civil_procedure"
     if "forms-files/civil" in seed_lower or "title: civil" in context:
         return "civil_procedure"
     if "forms-files/criminal" in seed_lower or "title: criminal" in context:
@@ -258,6 +260,8 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
     if state_code == "DC":
         seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/")
         seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/chapter-1/")
+    if state_code == "HI":
+        seeds.append("https://www.courts.state.hi.us/circuit-courts-civil-justice-improvement-rules")
     if state_code == "OH":
         seeds.extend(
             [
