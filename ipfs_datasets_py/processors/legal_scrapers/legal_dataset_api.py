@@ -933,6 +933,7 @@ async def scrape_state_admin_rules_from_parameters(
             agentic_max_hops=parameters.get("agentic_max_hops", 1),
             agentic_max_pages=parameters.get("agentic_max_pages", 8),
             write_agentic_kg_corpus=parameters.get("write_agentic_kg_corpus", True),
+            require_substantive_rule_text=parameters.get("require_substantive_rule_text", True),
         )
 
         job_id = parameters.get("job_id")

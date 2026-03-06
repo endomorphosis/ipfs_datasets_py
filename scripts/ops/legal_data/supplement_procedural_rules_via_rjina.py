@@ -257,6 +257,12 @@ def _state_seed_urls(state_code: str, state_name: str) -> List[str]:
         seeds.append("https://law.justia.com/codes/virginia/title-8-01/")
     if state_code == "WV":
         seeds.append("https://law.justia.com/codes/west-virginia/chapter-56/")
+    if state_code == "KY":
+        seeds.append("https://law.justia.com/codes/kentucky/chapter-454/")
+    if state_code == "MI":
+        seeds.append(
+            "https://www.courts.michigan.gov/rules-administrative-orders-and-jury-instructions/current-rules-and-jury-instructions/michigan-court-rules/"
+        )
     if state_code == "DC":
         seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/")
         seeds.append("https://law.justia.com/codes/district-of-columbia/title-13/chapter-1/")

@@ -38,6 +38,16 @@ _ADMIN_LINK_HINT_RE = re.compile(
     re.IGNORECASE,
 )
 
+_PORTAL_REFERENCE_RE = re.compile(
+    r"portal\s+reference|landing\s+page|source\s+url:\s*https?://|entrypoint|seed\s+url",
+    re.IGNORECASE,
+)
+
+_LEGAL_CONTENT_SIGNAL_RE = re.compile(
+    r"\b(section|chapter|title|part|subchapter|authority|effective|amended|adopted|pursuant|rule|regulation|code)\b|§",
+    re.IGNORECASE,
+)
+
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
     legal_area = str(statute.get("legal_area") or "")
@@ -192,6 +202,8 @@ def _filter_admin_state_blocks(
     raw_data: List[Dict[str, Any]],
     *,
     max_rules: Optional[int],
+    min_full_text_chars: int,
+    require_substantive_text: bool,
 ) -> tuple[List[Dict[str, Any]], int, List[str]]:
     filtered_data: List[Dict[str, Any]] = []
     admin_rule_count = 0
@@ -202,10 +214,18 @@ def _filter_admin_state_blocks(
             continue
         state_code = str(state_block.get("state_code") or "").upper()
         statutes = list(state_block.get("statutes") or [])
-        admin_statutes = [
-            statute for statute in statutes
-            if isinstance(statute, dict) and _is_admin_rule_statute(statute)
-        ]
+        admin_statutes: List[Dict[str, Any]] = []
+        for statute in statutes:
+            if not isinstance(statute, dict):
+                continue
+            if not _is_admin_rule_statute(statute):
+                continue
+            if require_substantive_text and not _is_substantive_admin_statute(
+                statute,
+                min_chars=int(min_full_text_chars),
+            ):
+                continue
+            admin_statutes.append(statute)
         if max_rules and max_rules > 0:
             admin_statutes = admin_statutes[: int(max_rules)]
 
@@ -314,6 +334,40 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
     return bool(_ADMIN_RULE_TEXT_RE.search(hay))
 
 
+def _looks_like_placeholder_text(text: str) -> bool:
+    value = str(text or "").strip()
+    if not value:
+        return True
+    return bool(_PORTAL_REFERENCE_RE.search(value))
+
+
+def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
+    body = str(text or "").strip()
+    title_value = str(title or "").strip()
+    url_value = str(url or "").strip()
+    if len(body) < max(120, int(min_chars)):
+        return False
+    if _looks_like_placeholder_text(body):
+        return False
+    if not _has_admin_signal(text=body, title=title_value, url=url_value):
+        return False
+    if not _LEGAL_CONTENT_SIGNAL_RE.search(body):
+        return False
+    return True
+
+
+def _is_substantive_admin_statute(statute: Dict[str, Any], *, min_chars: int) -> bool:
+    full_text = str(statute.get("full_text") or "")
+    section_name = str(statute.get("section_name") or statute.get("short_title") or "")
+    source_url = str(statute.get("source_url") or "")
+    return _is_substantive_rule_text(
+        text=full_text,
+        title=section_name,
+        url=source_url,
+        min_chars=max(160, int(min_chars)),
+    )
+
+
 def _candidate_links_from_scrape(scraped: Any, base_host: str, limit: int = 10) -> List[str]:
     out: List[str] = []
     seen = set()
@@ -362,6 +416,7 @@ async def _agentic_discover_admin_state_blocks(
     max_hops: int,
     max_pages: int,
     min_full_text_chars: int,
+    require_substantive_text: bool,
 ) -> Dict[str, Any]:
     try:
         from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import LegalWebArchiveSearch
@@ -521,12 +576,87 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         statutes: List[Dict[str, Any]] = []
+        direct_doc_urls: set[str] = set()
+
+        try:
+            if "discovered" in locals() and isinstance(discovered, dict):
+                for fetch_row in discovered.get("results", []) or []:
+                    if not isinstance(fetch_row, dict):
+                        continue
+                    document = fetch_row.get("document") or {}
+                    if not isinstance(document, dict):
+                        continue
+                    doc_url = str(document.get("url") or fetch_row.get("url") or "").strip()
+                    if not doc_url.startswith(("http://", "https://")):
+                        continue
+                    doc_text = str(document.get("text") or "").strip()
+                    doc_title = str(document.get("title") or "").strip()
+                    min_text_chars = max(140, int(min_full_text_chars // 2))
+                    if require_substantive_text:
+                        min_text_chars = max(220, int(min_full_text_chars))
+                    if not _is_substantive_rule_text(
+                        text=doc_text,
+                        title=doc_title,
+                        url=doc_url,
+                        min_chars=min_text_chars,
+                    ):
+                        continue
+                    doc_key = doc_url.lower()
+                    if doc_key in direct_doc_urls:
+                        continue
+                    direct_doc_urls.add(doc_key)
+
+                    section_number = f"A{len(statutes) + 1}"
+                    section_name = doc_title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
+                    method_used = document.get("method_used")
+                    method_value = getattr(method_used, "value", method_used)
+                    statute = {
+                        "state_code": state_code,
+                        "state_name": state_name,
+                        "statute_id": f"{state_code}-AGENTIC-{section_number}",
+                        "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
+                        "section_number": section_number,
+                        "section_name": section_name,
+                        "short_title": section_name,
+                        "full_text": doc_text,
+                        "summary": doc_text[:500],
+                        "legal_area": "administrative",
+                        "source_url": doc_url,
+                        "official_cite": f"{state_code} Admin Rule {section_number}",
+                        "structured_data": {
+                            "type": "regulation",
+                            "agentic_discovery": True,
+                            "method_used": method_value,
+                            "source_domain": urlparse(doc_url).netloc,
+                        },
+                    }
+                    statutes.append(statute)
+                    kg_rows.append(
+                        {
+                            "state_code": state_code,
+                            "state_name": state_name,
+                            "url": doc_url,
+                            "domain": urlparse(doc_url).netloc,
+                            "title": doc_title,
+                            "text": doc_text,
+                            "method_used": method_value,
+                            "query": query,
+                            "source": "agentic_web_archiving",
+                            "fetched_at": datetime.now().isoformat(),
+                        }
+                    )
+                    if len(statutes) >= max(1, int(max_fetch_per_state)):
+                        break
+        except Exception:
+            pass
+
         max_candidates = max(1, int(max_candidates_per_state))
         max_fetch = max(1, int(max_fetch_per_state))
         pending: List[tuple[str, int]] = list(ranked_urls[:max_candidates])
-        seen_urls = set()
+        seen_urls = set(direct_doc_urls)
         inspected_urls = 0
         expanded_urls = 0
+        deep_discovery_calls = 0
         base_hosts = {
             urlparse(str(seed).strip()).netloc
             for seed in seed_urls
@@ -546,8 +676,16 @@ async def _agentic_discover_admin_state_blocks(
                 scraped = await asyncio.wait_for(scraper.scrape(url), timeout=25.0)
                 text = str(getattr(scraped, "text", "") or "").strip()
                 title = str(getattr(scraped, "title", "") or "").strip()
-                min_text_chars = max(120, int(min_full_text_chars // 2))
-                if len(text) < min_text_chars or not _has_admin_signal(text=text, title=title, url=url):
+                min_text_chars = max(140, int(min_full_text_chars // 2))
+                if require_substantive_text:
+                    min_text_chars = max(220, int(min_full_text_chars))
+
+                if not _is_substantive_rule_text(
+                    text=text,
+                    title=title,
+                    url=url,
+                    min_chars=min_text_chars,
+                ):
                     host = urlparse(url).netloc
                     same_host = host if host in base_hosts else ""
                     for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=8):
@@ -556,6 +694,38 @@ async def _agentic_discover_admin_state_blocks(
                             continue
                         pending.append((link_url, link_score))
                         expanded_urls += 1
+
+                    if deep_discovery_calls < 2 and time.monotonic() - state_start < (per_state_budget_s * 0.8):
+                        try:
+                            deep_discovery_calls += 1
+                            deep_discovered = await asyncio.wait_for(
+                                asyncio.to_thread(
+                                    lambda: unified_api.agentic_discover_and_fetch(
+                                        seed_urls=[url],
+                                        target_terms=["administrative", "regulation", "rule", "code", "title", "chapter"],
+                                        max_hops=max(0, int(max_hops)),
+                                        max_pages=max(2, min(8, int(max_pages))),
+                                        mode=OperationMode.BALANCED,
+                                    ),
+                                ),
+                                timeout=35.0,
+                            )
+                            for fetch_row in deep_discovered.get("results", []) or []:
+                                if not isinstance(fetch_row, dict):
+                                    continue
+                                document = fetch_row.get("document") or {}
+                                deep_url = ""
+                                if isinstance(document, dict):
+                                    deep_url = str(document.get("url") or fetch_row.get("url") or "").strip()
+                                else:
+                                    deep_url = str(fetch_row.get("url") or "").strip()
+                                if not deep_url.startswith(("http://", "https://")):
+                                    continue
+                                pending.append((deep_url, _score_candidate_url(deep_url) + 1))
+                                expanded_urls += 1
+                        except Exception:
+                            pass
+
                     pending = sorted(pending, key=lambda item: item[1], reverse=True)
                     continue
                 method_used = getattr(scraped, "method_used", None)
@@ -678,6 +848,7 @@ async def scrape_state_admin_rules(
     agentic_max_hops: int = 1,
     agentic_max_pages: int = 8,
     write_agentic_kg_corpus: bool = True,
+    require_substantive_rule_text: bool = True,
 ) -> Dict[str, Any]:
     """Scrape state administrative rules for selected states.
 
@@ -723,6 +894,8 @@ async def scrape_state_admin_rules(
         filtered_data, admin_rule_count, zero_rule_states = _filter_admin_state_blocks(
             raw_data,
             max_rules=max_rules,
+            min_full_text_chars=int(min_full_text_chars),
+            require_substantive_text=bool(require_substantive_rule_text),
         )
 
         fallback_attempted_states: List[str] = []
@@ -750,6 +923,8 @@ async def scrape_state_admin_rules(
             fallback_filtered, _, _ = _filter_admin_state_blocks(
                 list(fallback_result.get("data") or []),
                 max_rules=max_rules,
+                min_full_text_chars=int(min_full_text_chars),
+                require_substantive_text=bool(require_substantive_rule_text),
             )
             fallback_by_state = {
                 str(item.get("state_code") or "").upper(): item
@@ -789,6 +964,7 @@ async def scrape_state_admin_rules(
                 max_hops=int(agentic_max_hops),
                 max_pages=int(agentic_max_pages),
                 min_full_text_chars=int(min_full_text_chars),
+                require_substantive_text=bool(require_substantive_rule_text),
             )
             agentic_report = {
                 "status": agentic_result.get("status"),
@@ -872,6 +1048,7 @@ async def scrape_state_admin_rules(
             "agentic_max_results_per_domain": int(agentic_max_results_per_domain),
             "agentic_max_hops": int(agentic_max_hops),
             "agentic_max_pages": int(agentic_max_pages),
+            "require_substantive_rule_text": bool(require_substantive_rule_text),
             "max_base_statutes": int(effective_max_base_statutes) if effective_max_base_statutes else None,
             "per_state_timeout_seconds": float(per_state_timeout_seconds),
             "strict_full_text": bool(strict_full_text),
