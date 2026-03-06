@@ -526,13 +526,22 @@ async def _agentic_discover_admin_state_blocks(
 ) -> Dict[str, Any]:
     try:
         from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import LegalWebArchiveSearch
-        from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedSearchRequest
-        from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
-        from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
-            ScraperConfig,
-            ScraperMethod,
-            UnifiedWebScraper,
-        )
+        try:
+            from ..web_archiving.contracts import OperationMode, UnifiedSearchRequest
+            from ..web_archiving.unified_api import UnifiedWebArchivingAPI
+            from ..web_archiving.unified_web_scraper import (
+                ScraperConfig,
+                ScraperMethod,
+                UnifiedWebScraper,
+            )
+        except Exception:
+            from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedSearchRequest
+            from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+            from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
+                ScraperConfig,
+                ScraperMethod,
+                UnifiedWebScraper,
+            )
     except Exception as exc:
         return {
             "status": "error",

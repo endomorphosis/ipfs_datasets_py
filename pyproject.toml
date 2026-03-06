@@ -20,6 +20,10 @@ requires-python = ">=3.12"
 dependencies = [
     "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
     "numpy>=2.0.0; python_version >= '3.14'",
+    "duckduckgo-search>=8.1.1",
+    "google-api-python-client>=2.192.0",
+    "cloudscraper>=1.2.71",
+    "brave-search==0.1.8",
 ]
 
 [project.optional-dependencies]

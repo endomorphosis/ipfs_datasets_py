@@ -60,7 +60,8 @@ class NewHampshireScraper(BaseStateScraper):
             "https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
             "https://web.archive.org/web/20250101000000/https://gc.nh.gov/rsa/html/NHTOC.htm",
         ]
-        for archived in await self._discover_archived_rsa_urls(limit=220):
+        # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
+        for archived in await self._discover_archived_rsa_urls(limit=80):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
 
@@ -85,7 +86,7 @@ class NewHampshireScraper(BaseStateScraper):
                 code_name,
                 candidate,
                 "N.H. Rev. Stat.",
-                max_sections=320,
+                max_sections=180,
             )
             statutes = self._filter_section_level(statutes)
             _merge(statutes)

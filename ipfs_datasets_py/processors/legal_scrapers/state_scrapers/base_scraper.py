@@ -789,13 +789,17 @@ class BaseStateScraper(ABC):
 
     async def _fetch_page_content_with_unified_api(self, url: str, timeout_seconds: int = 25) -> bytes:
         try:
-            from ipfs_datasets_py.processors.web_archiving.contracts import (
-                OperationMode,
-                UnifiedFetchRequest,
-            )
-            from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+            from ....web_archiving.contracts import OperationMode, UnifiedFetchRequest
+            from ....web_archiving.unified_api import UnifiedWebArchivingAPI
         except Exception:
-            return b""
+            try:
+                from ipfs_datasets_py.processors.web_archiving.contracts import (
+                    OperationMode,
+                    UnifiedFetchRequest,
+                )
+                from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+            except Exception:
+                return b""
 
         try:
             api = UnifiedWebArchivingAPI()

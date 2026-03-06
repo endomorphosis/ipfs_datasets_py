@@ -112,11 +112,8 @@ class GenericStateScraper(BaseStateScraper):
     def _fetch_url_bytes_sync(self, url: str, timeout_seconds: int = 30) -> bytes:
         """Fetch URL bytes synchronously while preserving fetch telemetry."""
         try:
-            from ipfs_datasets_py.processors.web_archiving.contracts import (
-                OperationMode,
-                UnifiedFetchRequest,
-            )
-            from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+            from ....web_archiving.contracts import OperationMode, UnifiedFetchRequest
+            from ....web_archiving.unified_api import UnifiedWebArchivingAPI
 
             api = UnifiedWebArchivingAPI()
             request = UnifiedFetchRequest(
@@ -141,8 +138,39 @@ class GenericStateScraper(BaseStateScraper):
                     self._record_fetch_event(provider=provider, success=True)
                     return content.encode("utf-8", errors="replace")
             self._record_fetch_event(provider=provider, success=False)
-        except Exception as exc:
-            self._record_fetch_event(provider="unified_api", success=False, error=str(exc))
+        except Exception:
+            try:
+                from ipfs_datasets_py.processors.web_archiving.contracts import (
+                    OperationMode,
+                    UnifiedFetchRequest,
+                )
+                from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+
+                api = UnifiedWebArchivingAPI()
+                request = UnifiedFetchRequest(
+                    url=url,
+                    mode=OperationMode.MAX_QUALITY,
+                    timeout_seconds=max(1, int(timeout_seconds or 30)),
+                    domain="legal",
+                    metadata={"pipeline": "state_laws", "path": "generic_code_list"},
+                )
+                response = api.fetch(request)
+                trace = getattr(response, "trace", None)
+                provider = str(getattr(trace, "provider_selected", None) or "unified_api")
+                if bool(getattr(response, "success", False)):
+                    document = getattr(response, "document", None)
+                    metadata = getattr(document, "metadata", {}) if document is not None else {}
+                    raw_bytes = metadata.get("raw_bytes") if isinstance(metadata, dict) else None
+                    if isinstance(raw_bytes, bytes) and raw_bytes:
+                        self._record_fetch_event(provider=provider, success=True)
+                        return raw_bytes
+                    content = str(getattr(document, "content", "") or "") if document is not None else ""
+                    if content:
+                        self._record_fetch_event(provider=provider, success=True)
+                        return content.encode("utf-8", errors="replace")
+                self._record_fetch_event(provider=provider, success=False)
+            except Exception as exc:
+                self._record_fetch_event(provider="unified_api", success=False, error=str(exc))
 
         try:
             from urllib.request import Request, urlopen
