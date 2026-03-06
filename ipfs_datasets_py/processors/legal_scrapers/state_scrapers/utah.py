@@ -38,7 +38,16 @@ class UtahScraper(BaseStateScraper):
             f"{self.get_base_url()}/xcode/",
             f"{self.get_base_url()}/xcode/Title01/",
             "https://law.justia.com/codes/utah/",
+            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/",
+            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title01/",
+            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title10/",
+            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title17/",
+            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title76/",
+            "https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title78B/",
         ]
+
+        for title in range(1, 33):
+            candidate_urls.append(f"https://web.archive.org/web/20250301000000/https://le.utah.gov/xcode/Title{title:02d}/")
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
@@ -47,10 +56,10 @@ class UtahScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=280)
+            statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=360)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= 30:
+            if len(statutes) >= 40:
                 return statutes
 
         return best_statutes

@@ -273,12 +273,28 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
         if base_url:
             urls.append(base_url)
         code_list = list(scraper.get_code_list() or [])
-        for item in code_list[:8]:
+        admin_priority_urls: List[str] = []
+        generic_urls: List[str] = []
+        for item in code_list:
             if not isinstance(item, dict):
                 continue
+            code_name = str(item.get("name") or "")
             value = str(item.get("url") or "").strip()
-            if value:
-                urls.append(value)
+            code_type = str(item.get("type") or "")
+            if not value:
+                continue
+            signal = " ".join([code_name, code_type, value])
+            if _ADMIN_RULE_TEXT_RE.search(signal):
+                admin_priority_urls.append(value)
+            else:
+                generic_urls.append(value)
+
+        # Prefer admin-specific code entrypoints, then a small generic tail.
+        urls.extend(admin_priority_urls)
+        urls.extend(generic_urls[:6])
+
+        # Add deterministic admin URL templates as seed entrypoints too.
+        urls.extend(_template_admin_urls_for_state(state_code))
     except Exception:
         pass
 
@@ -292,7 +308,7 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
             continue
         seen.add(key)
         deduped.append(value)
-    return deduped[:10]
+    return deduped[:20]
 
 
 def _template_admin_urls_for_state(state_code: str) -> List[str]:
@@ -327,6 +343,10 @@ def _score_candidate_url(url: str) -> int:
     if "/rule" in value or "/reg" in value or "admin" in value:
         score += 2
     return score
+
+
+def _url_key(url: str) -> str:
+    return str(url or "").strip().lower().rstrip("/")
 
 
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
@@ -601,7 +621,7 @@ async def _agentic_discover_admin_state_blocks(
                         min_chars=min_text_chars,
                     ):
                         continue
-                    doc_key = doc_url.lower()
+                    doc_key = _url_key(doc_url)
                     if doc_key in direct_doc_urls:
                         continue
                     direct_doc_urls.add(doc_key)
@@ -667,7 +687,7 @@ async def _agentic_discover_admin_state_blocks(
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
             url, score = pending.pop(0)
-            key = str(url).strip().lower()
+            key = _url_key(url)
             if not key or key in seen_urls:
                 continue
             seen_urls.add(key)

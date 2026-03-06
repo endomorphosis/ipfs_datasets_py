@@ -6,6 +6,7 @@ Indiana General Assembly static-document chapter PDFs.
 
 import re
 import subprocess
+from urllib.parse import quote
 from typing import Dict, List
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -61,7 +62,12 @@ class IndianaScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen_ids = set()
 
-        for pdf_url in self._ARCHIVE_CHAPTER_PDFS:
+        candidate_urls = list(self._ARCHIVE_CHAPTER_PDFS)
+        for discovered_url in await self._discover_archived_pdf_urls(limit=max(max_statutes * 8, 200)):
+            if discovered_url not in candidate_urls:
+                candidate_urls.append(discovered_url)
+
+        for pdf_url in candidate_urls:
             if len(statutes) >= max_statutes:
                 break
 
@@ -75,6 +81,33 @@ class IndianaScraper(BaseStateScraper):
             statutes.append(statute)
 
         return statutes
+
+    async def _discover_archived_pdf_urls(self, limit: int = 240) -> List[str]:
+        cdx_url = (
+            "https://web.archive.org/cdx/search/cdx"
+            "?url=iga.in.gov/static-documents/*.pdf"
+            "&output=json"
+            "&filter=statuscode:200"
+            f"&limit={max(1, int(limit))}"
+        )
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+            rows = self._parse_json_rows(payload)
+        except Exception:
+            return []
+
+        out: List[str] = []
+        for row in rows:
+            if len(row) < 3:
+                continue
+            ts = str(row[1] or "").strip()
+            original = str(row[2] or "").strip()
+            if not ts or not original or not original.lower().endswith(".pdf"):
+                continue
+            out.append(f"https://web.archive.org/web/{ts}/{quote(original, safe=':/?=&._-')}")
+
+        return out
 
     async def _build_statute_from_pdf_url(
         self,

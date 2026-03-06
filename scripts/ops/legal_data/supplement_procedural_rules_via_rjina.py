@@ -16,7 +16,7 @@ import re
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urldefrag, urljoin, urlparse
 
 import requests
 
@@ -36,6 +36,21 @@ CRIMINAL_RE = re.compile(
 FALLBACK_LINK_RE = re.compile(
     r"rule|rules|form|forms|procedure|court|civil|criminal|chapter|article|section|subtitle|part|title",
     re.IGNORECASE,
+)
+
+STATIC_ASSET_EXTENSIONS = (
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".webp",
+    ".ico",
+    ".css",
+    ".js",
+    ".woff",
+    ".woff2",
+    ".ttf",
 )
 
 
@@ -138,15 +153,34 @@ def _classify(label: str, url: str) -> Optional[str]:
     return None
 
 
+def _is_non_substantive_link(label: str, url: str, seed_url: str) -> bool:
+    label_lower = label.strip().lower()
+    parsed = urlparse(url)
+    path_lower = (parsed.path or "").lower()
+
+    if path_lower.endswith(STATIC_ASSET_EXTENSIONS):
+        return True
+    if label_lower.startswith("skip to "):
+        return True
+    if label_lower.startswith("image ") or label_lower.startswith("![image"):
+        return True
+    if parsed.fragment and urldefrag(url)[0].rstrip("/") == seed_url.rstrip("/"):
+        return True
+    return False
+
+
 def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, str]]:
     out: List[Tuple[str, str, str]] = []
     fallback_family = _page_context_family(seed_url, markdown_text)
     for m in LINK_RE.finditer(markdown_text):
         label = m.group("label").strip()
         raw_url = html.unescape(m.group("url")).strip()
-        url = urljoin(seed_url, raw_url)
-        if not url.lower().startswith(("http://", "https://")):
+        full_url = urljoin(seed_url, raw_url)
+        if not full_url.lower().startswith(("http://", "https://")):
             continue
+        if _is_non_substantive_link(label, full_url, seed_url):
+            continue
+        url = urldefrag(full_url)[0]
         family = _classify(label, url)
         generic_label = (
             len(label) <= 10
@@ -178,9 +212,12 @@ def _extract_matches(markdown_text: str, seed_url: str) -> List[Tuple[str, str, 
             raw_label = re.sub(r"<[^>]+>", " ", m.group("label"))
             label = html.unescape(raw_label).strip()
             raw_url = html.unescape(m.group("url")).strip()
-            url = urljoin(seed_url, raw_url)
-            if not url.lower().startswith(("http://", "https://")):
+            full_url = urljoin(seed_url, raw_url)
+            if not full_url.lower().startswith(("http://", "https://")):
                 continue
+            if _is_non_substantive_link(label, full_url, seed_url):
+                continue
+            url = urldefrag(full_url)[0]
             family = _classify(label, url)
             if not family and fallback_family and (
                 url.lower().endswith(".pdf")

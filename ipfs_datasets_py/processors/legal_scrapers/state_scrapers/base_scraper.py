@@ -706,12 +706,13 @@ class BaseStateScraper(ABC):
         This keeps Common Crawl/Wayback/Archive.is logic inside state scrapers,
         mirroring Oregon archival workflow for all states.
         """
-        unified_bytes = await self._fetch_page_content_with_unified_api(
-            url=url,
-            timeout_seconds=timeout_seconds,
-        )
-        if unified_bytes:
-            return unified_bytes
+        for candidate_url in self._wayback_replay_candidates(url):
+            unified_bytes = await self._fetch_page_content_with_unified_api(
+                url=candidate_url,
+                timeout_seconds=timeout_seconds,
+            )
+            if unified_bytes:
+                return unified_bytes
 
         try:
             from .state_archival_fetch import ArchivalFetchClient
@@ -737,18 +738,54 @@ class BaseStateScraper(ABC):
                 "User-Agent": "ipfs-datasets-state-scraper/2.0",
                 "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
             }
-            request = Request(url, headers=headers)
-            with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
-                status_code = int(getattr(response, "status", 200) or 200)
-                content = bytes(response.read() or b"")
-            if status_code != 200 or not content:
-                self._record_fetch_event(provider="requests_direct", success=False)
-                return b""
-            self._record_fetch_event(provider="requests_direct", success=True)
-            return content
+            for candidate_url in self._wayback_replay_candidates(url):
+                try:
+                    request = Request(candidate_url, headers=headers)
+                    with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
+                        status_code = int(getattr(response, "status", 200) or 200)
+                        content = bytes(response.read() or b"")
+                    if status_code != 200 or not content:
+                        continue
+                    self._record_fetch_event(provider="requests_direct", success=True)
+                    return content
+                except Exception:
+                    continue
+
+            self._record_fetch_event(provider="requests_direct", success=False)
+            return b""
         except Exception as exc:
             self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
             return b""
+
+    def _wayback_replay_candidates(self, url: str) -> List[str]:
+        value = str(url or "").strip()
+        if not value:
+            return []
+
+        out: List[str] = []
+
+        def _add(candidate: str) -> None:
+            c = str(candidate or "").strip()
+            if c and c not in out:
+                out.append(c)
+
+        _add(value)
+
+        if "web.archive.org/web/" in value:
+            if "/if_/" not in value:
+                _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", value, count=1))
+            if "/id_/" not in value:
+                _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1id_/\2", value, count=1))
+
+        # Try scheme-alternate variants last for flaky mirrors.
+        seed = list(out)
+        for candidate in seed:
+            if candidate.startswith("https://"):
+                _add("http://" + candidate[8:])
+            elif candidate.startswith("http://"):
+                _add("https://" + candidate[7:])
+
+        return out
 
     async def _fetch_page_content_with_unified_api(self, url: str, timeout_seconds: int = 25) -> bytes:
         try:

@@ -68,14 +68,15 @@ class ColoradoScraper(BaseStateScraper):
                 continue
             seen.add(path)
 
-            # Keep section-like CRS files (e.g., 14-10-114pre20140101.pdf).
-            if not re.search(r"/\d{1,2}-\d{1,3}-\d{1,4}[A-Za-z0-9\-]*\.pdf$", path):
-                continue
-
             pdf_url = urljoin("https://content.leg.colorado.gov", path)
             section_number = self._extract_section_number_from_pdf_path(path)
+            if not section_number:
+                # Keep stable ids for chapter/title PDFs even when they are not section-number named.
+                section_number = self._fallback_section_id_from_pdf_path(path)
             section_name = f"Section {section_number}" if section_number else "Colorado Revised Statutes section"
             full_text = await self._extract_pdf_text_summary(pdf_url)
+            if len(full_text or "") < 300:
+                continue
 
             statute = NormalizedStatute(
                 state_code=self.state_code,
@@ -102,6 +103,13 @@ class ColoradoScraper(BaseStateScraper):
         if not match:
             return ""
         return match.group(1)
+
+    def _fallback_section_id_from_pdf_path(self, path: str) -> str:
+        decoded_path = unquote(path)
+        file_name = decoded_path.rsplit("/", 1)[-1]
+        file_name = re.sub(r"\.pdf$", "", file_name, flags=re.IGNORECASE)
+        file_name = re.sub(r"[^A-Za-z0-9._-]+", "-", file_name).strip("-")
+        return file_name[:80]
 
     async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 8000) -> str:
         """Download a PDF and extract a normalized text summary using pdftotext."""
