@@ -15,6 +15,10 @@ OUT="${OUT:-${OUT_DIR}/us_state_procedural_rules_supplemental_rjina_guarded_smok
 MERGED="${MERGED:-${OUT_DIR}/us_state_procedural_rules_merged_with_rjina_guarded_smoke.jsonl}"
 STATES="${STATES:-MI KY}"
 MIN_RECORDS="${MIN_RECORDS:-20}"
+# Default to checking only states exercised in this smoke run to avoid unrelated
+# global coverage drift breaking the harness. Set COVERAGE_SCOPE=all for full run.
+COVERAGE_SCOPE="${COVERAGE_SCOPE:-target}"
+COVERAGE_STATES="${COVERAGE_STATES:-$STATES}"
 
 printf '[1/4] compile checks\n'
 PYTHONPATH=. python3 -m py_compile \
@@ -35,6 +39,11 @@ PYTHONPATH=. python3 scripts/ops/legal_data/supplement_procedural_rules_via_rjin
   --post-cleanup-merged
 
 printf '[4/4] coverage check (min-records=%s)\n' "$MIN_RECORDS"
-PYTHONPATH=. python3 scripts/ops/legal_data/check_state_law_coverage.py --min-records "$MIN_RECORDS"
+if [[ "$COVERAGE_SCOPE" == "all" ]]; then
+  PYTHONPATH=. python3 scripts/ops/legal_data/check_state_law_coverage.py --min-records "$MIN_RECORDS"
+else
+  COVERAGE_CSV="$(echo "$COVERAGE_STATES" | tr ' ' ',' | tr -s ',' | sed 's/^,//; s/,$//')"
+  PYTHONPATH=. python3 scripts/ops/legal_data/check_state_law_coverage.py --min-records "$MIN_RECORDS" --states "$COVERAGE_CSV"
+fi
 
 printf 'guarded procedural rules smoke: PASS\n'

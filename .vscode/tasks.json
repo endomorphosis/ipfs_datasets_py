@@ -1040,6 +1040,21 @@
 			}
 		},
 		{
+			"label": "Legal smoke: procedural rules guarded",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"STATES=\"MI KY\" MIN_RECORDS=20 COVERAGE_SCOPE=target ./scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
 			"label": "Legal V2: pipeline batch fixture",
 			"type": "shell",
 			"command": "bash",

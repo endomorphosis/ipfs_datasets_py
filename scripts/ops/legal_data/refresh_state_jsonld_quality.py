@@ -192,8 +192,12 @@ async def refresh_state(
     final_rows = after_candidate
     selected = "after"
     if no_regression and not is_not_worse_quality(after_candidate, before_candidate):
-        final_rows = before_candidate
-        selected = "before"
+        # Keep prior output only when it already meets the requested floor.
+        if len(before_candidate) >= target_lines:
+            final_rows = before_candidate
+            selected = "before"
+        else:
+            selected = "after-floor-enforced"
 
     with state_file.open("w", encoding="utf-8") as f:
         for row in final_rows:

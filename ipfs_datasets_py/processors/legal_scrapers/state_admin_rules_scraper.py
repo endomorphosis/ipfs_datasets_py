@@ -100,6 +100,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
 }
 
+# States that still need broader, controlled acceptance during recovery runs.
+_RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "NH", "TN"}
+
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
     legal_area = str(statute.get("legal_area") or "")
@@ -420,7 +423,16 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
     if len(body) < max(120, int(min_chars)):
-        return False
+        # PDF-based admin-rule publications often extract with sparse text; allow
+        # a lower floor when URL/title still strongly indicate rule content.
+        pdf_like = str(url_value).lower().endswith(".pdf") or ".pdf?" in str(url_value).lower()
+        if not (
+            pdf_like
+            and len(body) >= 60
+            and _has_admin_signal(text=body, title=title_value, url=url_value)
+            and _LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body]))
+        ):
+            return False
     if _looks_like_placeholder_text(body):
         return False
     if not _has_admin_signal(text=body, title=title_value, url=url_value):
@@ -440,6 +452,19 @@ def _is_substantive_admin_statute(statute: Dict[str, Any], *, min_chars: int) ->
         url=source_url,
         min_chars=max(160, int(min_chars)),
     )
+
+
+def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
+    body = str(text or "").strip()
+    title_value = str(title or "").strip()
+    url_value = str(url or "").strip()
+    if len(body) < 80:
+        return False
+    if _looks_like_placeholder_text(body):
+        return False
+    if not _has_admin_signal(text=body, title=title_value, url=url_value):
+        return False
+    return bool(_LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body])))
 
 
 def _candidate_links_from_scrape(scraped: Any, base_host: str, limit: int = 10) -> List[str]:
@@ -491,6 +516,7 @@ async def _agentic_discover_admin_state_blocks(
     max_pages: int,
     min_full_text_chars: int,
     require_substantive_text: bool,
+    fetch_concurrency: int,
 ) -> Dict[str, Any]:
     try:
         from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import LegalWebArchiveSearch
@@ -537,6 +563,7 @@ async def _agentic_discover_admin_state_blocks(
         # Keep agentic fallback bounded per state so staged runs keep moving.
         per_state_budget_s = 120.0
         state_name = US_STATES.get(state_code, state_code)
+        relaxed_recovery = str(state_code or "").upper() in _RECOVERY_RELAXED_STATES
         query = _agentic_query_for_state(state_code)
         candidate_urls: List[str] = []
         source_breakdown: Dict[str, int] = {}
@@ -674,7 +701,8 @@ async def _agentic_discover_admin_state_blocks(
                         url=doc_url,
                         min_chars=min_text_chars,
                     ):
-                        continue
+                        if not (relaxed_recovery and _is_relaxed_recovery_text(text=doc_text, title=doc_title, url=doc_url)):
+                            continue
                     doc_key = _url_key(doc_url)
                     if doc_key in direct_doc_urls:
                         continue
@@ -700,6 +728,7 @@ async def _agentic_discover_admin_state_blocks(
                         "structured_data": {
                             "type": "regulation",
                             "agentic_discovery": True,
+                            "relaxed_recovery": bool(relaxed_recovery),
                             "method_used": method_value,
                             "source_domain": urlparse(doc_url).netloc,
                         },
@@ -737,112 +766,145 @@ async def _agentic_discover_admin_state_blocks(
             if str(seed).strip().startswith(("http://", "https://"))
         }
 
+        effective_fetch_concurrency = max(1, int(fetch_concurrency))
         while pending and len(statutes) < max_fetch and inspected_urls < max(4, max_candidates * 4):
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
-            url, score = pending.pop(0)
-            key = _url_key(url)
-            if not key or key in seen_urls:
-                continue
-            seen_urls.add(key)
-            inspected_urls += 1
-            try:
-                scraped = await asyncio.wait_for(scraper.scrape(url), timeout=25.0)
-                text = str(getattr(scraped, "text", "") or "").strip()
-                title = str(getattr(scraped, "title", "") or "").strip()
-                min_text_chars = max(140, int(min_full_text_chars // 2))
-                if require_substantive_text:
-                    min_text_chars = max(220, int(min_full_text_chars))
 
-                if not _is_substantive_rule_text(
-                    text=text,
-                    title=title,
-                    url=url,
-                    min_chars=min_text_chars,
-                ):
-                    host = urlparse(url).netloc
-                    same_host = host if host in base_hosts else ""
-                    for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=8):
-                        link_score = _score_candidate_url(link_url)
-                        if link_score <= 0:
-                            continue
-                        pending.append((link_url, link_score))
-                        expanded_urls += 1
-
-                    if deep_discovery_calls < 2 and time.monotonic() - state_start < (per_state_budget_s * 0.8):
-                        try:
-                            deep_discovery_calls += 1
-                            deep_discovered = await asyncio.wait_for(
-                                asyncio.to_thread(
-                                    lambda: unified_api.agentic_discover_and_fetch(
-                                        seed_urls=[url],
-                                        target_terms=["administrative", "regulation", "rule", "code", "title", "chapter"],
-                                        max_hops=max(0, int(max_hops)),
-                                        max_pages=max(2, min(8, int(max_pages))),
-                                        mode=OperationMode.BALANCED,
-                                    ),
-                                ),
-                                timeout=35.0,
-                            )
-                            for fetch_row in deep_discovered.get("results", []) or []:
-                                if not isinstance(fetch_row, dict):
-                                    continue
-                                document = fetch_row.get("document") or {}
-                                deep_url = ""
-                                if isinstance(document, dict):
-                                    deep_url = str(document.get("url") or fetch_row.get("url") or "").strip()
-                                else:
-                                    deep_url = str(fetch_row.get("url") or "").strip()
-                                if not deep_url.startswith(("http://", "https://")):
-                                    continue
-                                pending.append((deep_url, _score_candidate_url(deep_url) + 1))
-                                expanded_urls += 1
-                        except Exception:
-                            pass
-
-                    pending = sorted(pending, key=lambda item: item[1], reverse=True)
+            batch_candidates: List[tuple[str, int]] = []
+            while (
+                pending
+                and len(batch_candidates) < effective_fetch_concurrency
+                and len(statutes) + len(batch_candidates) < max_fetch
+                and inspected_urls < max(4, max_candidates * 4)
+            ):
+                url, score = pending.pop(0)
+                key = _url_key(url)
+                if not key or key in seen_urls:
                     continue
-                method_used = getattr(scraped, "method_used", None)
-                method_value = method_used.value if method_used else None
-                section_number = f"A{len(statutes) + 1}"
-                section_name = title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
-                statute = {
-                    "state_code": state_code,
-                    "state_name": state_name,
-                    "statute_id": f"{state_code}-AGENTIC-{section_number}",
-                    "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
-                    "section_number": section_number,
-                    "section_name": section_name,
-                    "short_title": section_name,
-                    "full_text": text,
-                    "summary": text[:500],
-                    "legal_area": "administrative",
-                    "source_url": url,
-                    "official_cite": f"{state_code} Admin Rule {section_number}",
-                    "structured_data": {
-                        "type": "regulation",
-                        "agentic_discovery": True,
-                        "method_used": method_value,
-                        "source_domain": urlparse(url).netloc,
-                    },
-                }
-                statutes.append(statute)
-                kg_rows.append(
-                    {
+                seen_urls.add(key)
+                inspected_urls += 1
+                batch_candidates.append((url, score))
+
+            if not batch_candidates:
+                continue
+
+            scrape_results = await asyncio.gather(
+                *[
+                    asyncio.wait_for(scraper.scrape(url), timeout=25.0)
+                    for url, _ in batch_candidates
+                ],
+                return_exceptions=True,
+            )
+
+            for (url, score), scrape_result in zip(batch_candidates, scrape_results):
+                if isinstance(scrape_result, Exception):
+                    continue
+
+                try:
+                    scraped = scrape_result
+                    text = str(getattr(scraped, "text", "") or "").strip()
+                    title = str(getattr(scraped, "title", "") or "").strip()
+                    min_text_chars = max(140, int(min_full_text_chars // 2))
+                    if require_substantive_text:
+                        min_text_chars = max(220, int(min_full_text_chars))
+
+                    if not _is_substantive_rule_text(
+                        text=text,
+                        title=title,
+                        url=url,
+                        min_chars=min_text_chars,
+                    ):
+                        if relaxed_recovery and _is_relaxed_recovery_text(text=text, title=title, url=url):
+                            pass
+                        else:
+                            host = urlparse(url).netloc
+                            same_host = host if host in base_hosts else ""
+                            for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=8):
+                                link_score = _score_candidate_url(link_url)
+                                if link_score <= 0:
+                                    continue
+                                pending.append((link_url, link_score))
+                                expanded_urls += 1
+
+                            if deep_discovery_calls < 2 and time.monotonic() - state_start < (per_state_budget_s * 0.8):
+                                try:
+                                    deep_discovery_calls += 1
+                                    deep_discovered = await asyncio.wait_for(
+                                        asyncio.to_thread(
+                                            lambda: unified_api.agentic_discover_and_fetch(
+                                                seed_urls=[url],
+                                                target_terms=["administrative", "regulation", "rule", "code", "title", "chapter"],
+                                                max_hops=max(0, int(max_hops)),
+                                                max_pages=max(2, min(8, int(max_pages))),
+                                                mode=OperationMode.BALANCED,
+                                            ),
+                                        ),
+                                        timeout=35.0,
+                                    )
+                                    for fetch_row in deep_discovered.get("results", []) or []:
+                                        if not isinstance(fetch_row, dict):
+                                            continue
+                                        document = fetch_row.get("document") or {}
+                                        deep_url = ""
+                                        if isinstance(document, dict):
+                                            deep_url = str(document.get("url") or fetch_row.get("url") or "").strip()
+                                        else:
+                                            deep_url = str(fetch_row.get("url") or "").strip()
+                                        if not deep_url.startswith(("http://", "https://")):
+                                            continue
+                                        pending.append((deep_url, _score_candidate_url(deep_url) + 1))
+                                        expanded_urls += 1
+                                except Exception:
+                                    pass
+
+                            continue
+                    method_used = getattr(scraped, "method_used", None)
+                    method_value = method_used.value if method_used else None
+                    section_number = f"A{len(statutes) + 1}"
+                    section_name = title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
+                    statute = {
                         "state_code": state_code,
                         "state_name": state_name,
-                        "url": url,
-                        "domain": urlparse(url).netloc,
-                        "title": title,
-                        "text": text,
-                        "method_used": method_value,
-                        "query": query,
-                        "source": "agentic_web_archiving",
-                        "fetched_at": datetime.now().isoformat(),
+                        "statute_id": f"{state_code}-AGENTIC-{section_number}",
+                        "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
+                        "section_number": section_number,
+                        "section_name": section_name,
+                        "short_title": section_name,
+                        "full_text": text,
+                        "summary": text[:500],
+                        "legal_area": "administrative",
+                        "source_url": url,
+                        "official_cite": f"{state_code} Admin Rule {section_number}",
+                        "structured_data": {
+                            "type": "regulation",
+                            "agentic_discovery": True,
+                            "relaxed_recovery": bool(relaxed_recovery),
+                            "method_used": method_value,
+                            "source_domain": urlparse(url).netloc,
+                        },
                     }
-                )
-            except Exception:
-                continue
+                    statutes.append(statute)
+                    kg_rows.append(
+                        {
+                            "state_code": state_code,
+                            "state_name": state_name,
+                            "url": url,
+                            "domain": urlparse(url).netloc,
+                            "title": title,
+                            "text": text,
+                            "method_used": method_value,
+                            "query": query,
+                            "source": "agentic_web_archiving",
+                            "fetched_at": datetime.now().isoformat(),
+                        }
+                    )
+                    if len(statutes) >= max_fetch:
+                        break
+                except Exception:
+                    continue
+
+            pending = sorted(pending, key=lambda item: item[1], reverse=True)
 
         blocks.append(
             {
@@ -921,6 +983,7 @@ async def scrape_state_admin_rules(
     agentic_max_results_per_domain: int = 20,
     agentic_max_hops: int = 1,
     agentic_max_pages: int = 8,
+    agentic_fetch_concurrency: int = 6,
     write_agentic_kg_corpus: bool = True,
     require_substantive_rule_text: bool = True,
 ) -> Dict[str, Any]:
@@ -1039,6 +1102,7 @@ async def scrape_state_admin_rules(
                 max_pages=int(agentic_max_pages),
                 min_full_text_chars=int(min_full_text_chars),
                 require_substantive_text=bool(require_substantive_rule_text),
+                fetch_concurrency=int(agentic_fetch_concurrency),
             )
             agentic_report = {
                 "status": agentic_result.get("status"),
@@ -1122,6 +1186,7 @@ async def scrape_state_admin_rules(
             "agentic_max_results_per_domain": int(agentic_max_results_per_domain),
             "agentic_max_hops": int(agentic_max_hops),
             "agentic_max_pages": int(agentic_max_pages),
+            "agentic_fetch_concurrency": int(agentic_fetch_concurrency),
             "require_substantive_rule_text": bool(require_substantive_rule_text),
             "max_base_statutes": int(effective_max_base_statutes) if effective_max_base_statutes else None,
             "per_state_timeout_seconds": float(per_state_timeout_seconds),

@@ -61,9 +61,11 @@ Notes:
 	The supplement run fails fast on nonzero post-cleanup exit by default; use `--no-fail-on-post-cleanup-error` only when you need diagnostics without failing the run.
 - Run `run_procedural_rules_guarded_smoke.sh` for a one-command safety check that executes:
 	1) compile checks, 2) focused unit tests, 3) guarded supplement smoke run, and 4) state-law coverage check.
+	Coverage defaults to the harness target states to avoid unrelated global drift; set `COVERAGE_SCOPE=all` for full all-state coverage gating.
 	Examples:
 	`bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
 	`STATES="MI" MIN_RECORDS=20 bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
+	`COVERAGE_SCOPE=all MIN_RECORDS=20 bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
 	`run_formal_logic_regression_check.sh` to auto-export
 	`proof_certificate_audit.json` after conversion/analysis complete.
