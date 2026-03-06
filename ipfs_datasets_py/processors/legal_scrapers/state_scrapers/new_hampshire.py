@@ -12,7 +12,7 @@ from .registry import StateScraperRegistry
 
 
 class NewHampshireScraper(BaseStateScraper):
-    """Scraper for New Hampshire state laws from http://www.gencourt.state.nh.us"""
+    """Scraper for New Hampshire state laws from gencourt/gc.nh.gov sources."""
 
     _NH_STATUTE_URL_RE = re.compile(
         r"/rsa/html/(?:NHTOC/[^/?#]+\.htm|(?:[^/?#]+/)+[^/?#]+\.htm)$",
@@ -21,7 +21,7 @@ class NewHampshireScraper(BaseStateScraper):
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
-        return "http://www.gencourt.state.nh.us"
+        return "https://www.gencourt.state.nh.us"
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for New Hampshire."""
@@ -53,8 +53,12 @@ class NewHampshireScraper(BaseStateScraper):
             code_url,
             f"{self.get_base_url()}/rsa/html/NHTOC.htm",
             f"{self.get_base_url()}/rsa/html/",
-            "http://web.archive.org/web/20250101000000/http://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
-            "https://web.archive.org/web/20250101000000/http://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+            "https://gc.nh.gov/rsa/html/NHTOC.htm",
+            "https://gc.nh.gov/rsa/html/",
+            "http://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+            "http://web.archive.org/web/20250101000000/https://gc.nh.gov/rsa/html/NHTOC.htm",
+            "https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
+            "https://web.archive.org/web/20250101000000/https://gc.nh.gov/rsa/html/NHTOC.htm",
         ]
         for archived in await self._discover_archived_rsa_urls(limit=220):
             if archived not in candidate_urls:
