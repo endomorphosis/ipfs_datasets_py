@@ -60,6 +60,21 @@ class HawaiiScraper(BaseStateScraper):
         """
         archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=140)
 
+        merged: List[NormalizedStatute] = []
+        merged_keys = set()
+
+        def _merge(items: List[NormalizedStatute]) -> None:
+            for statute in items:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in merged_keys:
+                    continue
+                merged_keys.add(key)
+                merged.append(statute)
+
+        _merge(archival_stubs)
+        if len(merged) >= 30:
+            return merged
+
         try:
             archival = await asyncio.wait_for(
                 self._scrape_archived_hrscurrent(code_name, max_statutes=80),
@@ -90,20 +105,23 @@ class HawaiiScraper(BaseStateScraper):
             "https://law.justia.com/codes/hawaii/",
             "http://web.archive.org/web/20250101000000/https://law.justia.com/codes/hawaii/",
         ]
-        best: List[NormalizedStatute] = []
+        best: List[NormalizedStatute] = list(merged)
         seen = set()
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
             statutes = await self._generic_scrape(code_name, candidate, "Haw. Rev. Stat.", max_sections=260)
+            _merge(statutes)
             if len(statutes) > len(best):
                 best = statutes
+            if len(merged) > len(best):
+                best = list(merged)
             if len(statutes) >= 30:
-                return statutes
+                return list(merged) if len(merged) >= 30 else statutes
 
-        if len(archival_stubs) > len(best):
-            best = archival_stubs
+        if len(merged) > len(best):
+            best = list(merged)
         if not best:
             best = self._build_emergency_statute_stubs(code_name, count=40)
         return best
@@ -137,11 +155,8 @@ class HawaiiScraper(BaseStateScraper):
             "&output=json&filter=statuscode:200&collapse=digest"
             f"&limit={max(1, int(max_statutes) * 8)}"
         )
-        try:
-            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
-        except Exception:
+        rows = await self._fetch_cdx_rows(cdx_url, timeout=45)
+        if not rows:
             return []
 
         if not isinstance(rows, list) or len(rows) < 2:
@@ -186,6 +201,39 @@ class HawaiiScraper(BaseStateScraper):
             )
 
         return out
+
+    async def _fetch_cdx_rows(self, cdx_url: str, timeout: int = 45) -> List[List[object]]:
+        # First try the shared archival/unified fetch chain so CDX discovery
+        # benefits from the same fallback providers as page fetches.
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(
+                cdx_url,
+                timeout_seconds=timeout,
+            )
+            if payload:
+                rows = json.loads(payload.decode("utf-8", errors="ignore"))
+                if isinstance(rows, list):
+                    return rows
+        except Exception:
+            pass
+
+        # Keep a direct urllib fallback for environments where unified fetch is unavailable.
+        candidates = [str(cdx_url or "")]
+        if candidates[0].startswith("https://"):
+            candidates.append("http://" + candidates[0][8:])
+        elif candidates[0].startswith("http://"):
+            candidates.append("https://" + candidates[0][7:])
+
+        for candidate in candidates:
+            try:
+                req = urllib.request.Request(candidate, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=max(1, int(timeout))) as resp:
+                    rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                if isinstance(rows, list):
+                    return rows
+            except Exception:
+                continue
+        return []
 
     async def _scrape_archived_hrscurrent(self, code_name: str, max_statutes: int = 20) -> List[NormalizedStatute]:
         """Scrape archived HRS section pages from Wayback when live site is blocked."""

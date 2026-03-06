@@ -66,6 +66,10 @@ Notes:
 	`bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
 	`STATES="MI" MIN_RECORDS=20 bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
 	`COVERAGE_SCOPE=all MIN_RECORDS=20 bash scripts/ops/legal_data/run_procedural_rules_guarded_smoke.sh`
+- Run `run_procedural_rules_guarded_matrix.sh` to execute multiple guarded smoke sets in parallel and write a consolidated `summary.json` under a temp matrix output dir.
+	Examples:
+	`bash scripts/ops/legal_data/run_procedural_rules_guarded_matrix.sh`
+	`MATRIX_SETS="MI;KY MI;IN MO NH" MIN_RECORDS=20 bash scripts/ops/legal_data/run_procedural_rules_guarded_matrix.sh`
 - Set `RUN_PROOF_CERT_AUDIT_AFTER_RUN=1` when invoking
 	`run_formal_logic_regression_check.sh` to auto-export
 	`proof_certificate_audit.json` after conversion/analysis complete.

@@ -1055,6 +1055,21 @@
 			}
 		},
 		{
+			"label": "Legal smoke: procedural rules guarded matrix",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"MATRIX_SETS=\"MI;KY MI;IN MO NH\" MIN_RECORDS=20 COVERAGE_SCOPE=target ./scripts/ops/legal_data/run_procedural_rules_guarded_matrix.sh"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
 			"label": "Legal V2: pipeline batch fixture",
 			"type": "shell",
 			"command": "bash",

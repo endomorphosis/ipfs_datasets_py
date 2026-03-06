@@ -58,6 +58,58 @@ def load_jsonld(path: Path) -> List[Dict[str, object]]:
     return out
 
 
+def build_fallback_jsonld_row(state_code: str, statute: Dict[str, object]) -> Dict[str, object]:
+    section_number = str(statute.get("section_number") or "").strip()
+    section_name = str(statute.get("section_name") or "").strip()
+    statute_id = str(statute.get("statute_id") or "").strip() or section_number or section_name or "UNKNOWN"
+    full_text = str(statute.get("full_text") or "").strip()
+    source_url = str(statute.get("source_url") or "").strip()
+    title = section_name or section_number or statute_id
+    return {
+        "@context": "https://schema.org",
+        "@type": "Legislation",
+        "legislationType": "StateStatute",
+        "legislationJurisdiction": f"US-{state_code}",
+        "name": title,
+        "identifier": statute_id,
+        "description": title,
+        "text": full_text or f"{title}: source {source_url}" if source_url else title,
+        "url": source_url,
+        "sameAs": source_url,
+        "legislationIdentifier": statute_id,
+    }
+
+
+def extract_scrape_jsonld_rows(result: Dict[str, object], state_code: str) -> List[Dict[str, object]]:
+    out: List[Dict[str, object]] = []
+    data = result.get("data") if isinstance(result, dict) else None
+    if not isinstance(data, list):
+        return out
+
+    for block in data:
+        if not isinstance(block, dict):
+            continue
+        if str(block.get("state_code") or "").upper() != state_code:
+            continue
+        statutes = block.get("statutes")
+        if not isinstance(statutes, list):
+            continue
+        for statute in statutes:
+            if not isinstance(statute, dict):
+                continue
+            structured = statute.get("structured_data")
+            payload = None
+            if isinstance(structured, dict):
+                candidate = structured.get("jsonld")
+                if isinstance(candidate, dict):
+                    payload = candidate
+            if payload is None:
+                payload = build_fallback_jsonld_row(state_code, statute)
+            if isinstance(payload, dict):
+                out.append(payload)
+    return out
+
+
 def dedupe(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
     out: List[Dict[str, object]] = []
     seen = set()
@@ -148,7 +200,7 @@ async def refresh_state(
 
     before = load_jsonld(state_file)
 
-    await scrape_state_laws(
+    scrape_result = await scrape_state_laws(
         states=[state_code],
         include_metadata=True,
         rate_limit_delay=0.2,
@@ -166,11 +218,13 @@ async def refresh_state(
     )
 
     after = load_jsonld(state_file)
+    scraped_rows = extract_scrape_jsonld_rows(scrape_result, state_code)
+    after_combined = dedupe(scraped_rows + after)
 
     before_real = [r for r in before if not is_synthetic_row(r)]
     before_synth = [r for r in before if is_synthetic_row(r)]
-    after_real = [r for r in after if not is_synthetic_row(r)]
-    after_synth = [r for r in after if is_synthetic_row(r)]
+    after_real = [r for r in after_combined if not is_synthetic_row(r)]
+    after_synth = [r for r in after_combined if is_synthetic_row(r)]
 
     before_candidate = dedupe(before)
     if not before_candidate:
@@ -207,7 +261,7 @@ async def refresh_state(
         "state": state_code,
         "before_total": len(before),
         "before_real": len(before_real),
-        "after_total": len(after),
+        "after_total": len(after_combined),
         "after_real": len(after_real),
         "final_total": len(final_rows),
         "final_real": len([r for r in final_rows if not is_synthetic_row(r)]),

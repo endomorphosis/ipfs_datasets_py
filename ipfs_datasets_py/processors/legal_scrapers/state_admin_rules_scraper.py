@@ -458,13 +458,19 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
-    if len(body) < 80:
+    if body and _looks_like_placeholder_text(body):
         return False
-    if _looks_like_placeholder_text(body):
-        return False
-    if not _has_admin_signal(text=body, title=title_value, url=url_value):
-        return False
-    return bool(_LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body])))
+    if len(body) >= 30 and _has_admin_signal(text=body, title=title_value, url=url_value):
+        return True
+
+    # Some official admin pages are sparse/JS-driven but have clear rule signal
+    # in title + URL path. Allow these only in recovery mode.
+    has_ruleish_path = bool(
+        re.search(r"/(rules?|regulations?|administrative|adminsearch|nmac|nycrr|code)(?:/|$)", url_value, re.IGNORECASE)
+    )
+    if len(title_value) >= 12 and _has_admin_signal(text="", title=title_value, url=url_value) and has_ruleish_path:
+        return True
+    return False
 
 
 def _candidate_links_from_scrape(scraped: Any, base_host: str, limit: int = 10) -> List[str]:
@@ -702,7 +708,8 @@ async def _agentic_discover_admin_state_blocks(
                         min_chars=min_text_chars,
                     ):
                         if not (relaxed_recovery and _is_relaxed_recovery_text(text=doc_text, title=doc_title, url=doc_url)):
-                            continue
+                            if not (relaxed_recovery and _score_candidate_url(doc_url) >= 4):
+                                continue
                     doc_key = _url_key(doc_url)
                     if doc_key in direct_doc_urls:
                         continue
@@ -710,6 +717,7 @@ async def _agentic_discover_admin_state_blocks(
 
                     section_number = f"A{len(statutes) + 1}"
                     section_name = doc_title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
+                    stored_text = doc_text.strip() or f"{section_name}\nAdministrative rules source URL: {doc_url}"
                     method_used = document.get("method_used")
                     method_value = getattr(method_used, "value", method_used)
                     statute = {
@@ -720,8 +728,8 @@ async def _agentic_discover_admin_state_blocks(
                         "section_number": section_number,
                         "section_name": section_name,
                         "short_title": section_name,
-                        "full_text": doc_text,
-                        "summary": doc_text[:500],
+                        "full_text": stored_text,
+                        "summary": stored_text[:500],
                         "legal_area": "administrative",
                         "source_url": doc_url,
                         "official_cite": f"{state_code} Admin Rule {section_number}",
@@ -863,6 +871,7 @@ async def _agentic_discover_admin_state_blocks(
                     method_value = method_used.value if method_used else None
                     section_number = f"A{len(statutes) + 1}"
                     section_name = title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
+                    stored_text = text.strip() or f"{section_name}\nAdministrative rules source URL: {url}"
                     statute = {
                         "state_code": state_code,
                         "state_name": state_name,
@@ -871,8 +880,8 @@ async def _agentic_discover_admin_state_blocks(
                         "section_number": section_number,
                         "section_name": section_name,
                         "short_title": section_name,
-                        "full_text": text,
-                        "summary": text[:500],
+                        "full_text": stored_text,
+                        "summary": stored_text[:500],
                         "legal_area": "administrative",
                         "source_url": url,
                         "official_cite": f"{state_code} Admin Rule {section_number}",
@@ -902,6 +911,32 @@ async def _agentic_discover_admin_state_blocks(
                     if len(statutes) >= max_fetch:
                         break
                 except Exception:
+                    if relaxed_recovery and score >= 4 and len(statutes) < max_fetch:
+                        section_number = f"A{len(statutes) + 1}"
+                        fallback_title = f"{state_name} Administrative Rules (recovery source {len(statutes) + 1})"
+                        statutes.append(
+                            {
+                                "state_code": state_code,
+                                "state_name": state_name,
+                                "statute_id": f"{state_code}-AGENTIC-{section_number}",
+                                "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
+                                "section_number": section_number,
+                                "section_name": fallback_title,
+                                "short_title": fallback_title,
+                                "full_text": f"{fallback_title}\nAdministrative rules source URL: {url}",
+                                "summary": f"Administrative rules source URL: {url}",
+                                "legal_area": "administrative",
+                                "source_url": url,
+                                "official_cite": f"{state_code} Admin Rule {section_number}",
+                                "structured_data": {
+                                    "type": "regulation",
+                                    "agentic_discovery": True,
+                                    "relaxed_recovery": True,
+                                    "source_domain": urlparse(url).netloc,
+                                    "recovery_url_only": True,
+                                },
+                            }
+                        )
                     continue
 
             pending = sorted(pending, key=lambda item: item[1], reverse=True)

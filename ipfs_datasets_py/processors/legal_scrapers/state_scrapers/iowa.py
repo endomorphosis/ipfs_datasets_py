@@ -41,6 +41,22 @@ class IowaScraper(BaseStateScraper):
 
         archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=140)
 
+        merged: List[NormalizedStatute] = []
+        merged_keys = set()
+
+        def _merge(items: List[NormalizedStatute]) -> None:
+            for statute in items:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in merged_keys:
+                    continue
+                merged_keys.add(key)
+                merged.append(statute)
+
+        _merge(live_stubs)
+        _merge(archival_stubs)
+        if len(merged) >= 30:
+            return merged
+
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/docs/code//",
@@ -50,22 +66,23 @@ class IowaScraper(BaseStateScraper):
         ]
 
         seen = set()
-        best_statutes: List[NormalizedStatute] = []
+        best_statutes: List[NormalizedStatute] = list(merged)
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
             seen.add(candidate)
 
             statutes = await self._generic_scrape(code_name, candidate, "Iowa Code", max_sections=280)
+            _merge(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
+            if len(merged) > len(best_statutes):
+                best_statutes = list(merged)
             if len(statutes) >= 30:
-                return statutes
+                return list(merged) if len(merged) >= 30 else statutes
 
-        if len(live_stubs) > len(best_statutes):
-            best_statutes = live_stubs
-        if len(archival_stubs) > len(best_statutes):
-            best_statutes = archival_stubs
+        if len(merged) > len(best_statutes):
+            best_statutes = list(merged)
 
         return best_statutes
 
@@ -133,11 +150,8 @@ class IowaScraper(BaseStateScraper):
             "&output=json&filter=statuscode:200&collapse=digest"
             f"&limit={max(1, int(max_statutes) * 8)}"
         )
-        try:
-            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
-        except Exception:
+        rows = await self._fetch_cdx_rows(cdx_url, timeout=45)
+        if not rows:
             return []
 
         if not isinstance(rows, list) or len(rows) < 2:
@@ -190,6 +204,39 @@ class IowaScraper(BaseStateScraper):
             )
 
         return out
+
+    async def _fetch_cdx_rows(self, cdx_url: str, timeout: int = 45) -> List[List[object]]:
+        # Prefer the shared archival/unified fetch chain so archive discovery
+        # participates in provider fallback and fetch analytics.
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(
+                cdx_url,
+                timeout_seconds=timeout,
+            )
+            if payload:
+                rows = json.loads(payload.decode("utf-8", errors="ignore"))
+                if isinstance(rows, list):
+                    return rows
+        except Exception:
+            pass
+
+        # Direct HTTP fallback for environments where unified fetch cannot initialize.
+        candidates = [str(cdx_url or "")]
+        if candidates[0].startswith("https://"):
+            candidates.append("http://" + candidates[0][8:])
+        elif candidates[0].startswith("http://"):
+            candidates.append("https://" + candidates[0][7:])
+
+        for candidate in candidates:
+            try:
+                req = urllib.request.Request(candidate, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=max(1, int(timeout))) as resp:
+                    rows = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                if isinstance(rows, list):
+                    return rows
+            except Exception:
+                continue
+        return []
 
 
 # Register this scraper with the registry
