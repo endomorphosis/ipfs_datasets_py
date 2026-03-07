@@ -54,7 +54,9 @@ _NON_ADMIN_CODE_NAME_RE = re.compile(
 )
 
 _NON_ADMIN_SOURCE_URL_RE = re.compile(
-    r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/",
+    r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|"
+    r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
+    r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)",
     re.IGNORECASE,
 )
 
@@ -66,7 +68,8 @@ _BAD_DISCOVERY_DOMAIN_RE = re.compile(
 _BAD_DISCOVERY_TEXT_RE = re.compile(
     r"site\s+has\s+moved|redirected\s+shortly|page\s+not\s+found|404\s+not\s+found|403\s+forbidden|toggle\s+navigation|submit\s+your\s+own\s+pictures|"
     r"city-data\.com\s+does\s+not\s+guarantee|forum\s+cities\s+schools\s+neighborhoods|"
-    r"administrative\s+rules\s+source\s+url:\s*https?://",
+    r"administrative\s+rules\s+source\s+url:\s*https?://|you\s+need\s+to\s+enable\s+javascript\s+to\s+run\s+this\s+app|"
+    r"javascript\s+is\s+not\s+enabled",
     re.IGNORECASE,
 )
 
@@ -80,7 +83,9 @@ _NAVIGATION_PAGE_TOKEN_RE = re.compile(
 _LANDING_PAGE_PHRASE_RE = re.compile(
     r"welcome\s+to\s+the\s+texas\s+administrative\s+code|view\s+the\s+current\s+texas\s+administrative\s+code|"
     r"search\s+the\s+texas\s+administrative\s+code|about\s+the\s+uniform\s+commercial\s+code|"
-    r"in-person\s+services\s+for\s+the\s+office\s+of\s+the\s+texas\s+secretary\s+of\s+state\s+have\s+moved",
+    r"in-person\s+services\s+for\s+the\s+office\s+of\s+the\s+texas\s+secretary\s+of\s+state\s+have\s+moved|"
+    r"all\s+current\s+proposed\s+rules|rules\s+are\s+archived\s+20\s+days\s+after\s+filed\s+with\s+secretary\s+of\s+state|"
+    r"browse\s+rules\s+and\s+regulations\s+of\s+the\s+state\s+of\s+georgia",
     re.IGNORECASE,
 )
 
@@ -133,6 +138,11 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ok.gov/rules/default.aspx",
         "https://www.sos.ok.gov/rules/",
     ],
+    "MT": [
+        "https://rules.mt.gov/",
+        "https://sosmt.gov/arm/register/",
+        "https://sosmt.gov/arm/rulemaking-resources/",
+    ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
         "https://rules.sos.ri.gov/",
@@ -147,6 +157,15 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC",
         "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=SEARCH_TAC",
         "https://www.sos.state.tx.us/texreg/index.shtml",
+    ],
+    "UT": [
+        "https://rules.utah.gov/",
+        "https://adminrules.utah.gov/public/search//Current%20Rules",
+        "https://rules.utah.gov/utah-administrative-code/",
+    ],
+    "VT": [
+        "https://secure.vermont.gov/SOS/rules/",
+        "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
     ],
     "TN": [
         "https://publications.tnsosfiles.com/rules/",
@@ -494,13 +513,12 @@ def _looks_like_navigation_page(text: str) -> bool:
     value = str(text or "").strip()
     if not value:
         return False
+    if _LANDING_PAGE_PHRASE_RE.search(value):
+        return True
     nav_hits = len(_NAVIGATION_PAGE_TOKEN_RE.findall(value))
     if nav_hits < 3:
         return False
-    landing_phrase = bool(_LANDING_PAGE_PHRASE_RE.search(value))
     has_section_structure = bool(re.search(r"\bsec\.?\s+\d|§\s*\d|chapter\s+\d|title\s+\d|part\s+\d", value, re.IGNORECASE))
-    if landing_phrase:
-        return True
     return not has_section_structure
 
 

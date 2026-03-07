@@ -28,6 +28,7 @@ class IndianaScraper(BaseStateScraper):
         r"TITLE(?P<title>\d+)_AR(?P<article>[0-9.]+)_ch(?P<chapter>\d+)\.pdf$",
         re.IGNORECASE,
     )
+    _JUSTIA_TITLE_RE = re.compile(r"title\s*(\d+(?:\.\d+)?)", re.IGNORECASE)
 
     def get_base_url(self) -> str:
         """Return the base URL for Indiana's legislative website."""
@@ -50,6 +51,7 @@ class IndianaScraper(BaseStateScraper):
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
         archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=60)
+        justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=80)
         title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=60)
 
         merged: List[NormalizedStatute] = []
@@ -64,6 +66,7 @@ class IndianaScraper(BaseStateScraper):
                 merged.append(statute)
 
         _merge(archival)
+        _merge(justia_titles)
         _merge(title_page_statutes)
 
         if merged:
@@ -72,6 +75,72 @@ class IndianaScraper(BaseStateScraper):
 
         # Keep a final generic fallback for resilience.
         return await self._generic_scrape(code_name, code_url, "Ind. Code")
+
+    async def _scrape_archived_justia_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        root_url = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/"
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
+        except Exception:
+            return []
+        if not payload:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        title_links: List[tuple[str, str]] = []
+        seen = set()
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            text = " ".join(link.get_text(" ", strip=True).split())
+            if "TITLE" not in text.upper():
+                continue
+            if "/codes/indiana/2010/title" not in href:
+                continue
+            full_url = href if href.startswith("http") else f"https://web.archive.org{href}"
+            if full_url in seen:
+                continue
+            seen.add(full_url)
+            title_links.append((text, full_url))
+            if len(title_links) >= max_statutes:
+                break
+
+        statutes: List[NormalizedStatute] = []
+        for title_text, title_url in title_links:
+            try:
+                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+            except Exception:
+                continue
+            if not title_payload:
+                continue
+            title_soup = BeautifulSoup(title_payload, "html.parser")
+            page_text = " ".join(title_soup.get_text(" ", strip=True).split())
+            if len(page_text) < 300:
+                continue
+            match = self._JUSTIA_TITLE_RE.search(title_text)
+            title_no = match.group(1) if match else title_text[:40]
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § Title {title_no}",
+                    code_name=code_name,
+                    section_number=f"Title {title_no}",
+                    section_name=title_text[:200],
+                    full_text=page_text[:14000],
+                    legal_area=self._identify_legal_area(title_text),
+                    source_url=title_url,
+                    official_cite=f"Ind. Code Title {title_no}",
+                    metadata=StatuteMetadata(),
+                )
+            )
+            if len(statutes) >= max_statutes:
+                break
+
+        return statutes
 
     async def _scrape_archived_title_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         title_urls = await self._discover_archived_title_urls(limit=180)

@@ -3,9 +3,10 @@
 This module contains the scraper for Minnesota statutes from the official state legislative website.
 """
 
+import asyncio
 from typing import List, Dict
 import re
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -13,6 +14,7 @@ class MinnesotaScraper(BaseStateScraper):
     """Scraper for Minnesota state laws from https://www.revisor.mn.gov"""
 
     _MN_SECTION_URL_RE = re.compile(r"/statutes/cite/[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*$", re.IGNORECASE)
+    _MN_SECTION_NUMBER_RE = re.compile(r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)$", re.IGNORECASE)
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -64,6 +66,11 @@ class MinnesotaScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
+        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=120)
+        _merge(chapter_statutes)
+        if len(merged) >= 40:
+            return merged
+
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -93,6 +100,108 @@ class MinnesotaScraper(BaseStateScraper):
                 return merged
 
         return merged
+
+    async def _scrape_chapter_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        chapter_urls = [
+            f"{self.get_base_url()}/statutes/cite/609",
+            f"{self.get_base_url()}/statutes/cite/645",
+            f"{self.get_base_url()}/statutes/cite/518B",
+            f"{self.get_base_url()}/statutes/cite/169A",
+        ]
+
+        section_urls: List[str] = []
+        seen_urls = set()
+        for chapter_url in chapter_urls:
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=35)
+            except Exception:
+                continue
+            if not payload:
+                continue
+            soup = BeautifulSoup(payload, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                if not href.startswith("/statutes/cite/"):
+                    continue
+                full_url = href if href.startswith("http") else f"{self.get_base_url()}{href}"
+                if not self._MN_SECTION_URL_RE.search(full_url):
+                    continue
+                if full_url in seen_urls:
+                    continue
+                seen_urls.add(full_url)
+                section_urls.append(full_url)
+                if len(section_urls) >= max_statutes * 2:
+                    break
+            if len(section_urls) >= max_statutes * 2:
+                break
+
+        if not section_urls:
+            return []
+
+        sem = asyncio.Semaphore(6)
+
+        async def _fetch_one(section_url: str) -> NormalizedStatute | None:
+            async with sem:
+                return await self._build_statute_from_section_page(code_name, section_url)
+
+        statutes: List[NormalizedStatute] = []
+        for result in await asyncio.gather(*[_fetch_one(url) for url in section_urls[: max_statutes * 2]], return_exceptions=True):
+            if isinstance(result, Exception) or result is None:
+                continue
+            statutes.append(result)
+            if len(statutes) >= max_statutes:
+                break
+
+        return statutes
+
+    async def _build_statute_from_section_page(self, code_name: str, section_url: str) -> NormalizedStatute | None:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+        except Exception:
+            return None
+        if not payload:
+            return None
+
+        soup = BeautifulSoup(payload, "html.parser")
+        text = " ".join(soup.get_text(" ", strip=True).split())
+        if len(text) < 160:
+            return None
+
+        match = self._MN_SECTION_NUMBER_RE.search(section_url)
+        section_number = match.group(1) if match else section_url.rsplit("/", 1)[-1]
+        heading = ""
+        for selector in ("h1", "h2", "title"):
+            node = soup.select_one(selector)
+            if node:
+                heading = " ".join(node.get_text(" ", strip=True).split())
+                if heading:
+                    break
+        if not heading:
+            heading = f"Minnesota Statutes {section_number}"
+
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            section_number=section_number,
+            section_name=heading[:200],
+            full_text=text[:14000],
+            source_url=section_url,
+            legal_area=self._identify_legal_area(heading),
+            official_cite=f"Minn. Stat. § {section_number}",
+            metadata=StatuteMetadata(),
+        )
 
 
 # Register this scraper with the registry

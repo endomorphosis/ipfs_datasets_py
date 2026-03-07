@@ -23,6 +23,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import 
     LegalWebArchiveSearch,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import (
+    _STATE_ADMIN_SOURCE_MAP,
     US_50_STATE_CODES,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
@@ -114,6 +115,20 @@ def _score_url(url: str) -> int:
 
 
 def _template_candidates_for_state(state_code: str, query: str) -> List[Candidate]:
+    curated = list(_STATE_ADMIN_SOURCE_MAP.get(state_code) or [])
+    if curated:
+        return [
+            Candidate(
+                state_code=state_code,
+                query=query,
+                url=url,
+                source="curated_seed",
+                score=_score_url(url) + 3,
+            )
+            for url in curated
+            if str(url or "").strip()
+        ]
+
     base_url = str(_get_official_state_url(state_code) or "").strip()
     if not base_url:
         return []

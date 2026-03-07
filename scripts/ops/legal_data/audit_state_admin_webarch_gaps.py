@@ -33,6 +33,16 @@ _ERROR_BLOCK_RE = re.compile(
     re.IGNORECASE,
 )
 
+_ADMIN_PAGE_ANCHOR_RE = re.compile(
+    r"administrative|admin\.?\s+code|rules?|regulations?|register|code\s+of\s+regulations|tac\b|nmac\b|nycrr\b|arm\b|ricr\b|iar\b",
+    re.IGNORECASE,
+)
+
+_NON_ADMIN_PAGE_RE = re.compile(
+    r"notary|invite|directory|roster|find my legislator|legislator|budget document|fee schedule|map|about$|contact|opt-out preferences",
+    re.IGNORECASE,
+)
+
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Audit state admin-rule corpus gaps with agentic web archiving")
@@ -160,6 +170,17 @@ def _document_title(doc: Dict[str, Any]) -> str:
     return str(doc.get("title") or "").strip()
 
 
+def _is_confident_substantive_page(*, text: str, title: str, url: str) -> bool:
+    if not _is_substantive_rule_text(text=text, title=title, url=url, min_chars=160):
+        return False
+    title_url_hay = " ".join([str(title or ""), str(url or "")]).strip()
+    if not title_url_hay:
+        return False
+    if _NON_ADMIN_PAGE_RE.search(title_url_hay):
+        return False
+    return bool(_ADMIN_PAGE_ANCHOR_RE.search(title_url_hay))
+
+
 def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -> Dict[str, Any]:
     url = _norm_url(page.get("url"))
     document = page.get("document") or {}
@@ -182,7 +203,7 @@ def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -
                 error_messages.append(text)
     title = _document_title(document)
     text = _document_text(document)
-    substantive = _is_substantive_rule_text(text=text, title=title, url=url, min_chars=160)
+    substantive = _is_confident_substantive_page(text=text, title=title, url=url)
     relaxed = _is_relaxed_recovery_text(text=text, title=title, url=url)
     blocked, blocked_messages = _classify_error_messages(error_messages)
     return {

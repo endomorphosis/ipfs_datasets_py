@@ -5,6 +5,7 @@ This module contains the scraper for North Dakota statutes from the official sta
 
 from typing import List, Dict
 import json
+import subprocess
 import urllib.request
 import urllib.parse
 import re
@@ -101,6 +102,10 @@ class NorthDakotaScraper(BaseStateScraper):
             chapter_no = m.group(2) if m else ""
             label = f"Title {title_no} Chapter {chapter_no}".strip()
             section_number = f"{title_no}-{chapter_no}".strip("-") or file_name
+            pdf_bytes = await self._request_bytes(abs_url, timeout=45)
+            full_text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=14000)
+            if len(full_text) < 280:
+                full_text = f"North Dakota Century Code {label}: {abs_url}"
 
             statutes.append(
                 NormalizedStatute(
@@ -110,7 +115,7 @@ class NorthDakotaScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=label,
-                    full_text=f"North Dakota Century Code {label}: {abs_url}",
+                    full_text=full_text,
                     source_url=abs_url,
                     legal_area=self._identify_legal_area(label),
                     official_cite=f"N.D. Cent. Code {section_number}",
@@ -148,6 +153,59 @@ class NorthDakotaScraper(BaseStateScraper):
             return out
         except Exception:
             return []
+
+    async def _request_bytes(self, pdf_url: str, timeout: int) -> bytes:
+        candidates = [str(pdf_url or "")]
+        wayback_iframe = self._to_wayback_iframe_url(candidates[0])
+        if wayback_iframe and wayback_iframe not in candidates:
+            candidates.insert(0, wayback_iframe)
+
+        if candidates[0].startswith("https://"):
+            candidates.append("http://" + candidates[0][8:])
+        elif candidates[0].startswith("http://"):
+            candidates.append("https://" + candidates[0][7:])
+
+        seen = set()
+        for candidate in candidates:
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(candidate, timeout_seconds=timeout)
+                if payload:
+                    return payload
+            except Exception:
+                continue
+
+        return b""
+
+    def _to_wayback_iframe_url(self, url: str) -> str:
+        if not url or "web.archive.org/web/" not in url:
+            return ""
+        if "/if_/" in url:
+            return url
+        return re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", url, count=1)
+
+    def _extract_pdf_text(self, pdf_bytes: bytes, max_chars: int) -> str:
+        if not pdf_bytes:
+            return ""
+        try:
+            proc = subprocess.run(
+                ["pdftotext", "-layout", "-q", "-", "-"],
+                input=pdf_bytes,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        except Exception:
+            return ""
+
+        if proc.returncode != 0 or not proc.stdout:
+            return ""
+
+        text = proc.stdout.decode("utf-8", errors="ignore")
+        text = re.sub(r"\s+", " ", text).strip()
+        return text[:max_chars]
 
 
 # Register this scraper with the registry
