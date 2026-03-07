@@ -69,7 +69,8 @@ _BAD_DISCOVERY_TEXT_RE = re.compile(
     r"site\s+has\s+moved|redirected\s+shortly|page\s+not\s+found|404\s+not\s+found|403\s+forbidden|toggle\s+navigation|submit\s+your\s+own\s+pictures|"
     r"city-data\.com\s+does\s+not\s+guarantee|forum\s+cities\s+schools\s+neighborhoods|"
     r"administrative\s+rules\s+source\s+url:\s*https?://|you\s+need\s+to\s+enable\s+javascript\s+to\s+run\s+this\s+app|"
-    r"javascript\s+is\s+not\s+enabled",
+    r"javascript\s+is\s+not\s+enabled|there\s+are\s+currently\s+no\s+rules\s+pending\s+for\s+this\s+agency|"
+    r"click\s+on\s+comment\s+deadline\s+date\s+to\s+submit\s+your\s+comment|public\s+hearing\s+dates|interim\s+committee\s+hearing",
     re.IGNORECASE,
 )
 

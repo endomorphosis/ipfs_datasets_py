@@ -50,8 +50,12 @@ class IndianaScraper(BaseStateScraper):
         Indiana's live site is currently SPA-only in headless contexts.
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
-        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=60)
         justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=80)
+        if len(justia_titles) >= 40:
+            self.logger.info(f"Indiana archived Justia fallback: Scraped {len(justia_titles)} title records")
+            return justia_titles
+
+        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=60)
         title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=60)
 
         merged: List[NormalizedStatute] = []
