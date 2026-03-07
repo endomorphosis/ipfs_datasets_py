@@ -37,12 +37,10 @@ URL_FIELDS: Tuple[str, ...] = ("sourceUrl", "url", "sameAs")
 
 def is_synthetic_row(row: Dict[str, object]) -> bool:
     text = str(row.get("text") or "").lower()
-    name = str(row.get("name") or "").lower()
     identifier = str(row.get("identifier") or "").lower()
     return (
         "generated-filler" in text
         or "example.invalid" in text
-        or " statute section " in name
         or "-fill-" in identifier
     )
 
@@ -176,6 +174,8 @@ def _norm_url(value: object) -> str:
     if url.startswith("http://web.archive.org/"):
         url = "https://" + url[len("http://"):]
     # Repair malformed archived replay segments like .../http:/example.com.
+    url = url.replace("/http:///", "/http://")
+    url = url.replace("/https:///", "/https://")
     url = url.replace("/http:/", "/http://")
     url = url.replace("/https:/", "/https://")
     return url

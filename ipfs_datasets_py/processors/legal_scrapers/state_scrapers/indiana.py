@@ -49,8 +49,8 @@ class IndianaScraper(BaseStateScraper):
         Indiana's live site is currently SPA-only in headless contexts.
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
-        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=20)
-        title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=40)
+        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=60)
+        title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=60)
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -86,6 +86,8 @@ class IndianaScraper(BaseStateScraper):
             except Exception:
                 statutes = []
             for statute in statutes:
+                if self._is_low_quality_statute_record(statute):
+                    continue
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in seen:
                     continue
@@ -176,6 +178,8 @@ class IndianaScraper(BaseStateScraper):
             ts = str(row[1] or "").strip()
             original = str(row[2] or "").strip()
             if not ts or not original or not original.lower().endswith(".pdf"):
+                continue
+            if not self._TITLE_ARTICLE_CHAPTER_RE.search(original):
                 continue
             out.append(f"https://web.archive.org/web/{ts}/{quote(original, safe=':/?=&._-')}")
 

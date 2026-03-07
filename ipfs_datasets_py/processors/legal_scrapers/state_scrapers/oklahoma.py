@@ -46,8 +46,8 @@ class OklahomaScraper(BaseStateScraper):
     @staticmethod
     def _normalize_wayback_url(url: str) -> str:
         value = str(url or "").strip()
-        if value.startswith("https://web.archive.org/"):
-            return "http://" + value[len("https://"):]
+        if value.startswith("http://web.archive.org/"):
+            return "https://" + value[len("http://"):]
         return value
     
     def get_base_url(self) -> str:
@@ -171,7 +171,7 @@ class OklahomaScraper(BaseStateScraper):
             return []
 
         cdx_url = (
-            "http://web.archive.org/cdx/search/cdx"
+            "https://web.archive.org/cdx/search/cdx"
             "?url=www.oscn.net/applications/oscn/DeliverDocument.asp"
             f"?CiteID={seed_citeid}&output=json"
             "&fl=timestamp,original,statuscode&filter=statuscode:200&limit=8"
@@ -199,7 +199,7 @@ class OklahomaScraper(BaseStateScraper):
             original = str(row[1] or "").strip()
             if not ts or not original:
                 continue
-            replay_url = self._normalize_wayback_url(f"http://web.archive.org/web/{ts}id_/{original}")
+            replay_url = self._normalize_wayback_url(f"https://web.archive.org/web/{ts}id_/{original}")
             html = await self._request_text(replay_url, headers=headers, timeout=35)
             if not html:
                 continue

@@ -66,6 +66,11 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://ag.hawaii.gov/admin-rules/",
         "https://ltgov.hawaii.gov/the-office/administrative-rules/",
     ],
+    "IN": [
+        "https://iar.iga.in.gov/code",
+        "https://iar.iga.in.gov/iac//",
+        "https://iga.in.gov/legislative/laws/iac/",
+    ],
     "LA": [
         "https://www.doa.la.gov/doa/osr/lac/",
         "https://www.doa.la.gov/doa/osr/",
@@ -89,6 +94,15 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "OK": [
         "https://www.sos.ok.gov/rules/default.aspx",
         "https://www.sos.ok.gov/rules/",
+    ],
+    "RI": [
+        "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
+        "https://rules.sos.ri.gov/",
+    ],
+    "SD": [
+        "https://rules.sd.gov/",
+        "https://rules.sd.gov/default.aspx",
+        "https://sdlegislature.gov/Rules/Administrative",
     ],
     "TN": [
         "https://publications.tnsosfiles.com/rules/",

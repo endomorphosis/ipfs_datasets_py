@@ -109,7 +109,7 @@ async def _search_wayback_direct_api(
     try:
         import requests
 
-        cdx_url = "http://web.archive.org/cdx/search/cdx"
+        cdx_url = "https://web.archive.org/cdx/search/cdx"
         params: Dict[str, Any] = {"url": url, "output": "json", "limit": limit}
         if from_date:
             params["from"] = from_date
@@ -135,7 +135,7 @@ async def _search_wayback_direct_api(
                     "url": record[2] if len(record) > 2 else "",
                     "original_url": record[2] if len(record) > 2 else "",
                     "wayback_url": (
-                        f"http://web.archive.org/web/{record[1]}/{record[2]}" if len(record) > 2 else ""
+                        f"https://web.archive.org/web/{record[1]}/{record[2]}" if len(record) > 2 else ""
                     ),
                     "mime_type": record[3] if len(record) > 3 else "",
                     "status_code": record[4] if len(record) > 4 else "",
@@ -204,9 +204,9 @@ async def _get_wayback_content_direct(
         import requests
 
         wayback_url = (
-            f"http://web.archive.org/web/{timestamp}/{url}"
+            f"https://web.archive.org/web/{timestamp}/{url}"
             if timestamp
-            else f"http://web.archive.org/web/{url}"
+            else f"https://web.archive.org/web/{url}"
         )
         response = requests.get(wayback_url, timeout=30)
         response.raise_for_status()

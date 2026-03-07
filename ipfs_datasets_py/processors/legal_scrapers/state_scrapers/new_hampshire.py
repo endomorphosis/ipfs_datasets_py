@@ -6,8 +6,8 @@ This module contains the scraper for New Hampshire statutes from the official st
 from typing import List, Dict
 import json
 import re
-from urllib.parse import quote
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from urllib.parse import quote, urljoin
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -18,6 +18,7 @@ class NewHampshireScraper(BaseStateScraper):
         r"/rsa/html/(?:NHTOC/[^/?#]+\.htm|(?:[^/?#]+/)+[^/?#]+\.htm)$",
         re.IGNORECASE,
     )
+    _NH_TITLE_TEXT_RE = re.compile(r"^TITLE\s+([A-Z0-9-]+)\s*:\s*(.+)$", re.IGNORECASE)
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
@@ -34,7 +35,8 @@ class NewHampshireScraper(BaseStateScraper):
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
         for statute in statutes:
-            source = str(statute.source_url or "")
+            source = self._normalize_wayback_like_url(str(statute.source_url or ""))
+            statute.source_url = source
             if self._NH_STATUTE_URL_RE.search(source):
                 filtered.append(statute)
         return filtered
@@ -65,6 +67,8 @@ class NewHampshireScraper(BaseStateScraper):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
 
+        archived_title_stubs = await self._scrape_archived_title_stubs(code_name, max_statutes=120)
+
         seen = set()
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -76,6 +80,10 @@ class NewHampshireScraper(BaseStateScraper):
                     continue
                 merged_keys.add(key)
                 merged.append(statute)
+
+        _merge(archived_title_stubs)
+        if len(merged) >= 40:
+            return merged
 
         for candidate in candidate_urls:
             if candidate in seen:
@@ -94,6 +102,108 @@ class NewHampshireScraper(BaseStateScraper):
                 return merged
 
         return merged
+
+    async def _scrape_archived_title_stubs(self, code_name: str, max_statutes: int = 100) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        root_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
+            if not payload:
+                return []
+        except Exception:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        title_urls: List[str] = []
+        seen_titles = set()
+        title_stubs: List[NormalizedStatute] = []
+        for a in soup.find_all("a", href=True):
+            text = str(a.get_text(" ", strip=True) or "").strip()
+            title_match = self._NH_TITLE_TEXT_RE.match(text)
+            href = str(a.get("href") or "").strip()
+            full_url = self._normalize_wayback_like_url(urljoin(root_url, href))
+            if "/rsa/html/nhtoc/" not in full_url.lower():
+                continue
+            if full_url in seen_titles:
+                continue
+            seen_titles.add(full_url)
+            title_urls.append(full_url)
+            if title_match and len(title_stubs) < max_statutes:
+                title_no = title_match.group(1).upper()
+                title_name = title_match.group(2).strip()
+                title_stubs.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § Title {title_no}",
+                        code_name=code_name,
+                        section_number=f"Title {title_no}",
+                        section_name=text[:200],
+                        full_text=f"New Hampshire Revised Statutes {text}",
+                        source_url=full_url,
+                        legal_area=self._identify_legal_area(title_name),
+                        official_cite=f"N.H. Rev. Stat. Title {title_no}",
+                        metadata=StatuteMetadata(),
+                    )
+                )
+            if len(title_urls) >= 12:
+                break
+
+        out: List[NormalizedStatute] = list(title_stubs)
+        seen_sections = set()
+        chapter_re = re.compile(r"chapter\s+([0-9A-Z-]+)", re.IGNORECASE)
+
+        for title_url in title_urls:
+            if len(out) >= max_statutes:
+                break
+            try:
+                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                if not title_payload:
+                    continue
+            except Exception:
+                continue
+
+            title_soup = BeautifulSoup(title_payload, "html.parser")
+            for a in title_soup.find_all("a", href=True):
+                if len(out) >= max_statutes:
+                    break
+                href = str(a.get("href") or "").strip()
+                text = str(a.get_text(" ", strip=True) or "").strip()
+                if not href.endswith(".htm"):
+                    continue
+                match = chapter_re.search(text)
+                if not match:
+                    continue
+                chapter_id = match.group(1).upper()
+                key = chapter_id.lower()
+                if key in seen_sections:
+                    continue
+                seen_sections.add(key)
+
+                source_url = self._normalize_wayback_like_url(urljoin(title_url, href))
+                chapter_name = text[:200] if text else f"Chapter {chapter_id}"
+                out.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § Chapter {chapter_id}",
+                        code_name=code_name,
+                        section_number=f"Chapter {chapter_id}",
+                        section_name=chapter_name,
+                        full_text=f"New Hampshire Revised Statutes {chapter_name}: {source_url}",
+                        source_url=source_url,
+                        legal_area=self._identify_legal_area(chapter_name),
+                        official_cite=f"N.H. Rev. Stat. ch. {chapter_id}",
+                        metadata=StatuteMetadata(),
+                    )
+                )
+
+        return out
 
     async def _discover_archived_rsa_urls(self, limit: int = 180) -> List[str]:
         cdx_url = (
@@ -121,7 +231,9 @@ class NewHampshireScraper(BaseStateScraper):
             lower_original = original.lower()
             if "/rsa/html/" not in lower_original:
                 continue
-            replay = f"https://web.archive.org/web/{ts}/{quote(original, safe=':/?=&._-')}"
+            replay = self._normalize_wayback_like_url(
+                f"https://web.archive.org/web/{ts}/{quote(original, safe=':/?=&._-')}"
+            )
             if replay in seen:
                 continue
             seen.add(replay)
@@ -130,6 +242,14 @@ class NewHampshireScraper(BaseStateScraper):
                 break
 
         return out
+
+    def _normalize_wayback_like_url(self, value: str) -> str:
+        url = str(value or "").strip()
+        if not url:
+            return url
+        url = re.sub(r"(web\.archive\.org/web/\d+/https?):/([^/])", r"\1://\2", url, flags=re.IGNORECASE)
+        url = re.sub(r"(web\.archive\.org/web/\d+/http):/([^/])", r"\1://\2", url, flags=re.IGNORECASE)
+        return url
 
     def _parse_json_rows(self, payload: bytes) -> List[List[object]]:
         if not payload:
