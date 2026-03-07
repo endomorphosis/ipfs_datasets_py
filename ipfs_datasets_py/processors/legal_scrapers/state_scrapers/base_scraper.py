@@ -886,6 +886,10 @@ class BaseStateScraper(ABC):
         }
 
     async def _hydrate_statute_text_if_needed(self, statute: NormalizedStatute) -> None:
+        structured = statute.structured_data if isinstance(statute.structured_data, dict) else {}
+        if bool(structured.get("skip_hydrate")):
+            return
+
         source_url = self._canonicalize_statute_url(str(statute.source_url or "").strip())
         if source_url and source_url != str(statute.source_url or "").strip():
             statute.source_url = source_url

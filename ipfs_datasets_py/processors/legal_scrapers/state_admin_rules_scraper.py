@@ -48,6 +48,42 @@ _LEGAL_CONTENT_SIGNAL_RE = re.compile(
     re.IGNORECASE,
 )
 
+_NON_ADMIN_CODE_NAME_RE = re.compile(
+    r"\b(general\s+laws|revised\s+statutes|compiled\s+laws|codified\s+laws|session\s+laws|constitution)\b",
+    re.IGNORECASE,
+)
+
+_NON_ADMIN_SOURCE_URL_RE = re.compile(
+    r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/",
+    re.IGNORECASE,
+)
+
+_BAD_DISCOVERY_DOMAIN_RE = re.compile(
+    r"(^|\.)(city-data\.com)$",
+    re.IGNORECASE,
+)
+
+_BAD_DISCOVERY_TEXT_RE = re.compile(
+    r"site\s+has\s+moved|redirected\s+shortly|page\s+not\s+found|404\s+not\s+found|403\s+forbidden|toggle\s+navigation|submit\s+your\s+own\s+pictures|"
+    r"city-data\.com\s+does\s+not\s+guarantee|forum\s+cities\s+schools\s+neighborhoods|"
+    r"administrative\s+rules\s+source\s+url:\s*https?://",
+    re.IGNORECASE,
+)
+
+_NAVIGATION_PAGE_TOKEN_RE = re.compile(
+    r"skip\s+to\s+(main\s+content|content)|site\s+map|contact\s+us|website\s+survey|"
+    r"privacy\s+policy|quick\s+links|search\s+for\s+this:|menu|my\s+tlo|who\s+represents\s+me|"
+    r"current\s+issue|media\s*\||help\s*\||faq\s*\||contact\s*\|",
+    re.IGNORECASE,
+)
+
+_LANDING_PAGE_PHRASE_RE = re.compile(
+    r"welcome\s+to\s+the\s+texas\s+administrative\s+code|view\s+the\s+current\s+texas\s+administrative\s+code|"
+    r"search\s+the\s+texas\s+administrative\s+code|about\s+the\s+uniform\s+commercial\s+code|"
+    r"in-person\s+services\s+for\s+the\s+office\s+of\s+the\s+texas\s+secretary\s+of\s+state\s+have\s+moved",
+    re.IGNORECASE,
+)
+
 # Curated admin-rules entrypoints for states that remain hard to recover via generic discovery.
 _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "AL": [
@@ -80,6 +116,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ms.gov/adminsearch/",
     ],
     "NH": [
+        "https://gc.nh.gov/rules/state_agencies/",
+        "https://gc.nh.gov/rules/",
         "https://www.gencourt.state.nh.us/rules/state_agencies/",
         "https://www.gencourt.state.nh.us/rules/",
     ],
@@ -104,6 +142,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.sd.gov/default.aspx",
         "https://sdlegislature.gov/Rules/Administrative",
     ],
+    "TX": [
+        "https://www.sos.state.tx.us/tac/index.shtml",
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC",
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=SEARCH_TAC",
+        "https://www.sos.state.tx.us/texreg/index.shtml",
+    ],
     "TN": [
         "https://publications.tnsosfiles.com/rules/",
         "https://www.tn.gov/sos/rules-and-regulations.html",
@@ -124,6 +168,11 @@ def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
     section_name = str(statute.get("section_name") or statute.get("short_title") or "")
     official_cite = str(statute.get("official_cite") or "")
     source_url = str(statute.get("source_url") or "")
+
+    if _NON_ADMIN_CODE_NAME_RE.search(code_name):
+        return False
+    if source_url and _NON_ADMIN_SOURCE_URL_RE.search(source_url):
+        return False
 
     haystack = " ".join([legal_area, code_name, section_name, official_cite, source_url])
     if _ADMIN_RULE_TEXT_RE.search(haystack):
@@ -429,13 +478,40 @@ def _looks_like_placeholder_text(text: str) -> bool:
     value = str(text or "").strip()
     if not value:
         return True
-    return bool(_PORTAL_REFERENCE_RE.search(value))
+    return bool(
+        _PORTAL_REFERENCE_RE.search(value)
+        or _BAD_DISCOVERY_TEXT_RE.search(value)
+        or _looks_like_navigation_page(value)
+    )
+
+
+def _has_disallowed_discovery_domain(url: str) -> bool:
+    host = urlparse(str(url or "").strip()).netloc
+    return bool(host and _BAD_DISCOVERY_DOMAIN_RE.search(host))
+
+
+def _looks_like_navigation_page(text: str) -> bool:
+    value = str(text or "").strip()
+    if not value:
+        return False
+    nav_hits = len(_NAVIGATION_PAGE_TOKEN_RE.findall(value))
+    if nav_hits < 3:
+        return False
+    landing_phrase = bool(_LANDING_PAGE_PHRASE_RE.search(value))
+    has_section_structure = bool(re.search(r"\bsec\.?\s+\d|§\s*\d|chapter\s+\d|title\s+\d|part\s+\d", value, re.IGNORECASE))
+    if landing_phrase:
+        return True
+    return not has_section_structure
 
 
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
+    if _has_disallowed_discovery_domain(url_value):
+        return False
+    if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
+        return False
     if len(body) < max(120, int(min_chars)):
         # PDF-based admin-rule publications often extract with sparse text; allow
         # a lower floor when URL/title still strongly indicate rule content.
@@ -447,6 +523,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
             and _LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body]))
         ):
             return False
+    if title_value and _looks_like_placeholder_text(title_value):
+        return False
     if _looks_like_placeholder_text(body):
         return False
     if not _has_admin_signal(text=body, title=title_value, url=url_value):
@@ -472,17 +550,15 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
+    if _has_disallowed_discovery_domain(url_value):
+        return False
+    if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
+        return False
+    if title_value and _looks_like_placeholder_text(title_value):
+        return False
     if body and _looks_like_placeholder_text(body):
         return False
-    if len(body) >= 30 and _has_admin_signal(text=body, title=title_value, url=url_value):
-        return True
-
-    # Some official admin pages are sparse/JS-driven but have clear rule signal
-    # in title + URL path. Allow these only in recovery mode.
-    has_ruleish_path = bool(
-        re.search(r"/(rules?|regulations?|administrative|adminsearch|nmac|nycrr|code)(?:/|$)", url_value, re.IGNORECASE)
-    )
-    if len(title_value) >= 12 and _has_admin_signal(text="", title=title_value, url=url_value) and has_ruleish_path:
+    if len(body) >= 80 and _has_admin_signal(text=body, title=title_value, url=url_value) and _LEGAL_CONTENT_SIGNAL_RE.search(body):
         return True
     return False
 
@@ -731,8 +807,7 @@ async def _agentic_discover_admin_state_blocks(
                         min_chars=min_text_chars,
                     ):
                         if not (relaxed_recovery and _is_relaxed_recovery_text(text=doc_text, title=doc_title, url=doc_url)):
-                            if not (relaxed_recovery and _score_candidate_url(doc_url) >= 4):
-                                continue
+                            continue
                     doc_key = _url_key(doc_url)
                     if doc_key in direct_doc_urls:
                         continue
@@ -934,32 +1009,6 @@ async def _agentic_discover_admin_state_blocks(
                     if len(statutes) >= max_fetch:
                         break
                 except Exception:
-                    if relaxed_recovery and score >= 4 and len(statutes) < max_fetch:
-                        section_number = f"A{len(statutes) + 1}"
-                        fallback_title = f"{state_name} Administrative Rules (recovery source {len(statutes) + 1})"
-                        statutes.append(
-                            {
-                                "state_code": state_code,
-                                "state_name": state_name,
-                                "statute_id": f"{state_code}-AGENTIC-{section_number}",
-                                "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
-                                "section_number": section_number,
-                                "section_name": fallback_title,
-                                "short_title": fallback_title,
-                                "full_text": f"{fallback_title}\nAdministrative rules source URL: {url}",
-                                "summary": f"Administrative rules source URL: {url}",
-                                "legal_area": "administrative",
-                                "source_url": url,
-                                "official_cite": f"{state_code} Admin Rule {section_number}",
-                                "structured_data": {
-                                    "type": "regulation",
-                                    "agentic_discovery": True,
-                                    "relaxed_recovery": True,
-                                    "source_domain": urlparse(url).netloc,
-                                    "recovery_url_only": True,
-                                },
-                            }
-                        )
                     continue
 
             pending = sorted(pending, key=lambda item: item[1], reverse=True)

@@ -194,6 +194,9 @@ async def refresh_state(
     target_lines: int,
     min_full_text_chars: int,
     no_regression: bool,
+    max_statutes: int,
+    per_state_timeout_seconds: float,
+    preserve_prior_size: bool,
 ) -> Dict[str, object]:
     state_code = state_code.upper().strip()
     state_file = Path.home() / ".ipfs_datasets" / "state_laws" / "state_laws_jsonld" / f"STATE-{state_code}.jsonld"
@@ -204,7 +207,7 @@ async def refresh_state(
         states=[state_code],
         include_metadata=True,
         rate_limit_delay=0.2,
-        max_statutes=450,
+        max_statutes=(int(max_statutes) if int(max_statutes) > 0 else None),
         use_state_specific_scrapers=True,
         output_dir=None,
         write_jsonld=True,
@@ -214,7 +217,7 @@ async def refresh_state(
         parallel_workers=1,
         per_state_retry_attempts=0,
         retry_zero_statute_states=False,
-        per_state_timeout_seconds=220.0,
+        per_state_timeout_seconds=float(per_state_timeout_seconds),
     )
 
     after = load_jsonld(state_file)
@@ -235,7 +238,7 @@ async def refresh_state(
             target_lines=max(1, target_lines),
         )
 
-    target_for_after = max(target_lines, len(before_candidate))
+    target_for_after = max(target_lines, len(before_candidate)) if preserve_prior_size else target_lines
     after_candidate = build_target_rows(
         state_code=state_code,
         real_rows=dedupe(after_real + before_real),
@@ -275,12 +278,32 @@ def main() -> int:
     parser.add_argument("--state", required=True, help="State code, e.g. NH")
     parser.add_argument("--target-lines", type=int, default=40)
     parser.add_argument("--min-full-text-chars", type=int, default=160)
+    parser.add_argument(
+        "--max-statutes",
+        type=int,
+        default=450,
+        help="Maximum statutes to request from scraper for the state (0 = unlimited)",
+    )
+    parser.add_argument(
+        "--per-state-timeout-seconds",
+        type=float,
+        default=220.0,
+        help="Per-state scrape timeout for deep refresh runs",
+    )
+    parser.add_argument(
+        "--no-preserve-prior-size",
+        action="store_true",
+        help="Do not force output size to be at least prior file size",
+    )
     parser.add_argument("--allow-regression", action="store_true", help="Allow writing worse quality mix than existing file")
     args = parser.parse_args()
 
     state_code = str(args.state or "").upper().strip()
     target_lines = max(1, int(args.target_lines))
     min_full_text_chars = max(0, int(args.min_full_text_chars))
+    max_statutes = int(args.max_statutes)
+    per_state_timeout_seconds = max(30.0, float(args.per_state_timeout_seconds))
+    preserve_prior_size = not bool(args.no_preserve_prior_size)
     no_regression = not args.allow_regression
 
     try:
@@ -290,6 +313,9 @@ def main() -> int:
                 target_lines=target_lines,
                 min_full_text_chars=min_full_text_chars,
                 no_regression=no_regression,
+                max_statutes=max_statutes,
+                per_state_timeout_seconds=per_state_timeout_seconds,
+                preserve_prior_size=preserve_prior_size,
             )
         )
         print(json.dumps(result, indent=2, sort_keys=True))
@@ -305,6 +331,9 @@ def main() -> int:
                     "message": "refresh interrupted",
                     "target_lines": target_lines,
                     "min_full_text_chars": min_full_text_chars,
+                    "max_statutes": max_statutes,
+                    "per_state_timeout_seconds": per_state_timeout_seconds,
+                    "preserve_prior_size": preserve_prior_size,
                     "no_regression": no_regression,
                 },
                 indent=2,
@@ -322,6 +351,9 @@ def main() -> int:
                     "message": str(exc),
                     "target_lines": target_lines,
                     "min_full_text_chars": min_full_text_chars,
+                    "max_statutes": max_statutes,
+                    "per_state_timeout_seconds": per_state_timeout_seconds,
+                    "preserve_prior_size": preserve_prior_size,
                     "no_regression": no_regression,
                 },
                 indent=2,

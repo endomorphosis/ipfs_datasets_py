@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
@@ -43,6 +44,20 @@ def is_synthetic_row(row: Dict[str, object]) -> bool:
         or "example.invalid" in text
         or "-fill-" in identifier
     )
+
+
+def _repair_wayback_replay_segments(url: str) -> str:
+    repaired = str(url or "").strip()
+    if not repaired:
+        return ""
+    repaired = re.sub(r"/(https?):/{1,}", r"/\1://", repaired)
+    repaired = repaired.replace("/http:///", "/http://")
+    repaired = repaired.replace("/https:///", "/https://")
+    repaired = repaired.replace("/http:/", "/http://")
+    repaired = repaired.replace("/https:/", "/https://")
+    repaired = repaired.replace("http:///", "http://")
+    repaired = repaired.replace("https:///", "https://")
+    return repaired
 
 
 @dataclass
@@ -171,13 +186,10 @@ def _norm_url(value: object) -> str:
         return ""
     if "example.invalid" in url:
         return ""
-    if url.startswith("http://web.archive.org/"):
-        url = "https://" + url[len("http://"):]
-    # Repair malformed archived replay segments like .../http:/example.com.
-    url = url.replace("/http:///", "/http://")
-    url = url.replace("/https:///", "/https://")
-    url = url.replace("/http:/", "/http://")
-    url = url.replace("/https:/", "/https://")
+    url = _repair_wayback_replay_segments(url)
+    # Wayback replay is more reliably reachable over plain HTTP in this environment.
+    if url.startswith("https://web.archive.org/"):
+        url = "http://" + url[len("https://"):]
     return url
 
 
@@ -203,15 +215,35 @@ def extract_candidate_urls(path: Path, sample_rows: int, max_urls: int) -> List[
 
 
 def build_wayback_candidates(url: str) -> List[str]:
+    def _ordered_unique(values: Sequence[str]) -> List[str]:
+        out: List[str] = []
+        seen: Set[str] = set()
+        for value in values:
+            norm = _repair_wayback_replay_segments(str(value or "").strip())
+            if not norm or norm in seen:
+                continue
+            seen.add(norm)
+            out.append(norm)
+        return out
+
     if "web.archive.org/web/" in url:
-        return [url]
+        if url.startswith("http://web.archive.org/"):
+            return _ordered_unique([url, "https://" + url[len("http://"):]])
+        if url.startswith("https://web.archive.org/"):
+            return _ordered_unique(["http://" + url[len("https://"):], url])
+        return _ordered_unique([url])
 
     # Prefer explicit replay URLs over wildcard listing pages.
-    return [
-        f"https://web.archive.org/web/0/{url}",
-        f"https://web.archive.org/web/2/{url}",
-        f"https://web.archive.org/web/*/{url}",
-    ]
+    return _ordered_unique(
+        [
+            f"http://web.archive.org/web/0/{url}",
+            f"http://web.archive.org/web/2/{url}",
+            f"http://web.archive.org/web/*/{url}",
+            f"https://web.archive.org/web/0/{url}",
+            f"https://web.archive.org/web/2/{url}",
+            f"https://web.archive.org/web/*/{url}",
+        ]
+    )
 
 
 def run_fetch(api: UnifiedWebArchivingAPI, url: str, timeout_seconds: int, mode: OperationMode, domain: str) -> Tuple[bool, str, str, float]:

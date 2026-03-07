@@ -147,9 +147,6 @@ class UnifiedWebScraper:
     def __init__(self, config: Optional[ScraperConfig] = None):
         """
         Initialize the unified scraper.
-        
-        Args:
-            config: Scraper configuration. If None, uses defaults.
         """
         self.config = config or ScraperConfig()
         self._check_dependencies()
@@ -288,6 +285,12 @@ class UnifiedWebScraper:
             try:
                 logger.info(f"Trying {method.value} for {url}")
                 result = await self._scrape_with_method(url, method, **kwargs)
+
+                if result is None:
+                    error_msg = f"{method.value} returned no result"
+                    errors.append(error_msg)
+                    logger.warning(error_msg)
+                    continue
                 
                 if result.success:
                     logger.info(f"Successfully scraped {url} using {method.value}")
@@ -729,6 +732,12 @@ class UnifiedWebScraper:
                 success=False,
                 errors=[f"Archive.is scraping failed: {str(e)}"]
             )
+
+        return ScraperResult(
+            url=url,
+            success=False,
+            errors=["Archive.is returned no archived snapshot"]
+        )
     
     async def _scrape_ipwb(self, url: str, **kwargs) -> ScraperResult:
         """Scrape using IPWB (InterPlanetary Wayback)."""
@@ -831,7 +840,22 @@ class UnifiedWebScraper:
         async def _runner() -> ScraperResult:
             return await self.scrape(url, **kwargs)
 
-        return anyio.run(_runner)
+        try:
+            result = anyio.run(_runner)
+        except BaseException as exc:
+            return ScraperResult(
+                url=url,
+                success=False,
+                errors=[f"scrape_sync interrupted: {type(exc).__name__}: {str(exc)}"],
+            )
+
+        if result is None:
+            return ScraperResult(
+                url=url,
+                success=False,
+                errors=["scrape_sync returned no result"],
+            )
+        return result
 
     async def scrape_domain(self, url: str, *, max_pages: Optional[int] = None, **kwargs) -> List[ScraperResult]:
         """Scrape a whole domain using Common Crawl first.

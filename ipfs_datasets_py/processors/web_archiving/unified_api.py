@@ -254,6 +254,9 @@ class UnifiedWebArchivingAPI:
             scraper = self._get_scraper()
             scraper_result = scraper.scrape_sync(fetch_request.url)
 
+            if scraper_result is None:
+                raise RuntimeError("scraper returned no result")
+
             # Best-effort PDF bytes fetch for document-style links.
             if fetch_request.url.lower().endswith(".pdf"):
                 raw_bytes = self._fetch_raw_bytes(fetch_request.url)
@@ -357,7 +360,7 @@ class UnifiedWebArchivingAPI:
                 },
             )
 
-        except Exception as exc:
+        except BaseException as exc:
             elapsed_ms = (time.time() - start_time) * 1000.0
             trace.total_latency_ms = elapsed_ms
             trace.finished_at = datetime.utcnow().isoformat()
@@ -375,11 +378,11 @@ class UnifiedWebArchivingAPI:
                 trace=trace,
                 errors=[
                     UnifiedError(
-                        code="fetch_exception",
+                        code="fetch_interrupted" if isinstance(exc, (KeyboardInterrupt, SystemExit)) else "fetch_exception",
                         message=str(exc),
                         provider=provider,
-                        retryable=True,
-                        severity=ErrorSeverity.ERROR,
+                        retryable=not isinstance(exc, SystemExit),
+                        severity=ErrorSeverity.WARNING if isinstance(exc, (KeyboardInterrupt, SystemExit)) else ErrorSeverity.ERROR,
                         context={"request_id": request_id},
                     )
                 ],

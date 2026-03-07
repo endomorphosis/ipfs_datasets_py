@@ -3,6 +3,7 @@
 This module contains the scraper for New Hampshire statutes from the official state legislative website.
 """
 
+import asyncio
 from typing import List, Dict
 import json
 import re
@@ -19,6 +20,8 @@ class NewHampshireScraper(BaseStateScraper):
         re.IGNORECASE,
     )
     _NH_TITLE_TEXT_RE = re.compile(r"^TITLE\s+([A-Z0-9-]+)\s*:\s*(.+)$", re.IGNORECASE)
+    _NH_CHAPTER_TEXT_RE = re.compile(r"^CHAPTER\s+([0-9A-Z-]+)\s*:\s*(.+)$", re.IGNORECASE)
+    _NH_SECTION_LINK_RE = re.compile(r"^Section\s+([0-9A-Z:.-]+)\s+(.+)$", re.IGNORECASE)
     
     def get_base_url(self) -> str:
         """Return the base URL for New Hampshire's legislative website."""
@@ -149,6 +152,7 @@ class NewHampshireScraper(BaseStateScraper):
                         legal_area=self._identify_legal_area(title_name),
                         official_cite=f"N.H. Rev. Stat. Title {title_no}",
                         metadata=StatuteMetadata(),
+                        structured_data={"skip_hydrate": True, "record_type": "archived_title_stub"},
                     )
                 )
             if len(title_urls) >= 12:
@@ -156,7 +160,7 @@ class NewHampshireScraper(BaseStateScraper):
 
         out: List[NormalizedStatute] = list(title_stubs)
         seen_sections = set()
-        chapter_re = re.compile(r"chapter\s+([0-9A-Z-]+)", re.IGNORECASE)
+        chapter_urls: List[tuple[str, str, str]] = []
 
         for title_url in title_urls:
             if len(out) >= max_statutes:
@@ -176,7 +180,7 @@ class NewHampshireScraper(BaseStateScraper):
                 text = str(a.get_text(" ", strip=True) or "").strip()
                 if not href.endswith(".htm"):
                     continue
-                match = chapter_re.search(text)
+                match = self._NH_CHAPTER_TEXT_RE.match(text)
                 if not match:
                     continue
                 chapter_id = match.group(1).upper()
@@ -187,6 +191,7 @@ class NewHampshireScraper(BaseStateScraper):
 
                 source_url = self._normalize_wayback_like_url(urljoin(title_url, href))
                 chapter_name = text[:200] if text else f"Chapter {chapter_id}"
+                chapter_urls.append((chapter_id, chapter_name, source_url))
                 out.append(
                     NormalizedStatute(
                         state_code=self.state_code,
@@ -200,10 +205,119 @@ class NewHampshireScraper(BaseStateScraper):
                         legal_area=self._identify_legal_area(chapter_name),
                         official_cite=f"N.H. Rev. Stat. ch. {chapter_id}",
                         metadata=StatuteMetadata(),
+                        structured_data={"skip_hydrate": True, "record_type": "archived_chapter_stub"},
                     )
                 )
 
+        if len(out) >= max_statutes:
+            return out[:max_statutes]
+
+        async def _fetch_chapter_sections(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
+            try:
+                chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=35)
+                if not chapter_payload:
+                    return []
+            except Exception:
+                return []
+
+            chapter_soup = BeautifulSoup(chapter_payload, "html.parser")
+            section_links: List[tuple[str, str, str]] = []
+            seen_local = set()
+            for a in chapter_soup.find_all("a", href=True):
+                href = str(a.get("href") or "").strip()
+                text = str(a.get_text(" ", strip=True) or "").strip()
+                if not href.endswith(".htm"):
+                    continue
+                match = self._NH_SECTION_LINK_RE.match(text)
+                if not match:
+                    continue
+                section_number = match.group(1).strip()
+                section_title = match.group(2).strip().rstrip(".")
+                section_key = section_number.lower()
+                if section_key in seen_local:
+                    continue
+                seen_local.add(section_key)
+                section_links.append(
+                    (
+                        section_number,
+                        section_title,
+                        self._normalize_wayback_like_url(urljoin(chapter_url, href)),
+                    )
+                )
+
+            section_statutes: List[NormalizedStatute] = []
+            for section_number, section_title, section_url in section_links:
+                try:
+                    section_payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+                except Exception:
+                    continue
+                section_text = self._extract_statute_text(section_payload)
+                if len(section_text) < 160:
+                    continue
+                section_name = f"Section {section_number} {section_title}".strip()
+                section_statutes.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § {section_number}",
+                        code_name=code_name,
+                        section_number=section_number,
+                        section_name=section_name[:200],
+                        full_text=section_text,
+                        source_url=section_url,
+                        legal_area=self._identify_legal_area(section_name or chapter_name),
+                        official_cite=f"N.H. Rev. Stat. § {section_number}",
+                        metadata=StatuteMetadata(),
+                    )
+                )
+                if len(section_statutes) >= max_statutes:
+                    break
+            return section_statutes
+
+        sem = asyncio.Semaphore(4)
+
+        async def _bounded_fetch(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
+            async with sem:
+                return await _fetch_chapter_sections(chapter_id, chapter_name, chapter_url)
+
+        for section_batch in await asyncio.gather(
+            *[
+                _bounded_fetch(chapter_id, chapter_name, chapter_url)
+                for chapter_id, chapter_name, chapter_url in chapter_urls[:8]
+            ],
+            return_exceptions=True,
+        ):
+            if isinstance(section_batch, Exception):
+                continue
+            for statute in section_batch:
+                key = str(statute.statute_id or statute.source_url or "").strip().lower()
+                if not key or key in merged_keys:
+                    continue
+                merged_keys.add(key)
+                out.append(statute)
+                if len(out) >= max_statutes:
+                    return out[:max_statutes]
+
         return out
+
+    def _extract_statute_text(self, payload: bytes) -> str:
+        if not payload:
+            return ""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return ""
+
+        soup = BeautifulSoup(payload, "html.parser")
+        text = " ".join(soup.get_text(" ", strip=True).split())
+        match = re.search(
+            r"(Section\s+[0-9A-Z:.-]+.*?Source\.[^\n]*?(?:\d{4}[^\n]*)?)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        if match:
+            return match.group(1)[:4000]
+        return text[:4000]
 
     async def _discover_archived_rsa_urls(self, limit: int = 180) -> List[str]:
         cdx_url = (

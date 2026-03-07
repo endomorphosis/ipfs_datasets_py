@@ -88,6 +88,9 @@ class IndianaScraper(BaseStateScraper):
             for statute in statutes:
                 if self._is_low_quality_statute_record(statute):
                     continue
+                if isinstance(statute.structured_data, dict):
+                    statute.structured_data["skip_hydrate"] = True
+                    statute.structured_data.setdefault("record_type", "archived_title_stub")
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in seen:
                     continue
