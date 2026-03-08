@@ -1,15 +1,24 @@
 """Scraper for Maryland state laws.
 
-This module contains the scraper for Maryland statutes from the official state legislative website.
+This module contains the scraper for Maryland statutes from the official state
+legislative website.
 """
 
-from typing import List, Dict
-from .base_scraper import BaseStateScraper, NormalizedStatute
+import json
+import re
+from typing import Dict, List
+import urllib.request
+
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
 class MarylandScraper(BaseStateScraper):
     """Scraper for Maryland state laws from http://mgaleg.maryland.gov"""
+
+    _MD_ARTICLE_CODE_RE = re.compile(r"\(([A-Za-z0-9]+)\)\s*$")
+    _MD_NEXT_TRAIL_RE = re.compile(r"\s+Next\s*$", re.IGNORECASE)
+    _MD_SECTION_CITE_RE = re.compile(r"§\s*([0-9A-Za-z\-\.]+)")
     
     def get_base_url(self) -> str:
         """Return the base URL for Maryland's legislative website."""
@@ -19,9 +28,149 @@ class MarylandScraper(BaseStateScraper):
         """Return list of available codes/statutes for Maryland."""
         return [{
             "name": "Maryland Code",
-            "url": f"{self.get_base_url()}/mgawebsite/Laws/StatuteText",
+            "url": f"{self.get_base_url()}/mgawebsite/Laws/Statutes",
             "type": "Code"
         }]
+
+    def _extract_article_code(self, display_text: str, value: str) -> str:
+        match = self._MD_ARTICLE_CODE_RE.search(str(display_text or ""))
+        if match:
+            return match.group(1).upper()
+        return str(value or "").strip().upper()
+
+    async def _fetch_json(self, url: str) -> object:
+        text = ""
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                text = resp.read().decode("utf-8", errors="ignore")
+        except Exception:
+            payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=35)
+            if isinstance(payload, bytes):
+                text = payload.decode("utf-8", errors="ignore")
+            elif payload:
+                text = str(payload)
+
+        if not text:
+            return None
+        try:
+            return json.loads(text)
+        except Exception:
+            return None
+
+    async def _scrape_api_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        articles_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
+        articles_payload = await self._fetch_json(articles_url)
+        if not isinstance(articles_payload, list):
+            return []
+
+        statutes: List[NormalizedStatute] = []
+        seen_urls = set()
+
+        for article in articles_payload:
+            if len(statutes) >= max_statutes:
+                break
+            if not isinstance(article, dict):
+                continue
+
+            article_display = str(article.get("DisplayText") or "").strip()
+            article_value = str(article.get("Value") or "").strip()
+            article_code = self._extract_article_code(article_display, article_value)
+            if not article_code:
+                continue
+
+            sections_url = (
+                f"{self.get_base_url()}/mgawebsite/api/Laws/GetSections"
+                f"?articleCode={article_value or article_code.lower()}&enactments=false"
+            )
+            sections_payload = await self._fetch_json(sections_url)
+            if not isinstance(sections_payload, list):
+                continue
+
+            for section in sections_payload:
+                if len(statutes) >= max_statutes:
+                    break
+                if not isinstance(section, dict):
+                    continue
+
+                section_number = str(section.get("DisplayText") or "").strip()
+                if not section_number:
+                    continue
+
+                section_url = (
+                    f"{self.get_base_url()}/mgawebsite/Laws/StatuteText"
+                    f"?article={article_code}&section={section_number}&enactments=false"
+                )
+                if section_url in seen_urls:
+                    continue
+
+                statute = await self._build_statute_from_section_page(
+                    code_name=code_name,
+                    article_label=article_display,
+                    section_number=section_number,
+                    section_url=section_url,
+                )
+                if statute is None:
+                    continue
+                if self._is_low_quality_statute_record(statute):
+                    continue
+
+                statutes.append(statute)
+                seen_urls.add(section_url)
+
+        return statutes
+
+    async def _build_statute_from_section_page(
+        self,
+        *,
+        code_name: str,
+        article_label: str,
+        section_number: str,
+        section_url: str,
+    ) -> NormalizedStatute | None:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+        except Exception:
+            return None
+        if not payload:
+            return None
+
+        soup = BeautifulSoup(payload, "html.parser")
+        text_node = soup.select_one("#StatuteText") or soup.select_one("#mainBody")
+        if text_node is None:
+            return None
+
+        text = " ".join(text_node.get_text(" ", strip=True).split())
+        text = self._MD_NEXT_TRAIL_RE.sub("", text).strip()
+        if len(text) < 220:
+            return None
+
+        cite_match = self._MD_SECTION_CITE_RE.search(text)
+        normalized_section = str(section_number or "").strip()
+        if not normalized_section and cite_match:
+            normalized_section = cite_match.group(1)
+        article_name = str(article_label or "").split(" - ", 1)[0].strip() or "Maryland Code"
+        section_name = f"{article_name} § {normalized_section}"
+
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {normalized_section}",
+            code_name=code_name,
+            section_number=normalized_section,
+            section_name=section_name[:200],
+            full_text=text[:14000],
+            source_url=section_url,
+            legal_area=self._identify_legal_area(article_name),
+            official_cite=f"Md. Code § {normalized_section}",
+            metadata=StatuteMetadata(),
+            structured_data={"skip_hydrate": True, "record_type": "maryland_api_section"},
+        )
     
     async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
         """Scrape a specific code from Maryland's legislative website.
@@ -35,10 +184,15 @@ class MarylandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        api_statutes = await self._scrape_api_sections(code_name, max_statutes=140)
+        if len(api_statutes) >= 40:
+            return api_statutes
+
         candidate_urls = [
             code_url,
-            f"{self.get_base_url()}/mgawebsite/Laws/StatuteText",
-            f"{self.get_base_url()}/mgawebsite/Laws/Code",
+            f"{self.get_base_url()}/mgawebsite/Laws/Statutes",
+            f"{self.get_base_url()}/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+            f"{self.get_base_url()}/mgawebsite/Laws/StatuteText?article=GCR&section=1-101&enactments=false",
             "https://law.justia.com/codes/maryland/",
         ]
 
@@ -51,8 +205,14 @@ class MarylandScraper(BaseStateScraper):
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
                     continue
+                if self._is_low_quality_statute_record(statute):
+                    continue
                 merged_keys.add(key)
                 merged.append(statute)
+
+        _merge(api_statutes)
+        if len(merged) >= 40:
+            return merged
 
         for candidate in candidate_urls:
             if candidate in seen:
@@ -66,6 +226,7 @@ class MarylandScraper(BaseStateScraper):
                     "Md. Code Ann.",
                     wait_for_selector="a[href*='statute'], a[href*='laws'], .article-link",
                     timeout=45000,
+                        wait_until="domcontentloaded",
                     max_sections=260,
                 )
             except Exception:

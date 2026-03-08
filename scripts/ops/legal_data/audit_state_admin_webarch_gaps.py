@@ -79,6 +79,21 @@ def _norm_url(value: Any) -> str:
     return url.rstrip("/")
 
 
+def _resolve_input_path(value: str) -> Path:
+    path = Path(value).expanduser()
+    if path.is_absolute():
+        return path.resolve()
+
+    candidates = [
+        Path.cwd() / path,
+        Path(__file__).resolve().parents[4] / path,
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+    return candidates[0].resolve()
+
+
 def _official_template_urls(state_code: str) -> List[str]:
     base_url = str(_get_official_state_url(state_code) or "").strip()
     if not base_url:
@@ -392,11 +407,11 @@ def _build_markdown(summary: Dict[str, Any], state_rows: List[Dict[str, Any]]) -
 def main() -> int:
     args = parse_args()
     states = [str(s).upper().strip() for s in args.states if str(s).upper().strip() in set(US_50_STATE_CODES)]
-    aggregate_path = Path(args.aggregate_jsonl).expanduser().resolve()
-    local_jsonld_dir = Path(args.local_jsonld_dir).expanduser().resolve()
+    aggregate_path = _resolve_input_path(args.aggregate_jsonl)
+    local_jsonld_dir = _resolve_input_path(args.local_jsonld_dir)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    out_dir = Path(args.output_dir).expanduser().resolve() if args.output_dir else (
-        Path("artifacts/state_admin_rules") / f"webarch_gap_audit_{timestamp}"
+    out_dir = _resolve_input_path(args.output_dir) if args.output_dir else (
+        Path.cwd() / "artifacts/state_admin_rules" / f"webarch_gap_audit_{timestamp}"
     ).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 

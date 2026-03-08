@@ -1,0 +1,940 @@
+{
+  "rows": [
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "http://www.legis.state.ak.us",
+        "https://alaska.gov",
+        "https://www.alaska.gov/employeeHome.html",
+        "https://www.alaska.gov/akdir1.html",
+        "https://doa.alaska.gov/dop/workplace/#agency-navigation-menu"
+      ],
+      "corpus_rows": 6,
+      "corpus_substantive_rows": 4,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 6,
+      "state_code": "AK",
+      "state_name": "Alaska"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: net::ERR_CERT_COMMON_NAME_INVALID at https://www.alabamaadministrativecode.state.al.us/\nCall log:\n  - n",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://www.sos.alabama.gov/sites/default/files/form-",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://www.sos.alabama.gov/sites/default/files/CHART",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://www.sos.alabama.gov/sites/default/files/voter",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://www.sos.alabama.gov/sites/default/files/Board"
+      ],
+      "candidate_urls": [
+        "https://www.alabamaadministrativecode.state.al.us",
+        "https://www.sos.alabama.gov/alabama-administrative-code",
+        "https://legislature.al.gov/rules",
+        "https://legislature.al.gov/regulations",
+        "https://legislature.al.gov/administrative-code",
+        "https://legislature.al.gov/code-of-regulations"
+      ],
+      "corpus_rows": 6,
+      "corpus_substantive_rows": 0,
+      "final_category": "fetchable_but_non_substantive",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 4,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 1,
+      "state_code": "AL",
+      "state_name": "Alabama"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.arkleg.state.ar.us/Home/FTPDocument?path=%2FBills%2FVetoBook.pdf",
+        "https://www.arkleg.state.ar.us/Committees/Detail?code=005&ddBienniumSession=2025%2F2026F"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 5,
+      "state_code": "AR",
+      "state_name": "Arkansas"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://apps.azsos.gov/public_services/Title_00.",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://apps.azsos.gov/public_services\", waiting"
+      ],
+      "candidate_urls": [
+        "https://apps.azsos.gov/public_services/Title_00.htm",
+        "https://apps.azsos.gov/public_services",
+        "https://legislature.az.gov/rules",
+        "https://legislature.az.gov/regulations",
+        "https://legislature.az.gov/administrative-code",
+        "https://legislature.az.gov/code-of-regulations"
+      ],
+      "corpus_rows": 4,
+      "corpus_substantive_rows": 0,
+      "final_category": "blocked_or_transport_failures",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 0,
+      "state_code": "AZ",
+      "state_name": "Arizona"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://leginfo.legislature.ca.gov/faces/codedisplayexpand.xhtml?tocCode=BPC",
+        "https://leginfo.legislature.ca.gov/faces/codedisplayexpand.xhtml?tocCode=CIV",
+        "https://leginfo.legislature.ca.gov/faces/codedisplayexpand.xhtml?tocCode=CORP",
+        "https://leginfo.legislature.ca.gov/faces/codedisplayexpand.xhtml?tocCode=EDC",
+        "https://leginfo.legislature.ca.gov/faces/codesTOCSelected.xhtml?tocCode=BPC&tocTitle=+Business+and+Professions+Code+-+BPC"
+      ],
+      "corpus_rows": 24,
+      "corpus_substantive_rows": 24,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "CA",
+      "state_name": "California"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://leg.colorado.gov",
+        "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "CO",
+      "state_name": "Colorado"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "http://web.archive.org/web/20250101000000/http://www.cga.ct.gov/current/pub/titles.htm"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 2,
+      "state_code": "CT",
+      "state_name": "Connecticut"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://delcode.delaware.gov/title1/c001/index.html"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 1,
+      "state_code": "DE",
+      "state_name": "Delaware"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "http://www.leg.state.fl.us/Statutes",
+        "http://www.leg.state.fl.us/cgi-bin/View_Page.pl?File=index_css.html&Directory=committees/joint/JAPC/&Tab=committees",
+        "http://www.leg.state.fl.us/index.cfm?Tab=statutes&submenu=-1",
+        "http://www.leg.state.fl.us/index.cfm?Mode=View%20Statutes&Submenu=1&Tab=statutes",
+        "http://www.leg.state.fl.us/index.cfm?Mode=Search%20Statutes&Submenu=2&Tab=statutes"
+      ],
+      "corpus_rows": 7,
+      "corpus_substantive_rows": 6,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 7,
+      "state_code": "FL",
+      "state_name": "Florida"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://rules.sos.ga.gov/gac",
+        "https://rules.sos.ga.gov",
+        "https://rules.sos.ga.gov/gac/90",
+        "https://dol.georgia.gov/individuals/job-search-assistance",
+        "https://georgia.gov/organization/georgia-access-medical-cannabis-commission",
+        "https://georgia.gov/agency-list"
+      ],
+      "corpus_rows": 9,
+      "corpus_substantive_rows": 3,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 4,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 12,
+      "state_code": "GA",
+      "state_name": "Georgia"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://ltgov.hawaii.gov/the-office/administrative-rules",
+        "https://ag.hawaii.gov/admin-rules"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 5,
+      "state_code": "HI",
+      "state_name": "Hawaii"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.legis.iowa.gov",
+        "https://www.legis.iowa.gov/law/administrativeRules/agencies",
+        "https://www.legis.iowa.gov/law"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 3,
+      "state_code": "IA",
+      "state_name": "Iowa"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://legislature.idaho.gov/sessioninfo/2025/interim/adminrules",
+        "https://legislature.idaho.gov/sessioninfo/2024/interim/adminrules",
+        "https://legislature.idaho.gov"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 8,
+      "state_code": "ID",
+      "state_name": "Idaho"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.ilga.gov/agencies/JCAR/AdminCode",
+        "https://www.ilga.gov/Legislation/ILCS/Chapters",
+        "https://en.wikipedia.org/wiki/Illinois",
+        "https://www.ilga.gov",
+        "https://www.ilga.gov/rules"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 8,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 7,
+      "state_code": "IL",
+      "state_name": "Illinois"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://iar.iga.in.gov/code",
+        "https://iar.iga.in.gov/iac",
+        "https://iga.in.gov/legislative/laws/iac",
+        "https://www.in.gov/core/index.html"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 1,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 9,
+      "state_code": "IN",
+      "state_name": "Indiana"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "http://www.kslegislature.org/li/s/pdf/house_rules.pdf"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 1,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 1,
+      "state_code": "KS",
+      "state_name": "Kansas"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://legislature.ky.gov",
+        "https://legislature.ky.gov/Law/kar/Pages/default.aspx",
+        "https://legislature.ky.gov/Law/kar/Pages/EmergencyRegs.aspx",
+        "https://www.kentucky.gov/government/Pages/agency.aspx",
+        "https://newsroom.ky.gov/GovernorBeshear/_layouts/15/Fwk.Webparts.Agency.Ui/newslistfeed.aspx"
+      ],
+      "corpus_rows": 10,
+      "corpus_substantive_rows": 7,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 5,
+      "state_code": "KY",
+      "state_name": "Kentucky"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: net::ERR_CONNECTION_REFUSED at http://web.archive.org/web/20250501013708/https://legis.la.gov/Legis/Law"
+      ],
+      "candidate_urls": [
+        "https://www.doa.la.gov/doa/osr/louisiana-administrative-code",
+        "https://www.doa.la.gov/doa/osr/lac",
+        "https://www.doa.la.gov/doa/osr",
+        "http://web.archive.org/web/20250501013708/https://legis.la.gov/Legis/Law.aspx?d=100117"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 1,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 6,
+      "state_code": "LA",
+      "state_name": "Louisiana"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://malegislature.gov/Laws/Rules/Joint",
+        "https://malegislature.gov/Laws/Rules/Senate",
+        "https://malegislature.gov/Laws/Rules/House",
+        "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleII/Chapter25C/Section6",
+        "https://malegislature.gov/Laws/GeneralLaws/Parti/Titlexxi/Chapter149/Section148"
+      ],
+      "corpus_rows": 11,
+      "corpus_substantive_rows": 2,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 3,
+      "probe_success_count": 8,
+      "state_code": "MA",
+      "state_name": "Massachusetts"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://mgaleg.maryland.gov/mgawebsite/Laws/Statutes"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 0,
+      "final_category": "fetchable_but_non_substantive",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 6,
+      "state_code": "MD",
+      "state_name": "Maryland"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "http://legislature.maine.gov",
+        "http://legislature.maine.gov/senate"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 2,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 6,
+      "state_code": "ME",
+      "state_name": "Maine"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.legislature.mi.gov/regulations",
+        "http://www.legislature.mi.gov/Laws/ChapterIndex",
+        "https://www.legislature.mi.gov/Laws/ChapterIndex",
+        "https://www.legislature.mi.gov",
+        "https://www.legislature.mi.gov/rules"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 2,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 8,
+      "state_code": "MI",
+      "state_name": "Michigan"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.revisor.mn.gov/static/office/1997_RuleDraftManual.a285c37112da.pdf",
+        "https://www.revisor.mn.gov",
+        "https://www.revisor.mn.gov/statutes/cite/609.02"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 1,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 3,
+      "state_code": "MN",
+      "state_name": "Minnesota"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://revisor.mo.gov",
+        "https://revisor.mo.gov/main/Home.aspx",
+        "https://revisor.mo.gov/main/OneChapter.aspx?chapter=195",
+        "https://revisor.mo.gov/main/OneChapter.aspx?chapter=293",
+        "https://en.m.wikipedia.org/wiki/Missouri"
+      ],
+      "corpus_rows": 6,
+      "corpus_substantive_rows": 6,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "MO",
+      "state_name": "Missouri"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: net::ERR_CONNECTION_REFUSED at https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: net::ERR_CONNECTION_REFUSED at https://web.archive.org/web/19980211130538/ftp://billstatus.ls.state.ms."
+      ],
+      "candidate_urls": [
+        "https://www.sos.ms.gov/adminsearch/Pages/default.aspx",
+        "https://www.sos.ms.gov/adminsearch",
+        "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0026.htm",
+        "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0027.htm",
+        "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0036.htm"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 6,
+      "state_code": "MS",
+      "state_name": "Mississippi"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74",
+        "https://rules.mt.gov/browse/collections/5e1173a6-33c7-4df8-b426-5e0077cfc430",
+        "https://rules.mt.gov",
+        "https://sosmt.gov/arm/register",
+        "https://sosmt.gov/arm/rulemaking-resources",
+        "https://leg.mt.gov"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 0,
+      "final_category": "corpus_gap_with_candidate_pages",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 9,
+      "state_code": "MT",
+      "state_name": "Montana"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.ncleg.gov/Committees/NoticeDocument/10246/Joint-Legislative-Administrative-Procedure-Oversight-Committee-100-PM",
+        "https://www.ncleg.gov/Committees/CommitteeInfo/NonStanding/472",
+        "https://www.ncleg.gov/Laws/GeneralStatutesTOC",
+        "https://www.ncleg.gov/Committees/CommitteeInfo/NonStanding/151",
+        "https://www.smcgov.org/north-fair-oaks-community"
+      ],
+      "corpus_rows": 5,
+      "corpus_substantive_rows": 4,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 8,
+      "state_code": "NC",
+      "state_name": "North Carolina"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.legis.nd.gov/agency-rules/north-dakota-administrative-code/index.html",
+        "https://www.legis.nd.gov/files/resource/miscellaneous/adminrulesdraftingmanual.pdf",
+        "https://www.legis.nd.gov"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 8,
+      "state_code": "ND",
+      "state_name": "North Dakota"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://nebraskalegislature.gov/FloorDocs/Current/PDF/Rules/RuleBook.pdf",
+        "https://nebraskalegislature.gov/laws/display-chapters.php?chapter=1",
+        "https://nebraskalegislature.gov/FloorDocs/109/PDF/Agencies/Legislative_Council/707_20260106-132413.pdf",
+        "https://nebraskalegislature.gov/pdf/reports/fiscal/funddescriptions1_2025.pdf",
+        "https://nebraskalegislature.gov/pdf/reports/fiscal/funddescriptions2_2025.pdf"
+      ],
+      "corpus_rows": 5,
+      "corpus_substantive_rows": 5,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 8,
+      "state_code": "NE",
+      "state_name": "Nebraska"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://gc.nh.gov/rules/state_agencies\", waiting",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://gc.nh.gov/rules\", waiting until \"network",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.gencourt.state.nh.us/rules/state_age",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.gencourt.state.nh.us/rules\", waiting"
+      ],
+      "candidate_urls": [
+        "https://gc.nh.gov/rules/state_agencies",
+        "https://gc.nh.gov/rules",
+        "https://www.gencourt.state.nh.us/rules/state_agencies",
+        "https://www.gencourt.state.nh.us/rules",
+        "https://legislature.nh.gov/rules",
+        "https://legislature.nh.gov/regulations"
+      ],
+      "corpus_rows": 6,
+      "corpus_substantive_rows": 0,
+      "final_category": "blocked_or_transport_failures",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 0,
+      "state_code": "NH",
+      "state_name": "New Hampshire"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.njleg.state.nj.us"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 0,
+      "final_category": "fetchable_but_non_substantive",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 2,
+      "state_code": "NJ",
+      "state_name": "New Jersey"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.srca.nm.gov/nmac-home/nmac-titles",
+        "https://www.srca.nm.gov/new-mexico-register",
+        "https://www.srca.nm.gov/nmac-home",
+        "https://www.srca.nm.gov"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 2,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 4,
+      "probe_success_count": 8,
+      "state_code": "NM",
+      "state_name": "New Mexico"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.leg.state.nv.us/Division/Legal/LawLi"
+      ],
+      "candidate_urls": [
+        "https://www.leg.state.nv.us/register",
+        "https://www.leg.state.nv.us/home/image/documents/2025_10-28_Regulations Concerning Use of Legislative Grounds and Parking Areas_Pamphlet Form.pdf",
+        "https://www.leg.state.nv.us",
+        "https://www.leg.state.nv.us/NRS",
+        "https://www.leg.state.nv.us/law1.html"
+      ],
+      "corpus_rows": 4,
+      "corpus_substantive_rows": 3,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 7,
+      "state_code": "NV",
+      "state_name": "Nevada"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.nysenate.gov/\", waiting until \"netwo",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.nysenate.gov/rules\", waiting until \"",
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.nysenate.gov/regulations\", waiting u"
+      ],
+      "candidate_urls": [
+        "https://govt.westlaw.com/nycrr/Index",
+        "https://govt.westlaw.com/nycrr",
+        "https://dos.ny.gov/new-york-codes-rules-and-regulations-nycrr",
+        "https://www.nysenate.gov",
+        "https://www.nysenate.gov/rules",
+        "https://www.nysenate.gov/regulations"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 3,
+      "state_code": "NY",
+      "state_name": "New York"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Download is starting\nCall log:\n  - navigating to \"https://www.legislature.ohio.gov/files/publications/l"
+      ],
+      "candidate_urls": [
+        "https://codes.ohio.gov/ohio-administrative-code",
+        "https://codes.ohio.gov",
+        "https://codes.ohio.gov/ohio-revised-code",
+        "https://codes.ohio.gov/ohio-constitution",
+        "https://www.legislature.ohio.gov"
+      ],
+      "corpus_rows": 4,
+      "corpus_substantive_rows": 4,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 7,
+      "state_code": "OH",
+      "state_name": "Ohio"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.sos.ok.gov/rules/default.aspx",
+        "https://www.sos.ok.gov/rules"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 0,
+      "final_category": "fetchable_but_non_substantive",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "OK",
+      "state_name": "Oklahoma"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=137",
+        "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html",
+        "https://www.oregonlegislature.gov/bills_laws/Pages/ORS.aspx"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 3,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "OR",
+      "state_name": "Oregon"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.legis.state.pa.us",
+        "https://www.legis.state.pa.us/rules",
+        "https://www.legis.state.pa.us/regulations",
+        "https://www.legis.state.pa.us/administrative-code",
+        "https://www.legis.state.pa.us/code-of-regulations"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "PA",
+      "state_name": "Pennsylvania"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: net::ERR_CONNECTION_REFUSED at https://web.archive.org/web/20121004042026/http:/webserver.rilin.state.r"
+      ],
+      "candidate_urls": [
+        "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations/building-and-fire-codes",
+        "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
+        "https://rules.sos.ri.gov",
+        "https://web.archive.org/web/20121004042026/http:/webserver.rilin.state.ri.us/Statutes/TITLE3/3-8/INDEX.HTM",
+        "https://web.archive.org/web/20121004042026/http:/webserver.rilin.state.ri.us/Statutes/TITLE4/4-13.1/INDEX.HTM"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 0,
+      "final_category": "corpus_gap_with_candidate_pages",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 1,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 7,
+      "state_code": "RI",
+      "state_name": "Rhode Island"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.scstatehouse.gov/coderegs/statmast.php",
+        "https://www.scstatehouse.gov",
+        "https://www.scstatehouse.gov/code/statmast.php"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 1,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 8,
+      "state_code": "SC",
+      "state_name": "South Carolina"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://sdlegislature.gov/Rules/Administrative",
+        "https://rules.sd.gov",
+        "https://rules.sd.gov/default.aspx"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 0,
+      "final_category": "corpus_gap_with_candidate_pages",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 2,
+      "probe_substantive_hits": 1,
+      "probe_success_count": 4,
+      "state_code": "SD",
+      "state_name": "South Dakota"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://publications.tnsosfiles.com/rules",
+        "https://www.tn.gov/sos/rules-and-regulations.html",
+        "https://www.tn.gov",
+        "https://sos.tn.gov/civics/guides/statehood-and-state-history",
+        "https://www.tn.gov/directory.html"
+      ],
+      "corpus_rows": 12,
+      "corpus_substantive_rows": 5,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "TN",
+      "state_name": "Tennessee"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://www.sos.state.tx.us/tac/index.shtml",
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC",
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=SEARCH_TAC",
+        "https://www.sos.state.tx.us/texreg/index.shtml",
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=LANDING_PAGE&section=1.1",
+        "https://capitol.texas.gov"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 0,
+      "final_category": "fetchable_but_non_substantive",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 7,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 8,
+      "state_code": "TX",
+      "state_name": "Texas"
+    },
+    {
+      "blocked_examples": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; playwright error: Page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://adminrules.utah.gov/public/search//Curre"
+      ],
+      "candidate_urls": [
+        "https://rules.utah.gov",
+        "https://rules.utah.gov/utah-administrative-code",
+        "https://rules.utah.gov/march-1-2026-issue-of-the-utah-state-bulletin-is-now-available",
+        "https://rules.utah.gov/february-15-2026-issue-of-the-utah-state-bulletin-is-now-available",
+        "https://adminrules.utah.gov/public/search//Current%20Rules",
+        "https://le.utah.gov",
+        "https://le.utah.gov/xcode/R.html"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 1,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 5,
+      "probe_success_count": 13,
+      "state_code": "UT",
+      "state_name": "Utah"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://law.lis.virginia.gov"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 1,
+      "state_code": "VA",
+      "state_name": "Virginia"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://secure.vermont.gov/SOS/rules",
+        "https://sos.vermont.gov/secretary-of-state-services/apa-rules",
+        "https://legislature.vermont.gov",
+        "https://legislature.vermont.gov/committee/detail/2026/39",
+        "https://sos.vermont.gov/opr"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 1,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 3,
+      "probe_success_count": 14,
+      "state_code": "VT",
+      "state_name": "Vermont"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.030"
+      ],
+      "corpus_rows": 1,
+      "corpus_substantive_rows": 1,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 1,
+      "state_code": "WA",
+      "state_name": "Washington"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://docs.legis.wisconsin.gov/code",
+        "https://docs.legis.wisconsin.gov/document/administrativecode/toc",
+        "https://docs.legis.wisconsin.gov",
+        "https://docs.legis.wisconsin.gov/statutes/statutes"
+      ],
+      "corpus_rows": 4,
+      "corpus_substantive_rows": 3,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 8,
+      "state_code": "WI",
+      "state_name": "Wisconsin"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://code.wvlegislature.gov",
+        "https://code.wvlegislature.gov/11-8-12",
+        "https://code.wvlegislature.gov/signed_bills/2025/2025-RS-SB10-SUB1 ENR_signed.pdf"
+      ],
+      "corpus_rows": 3,
+      "corpus_substantive_rows": 3,
+      "final_category": "corpus_has_signal_but_probe_thin",
+      "has_curated_seeds": false,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 0,
+      "probe_success_count": 7,
+      "state_code": "WV",
+      "state_name": "West Virginia"
+    },
+    {
+      "blocked_examples": [],
+      "candidate_urls": [
+        "https://rules.wyo.gov",
+        "https://rules.wyo.gov/Search.aspx"
+      ],
+      "corpus_rows": 2,
+      "corpus_substantive_rows": 2,
+      "final_category": "has_substantive_signal",
+      "has_curated_seeds": true,
+      "local_jsonld_rows": 0,
+      "probe_substantive_hits": 2,
+      "probe_success_count": 2,
+      "state_code": "WY",
+      "state_name": "Wyoming"
+    }
+  ],
+  "summary": {
+    "blocked_or_transport_failures": 2,
+    "corpus_gap_with_candidate_pages": 3,
+    "deep_summaries": [
+      "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/webarch_gap_audit_live_deep_20260307_103145/summary.json"
+    ],
+    "fetchable_but_non_substantive": 5,
+    "full_summary": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/webarch_gap_audit_live_retry_20260307_102306/summary.json",
+    "generated_at": "2026-03-07T10:38:55.186132+00:00",
+    "has_or_retains_substantive_signal": 40,
+    "states_total": 50
+  }
+}

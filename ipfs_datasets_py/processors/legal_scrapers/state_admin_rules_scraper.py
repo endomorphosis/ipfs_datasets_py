@@ -110,6 +110,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "IN": [
         "https://iar.iga.in.gov/code",
+        "https://iar.iga.in.gov/code/2006",
+        "https://iar.iga.in.gov/sitemap.xml",
         "https://iar.iga.in.gov/iac//",
         "https://iga.in.gov/legislative/laws/iac/",
     ],
@@ -141,6 +143,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "MT": [
         "https://rules.mt.gov/",
+        "https://rules.mt.gov/browse/collections",
+        "https://rules.mt.gov/search",
         "https://sosmt.gov/arm/register/",
         "https://sosmt.gov/arm/rulemaking-resources/",
     ],
@@ -161,11 +165,15 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "UT": [
         "https://rules.utah.gov/",
+        "https://adminrules.utah.gov/",
+        "https://adminrules.utah.gov/public/search",
         "https://adminrules.utah.gov/public/search//Current%20Rules",
         "https://rules.utah.gov/utah-administrative-code/",
     ],
     "VT": [
         "https://secure.vermont.gov/SOS/rules/",
+        "https://secure.vermont.gov/SOS/rules/search.php",
+        "https://secure.vermont.gov/SOS/rules/rssFeed.php",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
     ],
     "TN": [

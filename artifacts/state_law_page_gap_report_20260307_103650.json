@@ -1,0 +1,4122 @@
+{
+  "states": [
+    {
+      "problem_pages": [
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/1000.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/109432.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/12057.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/13297.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/13894.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/14214.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/14974.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/152148.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/155473.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/16474.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/16994.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/17154.htm"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 46,
+      "short_real_rows": 40,
+      "state": "AL",
+      "synthetic_rows": 0,
+      "top_url": "http://web.archive.org/web/20240123221654/http:/alisondb.legislature.state.al.us/alison/CodeOfAlabama/1975/1000.htm",
+      "top_url_hits": 1,
+      "top_url_share": 0.022,
+      "total_rows": 46,
+      "unique_urls": 46
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 59,
+      "short_real_rows": 0,
+      "state": "AK",
+      "synthetic_rows": 0,
+      "top_url": "https://www.akleg.gov/basis/statutes.asp#24.20.070",
+      "top_url_hits": 1,
+      "top_url_share": 0.017,
+      "total_rows": 59,
+      "unique_urls": 59
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20251017000000/https://www.azleg.gov/arsDetail/?title=13"
+        },
+        {
+          "domain": "www.azleg.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.azleg.gov/ars/13/00413.htm"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 180,
+      "short_real_rows": 2,
+      "state": "AZ",
+      "synthetic_rows": 0,
+      "top_url": "https://web.archive.org/web/20251017000000/https://www.azleg.gov/arsDetail/?title=13",
+      "top_url_hits": 1,
+      "top_url_share": 0.006,
+      "total_rows": 180,
+      "unique_urls": 180
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-029"
+        }
+      ],
+      "real_ratio": 0.4,
+      "real_rows": 16,
+      "short_real_rows": 0,
+      "state": "AR",
+      "synthetic_rows": 24,
+      "top_url": "https://www.arkleg.state.ar.us/Acts/CodeSectionsAmended",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 300,
+      "short_real_rows": 0,
+      "state": "CA",
+      "synthetic_rows": 0,
+      "top_url": "https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=BPC&division=1.&title=&part=&chapter=1.&article=",
+      "top_url_hits": 1,
+      "top_url_share": 0.003,
+      "total_rows": 300,
+      "unique_urls": 300
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-036"
+        }
+      ],
+      "real_ratio": 0.6,
+      "real_rows": 24,
+      "short_real_rows": 0,
+      "state": "CO",
+      "synthetic_rows": 16,
+      "top_url": "https://content.leg.colorado.gov/sites/default/files/14-10-114pre20140101.pdf",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "web.archive.org",
+          "rows": 2,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_04c.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_01.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_02.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_02c.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_03.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_04.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_04a.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_04b.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_04d.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_04e.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_05.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_06.htm"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 83,
+      "short_real_rows": 70,
+      "state": "CT",
+      "synthetic_rows": 0,
+      "top_url": "http://web.archive.org/web/20250101000000/http:/www.cga.ct.gov/current/pub/title_04c.htm",
+      "top_url_hits": 2,
+      "top_url_share": 0.024,
+      "total_rows": 83,
+      "unique_urls": 82
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "legis.delaware.gov",
+          "rows": 3,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legis.delaware.gov/SessionLaws?volume=60&chapter=56"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 63,
+      "short_real_rows": 0,
+      "state": "DE",
+      "synthetic_rows": 0,
+      "top_url": "https://legis.delaware.gov/SessionLaws?volume=60&chapter=56",
+      "top_url_hits": 3,
+      "top_url_share": 0.048,
+      "total_rows": 63,
+      "unique_urls": 61
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 49,
+      "short_real_rows": 0,
+      "state": "FL",
+      "synthetic_rows": 0,
+      "top_url": "http://www.leg.state.fl.us/Statutes/index.cfm?App_mode=Display_Index&Title_Request=I#TitleI",
+      "top_url_hits": 1,
+      "top_url_share": 0.02,
+      "total_rows": 49,
+      "unique_urls": 49
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-011"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-012"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-013"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-022"
+        }
+      ],
+      "real_ratio": 0.325,
+      "real_rows": 13,
+      "short_real_rows": 0,
+      "state": "GA",
+      "synthetic_rows": 27,
+      "top_url": "http://www.lexisnexis.com/hottopics/gacode",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 76,
+      "short_real_rows": 0,
+      "state": "HI",
+      "synthetic_rows": 0,
+      "top_url": "http://web.archive.org/web/20060408115923/http://www.capitol.hawaii.gov/hrscurrent/Vol01_Ch0001-0042F/HRS0001/HRS_0001-0001.HTM",
+      "top_url_hits": 1,
+      "top_url_share": 0.013,
+      "total_rows": 76,
+      "unique_urls": 76
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-035"
+        }
+      ],
+      "real_ratio": 0.575,
+      "real_rows": 23,
+      "short_real_rows": 16,
+      "state": "ID",
+      "synthetic_rows": 17,
+      "top_url": "https://legislature.idaho.gov/statutesrules/idstat/Title18/T18CH1/SECT18-100",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 71,
+      "short_real_rows": 0,
+      "state": "IL",
+      "synthetic_rows": 0,
+      "top_url": "https://www.ilga.gov/Legislation/ILCS/Chapters",
+      "top_url_hits": 1,
+      "top_url_share": 0.014,
+      "total_rows": 71,
+      "unique_urls": 71
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://web.archive.org/web/20170127104730/http://iga.in.gov/static-documents/0/0/b/3/00b3e7df/TITLE32_AR28_ch3.pdf"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 40,
+      "short_real_rows": 1,
+      "state": "IN",
+      "synthetic_rows": 0,
+      "top_url": "http://web.archive.org/web/20170215063144/http://iga.in.gov/static-documents/0/0/5/2/005284ae/TITLE6_AR1.1_ch15.pdf",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170210051043/https://www.legis.iowa.gov/docs/code/%C2%A7256G.4.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170210051047/https://www.legis.iowa.gov/docs/code/%C2%A7457B.1.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170211051543/https://www.legis.iowa.gov/docs/code/%C2%A78.6.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170211192400/https://www.legis.iowa.gov/docs/code/%C2%A7232.173.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170214234159/https://www.legis.iowa.gov/docs/code/%C2%A7216A.140.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170216202642/https://www.legis.iowa.gov/docs/code/%C2%A7284.15.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170217225838/https://www.legis.iowa.gov/docs/code/%C2%A7483A.24.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170224104712/https://www.legis.iowa.gov/docs/code/%C2%A7256.7.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170228024923/https://www.legis.iowa.gov/docs/code/%C2%A7426B.5.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170301054848/https://www.legis.iowa.gov/docs/code/%C2%A7135.156.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20170301225629/https://www.legis.iowa.gov/docs/code/%C2%A7455B.190A.pdf"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20230331152210/https://www.legis.iowa.gov/docs/code/03/2/15E.117.pdf"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 140,
+      "short_real_rows": 87,
+      "state": "IA",
+      "synthetic_rows": 0,
+      "top_url": "https://web.archive.org/web/20170301054848/https://www.legis.iowa.gov/docs/code/%C2%A7135.156.pdf",
+      "top_url_hits": 1,
+      "top_url_share": 0.007,
+      "total_rows": 140,
+      "unique_urls": 140
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "www.kslegislature.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.kslegislature.org/li/b2025_26/statute/009_000_0000_chapter/"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 100,
+      "short_real_rows": 1,
+      "state": "KS",
+      "synthetic_rows": 0,
+      "top_url": "http://www.kslegislature.org/li_2024/",
+      "top_url_hits": 1,
+      "top_url_share": 0.01,
+      "total_rows": 100,
+      "unique_urls": 100
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "apps.legislature.ky.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=16"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 89,
+      "short_real_rows": 1,
+      "state": "KY",
+      "synthetic_rows": 0,
+      "top_url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=7",
+      "top_url_hits": 1,
+      "top_url_share": 0.011,
+      "total_rows": 89,
+      "unique_urls": 89
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-033"
+        }
+      ],
+      "real_ratio": 0.525,
+      "real_rows": 21,
+      "short_real_rows": 0,
+      "state": "LA",
+      "synthetic_rows": 19,
+      "top_url": "http://web.archive.org/web/20240407200045/https://legis.la.gov/Legis/law.aspx?d=100114",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec1.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec10.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec11.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec12.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec13.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec14.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec16.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec17.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec18.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec19.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec2.html"
+        },
+        {
+          "domain": "legislature.maine.gov",
+          "rows": 2,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "https://legislature.maine.gov/statutes/1/title1sec20.html"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 58,
+      "short_real_rows": 0,
+      "state": "ME",
+      "synthetic_rows": 0,
+      "top_url": "https://legislature.maine.gov/statutes/1/title1sec1.html",
+      "top_url_hits": 2,
+      "top_url_share": 0.034,
+      "total_rows": 58,
+      "unique_urls": 30
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-011"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-012"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-013"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-022"
+        }
+      ],
+      "real_ratio": 0.225,
+      "real_rows": 9,
+      "short_real_rows": 2,
+      "state": "MD",
+      "synthetic_rows": 31,
+      "top_url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MA/sec-015"
+        },
+        {
+          "domain": "malegislature.gov",
+          "rows": 2,
+          "short_real_rows": 2,
+          "synthetic_rows": 0,
+          "url": "https://malegislature.gov/Laws/GeneralLaws/PartIV"
+        },
+        {
+          "domain": "malegislature.gov",
+          "rows": 2,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://malegislature.gov/Laws/GeneralLaws/PartII"
+        },
+        {
+          "domain": "malegislature.gov",
+          "rows": 2,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://malegislature.gov/Laws/GeneralLaws/PartIII"
+        },
+        {
+          "domain": "malegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://malegislature.gov/Laws/GeneralLaws/PartI"
+        },
+        {
+          "domain": "malegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://malegislature.gov/Laws/GeneralLaws/PartV"
+        }
+      ],
+      "real_ratio": 0.975,
+      "real_rows": 39,
+      "short_real_rows": 6,
+      "state": "MA",
+      "synthetic_rows": 1,
+      "top_url": "https://malegislature.gov/Laws/GeneralLaws/PartII",
+      "top_url_hits": 2,
+      "top_url_share": 0.05,
+      "total_rows": 40,
+      "unique_urls": 37
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap1"
+        },
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap117"
+        },
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap121"
+        },
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap168"
+        },
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap260"
+        },
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap280"
+        },
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap42"
+        },
+        {
+          "domain": "www.legislature.mi.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://www.legislature.mi.gov/Home/GetObject?objectName=mcl-chap5"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 96,
+      "short_real_rows": 8,
+      "state": "MI",
+      "synthetic_rows": 0,
+      "top_url": "http://www.legislature.mi.gov/Laws/ChapterIndex",
+      "top_url_hits": 1,
+      "top_url_share": 0.01,
+      "total_rows": 96,
+      "unique_urls": 96
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-008"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-009"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-010"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-011"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-012"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-013"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-019"
+        }
+      ],
+      "real_ratio": 0.2,
+      "real_rows": 8,
+      "short_real_rows": 0,
+      "state": "MN",
+      "synthetic_rows": 32,
+      "top_url": "https://www.revisor.mn.gov/statutes/cite/609",
+      "top_url_hits": 3,
+      "top_url_share": 0.075,
+      "total_rows": 40,
+      "unique_urls": 38
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 40,
+      "short_real_rows": 0,
+      "state": "MS",
+      "synthetic_rows": 0,
+      "top_url": "https://web.archive.org/web/19980110154920/http://billstatus.ls.state.ms.us/1997/history/HB/HB0001.htm",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-036"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-037"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-038"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-039"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MO/sec-040"
+        }
+      ],
+      "real_ratio": 0.725,
+      "real_rows": 29,
+      "short_real_rows": 0,
+      "state": "MO",
+      "synthetic_rows": 11,
+      "top_url": "https://revisor.mo.gov/main/OneSection.aspx?section=3.090",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-036"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-037"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-038"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-039"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MT/sec-040"
+        }
+      ],
+      "real_ratio": 0.8,
+      "real_rows": 32,
+      "short_real_rows": 0,
+      "state": "MT",
+      "synthetic_rows": 8,
+      "top_url": "https://leg.mt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0010/0450-0050-0010-0010.html",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 91,
+      "short_real_rows": 0,
+      "state": "NE",
+      "synthetic_rows": 0,
+      "top_url": "https://nebraskalegislature.gov/laws/laws.php",
+      "top_url_hits": 1,
+      "top_url_share": 0.011,
+      "total_rows": 91,
+      "unique_urls": 91
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 100,
+      "short_real_rows": 0,
+      "state": "NV",
+      "synthetic_rows": 0,
+      "top_url": "https://www.leg.state.nv.us/NRS/NRS-000.html",
+      "top_url_hits": 1,
+      "top_url_share": 0.01,
+      "total_rows": 100,
+      "unique_urls": 100
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-1-A.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-1.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-10-A.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-10-B.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-10.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-11.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-12-A.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-12-B.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-12-D.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-12-E.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-12-F.htm"
+        },
+        {
+          "domain": "web.archive.org",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-12-G.htm"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 120,
+      "short_real_rows": 118,
+      "state": "NH",
+      "synthetic_rows": 0,
+      "top_url": "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I.htm",
+      "top_url_hits": 1,
+      "top_url_share": 0.008,
+      "total_rows": 120,
+      "unique_urls": 120
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=0000000080000003402BBA647F4CF65F00000D4D$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=122$hitdoc_g_hitindex=1"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=00000000800000034032A22A46FDB1740000CFFC$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=127$hitdoc_g_hitindex=1"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=0000000180000003402BC8359EE45D5200000C7F$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=122$hitdoc_g_hitindex=2"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=0000000280000003402BD17743D4B14600000B10$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=122$hitdoc_g_hitindex=3"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=00000003800000034032AFC189CCC3AC0000CA0F$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=127$hitdoc_g_hitindex=4"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=0000000480000003402BE162A90D0F4300000D69$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=122$hitdoc_g_hitindex=5"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=00000004800000034032B638C24227490000CB30$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=127$hitdoc_g_hitindex=5"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=0000000480000003403890C68453C4210000D213$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=243$hitdoc_g_hitindex=5"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=00000005800000034038939ACEA53F9B00006DAD$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=243$hitdoc_g_hitindex=6"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=0000000680000003402BEDC729305AF200000B0E$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=122$hitdoc_g_hitindex=7"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=000000068000000340389C2E9AAF5ADD00008B25$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=243$hitdoc_g_hitindex=7"
+        },
+        {
+          "domain": "lis.njleg.state.nj.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=0000000880000003402C45F080D855E700000D9A$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=122$hitdoc_g_hitindex=9"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 69,
+      "short_real_rows": 68,
+      "state": "NJ",
+      "synthetic_rows": 0,
+      "top_url": "https://lis.njleg.state.nj.us/nxt/gateway.dll?f=hitdoc$hitdoc_bm=00000000800000034032A22A46FDB1740000CFFC$hitdoc_hit=1$hitdoc_dt=document-frameset.htm$global=hitdoc_g_$hitdoc_g_hittotal=127$hitdoc_g_hitindex=1",
+      "top_url_hits": 1,
+      "top_url_share": 0.014,
+      "total_rows": 69,
+      "unique_urls": 69
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-036"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-037"
+        }
+      ],
+      "real_ratio": 0.625,
+      "real_rows": 25,
+      "short_real_rows": 25,
+      "state": "NM",
+      "synthetic_rows": 15,
+      "top_url": "https://nmonesource.com/nmos/nmsa/en/item/4351/index.do",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "newyork.public.law",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://newyork.public.law/laws/n.y._education_law_section_3013"
+        },
+        {
+          "domain": "newyork.public.law",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://newyork.public.law/laws/n.y._general_business_law_section_392-k"
+        },
+        {
+          "domain": "newyork.public.law",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://newyork.public.law/laws/n.y._public_health_law_section_4611"
+        },
+        {
+          "domain": "newyork.public.law",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://newyork.public.law/laws/n.y._real_property_tax_law_section_471"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 120,
+      "short_real_rows": 4,
+      "state": "NY",
+      "synthetic_rows": 0,
+      "top_url": "https://newyork.public.law/laws/n.y._alcoholic_beverage_control_law_section_110-b",
+      "top_url_hits": 1,
+      "top_url_share": 0.008,
+      "total_rows": 120,
+      "unique_urls": 120
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 238,
+      "short_real_rows": 0,
+      "state": "NC",
+      "synthetic_rows": 0,
+      "top_url": "https://www.ncleg.gov/Laws/GeneralStatuteSections/Chapter1",
+      "top_url_hits": 1,
+      "top_url_share": 0.004,
+      "total_rows": 238,
+      "unique_urls": 238
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-028"
+        }
+      ],
+      "real_ratio": 0.325,
+      "real_rows": 13,
+      "short_real_rows": 1,
+      "state": "ND",
+      "synthetic_rows": 27,
+      "top_url": "https://www.legis.nd.gov/assembly/70-2027/regular",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OH/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OH/sec-036"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OH/sec-037"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OH/sec-038"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OH/sec-039"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OH/sec-040"
+        },
+        {
+          "domain": "codes.ohio.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://codes.ohio.gov/ohio-revised-code/title-63"
+        }
+      ],
+      "real_ratio": 0.85,
+      "real_rows": 34,
+      "short_real_rows": 1,
+      "state": "OH",
+      "synthetic_rows": 6,
+      "top_url": "https://codes.ohio.gov/ohio-revised-code/general-provisions",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-025"
+        }
+      ],
+      "real_ratio": 0.375,
+      "real_rows": 15,
+      "short_real_rows": 0,
+      "state": "OK",
+      "synthetic_rows": 25,
+      "top_url": "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69782&Title=74",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.020"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.055"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.070"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.080"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.100"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.110"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.120"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.130"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.165"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.167"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.169"
+        },
+        {
+          "domain": "www.oregonlegislature.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.170"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 996,
+      "short_real_rows": 56,
+      "state": "OR",
+      "synthetic_rows": 0,
+      "top_url": "https://www.oregonlegislature.gov/bills_laws/ors/ors001.html#section-1.001",
+      "top_url_hits": 1,
+      "top_url_share": 0.001,
+      "total_rows": 996,
+      "unique_urls": 996
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-027"
+        }
+      ],
+      "real_ratio": 0.475,
+      "real_rows": 19,
+      "short_real_rows": 0,
+      "state": "PA",
+      "synthetic_rows": 21,
+      "top_url": "https://www.palegis.us/statutes/unconsolidated/chron-history-affected?SESSYR=2026&SESSIND=0&ACTNUM=",
+      "top_url_hits": 2,
+      "top_url_share": 0.05,
+      "total_rows": 40,
+      "unique_urls": 39
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "webserver.rilin.state.ri.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://webserver.rilin.state.ri.us/Statutes/TITLE42/INDEX.HTM"
+        },
+        {
+          "domain": "webserver.rilin.state.ri.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://webserver.rilin.state.ri.us/Statutes/TITLE43/INDEX.HTM"
+        },
+        {
+          "domain": "webserver.rilin.state.ri.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://webserver.rilin.state.ri.us/Statutes/TITLE44/INDEX.HTM"
+        },
+        {
+          "domain": "webserver.rilin.state.ri.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://webserver.rilin.state.ri.us/Statutes/TITLE45/INDEX.HTM"
+        },
+        {
+          "domain": "webserver.rilin.state.ri.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://webserver.rilin.state.ri.us/Statutes/TITLE46/INDEX.HTM"
+        },
+        {
+          "domain": "webserver.rilin.state.ri.us",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://webserver.rilin.state.ri.us/Statutes/TITLE47/INDEX.HTM"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 49,
+      "short_real_rows": 6,
+      "state": "RI",
+      "synthetic_rows": 0,
+      "top_url": "http://webserver.rilin.state.ri.us/Statutes/TITLE1/INDEX.HTM",
+      "top_url_hits": 1,
+      "top_url_share": 0.02,
+      "total_rows": 49,
+      "unique_urls": 49
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 64,
+      "short_real_rows": 0,
+      "state": "SC",
+      "synthetic_rows": 0,
+      "top_url": "https://www.scstatehouse.gov/coderegs/statmast.php",
+      "top_url_hits": 1,
+      "top_url_share": 0.016,
+      "total_rows": 64,
+      "unique_urls": 64
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/SD/sec-031"
+        }
+      ],
+      "real_ratio": 0.7,
+      "real_rows": 28,
+      "short_real_rows": 0,
+      "state": "SD",
+      "synthetic_rows": 12,
+      "top_url": "https://sdlegislature.gov/Statutes/23A",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TN/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TN/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TN/sec-036"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TN/sec-037"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TN/sec-038"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TN/sec-039"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TN/sec-040"
+        },
+        {
+          "domain": "sos.tn.gov",
+          "rows": 14,
+          "short_real_rows": 14,
+          "synthetic_rows": 0,
+          "url": "https://sos.tn.gov/division-publications/acts-and-resolutions"
+        },
+        {
+          "domain": "sos.tn.gov",
+          "rows": 14,
+          "short_real_rows": 0,
+          "synthetic_rows": 0,
+          "url": "http://sos.tn.gov/division-publications/acts-and-resolutions"
+        },
+        {
+          "domain": "www.capitol.tn.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.capitol.tn.gov/legislation/Archives/104GA/bills/SpecSessIndex.htm"
+        },
+        {
+          "domain": "www.capitol.tn.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.capitol.tn.gov/legislation/Archives/99GA/bills/SpecSessIndex.htm"
+        },
+        {
+          "domain": "www.capitol.tn.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://www.capitol.tn.gov/legislation/archives/106GA/106thSpecialSession.htm"
+        }
+      ],
+      "real_ratio": 0.825,
+      "real_rows": 33,
+      "short_real_rows": 18,
+      "state": "TN",
+      "synthetic_rows": 7,
+      "top_url": "https://sos.tn.gov/division-publications/acts-and-resolutions",
+      "top_url_hits": 14,
+      "top_url_share": 0.35,
+      "total_rows": 40,
+      "unique_urls": 14
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-032"
+        }
+      ],
+      "real_ratio": 0.5,
+      "real_rows": 20,
+      "short_real_rows": 0,
+      "state": "TX",
+      "synthetic_rows": 20,
+      "top_url": "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=LANDING_PAGE&section=1.1",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "images.archives.utah.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "http://images.archives.utah.gov/cdm/search/collection/432n!428/searchterm/working%20bills/field/all/mode/all/conn/and/order/identi/ad/asc"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 83,
+      "short_real_rows": 1,
+      "state": "UT",
+      "synthetic_rows": 0,
+      "top_url": "https://le.utah.gov/xcode/Title3/3.html?v=C3_1800010118000101",
+      "top_url_hits": 1,
+      "top_url_share": 0.012,
+      "total_rows": 83,
+      "unique_urls": 83
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "legislature.vermont.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://legislature.vermont.gov/statutes/statutes/title/01"
+        },
+        {
+          "domain": "legislature.vermont.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://legislature.vermont.gov/statutes/statutes/title/02"
+        },
+        {
+          "domain": "legislature.vermont.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://legislature.vermont.gov/statutes/statutes/title/03"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 47,
+      "short_real_rows": 3,
+      "state": "VT",
+      "synthetic_rows": 0,
+      "top_url": "https://legislature.vermont.gov/statutes/constitution-of-the-state-of-vermont/",
+      "top_url_hits": 1,
+      "top_url_share": 0.021,
+      "total_rows": 47,
+      "unique_urls": 47
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "law.lis.virginia.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-248.8/"
+        },
+        {
+          "domain": "law.lis.virginia.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-250.1/"
+        },
+        {
+          "domain": "law.lis.virginia.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-260.1/"
+        },
+        {
+          "domain": "law.lis.virginia.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-264.01/"
+        },
+        {
+          "domain": "law.lis.virginia.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-268.12/"
+        },
+        {
+          "domain": "law.lis.virginia.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-298/"
+        },
+        {
+          "domain": "law.lis.virginia.gov",
+          "rows": 1,
+          "short_real_rows": 1,
+          "synthetic_rows": 0,
+          "url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-307/"
+        }
+      ],
+      "real_ratio": 1.0,
+      "real_rows": 185,
+      "short_real_rows": 7,
+      "state": "VA",
+      "synthetic_rows": 0,
+      "top_url": "https://law.lis.virginia.gov/vacode/title18.2/chapter7/section18.2-247/",
+      "top_url_hits": 1,
+      "top_url_share": 0.005,
+      "total_rows": 185,
+      "unique_urls": 185
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 110,
+      "short_real_rows": 0,
+      "state": "WA",
+      "synthetic_rows": 0,
+      "top_url": "https://app.leg.wa.gov/RCW/default.aspx?cite=4.24",
+      "top_url_hits": 1,
+      "top_url_share": 0.009,
+      "total_rows": 110,
+      "unique_urls": 110
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 89,
+      "short_real_rows": 0,
+      "state": "WV",
+      "synthetic_rows": 0,
+      "top_url": "https://code.wvlegislature.gov/11-1/",
+      "top_url_hits": 1,
+      "top_url_share": 0.011,
+      "total_rows": 89,
+      "unique_urls": 89
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 49,
+      "short_real_rows": 0,
+      "state": "WI",
+      "synthetic_rows": 0,
+      "top_url": "https://docs.legis.wisconsin.gov/document/statutes/940.01",
+      "top_url_hits": 1,
+      "top_url_share": 0.02,
+      "total_rows": 49,
+      "unique_urls": 49
+    },
+    {
+      "problem_pages": [],
+      "real_ratio": 1.0,
+      "real_rows": 90,
+      "short_real_rows": 0,
+      "state": "WY",
+      "synthetic_rows": 0,
+      "top_url": "https://wyoleg.gov/statutes/compress/title97.pdf",
+      "top_url_hits": 1,
+      "top_url_share": 0.011,
+      "total_rows": 90,
+      "unique_urls": 90
+    }
+  ],
+  "summary": {
+    "avg_real_ratio": 0.841,
+    "real_total": 4391,
+    "rows_total": 4710,
+    "states_total": 50,
+    "synthetic_total": 319,
+    "weak_states": [
+      "MN",
+      "MD",
+      "GA",
+      "ND",
+      "OK",
+      "AR",
+      "PA",
+      "TX",
+      "LA",
+      "ID",
+      "CO",
+      "NM"
+    ]
+  },
+  "weak_states": [
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-008"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-009"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-010"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-011"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-012"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-013"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MN/sec-019"
+        }
+      ],
+      "real_ratio": 0.2,
+      "real_rows": 8,
+      "short_real_rows": 0,
+      "state": "MN",
+      "synthetic_rows": 32,
+      "top_url": "https://www.revisor.mn.gov/statutes/cite/609",
+      "top_url_hits": 3,
+      "top_url_share": 0.075,
+      "total_rows": 40,
+      "unique_urls": 38
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-011"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-012"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-013"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/MD/sec-022"
+        }
+      ],
+      "real_ratio": 0.225,
+      "real_rows": 9,
+      "short_real_rows": 2,
+      "state": "MD",
+      "synthetic_rows": 31,
+      "top_url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-011"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-012"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-013"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/GA/sec-022"
+        }
+      ],
+      "real_ratio": 0.325,
+      "real_rows": 13,
+      "short_real_rows": 0,
+      "state": "GA",
+      "synthetic_rows": 27,
+      "top_url": "http://www.lexisnexis.com/hottopics/gacode",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ND/sec-028"
+        }
+      ],
+      "real_ratio": 0.325,
+      "real_rows": 13,
+      "short_real_rows": 1,
+      "state": "ND",
+      "synthetic_rows": 27,
+      "top_url": "https://www.legis.nd.gov/assembly/70-2027/regular",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-014"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-015"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/OK/sec-025"
+        }
+      ],
+      "real_ratio": 0.375,
+      "real_rows": 15,
+      "short_real_rows": 0,
+      "state": "OK",
+      "synthetic_rows": 25,
+      "top_url": "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69782&Title=74",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/AR/sec-029"
+        }
+      ],
+      "real_ratio": 0.4,
+      "real_rows": 16,
+      "short_real_rows": 0,
+      "state": "AR",
+      "synthetic_rows": 24,
+      "top_url": "https://www.arkleg.state.ar.us/Acts/CodeSectionsAmended",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-016"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-017"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-018"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-019"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-020"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/PA/sec-027"
+        }
+      ],
+      "real_ratio": 0.475,
+      "real_rows": 19,
+      "short_real_rows": 0,
+      "state": "PA",
+      "synthetic_rows": 21,
+      "top_url": "https://www.palegis.us/statutes/unconsolidated/chron-history-affected?SESSYR=2026&SESSIND=0&ACTNUM=",
+      "top_url_hits": 2,
+      "top_url_share": 0.05,
+      "total_rows": 40,
+      "unique_urls": 39
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-021"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/TX/sec-032"
+        }
+      ],
+      "real_ratio": 0.5,
+      "real_rows": 20,
+      "short_real_rows": 0,
+      "state": "TX",
+      "synthetic_rows": 20,
+      "top_url": "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=LANDING_PAGE&section=1.1",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-022"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-023"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/LA/sec-033"
+        }
+      ],
+      "real_ratio": 0.525,
+      "real_rows": 21,
+      "short_real_rows": 0,
+      "state": "LA",
+      "synthetic_rows": 19,
+      "top_url": "http://web.archive.org/web/20240407200045/https://legis.la.gov/Legis/law.aspx?d=100114",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-024"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/ID/sec-035"
+        }
+      ],
+      "real_ratio": 0.575,
+      "real_rows": 23,
+      "short_real_rows": 16,
+      "state": "ID",
+      "synthetic_rows": 17,
+      "top_url": "https://legislature.idaho.gov/statutesrules/idstat/Title18/T18CH1/SECT18-100",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-025"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/CO/sec-036"
+        }
+      ],
+      "real_ratio": 0.6,
+      "real_rows": 24,
+      "short_real_rows": 0,
+      "state": "CO",
+      "synthetic_rows": 16,
+      "top_url": "https://content.leg.colorado.gov/sites/default/files/14-10-114pre20140101.pdf",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    },
+    {
+      "problem_pages": [
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-026"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-027"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-028"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-029"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-030"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-031"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-032"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-033"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-034"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-035"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-036"
+        },
+        {
+          "domain": "example.invalid",
+          "rows": 1,
+          "short_real_rows": 0,
+          "synthetic_rows": 1,
+          "url": "https://example.invalid/NM/sec-037"
+        }
+      ],
+      "real_ratio": 0.625,
+      "real_rows": 25,
+      "short_real_rows": 25,
+      "state": "NM",
+      "synthetic_rows": 15,
+      "top_url": "https://nmonesource.com/nmos/nmsa/en/item/4351/index.do",
+      "top_url_hits": 1,
+      "top_url_share": 0.025,
+      "total_rows": 40,
+      "unique_urls": 40
+    }
+  ]
+}
