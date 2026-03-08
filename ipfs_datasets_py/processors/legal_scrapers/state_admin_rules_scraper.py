@@ -59,12 +59,13 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
-    r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)",
+    r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)|"
+    r"(?:^|https?://)(?:www\.)?boardsandcommissions\.sd\.gov/",
     re.IGNORECASE,
 )
 
 _BAD_DISCOVERY_DOMAIN_RE = re.compile(
-    r"(^|\.)(city-data\.com|texashuntingforum\.com|montanaheritagecommission\.mt\.gov)$",
+    r"(^|\.)(city-data\.com|legalclarity\.org|texashuntingforum\.com|montanaheritagecommission\.mt\.gov)$",
     re.IGNORECASE,
 )
 

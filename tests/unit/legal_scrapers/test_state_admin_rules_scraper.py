@@ -151,6 +151,46 @@ def test_rejects_montana_doc_policies_false_positive() -> None:
     ) is False
 
 
+def test_rejects_south_dakota_boards_portal_false_positive() -> None:
+    statute = {
+        "code_name": "South Dakota Administrative Rules (Agentic Discovery)",
+        "section_name": "Boards and Commissions",
+        "source_url": "https://boardsandcommissions.sd.gov/Meetings.aspx?BoardID=123",
+        "full_text": (
+            "Boards and Commissions Annual Disclosure General Information Find a Board or Commission. "
+            "Upcoming Meetings Archived Meetings Agenda Minutes Board Compensation."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is False
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_rejects_legalclarity_admin_law_article_false_positive() -> None:
+    statute = {
+        "code_name": "South Dakota Administrative Rules (Agentic Discovery)",
+        "section_name": "What Are the Functions of Administrative Law?",
+        "source_url": "https://legalclarity.org/what-are-the-functions-of-administrative-law-2/",
+        "full_text": (
+            "Administrative law governs how agencies write rules, resolve disputes, enforce compliance, and remain subject to judicial review. "
+            "The Administrative Procedure Act provides the backbone for these functions."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
 def test_accepts_texas_transfer_page_as_substantive_admin_rule() -> None:
     statute = {
         "code_name": "Texas Administrative Rules (Agentic Discovery)",
@@ -167,3 +207,23 @@ def test_accepts_texas_transfer_page_as_substantive_admin_rule() -> None:
 
     assert _is_admin_rule_statute(statute) is True
     assert _is_substantive_admin_statute(statute, min_chars=160) is True
+
+
+def test_accepts_south_dakota_official_rule_index_page() -> None:
+    statute = {
+        "code_name": "South Dakota Administrative Rules (Agentic Discovery)",
+        "section_name": "Administrative Rules | South Dakota Legislature",
+        "source_url": "https://sdlegislature.gov/Rules/Administrative",
+        "full_text": (
+            "Administrative Rules List Current Register Archived Registers Administrative Rules Manual Rules Review Committee. "
+            "Administrative Rules Home Administrative Rules Go To: 01:15 02:01 02:02 05:01 10:01 12:01 17:10 20:01 24:03 41:01 44:02 67:10 74:02."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is True
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
