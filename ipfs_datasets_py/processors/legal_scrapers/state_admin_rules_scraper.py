@@ -172,6 +172,13 @@ _UT_NON_SUBSTANTIVE_INDEX_PATH_RE = re.compile(
 
 _UT_BULLETIN_PDF_PATH_RE = re.compile(r"^/wp-content/uploads/b\d{8}\.pdf$", re.IGNORECASE)
 
+_TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE = re.compile(
+    r"(?:^|[?&])interface=(?:VIEW_TAC|SEARCH_TAC)(?:[&#]|$)",
+    re.IGNORECASE,
+)
+
+_TX_TRANSFER_PATH_RE = re.compile(r"^/texreg/transfers(?:/|$)", re.IGNORECASE)
+
 _LOW_VALUE_LINK_TEXT_RE = re.compile(
     r"^(?:home|about(?:\s+us)?|contact(?:\s+us)?|help|privacy|services|state\s+login|login|myiar|subscriptions?)$",
     re.IGNORECASE,
@@ -877,9 +884,14 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
     path = parsed.path or ""
+    query = parsed.query or ""
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
         return True
     if host in {"secure.vermont.gov", "sos.vermont.gov"} and _VT_NON_RULE_PORTAL_PATH_RE.search(path):
+        return True
+    if host == "texas-sos.appianportalsgov.com" and _TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE.search(query):
+        return True
+    if host == "www.sos.state.tx.us" and _TX_TRANSFER_PATH_RE.search(path):
         return True
     if host == "adminrules.utah.gov" and path.startswith("/public/search"):
         return False
