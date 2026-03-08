@@ -5,6 +5,100 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.38] - 2026-02-23
+
+### Added — 2 new MCP server tools for KG analytics and link prediction (Session 84) — 42 tests
+
+**`mcp_server/tools/graph_tools/graph_analytics.py`** (new MCP tool):
+- `graph_analytics(kg_data, include_completion_analysis, include_quality_metrics, include_topology, max_completion_suggestions)` — comprehensive KG analytics
+- Quality metrics via `KnowledgeGraphExtractor.compute_extraction_quality_metrics()`
+- KG completion via `KnowledgeGraphCompleter` (missing relationships, isolated entities)
+- Topology: entity/relationship type distributions + degree statistics
+- Returns `status / entity_count / relationship_count / quality_metrics / missing_relationships / isolated_entities / topology`
+
+**`mcp_server/tools/graph_tools/graph_link_predict.py`** (new MCP tool):
+- `graph_link_predict(entity_a_id, entity_b_id, kg_data, layer_type, top_candidates, top_k)` — GNN link prediction
+- Delegates to `GraphNeuralNetworkAdapter.link_prediction_score()`
+- Optional top-k ranked candidates via cosine similarity
+- Returns `status / score / prediction ("likely"/"unlikely") / top_predictions`
+
+**`core_operations/knowledge_graph_manager.py`** (updated):
+- Added `analytics()` — full analytics pipeline
+- Added `link_predict()` — link prediction with optional top-k ranking
+
+**`mcp_server/tools/graph_tools/__init__.py`** (updated):
+- 22 → 24 tools; `graph_analytics` and `graph_link_predict` added to `__all__`
+
+**`mcp_server/tools/graph_tools/README.md`** (updated):
+- 2 new rows for session 84 tools
+
+## [3.22.37] - 2026-02-23
+
+### Added — 3 new MCP server tools for GNN, ZKP, and Federation (Session 83) — 48 tests
+
+**`mcp_server/tools/graph_tools/graph_gnn_embed.py`** (new MCP tool):
+- `graph_gnn_embed(kg_data, entity_ids, top_k_similar, layer_type, embedding_dim, num_layers)` — compute GNN node embeddings
+- Delegates to `KnowledgeGraphManager.gnn_embed()` → `GraphNeuralNetworkAdapter`
+- Supports layer types: `"graph_conv"` / `"graph_sage"` / `"graph_attention"`
+- Returns `status / entity_count / embedding_dim / layer_type / embeddings / similar`
+
+**`mcp_server/tools/graph_tools/graph_zkp_prove.py`** (new MCP tool):
+- `graph_zkp_prove(proof_type, entity_type, entity_name, ...)` — generate ZK proofs
+- Proof types: `entity_exists` / `entity_property` / `path_exists` / `query_answer_count`
+- Optional `build_tdfol_witness=True` to also generate TDFOL_v1 witness dict
+- Returns `status / proof_type / proof / valid / tdfol_witness`
+
+**`mcp_server/tools/graph_tools/graph_federate_query.py`** (new MCP tool):
+- `graph_federate_query(graphs, query_entity_name, resolution_strategy, merge, ...)` — query across federated KGs
+- Delegates to `KnowledgeGraphManager.federate_query()` → `FederatedKnowledgeGraph`
+- Strategies: `"type_and_name"` / `"exact_name"` / `"property_match"`
+- Returns `status / graph_count / entity_matches / query_hits / merged_entity_count`
+
+**`core_operations/knowledge_graph_manager.py`** (updated):
+- Added `gnn_embed()` — compute GNN embeddings + similar entities
+- Added `zkp_prove()` — generate ZK proofs with optional TDFOL_v1 witness
+- Added `federate_query()` — cross-graph entity resolution and query
+
+**`mcp_server/tools/graph_tools/__init__.py`** (updated):
+- 19 → 22 tools; `graph_gnn_embed`, `graph_zkp_prove`, `graph_federate_query` added to `__all__`
+
+**`mcp_server/tools/graph_tools/README.md`** (updated):
+- 3 new rows for session 83 tools
+
+## [3.22.36] - 2026-02-23
+
+### Added — TDFOL_v1 Witness Builder for Groth16 backend (Session 82) — 50 tests
+
+**`query/groth16_kg_witness.py`** (new module):
+- `KGAtomEncoder(max_length=64)` — normalize arbitrary KG strings to valid
+  single-word TDFOL_v1 atoms required by the Groth16 Rust backend
+  (`processors/groth16_backend`). Core `normalize(s)` + domain-specific encoders:
+  `encode_entity_type`, `encode_name`, `encode_relationship_type`,
+  `encode_entity_id`, `encode_property_key`. Compound atoms:
+  `atom_for_entity`, `atom_for_entity_exists`, `atom_for_path_exists`,
+  `atom_for_entity_property`.
+- `KGWitnessBuilder(circuit_version=1, ruleset_id="TDFOL_v1")` — build complete
+  TDFOL_v1 witness input dicts compatible with `WitnessInput` struct:
+  - `entity_exists(entity_type, name, entity_id, confidence)` → witness proving a
+    named entity exists without revealing its ID
+  - `path_exists(path_ids, rel_types, start_type, end_type)` → witness proving a
+    path exists without revealing node IDs
+  - `entity_property(entity_id, property_key, value_hash)` → witness proving an
+    entity has a property (value hidden behind SHA-256 hash)
+  - `query_answer_count(min_count, actual_count, query_type)` → witness proving
+    result count ≥ threshold
+  - All builders auto-compute `theorem_hash_hex` and `axioms_commitment_hex`
+  - Circuit v2: auto-generates `intermediate_steps` when not provided
+
+**`query/groth16_bridge.py`** (updated):
+- `KGEntityFormula.to_tdfol_atoms(proof_type, entity_type, name_or_end_type,
+  entity_id, confidence) -> dict` (new classmethod) — returns valid TDFOL_v1
+  single-word atoms for `entity_exists` / `path_exists` / `entity_property`
+  proof types using `KGAtomEncoder` internally.
+
+**`query/__init__.py`** (updated):
+- `KGAtomEncoder` and `KGWitnessBuilder` exported + added to `__all__`.
+
 ## [3.22.35] - 2026-02-23
 
 ### Added — 5 new MCP server tools for query/extraction features (Session 81) — 42 tests
