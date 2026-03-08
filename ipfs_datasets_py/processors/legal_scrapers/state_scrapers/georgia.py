@@ -6,6 +6,7 @@ This module contains the scraper for Georgia statutes from the official state le
 import re
 import subprocess
 import tempfile
+from urllib.parse import urljoin
 from typing import List, Dict
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -20,6 +21,10 @@ except ImportError:
 
 class GeorgiaScraper(BaseStateScraper):
     """Scraper for Georgia state laws from http://www.legis.ga.gov"""
+
+    _GA_JUSTIA_TITLE_RE = re.compile(r"/codes/georgia/\d{4}/title-[^/]+/?$", re.IGNORECASE)
+    _GA_JUSTIA_SECTION_RE = re.compile(r"/codes/georgia/\d{4}/title-[^/]+/.*/section-[^/]+/?$", re.IGNORECASE)
+    _GA_SECTION_NUMBER_RE = re.compile(r"/section-([^/]+)/?$", re.IGNORECASE)
     
     def get_base_url(self) -> str:
         """Return the base URL for Georgia's legislative website."""
@@ -49,7 +54,13 @@ class GeorgiaScraper(BaseStateScraper):
             "https://law.justia.com/codes/georgia/",
         ]
 
+        justia_statutes = await self._scrape_justia_year(code_name, year="2024", max_statutes=180)
+        if len(justia_statutes) >= 60:
+            return justia_statutes
+
         best_statutes: List[NormalizedStatute] = []
+        if len(justia_statutes) > len(best_statutes):
+            best_statutes = justia_statutes
         seen = set()
         for candidate in candidate_urls:
             if candidate in seen:
@@ -82,6 +93,110 @@ class GeorgiaScraper(BaseStateScraper):
             return summary_pdf_statutes
 
         return []
+
+    async def _scrape_justia_year(self, code_name: str, year: str, max_statutes: int) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        year_url = f"https://law.justia.com/codes/georgia/{year}/"
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(year_url, timeout_seconds=40)
+        except Exception:
+            return []
+        if not payload:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        title_urls: List[str] = []
+        seen_titles = set()
+        for anchor in soup.find_all("a", href=True):
+            href = urljoin(year_url, str(anchor.get("href") or "").strip())
+            if not self._GA_JUSTIA_TITLE_RE.search(href):
+                continue
+            if href in seen_titles:
+                continue
+            seen_titles.add(href)
+            title_urls.append(href)
+            if len(title_urls) >= 40:
+                break
+
+        section_urls: List[str] = []
+        seen_sections = set()
+        for title_url in title_urls:
+            try:
+                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+            except Exception:
+                continue
+            if not title_payload:
+                continue
+            title_soup = BeautifulSoup(title_payload, "html.parser")
+            for anchor in title_soup.find_all("a", href=True):
+                href = urljoin(title_url, str(anchor.get("href") or "").strip())
+                if not self._GA_JUSTIA_SECTION_RE.search(href):
+                    continue
+                if href in seen_sections:
+                    continue
+                seen_sections.add(href)
+                section_urls.append(href)
+                if len(section_urls) >= max(1, int(max_statutes * 4)):
+                    break
+            if len(section_urls) >= max(1, int(max_statutes * 4)):
+                break
+
+        statutes: List[NormalizedStatute] = []
+        for index, section_url in enumerate(section_urls[: max(1, int(max_statutes * 4))], start=1):
+            statute = await self._build_justia_statute(code_name=code_name, section_url=section_url, fallback_number=str(index))
+            if statute is None:
+                continue
+            statutes.append(statute)
+            if len(statutes) >= max_statutes:
+                break
+
+        return statutes
+
+    async def _build_justia_statute(self, *, code_name: str, section_url: str, fallback_number: str) -> NormalizedStatute | None:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+        except Exception:
+            return None
+        if not payload:
+            return None
+
+        html = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+        soup = BeautifulSoup(html, "html.parser")
+        content_node = soup.select_one("main") or soup.select_one("article") or soup.select_one("body")
+        if content_node is None:
+            return None
+
+        full_text = self._extract_text_from_html(str(content_node))
+        if len(full_text) < 280:
+            return None
+
+        heading_node = soup.select_one("h1") or soup.select_one("title")
+        heading = " ".join((heading_node.get_text(" ", strip=True) if heading_node else "").split())
+        match = self._GA_SECTION_NUMBER_RE.search(section_url)
+        section_number = match.group(1) if match else fallback_number
+
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            section_number=section_number,
+            section_name=(heading or f"Georgia Code {section_number}")[:200],
+            full_text=full_text[:14000],
+            source_url=section_url,
+            legal_area=self._identify_legal_area(heading),
+            official_cite=f"Ga. Code Ann. § {section_number}",
+            metadata=StatuteMetadata(),
+        )
 
     async def _scrape_general_statute_summary_pdfs(self, code_name: str) -> List[NormalizedStatute]:
         """Use official GA-hosted General Statutes summary PDFs as strict-safe fallback."""

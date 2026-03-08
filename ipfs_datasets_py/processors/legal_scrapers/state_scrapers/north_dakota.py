@@ -16,6 +16,9 @@ from .registry import StateScraperRegistry
 
 class NorthDakotaScraper(BaseStateScraper):
     """Scraper for North Dakota state laws from https://www.legis.nd.gov"""
+
+    _ND_CENCODE_PDF_RE = re.compile(r"/cencode/.*?\.pdf$", re.IGNORECASE)
+    _ND_CENCODE_FILE_RE = re.compile(r"t(\d{1,3})c(\d{1,3})\.pdf$", re.IGNORECASE)
     
     def get_base_url(self) -> str:
         """Return the base URL for North Dakota's legislative website."""
@@ -42,6 +45,8 @@ class NorthDakotaScraper(BaseStateScraper):
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/",
+            f"{self.get_base_url()}/cencode/",
+            "https://www.ndlegis.gov/cencode/",
         ]
 
         best: List[NormalizedStatute] = []
@@ -69,19 +74,24 @@ class NorthDakotaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        homepage = f"{self.get_base_url()}/"
-        payload = await self._fetch_page_content_with_archival_fallback(homepage, timeout_seconds=35)
-        if not payload:
-            return []
-
-        soup = BeautifulSoup(payload, "html.parser")
         statutes: List[NormalizedStatute] = []
         seen = set()
         candidate_links = []
-        for link in soup.find_all("a", href=True):
-            candidate_links.append(str(link.get("href", "")).strip())
 
-        discovered = await self._discover_archived_cencode_pdfs(limit=420)
+        for homepage in [f"{self.get_base_url()}/cencode/", "https://www.ndlegis.gov/cencode/", f"{self.get_base_url()}/"]:
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(homepage, timeout_seconds=35)
+            except Exception:
+                continue
+            if not payload:
+                continue
+            soup = BeautifulSoup(payload, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href", "")).strip()
+                if href:
+                    candidate_links.append(urljoin(homepage, href))
+
+        discovered = await self._discover_archived_cencode_pdfs(limit=max(600, max_statutes * 6))
         candidate_links.extend(discovered)
 
         for href in candidate_links:
@@ -89,19 +99,19 @@ class NorthDakotaScraper(BaseStateScraper):
                 break
             if not href:
                 continue
-            abs_url = urljoin(homepage, href)
-            if not re.search(r"/cencode/t\d{1,3}c\d{1,3}\.pdf$", abs_url, re.IGNORECASE):
+            abs_url = href
+            if not self._ND_CENCODE_PDF_RE.search(abs_url):
                 continue
             if abs_url in seen:
                 continue
             seen.add(abs_url)
 
             file_name = abs_url.rsplit("/", 1)[-1]
-            m = re.search(r"t(\d{1,3})c(\d{1,3})\.pdf$", file_name, re.IGNORECASE)
+            m = self._ND_CENCODE_FILE_RE.search(file_name)
             title_no = m.group(1) if m else ""
             chapter_no = m.group(2) if m else ""
-            label = f"Title {title_no} Chapter {chapter_no}".strip()
-            section_number = f"{title_no}-{chapter_no}".strip("-") or file_name
+            label = f"Title {title_no} Chapter {chapter_no}".strip() if m else file_name
+            section_number = f"{title_no}-{chapter_no}".strip("-") or file_name.rsplit(".", 1)[0]
             pdf_bytes = await self._request_bytes(abs_url, timeout=45)
             full_text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=14000)
             if len(full_text) < 280:
@@ -127,20 +137,28 @@ class NorthDakotaScraper(BaseStateScraper):
 
     async def _discover_archived_cencode_pdfs(self, limit: int = 320) -> List[str]:
         """Discover archived ND Century Code chapter PDFs from Wayback CDX."""
-        cdx_url = (
-            "http://web.archive.org/cdx/search/cdx?url=legis.nd.gov/cencode/t*c*.pdf"
-            "&output=json&filter=statuscode:200&collapse=digest"
-            f"&limit={max(1, int(limit))}"
-        )
-        try:
-            req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=45) as resp:
-                payload = resp.read().decode("utf-8", errors="ignore")
-            rows = json.loads(payload)
-            if not isinstance(rows, list) or len(rows) < 2:
-                return []
+        out: List[str] = []
+        seen = set()
+        for target in [
+            "legis.nd.gov/cencode/*.pdf",
+            "ndlegis.gov/cencode/*.pdf",
+        ]:
+            cdx_url = (
+                f"http://web.archive.org/cdx/search/cdx?url={urllib.parse.quote(target, safe='*/:.')}"
+                "&output=json&filter=statuscode:200&collapse=digest"
+                f"&limit={max(1, int(limit))}"
+            )
+            try:
+                req = urllib.request.Request(cdx_url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=45) as resp:
+                    payload = resp.read().decode("utf-8", errors="ignore")
+                rows = json.loads(payload)
+            except Exception:
+                continue
 
-            out: List[str] = []
+            if not isinstance(rows, list) or len(rows) < 2:
+                continue
+
             for row in rows[1:]:
                 if not isinstance(row, list) or len(row) < 3:
                     continue
@@ -149,10 +167,12 @@ class NorthDakotaScraper(BaseStateScraper):
                 if not ts or not original:
                     continue
                 encoded = urllib.parse.quote(original, safe=':/?=&%.-_')
-                out.append(f"http://web.archive.org/web/{ts}/{encoded}")
-            return out
-        except Exception:
-            return []
+                candidate = f"http://web.archive.org/web/{ts}/{encoded}"
+                if candidate in seen:
+                    continue
+                seen.add(candidate)
+                out.append(candidate)
+        return out
 
     async def _request_bytes(self, pdf_url: str, timeout: int) -> bytes:
         candidates = [str(pdf_url or "")]

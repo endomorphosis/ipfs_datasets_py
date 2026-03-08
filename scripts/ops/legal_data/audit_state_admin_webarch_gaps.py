@@ -28,6 +28,11 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import _get_official_state_url
 from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
+from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
+    ScraperConfig,
+    ScraperMethod,
+    UnifiedWebScraper,
+)
 
 _ERROR_BLOCK_RE = re.compile(
     r"403|404|forbidden|page not found|cert|certificate|ssl|timeout|timed out|connection refused|dns|name mismatch",
@@ -49,6 +54,43 @@ _RULE_BODY_SIGNAL_RE = re.compile(
     r"purpose\s+of\s+regulations|notice\s+of\s+adoption|notice\s+of\s+proposed\s+(?:amendment|adoption|repeal)",
     re.IGNORECASE,
 )
+
+_BLOCKED_CHALLENGE_RE = re.compile(
+    r"just a moment|attention required|cloudflare|request rejected|access denied|access is denied|"
+    r"captcha|security check|checking your browser|temporarily unavailable|forbidden",
+    re.IGNORECASE,
+)
+
+_LOGIN_GATE_RE = re.compile(
+    r"sign in|log in|username|password|single sign-on|sso|forgot password|request account|account login",
+    re.IGNORECASE,
+)
+
+_BLOCKED_TITLE_RE = re.compile(
+    r"^(attention required|just a moment|request rejected|403\b|404\b|access denied|forbidden)",
+    re.IGNORECASE,
+)
+
+
+def _build_live_audit_api() -> UnifiedWebArchivingAPI:
+    """Use the same live-aware routing as targeted weak-state recovery."""
+    live_cfg = ScraperConfig(
+        timeout=40,
+        max_retries=2,
+        extract_links=True,
+        extract_text=True,
+        fallback_enabled=True,
+        rate_limit_delay=0.2,
+        common_crawl_hf_remote_meta=False,
+        preferred_methods=[
+            ScraperMethod.PLAYWRIGHT,
+            ScraperMethod.BEAUTIFULSOUP,
+            ScraperMethod.REQUESTS_ONLY,
+            ScraperMethod.WAYBACK_MACHINE,
+            ScraperMethod.COMMON_CRAWL,
+        ],
+    )
+    return UnifiedWebArchivingAPI(scraper=UnifiedWebScraper(live_cfg))
 
 
 def parse_args() -> argparse.Namespace:
@@ -192,6 +234,32 @@ def _document_title(doc: Dict[str, Any]) -> str:
     return str(doc.get("title") or "").strip()
 
 
+def _document_html(doc: Dict[str, Any]) -> str:
+    return str(doc.get("html") or "")
+
+
+def _looks_like_blocked_page(*, title: str, text: str, html: str, error_messages: Iterable[str]) -> bool:
+    title_text = str(title or "").strip()
+    body_text = str(text or "")
+    body_html = str(html or "")
+    errors = "\n".join(str(msg or "") for msg in error_messages)
+    combined = "\n".join([title_text, body_text[:2500], body_html[:2500], errors[:1000]])
+    if _BLOCKED_TITLE_RE.search(title_text):
+        return True
+    if not _BLOCKED_CHALLENGE_RE.search(combined):
+        return False
+    return len(body_text.strip()) < 1200
+
+
+def _looks_like_login_gate(*, title: str, text: str, html: str) -> bool:
+    title_text = str(title or "").strip()
+    body_text = str(text or "")
+    hay = "\n".join([title_text, body_text[:2500], str(html or "")[:2500]])
+    if not _LOGIN_GATE_RE.search(hay):
+        return False
+    return len(body_text.strip()) < 1200 or bool(re.search(r"^(sign in|log in|account)", title_text, re.IGNORECASE))
+
+
 def _is_confident_substantive_page(*, text: str, title: str, url: str) -> bool:
     if not _is_substantive_rule_text(text=text, title=title, url=url, min_chars=160):
         return False
@@ -230,15 +298,20 @@ def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -
                 error_messages.append(text)
     title = _document_title(document)
     text = _document_text(document)
+    html = _document_html(document)
     substantive = _is_confident_substantive_page(text=text, title=title, url=url)
     relaxed = _is_relaxed_recovery_text(text=text, title=title, url=url)
     rule_body = _has_rule_body_signals(text=text, title=title, url=url)
     landing_like = _looks_like_non_rule_admin_page(text=text, title=title, url=url)
-    blocked, blocked_messages = _classify_error_messages(error_messages)
+    blocked_from_errors, blocked_messages = _classify_error_messages(error_messages)
+    blocked_from_page = _looks_like_blocked_page(title=title, text=text, html=html, error_messages=error_messages)
+    login_gate = _looks_like_login_gate(title=title, text=text, html=html)
+    blocked = blocked_from_errors or blocked_from_page or login_gate
     return {
         "state_code": state_code,
         "url": url,
         "success": bool(page.get("success")),
+        "usable_success": bool(page.get("success")) and not blocked,
         "title": title[:240],
         "text_len": len(text),
         "substantive_admin": substantive,
@@ -248,6 +321,8 @@ def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -
         "error_codes": error_codes,
         "error_messages": error_messages[:5],
         "blocked_or_transport_error": blocked,
+        "blocked_by_challenge_page": blocked_from_page,
+        "blocked_by_login_gate": login_gate,
         "blocked_examples": blocked_messages,
         "in_existing_corpus": url in corpus_urls,
         "domain": urlparse(url).netloc if url else "",
@@ -306,7 +381,7 @@ def _audit_state(
     state_name = US_STATES.get(state_code, state_code)
     corpus = _corpus_summary(state_code, corpus_rows)
     seeds = _prioritize_seeds(state_code, corpus_rows, max_seeds)
-    api = UnifiedWebArchivingAPI()
+    api = _build_live_audit_api()
     target_terms = [
         state_name,
         f"{state_name} administrative code",
@@ -323,23 +398,27 @@ def _audit_state(
     page_rows = [_page_row(state_code=state_code, page=page, corpus_urls=corpus["corpus_urls"]) for page in results if isinstance(page, dict)]
 
     success_count = sum(1 for row in page_rows if row["success"])
+    usable_success_count = sum(1 for row in page_rows if row["usable_success"])
     substantive_hits = [row for row in page_rows if row["substantive_admin"] and row["rule_body_signals"]]
     landing_candidate_hits = [row for row in page_rows if row["substantive_admin"] and not row["rule_body_signals"]]
     blocked_count = sum(1 for row in page_rows if row["blocked_or_transport_error"])
     new_substantive_urls = [row["url"] for row in substantive_hits if row["url"] and not row["in_existing_corpus"]]
     new_landing_candidate_urls = [row["url"] for row in landing_candidate_hits if row["url"] and not row["in_existing_corpus"]]
-    thin_successes = [row for row in page_rows if row["success"] and row["text_len"] < 160 and not row["substantive_admin"]]
+    thin_successes = [
+        row for row in page_rows
+        if row["usable_success"] and row["text_len"] < 160 and not row["substantive_admin"]
+    ]
 
     if corpus["corpus_substantive_rows"] <= 0 and substantive_hits:
         gap_category = "corpus_gap_probe_found_substantive"
     elif corpus["corpus_substantive_rows"] <= 0 and landing_candidate_hits:
         gap_category = "corpus_gap_with_landing_candidates"
-    elif success_count <= 0 and blocked_count > 0:
-        gap_category = "blocked_or_transport_failures"
-    elif success_count > 0 and not substantive_hits:
-        gap_category = "fetchable_but_non_substantive"
     elif corpus["corpus_substantive_rows"] > 0 or substantive_hits:
         gap_category = "has_substantive_signal"
+    elif usable_success_count <= 0 and blocked_count > 0:
+        gap_category = "blocked_or_transport_failures"
+    elif usable_success_count > 0 and not substantive_hits:
+        gap_category = "fetchable_but_non_substantive"
     else:
         gap_category = "unclear"
 
@@ -355,6 +434,7 @@ def _audit_state(
         "probe_visited_count": int(probe.get("visited_count") or 0),
         "probe_result_count": len(page_rows),
         "probe_success_count": success_count,
+        "probe_usable_success_count": usable_success_count,
         "probe_substantive_hits": len(substantive_hits),
         "probe_landing_candidate_hits": len(landing_candidate_hits),
         "probe_blocked_count": blocked_count,
@@ -400,11 +480,11 @@ def _build_markdown(summary: Dict[str, Any], state_rows: List[Dict[str, Any]]) -
     lines.append("")
     lines.append("## Per-State")
     lines.append("")
-    lines.append("| State | Corpus Rows | Corpus Substantive | Probe Success | Probe Substantive | Probe Landing Candidates | New Substantive URLs | Gap Category |")
-    lines.append("|---|---:|---:|---:|---:|---:|---:|---|")
+    lines.append("| State | Corpus Rows | Corpus Substantive | Probe Success | Usable Success | Probe Substantive | Probe Landing Candidates | New Substantive URLs | Gap Category |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---|")
     for row in state_rows:
         lines.append(
-            f"| {row['state_code']} | {row['corpus_rows']} | {row['corpus_substantive_rows']} | {row['probe_success_count']} | {row['probe_substantive_hits']} | {row['probe_landing_candidate_hits']} | {len(row['new_substantive_urls'])} | {row['gap_category']} |"
+            f"| {row['state_code']} | {row['corpus_rows']} | {row['corpus_substantive_rows']} | {row['probe_success_count']} | {row['probe_usable_success_count']} | {row['probe_substantive_hits']} | {row['probe_landing_candidate_hits']} | {len(row['new_substantive_urls'])} | {row['gap_category']} |"
         )
     lines.append("")
     lines.append("## Priority Gaps")

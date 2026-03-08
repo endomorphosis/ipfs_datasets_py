@@ -21,7 +21,10 @@ making it resilient to various failure scenarios.
 
 import logging
 import anyio
+import glob
+import os
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Any, Literal, Union, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -88,6 +91,8 @@ class ScraperConfig:
     retry_delay: float = 1.0
     playwright_headless: bool = True
     playwright_wait_for: str = "networkidle"
+    playwright_hydration_wait_ms: int = 3000
+    playwright_shell_retry_wait_ms: int = 9000
     extract_links: bool = True
     extract_text: bool = True
     follow_redirects: bool = True
@@ -103,6 +108,10 @@ class ScraperConfig:
     common_crawl_year_db: Optional[str] = None
     common_crawl_collection_db: Optional[str] = None
     common_crawl_year: Optional[str] = None
+    common_crawl_hf_remote_meta: Optional[bool] = None
+    common_crawl_hf_meta_index_dataset: Optional[str] = None
+    common_crawl_hf_pointer_dataset: Optional[str] = None
+    common_crawl_hf_revision: Optional[str] = None
     common_crawl_max_matches: int = 25
     common_crawl_max_parquet_files: int = 200
     common_crawl_per_parquet_limit: int = 2000
@@ -240,6 +249,183 @@ class UnifiedWebScraper:
             self.session.headers.update({'User-Agent': self.config.user_agent})
         except ImportError:
             self.session = None
+
+    @staticmethod
+    def _env_bool(*names: str) -> Optional[bool]:
+        """Parse the first present boolean-like environment variable."""
+        for name in names:
+            raw = (os.environ.get(name) or "").strip().lower()
+            if not raw:
+                continue
+            if raw in {"1", "true", "yes", "on"}:
+                return True
+            if raw in {"0", "false", "no", "off"}:
+                return False
+        return None
+
+    @staticmethod
+    def _existing_path(*candidates: Optional[Union[str, Path]], want_dir: bool = False, want_file: bool = False) -> Optional[Path]:
+        """Return the first existing path from a candidate list."""
+        for candidate in candidates:
+            if not candidate:
+                continue
+            path = Path(candidate).expanduser()
+            if not path.exists():
+                continue
+            if want_dir and not path.is_dir():
+                continue
+            if want_file and not path.is_file():
+                continue
+            return path.resolve()
+        return None
+
+    @staticmethod
+    def _latest_matching_path(patterns: List[str]) -> Optional[Path]:
+        """Pick the lexicographically latest existing path from glob patterns."""
+        matches: List[Path] = []
+        for pattern in patterns:
+            if not pattern:
+                continue
+            matches.extend(Path(p) for p in glob.glob(pattern))
+        if not matches:
+            return None
+        return sorted((p.expanduser().resolve() for p in matches if p.exists()), reverse=True)[0]
+
+    def _resolve_common_crawl_search_options(self, *, max_matches: int) -> tuple[Dict[str, Any], str, bool]:
+        """Resolve local Common Crawl paths and HF remote fallback policy."""
+        year = self.config.common_crawl_year or (os.environ.get("COMMON_CRAWL_YEAR") or "").strip() or None
+
+        parquet_root = self._existing_path(
+            self.config.common_crawl_parquet_root,
+            os.environ.get("IPFS_DATASETS_PY_COMMON_CRAWL_PARQUET_ROOT"),
+            os.environ.get("COMMON_CRAWL_PARQUET_ROOT"),
+            os.environ.get("CCINDEX_PARQUET_ROOT"),
+            "~/ccindex_storage/parquet",
+            "/storage/ccindex_parquet",
+            want_dir=True,
+        )
+
+        master_db = self._existing_path(
+            self.config.common_crawl_master_db,
+            os.environ.get("IPFS_DATASETS_PY_COMMON_CRAWL_MASTER_DB"),
+            os.environ.get("COMMON_CRAWL_MASTER_DB"),
+            os.environ.get("CCINDEX_MASTER_DB"),
+            "~/ccindex_storage/duckdb/cc_pointers_master/cc_master_index.duckdb",
+            "/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb",
+            want_file=True,
+        )
+
+        year_db = self._existing_path(
+            self.config.common_crawl_year_db,
+            os.environ.get("IPFS_DATASETS_PY_COMMON_CRAWL_YEAR_DB"),
+            os.environ.get("COMMON_CRAWL_YEAR_DB"),
+            os.environ.get("CCINDEX_YEAR_DB"),
+            (f"~/ccindex_storage/duckdb/cc_pointers_by_year/{year}.duckdb" if year else None),
+            want_file=True,
+        )
+
+        collection_db = self._existing_path(
+            self.config.common_crawl_collection_db,
+            os.environ.get("IPFS_DATASETS_PY_COMMON_CRAWL_COLLECTION_DB"),
+            os.environ.get("COMMON_CRAWL_COLLECTION_DB"),
+            os.environ.get("CCINDEX_COLLECTION_DB"),
+            want_file=True,
+        )
+        if collection_db is None:
+            collection_db = self._latest_matching_path([
+                f"{Path('~/ccindex_storage/duckdb/cc_pointers_by_collection').expanduser()}/CC-MAIN-{year}-*.duckdb" if year else "",
+                f"{Path('~/ccindex_storage/duckdb/cc_pointers_by_collection').expanduser()}/*.duckdb",
+            ])
+
+        meta_mode = "none"
+        if master_db is not None:
+            meta_mode = "master"
+        elif year_db is not None:
+            meta_mode = "year"
+        elif collection_db is not None:
+            meta_mode = "collection"
+
+        hf_remote_meta = self.config.common_crawl_hf_remote_meta
+        if hf_remote_meta is None:
+            hf_remote_meta = self._env_bool(
+                "IPFS_DATASETS_PY_COMMON_CRAWL_HF_REMOTE_META",
+                "COMMON_CRAWL_HF_REMOTE_META",
+                "HF_REMOTE_META",
+            )
+        hf_remote_requested = bool(hf_remote_meta)
+        hf_remote_auto = hf_remote_meta is None and meta_mode == "none"
+        hf_remote_fallback_allowed = hf_remote_requested or meta_mode in {"none", "collection"}
+
+        search_options: Dict[str, Any] = {
+            "parquet_root": parquet_root if parquet_root is not None else Path("/storage/ccindex_parquet"),
+            "master_db": master_db,
+            "year_db": year_db,
+            "collection_db": collection_db,
+            "year": year,
+            "max_parquet_files": int(self.config.common_crawl_max_parquet_files),
+            "max_matches": int(max_matches),
+            "per_parquet_limit": int(self.config.common_crawl_per_parquet_limit),
+        }
+
+        if hf_remote_requested or hf_remote_auto:
+            search_options.update(
+                {
+                    "hf_remote_meta": True,
+                    "hf_meta_index_dataset": self.config.common_crawl_hf_meta_index_dataset
+                    or os.environ.get("COMMON_CRAWL_HF_META_INDEX_DATASET")
+                    or "Publicus/common_crawl_pointer_indices",
+                    "hf_pointer_dataset": self.config.common_crawl_hf_pointer_dataset
+                    or os.environ.get("COMMON_CRAWL_HF_POINTER_DATASET")
+                    or "Publicus/common_crawl_pointers_by_collection",
+                    "hf_revision": self.config.common_crawl_hf_revision
+                    or os.environ.get("COMMON_CRAWL_HF_REVISION")
+                    or "main",
+                }
+            )
+
+        return search_options, meta_mode, hf_remote_fallback_allowed
+
+    def _search_common_crawl_records(self, ccapi: Any, url: str, *, max_matches: int):
+        """Search Common Crawl locally first, then retry with HF remote meta when needed."""
+        search_options, meta_mode, hf_remote_enabled = self._resolve_common_crawl_search_options(
+            max_matches=max_matches
+        )
+
+        def _run(options: Dict[str, Any]):
+            return ccapi.search_domain_via_meta_indexes(url, **options)
+
+        if bool(search_options.get("hf_remote_meta")) and meta_mode == "none":
+            return _run(search_options), True
+
+        try:
+            result = _run(search_options)
+        except (FileNotFoundError, ValueError):
+            if not hf_remote_enabled:
+                raise
+            remote_options = dict(search_options)
+            remote_options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                }
+            )
+            return _run(remote_options), True
+
+        if meta_mode == "collection" and hf_remote_enabled and not list(getattr(result, "records", []) or []):
+            remote_options = dict(search_options)
+            remote_options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                }
+            )
+            return _run(remote_options), True
+
+        return result, bool(search_options.get("hf_remote_meta"))
     
     async def scrape(
         self,
@@ -364,13 +550,76 @@ class UnifiedWebScraper:
         """Scrape using Playwright for JavaScript-rendered content."""
         from playwright.async_api import async_playwright
         from bs4 import BeautifulSoup
+
+        browser_user_agent = self.config.user_agent
+        if browser_user_agent == "IPFS-Datasets-UnifiedScraper/1.0":
+            browser_user_agent = (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            )
+
+        async def _read_live_dom(page: Any) -> tuple[str, List[Dict[str, str]]]:
+            body_text = ""
+            if self.config.extract_text:
+                try:
+                    body_text = await page.locator("body").inner_text()
+                except Exception:
+                    body_text = ""
+
+            dom_links: List[Dict[str, str]] = []
+            if self.config.extract_links:
+                try:
+                    raw_links = await page.locator("a").evaluate_all(
+                        """
+                        (els) => els.map((a) => ({
+                            href: a.href || '',
+                            text: (a.innerText || a.textContent || '').trim(),
+                        }))
+                        """
+                    )
+                except Exception:
+                    raw_links = []
+                for link in raw_links or []:
+                    if not isinstance(link, dict):
+                        continue
+                    href = str(link.get("href") or "").strip()
+                    if not href:
+                        continue
+                    dom_links.append({
+                        "url": href,
+                        "text": str(link.get("text") or "").strip(),
+                    })
+            return body_text, dom_links
         
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=self.config.playwright_headless)
-            page = await browser.new_page()
+            context = await browser.new_context(
+                user_agent=browser_user_agent,
+                locale="en-US",
+                viewport={"width": 1440, "height": 900},
+            )
+            page = await context.new_page()
             
             try:
-                await page.goto(url, wait_until=self.config.playwright_wait_for, timeout=self.config.timeout * 1000)
+                # SPAs on state code hosts often return an initial shell before client-side
+                # hydration fills in the real body text and links.
+                await page.goto(url, wait_until="domcontentloaded", timeout=self.config.timeout * 1000)
+                try:
+                    await page.wait_for_load_state(self.config.playwright_wait_for, timeout=min(5000, self.config.timeout * 1000))
+                except Exception:
+                    pass
+                if self.config.playwright_hydration_wait_ms > 0:
+                    await page.wait_for_timeout(self.config.playwright_hydration_wait_ms)
+
+                text, links = await _read_live_dom(page)
+                shell_like = (
+                    (not text.strip())
+                    or "you need to enable javascript to run this app" in text.lower()
+                    or (self.config.extract_links and not links)
+                )
+                if shell_like and self.config.playwright_shell_retry_wait_ms > 0:
+                    await page.wait_for_timeout(self.config.playwright_shell_retry_wait_ms)
+                    text, links = await _read_live_dom(page)
                 
                 # Get content
                 html = await page.content()
@@ -380,15 +629,17 @@ class UnifiedWebScraper:
                 soup = BeautifulSoup(html, 'html.parser')
                 
                 # Extract text
-                text = ""
+                parsed_text = ""
                 if self.config.extract_text:
                     for script in soup(["script", "style"]):
                         script.decompose()
-                    text = soup.get_text(separator='\n', strip=True)
+                    parsed_text = soup.get_text(separator='\n', strip=True)
+                if not text:
+                    text = parsed_text
                 
                 # Extract links
-                links = []
-                if self.config.extract_links:
+                if self.config.extract_links and not links:
+                    links = []
                     for link in soup.find_all('a', href=True):
                         href = link['href']
                         if href.startswith('/'):
@@ -414,6 +665,7 @@ class UnifiedWebScraper:
                 )
             
             finally:
+                await context.close()
                 await browser.close()
     
     async def _scrape_beautifulsoup(self, url: str, **kwargs) -> ScraperResult:
@@ -534,24 +786,10 @@ class UnifiedWebScraper:
 
         if have_cc_engine:
             try:
-                from pathlib import Path
-
-                parquet_root = self.config.common_crawl_parquet_root
-                master_db = self.config.common_crawl_master_db
-                year_db = self.config.common_crawl_year_db
-                collection_db = self.config.common_crawl_collection_db
-                year = self.config.common_crawl_year
-
-                res = ccapi.search_domain_via_meta_indexes(
+                res, _used_hf_remote = self._search_common_crawl_records(
+                    ccapi,
                     url,
-                    parquet_root=(Path(parquet_root).expanduser().resolve() if parquet_root else Path("/storage/ccindex_parquet")),
-                    master_db=(Path(master_db).expanduser().resolve() if master_db else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
-                    year_db=(Path(year_db).expanduser().resolve() if year_db else None),
-                    collection_db=(Path(collection_db).expanduser().resolve() if collection_db else None),
-                    year=year,
-                    max_parquet_files=int(self.config.common_crawl_max_parquet_files),
                     max_matches=int(self.config.common_crawl_max_matches),
-                    per_parquet_limit=int(self.config.common_crawl_per_parquet_limit),
                 )
 
                 records = list(getattr(res, "records", []) or [])
@@ -884,26 +1122,13 @@ class UnifiedWebScraper:
             ]
 
         try:
-            from pathlib import Path
             import base64
             from bs4 import BeautifulSoup
 
-            parquet_root = self.config.common_crawl_parquet_root
-            master_db = self.config.common_crawl_master_db
-            year_db = self.config.common_crawl_year_db
-            collection_db = self.config.common_crawl_collection_db
-            year = self.config.common_crawl_year
-
-            res = ccapi.search_domain_via_meta_indexes(
+            res, _used_hf_remote = self._search_common_crawl_records(
+                ccapi,
                 url,
-                parquet_root=(Path(parquet_root).expanduser().resolve() if parquet_root else Path("/storage/ccindex_parquet")),
-                master_db=(Path(master_db).expanduser().resolve() if master_db else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
-                year_db=(Path(year_db).expanduser().resolve() if year_db else None),
-                collection_db=(Path(collection_db).expanduser().resolve() if collection_db else None),
-                year=year,
-                max_parquet_files=int(self.config.common_crawl_max_parquet_files),
-                max_matches=int(max_pages_i),
-                per_parquet_limit=int(self.config.common_crawl_per_parquet_limit),
+                max_matches=max_pages_i,
             )
 
             records = list(getattr(res, "records", []) or [])

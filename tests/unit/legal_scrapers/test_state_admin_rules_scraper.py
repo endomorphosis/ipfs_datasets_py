@@ -8,9 +8,14 @@ from ipfs_datasets_py.processors.legal_scrapers import legal_web_archive_search 
 from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as scraper_module
 from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import (
     _agentic_discover_admin_state_blocks,
+    _allowed_discovery_hosts_for_state,
+    _candidate_montana_rule_urls_from_text,
+    _candidate_utah_rule_urls_from_public_api,
     _is_admin_rule_statute,
     _is_relaxed_recovery_text,
+    _is_substantive_rule_text,
     _is_substantive_admin_statute,
+    _url_allowed_for_state,
     scrape_state_admin_rules,
 )
 from ipfs_datasets_py.processors.web_archiving import contracts as contracts_module
@@ -101,6 +106,184 @@ def test_rejects_montana_board_landing_page_false_positive() -> None:
 
     assert _is_admin_rule_statute(statute) is True
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_montana_title_inventory_page_false_positive() -> None:
+    text = (
+        "AGRICULTURE | Montana SOS\n"
+        "Administrative Rules of Montana\n"
+        "Title 4 AGRICULTURE\n"
+        "Chapter 4.1 ORGANIZATIONAL RULE\n"
+        "Chapter 4.2 PROCEDURAL RULES\n"
+        "Chapter 4.3 AGRICULTURAL DEVELOPMENT DIVISION\n"
+        "Chapter 4.4 HAIL INSURANCE PROGRAM\n"
+        "Chapter 4.5 NOXIOUS WEED MANAGEMENT\n"
+        "Home | Contact Us | Accessibility | Disclaimer\n"
+        "Administrative Rules of Montana\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="AGRICULTURE | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/5eaf58c6-ae9f-4ebe-afe2-c617e962b390",
+        min_chars=160,
+    ) is False
+
+
+def test_rejects_montana_subchapter_inventory_page_false_positive() -> None:
+    text = (
+        "HAIL INSURANCE PROGRAM | Montana SOS\n"
+        "HAIL INSURANCE PROGRAM\n"
+        "Subchapter 4.4.1 Organizational Rule\n"
+        "Subchapter 4.4.2 Procedural Rules\n"
+        "Subchapter 4.4.3 Substantive Rules\n"
+        "Home | Contact Us | Accessibility | Disclaimer\n"
+        "Administrative Rules of Montana\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="HAIL INSURANCE PROGRAM | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/9a3c8dd7-4528-4ad3-b2f5-bc5f0c5c31ef",
+        min_chars=160,
+    ) is False
+
+
+def test_rejects_montana_chapter_landing_page_false_positive() -> None:
+    text = (
+        "ORGANIZATIONAL RULE | Montana SOS\n"
+        "Administrative Rules of Montana\n"
+        "Title 10 EDUCATION\n"
+        "Chapter 10.1 ORGANIZATIONAL RULE\n"
+        "Show Not Effective Rules\n"
+        "Subchapter 10.1.1 Organizational Rule\n"
+        "Home | Contact Us | Accessibility | Disclaimer\n"
+        "Administrative Rules of Montana\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="ORGANIZATIONAL RULE | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1892387a-b61e-4aa2-a1dd-d9f7a535fd42",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="ORGANIZATIONAL RULE | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1892387a-b61e-4aa2-a1dd-d9f7a535fd42",
+    ) is False
+
+
+def test_synthesizes_montana_rule_urls_from_section_listing() -> None:
+    text = (
+        "Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act\n"
+        "1.3.201 INTRODUCTION AND DEFINITIONS\n"
+        "1.3.202 APPLICATION OF MONTANA ADMINISTRATIVE PROCEDURE ACT\n"
+        "1.3.233 GENERAL PROVISIONS, PUBLIC INSPECTION OF ORDERS AND DECISIONS\n"
+    )
+
+    assert _candidate_montana_rule_urls_from_text(
+        text=text,
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f",
+        limit=5,
+    ) == [
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/1.3.201",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/1.3.202",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/1.3.233",
+    ]
+
+
+def test_rejects_montana_arm_listing_section_without_rule_detail() -> None:
+    text = (
+        "Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act | Montana SOS\n"
+        "1.3.201 INTRODUCTION AND DEFINITIONS\n"
+        "1.3.202 APPLICATION OF MONTANA ADMINISTRATIVE PROCEDURE ACT\n"
+        "1.3.211 CONTESTED CASES, INTRODUCTION\n"
+        "1.3.212 CONTESTED CASES, NOTICE OF OPPORTUNITY TO BE HEARD\n"
+        "Home | Contact Us | Accessibility | Disclaimer\n"
+        "Administrative Rules of Montana\n"
+        "Show not effective\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f",
+    ) is False
+
+
+def test_rejects_montana_collection_root_inventory_page() -> None:
+    text = (
+        "Administrative Rules of Montana | Montana SOS\n"
+        "Administrative Rules of Montana\n"
+        "Title 1 GENERAL PROVISIONS\n"
+        "Title 4 AGRICULTURE\n"
+        "Title 10 EDUCATION\n"
+        "Home | Contact Us | Accessibility | Disclaimer\n"
+        "Emergency Rules\n"
+        "Montana Administrative Register\n"
+        "Show not effective\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Administrative Rules of Montana | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74",
+        min_chars=160,
+    ) is False
+
+
+def test_accepts_montana_policy_detail_page() -> None:
+    text = (
+        "INTRODUCTION AND DEFINITIONS | Montana SOS\n"
+        "Administrative Rules of Montana\n"
+        "Montana Administrative Register\n"
+        "Back\n"
+        "Subchapter 1.3.2 Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act\n"
+        "1.3.201 INTRODUCTION AND DEFINITIONS\n"
+        "Effective\n"
+        "Rule Version 27282\n"
+        "Active Version\n"
+        "Contact Information contactdoj@mt.gov\n"
+        "Rule History Eff. 12/31/72; AMD, 2009 MAR p. 7, Eff. 1/16/09.\n"
+        "Relevant MAR Notices 2008 Issue 22 Pages 2393-2539\n"
+        "References 2-4-101, MCA Short Title -- Purpose -- Exception\n"
+        "Referenced by 2025-195.1 Implementation of Senate Bill 315 (2025)\n"
+        "Administrative Rules of Montana\n"
+        "Title 1 GENERAL PROVISIONS\n"
+        "Chapter 1.3 ATTORNEY GENERAL MODEL RULES\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="INTRODUCTION AND DEFINITIONS | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865",
+        min_chars=160,
+    ) is True
+
+
+def test_accepts_montana_rule_body_page_with_arm_citations() -> None:
+    text = (
+        "Administrative Rules of Montana\n"
+        "ARM 4.3.101 Definitions\n"
+        "Authority: 80-11-102, MCA\n"
+        "Implementing: 80-11-103, MCA\n"
+        "(1) The department adopts the following definitions for the agricultural development division.\n"
+        "History: 44-2.5.101, eff. 01/01/2024.\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Definitions | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/4.3.101",
+        min_chars=160,
+    ) is True
 
 
 def test_rejects_texas_hunting_forum_false_positive() -> None:
@@ -221,6 +404,25 @@ def test_rejects_federal_uscode_admin_law_false_positive() -> None:
     ) is False
 
 
+def test_rejects_arizona_azleg_statute_proxy_false_positive() -> None:
+    statute = {
+        "code_name": "Arizona Administrative Rules (Agentic Discovery)",
+        "section_name": "A.R.S. 3-109",
+        "source_url": "https://www.azleg.gov/viewdocument/?docName=https://www.azleg.gov/ars/3/00109-01.htm",
+        "full_text": (
+            "Arizona Revised Statutes 3-109. Department duties and powers. The department may adopt rules, but this page is a statute page from the Arizona Legislature."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is False
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
 def test_accepts_new_hampshire_archived_rule_chapter() -> None:
     statute = {
         "code_name": "New Hampshire Administrative Rules (Agentic Discovery)",
@@ -277,6 +479,309 @@ def test_accepts_south_dakota_official_rule_index_page() -> None:
         title=statute["section_name"],
         url=statute["source_url"],
     ) is True
+
+
+def test_rejects_utah_official_rule_index_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Utah Administrative Rules (Agentic Discovery)",
+        "section_name": "Administrative Code Updates | Office of Administrative Rules",
+        "source_url": "https://rules.utah.gov/publications/code-updates",
+        "full_text": (
+            "Administrative Code Updates. Office of Administrative Rules. Utah Administrative Code updates and changed rule files. "
+            "Titles of the Utah Administrative Code are arranged by the authoring department. "
+            "For example, R15 is the title of the code that contains the rules written by the Office of Administrative Rules."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+
+
+def test_rejects_utah_adminrules_search_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Utah Administrative Rules (Agentic Discovery)",
+        "section_name": "Utah Office of Administrative Rules",
+        "source_url": "https://adminrules.utah.gov/public/search",
+        "full_text": (
+            "Administrative Rules Search Current Rules Proposed Rules Emergency Rules. "
+            "Agency Agriculture and Food 8 results. Agency Commerce 7 results. "
+            "Administrative Code search current rules by agency and rule."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+
+
+def test_rejects_utah_current_rules_search_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Utah Administrative Rules (Agentic Discovery)",
+        "section_name": "Utah Office of Administrative Rules",
+        "source_url": "https://adminrules.utah.gov/public/search//Current%20Rules",
+        "full_text": (
+            "Administrative Rules Search Current Rules Proposed Rules Emergency Rules. "
+            "Agency Agriculture and Food 8 results. Agency Commerce 7 results. "
+            "Administrative Code search current rules by agency and rule."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+
+
+def test_rejects_utah_root_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Utah Administrative Rules (Agentic Discovery)",
+        "section_name": "Office of Administrative Rules",
+        "source_url": "https://rules.utah.gov",
+        "full_text": (
+            "Office of Administrative Rules. Administrative Code. Publications. Utah State Bulletin. "
+            "Administrative Rules Register. Contact Agency. Rulewriting Manual."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_accepts_utah_rule_detail_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Utah Administrative Rules (Agentic Discovery)",
+        "section_name": "R70-101. Administration of Utah Educational Savings Plan",
+        "source_url": "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules?searchText=undefined",
+        "full_text": (
+            "R70-101. Administration of Utah Educational Savings Plan. "
+            "Authority and Purpose. Definitions. Eligibility. Board duties. Account owner rights. Contributions. "
+            "Withdrawals. Penalties. "
+        )
+        * 12,
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is True
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+
+
+def test_rejects_utah_bulletin_announcement_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Utah Administrative Rules (Agentic Discovery)",
+        "section_name": "November 1, 2025, issue of the Utah State Bulletin is now available | Office of Administrative Rules",
+        "source_url": "https://rules.utah.gov/wp-content/uploads/b20251101.pdf",
+        "full_text": (
+            "November 1, 2025, issue of the Utah State Bulletin is now available. "
+            "The November 1, 2025, issue of the Utah State Bulletin is available online. "
+        )
+        * 20,
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_rejects_utah_adminrules_home_landing_page() -> None:
+    statute = {
+        "code_name": "Utah Administrative Rules (Agentic Discovery)",
+        "section_name": "Utah Office of Administrative Rules",
+        "source_url": "https://adminrules.utah.gov/public/home",
+        "full_text": (
+            "HOME CODE BULLETIN HELP ABOUT US CONTACT US. "
+            "The state of Utah eRules application provides state agencies the ability to electronically submit proposed rule packets. "
+            "Questions about the content or application of a particular administrative rule must be referred to the agency that issued the rule."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_accepts_indiana_current_code_index_page() -> None:
+    statute = {
+        "code_name": "Indiana Administrative Rules (Agentic Discovery)",
+        "section_name": "Indiana Administrative Code | IARP",
+        "source_url": "https://iar.iga.in.gov/code/current",
+        "full_text": (
+            "Indiana Administrative Code Current TITLE 10 Office of Attorney General for the State TITLE 11 Consumer Protection Division of the Office of the Attorney General "
+            "TITLE 15 State Election Board TITLE 16 Office of the Lieutenant Governor TITLE 18 Indiana Election Commission TITLE 20 State Board of Accounts "
+            "TITLE 25 Indiana Department of Administration TITLE 30 State Personnel Board TITLE 31 State Personnel Department TITLE 33 State Employees' Appeals Commission."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is True
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+
+
+def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = [
+        {
+            "id": 2,
+            "name": "Agriculture and Food",
+            "programs": [
+                {
+                    "id": 70,
+                    "name": "Regulatory Services",
+                    "rules": [
+                        {
+                            "referenceNumber": "R70-101",
+                            "linkToRule": "R70-101/Current Rules",
+                            "htmlDownload": "uac-html/d605db48-0f6b-40d7-84a9-9a50c715d637.html",
+                        },
+                        {
+                            "referenceNumber": "R70-201",
+                            "linkToRule": "R70-201/Current Rules",
+                            "htmlDownload": "uac-html/abc44f4f-93bc-4f1f-8c5d-cd234ca8fb3d.html",
+                        },
+                    ],
+                }
+            ],
+        }
+    ]
+
+    class _FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return payload
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: _FakeResponse())
+
+    urls = _candidate_utah_rule_urls_from_public_api(
+        url="https://adminrules.utah.gov/public/search//Current%20Rules",
+        limit=4,
+    )
+
+    assert urls == [
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
+        "https://adminrules.utah.gov/api/public/getHTML/uac-html/d605db48-0f6b-40d7-84a9-9a50c715d637.html",
+        "https://adminrules.utah.gov/public/rule/R70-201/Current%20Rules",
+        "https://adminrules.utah.gov/api/public/getHTML/uac-html/abc44f4f-93bc-4f1f-8c5d-cd234ca8fb3d.html",
+    ]
+
+
+def test_utah_discovery_host_allowlist_excludes_external_domains() -> None:
+    allowed_hosts = _allowed_discovery_hosts_for_state("UT", "Utah")
+
+    assert "rules.utah.gov" in allowed_hosts
+    assert "adminrules.utah.gov" in allowed_hosts
+    assert _url_allowed_for_state("https://rules.utah.gov/publications/code-updates/", allowed_hosts) is True
+    assert _url_allowed_for_state("https://adminrules.utah.gov/public/search", allowed_hosts) is True
+    assert _url_allowed_for_state("https://www.nationalgeographic.com/travel/national-parks/article/zion-national-park", allowed_hosts) is False
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_ignores_off_domain_search_hits(monkeypatch: pytest.MonkeyPatch) -> None:
+    keep_url = "https://rules.utah.gov/publications/code-updates/"
+    reject_url = "https://www.nationalgeographic.com/travel/national-parks/article/zion-national-park"
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": [{"url": reject_url}, {"url": keep_url}]}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
+                title="Administrative Code Updates | Office of Administrative Rules",
+                html="",
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
+                title="Administrative Code Updates | Office of Administrative Rules",
+                html="",
+                links=[],
+            )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [keep_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: True)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["UT"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=2,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [keep_url]
 
 
 @pytest.mark.anyio
@@ -418,3 +923,206 @@ async def test_scrape_state_admin_rules_recovers_missing_target_state_via_agenti
     assert result["data"][0]["rules_count"] == 1
     assert result["metadata"]["agentic_recovered_states"] == ["AL"]
     assert result["metadata"]["missing_rule_states"] == []
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_seed_fetch_expands_hydrated_seed_links(monkeypatch: pytest.MonkeyPatch) -> None:
+    seed_url = "https://iar.iga.in.gov/code"
+    deep_url = "https://iar.iga.in.gov/code/current/10/1"
+    seed_text = (
+        "Indiana Administrative Code Current "
+        "TITLE 10 Office of Attorney General for the State "
+        "TITLE 11 Consumer Protection Division of the Office of the Attorney General "
+        "TITLE 15 State Election Board TITLE 16 Office of the Lieutenant Governor "
+        "TITLE 18 Indiana Election Commission TITLE 20 State Board of Accounts "
+        "TITLE 25 Indiana Department of Administration TITLE 30 State Personnel Board "
+        "TITLE 31 State Personnel Department TITLE 33 State Employees' Appeals Commission."
+    )
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text=seed_text,
+                title="Indiana Administrative Code | IARP",
+                html="<html><body><div id='root'></div></body></html>",
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            if url == seed_url:
+                return SimpleNamespace(
+                    text=seed_text,
+                    title="Indiana Administrative Code | IARP",
+                    html="<a href='https://iar.iga.in.gov/code/current/10/1'>Article 1</a>",
+                    links=[{"url": deep_url, "text": "Article 1"}],
+                )
+            return SimpleNamespace(
+                text="TITLE 10 Office of Attorney General ARTICLE 1 UNCLAIMED PROPERTY authority effective section.",
+                title="Title 10, Article 1",
+                html="",
+                links=[],
+            )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: True)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["IN"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=3,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 2
+    assert [
+        statute["source_url"] for statute in result["state_blocks"][0]["statutes"]
+    ] == [seed_url, deep_url]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_uses_live_scraper_for_prioritized_seed(monkeypatch: pytest.MonkeyPatch) -> None:
+    seed_url = "https://iar.iga.in.gov/code/current"
+    hydrated_text = (
+        "Indiana Administrative Code Current "
+        "TITLE 10 Office of Attorney General for the State "
+        "TITLE 11 Consumer Protection Division of the Office of the Attorney General "
+        "TITLE 15 State Election Board TITLE 16 Office of the Lieutenant Governor "
+        "TITLE 18 Indiana Election Commission TITLE 20 State Board of Accounts "
+        "TITLE 25 Indiana Department of Administration TITLE 30 State Personnel Board "
+        "TITLE 31 State Personnel Department TITLE 33 State Employees' Appeals Commission."
+    )
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="Indiana Register. You need to enable JavaScript to run this app.",
+                title="Indiana Register",
+                html="<div id='root'></div>",
+                extraction_provenance={"method": "beautifulsoup"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _GenericScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text="Indiana Register. You need to enable JavaScript to run this app.",
+                title="Indiana Register",
+                html="<div id='root'></div>",
+                links=[],
+            )
+
+    class _LiveScraper(_GenericScraper):
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text=hydrated_text,
+                title="Indiana Administrative Code | IARP",
+                html="",
+                links=[],
+            )
+
+    def _fake_scraper_factory(cfg):
+        preferred = list(getattr(cfg, "preferred_methods", []) or [])
+        if preferred and preferred[0] == "playwright":
+            return _LiveScraper(cfg)
+        return _GenericScraper(cfg)
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _fake_scraper_factory)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["IN"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=2,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [seed_url]

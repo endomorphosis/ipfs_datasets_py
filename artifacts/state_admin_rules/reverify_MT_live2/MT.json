@@ -1,0 +1,9 @@
+{
+  "state": "MT",
+  "status": "partial_success",
+  "rules_count": 16,
+  "states_with_rules": [
+    "MT"
+  ],
+  "missing_rule_states": []
+}

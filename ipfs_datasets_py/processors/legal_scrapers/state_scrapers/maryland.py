@@ -46,6 +46,12 @@ class MarylandScraper(BaseStateScraper):
         normalized = re.sub(r"\s+", "", normalized)
         return normalized.strip(".")
 
+    def _is_maryland_api_record(self, statute: NormalizedStatute) -> bool:
+        if not isinstance(statute, NormalizedStatute):
+            return False
+        structured = getattr(statute, "structured_data", {}) or {}
+        return str(structured.get("record_type") or "").strip().lower() == "maryland_api_section"
+
     async def _fetch_json(self, url: str) -> object:
         text = ""
         try:
@@ -121,7 +127,8 @@ class MarylandScraper(BaseStateScraper):
 
             section_jobs = []
             remaining = max_statutes - len(statutes)
-            for section in sections_payload[: max(remaining * 2, remaining)]:
+            budget = min(len(sections_payload), max(remaining * 4, 80))
+            for section in sections_payload[:budget]:
                 if not isinstance(section, dict):
                     continue
 
@@ -154,7 +161,7 @@ class MarylandScraper(BaseStateScraper):
                     continue
                 if statute is None:
                     continue
-                if self._is_low_quality_statute_record(statute):
+                if not self._is_maryland_api_record(statute) and self._is_low_quality_statute_record(statute):
                     continue
 
                 statutes.append(statute)
@@ -231,8 +238,8 @@ class MarylandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        api_statutes = await self._scrape_api_sections(code_name, max_statutes=80)
-        if len(api_statutes) >= 40:
+        api_statutes = await self._scrape_api_sections(code_name, max_statutes=140)
+        if len(api_statutes) >= 80:
             return api_statutes
 
         candidate_urls = [
@@ -252,13 +259,13 @@ class MarylandScraper(BaseStateScraper):
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
                     continue
-                if self._is_low_quality_statute_record(statute):
+                if not self._is_maryland_api_record(statute) and self._is_low_quality_statute_record(statute):
                     continue
                 merged_keys.add(key)
                 merged.append(statute)
 
         _merge(api_statutes)
-        if len(merged) >= 40:
+        if len(merged) >= 80:
             return merged
 
         for candidate in candidate_urls:
@@ -280,7 +287,7 @@ class MarylandScraper(BaseStateScraper):
                 statutes = []
 
             _merge(statutes)
-            if len(merged) >= 60:
+            if len(merged) >= 80:
                 return merged
 
             try:
@@ -289,7 +296,7 @@ class MarylandScraper(BaseStateScraper):
                 generic = []
 
             _merge(generic)
-            if len(merged) >= 60:
+            if len(merged) >= 80:
                 return merged
 
         return merged

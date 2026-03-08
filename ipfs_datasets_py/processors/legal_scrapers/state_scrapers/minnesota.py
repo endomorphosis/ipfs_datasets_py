@@ -13,9 +13,11 @@ from .registry import StateScraperRegistry
 class MinnesotaScraper(BaseStateScraper):
     """Scraper for Minnesota state laws from https://www.revisor.mn.gov"""
 
+    _MN_CHAPTER_URL_RE = re.compile(r"/statutes/cite/([0-9A-Za-z]+)$", re.IGNORECASE)
     _MN_SECTION_URL_RE = re.compile(r"/statutes/cite/[0-9A-Za-z]+\.[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*$", re.IGNORECASE)
     _MN_SECTION_NUMBER_RE = re.compile(r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)$", re.IGNORECASE)
     _MN_SECTION_ROW_RE = re.compile(r"^(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+)\s+(?P<title>.+)$")
+    _MN_CHAPTER_RANGE_RE = re.compile(r"\b(?P<start>\d{1,3}[A-Za-z]?)\s*-\s*(?P<end>\d{1,3}[A-Za-z]?)\b")
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -67,9 +69,9 @@ class MinnesotaScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
-        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=260)
+        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=420)
         _merge(chapter_statutes)
-        if len(merged) >= 40:
+        if len(merged) >= 80:
             return merged
 
         for candidate in candidate_urls:
@@ -89,7 +91,7 @@ class MinnesotaScraper(BaseStateScraper):
                     )
                     statutes = self._filter_section_level(statutes)
                     _merge(statutes)
-                    if len(merged) >= 40:
+                    if len(merged) >= 80:
                         return merged
                 except Exception:
                     pass
@@ -97,7 +99,7 @@ class MinnesotaScraper(BaseStateScraper):
             statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=420)
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
-            if len(merged) >= 40:
+            if len(merged) >= 80:
                 return merged
 
         return merged
@@ -108,16 +110,18 @@ class MinnesotaScraper(BaseStateScraper):
         except ImportError:
             return []
 
-        chapter_urls = [
-            f"{self.get_base_url()}/statutes/cite/609",
-            f"{self.get_base_url()}/statutes/cite/645",
-            f"{self.get_base_url()}/statutes/cite/518B",
-            f"{self.get_base_url()}/statutes/cite/169A",
-            f"{self.get_base_url()}/statutes/cite/8",
-            f"{self.get_base_url()}/statutes/cite/13",
-            f"{self.get_base_url()}/statutes/cite/144",
-            f"{self.get_base_url()}/statutes/cite/325F",
-        ]
+        chapter_urls = await self._discover_chapter_urls(max_chapters=max_statutes * 2)
+        if not chapter_urls:
+            chapter_urls = [
+                f"{self.get_base_url()}/statutes/cite/609",
+                f"{self.get_base_url()}/statutes/cite/645",
+                f"{self.get_base_url()}/statutes/cite/518B",
+                f"{self.get_base_url()}/statutes/cite/169A",
+                f"{self.get_base_url()}/statutes/cite/8",
+                f"{self.get_base_url()}/statutes/cite/13",
+                f"{self.get_base_url()}/statutes/cite/144",
+                f"{self.get_base_url()}/statutes/cite/325F",
+            ]
 
         section_urls: List[str] = []
         seen_urls = set()
@@ -157,6 +161,81 @@ class MinnesotaScraper(BaseStateScraper):
                 break
 
         return statutes
+
+    async def _discover_chapter_urls(self, max_chapters: int) -> List[str]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        index_url = f"{self.get_base_url()}/statutes/"
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=35)
+        except Exception:
+            return []
+        if not payload:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        chapter_urls: List[str] = []
+        seen = set()
+
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            match = self._MN_CHAPTER_URL_RE.search(href)
+            if not match:
+                continue
+            chapter_token = match.group(1)
+            if "." in chapter_token:
+                continue
+            full_url = href if href.startswith("http") else f"{self.get_base_url()}{href}"
+            if full_url in seen:
+                continue
+            seen.add(full_url)
+            chapter_urls.append(full_url)
+            if len(chapter_urls) >= max(1, int(max_chapters)):
+                return chapter_urls
+
+        page_text = "\n".join(line.strip() for line in soup.get_text("\n").splitlines() if line.strip())
+        for match in self._MN_CHAPTER_RANGE_RE.finditer(page_text):
+            for chapter_token in self._expand_chapter_range(match.group("start"), match.group("end")):
+                full_url = f"{self.get_base_url()}/statutes/cite/{chapter_token}"
+                if full_url in seen:
+                    continue
+                seen.add(full_url)
+                chapter_urls.append(full_url)
+                if len(chapter_urls) >= max(1, int(max_chapters)):
+                    return chapter_urls
+
+        return chapter_urls
+
+    def _expand_chapter_range(self, start_token: str, end_token: str) -> List[str]:
+        def _split(token: str) -> tuple[int, str]:
+            match = re.match(r"^(\d{1,3})([A-Za-z]?)$", str(token or "").strip())
+            if not match:
+                return 0, ""
+            return int(match.group(1)), match.group(2).upper()
+
+        start_num, start_suffix = _split(start_token)
+        end_num, end_suffix = _split(end_token)
+        if start_num <= 0 or end_num <= 0 or end_num < start_num:
+            return []
+
+        if start_num == end_num:
+            suffixes = [""]
+            if start_suffix or end_suffix:
+                begin_ord = ord(start_suffix or "A")
+                end_ord = ord(end_suffix or start_suffix or "A")
+                suffixes = [chr(code) for code in range(begin_ord, end_ord + 1)]
+                if start_suffix == "":
+                    suffixes.insert(0, "")
+            return [f"{start_num}{suffix}" for suffix in suffixes]
+
+        out = [f"{start_num}{start_suffix}" if start_suffix else str(start_num)]
+        for value in range(start_num + 1, end_num):
+            out.append(str(value))
+        out.append(f"{end_num}{end_suffix}" if end_suffix else str(end_num))
+        return out
 
     def _extract_section_urls_from_chapter_page(self, soup) -> List[str]:
         urls: List[str] = []
