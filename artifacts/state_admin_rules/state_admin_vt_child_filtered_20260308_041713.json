@@ -1,0 +1,559 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPConnectionPool(host='legislature.vermont.gov', port=80): Max retries exceeded with url: /statutes/chapter/03/025 (Caused by ConnectTimeoutError(<HTTPConnection(host='legislature.vermont.gov', port=80) at 0xf2627cd2d670>, 'Connection to legislature.vermont.gov timed out. (connect timeout=30)')); Archive.is returned no archived snapshot; requests_only error: HTTPConnectionPool(host='legislature.vermont.gov', port=80): Max retries exceeded with url: /statutes/chapter/03/025 (Caused by ConnectTimeoutError(<HTTPConnection(host='legislature.vermont.gov', port=80) at 0xf2627d357680>, 'Connection to legislature.vermont.gov timed out. (connect timeout=30)'))"
+      ],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "http://legislature.vermont.gov/statutes/chapter/03/025"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: 520 Server Error: <none> for url: http://twitter.com/vermontrules; Archive.is returned no archived snapshot; requests_only error: 520 Server Error: <none> for url: http://twitter.com/vermontrules"
+      ],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "http://twitter.com/vermontrules"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.4,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 0,
+      "title": "",
+      "url": "http://www.lexisnexis.com/hottopics/codeofvtrules/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.4,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 0,
+      "title": "",
+      "url": "https://advance.lexis.com/documentpage/?pdmfid=1000516&crid=6f021699-e5d8-40b4-86fe-22fa08020f91&nodeid=AADAABAABAAB&nodepath=%2FROOT%2FAAD%2FAADAAB%2FAADAABAAB%2FAADAABAABAAB&level=4&haschildren=&populated=false&title=04+000+001.+RULE+ON+RULEMAKING&indicator=true&config=00JAA3YmIxY2M5OC0zYmJjLTQ4ZjMtYjY3Yi02ODZhMTViYWUzMmEKAFBvZENhdGFsb2dfKuGXoJFNHKuKZG9OqaaI&pddocfullpath=%2Fshared%2Fdocument%2Fadministrative-codes%2Furn%3AcontentItem%3A6488-XWH1-F7VM-S392-00008-00&ecomp=6gf5kkk&prid=91f9c711-0a84-4f72-ac4c-e15b6772e554"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 1561716,
+      "title": "",
+      "url": "https://outside.vermont.gov/dept/sos/Services/APA/21-023.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 118998,
+      "title": "",
+      "url": "https://outside.vermont.gov/dept/sos/Services/APA/ruleonrulemaking.pdf"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Recent",
+          "url": "https://secure.vermont.gov/SOS/rules/index.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search Rules",
+          "url": "https://secure.vermont.gov/SOS/rules/search.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "APA Site",
+          "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.lexisnexis.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Code of Vermont Rules",
+          "url": "http://www.lexisnexis.com/hottopics/codeofvtrules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Calendar",
+          "url": "https://secure.vermont.gov/SOS/rules/calendar.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Subscribe",
+          "url": "https://secure.vermont.gov/SOS/rules/subscribe.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "APA Contact Info",
+          "url": "https://secure.vermont.gov/SOS/rules/contact.php"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 1030,
+      "title": "Vermont Secretary of State Rules Service",
+      "url": "https://secure.vermont.gov/SOS/rules/calendar.php"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Recent",
+          "url": "https://secure.vermont.gov/SOS/rules/index.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search Rules",
+          "url": "https://secure.vermont.gov/SOS/rules/search.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "APA Site",
+          "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.lexisnexis.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Code of Vermont Rules",
+          "url": "http://www.lexisnexis.com/hottopics/codeofvtrules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Calendar",
+          "url": "https://secure.vermont.gov/SOS/rules/calendar.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Subscribe",
+          "url": "https://secure.vermont.gov/SOS/rules/subscribe.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "APA Contact Info",
+          "url": "https://secure.vermont.gov/SOS/rules/contact.php"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 1030,
+      "title": "Vermont Secretary of State Rules Service",
+      "url": "https://secure.vermont.gov/SOS/rules/contact.php"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Recent",
+          "url": "https://secure.vermont.gov/SOS/rules/index.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search Rules",
+          "url": "https://secure.vermont.gov/SOS/rules/search.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "APA Site",
+          "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.lexisnexis.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Code of Vermont Rules",
+          "url": "http://www.lexisnexis.com/hottopics/codeofvtrules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Calendar",
+          "url": "https://secure.vermont.gov/SOS/rules/calendar.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Subscribe",
+          "url": "https://secure.vermont.gov/SOS/rules/subscribe.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "APA Contact Info",
+          "url": "https://secure.vermont.gov/SOS/rules/contact.php"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 6773,
+      "title": "Vermont Secretary of State Rules Service",
+      "url": "https://secure.vermont.gov/SOS/rules/index.php"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Recent",
+          "url": "https://secure.vermont.gov/SOS/rules/index.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search Rules",
+          "url": "https://secure.vermont.gov/SOS/rules/search.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "APA Site",
+          "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.lexisnexis.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Code of Vermont Rules",
+          "url": "http://www.lexisnexis.com/hottopics/codeofvtrules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Calendar",
+          "url": "https://secure.vermont.gov/SOS/rules/calendar.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Subscribe",
+          "url": "https://secure.vermont.gov/SOS/rules/subscribe.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "APA Contact Info",
+          "url": "https://secure.vermont.gov/SOS/rules/contact.php"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 53943,
+      "title": "Vermont Secretary of State Rules Service",
+      "url": "https://secure.vermont.gov/SOS/rules/search.php"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Recent",
+          "url": "https://secure.vermont.gov/SOS/rules/index.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search Rules",
+          "url": "https://secure.vermont.gov/SOS/rules/search.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "APA Site",
+          "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.lexisnexis.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Code of Vermont Rules",
+          "url": "http://www.lexisnexis.com/hottopics/codeofvtrules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Calendar",
+          "url": "https://secure.vermont.gov/SOS/rules/calendar.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Subscribe",
+          "url": "https://secure.vermont.gov/SOS/rules/subscribe.php"
+        },
+        {
+          "admin_signal": true,
+          "domain": "secure.vermont.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "APA Contact Info",
+          "url": "https://secure.vermont.gov/SOS/rules/contact.php"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 52393,
+      "title": "Vermont Secretary of State Rules Service",
+      "url": "https://secure.vermont.gov/SOS/rules/subscribe.php"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 82,
+      "title": "",
+      "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 81,
+      "title": "",
+      "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/apa-forms/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 82,
+      "title": "",
+      "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/filing-tools/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 81,
+      "title": "",
+      "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/filing-tools/electronic-filing/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 81,
+      "title": "",
+      "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/filing-tools/publication-calculator/"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:18:19.471103+00:00",
+    "pages_fetched": 16,
+    "pages_with_child_links": 5,
+    "source_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_landing_drilldown_20260308_040116.json",
+    "successful_fetches": 14
+  }
+}

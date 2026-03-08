@@ -1,0 +1,257 @@
+{
+  "pages": [
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "",
+          "url": "https://pels.georgia.gov/wp-content/uploads/2024/11/04-Policy-Statements.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "",
+          "url": "https://pels.georgia.gov/wp-content/uploads/2024/11/04-Seals-and-Stamps.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "",
+          "url": "https://pels.georgia.gov/wp-content/uploads/2025/04/04-Form-Petition-for-Rule-Variance-or-Waiver.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "",
+          "url": "https://pels.georgia.gov/wp-content/uploads/2024/11/04-Form-Petition-for-Rule-Variance-or-Waiver.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Professional EngineersandLand Surveyors Board",
+          "url": "https://pels.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Board Information",
+          "url": "https://pels.georgia.gov/board-information/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws, Rules & Policies",
+          "url": "https://pels.georgia.gov/laws-rules-policies/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://pels.georgia.gov/online-services/status-of-proposed-rule-amendments/%20"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "File A Complaint",
+          "url": "https://pels.georgia.gov/online-services/filing-a-complaint-with-the-georgia-professional-engineers-and-land-surveyors-board/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/gac/180"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Professional Engineers and Land Surveyors\r\n            Board",
+          "url": "https://www.linkedin.com/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2234,
+      "title": "Laws, Rules & Policies \u2013 Georgia Professional Engineers and Land Surveyors Board",
+      "url": "https://pels.georgia.gov/laws-rules-policies"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "DepartmentofAdministrative Services",
+          "url": "https://doas.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Letter From Commissioner",
+          "url": "https://doas.ga.gov/letter-from-commissioner"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Fleet Rules, Policies, and Compliance",
+          "url": "https://doas.ga.gov/fleet-management/fleet-rules-policies-and-compliance"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgiadoas.prod.acquia-sites.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 6,
+          "text": "Mission, Vision, and Values",
+          "url": "https://georgiadoas.prod.acquia-sites.com/sites/default/files/2024-01/Vision%20and%20Mission%20Poster.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "",
+          "url": "https://www.linkedin.com/company/georgia-department-of-administrative-services"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All Employee Resources",
+          "url": "https://doas.ga.gov/state-employee-resources"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All State Entities Resources",
+          "url": "https://doas.ga.gov/state-entity-resources"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Local Governments",
+          "url": "https://doas.ga.gov/surplus-property/information-for-local-governments"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Nonprofit Organizations",
+          "url": "https://doas.ga.gov/surplus-property/information-nonprofit-organization"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Public",
+          "url": "https://doas.ga.gov/surplus-property/information-for-public"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "State Entities",
+          "url": "https://doas.ga.gov/surplus-property/information-for-state-entities-property-coordinators"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_substantive",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 9409,
+      "title": "Homepage | Georgia Department of Administrative Services - DOAS",
+      "url": "https://doas.ga.gov"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:19:31.257110+00:00",
+    "pages_fetched": 2,
+    "pages_with_child_links": 2,
+    "source_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_webarch_page_gap_report_pagequal_20260308_034824.json",
+    "successful_fetches": 2
+  }
+}

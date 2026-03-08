@@ -1,0 +1,805 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "landing_like_non_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 63,
+      "title": "Indiana Register",
+      "url": "http://www.in.gov/legislative/iac/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "landing_like_non_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 71,
+      "title": "Indiana General Assembly",
+      "url": "https://iga.in.gov/laws/current/ic/titles/1"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Revenue",
+          "url": "https://www.in.gov/dor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "iga.in.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Laws & Administrative Code",
+          "url": "https://iga.in.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Residents",
+          "url": "https://www.in.gov/core/residents.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Jobs / Employment",
+          "url": "https://www.in.gov/core/economy-development.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Health Programs",
+          "url": "https://www.in.gov/health/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "BMV Branches",
+          "url": "https://www.in.gov/bmv/branch-locations-and-hours/bmv-branch-map/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Professional Licenses",
+          "url": "https://www.in.gov/core/licensing/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Driver's Licenses / IDs",
+          "url": "https://www.in.gov/bmv/licenses-permits-ids/home/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Outdoor Licenses",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/indiana-fish-and-wildlife-online-license-system/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Education",
+          "url": "https://www.in.gov/core/education.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "landing_like_non_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 3312,
+      "title": "IN.gov | Find an Agency",
+      "url": "https://www.in.gov/core/find_agency.html"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "landing_like_non_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 551097,
+      "title": "",
+      "url": "https://www.in.gov/dnr/fish-and-wildlife/files/fw-hunting_trapping_seasons.pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule & Regulation Changes",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/rule-regulation-changes"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Netting & Trapping",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/fishing/fish-netting-and-trapping-rules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Register for a reserved hunt",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/hunting-and-trapping/reserved-hunts"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Online Version",
+          "url": "https://www.eregulations.com/indiana/fishing"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "PDF Version",
+          "url": "https://www.eregulations.com/indiana/fishing/pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Online Version",
+          "url": "http://www.eregulations.com/indiana/fishing"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "How to Buy, Fees, &\u00a0Exemptions",
+          "url": "http://www.eregulations.com/indiana/fishing/fishing-licenses-fees/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Size & Bag Limits",
+          "url": "http://www.eregulations.com/indiana/fishing/fishing-regulations/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Basic Fishing Information",
+          "url": "http://www.eregulations.com/indiana/fishing/basic-fishing-information/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Bass",
+          "url": "http://www.eregulations.com/indiana/fishing/bass-regulations/"
+        }
+      ],
+      "errors": [],
+      "page_category": "landing_like_non_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 5392,
+      "title": "DNR: Fish & Wildlife: Fishing Guide & Regulations",
+      "url": "https://www.in.gov/dnr/fish-and-wildlife/fishing/fishing-guide-and-regulations"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule & Regulation Changes",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/rule-regulation-changes"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Register for a reserved hunt",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/hunting-and-trapping/reserved-hunts"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "iga.in.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Indiana Code",
+          "url": "https://iga.in.gov/laws/current/ic/titles/1"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "An official websiteof the Indiana State Government",
+          "url": "https://www.in.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Governor Mike Braun",
+          "url": "https://www.in.gov/gov"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.in.gov/dnr"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Education Programs",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/education-programs"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Fishing",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/fishing"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Find A Property- Click to Expand",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/properties"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Fish & Wildlife Property Alerts- Click to Expand",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/properties/advisories"
+        }
+      ],
+      "errors": [],
+      "page_category": "landing_like_non_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 5062,
+      "title": "DNR: Fish & Wildlife: Rule & Regulation Changes",
+      "url": "https://www.in.gov/dnr/fish-and-wildlife/rule-regulation-changes"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 71,
+      "title": "Indiana General Assembly",
+      "url": "https://iga.in.gov/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Revenue",
+          "url": "https://www.in.gov/dor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "iga.in.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Laws & Administrative Code",
+          "url": "https://iga.in.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Residents",
+          "url": "https://www.in.gov/core/residents.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Jobs / Employment",
+          "url": "https://www.in.gov/core/economy-development.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Health Programs",
+          "url": "https://www.in.gov/health/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "BMV Branches",
+          "url": "https://www.in.gov/bmv/branch-locations-and-hours/bmv-branch-map/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Professional Licenses",
+          "url": "https://www.in.gov/core/licensing/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Driver's Licenses / IDs",
+          "url": "https://www.in.gov/bmv/licenses-permits-ids/home/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Outdoor Licenses",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/indiana-fish-and-wildlife-online-license-system/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Education",
+          "url": "https://www.in.gov/core/education.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 4318,
+      "title": "IN.gov | Economic Development & Jobs",
+      "url": "https://www.in.gov/core/economy-development.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Revenue",
+          "url": "https://www.in.gov/dor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Transportation, Department of",
+          "url": "http://www.in.gov/indot/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Veteran Affairs, Department of",
+          "url": "http://www.in.gov/dva/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Workforce Development, Department of",
+          "url": "http://www.in.gov/dwd/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Homeland Security, Department of",
+          "url": "http://www.in.gov/dhs/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Corrections",
+          "url": "http://www.in.gov/idoc/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "iga.in.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Laws & Administrative Code",
+          "url": "https://iga.in.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.indianavoters.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Register to Vote",
+          "url": "http://www.indianavoters.com/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Residents",
+          "url": "https://www.in.gov/core/residents.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Jobs / Employment",
+          "url": "https://www.in.gov/core/economy-development.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 3213,
+      "title": "IN.gov | Resident Resources",
+      "url": "https://www.in.gov/core/residents.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Corporate/Partnership Income Tax Forms",
+          "url": "https://www.in.gov/dor/tax-forms/corporate/current-corporatepartnership"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About the Agency- Click to Expand",
+          "url": "https://www.in.gov/dor/about/our-agency"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "LinkedIn",
+          "url": "https://www.linkedin.com/company/indiana-department-of-revenue/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "iga.in.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Indiana Code",
+          "url": "https://iga.in.gov/laws/current/ic/titles/1"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "An official websiteof the Indiana State Government",
+          "url": "https://www.in.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Governor Mike Braun",
+          "url": "https://www.in.gov/gov"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.in.gov/dor"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "I Am a...- Click to Expand",
+          "url": "https://www.in.gov/dor/i-am-a"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Individual- Click to Expand",
+          "url": "https://www.in.gov/dor/i-am-a/individual"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "INTIME Information",
+          "url": "https://www.in.gov/dor/resources/online-services/intime"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 8041,
+      "title": "DOR: Indiana Department of Revenue",
+      "url": "https://www.in.gov/dor"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:23:10.504791+00:00",
+    "pages_fetched": 10,
+    "pages_with_child_links": 6,
+    "source_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_remaining_weak_broad_drilldown_20260308_042038.json",
+    "successful_fetches": 10
+  }
+}

@@ -1,0 +1,3389 @@
+{
+  "pages": [
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Click here to learn important facts about the new law >>>",
+          "url": "https://pels.georgia.gov/wp-content/uploads/2025/01/PLS-Applicant-Update-051324.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Professional EngineersandLand Surveyors Board",
+          "url": "https://pels.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Board Information",
+          "url": "https://pels.georgia.gov/board-information/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws, Rules & Policies",
+          "url": "https://pels.georgia.gov/laws-rules-policies/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "File A Complaint",
+          "url": "https://pels.georgia.gov/online-services/filing-a-complaint-with-the-georgia-professional-engineers-and-land-surveyors-board/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Professional Engineers and Land Surveyors\r\n            Board",
+          "url": "https://www.linkedin.com/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": true,
+          "domain": "oxley.agency",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Oxley",
+          "url": "https://oxley.agency/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Land Surveyor Information",
+          "url": "https://pels.georgia.gov/land-surveyor-information/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Licensing Services",
+          "url": "https://pels.georgia.gov/online-services/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Continuing Education",
+          "url": "https://pels.georgia.gov/continuing-education/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Professional Societies",
+          "url": "https://pels.georgia.gov/professional-societies/"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 5164,
+      "title": "Georgia Professional Engineers and Land Surveyors Board",
+      "url": "https://pels.georgia.gov/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Professional EngineersandLand Surveyors Board",
+          "url": "https://pels.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Board Information",
+          "url": "https://pels.georgia.gov/board-information/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws, Rules & Policies",
+          "url": "https://pels.georgia.gov/laws-rules-policies/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GA Professional Engineers & Land Surveyors Board Teleconference",
+          "url": "https://pels.georgia.gov/event/ga-professional-engineers-land-surveyors-board-teleconference-2/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GA Professional Engineers & Land Surveyors Board Teleconference",
+          "url": "https://pels.georgia.gov/event/ga-professional-engineers-land-surveyors-board-teleconference/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "File A Complaint",
+          "url": "https://pels.georgia.gov/online-services/filing-a-complaint-with-the-georgia-professional-engineers-and-land-surveyors-board/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Professional Engineers and Land Surveyors\r\n            Board",
+          "url": "https://www.linkedin.com/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": true,
+          "domain": "oxley.agency",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Oxley",
+          "url": "https://oxley.agency/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Land Surveyor Information",
+          "url": "https://pels.georgia.gov/land-surveyor-information/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Licensing Services",
+          "url": "https://pels.georgia.gov/online-services/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "pels.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Continuing Education",
+          "url": "https://pels.georgia.gov/continuing-education/"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 5825,
+      "title": "Board Information \u2013 Georgia Professional Engineers and Land Surveyors Board",
+      "url": "https://pels.georgia.gov/board-information/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 589789,
+      "title": "",
+      "url": "https://pels.georgia.gov/wp-content/uploads/2024/11/04-Form-Petition-for-Rule-Variance-or-Waiver.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 335287,
+      "title": "",
+      "url": "https://pels.georgia.gov/wp-content/uploads/2024/11/04-Policy-Statements.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "GA",
+      "success": true,
+      "text_len": 108350,
+      "title": "",
+      "url": "https://pels.georgia.gov/wp-content/uploads/2024/11/04-Seals-and-Stamps.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_landing_page_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "GA",
+      "success": true,
+      "text_len": 2464721,
+      "title": "",
+      "url": "https://pels.georgia.gov/wp-content/uploads/2025/04/04-Form-Petition-for-Rule-Variance-or-Waiver.pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "DepartmentofAdministrative Services",
+          "url": "https://doas.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Letter From Commissioner",
+          "url": "https://doas.ga.gov/letter-from-commissioner"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Fleet Rules, Policies, and Compliance",
+          "url": "https://doas.ga.gov/fleet-management/fleet-rules-policies-and-compliance"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgiadoas.prod.acquia-sites.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 6,
+          "text": "Mission, Vision, and Values",
+          "url": "https://georgiadoas.prod.acquia-sites.com/sites/default/files/2024-01/Vision%20and%20Mission%20Poster.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "",
+          "url": "https://www.linkedin.com/company/georgia-department-of-administrative-services"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All Employee Resources",
+          "url": "https://doas.ga.gov/state-employee-resources"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All State Entities Resources",
+          "url": "https://doas.ga.gov/state-entity-resources"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Local Governments",
+          "url": "https://doas.ga.gov/surplus-property/information-for-local-governments"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Nonprofit Organizations",
+          "url": "https://doas.ga.gov/surplus-property/information-nonprofit-organization"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Public",
+          "url": "https://doas.ga.gov/surplus-property/information-for-public"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "State Entities",
+          "url": "https://doas.ga.gov/surplus-property/information-for-state-entities-property-coordinators"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 9409,
+      "title": "Homepage | Georgia Department of Administrative Services - DOAS",
+      "url": "https://doas.ga.gov/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Policy 10",
+          "url": "https://doas.ga.gov/sites/default/files/2023-12/Policy%2010.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Fuel Card Standards and Guidelines",
+          "url": "https://doas.ga.gov/sites/default/files/assets/Fleet%20Management/Fleet%20Management%20Rules%20Policies%20and%20Compliance/Fuel%20Card%20Standards%20Guidelines.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Georgia Fleet Management Manual",
+          "url": "https://doas.ga.gov/sites/default/files/assets/Fleet%20Management/Fleet%20Management%20Rules%20Policies%20and%20Compliance/Fleet%20Manual%20FY21%20Update%20v15%20-%20JS.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Fleet Guidelines for Passenger-Carrying Vehicles",
+          "url": "https://doas.ga.gov/sites/default/files/assets/Fleet%20Management/Fleet%20Management%20COVID19%20Response/Fleet%20Guidelines%20for%20Passenger%20Carrying%20Vehicles_.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "DepartmentofAdministrative Services",
+          "url": "https://doas.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Letter From Commissioner",
+          "url": "https://doas.ga.gov/letter-from-commissioner"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Fleet Rules, Policies, and Compliance",
+          "url": "https://doas.ga.gov/fleet-management/fleet-rules-policies-and-compliance"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgiadoas.prod.acquia-sites.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 6,
+          "text": "Mission, Vision, and Values",
+          "url": "https://georgiadoas.prod.acquia-sites.com/sites/default/files/2024-01/Vision%20and%20Mission%20Poster.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "",
+          "url": "https://www.linkedin.com/company/georgia-department-of-administrative-services"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All Employee Resources",
+          "url": "https://doas.ga.gov/state-employee-resources"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All State Entities Resources",
+          "url": "https://doas.ga.gov/state-entity-resources"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2614,
+      "title": "Fleet Rules, Policies, and Compliance | Georgia Department of Administrative Services - DOAS",
+      "url": "https://doas.ga.gov/fleet-management/fleet-rules-policies-and-compliance"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "DepartmentofAdministrative Services",
+          "url": "https://doas.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Letter From Commissioner",
+          "url": "https://doas.ga.gov/letter-from-commissioner"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgiadoas.prod.acquia-sites.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 6,
+          "text": "Mission, Vision, and Values",
+          "url": "https://georgiadoas.prod.acquia-sites.com/sites/default/files/2024-01/Vision%20and%20Mission%20Poster.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "",
+          "url": "https://www.linkedin.com/company/georgia-department-of-administrative-services"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All Employee Resources",
+          "url": "https://doas.ga.gov/state-employee-resources"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "All State Entities Resources",
+          "url": "https://doas.ga.gov/state-entity-resources"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Local Governments",
+          "url": "https://doas.ga.gov/surplus-property/information-for-local-governments"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Nonprofit Organizations",
+          "url": "https://doas.ga.gov/surplus-property/information-nonprofit-organization"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Public",
+          "url": "https://doas.ga.gov/surplus-property/information-for-public"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "State Entities",
+          "url": "https://doas.ga.gov/surplus-property/information-for-state-entities-property-coordinators"
+        },
+        {
+          "admin_signal": false,
+          "domain": "doas.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Veterans",
+          "url": "https://doas.ga.gov/surplus-property/information-for-veterans"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 3058,
+      "title": "Letter From Commissioner | Georgia Department of Administrative Services - DOAS",
+      "url": "https://doas.ga.gov/letter-from-commissioner"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": true,
+          "same_domain": true,
+          "score": 10,
+          "text": "Human Trafficking Notice Rev 1.13.21",
+          "url": "https://gbi.georgia.gov/document/document/human-trafficking-notice-rev-11321/download"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "HTNOTICE-MANDARIN",
+          "url": "https://gbi.georgia.gov/document/document/ht-notice-mandarin/download"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "HTNOTICE -KOREAN",
+          "url": "https://gbi.georgia.gov/document/document/ht-notice-korean/download"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dofs-gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Child Fatality Review Program",
+          "url": "https://dofs-gbi.georgia.gov/departments/medical-examiners-office/child-fatality-review-program"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dofs-gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Medical Examiner's Office",
+          "url": "https://dofs-gbi.georgia.gov/departments/medical-examiners-office"
+        },
+        {
+          "admin_signal": false,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia Bureau of InvestigationGBI: State of Georgia Bureau of InvestigationConstition: wisdom, justice, moderationGeorgia BureauofInvestigation",
+          "url": "https://gbi.georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Monthly Statistical Report",
+          "url": "https://gbi.georgia.gov/gbi-monthly-statistical-report"
+        },
+        {
+          "admin_signal": false,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services",
+          "url": "https://gbi.georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "BINGO",
+          "url": "https://gbi.georgia.gov/services/bingo"
+        },
+        {
+          "admin_signal": false,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "CJIS Vendor Compliance Program",
+          "url": "https://gbi.georgia.gov/services/cjis-vendor-compliance-program"
+        },
+        {
+          "admin_signal": false,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Crime Statistics",
+          "url": "https://gbi.georgia.gov/services/crime-statistics"
+        }
+      ],
+      "errors": [],
+      "page_category": "candidate_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "GA",
+      "success": true,
+      "text_len": 5720,
+      "title": "Human Trafficking Notice | Georgia Bureau of Investigation",
+      "url": "https://gbi.georgia.gov/human-trafficking-notice"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "GA",
+      "success": true,
+      "text_len": 2272573,
+      "title": "",
+      "url": "https://georgiadoas.prod.acquia-sites.com/sites/default/files/2024-01/Vision%20and%20Mission%20Poster.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "candidate_substantive_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.4,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 0,
+      "title": "",
+      "url": "https://www.linkedin.com/company/georgia-department-of-administrative-services"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Department of LaborGeorgia DepartmentofLabor",
+          "url": "https://dol.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws and Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Required Workplace Posters",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Issue",
+          "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About Us",
+          "url": "https://dol.georgia.gov/organization/department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Honored as \"Model Agency\" for HR ExcellenceFebruary 17, 2026",
+          "url": "https://dol.georgia.gov/press-releases/2026-02-17/gdol-honored-model-agency-hr-excellence"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://dol.georgia.gov/biography-labor-commissioner"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.worksourcegaportal.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Register Now",
+          "url": "https://www.worksourcegaportal.com"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Department of Labor",
+          "url": "https://www.linkedin.com/company/georgia-department-of-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.georgia.org",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "GA Department of Economic Development",
+          "url": "https://www.georgia.org/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dol.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "US Department of Labor",
+          "url": "http://www.dol.gov/"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 4107,
+      "title": "Georgia Department of Labor",
+      "url": "https://dol.georgia.gov/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Department of LaborGeorgia DepartmentofLabor",
+          "url": "https://dol.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws and Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Required Workplace Posters",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Issue",
+          "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About Us",
+          "url": "https://dol.georgia.gov/organization/department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Laws and Rules",
+          "url": "https://dol.georgia.gov/employment-laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Department of Labor",
+          "url": "https://www.linkedin.com/company/georgia-department-of-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.georgia.org",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "GA Department of Economic Development",
+          "url": "https://www.georgia.org/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dol.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "US Department of Labor",
+          "url": "http://www.dol.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2615,
+      "title": "Laws and Rules | Georgia Department of Labor",
+      "url": "https://dol.georgia.gov/laws-and-rules"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Department of LaborGeorgia DepartmentofLabor",
+          "url": "https://dol.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws and Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Required Workplace Posters",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Issue",
+          "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About Us",
+          "url": "https://dol.georgia.gov/organization/department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "helpx.adobe.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Adobe Acrobat",
+          "url": "https://helpx.adobe.com/acrobat/kb/pdf-browser-plugin-configuration.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sbwc.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Georgia State Board of Workers' Compensation posters",
+          "url": "https://sbwc.georgia.gov/publications-and-forms/forms/board-forms"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eeoc.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Equal Employment Opportunity Commission",
+          "url": "https://www.eeoc.gov/poster"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Department of Labor",
+          "url": "https://www.linkedin.com/company/georgia-department-of-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.georgia.org",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "GA Department of Economic Development",
+          "url": "https://www.georgia.org/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dol.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "US Department of Labor",
+          "url": "http://www.dol.gov/"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 5006,
+      "title": "GDOL Required Workplace Posters | Georgia Department of Labor",
+      "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Department of LaborGeorgia DepartmentofLabor",
+          "url": "https://dol.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws and Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Required Workplace Posters",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Issue",
+          "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About Us",
+          "url": "https://dol.georgia.gov/organization/department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Notice of Adopted Rules, January 1, 2026",
+          "url": "https://dol.georgia.gov/blog-post/2026-01-06/notice-adopted-rules-january-1-2026"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Rules and Regulations for the Georgia Department of Labor",
+          "url": "https://rules.sos.georgia.gov/gac/300"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Department of Labor",
+          "url": "https://www.linkedin.com/company/georgia-department-of-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.georgia.org",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "GA Department of Economic Development",
+          "url": "https://www.georgia.org/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dol.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "US Department of Labor",
+          "url": "http://www.dol.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2810,
+      "title": "GDOL Rules | Georgia Department of Labor",
+      "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Department of LaborGeorgia DepartmentofLabor",
+          "url": "https://dol.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws and Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Required Workplace Posters",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Issue",
+          "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About Us",
+          "url": "https://dol.georgia.gov/organization/department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Laws and Rules",
+          "url": "https://dol.georgia.gov/employment-laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.justice.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "U.S. Department of Justice, Civil Rights Division",
+          "url": "https://www.justice.gov/crt"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dol.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "U.S. Department of Labor (USDOL) Wage and Hour Division",
+          "url": "https://www.dol.gov/agencies/whd"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eeoc.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "U.S. Equal Employment Opportunity Commission (EEOC)",
+          "url": "https://www.eeoc.gov"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sbwc.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Georgia State Board of Workers\u2019 Compensation",
+          "url": "https://sbwc.georgia.gov"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Department of Labor",
+          "url": "https://www.linkedin.com/company/georgia-department-of-labor"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 5994,
+      "title": "Obtain Information About An Employment Issue | Georgia Department of Labor",
+      "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Department of LaborGeorgia DepartmentofLabor",
+          "url": "https://dol.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws and Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Required Workplace Posters",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Issue",
+          "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About Us",
+          "url": "https://dol.georgia.gov/organization/department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Department of Labor",
+          "url": "https://www.linkedin.com/company/georgia-department-of-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.georgia.org",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "GA Department of Economic Development",
+          "url": "https://www.georgia.org/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dol.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "US Department of Labor",
+          "url": "http://www.dol.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Individuals",
+          "url": "https://dol.georgia.gov/individuals"
+        },
+        {
+          "admin_signal": false,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Job Search Assistance",
+          "url": "https://dol.georgia.gov/individuals/job-search-assistance"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 5083,
+      "title": "Department of Labor | Georgia Department of Labor",
+      "url": "https://dol.georgia.gov/organization/department-labor"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Register a Business",
+          "url": "https://georgia.gov/starting-business-guide"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "SNAP Benefits",
+          "url": "https://georgia.gov/georgia-snap-benefits"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Driving and Vehicles",
+          "url": "https://georgia.gov/driving-and-owning-vehicle"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Taxes and Refunds",
+          "url": "https://georgia.gov/taxes-refunds"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Birth and Death Certificates",
+          "url": "https://georgia.gov/order-birth-or-death-certificate"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Find an Offender",
+          "url": "https://georgia.gov/find-offender"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 3550,
+      "title": "Georgia.gov",
+      "url": "https://georgia.gov/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Access Public Information",
+          "url": "https://georgia.gov/access-public-information"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Assistance and Benefits Programs",
+          "url": "https://georgia.gov/how-guides/assistance-and-benefits-programs"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Children and Parenting",
+          "url": "https://georgia.gov/children-and-parenting"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Courts and Corrections",
+          "url": "https://georgia.gov/courts-corrections"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Driving, Vehicles, and Licensing",
+          "url": "https://georgia.gov/driving-and-owning-vehicle"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Education and Teaching",
+          "url": "https://georgia.gov/education-and-teaching"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 1977,
+      "title": "How-To Guides | Georgia.gov",
+      "url": "https://georgia.gov/how-guides"
+    },
+    {
+      "child_link_count": 8,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Serve Jury DutyCourts may call on local residents to serve as jurors for a trial.",
+          "url": "https://georgia.gov/serve-jury-duty"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Elected Officials",
+          "url": "https://georgia.gov/elected-officials"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2112,
+      "title": "Administrative Office of the Courts | Georgia.gov",
+      "url": "https://georgia.gov/organization/administrative-office-courts"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Elected Officials",
+          "url": "https://georgia.gov/elected-officials"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2119,
+      "title": "Board of Regents, University System of Georgia | Georgia.gov",
+      "url": "https://georgia.gov/organization/board-regents-university-system-georgia"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Elected Officials",
+          "url": "https://georgia.gov/elected-officials"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2234,
+      "title": "Brain and Spinal Injury Trust Fund Commission | Georgia.gov",
+      "url": "https://georgia.gov/organization/brain-and-spinal-injury-trust-fund-commission"
+    },
+    {
+      "child_link_count": 9,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Apply for a State Job in GeorgiaFind available job and internship opportunities with Georgia state government.",
+          "url": "https://georgia.gov/apply-state-job-georgia"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Buy Surplus PropertyGovernment property that is no longer used is redistributed or sold.",
+          "url": "https://georgia.gov/buy-surplus-property"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Elected Officials",
+          "url": "https://georgia.gov/elected-officials"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2472,
+      "title": "Department of Administrative Services | Georgia.gov",
+      "url": "https://georgia.gov/organization/department-administrative-services"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Elected Officials",
+          "url": "https://georgia.gov/elected-officials"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2292,
+      "title": "Department of Banking and Finance | Georgia.gov",
+      "url": "https://georgia.gov/organization/department-banking-and-finance"
+    },
+    {
+      "child_link_count": 8,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia Commission on Family Violence",
+          "url": "https://georgia.gov/organization/georgia-commission-family-violence"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Elected Officials",
+          "url": "https://georgia.gov/elected-officials"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2016,
+      "title": "Department of Community Supervision | Georgia.gov",
+      "url": "https://georgia.gov/organization/department-community-supervision"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Access the Workers\u2019 Compensation Supervisor\u2019s ManualEmployers have obligations if workers are injured on the job.",
+          "url": "https://georgia.gov/access-workers-compensation-supervisors-manual"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Apply for a Cash Assistance ProgramApply for a cash assistance program in Georgia that supports residents in need.",
+          "url": "https://georgia.gov/apply-cash-assistance-program"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Apply for a Firearms LicenseEligible Georgians may apply for a Weapons Carry License to carry out of state.",
+          "url": "https://georgia.gov/apply-firearms-license"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Apply for a Georgia Driver's License (Class C)Georgians who are 18 and older may apply for a non-commercial driver\u2019s license (Class C).",
+          "url": "https://georgia.gov/apply-georgia-drivers-license-class-c"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Apply for a Georgia Learner\u2019s Permit (Class CP)An instructional permit, also known as a learner\u2019s permit, is for Georgia teens preparing to get their full driver\u2019s license.",
+          "url": "https://georgia.gov/apply-georgia-learners-permit-class-cp"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Apply for a Georgia Provisional Driver's License (Class D)Once you meet certain requirements, you can apply for a provisional driver\u2019s license at age 16.",
+          "url": "https://georgia.gov/apply-georgia-provisional-drivers-license-class-d"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2859,
+      "title": "Services A-Z",
+      "url": "https://georgia.gov/services"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Learn How to Register\u00a0an LLC with the Georgia Secretary of State",
+          "url": "https://georgia.gov/register-llc"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Learn How to\u00a0Register\u00a0an LP with the Georgia Secretary of State",
+          "url": "https://georgia.gov/node/20326"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Learn How to Register a Corporation with the Georgia Secretary of State",
+          "url": "https://georgia.gov/register-corporation"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Learn How to\u00a0Register a Business with the Georgia Department of Revenue",
+          "url": "https://georgia.gov/register-business-georgia-department-revenue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Learn How to\u00a0Register a Business with the Georgia Department of Labor",
+          "url": "https://georgia.gov/node/20506"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Revenue",
+          "url": "https://georgia.gov/organization/department-revenue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia Department of Labor",
+          "url": "https://georgia.gov/organization/georgia-department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Office of Insurance and Safety Fire Commissioner",
+          "url": "https://georgia.gov/organization/office-insurance-and-safety-fire-commissioner"
+        },
+        {
+          "admin_signal": true,
+          "domain": "oci.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Office of Insurance and Safety Fire Commissioner",
+          "url": "https://oci.georgia.gov/insurance-resources/business"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 11783,
+      "title": "Starting a Business Guide | Georgia.gov",
+      "url": "https://georgia.gov/starting-business-guide"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Administrative Office of the Courts",
+          "url": "https://georgia.gov/organization/administrative-office-courts"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Board of Regents, University System of Georgia",
+          "url": "https://georgia.gov/organization/board-regents-university-system-georgia"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Brain and Spinal Injury Trust Fund Commission",
+          "url": "https://georgia.gov/organization/brain-and-spinal-injury-trust-fund-commission"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Administrative Services",
+          "url": "https://georgia.gov/organization/department-administrative-services"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Banking and Finance",
+          "url": "https://georgia.gov/organization/department-banking-and-finance"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Community Supervision",
+          "url": "https://georgia.gov/organization/department-community-supervision"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Corrections",
+          "url": "https://georgia.gov/organization/department-corrections"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Early Care and Learning",
+          "url": "https://georgia.gov/organization/department-early-care-and-learning"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Human Services",
+          "url": "https://georgia.gov/organization/department-human-services"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Division of Family and Children Services",
+          "url": "https://georgia.gov/organization/department-human-services-division-family-and-children-services"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Consumer Protection Division",
+          "url": "https://georgia.gov/organization/department-law-consumer-protection-division"
+        },
+        {
+          "admin_signal": true,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department of Natural Resources",
+          "url": "https://georgia.gov/organization/department-natural-resources"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 6325,
+      "title": "State Organizations",
+      "url": "https://georgia.gov/state-organizations"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Organizations",
+          "url": "https://georgia.gov/state-organizations"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Georgia.gov logoGeorgia.gov",
+          "url": "https://georgia.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Services A-Z",
+          "url": "https://georgia.gov/services"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "How-To Guides",
+          "url": "https://georgia.gov/how-guides"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Your Government",
+          "url": "https://georgia.gov/your-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "View Georgia\u2019s Elected Officials",
+          "url": "https://georgia.gov/node/1151"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Learn More",
+          "url": "https://georgia.gov/who-represents-you"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Run for Office",
+          "url": "https://georgia.gov/run-public-office"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Learn about the legislative process",
+          "url": "https://georgia.gov/life-law"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Learn how the three branches work",
+          "url": "https://georgia.gov/three-branches-georgias-state-government"
+        },
+        {
+          "admin_signal": false,
+          "domain": "georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Learn about Georgia & the Electoral College",
+          "url": "https://georgia.gov/georgias-role-electoral-college"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2749,
+      "title": "Your Government | Georgia.gov",
+      "url": "https://georgia.gov/your-government"
+    },
+    {
+      "child_link_count": 6,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": false,
+          "domain": "public.fastcase.com",
+          "rule_body_signal": true,
+          "same_domain": false,
+          "score": 4,
+          "text": "O.C.G.A. \u00a7 50-13-1 et seq",
+          "url": "https://public.fastcase.com/9SKwsfNqTc6OieYDhNMyM%2FHhpN1JF94mE9dQpQD0WVXsb2hregxQycs8%2B%2BZnBtzkzhSY1BCQlUZ1qb2k3n%2BUUA%3D%3D"
+        },
+        {
+          "admin_signal": true,
+          "domain": "services.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Rules Waiver Register (public access)",
+          "url": "https://services.georgia.gov/sos/sos-rw/searchHome.do"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Help",
+          "url": "https://rules.sos.ga.gov/help.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "thin_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "GA",
+      "success": true,
+      "text_len": 5126,
+      "title": "GA R&R - Home",
+      "url": "https://rules.sos.ga.gov/"
+    },
+    {
+      "child_link_count": 4,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Help",
+          "url": "https://rules.sos.ga.gov/help.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "thin_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 15580,
+      "title": "GA R&R - PDF Download",
+      "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 20. RULES OF STATE BOARD OF ACCOUNTANCY",
+          "url": "https://rules.sos.ga.gov/gac/20"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 40. RULES OF GEORGIA DEPARTMENT OF AGRICULTURE",
+          "url": "https://rules.sos.ga.gov/gac/40"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 41. AGRICULTURAL COMMODITY COMMISSION FOR BEEF",
+          "url": "https://rules.sos.ga.gov/gac/41"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 42. AGRICULTURAL COMMODITY COMMISSION FOR PROPANE",
+          "url": "https://rules.sos.ga.gov/gac/42"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 45. GEORGIA COUNCIL ON AMERICAN INDIAN CONCERNS",
+          "url": "https://rules.sos.ga.gov/gac/45"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 49. AGRICULTURAL COMMODITY COMMISSION FOR APPLES",
+          "url": "https://rules.sos.ga.gov/gac/49"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 50. GEORGIA STATE BOARD OF ARCHITECTS AND INTERIOR DESIGNERS",
+          "url": "https://rules.sos.ga.gov/gac/50"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 52. ASBESTOS LICENSING BOARD",
+          "url": "https://rules.sos.ga.gov/gac/52"
+        }
+      ],
+      "errors": [],
+      "page_category": "thin_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 9921,
+      "title": "GA R&R - GAC",
+      "url": "https://rules.sos.ga.gov/gac/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-1. ORGANIZATION",
+          "url": "https://rules.sos.ga.gov/gac/20-1"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-2. DEFINITIONS",
+          "url": "https://rules.sos.ga.gov/gac/20-2"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-3. EXAMINATIONS, APPLICATIONS FOR CERTIFICATES, AND TEMPORARY PERMITS - CERTIFIED PUBLIC ACCOUNTANTS",
+          "url": "https://rules.sos.ga.gov/gac/20-3"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-4. EXAMINATIONS, APPLICATIONS FOR CERTIFICATES, AND TEMPORARY PERMITS-REGISTERED PUBLIC ACCOUNTANTS",
+          "url": "https://rules.sos.ga.gov/gac/20-4"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-5. FOREIGN ACCOUNTANTS",
+          "url": "https://rules.sos.ga.gov/gac/20-5"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-6. CORPORATIONS FOR THE PRACTICE OF PUBLIC ACCOUNTANCY",
+          "url": "https://rules.sos.ga.gov/gac/20-6"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-7. INDIVIDUALS, PARTNERSHIPS, ASSOCIATIONS AND CORPORATIONS COMPOSED OF CERTIFIED PUBLIC ACCOUNTANTS",
+          "url": "https://rules.sos.ga.gov/gac/20-7"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 20-8. REGISTRATION REQUIREMENTS FOR ACCOUNTING FIRMS",
+          "url": "https://rules.sos.ga.gov/gac/20-8"
+        }
+      ],
+      "errors": [],
+      "page_category": "thin_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 23043,
+      "title": "GA R&R - GAC - Department 20. RULES OF STATE BOARD OF ACCOUNTANCY",
+      "url": "https://rules.sos.ga.gov/gac/20"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-1. ADMINISTRATION",
+          "url": "https://rules.sos.ga.gov/gac/40-1"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-2. MILK AND MILK PRODUCTS",
+          "url": "https://rules.sos.ga.gov/gac/40-2"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-3. EGG INSPECTION",
+          "url": "https://rules.sos.ga.gov/gac/40-3"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-4. ENTOMOLOGY AND PLANT INDUSTRY",
+          "url": "https://rules.sos.ga.gov/gac/40-4"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-5. COMMERCIAL FEEDING STUFFS",
+          "url": "https://rules.sos.ga.gov/gac/40-5"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-6. FERTILIZER",
+          "url": "https://rules.sos.ga.gov/gac/40-6"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-7. FOOD DIVISION REGULATIONS",
+          "url": "https://rules.sos.ga.gov/gac/40-7"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 40-8. FARMERS AND CONSUMERS MARKET BULLETIN",
+          "url": "https://rules.sos.ga.gov/gac/40-8"
+        }
+      ],
+      "errors": [],
+      "page_category": "thin_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "GA",
+      "success": true,
+      "text_len": 268732,
+      "title": "GA R&R - GAC - Department 40. RULES OF GEORGIA DEPARTMENT OF AGRICULTURE",
+      "url": "https://rules.sos.ga.gov/gac/40"
+    },
+    {
+      "child_link_count": 8,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subject 90-1-1. REPEALED (90-1-1-.01 thru 90-1-1-.06)",
+          "url": "https://rules.sos.ga.gov/gac/90-1-1"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subject 90-1-2. REPEALED (90-1-2-.01)",
+          "url": "https://rules.sos.ga.gov/gac/90-1-2"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subject 90-1-3. REPEALED (90-1-3-.01 thru 90-1-3-.05)",
+          "url": "https://rules.sos.ga.gov/gac/90-1-3"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Help",
+          "url": "https://rules.sos.ga.gov/help.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "thin_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 377,
+      "title": "GA R&R - GAC - Chapter 90-1. ADMINISTRATION",
+      "url": "https://rules.sos.ga.gov/gac/90-1"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:22:36.714050+00:00",
+    "pages_fetched": 36,
+    "pages_with_child_links": 30,
+    "source_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_remaining_weak_broad_drilldown_20260308_042038.json",
+    "successful_fetches": 36
+  }
+}

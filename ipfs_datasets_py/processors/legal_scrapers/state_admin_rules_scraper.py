@@ -61,7 +61,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
 )
 
 _BAD_DISCOVERY_DOMAIN_RE = re.compile(
-    r"(^|\.)(city-data\.com)$",
+    r"(^|\.)(city-data\.com|texashuntingforum\.com)$",
     re.IGNORECASE,
 )
 
@@ -103,9 +103,23 @@ _NON_RULE_ADMIN_LANDING_RE = re.compile(
     re.IGNORECASE,
 )
 
+_FORUM_PAGE_RE = re.compile(
+    r"rules?\s+of\s+conduct|forum\s+guidelines|family\s+friendly|volunteer\s+moderators?|"
+    r"moderation\s+is\s+interpretation|posting\s+privilege|signature\s+images|back\s+to\s+the\s+.*forum|"
+    r"do\s+not\s+create\s+more\s+than\s+one\s+user\s+account|classifieds",
+    re.IGNORECASE,
+)
+
 _RULE_BODY_SIGNAL_RE = re.compile(
     r"§\s*\d|\barm\s+\d|\b\d{1,3}\.\d{1,3}\.\d{1,4}\b|authority\s*:|history\s*:|implementing\s*:|"
     r"purpose\s+of\s+regulations|notice\s+of\s+adoption|notice\s+of\s+proposed\s+(?:amendment|adoption|repeal)",
+    re.IGNORECASE,
+)
+
+_PDF_BINARY_HEADER_RE = re.compile(r"^\s*%PDF-\d\.\d", re.IGNORECASE)
+
+_PDF_BINARY_TOKEN_RE = re.compile(
+    r"\b\d+\s+\d+\s+obj\b|endobj|xref|trailer|startxref|/Filter\b|/Length\b",
     re.IGNORECASE,
 )
 
@@ -563,6 +577,32 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     return False
 
 
+def _looks_like_forum_page(*, text: str, title: str, url: str) -> bool:
+    host = urlparse(str(url or "").strip()).netloc.lower()
+    hay = " ".join([str(title or ""), str(url or ""), str(text or "")])
+    if "forum" not in host and "ubbthreads" not in str(url or "").lower():
+        return False
+    return bool(_FORUM_PAGE_RE.search(hay))
+
+
+def _looks_like_binary_document_text(*, text: str, url: str) -> bool:
+    body = str(text or "")
+    if not body:
+        return False
+    head = body[:800]
+    url_value = str(url or "").lower()
+    if "\x00" in head:
+        return True
+    if _PDF_BINARY_HEADER_RE.search(head):
+        return True
+    replacement_count = head.count("\ufffd")
+    if replacement_count >= 3 and _PDF_BINARY_TOKEN_RE.search(head):
+        return True
+    if (url_value.endswith(".pdf") or ".pdf?" in url_value) and replacement_count >= 1 and _PDF_BINARY_TOKEN_RE.search(head):
+        return True
+    return False
+
+
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
@@ -570,6 +610,10 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
+        return False
+    if _looks_like_binary_document_text(text=body, url=url_value):
+        return False
+    if _looks_like_forum_page(text=body, title=title_value, url=url_value):
         return False
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
@@ -614,6 +658,10 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
+        return False
+    if _looks_like_binary_document_text(text=body, url=url_value):
+        return False
+    if _looks_like_forum_page(text=body, title=title_value, url=url_value):
         return False
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False

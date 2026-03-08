@@ -115,7 +115,7 @@ class MarylandScraper(BaseStateScraper):
 
                 section_label = str(section.get("DisplayText") or "").strip()
                 section_code = self._normalize_section_code(
-                    str(section.get("Value") or section_label)
+                    section_label or str(section.get("Value") or "")
                 )
                 if not section_code:
                     continue

@@ -1,0 +1,908 @@
+{
+  "pages": [
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 10 Department of Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d21d50ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter A. Municipalities, Districts, Companies, Institutions",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I082443e0b65611ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter B. Miscellaneous",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I12ce8530b65611ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter C. Water Supply Sources",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I12dae140b65611ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dos.ny.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "NY Department of State-Division of Administrative Rules",
+          "url": "https://www.dos.ny.gov/info/register.htm"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Home",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 704,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0823f5c0b65611ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 6,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 1 Department of Agriculture and Markets",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0dea9f40aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter A Dairy Products (Article 4, Agriculture and Markets Law)",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I47de5970ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter B. Milk Control Orders",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I4b564220ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dos.ny.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "NY Department of State-Division of Administrative Rules",
+          "url": "https://www.dos.ny.gov/info/register.htm"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Home",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 685,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I47b4ff80ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 8,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 1 Department of Agriculture and Markets",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0dea9f40aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter A. Diseases of Domestic Animals; Garbage Feeding",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I4fd5d6d0ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter C. Dog Control",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I517703b0ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter D. Operating on the Tails of Horses",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51a00f80ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter E. Sale of Dogs and Cats",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51a67820ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dos.ny.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "NY Department of State-Division of Administrative Rules",
+          "url": "https://www.dos.ny.gov/info/register.htm"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Home",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 754,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I4fd588b0ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 10,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 1 Department of Agriculture and Markets",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0dea9f40aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter A. Inspection and Sale of Seeds (Article 9, Agriculture and Markets Law)",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51de5100ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter B. Prevention of Fraud in Sale of Soil and Plant Inoculants (Article 10-A Agriculture and Markets Law)",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I5578b5d0ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter C. Prevention and Control of Disease in Trees and Plants; Insect Pests; Sale of Fruit-Bearing Trees(Article 14, Agriculture and Markets Law)",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I557f4580ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter D. Sale and Analysis of Commercial Fertilizer",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I56739090ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter E. Agricultural Liming Materials (Agriculture and Markets Law, art. 9-A)",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I56ad3e30ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter F. Industrial Hemp",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Ib9311bc0bb9611e59616b5f23db19f81&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dos.ny.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "NY Department of State-Division of Administrative Rules",
+          "url": "https://www.dos.ny.gov/info/register.htm"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Home",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 1106,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51de29f0ab3a11ddbd79a18800159157&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 10 Department of Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d21d50ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 1 General Provisions",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Id861b3e0b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 2 Communicable Diseases",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Id8c24a70b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 3 (Repealed)",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Id9489170b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 4 Protection Against Legionella",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I6f2fd8e057d711e5a05f0000845b8d3e&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 5 Drinking Water Supplies",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Id9b07b00b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 6 Swimming Pools, Bathing Beaches and Recreational Aquatic Spray Grounds",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Idde34f40b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 7 Temporary Residences, Mass Gatherings and Children's Camps",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Idfbc2df0b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 8 Nuisances Which May Affect Life and Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Ie1804c20b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 9 Prohibited Substances",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I5b35c04017cd11e2bc4f0000845b8d3e&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Part 10 Barber Shops and Beauty Parlors",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Ie1949770b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 1507,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Id86117a0b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 10 Department of Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d21d50ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter A. Vital Records and Personal Information",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Ie7d67590b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter B. State Aid and Funding",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Ie8562ce0b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter C. Access to Records",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Ieb74d200b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter D. Laboratories",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Iedabd640b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter F. Disease Registry",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=If10624d0b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter G. AIDS Testing, Communicable Diseases and Poisoning",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=If10eb050b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter H. Family Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=If1ed0260b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter I. Environmental Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=If376fdc0b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter J. Funeral Directing, Undertaking and Embalming",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=If4cffe10b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subchapter K. Controlled Substances",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=If543ce80b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 1506,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=Ie7d64e80b65511ddb903a4af59fec65a&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 2,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dos.ny.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "NY Department of State-Division of Administrative Rules",
+          "url": "https://www.dos.ny.gov/info/register.htm"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NY",
+      "success": true,
+      "text_len": 1645,
+      "title": "View Document - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Document/I9a267131212611e1b7120000845b8d3e?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 2,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dos.ny.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "NY Department of State-Division of Administrative Rules",
+          "url": "https://www.dos.ny.gov/info/register.htm"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NY",
+      "success": true,
+      "text_len": 1633,
+      "title": "View Document - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Document/I9a275b91212611e1b7120000845b8d3e?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "NYS Register",
+          "url": "https://govt.westlaw.com/nyreg/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 1 Department of Agriculture and Markets",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0dea9f40aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 2 Department of Audit and Control",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51a20ca0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 3 Banking",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I6a3340a0a5cf11dd9034b8065051ac11&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 4 Department of Civil Service",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51c68490ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 5 Department of Economic Development",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51c83240ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 6 Department of Environmental Conservation",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51cc02d0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 7 Department of Corrections and Community Supervision",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51ce25b0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 8 Education Department",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0e0f8c60aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 9 Executive Department",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d0bdc0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 10 Department of Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d21d50ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 3506,
+      "title": "Unofficial New York Codes, Rules and Regulations - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Index"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Unofficial New York Codes, Rules and Regulations",
+          "url": "https://govt.westlaw.com/nycrr/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "NYS Register",
+          "url": "https://govt.westlaw.com/nyreg/Index"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 1 Department of Agriculture and Markets",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0dea9f40aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 2 Department of Audit and Control",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51a20ca0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 3 Banking",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I6a3340a0a5cf11dd9034b8065051ac11&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 4 Department of Civil Service",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51c68490ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 5 Department of Economic Development",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51c83240ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 6 Department of Environmental Conservation",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51cc02d0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 7 Department of Corrections and Community Supervision",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51ce25b0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 8 Education Department",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0e0f8c60aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 9 Executive Department",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d0bdc0ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        },
+        {
+          "admin_signal": true,
+          "domain": "govt.westlaw.com",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Title 10 Department of Health",
+          "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d21d50ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)"
+        }
+      ],
+      "errors": [],
+      "page_category": "probe_input_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": true,
+      "text_len": 3506,
+      "title": "Unofficial New York Codes, Rules and Regulations - Unofficial New York Codes, Rules and Regulations",
+      "url": "https://govt.westlaw.com/nycrr/Index"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:11:46.629967+00:00",
+    "pages_fetched": 10,
+    "pages_with_child_links": 10,
+    "source_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_child_drilldown_20260308_040714.json",
+    "successful_fetches": 10
+  }
+}

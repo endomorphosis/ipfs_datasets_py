@@ -29,7 +29,9 @@ RULE_BODY_RE = re.compile(
 
 BAD_LINK_RE = re.compile(
     r"notary|apostille|contact|about-us|about$|help$|faq|login|log\s*in|directory|staff|calendar|events|"
-    r"meeting|agenda|minutes|news|home$|homepage|search$|sitemap|rss|subscribe|privacy|accessibility",
+    r"meeting|agenda|minutes|news|home$|homepage|search$|sitemap|rss|subscribe|privacy|accessibility|"
+    r"cdn-cgi|email-protection|twitter\.com|x\.com|facebook\.com|instagram\.com|youtube\.com|"
+    r"feedback-survey|accessgov|contact\.php|subscribe\.php",
     re.IGNORECASE,
 )
 
@@ -135,6 +137,22 @@ def _load_input_rows(path: Path, expand_child_links: bool, child_link_limit_per_
     return rows
 
 
+def _dedupe_target_rows(rows: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    deduped: List[Dict[str, Any]] = []
+    seen = set()
+    for row in rows:
+        state = str(row.get("state") or "").upper().strip()
+        url = str(row.get("url") or "").strip().rstrip("/")
+        if not url:
+            continue
+        key = (state, url.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+    return deduped
+
+
 def _link_score(base_host: str, link: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
     url = str(link.get("url") or "").strip()
     text = str(link.get("text") or "").strip()
@@ -151,6 +169,8 @@ def _link_score(base_host: str, link: Dict[str, Any]) -> Tuple[int, Dict[str, An
         score += 2
     if BAD_LINK_RE.search(hay):
         score -= 5
+    if re.search(r"/cdn-cgi/|email-protection|feedback-survey|accessgov", url, re.IGNORECASE):
+        score -= 6
     if re.search(r"/search(?:/|$)|/login(?:/|$)|/help(?:/|$)", url, re.IGNORECASE):
         score -= 4
     payload = {
@@ -295,6 +315,7 @@ def main() -> int:
             for row in rows
             if str(row.get("page_category") or "") in categories and (not states_filter or str(row.get("state") or "") in states_filter)
         ]
+    target_rows = _dedupe_target_rows(target_rows)
     target_rows.sort(key=lambda row: (str(row.get("state") or ""), str(row.get("page_category") or ""), -int(row.get("text_len") or 0), str(row.get("url") or "")))
     target_rows = target_rows[: max(1, int(args.top_pages))]
 
