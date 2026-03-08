@@ -56,6 +56,7 @@ _NON_ADMIN_CODE_NAME_RE = re.compile(
 _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
+    r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
     r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)",
     re.IGNORECASE,
@@ -71,7 +72,8 @@ _BAD_DISCOVERY_TEXT_RE = re.compile(
     r"city-data\.com\s+does\s+not\s+guarantee|forum\s+cities\s+schools\s+neighborhoods|"
     r"administrative\s+rules\s+source\s+url:\s*https?://|you\s+need\s+to\s+enable\s+javascript\s+to\s+run\s+this\s+app|"
     r"javascript\s+is\s+not\s+enabled|there\s+are\s+currently\s+no\s+rules\s+pending\s+for\s+this\s+agency|"
-    r"click\s+on\s+comment\s+deadline\s+date\s+to\s+submit\s+your\s+comment|public\s+hearing\s+dates|interim\s+committee\s+hearing",
+    r"click\s+on\s+comment\s+deadline\s+date\s+to\s+submit\s+your\s+comment|public\s+hearing\s+dates|interim\s+committee\s+hearing|"
+    r"forgot\s+password\??|request\s+account|email\s*\*\s*password\s*\*",
     re.IGNORECASE,
 )
 
@@ -128,6 +130,16 @@ _RULE_BODY_SIGNAL_RE = re.compile(
     re.IGNORECASE,
 )
 
+_OFFICIAL_RULE_INDEX_URL_RE = re.compile(
+    r"(?:^|https?://)(?:rules\.mt\.gov/browse/collections(?:/|$)|sdlegislature\.gov/Rules/Administrative(?:/|$)|"
+    r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
+    r"apps\.azsos\.gov/public_services/(?:Title_[\w.-]+\.htm)?$)",
+    re.IGNORECASE,
+)
+
+_SD_RULE_INDEX_ROW_RE = re.compile(r"\b\d{2}:\d{2}\b")
+_MT_RULE_INDEX_ROW_RE = re.compile(r"\bTitle\s+\d+\b", re.IGNORECASE)
+
 _PDF_BINARY_HEADER_RE = re.compile(r"^\s*%PDF-\d\.\d", re.IGNORECASE)
 
 _PDF_BINARY_TOKEN_RE = re.compile(
@@ -140,6 +152,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "AL": [
         "http://www.alabamaadministrativecode.state.al.us/",
         "https://www.alabamaadministrativecode.state.al.us/",
+        "https://admincode.legislature.state.al.us/",
+        "https://admincode.legislature.state.al.us/administrative-code",
+        "https://admincode.legislature.state.al.us/agency",
+        "https://admincode.legislature.state.al.us/search",
         "https://www.sos.alabama.gov/alabama-administrative-code",
     ],
     "AZ": [
@@ -251,7 +267,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
 }
 
 # States that still need broader, controlled acceptance during recovery runs.
-_RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "NH", "TN"}
+_RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -661,10 +677,37 @@ def _looks_like_binary_document_text(*, text: str, url: str) -> bool:
     return False
 
 
+def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> bool:
+    body = str(text or "").strip()
+    title_value = str(title or "").strip()
+    url_value = str(url or "").strip()
+    if not body or not url_value:
+        return False
+    if not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
+        return False
+
+    hay = " ".join([title_value, body])
+    mt_title_hits = len(_MT_RULE_INDEX_ROW_RE.findall(body))
+    sd_row_hits = len(_SD_RULE_INDEX_ROW_RE.findall(body))
+
+    if "administrative rules of montana" in hay.lower() and mt_title_hits >= 5:
+        return True
+    if "general provisions" in hay.lower() and mt_title_hits >= 3:
+        return True
+    if "administrative rules" in hay.lower() and sd_row_hits >= 8:
+        return True
+    if "alabama administrative code" in hay.lower() and len(re.findall(r"\b(?:agency|chapter|rule|title)\b", hay, re.IGNORECASE)) >= 4:
+        return True
+    if "arizona administrative code" in hay.lower() and len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE)) >= 4:
+        return True
+    return False
+
+
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
+    official_index_page = _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value)
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
@@ -679,20 +722,20 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         # PDF-based admin-rule publications often extract with sparse text; allow
         # a lower floor when URL/title still strongly indicate rule content.
         pdf_like = str(url_value).lower().endswith(".pdf") or ".pdf?" in str(url_value).lower()
-        if not (
+        if not official_index_page and not (
             pdf_like
             and len(body) >= 60
             and _has_admin_signal(text=body, title=title_value, url=url_value)
             and _LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body]))
         ):
             return False
-    if title_value and _looks_like_placeholder_text(title_value):
+    if title_value and _looks_like_placeholder_text(title_value) and not official_index_page:
         return False
-    if _looks_like_placeholder_text(body):
+    if _looks_like_placeholder_text(body) and not official_index_page:
         return False
     if not _has_admin_signal(text=body, title=title_value, url=url_value):
         return False
-    if not _LEGAL_CONTENT_SIGNAL_RE.search(body):
+    if not official_index_page and not _LEGAL_CONTENT_SIGNAL_RE.search(body):
         return False
     return True
 
@@ -713,6 +756,7 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
+    official_index_page = _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value)
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
@@ -723,10 +767,12 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
         return False
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
-    if title_value and _looks_like_placeholder_text(title_value):
+    if title_value and _looks_like_placeholder_text(title_value) and not official_index_page:
         return False
-    if body and _looks_like_placeholder_text(body):
+    if body and _looks_like_placeholder_text(body) and not official_index_page:
         return False
+    if official_index_page and len(body) >= 120 and _has_admin_signal(text=body, title=title_value, url=url_value):
+        return True
     if len(body) >= 80 and _has_admin_signal(text=body, title=title_value, url=url_value) and _LEGAL_CONTENT_SIGNAL_RE.search(body):
         return True
     return False
@@ -820,6 +866,7 @@ async def _agentic_discover_admin_state_blocks(
         preferred_methods=[
             ScraperMethod.COMMON_CRAWL,
             ScraperMethod.WAYBACK_MACHINE,
+            ScraperMethod.PLAYWRIGHT,
             ScraperMethod.BEAUTIFULSOUP,
             ScraperMethod.REQUESTS_ONLY,
         ],
