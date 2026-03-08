@@ -1,0 +1,95 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "AL",
+      "success": true,
+      "text_len": 74,
+      "title": "Alabama Administrative Code",
+      "url": "https://admincode.legislature.state.al.us/administrative-code"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "AL",
+      "success": true,
+      "text_len": 74,
+      "title": "Alabama Administrative Code",
+      "url": "https://admincode.legislature.state.al.us/search"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "MT",
+      "success": true,
+      "text_len": 11,
+      "title": "Montana SOS",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "MT",
+      "success": true,
+      "text_len": 11,
+      "title": "Montana SOS",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/5eaf58c6-ae9f-4ebe-afe2-c617e962b390"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "MT",
+      "success": true,
+      "text_len": 11,
+      "title": "Montana SOS",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/99c754c5-bab0-4029-a663-57d8e5f766bc"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "SD",
+      "success": true,
+      "text_len": 286,
+      "title": "Loading... | South Dakota Legislature",
+      "url": "https://sdlegislature.gov/Rules/Administrative"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T07:24:59.228723+00:00",
+    "pages_fetched": 6,
+    "pages_with_child_links": 0,
+    "source_json": "",
+    "successful_fetches": 6
+  }
+}

@@ -1,0 +1,443 @@
+{
+  "pages": [
+    {
+      "child_link_count": 1,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250330193850/https://gc.nh.gov/rules/Filing_history/sourceagr.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 17949,
+      "title": "Agr 500",
+      "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr500.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "House Rules",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/house/aboutthehouse/houseRules.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Public Code of Conduct",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/misc/State House Complex Public Conduct Policy 2023.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "ADA Compliance Notice",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/misc/ADAnotice3.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Sexual Harassment Policy",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/misc/General%20Court%20Harassment%20Policy%20and%20Addendum-1%202020.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse Index of Titles",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/rsa/html/nhtoc.htm"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Duties and Function",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/rules/whoweare.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rulemaking Register",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/rules/register/default.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rules Listed by Agency",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "JLCAR",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/rules/jlcar/description_members.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Lobbyists",
+          "url": "http://web.archive.org/web/20260308072504/https://www.sos.nh.gov/lobbyists"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "House Roster",
+          "url": "http://web.archive.org/web/20260308072504/https://gc.nh.gov/house/members/"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 1657,
+      "title": "The General Court of New Hampshire | 404",
+      "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr600.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.cdc.gov/infectioncontrol/pdf/guidelines/isolation-guidelines.pdf",
+          "url": "http://web.archive.org/web/20250203024439/https://www.cdc.gov/infectioncontrol/pdf/guidelines/isolation-guidelines.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://health.gov/dietaryguidelines/2015/resources/2015-2020_Dietary_Guidelines.pdf",
+          "url": "http://web.archive.org/web/20250203024439/https://health.gov/dietaryguidelines/2015/resources/2015-2020_Dietary_Guidelines.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.acep.org/globalassets/new-pdfs/policy-statements/emergency-department-planning-and-resource-guidelines.pdf",
+          "url": "http://web.archive.org/web/20250203024439/https://www.acep.org/globalassets/new-pdfs/policy-statements/emergency-department-planning-and-resource-guidelines.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.cdc.gov/infectioncontrol/pdf/guidelines/isolation-guidelines-H.pdf",
+          "url": "http://web.archive.org/web/20250203024439/https://www.cdc.gov/infectioncontrol/pdf/guidelines/isolation-guidelines-H.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.fda.gov/downloads/food/guidanceregulation/retailfoodprotection/\n  foodcode/ucm374510.pdf",
+          "url": "http://web.archive.org/web/20250203024439/https://www.fda.gov/downloads/food/guidanceregulation/retailfoodprotection/%20foodcode/ucm374510.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.dietaryguidelines.gov/sites/default/files/2021-03/Dietary_Guidelines_for_Americans-2020-2025.pdf",
+          "url": "http://web.archive.org/web/20250203024439/https://www.dietaryguidelines.gov/sites/default/files/2021-03/Dietary_Guidelines_for_Americans-2020-2025.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.cdc.gov/coronavirus/mers/downloads/Isolation2007.pdf",
+          "url": "http://web.archive.org/web/20250203024439/https://www.cdc.gov/coronavirus/mers/downloads/Isolation2007.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250203024439/https://www.gencourt.state.nh.us/rules/filing_history/sourcehe-p.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250203024439/https://gc.nh.gov/rules/Filing_history/sourcehe-p.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Internet-Only-Manuals-IOMs-Items/CMS1201984",
+          "url": "http://web.archive.org/web/20250203024439/https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Internet-Only-Manuals-IOMs-Items/CMS1201984"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250203024439/http://www.gencourt.state.nh.us/rules/filing_history/sourcehe-w.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "https://www.cms.gov/Medicare/Provider-Enrollment-and-Certification/CertificationandComplianc/LSC",
+          "url": "http://web.archive.org/web/20250203024439/https://www.cms.gov/Medicare/Provider-Enrollment-and-Certification/CertificationandComplianc/LSC"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 3089023,
+      "title": "CHAPTER He-P 800  RESIDENTIAL CARE AND HEALTH FACILITY RULES",
+      "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p800.html"
+    },
+    {
+      "child_link_count": 2,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250224120814/https://gc.nh.gov/rules/Filing_history/sourcesaf-c.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Safety-hearings@safety.state.nh.us",
+          "url": "http://web.archive.org/web/20250224120814/mailto:Safety-hearings@safety.state.nh.us"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 203000,
+      "title": "Saf-C 200 Rules",
+      "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/saf-c200.html"
+    },
+    {
+      "child_link_count": 9,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://civilwares.free.fr/ACI/MCP04/3501r_01.pdf",
+          "url": "http://web.archive.org/web/20250529141955/http://civilwares.free.fr/ACI/MCP04/3501r_01.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250529141955/https://gc.nh.gov/rules/filing_history/sourceenv-wq.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "http://www.nh.gov/dot/org/projectdevelopment/highwaydesign/specifications/index.htm",
+          "url": "http://web.archive.org/web/20250529141955/http://www.nh.gov/dot/org/projectdevelopment/highwaydesign/specifications/index.htm"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "www.whitehouse.gov/omb/circulars/a094/a94_appx-c.html",
+          "url": "http://web.archive.org/web/20250529141955/http://www.whitehouse.gov/omb/circulars/a094/a94_appx-c.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "mail@neiwpcc.org",
+          "url": "http://web.archive.org/web/20250529141955/mailto:mail@neiwpcc.org"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "https://www.safetyequipment.org/c/eyewash.cfm",
+          "url": "http://web.archive.org/web/20250529141955/https://www.safetyequipment.org/c/eyewash.cfm"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "http://www.awwa.org/publications/standards.aspx",
+          "url": "http://web.archive.org/web/20250529141955/http://www.awwa.org/publications/standards.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "http://www.uni-bell.org/resources.php?c=39",
+          "url": "http://web.archive.org/web/20250529141955/http://www.uni-bell.org/resources.php?c=39"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "http://www.astm.org/Standard/standards-and-publications.html",
+          "url": "http://web.archive.org/web/20250529141955/http://www.astm.org/Standard/standards-and-publications.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 230571,
+      "title": "Env-Wq 700",
+      "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq700.html"
+    },
+    {
+      "child_link_count": 2,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20260308072505/https://www.gencourt.state.nh.us/rules/filing_history/sourcerev.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "www.revenue.nh.gov",
+          "url": "http://web.archive.org/web/20260308072505/http://www.revenue.nh.gov/"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 127276,
+      "title": "Rev 601-602",
+      "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/rev600.html"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T07:25:23.517970+00:00",
+    "pages_fetched": 6,
+    "pages_with_child_links": 6,
+    "source_json": "",
+    "successful_fetches": 6
+  }
+}

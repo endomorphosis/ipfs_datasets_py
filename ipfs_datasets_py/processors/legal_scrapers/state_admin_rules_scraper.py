@@ -57,6 +57,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
+    r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
     r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)",
     re.IGNORECASE,
@@ -1133,6 +1134,7 @@ async def _agentic_discover_admin_state_blocks(
                     scraped = scrape_result
                     text = str(getattr(scraped, "text", "") or "").strip()
                     title = str(getattr(scraped, "title", "") or "").strip()
+                    official_index_page = _looks_like_official_rule_index_page(text=text, title=title, url=url)
                     min_text_chars = max(140, int(min_full_text_chars // 2))
                     if require_substantive_text:
                         min_text_chars = max(220, int(min_full_text_chars))
@@ -1267,6 +1269,20 @@ async def _agentic_discover_admin_state_blocks(
                             "fetched_at": datetime.now().isoformat(),
                         }
                     )
+
+                    # Official rule-index pages are useful corpus rows in their own right,
+                    # but they should also act as expansion hubs so the crawler can step
+                    # from statewide/title indexes into deeper rule pages.
+                    if official_index_page:
+                        same_host = host if host in base_hosts else urlparse(url).netloc
+                        for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=24):
+                            link_score = _score_candidate_url(link_url)
+                            if link_score <= 0:
+                                continue
+                            pending.append((link_url, link_score + 2))
+                            expanded_urls += 1
+                        pending.sort(key=lambda item: item[1], reverse=True)
+
                     if len(statutes) >= max_fetch:
                         break
                 except Exception:

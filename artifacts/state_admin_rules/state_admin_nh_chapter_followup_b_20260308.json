@@ -1,0 +1,185 @@
+{
+  "pages": [
+    {
+      "child_link_count": 1,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250523213153/https://gc.nh.gov/rules/filing_history/sourceagr.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 37480,
+      "title": "CHAPTER Agr 200 PRACTICE AND PROCEDURE",
+      "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr200.html"
+    },
+    {
+      "child_link_count": 2,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20260308071723/https://www.gencourt.state.nh.us/rules/filing_history/sourceagr.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20260308071723/https://www.gencourt.state.nh.us/rules/state_agencies/agr.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 36559,
+      "title": "Agr 700-708 (Aquisition)",
+      "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr700.html"
+    },
+    {
+      "child_link_count": 1,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250603110617/https://gc.nh.gov/rules/filing_history/sourcehe-p.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 28476,
+      "title": "He-P 700",
+      "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p700.html"
+    },
+    {
+      "child_link_count": 5,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://www.epa.gov/epawaste/hazard/correctiveaction/resources/guidance/sitechar/gwmonitr/rcra_gw.pdf",
+          "url": "http://web.archive.org/web/20250529141938/http://www.epa.gov/epawaste/hazard/correctiveaction/resources/guidance/sitechar/gwmonitr/rcra_gw.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs144p2_015566.pdf",
+          "url": "http://web.archive.org/web/20250529141938/http://www.nrcs.usda.gov/Internet/FSE_DOCUMENTS/nrcs144p2_015566.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250529141938/https://gc.nh.gov/rules/Filing_history/sourceenv-wq.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "http://www.astm.org/",
+          "url": "http://web.archive.org/web/20250529141938/http://www.astm.org/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "http://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=30000FRY.txt",
+          "url": "http://web.archive.org/web/20250529141938/http://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=30000FRY.txt"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 187254,
+      "title": "Env-Wq 400",
+      "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq400.html"
+    },
+    {
+      "child_link_count": 2,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250603111147/http://gencourt.state.nh.us/rules/filing_history/sourcerev.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250603111147/file://eagle/webrules$/sourcerev.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 213774,
+      "title": "Rev 300 Business profit",
+      "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/rev300.html"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T07:17:30.344919+00:00",
+    "pages_fetched": 5,
+    "pages_with_child_links": 5,
+    "source_json": "",
+    "successful_fetches": 5
+  }
+}
