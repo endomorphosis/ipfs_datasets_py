@@ -826,6 +826,7 @@ async def _agentic_discover_admin_state_blocks(
     )
     scraper = UnifiedWebScraper(cfg)
     unified_api = UnifiedWebArchivingAPI(scraper=scraper)
+    direct_fetch_api = UnifiedWebArchivingAPI()
     legal_archive = LegalWebArchiveSearch(auto_archive=False, use_hf_indexes=True)
 
     blocks: List[Dict[str, Any]] = []
@@ -910,6 +911,10 @@ async def _agentic_discover_admin_state_blocks(
         if not seed_urls:
             seed_urls = [f"https://{state_code.lower()}.gov"]
 
+        # Always inspect curated seed entrypoints directly as ranked candidates.
+        # Some states expose substantive rule indexes at the seed URL itself,
+        # and agentic discovery may not re-emit that same page as a document.
+        candidate_urls.extend(seed_urls)
         candidate_urls.extend(_template_admin_urls_for_state(state_code))
 
         try:
@@ -1040,6 +1045,7 @@ async def _agentic_discover_admin_state_blocks(
             for seed in seed_urls
             if str(seed).strip().startswith(("http://", "https://"))
         }
+        prioritized_seed_keys = {_url_key(url) for url in seed_urls}
 
         effective_fetch_concurrency = max(1, int(fetch_concurrency))
         while pending and len(statutes) < max_fetch and inspected_urls < max(4, max_candidates * 4):
@@ -1090,10 +1096,49 @@ async def _agentic_discover_admin_state_blocks(
                         url=url,
                         min_chars=min_text_chars,
                     ):
+                        # Dynamic official rule indexes can render as a thin JS shell through
+                        # the lightweight scraper even when the fuller fetch path has real text.
+                        host = urlparse(url).netloc
+                        if _url_key(url) in prioritized_seed_keys or host in base_hosts:
+                            try:
+                                fetched = await asyncio.wait_for(
+                                    asyncio.to_thread(
+                                        direct_fetch_api.fetch,
+                                        UnifiedFetchRequest(
+                                            url=url,
+                                            timeout_seconds=35,
+                                            mode=OperationMode.BALANCED,
+                                            domain=".gov" if host.endswith(".gov") else "legal",
+                                        ),
+                                    ),
+                                    timeout=40.0,
+                                )
+                                fetched_doc = getattr(fetched, "document", None)
+                                fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
+                                fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
+                                if _is_substantive_rule_text(
+                                    text=fetched_text,
+                                    title=fetched_title,
+                                    url=url,
+                                    min_chars=min_text_chars,
+                                ) or (
+                                    relaxed_recovery
+                                    and _is_relaxed_recovery_text(text=fetched_text, title=fetched_title, url=url)
+                                ):
+                                    text = fetched_text
+                                    title = fetched_title
+                            except Exception:
+                                pass
+
+                    if not _is_substantive_rule_text(
+                        text=text,
+                        title=title,
+                        url=url,
+                        min_chars=min_text_chars,
+                    ):
                         if relaxed_recovery and _is_relaxed_recovery_text(text=text, title=title, url=url):
                             pass
                         else:
-                            host = urlparse(url).netloc
                             same_host = host if host in base_hosts else ""
                             for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=8):
                                 link_score = _score_candidate_url(link_url)
