@@ -55,8 +55,12 @@ def _load_rows(paths: List[Path]) -> List[Dict[str, Any]]:
 
 
 def _category(row: Dict[str, Any]) -> str:
-    if bool(row.get("substantive_admin")):
+    if bool(row.get("substantive_admin")) and bool(row.get("rule_body_signals")):
         return "candidate_substantive"
+    if bool(row.get("substantive_admin")):
+        return "candidate_landing_page"
+    if bool(row.get("success")) and bool(row.get("landing_like_admin_page")):
+        return "landing_like_non_substantive"
     if bool(row.get("blocked_or_transport_error")):
         return "blocked_or_transport"
     if bool(row.get("success")) and int(row.get("text_len") or 0) < 240:
@@ -69,10 +73,12 @@ def _category(row: Dict[str, Any]) -> str:
 def _sort_pages(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     priority = {
         "blocked_or_transport": 0,
-        "non_substantive_success": 1,
-        "thin_success": 2,
-        "candidate_substantive": 3,
-        "other_failure": 4,
+        "landing_like_non_substantive": 1,
+        "non_substantive_success": 2,
+        "thin_success": 3,
+        "candidate_landing_page": 4,
+        "candidate_substantive": 5,
+        "other_failure": 6,
     }
     return sorted(
         rows,
@@ -100,6 +106,8 @@ def build_payload(rows: List[Dict[str, Any]], top_states: int, top_pages: int) -
         blocked = sum(1 for r in srows if r["page_category"] == "blocked_or_transport")
         thin = sum(1 for r in srows if r["page_category"] == "thin_success")
         non_sub = sum(1 for r in srows if r["page_category"] == "non_substantive_success")
+        landing_non_sub = sum(1 for r in srows if r["page_category"] == "landing_like_non_substantive")
+        landing_candidate = sum(1 for r in srows if r["page_category"] == "candidate_landing_page")
         candidate = sum(1 for r in srows if r["page_category"] == "candidate_substantive")
         success = sum(1 for r in srows if bool(r.get("success")))
         state_rows.append(
@@ -109,9 +117,11 @@ def build_payload(rows: List[Dict[str, Any]], top_states: int, top_pages: int) -
                 "success_pages": success,
                 "blocked_pages": blocked,
                 "thin_success_pages": thin,
+                "landing_like_non_substantive_pages": landing_non_sub,
                 "non_substantive_pages": non_sub,
+                "candidate_landing_pages": landing_candidate,
                 "candidate_substantive_pages": candidate,
-                "problem_score": blocked * 4 + non_sub * 3 + thin * 2 - candidate,
+                "problem_score": blocked * 4 + landing_non_sub * 3 + non_sub * 2 + thin * 2 + landing_candidate - candidate,
                 "problem_pages": _sort_pages(srows)[:top_pages],
             }
         )
@@ -127,7 +137,9 @@ def build_payload(rows: List[Dict[str, Any]], top_states: int, top_pages: int) -
         "pages_total": sum(r["pages_total"] for r in state_rows),
         "blocked_pages_total": sum(r["blocked_pages"] for r in state_rows),
         "thin_success_pages_total": sum(r["thin_success_pages"] for r in state_rows),
+        "landing_like_non_substantive_pages_total": sum(r["landing_like_non_substantive_pages"] for r in state_rows),
         "non_substantive_pages_total": sum(r["non_substantive_pages"] for r in state_rows),
+        "candidate_landing_pages_total": sum(r["candidate_landing_pages"] for r in state_rows),
         "candidate_substantive_pages_total": sum(r["candidate_substantive_pages"] for r in state_rows),
         "weak_states": [r["state"] for r in weak_states],
     }
@@ -147,27 +159,29 @@ def to_markdown(payload: Dict[str, Any]) -> str:
     lines.append(f"- Pages total: **{summary['pages_total']}**")
     lines.append(f"- Blocked pages: **{summary['blocked_pages_total']}**")
     lines.append(f"- Thin success pages: **{summary['thin_success_pages_total']}**")
+    lines.append(f"- Landing-like non-substantive pages: **{summary['landing_like_non_substantive_pages_total']}**")
     lines.append(f"- Non-substantive success pages: **{summary['non_substantive_pages_total']}**")
+    lines.append(f"- Candidate landing pages: **{summary['candidate_landing_pages_total']}**")
     lines.append(f"- Candidate substantive pages: **{summary['candidate_substantive_pages_total']}**")
     lines.append(f"- Weak states: `{', '.join(summary['weak_states'])}`")
     lines.append("")
     lines.append("## Weak States")
     lines.append("")
-    lines.append("| State | Pages | Success | Blocked | Thin | Non-substantive | Candidate Substantive |")
-    lines.append("|---|---:|---:|---:|---:|---:|---:|")
+    lines.append("| State | Pages | Success | Blocked | Thin | Landing Non-sub | Non-substantive | Candidate Landing | Candidate Substantive |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|")
     for st in weak_states:
         lines.append(
-            f"| {st['state']} | {st['pages_total']} | {st['success_pages']} | {st['blocked_pages']} | {st['thin_success_pages']} | {st['non_substantive_pages']} | {st['candidate_substantive_pages']} |"
+            f"| {st['state']} | {st['pages_total']} | {st['success_pages']} | {st['blocked_pages']} | {st['thin_success_pages']} | {st['landing_like_non_substantive_pages']} | {st['non_substantive_pages']} | {st['candidate_landing_pages']} | {st['candidate_substantive_pages']} |"
         )
     for st in weak_states:
         lines.append("")
         lines.append(f"### {st['state']} Problem Pages")
         lines.append("")
-        lines.append("| Category | URL | Title | Text Len | In Corpus |")
-        lines.append("|---|---|---|---:|:---:|")
+        lines.append("| Category | URL | Title | Text Len | In Corpus | Rule Body | Landing-like |")
+        lines.append("|---|---|---|---:|:---:|:---:|:---:|")
         for row in st.get("problem_pages") or []:
             lines.append(
-                f"| {row['page_category']} | {row.get('url','')} | {str(row.get('title') or '').replace('|',' ')} | {int(row.get('text_len') or 0)} | {'Yes' if row.get('in_existing_corpus') else 'No'} |"
+                f"| {row['page_category']} | {row.get('url','')} | {str(row.get('title') or '').replace('|',' ')} | {int(row.get('text_len') or 0)} | {'Yes' if row.get('in_existing_corpus') else 'No'} | {'Yes' if row.get('rule_body_signals') else 'No'} | {'Yes' if row.get('landing_like_admin_page') else 'No'} |"
             )
     return "\n".join(lines) + "\n"
 

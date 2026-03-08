@@ -1,0 +1,108 @@
+{
+  "rows": [
+    {
+      "state": "MT",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/0947bf41-fcda-4195-a866-a835873a3aaf",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "EDUCATION | Montana SOS",
+      "text_len": 3136,
+      "admin_signal": true,
+      "rule_body_signals": false,
+      "preview": "EDUCATION | Montana SOS\nAdministrative Rules of Montana\nMontana Administrative Register\n\u200b\n\u200b\nAdministrative Rules of Montana\n/\nTitle 10 EDUCATION\nShow Not Effective Rules\nAdministrative Rules of Montana\nTitle 1 GENERAL PROVISIONS\nTitle 2 ADMINISTRATION\nTitle 4 AGRICULTURE\nTitle 6 STATE AUDITOR\nTitle 8 COMMERCE\nTitle 10 EDUCATION\nTitle 12 FISH, WILDLIFE AND PARKS\nTitle 14 GOVERNOR\nTitle 17 ENVIRONMENTAL QUALITY\nTitle 18 TRANSPORTATION\nTitle 20 CORRECTIONS\nTitle 23 JUSTICE\nTitle 24 LABOR AND INDUSTRY\nTitle 30 LIEUTENANT GOVERNOR\nTitle 32 LIVESTOCK\nTitle 34 MILITARY AFFAIRS\nTitle 36 NATURAL RESOUR",
+      "errors": []
+    },
+    {
+      "state": "MT",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1f2ff5c5-b709-420b-bdd4-f6009ca7d33f",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "GENERAL PROVISIONS | Montana SOS",
+      "text_len": 1187,
+      "admin_signal": true,
+      "rule_body_signals": false,
+      "preview": "GENERAL PROVISIONS | Montana SOS\nAdministrative Rules of Montana\nMontana Administrative Register\n\u200b\n\u200b\nAdministrative Rules of Montana\n/\nTitle 1 GENERAL PROVISIONS\nShow Not Effective Rules\nAdministrative Rules of Montana\nTitle 1 GENERAL PROVISIONS\nTitle 2 ADMINISTRATION\nTitle 4 AGRICULTURE\nTitle 6 STATE AUDITOR\nTitle 8 COMMERCE\nTitle 10 EDUCATION\nTitle 12 FISH, WILDLIFE AND PARKS\nTitle 14 GOVERNOR\nTitle 17 ENVIRONMENTAL QUALITY\nTitle 18 TRANSPORTATION\nTitle 20 CORRECTIONS\nTitle 23 JUSTICE\nTitle 24 LABOR AND INDUSTRY\nTitle 30 LIEUTENANT GOVERNOR\nTitle 32 LIVESTOCK\nTitle 34 MILITARY AFFAIRS\nTitle ",
+      "errors": []
+    },
+    {
+      "state": "NY",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I0dea9f40aab711ddae51f9dc2e7e68c4&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "text_len": 854,
+      "admin_signal": true,
+      "rule_body_signals": false,
+      "preview": "Browse - Unofficial New York Codes, Rules and Regulations\nSkip to Main Content\nUnofficial New York Codes, Rules and Regulations\nHome\nSearch\nHelp\nHome\nTitle 1 Department of Agriculture and Markets\nIMPORTANT NOTE REGARDING CONTENT CURRENCY:\nThe date provided at the bottom of every rule section is the date of the most recently produced official NYCRR supplement covering that section. See\nHelp\nfor additional information on the currency of this unofficial version of the NYS Rules.\n1 CRR-NY Notice\nChapter I Milk Control*\nChapter II Animal Industry\nChapter III Plant Industry\nChapter IV Markets\nChapte",
+      "errors": []
+    },
+    {
+      "state": "NY",
+      "url": "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations?guid=I51d21d50ac3d11dd9f72c1eb90efe723&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "Browse - Unofficial New York Codes, Rules and Regulations",
+      "text_len": 1105,
+      "admin_signal": true,
+      "rule_body_signals": false,
+      "preview": "Browse - Unofficial New York Codes, Rules and Regulations\nSkip to Main Content\nUnofficial New York Codes, Rules and Regulations\nHome\nSearch\nHelp\nHome\nTitle 10 Department of Health\nIMPORTANT NOTE REGARDING CONTENT CURRENCY:\nThe date provided at the bottom of every rule section is the date of the most recently produced official NYCRR supplement covering that section. See\nHelp\nfor additional information on the currency of this unofficial version of the NYS Rules.\n10 CRR-NY Notice\nChapter I State Sanitary Code\nChapter II Administrative Rules and Regulations\nChapter III Public Water Supplies\nChapte",
+      "errors": []
+    },
+    {
+      "state": "OH",
+      "url": "https://codes.ohio.gov/ohio-administrative-code/011",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "011 - Ohio Administrative Code | Ohio Laws",
+      "text_len": 707,
+      "admin_signal": true,
+      "rule_body_signals": false,
+      "preview": "011 - Ohio Administrative Code | Ohio Laws\nSkip to main content\nAdministrative Code Keywords\nRule Number\nGo To Rule\nLaws\nOhio Constitution\nOhio Revised Code\nOhio Administrative Code\nAbout\nAbout\nContact\nContact\nRelated Sites\nRelated Sites\nTop\nHome\nLaws\nOhio Constitution\nOhio Revised Code\nOhio Administrative Code\nAbout\nContact\nRelated Sites\nGo To\nAdministrative Code Number\nGo\nAdministrative Code Keywords\nThis website publishes administrative rules on their effective dates, as designated by the adopting state agencies, colleges, and\nuniversities.\n011\n|\nApportionment Board\nOhio Administrative Code",
+      "errors": []
+    },
+    {
+      "state": "OH",
+      "url": "https://codes.ohio.gov/ohio-administrative-code/109:5",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "109:5 - Ohio Administrative Code | Ohio Laws",
+      "text_len": 1047,
+      "admin_signal": true,
+      "rule_body_signals": false,
+      "preview": "109:5 - Ohio Administrative Code | Ohio Laws\nSkip to main content\nAdministrative Code Keywords\nRule Number\nGo To Rule\nLaws\nOhio Constitution\nOhio Revised Code\nOhio Administrative Code\nAbout\nAbout\nContact\nContact\nRelated Sites\nRelated Sites\nTop\nHome\nLaws\nOhio Constitution\nOhio Revised Code\nOhio Administrative Code\nAbout\nContact\nRelated Sites\nGo To\nAdministrative Code Number\nGo\nAdministrative Code Keywords\nThis website publishes administrative rules on their effective dates, as designated by the adopting state agencies, colleges, and\nuniversities.\n109:5\n|\nBureau of Criminal Identification and In",
+      "errors": []
+    },
+    {
+      "state": "RI",
+      "url": "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "RISBC-1 Rhode Island Building Code - Rhode Island Department of State",
+      "text_len": 18847,
+      "admin_signal": true,
+      "rule_body_signals": true,
+      "preview": "RISBC-1 Rhode Island Building Code - Rhode Island Department of State\nAn Official Rhode Island State Website.\nRhode Island Department of State\nGregg M. Amore\nSecretary of State\nBusiness Services\nElections\nCivics and Education\nOpen Government\nYou are here:\nHome\nOpen Government\nRules and Regulations\nCode of Regulations\nRISBC-1 Rhode Island Building Code\n510-RICR-00-00-1\nACTIVE RULE\nRegulation Text\nOverview\nRegulation\nHistory\nRulemaking Documents\nMy Page Title\n1.1\nAuthority\nA.\nThe Rhode Island Building Code is promulgated by the Building Code Standards Committee pursuant to the authority granted ",
+      "errors": []
+    },
+    {
+      "state": "RI",
+      "url": "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
+      "success": true,
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "title": "RISBC-2 Rhode Island State One and Two Family Dwellings - Rhode Island Department of State",
+      "text_len": 34715,
+      "admin_signal": true,
+      "rule_body_signals": true,
+      "preview": "RISBC-2 Rhode Island State One and Two Family Dwellings - Rhode Island Department of State\nAn Official Rhode Island State Website.\nRhode Island Department of State\nGregg M. Amore\nSecretary of State\nBusiness Services\nElections\nCivics and Education\nOpen Government\nYou are here:\nHome\nOpen Government\nRules and Regulations\nCode of Regulations\nRISBC-2 Rhode Island State One and Two Family Dwellings\n510-RICR-00-00-2\nACTIVE RULE\nRegulation Text\nOverview\nRegulation\nHistory\nRulemaking Documents\nMy Page Title\n2.1\nAuthority\nA.\nThe Rhode Island One & Two-Family Dwelling Code is promulgated by the Building ",
+      "errors": []
+    }
+  ]
+}

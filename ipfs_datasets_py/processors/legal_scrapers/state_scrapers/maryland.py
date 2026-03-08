@@ -18,7 +18,7 @@ class MarylandScraper(BaseStateScraper):
 
     _MD_ARTICLE_CODE_RE = re.compile(r"\(([A-Za-z0-9]+)\)\s*$")
     _MD_NEXT_TRAIL_RE = re.compile(r"\s+Next\s*$", re.IGNORECASE)
-    _MD_SECTION_CITE_RE = re.compile(r"§\s*([0-9A-Za-z\-\.]+)")
+    _MD_SECTION_CITE_RE = re.compile(r"§\s*([0-9A-Za-z\-\u2010-\u2015\.]+)")
     
     def get_base_url(self) -> str:
         """Return the base URL for Maryland's legislative website."""
@@ -37,6 +37,13 @@ class MarylandScraper(BaseStateScraper):
         if match:
             return match.group(1).upper()
         return str(value or "").strip().upper()
+
+    def _normalize_section_code(self, value: str) -> str:
+        normalized = str(value or "").strip()
+        for dash in ("\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2015", "\u2212"):
+            normalized = normalized.replace(dash, "-")
+        normalized = re.sub(r"\s+", "", normalized)
+        return normalized.strip(".")
 
     async def _fetch_json(self, url: str) -> object:
         text = ""
@@ -57,6 +64,19 @@ class MarylandScraper(BaseStateScraper):
             return json.loads(text)
         except Exception:
             return None
+
+    async def _fetch_text_direct(self, url: str, timeout: int = 45) -> str:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return resp.read().decode("utf-8", errors="ignore")
+        except Exception:
+            payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout)
+            if isinstance(payload, bytes):
+                return payload.decode("utf-8", errors="ignore")
+            if payload:
+                return str(payload)
+            return ""
 
     async def _scrape_api_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         articles_url = f"{self.get_base_url()}/mgawebsite/api/Laws/GetArticles?enactments=false"
@@ -93,13 +113,16 @@ class MarylandScraper(BaseStateScraper):
                 if not isinstance(section, dict):
                     continue
 
-                section_number = str(section.get("DisplayText") or "").strip()
-                if not section_number:
+                section_label = str(section.get("DisplayText") or "").strip()
+                section_code = self._normalize_section_code(
+                    str(section.get("Value") or section_label)
+                )
+                if not section_code:
                     continue
 
                 section_url = (
                     f"{self.get_base_url()}/mgawebsite/Laws/StatuteText"
-                    f"?article={article_code}&section={section_number}&enactments=false"
+                    f"?article={article_code}&section={section_code}&enactments=false"
                 )
                 if section_url in seen_urls:
                     continue
@@ -107,7 +130,8 @@ class MarylandScraper(BaseStateScraper):
                 statute = await self._build_statute_from_section_page(
                     code_name=code_name,
                     article_label=article_display,
-                    section_number=section_number,
+                    section_label=section_label,
+                    section_number=section_code,
                     section_url=section_url,
                 )
                 if statute is None:
@@ -125,6 +149,7 @@ class MarylandScraper(BaseStateScraper):
         *,
         code_name: str,
         article_label: str,
+        section_label: str,
         section_number: str,
         section_url: str,
     ) -> NormalizedStatute | None:
@@ -134,13 +159,13 @@ class MarylandScraper(BaseStateScraper):
             return None
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+            html_text = await self._fetch_text_direct(section_url, timeout=35)
         except Exception:
             return None
-        if not payload:
+        if not html_text:
             return None
 
-        soup = BeautifulSoup(payload, "html.parser")
+        soup = BeautifulSoup(html_text, "html.parser")
         text_node = soup.select_one("#StatuteText") or soup.select_one("#mainBody")
         if text_node is None:
             return None
@@ -151,11 +176,14 @@ class MarylandScraper(BaseStateScraper):
             return None
 
         cite_match = self._MD_SECTION_CITE_RE.search(text)
-        normalized_section = str(section_number or "").strip()
+        normalized_section = self._normalize_section_code(section_number)
         if not normalized_section and cite_match:
-            normalized_section = cite_match.group(1)
+            normalized_section = self._normalize_section_code(cite_match.group(1))
+        if not normalized_section:
+            return None
         article_name = str(article_label or "").split(" - ", 1)[0].strip() or "Maryland Code"
-        section_name = f"{article_name} § {normalized_section}"
+        display_label = str(section_label or normalized_section).strip()
+        section_name = f"{article_name} § {display_label}"
 
         return NormalizedStatute(
             state_code=self.state_code,

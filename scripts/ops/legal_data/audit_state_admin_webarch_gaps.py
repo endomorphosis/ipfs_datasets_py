@@ -22,6 +22,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
     US_50_STATE_CODES,
     US_STATES,
     _STATE_ADMIN_SOURCE_MAP,
+    _looks_like_non_rule_admin_page,
     _is_relaxed_recovery_text,
     _is_substantive_rule_text,
 )
@@ -40,6 +41,12 @@ _ADMIN_PAGE_ANCHOR_RE = re.compile(
 
 _NON_ADMIN_PAGE_RE = re.compile(
     r"notary|invite|directory|roster|find my legislator|legislator|budget document|fee schedule|map|about$|contact|opt-out preferences",
+    re.IGNORECASE,
+)
+
+_RULE_BODY_SIGNAL_RE = re.compile(
+    r"§\s*\d|\barm\s+\d|\b\d{1,3}\.\d{1,3}\.\d{1,4}\b|authority\s*:|history\s*:|implementing\s*:|"
+    r"purpose\s+of\s+regulations|notice\s+of\s+adoption|notice\s+of\s+proposed\s+(?:amendment|adoption|repeal)",
     re.IGNORECASE,
 )
 
@@ -196,6 +203,11 @@ def _is_confident_substantive_page(*, text: str, title: str, url: str) -> bool:
     return bool(_ADMIN_PAGE_ANCHOR_RE.search(title_url_hay))
 
 
+def _has_rule_body_signals(*, text: str, title: str, url: str) -> bool:
+    hay = " ".join([str(title or ""), str(url or ""), str(text or "")])
+    return bool(_RULE_BODY_SIGNAL_RE.search(hay))
+
+
 def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -> Dict[str, Any]:
     url = _norm_url(page.get("url"))
     document = page.get("document") or {}
@@ -220,6 +232,8 @@ def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -
     text = _document_text(document)
     substantive = _is_confident_substantive_page(text=text, title=title, url=url)
     relaxed = _is_relaxed_recovery_text(text=text, title=title, url=url)
+    rule_body = _has_rule_body_signals(text=text, title=title, url=url)
+    landing_like = _looks_like_non_rule_admin_page(text=text, title=title, url=url)
     blocked, blocked_messages = _classify_error_messages(error_messages)
     return {
         "state_code": state_code,
@@ -229,6 +243,8 @@ def _page_row(*, state_code: str, page: Dict[str, Any], corpus_urls: set[str]) -
         "text_len": len(text),
         "substantive_admin": substantive,
         "relaxed_admin": relaxed,
+        "rule_body_signals": rule_body,
+        "landing_like_admin_page": landing_like,
         "error_codes": error_codes,
         "error_messages": error_messages[:5],
         "blocked_or_transport_error": blocked,
@@ -307,13 +323,17 @@ def _audit_state(
     page_rows = [_page_row(state_code=state_code, page=page, corpus_urls=corpus["corpus_urls"]) for page in results if isinstance(page, dict)]
 
     success_count = sum(1 for row in page_rows if row["success"])
-    substantive_hits = [row for row in page_rows if row["substantive_admin"]]
+    substantive_hits = [row for row in page_rows if row["substantive_admin"] and row["rule_body_signals"]]
+    landing_candidate_hits = [row for row in page_rows if row["substantive_admin"] and not row["rule_body_signals"]]
     blocked_count = sum(1 for row in page_rows if row["blocked_or_transport_error"])
     new_substantive_urls = [row["url"] for row in substantive_hits if row["url"] and not row["in_existing_corpus"]]
+    new_landing_candidate_urls = [row["url"] for row in landing_candidate_hits if row["url"] and not row["in_existing_corpus"]]
     thin_successes = [row for row in page_rows if row["success"] and row["text_len"] < 160 and not row["substantive_admin"]]
 
     if corpus["corpus_substantive_rows"] <= 0 and substantive_hits:
         gap_category = "corpus_gap_probe_found_substantive"
+    elif corpus["corpus_substantive_rows"] <= 0 and landing_candidate_hits:
+        gap_category = "corpus_gap_with_landing_candidates"
     elif success_count <= 0 and blocked_count > 0:
         gap_category = "blocked_or_transport_failures"
     elif success_count > 0 and not substantive_hits:
@@ -336,10 +356,13 @@ def _audit_state(
         "probe_result_count": len(page_rows),
         "probe_success_count": success_count,
         "probe_substantive_hits": len(substantive_hits),
+        "probe_landing_candidate_hits": len(landing_candidate_hits),
         "probe_blocked_count": blocked_count,
         "probe_thin_success_count": len(thin_successes),
         "new_substantive_urls": new_substantive_urls[:10],
         "best_substantive_urls": [row["url"] for row in substantive_hits[:10]],
+        "new_landing_candidate_urls": new_landing_candidate_urls[:10],
+        "best_landing_candidate_urls": [row["url"] for row in landing_candidate_hits[:10]],
         "blocked_examples": [msg for row in page_rows for msg in row["blocked_examples"]][:5],
         "gap_category": gap_category,
         "pages": page_rows,
@@ -371,16 +394,17 @@ def _build_markdown(summary: Dict[str, Any], state_rows: List[Dict[str, Any]]) -
     lines.append(f"- States with substantive corpus signal: **{summary['states_with_corpus_substantive']}**")
     lines.append(f"- States where probe found substantive pages: **{summary['states_with_probe_substantive']}**")
     lines.append(f"- States where probe found new substantive URLs outside corpus: **{summary['states_with_new_substantive_urls']}**")
+    lines.append(f"- States where probe found only landing-page candidates: **{summary['states_with_landing_candidates']}**")
     lines.append(f"- States blocked mainly by transport/access failures: **{summary['states_blocked_or_transport']}**")
     lines.append(f"- States fetchable but still non-substantive: **{summary['states_fetchable_but_non_substantive']}**")
     lines.append("")
     lines.append("## Per-State")
     lines.append("")
-    lines.append("| State | Corpus Rows | Corpus Substantive | Probe Success | Probe Substantive | New Substantive URLs | Gap Category |")
-    lines.append("|---|---:|---:|---:|---:|---:|---|")
+    lines.append("| State | Corpus Rows | Corpus Substantive | Probe Success | Probe Substantive | Probe Landing Candidates | New Substantive URLs | Gap Category |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---|")
     for row in state_rows:
         lines.append(
-            f"| {row['state_code']} | {row['corpus_rows']} | {row['corpus_substantive_rows']} | {row['probe_success_count']} | {row['probe_substantive_hits']} | {len(row['new_substantive_urls'])} | {row['gap_category']} |"
+            f"| {row['state_code']} | {row['corpus_rows']} | {row['corpus_substantive_rows']} | {row['probe_success_count']} | {row['probe_substantive_hits']} | {row['probe_landing_candidate_hits']} | {len(row['new_substantive_urls'])} | {row['gap_category']} |"
         )
     lines.append("")
     lines.append("## Priority Gaps")
@@ -388,6 +412,7 @@ def _build_markdown(summary: Dict[str, Any], state_rows: List[Dict[str, Any]]) -
     for row in state_rows:
         if row["gap_category"] not in {
             "corpus_gap_probe_found_substantive",
+            "corpus_gap_with_landing_candidates",
             "blocked_or_transport_failures",
             "fetchable_but_non_substantive",
         }:
@@ -398,6 +423,8 @@ def _build_markdown(summary: Dict[str, Any], state_rows: List[Dict[str, Any]]) -
         lines.append(f"- Seed URLs: {', '.join('`' + url + '`' for url in row['seed_urls'][:4]) or 'None'}")
         if row["new_substantive_urls"]:
             lines.append(f"- New substantive URLs: {', '.join('`' + url + '`' for url in row['new_substantive_urls'][:5])}")
+        if row["best_landing_candidate_urls"]:
+            lines.append(f"- Landing-page candidates: {', '.join('`' + url + '`' for url in row['best_landing_candidate_urls'][:5])}")
         if row["blocked_examples"]:
             lines.append(f"- Blocked examples: {', '.join('`' + msg[:120] + '`' for msg in row['blocked_examples'][:3])}")
         lines.append("")
@@ -450,6 +477,7 @@ def main() -> int:
         "states_with_corpus_substantive": sum(1 for row in state_rows if row["corpus_substantive_rows"] > 0),
         "states_with_probe_substantive": sum(1 for row in state_rows if row["probe_substantive_hits"] > 0),
         "states_with_new_substantive_urls": sum(1 for row in state_rows if row["new_substantive_urls"]),
+        "states_with_landing_candidates": sum(1 for row in state_rows if row["probe_landing_candidate_hits"] > 0 and row["probe_substantive_hits"] == 0),
         "states_blocked_or_transport": sum(1 for row in state_rows if row["gap_category"] == "blocked_or_transport_failures"),
         "states_fetchable_but_non_substantive": sum(1 for row in state_rows if row["gap_category"] == "fetchable_but_non_substantive"),
     }

@@ -1,0 +1,283 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://rules.mt.gov/browse/collections"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://rules.mt.gov/browse/collections/5e1173a6-33c7-4df8-b426-5e0077cfc430"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NV",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://www.leg.state.nv.us/home/image/documents/2025_10-28_Regulations Concerning Use of Legislative Grounds and Parking Areas_Pamphlet Form.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NV",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://www.leg.state.nv.us/register"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://govt.westlaw.com/nycrr"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NY",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://govt.westlaw.com/nycrr/Index"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "OH",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://codes.ohio.gov/ohio-administrative-code"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "RI",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations/building-and-fire-codes"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "UT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://rules.utah.gov"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "UT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://rules.utah.gov/february-15-2026-issue-of-the-utah-state-bulletin-is-now-available"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "UT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://rules.utah.gov/march-1-2026-issue-of-the-utah-state-bulletin-is-now-available"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "UT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://rules.utah.gov/utah-administrative-code"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://secure.vermont.gov/SOS/rules"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_landing_page",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_substantive",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://secure.vermont.gov/SOS/rules/rssFeed.php"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "AttributeError: 'UnifiedDocument' object has no attribute 'links'"
+      ],
+      "page_category": "candidate_substantive",
+      "provider": "",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://secure.vermont.gov/SOS/rules/search.php"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T03:59:17.117923+00:00",
+    "pages_fetched": 17,
+    "pages_with_child_links": 0,
+    "report_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_webarch_page_gap_report_pagequal_20260308_034824.json",
+    "successful_fetches": 0
+  }
+}

@@ -93,6 +93,10 @@ def extract_scrape_jsonld_rows(result: Dict[str, object], state_code: str) -> Li
             continue
         statutes = block.get("statutes")
         if not isinstance(statutes, list):
+            nested = block.get("statute_data")
+            if isinstance(nested, dict):
+                statutes = nested.get("statutes")
+        if not isinstance(statutes, list):
             continue
         for statute in statutes:
             if not isinstance(statute, dict):
