@@ -13,8 +13,9 @@ from .registry import StateScraperRegistry
 class MinnesotaScraper(BaseStateScraper):
     """Scraper for Minnesota state laws from https://www.revisor.mn.gov"""
 
-    _MN_SECTION_URL_RE = re.compile(r"/statutes/cite/[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*$", re.IGNORECASE)
+    _MN_SECTION_URL_RE = re.compile(r"/statutes/cite/[0-9A-Za-z]+\.[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*$", re.IGNORECASE)
     _MN_SECTION_NUMBER_RE = re.compile(r"/statutes/cite/([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)$", re.IGNORECASE)
+    _MN_SECTION_ROW_RE = re.compile(r"^(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)+)\s+(?P<title>.+)$")
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -128,17 +129,11 @@ class MinnesotaScraper(BaseStateScraper):
             if not payload:
                 continue
             soup = BeautifulSoup(payload, "html.parser")
-            for link in soup.find_all("a", href=True):
-                href = str(link.get("href") or "").strip()
-                if not href.startswith("/statutes/cite/"):
+            for section_url in self._extract_section_urls_from_chapter_page(soup):
+                if section_url in seen_urls:
                     continue
-                full_url = href if href.startswith("http") else f"{self.get_base_url()}{href}"
-                if not self._MN_SECTION_URL_RE.search(full_url):
-                    continue
-                if full_url in seen_urls:
-                    continue
-                seen_urls.add(full_url)
-                section_urls.append(full_url)
+                seen_urls.add(section_url)
+                section_urls.append(section_url)
                 if len(section_urls) >= max_statutes * 4:
                     break
             if len(section_urls) >= max_statutes * 4:
@@ -162,6 +157,33 @@ class MinnesotaScraper(BaseStateScraper):
                 break
 
         return statutes
+
+    def _extract_section_urls_from_chapter_page(self, soup) -> List[str]:
+        urls: List[str] = []
+
+        # Minnesota chapter pages expose the authoritative section list in table rows,
+        # which is more reliable than inferring coverage from the link structure alone.
+        for row in soup.find_all("tr"):
+            text = " ".join(row.get_text(" ", strip=True).split())
+            if not text:
+                continue
+            match = self._MN_SECTION_ROW_RE.match(text)
+            if not match:
+                continue
+            urls.append(f"{self.get_base_url()}/statutes/cite/{match.group('section')}")
+
+        if urls:
+            return urls
+
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href.startswith("/statutes/cite/"):
+                continue
+            full_url = href if href.startswith("http") else f"{self.get_base_url()}{href}"
+            if self._MN_SECTION_URL_RE.search(full_url):
+                urls.append(full_url)
+
+        return urls
 
     async def _build_statute_from_section_page(self, code_name: str, section_url: str) -> NormalizedStatute | None:
         try:

@@ -300,7 +300,7 @@ def brave_web_search(
     
     Args:
         query: Search query string
-        api_key: Brave Search API key (defaults to BRAVE_SEARCH_API_KEY env var)
+        api_key: Brave Search API key (defaults to BRAVE_SEARCH_API_KEY or BRAVE_API_KEY env var)
         count: Number of results to return (1-20, default 10)
         offset: Pagination offset (default 0)
         country: Country code for search results (default "us")
@@ -313,15 +313,16 @@ def brave_web_search(
         RuntimeError: If API key is missing or API request fails
         
     Environment Variables:
-        BRAVE_SEARCH_API_KEY: API key (required if not passed as parameter)
+        BRAVE_SEARCH_API_KEY: Preferred API key env var
+        BRAVE_API_KEY: Backward-compatible Brave API key env var
         BRAVE_SEARCH_CACHE_DISABLE: Set to "1"/"true" to disable caching
         BRAVE_SEARCH_CACHE_TTL_S: Cache TTL in seconds (default: 86400)
         BRAVE_SEARCH_CACHE_MAX_ENTRIES: Max cache entries (default: 1000)
         BRAVE_SEARCH_CACHE_PATH: Custom cache file path
     """
-    token = (api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or "").strip()
+    token = (api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or os.environ.get("BRAVE_API_KEY") or "").strip()
     if not token:
-        raise RuntimeError("Missing BRAVE_SEARCH_API_KEY (set env var or pass api_key)")
+        raise RuntimeError("Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY (set env var or pass api_key)")
     
     q = (query or "").strip()
     if not q:
@@ -691,9 +692,9 @@ class BraveSearchClient:
         """Initialize Brave Search client.
         
         Args:
-            api_key: Brave Search API key (can use BRAVE_SEARCH_API_KEY env var)
+            api_key: Brave Search API key (can use BRAVE_SEARCH_API_KEY or BRAVE_API_KEY env var)
         """
-        self.api_key = api_key or os.environ.get("BRAVE_SEARCH_API_KEY")
+        self.api_key = api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or os.environ.get("BRAVE_API_KEY")
         self.config = {
             "country": "us",
             "safesearch": "moderate",
