@@ -9,6 +9,7 @@ from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper
 from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import (
     _agentic_discover_admin_state_blocks,
     _allowed_discovery_hosts_for_state,
+    _candidate_links_from_html,
     _candidate_montana_rule_urls_from_text,
     _candidate_utah_rule_urls_from_public_api,
     _is_admin_rule_statute,
@@ -700,6 +701,25 @@ def test_utah_discovery_host_allowlist_excludes_external_domains() -> None:
     assert _url_allowed_for_state("https://rules.utah.gov/publications/code-updates/", allowed_hosts) is True
     assert _url_allowed_for_state("https://adminrules.utah.gov/public/search", allowed_hosts) is True
     assert _url_allowed_for_state("https://www.nationalgeographic.com/travel/national-parks/article/zion-national-park", allowed_hosts) is False
+
+
+def test_candidate_links_from_html_keeps_utah_detail_link_on_allowed_sibling_host() -> None:
+    allowed_hosts = _allowed_discovery_hosts_for_state("UT", "Utah")
+    html = (
+        '<a href="https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules?searchText=undefined">'
+        'Bedding, Upholstered Furniture, and Quilted Clothing(101)</a>'
+        '<a href="https://example.com/not-allowed">Off domain</a>'
+    )
+
+    assert _candidate_links_from_html(
+        html,
+        base_host="rules.utah.gov",
+        page_url="https://rules.utah.gov/utah-administrative-code/",
+        limit=5,
+        allowed_hosts=allowed_hosts,
+    ) == [
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules?searchText=undefined",
+    ]
 
 
 @pytest.mark.anyio

@@ -194,6 +194,8 @@ _LIVE_FETCH_PREFERRED_HOSTS = {
     "iar.iga.in.gov",
 }
 
+_TX_TRANSFER_INDEX_PATH_RE = re.compile(r"^/texreg/transfers(?:/|/index\.shtml)?$", re.IGNORECASE)
+
 
 def _prefers_live_fetch(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
@@ -800,8 +802,15 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score += 4
         if any(token in lower_url for token in ("current%20rules", "/proposed", "/emergency")):
             score += 2
+    parsed = urlparse(str(link_url or "").strip())
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
+    if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
+        score += 6
     if re.search(r"/code/(?:current|2006)/\d+/\d+(?:\.\d+)?", lower_url):
         score += 4
+        if re.search(r"\b(?:article|rule)\b", hay, re.IGNORECASE):
+            score += 2
 
     low_text = str(link_text or "").strip()
     if low_text and _LOW_VALUE_LINK_TEXT_RE.fullmatch(low_text):
@@ -891,7 +900,7 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "texas-sos.appianportalsgov.com" and _TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE.search(query):
         return True
-    if host == "www.sos.state.tx.us" and _TX_TRANSFER_PATH_RE.search(path):
+    if host == "www.sos.state.tx.us" and _TX_TRANSFER_INDEX_PATH_RE.search(path):
         return True
     if host == "adminrules.utah.gov" and path.startswith("/public/search"):
         return False
@@ -1227,7 +1236,13 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     return False
 
 
-def _candidate_links_from_scrape(scraped: Any, base_host: str, page_url: str = "", limit: int = 10) -> List[str]:
+def _candidate_links_from_scrape(
+    scraped: Any,
+    base_host: str,
+    page_url: str = "",
+    limit: int = 10,
+    allowed_hosts: Optional[set[str]] = None,
+) -> List[str]:
     ranked: List[tuple[int, str]] = []
     seen = set()
     for item in list(getattr(scraped, "links", []) or []):
@@ -1240,7 +1255,10 @@ def _candidate_links_from_scrape(scraped: Any, base_host: str, page_url: str = "
         if not link_url.startswith(("http://", "https://")):
             continue
         host = urlparse(link_url).netloc
-        if base_host and host and host != base_host:
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
             continue
         if not _ADMIN_LINK_HINT_RE.search(" ".join([link_url, link_text])):
             continue
@@ -1256,7 +1274,13 @@ def _candidate_links_from_scrape(scraped: Any, base_host: str, page_url: str = "
     return [link_url for _, link_url in ranked[: max(1, int(limit))]]
 
 
-def _candidate_links_from_html(html: str, base_host: str, page_url: str = "", limit: int = 10) -> List[str]:
+def _candidate_links_from_html(
+    html: str,
+    base_host: str,
+    page_url: str = "",
+    limit: int = 10,
+    allowed_hosts: Optional[set[str]] = None,
+) -> List[str]:
     body = str(html or "")
     if not body:
         return []
@@ -1271,7 +1295,10 @@ def _candidate_links_from_html(html: str, base_host: str, page_url: str = "", li
         if not link_url.startswith(("http://", "https://")):
             continue
         host = urlparse(link_url).netloc
-        if base_host and host and host != base_host:
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
             continue
         if not _ADMIN_LINK_HINT_RE.search(" ".join([link_url, link_text])):
             continue
@@ -1642,6 +1669,7 @@ async def _agentic_discover_admin_state_blocks(
                             base_host=host,
                             page_url=seed_url,
                             limit=24,
+                            allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
                             if link_score <= 0:
@@ -1652,6 +1680,7 @@ async def _agentic_discover_admin_state_blocks(
                             base_host=host,
                             page_url=seed_url,
                             limit=24,
+                            allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
                             if link_score <= 0:
@@ -1733,6 +1762,7 @@ async def _agentic_discover_admin_state_blocks(
                         base_host=cc_host,
                         page_url=cc_url,
                         limit=32,
+                        allowed_hosts=allowed_hosts,
                     ):
                         link_score = _score_candidate_url(link_url)
                         if link_score <= 0:
@@ -1743,6 +1773,7 @@ async def _agentic_discover_admin_state_blocks(
                         base_host=cc_host,
                         page_url=cc_url,
                         limit=32,
+                        allowed_hosts=allowed_hosts,
                     ):
                         link_score = _score_candidate_url(link_url)
                         if link_score <= 0:
@@ -1879,6 +1910,7 @@ async def _agentic_discover_admin_state_blocks(
                                 base_host=same_host,
                                 page_url=url,
                                 limit=8,
+                                allowed_hosts=allowed_hosts,
                             ):
                                 link_score = _score_candidate_url(link_url)
                                 if link_score <= 0:
@@ -1890,6 +1922,7 @@ async def _agentic_discover_admin_state_blocks(
                                 base_host=same_host,
                                 page_url=url,
                                 limit=12,
+                                allowed_hosts=allowed_hosts,
                             ):
                                 link_score = _score_candidate_url(link_url)
                                 if link_score <= 0:
@@ -1959,6 +1992,7 @@ async def _agentic_discover_admin_state_blocks(
                             base_host=same_host,
                             page_url=url,
                             limit=24,
+                            allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
                             if link_score <= 0:
@@ -1970,6 +2004,7 @@ async def _agentic_discover_admin_state_blocks(
                             base_host=same_host,
                             page_url=url,
                             limit=24,
+                            allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
                             if link_score <= 0:
