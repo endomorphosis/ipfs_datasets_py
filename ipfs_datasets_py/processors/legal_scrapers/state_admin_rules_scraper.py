@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 from .state_laws_scraper import (
     US_STATES,
@@ -34,7 +34,8 @@ _ADMIN_RULE_TEXT_RE = re.compile(
 )
 
 _ADMIN_LINK_HINT_RE = re.compile(
-    r"administrative|admin\.?\s+code|regulation|rules?|code|statute|chapter|title|agency|board|commission",
+    r"administrative|admin\.?\s+code|regulation|rules?|code|statute|chapter|subchapter|part|article|section|title|agency|board|commission|"
+    r"state_agencies/[\w.-]+\.html|\b[A-Za-z]{2,4}(?:-[A-Za-z]{1,3})?\s*\d{3}\b|\b\d{2}:\d{2}\b|\b\d{1,3}\.\d{1,3}(?:\.\d{1,4})?\b",
     re.IGNORECASE,
 )
 
@@ -55,9 +56,11 @@ _NON_ADMIN_CODE_NAME_RE = re.compile(
 
 _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
+    r"(?:^|https?://)(?:www\.)?uscode\.house\.gov/|(?:^|https?://)(?:www\.)?ecfr\.gov/|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
+    r"(?:^|https?://)(?:www\.)?sdlegislature\.gov/Statutes(?:\?|/|$)|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
     r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)|"
     r"(?:^|https?://)(?:www\.)?boardsandcommissions\.sd\.gov/",
@@ -126,6 +129,18 @@ _FORUM_PAGE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_NH_ARCHIVED_RULE_CHAPTER_URL_RE = re.compile(
+    r"^https?://web\.archive\.org/web/\d+/https?://gc\.nh\.gov/rules/state_agencies/[\w.-]+\.html$",
+    re.IGNORECASE,
+)
+
+_NH_ARCHIVED_RULE_CHAPTER_TEXT_RE = re.compile(
+    r"\bchapter\s+[A-Za-z-]+\s*\d{3}\b|\bpart\s+[A-Za-z-]+\s*\d{3}\b|statutory\s+authority:|\bsource\.\b",
+    re.IGNORECASE,
+)
+
+_NH_ARCHIVED_RULE_PREFIX_RE = re.compile(r"\b[A-Za-z]{2,4}(?:-[A-Za-z]{1,3})?\s*\d{3}\b")
+
 _RULE_BODY_SIGNAL_RE = re.compile(
     r"§\s*\d|\barm\s+\d|\b\d{1,3}\.\d{1,3}\.\d{1,4}\b|authority\s*:|history\s*:|implementing\s*:|"
     r"purpose\s+of\s+regulations|notice\s+of\s+adoption|notice\s+of\s+proposed\s+(?:amendment|adoption|repeal)",
@@ -188,13 +203,20 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ms.gov/adminsearch/",
     ],
     "NH": [
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr200.html",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/env-wq300.html",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/env-wq400.html",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/rev100.html",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/saf-c200.html",
         "https://gc.nh.gov/rules/state_agencies/",
         "https://gc.nh.gov/rules/",
         "https://www.gencourt.state.nh.us/rules/state_agencies/",
         "https://www.gencourt.state.nh.us/rules/",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
     ],
     "NM": [
         "https://www.srca.nm.gov/nmac-home/",
@@ -211,11 +233,20 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "MT": [
         "https://rules.mt.gov/",
         "https://rules.mt.gov/browse/collections",
-        "https://rules.mt.gov/search",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/ed446fdb-2d8d-4759-89ac-9cab3b21695c",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/f15f6670-85c3-43bc-a946-4632329a8e23",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1892387a-b61e-4aa2-a1dd-d9f7a535fd42",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/f504ae22-401c-4752-ac93-50e35903f1cd",
+        "https://rules.mt.gov/search",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1f2ff5c5-b709-420b-bdd4-f6009ca7d33f",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/b68c4d42-26f2-4fb4-b6a8-e1a2d4d265d2",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/5eaf58c6-ae9f-4ebe-afe2-c617e962b390",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/9af1b5dc-0d82-4413-bd9c-2cb707e5a8bd",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/cd2f9808-ce8d-4a4a-b05c-fd9fa5d034e0",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/11f11d0c-eb65-430a-baab-8728335a0c1b",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/c51b386c-09d3-476e-ab0b-ba97d644b619",
         "https://sosmt.gov/arm/register/",
         "https://sosmt.gov/arm/rulemaking-resources/",
     ],
@@ -471,6 +502,44 @@ def _filter_admin_state_blocks(
     return filtered_data, admin_rule_count, zero_rule_states
 
 
+def _ensure_target_state_blocks(
+    filtered_data: List[Dict[str, Any]],
+    *,
+    selected_states: List[str],
+) -> tuple[List[Dict[str, Any]], List[str]]:
+    """Ensure every targeted state has a placeholder block for fallback recovery."""
+    out = list(filtered_data)
+    present_states = {
+        str((item or {}).get("state_code") or "").upper()
+        for item in out
+        if isinstance(item, dict)
+    }
+    added_zero_states: List[str] = []
+
+    for state_code in selected_states:
+        state_code = str(state_code or "").upper()
+        if not state_code or state_code in present_states:
+            continue
+        out.append(
+            {
+                "state_code": state_code,
+                "state_name": US_STATES.get(state_code, state_code),
+                "title": f"{US_STATES.get(state_code, state_code)} Administrative Rules",
+                "source": "Official State Administrative Rule Sources",
+                "source_url": None,
+                "scraped_at": datetime.now().isoformat(),
+                "statutes": [],
+                "rules_count": 0,
+                "schema_version": "1.0",
+                "normalized": True,
+            }
+        )
+        added_zero_states.append(state_code)
+        present_states.add(state_code)
+
+    return out, added_zero_states
+
+
 def _agentic_domains_for_state(state_code: str) -> List[str]:
     low = str(state_code or "").lower()
     if not low:
@@ -599,7 +668,18 @@ def _url_key(url: str) -> str:
 
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
     hay = " ".join([str(text or ""), str(title or ""), str(url or "")])
-    return bool(_ADMIN_RULE_TEXT_RE.search(hay))
+    if _ADMIN_RULE_TEXT_RE.search(hay):
+        return True
+
+    url_value = str(url or "").strip()
+    body = str(text or "")
+    title_value = str(title or "")
+    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(url_value):
+        nh_hay = " ".join([title_value, body])
+        if _NH_ARCHIVED_RULE_CHAPTER_TEXT_RE.search(nh_hay):
+            return True
+
+    return False
 
 
 def _looks_like_placeholder_text(text: str) -> bool:
@@ -705,6 +785,36 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
     return False
 
 
+def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
+    body = str(text or "").strip()
+    title_value = str(title or "").strip()
+    url_value = str(url or "").strip()
+    if not body or not url_value:
+        return False
+    if _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value):
+        return True
+
+    host = urlparse(url_value).netloc.lower()
+    hay = " ".join([title_value, body])
+    chapter_hits = len(re.findall(r"\bchapter\b", body, re.IGNORECASE))
+    subchapter_hits = len(re.findall(r"\bsubchapter\b", body, re.IGNORECASE))
+    sd_row_hits = len(_SD_RULE_INDEX_ROW_RE.findall(body))
+    mt_rule_hits = len(re.findall(r"\b\d{1,3}\.\d{1,3}\.\d{2,4}\b", body))
+    nh_prefix_hits = len(_NH_ARCHIVED_RULE_PREFIX_RE.findall(hay))
+
+    if host == "rules.mt.gov" and (chapter_hits >= 3 or subchapter_hits >= 2 or mt_rule_hits >= 2):
+        return True
+    if host == "admincode.legislature.state.al.us" and chapter_hits >= 3:
+        return True
+    if host == "sdlegislature.gov" and sd_row_hits >= 8:
+        return True
+    if host == "web.archive.org" and "gc.nh.gov/rules" in url_value.lower() and (
+        "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
+    ):
+        return True
+    return False
+
+
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
@@ -780,7 +890,7 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     return False
 
 
-def _candidate_links_from_scrape(scraped: Any, base_host: str, limit: int = 10) -> List[str]:
+def _candidate_links_from_scrape(scraped: Any, base_host: str, page_url: str = "", limit: int = 10) -> List[str]:
     out: List[str] = []
     seen = set()
     for item in list(getattr(scraped, "links", []) or []):
@@ -788,6 +898,8 @@ def _candidate_links_from_scrape(scraped: Any, base_host: str, limit: int = 10) 
             continue
         link_url = str(item.get("url") or "").strip()
         link_text = str(item.get("text") or "").strip()
+        if link_url and not link_url.startswith(("http://", "https://")) and page_url:
+            link_url = urljoin(page_url, link_url)
         if not link_url.startswith(("http://", "https://")):
             continue
         host = urlparse(link_url).netloc
@@ -1006,6 +1118,95 @@ async def _agentic_discover_admin_state_blocks(
 
         statutes: List[Dict[str, Any]] = []
         direct_doc_urls: set[str] = set()
+        max_fetch = max(1, int(max_fetch_per_state))
+        min_text_chars = max(140, int(min_full_text_chars // 2))
+        if require_substantive_text:
+            min_text_chars = max(220, int(min_full_text_chars))
+
+        async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
+            if not doc_url.startswith(("http://", "https://")):
+                return False
+            if not _is_substantive_rule_text(
+                text=doc_text,
+                title=doc_title,
+                url=doc_url,
+                min_chars=min_text_chars,
+            ):
+                if not (relaxed_recovery and _is_relaxed_recovery_text(text=doc_text, title=doc_title, url=doc_url)):
+                    return False
+            doc_key = _url_key(doc_url)
+            if doc_key in direct_doc_urls:
+                return False
+            direct_doc_urls.add(doc_key)
+
+            section_number = f"A{len(statutes) + 1}"
+            section_name = doc_title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
+            stored_text = doc_text.strip() or f"{section_name}\nAdministrative rules source URL: {doc_url}"
+            statute = {
+                "state_code": state_code,
+                "state_name": state_name,
+                "statute_id": f"{state_code}-AGENTIC-{section_number}",
+                "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
+                "section_number": section_number,
+                "section_name": section_name,
+                "short_title": section_name,
+                "full_text": stored_text,
+                "summary": stored_text[:500],
+                "legal_area": "administrative",
+                "source_url": doc_url,
+                "official_cite": f"{state_code} Admin Rule {section_number}",
+                "structured_data": {
+                    "type": "regulation",
+                    "agentic_discovery": True,
+                    "relaxed_recovery": bool(relaxed_recovery),
+                    "method_used": method_value,
+                    "source_domain": urlparse(doc_url).netloc,
+                },
+            }
+            statutes.append(statute)
+            kg_rows.append(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "url": doc_url,
+                    "domain": urlparse(doc_url).netloc,
+                    "title": doc_title,
+                    "text": doc_text,
+                    "method_used": method_value,
+                    "query": query,
+                    "source": "agentic_web_archiving",
+                    "fetched_at": datetime.now().isoformat(),
+                }
+            )
+            return True
+
+        # Give curated/official entrypoints one deterministic direct fetch pass.
+        for seed_url in seed_urls[:6]:
+            if len(statutes) >= max(1, int(max_fetch_per_state)):
+                break
+            host = urlparse(seed_url).netloc
+            try:
+                fetched = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        direct_fetch_api.fetch,
+                        UnifiedFetchRequest(
+                            url=seed_url,
+                            timeout_seconds=35,
+                            mode=OperationMode.BALANCED,
+                            domain=".gov" if host.endswith(".gov") else "legal",
+                        ),
+                    ),
+                    timeout=40.0,
+                )
+                fetched_doc = getattr(fetched, "document", None)
+                fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
+                fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
+                method_value = None
+                if fetched_doc is not None:
+                    method_value = (getattr(fetched_doc, "extraction_provenance", {}) or {}).get("method")
+                await _append_document_if_rule(seed_url, fetched_title, fetched_text, method_value)
+            except Exception:
+                pass
 
         try:
             if "discovered" in locals() and isinstance(discovered, dict):
@@ -1020,70 +1221,16 @@ async def _agentic_discover_admin_state_blocks(
                         continue
                     doc_text = str(document.get("text") or "").strip()
                     doc_title = str(document.get("title") or "").strip()
-                    min_text_chars = max(140, int(min_full_text_chars // 2))
-                    if require_substantive_text:
-                        min_text_chars = max(220, int(min_full_text_chars))
-                    if not _is_substantive_rule_text(
-                        text=doc_text,
-                        title=doc_title,
-                        url=doc_url,
-                        min_chars=min_text_chars,
-                    ):
-                        if not (relaxed_recovery and _is_relaxed_recovery_text(text=doc_text, title=doc_title, url=doc_url)):
-                            continue
-                    doc_key = _url_key(doc_url)
-                    if doc_key in direct_doc_urls:
-                        continue
-                    direct_doc_urls.add(doc_key)
-
-                    section_number = f"A{len(statutes) + 1}"
-                    section_name = doc_title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
-                    stored_text = doc_text.strip() or f"{section_name}\nAdministrative rules source URL: {doc_url}"
                     method_used = document.get("method_used")
                     method_value = getattr(method_used, "value", method_used)
-                    statute = {
-                        "state_code": state_code,
-                        "state_name": state_name,
-                        "statute_id": f"{state_code}-AGENTIC-{section_number}",
-                        "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
-                        "section_number": section_number,
-                        "section_name": section_name,
-                        "short_title": section_name,
-                        "full_text": stored_text,
-                        "summary": stored_text[:500],
-                        "legal_area": "administrative",
-                        "source_url": doc_url,
-                        "official_cite": f"{state_code} Admin Rule {section_number}",
-                        "structured_data": {
-                            "type": "regulation",
-                            "agentic_discovery": True,
-                            "relaxed_recovery": bool(relaxed_recovery),
-                            "method_used": method_value,
-                            "source_domain": urlparse(doc_url).netloc,
-                        },
-                    }
-                    statutes.append(statute)
-                    kg_rows.append(
-                        {
-                            "state_code": state_code,
-                            "state_name": state_name,
-                            "url": doc_url,
-                            "domain": urlparse(doc_url).netloc,
-                            "title": doc_title,
-                            "text": doc_text,
-                            "method_used": method_value,
-                            "query": query,
-                            "source": "agentic_web_archiving",
-                            "fetched_at": datetime.now().isoformat(),
-                        }
-                    )
+                    if not await _append_document_if_rule(doc_url, doc_title, doc_text, method_value):
+                        continue
                     if len(statutes) >= max(1, int(max_fetch_per_state)):
                         break
         except Exception:
             pass
 
         max_candidates = max(1, int(max_candidates_per_state))
-        max_fetch = max(1, int(max_fetch_per_state))
         pending: List[tuple[str, int]] = list(ranked_urls[:max_candidates])
         seen_urls = set(direct_doc_urls)
         inspected_urls = 0
@@ -1136,9 +1283,6 @@ async def _agentic_discover_admin_state_blocks(
                     text = str(getattr(scraped, "text", "") or "").strip()
                     title = str(getattr(scraped, "title", "") or "").strip()
                     official_index_page = _looks_like_official_rule_index_page(text=text, title=title, url=url)
-                    min_text_chars = max(140, int(min_full_text_chars // 2))
-                    if require_substantive_text:
-                        min_text_chars = max(220, int(min_full_text_chars))
 
                     if not _is_substantive_rule_text(
                         text=text,
@@ -1190,7 +1334,12 @@ async def _agentic_discover_admin_state_blocks(
                             pass
                         else:
                             same_host = host if host in base_hosts else ""
-                            for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=8):
+                            for link_url in _candidate_links_from_scrape(
+                                scraped,
+                                base_host=same_host,
+                                page_url=url,
+                                limit=8,
+                            ):
                                 link_score = _score_candidate_url(link_url)
                                 if link_score <= 0:
                                     continue
@@ -1231,52 +1380,20 @@ async def _agentic_discover_admin_state_blocks(
                             continue
                     method_used = getattr(scraped, "method_used", None)
                     method_value = method_used.value if method_used else None
-                    section_number = f"A{len(statutes) + 1}"
-                    section_name = title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
-                    stored_text = text.strip() or f"{section_name}\nAdministrative rules source URL: {url}"
-                    statute = {
-                        "state_code": state_code,
-                        "state_name": state_name,
-                        "statute_id": f"{state_code}-AGENTIC-{section_number}",
-                        "code_name": f"{state_name} Administrative Rules (Agentic Discovery)",
-                        "section_number": section_number,
-                        "section_name": section_name,
-                        "short_title": section_name,
-                        "full_text": stored_text,
-                        "summary": stored_text[:500],
-                        "legal_area": "administrative",
-                        "source_url": url,
-                        "official_cite": f"{state_code} Admin Rule {section_number}",
-                        "structured_data": {
-                            "type": "regulation",
-                            "agentic_discovery": True,
-                            "relaxed_recovery": bool(relaxed_recovery),
-                            "method_used": method_value,
-                            "source_domain": urlparse(url).netloc,
-                        },
-                    }
-                    statutes.append(statute)
-                    kg_rows.append(
-                        {
-                            "state_code": state_code,
-                            "state_name": state_name,
-                            "url": url,
-                            "domain": urlparse(url).netloc,
-                            "title": title,
-                            "text": text,
-                            "method_used": method_value,
-                            "query": query,
-                            "source": "agentic_web_archiving",
-                            "fetched_at": datetime.now().isoformat(),
-                        }
-                    )
+                    if not await _append_document_if_rule(url, title, text, method_value):
+                        continue
 
                     # Official rule-index pages are useful corpus rows in their own right,
                     # but they should also act as expansion hubs so the crawler can step
                     # from statewide/title indexes into deeper rule pages.
-                    if official_index_page:
+                    if _looks_like_rule_inventory_page(text=text, title=title, url=url):
                         same_host = host if host in base_hosts else urlparse(url).netloc
-                        for link_url in _candidate_links_from_scrape(scraped, base_host=same_host, limit=24):
+                        for link_url in _candidate_links_from_scrape(
+                            scraped,
+                            base_host=same_host,
+                            page_url=url,
+                            limit=24,
+                        ):
                             link_score = _score_candidate_url(link_url)
                             if link_score <= 0:
                                 continue
@@ -1419,6 +1536,12 @@ async def scrape_state_admin_rules(
             min_full_text_chars=int(min_full_text_chars),
             require_substantive_text=bool(require_substantive_rule_text),
         )
+        filtered_data, added_zero_states = _ensure_target_state_blocks(
+            filtered_data,
+            selected_states=selected_states,
+        )
+        if added_zero_states:
+            zero_rule_states = sorted(set(zero_rule_states).union(added_zero_states))
 
         fallback_attempted_states: List[str] = []
         fallback_recovered_states: List[str] = []

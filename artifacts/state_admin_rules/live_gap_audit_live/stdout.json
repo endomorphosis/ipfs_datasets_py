@@ -1,0 +1,17 @@
+{
+  "aggregate_jsonl": "/home/barberb/municipal_scrape_workspace/artifacts/state_admin_rules/full_parallel_run_20260306_073445/output/aggregates/state_admin_rule_kg_corpus_all_states_complete_20260307.jsonl",
+  "generated_at": "2026-03-08T08:11:48.472278+00:00",
+  "local_jsonld_dir": "/home/barberb/.ipfs_datasets/state_admin_rules/state_admin_rules_jsonld",
+  "max_hops": 1,
+  "max_pages": 8,
+  "max_seeds_per_state": 6,
+  "output_dir": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/live_gap_audit_live",
+  "states_audited": 12,
+  "states_blocked_or_transport": 1,
+  "states_fetchable_but_non_substantive": 4,
+  "states_with_corpus_substantive": 4,
+  "states_with_landing_candidates": 4,
+  "states_with_new_substantive_urls": 4,
+  "states_with_probe_substantive": 4,
+  "workers": 8
+}
