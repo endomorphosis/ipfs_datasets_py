@@ -1,0 +1,283 @@
+{
+  "pages": [
+    {
+      "child_link_count": 1,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250608032214/https://gc.nh.gov/rules/filing_history/sourceagr.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 7240,
+      "title": "Agr 100",
+      "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr100.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://repository.immregistries.org/files/resources/5bef530428317/hl7_2_5_1_release_1_5__2018_update.pdf",
+          "url": "http://web.archive.org/web/20241204201326/https://repository.immregistries.org/files/resources/5bef530428317/hl7_2_5_1_release_1_5__2018_update.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://www.cdc.gov/nhsn/PDFs/pscManual/7pscCAUTIcurrent.pdf",
+          "url": "http://web.archive.org/web/20241204201326/http://www.cdc.gov/nhsn/PDFs/pscManual/7pscCAUTIcurrent.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://www.cdc.gov/nhsn/PDFs/pscManual/4PSC_CLABScurrent.pdf",
+          "url": "http://web.archive.org/web/20241204201326/http://www.cdc.gov/nhsn/PDFs/pscManual/4PSC_CLABScurrent.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://www.cdc.gov/nhsn/PDFs/pscManual/9pscSSIcurrent.pdf",
+          "url": "http://web.archive.org/web/20241204201326/http://www.cdc.gov/nhsn/PDFs/pscManual/9pscSSIcurrent.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.cdc.gov/nhsn/pdfs/pscmanual/12pscmdro_cdadcurrent.pdf",
+          "url": "http://web.archive.org/web/20241204201326/https://www.cdc.gov/nhsn/pdfs/pscmanual/12pscmdro_cdadcurrent.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://www.cdc.gov/nhsn/pdfs/pscmanual/11pscaurcurrent.pdf",
+          "url": "http://web.archive.org/web/20241204201326/https://www.cdc.gov/nhsn/pdfs/pscmanual/11pscaurcurrent.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "https://aidsinfo.nih.gov/contentfiles/lvguidelines/adultandadolescentgl.pdf",
+          "url": "http://web.archive.org/web/20241204201326/https://aidsinfo.nih.gov/contentfiles/lvguidelines/adultandadolescentgl.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://www.cdc.gov/nhsn/PDFs/pscManual/5psc_CLIPcurrent.pdf",
+          "url": "http://web.archive.org/web/20241204201326/http://www.cdc.gov/nhsn/PDFs/pscManual/5psc_CLIPcurrent.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "http://www.cdc.gov/nhsn/pdfs/pscmanual/8pscdialysiseventcurrent.pdf",
+          "url": "http://web.archive.org/web/20241204201326/http://www.cdc.gov/nhsn/pdfs/pscmanual/8pscdialysiseventcurrent.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20241204201326/http://gencourt.state.nh.us/rules/filing_history/sourcehe-p.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "www.vaers.org",
+          "url": "http://web.archive.org/web/20241204201326/http://www.vaers.org/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "http://www.naaccr.org",
+          "url": "http://web.archive.org/web/20241204201326/http://www.naaccr.org/"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 196062,
+      "title": "He-P 300 Communic. Diseas",
+      "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p300.html"
+    },
+    {
+      "child_link_count": 8,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250529141931/https://gencourt.state.nh.us/rules/Filing_history/sourceenv-wq.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "https://onlineforms.nh.gov/?formtag=NHDES-W-09-004",
+          "url": "http://web.archive.org/web/20250529141931/https://onlineforms.nh.gov/?formtag=NHDES-W-09-004"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "https://onlineforms.nh.gov/?formtag=NHDES-W-09-068",
+          "url": "http://web.archive.org/web/20250529141931/https://onlineforms.nh.gov/?formtag=NHDES-W-09-068"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "https://onlineforms.nh.gov/?formtag=NHDES-W-09-055",
+          "url": "http://web.archive.org/web/20250529141931/https://onlineforms.nh.gov/?formtag=NHDES-W-09-055"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "https://onlineforms.nh.gov/?formtag=NHDES-W-09-065",
+          "url": "http://web.archive.org/web/20250529141931/https://onlineforms.nh.gov/?formtag=NHDES-W-09-065"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "https://onlineforms.nh.gov/?formtag=NHDES-W-09-067",
+          "url": "http://web.archive.org/web/20250529141931/https://us-east-2.protection.sophos.com/?d=nh.gov&u=aHR0cHM6Ly9vbmxpbmVmb3Jtcy5uaC5nb3YvP2Zvcm10YWc9TkhERVMtVy0wOS0wNjc=&i=NWViOWEzNmRkMDA3MzIxNzcxMzI5ZmU4&t=OS90dDRIV2MwUzNVSlN1aDErMGRnSCttRTF4cGV0T3NORW1YWHE1TGdUWT0=&h=074cc36795f4410ba4653274f472d5e1&s=AVNPUEhUT0NFTkNSWVBUSVZA9OkMF_px2Zzd5GDtCuD95OyB8sMAawdE0qpwu9-Q0Q"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "www.des.nh.gov",
+          "url": "http://web.archive.org/web/20250529141931/http://www.des.nh.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "des.wastewaterengineering@des.nh.gov",
+          "url": "http://web.archive.org/web/20250529141931/mailto:des.wastewaterengineering@des.nh.gov"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 147242,
+      "title": "CHAPTER Env-Ws 400  PROTECTION OF STATE SURFACE WATERS",
+      "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq300.html"
+    },
+    {
+      "child_link_count": 1,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Source.",
+          "url": "http://web.archive.org/web/20250603111140/https://gc.nh.gov/rules/Filing_history/sourcerev.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NH",
+      "success": true,
+      "text_len": 12099,
+      "title": "Rev 100",
+      "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/rev100.html"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 22975,
+      "title": "Saf-C 100 Organizational Rules",
+      "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/saf-c100.html"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T06:10:58.339321+00:00",
+    "pages_fetched": 5,
+    "pages_with_child_links": 4,
+    "source_json": "",
+    "successful_fetches": 5
+  }
+}

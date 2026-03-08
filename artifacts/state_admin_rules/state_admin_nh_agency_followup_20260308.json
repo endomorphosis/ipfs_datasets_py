@@ -1,0 +1,626 @@
+{
+  "pages": [
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr100",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr200",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr200.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr300",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr300.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr400",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr400.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr500",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr500.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr700",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr700.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr1000",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr1000.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr1100",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr1100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr1200",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr1200.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr1400",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr1400.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr1600",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr1600.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTERAgr1700",
+          "url": "http://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr1700.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 44567,
+      "title": "TABLE OF CONTENTS",
+      "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 300",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq300.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 400",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq400.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 500",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq500.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 700",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq700.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 800",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq800.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Env-Wq 900",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq900.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 1000",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq1000.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 1100",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq1100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 1200",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq1200.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 1300",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq1300.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 1400",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq1400.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nEnv-Wq 1500",
+          "url": "http://web.archive.org/web/20250213094551/http://gencourt.state.nh.us/rules/state_agencies/env-wq1500.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 125893,
+      "title": "TABLE OF CONTENTS",
+      "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/env-wq.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER He-P 300",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p300.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 400",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p400.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 600",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p600.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 700",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p700.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 800",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p800.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER He-P 900",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p900.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 1600",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p1600.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 1800",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p1800.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 1900",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p1900.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 2100",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p2100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nHe-P 2200",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p2200.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER He-P 2300",
+          "url": "http://web.archive.org/web/20250212001022/http://gencourt.state.nh.us/rules/state_agencies/he-p2300.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 105163,
+      "title": "TABLE OF CONTENTS",
+      "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/he-p.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Rev 100",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Rev\n200",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev200.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Rev\n300",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev300.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Rev 400",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev400.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Rev\n500",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev500.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Rev\n600",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev600.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Rev\n700",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev700.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nRev 800",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev800.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nRev 900",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev900.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nRev 1000",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev1000.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nRev 1100",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev1100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nRev 1200",
+          "url": "http://web.archive.org/web/20250213032616/http://gencourt.state.nh.us/rules/state_agencies/rev1200.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 97369,
+      "title": "TABLE OF CONTENTS",
+      "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/rev.html"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 100",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Saf-C 200",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c200.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 300",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c300.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 400",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c400.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 500",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c500.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 600",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c600.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 700",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c700.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 800",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c800.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER Saf-C 900",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c900.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 1000",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c1000.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 1100",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c1100.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "CHAPTER\nSaf-C 1200",
+          "url": "http://web.archive.org/web/20250601032039/http://gencourt.state.nh.us/rules/state_agencies/saf-c1200.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 239356,
+      "title": "TABLE OF CONTENTS",
+      "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/saf-c.html"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T06:10:14.873853+00:00",
+    "pages_fetched": 5,
+    "pages_with_child_links": 5,
+    "source_json": "",
+    "successful_fetches": 5
+  }
+}
