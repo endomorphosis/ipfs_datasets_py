@@ -54,14 +54,15 @@ _NON_ADMIN_CODE_NAME_RE = re.compile(
 )
 
 _NON_ADMIN_SOURCE_URL_RE = re.compile(
-    r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|"
+    r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
+    r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
     r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)",
     re.IGNORECASE,
 )
 
 _BAD_DISCOVERY_DOMAIN_RE = re.compile(
-    r"(^|\.)(city-data\.com|texashuntingforum\.com)$",
+    r"(^|\.)(city-data\.com|texashuntingforum\.com|montanaheritagecommission\.mt\.gov)$",
     re.IGNORECASE,
 )
 
@@ -92,7 +93,7 @@ _LANDING_PAGE_PHRASE_RE = re.compile(
 
 _OFF_TOPIC_HISTORY_PAGE_RE = re.compile(
     r"magazine\s+of\s+(?:western\s+)?history|on\s+the\s+cover|reviewed\s+by|vol\.\s*\d+\s*,\s*no\.\s*\d+|"
-    r"membership\s+visit\s+about|event\s+spaces?\s+rental|montana\s+heritage\s+center|staff\s+directory",
+    r"membership\s+visit\s+about|event\s+spaces?\s+rental|montana\s+heritage\s+center|montana\s+heritage\s+commission|staff\s+directory",
     re.IGNORECASE,
 )
 
@@ -100,6 +101,17 @@ _NON_RULE_ADMIN_LANDING_RE = re.compile(
     r"board\s+members|meeting\s+information|agenda\s+packet|public\s+comment|events\s+calendar|"
     r"past\s+meetings\s+and\s+minutes|board\s+training|member\s+directory|"
     r"subscribe\s+to\s+receive\s+.*email\s+updates|board\s+of\s+public\s+education|board\s+of\s+housing",
+    re.IGNORECASE,
+)
+
+_GENERIC_ADMIN_INDEX_TITLE_RE = re.compile(
+    r"^(administrative\s+rules|policies|home|rulemaking\s+resources)$",
+    re.IGNORECASE,
+)
+
+_NON_RULE_POLICY_PAGE_RE = re.compile(
+    r"department\s+of\s+corrections\s+policies|policies\s+manual|contracts\s+policies\s+procedures|"
+    r"social\s+media\s+terms\s+of\s+use|state\s+hr\s+policies|policy\s+and\s+procedure\s+management",
     re.IGNORECASE,
 )
 
@@ -126,6 +138,7 @@ _PDF_BINARY_TOKEN_RE = re.compile(
 # Curated admin-rules entrypoints for states that remain hard to recover via generic discovery.
 _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "AL": [
+        "http://www.alabamaadministrativecode.state.al.us/",
         "https://www.alabamaadministrativecode.state.al.us/",
         "https://www.sos.alabama.gov/alabama-administrative-code",
     ],
@@ -161,6 +174,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://gc.nh.gov/rules/",
         "https://www.gencourt.state.nh.us/rules/state_agencies/",
         "https://www.gencourt.state.nh.us/rules/",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
     ],
     "NM": [
         "https://www.srca.nm.gov/nmac-home/",
@@ -178,12 +194,19 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.mt.gov/",
         "https://rules.mt.gov/browse/collections",
         "https://rules.mt.gov/search",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1f2ff5c5-b709-420b-bdd4-f6009ca7d33f",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/b68c4d42-26f2-4fb4-b6a8-e1a2d4d265d2",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/5eaf58c6-ae9f-4ebe-afe2-c617e962b390",
         "https://sosmt.gov/arm/register/",
         "https://sosmt.gov/arm/rulemaking-resources/",
     ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
         "https://rules.sos.ri.gov/",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-3",
     ],
     "SD": [
         "https://rules.sd.gov/",
@@ -195,18 +218,26 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC",
         "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=SEARCH_TAC",
         "https://www.sos.state.tx.us/texreg/index.shtml",
+        "https://www.sos.state.tx.us/texreg/transfers/index.shtml",
+        "https://www.sos.state.tx.us/texreg/pdf/currview/index.shtml",
+        "https://www.sos.state.tx.us/texreg/pdf/backview/index.shtml",
     ],
     "UT": [
         "https://rules.utah.gov/",
         "https://adminrules.utah.gov/",
+        "https://adminrules.utah.gov/public/home",
         "https://adminrules.utah.gov/public/search",
         "https://adminrules.utah.gov/public/search//Current%20Rules",
         "https://rules.utah.gov/utah-administrative-code/",
+        "https://rules.utah.gov/publications/administrative-rules-register/",
+        "https://rules.utah.gov/publications/code-updates/",
     ],
     "VT": [
         "https://secure.vermont.gov/SOS/rules/",
+        "https://secure.vermont.gov/SOS/rules/index.php",
         "https://secure.vermont.gov/SOS/rules/search.php",
         "https://secure.vermont.gov/SOS/rules/rssFeed.php",
+        "https://secure.vermont.gov/SOS/rules/display.php?r=1049",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
     ],
     "TN": [
@@ -523,6 +554,24 @@ def _score_candidate_url(url: str) -> int:
         score += 2
     if "/rule" in value or "/reg" in value or "admin" in value:
         score += 2
+    if any(
+        token in value
+        for token in (
+            "/part/",
+            "/section/",
+            "/sections/",
+            "display.php",
+            "/browse/collections/",
+            "/code/",
+            "/gac/",
+            "/transfers/",
+            "/pdf/currview/",
+            "/pdf/backview/",
+        )
+    ):
+        score += 2
+    if "title" in value or "chapter" in value or "article" in value:
+        score += 1
     return score
 
 
@@ -570,9 +619,15 @@ def _looks_like_navigation_page(text: str) -> bool:
 
 def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     hay = " ".join([str(title or ""), str(url or ""), str(text or "")])
+    title_value = str(title or "").strip()
+    nav_hits = len(_NAVIGATION_PAGE_TOKEN_RE.findall(hay))
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
         return True
     if _NON_RULE_ADMIN_LANDING_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
+        return True
+    if _NON_RULE_POLICY_PAGE_RE.search(hay):
+        return True
+    if _GENERIC_ADMIN_INDEX_TITLE_RE.fullmatch(title_value) and nav_hits >= 4:
         return True
     return False
 
@@ -591,9 +646,12 @@ def _looks_like_binary_document_text(*, text: str, url: str) -> bool:
         return False
     head = body[:800]
     url_value = str(url or "").lower()
+    control_count = sum(1 for ch in head if ord(ch) < 32 and ch not in "\n\r\t")
     if "\x00" in head:
         return True
     if _PDF_BINARY_HEADER_RE.search(head):
+        return True
+    if control_count >= 8 and _PDF_BINARY_TOKEN_RE.search(head):
         return True
     replacement_count = head.count("\ufffd")
     if replacement_count >= 3 and _PDF_BINARY_TOKEN_RE.search(head):

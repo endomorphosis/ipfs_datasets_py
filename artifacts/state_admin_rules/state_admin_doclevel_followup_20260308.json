@@ -1,0 +1,357 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='www.sos.alabama.gov', port=443): Max retries exceeded with url: /alabama-administrative-code (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)'))); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='www.sos.alabama.gov', port=443): Max retries exceeded with url: /alabama-administrative-code (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')))"
+      ],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "AL",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://www.sos.alabama.gov/alabama-administrative-code"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 551097,
+      "title": "",
+      "url": "https://www.in.gov/dnr/fish-and-wildlife/files/fw-hunting_trapping_seasons.pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule & Regulation Changes",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/rule-regulation-changes"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Netting & Trapping",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/fishing/fish-netting-and-trapping-rules/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Register for a reserved hunt",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/hunting-and-trapping/reserved-hunts"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Online Version",
+          "url": "https://www.eregulations.com/indiana/fishing"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "PDF Version",
+          "url": "https://www.eregulations.com/indiana/fishing/pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Online Version",
+          "url": "http://www.eregulations.com/indiana/fishing"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "How to Buy, Fees, &\u00a0Exemptions",
+          "url": "http://www.eregulations.com/indiana/fishing/fishing-licenses-fees/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Size & Bag Limits",
+          "url": "http://www.eregulations.com/indiana/fishing/fishing-regulations/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Basic Fishing Information",
+          "url": "http://www.eregulations.com/indiana/fishing/basic-fishing-information/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.eregulations.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Bass",
+          "url": "http://www.eregulations.com/indiana/fishing/bass-regulations/"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 5392,
+      "title": "DNR: Fish & Wildlife: Fishing Guide & Regulations",
+      "url": "https://www.in.gov/dnr/fish-and-wildlife/fishing/fishing-guide-and-regulations"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "MS",
+      "success": true,
+      "text_len": 662587,
+      "title": "",
+      "url": "https://www.sos.ms.gov/content/documents/reg_enf/admin/APA%20RulesRegulations.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": true,
+      "text_len": 146421,
+      "title": "",
+      "url": "https://www.sos.ms.gov/content/documents/reg_enf/admin/Administrative%20Procedures%20Act.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "MS",
+      "success": true,
+      "text_len": 143531,
+      "title": "",
+      "url": "https://www.sos.ms.gov/content/documents/reg_enf/admin/Index%20to%20Titles.pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Rule Making Process Flow Chart",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/process/Rulemaking%20Flow%20Chart%20APPROVED%209-20%20corrected%204-21.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Drafting & Procedure Manual",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/manual/amendedmanualeffective5-1-16amended8-1-19.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Public Code of Conduct",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/misc/State House Complex Public Conduct Policy 2023.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Senate Code of Conduct for Committee Hearings",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/senate/about_senate/SCCCCH.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "ADA Compliance Notice",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/misc/ADAnotice3.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Sexual Harassment Policy",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/misc/General%20Court%20Harassment%20Policy%20and%20Addendum-1%202020.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Administrative Rules",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Duties and Functions",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/whoweare.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rules Listed by Agency",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "What is an Admin. Rule?",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/rules_defined.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Check an Online Rule",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Official Versions of Rules",
+          "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/official_version.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 4192,
+      "title": "Administrative Rules",
+      "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "NV",
+      "success": true,
+      "text_len": 285652,
+      "title": "",
+      "url": "https://www.leg.state.nv.us/home/image/documents/2025_10-28_Regulations%20Concerning%20Use%20of%20Legislative%20Grounds%20and%20Parking%20Areas_Pamphlet%20Form.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 118998,
+      "title": "",
+      "url": "https://outside.vermont.gov/dept/sos/Services/APA/ruleonrulemaking.pdf"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:53:07.905783+00:00",
+    "pages_fetched": 9,
+    "pages_with_child_links": 2,
+    "source_json": "",
+    "successful_fetches": 8
+  }
+}

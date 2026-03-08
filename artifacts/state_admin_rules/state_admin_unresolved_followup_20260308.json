@@ -1,0 +1,365 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "AL",
+      "success": true,
+      "text_len": 74,
+      "title": "Alabama Administrative Code",
+      "url": "https://admincode.legislature.state.al.us/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 63,
+      "title": "Indiana Register",
+      "url": "http://www.in.gov/legislative/iac/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule & Regulation Changes",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/rule-regulation-changes"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Register for a reserved hunt",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/hunting-and-trapping/reserved-hunts"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Find an Agency",
+          "url": "https://www.in.gov/core/find_agency.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Indiana Administrative Code",
+          "url": "http://www.in.gov/legislative/iac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "iga.in.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Indiana Code",
+          "url": "https://iga.in.gov/laws/current/ic/titles/1"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "An official websiteof the Indiana State Government",
+          "url": "https://www.in.gov/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Governor Mike Braun",
+          "url": "https://www.in.gov/gov"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.in.gov/dnr"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Education Programs",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/education-programs"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Fishing",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/fishing"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Find A Property- Click to Expand",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/properties"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.in.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Fish & Wildlife Property Alerts- Click to Expand",
+          "url": "https://www.in.gov/dnr/fish-and-wildlife/properties/advisories"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "IN",
+      "success": true,
+      "text_len": 5062,
+      "title": "DNR: Fish & Wildlife: Rule & Regulation Changes",
+      "url": "https://www.in.gov/dnr/fish-and-wildlife/rule-regulation-changes"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "MS",
+      "success": true,
+      "text_len": 1220533,
+      "title": "",
+      "url": "https://www.sos.ms.gov/content/documents/Securities/MS%20Securities%20Act%20Rules2024.pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Report on Charitable Giving",
+          "url": "https://www.sos.ms.gov/content/documents/sec_char/2025Charitable Giving Annual Report2 4.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Mississippi Securities Act",
+          "url": "https://www.sos.ms.gov/content/documents/Securities/MS Securities Act of 2010 as amended July 2020.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Current Mississippi Securities Act Rules\u200b",
+          "url": "https://www.sos.ms.gov/content/documents/Securities/MS Securities Act Rules2024.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Commodities Enforcement Act\u200b",
+          "url": "https://www.sos.ms.gov/sites/default/files/Securities/Commodities_Enforcement_Act.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Pre-Need Funeral",
+          "url": "https://www.sos.ms.gov/index.php/regulation-enforcement/pre-need-funeral"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Perpetual Care Cemeteries",
+          "url": "https://www.sos.ms.gov/index.php/regulation-enforcement/perpetual-care-cemeteries"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Scrap Metal",
+          "url": "https://www.sos.ms.gov/index.php/regulation-enforcement/scrap-metal"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Administrative Procedures",
+          "url": "https://www.sos.ms.gov/index.php/regulation-enforcement/administrative-procedures"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Athlete Agent",
+          "url": "https://www.sos.ms.gov/index.php/regulation-enforcement/athlete-agent"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Agency Held Lands",
+          "url": "https://www.sos.ms.gov/index.php/public-lands/agency-held-lands"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.ms.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Agencies, Boards & Commissions",
+          "url": "https://www.sos.ms.gov/index.php/communications-publications/agencies-boards-commissions"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sec.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "U.S. Securities and Exchange Commission",
+          "url": "https://www.sec.gov/"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": true,
+      "text_len": 4115,
+      "title": "Mississippi Securities Laws | Michael Watson Secretary of state",
+      "url": "https://www.sos.ms.gov/index.php/securities/mississippi-securities-laws"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "MT",
+      "success": true,
+      "text_len": 11,
+      "title": "Montana SOS",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1f2ff5c5-b709-420b-bdd4-f6009ca7d33f"
+    },
+    {
+      "child_link_count": 1,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.leg.state.nv.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Subject Index",
+          "url": "https://www.leg.state.nv.us/register/indexes/1998_NAC_REGISTER_KEYWORd.htm"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NV",
+      "success": true,
+      "text_len": 3715,
+      "title": "Nevada Register",
+      "url": "https://www.leg.state.nv.us/register"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "VT",
+      "success": true,
+      "text_len": 1561716,
+      "title": "",
+      "url": "https://outside.vermont.gov/dept/sos/Services/APA/21-023.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 0.4,
+      "rule_body_signals": false,
+      "state": "VT",
+      "success": true,
+      "text_len": 0,
+      "title": "",
+      "url": "https://sos.vermont.gov/secretary-of-state-services/apa-rules/notices-of-rulemaking/"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:47:41.277753+00:00",
+    "pages_fetched": 9,
+    "pages_with_child_links": 3,
+    "source_json": "",
+    "successful_fetches": 9
+  }
+}

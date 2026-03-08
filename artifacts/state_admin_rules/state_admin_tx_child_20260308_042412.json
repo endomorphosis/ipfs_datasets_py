@@ -1,0 +1,1548 @@
+{
+  "pages": [
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "http://sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "http://sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "http://sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "http://sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "University of North Texas LibrariesTexas RegisterBack Issue Archive",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Skip to Main Content",
+          "url": "http://sos.state.tx.us/#mainContent"
+        },
+        {
+          "admin_signal": false,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Site Map",
+          "url": "http://sos.state.tx.us/siteindex.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "En Espa\u00f1ol",
+          "url": "http://sos.state.tx.us/sos_espanol.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "http://sos.state.tx.us/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "About the Office",
+          "url": "http://sos.state.tx.us/about/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Secretary of State Biography",
+          "url": "http://sos.state.tx.us/about/sosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Deputy Secretary of State Biography",
+          "url": "http://sos.state.tx.us/about/assistantsosbio.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "TX",
+      "success": true,
+      "text_len": 4473,
+      "title": "Welcome to the Texas Administrative Code",
+      "url": "http://sos.state.tx.us/tac/index.shtml"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Partners",
+          "url": "http://texashistory.unt.edu/explore/partners/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Titles",
+          "url": "http://texashistory.unt.edu/explore/titles/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Register",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1976",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1976"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1977",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1977"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1978",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1978"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1979",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1979"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1980",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1980"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1981",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1981"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1982",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1982"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1983",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1983"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "1984",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/browse/?sort=title&fq=str_year:1984"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 5891,
+      "title": "Texas Register - The Portal to Texas History",
+      "url": "http://texashistory.unt.edu/explore/collections/TR/"
+    },
+    {
+      "child_link_count": 11,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "tlc.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 6,
+          "text": "How a Bill Becomes Law (PDF)",
+          "url": "https://tlc.texas.gov/docs/legref/legislativeprocess.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "tlc.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 6,
+          "text": "Dates of Interest (PDF)",
+          "url": "https://tlc.texas.gov/docs/legref/Dates-of-Interest.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Administrative Code",
+          "url": "http://sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://capitol.texas.gov/Home.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "My TLO",
+          "url": "https://capitol.texas.gov/MnuMyTLO.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "House",
+          "url": "https://capitol.texas.gov/MnuHouse.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Senate",
+          "url": "https://capitol.texas.gov/MnuSenate.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Legislation",
+          "url": "https://capitol.texas.gov/MnuLegislation.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Committees",
+          "url": "https://capitol.texas.gov/MnuCommittees.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Policies",
+          "url": "https://capitol.texas.gov/resources/policies.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "tlc.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 1,
+          "text": "End of Session Deadlines (PDF)",
+          "url": "https://tlc.texas.gov/docs/DeadlineActionCalendar.pdf"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 3410,
+      "title": "Texas Legislature Online",
+      "url": "https://capitol.texas.gov/Home.aspx"
+    },
+    {
+      "child_link_count": 8,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "house.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Rules of Procedure",
+          "url": "https://house.texas.gov/resources/rules"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://capitol.texas.gov/Home.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "My TLO",
+          "url": "https://capitol.texas.gov/MnuMyTLO.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "House",
+          "url": "https://capitol.texas.gov/MnuHouse.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Senate",
+          "url": "https://capitol.texas.gov/MnuSenate.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Legislation",
+          "url": "https://capitol.texas.gov/MnuLegislation.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Committees",
+          "url": "https://capitol.texas.gov/MnuCommittees.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Policies",
+          "url": "https://capitol.texas.gov/resources/policies.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 2480,
+      "title": "Texas House of Representatives | Texas Legislature Online",
+      "url": "https://capitol.texas.gov/MnuHouse.aspx"
+    },
+    {
+      "child_link_count": 7,
+      "child_links": [
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://capitol.texas.gov/Home.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "My TLO",
+          "url": "https://capitol.texas.gov/MnuMyTLO.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "House",
+          "url": "https://capitol.texas.gov/MnuHouse.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Senate",
+          "url": "https://capitol.texas.gov/MnuSenate.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Legislation",
+          "url": "https://capitol.texas.gov/MnuLegislation.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Committees",
+          "url": "https://capitol.texas.gov/MnuCommittees.aspx"
+        },
+        {
+          "admin_signal": false,
+          "domain": "capitol.texas.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Policies",
+          "url": "https://capitol.texas.gov/resources/policies.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 1649,
+      "title": "MyTLO | Texas Legislature Online",
+      "url": "https://capitol.texas.gov/MnuMyTLO.aspx"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 50544,
+      "title": "",
+      "url": "https://tlc.texas.gov/docs/legref/Dates-of-Interest.pdf"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "TX",
+      "success": true,
+      "text_len": 3226135,
+      "title": "",
+      "url": "https://tlc.texas.gov/docs/legref/legislativeprocess.pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.votetexas.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Use VoteTexas.gov to learn aboutRegistering to Vote,",
+          "url": "https://www.votetexas.gov/register-to-vote/index.html"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Skip to Main Content",
+          "url": "https://www.sos.state.tx.us/#mainContent"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Site Map",
+          "url": "https://www.sos.state.tx.us/siteindex.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "En Espa\u00f1ol",
+          "url": "https://www.sos.state.tx.us/sos_espanol.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.sos.state.tx.us/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "About the Office",
+          "url": "https://www.sos.state.tx.us/about/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/sosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Deputy Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/assistantsosbio.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 4084,
+      "title": "Welcome to the Texas Secretary of State",
+      "url": "https://www.sos.state.tx.us/#mainContent"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texas-sos.appianportalsgov.com",
+          "rule_body_signal": true,
+          "same_domain": false,
+          "score": 3,
+          "text": "1 Texas Administrative Code \u00a779.29",
+          "url": "https://texas-sos.appianportalsgov.com/rules-and-meetings?$locale=en_US&interface=VIEW_TAC_SUMMARY&queryAsDate=03%2F20%2F2025&recordId=143700"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Skip to Main Content",
+          "url": "https://www.sos.state.tx.us/#mainContent"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Site Map",
+          "url": "https://www.sos.state.tx.us/siteindex.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "En Espa\u00f1ol",
+          "url": "https://www.sos.state.tx.us/sos_espanol.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.sos.state.tx.us/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "About the Office",
+          "url": "https://www.sos.state.tx.us/about/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/sosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Deputy Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/assistantsosbio.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "TX",
+      "success": true,
+      "text_len": 4055,
+      "title": "Registered Agents",
+      "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Skip to Main Content",
+          "url": "https://www.sos.state.tx.us/#mainContent"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Site Map",
+          "url": "https://www.sos.state.tx.us/siteindex.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "En Espa\u00f1ol",
+          "url": "https://www.sos.state.tx.us/sos_espanol.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.sos.state.tx.us/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "About the Office",
+          "url": "https://www.sos.state.tx.us/about/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/sosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Deputy Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/assistantsosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "History of the Office",
+          "url": "https://www.sos.state.tx.us/about/history.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 5067,
+      "title": "Secretary of State Site Index",
+      "url": "https://www.sos.state.tx.us/siteindex.shtml"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "University of North Texas LibrariesTexas RegisterBack Issue Archive",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Skip to Main Content",
+          "url": "https://www.sos.state.tx.us/#mainContent"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Site Map",
+          "url": "https://www.sos.state.tx.us/siteindex.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "En Espa\u00f1ol",
+          "url": "https://www.sos.state.tx.us/sos_espanol.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.sos.state.tx.us/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "About the Office",
+          "url": "https://www.sos.state.tx.us/about/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/sosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Deputy Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/assistantsosbio.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "TX",
+      "success": true,
+      "text_len": 4473,
+      "title": "Welcome to the Texas Administrative Code",
+      "url": "https://www.sos.state.tx.us/tac/index.shtml"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Skip to Main Content",
+          "url": "https://www.sos.state.tx.us/#mainContent"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Site Map",
+          "url": "https://www.sos.state.tx.us/siteindex.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "En Espa\u00f1ol",
+          "url": "https://www.sos.state.tx.us/sos_espanol.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.sos.state.tx.us/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "About the Office",
+          "url": "https://www.sos.state.tx.us/about/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/sosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Deputy Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/assistantsosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "History of the Office",
+          "url": "https://www.sos.state.tx.us/about/history.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 3238,
+      "title": "Temporary Location Notice",
+      "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "February 27, 2026 - Pages 1213-1342",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0227/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "February 20, 2026 - Pages 993-1212",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0220/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "February 13, 2026 - Pages 777-992",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0213/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "February 6, 2026 - Pages 655-776",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0206/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "January 30, 2026 - Pages 443-654",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0130/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "January 23, 2026 - Pages 347-442",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0123/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "January 16, 2026 - Pages 227-346",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0116/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "January 9, 2026 - Pages 185-226",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0109/index.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 4643,
+      "title": "Back Issues of the Texas Register - PDF version",
+      "url": "https://www.sos.state.tx.us/texreg/pdf/backview/index.shtml"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "March 6 issue (all sections)",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306is.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Table of Contents",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306con.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Attorney General",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306ag.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Proposed Rules",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306prop.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Adopted Rules",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306adop.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Review of Agency Rules",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306rev.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Tables & Graphics",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306tab.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "In Addition",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306ia.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 2753,
+      "title": "March 6, 2026 Issue of the Texas Register - .pdf",
+      "url": "https://www.sos.state.tx.us/texreg/pdf/currview/index.shtml"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfer effective September 1, 2004",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/aging091004.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfer effective September 1, 2004",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/aginganddis091004.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers effective May 1, 2019",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/dads050119.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers effective October 1, 2020",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/aging082820.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfer effective November 15, 2020",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/aging103020.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfer effective January 15, 2021",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/aging121120.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfer effective January 15, 2021",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/aging121820.html"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers effective June 15, 2021",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/aging052821.html"
+        }
+      ],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 17811,
+      "title": "Rule Transfers and Agency Name Changes",
+      "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:24:20.712523+00:00",
+    "pages_fetched": 15,
+    "pages_with_child_links": 13,
+    "source_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_remaining_weak_broad_drilldown_20260308_042038.json",
+    "successful_fetches": 15
+  }
+}

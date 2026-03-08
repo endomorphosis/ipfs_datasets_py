@@ -40,6 +40,12 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Drill down candidate admin landing pages and rank likely child links")
     p.add_argument("--report-json", help="Page-gap report JSON")
     p.add_argument("--input-json", help="Prior drilldown/probe JSON with `pages` or `rows`")
+    p.add_argument(
+        "--urls",
+        nargs="*",
+        default=[],
+        help="Explicit probe targets in the form STATE|URL",
+    )
     p.add_argument("--states", nargs="*", default=[], help="Optional state filter")
     p.add_argument(
         "--page-categories",
@@ -70,8 +76,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--output-json", required=True)
     p.add_argument("--output-md", required=True)
     args = p.parse_args()
-    if not args.report_json and not args.input_json:
-        p.error("one of --report-json or --input-json is required")
+    if not args.report_json and not args.input_json and not args.urls:
+        p.error("one of --report-json, --input-json, or --urls is required")
     return args
 
 
@@ -132,6 +138,31 @@ def _load_input_rows(path: Path, expand_child_links: bool, child_link_limit_per_
                 "page_category": page_category,
                 "rule_body_signals": bool(item.get("rule_body_signals")),
                 "text_len": int(item.get("text_len") or 0),
+            }
+        )
+    return rows
+
+
+def _load_url_rows(values: Iterable[str]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for raw in values:
+        item = str(raw or "").strip()
+        if not item:
+            continue
+        if "|" not in item:
+            raise ValueError(f"Expected STATE|URL, got: {item}")
+        state, url = item.split("|", 1)
+        state = state.upper().strip()
+        url = url.strip()
+        if not state or not url:
+            raise ValueError(f"Expected STATE|URL, got: {item}")
+        rows.append(
+            {
+                "state": state,
+                "url": url,
+                "page_category": "explicit_url",
+                "rule_body_signals": False,
+                "text_len": 0,
             }
         )
     return rows
@@ -294,14 +325,17 @@ def _markdown(payload: Dict[str, Any]) -> str:
 
 def main() -> int:
     args = parse_args()
-    source_path = Path(args.input_json or args.report_json).expanduser().resolve()
-    if args.input_json:
+    source_json = args.input_json or args.report_json
+    source_path = Path(source_json).expanduser().resolve() if source_json else None
+    if args.urls:
+        rows = _load_url_rows(args.urls)
+    elif args.input_json:
         rows = _load_input_rows(source_path, bool(args.expand_child_links), int(args.child_link_limit_per_page))
     else:
         rows = _load_report(source_path)
     states_filter = {str(s).upper().strip() for s in args.states if str(s).strip()}
     categories = {str(c).strip() for c in args.page_categories if str(c).strip()}
-    if args.input_json:
+    if args.urls or args.input_json:
         target_rows = [
             row
             for row in rows
@@ -332,7 +366,7 @@ def main() -> int:
             "pages_fetched": len(pages),
             "successful_fetches": sum(1 for row in pages if row["success"]),
             "pages_with_child_links": sum(1 for row in pages if row.get("child_links")),
-            "source_json": str(source_path),
+            "source_json": str(source_path) if source_path else "",
         },
         "pages": pages,
     }

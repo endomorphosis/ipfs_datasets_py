@@ -1,0 +1,265 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0026IN.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0026IN.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "blocked_or_transport_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130531/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0026IN.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_authors/Clark.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_authors/Clark.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "blocked_or_transport_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_authors/Clark.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_cmtes/UC.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_cmtes/UC.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "blocked_or_transport_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_cmtes/UC.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_cmtes/WM.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_cmtes/WM.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "blocked_or_transport_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130531/http://billstatus.ls.state.ms.us/1997/House_cmtes/WM.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/mainmenu.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/mainmenu.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "blocked_or_transport_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130531/http://billstatus.ls.state.ms.us/1997/mainmenu.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/misc/histhelp.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130531/http://billstatus.ls.state.ms.us/1997/misc/histhelp.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "blocked_or_transport_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130531/http://billstatus.ls.state.ms.us/1997/misc/histhelp.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0027IN.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0027IN.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130538/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0027IN.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_authors/Clark.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_authors/Clark.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_authors/Clark.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_cmtes/AP.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_cmtes/AP.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_cmtes/AP.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_cmtes/PH.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_cmtes/PH.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130538/http://billstatus.ls.state.ms.us/1997/House_cmtes/PH.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": true,
+      "text_len": 370,
+      "title": "Mississippi Legislature",
+      "url": "https://web.archive.org/web/19980211130538/http://billstatus.ls.state.ms.us/1997/mainmenu.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/misc/histhelp.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130538/http://billstatus.ls.state.ms.us/1997/misc/histhelp.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130538/http://billstatus.ls.state.ms.us/1997/misc/histhelp.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0036IN.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0036IN.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130640/ftp://billstatus.ls.state.ms.us/1997/HB/0001-0099/HB0036IN.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/http://billstatus.ls.state.ms.us/1997/House_authors/Bowles.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/http://billstatus.ls.state.ms.us/1997/House_authors/Bowles.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130640/http://billstatus.ls.state.ms.us/1997/House_authors/Bowles.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/http://billstatus.ls.state.ms.us/1997/House_cmtes/GF.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/http://billstatus.ls.state.ms.us/1997/House_cmtes/GF.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130640/http://billstatus.ls.state.ms.us/1997/House_cmtes/GF.htm"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/http://billstatus.ls.state.ms.us/1997/mainmenu.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\")); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='web.archive.org', port=443): Max retries exceeded with url: /web/19980211130640/http://billstatus.ls.state.ms.us/1997/mainmenu.htm (Caused by NewConnectionError(\"HTTPSConnection(host='web.archive.org', port=443): Failed to establish a new connection: [Errno 111] Connection refused\"))"
+      ],
+      "page_category": "non_substantive_success_child",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "MS",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://web.archive.org/web/19980211130640/http://billstatus.ls.state.ms.us/1997/mainmenu.htm"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:23:35.073964+00:00",
+    "pages_fetched": 16,
+    "pages_with_child_links": 0,
+    "source_json": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/state_admin_remaining_weak_broad_drilldown_20260308_042038.json",
+    "successful_fetches": 1
+  }
+}

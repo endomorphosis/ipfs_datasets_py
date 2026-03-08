@@ -104,7 +104,7 @@ def test_rejects_texas_hunting_forum_false_positive() -> None:
         ),
     }
 
-    assert _is_admin_rule_statute(statute) is True
+    assert _is_admin_rule_statute(statute) is False
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
     assert _is_relaxed_recovery_text(
         text=statute["full_text"],
@@ -119,6 +119,27 @@ def test_rejects_binary_pdf_payload_false_positive() -> None:
         "section_name": "Chapter 1",
         "source_url": "https://mhs.mt.gov/education/Elementary/Chap1.pdf",
         "full_text": "%PDF-1.6\r%\ufffd\ufffd\ufffd\ufffd\r\n913 0 obj\r<\n>/Filter /FlateDecode /Length 928\rendobj\r",
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_rejects_montana_doc_policies_false_positive() -> None:
+    statute = {
+        "code_name": "Montana Administrative Rules (Agentic Discovery)",
+        "section_name": "Policies",
+        "source_url": "https://cor.mt.gov/DataStatsContractsPoliciesProcedures/DOCPolicies",
+        "full_text": (
+            "Policies. Data Stats Contracts Policies Procedures. The Montana Department of Corrections policies are public information. "
+            "View the Department of Corrections Policies Manual. Additional Information Social Media Terms of Use. "
+            "Administrative Rules and Notices appears in a short informational section, but the page is a policies index."
+        ),
     }
 
     assert _is_admin_rule_statute(statute) is True

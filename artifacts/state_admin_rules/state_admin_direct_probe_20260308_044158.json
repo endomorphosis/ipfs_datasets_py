@@ -1,0 +1,488 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "AL",
+      "success": true,
+      "text_len": 74,
+      "title": "Alabama Administrative Code",
+      "url": "http://www.alabamaadministrativecode.state.al.us/"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='www.alabamaadministrativecode.state.al.us', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, \"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'www.alabamaadministrativecode.state.al.us'. (_ssl.c:1000)\"))); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='www.alabamaadministrativecode.state.al.us', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, \"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'www.alabamaadministrativecode.state.al.us'. (_ssl.c:1000)\")))"
+      ],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "AL",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://www.alabamaadministrativecode.state.al.us/"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Georgia.gov logoGeorgia Department of LaborGeorgia DepartmentofLabor",
+          "url": "https://dol.georgia.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Laws and Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Required Workplace Posters",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-required-workplace-posters"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "GDOL Rules",
+          "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Employment Issue",
+          "url": "https://dol.georgia.gov/laws-and-rules/obtain-information-about-employment-issue"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "About Us",
+          "url": "https://dol.georgia.gov/organization/department-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "dol.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Notice of Adopted Rules, January 1, 2026",
+          "url": "https://dol.georgia.gov/blog-post/2026-01-06/notice-adopted-rules-january-1-2026"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Rules and Regulations for the Georgia Department of Labor",
+          "url": "https://rules.sos.georgia.gov/gac/300"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.linkedin.com",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Linkedin page for Georgia Department of Labor",
+          "url": "https://www.linkedin.com/company/georgia-department-of-labor"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.georgia.org",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "GA Department of Economic Development",
+          "url": "https://www.georgia.org/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.dol.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "US Department of Labor",
+          "url": "http://www.dol.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "gbi.georgia.gov",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "Human Trafficking Notice",
+          "url": "https://gbi.georgia.gov/human-trafficking-notice"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 2810,
+      "title": "GDOL Rules | Georgia Department of Labor",
+      "url": "https://dol.georgia.gov/laws-and-rules/gdol-rules"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-1. ORGANIZATION",
+          "url": "https://rules.sos.ga.gov/gac/180-1"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-2. APPLICATIONS",
+          "url": "https://rules.sos.ga.gov/gac/180-2"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-3. QUALIFICATIONS: PROFESSIONAL ENGINEER AND ENGINEER-IN-TRAINING",
+          "url": "https://rules.sos.ga.gov/gac/180-3"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-4. LAND SURVEYOR AND LAND SURVEYOR INTERN",
+          "url": "https://rules.sos.ga.gov/gac/180-4"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-5. FEES",
+          "url": "https://rules.sos.ga.gov/gac/180-5"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-6. RULES OF PROFESSIONAL CONDUCT",
+          "url": "https://rules.sos.ga.gov/gac/180-6"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-7. TECHNICAL STANDARDS FOR PROPERTY SURVEYS",
+          "url": "https://rules.sos.ga.gov/gac/180-7"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Chapter 180-8. RENEWAL OF LICENSE",
+          "url": "https://rules.sos.ga.gov/gac/180-8"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 16368,
+      "title": "GA R&R - GAC - Department 180. GEORGIA PROFESSIONAL ENGINEERS AND LAND SURVEYORS BOARD",
+      "url": "https://rules.sos.ga.gov/gac/180"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPConnectionPool(host='gc.nh.gov', port=80): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPConnection(host='gc.nh.gov', port=80) at 0xfa026fbd3590>, 'Connection to gc.nh.gov timed out. (connect timeout=30)')); Archive.is returned no archived snapshot; requests_only error: HTTPConnectionPool(host='gc.nh.gov', port=80): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPConnection(host='gc.nh.gov', port=80) at 0xfa026fd669f0>, 'Connection to gc.nh.gov timed out. (connect timeout=30)'))"
+      ],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "http://gc.nh.gov/rules"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPConnectionPool(host='www.gencourt.state.nh.us', port=80): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPConnection(host='www.gencourt.state.nh.us', port=80) at 0xfa026fbd3b90>, 'Connection to www.gencourt.state.nh.us timed out. (connect timeout=30)')); Archive.is returned no archived snapshot; requests_only error: HTTPConnectionPool(host='www.gencourt.state.nh.us', port=80): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPConnection(host='www.gencourt.state.nh.us', port=80) at 0xfa026ef77410>, 'Connection to www.gencourt.state.nh.us timed out. (connect timeout=30)'))"
+      ],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "http://www.gencourt.state.nh.us/rules"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='gc.nh.gov', port=443): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPSConnection(host='gc.nh.gov', port=443) at 0xfa026fc10260>, 'Connection to gc.nh.gov timed out. (connect timeout=30)')); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='gc.nh.gov', port=443): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPSConnection(host='gc.nh.gov', port=443) at 0xfa026fbd2510>, 'Connection to gc.nh.gov timed out. (connect timeout=30)'))"
+      ],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://gc.nh.gov/rules"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [
+        "common_crawl_search_engine error: FileNotFoundError: Parquet root does not exist: /storage/ccindex_parquet; beautifulsoup error: HTTPSConnectionPool(host='www.gencourt.state.nh.us', port=443): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.gencourt.state.nh.us', port=443) at 0xfa026fc10920>, 'Connection to www.gencourt.state.nh.us timed out. (connect timeout=30)')); Archive.is returned no archived snapshot; requests_only error: HTTPSConnectionPool(host='www.gencourt.state.nh.us', port=443): Max retries exceeded with url: /rules (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.gencourt.state.nh.us', port=443) at 0xfa026ef76750>, 'Connection to www.gencourt.state.nh.us timed out. (connect timeout=30)'))"
+      ],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 0.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": false,
+      "text_len": 0,
+      "title": "",
+      "url": "https://www.gencourt.state.nh.us/rules"
+    },
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "TX",
+      "success": true,
+      "text_len": 801363,
+      "title": "",
+      "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306adop.pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "March 6 issue (all sections)",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306is.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Table of Contents",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306con.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Attorney General",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306ag.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Proposed Rules",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306prop.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Adopted Rules",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306adop.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Review of Agency Rules",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306rev.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Tables & Graphics",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306tab.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "In Addition",
+          "url": "https://www.sos.state.tx.us/texreg/pdf/backview/0306/0306ia.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "TX",
+      "success": true,
+      "text_len": 2753,
+      "title": "March 6, 2026 Issue of the Texas Register - .pdf",
+      "url": "https://www.sos.state.tx.us/texreg/pdf/currview/index.shtml"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:43:05.525299+00:00",
+    "pages_fetched": 10,
+    "pages_with_child_links": 3,
+    "source_json": "",
+    "successful_fetches": 5
+  }
+}

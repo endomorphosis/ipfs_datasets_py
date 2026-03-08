@@ -1,0 +1,394 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "IN",
+      "success": true,
+      "text_len": 8376895,
+      "title": "",
+      "url": "https://www.eregulations.com/indiana/fishing/pdf"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Rule Making Process Flow Chart",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules/process/Rulemaking%20Flow%20Chart%20APPROVED%209-20%20corrected%204-21.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Drafting & Procedure Manual",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules/manual/amendedmanualeffective5-1-16amended8-1-19.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Public Code of Conduct",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/misc/State House Complex Public Conduct Policy 2023.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Senate Code of Conduct for Committee Hearings",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/senate/about_senate/SCCCCH.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "ADA Compliance Notice",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/misc/ADAnotice3.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Sexual Harassment Policy",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/misc/General%20Court%20Harassment%20Policy%20and%20Addendum-1%202020.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Administrative Rules",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Duties and Functions",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules/whoweare.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rules Listed by Agency",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "What is an Admin. Rule?",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules/about_rules/rules_defined.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Check an Online Rule",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules/about_rules/checkrule.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Official Versions of Rules",
+          "url": "http://web.archive.org/web/20250525075513/https://gc.nh.gov/rules/about_rules/official_version.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 6320,
+      "title": "Administrative Rules",
+      "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Rule Making Process Flow Chart",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/process/Rulemaking%20Flow%20Chart%20APPROVED%209-20%20corrected%204-21.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Drafting & Procedure Manual",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/manual/amendedmanualeffective5-1-16amended8-1-19.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Public Code of Conduct",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/misc/State House Complex Public Conduct Policy 2023.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Senate Code of Conduct for Committee Hearings",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/senate/about_senate/SCCCCH.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "ADA Compliance Notice",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/misc/ADAnotice3.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Sexual Harassment Policy",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/misc/General%20Court%20Harassment%20Policy%20and%20Addendum-1%202020.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Administrative Rules",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Duties and Functions",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/whoweare.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rules Listed by Agency",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "What is an Admin. Rule?",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/about_rules/rules_defined.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Check an Online Rule",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/about_rules/checkrule.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Official Versions of Rules",
+          "url": "http://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/about_rules/official_version.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 27220,
+      "title": "Administrative Rules",
+      "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Rule Making Process Flow Chart",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules/process/Rulemaking%20Flow%20Chart%20APPROVED%209-20%20corrected%204-21.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Drafting & Procedure Manual",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules/manual/amendedmanualeffective5-1-16amended8-1-19.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Public Code of Conduct",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/misc/State House Complex Public Conduct Policy 2023.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Senate Code of Conduct for Committee Hearings",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/senate/about_senate/SCCCCH.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "ADA Compliance Notice",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/misc/ADAnotice3.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 8,
+          "text": "Sexual Harassment Policy",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/misc/General%20Court%20Harassment%20Policy%20and%20Addendum-1%202020.pdf"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Administrative Rules",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Duties and Functions",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules/whoweare.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rules Listed by Agency",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "What is an Admin. Rule?",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules/about_rules/rules_defined.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Check an Online Rule",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules/about_rules/checkrule.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "web.archive.org",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Official Versions of Rules",
+          "url": "http://web.archive.org/web/20250525075520/https://gc.nh.gov/rules/about_rules/official_version.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "NH",
+      "success": true,
+      "text_len": 7738,
+      "title": "Administrative Rules",
+      "url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/official_version.aspx"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T05:10:12.998438+00:00",
+    "pages_fetched": 4,
+    "pages_with_child_links": 3,
+    "source_json": "",
+    "successful_fetches": 4
+  }
+}

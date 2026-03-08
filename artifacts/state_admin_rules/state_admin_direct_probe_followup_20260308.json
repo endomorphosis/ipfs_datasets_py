@@ -1,0 +1,385 @@
+{
+  "pages": [
+    {
+      "child_link_count": 0,
+      "child_links": [],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "AL",
+      "success": true,
+      "text_len": 74,
+      "title": "Alabama Administrative Code",
+      "url": "https://admincode.legislature.state.al.us/"
+    },
+    {
+      "child_link_count": 11,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 180",
+          "url": "https://rules.sos.ga.gov/gac/180"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-3-.01 Education",
+          "url": "https://rules.sos.ga.gov/gac/180-3-.01"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-3-.02 Experience",
+          "url": "https://rules.sos.ga.gov/gac/180-3-.02"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-3-.03 Advanced",
+          "url": "https://rules.sos.ga.gov/gac/180-3-.03"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-3-.04 Evaluation of Foreign Education",
+          "url": "https://rules.sos.ga.gov/gac/180-3-.04"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-3-.05 Licensure of Veterans and Military Spouses",
+          "url": "https://rules.sos.ga.gov/gac/180-3-.05"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 1,
+          "text": "Help",
+          "url": "https://rules.sos.ga.gov/help.aspx"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": false,
+      "state": "GA",
+      "success": true,
+      "text_len": 9422,
+      "title": "GA R&R - GAC - Chapter 180-3 QUALIFICATIONS: PROFESSIONAL ENGINEER AND ENGINEER-IN-TRAINING",
+      "url": "https://rules.sos.ga.gov/gac/180-3"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "",
+          "url": "https://rules.sos.ga.gov/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Browse",
+          "url": "https://rules.sos.ga.gov/gac/"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Download",
+          "url": "https://rules.sos.ga.gov/Download_pdf.aspx"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Search tips",
+          "url": "https://rules.sos.ga.gov/help.aspx#searching"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Department 180",
+          "url": "https://rules.sos.ga.gov/gac/180"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-6-.01 General",
+          "url": "https://rules.sos.ga.gov/gac/180-6-.01"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-6-.02 Protection of the Public",
+          "url": "https://rules.sos.ga.gov/gac/180-6-.02"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "180-6-.03 Rules of Practice",
+          "url": "https://rules.sos.ga.gov/gac/180-6-.03"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-6-.04 Statement and Testimony",
+          "url": "https://rules.sos.ga.gov/gac/180-6-.04"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-6-.05 Conflict of Interest",
+          "url": "https://rules.sos.ga.gov/gac/180-6-.05"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-6-.06 Conduct",
+          "url": "https://rules.sos.ga.gov/gac/180-6-.06"
+        },
+        {
+          "admin_signal": true,
+          "domain": "rules.sos.ga.gov",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule 180-6-.07 Ethics",
+          "url": "https://rules.sos.ga.gov/gac/180-6-.07"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "GA",
+      "success": true,
+      "text_len": 15685,
+      "title": "GA R&R - GAC - Chapter 180-6 RULES OF PROFESSIONAL CONDUCT",
+      "url": "https://rules.sos.ga.gov/gac/180-6"
+    },
+    {
+      "child_link_count": 12,
+      "child_links": [
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "IN-PERSON SERVICES FOR THE OFFICE OF THE TEXAS SECRETARY OF STATE HAVE MOVED TO 400 W. 15TH STREET.PARKING DETAILS AND MORE INFORMATION",
+          "url": "https://www.sos.state.tx.us/temp-location-notice.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Registered Agents",
+          "url": "https://www.sos.state.tx.us/corp/registeredagents.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Texas Administrative Code",
+          "url": "https://www.sos.state.tx.us/tac/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 6,
+          "text": "Rule Transfers and Agency Name Changes",
+          "url": "https://www.sos.state.tx.us/texreg/transfers/index.shtml"
+        },
+        {
+          "admin_signal": true,
+          "domain": "texashistory.unt.edu",
+          "rule_body_signal": false,
+          "same_domain": false,
+          "score": 4,
+          "text": "University of North Texas LibrariesTexas RegisterBack Issue Archive",
+          "url": "http://texashistory.unt.edu/explore/collections/TR/"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Skip to Main Content",
+          "url": "https://www.sos.state.tx.us/#mainContent"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Site Map",
+          "url": "https://www.sos.state.tx.us/siteindex.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "En Espa\u00f1ol",
+          "url": "https://www.sos.state.tx.us/sos_espanol.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "",
+          "url": "https://www.sos.state.tx.us/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "About the Office",
+          "url": "https://www.sos.state.tx.us/about/index.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/sosbio.shtml"
+        },
+        {
+          "admin_signal": false,
+          "domain": "www.sos.state.tx.us",
+          "rule_body_signal": false,
+          "same_domain": true,
+          "score": 2,
+          "text": "Deputy Secretary of State Biography",
+          "url": "https://www.sos.state.tx.us/about/assistantsosbio.shtml"
+        }
+      ],
+      "errors": [],
+      "page_category": "explicit_url",
+      "provider": "unified_scraper",
+      "quality_score": 1.0,
+      "rule_body_signals": true,
+      "state": "TX",
+      "success": true,
+      "text_len": 4473,
+      "title": "Welcome to the Texas Administrative Code",
+      "url": "https://www.sos.state.tx.us/tac/index.shtml"
+    }
+  ],
+  "summary": {
+    "generated_at": "2026-03-08T04:45:34.667501+00:00",
+    "pages_fetched": 4,
+    "pages_with_child_links": 3,
+    "source_json": "",
+    "successful_fetches": 4
+  }
+}

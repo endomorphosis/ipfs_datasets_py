@@ -4,6 +4,7 @@ This module contains the scraper for Maryland statutes from the official state
 legislative website.
 """
 
+import asyncio
 import json
 import re
 from typing import Dict, List
@@ -86,6 +87,17 @@ class MarylandScraper(BaseStateScraper):
 
         statutes: List[NormalizedStatute] = []
         seen_urls = set()
+        sem = asyncio.Semaphore(8)
+
+        async def _build_one(*, article_display: str, section_label: str, section_code: str, section_url: str) -> NormalizedStatute | None:
+            async with sem:
+                return await self._build_statute_from_section_page(
+                    code_name=code_name,
+                    article_label=article_display,
+                    section_label=section_label,
+                    section_number=section_code,
+                    section_url=section_url,
+                )
 
         for article in articles_payload:
             if len(statutes) >= max_statutes:
@@ -107,9 +119,9 @@ class MarylandScraper(BaseStateScraper):
             if not isinstance(sections_payload, list):
                 continue
 
-            for section in sections_payload:
-                if len(statutes) >= max_statutes:
-                    break
+            section_jobs = []
+            remaining = max_statutes - len(statutes)
+            for section in sections_payload[: max(remaining * 2, remaining)]:
                 if not isinstance(section, dict):
                     continue
 
@@ -127,20 +139,27 @@ class MarylandScraper(BaseStateScraper):
                 if section_url in seen_urls:
                     continue
 
-                statute = await self._build_statute_from_section_page(
-                    code_name=code_name,
-                    article_label=article_display,
-                    section_label=section_label,
-                    section_number=section_code,
-                    section_url=section_url,
+                seen_urls.add(section_url)
+                section_jobs.append(
+                    _build_one(
+                        article_display=article_display,
+                        section_label=section_label,
+                        section_code=section_code,
+                        section_url=section_url,
+                    )
                 )
+
+            for statute in await asyncio.gather(*section_jobs, return_exceptions=True):
+                if isinstance(statute, Exception):
+                    continue
                 if statute is None:
                     continue
                 if self._is_low_quality_statute_record(statute):
                     continue
 
                 statutes.append(statute)
-                seen_urls.add(section_url)
+                if len(statutes) >= max_statutes:
+                    break
 
         return statutes
 
@@ -212,8 +231,8 @@ class MarylandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        api_statutes = await self._scrape_api_sections(code_name, max_statutes=360)
-        if len(api_statutes) >= 80:
+        api_statutes = await self._scrape_api_sections(code_name, max_statutes=80)
+        if len(api_statutes) >= 40:
             return api_statutes
 
         candidate_urls = [
