@@ -66,7 +66,7 @@ class MinnesotaScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
-        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=120)
+        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=260)
         _merge(chapter_statutes)
         if len(merged) >= 40:
             return merged
@@ -82,7 +82,7 @@ class MinnesotaScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Minn. Stat.",
-                        max_sections=220,
+                        max_sections=420,
                         wait_for_selector="a[href*='/statutes/cite/'], a[href*='/statutes/']",
                         timeout=45000,
                     )
@@ -93,7 +93,7 @@ class MinnesotaScraper(BaseStateScraper):
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=220)
+            statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=420)
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
             if len(merged) >= 40:
@@ -112,6 +112,10 @@ class MinnesotaScraper(BaseStateScraper):
             f"{self.get_base_url()}/statutes/cite/645",
             f"{self.get_base_url()}/statutes/cite/518B",
             f"{self.get_base_url()}/statutes/cite/169A",
+            f"{self.get_base_url()}/statutes/cite/8",
+            f"{self.get_base_url()}/statutes/cite/13",
+            f"{self.get_base_url()}/statutes/cite/144",
+            f"{self.get_base_url()}/statutes/cite/325F",
         ]
 
         section_urls: List[str] = []
@@ -135,22 +139,22 @@ class MinnesotaScraper(BaseStateScraper):
                     continue
                 seen_urls.add(full_url)
                 section_urls.append(full_url)
-                if len(section_urls) >= max_statutes * 2:
+                if len(section_urls) >= max_statutes * 4:
                     break
-            if len(section_urls) >= max_statutes * 2:
+            if len(section_urls) >= max_statutes * 4:
                 break
 
         if not section_urls:
             return []
 
-        sem = asyncio.Semaphore(6)
+        sem = asyncio.Semaphore(10)
 
         async def _fetch_one(section_url: str) -> NormalizedStatute | None:
             async with sem:
                 return await self._build_statute_from_section_page(code_name, section_url)
 
         statutes: List[NormalizedStatute] = []
-        for result in await asyncio.gather(*[_fetch_one(url) for url in section_urls[: max_statutes * 2]], return_exceptions=True):
+        for result in await asyncio.gather(*[_fetch_one(url) for url in section_urls[: max_statutes * 4]], return_exceptions=True):
             if isinstance(result, Exception) or result is None:
                 continue
             statutes.append(result)

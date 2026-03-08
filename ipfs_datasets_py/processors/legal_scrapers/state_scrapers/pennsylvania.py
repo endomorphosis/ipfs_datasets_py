@@ -59,9 +59,9 @@ class PennsylvaniaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Pa. Cons. Stat.", max_sections=420)
+            statutes = await self._generic_scrape(code_name, candidate, "Pa. Cons. Stat.", max_sections=900)
             _merge(statutes)
-            if len(merged) >= 30:
+            if len(merged) >= 80:
                 return merged
 
         return merged

@@ -50,13 +50,9 @@ class IndianaScraper(BaseStateScraper):
         Indiana's live site is currently SPA-only in headless contexts.
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
-        justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=80)
-        if len(justia_titles) >= 40:
-            self.logger.info(f"Indiana archived Justia fallback: Scraped {len(justia_titles)} title records")
-            return justia_titles
-
-        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=60)
-        title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=60)
+        justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=220)
+        archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=180)
+        title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=180)
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -147,7 +143,7 @@ class IndianaScraper(BaseStateScraper):
         return statutes
 
     async def _scrape_archived_title_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
-        title_urls = await self._discover_archived_title_urls(limit=180)
+        title_urls = await self._discover_archived_title_urls(limit=420)
         out: List[NormalizedStatute] = []
         seen = set()
 
@@ -155,7 +151,7 @@ class IndianaScraper(BaseStateScraper):
             if len(out) >= max_statutes:
                 break
             try:
-                statutes = await self._generic_scrape(code_name, title_url, "Ind. Code", max_sections=80)
+                statutes = await self._generic_scrape(code_name, title_url, "Ind. Code", max_sections=220)
             except Exception:
                 statutes = []
             for statute in statutes:

@@ -50,14 +50,14 @@ class NorthDakotaScraper(BaseStateScraper):
             if candidate in seen:
                 continue
             seen.add(candidate)
-            statutes = await self._generic_scrape(code_name, candidate, "N.D. Cent. Code", max_sections=260)
+            statutes = await self._generic_scrape(code_name, candidate, "N.D. Cent. Code", max_sections=520)
             if len(statutes) > len(best):
                 best = statutes
 
-        if len(best) >= 20:
+        if len(best) >= 60:
             return best
 
-        pdf_statutes = await self._scrape_cencode_pdfs(code_name, max_statutes=120)
+        pdf_statutes = await self._scrape_cencode_pdfs(code_name, max_statutes=260)
         if pdf_statutes:
             return pdf_statutes
         return best
@@ -81,7 +81,7 @@ class NorthDakotaScraper(BaseStateScraper):
         for link in soup.find_all("a", href=True):
             candidate_links.append(str(link.get("href", "")).strip())
 
-        discovered = await self._discover_archived_cencode_pdfs(limit=180)
+        discovered = await self._discover_archived_cencode_pdfs(limit=420)
         candidate_links.extend(discovered)
 
         for href in candidate_links:
@@ -125,7 +125,7 @@ class NorthDakotaScraper(BaseStateScraper):
 
         return statutes
 
-    async def _discover_archived_cencode_pdfs(self, limit: int = 120) -> List[str]:
+    async def _discover_archived_cencode_pdfs(self, limit: int = 320) -> List[str]:
         """Discover archived ND Century Code chapter PDFs from Wayback CDX."""
         cdx_url = (
             "http://web.archive.org/cdx/search/cdx?url=legis.nd.gov/cencode/t*c*.pdf"

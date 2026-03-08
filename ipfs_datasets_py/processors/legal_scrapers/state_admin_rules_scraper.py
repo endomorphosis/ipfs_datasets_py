@@ -90,6 +90,25 @@ _LANDING_PAGE_PHRASE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_OFF_TOPIC_HISTORY_PAGE_RE = re.compile(
+    r"magazine\s+of\s+(?:western\s+)?history|on\s+the\s+cover|reviewed\s+by|vol\.\s*\d+\s*,\s*no\.\s*\d+|"
+    r"membership\s+visit\s+about|event\s+spaces?\s+rental|montana\s+heritage\s+center|staff\s+directory",
+    re.IGNORECASE,
+)
+
+_NON_RULE_ADMIN_LANDING_RE = re.compile(
+    r"board\s+members|meeting\s+information|agenda\s+packet|public\s+comment|events\s+calendar|"
+    r"past\s+meetings\s+and\s+minutes|board\s+training|member\s+directory|"
+    r"subscribe\s+to\s+receive\s+.*email\s+updates|board\s+of\s+public\s+education|board\s+of\s+housing",
+    re.IGNORECASE,
+)
+
+_RULE_BODY_SIGNAL_RE = re.compile(
+    r"§\s*\d|\barm\s+\d|\b\d{1,3}\.\d{1,3}\.\d{1,4}\b|authority\s*:|history\s*:|implementing\s*:|"
+    r"purpose\s+of\s+regulations|notice\s+of\s+adoption|notice\s+of\s+proposed\s+(?:amendment|adoption|repeal)",
+    re.IGNORECASE,
+)
+
 # Curated admin-rules entrypoints for states that remain hard to recover via generic discovery.
 _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "AL": [
@@ -524,11 +543,24 @@ def _looks_like_navigation_page(text: str) -> bool:
         return False
     if _LANDING_PAGE_PHRASE_RE.search(value):
         return True
+    if _OFF_TOPIC_HISTORY_PAGE_RE.search(value):
+        return True
     nav_hits = len(_NAVIGATION_PAGE_TOKEN_RE.findall(value))
-    if nav_hits < 3:
-        return False
-    has_section_structure = bool(re.search(r"\bsec\.?\s+\d|§\s*\d|chapter\s+\d|title\s+\d|part\s+\d", value, re.IGNORECASE))
-    return not has_section_structure
+    has_rule_body = bool(_RULE_BODY_SIGNAL_RE.search(value))
+    if nav_hits >= 3 and not has_rule_body:
+        return True
+    if _NON_RULE_ADMIN_LANDING_RE.search(value) and not has_rule_body:
+        return True
+    return False
+
+
+def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
+    hay = " ".join([str(title or ""), str(url or ""), str(text or "")])
+    if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
+        return True
+    if _NON_RULE_ADMIN_LANDING_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
+        return True
+    return False
 
 
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
@@ -538,6 +570,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
+        return False
+    if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
     if len(body) < max(120, int(min_chars)):
         # PDF-based admin-rule publications often extract with sparse text; allow
@@ -580,6 +614,8 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
+        return False
+    if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
     if title_value and _looks_like_placeholder_text(title_value):
         return False

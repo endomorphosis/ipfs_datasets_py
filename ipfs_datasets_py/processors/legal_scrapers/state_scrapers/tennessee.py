@@ -62,7 +62,7 @@ class TennesseeScraper(BaseStateScraper):
                     code_name,
                     url_attempt,
                     "Tenn. Code Ann.",
-                    max_sections=50
+                    max_sections=180
                 )
                 if statutes:
                     return statutes
@@ -95,7 +95,7 @@ class TennesseeScraper(BaseStateScraper):
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 100
+        max_sections: int = 280
     ) -> List[NormalizedStatute]:
         """Custom scraper for Tennessee with SSL bypass."""
         try:

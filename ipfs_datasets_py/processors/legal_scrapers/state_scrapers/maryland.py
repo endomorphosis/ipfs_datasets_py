@@ -184,8 +184,8 @@ class MarylandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        api_statutes = await self._scrape_api_sections(code_name, max_statutes=140)
-        if len(api_statutes) >= 40:
+        api_statutes = await self._scrape_api_sections(code_name, max_statutes=360)
+        if len(api_statutes) >= 80:
             return api_statutes
 
         candidate_urls = [
@@ -227,22 +227,22 @@ class MarylandScraper(BaseStateScraper):
                     wait_for_selector="a[href*='statute'], a[href*='laws'], .article-link",
                     timeout=45000,
                         wait_until="domcontentloaded",
-                    max_sections=260,
+                    max_sections=520,
                 )
             except Exception:
                 statutes = []
 
             _merge(statutes)
-            if len(merged) >= 30:
+            if len(merged) >= 60:
                 return merged
 
             try:
-                generic = await self._generic_scrape(code_name, candidate, "Md. Code Ann.", max_sections=260)
+                generic = await self._generic_scrape(code_name, candidate, "Md. Code Ann.", max_sections=520)
             except Exception:
                 generic = []
 
             _merge(generic)
-            if len(merged) >= 30:
+            if len(merged) >= 60:
                 return merged
 
         return merged

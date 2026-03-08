@@ -58,3 +58,34 @@ def test_rejects_alabama_page_not_found_admin_false_positive() -> None:
 
     assert _is_admin_rule_statute(statute) is True
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_montana_history_magazine_false_positive() -> None:
+    statute = {
+        "code_name": "Montana Administrative Rules (Agentic Discovery)",
+        "section_name": "Montana - Montana Administrative Rules (Agentic Discovery) - A1",
+        "source_url": "https://mhs.mt.gov/history/montana-the-magazine-of-western-history",
+        "full_text": (
+            "Montana The Magazine of Western History Donate Membership Visit About Montana Heritage Center "
+            "Board of Trustees Staff Directory Reviews reviewed by editors. On the cover. Vol. 10, No. 3."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_montana_board_landing_page_false_positive() -> None:
+    statute = {
+        "code_name": "Montana Administrative Rules (Agentic Discovery)",
+        "section_name": "Home",
+        "source_url": "https://bpe.mt.gov/",
+        "full_text": (
+            "Board of Public Education HOME BOARD MEMBERS STRATEGIC PLAN MEETING INFORMATION REPORTS "
+            "AND RECOMMENDATIONS ADMINISTRATIVE RULES Public Comment Agenda Packet Events Calendar "
+            "Timeline Notice of Public Hearing on Proposed Adoption."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False

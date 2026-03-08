@@ -28,7 +28,7 @@ class OklahomaScraper(BaseStateScraper):
     _CDX_DISCOVERY_URL = (
         "https://web.archive.org/cdx/search/cdx"
         "?url=www.oscn.net/applications/oscn/DeliverDocument.asp*"
-        "&output=json&filter=statuscode:200&limit=350"
+        "&output=json&filter=statuscode:200&limit=1200"
     )
     _ANTI_BOT_RE = re.compile(
         r"why am i seeing this\?|verify (?:you are|you're) human|automated traffic|cloudflare",
@@ -74,7 +74,7 @@ class OklahomaScraper(BaseStateScraper):
         """
         best_archival: List[NormalizedStatute] = []
         for attempt in range(3):
-            archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=140)
+            archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=320)
             if len(archival) > len(best_archival):
                 best_archival = archival
             if best_archival:
@@ -205,7 +205,7 @@ class OklahomaScraper(BaseStateScraper):
                 continue
             for link in self._extract_deliver_document_links(seed_url=replay_url, html=html):
                 discovered.append(link)
-            if len(discovered) >= 120:
+            if len(discovered) >= 400:
                 break
 
         return discovered

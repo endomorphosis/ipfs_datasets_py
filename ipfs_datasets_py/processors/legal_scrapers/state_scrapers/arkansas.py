@@ -59,9 +59,9 @@ class ArkansasScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=260)
+            statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=720)
             _merge(statutes)
-            if len(merged) >= 30:
+            if len(merged) >= 80:
                 return merged
 
         return merged

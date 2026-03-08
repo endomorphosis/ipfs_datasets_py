@@ -176,7 +176,7 @@ class GeorgiaScraper(BaseStateScraper):
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 30
+        max_sections: int = 140
     ) -> List[NormalizedStatute]:
         """Scrape Georgia using Playwright for JavaScript rendering."""
         try:
@@ -246,7 +246,7 @@ class GeorgiaScraper(BaseStateScraper):
         code_name: str,
         code_url: str,
         citation_format: str,
-        max_sections: int = 100
+        max_sections: int = 320
     ) -> List[NormalizedStatute]:
         """Custom scraper for Georgia's legislative website.
         
