@@ -198,6 +198,10 @@ _LIVE_FETCH_PREFERRED_HOSTS = {
 
 _TX_TRANSFER_INDEX_PATH_RE = re.compile(r"^/texreg/transfers(?:/|/index\.shtml)?$", re.IGNORECASE)
 
+_MI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/(?:|home/?)$", re.IGNORECASE)
+
+_RI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/organizations/?$", re.IGNORECASE)
+
 
 def _prefers_live_fetch(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
@@ -913,8 +917,13 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
     path = parsed.path or ""
+    normalized_path = path.rstrip("/") or "/"
     query = parsed.query or ""
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
+        return True
+    if host == "ars.apps.lara.state.mi.us" and _MI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
+        return True
+    if host == "rules.sos.ri.gov" and _RI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
         return True
     if host in {"secure.vermont.gov", "sos.vermont.gov"} and _VT_NON_RULE_PORTAL_PATH_RE.search(path):
         return True

@@ -69,6 +69,32 @@ def test_rejects_michigan_legislature_statute_pages_even_with_admin_like_code_na
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
+@pytest.mark.parametrize(
+    ("url", "title"),
+    [
+        ("https://ars.apps.lara.state.mi.us/", "ARS Public - Home"),
+        ("https://ars.apps.lara.state.mi.us/Home", "ARS Public - Home"),
+    ],
+)
+def test_rejects_michigan_admin_portal_home_pages_as_rule_content(url: str, title: str) -> None:
+    text = (
+        "Home MI Admin Code Pending/Recent Rulemaking Transactions Show 10 25 50 100 entries Search: "
+        "Rule Set # Department - Bureau Rule Set Title Filing Date Effective Date 2021-48 LR Licensing and Regulatory Affairs."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title=title,
+        url=url,
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title=title,
+        url=url,
+    ) is False
+
+
 def test_rejects_south_dakota_codified_laws_as_admin_rule() -> None:
     statute = {
         "code_name": "South Dakota Codified Laws",
@@ -131,6 +157,25 @@ def test_rejects_rhode_island_subscription_page_as_rule_content() -> None:
         text=text,
         title="Subscribe - Rhode Island Department of State",
         url="https://rules.sos.ri.gov/subscriptions/subscribe/all",
+    ) is False
+
+
+def test_rejects_rhode_island_organizations_landing_page_as_rule_content() -> None:
+    text = (
+        "Welcome to the Rhode Island Code of Regulations. Table of Contents. Filter by Agency. "
+        "Search Regulations. Subscribe to Notifications. FAQ. Return to top."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Welcome to the Rhode Island Code of Regulations - Rhode Island Department of State",
+        url="https://rules.sos.ri.gov/Organizations",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Welcome to the Rhode Island Code of Regulations - Rhode Island Department of State",
+        url="https://rules.sos.ri.gov/Organizations",
     ) is False
 
 
