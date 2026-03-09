@@ -36,6 +36,39 @@ def test_rejects_rhode_island_statute_index_as_admin_rule() -> None:
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
+def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr() -> None:
+    mi_urls = scraper_module._extract_seed_urls_for_state("MI", "Michigan")
+    ri_urls = scraper_module._extract_seed_urls_for_state("RI", "Rhode Island")
+
+    assert "https://ars.apps.lara.state.mi.us/" in mi_urls
+    assert any("rules.sos.ri.gov/organizations" in url.lower() for url in ri_urls)
+    assert "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations" in ri_urls
+
+
+def test_rejects_indiana_archived_statute_pdfs_even_with_admin_like_code_name() -> None:
+    statute = {
+        "code_name": "Indiana Administrative Code",
+        "section_name": "Indiana Code tit. 6, art. 1.1, ch. 15",
+        "source_url": "http://web.archive.org/web/20170215063144/http://iga.in.gov/static-documents/0/0/5/2/005284ae/TITLE6_AR1.1_ch15.pdf",
+        "full_text": "IC 6-1.1-15 Chapter 15. Procedures for Review and Appeal of Assessment and Correction of Errors.",
+    }
+
+    assert _is_admin_rule_statute(statute) is False
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_michigan_legislature_statute_pages_even_with_admin_like_code_name() -> None:
+    statute = {
+        "code_name": "Michigan Administrative Rules (Agentic Discovery)",
+        "section_name": "MCL - Section 436.1205 - Michigan Legislature",
+        "source_url": "https://www.legislature.mi.gov/Search/ExecuteSearch?sectionNumbers=436.1205&docTypes=Section",
+        "full_text": "MICHIGAN LIQUOR CONTROL CODE OF 1998 (EXCERPT) Act 58 of 1998.",
+    }
+
+    assert _is_admin_rule_statute(statute) is False
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
 def test_rejects_south_dakota_codified_laws_as_admin_rule() -> None:
     statute = {
         "code_name": "South Dakota Codified Laws",
@@ -624,7 +657,7 @@ def test_rejects_utah_adminrules_home_landing_page() -> None:
     ) is False
 
 
-def test_accepts_indiana_current_code_index_page() -> None:
+def test_rejects_indiana_current_code_index_page_as_substantive_rule_text() -> None:
     statute = {
         "code_name": "Indiana Administrative Rules (Agentic Discovery)",
         "section_name": "Indiana Administrative Code | IARP",
@@ -637,12 +670,32 @@ def test_accepts_indiana_current_code_index_page() -> None:
     }
 
     assert _is_admin_rule_statute(statute) is True
-    assert _is_substantive_admin_statute(statute, min_chars=160) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
     assert _is_relaxed_recovery_text(
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
     ) is True
+
+
+def test_accepts_indiana_article_detail_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Indiana Administrative Rules (Agentic Discovery)",
+        "section_name": "Title 10, Article 1.5",
+        "short_title": "Title 10, Article 1.5",
+        "source_url": "https://iar.iga.in.gov/code/current/10/1.5",
+        "full_text": (
+            "TITLE 10 Office of Attorney General ARTICLE 1.5 authority effective section rule law "
+            "Sec. 1. The commissioner may adopt rules to administer the chapter. "
+            "Authority: IC 4-22-2-13; IC 4-6-2-1. Affected: IC 4-22-2; IC 4-6-1. "
+            "This rule governs agency procedures, notice requirements, filing obligations, and enforcement."
+        ),
+        "legal_area": "administrative",
+        "official_cite": "IN Admin Rule A1",
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=100) is True
 
 
 def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1046,8 +1099,15 @@ async def test_agentic_discovery_seed_fetch_expands_hydrated_seed_links(monkeypa
 
 
 @pytest.mark.anyio
-async def test_agentic_discovery_uses_live_scraper_for_prioritized_seed(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_agentic_discovery_follows_live_prioritized_seed_links(monkeypatch: pytest.MonkeyPatch) -> None:
     seed_url = "https://iar.iga.in.gov/code/current"
+    deep_url = "https://iar.iga.in.gov/code/current/10/1.5"
+    deep_text = (
+        "TITLE 10 Office of Attorney General ARTICLE 1.5 authority effective section rule law "
+        "Sec. 1. The commissioner may adopt rules to administer the chapter. "
+        "Authority: IC 4-22-2-13; IC 4-6-2-1. Affected: IC 4-22-2; IC 4-6-1. "
+        "This rule governs agency procedures, notice requirements, filing obligations, and enforcement."
+    )
     hydrated_text = (
         "Indiana Administrative Code Current "
         "TITLE 10 Office of Attorney General for the State "
@@ -1098,9 +1158,16 @@ async def test_agentic_discovery_uses_live_scraper_for_prioritized_seed(monkeypa
 
     class _LiveScraper(_GenericScraper):
         async def scrape(self, url: str):
+            if url == seed_url:
+                return SimpleNamespace(
+                    text=hydrated_text,
+                    title="Indiana Administrative Code | IARP",
+                    html=f"<a href='{deep_url}'>Article 1.5</a>",
+                    links=[{"url": deep_url, "text": "Article 1.5"}],
+                )
             return SimpleNamespace(
-                text=hydrated_text,
-                title="Indiana Administrative Code | IARP",
+                text=deep_text,
+                title="Title 10, Article 1.5",
                 html="",
                 links=[],
             )
@@ -1145,4 +1212,6 @@ async def test_agentic_discovery_uses_live_scraper_for_prioritized_seed(monkeypa
 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
-    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [seed_url]
+    assert [
+        statute["source_url"] for statute in result["state_blocks"][0]["statutes"]
+    ] == [deep_url]

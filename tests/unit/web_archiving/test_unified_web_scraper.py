@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 import sys
 import types
 
@@ -8,6 +9,7 @@ import pytest
 from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
     ScraperConfig,
     ScraperMethod,
+    ScraperResult,
     UnifiedWebScraper,
 )
 
@@ -189,3 +191,105 @@ def test_common_crawl_search_options_enable_hf_remote_when_no_local_meta(
     assert options["hf_meta_index_dataset"] == "Publicus/common_crawl_pointer_indices"
     assert options["hf_pointer_dataset"] == "Publicus/common_crawl_pointers_by_collection"
     assert options["hf_revision"] == "main"
+
+
+class _FakeResponse:
+    def __init__(self, *, content: bytes, headers: dict[str, str] | None = None, status_code: int = 200, text: str | None = None):
+        self.content = content
+        self.headers = headers or {}
+        self.status_code = status_code
+        self.text = text if text is not None else content.decode("utf-8", errors="replace")
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+
+@pytest.mark.anyio
+async def test_requests_only_retries_with_relaxed_ssl(monkeypatch: pytest.MonkeyPatch) -> None:
+    requests = pytest.importorskip("requests")
+    calls: list[bool] = []
+
+    def _fake_get(_url: str, *, timeout: int, verify: bool, **_kwargs):
+        calls.append(verify)
+        if verify:
+            raise requests.exceptions.SSLError("CERTIFICATE_VERIFY_FAILED")
+        return _FakeResponse(
+            content=b"<html><title>Recovered</title><body>ok</body></html>",
+            headers={"Content-Type": "text/html; charset=utf-8"},
+        )
+
+    scraper = UnifiedWebScraper(ScraperConfig(timeout=5, verify_ssl=True, retry_insecure_ssl=True))
+    scraper.session = SimpleNamespace(get=_fake_get)
+
+    result = await scraper._scrape_requests_only("https://badssl.example.gov/")
+
+    assert result.success is True
+    assert result.title == "Recovered"
+    assert result.metadata["ssl_verification_relaxed"] is True
+    assert calls == [True, False]
+
+
+@pytest.mark.anyio
+async def test_beautifulsoup_returns_pdf_bytes_and_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    pdf_bytes = b"%PDF-1.4 fake"
+
+    scraper = UnifiedWebScraper(ScraperConfig())
+    scraper.session = SimpleNamespace(
+        get=lambda *_args, **_kwargs: _FakeResponse(
+            content=pdf_bytes,
+            headers={
+                "Content-Type": "application/pdf",
+                "Content-Disposition": 'attachment; filename="rules.pdf"',
+            },
+        )
+    )
+    monkeypatch.setattr(scraper, "_extract_pdf_text", lambda _raw: "Parsed PDF text")
+
+    result = await scraper._scrape_beautifulsoup("https://example.gov/rules")
+
+    assert result.success is True
+    assert result.title == "rules.pdf"
+    assert result.text == "Parsed PDF text"
+    assert result.metadata["binary_document"] is True
+    assert result.metadata["content_type"] == "application/pdf"
+    assert result.metadata["raw_bytes"] == pdf_bytes
+
+
+@pytest.mark.anyio
+async def test_fallback_submits_archive_is_only_after_snapshot_miss(monkeypatch: pytest.MonkeyPatch) -> None:
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            preferred_methods=[ScraperMethod.ARCHIVE_IS],
+            archive_is_submit_on_miss=True,
+            archive_is_submit_retries=1,
+        )
+    )
+    scraper.available_methods[ScraperMethod.ARCHIVE_IS] = True
+
+    calls: list[bool] = []
+
+    async def _fake_scrape_archive_is(url: str, submit_on_miss: bool = False, **_kwargs):
+        calls.append(submit_on_miss)
+        if submit_on_miss:
+            return ScraperResult(
+                url=url,
+                success=False,
+                method_used=ScraperMethod.ARCHIVE_IS,
+                errors=["Archive.is capture submitted and is still pending"],
+            )
+        return ScraperResult(
+            url=url,
+            success=False,
+            method_used=ScraperMethod.ARCHIVE_IS,
+            errors=["Archive.is returned no archived snapshot"],
+        )
+
+    monkeypatch.setattr(scraper, "_scrape_archive_is", _fake_scrape_archive_is)
+
+    result = await scraper._scrape_with_fallback("https://example.gov/moved")
+
+    assert result.success is False
+    assert calls == [False, True]
+    assert "Archive.is capture submitted and is still pending" in result.errors
+

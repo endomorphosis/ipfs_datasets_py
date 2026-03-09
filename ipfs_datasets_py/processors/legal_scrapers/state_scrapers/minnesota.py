@@ -266,33 +266,33 @@ class MinnesotaScraper(BaseStateScraper):
 
     async def _build_statute_from_section_page(self, code_name: str, section_url: str) -> NormalizedStatute | None:
         try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            return None
-
-        try:
             payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
         except Exception:
             return None
         if not payload:
             return None
 
-        soup = BeautifulSoup(payload, "html.parser")
-        text = " ".join(soup.get_text(" ", strip=True).split())
+        match = self._MN_SECTION_NUMBER_RE.search(section_url)
+        section_number = match.group(1) if match else section_url.rsplit("/", 1)[-1]
+        html_text = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+        text = self._extract_best_content_text(html_text)
+        heading_pattern = re.compile(
+            rf"\b{re.escape(section_number)}\b\s+[A-Z][A-Z0-9 ,;:'()\-/&]+\.",
+            re.IGNORECASE,
+        )
+        heading_match = heading_pattern.search(text)
+        if heading_match:
+            text = text[heading_match.start():]
+        text = re.split(r"\bHistory:\b", text, maxsplit=1)[0].strip()
+        text = re.split(r"\b(?:Official Publication of the State of Minnesota|About the Legislature|General Contact|Get Connected)\b", text, maxsplit=1)[0].strip()
+        text = re.sub(r"\s+", " ", text).strip()
         if len(text) < 160:
             return None
 
-        match = self._MN_SECTION_NUMBER_RE.search(section_url)
-        section_number = match.group(1) if match else section_url.rsplit("/", 1)[-1]
-        heading = ""
-        for selector in ("h1", "h2", "title"):
-            node = soup.select_one(selector)
-            if node:
-                heading = " ".join(node.get_text(" ", strip=True).split())
-                if heading:
-                    break
-        if not heading:
-            heading = f"Minnesota Statutes {section_number}"
+        heading = f"Minnesota Statutes {section_number}"
+        title_match = re.search(r"\b%s\b\s+([A-Z][A-Z0-9 ,;:'()\-/&]{4,120})\." % re.escape(section_number), text)
+        if title_match:
+            heading = f"{section_number} {title_match.group(1).title()}"
 
         return NormalizedStatute(
             state_code=self.state_code,
@@ -307,7 +307,6 @@ class MinnesotaScraper(BaseStateScraper):
             official_cite=f"Minn. Stat. § {section_number}",
             metadata=StatuteMetadata(),
         )
-
 
 # Register this scraper with the registry
 StateScraperRegistry.register("MN", MinnesotaScraper)

@@ -81,13 +81,14 @@ def _build_live_audit_api() -> UnifiedWebArchivingAPI:
         extract_text=True,
         fallback_enabled=True,
         rate_limit_delay=0.2,
-        common_crawl_hf_remote_meta=False,
+        common_crawl_hf_remote_meta=True,
         preferred_methods=[
+            ScraperMethod.COMMON_CRAWL,
             ScraperMethod.PLAYWRIGHT,
             ScraperMethod.BEAUTIFULSOUP,
             ScraperMethod.REQUESTS_ONLY,
             ScraperMethod.WAYBACK_MACHINE,
-            ScraperMethod.COMMON_CRAWL,
+            ScraperMethod.ARCHIVE_IS,
         ],
     )
     return UnifiedWebArchivingAPI(scraper=UnifiedWebScraper(live_cfg))

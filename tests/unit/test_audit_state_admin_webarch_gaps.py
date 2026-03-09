@@ -22,11 +22,11 @@ def test_build_live_audit_api_prefers_live_methods() -> None:
 	api = module._build_live_audit_api()
 	config = api.scraper.config
 
-	assert config.common_crawl_hf_remote_meta is False
+	assert config.common_crawl_hf_remote_meta is True
 	assert [method.value for method in config.preferred_methods[:3]] == [
+		"common_crawl",
 		"playwright",
 		"beautifulsoup",
-		"requests_only",
 	]
 
 

@@ -23,7 +23,9 @@ import logging
 import anyio
 import glob
 import os
+import re
 import time
+from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Literal, Union, Callable
 from dataclasses import dataclass, field
@@ -97,9 +99,14 @@ class ScraperConfig:
     extract_text: bool = True
     follow_redirects: bool = True
     verify_ssl: bool = True
+    retry_insecure_ssl: bool = True
     rate_limit_delay: float = 1.0
     preferred_methods: Optional[List[ScraperMethod]] = None
     fallback_enabled: bool = True
+    archive_is_submit_on_miss: bool = True
+    archive_is_submit_wait: bool = False
+    archive_is_submit_retries: int = 2
+    archive_is_submit_backoff_seconds: float = 2.0
 
     # Common Crawl (via local common_crawl_search_engine) configuration.
     # Defaults match common_crawl_search_engine.ccindex.api.search_domain_via_meta_indexes().
@@ -426,6 +433,111 @@ class UnifiedWebScraper:
             return _run(remote_options), True
 
         return result, bool(search_options.get("hf_remote_meta"))
+
+    @staticmethod
+    def _ssl_retry_allowed(exc: Exception) -> bool:
+        message = str(exc).lower()
+        return any(
+            token in message
+            for token in [
+                "ssl",
+                "certificate verify failed",
+                "certificate_verify_failed",
+                "cert verify failed",
+            ]
+        )
+
+    @staticmethod
+    def _content_type_matches(content_type: str, *tokens: str) -> bool:
+        lowered = (content_type or "").lower()
+        return any(token in lowered for token in tokens)
+
+    @staticmethod
+    def _response_filename(url: str, content_disposition: str) -> str:
+        match = re.search(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?', content_disposition or "", re.IGNORECASE)
+        if match:
+            return os.path.basename(match.group(1).strip())
+        parsed = urlparse(url)
+        return os.path.basename(parsed.path.rstrip("/")) or parsed.netloc or url
+
+    def _is_binary_document_response(self, *, url: str, content_type: str, content_disposition: str) -> bool:
+        haystack = f"{url} {content_type} {content_disposition}".lower()
+        binary_tokens = [
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument",
+            "application/vnd.ms-excel",
+            "application/vnd.ms-powerpoint",
+            "application/octet-stream",
+        ]
+        if any(token in haystack for token in binary_tokens):
+            return True
+        return "attachment" in (content_disposition or "").lower()
+
+    @staticmethod
+    def _extract_pdf_text(pdf_bytes: bytes) -> str:
+        if not pdf_bytes:
+            return ""
+        try:
+            from pypdf import PdfReader  # type: ignore
+
+            reader = PdfReader(BytesIO(pdf_bytes))
+            return "\n".join((page.extract_text() or "") for page in reader.pages).strip()
+        except Exception:
+            return ""
+
+    def _build_binary_document_result(
+        self,
+        *,
+        url: str,
+        response: Any,
+        method: ScraperMethod,
+        ssl_verification_relaxed: bool,
+    ) -> ScraperResult:
+        content_type = response.headers.get("Content-Type", "")
+        content_disposition = response.headers.get("Content-Disposition", "")
+        raw_bytes = bytes(response.content or b"")
+        filename = self._response_filename(url, content_disposition)
+        text = ""
+        if self._content_type_matches(content_type, "application/pdf") or url.lower().endswith(".pdf"):
+            text = self._extract_pdf_text(raw_bytes)
+
+        return ScraperResult(
+            url=url,
+            title=filename,
+            text=text,
+            content=text,
+            method_used=method,
+            success=bool(raw_bytes),
+            metadata={
+                "method": method.value,
+                "status_code": getattr(response, "status_code", None),
+                "content_type": content_type,
+                "content_disposition": content_disposition,
+                "content_length": len(raw_bytes),
+                "raw_bytes": raw_bytes,
+                "binary_document": True,
+                "ssl_verification_relaxed": ssl_verification_relaxed,
+            },
+            errors=[] if raw_bytes else ["Binary document response was empty"],
+        )
+
+    def _request_with_ssl_fallback(self, url: str, **kwargs) -> tuple[Any, bool]:
+        verify = kwargs.pop("verify", self.config.verify_ssl)
+        try:
+            return self.session.get(url, verify=verify, **kwargs), False
+        except Exception as exc:
+            if not verify or not self.config.retry_insecure_ssl or not self._ssl_retry_allowed(exc):
+                raise
+            logger.info("Retrying %s without SSL verification after %s", url, type(exc).__name__)
+            return self.session.get(url, verify=False, **kwargs), True
     
     async def scrape(
         self,
@@ -463,6 +575,7 @@ class UnifiedWebScraper:
     async def _scrape_with_fallback(self, url: str, **kwargs) -> ScraperResult:
         """Try multiple scraping methods in sequence until one succeeds."""
         errors = []
+        archive_snapshot_miss = False
         
         for method in self.config.preferred_methods:
             if not self.available_methods.get(method, False):
@@ -482,6 +595,11 @@ class UnifiedWebScraper:
                     logger.info(f"Successfully scraped {url} using {method.value}")
                     return result
                 else:
+                    if (
+                        method == ScraperMethod.ARCHIVE_IS
+                        and "Archive.is returned no archived snapshot" in (getattr(result, "errors", []) or [])
+                    ):
+                        archive_snapshot_miss = True
                     errors.extend(result.errors)
             
             except Exception as e:
@@ -491,6 +609,16 @@ class UnifiedWebScraper:
             
             # Rate limiting between attempts
             await anyio.sleep(self.config.rate_limit_delay)
+
+        if archive_snapshot_miss and self.config.archive_is_submit_on_miss:
+            try:
+                logger.info("Submitting %s to Archive.is as final fallback", url)
+                result = await self._scrape_archive_is(url, submit_on_miss=True, **kwargs)
+                if result.success:
+                    return result
+                errors.extend(getattr(result, "errors", []) or [])
+            except Exception as exc:
+                errors.append(f"archive_is submission failed: {type(exc).__name__}: {exc}")
         
         # All methods failed
         return ScraperResult(
@@ -670,16 +798,28 @@ class UnifiedWebScraper:
     
     async def _scrape_beautifulsoup(self, url: str, **kwargs) -> ScraperResult:
         """Scrape using BeautifulSoup + requests."""
-        import requests
         from bs4 import BeautifulSoup
         
-        response = self.session.get(
+        response, ssl_relaxed = self._request_with_ssl_fallback(
             url,
             timeout=self.config.timeout,
-            verify=self.config.verify_ssl,
             allow_redirects=self.config.follow_redirects
         )
         response.raise_for_status()
+
+        content_type = response.headers.get('Content-Type', '')
+        content_disposition = response.headers.get('Content-Disposition', '')
+        if self._is_binary_document_response(
+            url=url,
+            content_type=content_type,
+            content_disposition=content_disposition,
+        ):
+            return self._build_binary_document_result(
+                url=url,
+                response=response,
+                method=ScraperMethod.BEAUTIFULSOUP,
+                ssl_verification_relaxed=ssl_relaxed,
+            )
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
@@ -719,7 +859,8 @@ class UnifiedWebScraper:
                 'method': 'beautifulsoup',
                 'status_code': response.status_code,
                 'content_type': response.headers.get('Content-Type', ''),
-                'content_length': len(response.content)
+                'content_length': len(response.content),
+                'ssl_verification_relaxed': ssl_relaxed,
             }
         )
     
@@ -888,6 +1029,7 @@ class UnifiedWebScraper:
                         "cc_local_warc_path": local_path,
                         "http_status": http.http_status,
                         "http_mime": http.body_mime,
+                        "content_type": http.body_mime,
                         "http_charset": http.body_charset,
                         "ok": http.ok,
                         "error": http.error,
@@ -928,10 +1070,13 @@ class UnifiedWebScraper:
                 errors=["Common Crawl integration unavailable"]
             )
     
-    async def _scrape_archive_is(self, url: str, **kwargs) -> ScraperResult:
+    async def _scrape_archive_is(self, url: str, submit_on_miss: Optional[bool] = None, **kwargs) -> ScraperResult:
         """Scrape using Archive.is."""
         import requests
         from bs4 import BeautifulSoup
+
+        if submit_on_miss is None:
+            submit_on_miss = False
         
         # Try to find existing archive first
         search_url = f"https://archive.is/newest/{url}"
@@ -961,7 +1106,8 @@ class UnifiedWebScraper:
                     success=True,
                     metadata={
                         'method': 'archive_is',
-                        'archive_url': response.url
+                        'archive_url': response.url,
+                        'archive_lookup_only': not submit_on_miss,
                     }
                 )
         except Exception as e:
@@ -970,6 +1116,70 @@ class UnifiedWebScraper:
                 success=False,
                 errors=[f"Archive.is scraping failed: {str(e)}"]
             )
+
+        if submit_on_miss:
+            try:
+                from .archive_is_engine import archive_to_archive_is
+
+                attempts = max(1, int(self.config.archive_is_submit_retries))
+                backoff = max(0.0, float(self.config.archive_is_submit_backoff_seconds))
+                last_result: Dict[str, Any] = {}
+                for attempt in range(attempts):
+                    last_result = await archive_to_archive_is(
+                        url,
+                        wait_for_completion=bool(self.config.archive_is_submit_wait),
+                        timeout=max(60, int(self.config.timeout)),
+                    )
+                    status = str(last_result.get("status") or "").lower()
+                    if status == "success":
+                        archive_url = str(last_result.get("archive_url") or "")
+                        return ScraperResult(
+                            url=url,
+                            success=True,
+                            method_used=ScraperMethod.ARCHIVE_IS,
+                            metadata={
+                                "method": "archive_is",
+                                "archive_url": archive_url,
+                                "archive_submitted": True,
+                                "archive_submit_status": status,
+                            },
+                            content=archive_url,
+                            text=archive_url,
+                            title="Archive.is submission created",
+                        )
+                    if status == "pending":
+                        return ScraperResult(
+                            url=url,
+                            success=False,
+                            method_used=ScraperMethod.ARCHIVE_IS,
+                            metadata={
+                                "method": "archive_is",
+                                "archive_submitted": True,
+                                "archive_submit_status": status,
+                                **last_result,
+                            },
+                            errors=["Archive.is capture submitted and is still pending"],
+                        )
+                    if attempt + 1 < attempts:
+                        await anyio.sleep(backoff * (attempt + 1))
+                return ScraperResult(
+                    url=url,
+                    success=False,
+                    method_used=ScraperMethod.ARCHIVE_IS,
+                    metadata={
+                        "method": "archive_is",
+                        "archive_submitted": bool(last_result),
+                        **last_result,
+                    },
+                    errors=[str(last_result.get("error") or "Archive.is submission failed")],
+                )
+            except Exception as e:
+                return ScraperResult(
+                    url=url,
+                    success=False,
+                    method_used=ScraperMethod.ARCHIVE_IS,
+                    errors=[f"Archive.is submission failed: {str(e)}"],
+                )
 
         return ScraperResult(
             url=url,
@@ -1015,12 +1225,25 @@ class UnifiedWebScraper:
     
     async def _scrape_readability(self, url: str, **kwargs) -> ScraperResult:
         """Scrape using Readability."""
-        import requests
         from readability import Document
         from bs4 import BeautifulSoup
         
-        response = self.session.get(url, timeout=self.config.timeout)
+        response, ssl_relaxed = self._request_with_ssl_fallback(url, timeout=self.config.timeout)
         response.raise_for_status()
+
+        content_type = response.headers.get('Content-Type', '')
+        content_disposition = response.headers.get('Content-Disposition', '')
+        if self._is_binary_document_response(
+            url=url,
+            content_type=content_type,
+            content_disposition=content_disposition,
+        ):
+            return self._build_binary_document_result(
+                url=url,
+                response=response,
+                method=ScraperMethod.READABILITY,
+                ssl_verification_relaxed=ssl_relaxed,
+            )
         
         doc = Document(response.content)
         title = doc.title()
@@ -1039,17 +1262,32 @@ class UnifiedWebScraper:
             success=True,
             metadata={
                 'method': 'readability',
-                'content_length': len(response.content)
+                'content_length': len(response.content),
+                'content_type': content_type,
+                'ssl_verification_relaxed': ssl_relaxed,
             }
         )
     
     async def _scrape_requests_only(self, url: str, **kwargs) -> ScraperResult:
         """Basic scraping with requests only."""
-        import requests
         import re
         
-        response = self.session.get(url, timeout=self.config.timeout)
+        response, ssl_relaxed = self._request_with_ssl_fallback(url, timeout=self.config.timeout)
         response.raise_for_status()
+
+        content_type = response.headers.get('Content-Type', '')
+        content_disposition = response.headers.get('Content-Disposition', '')
+        if self._is_binary_document_response(
+            url=url,
+            content_type=content_type,
+            content_disposition=content_disposition,
+        ):
+            return self._build_binary_document_result(
+                url=url,
+                response=response,
+                method=ScraperMethod.REQUESTS_ONLY,
+                ssl_verification_relaxed=ssl_relaxed,
+            )
         
         # Basic HTML tag removal
         text = re.sub(r'<[^>]+>', '', response.text)
@@ -1069,7 +1307,9 @@ class UnifiedWebScraper:
             success=True,
             metadata={
                 'method': 'requests_only',
-                'status_code': response.status_code
+                'status_code': response.status_code,
+                'content_type': content_type,
+                'ssl_verification_relaxed': ssl_relaxed,
             }
         )
     

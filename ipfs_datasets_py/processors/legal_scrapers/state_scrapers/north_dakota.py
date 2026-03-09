@@ -19,6 +19,20 @@ class NorthDakotaScraper(BaseStateScraper):
 
     _ND_CENCODE_PDF_RE = re.compile(r"/cencode/.*?\.pdf$", re.IGNORECASE)
     _ND_CENCODE_FILE_RE = re.compile(r"t(\d{1,3})c(\d{1,3})\.pdf$", re.IGNORECASE)
+
+    def _filter_non_code_results(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        out: List[NormalizedStatute] = []
+        for statute in statutes:
+            url = str(statute.source_url or "").lower()
+            text = str(statute.full_text or "").lower()
+            if "/cencode/" not in url and "web.archive.org/web/" not in url:
+                continue
+            if "/assembly/" in url:
+                continue
+            if "legislative assembly - regular session" in text:
+                continue
+            out.append(statute)
+        return out
     
     def get_base_url(self) -> str:
         """Return the base URL for North Dakota's legislative website."""
@@ -56,6 +70,7 @@ class NorthDakotaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
             statutes = await self._generic_scrape(code_name, candidate, "N.D. Cent. Code", max_sections=520)
+            statutes = self._filter_non_code_results(statutes)
             if len(statutes) > len(best):
                 best = statutes
 

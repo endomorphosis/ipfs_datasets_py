@@ -59,11 +59,13 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
     r"(?:^|https?://)(?:www\.)?uscode\.house\.gov/|(?:^|https?://)(?:www\.)?ecfr\.gov/|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
+    r"(?:^|https?://)(?:www\.)?iga\.in\.gov/static-documents/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/viewdocument(?:/viewDocument)?/\?docName=https?://(?:www\.)?azleg\.gov/ars/|"
     r"(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sdlegislature\.gov/Statutes(?:\?|/|$)|"
+    r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/(?:Search/ExecuteSearch|Laws/MCL)(?:\?|/|$)|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
     r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)|"
     r"(?:^|https?://)(?:www\.)?boardsandcommissions\.sd\.gov/",
@@ -335,8 +337,15 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sosmt.gov/arm/register/",
         "https://sosmt.gov/arm/rulemaking-resources/",
     ],
+    "MI": [
+        "https://ars.apps.lara.state.mi.us/",
+        "https://ars.apps.lara.state.mi.us/Home",
+        "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306",
+    ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
+        "https://rules.sos.ri.gov/Organizations",
+        "https://rules.sos.ri.gov/organizations",
         "https://rules.sos.ri.gov/",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
@@ -844,6 +853,17 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
         if _RULE_BODY_SIGNAL_RE.search(ut_hay) or _LEGAL_CONTENT_SIGNAL_RE.search(ut_hay):
             return True
 
+    if host == "iar.iga.in.gov" and re.search(r"/code/(?:current|2006)/\d+/\d+(?:\.\d+)?", path, re.IGNORECASE):
+        in_hay = " ".join([title_value, body, url_value])
+        if re.search(r"\btitle\s+\d+(?:\.\d+)?\b", in_hay, re.IGNORECASE) and re.search(
+            r"\b(?:article|rule)\s+\d+(?:\.\d+)?\b",
+            in_hay,
+            re.IGNORECASE,
+        ):
+            return True
+        if _RULE_BODY_SIGNAL_RE.search(in_hay) and _LEGAL_CONTENT_SIGNAL_RE.search(in_hay):
+            return True
+
     if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(url_value):
         nh_hay = " ".join([title_value, body])
         if _NH_ARCHIVED_RULE_CHAPTER_TEXT_RE.search(nh_hay):
@@ -1165,6 +1185,11 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     # represent substantive rule text. Keep them available to relaxed recovery, not to the
     # substantive corpus.
     if host in {"rules.utah.gov", "adminrules.utah.gov"} and _UT_NON_SUBSTANTIVE_INDEX_PATH_RE.search(path):
+        return False
+
+    # Indiana landing pages are useful seed inventory surfaces, but the emitted
+    # corpus should prefer article/rule detail pages instead of top-level code indexes.
+    if host == "iar.iga.in.gov" and path.rstrip("/") in {"/code", "/code/current", "/code/2006"}:
         return False
 
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
@@ -1650,14 +1675,20 @@ async def _agentic_discover_admin_state_blocks(
                     ):
                         seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
 
-                # Seed URLs that are already accepted often still need a hydrated browser pass
-                # to expose same-host chapter/article links hidden behind SPA rendering.
-                if accepted_seed or inventory_seed:
+                # Official seed entrypoints still need a hydrated browser pass so SPA-backed
+                # indexes can expose child chapter/article links even when the initial fetch
+                # only returned placeholder text.
+                if accepted_seed or inventory_seed or _prefers_live_fetch(seed_url) or bool(_OFFICIAL_RULE_INDEX_URL_RE.search(seed_url)):
                     try:
                         seed_scrape = await asyncio.wait_for(live_scraper.scrape(seed_url), timeout=25.0)
                         seed_scrape_text = str(getattr(seed_scrape, "text", "") or "").strip()
                         seed_scrape_title = str(getattr(seed_scrape, "title", "") or "").strip()
                         seed_scrape_html = str(getattr(seed_scrape, "html", "") or "")
+                        live_method_value = None
+                        seed_scrape_provenance = getattr(seed_scrape, "extraction_provenance", None) or {}
+                        if isinstance(seed_scrape_provenance, dict):
+                            live_method_value = seed_scrape_provenance.get("method")
+                        await _append_document_if_rule(seed_url, seed_scrape_title, seed_scrape_text, live_method_value)
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=seed_scrape_text,
                             url=seed_url,

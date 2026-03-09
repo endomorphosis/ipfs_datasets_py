@@ -56,6 +56,64 @@ class FakeOrchestratorCapture:
         return {"engines": {}}
 
 
+class FakeOrchestratorRelocation:
+    def __init__(self):
+        self.queries = []
+
+    def search(self, query, max_results, offset, engines):
+        self.queries.append(query)
+        return SimpleNamespace(
+            results=[
+                SimpleNamespace(
+                    title="Relocated Indiana Code",
+                    url="https://new.example.org/indiana/code",
+                    snippet="Updated code location for Indiana law",
+                    engine="duckduckgo",
+                    score=0.95,
+                    metadata={"rank": 1},
+                )
+            ],
+            took_ms=35.0,
+            metadata={"engines_used": list(engines)},
+        )
+
+    def get_stats(self):
+        return {"engines": {}}
+
+
+class FakeOrchestratorRelocationMixed:
+    def __init__(self):
+        self.queries = []
+
+    def search(self, query, max_results, offset, engines):
+        self.queries.append(query)
+        return SimpleNamespace(
+            results=[
+                SimpleNamespace(
+                    title="World Wide Web",
+                    url="https://en.wikipedia.org/wiki/World_Wide_Web",
+                    snippet="General background article",
+                    engine="duckduckgo",
+                    score=0.99,
+                    metadata={"rank": 1},
+                ),
+                SimpleNamespace(
+                    title="Georgia Code | Georgia General Assembly",
+                    url="https://www.legis.ga.gov/legislation/georgia-code",
+                    snippet="Official Georgia code publication",
+                    engine="duckduckgo",
+                    score=0.88,
+                    metadata={"rank": 2},
+                ),
+            ],
+            took_ms=35.0,
+            metadata={"engines_used": list(engines)},
+        )
+
+    def get_stats(self):
+        return {"engines": {}}
+
+
 class FakeScraper:
     def scrape_sync(self, url):
         return SimpleNamespace(
@@ -69,6 +127,93 @@ class FakeScraper:
             links=[{"url": "https://example.com/law-2", "text": "Law 2"}],
             errors=[],
         )
+
+
+class FakeScraperRelocation:
+    def scrape_sync(self, url):
+        if url == "https://old.example.com/code":
+            return SimpleNamespace(
+                success=False,
+                title="",
+                text="",
+                html="",
+                metadata={"content_type": "text/html"},
+                method_used=SimpleNamespace(value="beautifulsoup"),
+                extraction_time=0.1,
+                links=[],
+                errors=["404 not found"],
+            )
+        if url == "https://new.example.org/indiana/code":
+            return SimpleNamespace(
+                success=True,
+                title="Indiana Code Relocated",
+                text="Indiana code content relocated to the new site.",
+                html="<html><body>Indiana code content relocated to the new site.</body></html>",
+                metadata={"content_type": "text/html"},
+                method_used=SimpleNamespace(value="beautifulsoup"),
+                extraction_time=0.1,
+                links=[],
+                errors=[],
+            )
+        raise AssertionError(f"Unexpected URL fetched: {url}")
+
+
+class FakeScraperThinRelocation:
+    def scrape_sync(self, url):
+        if url == "https://old.example.com/code":
+            return SimpleNamespace(
+                success=True,
+                title="",
+                text="",
+                html="<html></html>",
+                metadata={"content_type": "text/html"},
+                method_used=SimpleNamespace(value="common_crawl"),
+                extraction_time=0.1,
+                links=[],
+                errors=[],
+            )
+        if url == "https://new.example.org/indiana/code":
+            return SimpleNamespace(
+                success=True,
+                title="Indiana Code Relocated",
+                text="Indiana code content relocated to the new site.",
+                html="<html><body>Indiana code content relocated to the new site.</body></html>",
+                metadata={"content_type": "text/html"},
+                method_used=SimpleNamespace(value="beautifulsoup"),
+                extraction_time=0.1,
+                links=[],
+                errors=[],
+            )
+        raise AssertionError(f"Unexpected URL fetched: {url}")
+
+
+class FakeScraperGeorgiaRelocation:
+    def scrape_sync(self, url):
+        if url == "https://www.legis.ga.gov/legislation/laws.html":
+            return SimpleNamespace(
+                success=True,
+                title="",
+                text="",
+                html="<html></html>",
+                metadata={"content_type": "text/html"},
+                method_used=SimpleNamespace(value="common_crawl"),
+                extraction_time=0.1,
+                links=[],
+                errors=[],
+            )
+        if url == "https://www.legis.ga.gov/legislation/georgia-code":
+            return SimpleNamespace(
+                success=True,
+                title="Georgia Code | Georgia General Assembly",
+                text="Georgia Code official publication title chapter section statute law.",
+                html="<html><body>Georgia Code official publication title chapter section statute law.</body></html>",
+                metadata={"content_type": "text/html"},
+                method_used=SimpleNamespace(value="beautifulsoup"),
+                extraction_time=0.1,
+                links=[],
+                errors=[],
+            )
+        raise AssertionError(f"Unexpected URL fetched: {url}")
 
 
 def test_unified_api_search_success_maps_results() -> None:
@@ -95,6 +240,28 @@ def test_unified_api_search_success_maps_results() -> None:
     metrics = api.metrics_registry.snapshot("brave", "search", window_seconds=300)
     assert metrics["successes"] == 1.0
     assert metrics["items_processed"] == 1.0
+
+
+def test_relocation_target_terms_expand_state_abbreviation_from_url() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorCapture())
+
+    terms = api._relocation_target_terms(
+        source_url="https://www.legis.ga.gov/legislation/laws.html",
+        target_terms=["code"],
+    )
+
+    assert "georgia" in [term.lower() for term in terms]
+
+
+def test_relocation_queries_include_expanded_state_name() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorCapture())
+
+    queries = api._build_relocation_queries(
+        source_url="https://www.legis.ga.gov/legislation/laws.html",
+        target_terms=["code"],
+    )
+
+    assert any("georgia" in query.lower() for query in queries)
 
 
 def test_unified_api_search_failure_returns_error_contract() -> None:
@@ -216,6 +383,51 @@ def test_unified_api_fetch_respects_domain_for_structured_schema() -> None:
     assert response.metadata.get("requested_domain") == "legal"
 
 
+def test_unified_api_fetch_uses_search_for_relocated_url() -> None:
+    orchestrator = FakeOrchestratorRelocation()
+    api = UnifiedWebArchivingAPI(orchestrator=orchestrator, scraper=FakeScraperRelocation())
+
+    response = api.fetch("https://old.example.com/code", domain="legal")
+
+    assert response.success is True
+    assert response.url == "https://old.example.com/code"
+    assert response.document is not None
+    assert response.document.url == "https://new.example.org/indiana/code"
+    assert response.document.metadata.get("relocated_via_search") is True
+    assert response.document.metadata.get("relocated_from") == "https://old.example.com/code"
+    assert response.document.metadata.get("relocated_to") == "https://new.example.org/indiana/code"
+    assert response.metadata.get("relocated_via_search") is True
+    assert any("old.example.com" in query or "indiana" in query for query in orchestrator.queries)
+
+
+def test_unified_api_fetch_uses_search_for_thin_successful_fetch() -> None:
+    orchestrator = FakeOrchestratorRelocation()
+    api = UnifiedWebArchivingAPI(orchestrator=orchestrator, scraper=FakeScraperThinRelocation())
+
+    response = api.fetch("https://old.example.com/code", domain="legal")
+
+    assert response.success is True
+    assert response.document is not None
+    assert response.document.url == "https://new.example.org/indiana/code"
+    assert response.document.metadata.get("relocated_via_search") is True
+    assert response.document.extraction_provenance.get("relocated_to") == "https://new.example.org/indiana/code"
+
+
+def test_unified_api_fetch_filters_irrelevant_relocation_hits() -> None:
+    orchestrator = FakeOrchestratorRelocationMixed()
+    api = UnifiedWebArchivingAPI(orchestrator=orchestrator, scraper=FakeScraperGeorgiaRelocation())
+
+    response = api.fetch(
+        "https://www.legis.ga.gov/legislation/laws.html",
+        domain="legal",
+    )
+
+    assert response.success is True
+    assert response.document is not None
+    assert response.document.url == "https://www.legis.ga.gov/legislation/georgia-code"
+    assert response.document.metadata.get("relocated_via_search") is True
+
+
 def test_unified_api_fetch_normalizes_domain_alias_and_migration_meta() -> None:
     api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
 
@@ -283,3 +495,24 @@ def test_unified_api_agentic_discover_and_fetch() -> None:
     assert result["status"] == "success"
     assert result["visited_count"] >= 1
     assert isinstance(result["results"], list)
+
+
+def test_unified_api_agentic_discover_and_fetch_uses_search_for_relocated_url() -> None:
+    orchestrator = FakeOrchestratorRelocation()
+    api = UnifiedWebArchivingAPI(orchestrator=orchestrator, scraper=FakeScraperRelocation())
+
+    result = api.agentic_discover_and_fetch(
+        seed_urls=["https://old.example.com/code"],
+        target_terms=["indiana", "code"],
+        max_hops=1,
+        max_pages=3,
+    )
+
+    visited_urls = [item["url"] for item in result["results"]]
+
+    assert result["status"] == "success"
+    assert result["relocation_searches"] >= 1
+    assert result["relocation_candidates_added"] >= 1
+    assert "https://old.example.com/code" in visited_urls
+    assert "https://new.example.org/indiana/code" in visited_urls
+    assert any("old.example.com" in query or "indiana" in query for query in orchestrator.queries)

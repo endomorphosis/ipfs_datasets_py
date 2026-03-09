@@ -15,9 +15,27 @@ from .registry import StateScraperRegistry
 class ArkansasScraper(BaseStateScraper):
     """Scraper for Arkansas state laws from https://www.arkleg.state.ar.us"""
 
-    _AR_JUSTIA_TITLE_RE = re.compile(r"/codes/arkansas/title-[^/]+/?$", re.IGNORECASE)
-    _AR_JUSTIA_SECTION_RE = re.compile(r"/codes/arkansas/.*/section-[^/]+/?$", re.IGNORECASE)
+    _AR_JUSTIA_TITLE_RE = re.compile(r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/?$", re.IGNORECASE)
+    _AR_JUSTIA_INTERMEDIATE_RE = re.compile(r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/(?!.*section-)[^?#]+/?$", re.IGNORECASE)
+    _AR_JUSTIA_SECTION_RE = re.compile(r"/codes/arkansas/(?:\d{4}/)?title-[^/]+/.*/section-[^/]+/?$", re.IGNORECASE)
     _AR_SECTION_NUMBER_RE = re.compile(r"/section-([^/]+)/?$", re.IGNORECASE)
+
+    def _filter_non_code_results(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
+        out: List[NormalizedStatute] = []
+        for statute in statutes:
+            url = str(statute.source_url or "").lower()
+            text = str(statute.full_text or "").lower()
+            allow_justia_section = bool(self._AR_JUSTIA_SECTION_RE.search(url))
+            if "/acts/codesectionsamended" in url:
+                continue
+            if "codeofarrules.arkansas.gov" in url:
+                continue
+            if "code sections amended" in text or "state government directory" in text:
+                continue
+            if "law.justia.com" in url and not allow_justia_section:
+                continue
+            out.append(statute)
+        return out
     
     def get_base_url(self) -> str:
         """Return the base URL for Arkansas's legislative website."""
@@ -42,6 +60,7 @@ class ArkansasScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         justia_statutes = await self._scrape_justia_titles(code_name, max_statutes=180)
+        justia_statutes = self._filter_non_code_results(justia_statutes)
         if len(justia_statutes) >= 60:
             return justia_statutes
 
@@ -76,6 +95,7 @@ class ArkansasScraper(BaseStateScraper):
             seen.add(candidate)
 
             statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=720)
+            statutes = self._filter_non_code_results(statutes)
             _merge(statutes)
             if len(merged) >= 80:
                 return merged
@@ -111,6 +131,8 @@ class ArkansasScraper(BaseStateScraper):
                 break
 
         section_urls: List[str] = []
+        intermediate_urls: List[str] = []
+        seen_intermediate = set()
         seen_sections = set()
         for title_url in title_urls:
             try:
@@ -122,6 +144,29 @@ class ArkansasScraper(BaseStateScraper):
             title_soup = BeautifulSoup(title_payload, "html.parser")
             for anchor in title_soup.find_all("a", href=True):
                 href = urljoin(title_url, str(anchor.get("href") or "").strip())
+                if not self._AR_JUSTIA_SECTION_RE.search(href):
+                    if self._AR_JUSTIA_INTERMEDIATE_RE.search(href) and href not in seen_intermediate and href != title_url:
+                        seen_intermediate.add(href)
+                        intermediate_urls.append(href)
+                    continue
+                if href not in seen_sections:
+                    seen_sections.add(href)
+                    section_urls.append(href)
+                if len(section_urls) >= max(1, int(max_statutes * 4)):
+                    break
+            if len(section_urls) >= max(1, int(max_statutes * 4)):
+                break
+
+        for page_url in intermediate_urls[: max(1, int(max_statutes * 2))]:
+            try:
+                page_payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+            except Exception:
+                continue
+            if not page_payload:
+                continue
+            page_soup = BeautifulSoup(page_payload, "html.parser")
+            for anchor in page_soup.find_all("a", href=True):
+                href = urljoin(page_url, str(anchor.get("href") or "").strip())
                 if not self._AR_JUSTIA_SECTION_RE.search(href):
                     continue
                 if href in seen_sections:
@@ -169,7 +214,10 @@ class ArkansasScraper(BaseStateScraper):
         if content_node is None:
             return None
 
-        full_text = self._extract_text_from_html(str(content_node))
+        full_text = self._extract_best_content_text(str(content_node))
+        full_text = re.split(r"\bDisclaimer:\b", full_text, maxsplit=1)[0].strip()
+        full_text = re.split(r"\bAsk a Lawyer\b", full_text, maxsplit=1)[0].strip()
+        full_text = re.sub(r"\s+", " ", full_text).strip()
         if len(full_text) < 280:
             return None
 

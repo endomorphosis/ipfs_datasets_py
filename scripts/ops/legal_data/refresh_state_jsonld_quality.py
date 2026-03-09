@@ -13,6 +13,7 @@ import argparse
 import asyncio
 import json
 from pathlib import Path
+import re
 import sys
 from typing import Dict, List, Tuple
 
@@ -23,20 +24,83 @@ if str(REPO_ROOT) not in sys.path:
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import scrape_state_laws
 
 
+def row_text_value(row: Dict[str, object]) -> str:
+    return str(row.get("text") or row.get("full_text") or "")
+
+
+def row_name_value(row: Dict[str, object]) -> str:
+    return str(row.get("name") or row.get("sectionName") or row.get("section_name") or "")
+
+
+def row_url_value(row: Dict[str, object]) -> str:
+    return str(row.get("url") or row.get("sourceUrl") or row.get("source_url") or "")
+
+
 def is_synthetic_row(row: Dict[str, object]) -> bool:
-    text = str(row.get("text") or "").lower()
-    name = str(row.get("name") or "").lower()
+    text = row_text_value(row).lower()
+    name = row_name_value(row).lower()
+    url = row_url_value(row).lower()
     return (
         "statute section" in name
         or ": source https://" in text
         or ": source http://" in text
+        or "generated-filler" in text
+        or "-fill-" in str(row.get("identifier") or "").lower()
+        or "example.invalid" in url
     )
+
+
+def is_low_quality_row(row: Dict[str, object]) -> bool:
+    text = row_text_value(row).lower()
+    name = row_name_value(row).lower()
+    url = row_url_value(row).lower()
+    hay = " ".join([name, text, url])
+
+    blocker_phrases = [
+        "temporary error. please try again",
+        "complete the security check before continuing",
+        "google translate to be disabled",
+        "let's confirm you are human",
+        "code sections amended",
+        "state government directory",
+        "committee room reservation",
+        "legislative assembly - regular session",
+        "legislative assembly regular interim special",
+    ]
+    if any(phrase in hay for phrase in blocker_phrases):
+        return True
+
+    low_quality_url_hints = [
+        "/assembly/",
+        "/fiscal/",
+        "/library-and-research/title-summaries",
+        "/acts/codesectionsamended",
+        "codeofarrules.arkansas.gov/rules/emergency",
+        "dds.georgia.gov",
+        "dol.georgia.gov",
+        "lexisnexis.com/hottopics/gacode",
+        "justia.com/marketing/",
+        "justia.com/lawyers/",
+        "law.justia.com/cases/",
+        "law.justia.com/california/",
+    ]
+    if any(hint in url for hint in low_quality_url_hints):
+        return True
+
+    if re.search(r"law\.justia\.com/codes/georgia/\d{4}/?$", url):
+        return True
+    if re.search(r"law\.justia\.com/codes/arkansas/\d{4}/?$", url):
+        return True
+    if "skip to main content skip to office menu" in text:
+        return True
+
+    return False
 
 
 def row_key(row: Dict[str, object]) -> Tuple[str, str, str]:
     ident = str(row.get("identifier") or "").strip().lower()
-    url = str(row.get("url") or "").strip().lower()
-    name = str(row.get("name") or "").strip().lower()
+    url = row_url_value(row).strip().lower()
+    name = row_name_value(row).strip().lower()
     return (ident, url, name)
 
 
@@ -164,15 +228,15 @@ def build_target_rows(
 
 
 def score_rows(rows: List[Dict[str, object]]) -> Tuple[int, int, int]:
-    real = sum(1 for r in rows if not is_synthetic_row(r))
-    synth = sum(1 for r in rows if is_synthetic_row(r))
+    real = sum(1 for r in rows if not is_synthetic_row(r) and not is_low_quality_row(r))
+    synth = sum(1 for r in rows if is_synthetic_row(r) or is_low_quality_row(r))
     # Higher score is better: more real rows, fewer synthetic rows, then more rows.
     return (real, -synth, len(rows))
 
 
 def quality_stats(rows: List[Dict[str, object]]) -> Tuple[int, int, int, float]:
     total = len(rows)
-    synth = sum(1 for r in rows if is_synthetic_row(r))
+    synth = sum(1 for r in rows if is_synthetic_row(r) or is_low_quality_row(r))
     real = total - synth
     real_ratio = (real / total) if total else 0.0
     return real, synth, total, real_ratio
@@ -228,19 +292,17 @@ async def refresh_state(
     scraped_rows = extract_scrape_jsonld_rows(scrape_result, state_code)
     after_combined = dedupe(scraped_rows + after)
 
-    before_real = [r for r in before if not is_synthetic_row(r)]
+    before_real = [r for r in before if not is_synthetic_row(r) and not is_low_quality_row(r)]
     before_synth = [r for r in before if is_synthetic_row(r)]
-    after_real = [r for r in after_combined if not is_synthetic_row(r)]
+    after_real = [r for r in after_combined if not is_synthetic_row(r) and not is_low_quality_row(r)]
     after_synth = [r for r in after_combined if is_synthetic_row(r)]
 
-    before_candidate = dedupe(before)
-    if not before_candidate:
-        before_candidate = build_target_rows(
-            state_code=state_code,
-            real_rows=[],
-            synth_rows=[],
-            target_lines=max(1, target_lines),
-        )
+    before_candidate = build_target_rows(
+        state_code=state_code,
+        real_rows=dedupe(before_real),
+        synth_rows=dedupe(before_synth),
+        target_lines=max(1, target_lines),
+    )
 
     target_for_after = max(target_lines, len(before_candidate)) if preserve_prior_size else target_lines
     after_candidate = build_target_rows(
@@ -271,8 +333,8 @@ async def refresh_state(
         "after_total": len(after_combined),
         "after_real": len(after_real),
         "final_total": len(final_rows),
-        "final_real": len([r for r in final_rows if not is_synthetic_row(r)]),
-        "final_synthetic": len([r for r in final_rows if is_synthetic_row(r)]),
+        "final_real": len([r for r in final_rows if not is_synthetic_row(r) and not is_low_quality_row(r)]),
+        "final_synthetic": len([r for r in final_rows if is_synthetic_row(r) or is_low_quality_row(r)]),
         "selected": selected,
     }
 
