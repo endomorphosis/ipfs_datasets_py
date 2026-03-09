@@ -59,7 +59,7 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://apps.azsos.gov/public_services/CodeTOC.htm" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_00.htm" not in az_urls
 
-    assert "https://adminrules.utah.gov/public/search/R/Current%20Rules" in ut_urls
+    assert "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules" in ut_urls
     assert "https://adminrules.utah.gov/public/home" not in ut_urls
     assert "https://adminrules.utah.gov/public/search" not in ut_urls
 
@@ -196,6 +196,41 @@ def test_rejects_rhode_island_organizations_landing_page_as_rule_content() -> No
         text=text,
         title="Welcome to the Rhode Island Code of Regulations - Rhode Island Department of State",
         url="https://rules.sos.ri.gov/Organizations",
+    ) is False
+
+
+def test_rejects_arizona_notary_page_as_rule_content() -> None:
+    text = (
+        "New Notary Arizona Secretary of State commission application notary education manual oath bond "
+        "commission expiration renewal and notarial acts."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="New Notary | Arizona Secretary of State",
+        url="https://azsos.gov/business/notary-public/new-notary",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="New Notary | Arizona Secretary of State",
+        url="https://azsos.gov/business/notary-public/new-notary",
+    ) is False
+
+
+def test_rejects_zhihu_discovery_noise_as_rule_content() -> None:
+    text = "Administrative rules discussion thread with no state rule text or citations."
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Question thread",
+        url="https://www.zhihu.com/question/19860216",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Question thread",
+        url="https://www.zhihu.com/question/19860216",
     ) is False
 
 
@@ -1051,6 +1086,48 @@ def test_candidate_utah_rule_urls_from_public_api_preserves_explicit_query(monke
 
     assert urls == []
     assert observed["url"] == "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R70-101/Current%20Rules"
+
+
+def test_candidate_utah_rule_urls_from_public_api_accepts_api_seed(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = [
+        {
+            "programs": [
+                {
+                    "rules": [
+                        {
+                            "referenceNumber": "R70-101",
+                            "linkToRule": "R70-101/Current Rules",
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+
+    class _FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return payload
+
+    observed: dict[str, object] = {}
+
+    def _fake_get(*args, **kwargs):
+        observed["url"] = args[0] if args else kwargs.get("url")
+        return _FakeResponse()
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    urls = _candidate_utah_rule_urls_from_public_api(
+        url="https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules",
+        limit=4,
+    )
+
+    assert observed["url"] == "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
+    assert urls == [
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
+    ]
 
 
 def test_initial_pending_candidates_prioritize_seed_expansions() -> None:

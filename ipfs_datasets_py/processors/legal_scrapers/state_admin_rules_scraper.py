@@ -65,6 +65,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?iga\.in\.gov/static-documents/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/viewdocument(?:/viewDocument)?/\?docName=https?://(?:www\.)?azleg\.gov/ars/|"
+    r"(?:^|https?://)(?:www\.)?azsos\.gov/business/notary-public(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sdlegislature\.gov/Statutes(?:\?|/|$)|"
@@ -76,7 +77,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
 )
 
 _BAD_DISCOVERY_DOMAIN_RE = re.compile(
-    r"(^|\.)(city-data\.com|legalclarity\.org|texashuntingforum\.com|montanaheritagecommission\.mt\.gov|wikipedia\.org|britannica\.com|ballotpedia\.org)$",
+    r"(^|\.)(city-data\.com|legalclarity\.org|texashuntingforum\.com|montanaheritagecommission\.mt\.gov|wikipedia\.org|britannica\.com|ballotpedia\.org|zhihu\.com)$",
     re.IGNORECASE,
 )
 
@@ -253,7 +254,7 @@ _RULE_BODY_SIGNAL_RE = re.compile(
 _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"(?:^|https?://)(?:rules\.mt\.gov/browse/collections(?:/|$)|sdlegislature\.gov/Rules/Administrative(?:/|$)|"
     r"rules\.utah\.gov(?:/(?:utah-administrative-code|publications/(?:administrative-rules-register|code-updates))?)?(?:/|$)|"
-    r"adminrules\.utah\.gov(?:/public/(?:home|search)(?:/.*)?)?(?:/|$)|"
+    r"adminrules\.utah\.gov(?:/(?:public/(?:home|search)(?:/.*)?|api/public/searchRuleDataTotal/[^/]+/Current%20Rules))?(?:/|$)|"
     r"iar\.iga\.in\.gov/code(?:/(?:current|2006))?(?:/|$)|"
     r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
     r"azsos\.gov/rules(?:/arizona-administrative-code)?(?:/|$)|"
@@ -372,8 +373,6 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
-        "https://rules.sos.ri.gov/Organizations",
-        "https://rules.sos.ri.gov/organizations",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-3",
@@ -393,7 +392,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.state.tx.us/texreg/pdf/backview/index.shtml",
     ],
     "UT": [
-        "https://adminrules.utah.gov/public/search/R/Current%20Rules",
+        "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules",
         "https://rules.utah.gov/",
         "https://adminrules.utah.gov/",
         "https://rules.utah.gov/utah-administrative-code/",
@@ -1188,13 +1187,27 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
     parsed = urlparse(url_value)
     if parsed.netloc.lower() != "adminrules.utah.gov":
         return []
-    if not parsed.path.startswith("/public/search"):
+    if not (
+        parsed.path.startswith("/public/search")
+        or parsed.path.startswith("/api/public/searchRuleDataTotal/")
+    ):
         return []
 
     search_term = ""
     path_parts = [unquote(part).strip() for part in parsed.path.split("/") if part]
     if len(path_parts) >= 3 and path_parts[0] == "public" and path_parts[1] == "search":
         candidate_term = str(path_parts[2] or "").strip()
+        if candidate_term.lower() not in {
+            "current rules",
+            "proposed",
+            "emergency",
+            "expired emergency",
+            "repealed",
+            "superseded",
+        }:
+            search_term = candidate_term
+    elif len(path_parts) >= 6 and path_parts[:4] == ["api", "public", "searchRuleDataTotal", path_parts[3]]:
+        candidate_term = str(path_parts[3] or "").strip()
         if candidate_term.lower() not in {
             "current rules",
             "proposed",
