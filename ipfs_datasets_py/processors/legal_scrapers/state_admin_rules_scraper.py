@@ -237,7 +237,8 @@ _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"adminrules\.utah\.gov(?:/public/(?:home|search)(?:/.*)?)?(?:/|$)|"
     r"iar\.iga\.in\.gov/code(?:/(?:current|2006))?(?:/|$)|"
     r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
-    r"apps\.azsos\.gov/public_services/(?:Title_[\w.-]+\.htm)?$)",
+    r"azsos\.gov/rules(?:/arizona-administrative-code)?(?:/|$)|"
+    r"apps\.azsos\.gov/public_services/(?:CodeTOC\.htm|Title_[\w.-]+\.htm)?$)",
     re.IGNORECASE,
 )
 
@@ -263,8 +264,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.alabama.gov/alabama-administrative-code",
     ],
     "AZ": [
-        "https://apps.azsos.gov/public_services/Title_00.htm",
-        "https://apps.azsos.gov/public_services/",
+        "https://azsos.gov/rules/arizona-administrative-code",
+        "https://azsos.gov/rules/",
+        "https://apps.azsos.gov/public_services/CodeTOC.htm",
     ],
     "GA": [
         "https://rules.sos.ga.gov/gac",
@@ -372,9 +374,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "UT": [
         "https://rules.utah.gov/",
         "https://adminrules.utah.gov/",
-        "https://adminrules.utah.gov/public/home",
-        "https://adminrules.utah.gov/public/search",
-        "https://adminrules.utah.gov/public/search//Current%20Rules",
+        "https://adminrules.utah.gov/public/search/R/Current%20Rules",
         "https://rules.utah.gov/utah-administrative-code/",
         "https://rules.utah.gov/publications/administrative-rules-register/",
         "https://rules.utah.gov/publications/code-updates/",
@@ -833,6 +833,17 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
     if page_url and _url_key(link_url) == _url_key(page_url):
         score -= 5
     return score
+
+
+def _build_initial_pending_candidates(
+    ranked_urls: List[tuple[str, int]],
+    seed_expansion_candidates: List[tuple[str, int]],
+    max_candidates: int,
+) -> List[tuple[str, int]]:
+    pending: List[tuple[str, int]] = list(ranked_urls[:max(1, int(max_candidates))])
+    pending.extend(seed_expansion_candidates)
+    pending.sort(key=lambda item: item[1], reverse=True)
+    return pending
 
 
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
@@ -1925,8 +1936,11 @@ async def _agentic_discover_admin_state_blocks(
                 pass
 
         max_candidates = max(1, int(max_candidates_per_state))
-        pending: List[tuple[str, int]] = list(ranked_urls[:max_candidates])
-        pending.extend(seed_expansion_candidates)
+        pending = _build_initial_pending_candidates(
+            ranked_urls=ranked_urls,
+            seed_expansion_candidates=seed_expansion_candidates,
+            max_candidates=max_candidates,
+        )
         seen_urls = set(direct_doc_urls)
         inspected_urls = 0
         expanded_urls = 0

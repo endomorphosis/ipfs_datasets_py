@@ -45,6 +45,19 @@ def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr
     assert "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations" in ri_urls
 
 
+def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoints() -> None:
+    az_urls = scraper_module._extract_seed_urls_for_state("AZ", "Arizona")
+    ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
+
+    assert "https://azsos.gov/rules/arizona-administrative-code" in az_urls
+    assert "https://apps.azsos.gov/public_services/CodeTOC.htm" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_00.htm" not in az_urls
+
+    assert "https://adminrules.utah.gov/public/search/R/Current%20Rules" in ut_urls
+    assert "https://adminrules.utah.gov/public/home" not in ut_urls
+    assert "https://adminrules.utah.gov/public/search" not in ut_urls
+
+
 def test_rejects_indiana_archived_statute_pdfs_even_with_admin_like_code_name() -> None:
     statute = {
         "code_name": "Indiana Administrative Code",
@@ -540,6 +553,20 @@ def test_rejects_arizona_azleg_statute_proxy_false_positive() -> None:
     ) is False
 
 
+def test_accepts_relocated_arizona_rule_index_as_relaxed_recovery_text() -> None:
+    text = (
+        "Arizona Administrative Code. Title 1 State Government. Title 2 Administration. "
+        "Title 3 Agriculture. Title 4 Professions and Occupations. Browse the official rules index, "
+        "agency rules, notices, and codified administrative materials published by the Arizona Secretary of State."
+    )
+
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Administrative Code",
+        url="https://azsos.gov/rules/arizona-administrative-code",
+    ) is True
+
+
 def test_accepts_new_hampshire_archived_rule_chapter() -> None:
     statute = {
         "code_name": "New Hampshire Administrative Rules (Agentic Discovery)",
@@ -862,6 +889,30 @@ def test_candidate_utah_rule_urls_from_public_api_preserves_explicit_query(monke
 
     assert urls == []
     assert observed["url"] == "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R70-101/Current%20Rules"
+
+
+def test_initial_pending_candidates_prioritize_seed_expansions() -> None:
+    ranked_urls = [
+        ("https://adminrules.utah.gov/public/search/A/Current%20Rules", 4),
+        ("https://adminrules.utah.gov/public/search/B/Current%20Rules", 4),
+        ("https://adminrules.utah.gov/public/search/C/Current%20Rules", 4),
+        ("https://adminrules.utah.gov/public/search/D/Current%20Rules", 4),
+    ]
+    seed_expansion_candidates = [
+        ("https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules", 10),
+    ]
+
+    pending = scraper_module._build_initial_pending_candidates(
+        ranked_urls=ranked_urls,
+        seed_expansion_candidates=seed_expansion_candidates,
+        max_candidates=4,
+    )
+
+    assert pending[0] == (
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
+        10,
+    )
+    assert pending[1:] == ranked_urls
 
 
 def test_candidate_utah_rule_urls_from_public_api_skips_html_download_shell_urls(
