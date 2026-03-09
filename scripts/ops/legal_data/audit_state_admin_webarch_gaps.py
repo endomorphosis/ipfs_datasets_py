@@ -77,13 +77,6 @@ warnings.filterwarnings(
     message=r"datetime\.datetime\.utcnow\(\) is deprecated.*",
     category=DeprecationWarning,
 )
-warnings.filterwarnings(
-    "ignore",
-    message=r"This package \(`duckduckgo_search`\) has been renamed to `ddgs`!.*",
-    category=RuntimeWarning,
-)
-
-
 def _build_live_audit_api() -> UnifiedWebArchivingAPI:
     """Use the same live-aware routing as targeted weak-state recovery."""
     live_cfg = ScraperConfig(

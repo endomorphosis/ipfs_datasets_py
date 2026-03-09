@@ -921,6 +921,40 @@ def test_initial_pending_candidates_prioritize_seed_expansions() -> None:
     assert pending[1:] == ranked_urls
 
 
+def test_score_candidate_url_prioritizes_utah_detail_pages_over_search_indexes() -> None:
+    detail_score = scraper_module._score_candidate_url(
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules"
+    )
+    search_score = scraper_module._score_candidate_url(
+        "https://adminrules.utah.gov/public/search/R/Current%20Rules"
+    )
+
+    assert detail_score > search_score
+
+
+def test_prefers_live_fetch_for_utah_detail_pages() -> None:
+    assert (
+        scraper_module._prefers_live_fetch(
+            "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules"
+        )
+        is True
+    )
+    assert scraper_module._prefers_live_fetch("https://rules.utah.gov/") is False
+
+
+def test_seed_expansion_backlog_is_ready_after_enough_unique_detail_urls() -> None:
+    seed_expansion_candidates = [
+        (f"https://adminrules.utah.gov/public/rule/R70-{index}/Current%20Rules", 12)
+        for index in range(100, 112)
+    ]
+    seed_expansion_candidates.append(
+        ("https://adminrules.utah.gov/public/rule/R70-100/Current%20Rules", 12)
+    )
+
+    assert scraper_module._seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch=3) is True
+    assert scraper_module._seed_expansion_backlog_is_ready(seed_expansion_candidates[:3], max_fetch=3) is False
+
+
 def test_candidate_utah_rule_urls_from_public_api_skips_html_download_shell_urls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

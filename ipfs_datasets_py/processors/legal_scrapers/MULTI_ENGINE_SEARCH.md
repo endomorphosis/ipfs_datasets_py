@@ -71,14 +71,14 @@ engine = BraveSearchEngine(config)
 Provides search using DuckDuckGo (no API key required).
 
 **Features:**
-- No API key required (uses duckduckgo-search library)
+- No API key required (uses the `ddgs` library)
 - Conservative rate limiting (30 requests/minute recommended)
 - Automatic retry on failure
 - Region and safesearch support
 
 **Requirements:**
 ```bash
-pip install duckduckgo-search>=6.0.0
+pip install ddgs>=9.11.2
 ```
 
 **Configuration:**

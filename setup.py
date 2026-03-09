@@ -150,7 +150,7 @@ setup(
         # Core utilities imported by default modules
         "PyJWT>=2.8.0,<3.0.0",
         "beautifulsoup4>=4.12.0,<5.0.0",
-        "duckduckgo-search>=8.1.1",
+        "ddgs>=9.11.2",
         "google-api-python-client>=2.192.0",
         "cloudscraper>=1.2.71",
         # 0.2.0 currently publishes invalid metadata on PyPI; 0.1.8 is the newest installable release.

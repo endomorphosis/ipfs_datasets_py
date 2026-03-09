@@ -209,7 +209,9 @@ def _prefers_live_fetch(url: str) -> bool:
     path = parsed.path.lower()
     if host in _LIVE_FETCH_PREFERRED_HOSTS:
         return True
-    if host == "adminrules.utah.gov" and path.startswith("/public/search"):
+    if host == "adminrules.utah.gov" and (
+        path.startswith("/public/search") or bool(_UT_RULE_DETAIL_PATH_RE.search(parsed.path or ""))
+    ):
         return True
     return False
 
@@ -767,6 +769,9 @@ def _template_admin_urls_for_state(state_code: str) -> List[str]:
 def _score_candidate_url(url: str) -> int:
     value = str(url or "").lower()
     score = 0
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
     if _ADMIN_RULE_TEXT_RE.search(value):
         score += 3
     if ".gov" in value or ".us" in value:
@@ -791,6 +796,12 @@ def _score_candidate_url(url: str) -> int:
         score += 2
     if "title" in value or "chapter" in value or "article" in value:
         score += 1
+    if host == "adminrules.utah.gov" and path.lower().startswith("/public/search"):
+        score += 4
+        if any(token in value for token in ("current%20rules", "/proposed", "/emergency")):
+            score += 2
+    if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
+        score += 6
     return score
 
 
@@ -839,6 +850,20 @@ def _build_initial_pending_candidates(
     pending.extend(seed_expansion_candidates)
     pending.sort(key=lambda item: item[1], reverse=True)
     return pending
+
+
+def _seed_expansion_backlog_is_ready(seed_expansion_candidates: List[tuple[str, int]], max_fetch: int) -> bool:
+    if not seed_expansion_candidates:
+        return False
+    unique_keys = {
+        _url_key(url)
+        for url, score in seed_expansion_candidates
+        if _url_key(url) and int(score) > 0
+    }
+    if not unique_keys:
+        return False
+    threshold = max(4, min(12, max(1, int(max_fetch)) * 4))
+    return len(unique_keys) >= threshold
 
 
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
@@ -1743,6 +1768,8 @@ async def _agentic_discover_admin_state_blocks(
         for seed_url in seed_urls[:6]:
             if len(statutes) >= max(1, int(max_fetch_per_state)):
                 break
+            if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
+                break
             host = urlparse(seed_url).netloc
             fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
             try:
@@ -1839,6 +1866,8 @@ async def _agentic_discover_admin_state_blocks(
                             seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
                     except Exception:
                         pass
+                if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
+                    break
             except Exception:
                 pass
 

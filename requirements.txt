@@ -140,7 +140,7 @@ scrapy>=2.11.0  # Advanced web scraping framework
 aiohttp>=3.8.0  # Async HTTP client for web archiving
 
 # Multi-engine search support (Enhancement 12)
-duckduckgo-search>=6.0.0  # DuckDuckGo search API (no key required)
+ddgs>=9.11.2  # DuckDuckGo search API (no key required)
 google-api-python-client>=2.100.0  # Google Custom Search Engine API
 cloudscraper>=1.2.71  # Cloudflare-aware requests wrapper for search/scrape fallbacks
 # 0.2.0 currently publishes invalid metadata on PyPI; 0.1.8 is the newest installable release.

@@ -1,8 +1,7 @@
-"""
-DuckDuckGo Search Engine Adapter.
+"""DuckDuckGo Search Engine Adapter.
 
 This adapter provides search capabilities using DuckDuckGo's unofficial API
-via the duckduckgo_search library.
+via the ``ddgs`` library.
 
 Note: DuckDuckGo doesn't require an API key but has rate limiting.
       Use responsibly to avoid being blocked.
@@ -25,31 +24,29 @@ from .base import (
 
 logger = logging.getLogger(__name__)
 
-# Try to import duckduckgo_search library
+# Try to import ddgs library
 try:
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
+
     HAVE_DDGS = True
 except ImportError:
     HAVE_DDGS = False
     DDGS = None
-    logger.warning(
-        "duckduckgo_search not available. "
-        "Install with: pip install duckduckgo-search"
-    )
+    logger.warning("ddgs not available. Install with: pip install ddgs")
 
 
 class DuckDuckGoSearchEngine(SearchEngineAdapter):
     """DuckDuckGo Search engine adapter.
-    
-    Uses the duckduckgo_search library to perform searches without
-    requiring an API key. Includes rate limiting to avoid blocks.
-    
+
+    Uses the ``ddgs`` library to perform searches without requiring an API key.
+    Includes rate limiting to avoid blocks.
+
     Features:
     - No API key required
     - Rate limiting (default: 30 requests/minute)
     - Result caching
     - Automatic retry on failure
-    
+
     Example:
         >>> from ipfs_datasets_py.processors.web_archiving.search_engines import (
         ...     DuckDuckGoSearchEngine,
@@ -57,38 +54,37 @@ class DuckDuckGoSearchEngine(SearchEngineAdapter):
         ... )
         >>> config = SearchEngineConfig(
         ...     engine_type="duckduckgo",
-        ...     rate_limit_per_minute=30,  # Conservative rate limit
-        ...     cache_enabled=True
+        ...     rate_limit_per_minute=30,
+        ...     cache_enabled=True,
         ... )
         >>> engine = DuckDuckGoSearchEngine(config)
         >>> response = engine.search("EPA regulations California")
         >>> print(f"Found {len(response.results)} results")
     """
-    
+
     def __init__(self, config: SearchEngineConfig):
         """Initialize DuckDuckGo search engine.
-        
+
         Args:
             config: Search engine configuration
-            
+
         Raises:
-            SearchEngineError: If duckduckgo_search not available
+            SearchEngineError: If ``ddgs`` is not available
         """
         super().__init__(config)
-        
+
         if not HAVE_DDGS:
             raise SearchEngineError(
-                "duckduckgo_search library not available. "
-                "Install with: pip install duckduckgo-search"
+                "ddgs library not available. Install with: pip install ddgs"
             )
-        
-        # Set conservative defaults for DuckDuckGo
+
+        # Set conservative defaults for DuckDuckGo.
         if config.rate_limit_per_minute > 30:
             logger.warning(
                 f"DuckDuckGo rate limit {config.rate_limit_per_minute} "
                 "may be too high. Recommended: 30 or less."
             )
-        
+
         logger.info("DuckDuckGo search engine initialized")
     
     def search(
@@ -209,7 +205,7 @@ class DuckDuckGoSearchEngine(SearchEngineAdapter):
             timelimit = kwargs.get("time", None)
             
             ddgs_results = list(ddgs.text(
-                keywords=query,
+                query=query,
                 region=region,
                 safesearch=safesearch,
                 timelimit=timelimit,
