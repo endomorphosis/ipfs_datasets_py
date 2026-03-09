@@ -24,6 +24,7 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _KG_DIR = _REPO_ROOT / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = _REPO_ROOT / "docs" / "knowledge_graphs"
 
 # ---------------------------------------------------------------------------
 # Test helper
@@ -441,29 +442,29 @@ class TestDocIntegritySession73:
     """Deferred features + roadmap docs reflect session 73 deliverables."""
 
     def test_deferred_features_has_visualization_section(self):
-        content = (_KG_DIR / "DEFERRED_FEATURES.md").read_text()
+        content = (_DOCS_KG / "DEFERRED_FEATURES.md").read_text()
         assert "Advanced Visualization Tools" in content
 
     def test_deferred_features_has_p8_section(self):
-        content = (_KG_DIR / "DEFERRED_FEATURES.md").read_text()
+        content = (_DOCS_KG / "DEFERRED_FEATURES.md").read_text()
         assert "P8" in content
 
     def test_deferred_features_visualization_implemented(self):
-        content = (_KG_DIR / "DEFERRED_FEATURES.md").read_text()
+        content = (_DOCS_KG / "DEFERRED_FEATURES.md").read_text()
         assert "✅ Implemented" in content
         assert "3.22.27" in content
 
     def test_roadmap_visualization_delivered(self):
-        content = (_KG_DIR / "ROADMAP.md").read_text()
+        content = (_DOCS_KG / "ROADMAP.md").read_text()
         assert "Advanced visualization tools" in content
         assert "3.22.27" in content or "Delivered in v3.22.27" in content
 
     def test_master_status_version_327(self):
-        content = (_KG_DIR / "MASTER_STATUS.md").read_text()
+        content = (_DOCS_KG / "MASTER_STATUS.md").read_text()
         assert "3.22.27" in content
 
     def test_changelog_has_327_section(self):
-        content = (_KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
+        content = (_DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
         assert "3.22.27" in content
 
 
@@ -475,13 +476,13 @@ class TestVersionAgreement:
     """MASTER_STATUS / CHANGELOG / ROADMAP all agree on v3.22.27."""
 
     def test_master_status_version(self):
-        content = (_KG_DIR / "MASTER_STATUS.md").read_text()
+        content = (_DOCS_KG / "MASTER_STATUS.md").read_text()
         assert "3.22.27" in content
 
     def test_changelog_latest_version(self):
-        content = (_KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
+        content = (_DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
         assert "3.22.27" in content
 
     def test_roadmap_current_version(self):
-        content = (_KG_DIR / "ROADMAP.md").read_text()
+        content = (_DOCS_KG / "ROADMAP.md").read_text()
         assert "3.22.27" in content

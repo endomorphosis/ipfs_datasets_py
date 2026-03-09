@@ -13,11 +13,12 @@ import re
 from pathlib import Path
 
 KG_DIR = Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
 SRC_DIR = KG_DIR / "reasoning"
-MASTER_STATUS = KG_DIR / "MASTER_STATUS.md"
-CHANGELOG = KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-ROADMAP = KG_DIR / "ROADMAP.md"
-REFACTORING_PLAN = KG_DIR / "MASTER_REFACTORING_PLAN_2026.md"
+MASTER_STATUS = _DOCS_KG / "MASTER_STATUS.md"
+CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+ROADMAP = _DOCS_KG / "ROADMAP.md"
+REFACTORING_PLAN = _DOCS_KG / "MASTER_REFACTORING_PLAN_2026.md"
 CROSS_DOC = SRC_DIR / "cross_document.py"
 
 

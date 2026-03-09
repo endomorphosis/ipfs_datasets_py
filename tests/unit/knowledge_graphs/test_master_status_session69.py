@@ -21,11 +21,12 @@ import pytest
 
 _ROOT = pathlib.Path(__file__).parents[3]
 _KG = _ROOT / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = _ROOT / "docs" / "knowledge_graphs"
 
-_MASTER_STATUS = _KG / "MASTER_STATUS.md"
-_CHANGELOG = _KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-_ROADMAP = _KG / "ROADMAP.md"
-_DEFERRED = _KG / "DEFERRED_FEATURES.md"
+_MASTER_STATUS = _DOCS_KG / "MASTER_STATUS.md"
+_CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_ROADMAP = _DOCS_KG / "ROADMAP.md"
+_DEFERRED = _DOCS_KG / "DEFERRED_FEATURES.md"
 _EXTRACTION_README = _KG / "extraction" / "README.md"
 
 

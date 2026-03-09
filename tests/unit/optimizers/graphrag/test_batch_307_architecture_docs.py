@@ -23,6 +23,7 @@ def _resolve_optimizers_path() -> Path:
     file_path = Path(__file__).resolve()
     for parent in file_path.parents:
         candidates = (
+            parent / "docs" / "optimizers",
             parent / "ipfs_datasets_py" / "optimizers",
             parent / "optimizers",
         )

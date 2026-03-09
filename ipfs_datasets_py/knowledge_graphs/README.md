@@ -12,7 +12,7 @@ The Knowledge Graphs module provides comprehensive tools for building, querying,
 
 ## 🎯 Quick Start
 
-**New to knowledge graphs?** → See **[QUICKSTART.md](./QUICKSTART.md)** for a 5-minute introduction!
+**New to knowledge graphs?** → See **[QUICKSTART.md](../../docs/knowledge_graphs/QUICKSTART.md)** for a 5-minute introduction!
 
 ```python
 # Basic usage - Extract knowledge graph from text
@@ -33,7 +33,7 @@ for person in persons:
     print(f"Person: {person.name}")
 ```
 
-**For more examples:** See [QUICKSTART.md](./QUICKSTART.md) and [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md)
+**For more examples:** See [QUICKSTART.md](../../docs/knowledge_graphs/QUICKSTART.md) and [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md)
 
 ## ✅ Supported Imports (Public API)
 
@@ -75,15 +75,15 @@ knowledge_graphs/
 
 ## 📋 Current Status & Plans
 
-**📌 Module Status:** [MASTER_STATUS.md](./MASTER_STATUS.md) ⭐ - Single source of truth for features, coverage, roadmap  
-**📖 Documentation Guide:** [DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md) ⭐ - How to navigate all documentation  
-**🔍 Latest Analysis:** [COMPREHENSIVE_ANALYSIS_2026_02_18.md](./COMPREHENSIVE_ANALYSIS_2026_02_18.md) ⭐ **NEW** - Comprehensive review findings
+**📌 Module Status:** [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md) ⭐ - Single source of truth for features, coverage, roadmap  
+**📖 Documentation Guide:** [DOCUMENTATION_GUIDE.md](../../docs/knowledge_graphs/DOCUMENTATION_GUIDE.md) ⭐ - How to navigate all documentation  
+**🔍 Latest Analysis:** [COMPREHENSIVE_ANALYSIS_2026_02_18.md](../../docs/knowledge_graphs/COMPREHENSIVE_ANALYSIS_2026_02_18.md) ⭐ **NEW** - Comprehensive review findings
 
 **Quick Links:**
-- **Status & Features:** [MASTER_STATUS.md](./MASTER_STATUS.md) - Feature matrix, test coverage, roadmap
-- **Planned Features:** [DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md) - What's coming and when
-- **Development Plan:** [ROADMAP.md](./ROADMAP.md) - Long-term development timeline
-- **All Documentation:** [INDEX.md](./INDEX.md) - Complete documentation index
+- **Status & Features:** [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md) - Feature matrix, test coverage, roadmap
+- **Planned Features:** [DEFERRED_FEATURES.md](../../docs/knowledge_graphs/DEFERRED_FEATURES.md) - What's coming and when
+- **Development Plan:** [ROADMAP.md](../../docs/knowledge_graphs/ROADMAP.md) - Long-term development timeline
+- **All Documentation:** [INDEX.md](../../docs/knowledge_graphs/INDEX.md) - Complete documentation index
 
 **Key Findings from Comprehensive Review (2026-02-18):**
 - ✅ **Code is production-ready** - 71 Python files, all complete and functional
@@ -168,13 +168,13 @@ knowledge_graphs/
 
 ## 📊 Current Status
 
-✅ Production-ready and feature-complete for P1–P4 (see [MASTER_STATUS.md](./MASTER_STATUS.md)).
+✅ Production-ready and feature-complete for P1–P4 (see [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md)).
 
 **Main ongoing improvements:**
 - Increase migration module test coverage (target ≥70% in v2.0.1)
 - Keep tightening error handling + diagnostics in hot paths
 
-For the comprehensive, continuously-growing improvement plan, see **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)**.
+For the comprehensive, continuously-growing improvement plan, see **[IMPROVEMENT_TODO.md](../../docs/knowledge_graphs/IMPROVEMENT_TODO.md)**.
 
 ## 🚀 Key Features
 
@@ -204,11 +204,11 @@ For the comprehensive, continuously-growing improvement plan, see **[IMPROVEMENT
 ## 📖 Documentation
 
 ### Quick Reference
-- **[QUICKSTART.md](./QUICKSTART.md)** - 5-minute quick start guide ⚡
-- **[MASTER_STATUS.md](./MASTER_STATUS.md)** - Feature matrix, test coverage, roadmap ⭐
-- **[DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md)** - Planned features with timelines 📅
-- **[INDEX.md](./INDEX.md)** - Complete documentation index 📚
-- **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)** - Living improvement backlog ♾️
+- **[QUICKSTART.md](../../docs/knowledge_graphs/QUICKSTART.md)** - 5-minute quick start guide ⚡
+- **[MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md)** - Feature matrix, test coverage, roadmap ⭐
+- **[DEFERRED_FEATURES.md](../../docs/knowledge_graphs/DEFERRED_FEATURES.md)** - Planned features with timelines 📅
+- **[INDEX.md](../../docs/knowledge_graphs/INDEX.md)** - Complete documentation index 📚
+- **[IMPROVEMENT_TODO.md](../../docs/knowledge_graphs/IMPROVEMENT_TODO.md)** - Living improvement backlog ♾️
 
 ### Main Documentation (in /docs)
 - **KNOWLEDGE_GRAPHS_INTEGRATION_GUIDE.md** (37KB) - End-to-end workflows
@@ -219,7 +219,7 @@ For the comprehensive, continuously-growing improvement plan, see **[IMPROVEMENT
 
 ### Module Documentation
 - **extraction/README.md** - Extraction package documentation
-- ✅ Each subdirectory includes its own `README.md` (see [INDEX.md](./INDEX.md) for navigation)
+- ✅ Each subdirectory includes its own `README.md` (see [INDEX.md](../../docs/knowledge_graphs/INDEX.md) for navigation)
 
 ## 🧪 Testing
 
@@ -249,10 +249,10 @@ pytest tests/unit/knowledge_graphs/test_transactions.py
 - ✅ Backup files (REMOVED in Phase 1)
 
 **High Priority (P1):**
-- Improve migration module test coverage (see [MASTER_STATUS.md](./MASTER_STATUS.md))
+- Improve migration module test coverage (see [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md))
 - Continue deprecation cleanups (legacy import shims) without breaking compatibility
 
-**See [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) for the comprehensive list.**
+**See [IMPROVEMENT_TODO.md](../../docs/knowledge_graphs/IMPROVEMENT_TODO.md) for the comprehensive list.**
 
 ## 🔧 Usage Patterns
 
@@ -349,8 +349,8 @@ See **KNOWLEDGE_GRAPHS_PERFORMANCE_OPTIMIZATION.md** for tuning guidance.
 ## 🤝 Contributing
 
 See:
-- [MASTER_STATUS.md](./MASTER_STATUS.md) for current status and gaps
-- [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) for open improvement tasks
+- [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md) for current status and gaps
+- [IMPROVEMENT_TODO.md](../../docs/knowledge_graphs/IMPROVEMENT_TODO.md) for open improvement tasks
 
 ## 📝 License
 
@@ -365,7 +365,7 @@ This module is part of the IPFS Datasets Python project. See main project LICENS
 
 ## 📞 Support
 
-- **Issues:** Include current status + gaps from [MASTER_STATUS.md](./MASTER_STATUS.md)
+- **Issues:** Include current status + gaps from [MASTER_STATUS.md](../../docs/knowledge_graphs/MASTER_STATUS.md)
 - **Documentation:** Start with [../../docs/knowledge_graphs/USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) and [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md)
 - **Tests:** See tests/unit/knowledge_graphs/
 

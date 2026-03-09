@@ -23,7 +23,7 @@ import pytest
 # Test is at: ipfs_datasets_py/tests/unit/optimizers/graphrag/
 # Target is at: ipfs_datasets_py/ipfs_datasets_py/optimizers/
 # Structure: parents[4] = ipfs_datasets_py (tests parent), then into ipfs_datasets_py/optimizers
-CONTRIBUTING_PATH = Path(__file__).parents[4] / "ipfs_datasets_py" / "optimizers" / "CONTRIBUTING.md"
+CONTRIBUTING_PATH = Path(__file__).parents[4] / "docs" / "optimizers" / "CONTRIBUTING.md"
 
 
 class TestContributingFileStructure:

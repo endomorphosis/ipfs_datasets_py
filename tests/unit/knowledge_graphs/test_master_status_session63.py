@@ -12,10 +12,11 @@ import re
 import pytest
 
 _KG = Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
-_ROADMAP = _KG / "ROADMAP.md"
-_REFPLAN = _KG / "MASTER_REFACTORING_PLAN_2026.md"
-_MASTER = _KG / "MASTER_STATUS.md"
-_CHANGELOG = _KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_DOCS_KG = Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
+_ROADMAP = _DOCS_KG / "ROADMAP.md"
+_REFPLAN = _DOCS_KG / "MASTER_REFACTORING_PLAN_2026.md"
+_MASTER = _DOCS_KG / "MASTER_STATUS.md"
+_CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
 
 
 # ---------------------------------------------------------------------------

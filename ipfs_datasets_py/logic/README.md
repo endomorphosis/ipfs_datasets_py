@@ -1,43 +1,43 @@
 # Logic Module - Complete Neurosymbolic Reasoning System
 
 [![Status](https://img.shields.io/badge/status-production-green)](https://github.com/endomorphosis/ipfs_datasets_py)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue)](./API_VERSIONING.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](../../docs/logic/API_VERSIONING.md)
 [![Tests](https://img.shields.io/badge/tests-790%2B-blue)](./tests/)
 [![Coverage](https://img.shields.io/badge/coverage-94%25-green)](./tests/)
 [![Python](https://img.shields.io/badge/python-3.12%2B-brightgreen)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](../../LICENSE)
 
 **Additional Metrics:**
-[![Rules](https://img.shields.io/badge/inference--rules-128-orange)](./INFERENCE_RULES_INVENTORY.md)
+[![Rules](https://img.shields.io/badge/inference--rules-128-orange)](../../docs/logic/INFERENCE_RULES_INVENTORY.md)
 [![Provers](https://img.shields.io/badge/modal--provers-5-purple)](./CEC/native/)
 [![Docs](https://img.shields.io/badge/docs-comprehensive-success)](./DOCUMENTATION_INDEX.md)
 
 ## Quick Links
 
 📚 **Documentation:**
-- [API Reference](./API_REFERENCE.md) - Complete API documentation
-- [User Guide](./UNIFIED_CONVERTER_GUIDE.md) - Getting started guide
-- [Architecture](./ARCHITECTURE.md) - System architecture
+- [API Reference](../../docs/logic/API_REFERENCE.md) - Complete API documentation
+- [User Guide](../../docs/logic/UNIFIED_CONVERTER_GUIDE.md) - Getting started guide
+- [Architecture](../../docs/logic/ARCHITECTURE.md) - System architecture
 
 🚀 **Getting Started:**
 - [Installation](#installation) - Setup instructions
 - [Quick Start](#quick-start) - Basic usage examples
-- [Contributing](./CONTRIBUTING.md) - How to contribute
+- [Contributing](../../docs/logic/CONTRIBUTING.md) - How to contribute
 
 🔧 **Operations:**
-- [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Production deployment
-- [Performance Tuning](./PERFORMANCE_TUNING.md) - Optimization tips
-- [Security Guide](./SECURITY_GUIDE.md) - Security best practices
+- [Deployment Guide](../../docs/logic/DEPLOYMENT_GUIDE.md) - Production deployment
+- [Performance Tuning](../../docs/logic/PERFORMANCE_TUNING.md) - Optimization tips
+- [Security Guide](../../docs/logic/SECURITY_GUIDE.md) - Security best practices
 
 ❓ **Help:**
-- [Troubleshooting](./TROUBLESHOOTING.md) - Common issues and solutions
-- [Error Reference](./ERROR_REFERENCE.md) - Complete error catalog
-- [Known Limitations](./KNOWN_LIMITATIONS.md) - Current limitations
+- [Troubleshooting](../../docs/logic/TROUBLESHOOTING.md) - Common issues and solutions
+- [Error Reference](../../docs/logic/ERROR_REFERENCE.md) - Complete error catalog
+- [Known Limitations](../../docs/logic/KNOWN_LIMITATIONS.md) - Current limitations
 
 ---
 
 > **🎉 NEW:** v2.0 Production Release with comprehensive documentation  
-> See [API_VERSIONING.md](./API_VERSIONING.md) for stability guarantees.
+> See [API_VERSIONING.md](../../docs/logic/API_VERSIONING.md) for stability guarantees.
 > 
 > ⚠️ **IMPORTANT:** ZKP module is simulation-only. See [Production Status](#production-status) below.
 
@@ -56,7 +56,7 @@ These components are fully tested, stable, and ready for production deployment:
 - **Type System** - 95%+ coverage, mypy validated
 - **Batch Processing** - 100% complete, 2-8x speedup
 
-**API Stability:** Guaranteed backward compatibility — see [API_VERSIONING.md](./API_VERSIONING.md).
+**API Stability:** Guaranteed backward compatibility — see [API_VERSIONING.md](../../docs/logic/API_VERSIONING.md).
 
 ### ⚠️ Beta Features (Use with Caution)
 
@@ -77,7 +77,7 @@ These features are for demonstration or research purposes:
 
 **API Stability:** No guarantees, may change at any time
 
-**For complete details, see [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md)**
+**For complete details, see [KNOWN_LIMITATIONS.md](../../docs/logic/KNOWN_LIMITATIONS.md)**
 
 ---
 
@@ -93,7 +93,7 @@ The IPFS Datasets Python logic module provides a **complete neurosymbolic reason
 
 ### Key Features
 
-✅ **128 Inference Rules** (41 TDFOL + 87 CEC) - See [INFERENCE_RULES_INVENTORY.md](./INFERENCE_RULES_INVENTORY.md)  
+✅ **128 Inference Rules** (41 TDFOL + 87 CEC) - See [INFERENCE_RULES_INVENTORY.md](../../docs/logic/INFERENCE_RULES_INVENTORY.md)  
 ✅ **5 Modal Logic Provers** (K/S4/S5/D/Cognitive)  
 ✅ **Grammar-Based NL Processing** (100+ lexicon, 50+ rules)  
 ✅ **Multi-Format Parsing** (TDFOL, DCEC, Natural Language)  
@@ -103,7 +103,7 @@ The IPFS Datasets Python logic module provides a **complete neurosymbolic reason
 🆕 **ZKP Simulation** (demo/educational - see limitations)  
 🆕 **Utility Monitoring** (48x cache speedup for utilities)
 
-**For limitations and optional dependencies, see [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md)**
+**For limitations and optional dependencies, see [KNOWN_LIMITATIONS.md](../../docs/logic/KNOWN_LIMITATIONS.md)**
 
 ---
 
@@ -132,7 +132,7 @@ The logic module gracefully degrades when optional dependencies are missing:
 - **spaCy:** NLP for FOL extraction (15-20% accuracy boost), falls back to regex
 - **Lean/Coq:** Interactive proof development, requires separate installation
 
-See [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) for detailed fallback behaviors.
+See [KNOWN_LIMITATIONS.md](../../docs/logic/KNOWN_LIMITATIONS.md) for detailed fallback behaviors.
 
 ### Basic Usage
 
@@ -206,7 +206,7 @@ print(f"Operator: {result.output.operator}")  # OBLIGATION
 - 🌐 **IPFS support** (distributed caching)
 - 📊 **Monitoring** (real-time metrics)
 
-See [UNIFIED_CONVERTER_GUIDE.md](./UNIFIED_CONVERTER_GUIDE.md) for details.
+See [UNIFIED_CONVERTER_GUIDE.md](../../docs/logic/UNIFIED_CONVERTER_GUIDE.md) for details.
 
 ### Zero-Knowledge Proofs 🔐
 
@@ -273,9 +273,9 @@ The logic module consists of several integrated components working together:
 - **Converters** - FOL and Deontic converters with caching
 - **External Provers** - Z3, Lean, Coq integration
 
-**📊 For detailed architecture diagrams and component interactions, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
+**📊 For detailed architecture diagrams and component interactions, see [ARCHITECTURE.md](../../docs/logic/ARCHITECTURE.md)**
 
-**📚 For complete API documentation, see [API_REFERENCE.md](./API_REFERENCE.md)**
+**📚 For complete API documentation, see [API_REFERENCE.md](../../docs/logic/API_REFERENCE.md)**
 
 ### Quick Component Overview
 
@@ -538,7 +538,7 @@ python scripts/benchmarks/neurosymbolic_benchmark.py
 ### Module Documentation
 
 - **[TDFOL README](./TDFOL/README.md)** - TDFOL module documentation
-- **[CEC System Guide](./CEC/CEC_SYSTEM_GUIDE.md)** - CEC documentation
+- **[CEC System Guide](../../docs/logic/CEC/CEC_SYSTEM_GUIDE.md)** - CEC documentation
 - **[Examples README](../../examples/neurosymbolic/README.md)** - Example guide
 
 ### Project Documentation
@@ -707,9 +707,9 @@ Each major module has detailed documentation with quick start examples:
 ### Documentation Hub
 
 - **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** - Complete documentation index
-- **[CACHING_ARCHITECTURE.md](./CACHING_ARCHITECTURE.md)** - Caching strategies and best practices
-- **[UNIFIED_CONVERTER_GUIDE.md](./UNIFIED_CONVERTER_GUIDE.md)** - Converter architecture guide
-- **[FEATURES.md](./FEATURES.md)** - Complete feature catalog
+- **[CACHING_ARCHITECTURE.md](../../docs/logic/CACHING_ARCHITECTURE.md)** - Caching strategies and best practices
+- **[UNIFIED_CONVERTER_GUIDE.md](../../docs/logic/UNIFIED_CONVERTER_GUIDE.md)** - Converter architecture guide
+- **[FEATURES.md](../../docs/logic/FEATURES.md)** - Complete feature catalog
 - **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)** - Migration from legacy APIs
 
 ---

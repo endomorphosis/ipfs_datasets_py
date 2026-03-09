@@ -26,10 +26,11 @@ import pytest
 # Path helpers
 # ---------------------------------------------------------------------------
 KG_ROOT = pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
-DEFERRED_PATH = KG_ROOT / "DEFERRED_FEATURES.md"
-MASTER_STATUS_PATH = KG_ROOT / "MASTER_STATUS.md"
-CHANGELOG_PATH = KG_ROOT / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-ROADMAP_PATH = KG_ROOT / "ROADMAP.md"
+_DOCS_KG = pathlib.Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
+DEFERRED_PATH = _DOCS_KG / "DEFERRED_FEATURES.md"
+MASTER_STATUS_PATH = _DOCS_KG / "MASTER_STATUS.md"
+CHANGELOG_PATH = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+ROADMAP_PATH = _DOCS_KG / "ROADMAP.md"
 
 EXPECTED_VERSION = "3.22.34"
 

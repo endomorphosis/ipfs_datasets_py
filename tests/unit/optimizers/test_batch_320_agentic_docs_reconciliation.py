@@ -21,7 +21,7 @@ import pytest
 # FIXTURES & HELPERS
 # ============================================================================
 
-AGENTIC_DOCS_DIR = Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "optimizers" / "agentic"
+AGENTIC_DOCS_DIR = Path(__file__).parent.parent.parent.parent / "docs" / "optimizers" / "agentic"
 AGENTIC_TESTS_DIR = Path(__file__).parent / "agentic"
 AGENTIC_SRC_DIR = Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "optimizers" / "agentic"
 

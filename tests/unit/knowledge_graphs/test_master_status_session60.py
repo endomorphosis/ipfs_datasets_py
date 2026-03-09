@@ -22,9 +22,11 @@ import pytest
 # ---------------------------------------------------------------------------
 _KG_DIR = Path(__file__).resolve().parent.parent.parent.parent / \
     "ipfs_datasets_py" / "knowledge_graphs"
-_MASTER_STATUS = _KG_DIR / "MASTER_STATUS.md"
-_ROADMAP = _KG_DIR / "ROADMAP.md"
-_CHANGELOG = _KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_DOCS_KG = Path(__file__).resolve().parent.parent.parent.parent / \
+    "docs" / "knowledge_graphs"
+_MASTER_STATUS = _DOCS_KG / "MASTER_STATUS.md"
+_ROADMAP = _DOCS_KG / "ROADMAP.md"
+_CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
 
 
 def _read(p: Path) -> str:
