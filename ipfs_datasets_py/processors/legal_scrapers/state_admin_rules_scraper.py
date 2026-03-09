@@ -285,6 +285,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "AZ": [
         "https://azsos.gov/rules/arizona-administrative-code",
         "https://azsos.gov/rules/",
+        "https://azsos.gov/rules/arizona-administrative-register",
         "https://apps.azsos.gov/public_services/CodeTOC.htm",
     ],
     "GA": [
@@ -300,8 +301,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://iar.iga.in.gov/code",
         "https://iar.iga.in.gov/code/2006",
         "https://iar.iga.in.gov/code/current/10/1.5",
+        "https://iar.iga.in.gov/code/current/16/2",
+        "https://iar.iga.in.gov/code/current/16/4",
         "https://iar.iga.in.gov/code/current/25/1.1",
+        "https://iar.iga.in.gov/code/current/25/7",
         "https://iar.iga.in.gov/code/current/31/1",
+        "https://iar.iga.in.gov/register",
         "https://iar.iga.in.gov/sitemap.xml",
         "https://iar.iga.in.gov/iac//",
         "https://iga.in.gov/legislative/laws/iac/",
@@ -367,6 +372,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
+        "https://rules.sos.ri.gov/Organizations",
+        "https://rules.sos.ri.gov/organizations",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-3",
