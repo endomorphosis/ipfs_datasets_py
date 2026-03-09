@@ -17,6 +17,7 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Iterable, List, Tuple
 from urllib.parse import urlparse
+import warnings
 
 from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import (
     US_50_STATE_CODES,
@@ -69,6 +70,17 @@ _LOGIN_GATE_RE = re.compile(
 _BLOCKED_TITLE_RE = re.compile(
     r"^(attention required|just a moment|request rejected|403\b|404\b|access denied|forbidden)",
     re.IGNORECASE,
+)
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"datetime\.datetime\.utcnow\(\) is deprecated.*",
+    category=DeprecationWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=r"This package \(`duckduckgo_search`\) has been renamed to `ddgs`!.*",
+    category=RuntimeWarning,
 )
 
 
@@ -525,6 +537,9 @@ def main() -> int:
 
     by_state = _load_aggregate_by_state(aggregate_path)
     local_counts = _count_local_jsonld_rows(local_jsonld_dir)
+    partial_state_path = out_dir / "per_state.partial.jsonl"
+    if partial_state_path.exists():
+        partial_state_path.unlink()
 
     state_rows: List[Dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=max(1, int(args.workers))) as executor:
@@ -541,7 +556,10 @@ def main() -> int:
             for state_code in states
         }
         for future in as_completed(futures):
-            state_rows.append(future.result())
+            row = future.result()
+            state_rows.append(row)
+            with partial_state_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     state_rows.sort(key=lambda row: row["state_code"])
     page_rows = [page for row in state_rows for page in row["pages"]]

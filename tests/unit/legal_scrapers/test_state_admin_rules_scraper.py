@@ -39,10 +39,12 @@ def test_rejects_rhode_island_statute_index_as_admin_rule() -> None:
 def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr() -> None:
     mi_urls = scraper_module._extract_seed_urls_for_state("MI", "Michigan")
     ri_urls = scraper_module._extract_seed_urls_for_state("RI", "Rhode Island")
+    ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
 
     assert "https://ars.apps.lara.state.mi.us/" in mi_urls
     assert any("rules.sos.ri.gov/organizations" in url.lower() for url in ri_urls)
     assert "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations" in ri_urls
+    assert ut_urls[0] == "https://adminrules.utah.gov/public/search/R/Current%20Rules"
 
 
 def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoints() -> None:
@@ -87,6 +89,7 @@ def test_rejects_michigan_legislature_statute_pages_even_with_admin_like_code_na
     [
         ("https://ars.apps.lara.state.mi.us/", "ARS Public - Home"),
         ("https://ars.apps.lara.state.mi.us/Home", "ARS Public - Home"),
+        ("https://ars.apps.lara.state.mi.us/AdminCode/AdminCode", "ARS Public - MI Admin Code"),
     ],
 )
 def test_rejects_michigan_admin_portal_home_pages_as_rule_content(url: str, title: str) -> None:

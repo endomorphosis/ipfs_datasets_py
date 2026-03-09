@@ -198,7 +198,7 @@ _LIVE_FETCH_PREFERRED_HOSTS = {
 
 _TX_TRANSFER_INDEX_PATH_RE = re.compile(r"^/texreg/transfers(?:/|/index\.shtml)?$", re.IGNORECASE)
 
-_MI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/(?:|home/?)$", re.IGNORECASE)
+_MI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/(?:|home/?|admincode/admincode/?)$", re.IGNORECASE)
 
 _RI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/organizations/?$", re.IGNORECASE)
 
@@ -372,9 +372,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.state.tx.us/texreg/pdf/backview/index.shtml",
     ],
     "UT": [
+        "https://adminrules.utah.gov/public/search/R/Current%20Rules",
         "https://rules.utah.gov/",
         "https://adminrules.utah.gov/",
-        "https://adminrules.utah.gov/public/search/R/Current%20Rules",
         "https://rules.utah.gov/utah-administrative-code/",
         "https://rules.utah.gov/publications/administrative-rules-register/",
         "https://rules.utah.gov/publications/code-updates/",
