@@ -29,9 +29,10 @@ if "anyio" not in sys.modules:
 # ---------------------------------------------------------------------------
 _BASE = pathlib.Path(__file__).parent.parent.parent.parent
 _KG_ROOT = _BASE / "ipfs_datasets_py" / "knowledge_graphs"
-_MASTER = _KG_ROOT / "MASTER_STATUS.md"
-_CHANGELOG = _KG_ROOT / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-_ROADMAP = _KG_ROOT / "ROADMAP.md"
+_DOCS_KG = _BASE / "docs" / "knowledge_graphs"
+_MASTER = _DOCS_KG / "MASTER_STATUS.md"
+_CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_ROADMAP = _DOCS_KG / "ROADMAP.md"
 _README_GT = (_BASE / "ipfs_datasets_py" / "mcp_server" / "tools" /
               "graph_tools" / "README.md")
 

@@ -24,12 +24,15 @@ import pytest
 _HERE = os.path.dirname(__file__)
 _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", "..", ".."))
 _KG_ROOT = os.path.join(_REPO_ROOT, "ipfs_datasets_py", "knowledge_graphs")
+_DOCS_KG = os.path.join(_REPO_ROOT, "docs", "knowledge_graphs")
 
 sys.path.insert(0, _REPO_ROOT)
 
 
 def _read(relpath: str) -> str:
-    with open(os.path.join(_KG_ROOT, relpath), encoding="utf-8") as fh:
+    _moved = {'COMPREHENSIVE_ANALYSIS_2026_02_18.md', 'DOCUMENTATION_GUIDE.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md', 'IMPROVEMENT_TODO.md', 'INDEX.md', 'P3_P4_IMPLEMENTATION_COMPLETE.md', 'QUICKSTART.md', 'EXECUTIVE_SUMMARY_FINAL_2026_02_18.md', 'MASTER_REFACTORING_PLAN_2026.md', 'MASTER_STATUS.md', 'DEFERRED_FEATURES.md', 'ROADMAP.md', 'REFACTORING_COMPLETE_2026_02_18.md'}
+    base = _DOCS_KG if relpath in _moved else _KG_ROOT
+    with open(os.path.join(base, relpath), encoding="utf-8") as fh:
         return fh.read()
 
 

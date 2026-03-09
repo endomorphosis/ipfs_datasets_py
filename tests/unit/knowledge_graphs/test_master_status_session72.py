@@ -21,6 +21,7 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _KG_DIR = _REPO_ROOT / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = _REPO_ROOT / "docs" / "knowledge_graphs"
 
 # ---------------------------------------------------------------------------
 # Test helper: lazy KnowledgeGraph construction
@@ -371,23 +372,23 @@ class TestDocIntegritySession72:
     """Documentation reflects session 72 changes."""
 
     def test_deferred_features_graphql_entry(self):
-        content = (_KG_DIR / "DEFERRED_FEATURES.md").read_text()
+        content = (_DOCS_KG / "DEFERRED_FEATURES.md").read_text()
         assert "GraphQL API" in content or "graphql" in content.lower()
 
     def test_roadmap_graphql_delivered(self):
-        content = (_KG_DIR / "ROADMAP.md").read_text()
+        content = (_DOCS_KG / "ROADMAP.md").read_text()
         assert "GraphQL" in content
 
     def test_roadmap_v3_22_26_row(self):
-        content = (_KG_DIR / "ROADMAP.md").read_text()
+        content = (_DOCS_KG / "ROADMAP.md").read_text()
         assert "3.22.26" in content
 
     def test_master_status_version(self):
-        content = (_KG_DIR / "MASTER_STATUS.md").read_text()
+        content = (_DOCS_KG / "MASTER_STATUS.md").read_text()
         assert "3.22.26" in content
 
     def test_changelog_3_22_26(self):
-        content = (_KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
+        content = (_DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
         assert "3.22.26" in content
 
 
@@ -399,13 +400,13 @@ class TestVersionAgreement:
     """MASTER_STATUS / CHANGELOG / ROADMAP all declare v3.22.26."""
 
     def test_master_status_current_version(self):
-        content = (_KG_DIR / "MASTER_STATUS.md").read_text()
+        content = (_DOCS_KG / "MASTER_STATUS.md").read_text()
         assert "3.22.26" in content
 
     def test_changelog_has_v3_22_26(self):
-        content = (_KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
+        content = (_DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
         assert "3.22.26" in content
 
     def test_roadmap_current_version_header(self):
-        content = (_KG_DIR / "ROADMAP.md").read_text()
+        content = (_DOCS_KG / "ROADMAP.md").read_text()
         assert "3.22.26" in content

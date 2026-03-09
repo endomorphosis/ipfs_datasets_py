@@ -13,14 +13,15 @@ import pathlib
 import pytest
 
 KG = pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = pathlib.Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
 
-COMPREHENSIVE = KG / "COMPREHENSIVE_ANALYSIS_2026_02_18.md"
-EXEC_SUMMARY  = KG / "EXECUTIVE_SUMMARY_FINAL_2026_02_18.md"
-REFACTORING   = KG / "REFACTORING_COMPLETE_2026_02_18.md"
-DOC_GUIDE     = KG / "DOCUMENTATION_GUIDE.md"
-MASTER_STATUS = KG / "MASTER_STATUS.md"
-CHANGELOG     = KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-ROADMAP       = KG / "ROADMAP.md"
+COMPREHENSIVE = _DOCS_KG / "COMPREHENSIVE_ANALYSIS_2026_02_18.md"
+EXEC_SUMMARY  = _DOCS_KG / "EXECUTIVE_SUMMARY_FINAL_2026_02_18.md"
+REFACTORING   = _DOCS_KG / "REFACTORING_COMPLETE_2026_02_18.md"
+DOC_GUIDE     = _DOCS_KG / "DOCUMENTATION_GUIDE.md"
+MASTER_STATUS = _DOCS_KG / "MASTER_STATUS.md"
+CHANGELOG     = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+ROADMAP       = _DOCS_KG / "ROADMAP.md"
 
 
 # ---------------------------------------------------------------------------

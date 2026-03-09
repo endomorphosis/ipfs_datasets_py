@@ -20,9 +20,9 @@ _CYPHER_README = _KG / "cypher" / "README.md"
 _CORE_README   = _KG / "core" / "README.md"
 _MIGRATION     = _DOCS / "MIGRATION_GUIDE.md"
 _API_REF       = _DOCS / "API_REFERENCE.md"
-_MASTER_STATUS = _KG / "MASTER_STATUS.md"
-_CHANGELOG     = _KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-_ROADMAP       = _KG / "ROADMAP.md"
+_MASTER_STATUS = _DOCS / "MASTER_STATUS.md"
+_CHANGELOG     = _DOCS / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_ROADMAP       = _DOCS / "ROADMAP.md"
 
 
 def _read(p: pathlib.Path) -> str:

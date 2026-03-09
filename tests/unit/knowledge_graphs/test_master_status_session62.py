@@ -19,9 +19,19 @@ import pytest
 # Path helpers
 # ---------------------------------------------------------------------------
 _KG_DIR = pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = pathlib.Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
+
+_MOVED_TO_DOCS = {
+    "DOCUMENTATION_GUIDE.md", "DEFERRED_FEATURES.md", "IMPROVEMENT_TODO.md",
+    "MASTER_STATUS.md", "ROADMAP.md", "CHANGELOG_KNOWLEDGE_GRAPHS.md",
+    "INDEX.md", "MASTER_REFACTORING_PLAN_2026.md", "QUICKSTART.md",
+}
 
 def _read(filename: str) -> str:
-    path = _KG_DIR / filename
+    if filename in _MOVED_TO_DOCS:
+        path = _DOCS_KG / filename
+    else:
+        path = _KG_DIR / filename
     assert path.exists(), f"File not found: {path}"
     return path.read_text(encoding="utf-8")
 

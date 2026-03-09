@@ -13,16 +13,17 @@ import pathlib
 import pytest
 
 _KG = pathlib.Path(__file__).parents[3] / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = pathlib.Path(__file__).parents[3] / "docs" / "knowledge_graphs"
 _TESTS_KG = pathlib.Path(__file__).parents[3] / "tests" / "knowledge_graphs"
 
 _TEST_STATUS = _TESTS_KG / "TEST_STATUS.md"
 _TEST_GUIDE = _TESTS_KG / "TEST_GUIDE.md"
 _ARCHIVE_README = _KG / "archive" / "README.md"
-_REFACTORING_PLAN = _KG / "MASTER_REFACTORING_PLAN_2026.md"
-_DOC_GUIDE = _KG / "DOCUMENTATION_GUIDE.md"
-_MASTER_STATUS = _KG / "MASTER_STATUS.md"
-_CHANGELOG = _KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-_ROADMAP = _KG / "ROADMAP.md"
+_REFACTORING_PLAN = _DOCS_KG / "MASTER_REFACTORING_PLAN_2026.md"
+_DOC_GUIDE = _DOCS_KG / "DOCUMENTATION_GUIDE.md"
+_MASTER_STATUS = _DOCS_KG / "MASTER_STATUS.md"
+_CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_ROADMAP = _DOCS_KG / "ROADMAP.md"
 
 
 def _read(p: pathlib.Path) -> str:

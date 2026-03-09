@@ -20,12 +20,13 @@ import pathlib
 import unittest
 
 _KG_DIR = pathlib.Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = pathlib.Path(__file__).parent.parent.parent.parent / "docs" / "knowledge_graphs"
 
-_INDEX_PATH = _KG_DIR / "INDEX.md"
+_INDEX_PATH = _DOCS_KG / "INDEX.md"
 _README_PATH = _KG_DIR / "README.md"
-_ROADMAP_PATH = _KG_DIR / "ROADMAP.md"
-_MASTER_PATH = _KG_DIR / "MASTER_STATUS.md"
-_CHANGELOG_PATH = _KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_ROADMAP_PATH = _DOCS_KG / "ROADMAP.md"
+_MASTER_PATH = _DOCS_KG / "MASTER_STATUS.md"
+_CHANGELOG_PATH = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
 
 
 def _read(path: pathlib.Path) -> str:

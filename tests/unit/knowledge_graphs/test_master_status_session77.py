@@ -24,6 +24,11 @@ _KG_ROOT = os.path.join(
     "..", "..", "..",
     "ipfs_datasets_py", "knowledge_graphs",
 )
+_DOCS_KG = os.path.join(
+    os.path.dirname(__file__),
+    "..", "..", "..",
+    "docs", "knowledge_graphs",
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -31,8 +36,10 @@ _KG_ROOT = os.path.join(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _read(path: str) -> str:
-    with open(os.path.join(_KG_ROOT, path), encoding="utf-8") as f:
-        return f.read()
+    _moved = {'COMPREHENSIVE_ANALYSIS_2026_02_18.md', 'DOCUMENTATION_GUIDE.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md', 'IMPROVEMENT_TODO.md', 'INDEX.md', 'P3_P4_IMPLEMENTATION_COMPLETE.md', 'QUICKSTART.md', 'EXECUTIVE_SUMMARY_FINAL_2026_02_18.md', 'MASTER_REFACTORING_PLAN_2026.md', 'MASTER_STATUS.md', 'DEFERRED_FEATURES.md', 'ROADMAP.md', 'REFACTORING_COMPLETE_2026_02_18.md'}
+    base = _DOCS_KG if path in _moved else _KG_ROOT
+    with open(os.path.join(base, path), encoding="utf-8") as fh:
+        return fh.read()
 
 
 def _make_kg():
@@ -267,7 +274,10 @@ class TestDocIntegritySession77:
 class TestVersionAgreement:
     def _extract_top_version(self, path: str) -> str:
         import re
-        with open(os.path.join(_KG_ROOT, path), encoding="utf-8") as f:
+        _moved = {'MASTER_STATUS.md', 'ROADMAP.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md',
+                  'DEFERRED_FEATURES.md', 'INDEX.md', 'QUICKSTART.md'}
+        base = _DOCS_KG if path in _moved else _KG_ROOT
+        with open(os.path.join(base, path), encoding="utf-8") as f:
             content = f.read()
         versions = re.findall(r"3\.22\.(\d+)", content)
         if not versions:

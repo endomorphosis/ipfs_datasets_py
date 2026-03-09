@@ -22,9 +22,9 @@ def _read(path: pathlib.Path) -> str:
 QUERY_README = _read(KG_DIR / "query" / "README.md")
 API_REF      = _read(DOCS_DIR / "API_REFERENCE.md")
 USER_GUIDE   = _read(DOCS_DIR / "USER_GUIDE.md")
-MASTER       = _read(KG_DIR / "MASTER_STATUS.md")
-CHANGELOG    = _read(KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md")
-ROADMAP      = _read(KG_DIR / "ROADMAP.md")
+MASTER       = _read(DOCS_DIR / "MASTER_STATUS.md")
+CHANGELOG    = _read(DOCS_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md")
+ROADMAP      = _read(DOCS_DIR / "ROADMAP.md")
 
 
 # ──────────────────────────────────────────────────────────────

@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 _KG_ROOT = Path(__file__).resolve().parents[3] / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = Path(__file__).resolve().parents[3] / "docs" / "knowledge_graphs"
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -27,23 +28,23 @@ def _make_kg(name="test"):
 
 
 def _master_status() -> str:
-    return (_KG_ROOT / "MASTER_STATUS.md").read_text()
+    return (_DOCS_KG / "MASTER_STATUS.md").read_text()
 
 
 def _refactoring_plan() -> str:
-    return (_KG_ROOT / "MASTER_REFACTORING_PLAN_2026.md").read_text()
+    return (_DOCS_KG / "MASTER_REFACTORING_PLAN_2026.md").read_text()
 
 
 def _changelog() -> str:
-    return (_KG_ROOT / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
+    return (_DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md").read_text()
 
 
 def _roadmap() -> str:
-    return (_KG_ROOT / "ROADMAP.md").read_text()
+    return (_DOCS_KG / "ROADMAP.md").read_text()
 
 
 def _deferred_features() -> str:
-    return (_KG_ROOT / "DEFERRED_FEATURES.md").read_text()
+    return (_DOCS_KG / "DEFERRED_FEATURES.md").read_text()
 
 
 # ===========================================================================

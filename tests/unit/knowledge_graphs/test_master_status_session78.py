@@ -21,10 +21,13 @@ import pytest
 
 # ── repo root helper ────────────────────────────────────────────────────────
 _KG_ROOT = Path(__file__).resolve().parents[3] / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = Path(__file__).resolve().parents[3] / "docs" / "knowledge_graphs"
 
 
 def _read(rel: str) -> str:
-    return (_KG_ROOT / rel).read_text(encoding="utf-8")
+    _moved = ['COMPREHENSIVE_ANALYSIS_2026_02_18.md', 'DOCUMENTATION_GUIDE.md', 'CHANGELOG_KNOWLEDGE_GRAPHS.md', 'IMPROVEMENT_TODO.md', 'INDEX.md', 'P3_P4_IMPLEMENTATION_COMPLETE.md', 'QUICKSTART.md', 'EXECUTIVE_SUMMARY_FINAL_2026_02_18.md', 'MASTER_REFACTORING_PLAN_2026.md', 'MASTER_STATUS.md', 'DEFERRED_FEATURES.md', 'ROADMAP.md', 'REFACTORING_COMPLETE_2026_02_18.md']
+    base = _DOCS_KG if rel in _moved else _KG_ROOT
+    return (base / rel).read_text(encoding="utf-8")
 
 
 def _extract_version(text: str) -> str | None:

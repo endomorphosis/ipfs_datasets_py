@@ -17,10 +17,11 @@ import pytest
 
 # ── paths ────────────────────────────────────────────────────────────────────
 _KG = Path(__file__).parents[3] / "ipfs_datasets_py" / "knowledge_graphs"
-_QS = _KG / "QUICKSTART.md"
-_MS = _KG / "MASTER_STATUS.md"
-_RR = _KG / "ROADMAP.md"
-_CL = _KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_DOCS_KG = Path(__file__).parents[3] / "docs" / "knowledge_graphs"
+_QS = _DOCS_KG / "QUICKSTART.md"
+_MS = _DOCS_KG / "MASTER_STATUS.md"
+_RR = _DOCS_KG / "ROADMAP.md"
+_CL = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
 
 
 def _qs():

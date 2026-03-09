@@ -35,6 +35,7 @@ import pytest
 # tests/unit/knowledge_graphs/ → 3 levels up → repo root
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _KG_ROOT = _REPO_ROOT / "ipfs_datasets_py" / "knowledge_graphs"
+_DOCS_KG = _REPO_ROOT / "docs" / "knowledge_graphs"
 
 
 def _read(path) -> str:
@@ -348,7 +349,7 @@ class TestDeferredFeaturesDoc:
     """DEFERRED_FEATURES.md acknowledges §17 and §18."""
 
     def _text(self):
-        return _read(_KG_ROOT / "DEFERRED_FEATURES.md")
+        return _read(_DOCS_KG / "DEFERRED_FEATURES.md")
 
     def test_graph_event_subscriptions_entry(self):
         text = self._text()
@@ -363,7 +364,7 @@ class TestRoadmapDoc:
     """ROADMAP.md acknowledges v3.22.25 delivery."""
 
     def _text(self):
-        return _read(_KG_ROOT / "ROADMAP.md")
+        return _read(_DOCS_KG / "ROADMAP.md")
 
     def test_v3_22_25_row_present(self):
         assert "3.22.25" in self._text()
@@ -378,15 +379,15 @@ class TestVersionAgreement:
     """MASTER_STATUS.md, CHANGELOG, and ROADMAP agree on the current version."""
 
     def test_master_status_version(self):
-        text = _read(_KG_ROOT / "MASTER_STATUS.md")
+        text = _read(_DOCS_KG / "MASTER_STATUS.md")
         assert "3.22.25" in text
 
     def test_changelog_version(self):
-        text = _read(_KG_ROOT / "CHANGELOG_KNOWLEDGE_GRAPHS.md")
+        text = _read(_DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md")
         assert "3.22.25" in text
 
     def test_roadmap_current_version(self):
-        text = _read(_KG_ROOT / "ROADMAP.md")
+        text = _read(_DOCS_KG / "ROADMAP.md")
         assert "3.22.25" in text
 
 

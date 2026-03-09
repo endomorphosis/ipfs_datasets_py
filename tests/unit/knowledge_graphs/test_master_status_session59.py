@@ -26,9 +26,10 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 _KG_DIR = Path(__file__).parents[3] / "ipfs_datasets_py" / "knowledge_graphs"
-_ROADMAP = _KG_DIR / "ROADMAP.md"
-_CHANGELOG = _KG_DIR / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
-_MASTER = _KG_DIR / "MASTER_STATUS.md"
+_DOCS_KG = Path(__file__).parents[3] / "docs" / "knowledge_graphs"
+_ROADMAP = _DOCS_KG / "ROADMAP.md"
+_CHANGELOG = _DOCS_KG / "CHANGELOG_KNOWLEDGE_GRAPHS.md"
+_MASTER = _DOCS_KG / "MASTER_STATUS.md"
 
 
 def _read(path: Path) -> str:
