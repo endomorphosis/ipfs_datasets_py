@@ -797,11 +797,13 @@ def _score_candidate_url(url: str) -> int:
     if "title" in value or "chapter" in value or "article" in value:
         score += 1
     if host == "adminrules.utah.gov" and path.lower().startswith("/public/search"):
-        score += 4
+        # Search indexes are useful discovery surfaces, but real rule detail pages
+        # should always outrank them when both are available.
+        score += 3
         if any(token in value for token in ("current%20rules", "/proposed", "/emergency")):
-            score += 2
+            score += 1
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
-        score += 6
+        score += 8
     return score
 
 
@@ -818,14 +820,14 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score += 2
     lower_url = str(link_url or "").lower()
     if "adminrules.utah.gov/public/search" in lower_url:
-        score += 4
+        score += 3
         if any(token in lower_url for token in ("current%20rules", "/proposed", "/emergency")):
-            score += 2
+            score += 1
     parsed = urlparse(str(link_url or "").strip())
     host = parsed.netloc.lower()
     path = parsed.path or ""
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
-        score += 6
+        score += 8
     if re.search(r"/code/(?:current|2006)/\d+/\d+(?:\.\d+)?", lower_url):
         score += 4
         if re.search(r"\b(?:article|rule)\b", hay, re.IGNORECASE):
