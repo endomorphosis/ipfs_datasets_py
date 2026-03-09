@@ -1542,33 +1542,105 @@ async def _agentic_discover_admin_state_blocks(
         candidate_urls.extend(seed_urls)
         candidate_urls.extend(_template_admin_urls_for_state(state_code))
 
-        try:
-            discovered = await asyncio.wait_for(
-                asyncio.to_thread(
-                    lambda: unified_api.agentic_discover_and_fetch(
-                        seed_urls=seed_urls,
-                        target_terms=["administrative", "regulations", "rules", "code"],
-                        max_hops=max(0, int(max_hops)),
-                        max_pages=max(1, int(max_pages)),
-                        mode=OperationMode.BALANCED,
+        # Curated seeds often already expose substantive rule pages or article/part
+        # links. Prefetch them before broad agentic discovery so states like Indiana
+        # and Rhode Island can short-circuit expensive exploration when the official
+        # entrypoints are already sufficient.
+        preseed_signal = False
+        for seed_url in seed_urls[:6]:
+            host = urlparse(seed_url).netloc
+            fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
+            try:
+                fetched = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        fetch_api.fetch,
+                        UnifiedFetchRequest(
+                            url=seed_url,
+                            timeout_seconds=35,
+                            mode=OperationMode.BALANCED,
+                            domain=".gov" if host.endswith(".gov") else "legal",
+                        ),
                     ),
-                ),
-                timeout=70.0,
-            )
-            for fetch_row in discovered.get("results", []) or []:
-                if not isinstance(fetch_row, dict):
-                    continue
-                document = fetch_row.get("document") or {}
-                if isinstance(document, dict):
-                    url = str(document.get("url") or fetch_row.get("url") or "").strip()
-                else:
-                    url = str(fetch_row.get("url") or "").strip()
-                if not url or not _url_allowed_for_state(url, allowed_hosts):
-                    continue
-                candidate_urls.append(url)
-                source_breakdown["agentic_discovery"] = int(source_breakdown.get("agentic_discovery", 0)) + 1
-        except Exception:
-            pass
+                    timeout=40.0,
+                )
+                fetched_doc = getattr(fetched, "document", None)
+                fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
+                fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
+                fetched_html = str(getattr(fetched_doc, "html", "") or "")
+                seed_is_substantive = _is_substantive_rule_text(
+                    text=fetched_text,
+                    title=fetched_title,
+                    url=seed_url,
+                    min_chars=min_full_text_chars,
+                )
+                seed_is_relaxed = relaxed_recovery and _is_relaxed_recovery_text(
+                    text=fetched_text,
+                    title=fetched_title,
+                    url=seed_url,
+                )
+                inventory_seed = _looks_like_rule_inventory_page(
+                    text=fetched_text,
+                    title=fetched_title,
+                    url=seed_url,
+                )
+
+                if seed_is_substantive or seed_is_relaxed or inventory_seed:
+                    preseed_signal = True
+                    source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
+
+                if inventory_seed:
+                    for rule_url in _candidate_montana_rule_urls_from_text(
+                        text=fetched_text,
+                        url=seed_url,
+                        limit=24,
+                    ):
+                        candidate_urls.append(rule_url)
+                    for link_url in _candidate_links_from_html(
+                        fetched_html,
+                        base_host=host,
+                        page_url=seed_url,
+                        limit=24,
+                        allowed_hosts=allowed_hosts,
+                    ):
+                        if _score_candidate_url(link_url) > 0:
+                            candidate_urls.append(link_url)
+                    for rule_url in _candidate_utah_rule_urls_from_public_api(
+                        url=seed_url,
+                        limit=24,
+                    ):
+                        candidate_urls.append(rule_url)
+            except Exception:
+                pass
+
+        discovered: Dict[str, Any] = {}
+        if not preseed_signal:
+            try:
+                discovered = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        lambda: unified_api.agentic_discover_and_fetch(
+                            seed_urls=seed_urls,
+                            target_terms=["administrative", "regulations", "rules", "code"],
+                            max_hops=max(0, int(max_hops)),
+                            max_pages=max(1, int(max_pages)),
+                            mode=OperationMode.BALANCED,
+                        ),
+                    ),
+                    timeout=70.0,
+                )
+                for fetch_row in discovered.get("results", []) or []:
+                    if not isinstance(fetch_row, dict):
+                        continue
+                    document = fetch_row.get("document") or {}
+                    if isinstance(document, dict):
+                        url = str(document.get("url") or fetch_row.get("url") or "").strip()
+                    else:
+                        url = str(fetch_row.get("url") or "").strip()
+                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                        continue
+                    candidate_urls.append(url)
+                    source_breakdown["agentic_discovery"] = int(source_breakdown.get("agentic_discovery", 0)) + 1
+            except Exception:
+                pass
 
         ranked_urls = sorted(
             {
