@@ -835,9 +835,7 @@ def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatc
 
     assert urls == [
         "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
-        "https://adminrules.utah.gov/api/public/getHTML/uac-html/d605db48-0f6b-40d7-84a9-9a50c715d637.html",
         "https://adminrules.utah.gov/public/rule/R70-201/Current%20Rules",
-        "https://adminrules.utah.gov/api/public/getHTML/uac-html/abc44f4f-93bc-4f1f-8c5d-cd234ca8fb3d.html",
     ]
 
 
@@ -864,6 +862,48 @@ def test_candidate_utah_rule_urls_from_public_api_preserves_explicit_query(monke
 
     assert urls == []
     assert observed["url"] == "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R70-101/Current%20Rules"
+
+
+def test_candidate_utah_rule_urls_from_public_api_skips_html_download_shell_urls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = [
+        {
+            "id": 2,
+            "name": "Agriculture and Food",
+            "programs": [
+                {
+                    "id": 70,
+                    "name": "Regulatory Services",
+                    "rules": [
+                        {
+                            "referenceNumber": "R70-101",
+                            "linkToRule": "R70-101/Current Rules",
+                            "htmlDownload": "uac-html/d605db48-0f6b-40d7-84a9-9a50c715d637.html",
+                        }
+                    ],
+                }
+            ],
+        }
+    ]
+
+    class _FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return payload
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: _FakeResponse())
+
+    urls = _candidate_utah_rule_urls_from_public_api(
+        url="https://adminrules.utah.gov/public/search//Current%20Rules",
+        limit=4,
+    )
+
+    assert urls == [
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
+    ]
 
 
 def test_utah_discovery_host_allowlist_excludes_external_domains() -> None:

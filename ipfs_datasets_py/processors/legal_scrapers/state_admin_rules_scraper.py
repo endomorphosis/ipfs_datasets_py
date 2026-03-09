@@ -1181,15 +1181,6 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
                         out.append(candidate_url)
                         if len(out) >= max(1, int(limit)):
                             return out
-                html_download = str(rule.get("htmlDownload") or "").strip()
-                if html_download:
-                    html_url = urljoin("https://adminrules.utah.gov/api/public/getHTML/", html_download)
-                    key = _url_key(html_url)
-                    if key and key not in seen:
-                        seen.add(key)
-                        out.append(html_url)
-                        if len(out) >= max(1, int(limit)):
-                            return out
     return out
 
 
