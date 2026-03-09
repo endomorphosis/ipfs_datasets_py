@@ -1,0 +1,9 @@
+{
+  "state": "NH",
+  "status": "partial_success",
+  "rules_count": 0,
+  "states_with_rules": [],
+  "missing_rule_states": [
+    "NH"
+  ]
+}

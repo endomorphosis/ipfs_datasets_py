@@ -731,12 +731,24 @@ def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatc
         def json(self):
             return payload
 
-    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: _FakeResponse())
+    observed: dict[str, object] = {}
+
+    def _fake_get(*args, **kwargs):
+        observed["url"] = args[0] if args else kwargs.get("url")
+        observed["headers"] = kwargs.get("headers") or {}
+        return _FakeResponse()
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
 
     urls = _candidate_utah_rule_urls_from_public_api(
         url="https://adminrules.utah.gov/public/search//Current%20Rules",
         limit=4,
     )
+
+    assert observed["url"] == "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
+    headers = observed["headers"]
+    assert isinstance(headers, dict)
+    assert headers.get("Accept") == "application/json, text/plain, */*"
 
     assert urls == [
         "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
@@ -744,6 +756,31 @@ def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatc
         "https://adminrules.utah.gov/public/rule/R70-201/Current%20Rules",
         "https://adminrules.utah.gov/api/public/getHTML/uac-html/abc44f4f-93bc-4f1f-8c5d-cd234ca8fb3d.html",
     ]
+
+
+def test_candidate_utah_rule_urls_from_public_api_preserves_explicit_query(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return []
+
+    observed: dict[str, object] = {}
+
+    def _fake_get(*args, **kwargs):
+        observed["url"] = args[0] if args else kwargs.get("url")
+        return _FakeResponse()
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    urls = _candidate_utah_rule_urls_from_public_api(
+        url="https://adminrules.utah.gov/public/search/R70-101/Current%20Rules",
+        limit=4,
+    )
+
+    assert urls == []
+    assert observed["url"] == "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R70-101/Current%20Rules"
 
 
 def test_utah_discovery_host_allowlist_excludes_external_domains() -> None:

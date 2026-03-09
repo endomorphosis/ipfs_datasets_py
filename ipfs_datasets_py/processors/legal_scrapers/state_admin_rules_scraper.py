@@ -16,7 +16,7 @@ import requests
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote, unquote, urljoin, urlparse
 
 from .state_laws_scraper import (
     US_STATES,
@@ -1112,7 +1112,27 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
     if not parsed.path.startswith("/public/search"):
         return []
 
-    api_url = "https://adminrules.utah.gov/api/public/searchRuleDataTotal/undefined/Current%20Rules"
+    search_term = ""
+    path_parts = [unquote(part).strip() for part in parsed.path.split("/") if part]
+    if len(path_parts) >= 3 and path_parts[0] == "public" and path_parts[1] == "search":
+        candidate_term = str(path_parts[2] or "").strip()
+        if candidate_term.lower() not in {
+            "current rules",
+            "proposed",
+            "emergency",
+            "expired emergency",
+            "repealed",
+            "superseded",
+        }:
+            search_term = candidate_term
+    if not search_term or search_term.lower() == "undefined":
+        # Utah's empty search route no longer serves JSON for the legacy
+        # `undefined` token, but the broad `R` query still returns the current-rule
+        # index as JSON and is enough to bootstrap substantive detail pages.
+        search_term = "R"
+
+    encoded_search_term = quote(search_term, safe="")
+    api_url = f"https://adminrules.utah.gov/api/public/searchRuleDataTotal/{encoded_search_term}/Current%20Rules"
     out: List[str] = []
     seen = set()
 
@@ -1120,7 +1140,11 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
         response = requests.get(
             api_url,
             timeout=25,
-            headers={"User-Agent": "Mozilla/5.0"},
+            headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json, text/plain, */*",
+                "Referer": url_value or "https://adminrules.utah.gov/public/search//Current%20Rules",
+            },
         )
         response.raise_for_status()
         payload = response.json()
