@@ -1215,6 +1215,12 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     # corpus should prefer article/rule detail pages instead of top-level code indexes.
     if host == "iar.iga.in.gov" and path.rstrip("/") in {"/code", "/code/current", "/code/2006"}:
         return False
+    if host == "iar.iga.in.gov" and path.rstrip("/") == "/iac":
+        return False
+
+    # Rhode Island notification subscription pages are operational UI, not rules.
+    if host == "rules.sos.ri.gov" and path.startswith("/subscriptions/"):
+        return False
 
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         if len(body) < max(120, int(min_chars)):
@@ -1273,6 +1279,13 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
     if _looks_like_shallow_montana_inventory_page(text=body, title=title_value, url=url_value):
+        return False
+    parsed = urlparse(url_value)
+    host = parsed.netloc.lower()
+    path = parsed.path.rstrip("/") or "/"
+    if host == "iar.iga.in.gov" and path == "/iac":
+        return False
+    if host == "rules.sos.ri.gov" and path.startswith("/subscriptions"):
         return False
     if title_value and _looks_like_placeholder_text(title_value) and not official_index_page:
         return False

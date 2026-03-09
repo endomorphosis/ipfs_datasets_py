@@ -96,6 +96,44 @@ def test_rejects_texas_portal_notice_as_substantive_admin_rule() -> None:
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
+def test_rejects_indiana_iarp_home_page_as_rule_content() -> None:
+    text = (
+        "Indiana Administrative Rules and Policies Home Indiana Register Administrative Code MyIAR "
+        "Pending Rules Upcoming Public Hearings Comment Period Deadline Register Documents Search All Site Map"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Indiana Administrative Rules and Policies | IARP",
+        url="https://iar.iga.in.gov/iac//",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Indiana Administrative Rules and Policies | IARP",
+        url="https://iar.iga.in.gov/iac//",
+    ) is False
+
+
+def test_rejects_rhode_island_subscription_page_as_rule_content() -> None:
+    text = (
+        "Subscribe to RICR Notifications Receive Notifications through Email Address Notification Options "
+        "Select Agency Notification Frequency Daily Weekly Monthly Subscribe Manage Subscriptions"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Subscribe - Rhode Island Department of State",
+        url="https://rules.sos.ri.gov/subscriptions/subscribe/all",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Subscribe - Rhode Island Department of State",
+        url="https://rules.sos.ri.gov/subscriptions/subscribe/all",
+    ) is False
+
+
 def test_rejects_alabama_page_not_found_admin_false_positive() -> None:
     statute = {
         "code_name": "Alabama Administrative Code",
