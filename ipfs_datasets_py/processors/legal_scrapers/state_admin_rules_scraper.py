@@ -2253,7 +2253,7 @@ async def _agentic_discover_admin_state_blocks(
                     cc_html = str(getattr(scraped, "html", "") or "")
                     cc_host = urlparse(cc_url).netloc
                     method_used = getattr(scraped, "method_used", None)
-                    method_value = method_used.value if method_used else None
+                    method_value = getattr(method_used, "value", method_used) if method_used else None
 
                     candidate_urls.append(cc_url)
                     source_breakdown["common_crawl_domain"] = int(source_breakdown.get("common_crawl_domain", 0)) + 1
@@ -2492,7 +2492,7 @@ async def _agentic_discover_admin_state_blocks(
 
                             continue
                     method_used = getattr(scraped, "method_used", None)
-                    method_value = method_used.value if method_used else None
+                    method_value = getattr(method_used, "value", method_used) if method_used else None
                     if not await _append_document_if_rule(url, title, text, method_value):
                         continue
 
