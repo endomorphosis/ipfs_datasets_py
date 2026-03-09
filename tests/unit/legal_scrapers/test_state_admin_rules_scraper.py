@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -573,6 +574,121 @@ def test_accepts_relocated_arizona_rule_index_as_relaxed_recovery_text() -> None
     ) is True
 
 
+def test_candidate_links_from_html_extracts_arizona_official_pdf_chapter_links() -> None:
+    html = """
+    <html>
+      <body>
+        <a href="https://apps.azsos.gov/public_services/Title_01/1-01.pdf">Secretary of State - Rules and Rulemaking</a>
+        <a href="https://apps.azsos.gov/public_services/Title_01/1-01.rtf">rtf</a>
+      </body>
+    </html>
+    """
+
+    links = _candidate_links_from_html(
+        html,
+        base_host="apps.azsos.gov",
+        page_url="https://apps.azsos.gov/public_services/CodeTOC.htm",
+        limit=4,
+    )
+
+    assert "https://apps.azsos.gov/public_services/Title_01/1-01.pdf" in links
+
+
+def test_scores_arizona_official_pdf_chapters_above_inventory_page() -> None:
+    inventory_url = "https://apps.azsos.gov/public_services/CodeTOC.htm"
+    chapter_pdf_url = "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+
+    assert scraper_module._score_candidate_url(chapter_pdf_url) > scraper_module._score_candidate_url(inventory_url)
+
+
+@pytest.mark.asyncio
+async def test_extract_text_from_pdf_bytes_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakePDFProcessor:
+        async def _decompose_pdf(self, pdf_path):
+            assert str(pdf_path).endswith(".pdf")
+            return {
+                "pages": [
+                    {"text_blocks": [{"content": "R1-1-101. Purpose."}, {"content": "Authority and definitions."}]},
+                ]
+            }
+
+        def _extract_native_text(self, text_blocks):
+            return "\n".join(block["content"] for block in text_blocks)
+
+        async def _process_ocr(self, decomposed_content):
+            return {}
+
+    fake_pdf_module = SimpleNamespace(PDFProcessor=FakePDFProcessor)
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.processors.specialized.pdf", fake_pdf_module)
+
+    extracted = await scraper_module._extract_text_from_pdf_bytes_with_processor(
+        b"%PDF-1.4 fake pdf bytes",
+        source_url="https://apps.azsos.gov/public_services/Title_01/1-01.pdf",
+    )
+
+    assert "R1-1-101. Purpose." in extracted
+    assert "Authority and definitions." in extracted
+
+
+@pytest.mark.asyncio
+async def test_scrape_utah_rule_detail_via_public_download_uses_html_attachment(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def __init__(self, *, status_code=200, headers=None, text="", json_data=None, content=b""):
+            self.status_code = status_code
+            self.headers = headers or {}
+            self.text = text
+            self._json_data = json_data
+            self.content = content or text.encode("utf-8")
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise scraper_module.requests.HTTPError(f"status {self.status_code}")
+
+        def json(self):
+            return self._json_data
+
+    def fake_get(url, timeout=0, headers=None):
+        if "searchRuleDataTotal/R70-101/Current%20Rules" in url:
+            return FakeResponse(
+                json_data=[
+                    {
+                        "programs": [
+                            {
+                                "rules": [
+                                    {
+                                        "referenceNumber": "R70-101",
+                                        "name": "Bedding, Upholstered Furniture, and Quilted Clothing",
+                                        "htmlDownload": "uac-html/test-rule.html",
+                                        "htmlDownloadName": "R70-101.html",
+                                        "pdfDownload": "uac-pdf/test-rule.pdf",
+                                        "pdfDownloadName": "R70-101.pdf",
+                                        "linkToRule": "R70-101/Current Rules",
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            )
+        if "api/public/getfile/uac-html/test-rule.html/R70-101.html" in url:
+            return FakeResponse(
+                headers={"content-type": "text/html"},
+                text="<html><body><h1>R70-101. Bedding</h1><p>R70-101-1. Authority and Purpose.</p><p>The rule text.</p></body></html>",
+            )
+        raise AssertionError(f"Unexpected URL {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    scraped = await scraper_module._scrape_utah_rule_detail_via_public_download(
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules?searchText=R70"
+    )
+
+    assert scraped is not None
+    assert scraped.method_used == "utah_public_getfile_html"
+    assert "R70-101-1. Authority and Purpose." in scraped.text
+    assert scraped.title == "R70-101. Bedding, Upholstered Furniture, and Quilted Clothing"
+
+
 def test_accepts_new_hampshire_archived_rule_chapter() -> None:
     statute = {
         "code_name": "New Hampshire Administrative Rules (Agentic Discovery)",
@@ -729,6 +845,46 @@ def test_accepts_utah_rule_detail_page_as_substantive_rule_text() -> None:
         title=statute["section_name"],
         url=statute["source_url"],
     ) is True
+
+
+def test_rejects_utah_erules_category_news_page_as_rule_text() -> None:
+    text = (
+        "eRules | Office of Administrative Rules. RulesNews Office of Administrative Rules News and information directly "
+        "from the Office of Administrative Rules. To get notified via email on new versions of the Utah State Bulletin "
+        "or Utah State Digest, visit Subscriptions. Changes to Utah Administrative Code Links."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="eRules | Office of Administrative Rules",
+        url="https://rules.utah.gov/category/erules/",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="eRules | Office of Administrative Rules",
+        url="https://rules.utah.gov/category/erules/",
+    ) is False
+
+
+def test_rejects_utah_link_migration_news_post_as_rule_text() -> None:
+    text = (
+        "Changes to Utah Administrative Code Links | Office of Administrative Rules. Hi, rule readers! We're continuing "
+        "our transition to the new eRules Utah Administrative Code public portal found at adminrules.utah.gov. "
+        "To get notified via email on new versions of the Utah State Bulletin or Utah State Digest, visit Subscriptions."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Changes to Utah Administrative Code Links | Office of Administrative Rules",
+        url="https://rules.utah.gov/changes-to-utah-administrative-code-links-2/",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Changes to Utah Administrative Code Links | Office of Administrative Rules",
+        url="https://rules.utah.gov/changes-to-utah-administrative-code-links-2/",
+    ) is False
 
 
 def test_rejects_utah_bulletin_announcement_page_as_substantive_rule_text() -> None:

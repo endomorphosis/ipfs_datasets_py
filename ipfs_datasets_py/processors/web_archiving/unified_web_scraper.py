@@ -27,6 +27,7 @@ import re
 import time
 from io import BytesIO
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Dict, List, Optional, Any, Literal, Union, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -482,18 +483,56 @@ class UnifiedWebScraper:
         return "attachment" in (content_disposition or "").lower()
 
     @staticmethod
-    def _extract_pdf_text(pdf_bytes: bytes) -> str:
+    async def _extract_pdf_text(pdf_bytes: bytes) -> str:
         if not pdf_bytes:
             return ""
+        temp_path: Optional[Path] = None
         try:
-            from pypdf import PdfReader  # type: ignore
+            from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
 
-            reader = PdfReader(BytesIO(pdf_bytes))
-            return "\n".join((page.extract_text() or "") for page in reader.pages).strip()
+            with NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
+                handle.write(pdf_bytes)
+                temp_path = Path(handle.name)
+
+            processor = PDFProcessor()
+            decomposed_content = await processor._decompose_pdf(temp_path)
+
+            text_parts: List[str] = []
+            for page_data in decomposed_content.get("pages") or []:
+                text_blocks = page_data.get("text_blocks") or []
+                try:
+                    page_text = processor._extract_native_text(text_blocks)
+                except Exception:
+                    page_text = ""
+                page_text = str(page_text or "").strip()
+                if page_text:
+                    text_parts.append(page_text)
+
+            if text_parts:
+                return "\n\n".join(text_parts).strip()
+
+            try:
+                ocr_results = await processor._process_ocr(decomposed_content)
+            except Exception:
+                ocr_results = {}
+
+            for page_ocr in (ocr_results or {}).values():
+                for image_result in page_ocr or []:
+                    ocr_text = str((image_result or {}).get("text") or "").strip()
+                    if ocr_text:
+                        text_parts.append(ocr_text)
+
+            return "\n\n".join(text_parts).strip()
         except Exception:
             return ""
+        finally:
+            if temp_path is not None:
+                try:
+                    temp_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
 
-    def _build_binary_document_result(
+    async def _build_binary_document_result(
         self,
         *,
         url: str,
@@ -507,7 +546,7 @@ class UnifiedWebScraper:
         filename = self._response_filename(url, content_disposition)
         text = ""
         if self._content_type_matches(content_type, "application/pdf") or url.lower().endswith(".pdf"):
-            text = self._extract_pdf_text(raw_bytes)
+            text = await self._extract_pdf_text(raw_bytes)
 
         return ScraperResult(
             url=url,
@@ -814,7 +853,7 @@ class UnifiedWebScraper:
             content_type=content_type,
             content_disposition=content_disposition,
         ):
-            return self._build_binary_document_result(
+            return await self._build_binary_document_result(
                 url=url,
                 response=response,
                 method=ScraperMethod.BEAUTIFULSOUP,
@@ -1238,7 +1277,7 @@ class UnifiedWebScraper:
             content_type=content_type,
             content_disposition=content_disposition,
         ):
-            return self._build_binary_document_result(
+            return await self._build_binary_document_result(
                 url=url,
                 response=response,
                 method=ScraperMethod.READABILITY,
@@ -1282,7 +1321,7 @@ class UnifiedWebScraper:
             content_type=content_type,
             content_disposition=content_disposition,
         ):
-            return self._build_binary_document_result(
+            return await self._build_binary_document_result(
                 url=url,
                 response=response,
                 method=ScraperMethod.REQUESTS_ONLY,

@@ -244,7 +244,11 @@ async def test_beautifulsoup_returns_pdf_bytes_and_text(monkeypatch: pytest.Monk
             },
         )
     )
-    monkeypatch.setattr(scraper, "_extract_pdf_text", lambda _raw: "Parsed PDF text")
+
+    async def _fake_extract_pdf_text(_raw: bytes) -> str:
+        return "Parsed PDF text"
+
+    monkeypatch.setattr(scraper, "_extract_pdf_text", _fake_extract_pdf_text)
 
     result = await scraper._scrape_beautifulsoup("https://example.gov/rules")
 
@@ -254,6 +258,37 @@ async def test_beautifulsoup_returns_pdf_bytes_and_text(monkeypatch: pytest.Monk
     assert result.metadata["binary_document"] is True
     assert result.metadata["content_type"] == "application/pdf"
     assert result.metadata["raw_bytes"] == pdf_bytes
+
+
+@pytest.mark.anyio
+async def test_binary_pdf_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakePDFProcessor:
+        async def _decompose_pdf(self, pdf_path):
+            assert str(pdf_path).endswith(".pdf")
+            return {
+                "pages": [
+                    {
+                        "text_blocks": [
+                            {"content": "Rule 1. Scope."},
+                            {"content": "Authority and purpose."},
+                        ]
+                    }
+                ]
+            }
+
+        def _extract_native_text(self, text_blocks):
+            return "\n".join(block["content"] for block in text_blocks)
+
+        async def _process_ocr(self, _decomposed_content):
+            return {}
+
+    fake_pdf_module = SimpleNamespace(PDFProcessor=FakePDFProcessor)
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.processors.specialized.pdf", fake_pdf_module)
+
+    extracted = await UnifiedWebScraper._extract_pdf_text(b"%PDF-1.4 fake pdf bytes")
+
+    assert "Rule 1. Scope." in extracted
+    assert "Authority and purpose." in extracted
 
 
 @pytest.mark.anyio

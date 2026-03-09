@@ -8,6 +8,7 @@ administrative rules/codes.
 from __future__ import annotations
 
 import asyncio
+from html import unescape
 import json
 import logging
 import re
@@ -15,6 +16,8 @@ import time
 import requests
 from datetime import datetime
 from pathlib import Path
+from tempfile import NamedTemporaryFile
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote, unquote, urljoin, urlparse
 
@@ -162,6 +165,18 @@ _UT_BULLETIN_NEWS_TITLE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_UT_NON_RULE_NEWS_PATH_RE = re.compile(
+    r"^/(?:category/[^/]+|changes-to-utah-administrative-code-links(?:-\d+)?)/?$",
+    re.IGNORECASE,
+)
+
+_UT_NON_RULE_NEWS_TEXT_RE = re.compile(
+    r"office\s+of\s+administrative\s+rules\s+news|"
+    r"to\s+get\s+notified\s+via\s+email\s+on\s+new\s+versions\s+of\s+the\s+utah\s+state\s+bulletin|"
+    r"changes\s+to\s+utah\s+administrative\s+code\s+links",
+    re.IGNORECASE,
+)
+
 _UT_RULE_DETAIL_PATH_RE = re.compile(
     r"^/(?:public/rule/[^/]+/Current%20Rules|api/public/getHTML/[^?#]+)",
     re.IGNORECASE,
@@ -173,6 +188,8 @@ _UT_NON_SUBSTANTIVE_INDEX_PATH_RE = re.compile(
 )
 
 _UT_BULLETIN_PDF_PATH_RE = re.compile(r"^/wp-content/uploads/b\d{8}\.pdf$", re.IGNORECASE)
+
+_AZ_OFFICIAL_PDF_PATH_RE = re.compile(r"^/public_services/Title_\d{2}/\d+-\d+\.pdf$", re.IGNORECASE)
 
 _TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE = re.compile(
     r"(?:^|[?&])interface=(?:VIEW_TAC|SEARCH_TAC)(?:[&#]|$)",
@@ -804,6 +821,10 @@ def _score_candidate_url(url: str) -> int:
             score += 1
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         score += 8
+    if host == "rules.utah.gov" and _UT_NON_RULE_NEWS_PATH_RE.search(path):
+        score -= 6
+    if host == "apps.azsos.gov" and _AZ_OFFICIAL_PDF_PATH_RE.search(path):
+        score += 8
     return score
 
 
@@ -827,6 +848,10 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
     host = parsed.netloc.lower()
     path = parsed.path or ""
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
+        score += 8
+    if host == "rules.utah.gov" and _UT_NON_RULE_NEWS_PATH_RE.search(path):
+        score -= 6
+    if host == "apps.azsos.gov" and _AZ_OFFICIAL_PDF_PATH_RE.search(path):
         score += 8
     if re.search(r"/code/(?:current|2006)/\d+/\d+(?:\.\d+)?", lower_url):
         score += 4
@@ -864,7 +889,10 @@ def _seed_expansion_backlog_is_ready(seed_expansion_candidates: List[tuple[str, 
     }
     if not unique_keys:
         return False
-    threshold = max(4, min(12, max(1, int(max_fetch)) * 4))
+    # Small bounded runs should not need a huge seed-expansion backlog before
+    # we start prioritizing concrete detail candidates over broad search/index
+    # surfaces. Keep the floor above trivial noise, but scale more gently.
+    threshold = max(3, min(8, max(1, int(max_fetch)) * 2))
     return len(unique_keys) >= threshold
 
 
@@ -969,6 +997,8 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     if host in {"rules.utah.gov", "adminrules.utah.gov"} and _UT_NON_RULE_PORTAL_PATH_RE.search(path):
         return True
     if host in {"rules.utah.gov", "adminrules.utah.gov"} and _UT_NON_RULE_TITLE_RE.search(title_value):
+        return True
+    if host == "rules.utah.gov" and (_UT_NON_RULE_NEWS_PATH_RE.search(path) or _UT_NON_RULE_NEWS_TEXT_RE.search(hay)):
         return True
     if host == "rules.utah.gov" and (_UT_BULLETIN_NEWS_TITLE_RE.search(title_value) or _UT_BULLETIN_PDF_PATH_RE.search(path)):
         return True
@@ -1215,6 +1245,299 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
                         if len(out) >= max(1, int(limit)):
                             return out
     return out
+
+
+def _is_pdf_candidate_url(url: str) -> bool:
+    value = str(url or "").strip().lower()
+    return value.endswith(".pdf") or ".pdf?" in value
+
+
+def _utah_rule_reference_from_url(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    path = unquote(parsed.path or "")
+    match = re.search(r"/public/rule/([^/]+)/", path, re.IGNORECASE)
+    if not match:
+        return ""
+    return str(match.group(1) or "").strip().upper()
+
+
+def _utah_rule_type_from_url(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    path = unquote(parsed.path or "")
+    match = re.search(r"/public/rule/[^/]+/([^/?#]+)", path, re.IGNORECASE)
+    if not match:
+        return "Current Rules"
+    value = str(match.group(1) or "").replace("%20", " ").strip()
+    return value or "Current Rules"
+
+
+def _extract_text_from_downloaded_html_document(document_html: str) -> str:
+    value = str(document_html or "")
+    if not value:
+        return ""
+
+    body_match = re.search(r"<body\b[^>]*>(.*?)</body>", value, re.IGNORECASE | re.DOTALL)
+    if body_match:
+        value = body_match.group(1)
+
+    value = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", value, flags=re.IGNORECASE | re.DOTALL)
+    value = re.sub(r"<[^>]+>", "\n", value)
+    value = unescape(value).replace("\ufeff", " ")
+
+    lines = []
+    for raw_line in value.splitlines():
+        cleaned = re.sub(r"\s+", " ", raw_line).strip()
+        if cleaned:
+            lines.append(cleaned)
+    return "\n".join(lines).strip()
+
+
+def _iter_utah_public_search_rules(payload: Any) -> List[Dict[str, Any]]:
+    rules: List[Dict[str, Any]] = []
+    for agency in payload or []:
+        if not isinstance(agency, dict):
+            continue
+        for program in agency.get("programs") or []:
+            if not isinstance(program, dict):
+                continue
+            for rule in program.get("rules") or []:
+                if isinstance(rule, dict):
+                    rules.append(rule)
+    return rules
+
+
+async def _scrape_utah_rule_detail_via_public_download(url: str) -> Optional[Any]:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "adminrules.utah.gov":
+        return None
+    if not _UT_RULE_DETAIL_PATH_RE.search(parsed.path or ""):
+        return None
+
+    reference_number = _utah_rule_reference_from_url(url)
+    if not reference_number:
+        return None
+    rule_type = _utah_rule_type_from_url(url)
+
+    headers = {
+        "Accept": "application/json,text/plain,*/*",
+        "Referer": str(url or "").strip(),
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/123.0 Safari/537.36"
+        ),
+    }
+    search_url = (
+        "https://adminrules.utah.gov/api/public/searchRuleDataTotal/"
+        f"{quote(reference_number, safe='')}/{quote(rule_type, safe='')}"
+    )
+
+    try:
+        search_response = requests.get(search_url, timeout=35, headers=headers)
+        search_response.raise_for_status()
+        payload = search_response.json()
+    except Exception:
+        return None
+
+    decoded_rule_path = unquote(parsed.path or "")
+    matched_rule: Optional[Dict[str, Any]] = None
+    for rule in _iter_utah_public_search_rules(payload):
+        rule_reference = str(rule.get("referenceNumber") or "").strip().upper()
+        link_to_rule = str(rule.get("linkToRule") or "").strip()
+        if rule_reference == reference_number:
+            matched_rule = rule
+            break
+        if link_to_rule and decoded_rule_path.endswith(link_to_rule):
+            matched_rule = rule
+            break
+    if matched_rule is None:
+        return None
+
+    title = str(matched_rule.get("name") or reference_number).strip()
+    if title and not title.startswith(reference_number):
+        title = f"{reference_number}. {title}"
+
+    html_download = str(matched_rule.get("htmlDownload") or "").strip()
+    html_download_name = str(matched_rule.get("htmlDownloadName") or "").strip()
+    if html_download and html_download_name:
+        html_url = (
+            "https://adminrules.utah.gov/api/public/getfile/"
+            f"{html_download}/{quote(html_download_name, safe='')}"
+        )
+        try:
+            html_response = requests.get(
+                html_url,
+                timeout=35,
+                headers={**headers, "Accept": "*/*"},
+            )
+            html_response.raise_for_status()
+            if "text/html" in str(html_response.headers.get("content-type") or "").lower():
+                extracted_text = _extract_text_from_downloaded_html_document(html_response.text)
+                if extracted_text:
+                    return SimpleNamespace(
+                        url=url,
+                        title=title,
+                        text=extracted_text,
+                        html=html_response.text,
+                        links=[],
+                        success=True,
+                        method_used="utah_public_getfile_html",
+                        extraction_provenance={"method": "utah_public_getfile_html"},
+                    )
+        except Exception:
+            pass
+
+    pdf_download = str(matched_rule.get("pdfDownload") or "").strip()
+    pdf_download_name = str(matched_rule.get("pdfDownloadName") or "").strip()
+    if pdf_download and pdf_download_name:
+        pdf_url = (
+            "https://adminrules.utah.gov/api/public/getfile/"
+            f"{pdf_download}/{quote(pdf_download_name, safe='')}"
+        )
+        try:
+            pdf_response = requests.get(
+                pdf_url,
+                timeout=35,
+                headers={**headers, "Accept": "application/pdf,*/*"},
+            )
+            pdf_response.raise_for_status()
+            extracted_text = await _extract_text_from_pdf_bytes_with_processor(pdf_response.content or b"", source_url=pdf_url)
+            extracted_text = str(extracted_text or "").strip()
+            if extracted_text:
+                return SimpleNamespace(
+                    url=url,
+                    title=title,
+                    text=extracted_text,
+                    html="",
+                    links=[],
+                    success=True,
+                    method_used="utah_public_getfile_pdf",
+                    extraction_provenance={"method": "utah_public_getfile_pdf"},
+                )
+        except Exception:
+            pass
+
+    return None
+
+
+def _pdf_request_headers(url: str) -> Dict[str, str]:
+    parsed = urlparse(str(url or "").strip())
+    referer = f"{parsed.scheme}://{parsed.netloc}/" if parsed.scheme and parsed.netloc else ""
+    if parsed.netloc.lower() == "apps.azsos.gov":
+        referer = "https://apps.azsos.gov/public_services/CodeTOC.htm"
+    return {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/123.0 Safari/537.36"
+        ),
+        "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": referer,
+    }
+
+
+def _title_from_extracted_pdf_text(*, text: str, url: str) -> str:
+    for line in str(text or "").splitlines():
+        cleaned = re.sub(r"\s+", " ", line).strip()
+        if len(cleaned) >= 12:
+            return cleaned[:240]
+    path = Path(urlparse(str(url or "").path).name)
+    stem = re.sub(r"[_-]+", " ", path.stem).strip()
+    return stem[:240] if stem else str(url or "").strip()[:240]
+
+
+async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, source_url: str) -> str:
+    if not pdf_bytes:
+        return ""
+
+    try:
+        from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
+    except Exception:
+        return ""
+
+    temp_path: Optional[Path] = None
+    try:
+        with NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
+            handle.write(pdf_bytes)
+            temp_path = Path(handle.name)
+
+        processor = PDFProcessor()
+        decomposed_content = await processor._decompose_pdf(temp_path)
+
+        text_parts: List[str] = []
+        for page_data in decomposed_content.get("pages") or []:
+            text_blocks = page_data.get("text_blocks") or []
+            try:
+                page_text = processor._extract_native_text(text_blocks)
+            except Exception:
+                page_text = ""
+            page_text = str(page_text or "").strip()
+            if page_text:
+                text_parts.append(page_text)
+
+        if text_parts:
+            return "\n\n".join(text_parts).strip()
+
+        try:
+            ocr_results = await processor._process_ocr(decomposed_content)
+        except Exception:
+            ocr_results = {}
+
+        for page_ocr in (ocr_results or {}).values():
+            for image_result in page_ocr or []:
+                ocr_text = str((image_result or {}).get("text") or "").strip()
+                if ocr_text:
+                    text_parts.append(ocr_text)
+
+        return "\n\n".join(text_parts).strip()
+    except Exception:
+        return ""
+    finally:
+        if temp_path is not None:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+
+async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
+    if not _is_pdf_candidate_url(url):
+        return None
+
+    try:
+        response = requests.get(
+            url,
+            timeout=35,
+            headers=_pdf_request_headers(url),
+        )
+        response.raise_for_status()
+    except Exception:
+        return None
+
+    content_type = str(response.headers.get("content-type") or "").lower()
+    body = response.content or b""
+    head = body[:1024].decode("latin1", errors="ignore")
+    if not body:
+        return None
+    if content_type.startswith("text/html") and _BAD_DISCOVERY_TEXT_RE.search(head):
+        return None
+    if "application/pdf" not in content_type and not _PDF_BINARY_HEADER_RE.search(head):
+        return None
+
+    extracted_text = await _extract_text_from_pdf_bytes_with_processor(body, source_url=url)
+    extracted_text = str(extracted_text or "").strip()
+    if not extracted_text:
+        return None
+
+    return SimpleNamespace(
+        url=url,
+        title=_title_from_extracted_pdf_text(text=extracted_text, url=url),
+        text=extracted_text,
+        html="",
+        links=[],
+        success=True,
+        method_used="pdf_processor",
+        extraction_provenance={"method": "pdf_processor"},
+    )
 
 
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
@@ -1587,6 +1910,18 @@ async def _agentic_discover_admin_state_blocks(
         # and agentic discovery may not re-emit that same page as a document.
         candidate_urls.extend(seed_urls)
         candidate_urls.extend(_template_admin_urls_for_state(state_code))
+
+        # Utah's public search API already exposes canonical detail-page URLs.
+        # Seed them immediately so bounded runs can hit substantive rule pages
+        # without waiting for slower search/index fetches to expand first.
+        if state_code == "UT":
+            for seed_url in seed_urls[:4]:
+                for rule_url in _candidate_utah_rule_urls_from_public_api(
+                    url=seed_url,
+                    limit=24,
+                ):
+                    candidate_urls.append(rule_url)
+                    source_breakdown["utah_public_api"] = int(source_breakdown.get("utah_public_api", 0)) + 1
 
         # Curated seeds often already expose substantive rule pages or article/part
         # links. Prefetch them before broad agentic discovery so states like Indiana
@@ -1981,6 +2316,12 @@ async def _agentic_discover_admin_state_blocks(
         effective_fetch_concurrency = max(1, int(fetch_concurrency))
 
         async def _scrape_candidate_url(url: str):
+            utah_scraped = await _scrape_utah_rule_detail_via_public_download(url)
+            if utah_scraped is not None:
+                return utah_scraped
+            pdf_scraped = await _scrape_pdf_candidate_url_with_processor(url)
+            if pdf_scraped is not None:
+                return pdf_scraped
             host = urlparse(url).netloc
             active_scraper = live_scraper if (_url_key(url) in prioritized_seed_keys or host in base_hosts) else scraper
             return await active_scraper.scrape(url)
