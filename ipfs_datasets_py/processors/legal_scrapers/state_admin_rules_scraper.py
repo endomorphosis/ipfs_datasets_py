@@ -344,15 +344,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sosmt.gov/arm/rulemaking-resources/",
     ],
     "MI": [
-        "https://ars.apps.lara.state.mi.us/",
-        "https://ars.apps.lara.state.mi.us/Home",
         "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306",
     ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
-        "https://rules.sos.ri.gov/Organizations",
-        "https://rules.sos.ri.gov/organizations",
-        "https://rules.sos.ri.gov/",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-3",

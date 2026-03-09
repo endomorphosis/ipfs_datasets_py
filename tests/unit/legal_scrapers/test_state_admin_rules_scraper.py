@@ -41,8 +41,11 @@ def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr
     ri_urls = scraper_module._extract_seed_urls_for_state("RI", "Rhode Island")
     ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
 
-    assert "https://ars.apps.lara.state.mi.us/" in mi_urls
-    assert any("rules.sos.ri.gov/organizations" in url.lower() for url in ri_urls)
+    assert "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306" in mi_urls
+    assert "https://ars.apps.lara.state.mi.us/" not in mi_urls
+    assert "https://ars.apps.lara.state.mi.us/Home" not in mi_urls
+    assert any("rules.sos.ri.gov/regulations/part/" in url.lower() for url in ri_urls)
+    assert all("rules.sos.ri.gov/organizations" not in url.lower() for url in ri_urls)
     assert "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations" in ri_urls
     assert ut_urls[0] == "https://adminrules.utah.gov/public/search/R/Current%20Rules"
 
