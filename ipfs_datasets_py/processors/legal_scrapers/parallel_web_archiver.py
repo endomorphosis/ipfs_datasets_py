@@ -205,7 +205,7 @@ class ParallelWebArchiver:
         
         # Execute all tasks in parallel
         tasks = [archive_with_semaphore(url) for url in urls]
-        results = await _anyio_gather(tasks)
+        results = await _anyio_gather(*tasks)
         
         # Handle any exceptions
         final_results = []

@@ -134,6 +134,13 @@ _NON_RULE_POLICY_PAGE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_SEO_MIRROR_PAGE_RE = re.compile(
+    r"website\s+value\s+calculator\s*&\s*seo\s+checker|domain\s+authority|estimated\s+worth:?|"
+    r"is\s+.+\s+down\s+for\s+everyone\s+or\s+just\s+me\?|offseo\.com|check\s+whois|"
+    r"google\s+trends|seo\s+report|remove\s+website|source\s+analysis|location\s+analysis",
+    re.IGNORECASE,
+)
+
 _FORUM_PAGE_RE = re.compile(
     r"rules?\s+of\s+conduct|forum\s+guidelines|family\s+friendly|volunteer\s+moderators?|"
     r"moderation\s+is\s+interpretation|posting\s+privilege|signature\s+images|back\s+to\s+the\s+.*forum|"
@@ -221,6 +228,11 @@ _TX_TRANSFER_INDEX_PATH_RE = re.compile(r"^/texreg/transfers(?:/|/index\.shtml)?
 _MI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/(?:|home/?|admincode/admincode/?)$", re.IGNORECASE)
 
 _RI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/organizations/?$", re.IGNORECASE)
+
+_AZ_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
+    r"^/(?:regulations|administrative-code|code-of-regulations)/?$",
+    re.IGNORECASE,
+)
 
 
 def _prefers_live_fetch(url: str) -> bool:
@@ -1050,6 +1062,26 @@ def _direct_detail_candidate_backlog_is_ready(candidate_urls: List[str], max_fet
     return _seed_expansion_backlog_is_ready(detail_candidates, max_fetch)
 
 
+def _seed_prefetch_priority(url: str) -> int:
+    score = _score_candidate_url(url)
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+    path = (parsed.path or "").lower()
+
+    if _is_direct_detail_candidate_url(url):
+        score += 12
+        if _is_rtf_candidate_url(url):
+            score += 2
+
+    if host == "apps.azsos.gov" and path in {"/public_services/codetoc.htm", "/public_services/index/"}:
+        score += 10
+
+    if _OFFICIAL_RULE_INDEX_URL_RE.search(str(url or "")):
+        score += 4
+
+    return score
+
+
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
     hay = " ".join([str(text or ""), str(title or ""), str(url or "")])
     if _ADMIN_RULE_TEXT_RE.search(hay):
@@ -1135,6 +1167,10 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     normalized_path = path.rstrip("/") or "/"
     query = parsed.query or ""
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
+        return True
+    if _SEO_MIRROR_PAGE_RE.search(hay):
+        return True
+    if host == "legislature.az.gov" and _AZ_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
         return True
     if host == "ars.apps.lara.state.mi.us" and _MI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
         return True
@@ -2313,6 +2349,8 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
     path = parsed.path.rstrip("/") or "/"
+    if host == "apps.azsos.gov" and path in {"/public_services/CodeTOC.htm", "/public_services/Index"}:
+        return False
     if host == "iar.iga.in.gov" and path == "/iac":
         return False
     if host == "rules.sos.ri.gov" and path.startswith("/subscriptions"):
@@ -2516,6 +2554,7 @@ async def _agentic_discover_admin_state_blocks(
         seed_urls = _extract_seed_urls_for_state(state_code, state_name)
         if not seed_urls:
             seed_urls = [f"https://{state_code.lower()}.gov"]
+        ordered_seed_urls = sorted(seed_urls, key=_seed_prefetch_priority, reverse=True)
 
         # Always inspect curated seed entrypoints directly as ranked candidates.
         # Some states expose substantive rule indexes at the seed URL itself,
@@ -2529,7 +2568,7 @@ async def _agentic_discover_admin_state_blocks(
         # Seed them immediately so bounded runs can hit substantive rule pages
         # without waiting for slower search/index fetches to expand first.
         if state_code == "UT":
-            for seed_url in seed_urls[:4]:
+            for seed_url in ordered_seed_urls[:4]:
                 for rule_url in _candidate_utah_rule_urls_from_public_api(
                     url=seed_url,
                     limit=24,
@@ -2616,7 +2655,7 @@ async def _agentic_discover_admin_state_blocks(
         # entrypoints are already sufficient.
         preseed_signal = direct_detail_ready
         if not direct_detail_ready:
-            for seed_url in seed_urls[:6]:
+            for seed_url in ordered_seed_urls[:6]:
                 host = urlparse(seed_url).netloc
                 fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
                 try:
@@ -2871,7 +2910,7 @@ async def _agentic_discover_admin_state_blocks(
 
         prioritized_seed_document_urls: List[str] = []
         seen_seed_document_keys: set[str] = set()
-        for seed_url in seed_urls:
+        for seed_url in ordered_seed_urls:
             if not _is_direct_detail_candidate_url(seed_url):
                 continue
             doc_key = _url_key(seed_url)
@@ -2951,7 +2990,7 @@ async def _agentic_discover_admin_state_blocks(
             await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value)
 
         # Give curated/official entrypoints one deterministic direct fetch pass.
-        for seed_url in seed_urls[:6]:
+        for seed_url in ordered_seed_urls[:6]:
             if len(statutes) >= max(1, int(max_fetch_per_state)):
                 break
             if time.monotonic() >= preloop_budget_deadline:

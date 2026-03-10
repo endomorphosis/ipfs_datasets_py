@@ -654,6 +654,47 @@ def test_accepts_relocated_arizona_rule_index_as_relaxed_recovery_text() -> None
     ) is True
 
 
+def test_rejects_arizona_rule_index_seo_mirror_false_positive() -> None:
+    text = (
+        "Website value calculator & SEO Checker => azsos.gov. Is azsos.gov down for everyone or just me? "
+        "SEO report with information and free domain appraisal for azsos.gov. Domain Authority. Google Trends. "
+        "Estimated worth: 236429 dollars. Remove Website."
+    )
+
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="azsos.gov? Website value calculator & SEO Checker",
+        url="https://azsos.gov/rules/arizona-administrative-code",
+    ) is False
+
+
+def test_rejects_arizona_legislature_landing_pages_as_relaxed_recovery_text() -> None:
+    text = (
+        "Arizona Legislature Skip to main content Skip to footer Bill # Search Legislative Events "
+        "General Effective Dates IRC 2022 Congressional Maps Bill Process Bill To Law Contact Webmaster"
+    )
+
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Legislature",
+        url="https://legislature.az.gov/regulations",
+    ) is False
+
+
+def test_rejects_arizona_public_services_subject_index_as_relaxed_recovery_text() -> None:
+    text = (
+        "Arizona Administrative Code Subject Index. AAC TOC By Subject List. "
+        "Administration, ADEQ. Air Pollution Control, ADEQ. Drinking Water Regulations, Primary and State, ADEQ. "
+        "Water Quality Standards, ADEQ. Public Drinking Water System, Capacity Development Requirements, ADEQ."
+    )
+
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Administrative Code",
+        url="https://apps.azsos.gov/public_services/Index/",
+    ) is False
+
+
 def test_candidate_links_from_html_extracts_arizona_official_chapter_document_links() -> None:
     html = """
     <html>
@@ -706,6 +747,21 @@ def test_direct_detail_candidate_backlog_is_ready_for_utah_and_arizona_detail_ur
     assert scraper_module._direct_detail_candidate_backlog_is_ready(arizona_urls, max_fetch=2) is True
     assert scraper_module._direct_detail_candidate_backlog_is_ready(arizona_rtf_urls, max_fetch=2) is True
     assert scraper_module._direct_detail_candidate_backlog_is_ready(search_urls, max_fetch=2) is False
+
+
+def test_seed_prefetch_priority_prefers_arizona_direct_documents_and_codetoc() -> None:
+    landing_url = "https://azsos.gov/rules/arizona-administrative-code"
+    codetoc_url = "https://apps.azsos.gov/public_services/CodeTOC.htm"
+    pdf_url = "https://apps.azsos.gov/public_services/Title_07/7-02.pdf"
+    rtf_url = "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+
+    scored = sorted(
+        [landing_url, codetoc_url, pdf_url, rtf_url],
+        key=scraper_module._seed_prefetch_priority,
+        reverse=True,
+    )
+
+    assert scored == [rtf_url, pdf_url, codetoc_url, landing_url]
 
 
 @pytest.mark.asyncio
@@ -2204,8 +2260,8 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 2
-    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [pdf_url, rtf_url]
-    assert pdf_calls == [pdf_url, rtf_url]
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [rtf_url, pdf_url]
+    assert pdf_calls == [rtf_url, pdf_url]
     assert rtf_calls == [rtf_url]
     assert agentic_discovery_calls == 0
     assert archive_search_calls == 0
