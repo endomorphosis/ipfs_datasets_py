@@ -120,7 +120,7 @@ except ImportError as e:
 
 from ipfs_datasets_py.monitoring import MonitoringConfig, MetricsConfig
 try:
-    from ipfs_datasets_py.processors.ocr_engine import MultiEngineOCR
+    from .ocr_engine import MultiEngineOCR
 except ImportError:
     class MockOCR:
         def __init__(self, *args, **kwargs):
@@ -195,13 +195,15 @@ except ImportError:
 
 # GraphRAGIntegrator is already imported above with a mock fallback.
 # Keep this secondary import guarded so missing optional deps (e.g., networkx)
-# don't break module import.
+# don't break module import, but do not overwrite the working fallback with a
+# non-callable export.
 try:
     from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator as _GraphRAGIntegrator
 except ImportError:
     _GraphRAGIntegrator = None
 else:
-    GraphRAGIntegrator = _GraphRAGIntegrator
+    if callable(_GraphRAGIntegrator):
+        GraphRAGIntegrator = _GraphRAGIntegrator
 import json
 import os
 
@@ -215,6 +217,32 @@ class InitializationError(RuntimeError):
 
 class DependencyError(RuntimeError):
     """Custom exception for errors that occur/are raised from dependencies in the PDFProcessor."""
+
+
+def _instantiate_graphrag_integrator(
+        integrator_cls: Any,
+        *,
+        storage: Any,
+        logger: Optional[logging.Logger],
+) -> Any:
+    """Instantiate a GraphRAG integrator without assuming one constructor shape."""
+    if not callable(integrator_cls):
+        raise TypeError("GraphRAGIntegrator is not callable")
+
+    try:
+        return integrator_cls(storage=storage, logger=logger)
+    except TypeError:
+        try:
+            return integrator_cls(storage=storage)
+        except TypeError:
+            return integrator_cls()
+
+
+def _instantiate_optional_component(component_cls: Any, *args: Any, **kwargs: Any) -> Any:
+    """Instantiate an optional component, tolerating None-valued exports."""
+    if not callable(component_cls):
+        raise TypeError(f"{component_cls!r} is not callable")
+    return component_cls(*args, **kwargs)
 
 
 
@@ -480,22 +508,24 @@ class PDFProcessor:
 
         if self.integrator is None:
             try:
-                self.integrator = GraphRAGIntegrator(
+                self.integrator = _instantiate_graphrag_integrator(
+                    GraphRAGIntegrator,
                     storage=self.storage,
-                    logger=self.logger if debugging else None
+                    logger=self.logger if debugging else None,
                 )
             except Exception as e:
                 raise InitializationError(f"Failed to initialize GraphRAGIntegrator: {e}") from e
 
         if self.ocr_engine is None:
             try:
-                self.ocr_engine = MultiEngineOCR()
+                self.ocr_engine = _instantiate_optional_component(MultiEngineOCR)
             except Exception as e:
                 raise InitializationError(f"Failed to initialize MultiEngineOCR: {e}") from e
         if self.optimizer is None:
             try:
-                self.optimizer = LLMOptimizer(
-                    logger=self.logger if debugging else None
+                self.optimizer = _instantiate_optional_component(
+                    LLMOptimizer,
+                    logger=self.logger if debugging else None,
                 )
             except Exception as e:
                 raise InitializationError(f"Failed to initialize LLMOptimizer: {e}") from e

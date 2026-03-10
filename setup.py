@@ -163,6 +163,12 @@ setup(
         'Flask>=3.1.1',
         # Default OCR engine (Surya; skip Windows / Python 3.14+)
         'surya-ocr>=0.14.6; platform_system!="Windows" and python_version < "3.14"',
+        # PDF / RTF runtime dependencies used by default processors
+        'pdfplumber>=0.11.7',
+        'pymupdf>=1.26.3',
+        'PyPDF2>=3.0.0',
+        'pypdf>=5.0.0',
+        'striprtf>=0.0.29',
     ],
     extras_require={
         # Logic integration / legal reasoning
@@ -255,6 +261,8 @@ setup(
         'pdf': [
             'pdfplumber>=0.11.7',  # Primary PDF tool (works on all platforms)
             'pymupdf>=1.26.3',  # Alternative PDF tool (may have DLL issues on Windows)
+            'PyPDF2>=3.0.0',
+            'pypdf>=5.0.0',
             'pytesseract>=0.3.13',  # OCR (requires system tesseract)
             'tiktoken>=0.6.0',
             'pysbd',
@@ -272,17 +280,20 @@ setup(
             'markitdown>=0.1.0',
             'aiohttp>=3.8.0',
             'playwright>=1.40.0',
+            'striprtf>=0.0.29',
         ],
         'file_conversion_full': [
             # All file conversion backends with full format support
             'markitdown>=0.1.0',
             'aiohttp>=3.8.0',
             'playwright>=1.40.0',
+            'striprtf>=0.0.29',
             # Additional format support
             'pytesseract>=0.3.10',  # OCR for images
             'python-docx>=0.8.11',  # Word documents
             'openpyxl>=3.0.0',      # Excel files
             'PyPDF2>=3.0.0',        # PDF processing
+            'pypdf>=5.0.0',
             'python-pptx>=0.6.21',  # PowerPoint files
             'beautifulsoup4>=4.11.0',  # HTML parsing
         ],
@@ -384,6 +395,8 @@ setup(
             # PDF
             'pdfplumber>=0.11.7',
             'pymupdf>=1.26.3',
+            'PyPDF2>=3.0.0',
+            'pypdf>=5.0.0',
             'pytesseract>=0.3.13',
             'tiktoken>=0.6.0',
             'pysbd',
@@ -395,6 +408,7 @@ setup(
             # File conversion
             'markitdown>=0.1.0',
             'aiohttp>=3.8.0',
+            'striprtf>=0.0.29',
             # Scraping
             'beautifulsoup4>=4.12.0',
             'selenium>=4.15.0',
