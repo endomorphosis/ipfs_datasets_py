@@ -268,6 +268,10 @@ _MT_RULE_INDEX_ROW_RE = re.compile(r"\bTitle\s+\d+\b", re.IGNORECASE)
 
 _PDF_BINARY_HEADER_RE = re.compile(r"^\s*%PDF-\d\.\d", re.IGNORECASE)
 _RTF_CONTENT_PREFIX_RE = re.compile(r"^\s*\{\\rtf", re.IGNORECASE)
+_BROWSER_CHALLENGE_HTML_RE = re.compile(
+    r"just\s+a\s+moment|cf-browser-verification|cloudflare|enable\s+javascript\s+and\s+cookies",
+    re.IGNORECASE,
+)
 
 _PDF_BINARY_TOKEN_RE = re.compile(
     r"\b\d+\s+\d+\s+obj\b|endobj|xref|trailer|startxref|/Filter\b|/Length\b",
@@ -1499,6 +1503,81 @@ def _pdf_request_headers(url: str) -> Dict[str, str]:
     }
 
 
+def _looks_like_browser_challenge(*, status_code: int, content_type: str, head: str) -> bool:
+    if int(status_code) < 400 and "html" not in str(content_type or "").lower():
+        return False
+    return bool(_BROWSER_CHALLENGE_HTML_RE.search(str(head or "")))
+
+
+async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str, Any]]:
+    try:
+        from playwright.async_api import async_playwright
+    except Exception:
+        return None
+
+    referer = _pdf_request_headers(url).get("Referer") or ""
+    browser_user_agent = (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/123.0 Safari/537.36"
+    )
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                accept_downloads=True,
+                user_agent=browser_user_agent,
+                locale="en-US",
+                viewport={"width": 1440, "height": 900},
+            )
+            page = await context.new_page()
+            try:
+                download = None
+                if referer and referer != url:
+                    try:
+                        await page.goto(referer, wait_until="domcontentloaded", timeout=30000)
+                        await page.wait_for_timeout(500)
+                    except Exception:
+                        pass
+
+                link_selector = f'a[href="{url}"]'
+                try:
+                    locator = page.locator(link_selector).first
+                    if await locator.count() > 0:
+                        async with page.expect_download(timeout=45000) as download_info:
+                            await locator.click()
+                        download = await download_info.value
+                except Exception:
+                    download = None
+
+                if download is None:
+                    async with page.expect_download(timeout=45000) as download_info:
+                        await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                    download = await download_info.value
+
+                download_path = await download.path()
+                if not download_path:
+                    return None
+                body = Path(download_path).read_bytes()
+                suggested_filename = str(getattr(download, "suggested_filename", "") or "")
+                content_type = "application/octet-stream"
+                lowered_name = suggested_filename.lower()
+                if lowered_name.endswith(".pdf"):
+                    content_type = "application/pdf"
+                elif lowered_name.endswith(".rtf"):
+                    content_type = "application/rtf"
+                return {
+                    "body": body,
+                    "content_type": content_type,
+                    "suggested_filename": suggested_filename,
+                }
+            finally:
+                await context.close()
+                await browser.close()
+    except Exception:
+        return None
+
+
 def _title_from_extracted_pdf_text(*, text: str, url: str) -> str:
     for line in str(text or "").splitlines():
         cleaned = re.sub(r"\s+", " ", line).strip()
@@ -1579,10 +1658,50 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
     if not rtf_bytes:
         return ""
 
+    def _fallback_extract() -> str:
+        try:
+            value = rtf_bytes.decode("latin1", errors="ignore")
+        except Exception:
+            return ""
+        if not value:
+            return ""
+
+        value = re.sub(
+            r"\\'([0-9a-fA-F]{2})",
+            lambda match: bytes.fromhex(match.group(1)).decode("latin1", errors="ignore"),
+            value,
+        )
+
+        def _decode_unicode(match: re.Match[str]) -> str:
+            try:
+                codepoint = int(match.group(1))
+            except Exception:
+                return ""
+            if codepoint < 0:
+                codepoint += 65536
+            try:
+                return chr(codepoint)
+            except Exception:
+                return ""
+
+        value = re.sub(r"\\u(-?\d+)\??", _decode_unicode, value)
+        value = re.sub(r"\\(?:par[d]?|line)\b", "\n", value)
+        value = re.sub(r"\\tab\b", " ", value)
+        value = re.sub(r"\\([{}\\])", r"\1", value)
+        value = re.sub(r"\\[a-zA-Z]+-?\d* ?", " ", value)
+        value = value.replace("{", " ").replace("}", " ")
+
+        lines = []
+        for raw_line in value.splitlines():
+            cleaned = re.sub(r"\s+", " ", raw_line).strip()
+            if cleaned:
+                lines.append(cleaned)
+        return "\n".join(lines).strip()
+
     try:
         from ipfs_datasets_py.processors.file_converter import RTFExtractor
     except Exception:
-        return ""
+        return _fallback_extract()
 
     temp_path: Optional[Path] = None
     try:
@@ -1592,11 +1711,12 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
 
         extractor = RTFExtractor()
         result = await asyncio.to_thread(extractor.extract, temp_path)
-        if not getattr(result, "success", False):
-            return ""
-        return str(getattr(result, "text", "") or "").strip()
+        extracted_text = str(getattr(result, "text", "") or "").strip()
+        if getattr(result, "success", False) and extracted_text:
+            return extracted_text
+        return _fallback_extract()
     except Exception:
-        return ""
+        return _fallback_extract()
     finally:
         if temp_path is not None:
             try:
@@ -1609,19 +1729,36 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
     if not _is_pdf_candidate_url(url):
         return None
 
+    response = None
     try:
         response = requests.get(
             url,
             timeout=35,
             headers=_pdf_request_headers(url),
         )
-        response.raise_for_status()
     except Exception:
+        response = None
+
+    content_type = str(getattr(response, "headers", {}).get("content-type") or "").lower()
+    body = getattr(response, "content", b"") or b""
+    head = body[:1024].decode("latin1", errors="ignore")
+    used_browser_download = False
+
+    if response is None or _looks_like_browser_challenge(
+        status_code=int(getattr(response, "status_code", 599) or 599),
+        content_type=content_type,
+        head=head,
+    ):
+        downloaded = await _download_document_bytes_via_playwright(url)
+        if downloaded is None:
+            return None
+        body = downloaded.get("body") or b""
+        content_type = str(downloaded.get("content_type") or "").lower()
+        head = body[:1024].decode("latin1", errors="ignore")
+        used_browser_download = True
+    elif int(getattr(response, "status_code", 599) or 599) >= 400:
         return None
 
-    content_type = str(response.headers.get("content-type") or "").lower()
-    body = response.content or b""
-    head = body[:1024].decode("latin1", errors="ignore")
     if not body:
         return None
     if content_type.startswith("text/html") and _BAD_DISCOVERY_TEXT_RE.search(head):
@@ -1641,8 +1778,10 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
         html="",
         links=[],
         success=True,
-        method_used="pdf_processor",
-        extraction_provenance={"method": "pdf_processor"},
+        method_used="pdf_processor_playwright_download" if used_browser_download else "pdf_processor",
+        extraction_provenance={
+            "method": "pdf_processor_playwright_download" if used_browser_download else "pdf_processor"
+        },
     )
 
 
@@ -1650,19 +1789,36 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
     if not _is_rtf_candidate_url(url):
         return None
 
+    response = None
     try:
         response = requests.get(
             url,
             timeout=35,
             headers=_pdf_request_headers(url),
         )
-        response.raise_for_status()
     except Exception:
+        response = None
+
+    content_type = str(getattr(response, "headers", {}).get("content-type") or "").lower()
+    body = getattr(response, "content", b"") or b""
+    head = body[:1024].decode("latin1", errors="ignore")
+    used_browser_download = False
+
+    if response is None or _looks_like_browser_challenge(
+        status_code=int(getattr(response, "status_code", 599) or 599),
+        content_type=content_type,
+        head=head,
+    ):
+        downloaded = await _download_document_bytes_via_playwright(url)
+        if downloaded is None:
+            return None
+        body = downloaded.get("body") or b""
+        content_type = str(downloaded.get("content_type") or "").lower()
+        head = body[:1024].decode("latin1", errors="ignore")
+        used_browser_download = True
+    elif int(getattr(response, "status_code", 599) or 599) >= 400:
         return None
 
-    content_type = str(response.headers.get("content-type") or "").lower()
-    body = response.content or b""
-    head = body[:1024].decode("latin1", errors="ignore")
     if not body:
         return None
     if "rtf" not in content_type and not _RTF_CONTENT_PREFIX_RE.search(head):
@@ -1680,8 +1836,10 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
         html="",
         links=[],
         success=True,
-        method_used="rtf_processor",
-        extraction_provenance={"method": "rtf_processor"},
+        method_used="rtf_processor_playwright_download" if used_browser_download else "rtf_processor",
+        extraction_provenance={
+            "method": "rtf_processor_playwright_download" if used_browser_download else "rtf_processor"
+        },
     )
 
 

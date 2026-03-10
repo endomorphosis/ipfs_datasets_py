@@ -716,6 +716,89 @@ async def test_extract_text_from_rtf_bytes_uses_repo_rtf_processor(monkeypatch: 
 
 
 @pytest.mark.asyncio
+async def test_extract_text_from_rtf_bytes_falls_back_without_striprtf(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeRTFResult:
+        success = False
+        text = ""
+
+    class FakeRTFExtractor:
+        def extract(self, file_path):
+            return FakeRTFResult()
+
+    monkeypatch.setattr(file_converter_module, "RTFExtractor", FakeRTFExtractor)
+
+    extracted = await scraper_module._extract_text_from_rtf_bytes_with_processor(
+        b"{\\rtf1\\ansi R1-1-101.\\par Authority and definitions.}",
+        source_url="https://example.gov/rules/current.rtf",
+    )
+
+    assert "R1-1-101." in extracted
+    assert "Authority and definitions." in extracted
+
+
+@pytest.mark.asyncio
+async def test_scrape_pdf_candidate_url_uses_playwright_download_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        status_code = 403
+        headers = {"content-type": "text/html; charset=UTF-8"}
+        content = b"<!DOCTYPE html><html><head><title>Just a moment...</title></head></html>"
+
+    async def fake_download(url: str):
+        return {
+            "body": b"%PDF-1.4 fake pdf bytes",
+            "content_type": "application/pdf",
+            "suggested_filename": "1-01.pdf",
+        }
+
+    async def fake_extract(pdf_bytes: bytes, *, source_url: str):
+        assert pdf_bytes.startswith(b"%PDF-")
+        return "R1-1-101. Purpose. Authority and definitions."
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: FakeResponse())
+    monkeypatch.setattr(scraper_module, "_download_document_bytes_via_playwright", fake_download)
+    monkeypatch.setattr(scraper_module, "_extract_text_from_pdf_bytes_with_processor", fake_extract)
+
+    scraped = await scraper_module._scrape_pdf_candidate_url_with_processor(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+    )
+
+    assert scraped is not None
+    assert scraped.method_used == "pdf_processor_playwright_download"
+    assert "Authority and definitions." in scraped.text
+
+
+@pytest.mark.asyncio
+async def test_scrape_rtf_candidate_url_uses_playwright_download_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        status_code = 403
+        headers = {"content-type": "text/html; charset=UTF-8"}
+        content = b"<!DOCTYPE html><html><head><title>Just a moment...</title></head></html>"
+
+    async def fake_download(url: str):
+        return {
+            "body": b"{\\rtf1\\ansi R1-1-101.\\par Authority and definitions.}",
+            "content_type": "application/rtf",
+            "suggested_filename": "1-01.rtf",
+        }
+
+    async def fake_extract(rtf_bytes: bytes, *, source_url: str):
+        assert b"\\rtf1" in rtf_bytes
+        return "R1-1-101. Authority and definitions."
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: FakeResponse())
+    monkeypatch.setattr(scraper_module, "_download_document_bytes_via_playwright", fake_download)
+    monkeypatch.setattr(scraper_module, "_extract_text_from_rtf_bytes_with_processor", fake_extract)
+
+    scraped = await scraper_module._scrape_rtf_candidate_url_with_processor(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.rtf"
+    )
+
+    assert scraped is not None
+    assert scraped.method_used == "rtf_processor_playwright_download"
+    assert "Authority and definitions." in scraped.text
+
+
+@pytest.mark.asyncio
 async def test_scrape_utah_rule_detail_via_public_download_uses_html_attachment(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeResponse:
         def __init__(self, *, status_code=200, headers=None, text="", json_data=None, content=b""):
