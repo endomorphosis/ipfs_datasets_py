@@ -8,6 +8,7 @@ administrative rules/codes.
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 from html import unescape
 import json
 import logging
@@ -190,7 +191,7 @@ _UT_NON_SUBSTANTIVE_INDEX_PATH_RE = re.compile(
 
 _UT_BULLETIN_PDF_PATH_RE = re.compile(r"^/wp-content/uploads/b\d{8}\.pdf$", re.IGNORECASE)
 
-_AZ_OFFICIAL_PDF_PATH_RE = re.compile(r"^/public_services/Title_\d{2}/\d+-\d+\.pdf$", re.IGNORECASE)
+_AZ_OFFICIAL_DOCUMENT_PATH_RE = re.compile(r"^/public_services/Title_\d{2}/\d+-\d+\.(?:pdf|rtf)$", re.IGNORECASE)
 
 _TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE = re.compile(
     r"(?:^|[?&])interface=(?:VIEW_TAC|SEARCH_TAC)(?:[&#]|$)",
@@ -266,6 +267,7 @@ _SD_RULE_INDEX_ROW_RE = re.compile(r"\b\d{2}:\d{2}\b")
 _MT_RULE_INDEX_ROW_RE = re.compile(r"\bTitle\s+\d+\b", re.IGNORECASE)
 
 _PDF_BINARY_HEADER_RE = re.compile(r"^\s*%PDF-\d\.\d", re.IGNORECASE)
+_RTF_CONTENT_PREFIX_RE = re.compile(r"^\s*\{\\rtf", re.IGNORECASE)
 
 _PDF_BINARY_TOKEN_RE = re.compile(
     r"\b\d+\s+\d+\s+obj\b|endobj|xref|trailer|startxref|/Filter\b|/Length\b",
@@ -305,8 +307,19 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://iar.iga.in.gov/code/current/16/2",
         "https://iar.iga.in.gov/code/current/16/4",
         "https://iar.iga.in.gov/code/current/25/1.1",
+        "https://iar.iga.in.gov/code/current/25/1.5",
         "https://iar.iga.in.gov/code/current/25/7",
         "https://iar.iga.in.gov/code/current/31/1",
+        "https://iar.iga.in.gov/code/current/35/1.1",
+        "https://iar.iga.in.gov/code/current/35/1.3",
+        "https://iar.iga.in.gov/code/current/35/14.1",
+        "https://iar.iga.in.gov/code/current/45/1.1",
+        "https://iar.iga.in.gov/code/current/45/2.1",
+        "https://iar.iga.in.gov/code/current/45/2.2",
+        "https://iar.iga.in.gov/code/current/45/3.1",
+        "https://iar.iga.in.gov/code/current/45/4.1",
+        "https://iar.iga.in.gov/code/current/45/8.1",
+        "https://iar.iga.in.gov/code/current/50/2.1",
         "https://iar.iga.in.gov/register",
         "https://iar.iga.in.gov/sitemap.xml",
         "https://iar.iga.in.gov/iac//",
@@ -381,6 +394,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.sd.gov/",
         "https://rules.sd.gov/default.aspx",
         "https://sdlegislature.gov/Rules/Administrative",
+        "https://sdlegislature.gov/Rules/Administrative/01:15",
+        "https://sdlegislature.gov/Rules/Administrative/02:01",
+        "https://sdlegislature.gov/Rules/Administrative/02:02",
+        "https://sdlegislature.gov/Rules/Administrative/02:03",
+        "https://sdlegislature.gov/Rules/Administrative/02:04",
+        "https://sdlegislature.gov/Rules/Administrative/05:01",
     ],
     "TX": [
         "https://www.sos.state.tx.us/tac/index.shtml",
@@ -829,7 +848,7 @@ def _score_candidate_url(url: str) -> int:
         score += 8
     if host == "rules.utah.gov" and _UT_NON_RULE_NEWS_PATH_RE.search(path):
         score -= 6
-    if host == "apps.azsos.gov" and _AZ_OFFICIAL_PDF_PATH_RE.search(path):
+    if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         score += 8
     return score
 
@@ -857,7 +876,7 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score += 8
     if host == "rules.utah.gov" and _UT_NON_RULE_NEWS_PATH_RE.search(path):
         score -= 6
-    if host == "apps.azsos.gov" and _AZ_OFFICIAL_PDF_PATH_RE.search(path):
+    if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         score += 8
     if re.search(r"/code/(?:current|2006)/\d+/\d+(?:\.\d+)?", lower_url):
         score += 4
@@ -900,6 +919,26 @@ def _seed_expansion_backlog_is_ready(seed_expansion_candidates: List[tuple[str, 
     # surfaces. Keep the floor above trivial noise, but scale more gently.
     threshold = max(3, min(8, max(1, int(max_fetch)) * 2))
     return len(unique_keys) >= threshold
+
+
+def _is_direct_detail_candidate_url(url: str) -> bool:
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
+    if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
+        return True
+    if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
+        return True
+    return False
+
+
+def _direct_detail_candidate_backlog_is_ready(candidate_urls: List[str], max_fetch: int) -> bool:
+    detail_candidates = [
+        (url, _score_candidate_url(url))
+        for url in candidate_urls
+        if _is_direct_detail_candidate_url(url)
+    ]
+    return _seed_expansion_backlog_is_ready(detail_candidates, max_fetch)
 
 
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
@@ -1272,6 +1311,11 @@ def _is_pdf_candidate_url(url: str) -> bool:
     return value.endswith(".pdf") or ".pdf?" in value
 
 
+def _is_rtf_candidate_url(url: str) -> bool:
+    value = str(url or "").strip().lower()
+    return value.endswith(".rtf") or ".rtf?" in value
+
+
 def _utah_rule_reference_from_url(url: str) -> str:
     parsed = urlparse(str(url or "").strip())
     path = unquote(parsed.path or "")
@@ -1465,6 +1509,18 @@ def _title_from_extracted_pdf_text(*, text: str, url: str) -> str:
     return stem[:240] if stem else str(url or "").strip()[:240]
 
 
+def _title_from_extracted_rtf_text(*, text: str, url: str) -> str:
+    return _title_from_extracted_pdf_text(text=text, url=url)
+
+
+def _document_format_for_url(url: str) -> str:
+    if _is_pdf_candidate_url(url):
+        return "pdf"
+    if _is_rtf_candidate_url(url):
+        return "rtf"
+    return "html"
+
+
 async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, source_url: str) -> str:
     if not pdf_bytes:
         return ""
@@ -1519,6 +1575,36 @@ async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, sourc
                 pass
 
 
+async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, source_url: str) -> str:
+    if not rtf_bytes:
+        return ""
+
+    try:
+        from ipfs_datasets_py.processors.file_converter import RTFExtractor
+    except Exception:
+        return ""
+
+    temp_path: Optional[Path] = None
+    try:
+        with NamedTemporaryFile(suffix=".rtf", delete=False) as handle:
+            handle.write(rtf_bytes)
+            temp_path = Path(handle.name)
+
+        extractor = RTFExtractor()
+        result = await asyncio.to_thread(extractor.extract, temp_path)
+        if not getattr(result, "success", False):
+            return ""
+        return str(getattr(result, "text", "") or "").strip()
+    except Exception:
+        return ""
+    finally:
+        if temp_path is not None:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+
 async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
     if not _is_pdf_candidate_url(url):
         return None
@@ -1557,6 +1643,45 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
         success=True,
         method_used="pdf_processor",
         extraction_provenance={"method": "pdf_processor"},
+    )
+
+
+async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
+    if not _is_rtf_candidate_url(url):
+        return None
+
+    try:
+        response = requests.get(
+            url,
+            timeout=35,
+            headers=_pdf_request_headers(url),
+        )
+        response.raise_for_status()
+    except Exception:
+        return None
+
+    content_type = str(response.headers.get("content-type") or "").lower()
+    body = response.content or b""
+    head = body[:1024].decode("latin1", errors="ignore")
+    if not body:
+        return None
+    if "rtf" not in content_type and not _RTF_CONTENT_PREFIX_RE.search(head):
+        return None
+
+    extracted_text = await _extract_text_from_rtf_bytes_with_processor(body, source_url=url)
+    extracted_text = str(extracted_text or "").strip()
+    if not extracted_text:
+        return None
+
+    return SimpleNamespace(
+        url=url,
+        title=_title_from_extracted_rtf_text(text=extracted_text, url=url),
+        text=extracted_text,
+        html="",
+        links=[],
+        success=True,
+        method_used="rtf_processor",
+        extraction_provenance={"method": "rtf_processor"},
     )
 
 
@@ -1780,8 +1905,9 @@ async def _agentic_discover_admin_state_blocks(
 ) -> Dict[str, Any]:
     try:
         from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import LegalWebArchiveSearch
+        from ipfs_datasets_py.processors.legal_scrapers.parallel_web_archiver import ParallelWebArchiver
         try:
-            from ..web_archiving.contracts import OperationMode, UnifiedSearchRequest
+            from ..web_archiving.contracts import OperationMode, UnifiedFetchRequest, UnifiedSearchRequest
             from ..web_archiving.unified_api import UnifiedWebArchivingAPI
             from ..web_archiving.unified_web_scraper import (
                 ScraperConfig,
@@ -1789,7 +1915,7 @@ async def _agentic_discover_admin_state_blocks(
                 UnifiedWebScraper,
             )
         except Exception:
-            from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedSearchRequest
+            from ipfs_datasets_py.processors.web_archiving.contracts import OperationMode, UnifiedFetchRequest, UnifiedSearchRequest
             from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
             from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
                 ScraperConfig,
@@ -1840,6 +1966,7 @@ async def _agentic_discover_admin_state_blocks(
     unified_api = UnifiedWebArchivingAPI(scraper=scraper)
     live_fetch_api = UnifiedWebArchivingAPI(scraper=UnifiedWebScraper(live_cfg))
     direct_fetch_api = UnifiedWebArchivingAPI()
+    parallel_archiver = ParallelWebArchiver(max_concurrent=max(1, int(fetch_concurrency)), timeout=25)
     legal_archive = LegalWebArchiveSearch(auto_archive=False, use_hf_indexes=True)
 
     blocks: List[Dict[str, Any]] = []
@@ -1931,6 +2058,8 @@ async def _agentic_discover_admin_state_blocks(
         candidate_urls.extend(seed_urls)
         candidate_urls.extend(_template_admin_urls_for_state(state_code))
 
+        utah_api_rule_urls: List[str] = []
+
         # Utah's public search API already exposes canonical detail-page URLs.
         # Seed them immediately so bounded runs can hit substantive rule pages
         # without waiting for slower search/index fetches to expand first.
@@ -1941,77 +2070,84 @@ async def _agentic_discover_admin_state_blocks(
                     limit=24,
                 ):
                     candidate_urls.append(rule_url)
+                    utah_api_rule_urls.append(rule_url)
                     source_breakdown["utah_public_api"] = int(source_breakdown.get("utah_public_api", 0)) + 1
+
+        direct_detail_ready = bool(utah_api_rule_urls) or _direct_detail_candidate_backlog_is_ready(
+            candidate_urls,
+            max_fetch=max_fetch_per_state,
+        )
 
         # Curated seeds often already expose substantive rule pages or article/part
         # links. Prefetch them before broad agentic discovery so states like Indiana
         # and Rhode Island can short-circuit expensive exploration when the official
         # entrypoints are already sufficient.
-        preseed_signal = False
-        for seed_url in seed_urls[:6]:
-            host = urlparse(seed_url).netloc
-            fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
-            try:
-                fetched = await asyncio.wait_for(
-                    asyncio.to_thread(
-                        fetch_api.fetch,
-                        UnifiedFetchRequest(
-                            url=seed_url,
-                            timeout_seconds=35,
-                            mode=OperationMode.BALANCED,
-                            domain=".gov" if host.endswith(".gov") else "legal",
+        preseed_signal = direct_detail_ready
+        if not direct_detail_ready:
+            for seed_url in seed_urls[:6]:
+                host = urlparse(seed_url).netloc
+                fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
+                try:
+                    fetched = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            fetch_api.fetch,
+                            UnifiedFetchRequest(
+                                url=seed_url,
+                                timeout_seconds=35,
+                                mode=OperationMode.BALANCED,
+                                domain=".gov" if host.endswith(".gov") else "legal",
+                            ),
                         ),
-                    ),
-                    timeout=40.0,
-                )
-                fetched_doc = getattr(fetched, "document", None)
-                fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
-                fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
-                fetched_html = str(getattr(fetched_doc, "html", "") or "")
-                seed_is_substantive = _is_substantive_rule_text(
-                    text=fetched_text,
-                    title=fetched_title,
-                    url=seed_url,
-                    min_chars=min_full_text_chars,
-                )
-                seed_is_relaxed = relaxed_recovery and _is_relaxed_recovery_text(
-                    text=fetched_text,
-                    title=fetched_title,
-                    url=seed_url,
-                )
-                inventory_seed = _looks_like_rule_inventory_page(
-                    text=fetched_text,
-                    title=fetched_title,
-                    url=seed_url,
-                )
-
-                if seed_is_substantive or seed_is_relaxed or inventory_seed:
-                    preseed_signal = True
-                    source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
-
-                if inventory_seed:
-                    for rule_url in _candidate_montana_rule_urls_from_text(
+                        timeout=40.0,
+                    )
+                    fetched_doc = getattr(fetched, "document", None)
+                    fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
+                    fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
+                    fetched_html = str(getattr(fetched_doc, "html", "") or "")
+                    seed_is_substantive = _is_substantive_rule_text(
                         text=fetched_text,
+                        title=fetched_title,
                         url=seed_url,
-                        limit=24,
-                    ):
-                        candidate_urls.append(rule_url)
-                    for link_url in _candidate_links_from_html(
-                        fetched_html,
-                        base_host=host,
-                        page_url=seed_url,
-                        limit=24,
-                        allowed_hosts=allowed_hosts,
-                    ):
-                        if _score_candidate_url(link_url) > 0:
-                            candidate_urls.append(link_url)
-                    for rule_url in _candidate_utah_rule_urls_from_public_api(
+                        min_chars=min_full_text_chars,
+                    )
+                    seed_is_relaxed = relaxed_recovery and _is_relaxed_recovery_text(
+                        text=fetched_text,
+                        title=fetched_title,
                         url=seed_url,
-                        limit=24,
-                    ):
-                        candidate_urls.append(rule_url)
-            except Exception:
-                pass
+                    )
+                    inventory_seed = _looks_like_rule_inventory_page(
+                        text=fetched_text,
+                        title=fetched_title,
+                        url=seed_url,
+                    )
+
+                    if seed_is_substantive or seed_is_relaxed or inventory_seed:
+                        preseed_signal = True
+                        source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
+
+                    if inventory_seed:
+                        for rule_url in _candidate_montana_rule_urls_from_text(
+                            text=fetched_text,
+                            url=seed_url,
+                            limit=24,
+                        ):
+                            candidate_urls.append(rule_url)
+                        for link_url in _candidate_links_from_html(
+                            fetched_html,
+                            base_host=host,
+                            page_url=seed_url,
+                            limit=24,
+                            allowed_hosts=allowed_hosts,
+                        ):
+                            if _score_candidate_url(link_url) > 0:
+                                candidate_urls.append(link_url)
+                        for rule_url in _candidate_utah_rule_urls_from_public_api(
+                            url=seed_url,
+                            limit=24,
+                        ):
+                            candidate_urls.append(rule_url)
+                except Exception:
+                    pass
 
         discovered: Dict[str, Any] = {}
         if not preseed_signal:
@@ -2057,10 +2193,18 @@ async def _agentic_discover_admin_state_blocks(
         statutes: List[Dict[str, Any]] = []
         direct_doc_urls: set[str] = set()
         seed_expansion_candidates: List[tuple[str, int]] = []
+        rules_by_host: Dict[str, int] = defaultdict(int)
+        format_counts: Dict[str, int] = {"html": 0, "pdf": 0, "rtf": 0}
+        visited_hosts: set[str] = set()
+        parallel_prefetch_attempted = 0
+        parallel_prefetch_succeeded = 0
+        parallel_prefetch_rule_hits = 0
         max_fetch = max(1, int(max_fetch_per_state))
         min_text_chars = max(140, int(min_full_text_chars // 2))
         if require_substantive_text:
             min_text_chars = max(220, int(min_full_text_chars))
+        effective_fetch_concurrency = max(1, int(fetch_concurrency))
+        preloop_budget_deadline = state_start + max(12.0, min(45.0, per_state_budget_s * 0.25))
 
         async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
             if not doc_url.startswith(("http://", "https://")):
@@ -2079,6 +2223,12 @@ async def _agentic_discover_admin_state_blocks(
             if doc_key in direct_doc_urls:
                 return False
             direct_doc_urls.add(doc_key)
+            host_value = urlparse(doc_url).netloc.lower()
+            if host_value:
+                visited_hosts.add(host_value)
+                rules_by_host[host_value] += 1
+            doc_format = _document_format_for_url(doc_url)
+            format_counts[doc_format] = int(format_counts.get(doc_format, 0)) + 1
 
             section_number = f"A{len(statutes) + 1}"
             section_name = doc_title or f"{state_name} Administrative Rules (agentic source {len(statutes) + 1})"
@@ -2121,9 +2271,104 @@ async def _agentic_discover_admin_state_blocks(
             )
             return True
 
+        prefetch_candidates = [
+            url
+            for url, score in ranked_urls
+            if int(score) > 0 and _url_key(url) not in direct_doc_urls
+        ][: max(2, min(max_candidates_per_state, max_fetch * 3, effective_fetch_concurrency * 4))]
+
+        if prefetch_candidates and time.monotonic() < preloop_budget_deadline:
+            parallel_prefetch_attempted = len(prefetch_candidates)
+            try:
+                archived_results = await asyncio.wait_for(
+                    parallel_archiver.archive_urls_parallel(prefetch_candidates),
+                    timeout=min(35.0, 8.0 + float(len(prefetch_candidates)) * 2.0),
+                )
+            except Exception:
+                archived_results = []
+
+            for archived in archived_results:
+                if len(statutes) >= max_fetch:
+                    break
+                if not getattr(archived, "success", False):
+                    continue
+                archived_url = str(getattr(archived, "url", "") or "").strip()
+                archived_content = str(getattr(archived, "content", "") or "").strip()
+                archived_source = str(getattr(archived, "source", "") or "parallel_archive")
+                if not archived_url or not archived_content:
+                    continue
+                parallel_prefetch_succeeded += 1
+                source_breakdown["parallel_archive_prefetch"] = int(source_breakdown.get("parallel_archive_prefetch", 0)) + 1
+                archived_title = _title_from_extracted_pdf_text(text=archived_content, url=archived_url)
+                accepted_prefetch = await _append_document_if_rule(
+                    archived_url,
+                    archived_title,
+                    archived_content,
+                    archived_source,
+                )
+                if accepted_prefetch:
+                    parallel_prefetch_rule_hits += 1
+                if _looks_like_rule_inventory_page(text=archived_content, title=archived_title, url=archived_url):
+                    archived_host = urlparse(archived_url).netloc
+                    for link_url in _candidate_links_from_html(
+                        archived_content,
+                        base_host=archived_host,
+                        page_url=archived_url,
+                        limit=16,
+                        allowed_hosts=allowed_hosts,
+                    ):
+                        link_score = _score_candidate_url(link_url)
+                        if link_score <= 0:
+                            continue
+                        seed_expansion_candidates.append((link_url, link_score + 1))
+                        expanded_urls += 1
+
+        prioritized_utah_seed_rule_urls: List[str] = []
+        if state_code == "UT" and utah_api_rule_urls:
+            seen_utah_rule_keys: set[str] = set()
+            for rule_url in utah_api_rule_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_utah_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_utah_rule_keys.add(rule_key)
+                prioritized_utah_seed_rule_urls.append(rule_url)
+                if len(prioritized_utah_seed_rule_urls) >= min(max_fetch, 8):
+                    break
+
+        for rule_url in prioritized_utah_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            try:
+                utah_scraped = await asyncio.wait_for(
+                    _scrape_utah_rule_detail_via_public_download(rule_url),
+                    timeout=25.0,
+                )
+            except Exception:
+                utah_scraped = None
+            if utah_scraped is None:
+                continue
+
+            utah_text = str(getattr(utah_scraped, "text", "") or "").strip()
+            utah_title = str(getattr(utah_scraped, "title", "") or "").strip()
+            utah_provenance = getattr(utah_scraped, "extraction_provenance", None) or {}
+            utah_method_value = None
+            if isinstance(utah_provenance, dict):
+                utah_method_value = utah_provenance.get("method")
+            if utah_method_value is None:
+                utah_method_value = getattr(utah_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, utah_title, utah_text, utah_method_value)
+
         # Give curated/official entrypoints one deterministic direct fetch pass.
         for seed_url in seed_urls[:6]:
             if len(statutes) >= max(1, int(max_fetch_per_state)):
+                break
+            if time.monotonic() >= preloop_budget_deadline:
                 break
             if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
                 break
@@ -2333,8 +2578,6 @@ async def _agentic_discover_admin_state_blocks(
         }
         prioritized_seed_keys = {_url_key(url) for url in seed_urls}
 
-        effective_fetch_concurrency = max(1, int(fetch_concurrency))
-
         async def _scrape_candidate_url(url: str):
             utah_scraped = await _scrape_utah_rule_detail_via_public_download(url)
             if utah_scraped is not None:
@@ -2342,6 +2585,9 @@ async def _agentic_discover_admin_state_blocks(
             pdf_scraped = await _scrape_pdf_candidate_url_with_processor(url)
             if pdf_scraped is not None:
                 return pdf_scraped
+            rtf_scraped = await _scrape_rtf_candidate_url_with_processor(url)
+            if rtf_scraped is not None:
+                return rtf_scraped
             host = urlparse(url).netloc
             active_scraper = live_scraper if (_url_key(url) in prioritized_seed_keys or host in base_hosts) else scraper
             return await active_scraper.scrape(url)
@@ -2586,6 +2832,32 @@ async def _agentic_discover_admin_state_blocks(
             "inspected_urls": int(inspected_urls),
             "expanded_urls": int(expanded_urls),
             "fetched_rules": len(statutes),
+            "format_counts": dict(format_counts),
+            "domains_seen": sorted(visited_hosts),
+            "parallel_prefetch": {
+                "attempted": int(parallel_prefetch_attempted),
+                "successful": int(parallel_prefetch_succeeded),
+                "rule_hits": int(parallel_prefetch_rule_hits),
+            },
+            "gap_summary": {
+                "seed_hosts": sorted({urlparse(url).netloc.lower() for url in seed_urls if urlparse(url).netloc}),
+                "candidate_hosts": sorted({urlparse(url).netloc.lower() for url, _score in ranked_urls if urlparse(url).netloc}),
+                "rule_hosts": sorted([host for host, count in rules_by_host.items() if int(count) > 0]),
+                "missing_seed_hosts": sorted(
+                    {
+                        urlparse(url).netloc.lower()
+                        for url in seed_urls
+                        if urlparse(url).netloc and urlparse(url).netloc.lower() not in visited_hosts
+                    }
+                ),
+                "candidate_hosts_without_rules": sorted(
+                    {
+                        urlparse(url).netloc.lower()
+                        for url, _score in ranked_urls
+                        if urlparse(url).netloc and rules_by_host.get(urlparse(url).netloc.lower(), 0) == 0
+                    }
+                )[:12],
+            },
             "source_breakdown": source_breakdown,
             "timed_out": bool((time.monotonic() - state_start) >= per_state_budget_s),
         }
