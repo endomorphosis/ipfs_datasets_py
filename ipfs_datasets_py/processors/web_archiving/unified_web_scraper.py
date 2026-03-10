@@ -116,10 +116,13 @@ class ScraperConfig:
     common_crawl_year_db: Optional[str] = None
     common_crawl_collection_db: Optional[str] = None
     common_crawl_year: Optional[str] = None
-    common_crawl_hf_remote_meta: Optional[bool] = None
+    # Prefer HF remote SQL/row-group search by default, then fallback to local disk indexes.
+    common_crawl_hf_remote_meta: Optional[bool] = True
     common_crawl_hf_meta_index_dataset: Optional[str] = None
     common_crawl_hf_pointer_dataset: Optional[str] = None
     common_crawl_hf_revision: Optional[str] = None
+    common_crawl_hf_retry_attempts: int = 3
+    common_crawl_hf_retry_backoff_seconds: float = 2.0
     common_crawl_max_matches: int = 25
     common_crawl_max_parquet_files: int = 200
     common_crawl_per_parquet_limit: int = 2000
@@ -300,7 +303,7 @@ class UnifiedWebScraper:
         return sorted((p.expanduser().resolve() for p in matches if p.exists()), reverse=True)[0]
 
     def _resolve_common_crawl_search_options(self, *, max_matches: int) -> tuple[Dict[str, Any], str, bool]:
-        """Resolve local Common Crawl paths and HF remote fallback policy."""
+        """Resolve Common Crawl options with HF-remote-first policy and local fallback."""
         year = self.config.common_crawl_year or (os.environ.get("COMMON_CRAWL_YEAR") or "").strip() or None
 
         parquet_root = self._existing_path(
@@ -360,9 +363,11 @@ class UnifiedWebScraper:
                 "COMMON_CRAWL_HF_REMOTE_META",
                 "HF_REMOTE_META",
             )
+        if hf_remote_meta is None:
+            hf_remote_meta = True
         hf_remote_requested = bool(hf_remote_meta)
-        hf_remote_auto = hf_remote_meta is None and meta_mode == "none"
-        hf_remote_fallback_allowed = hf_remote_requested or meta_mode in {"none", "collection"}
+        hf_remote_auto = False
+        hf_remote_fallback_allowed = True
 
         search_options: Dict[str, Any] = {
             "parquet_root": parquet_root if parquet_root is not None else Path("/storage/ccindex_parquet"),
@@ -394,7 +399,7 @@ class UnifiedWebScraper:
         return search_options, meta_mode, hf_remote_fallback_allowed
 
     def _search_common_crawl_records(self, ccapi: Any, url: str, *, max_matches: int):
-        """Search Common Crawl locally first, then retry with HF remote meta when needed."""
+        """Search Common Crawl via HF remote first, then fallback to local disk indexes."""
         search_options, meta_mode, hf_remote_enabled = self._resolve_common_crawl_search_options(
             max_matches=max_matches
         )
@@ -402,15 +407,67 @@ class UnifiedWebScraper:
         def _run(options: Dict[str, Any]):
             return ccapi.search_domain_via_meta_indexes(url, **options)
 
-        if bool(search_options.get("hf_remote_meta")) and meta_mode == "none":
-            return _run(search_options), True
+        def _is_hf_rate_limit_error(exc: Exception) -> bool:
+            msg = str(exc).lower()
+            return (
+                " 429" in msg
+                or "http 429" in msg
+                or "too many requests" in msg
+                or "rate limit" in msg
+            )
+
+        def _run_remote_with_backoff(options: Dict[str, Any]):
+            attempts = max(1, int(self.config.common_crawl_hf_retry_attempts))
+            backoff = max(0.0, float(self.config.common_crawl_hf_retry_backoff_seconds))
+            last_exc: Optional[Exception] = None
+            for attempt in range(1, attempts + 1):
+                try:
+                    return _run(options)
+                except Exception as exc:
+                    last_exc = exc
+                    if attempt >= attempts or not _is_hf_rate_limit_error(exc):
+                        raise
+                    delay = backoff * attempt
+                    logger.warning(
+                        "Common Crawl HF remote rate-limited (attempt %s/%s); retrying in %.1fs",
+                        attempt,
+                        attempts,
+                        delay,
+                    )
+                    time.sleep(delay)
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError("HF remote search retry loop exited unexpectedly")
+
+        if bool(search_options.get("hf_remote_meta")):
+            remote_options = dict(search_options)
+            remote_options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                }
+            )
+            try:
+                remote_result = _run_remote_with_backoff(remote_options)
+                remote_records = list(getattr(remote_result, "records", []) or [])
+                if remote_records or meta_mode == "none":
+                    return remote_result, True
+            except Exception as remote_error:
+                if meta_mode == "none":
+                    raise
+                logger.warning("Common Crawl HF remote search failed; falling back to local indexes: %s", remote_error)
+
+        local_options = dict(search_options)
+        local_options.update({"hf_remote_meta": False})
 
         try:
-            result = _run(search_options)
+            result = _run(local_options)
         except (FileNotFoundError, ValueError):
             if not hf_remote_enabled:
                 raise
-            remote_options = dict(search_options)
+            remote_options = dict(local_options)
             remote_options.update(
                 {
                     "master_db": None,
@@ -419,10 +476,10 @@ class UnifiedWebScraper:
                     "hf_remote_meta": True,
                 }
             )
-            return _run(remote_options), True
+            return _run_remote_with_backoff(remote_options), True
 
         if meta_mode == "collection" and hf_remote_enabled and not list(getattr(result, "records", []) or []):
-            remote_options = dict(search_options)
+            remote_options = dict(local_options)
             remote_options.update(
                 {
                     "master_db": None,
@@ -431,7 +488,7 @@ class UnifiedWebScraper:
                     "hf_remote_meta": True,
                 }
             )
-            return _run(remote_options), True
+            return _run_remote_with_backoff(remote_options), True
 
         return result, bool(search_options.get("hf_remote_meta"))
 

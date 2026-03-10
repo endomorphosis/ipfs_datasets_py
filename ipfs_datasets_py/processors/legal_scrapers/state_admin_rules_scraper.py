@@ -295,6 +295,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://azsos.gov/rules/",
         "https://azsos.gov/rules/arizona-administrative-register",
         "https://apps.azsos.gov/public_services/CodeTOC.htm",
+        "https://apps.azsos.gov/public_services/Index/",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
     ],
     "AK": [
         "https://www.akleg.gov/basis/aac.asp",
@@ -354,8 +357,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.iowa.gov/info/track-proposed-rules",
     ],
     "IN": [
+        "http://web.archive.org/web/20260120094721/https://iar.iga.in.gov/iac/irtoc.htm",
         "https://iar.iga.in.gov/code/current",
         "https://iar.iga.in.gov/code",
+        "https://iar.iga.in.gov/code/2024",
         "https://iar.iga.in.gov/code/2006",
         "https://iar.iga.in.gov/code/current/10/1.5",
         "https://iar.iga.in.gov/code/current/16/2",
@@ -377,6 +382,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://iar.iga.in.gov/register",
         "https://iar.iga.in.gov/sitemap.xml",
         "https://iar.iga.in.gov/iac//",
+        "https://iar.iga.in.gov/iac/",
+        "https://iar.iga.in.gov/iac/irtoc.htm",
+        "https://iar.iga.in.gov/search",
         "https://iga.in.gov/legislative/laws/iac/",
     ],
     "LA": [
@@ -387,7 +395,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.la.gov/OurOffice/FindAdministrativeRules/Pages/default.aspx",
     ],
     "MS": [
+        "https://sos.ms.gov/regulation-enforcement/administrative-code",
+        "https://www.sos.ms.gov/regulation-enforcement/administrative-code",
         "https://www.sos.ms.gov/adminsearch/Pages/default.aspx",
+        "https://www.sos.ms.gov/adminsearch/default.aspx",
         "https://www.sos.ms.gov/adminsearch/",
     ],
     "NH": [
@@ -403,20 +414,29 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/saf-c200.html",
         "https://gc.nh.gov/rules/state_agencies/",
         "https://gc.nh.gov/rules/",
+        "https://gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html",
         "https://www.gencourt.state.nh.us/rules/state_agencies/",
         "https://www.gencourt.state.nh.us/rules/",
     ],
     "NM": [
+        "http://web.archive.org/web/20260210051847/https://www.srca.nm.gov/nmac-home/",
+        "http://web.archive.org/web/20260210051847/https://www.srca.nm.gov/nmac-home/nmac-titles/",
         "https://www.srca.nm.gov/nmac-home/",
+        "https://www.srca.nm.gov/nmac-home/nmac-titles/",
+        "https://www.srca.nm.gov/nmac-home/explanation-of-the-new-mexico-administrative-code/",
         "https://www.srca.nm.gov/",
     ],
     "NY": [
         "https://dos.ny.gov/new-york-codes-rules-and-regulations-nycrr",
+        "https://dos.ny.gov/state-register",
+        "http://nyrules.elaws.us/nycrr",
         "https://govt.westlaw.com/nycrr",
     ],
     "OK": [
         "https://www.sos.ok.gov/rules/default.aspx",
         "https://www.sos.ok.gov/rules/",
+        "https://rules.ok.gov/",
+        "https://rules.ok.gov/code",
     ],
     "KS": [
         "https://www.sos.ks.gov/publications/kansas-administrative-regulations.html",
@@ -426,6 +446,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "MT": [
         "https://rules.mt.gov/",
+        "https://sosmt.gov/arm/",
+        "https://sosmt.gov/arm/secretary-of-state-administrative-rules/",
+        "https://sosmt.gov/?liquid-mega-menu=arm",
         "https://rules.mt.gov/browse/collections",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/ed446fdb-2d8d-4759-89ac-9cab3b21695c",
@@ -445,11 +468,15 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sosmt.gov/arm/rulemaking-resources/",
     ],
     "MI": [
+        "https://www.michigan.gov/lara/bureau-list/moahr/admin-rules",
         "https://ars.apps.lara.state.mi.us/AdminCode/AdminCode",
         "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306",
+        "http://mirules.elaws.us/search/allcode",
     ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
+        "https://rules.sos.ri.gov/Organizations",
+        "https://rules.sos.ri.gov/organizations/help/faq_gen-ricr",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-3",
@@ -471,6 +498,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "TX": [
         "https://www.sos.state.tx.us/tac/index.shtml",
+        "https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
+        "https://www.sos.state.tx.us/texreg/guides/view-search-TAC.pdf",
         "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC",
         "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=SEARCH_TAC",
         "https://www.sos.state.tx.us/texreg/index.shtml",
@@ -482,6 +511,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules",
         "https://rules.utah.gov/",
         "https://adminrules.utah.gov/",
+        "https://adminrules.utah.gov/public/search/c/Current+Rules",
+        "https://adminrules.utah.gov/public/rule/R590-190/Current+Rules",
         "https://rules.utah.gov/utah-administrative-code/",
         "https://rules.utah.gov/publications/administrative-rules-register/",
         "https://rules.utah.gov/publications/code-updates/",
@@ -493,13 +524,23 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://secure.vermont.gov/SOS/rules/rssFeed.php",
         "https://secure.vermont.gov/SOS/rules/display.php?r=1049",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
+        "https://sos.vermont.gov/secretary-of-state-services/apa-rules/notices-of-rulemaking/",
+        "https://aoa.vermont.gov/ICAR",
     ],
     "TN": [
+        "http://web.archive.org/web/20250819093146/https://publications.tnsosfiles.com/rules/",
         "https://publications.tnsosfiles.com/rules/",
+        "https://sos.tn.gov/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee",
+        "https://sos.tn.gov/publications/services/administrative-register",
+        "https://sharetngov.tnsosfiles.com/sos/rules/index.htm",
+        "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm",
         "https://www.tn.gov/sos/rules-and-regulations.html",
     ],
     "WY": [
+        "http://web.archive.org/web/20260207213344/https://rules.wyo.gov/",
+        "http://web.archive.org/web/20250917082256/https://rules.wyo.gov/Search.aspx",
         "https://rules.wyo.gov/",
+        "https://rules.wyo.gov/Help/Public/wyoming-administrative-rules-h.html",
         "https://rules.wyo.gov/Search.aspx",
     ],
 }
@@ -1556,15 +1597,20 @@ def _pdf_request_headers(url: str) -> Dict[str, str]:
     referer = f"{parsed.scheme}://{parsed.netloc}/" if parsed.scheme and parsed.netloc else ""
     if parsed.netloc.lower() == "apps.azsos.gov":
         referer = "https://apps.azsos.gov/public_services/CodeTOC.htm"
-    return {
-        "User-Agent": (
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/123.0 Safari/537.36"
-        ),
+    user_agent = str(os.getenv("IPFS_DATASETS_PY_DOC_REQUEST_USER_AGENT", "") or "").strip() or (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/123.0 Safari/537.36"
+    )
+    headers = {
+        "User-Agent": user_agent,
         "Accept": "application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
         "Referer": referer,
     }
+    cookie_header = str(os.getenv("IPFS_DATASETS_PY_DOC_REQUEST_COOKIE", "") or "").strip()
+    if cookie_header:
+        headers["Cookie"] = cookie_header
+    return headers
 
 
 def _looks_like_browser_challenge(*, status_code: int, content_type: str, head: str) -> bool:
@@ -1588,6 +1634,103 @@ def _playwright_persistent_profile_dir() -> Path:
     if configured:
         return Path(configured).expanduser()
     return Path.home() / ".cache" / "ipfs_datasets_py" / "playwright" / "state_admin_rules"
+
+
+def _playwright_storage_state_path() -> Optional[Path]:
+    configured = str(os.getenv("IPFS_DATASETS_PY_PLAYWRIGHT_STORAGE_STATE", "") or "").strip()
+    if not configured:
+        return None
+    return Path(configured).expanduser()
+
+
+def _playwright_cookie_header() -> str:
+    explicit = str(os.getenv("IPFS_DATASETS_PY_PLAYWRIGHT_COOKIE_HEADER", "") or "").strip()
+    if explicit:
+        return explicit
+    return str(os.getenv("IPFS_DATASETS_PY_DOC_REQUEST_COOKIE", "") or "").strip()
+
+
+def _playwright_cookies_from_header(url: str, cookie_header: str) -> List[Dict[str, Any]]:
+    parsed = urlparse(str(url or "").strip())
+    if not parsed.netloc:
+        return []
+    cookies: List[Dict[str, Any]] = []
+    for raw_part in str(cookie_header or "").split(";"):
+        part = raw_part.strip()
+        if not part or "=" not in part:
+            continue
+        name, value = part.split("=", 1)
+        name = name.strip()
+        if not name:
+            continue
+        cookies.append(
+            {
+                "name": name,
+                "value": value.strip(),
+                "domain": parsed.netloc,
+                "path": "/",
+                "secure": parsed.scheme == "https",
+                "httpOnly": False,
+            }
+        )
+    return cookies
+
+
+async def _apply_playwright_session_state(context: Any, page: Any, url: str) -> None:
+    cookies: List[Dict[str, Any]] = []
+
+    storage_state_path = _playwright_storage_state_path()
+    if storage_state_path and storage_state_path.exists():
+        try:
+            storage_state = json.loads(storage_state_path.read_text(encoding="utf-8"))
+        except Exception:
+            storage_state = None
+        if isinstance(storage_state, dict):
+            storage_cookies = storage_state.get("cookies") or []
+            if isinstance(storage_cookies, list):
+                cookies.extend(cookie for cookie in storage_cookies if isinstance(cookie, dict))
+
+    cookie_header = _playwright_cookie_header()
+    if cookie_header:
+        cookies.extend(_playwright_cookies_from_header(url, cookie_header))
+
+    if cookies:
+        try:
+            await context.add_cookies(cookies)
+        except Exception:
+            pass
+
+    if storage_state_path and storage_state_path.exists():
+        try:
+            storage_state = json.loads(storage_state_path.read_text(encoding="utf-8"))
+        except Exception:
+            storage_state = None
+        origins = storage_state.get("origins") if isinstance(storage_state, dict) else None
+        if isinstance(origins, list):
+            for origin_entry in origins:
+                if not isinstance(origin_entry, dict):
+                    continue
+                origin = str(origin_entry.get("origin") or "").strip()
+                local_storage = origin_entry.get("localStorage") or []
+                if not origin or not isinstance(local_storage, list):
+                    continue
+                try:
+                    await page.goto(origin, wait_until="domcontentloaded", timeout=15000)
+                    await page.evaluate(
+                        """
+                        (entries) => {
+                          for (const entry of entries) {
+                            if (!entry || typeof entry.name !== 'string') {
+                              continue;
+                            }
+                            localStorage.setItem(entry.name, String(entry.value ?? ''));
+                          }
+                        }
+                        """,
+                        local_storage,
+                    )
+                except Exception:
+                    continue
 
 
 def _download_document_bytes_via_cloudscraper(url: str) -> Optional[Dict[str, Any]]:
@@ -1682,87 +1825,100 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
         return None
 
     referer = _pdf_request_headers(url).get("Referer") or ""
-    browser_user_agent = (
+    browser_user_agent = _pdf_request_headers(url).get("User-Agent") or (
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/123.0 Safari/537.36"
     )
 
-    try:
-        async with async_playwright() as p:
-            browser = None
-            if _use_persistent_playwright_profile():
-                profile_dir = _playwright_persistent_profile_dir()
-                profile_dir.mkdir(parents=True, exist_ok=True)
-                context = await p.chromium.launch_persistent_context(
-                    user_data_dir=str(profile_dir),
-                    headless=_playwright_headless_enabled(),
-                    accept_downloads=True,
-                    user_agent=browser_user_agent,
-                    locale="en-US",
-                    viewport={"width": 1440, "height": 900},
-                )
-                page = context.pages[0] if context.pages else await context.new_page()
-            else:
-                browser = await p.chromium.launch(headless=_playwright_headless_enabled())
-                context = await browser.new_context(
-                    accept_downloads=True,
-                    user_agent=browser_user_agent,
-                    locale="en-US",
-                    viewport={"width": 1440, "height": 900},
-                )
-                page = await context.new_page()
-            try:
-                download = None
-                if referer and referer != url:
-                    try:
-                        await page.goto(referer, wait_until="domcontentloaded", timeout=30000)
-                        await page.wait_for_timeout(500)
-                    except Exception:
-                        pass
-
-                link_selector = f'a[href="{url}"]'
+    async def _attempt_download(p: Any, *, persistent_profile: bool) -> Optional[Dict[str, Any]]:
+        browser = None
+        if persistent_profile:
+            profile_dir = _playwright_persistent_profile_dir()
+            profile_dir.mkdir(parents=True, exist_ok=True)
+            context = await p.chromium.launch_persistent_context(
+                user_data_dir=str(profile_dir),
+                headless=_playwright_headless_enabled(),
+                accept_downloads=True,
+                user_agent=browser_user_agent,
+                locale="en-US",
+                viewport={"width": 1440, "height": 900},
+            )
+            page = context.pages[0] if context.pages else await context.new_page()
+        else:
+            browser = await p.chromium.launch(headless=_playwright_headless_enabled())
+            context = await browser.new_context(
+                accept_downloads=True,
+                user_agent=browser_user_agent,
+                locale="en-US",
+                viewport={"width": 1440, "height": 900},
+            )
+            page = await context.new_page()
+        try:
+            await _apply_playwright_session_state(context, page, url)
+            download = None
+            if referer and referer != url:
                 try:
-                    locator = page.locator(link_selector).first
-                    if await locator.count() > 0:
-                        async with page.expect_download(timeout=45000) as download_info:
-                            await locator.click()
-                        download = await download_info.value
+                    await page.goto(referer, wait_until="domcontentloaded", timeout=30000)
+                except Exception:
+                    pass
+                fetched = await _download_document_bytes_via_page_fetch(page, url)
+                if fetched is not None:
+                    return fetched
+
+            link_selector = f'a[href="{url}"]'
+            try:
+                locator = page.locator(link_selector).first
+                if await locator.count() > 0:
+                    async with page.expect_download(timeout=45000) as download_info:
+                        await locator.click()
+                    download = await download_info.value
+            except Exception:
+                download = None
+
+            if download is None:
+                try:
+                    async with page.expect_download(timeout=45000) as download_info:
+                        await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                    download = await download_info.value
                 except Exception:
                     download = None
 
-                if download is None:
-                    try:
-                        async with page.expect_download(timeout=45000) as download_info:
-                            await page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                        download = await download_info.value
-                    except Exception:
-                        download = None
+            if download is None:
+                fetched = await _download_document_bytes_via_page_fetch(page, url)
+                if fetched is not None:
+                    return fetched
+                return None
 
-                if download is None:
-                    fetched = await _download_document_bytes_via_page_fetch(page, url)
-                    if fetched is not None:
-                        return fetched
+            download_path = await download.path()
+            if not download_path:
+                return None
+            body = Path(download_path).read_bytes()
+            suggested_filename = str(getattr(download, "suggested_filename", "") or "")
+            content_type = "application/octet-stream"
+            lowered_name = suggested_filename.lower()
+            if lowered_name.endswith(".pdf"):
+                content_type = "application/pdf"
+            elif lowered_name.endswith(".rtf"):
+                content_type = "application/rtf"
+            return {
+                "body": body,
+                "content_type": content_type,
+                "suggested_filename": suggested_filename,
+            }
+        finally:
+            await context.close()
+            if browser is not None:
+                await browser.close()
 
-                download_path = await download.path()
-                if not download_path:
-                    return None
-                body = Path(download_path).read_bytes()
-                suggested_filename = str(getattr(download, "suggested_filename", "") or "")
-                content_type = "application/octet-stream"
-                lowered_name = suggested_filename.lower()
-                if lowered_name.endswith(".pdf"):
-                    content_type = "application/pdf"
-                elif lowered_name.endswith(".rtf"):
-                    content_type = "application/rtf"
-                return {
-                    "body": body,
-                    "content_type": content_type,
-                    "suggested_filename": suggested_filename,
-                }
-            finally:
-                await context.close()
-                if browser is not None:
-                    await browser.close()
+    try:
+        async with async_playwright() as p:
+            attempt_modes = [_use_persistent_playwright_profile()]
+            if attempt_modes[0]:
+                attempt_modes.append(False)
+            for persistent_profile in attempt_modes:
+                fetched = await _attempt_download(p, persistent_profile=persistent_profile)
+                if fetched is not None:
+                    return fetched
     except Exception:
         return None
 
@@ -2357,70 +2513,6 @@ async def _agentic_discover_admin_state_blocks(
         source_breakdown: Dict[str, int] = {}
         allowed_hosts = _allowed_discovery_hosts_for_state(state_code, state_name)
 
-        try:
-            archive_results = await legal_archive._search_archives_multi_domain(
-                query=query,
-                domains=_agentic_domains_for_state(state_code),
-                max_results_per_domain=max(1, int(max_results_per_domain)),
-            )
-            for row in (archive_results or {}).get("results", []) or []:
-                if not isinstance(row, dict):
-                    continue
-                url = str(row.get("url") or "").strip()
-                if not url or not _url_allowed_for_state(url, allowed_hosts):
-                    continue
-                candidate_urls.append(url)
-                source_breakdown["archives"] = int(source_breakdown.get("archives", 0)) + 1
-        except Exception:
-            pass
-
-        try:
-            unified_search = await asyncio.wait_for(
-                asyncio.to_thread(
-                    unified_api.search,
-                    UnifiedSearchRequest(
-                        query=query,
-                        max_results=max(5, int(max_candidates_per_state)),
-                        mode=OperationMode.BALANCED,
-                        domain="legal",
-                    ),
-                ),
-                timeout=40.0,
-            )
-            for hit in getattr(unified_search, "results", []) or []:
-                url = str(getattr(hit, "url", "") or "").strip()
-                if not url or not _url_allowed_for_state(url, allowed_hosts):
-                    continue
-                candidate_urls.append(url)
-                source_breakdown["search"] = int(source_breakdown.get("search", 0)) + 1
-        except Exception:
-            pass
-
-        if (time.monotonic() - state_start) >= per_state_budget_s:
-            report[state_code] = {
-                "candidate_urls": 0,
-                "inspected_urls": 0,
-                "expanded_urls": 0,
-                "fetched_rules": 0,
-                "source_breakdown": source_breakdown,
-                "timed_out": True,
-            }
-            blocks.append(
-                {
-                    "state_code": state_code,
-                    "state_name": state_name,
-                    "title": f"{state_name} Administrative Rules",
-                    "source": "Agentic web-archive discovery",
-                    "source_url": None,
-                    "scraped_at": datetime.now().isoformat(),
-                    "statutes": [],
-                    "rules_count": 0,
-                    "schema_version": "1.0",
-                    "normalized": True,
-                }
-            )
-            continue
-
         seed_urls = _extract_seed_urls_for_state(state_code, state_name)
         if not seed_urls:
             seed_urls = [f"https://{state_code.lower()}.gov"]
@@ -2446,10 +2538,77 @@ async def _agentic_discover_admin_state_blocks(
                     utah_api_rule_urls.append(rule_url)
                     source_breakdown["utah_public_api"] = int(source_breakdown.get("utah_public_api", 0)) + 1
 
-        direct_detail_ready = bool(utah_api_rule_urls) or _direct_detail_candidate_backlog_is_ready(
+        seeded_direct_detail_urls = [url for url in seed_urls if _is_direct_detail_candidate_url(url)]
+
+        direct_detail_ready = bool(utah_api_rule_urls or seeded_direct_detail_urls) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
             max_fetch=max_fetch_per_state,
         )
+
+        if not direct_detail_ready:
+            try:
+                archive_results = await legal_archive._search_archives_multi_domain(
+                    query=query,
+                    domains=_agentic_domains_for_state(state_code),
+                    max_results_per_domain=max(1, int(max_results_per_domain)),
+                )
+                for row in (archive_results or {}).get("results", []) or []:
+                    if not isinstance(row, dict):
+                        continue
+                    url = str(row.get("url") or "").strip()
+                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                        continue
+                    candidate_urls.append(url)
+                    source_breakdown["archives"] = int(source_breakdown.get("archives", 0)) + 1
+            except Exception:
+                pass
+
+            try:
+                unified_search = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        unified_api.search,
+                        UnifiedSearchRequest(
+                            query=query,
+                            max_results=max(5, int(max_candidates_per_state)),
+                            mode=OperationMode.BALANCED,
+                            domain="legal",
+                        ),
+                    ),
+                    timeout=40.0,
+                )
+                for hit in getattr(unified_search, "results", []) or []:
+                    url = str(getattr(hit, "url", "") or "").strip()
+                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                        continue
+                    candidate_urls.append(url)
+                    source_breakdown["search"] = int(source_breakdown.get("search", 0)) + 1
+            except Exception:
+                pass
+
+        if (time.monotonic() - state_start) >= per_state_budget_s:
+            report[state_code] = {
+                "candidate_urls": 0,
+                "inspected_urls": 0,
+                "expanded_urls": 0,
+                "fetched_rules": 0,
+                "source_breakdown": source_breakdown,
+                "timed_out": True,
+            }
+            blocks.append(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": None,
+                    "scraped_at": datetime.now().isoformat(),
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            )
+            continue
 
         # Curated seeds often already expose substantive rule pages or article/part
         # links. Prefetch them before broad agentic discovery so states like Indiana
@@ -2710,6 +2869,19 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_utah_seed_rule_urls) >= min(max_fetch, 8):
                     break
 
+        prioritized_seed_document_urls: List[str] = []
+        seen_seed_document_keys: set[str] = set()
+        for seed_url in seed_urls:
+            if not _is_direct_detail_candidate_url(seed_url):
+                continue
+            doc_key = _url_key(seed_url)
+            if not doc_key or doc_key in seen_seed_document_keys:
+                continue
+            seen_seed_document_keys.add(doc_key)
+            prioritized_seed_document_urls.append(seed_url)
+            if len(prioritized_seed_document_urls) >= min(max_fetch, 8):
+                break
+
         for rule_url in prioritized_utah_seed_rule_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -2736,6 +2908,47 @@ async def _agentic_discover_admin_state_blocks(
             if utah_method_value is None:
                 utah_method_value = getattr(utah_scraped, "method_used", None)
             await _append_document_if_rule(rule_url, utah_title, utah_text, utah_method_value)
+
+        for document_url in prioritized_seed_document_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
+            if remaining_prefetch_budget_s <= 1.0:
+                break
+            try:
+                direct_scraped = await asyncio.wait_for(
+                    _scrape_pdf_candidate_url_with_processor(document_url),
+                    timeout=max(1.0, min(12.0, remaining_prefetch_budget_s)),
+                )
+            except Exception:
+                direct_scraped = None
+            if direct_scraped is None:
+                remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
+                if remaining_prefetch_budget_s <= 1.0:
+                    break
+                try:
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        timeout=max(1.0, min(12.0, remaining_prefetch_budget_s)),
+                    )
+                except Exception:
+                    direct_scraped = None
+            if direct_scraped is None:
+                continue
+
+            direct_text = str(getattr(direct_scraped, "text", "") or "").strip()
+            direct_title = str(getattr(direct_scraped, "title", "") or "").strip()
+            direct_provenance = getattr(direct_scraped, "extraction_provenance", None) or {}
+            direct_method_value = None
+            if isinstance(direct_provenance, dict):
+                direct_method_value = direct_provenance.get("method")
+            if direct_method_value is None:
+                direct_method_value = getattr(direct_scraped, "method_used", None)
+            await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value)
 
         # Give curated/official entrypoints one deterministic direct fetch pass.
         for seed_url in seed_urls[:6]:

@@ -69,6 +69,17 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://adminrules.utah.gov/public/search" not in ut_urls
 
 
+def test_pdf_request_headers_accept_env_cookie_and_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_PY_DOC_REQUEST_USER_AGENT", "Custom Agent/1.0")
+    monkeypatch.setenv("IPFS_DATASETS_PY_DOC_REQUEST_COOKIE", "ASPSESSIONID=abc123")
+
+    headers = scraper_module._pdf_request_headers("https://apps.azsos.gov/public_services/Title_01/1-01.pdf")
+
+    assert headers["User-Agent"] == "Custom Agent/1.0"
+    assert headers["Cookie"] == "ASPSESSIONID=abc123"
+    assert headers["Referer"] == "https://apps.azsos.gov/public_services/CodeTOC.htm"
+
+
 def test_rejects_indiana_archived_statute_pdfs_even_with_admin_like_code_name() -> None:
     statute = {
         "code_name": "Indiana Administrative Code",
@@ -896,6 +907,45 @@ def test_playwright_persistent_profile_dir_uses_env_override(monkeypatch: pytest
     assert scraper_module._playwright_persistent_profile_dir().as_posix() == "/tmp/copilot-playwright-profile"
 
 
+def test_playwright_storage_state_path_uses_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_PY_PLAYWRIGHT_STORAGE_STATE", "/tmp/storage-state.json")
+
+    assert scraper_module._playwright_storage_state_path().as_posix() == "/tmp/storage-state.json"
+
+
+def test_playwright_cookie_header_falls_back_to_doc_request_cookie(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("IPFS_DATASETS_PY_PLAYWRIGHT_COOKIE_HEADER", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_DOC_REQUEST_COOKIE", "ASPSESSIONID=abc123")
+
+    assert scraper_module._playwright_cookie_header() == "ASPSESSIONID=abc123"
+
+
+def test_playwright_cookies_from_header_parses_cookie_pairs() -> None:
+    cookies = scraper_module._playwright_cookies_from_header(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.pdf",
+        "ASPSESSIONID=abc123; foo=bar",
+    )
+
+    assert cookies == [
+        {
+            "name": "ASPSESSIONID",
+            "value": "abc123",
+            "domain": "apps.azsos.gov",
+            "path": "/",
+            "secure": True,
+            "httpOnly": False,
+        },
+        {
+            "name": "foo",
+            "value": "bar",
+            "domain": "apps.azsos.gov",
+            "path": "/",
+            "secure": True,
+            "httpOnly": False,
+        },
+    ]
+
+
 def test_playwright_persistent_profile_mode_enabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("IPFS_DATASETS_PY_PLAYWRIGHT_USE_PERSISTENT_PROFILE", raising=False)
 
@@ -906,6 +956,208 @@ def test_playwright_headless_mode_can_be_disabled_by_env(monkeypatch: pytest.Mon
     monkeypatch.setenv("IPFS_DATASETS_PY_PLAYWRIGHT_HEADLESS", "0")
 
     assert scraper_module._playwright_headless_enabled() is False
+
+
+@pytest.mark.asyncio
+async def test_download_document_bytes_via_playwright_prefers_immediate_page_fetch_after_referer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakePage:
+        def __init__(self):
+            self.goto_calls = []
+
+        async def goto(self, url, wait_until=None, timeout=None):
+            self.goto_calls.append((url, wait_until, timeout))
+
+    class FakeContext:
+        def __init__(self, page):
+            self._page = page
+            self.pages = []
+
+        async def new_page(self):
+            return self._page
+
+        async def close(self):
+            return None
+
+        async def add_cookies(self, cookies):
+            return None
+
+    class FakeBrowser:
+        def __init__(self, context):
+            self._context = context
+
+        async def new_context(self, **kwargs):
+            return self._context
+
+        async def close(self):
+            return None
+
+    class FakeChromium:
+        def __init__(self, browser):
+            self._browser = browser
+
+        async def launch(self, **kwargs):
+            return self._browser
+
+    class FakePlaywright:
+        def __init__(self, browser):
+            self.chromium = FakeChromium(browser)
+
+    class FakePlaywrightManager:
+        def __init__(self, browser):
+            self._playwright = FakePlaywright(browser)
+
+        async def __aenter__(self):
+            return self._playwright
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    fake_page = FakePage()
+    fake_context = FakeContext(fake_page)
+    fake_browser = FakeBrowser(fake_context)
+    fake_async_api = SimpleNamespace(async_playwright=lambda: FakePlaywrightManager(fake_browser))
+    page_fetch_calls = []
+
+    async def fake_apply_session_state(context, page, url):
+        return None
+
+    async def fake_page_fetch(page, url):
+        page_fetch_calls.append((page, url))
+        return {
+            "body": b"%PDF-1.4 fake pdf bytes",
+            "content_type": "application/pdf",
+            "suggested_filename": "1-01.pdf",
+        }
+
+    monkeypatch.setitem(sys.modules, "playwright.async_api", fake_async_api)
+    monkeypatch.setattr(scraper_module, "_apply_playwright_session_state", fake_apply_session_state)
+    monkeypatch.setattr(scraper_module, "_download_document_bytes_via_page_fetch", fake_page_fetch)
+    monkeypatch.setattr(scraper_module, "_use_persistent_playwright_profile", lambda: False)
+
+    fetched = await scraper_module._download_document_bytes_via_playwright(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+    )
+
+    assert fetched == {
+        "body": b"%PDF-1.4 fake pdf bytes",
+        "content_type": "application/pdf",
+        "suggested_filename": "1-01.pdf",
+    }
+    assert fake_page.goto_calls == [
+        ("https://apps.azsos.gov/public_services/CodeTOC.htm", "domcontentloaded", 30000)
+    ]
+    assert page_fetch_calls == [
+        (fake_page, "https://apps.azsos.gov/public_services/Title_01/1-01.pdf")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_download_document_bytes_via_playwright_retries_without_persistent_profile(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakePage:
+        def __init__(self, name: str):
+            self.name = name
+            self.goto_calls = []
+
+        async def goto(self, url, wait_until=None, timeout=None):
+            self.goto_calls.append((url, wait_until, timeout))
+
+    class FakeContext:
+        def __init__(self, page):
+            self._page = page
+            self.pages = []
+
+        async def new_page(self):
+            return self._page
+
+        async def close(self):
+            return None
+
+        async def add_cookies(self, cookies):
+            return None
+
+    class FakeBrowser:
+        def __init__(self, context):
+            self._context = context
+
+        async def new_context(self, **kwargs):
+            return self._context
+
+        async def close(self):
+            return None
+
+    class FakeChromium:
+        def __init__(self, persistent_context, browser):
+            self._persistent_context = persistent_context
+            self._browser = browser
+
+        async def launch_persistent_context(self, **kwargs):
+            return self._persistent_context
+
+        async def launch(self, **kwargs):
+            return self._browser
+
+    class FakePlaywright:
+        def __init__(self, persistent_context, browser):
+            self.chromium = FakeChromium(persistent_context, browser)
+
+    class FakePlaywrightManager:
+        def __init__(self, persistent_context, browser):
+            self._playwright = FakePlaywright(persistent_context, browser)
+
+        async def __aenter__(self):
+            return self._playwright
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    persistent_page = FakePage("persistent")
+    fallback_page = FakePage("fallback")
+    persistent_context = FakeContext(persistent_page)
+    fallback_context = FakeContext(fallback_page)
+    fallback_browser = FakeBrowser(fallback_context)
+    fake_async_api = SimpleNamespace(
+        async_playwright=lambda: FakePlaywrightManager(persistent_context, fallback_browser)
+    )
+    page_fetch_calls = []
+
+    async def fake_apply_session_state(context, page, url):
+        return None
+
+    async def fake_page_fetch(page, url):
+        page_fetch_calls.append(page.name)
+        if page.name == "persistent":
+            return None
+        return {
+            "body": b"{\\rtf1\\ansi fallback bytes}",
+            "content_type": "application/rtf",
+            "suggested_filename": "1-01.rtf",
+        }
+
+    monkeypatch.setitem(sys.modules, "playwright.async_api", fake_async_api)
+    monkeypatch.setattr(scraper_module, "_apply_playwright_session_state", fake_apply_session_state)
+    monkeypatch.setattr(scraper_module, "_download_document_bytes_via_page_fetch", fake_page_fetch)
+    monkeypatch.setattr(scraper_module, "_use_persistent_playwright_profile", lambda: True)
+
+    fetched = await scraper_module._download_document_bytes_via_playwright(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.rtf"
+    )
+
+    assert fetched == {
+        "body": b"{\\rtf1\\ansi fallback bytes}",
+        "content_type": "application/rtf",
+        "suggested_filename": "1-01.rtf",
+    }
+    assert page_fetch_calls == ["persistent", "persistent", "fallback"]
+    assert persistent_page.goto_calls == [
+        ("https://apps.azsos.gov/public_services/CodeTOC.htm", "domcontentloaded", 30000)
+    ]
+    assert fallback_page.goto_calls == [
+        ("https://apps.azsos.gov/public_services/CodeTOC.htm", "domcontentloaded", 30000)
+    ]
 
 
 @pytest.mark.asyncio
@@ -927,6 +1179,7 @@ async def test_scrape_rtf_candidate_url_uses_playwright_download_fallback(monkey
         return "R1-1-101. Authority and definitions."
 
     monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: FakeResponse())
+    monkeypatch.setattr(scraper_module, "_download_document_bytes_via_cloudscraper", lambda url: None)
     monkeypatch.setattr(scraper_module, "_download_document_bytes_via_playwright", fake_download)
     monkeypatch.setattr(scraper_module, "_extract_text_from_rtf_bytes_with_processor", fake_extract)
 
@@ -1827,6 +2080,139 @@ async def test_agentic_discovery_short_circuits_utah_api_rule_candidates(monkeyp
     assert agentic_discovery_calls == 0
     assert result["report"]["UT"]["format_counts"]["html"] == 1
     assert result["report"]["UT"]["gap_summary"]["rule_hosts"] == ["adminrules.utah.gov"]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: pytest.MonkeyPatch) -> None:
+    landing_url = "https://azsos.gov/rules/arizona-administrative-code"
+    pdf_url = "https://apps.azsos.gov/public_services/Title_07/7-02.pdf"
+    rtf_url = "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+    pdf_calls: list[str] = []
+    rtf_calls: list[str] = []
+    agentic_discovery_calls = 0
+    archive_search_calls = 0
+    unified_search_calls = 0
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_search_calls
+            archive_search_calls += 1
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_discovery_calls
+            agentic_discovery_calls += 1
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="Arizona Administrative Code landing page.",
+                title="Arizona Administrative Code",
+                html="",
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text="Arizona Administrative Code landing page.",
+                title="Arizona Administrative Code",
+                html="",
+                links=[],
+            )
+
+    async def _fake_scrape_pdf_candidate_url_with_processor(url: str):
+        pdf_calls.append(url)
+        if url != pdf_url:
+            return None
+        return SimpleNamespace(
+            text="R7-2-101. Purpose. Arizona administrative code chapter text.",
+            title="Title 7 Chapter 2",
+            extraction_provenance={"method": "pdf_processor"},
+        )
+
+    async def _fake_scrape_rtf_candidate_url_with_processor(url: str):
+        rtf_calls.append(url)
+        if url != rtf_url:
+            return None
+        return SimpleNamespace(
+            text="R18-4-101. Applicability. Arizona administrative code article text.",
+            title="Title 18 Chapter 4",
+            extraction_provenance={"method": "rtf_processor"},
+        )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [landing_url, pdf_url, rtf_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(
+        scraper_module,
+        "_scrape_pdf_candidate_url_with_processor",
+        _fake_scrape_pdf_candidate_url_with_processor,
+    )
+    monkeypatch.setattr(
+        scraper_module,
+        "_scrape_rtf_candidate_url_with_processor",
+        _fake_scrape_rtf_candidate_url_with_processor,
+    )
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") in {pdf_url, rtf_url})
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["AZ"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=2,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 2
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [pdf_url, rtf_url]
+    assert pdf_calls == [pdf_url, rtf_url]
+    assert rtf_calls == [rtf_url]
+    assert agentic_discovery_calls == 0
+    assert archive_search_calls == 0
+    assert unified_search_calls == 0
+    assert result["report"]["AZ"]["format_counts"]["pdf"] == 1
+    assert result["report"]["AZ"]["format_counts"]["rtf"] == 1
+    assert result["report"]["AZ"]["gap_summary"]["rule_hosts"] == ["apps.azsos.gov"]
 
 
 @pytest.mark.anyio
