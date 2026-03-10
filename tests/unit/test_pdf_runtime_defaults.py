@@ -62,7 +62,18 @@ def test_default_dependency_manifests_include_pdf_and_rtf_runtime_libraries() ->
         repo_root / "pyproject.toml",
         repo_root / "requirements.txt",
     ]
-    required_specs = ["pdfplumber", "pymupdf", "PyPDF2", "pypdf", "striprtf"]
+    required_specs = [
+        "nltk",
+        "pdfplumber",
+        "pymupdf",
+        "pillow",
+        "PyPDF2",
+        "pypdf",
+        "pytesseract",
+        "striprtf",
+        "tiktoken",
+        "pysbd",
+    ]
 
     for manifest in manifests:
         content = manifest.read_text(encoding="utf-8")

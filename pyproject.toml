@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ipfs_datasets_py"
@@ -24,11 +24,17 @@ dependencies = [
     "google-api-python-client>=2.192.0",
     "cloudscraper>=1.2.71",
     "brave-search==0.1.8",
+    "nltk>=3.8.1",
     "pdfplumber>=0.11.7",
     "pymupdf>=1.26.3",
+    "pillow>=10.2.0,<11.0.0",
     "PyPDF2>=3.0.0",
     "pypdf>=5.0.0",
+    "pytesseract>=0.3.13",
     "striprtf>=0.0.29",
+    "tiktoken>=0.6.0",
+    "pysbd",
+    "surya-ocr>=0.14.6; platform_system != 'Windows' and python_version < '3.14'",
 ]
 
 [project.optional-dependencies]

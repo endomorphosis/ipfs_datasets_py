@@ -164,11 +164,16 @@ setup(
         # Default OCR engine (Surya; skip Windows / Python 3.14+)
         'surya-ocr>=0.14.6; platform_system!="Windows" and python_version < "3.14"',
         # PDF / RTF runtime dependencies used by default processors
+        'nltk>=3.8.1',
         'pdfplumber>=0.11.7',
         'pymupdf>=1.26.3',
+        'pillow>=10.2.0,<11.0.0',
         'PyPDF2>=3.0.0',
         'pypdf>=5.0.0',
+        'pytesseract>=0.3.13',
         'striprtf>=0.0.29',
+        'tiktoken>=0.6.0',
+        'pysbd',
     ],
     extras_require={
         # Logic integration / legal reasoning
