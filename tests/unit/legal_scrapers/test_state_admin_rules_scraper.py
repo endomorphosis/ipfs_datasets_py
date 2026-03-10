@@ -44,13 +44,16 @@ def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr
     ri_urls = scraper_module._extract_seed_urls_for_state("RI", "Rhode Island")
     ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
 
+    assert "https://ars.apps.lara.state.mi.us/AdminCode/AdminCode" in mi_urls
     assert "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306" in mi_urls
     assert "https://ars.apps.lara.state.mi.us/" not in mi_urls
     assert "https://ars.apps.lara.state.mi.us/Home" not in mi_urls
     assert any("rules.sos.ri.gov/regulations/part/" in url.lower() for url in ri_urls)
+    assert "https://rules.sos.ri.gov/regulations/part/510-00-00-4" in ri_urls
+    assert "https://rules.sos.ri.gov/regulations/part/510-00-00-20" in ri_urls
     assert all("rules.sos.ri.gov/organizations" not in url.lower() for url in ri_urls)
     assert "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations" in ri_urls
-    assert ut_urls[0] == "https://adminrules.utah.gov/public/search/R/Current%20Rules"
+    assert ut_urls[0] == "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
 
 
 def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoints() -> None:
@@ -88,6 +91,35 @@ def test_rejects_michigan_legislature_statute_pages_even_with_admin_like_code_na
 
     assert _is_admin_rule_statute(statute) is False
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+@pytest.mark.parametrize(
+    ("url", "title", "text"),
+    [
+        (
+            "https://www.legislature.mi.gov/Laws/ChapterIndex",
+            "MCL Chapter Index - Michigan Legislature",
+            "Michigan Legislature chapter index. Browse the chapters of the Michigan Compiled Laws. Search statutes and public acts.",
+        ),
+        (
+            "https://www.legislature.mi.gov/rules",
+            "Error - Michigan Legislature",
+            "Error page for Michigan Legislature rules route. Return to the Michigan Legislature home page.",
+        ),
+    ],
+)
+def test_rejects_michigan_legislature_index_and_rules_pages_as_rule_content(url: str, title: str, text: str) -> None:
+    assert _is_substantive_rule_text(
+        text=text,
+        title=title,
+        url=url,
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title=title,
+        url=url,
+    ) is False
 
 
 @pytest.mark.parametrize(
@@ -767,6 +799,115 @@ async def test_scrape_pdf_candidate_url_uses_playwright_download_fallback(monkey
     assert "Authority and definitions." in scraped.text
 
 
+def test_download_document_bytes_via_cloudscraper_returns_binary_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        status_code = 200
+        headers = {"content-type": "application/pdf"}
+        content = b"%PDF-1.4 fake pdf bytes"
+
+    class FakeScraper:
+        def get(self, url, timeout=0, headers=None):
+            assert url == "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+            assert headers is not None
+            return FakeResponse()
+
+    class FakeCloudscraperModule:
+        @staticmethod
+        def create_scraper(browser=None):
+            assert browser is not None
+            return FakeScraper()
+
+    monkeypatch.setitem(sys.modules, "cloudscraper", FakeCloudscraperModule)
+
+    fetched = scraper_module._download_document_bytes_via_cloudscraper(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+    )
+
+    assert fetched == {
+        "body": b"%PDF-1.4 fake pdf bytes",
+        "content_type": "application/pdf",
+        "suggested_filename": "1-01.pdf",
+    }
+
+
+@pytest.mark.asyncio
+async def test_download_document_bytes_via_page_fetch_returns_binary_bytes() -> None:
+    class FakePage:
+        async def evaluate(self, script, url):
+            assert "fetch(targetUrl" in script
+            assert url == "https://apps.azsos.gov/public_services/Title_01/1-01.rtf"
+            return {
+                "ok": True,
+                "status": 200,
+                "contentType": "application/rtf",
+                "contentDisposition": "",
+                "bodyBytes": [123, 92, 114, 116, 102, 49],
+            }
+
+    fetched = await scraper_module._download_document_bytes_via_page_fetch(
+        FakePage(),
+        "https://apps.azsos.gov/public_services/Title_01/1-01.rtf",
+    )
+
+    assert fetched == {
+        "body": b"{\\rtf1",
+        "content_type": "application/rtf",
+        "suggested_filename": "1-01.rtf",
+    }
+
+
+@pytest.mark.asyncio
+async def test_scrape_pdf_candidate_url_uses_cloudscraper_before_playwright(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        status_code = 403
+        headers = {"content-type": "text/html; charset=UTF-8"}
+        content = b"<!DOCTYPE html><html><head><title>Just a moment...</title></head></html>"
+
+    def fake_cloudscraper(url: str):
+        return {
+            "body": b"%PDF-1.4 fake pdf bytes",
+            "content_type": "application/pdf",
+            "suggested_filename": "1-01.pdf",
+        }
+
+    async def fake_playwright(url: str):
+        raise AssertionError("playwright fallback should not be used when cloudscraper succeeds")
+
+    async def fake_extract(pdf_bytes: bytes, *, source_url: str):
+        assert pdf_bytes.startswith(b"%PDF-")
+        return "R1-1-101. Purpose. Authority and definitions."
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: FakeResponse())
+    monkeypatch.setattr(scraper_module, "_download_document_bytes_via_cloudscraper", fake_cloudscraper)
+    monkeypatch.setattr(scraper_module, "_download_document_bytes_via_playwright", fake_playwright)
+    monkeypatch.setattr(scraper_module, "_extract_text_from_pdf_bytes_with_processor", fake_extract)
+
+    scraped = await scraper_module._scrape_pdf_candidate_url_with_processor(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+    )
+
+    assert scraped is not None
+    assert scraped.method_used == "pdf_processor_cloudscraper"
+
+
+def test_playwright_persistent_profile_dir_uses_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_PY_PLAYWRIGHT_PERSISTENT_PROFILE_DIR", "/tmp/copilot-playwright-profile")
+
+    assert scraper_module._playwright_persistent_profile_dir().as_posix() == "/tmp/copilot-playwright-profile"
+
+
+def test_playwright_persistent_profile_mode_enabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("IPFS_DATASETS_PY_PLAYWRIGHT_USE_PERSISTENT_PROFILE", raising=False)
+
+    assert scraper_module._use_persistent_playwright_profile() is True
+
+
+def test_playwright_headless_mode_can_be_disabled_by_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_PY_PLAYWRIGHT_HEADLESS", "0")
+
+    assert scraper_module._playwright_headless_enabled() is False
+
+
 @pytest.mark.asyncio
 async def test_scrape_rtf_candidate_url_uses_playwright_download_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeResponse:
@@ -1032,6 +1173,26 @@ def test_rejects_utah_erules_category_news_page_as_rule_text() -> None:
         text=text,
         title="eRules | Office of Administrative Rules",
         url="https://rules.utah.gov/category/erules/",
+    ) is False
+
+
+def test_rejects_utah_rulesnews_page_as_rule_text() -> None:
+    text = (
+        "News | Office of Administrative Rules. RulesNews Office of Administrative Rules News and information directly "
+        "from the Office of Administrative Rules. To get notified via email on new versions of the Utah State Bulletin "
+        "or Utah State Digest, visit Subscriptions. Changes to Utah Administrative Code Links."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="News | Office of Administrative Rules",
+        url="https://rules.utah.gov/rulesnews",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="News | Office of Administrative Rules",
+        url="https://rules.utah.gov/rulesnews",
     ) is False
 
 

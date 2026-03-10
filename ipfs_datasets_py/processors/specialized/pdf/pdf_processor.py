@@ -245,6 +245,20 @@ def _instantiate_optional_component(component_cls: Any, *args: Any, **kwargs: An
     return component_cls(*args, **kwargs)
 
 
+def _normalize_drawing_bbox(drawing: dict[str, Any]) -> list[float] | None:
+    for key in ("bbox", "rect"):
+        value = drawing.get(key)
+        if value is None:
+            continue
+        try:
+            coords = [float(part) for part in value]
+        except Exception:
+            continue
+        if len(coords) == 4:
+            return coords
+    return None
+
+
 
 class PDFProcessor:
     """
@@ -1445,7 +1459,7 @@ class PDFProcessor:
     
         for drawing in drawings:
             page_content['drawings'].append({
-                'bbox': drawing['bbox'],
+                'bbox': _normalize_drawing_bbox(drawing),
                 'type': drawing.get('type', 'vector_drawing'),
                 'items': len(drawing.get('items', []))
             })

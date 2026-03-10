@@ -12,6 +12,7 @@ from collections import defaultdict
 from html import unescape
 import json
 import logging
+import os
 import re
 import time
 import requests
@@ -70,7 +71,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sdlegislature\.gov/Statutes(?:\?|/|$)|"
-    r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/(?:Search/ExecuteSearch|Laws/MCL)(?:\?|/|$)|"
+    r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/(?:$|rules(?:\?|/|$)|Search/ExecuteSearch|Laws/(?:MCL|ChapterIndex)(?:\?|/|$))|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
     r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)|"
     r"(?:^|https?://)(?:www\.)?boardsandcommissions\.sd\.gov/",
@@ -168,7 +169,7 @@ _UT_BULLETIN_NEWS_TITLE_RE = re.compile(
 )
 
 _UT_NON_RULE_NEWS_PATH_RE = re.compile(
-    r"^/(?:category/[^/]+|changes-to-utah-administrative-code-links(?:-\d+)?)/?$",
+    r"^/(?:rulesnews|category/[^/]+|changes-to-utah-administrative-code-links(?:-\d+)?)/?$",
     re.IGNORECASE,
 )
 
@@ -295,13 +296,62 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://azsos.gov/rules/arizona-administrative-register",
         "https://apps.azsos.gov/public_services/CodeTOC.htm",
     ],
+    "AK": [
+        "https://www.akleg.gov/basis/aac.asp",
+        "https://ltgov.alaska.gov/information/regulations/",
+        "http://akrules.elaws.us/aac",
+    ],
+    "AR": [
+        "https://codeofarrules.arkansas.gov/",
+        "https://sos-rules-reg.ark.org/",
+        "https://www.sos.arkansas.gov/rules-regulations/",
+        "https://ark.org/rules_and_regs/index.php/rules/search/new",
+    ],
+    "CA": [
+        "https://oal.ca.gov/publications/ccr/",
+        "https://oal.ca.gov/publications/",
+        "http://carules.elaws.us/search/allcode",
+    ],
+    "CO": [
+        "https://www.sos.state.co.us/CCR/Welcome.do",
+        "https://www.sos.state.co.us/CCR/NumericalDeptList.do",
+        "https://www.sos.state.co.us/pubs/CCR/FAQs.html",
+        "https://www.coloradosos.gov/CCR/Welcome.do",
+        "https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58",
+    ],
+    "CT": [
+        "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA",
+        "https://eregulations.ct.gov/eRegsPortal/Search/RCSA",
+        "https://eregulations.ct.gov/eRegsPortal/",
+        "https://portal.ct.gov/Ethics/Statutes-and-Regulations/Statutes-and-Regulations/Regulations",
+    ],
+    "DE": [
+        "https://regulations.delaware.gov/AdminCode",
+        "https://regulations.delaware.gov/",
+        "https://www.legis.delaware.gov/Offices/DivisionOfResearch/RegistrarOfRegulations",
+    ],
+    "FL": [
+        "https://www.flrules.org/",
+        "https://dos.fl.gov/offices/administrative-code-and-register/",
+        "https://flrules.elaws.us/far/",
+    ],
     "GA": [
         "https://rules.sos.ga.gov/gac",
         "https://rules.sos.ga.gov/",
     ],
     "HI": [
+        "https://cca.hawaii.gov/hawaii-administrative-rules/",
         "https://ag.hawaii.gov/admin-rules/",
+        "https://ag.hawaii.gov/publications/administrative-rules/",
         "https://ltgov.hawaii.gov/the-office/administrative-rules/",
+        "https://labor.hawaii.gov/administrative-rules/",
+    ],
+    "IA": [
+        "https://rules.iowa.gov/",
+        "https://www.legis.iowa.gov/law/administrativeRules",
+        "https://www.legis.iowa.gov/law/administrativeRules/agencies",
+        "https://rules.iowa.gov/info/rules-publication",
+        "https://rules.iowa.gov/info/track-proposed-rules",
     ],
     "IN": [
         "https://iar.iga.in.gov/code/current",
@@ -332,6 +382,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "LA": [
         "https://www.doa.la.gov/doa/osr/lac/",
         "https://www.doa.la.gov/doa/osr/",
+        "https://www.sos.la.gov/BusinessServices/Pages/ReadAdministrativeRules.aspx",
+        "https://www.sos.la.gov/ElectionsAndVoting/ReviewAdministrationAndHistory/ReadAdministrativeRules/Pages/default.aspx",
+        "https://www.sos.la.gov/OurOffice/FindAdministrativeRules/Pages/default.aspx",
     ],
     "MS": [
         "https://www.sos.ms.gov/adminsearch/Pages/default.aspx",
@@ -365,6 +418,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ok.gov/rules/default.aspx",
         "https://www.sos.ok.gov/rules/",
     ],
+    "KS": [
+        "https://www.sos.ks.gov/publications/kansas-administrative-regulations.html",
+        "https://www.sos.ks.gov/publications/agency-regulation-resources.html",
+        "https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR=7&Srch=Y",
+        "https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR=1-45&Srch=Y",
+    ],
     "MT": [
         "https://rules.mt.gov/",
         "https://rules.mt.gov/browse/collections",
@@ -386,6 +445,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sosmt.gov/arm/rulemaking-resources/",
     ],
     "MI": [
+        "https://ars.apps.lara.state.mi.us/AdminCode/AdminCode",
         "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306",
     ],
     "RI": [
@@ -393,6 +453,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-3",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-4",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-5",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-7",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-20",
     ],
     "SD": [
         "https://rules.sd.gov/",
@@ -1509,6 +1573,108 @@ def _looks_like_browser_challenge(*, status_code: int, content_type: str, head: 
     return bool(_BROWSER_CHALLENGE_HTML_RE.search(str(head or "")))
 
 
+def _use_persistent_playwright_profile() -> bool:
+    value = str(os.getenv("IPFS_DATASETS_PY_PLAYWRIGHT_USE_PERSISTENT_PROFILE", "1") or "").strip().lower()
+    return value not in {"0", "false", "no", "off"}
+
+
+def _playwright_headless_enabled() -> bool:
+    value = str(os.getenv("IPFS_DATASETS_PY_PLAYWRIGHT_HEADLESS", "1") or "").strip().lower()
+    return value not in {"0", "false", "no", "off"}
+
+
+def _playwright_persistent_profile_dir() -> Path:
+    configured = str(os.getenv("IPFS_DATASETS_PY_PLAYWRIGHT_PERSISTENT_PROFILE_DIR", "") or "").strip()
+    if configured:
+        return Path(configured).expanduser()
+    return Path.home() / ".cache" / "ipfs_datasets_py" / "playwright" / "state_admin_rules"
+
+
+def _download_document_bytes_via_cloudscraper(url: str) -> Optional[Dict[str, Any]]:
+    try:
+        import cloudscraper
+    except Exception:
+        return None
+
+    try:
+        scraper = cloudscraper.create_scraper(
+            browser={"browser": "chrome", "platform": "linux", "desktop": True}
+        )
+        response = scraper.get(url, timeout=35, headers=_pdf_request_headers(url))
+    except Exception:
+        return None
+
+    status_code = int(getattr(response, "status_code", 599) or 599)
+    content_type = str(getattr(response, "headers", {}).get("content-type") or "").lower()
+    body = getattr(response, "content", b"") or b""
+    head = body[:1024].decode("latin1", errors="ignore")
+
+    if status_code >= 400 or _looks_like_browser_challenge(
+        status_code=status_code,
+        content_type=content_type,
+        head=head,
+    ):
+        return None
+    if not body:
+        return None
+
+    return {
+        "body": body,
+        "content_type": content_type,
+        "suggested_filename": Path(urlparse(str(url or "")).path).name,
+    }
+
+
+async def _download_document_bytes_via_page_fetch(page: Any, url: str) -> Optional[Dict[str, Any]]:
+    try:
+        fetched = await page.evaluate(
+            """
+            async (targetUrl) => {
+              const response = await fetch(targetUrl, { credentials: 'include' });
+              const buffer = await response.arrayBuffer();
+              return {
+                ok: response.ok,
+                status: response.status,
+                contentType: response.headers.get('content-type') || '',
+                contentDisposition: response.headers.get('content-disposition') || '',
+                bodyBytes: Array.from(new Uint8Array(buffer)),
+              };
+            }
+            """,
+            url,
+        )
+    except Exception:
+        return None
+
+    if not isinstance(fetched, dict) or not fetched.get("ok"):
+        return None
+
+    body_values = fetched.get("bodyBytes") or []
+    try:
+        body = bytes(body_values)
+    except Exception:
+        return None
+    if not body:
+        return None
+
+    content_type = str(fetched.get("contentType") or "").strip().lower()
+    suggested_filename = Path(urlparse(str(url or "")).path).name
+    if not content_type:
+        lowered_name = suggested_filename.lower()
+        if lowered_name.endswith(".pdf"):
+            content_type = "application/pdf"
+        elif lowered_name.endswith(".rtf"):
+            content_type = "application/rtf"
+        else:
+            content_type = "application/octet-stream"
+
+    return {
+        "body": body,
+        "content_type": content_type,
+        "suggested_filename": suggested_filename,
+    }
+
+
 async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str, Any]]:
     try:
         from playwright.async_api import async_playwright
@@ -1523,14 +1689,28 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
 
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(
-                accept_downloads=True,
-                user_agent=browser_user_agent,
-                locale="en-US",
-                viewport={"width": 1440, "height": 900},
-            )
-            page = await context.new_page()
+            browser = None
+            if _use_persistent_playwright_profile():
+                profile_dir = _playwright_persistent_profile_dir()
+                profile_dir.mkdir(parents=True, exist_ok=True)
+                context = await p.chromium.launch_persistent_context(
+                    user_data_dir=str(profile_dir),
+                    headless=_playwright_headless_enabled(),
+                    accept_downloads=True,
+                    user_agent=browser_user_agent,
+                    locale="en-US",
+                    viewport={"width": 1440, "height": 900},
+                )
+                page = context.pages[0] if context.pages else await context.new_page()
+            else:
+                browser = await p.chromium.launch(headless=_playwright_headless_enabled())
+                context = await browser.new_context(
+                    accept_downloads=True,
+                    user_agent=browser_user_agent,
+                    locale="en-US",
+                    viewport={"width": 1440, "height": 900},
+                )
+                page = await context.new_page()
             try:
                 download = None
                 if referer and referer != url:
@@ -1551,9 +1731,17 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
                     download = None
 
                 if download is None:
-                    async with page.expect_download(timeout=45000) as download_info:
-                        await page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                    download = await download_info.value
+                    try:
+                        async with page.expect_download(timeout=45000) as download_info:
+                            await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                        download = await download_info.value
+                    except Exception:
+                        download = None
+
+                if download is None:
+                    fetched = await _download_document_bytes_via_page_fetch(page, url)
+                    if fetched is not None:
+                        return fetched
 
                 download_path = await download.path()
                 if not download_path:
@@ -1573,7 +1761,8 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
                 }
             finally:
                 await context.close()
-                await browser.close()
+                if browser is not None:
+                    await browser.close()
     except Exception:
         return None
 
@@ -1743,19 +1932,24 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
     body = getattr(response, "content", b"") or b""
     head = body[:1024].decode("latin1", errors="ignore")
     used_browser_download = False
+    used_cloudscraper = False
 
     if response is None or _looks_like_browser_challenge(
         status_code=int(getattr(response, "status_code", 599) or 599),
         content_type=content_type,
         head=head,
     ):
-        downloaded = await _download_document_bytes_via_playwright(url)
+        downloaded = _download_document_bytes_via_cloudscraper(url)
+        if downloaded is not None:
+            used_cloudscraper = True
+        else:
+            downloaded = await _download_document_bytes_via_playwright(url)
         if downloaded is None:
             return None
         body = downloaded.get("body") or b""
         content_type = str(downloaded.get("content_type") or "").lower()
         head = body[:1024].decode("latin1", errors="ignore")
-        used_browser_download = True
+        used_browser_download = not used_cloudscraper
     elif int(getattr(response, "status_code", 599) or 599) >= 400:
         return None
 
@@ -1778,9 +1972,17 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
         html="",
         links=[],
         success=True,
-        method_used="pdf_processor_playwright_download" if used_browser_download else "pdf_processor",
+        method_used=(
+            "pdf_processor_cloudscraper"
+            if used_cloudscraper
+            else "pdf_processor_playwright_download" if used_browser_download else "pdf_processor"
+        ),
         extraction_provenance={
-            "method": "pdf_processor_playwright_download" if used_browser_download else "pdf_processor"
+            "method": (
+                "pdf_processor_cloudscraper"
+                if used_cloudscraper
+                else "pdf_processor_playwright_download" if used_browser_download else "pdf_processor"
+            )
         },
     )
 
@@ -1803,19 +2005,24 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
     body = getattr(response, "content", b"") or b""
     head = body[:1024].decode("latin1", errors="ignore")
     used_browser_download = False
+    used_cloudscraper = False
 
     if response is None or _looks_like_browser_challenge(
         status_code=int(getattr(response, "status_code", 599) or 599),
         content_type=content_type,
         head=head,
     ):
-        downloaded = await _download_document_bytes_via_playwright(url)
+        downloaded = _download_document_bytes_via_cloudscraper(url)
+        if downloaded is not None:
+            used_cloudscraper = True
+        else:
+            downloaded = await _download_document_bytes_via_playwright(url)
         if downloaded is None:
             return None
         body = downloaded.get("body") or b""
         content_type = str(downloaded.get("content_type") or "").lower()
         head = body[:1024].decode("latin1", errors="ignore")
-        used_browser_download = True
+        used_browser_download = not used_cloudscraper
     elif int(getattr(response, "status_code", 599) or 599) >= 400:
         return None
 
@@ -1836,9 +2043,17 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
         html="",
         links=[],
         success=True,
-        method_used="rtf_processor_playwright_download" if used_browser_download else "rtf_processor",
+        method_used=(
+            "rtf_processor_cloudscraper"
+            if used_cloudscraper
+            else "rtf_processor_playwright_download" if used_browser_download else "rtf_processor"
+        ),
         extraction_provenance={
-            "method": "rtf_processor_playwright_download" if used_browser_download else "rtf_processor"
+            "method": (
+                "rtf_processor_cloudscraper"
+                if used_cloudscraper
+                else "rtf_processor_playwright_download" if used_browser_download else "rtf_processor"
+            )
         },
     )
 

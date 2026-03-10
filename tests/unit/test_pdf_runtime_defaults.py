@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
+import fitz
 import pytest
 
 from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph
-from ipfs_datasets_py.processors.specialized.pdf.pdf_processor import _instantiate_graphrag_integrator
+from ipfs_datasets_py.processors.specialized.pdf.pdf_processor import PDFProcessor, _instantiate_graphrag_integrator
 
 
 @pytest.mark.asyncio
@@ -79,3 +81,23 @@ def test_default_dependency_manifests_include_pdf_and_rtf_runtime_libraries() ->
         content = manifest.read_text(encoding="utf-8")
         for spec in required_specs:
             assert spec in content, f"{spec} missing from {manifest.name}"
+
+
+@pytest.mark.asyncio
+async def test_extract_page_content_tolerates_drawings_without_bbox() -> None:
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((72, 72), "Arizona rule text")
+
+    processor = PDFProcessor.__new__(PDFProcessor)
+    processor.logger = Mock()
+
+    try:
+        with patch.object(type(page), "get_drawings", return_value=[{"type": "stroke", "items": [1, 2, 3]}]):
+            page_content = await PDFProcessor._extract_page_content(processor, page, 0)
+    finally:
+        doc.close()
+
+    assert page_content["page_number"] == 1
+    assert page_content["drawings"] == [{"bbox": None, "type": "stroke", "items": 3}]
+    assert any(block["content"] for block in page_content["text_blocks"])
