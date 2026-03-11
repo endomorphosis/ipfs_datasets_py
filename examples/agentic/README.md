@@ -118,6 +118,10 @@ llm_router = LLMRouter(
 4. Explore validation levels
 5. Experiment with CLI commands
 
+## Legal Scraper Daemon
+
+For the canonical legal scraping loop, see [docs/AGENTIC_LEGAL_SCRAPER_DAEMON.md](../docs/AGENTIC_LEGAL_SCRAPER_DAEMON.md).
+
 For more information, see:
 - `ipfs_datasets_py/optimizers/USAGE_GUIDE.md`
 - `ipfs_datasets_py/optimizers/ARCHITECTURE_AGENTIC_OPTIMIZERS.md`

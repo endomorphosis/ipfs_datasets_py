@@ -14,6 +14,23 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+try:
+    from .canonical_legal_corpora import get_canonical_legal_corpus
+except ImportError:  # pragma: no cover - file-based test imports
+    import importlib.util
+    import sys
+
+    _CANONICAL_MODULE_PATH = Path(__file__).with_name("canonical_legal_corpora.py")
+    _CANONICAL_SPEC = importlib.util.spec_from_file_location(
+        "canonical_legal_corpora",
+        _CANONICAL_MODULE_PATH,
+    )
+    if _CANONICAL_SPEC is None or _CANONICAL_SPEC.loader is None:
+        raise
+    _CANONICAL_MODULE = importlib.util.module_from_spec(_CANONICAL_SPEC)
+    sys.modules.setdefault("canonical_legal_corpora", _CANONICAL_MODULE)
+    _CANONICAL_SPEC.loader.exec_module(_CANONICAL_MODULE)
+    get_canonical_legal_corpus = _CANONICAL_MODULE.get_canonical_legal_corpus
 from .state_laws_scraper import US_STATES, list_state_jurisdictions, scrape_state_laws
 
 logger = logging.getLogger(__name__)
@@ -81,7 +98,7 @@ def _classify_procedure_family(statute: Dict[str, Any]) -> Optional[str]:
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
-    return (Path.home() / ".ipfs_datasets" / "state_procedure_rules").resolve()
+    return get_canonical_legal_corpus("state_court_rules").default_local_root()
 
 
 def _write_jsonld_files(filtered_data: List[Dict[str, Any]], output_dir: Path) -> List[str]:
@@ -131,6 +148,7 @@ async def scrape_state_procedure_rules(
     parallel_workers: int = 6,
     per_state_retry_attempts: int = 1,
     retry_zero_rule_states: bool = True,
+    per_state_timeout_seconds: float = 480.0,
 ) -> Dict[str, Any]:
     try:
         selected_states = [s.upper() for s in (states or []) if s and str(s).upper() in US_STATES]
@@ -153,6 +171,7 @@ async def scrape_state_procedure_rules(
             parallel_workers=parallel_workers,
             per_state_retry_attempts=per_state_retry_attempts,
             retry_zero_statute_states=retry_zero_rule_states,
+            per_state_timeout_seconds=per_state_timeout_seconds,
         )
 
         raw_data = list(base_result.get("data") or [])
@@ -188,7 +207,7 @@ async def scrape_state_procedure_rules(
                 procedure_statutes = procedure_statutes[: int(max_rules)]
 
             out_block = dict(state_block)
-            out_block["title"] = f"{US_STATES.get(state_code, state_code)} Procedure Rules"
+            out_block["title"] = f"{US_STATES.get(state_code, state_code)} Court Rules"
             out_block["source"] = "Official State Legislative/Judicial Sources"
             out_block["statutes"] = procedure_statutes
             out_block["rules_count"] = len(procedure_statutes)
@@ -198,11 +217,12 @@ async def scrape_state_procedure_rules(
             if len(procedure_statutes) == 0 and state_code:
                 zero_rule_states.append(state_code)
 
+        canonical_corpus = get_canonical_legal_corpus("state_court_rules")
         jsonld_paths: List[str] = []
         jsonld_dir: Optional[str] = None
         if write_jsonld:
             output_root = _resolve_output_dir(output_dir)
-            jsonld_root = output_root / "state_procedure_rules_jsonld"
+            jsonld_root = canonical_corpus.jsonld_dir(str(output_root))
             jsonld_paths = _write_jsonld_files(filtered_data, jsonld_root)
             jsonld_dir = str(jsonld_root)
 
@@ -211,6 +231,8 @@ async def scrape_state_procedure_rules(
             "states_scraped": selected_states,
             "states_count": len(selected_states),
             "rules_count": rules_count,
+            "canonical_dataset": canonical_corpus.key,
+            "canonical_hf_dataset_id": canonical_corpus.hf_dataset_id,
             "family_counts": family_counts,
             "elapsed_time_seconds": elapsed,
             "scraped_at": datetime.now().isoformat(),

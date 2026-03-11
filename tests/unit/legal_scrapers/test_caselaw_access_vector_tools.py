@@ -358,7 +358,7 @@ async def test_state_case_search_applies_oregon_defaults(
 async def test_state_case_search_can_enable_enrichment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """State-law wrapper should delegate to search_cases when enrichment is requested."""
+    """State-law wrapper should use canonical CID parquet defaults when enrichment is requested."""
     captured = {}
 
     def _fake_runner(*, operation, payload, venv_dir=".venv"):
@@ -386,12 +386,89 @@ async def test_state_case_search_can_enable_enrichment(
     assert result["status"] == "success"
     assert result["operation"] == "search_cases"
     assert captured["operation"] == "search_cases"
-    assert captured["payload"]["hf_parquet_prefix"] == "OR/parsed/parquet"
+    assert captured["payload"]["hf_parquet_prefix"] is None
+    assert captured["payload"]["cid_metadata_field"] == "ipfs_cid"
+    assert captured["payload"]["cid_column"] == "ipfs_cid"
     preferred_names = captured["payload"]["preferred_case_parquet_names"]
-    assert "oregon_revised_statutes" in preferred_names
-    assert "oregon_administrative_rules" in preferred_names
-    assert captured["payload"]["max_case_parquet_files"] == 8
+    assert "STATE-OR.parquet" in preferred_names
+    assert "state_laws_all_states.parquet" in preferred_names
+    assert "state_admin_rules_all_states.parquet" in preferred_names
+    assert captured["payload"]["max_case_parquet_files"] == 4
     assert captured["payload"]["chunk_lookup_enabled"] is False
+
+
+@pytest.mark.anyio
+async def test_state_court_rules_search_uses_canonical_state_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """State court-rules wrapper should target the canonical CID-keyed state corpus."""
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["venv_dir"] = venv_dir
+        return {
+            "status": "success",
+            "operation": operation,
+            "results": [],
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_court_rules_corpus_from_parameters(
+        {
+            "collection_name": "state_court_rules",
+            "query_vector": [0.5, 0.1, 0.9],
+            "jurisdiction": "state",
+            "state": "OR",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_cases"
+    assert result["jurisdiction"] == "state"
+    assert result["state"] == "OR"
+    assert captured["payload"]["hf_dataset_id"] == "justicedao/ipfs_court_rules"
+    assert captured["payload"]["hf_parquet_prefix"] is None
+    assert captured["payload"]["cid_metadata_field"] == "ipfs_cid"
+    assert captured["payload"]["cid_column"] == "ipfs_cid"
+    assert "STATE-OR.parquet" in captured["payload"]["preferred_case_parquet_names"]
+    assert "state_court_rules_all_states.parquet" in captured["payload"]["preferred_case_parquet_names"]
+
+
+@pytest.mark.anyio
+async def test_federal_court_rules_search_defaults_to_vector_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Federal court-rules search should avoid broken CID enrichment defaults."""
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        return {
+            "status": "success",
+            "operation": operation,
+            "results": [],
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_court_rules_corpus_from_parameters(
+        {
+            "collection_name": "federal_court_rules",
+            "query_vector": [0.5, 0.2, 0.3],
+            "jurisdiction": "federal",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search"
+    assert result["jurisdiction"] == "federal"
+    assert captured["operation"] == "search"
 
 
 @pytest.mark.anyio

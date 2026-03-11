@@ -23,6 +23,23 @@ from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote, unquote, urljoin, urlparse
 
+try:
+    from .canonical_legal_corpora import get_canonical_legal_corpus
+except ImportError:  # pragma: no cover - file-based test imports
+    import importlib.util
+    import sys
+
+    _CANONICAL_MODULE_PATH = Path(__file__).with_name("canonical_legal_corpora.py")
+    _CANONICAL_SPEC = importlib.util.spec_from_file_location(
+        "canonical_legal_corpora",
+        _CANONICAL_MODULE_PATH,
+    )
+    if _CANONICAL_SPEC is None or _CANONICAL_SPEC.loader is None:
+        raise
+    _CANONICAL_MODULE = importlib.util.module_from_spec(_CANONICAL_SPEC)
+    sys.modules.setdefault("canonical_legal_corpora", _CANONICAL_MODULE)
+    _CANONICAL_SPEC.loader.exec_module(_CANONICAL_MODULE)
+    get_canonical_legal_corpus = _CANONICAL_MODULE.get_canonical_legal_corpus
 from .state_laws_scraper import (
     US_STATES,
     _get_official_state_url,
@@ -487,8 +504,6 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "RI": [
         "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
-        "https://rules.sos.ri.gov/Organizations",
-        "https://rules.sos.ri.gov/organizations/help/faq_gen-ricr",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-1",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-2",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-3",
@@ -590,7 +605,7 @@ def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
 def _resolve_admin_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
-    return (Path.home() / ".ipfs_datasets" / "state_admin_rules").resolve()
+    return get_canonical_legal_corpus("state_admin_rules").default_local_root()
 
 
 def _build_admin_fallback_jsonld_payload(*, state_code: str, state_name: str, statute: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -852,7 +867,49 @@ def _url_allowed_for_state(url: str, allowed_hosts: set[str]) -> bool:
 
 def _agentic_query_for_state(state_code: str) -> str:
     state_name = US_STATES.get(state_code, state_code)
-    return f"{state_name} administrative code regulations agency rules"
+    base = f"{state_name} administrative code regulations agency rules"
+    hints = _query_hints_for_state(state_code)
+    if not hints:
+        return base
+    suffix = " ".join(hints[:3])
+    return f"{base} {suffix}".strip()
+
+
+def _query_hints_for_state(state_code: str) -> List[str]:
+    raw = str(os.getenv("LEGAL_SCRAPER_QUERY_HINTS_JSON") or "").strip()
+    if not raw:
+        return []
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return []
+    if not isinstance(payload, dict):
+        return []
+    items = payload.get(str(state_code or "").upper()) or []
+    if not isinstance(items, list):
+        return []
+    deduped: List[str] = []
+    seen = set()
+    for item in items:
+        text = str(item or "").strip()
+        key = text.lower()
+        if not text or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(text)
+    return deduped[:6]
+
+
+def _query_target_terms_for_state(state_code: str) -> List[str]:
+    target_terms = ["administrative", "regulations", "rules", "code"]
+    for hint in _query_hints_for_state(state_code):
+        for token in re.split(r"[^A-Za-z0-9]+", hint):
+            value = str(token or "").strip().lower()
+            if len(value) < 4:
+                continue
+            if value not in target_terms:
+                target_terms.append(value)
+    return target_terms[:12]
 
 
 def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
@@ -2778,7 +2835,7 @@ async def _agentic_discover_admin_state_blocks(
                     asyncio.to_thread(
                         lambda: unified_api.agentic_discover_and_fetch(
                             seed_urls=seed_urls,
-                            target_terms=["administrative", "regulations", "rules", "code"],
+                            target_terms=_query_target_terms_for_state(state_code),
                             max_hops=max(0, int(max_hops)),
                             max_pages=max(1, int(max_pages)),
                             mode=OperationMode.BALANCED,
@@ -2821,6 +2878,7 @@ async def _agentic_discover_admin_state_blocks(
         parallel_prefetch_attempted = 0
         parallel_prefetch_succeeded = 0
         parallel_prefetch_rule_hits = 0
+        expanded_urls = 0
         max_fetch = max(1, int(max_fetch_per_state))
         min_text_chars = max(140, int(min_full_text_chars // 2))
         if require_substantive_text:
@@ -2942,6 +3000,8 @@ async def _agentic_discover_admin_state_blocks(
                         link_score = _score_candidate_url(link_url)
                         if link_score <= 0:
                             continue
+                        if link_url not in candidate_urls:
+                            candidate_urls.append(link_url)
                         seed_expansion_candidates.append((link_url, link_score + 1))
                         expanded_urls += 1
 
@@ -3245,7 +3305,6 @@ async def _agentic_discover_admin_state_blocks(
         )
         seen_urls = set(direct_doc_urls)
         inspected_urls = 0
-        expanded_urls = 0
         deep_discovery_calls = 0
         base_hosts = {
             urlparse(str(seed).strip()).netloc
@@ -3503,11 +3562,25 @@ async def _agentic_discover_admin_state_blocks(
                 "normalized": True,
             }
         )
+        candidate_url_samples: List[str] = []
+        for url, _score in ranked_urls:
+            if url not in candidate_url_samples:
+                candidate_url_samples.append(url)
+            if len(candidate_url_samples) >= 16:
+                break
+        if len(candidate_url_samples) < 16:
+            for url in candidate_urls:
+                if url not in candidate_url_samples:
+                    candidate_url_samples.append(url)
+                if len(candidate_url_samples) >= 16:
+                    break
         report[state_code] = {
             "candidate_urls": len(ranked_urls),
             "inspected_urls": int(inspected_urls),
             "expanded_urls": int(expanded_urls),
             "fetched_rules": len(statutes),
+            "seed_urls": [url for url in seed_urls[:8]],
+            "top_candidate_urls": candidate_url_samples,
             "format_counts": dict(format_counts),
             "domains_seen": sorted(visited_hosts),
             "parallel_prefetch": {
@@ -3765,11 +3838,12 @@ async def scrape_state_admin_rules(
         target_state_set = set(selected_states)
         missing_rule_states = sorted(target_state_set - set(states_with_rules))
 
+        canonical_corpus = get_canonical_legal_corpus("state_admin_rules")
         jsonld_paths: List[str] = []
         jsonld_dir: Optional[str] = None
         if write_jsonld:
             output_root = _resolve_admin_output_dir(output_dir)
-            jsonld_root = output_root / "state_admin_rules_jsonld"
+            jsonld_root = canonical_corpus.jsonld_dir(str(output_root))
             jsonld_root.mkdir(parents=True, exist_ok=True)
             jsonld_paths = _write_state_admin_jsonld_files(filtered_data, jsonld_root)
             jsonld_dir = str(jsonld_root)
@@ -3781,6 +3855,8 @@ async def scrape_state_admin_rules(
             "target_jurisdictions": "50_states" + ("+DC" if include_dc else ""),
             "include_dc": bool(include_dc),
             "rules_count": admin_rule_count,
+            "canonical_dataset": canonical_corpus.key,
+            "canonical_hf_dataset_id": canonical_corpus.hf_dataset_id,
             "elapsed_time_seconds": elapsed,
             "scraped_at": datetime.now().isoformat(),
             "scraper_type": "State admin-rules via state-specific/fallback pipeline",

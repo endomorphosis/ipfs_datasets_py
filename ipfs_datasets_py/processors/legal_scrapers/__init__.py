@@ -185,6 +185,16 @@ from .state_laws_scheduler_engine import (
     run_schedule_now,
     enable_disable_schedule,
 )
+from .state_laws_agentic_daemon import (
+    PostCycleReleaseConfig,
+    ScraperTacticProfile,
+    StateLawsAgenticDaemonConfig,
+    StateLawsAgenticDaemon,
+    default_tactic_profiles,
+    run_state_laws_agentic_daemon,
+    run_state_admin_rules_agentic_daemon,
+    run_state_court_rules_agentic_daemon,
+)
 
 # Incremental Updates Engine — delta scraping helpers
 from .incremental_updates_engine import (
@@ -508,6 +518,14 @@ __all__ = [
     "list_schedules",
     "run_schedule_now",
     "enable_disable_schedule",
+    "PostCycleReleaseConfig",
+    "ScraperTacticProfile",
+    "StateLawsAgenticDaemonConfig",
+    "StateLawsAgenticDaemon",
+    "default_tactic_profiles",
+    "run_state_laws_agentic_daemon",
+    "run_state_admin_rules_agentic_daemon",
+    "run_state_court_rules_agentic_daemon",
 
     # Incremental Updates Engine
     "IncrementalUpdateTracker",

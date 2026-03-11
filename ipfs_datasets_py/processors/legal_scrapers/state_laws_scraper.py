@@ -12,6 +12,24 @@ import json
 import re
 from pathlib import Path
 
+try:
+    from .canonical_legal_corpora import get_canonical_legal_corpus
+except ImportError:  # pragma: no cover - file-based test imports
+    import importlib.util
+    import sys
+
+    _CANONICAL_MODULE_PATH = Path(__file__).with_name("canonical_legal_corpora.py")
+    _CANONICAL_SPEC = importlib.util.spec_from_file_location(
+        "canonical_legal_corpora",
+        _CANONICAL_MODULE_PATH,
+    )
+    if _CANONICAL_SPEC is None or _CANONICAL_SPEC.loader is None:
+        raise
+    _CANONICAL_MODULE = importlib.util.module_from_spec(_CANONICAL_SPEC)
+    sys.modules.setdefault("canonical_legal_corpora", _CANONICAL_MODULE)
+    _CANONICAL_SPEC.loader.exec_module(_CANONICAL_MODULE)
+    get_canonical_legal_corpus = _CANONICAL_MODULE.get_canonical_legal_corpus
+
 logger = logging.getLogger(__name__)
 
 _QUALITY_NAV_RE = re.compile(
@@ -433,10 +451,11 @@ async def scrape_state_laws(
         
         scraper_info = "State-specific scrapers" if use_state_specific_scrapers else "Justia fallback scraper"
         
+        canonical_corpus = get_canonical_legal_corpus("state_laws")
         jsonld_paths: List[str] = []
         if use_state_specific_scrapers and write_jsonld:
             output_root = _resolve_state_output_dir(output_dir)
-            jsonld_dir = output_root / "state_laws_jsonld"
+            jsonld_dir = canonical_corpus.jsonld_dir(str(output_root))
             jsonld_dir.mkdir(parents=True, exist_ok=True)
             jsonld_paths = _write_state_jsonld_files(scraped_statutes, jsonld_dir)
 
@@ -473,7 +492,9 @@ async def scrape_state_laws(
             "fetch_analytics_by_state": fetch_analytics_by_state if fetch_analytics_by_state else None,
             "etl_readiness": _compute_etl_readiness_summary(scraped_statutes),
             "schema_normalized": use_state_specific_scrapers,
-            "jsonld_dir": str((_resolve_state_output_dir(output_dir) / "state_laws_jsonld")) if (use_state_specific_scrapers and write_jsonld) else None,
+            "canonical_dataset": canonical_corpus.key,
+            "canonical_hf_dataset_id": canonical_corpus.hf_dataset_id,
+            "jsonld_dir": str(canonical_corpus.jsonld_dir(output_dir)) if (use_state_specific_scrapers and write_jsonld) else None,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
             "strict_full_text": strict_full_text,
             "min_full_text_chars": int(min_full_text_chars),
@@ -522,7 +543,7 @@ def _get_official_state_url(state_code: str) -> str:
 def _resolve_state_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
-    return (Path.home() / ".ipfs_datasets" / "state_laws").resolve()
+    return get_canonical_legal_corpus("state_laws").default_local_root()
 
 
 def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, Any]:

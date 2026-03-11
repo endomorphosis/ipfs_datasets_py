@@ -169,6 +169,7 @@ class UnifiedWebScraper:
         Initialize the unified scraper.
         """
         self.config = config or ScraperConfig()
+        self._apply_env_overrides()
         self._check_dependencies()
         self._init_session()
     
@@ -273,6 +274,77 @@ class UnifiedWebScraper:
             if raw in {"0", "false", "no", "off"}:
                 return False
         return None
+
+    @staticmethod
+    def _env_list(*names: str) -> List[str]:
+        """Parse the first present comma-separated environment variable."""
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            values = [item.strip() for item in raw.split(",") if item.strip()]
+            if values:
+                return values
+        return []
+
+    @classmethod
+    def _parse_method_names(cls, names: List[str]) -> List[ScraperMethod]:
+        aliases = {
+            "bs4": ScraperMethod.BEAUTIFULSOUP,
+            "beautifulsoup4": ScraperMethod.BEAUTIFULSOUP,
+            "beautifulsoup": ScraperMethod.BEAUTIFULSOUP,
+            "wayback": ScraperMethod.WAYBACK_MACHINE,
+            "commoncrawl": ScraperMethod.COMMON_CRAWL,
+            "archiveis": ScraperMethod.ARCHIVE_IS,
+            "requests": ScraperMethod.REQUESTS_ONLY,
+        }
+        parsed: List[ScraperMethod] = []
+        seen: set[ScraperMethod] = set()
+        for raw_name in names:
+            key = str(raw_name or "").strip().lower()
+            if not key:
+                continue
+            method = aliases.get(key)
+            if method is None:
+                try:
+                    method = ScraperMethod(key)
+                except ValueError:
+                    continue
+            if method not in seen:
+                parsed.append(method)
+                seen.add(method)
+        return parsed
+
+    def _apply_env_overrides(self) -> None:
+        preferred_method_names = self._env_list(
+            "IPFS_DATASETS_SCRAPER_METHOD_ORDER",
+            "IPFS_DATASETS_WEB_SCRAPER_METHOD_ORDER",
+            "LEGAL_SCRAPER_METHOD_ORDER",
+        )
+        preferred_methods = self._parse_method_names(preferred_method_names)
+        if preferred_methods:
+            self.config.preferred_methods = preferred_methods
+
+        fallback_enabled = self._env_bool(
+            "IPFS_DATASETS_SCRAPER_FALLBACK_ENABLED",
+            "LEGAL_SCRAPER_FALLBACK_ENABLED",
+        )
+        if fallback_enabled is not None:
+            self.config.fallback_enabled = fallback_enabled
+
+        archive_submit_on_miss = self._env_bool(
+            "IPFS_DATASETS_ARCHIVE_IS_SUBMIT_ON_MISS",
+            "LEGAL_SCRAPER_ARCHIVE_IS_SUBMIT_ON_MISS",
+        )
+        if archive_submit_on_miss is not None:
+            self.config.archive_is_submit_on_miss = archive_submit_on_miss
+
+        archive_submit_wait = self._env_bool(
+            "IPFS_DATASETS_ARCHIVE_IS_SUBMIT_WAIT",
+            "LEGAL_SCRAPER_ARCHIVE_IS_SUBMIT_WAIT",
+        )
+        if archive_submit_wait is not None:
+            self.config.archive_is_submit_wait = archive_submit_wait
 
     @staticmethod
     def _existing_path(*candidates: Optional[Union[str, Path]], want_dir: bool = False, want_file: bool = False) -> Optional[Path]:

@@ -33,6 +33,7 @@ bin/
 sql_configs.yaml
 *.log
 *.db
+datasets/CCINDEX_WARC_CACHE_DIR/
 mutants/
 # Proof and logic caching
 proof_cache/

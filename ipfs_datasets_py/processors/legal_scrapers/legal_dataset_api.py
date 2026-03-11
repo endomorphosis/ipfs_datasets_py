@@ -18,6 +18,23 @@ from typing import Any, Dict, Iterable, List
 
 import anyio
 
+try:
+    from .canonical_legal_corpora import get_canonical_legal_corpus
+except ImportError:  # pragma: no cover - file-based test imports
+    import importlib.util
+
+    _CANONICAL_MODULE_PATH = Path(__file__).with_name("canonical_legal_corpora.py")
+    _CANONICAL_SPEC = importlib.util.spec_from_file_location(
+        "canonical_legal_corpora",
+        _CANONICAL_MODULE_PATH,
+    )
+    if _CANONICAL_SPEC is None or _CANONICAL_SPEC.loader is None:
+        raise
+    _CANONICAL_MODULE = importlib.util.module_from_spec(_CANONICAL_SPEC)
+    sys.modules.setdefault("canonical_legal_corpora", _CANONICAL_MODULE)
+    _CANONICAL_SPEC.loader.exec_module(_CANONICAL_MODULE)
+    get_canonical_legal_corpus = _CANONICAL_MODULE.get_canonical_legal_corpus
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,9 +44,9 @@ DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
 
 DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
 DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
-DEFAULT_STATE_LAWS_HF_DATASET_ID = "justicedao/ipfs_state_laws"
-DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = "justicedao/ipfs_state_admin_rules"
-DEFAULT_COURT_RULES_HF_DATASET_ID = "justicedao/ipfs_court_rules"
+DEFAULT_STATE_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("state_laws").hf_dataset_id
+DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_admin_rules").hf_dataset_id
+DEFAULT_COURT_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_court_rules").hf_dataset_id
 DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = "justicedao/ipfs_federal_register"
 
 
@@ -1361,12 +1378,13 @@ async def search_state_law_corpus_from_parameters(
 ) -> Dict[str, Any]:
     """Search a state-law corpus vectors with optional statute metadata enrichment.
 
-    Defaults are oriented to combined state-law sources and use `<STATE>/parsed/parquet`
-    paths. By default this includes both:
+    Defaults are oriented to the canonical multi-state CID-keyed corpora. By default this includes both:
     - `justicedao/ipfs_state_laws` (legislative + judicial sources)
     - `justicedao/ipfs_state_admin_rules` (executive admin rules)
     """
     state_params = dict(parameters)
+    state_laws_corpus = get_canonical_legal_corpus("state_laws")
+    state_admin_corpus = get_canonical_legal_corpus("state_admin_rules")
     try:
         state_code = _normalize_state_code(state_params.get("state", "OR"))
     except ValueError as exc:
@@ -1377,18 +1395,18 @@ async def search_state_law_corpus_from_parameters(
             "tool_version": tool_version,
         }
 
-    state_params.setdefault("hf_dataset_id", DEFAULT_STATE_LAWS_HF_DATASET_ID)
+    state_params.setdefault("hf_dataset_id", state_laws_corpus.hf_dataset_id)
     state_params.setdefault(
         "hf_dataset_ids",
-        [DEFAULT_STATE_LAWS_HF_DATASET_ID, DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID],
+        [state_laws_corpus.hf_dataset_id, state_admin_corpus.hf_dataset_id],
     )
-    state_params.setdefault("hf_parquet_prefix", f"{state_code}/parsed/parquet")
+    state_params.setdefault("hf_parquet_prefix", None)
     state_params.setdefault("hf_parquet_file", None)
-    state_params.setdefault("cid_metadata_field", "cid")
-    state_params.setdefault("cid_column", "cid")
+    state_params.setdefault("cid_metadata_field", state_laws_corpus.cid_field)
+    state_params.setdefault("cid_column", state_laws_corpus.cid_field)
     state_params.setdefault(
         "text_field_candidates",
-        ["text", "content", "section_text", "body", "title", "heading"],
+        ["text", "content", "section_text", "body", "title", "heading", "semantic_text", "jsonld"],
     )
     state_params.setdefault("chunk_lookup_enabled", False)
     state_params.setdefault("chunk_hf_parquet_file", None)
@@ -1396,27 +1414,25 @@ async def search_state_law_corpus_from_parameters(
     enrich_with_cases = bool(state_params.get("enrich_with_cases", False))
 
     if enrich_with_cases:
-        if state_code == "OR":
-            state_params.setdefault(
-                "preferred_case_parquet_names",
-                [
-                    "oregon_revised_statutes",
-                    "oregon_administrative_rules",
-                    "ors",
-                    "oar",
-                    "by_cid",
-                    "laws_by_cid",
-                    "parsed",
-                    "law",
-                    state_code.lower(),
-                ],
-            )
-            state_params.setdefault("max_case_parquet_files", 8)
-        else:
-            state_params.setdefault(
-                "preferred_case_parquet_names",
-                ["by_cid", "laws_by_cid", "parsed", "law", state_code.lower()],
-            )
+        state_params.setdefault(
+            "preferred_case_parquet_names",
+            list(
+                dict.fromkeys(
+                    [
+                        state_laws_corpus.state_parquet_filename(state_code),
+                        state_admin_corpus.state_parquet_filename(state_code),
+                        state_laws_corpus.combined_parquet_filename,
+                        state_admin_corpus.combined_parquet_filename,
+                        "oregon_laws_by_cid.parquet",
+                        "oregon_administrative_rules.parquet",
+                        "oregon_laws_cid_index.parquet",
+                        "oregon_administrative_rules_key_cid_index.parquet",
+                        state_code.lower(),
+                    ]
+                )
+            ),
+        )
+        state_params.setdefault("max_case_parquet_files", 4)
         result = await search_caselaw_access_cases_from_parameters(
             state_params,
             tool_version=tool_version,
@@ -1491,6 +1507,7 @@ async def search_court_rules_corpus_from_parameters(
     - `both`: search both federal + state court rules
     """
     court_params = dict(parameters)
+    state_court_corpus = get_canonical_legal_corpus("state_court_rules")
 
     jurisdiction = str(court_params.get("jurisdiction", "both")).strip().lower()
     if jurisdiction not in {"federal", "state", "both"}:
@@ -1513,21 +1530,22 @@ async def search_court_rules_corpus_from_parameters(
                 "tool_version": tool_version,
             }
 
-    court_params.setdefault("hf_dataset_id", DEFAULT_COURT_RULES_HF_DATASET_ID)
-    court_params.setdefault("hf_dataset_ids", [DEFAULT_COURT_RULES_HF_DATASET_ID])
+    court_params.setdefault("hf_dataset_id", state_court_corpus.hf_dataset_id)
+    court_params.setdefault("hf_dataset_ids", [state_court_corpus.hf_dataset_id])
 
     if "hf_parquet_prefix" not in court_params:
-        if jurisdiction == "state" and state_code:
-            court_params["hf_parquet_prefix"] = f"{state_code}/parsed/parquet"
-        else:
-            court_params["hf_parquet_prefix"] = None
+        court_params["hf_parquet_prefix"] = None
 
     court_params.setdefault("hf_parquet_file", None)
-    court_params.setdefault("cid_metadata_field", "cid")
-    court_params.setdefault("cid_column", "cid")
+    if jurisdiction == "state":
+        court_params.setdefault("cid_metadata_field", state_court_corpus.cid_field)
+        court_params.setdefault("cid_column", state_court_corpus.cid_field)
+    else:
+        court_params.setdefault("cid_metadata_field", "cid")
+        court_params.setdefault("cid_column", "cid")
     court_params.setdefault(
         "text_field_candidates",
-        ["text", "content", "section_text", "body", "title", "heading", "semantic_text"],
+        ["text", "content", "section_text", "body", "title", "heading", "semantic_text", "jsonld"],
     )
     court_params.setdefault("chunk_lookup_enabled", False)
     court_params.setdefault("chunk_hf_parquet_file", None)
@@ -1537,6 +1555,7 @@ async def search_court_rules_corpus_from_parameters(
         common_terms = ["court_rules", "rules_of_civil_procedure", "rules_of_criminal_procedure"]
         if jurisdiction == "federal":
             preferred = [
+                "FEDERAL-RULES.parquet",
                 "federal_rules",
                 "federal_court_rules",
                 "local_court_rules",
@@ -1545,6 +1564,8 @@ async def search_court_rules_corpus_from_parameters(
             ]
         elif jurisdiction == "state":
             preferred = [
+                state_court_corpus.state_parquet_filename(state_code or ""),
+                state_court_corpus.combined_parquet_filename,
                 "state_court_rules",
                 "state_rules",
                 "local_court_rules",
@@ -1554,6 +1575,7 @@ async def search_court_rules_corpus_from_parameters(
             ]
         else:
             preferred = [
+                state_court_corpus.combined_parquet_filename,
                 "federal_rules",
                 "state_court_rules",
                 "state_rules",
@@ -1565,7 +1587,7 @@ async def search_court_rules_corpus_from_parameters(
         court_params["preferred_case_parquet_names"] = [term for term in preferred if term]
 
     court_params.setdefault("max_case_parquet_files", 24)
-    enrich_with_cases = bool(court_params.get("enrich_with_cases", True))
+    enrich_with_cases = bool(court_params.get("enrich_with_cases", jurisdiction == "state"))
 
     if enrich_with_cases:
         result = await search_caselaw_access_cases_from_parameters(

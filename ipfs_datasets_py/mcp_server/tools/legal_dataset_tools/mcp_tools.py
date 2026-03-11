@@ -122,8 +122,7 @@ async def search_us_code_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
 async def search_state_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Search a state-law corpus vectors with optional statute metadata enrichment.
 
-    Defaults combine legislative/judicial and executive sources under
-    ``<STATE>/parsed/parquet`` from:
+    Defaults combine the canonical multi-state corpora from:
     - ``justicedao/ipfs_state_laws``
     - ``justicedao/ipfs_state_admin_rules``
     """

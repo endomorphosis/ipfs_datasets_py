@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 import time
 import uuid
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
@@ -118,6 +119,7 @@ class UnifiedWebArchivingAPI:
         agentic_optimizer: Optional[AgenticScrapeOptimizer] = None,
     ):
         self.config = config or UnifiedAPIConfig(default_search_engines=list(DEFAULT_SEARCH_ENGINES))
+        self._apply_env_overrides_to_config()
         self.metrics_registry = metrics_registry or MetricsRegistry()
         self.orchestrator = orchestrator or self._build_orchestrator()
         self.scorer = scorer or ProviderScorer(metrics_registry=self.metrics_registry)
@@ -128,6 +130,52 @@ class UnifiedWebArchivingAPI:
         self.search_executor = search_executor or SearchExecutor(orchestrator=self.orchestrator)
         self.scraper = scraper
         self.agentic_optimizer = agentic_optimizer or AgenticScrapeOptimizer()
+
+    @staticmethod
+    def _env_bool(*names: str) -> Optional[bool]:
+        for name in names:
+            raw = (os.environ.get(name) or "").strip().lower()
+            if not raw:
+                continue
+            if raw in {"1", "true", "yes", "on"}:
+                return True
+            if raw in {"0", "false", "no", "off"}:
+                return False
+        return None
+
+    @staticmethod
+    def _env_list(*names: str) -> List[str]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            values = [item.strip() for item in raw.split(",") if item.strip()]
+            if values:
+                return values
+        return []
+
+    def _apply_env_overrides_to_config(self) -> None:
+        search_engines = self._env_list(
+            "IPFS_DATASETS_SEARCH_ENGINES",
+            "IPFS_DATASETS_WEB_ARCHIVE_SEARCH_ENGINES",
+            "LEGAL_SCRAPER_SEARCH_ENGINES",
+        )
+        if search_engines:
+            self.config.default_search_engines = search_engines
+
+        fallback_enabled = self._env_bool(
+            "IPFS_DATASETS_SEARCH_FALLBACK_ENABLED",
+            "LEGAL_SCRAPER_SEARCH_FALLBACK_ENABLED",
+        )
+        if fallback_enabled is not None:
+            self.config.fallback_enabled = fallback_enabled
+
+        parallel_enabled = self._env_bool(
+            "IPFS_DATASETS_SEARCH_PARALLEL_ENABLED",
+            "LEGAL_SCRAPER_SEARCH_PARALLEL_ENABLED",
+        )
+        if parallel_enabled is not None:
+            self.config.parallel_enabled = parallel_enabled
 
     def _build_orchestrator(self) -> MultiEngineOrchestrator:
         orchestrator_config = OrchestratorConfig(
