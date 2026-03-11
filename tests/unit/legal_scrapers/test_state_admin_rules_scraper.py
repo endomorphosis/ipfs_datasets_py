@@ -695,6 +695,21 @@ def test_rejects_arizona_public_services_subject_index_as_relaxed_recovery_text(
     ) is False
 
 
+def test_rejects_arizona_public_services_subject_index_as_substantive_text() -> None:
+    text = (
+        "Arizona Administrative Code Subject Index. AAC TOC By Subject List. "
+        "Administration, ADEQ. Air Pollution Control, ADEQ. Drinking Water Regulations, Primary and State, ADEQ. "
+        "Water Quality Standards, ADEQ. Public Drinking Water System, Capacity Development Requirements, ADEQ."
+    )
+
+    assert scraper_module._is_substantive_rule_text(
+        text=text,
+        title="Arizona Administrative Code",
+        url="https://apps.azsos.gov/public_services/Index/",
+        min_chars=160,
+    ) is False
+
+
 def test_candidate_links_from_html_extracts_arizona_official_chapter_document_links() -> None:
     html = """
     <html>
@@ -714,6 +729,25 @@ def test_candidate_links_from_html_extracts_arizona_official_chapter_document_li
 
     assert "https://apps.azsos.gov/public_services/Title_01/1-01.pdf" in links
     assert "https://apps.azsos.gov/public_services/Title_01/1-01.rtf" in links
+
+
+def test_candidate_links_from_html_extracts_arizona_official_chapter_document_links_from_flattened_text() -> None:
+    flattened = """
+    Arizona Administrative Code Subject Index
+    AAC TOC By Subject List
+    /public_services/Title_18/18-04.pdf
+    public_services/Title_18/18-04.rtf
+    """
+
+    links = _candidate_links_from_html(
+        flattened,
+        base_host="apps.azsos.gov",
+        page_url="https://apps.azsos.gov/public_services/CodeTOC.htm",
+        limit=4,
+    )
+
+    assert "https://apps.azsos.gov/public_services/Title_18/18-04.pdf" in links
+    assert "https://apps.azsos.gov/public_services/Title_18/18-04.rtf" in links
 
 
 def test_scores_arizona_official_chapter_documents_above_inventory_page() -> None:

@@ -2288,6 +2288,10 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     if host == "rules.sos.ri.gov" and path.startswith("/subscriptions/"):
         return False
 
+    # Arizona public-services inventory pages are crawl hubs, not substantive rule text.
+    if host == "apps.azsos.gov" and path.rstrip("/") in {"/public_services/Index", "/public_services/CodeTOC.htm"}:
+        return False
+
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         if len(body) < max(120, int(min_chars)):
             return False
@@ -2404,6 +2408,38 @@ def _candidate_links_from_scrape(
     return [link_url for _, link_url in ranked[: max(1, int(limit))]]
 
 
+def _candidate_arizona_rule_urls_from_text(*, text: str, page_url: str = "", limit: int = 12) -> List[str]:
+    body = unescape(str(text or ""))
+    if not body:
+        return []
+
+    page_host = urlparse(str(page_url or "").strip()).netloc.lower()
+    if page_host not in {"apps.azsos.gov", "azsos.gov", "www.azsos.gov"} and "apps.azsos.gov" not in body.lower():
+        return []
+
+    out: List[str] = []
+    seen = set()
+    pattern = re.compile(
+        r"(?:https?://apps\.azsos\.gov)?(?P<path>/?public_services/Title_\d{2}/\d+-\d+\.(?:pdf|rtf))",
+        re.IGNORECASE,
+    )
+    for match in pattern.finditer(body):
+        path = str(match.group("path") or "").strip()
+        if not path:
+            continue
+        if not path.startswith("/"):
+            path = f"/{path}"
+        candidate_url = urljoin("https://apps.azsos.gov", path)
+        key = _url_key(candidate_url)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(candidate_url)
+        if len(out) >= max(1, int(limit)):
+            break
+    return out
+
+
 def _candidate_links_from_html(
     html: str,
     base_host: str,
@@ -2437,6 +2473,21 @@ def _candidate_links_from_html(
             continue
         seen.add(key)
         score = _score_candidate_link(link_url, link_text, page_url)
+        if score <= 0:
+            continue
+        ranked.append((score, link_url))
+    for link_url in _candidate_arizona_rule_urls_from_text(text=body, page_url=page_url, limit=limit):
+        host = urlparse(link_url).netloc
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
+            continue
+        key = link_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        score = _score_candidate_link(link_url, "", page_url)
         if score <= 0:
             continue
         ranked.append((score, link_url))
