@@ -235,6 +235,7 @@ class StateLawsAgenticDaemonConfig:
     archive_warmup_urls: int = 25
     archive_warmup_concurrency: int = 8
     per_state_timeout_seconds: float = 480.0
+    scrape_timeout_seconds: float = 0.0
     admin_agentic_max_candidates_per_state: Optional[int] = None
     admin_agentic_max_fetch_per_state: Optional[int] = None
     admin_agentic_max_results_per_domain: Optional[int] = None
@@ -364,6 +365,8 @@ class StateLawsAgenticDaemon:
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+        checkpoint_payload.update({"stage": "router_review"})
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         router_assist = await self._build_router_assist_report(
             cycle_index=cycle_index,
             tactic=tactic,
@@ -371,14 +374,44 @@ class StateLawsAgenticDaemon:
             critic=critic,
         )
         critic = self._merge_router_assist_into_critic(critic=critic, router_assist=router_assist)
+        checkpoint_payload.update(
+            {
+                "stage": "archive_warmup",
+                "critic": critic,
+                "router_assist": router_assist,
+            }
+        )
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         archive_warmup = await self._archive_candidate_urls(scrape_result, diagnostics, critic=critic)
+        checkpoint_payload.update(
+            {
+                "stage": "document_gap_report",
+                "archive_warmup": archive_warmup,
+            }
+        )
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         document_gap_report = self._build_document_gap_report(diagnostics=diagnostics, metadata=metadata)
         document_gap_report_path = self._write_document_gap_report(cycle_index=cycle_index, report=document_gap_report)
+        checkpoint_payload.update(
+            {
+                "stage": "post_cycle_release",
+                "document_gap_report": document_gap_report,
+                "document_gap_report_path": str(document_gap_report_path) if document_gap_report_path else None,
+            }
+        )
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         post_cycle_release = await self._maybe_run_post_cycle_release(
             cycle_index=cycle_index,
             critic_score=critic_score,
             passed=passed,
         )
+        checkpoint_payload.update(
+            {
+                "stage": "finalize",
+                "post_cycle_release": post_cycle_release,
+            }
+        )
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
 
         cycle_payload = {
             "cycle": cycle_index,
@@ -459,7 +492,23 @@ class StateLawsAgenticDaemon:
                 kwargs[key] = max(0, int(value)) if key != "agentic_fetch_concurrency" else max(1, int(value))
 
         with self._tactic_env(tactic):
-            return await self.corpus.scrape_func(**kwargs)
+            scrape_coro = self.corpus.scrape_func(**kwargs)
+            scrape_timeout_seconds = max(0.0, float(self.config.scrape_timeout_seconds or 0.0))
+            if scrape_timeout_seconds <= 0:
+                return await scrape_coro
+
+            try:
+                return await asyncio.wait_for(scrape_coro, timeout=scrape_timeout_seconds)
+            except asyncio.TimeoutError:
+                return {
+                    "status": "error",
+                    "error": f"Corpus scrape timed out after {scrape_timeout_seconds} seconds",
+                    "data": [],
+                    "metadata": {
+                        "scrape_timeout_seconds": scrape_timeout_seconds,
+                        "scrape_timed_out": True,
+                    },
+                }
 
     def _build_diagnostics(self, scrape_result: Dict[str, Any]) -> Dict[str, Any]:
         metadata = scrape_result.get("metadata") or {}
@@ -2180,6 +2229,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--explore-probability", type=float, default=0.30, help="Exploration probability for tactic selection.")
     parser.add_argument("--archive-warmup-urls", type=int, default=25, help="Number of weak-state URLs to archive after each cycle.")
     parser.add_argument("--per-state-timeout-seconds", type=float, default=480.0, help="Timeout budget for each individual state scrape.")
+    parser.add_argument("--scrape-timeout-seconds", type=float, default=0.0, help="Optional timeout budget for the full corpus scrape stage. 0 disables the outer scrape timeout.")
     parser.add_argument("--router-llm-timeout-seconds", type=float, default=20.0, help="Timeout budget for router-backed LLM review during each cycle.")
     parser.add_argument("--router-embeddings-timeout-seconds", type=float, default=10.0, help="Timeout budget for router-backed embeddings ranking during each cycle.")
     parser.add_argument("--router-ipfs-timeout-seconds", type=float, default=10.0, help="Timeout budget for persisting router-assist artifacts to IPFS.")
@@ -2228,6 +2278,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             explore_probability=float(args.explore_probability),
             archive_warmup_urls=int(args.archive_warmup_urls),
             per_state_timeout_seconds=float(args.per_state_timeout_seconds),
+            scrape_timeout_seconds=float(args.scrape_timeout_seconds),
             router_llm_timeout_seconds=float(args.router_llm_timeout_seconds),
             router_embeddings_timeout_seconds=float(args.router_embeddings_timeout_seconds),
             router_ipfs_timeout_seconds=float(args.router_ipfs_timeout_seconds),

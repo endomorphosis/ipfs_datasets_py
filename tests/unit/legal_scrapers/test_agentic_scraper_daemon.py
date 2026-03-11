@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 
 import pytest
 
@@ -515,6 +516,128 @@ async def test_state_laws_agentic_daemon_writes_and_clears_in_progress_checkpoin
     assert not (tmp_path / "cycles" / "cycle_0001.in_progress.json").exists()
     assert not (tmp_path / "latest_in_progress.json").exists()
     assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+
+@pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_checkpoint_advances_to_router_review(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [
+                {
+                    "state_code": "OR",
+                    "statutes": [
+                        {
+                            "source_url": "https://example.org/oregon/statute-1",
+                            "full_text": "Section 1. This is valid legal text.",
+                        }
+                    ],
+                }
+            ],
+            "metadata": {
+                "coverage_summary": {
+                    "states_targeted": 1,
+                    "states_returned": 1,
+                    "states_with_nonzero_statutes": 1,
+                    "coverage_gap_states": [],
+                },
+                "fetch_analytics": {
+                    "attempted": 1,
+                    "success": 1,
+                    "success_ratio": 1.0,
+                    "fallback_count": 0,
+                    "providers": {"common_crawl": 1},
+                },
+                "fetch_analytics_by_state": {
+                    "OR": {
+                        "attempted": 1,
+                        "success": 1,
+                        "success_ratio": 1.0,
+                        "fallback_count": 0,
+                        "providers": {"common_crawl": 1},
+                    }
+                },
+                "etl_readiness": {
+                    "ready_for_kg_etl": True,
+                    "total_statutes": 1,
+                    "full_text_ratio": 1.0,
+                    "jsonld_ratio": 1.0,
+                    "jsonld_legislation_ratio": 1.0,
+                    "kg_payload_ratio": 1.0,
+                    "citation_ratio": 1.0,
+                    "statute_signal_ratio": 1.0,
+                    "non_scaffold_ratio": 1.0,
+                    "states_with_zero_statutes": 0,
+                },
+                "quality_by_state": {
+                    "OR": {
+                        "total": 1,
+                        "scaffold_ratio": 0.0,
+                        "nav_like_ratio": 0.0,
+                        "fallback_section_ratio": 0.0,
+                        "numeric_section_name_ratio": 1.0,
+                    }
+                },
+            },
+        }
+
+    async def _fake_router_assist_report(self, **kwargs):
+        checkpoint_payload = json.loads((tmp_path / "latest_in_progress.json").read_text(encoding="utf-8"))
+        assert checkpoint_payload["stage"] == "router_review"
+        assert checkpoint_payload["status"] == "success"
+        assert checkpoint_payload["critic_score"] >= 0.92
+        return {"status": "skipped", "reason": "test"}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_build_router_assist_report", _fake_router_assist_report)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=7,
+        )
+    )
+
+    summary = await daemon.run()
+
+    assert summary["status"] == "success"
+    assert summary["latest_cycle"]["router_assist"]["status"] == "skipped"
+
+
+@pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_applies_outer_scrape_timeout(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _slow_scrape_state_laws(**kwargs):
+        await asyncio.sleep(0.2)
+        return {"status": "success", "data": [{"state_code": "OR", "statutes": []}], "metadata": {}}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _slow_scrape_state_laws)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            scrape_timeout_seconds=0.05,
+            random_seed=7,
+        )
+    )
+    tactic = daemon._select_tactic()
+
+    started_at = time.perf_counter()
+    scrape_result = await daemon._run_scrape_with_tactic(tactic)
+    elapsed = time.perf_counter() - started_at
+
+    assert elapsed < 0.15
+    assert scrape_result["status"] == "error"
+    assert scrape_result["metadata"]["scrape_timed_out"] is True
+    assert scrape_result["metadata"]["scrape_timeout_seconds"] == 0.05
 
 
 @pytest.mark.asyncio

@@ -741,6 +741,7 @@ async def crawl_with_cloudflare_browser_rendering(
     timeout_seconds: int = 120,
     poll_interval_seconds: float = 2.0,
     request_timeout_seconds: int = 30,
+    max_rate_limit_wait_seconds: float = 300.0,
     limit: Optional[int] = None,
     depth: Optional[int] = None,
     formats: Optional[Iterable[str]] = None,
@@ -774,6 +775,7 @@ async def crawl_with_cloudflare_browser_rendering(
         include_patterns=include_patterns,
         exclude_patterns=exclude_patterns,
         request_timeout_seconds=request_timeout_seconds,
+        max_rate_limit_wait_seconds=max_rate_limit_wait_seconds,
         extra_body=extra_body,
     )
     if started.get("status") != "success":
