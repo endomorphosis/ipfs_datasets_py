@@ -335,6 +335,16 @@ class StateLawsAgenticDaemon:
         """Run one scrape-review-criticize-optimize cycle."""
         cycle_index = int(self._state.get("cycle_count", 0) or 0) + 1
         tactic = self._select_tactic()
+        checkpoint_payload: Dict[str, Any] = {
+            "cycle": cycle_index,
+            "timestamp": datetime.now().isoformat(),
+            "corpus": self.corpus.key,
+            "states": list(self.states),
+            "status": "running",
+            "stage": "scrape",
+            "tactic": asdict(tactic),
+        }
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         scrape_result = await self._run_scrape_with_tactic(tactic)
 
         metadata = scrape_result.get("metadata") or {}
@@ -342,6 +352,18 @@ class StateLawsAgenticDaemon:
         critic_score = self._critic_score(diagnostics)
         passed = self._is_success(diagnostics, critic_score)
         critic = self._criticize_cycle(diagnostics)
+        checkpoint_payload.update(
+            {
+                "status": str(scrape_result.get("status") or "unknown"),
+                "stage": "review",
+                "diagnostics": diagnostics,
+                "critic_score": critic_score,
+                "passed": passed,
+                "critic": critic,
+                "metadata": metadata,
+            }
+        )
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         router_assist = await self._build_router_assist_report(
             cycle_index=cycle_index,
             tactic=tactic,
@@ -349,7 +371,7 @@ class StateLawsAgenticDaemon:
             critic=critic,
         )
         critic = self._merge_router_assist_into_critic(critic=critic, router_assist=router_assist)
-        archive_warmup = await self._archive_candidate_urls(scrape_result, diagnostics)
+        archive_warmup = await self._archive_candidate_urls(scrape_result, diagnostics, critic=critic)
         document_gap_report = self._build_document_gap_report(diagnostics=diagnostics, metadata=metadata)
         document_gap_report_path = self._write_document_gap_report(cycle_index=cycle_index, report=document_gap_report)
         post_cycle_release = await self._maybe_run_post_cycle_release(
@@ -381,7 +403,26 @@ class StateLawsAgenticDaemon:
         cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
         cycle_path.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
         self.latest_file.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
+        self._clear_cycle_checkpoint(cycle_index=cycle_index)
         return cycle_payload
+
+    def _write_cycle_checkpoint(self, *, cycle_index: int, payload: Dict[str, Any]) -> Optional[Path]:
+        if not isinstance(payload, dict) or not payload:
+            return None
+        checkpoint_path = self.cycles_dir / f"cycle_{cycle_index:04d}.in_progress.json"
+        latest_checkpoint_path = self.output_dir / "latest_in_progress.json"
+        checkpoint_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        latest_checkpoint_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return checkpoint_path
+
+    def _clear_cycle_checkpoint(self, *, cycle_index: int) -> None:
+        checkpoint_path = self.cycles_dir / f"cycle_{cycle_index:04d}.in_progress.json"
+        latest_checkpoint_path = self.output_dir / "latest_in_progress.json"
+        for path in (checkpoint_path, latest_checkpoint_path):
+            try:
+                path.unlink(missing_ok=True)
+            except Exception:
+                pass
 
     async def _run_scrape_with_tactic(self, tactic: ScraperTacticProfile) -> Dict[str, Any]:
         kwargs: Dict[str, Any] = {
@@ -540,6 +581,7 @@ class StateLawsAgenticDaemon:
         total_by_format: Dict[str, int] = {"html": 0, "pdf": 0, "rtf": 0}
         candidate_document_urls = 0
         states_with_candidate_document_gaps: List[str] = []
+        candidate_format_counts_by_state: Dict[str, Dict[str, int]] = {}
 
         agentic_report = metadata.get("agentic_report") or {}
         agentic_per_state = agentic_report.get("per_state") if isinstance(agentic_report, dict) else {}
@@ -572,6 +614,12 @@ class StateLawsAgenticDaemon:
                     for value in list(state_report.get("top_candidate_urls") or [])
                     if self._document_format_from_url(value) in {"pdf", "rtf"}
                 )
+                candidate_format_counts = {"pdf": 0, "rtf": 0}
+                for value in list(state_report.get("top_candidate_urls") or []):
+                    doc_format = self._document_format_from_url(value)
+                    if doc_format in {"pdf", "rtf"}:
+                        candidate_format_counts[doc_format] = int(candidate_format_counts.get(doc_format, 0) or 0) + 1
+                candidate_format_counts_by_state[state_code] = candidate_format_counts
                 candidate_document_urls += candidate_doc_count
                 if candidate_doc_count > 0 and (int(state_counts.get("pdf", 0) or 0) + int(state_counts.get("rtf", 0) or 0) <= 0):
                     states_with_candidate_document_gaps.append(state_code)
@@ -589,6 +637,7 @@ class StateLawsAgenticDaemon:
             "total_by_format": total_by_format,
             "processed_document_urls": processed_document_urls,
             "candidate_document_urls": int(candidate_document_urls),
+            "candidate_format_counts_by_state": candidate_format_counts_by_state,
             "states_with_document_rules": states_with_document_rules,
             "states_with_candidate_document_gaps": sorted(set(states_with_candidate_document_gaps)),
             "per_state": per_state,
@@ -679,6 +728,136 @@ class StateLawsAgenticDaemon:
         cycle_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         latest_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         return cycle_path
+
+    def _build_state_action_plan(self, diagnostics: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        coverage = diagnostics.get("coverage") or {}
+        fetch = diagnostics.get("fetch") or {}
+        quality = diagnostics.get("quality") or {}
+        documents = diagnostics.get("documents") or {}
+        gap_analysis = diagnostics.get("gap_analysis") or {}
+
+        plan: Dict[str, Dict[str, Any]] = {}
+        document_per_state = documents.get("per_state") or {}
+        candidate_format_counts_by_state = documents.get("candidate_format_counts_by_state") or {}
+        gap_states = gap_analysis.get("states") or {}
+
+        def _normalize_state_items(values: Sequence[Any]) -> set[str]:
+            normalized: set[str] = set()
+            for item in list(values or []):
+                if isinstance(item, dict):
+                    candidate = item.get("state") or item.get("state_code") or item.get("code")
+                else:
+                    candidate = item
+                state_code = str(candidate or "").upper().strip()
+                if state_code in self.states:
+                    normalized.add(state_code)
+            return normalized
+
+        weak_quality_states = _normalize_state_items(list(quality.get("weak_states") or []))
+        no_attempt_states = _normalize_state_items(list(fetch.get("no_attempt_states") or []))
+        coverage_gap_states = _normalize_state_items(list(coverage.get("coverage_gap_states") or []))
+        document_gap_states = _normalize_state_items(list(documents.get("states_with_candidate_document_gaps") or []))
+        weak_gap_states = _normalize_state_items(list(gap_analysis.get("weak_states") or []))
+
+        def _ensure_entry(state_code: str) -> Dict[str, Any]:
+            state_key = str(state_code or "").upper().strip()
+            entry = plan.setdefault(
+                state_key,
+                {
+                    "priority_score": 0,
+                    "reasons": [],
+                    "recommended_tactics": [],
+                    "query_hints": [],
+                    "candidate_document_format_counts": {"pdf": 0, "rtf": 0},
+                    "hosts": [],
+                },
+            )
+            return entry
+
+        def _add_reason(state_code: str, reason: str, *, score: int, tactics: Sequence[str]) -> None:
+            entry = _ensure_entry(state_code)
+            if reason not in entry["reasons"]:
+                entry["reasons"].append(reason)
+            entry["priority_score"] = int(entry.get("priority_score", 0) or 0) + int(score)
+            for tactic_name in tactics:
+                if tactic_name in self.config.tactic_profiles and tactic_name not in entry["recommended_tactics"]:
+                    entry["recommended_tactics"].append(tactic_name)
+
+        for state_code in sorted(document_gap_states):
+            _add_reason(state_code, "document_candidate_gap", score=4, tactics=["document_first", "render_first", "router_assisted"])
+            entry = _ensure_entry(state_code)
+            candidate_format_counts = candidate_format_counts_by_state.get(state_code) if isinstance(candidate_format_counts_by_state, dict) else {}
+            if not isinstance(candidate_format_counts, dict):
+                candidate_format_counts = {}
+            entry["candidate_document_format_counts"] = {
+                "pdf": int(candidate_format_counts.get("pdf", 0) or 0),
+                "rtf": int(candidate_format_counts.get("rtf", 0) or 0),
+            }
+
+        for state_code in sorted(weak_gap_states):
+            _add_reason(state_code, "coverage_gap", score=3, tactics=["discovery_first", "archival_first", "router_assisted"])
+            gap_entry = gap_states.get(state_code) if isinstance(gap_states, dict) else {}
+            if not isinstance(gap_entry, dict):
+                gap_entry = {}
+            hosts = [
+                str(item).strip().lower()
+                for item in list(gap_entry.get("missing_seed_hosts") or []) + list(gap_entry.get("candidate_hosts_without_rules") or [])
+                if str(item).strip()
+            ]
+            if hosts:
+                entry = _ensure_entry(state_code)
+                entry["hosts"] = list(dict.fromkeys(entry.get("hosts") or [] + hosts))
+
+        for state_code in sorted(no_attempt_states):
+            _add_reason(state_code, "no_attempts", score=3, tactics=["archival_first", "discovery_first"])
+
+        for state_code in sorted(coverage_gap_states):
+            _add_reason(state_code, "missing_or_zero_coverage", score=2, tactics=["archival_first", "discovery_first"])
+
+        for state_code in sorted(weak_quality_states):
+            _add_reason(state_code, "weak_extraction_quality", score=2, tactics=["render_first", "precision_first"])
+
+        for state_code, entry in plan.items():
+            hosts = list(dict.fromkeys([str(item).strip().lower() for item in list(entry.get("hosts") or []) if str(item).strip()]))
+            format_counts = entry.get("candidate_document_format_counts") or {}
+            query_hints: List[str] = []
+            if int(format_counts.get("pdf", 0) or 0) > 0:
+                query_hints.append(f"{state_code} administrative code pdf")
+            if int(format_counts.get("rtf", 0) or 0) > 0:
+                query_hints.append(f"{state_code} administrative code rtf")
+            for host in hosts[:2]:
+                query_hints.append(f"{state_code} administrative rules site:{host}")
+            entry["hosts"] = hosts
+            entry["query_hints"] = list(dict.fromkeys([hint for hint in query_hints if hint.strip()]))[:4]
+
+        ordered_plan: Dict[str, Dict[str, Any]] = {}
+        for state_code, entry in sorted(
+            plan.items(),
+            key=lambda item: (-int((item[1] or {}).get("priority_score", 0) or 0), item[0]),
+        ):
+            normalized_entry = entry or {}
+            if int(normalized_entry.get("priority_score", 0) or 0) <= 0:
+                continue
+            ordered_plan[state_code] = {
+                "priority_score": int(normalized_entry.get("priority_score", 0) or 0),
+                "reasons": list(normalized_entry.get("reasons") or []),
+                "recommended_tactics": list(normalized_entry.get("recommended_tactics") or []),
+                "query_hints": list(normalized_entry.get("query_hints") or []),
+                "candidate_document_format_counts": dict(normalized_entry.get("candidate_document_format_counts") or {}),
+                "hosts": list(normalized_entry.get("hosts") or []),
+            }
+        return ordered_plan
+
+    @staticmethod
+    def _priority_states_from_action_plan(state_action_plan: Dict[str, Dict[str, Any]], *, limit: int = 8) -> List[str]:
+        ordered: List[str] = []
+        for state_code, entry in state_action_plan.items():
+            if int((entry or {}).get("priority_score", 0) or 0) <= 0:
+                continue
+            ordered.append(str(state_code).upper())
+            if len(ordered) >= max(1, int(limit or 1)):
+                break
+        return ordered
 
     async def _build_router_assist_report(
         self,
@@ -775,6 +954,8 @@ class StateLawsAgenticDaemon:
                 "summary": critic.get("summary"),
                 "issues": list(critic.get("issues") or []),
                 "provider_summary": critic.get("provider_summary") or {},
+                "priority_states": list(critic.get("priority_states") or []),
+                "state_action_plan": critic.get("state_action_plan") or {},
             },
             "diagnostics": {
                 "coverage": diagnostics.get("coverage") or {},
@@ -991,6 +1172,18 @@ class StateLawsAgenticDaemon:
             if name in self.config.tactic_profiles and name not in merged_tactics:
                 merged_tactics.append(name)
         updated["recommended_next_tactics"] = list(dict.fromkeys(merged_tactics))
+        merged_priority_states = [
+            str(item).upper().strip()
+            for item in list(updated.get("priority_states") or [])
+            if str(item).strip()
+        ]
+        if isinstance(llm_review, dict):
+            for state_code in list(llm_review.get("priority_states") or []):
+                normalized_state = str(state_code).upper().strip()
+                if normalized_state and normalized_state in self.states and normalized_state not in merged_priority_states:
+                    merged_priority_states.insert(0, normalized_state)
+        if merged_priority_states:
+            updated["priority_states"] = merged_priority_states
         llm_query_hints = list(llm_review.get("query_hints") or []) if isinstance(llm_review, dict) else []
         if llm_query_hints:
             updated["query_hints"] = llm_query_hints
@@ -1277,11 +1470,28 @@ class StateLawsAgenticDaemon:
             avg_score = float(entry.get("total_score", 0.0) or 0.0) / float(trials)
             best_score = float(entry.get("best_score", 0.0) or 0.0)
             recommendation_bonus = 0.03 if name in recommended else 0.0
+            priority_bonus = self._tactic_priority_bonus(name)
             exploration_bonus = 0.04 / float(trials)
-            return avg_score + (0.20 * best_score) + recommendation_bonus + exploration_bonus
+            return avg_score + (0.20 * best_score) + recommendation_bonus + priority_bonus + exploration_bonus
 
         selected_name = max(ordered_names, key=_rank)
         return profiles[selected_name]
+
+    def _tactic_priority_bonus(self, tactic_name: str) -> float:
+        state_action_plan = self._state.get("state_action_plan") or {}
+        if not isinstance(state_action_plan, dict):
+            return 0.0
+
+        bonus = 0.0
+        for state_code in list(self._state.get("priority_states") or []):
+            entry = state_action_plan.get(str(state_code).upper().strip())
+            if not isinstance(entry, dict):
+                continue
+            if tactic_name not in list(entry.get("recommended_tactics") or []):
+                continue
+            priority_score = int(entry.get("priority_score", 0) or 0)
+            bonus += 0.03 * float(min(priority_score, 5))
+        return min(0.18, bonus)
 
     def _criticize_cycle(self, diagnostics: Dict[str, Any]) -> Dict[str, Any]:
         coverage = diagnostics.get("coverage") or {}
@@ -1355,10 +1565,21 @@ class StateLawsAgenticDaemon:
             next_tactics.append("archival_first")
 
         deduped_tactics = list(dict.fromkeys([name for name in next_tactics if name in self.config.tactic_profiles]))
+        state_action_plan = self._build_state_action_plan(diagnostics)
+        priority_states = self._priority_states_from_action_plan(state_action_plan)
+        query_hints: List[str] = []
+        for state_code in priority_states:
+            for hint in list((state_action_plan.get(state_code) or {}).get("query_hints") or []):
+                normalized_hint = str(hint).strip()
+                if normalized_hint and normalized_hint not in query_hints:
+                    query_hints.append(normalized_hint)
         return {
             "issues": issues,
             "provider_summary": provider_summary,
             "recommended_next_tactics": deduped_tactics,
+            "priority_states": priority_states,
+            "state_action_plan": state_action_plan,
+            "query_hints": query_hints,
             "summary": self._summarize_critic_issues(issues),
         }
 
@@ -1376,12 +1597,18 @@ class StateLawsAgenticDaemon:
             return "Fetch reliability is weak; bias toward alternative archival providers and relocation search."
         return "Cycle surfaced mixed issues; continue exploring alternate tactics with provider diversity."
 
-    async def _archive_candidate_urls(self, scrape_result: Dict[str, Any], diagnostics: Dict[str, Any]) -> Dict[str, Any]:
+    async def _archive_candidate_urls(
+        self,
+        scrape_result: Dict[str, Any],
+        diagnostics: Dict[str, Any],
+        *,
+        critic: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         max_urls = max(0, int(self.config.archive_warmup_urls or 0))
         if max_urls <= 0:
             return {"status": "skipped", "reason": "archive-warmup-disabled", "attempted": 0}
 
-        urls = self._collect_candidate_urls(scrape_result, diagnostics, limit=max_urls)
+        urls = self._collect_candidate_urls(scrape_result, diagnostics, critic=critic, limit=max_urls)
         if not urls:
             return {"status": "skipped", "reason": "no-candidate-urls", "attempted": 0}
 
@@ -1419,6 +1646,7 @@ class StateLawsAgenticDaemon:
         scrape_result: Dict[str, Any],
         diagnostics: Dict[str, Any],
         *,
+        critic: Optional[Dict[str, Any]] = None,
         limit: int,
     ) -> List[str]:
         coverage = diagnostics.get("coverage") or {}
@@ -1435,6 +1663,18 @@ class StateLawsAgenticDaemon:
         metadata = scrape_result.get("metadata") or {}
         agentic_report = metadata.get("agentic_report") or {}
         agentic_per_state = agentic_report.get("per_state") if isinstance(agentic_report, dict) else {}
+        documents = diagnostics.get("documents") or {}
+        document_gap_states = [
+            str(item).upper().strip()
+            for item in list(documents.get("states_with_candidate_document_gaps") or [])
+            if str(item).strip()
+        ]
+        priority_states = [
+            str(item).upper().strip()
+            for item in list((critic or {}).get("priority_states") or [])
+            if str(item).strip()
+        ]
+        state_order = list(dict.fromkeys(priority_states + document_gap_states + sorted(weak_states)))
 
         def _remember_url(value: Any) -> bool:
             url = str(value or "").strip()
@@ -1443,11 +1683,37 @@ class StateLawsAgenticDaemon:
             urls.append(url)
             return len(urls) >= limit
 
+        def _remember_state_report_urls(state_code: str) -> bool:
+            if not isinstance(agentic_per_state, dict):
+                return False
+            state_report = agentic_per_state.get(state_code)
+            if not isinstance(state_report, dict):
+                return False
+            candidate_urls = [str(item).strip() for item in list(state_report.get("top_candidate_urls") or []) if str(item).strip()]
+            candidate_urls.sort(
+                key=lambda value: (
+                    0 if self._document_format_from_url(value) in {"pdf", "rtf"} else 1,
+                    0 if self._document_format_from_url(value) == "pdf" else 1,
+                    value,
+                )
+            )
+            for value in candidate_urls:
+                if _remember_url(value):
+                    return True
+            for value in list(state_report.get("seed_urls") or []):
+                if _remember_url(value):
+                    return True
+            return False
+
+        for state_code in state_order:
+            if _remember_state_report_urls(state_code):
+                return urls
+
         for block in list(scrape_result.get("data") or []):
             if not isinstance(block, dict):
                 continue
             state_code = str(block.get("state_code") or "").upper()
-            if weak_states and state_code not in weak_states:
+            if state_order and state_code not in state_order:
                 continue
             for statute in list(block.get("statutes") or []):
                 if not isinstance(statute, dict):
@@ -1456,16 +1722,9 @@ class StateLawsAgenticDaemon:
                     return urls
 
         if isinstance(agentic_per_state, dict):
-            for state_code in sorted(weak_states):
-                state_report = agentic_per_state.get(state_code)
-                if not isinstance(state_report, dict):
-                    continue
-                for value in list(state_report.get("top_candidate_urls") or []):
-                    if _remember_url(value):
-                        return urls
-                for value in list(state_report.get("seed_urls") or []):
-                    if _remember_url(value):
-                        return urls
+            for state_code in sorted(set(agentic_per_state) - set(state_order)):
+                if _remember_state_report_urls(state_code):
+                    return urls
         return urls[:limit]
 
     def _update_state(self, *, tactic: ScraperTacticProfile, cycle_payload: Dict[str, Any]) -> None:
@@ -1473,6 +1732,8 @@ class StateLawsAgenticDaemon:
         self._state["last_cycle_at"] = cycle_payload.get("timestamp")
         self._state["corpus"] = self.corpus.key
         self._state["recommended_tactics"] = list((cycle_payload.get("critic") or {}).get("recommended_next_tactics") or [])
+        self._state["priority_states"] = list((cycle_payload.get("critic") or {}).get("priority_states") or [])
+        self._state["state_action_plan"] = dict((cycle_payload.get("critic") or {}).get("state_action_plan") or {})
         self._state["state_query_hints"] = self._next_state_query_hints(cycle_payload)
 
         tactics = self._state.setdefault("tactics", {})
@@ -1532,6 +1793,8 @@ class StateLawsAgenticDaemon:
             "created_at": datetime.now().isoformat(),
             "cycle_count": 0,
             "recommended_tactics": [],
+            "priority_states": [],
+            "state_action_plan": {},
             "state_query_hints": {},
             "tactics": {},
             "best_tactic": {},
@@ -1540,22 +1803,33 @@ class StateLawsAgenticDaemon:
     def _next_state_query_hints(self, cycle_payload: Dict[str, Any]) -> Dict[str, List[str]]:
         router_assist = cycle_payload.get("router_assist") or {}
         llm_review = router_assist.get("llm_review") if isinstance(router_assist, dict) else {}
-        if not isinstance(llm_review, dict):
+        critic = cycle_payload.get("critic") or {}
+
+        if isinstance(llm_review, dict):
+            query_hints = [str(item).strip() for item in list(llm_review.get("query_hints") or []) if str(item).strip()]
+            priority_states = [
+                str(item).upper().strip()
+                for item in list(llm_review.get("priority_states") or [])
+                if str(item).strip()
+            ]
+            target_states = [state for state in priority_states if state in self.states] or list(self.states)
+            if query_hints and target_states:
+                return {state: list(query_hints) for state in target_states}
+
+        state_action_plan = critic.get("state_action_plan") or {}
+        if not isinstance(state_action_plan, dict) or not state_action_plan:
             return {}
 
-        query_hints = [str(item).strip() for item in list(llm_review.get("query_hints") or []) if str(item).strip()]
-        if not query_hints:
-            return {}
-
-        priority_states = [
-            str(item).upper().strip()
-            for item in list(llm_review.get("priority_states") or [])
-            if str(item).strip()
-        ]
-        target_states = [state for state in priority_states if state in self.states] or list(self.states)
-        if not target_states:
-            return {}
-        return {state: list(query_hints) for state in target_states}
+        mapped: Dict[str, List[str]] = {}
+        for state_code in list(critic.get("priority_states") or []):
+            normalized_state = str(state_code).upper().strip()
+            if normalized_state not in self.states:
+                continue
+            state_entry = state_action_plan.get(normalized_state) or {}
+            state_hints = [str(item).strip() for item in list(state_entry.get("query_hints") or []) if str(item).strip()]
+            if state_hints:
+                mapped[normalized_state] = state_hints
+        return mapped
 
     @staticmethod
     def _normalize_states(states: Sequence[str]) -> List[str]:

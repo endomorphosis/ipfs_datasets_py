@@ -5,6 +5,7 @@ legislative websites and legal databases.
 """
 import logging
 import asyncio
+import threading
 import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -697,6 +698,57 @@ def _scrape_state_once_sync(
     }
 
 
+async def _run_sync_scrape_on_daemon_thread(
+    *,
+    state_code: str,
+    legal_areas: Optional[List[str]],
+    rate_limit_delay: float,
+    max_statutes: Optional[int],
+    strict_full_text: bool,
+    min_full_text_chars: int,
+    hydrate_statute_text: bool,
+    timeout_seconds: float,
+) -> Dict[str, Any]:
+    loop = asyncio.get_running_loop()
+    result_future: asyncio.Future[Dict[str, Any]] = loop.create_future()
+
+    def _publish_result(result: Dict[str, Any]) -> None:
+        if not result_future.done():
+            result_future.set_result(result)
+
+    def _publish_exception(exc: BaseException) -> None:
+        if not result_future.done():
+            result_future.set_exception(exc)
+
+    def _worker() -> None:
+        try:
+            result = _scrape_state_once_sync(
+                state_code=state_code,
+                legal_areas=legal_areas,
+                rate_limit_delay=rate_limit_delay,
+                max_statutes=max_statutes,
+                strict_full_text=strict_full_text,
+                min_full_text_chars=min_full_text_chars,
+                hydrate_statute_text=hydrate_statute_text,
+            )
+        except BaseException as exc:
+            loop.call_soon_threadsafe(_publish_exception, exc)
+            return
+
+        loop.call_soon_threadsafe(_publish_result, result)
+
+    worker = threading.Thread(
+        target=_worker,
+        name=f"state-scrape-{state_code.lower()}",
+        daemon=True,
+    )
+    worker.start()
+
+    if timeout_seconds > 0:
+        return await asyncio.wait_for(result_future, timeout=timeout_seconds)
+    return await result_future
+
+
 async def _scrape_state_with_retries(
     *,
     state_code: str,
@@ -716,8 +768,7 @@ async def _scrape_state_with_retries(
     for attempt_idx in range(attempts):
         try:
             timeout_seconds = float(per_state_timeout_seconds or 0.0)
-            scrape_task = asyncio.to_thread(
-                _scrape_state_once_sync,
+            result = await _run_sync_scrape_on_daemon_thread(
                 state_code=state_code,
                 legal_areas=legal_areas,
                 rate_limit_delay=rate_limit_delay,
@@ -725,11 +776,8 @@ async def _scrape_state_with_retries(
                 strict_full_text=strict_full_text,
                 min_full_text_chars=min_full_text_chars,
                 hydrate_statute_text=hydrate_statute_text,
+                timeout_seconds=timeout_seconds,
             )
-            if timeout_seconds > 0:
-                result = await asyncio.wait_for(scrape_task, timeout=timeout_seconds)
-            else:
-                result = await scrape_task
         except asyncio.TimeoutError:
             state_name = US_STATES[state_code]
             error_msg = (

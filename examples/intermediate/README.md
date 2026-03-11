@@ -44,10 +44,12 @@ These examples demonstrate more advanced features and integration patterns.
 **Web Scraping and Archiving**
 - Common Crawl integration
 - Wayback Machine access
+- Cloudflare Browser Rendering fallback
 - Parallel web archiving
 - WARC file handling
 
 **Requirements**: `beautifulsoup4`, `requests`
+Optional Cloudflare setup: `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` with `Browser Rendering - Edit`
 
 ### 12_graphrag_basic.py
 **Knowledge Graph-Enhanced RAG**

@@ -95,6 +95,41 @@ def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
     assert "release state_admin_rules" in preview["commands"][3]["command"]
 
 
+def test_state_admin_rules_agentic_daemon_select_tactic_biases_priority_state_recommendations(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            random_seed=5,
+        )
+    )
+
+    daemon._state["recommended_tactics"] = []
+    daemon._state["priority_states"] = ["AZ"]
+    daemon._state["state_action_plan"] = {
+        "AZ": {
+            "priority_score": 5,
+            "recommended_tactics": ["document_first", "router_assisted"],
+            "query_hints": ["AZ administrative code pdf"],
+        }
+    }
+    daemon._state["tactics"] = {
+        name: {"trials": 2, "total_score": 1.0, "best_score": 0.5}
+        for name in daemon.config.tactic_profiles
+    }
+    daemon._state["tactics"]["archival_first"] = {"trials": 2, "total_score": 2.0, "best_score": 1.0}
+    daemon._state["tactics"]["document_first"] = {"trials": 2, "total_score": 1.8, "best_score": 0.9}
+    daemon._state["tactics"]["router_assisted"] = {"trials": 2, "total_score": 1.7, "best_score": 0.85}
+
+    selected = daemon._select_tactic()
+
+    assert selected.name == "document_first"
+
+
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_plans_post_cycle_release(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
@@ -391,6 +426,98 @@ async def test_state_laws_agentic_daemon_runs_single_cycle(monkeypatch, tmp_path
 
 
 @pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_writes_and_clears_in_progress_checkpoint(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_laws(**kwargs):
+        checkpoint_path = tmp_path / "cycles" / "cycle_0001.in_progress.json"
+        latest_checkpoint_path = tmp_path / "latest_in_progress.json"
+        assert checkpoint_path.exists()
+        assert latest_checkpoint_path.exists()
+        checkpoint_payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        assert checkpoint_payload["status"] == "running"
+        assert checkpoint_payload["stage"] == "scrape"
+        return {
+            "status": "success",
+            "data": [
+                {
+                    "state_code": "OR",
+                    "statutes": [
+                        {
+                            "source_url": "https://example.org/oregon/statute-1",
+                            "full_text": "Section 1. This is valid legal text.",
+                        }
+                    ],
+                }
+            ],
+            "metadata": {
+                "coverage_summary": {
+                    "states_targeted": 1,
+                    "states_returned": 1,
+                    "states_with_nonzero_statutes": 1,
+                    "coverage_gap_states": [],
+                },
+                "fetch_analytics": {
+                    "attempted": 1,
+                    "success": 1,
+                    "success_ratio": 1.0,
+                    "fallback_count": 0,
+                    "providers": {"common_crawl": 1},
+                },
+                "fetch_analytics_by_state": {
+                    "OR": {
+                        "attempted": 1,
+                        "success": 1,
+                        "success_ratio": 1.0,
+                        "fallback_count": 0,
+                        "providers": {"common_crawl": 1},
+                    }
+                },
+                "etl_readiness": {
+                    "ready_for_kg_etl": True,
+                    "total_statutes": 1,
+                    "full_text_ratio": 1.0,
+                    "jsonld_ratio": 1.0,
+                    "jsonld_legislation_ratio": 1.0,
+                    "kg_payload_ratio": 1.0,
+                    "citation_ratio": 1.0,
+                    "statute_signal_ratio": 1.0,
+                    "non_scaffold_ratio": 1.0,
+                    "states_with_zero_statutes": 0,
+                },
+                "quality_by_state": {
+                    "OR": {
+                        "total": 1,
+                        "scaffold_ratio": 0.0,
+                        "nav_like_ratio": 0.0,
+                        "fallback_section_ratio": 0.0,
+                        "numeric_section_name_ratio": 1.0,
+                    }
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _fake_scrape_state_laws)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=7,
+        )
+    )
+
+    summary = await daemon.run()
+
+    assert summary["status"] == "success"
+    assert not (tmp_path / "cycles" / "cycle_0001.in_progress.json").exists()
+    assert not (tmp_path / "latest_in_progress.json").exists()
+    assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -597,6 +724,98 @@ async def test_state_admin_rules_agentic_daemon_archive_warmup_uses_agentic_repo
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_archive_warmup_prioritizes_priority_state_documents(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver as archiver_module
+
+    captured = {}
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {"state_code": "AZ", "statutes": [], "rules_count": 0},
+                {"state_code": "UT", "statutes": [], "rules_count": 0},
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {"attempted": 3, "success": 1, "success_ratio": 0.333, "fallback_count": 1, "providers": {"playwright": 1}},
+                        "UT": {"attempted": 3, "success": 1, "success_ratio": 0.333, "fallback_count": 1, "providers": {"common_crawl": 1}},
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "AZ": {
+                            "seed_urls": ["https://apps.azsos.gov/public_services/CodeTOC.htm"],
+                            "top_candidate_urls": [
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "gap_summary": {"missing_seed_hosts": ["apps.azsos.gov"], "candidate_hosts_without_rules": ["apps.azsos.gov"]},
+                        },
+                        "UT": {
+                            "seed_urls": ["https://adminrules.utah.gov/public/home"],
+                            "top_candidate_urls": [
+                                "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "gap_summary": {"missing_seed_hosts": ["adminrules.utah.gov"], "candidate_hosts_without_rules": ["adminrules.utah.gov"]},
+                        },
+                    },
+                },
+            },
+        }
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, max_concurrent=1):
+            captured["max_concurrent"] = max_concurrent
+
+        async def archive_urls_parallel(self, urls):
+            captured["urls"] = list(urls)
+            return [type("ArchiveResult", (), {"success": True, "source": "wayback"})() for _ in urls]
+
+    async def _fake_router_review(self, *, tactic, diagnostics, critic):
+        return {
+            "status": "success",
+            "recommended_next_tactics": ["document_first", "router_assisted"],
+            "priority_states": ["AZ"],
+            "query_hints": ["Arizona administrative code pdf title 18"],
+            "rationale": "Prioritize Arizona document recovery first.",
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_run_llm_router_review", _fake_router_review)
+    monkeypatch.setattr(archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ", "UT"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=4,
+            archive_warmup_concurrency=2,
+            random_seed=19,
+        )
+    )
+
+    summary = await daemon.run()
+
+    archive_warmup = summary["latest_cycle"]["archive_warmup"]
+    assert archive_warmup["status"] == "success"
+    assert archive_warmup["attempted"] == 4
+    assert captured["urls"] == [
+        "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/CodeTOC.htm",
+        "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recommends_document_first(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -664,10 +883,16 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     document_gap_report = summary["latest_cycle"]["document_gap_report"]
     document_gap_report_path = tmp_path / "cycles" / "cycle_0001_document_gaps.json"
     assert diagnostics["documents"]["candidate_document_urls"] == 2
+    assert diagnostics["documents"]["candidate_format_counts_by_state"] == {"AZ": {"pdf": 1, "rtf": 1}}
     assert diagnostics["documents"]["states_with_candidate_document_gaps"] == ["AZ"]
     assert diagnostics["gap_analysis"]["weak_states"] == ["AZ"]
     assert any(item.startswith("document-candidate-gaps:AZ") for item in critic["issues"])
     assert "document_first" in critic["recommended_next_tactics"]
+    assert critic["priority_states"] == ["AZ"]
+    assert critic["state_action_plan"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
+    assert "AZ administrative code pdf" in critic["query_hints"]
+    assert "AZ administrative code rtf" in critic["query_hints"]
+    assert "AZ administrative rules site:apps.azsos.gov" in critic["query_hints"]
     assert document_gap_report["states_with_candidate_document_gaps"] == ["AZ"]
     assert document_gap_report["states"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
     assert document_gap_report["states"]["AZ"]["top_candidate_document_urls"] == [
@@ -678,6 +903,88 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     persisted_report = json.loads(document_gap_report_path.read_text(encoding="utf-8"))
     assert persisted_report["cycle"] == 1
     assert persisted_report["states_with_candidate_document_gaps"] == ["AZ"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_falls_back_to_critic_query_hints_without_router(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AZ",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 3,
+                            "success": 1,
+                            "success_ratio": 0.333,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1, "common_crawl": 2},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 4,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["apps.azsos.gov"],
+                                "candidate_hosts_without_rules": ["apps.azsos.gov"],
+                            },
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _unavailable_router_review(self, *, tactic, diagnostics, critic):
+        return {"status": "unavailable", "error": "llm-router-disabled"}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_run_llm_router_review", _unavailable_router_review)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            router_llm_timeout_seconds=0.0,
+            router_embeddings_timeout_seconds=0.0,
+            router_ipfs_timeout_seconds=0.0,
+            random_seed=29,
+        )
+    )
+
+    summary = await daemon.run()
+
+    critic = summary["latest_cycle"]["critic"]
+    assert critic["priority_states"] == ["AZ"]
+    assert "AZ administrative code pdf" in critic["query_hints"]
+    assert "AZ administrative code rtf" in critic["query_hints"]
+
+    state_payload = json.loads((tmp_path / "daemon_state.json").read_text(encoding="utf-8"))
+    assert state_payload["state_query_hints"]["AZ"] == [
+        "AZ administrative code pdf",
+        "AZ administrative code rtf",
+        "AZ administrative rules site:apps.azsos.gov",
+    ]
 
 
 @pytest.mark.asyncio

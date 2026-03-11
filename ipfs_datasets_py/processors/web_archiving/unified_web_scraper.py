@@ -114,6 +114,7 @@ class ScraperConfig:
     cloudflare_api_token: Optional[str] = None
     cloudflare_timeout_seconds: int = 120
     cloudflare_poll_interval_seconds: float = 2.0
+    cloudflare_max_rate_limit_wait_seconds: float = 300.0
     cloudflare_limit: int = 1
     cloudflare_depth: int = 0
     cloudflare_render: bool = False
@@ -417,6 +418,13 @@ class UnifiedWebScraper:
         )
         if cloudflare_poll_interval is not None and cloudflare_poll_interval > 0:
             self.config.cloudflare_poll_interval_seconds = cloudflare_poll_interval
+
+        cloudflare_max_rate_limit_wait = self._env_float(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS",
+        )
+        if cloudflare_max_rate_limit_wait is not None and cloudflare_max_rate_limit_wait >= 0:
+            self.config.cloudflare_max_rate_limit_wait_seconds = cloudflare_max_rate_limit_wait
 
         cloudflare_limit = self._env_int(
             "IPFS_DATASETS_CLOUDFLARE_CRAWL_LIMIT",
@@ -1505,6 +1513,7 @@ class UnifiedWebScraper:
             api_token=api_token,
             timeout_seconds=int(kwargs.get("cloudflare_timeout_seconds", self.config.cloudflare_timeout_seconds)),
             poll_interval_seconds=float(kwargs.get("cloudflare_poll_interval_seconds", self.config.cloudflare_poll_interval_seconds)),
+            max_rate_limit_wait_seconds=float(kwargs.get("cloudflare_max_rate_limit_wait_seconds", self.config.cloudflare_max_rate_limit_wait_seconds)),
             request_timeout_seconds=int(kwargs.get("cloudflare_request_timeout_seconds", self.config.timeout)),
             limit=int(kwargs.get("cloudflare_limit", self.config.cloudflare_limit)),
             depth=int(kwargs.get("cloudflare_depth", self.config.cloudflare_depth)),
@@ -1529,6 +1538,11 @@ class UnifiedWebScraper:
                     "method": "cloudflare_browser_rendering",
                     "cloudflare_status": crawl_result.get("status"),
                     "cloudflare_job_id": crawl_result.get("job_id"),
+                    "retryable": bool(crawl_result.get("retryable")),
+                    "retry_after_seconds": crawl_result.get("retry_after_seconds"),
+                    "retry_at_utc": crawl_result.get("retry_at_utc"),
+                    "wait_budget_exhausted": bool(crawl_result.get("wait_budget_exhausted")),
+                    "rate_limit_diagnostics": dict(crawl_result.get("rate_limit_diagnostics") or {}),
                 },
             )
 

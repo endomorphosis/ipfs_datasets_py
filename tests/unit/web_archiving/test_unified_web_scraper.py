@@ -315,6 +315,51 @@ async def test_cloudflare_browser_rendering_returns_completed_record(monkeypatch
 
 
 @pytest.mark.anyio
+async def test_cloudflare_browser_rendering_preserves_rate_limit_schedule(monkeypatch: pytest.MonkeyPatch) -> None:
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            cloudflare_account_id="acct-test",
+            cloudflare_api_token="token-test",
+            cloudflare_max_rate_limit_wait_seconds=30.0,
+        )
+    )
+
+    async def _fake_crawl(url: str, **kwargs):
+        assert url == "https://example.gov/rules"
+        assert kwargs["max_rate_limit_wait_seconds"] == 30.0
+        return {
+            "status": "rate_limited",
+            "error": "2001: Rate limit exceeded",
+            "retryable": True,
+            "retry_after_seconds": 600.0,
+            "retry_at_utc": "2026-03-12T00:00:00+00:00",
+            "wait_budget_exhausted": True,
+            "rate_limit_diagnostics": {
+                "cf_ray": "test-ray",
+                "cf_auditlog_id": "audit-id",
+                "error_code": "2001",
+            },
+        }
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine.crawl_with_cloudflare_browser_rendering",
+        _fake_crawl,
+    )
+
+    result = await scraper._scrape_cloudflare_browser_rendering("https://example.gov/rules")
+
+    assert result.success is False
+    assert result.method_used == ScraperMethod.CLOUDFLARE_BROWSER_RENDERING
+    assert result.metadata["cloudflare_status"] == "rate_limited"
+    assert result.metadata["retryable"] is True
+    assert result.metadata["retry_after_seconds"] == 600.0
+    assert result.metadata["retry_at_utc"] == "2026-03-12T00:00:00+00:00"
+    assert result.metadata["wait_budget_exhausted"] is True
+    assert result.metadata["rate_limit_diagnostics"]["cf_ray"] == "test-ray"
+    assert result.metadata["rate_limit_diagnostics"]["cf_auditlog_id"] == "audit-id"
+
+
+@pytest.mark.anyio
 async def test_binary_pdf_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePDFProcessor:
         async def _decompose_pdf(self, pdf_path):

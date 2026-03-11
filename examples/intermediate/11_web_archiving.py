@@ -2,12 +2,17 @@
 Web Archiving - Scrape, Archive, and Search Web Content
 
 This example demonstrates how to scrape web content, archive it, and search
-using Common Crawl, Wayback Machine, and custom web scraping capabilities.
+using Common Crawl, Wayback Machine, Cloudflare Browser Rendering, and custom
+web scraping capabilities.
 
 Requirements:
     - beautifulsoup4: pip install beautifulsoup4
     - requests: pip install requests
     - lxml: pip install lxml
+
+Optional Cloudflare Browser Rendering fallback:
+    - CLOUDFLARE_ACCOUNT_ID=<account id>
+    - CLOUDFLARE_API_TOKEN=<token with Browser Rendering - Edit>
 
 Usage:
     python examples/11_web_archiving.py
@@ -64,6 +69,10 @@ async def demo_unified_web_scraper():
     
     example_code = '''
 from ipfs_datasets_py.processors.web_archiving import UnifiedWebScraper
+
+# Optional: enable Cloudflare Browser Rendering fallback.
+# export CLOUDFLARE_ACCOUNT_ID=...
+# export CLOUDFLARE_API_TOKEN=...  # Requires Browser Rendering - Edit
 
 scraper = UnifiedWebScraper(
     strategies=["beautifulsoup", "selenium", "requests"],
@@ -146,6 +155,7 @@ results_cached = await client.search(
     print("   - Result caching")
     print("   - Safe search filtering")
     print("   - Rich metadata")
+    print("   - Optional Cloudflare Browser Rendering crawl fallback for blocked sites")
 
 
 async def demo_common_crawl():

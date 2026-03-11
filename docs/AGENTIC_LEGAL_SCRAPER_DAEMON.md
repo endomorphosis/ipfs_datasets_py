@@ -125,6 +125,28 @@ The wrapper script recognizes these variables:
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_HOPS`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_PAGES`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_FETCH_CONCURRENCY`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+- `IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID`
+- `IPFS_DATASETS_CLOUDFLARE_API_TOKEN`
+- `LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID`
+- `LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_POLL_INTERVAL_SECONDS`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_LIMIT`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_DEPTH`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_RENDER`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_SOURCE`
+- `IPFS_DATASETS_CLOUDFLARE_CRAWL_FORMATS`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_POLL_INTERVAL_SECONDS`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_LIMIT`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_DEPTH`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_RENDER`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_SOURCE`
+- `LEGAL_SCRAPER_CLOUDFLARE_CRAWL_FORMATS`
 - `LEGAL_DAEMON_ROUTER_LLM_TIMEOUT_SECONDS`
 - `LEGAL_DAEMON_ROUTER_EMBEDDINGS_TIMEOUT_SECONDS`
 - `LEGAL_DAEMON_ROUTER_IPFS_TIMEOUT_SECONDS`
@@ -163,6 +185,12 @@ LEGAL_DAEMON_STATES=NY,CA
 LEGAL_DAEMON_MAX_CYCLES=1
 LEGAL_DAEMON_MAX_STATUTES=25
 LEGAL_DAEMON_PER_STATE_TIMEOUT_SECONDS=45
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_API_TOKEN=your_browser_rendering_token
+LEGAL_SCRAPER_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS=120
+LEGAL_SCRAPER_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS=300
+LEGAL_SCRAPER_CLOUDFLARE_CRAWL_RENDER=0
+LEGAL_SCRAPER_CLOUDFLARE_CRAWL_FORMATS=markdown,html
 LEGAL_DAEMON_ADMIN_AGENTIC_MAX_CANDIDATES_PER_STATE=12
 LEGAL_DAEMON_ADMIN_AGENTIC_MAX_FETCH_PER_STATE=8
 LEGAL_DAEMON_ROUTER_LLM_TIMEOUT_SECONDS=20
@@ -179,6 +207,11 @@ LEGAL_PUBLISH_VERIFY=0
 
 Set `LEGAL_DAEMON_MAX_STATUTES=0` for an uncapped run.
 Use the router timeout variables to bound unattended LLM, embeddings, and IPFS review stages.
+Cloudflare Browser Rendering requires a custom API token with `Browser Rendering - Edit` permission; a token can verify as active but still fail crawl calls without that scope.
+Cloudflare `/crawl` can also return transient `2001: Rate limit exceeded` responses during bursts of job creation or polling. The Cloudflare fallback now retries those responses automatically, but repeated smoke tests may still need a cooldown before the next live run succeeds.
+If Cloudflare asks for a cooldown longer than the configured local wait budget, the client now returns a structured `rate_limited` result with `retry_after_seconds` and `retry_at_utc` so daemon orchestration can defer and requeue the crawl instead of spinning.
+Use `*_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS` to control how long the client should wait locally before returning that structured `rate_limited` defer result.
+The same `rate_limited` result now includes `rate_limit_diagnostics` with Cloudflare support identifiers such as `cf_ray`, `cf_auditlog_id`, `api_version`, `retry_after_header`, and the endpoint/operation that triggered the throttle.
 
 ## VS Code Tasks
 
