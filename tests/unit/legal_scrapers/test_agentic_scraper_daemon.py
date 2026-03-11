@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import pytest
@@ -405,6 +406,13 @@ async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics
                 }
             ],
             "metadata": {
+                "phase_timings": {
+                    "base_scrape_seconds": 1.2,
+                    "fallback_retry_seconds": 0.3,
+                    "agentic_discovery_seconds": 4.8,
+                    "jsonld_write_seconds": 0.1,
+                    "total_seconds": 6.4,
+                },
                 "base_metadata": {
                     "fetch_analytics_by_state": {
                         "OR": {
@@ -438,6 +446,9 @@ async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics
     assert summary["latest_cycle"]["corpus"] == "state_admin_rules"
     assert summary["latest_cycle"]["passed"] is False
     assert summary["latest_cycle"]["diagnostics"]["coverage"]["coverage_gap_states"] == ["OR"]
+    assert summary["latest_cycle"]["diagnostics"]["timing"]["dominant_phase"] == "agentic_discovery_seconds"
+    assert "agentic-discovery-dominant" in summary["latest_cycle"]["critic"]["issues"]
+    assert "document_first" in summary["latest_cycle"]["critic"]["recommended_next_tactics"]
     assert summary["latest_cycle"]["critic"]["recommended_next_tactics"]
 
 
@@ -770,6 +781,135 @@ async def test_state_admin_rules_agentic_daemon_uses_router_assist_review(monkey
     assert persisted["llm_review"]["priority_states"] == ["AZ"]
     state_payload = json.loads((tmp_path / "daemon_state.json").read_text(encoding="utf-8"))
     assert state_payload["state_query_hints"] == {"AZ": ["Arizona administrative code pdf title 18"]}
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_llm_router_review_uses_generate_text(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py import embeddings_router as embeddings_router_module
+    from ipfs_datasets_py import llm_router as llm_router_module
+
+    def _fake_generate_text(prompt, **kwargs):
+        assert 'recommended_next_tactics' in prompt
+        assert kwargs["provider"] is None
+        return json.dumps(
+            {
+                "recommended_next_tactics": ["router_assisted", "document_first"],
+                "priority_states": ["AZ"],
+                "query_hints": ["Arizona administrative code pdf title 18"],
+                "rationale": "Use document-oriented recovery first.",
+            }
+        )
+
+    def _fake_embed_texts_batched(texts, **kwargs):
+        return [
+            [1.0, 0.0],
+            [1.0, 0.0],
+            [0.2, 0.8],
+            [0.1, 0.9],
+            [0.0, 1.0],
+            [0.5, 0.5],
+        ]
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 1,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                }
+            },
+        }
+
+    async def _fake_ipfs_persist(self, *, cycle_index, report, corpus_key):
+        return {"status": "success", "cid": "bafyrouterreview", "name": f"{corpus_key}-{cycle_index}"}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(llm_router_module, "generate_text", _fake_generate_text)
+    monkeypatch.setattr(llm_router_module, "get_accelerate_status", lambda: {"available": False})
+    monkeypatch.setattr(embeddings_router_module, "embed_texts_batched", _fake_embed_texts_batched)
+    monkeypatch.setattr(embeddings_router_module, "get_accelerate_status", lambda: {"available": False})
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_persist_router_assist_to_ipfs", _fake_ipfs_persist)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=41,
+        )
+    )
+
+    summary = await daemon.run()
+
+    router_assist = summary["latest_cycle"]["router_assist"]
+    assert router_assist["status"] == "completed"
+    assert router_assist["llm_review"]["status"] == "success"
+    assert router_assist["llm_review"]["recommended_next_tactics"] == ["router_assisted", "document_first"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_router_timeout_does_not_block_cycle(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 1,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                }
+            },
+        }
+
+    async def _slow_router_review(self, *, tactic, diagnostics, critic):
+        await asyncio.sleep(0.2)
+        return {"status": "success", "recommended_next_tactics": ["router_assisted"]}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_run_llm_router_review", _slow_router_review)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            router_llm_timeout_seconds=0.01,
+            router_embeddings_timeout_seconds=0.01,
+            router_ipfs_timeout_seconds=0.01,
+        )
+    )
+
+    summary = await daemon.run()
+
+    assert summary["status"] == "success"
+    assert summary["latest_cycle"]["router_assist"]["status"] == "completed"
+    assert summary["latest_cycle"]["router_assist"]["llm_review"]["status"] == "error"
+    assert "timed out" in summary["latest_cycle"]["router_assist"]["llm_review"]["error"]
+    assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+
 
 
 @pytest.mark.asyncio

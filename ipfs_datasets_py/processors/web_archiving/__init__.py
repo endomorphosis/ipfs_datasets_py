@@ -16,6 +16,7 @@ Search engine functions:
     - search_github_repositories, search_github_code, ...          (github_search_engine.py)
     - create_autoscraper_model, scrape_with_autoscraper, ...       (autoscraper_engine.py)
     - archive_to_archive_is, search_archive_is, ...                (archive_is_engine.py)
+    - crawl_with_cloudflare_browser_rendering, ...                 (cloudflare_browser_rendering_engine.py)
     - search_google, search_google_images, batch_search_google     (google_search_engine.py)
     - search_wayback_machine, get_wayback_content, archive_to_wayback (wayback_machine_engine.py)
     - index_warc_to_ipwb, start_ipwb_replay, search_ipwb_archive   (ipwb_engine.py)
@@ -160,6 +161,17 @@ except Exception:
     pass
 
 try:
+    from .cloudflare_browser_rendering_engine import (  # noqa: F401
+        cancel_cloudflare_browser_rendering_crawl,
+        crawl_with_cloudflare_browser_rendering,
+        get_cloudflare_browser_rendering_crawl,
+        start_cloudflare_browser_rendering_crawl,
+        wait_for_cloudflare_browser_rendering_crawl,
+    )
+except Exception:
+    pass
+
+try:
     from .google_search_engine import (  # noqa: F401
         search_google,
         search_google_images,
@@ -219,6 +231,12 @@ __all__ = [
     "get_archive_is_content",
     "check_archive_status",
     "batch_archive_to_archive_is",
+    # Cloudflare Browser Rendering
+    "start_cloudflare_browser_rendering_crawl",
+    "get_cloudflare_browser_rendering_crawl",
+    "wait_for_cloudflare_browser_rendering_crawl",
+    "cancel_cloudflare_browser_rendering_crawl",
+    "crawl_with_cloudflare_browser_rendering",
     # Google Search
     "search_google",
     "search_google_images",

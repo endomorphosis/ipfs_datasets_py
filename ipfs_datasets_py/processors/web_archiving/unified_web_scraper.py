@@ -11,9 +11,10 @@ Supported Scraping Methods (in fallback order):
 3. Wayback Machine - Historical snapshots via Internet Archive
 4. Common Crawl - Large-scale web archive
 5. Archive.is - Permanent webpage snapshots
-6. IPWB (InterPlanetary Wayback) - IPFS-based web archives
-7. Newspaper3k - Article extraction
-8. Readability - Content extraction
+6. Cloudflare Browser Rendering crawl - remote crawl fallback
+7. IPWB (InterPlanetary Wayback) - IPFS-based web archives
+8. Newspaper3k - Article extraction
+9. Readability - Content extraction
 
 The scraper automatically tries each method in sequence until successful,
 making it resilient to various failure scenarios.
@@ -45,6 +46,7 @@ class ScraperMethod(Enum):
     WAYBACK_MACHINE = "wayback_machine"
     COMMON_CRAWL = "common_crawl"
     ARCHIVE_IS = "archive_is"
+    CLOUDFLARE_BROWSER_RENDERING = "cloudflare_browser_rendering"
     IPWB = "ipwb"
     NEWSPAPER = "newspaper"
     READABILITY = "readability"
@@ -108,6 +110,17 @@ class ScraperConfig:
     archive_is_submit_wait: bool = False
     archive_is_submit_retries: int = 2
     archive_is_submit_backoff_seconds: float = 2.0
+    cloudflare_account_id: Optional[str] = None
+    cloudflare_api_token: Optional[str] = None
+    cloudflare_timeout_seconds: int = 120
+    cloudflare_poll_interval_seconds: float = 2.0
+    cloudflare_limit: int = 1
+    cloudflare_depth: int = 0
+    cloudflare_render: bool = False
+    cloudflare_source: str = "all"
+    cloudflare_formats: Optional[List[str]] = None
+    cloudflare_include_external_links: bool = False
+    cloudflare_include_subdomains: bool = False
 
     # Common Crawl (via local common_crawl_search_engine) configuration.
     # Defaults match common_crawl_search_engine.ccindex.api.search_domain_via_meta_indexes().
@@ -148,6 +161,7 @@ class ScraperConfig:
                 ScraperMethod.BEAUTIFULSOUP,
                 ScraperMethod.WAYBACK_MACHINE,
                 ScraperMethod.ARCHIVE_IS,
+                ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
                 ScraperMethod.IPWB,
                 ScraperMethod.NEWSPAPER,
                 ScraperMethod.READABILITY,
@@ -221,6 +235,16 @@ class UnifiedWebScraper:
             self.available_methods[ScraperMethod.ARCHIVE_IS] = True
         except ImportError:
             self.available_methods[ScraperMethod.ARCHIVE_IS] = False
+
+        # Check Cloudflare Browser Rendering crawl endpoint.
+        try:
+            import requests  # noqa: F401
+            account_id, api_token = self._resolve_cloudflare_credentials()
+            self.available_methods[ScraperMethod.CLOUDFLARE_BROWSER_RENDERING] = bool(account_id and api_token)
+            if not self.available_methods[ScraperMethod.CLOUDFLARE_BROWSER_RENDERING]:
+                logger.debug("Cloudflare Browser Rendering credentials not configured")
+        except ImportError:
+            self.available_methods[ScraperMethod.CLOUDFLARE_BROWSER_RENDERING] = False
         
         # Check IPWB
         try:
@@ -287,6 +311,38 @@ class UnifiedWebScraper:
                 return values
         return []
 
+    @staticmethod
+    def _env_int(*names: str) -> Optional[int]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            try:
+                return int(raw)
+            except ValueError:
+                continue
+        return None
+
+    @staticmethod
+    def _env_float(*names: str) -> Optional[float]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            try:
+                return float(raw)
+            except ValueError:
+                continue
+        return None
+
+    @staticmethod
+    def _env_str(*names: str) -> Optional[str]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if raw:
+                return raw
+        return None
+
     @classmethod
     def _parse_method_names(cls, names: List[str]) -> List[ScraperMethod]:
         aliases = {
@@ -296,6 +352,8 @@ class UnifiedWebScraper:
             "wayback": ScraperMethod.WAYBACK_MACHINE,
             "commoncrawl": ScraperMethod.COMMON_CRAWL,
             "archiveis": ScraperMethod.ARCHIVE_IS,
+            "cloudflare": ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+            "browser_rendering": ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
             "requests": ScraperMethod.REQUESTS_ONLY,
         }
         parsed: List[ScraperMethod] = []
@@ -345,6 +403,76 @@ class UnifiedWebScraper:
         )
         if archive_submit_wait is not None:
             self.config.archive_is_submit_wait = archive_submit_wait
+
+        cloudflare_timeout = self._env_int(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS",
+        )
+        if cloudflare_timeout is not None and cloudflare_timeout > 0:
+            self.config.cloudflare_timeout_seconds = cloudflare_timeout
+
+        cloudflare_poll_interval = self._env_float(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_POLL_INTERVAL_SECONDS",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_POLL_INTERVAL_SECONDS",
+        )
+        if cloudflare_poll_interval is not None and cloudflare_poll_interval > 0:
+            self.config.cloudflare_poll_interval_seconds = cloudflare_poll_interval
+
+        cloudflare_limit = self._env_int(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_LIMIT",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_LIMIT",
+        )
+        if cloudflare_limit is not None and cloudflare_limit > 0:
+            self.config.cloudflare_limit = cloudflare_limit
+
+        cloudflare_depth = self._env_int(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_DEPTH",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_DEPTH",
+        )
+        if cloudflare_depth is not None and cloudflare_depth >= 0:
+            self.config.cloudflare_depth = cloudflare_depth
+
+        cloudflare_render = self._env_bool(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_RENDER",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_RENDER",
+        )
+        if cloudflare_render is not None:
+            self.config.cloudflare_render = cloudflare_render
+
+        cloudflare_source = self._env_str(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_SOURCE",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_SOURCE",
+        )
+        if cloudflare_source:
+            self.config.cloudflare_source = cloudflare_source
+
+        cloudflare_formats = self._env_list(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_FORMATS",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_FORMATS",
+        )
+        if cloudflare_formats:
+            self.config.cloudflare_formats = cloudflare_formats
+
+    def _resolve_cloudflare_credentials(self) -> tuple[Optional[str], Optional[str]]:
+        account_id = (
+            self.config.cloudflare_account_id
+            or self._env_str(
+                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+                "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+                "CLOUDFLARE_ACCOUNT_ID",
+            )
+            or ""
+        ).strip() or None
+        api_token = (
+            self.config.cloudflare_api_token
+            or self._env_str(
+                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+                "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+                "CLOUDFLARE_API_TOKEN",
+            )
+            or ""
+        ).strip() or None
+        return account_id, api_token
 
     @staticmethod
     def _existing_path(*candidates: Optional[Union[str, Path]], want_dir: bool = False, want_file: bool = False) -> Optional[Path]:
@@ -820,6 +948,8 @@ class UnifiedWebScraper:
                 return await self._scrape_common_crawl(url, **kwargs)
             elif method == ScraperMethod.ARCHIVE_IS:
                 return await self._scrape_archive_is(url, **kwargs)
+            elif method == ScraperMethod.CLOUDFLARE_BROWSER_RENDERING:
+                return await self._scrape_cloudflare_browser_rendering(url, **kwargs)
             elif method == ScraperMethod.IPWB:
                 return await self._scrape_ipwb(url, **kwargs)
             elif method == ScraperMethod.NEWSPAPER:
@@ -1353,6 +1483,117 @@ class UnifiedWebScraper:
             url=url,
             success=False,
             errors=["Archive.is returned no archived snapshot"]
+        )
+
+    async def _scrape_cloudflare_browser_rendering(self, url: str, **kwargs) -> ScraperResult:
+        """Scrape using Cloudflare Browser Rendering crawl as a remote fallback."""
+        from .cloudflare_browser_rendering_engine import crawl_with_cloudflare_browser_rendering
+
+        account_id, api_token = self._resolve_cloudflare_credentials()
+        if not account_id or not api_token:
+            return ScraperResult(
+                url=url,
+                success=False,
+                method_used=ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+                errors=["Cloudflare Browser Rendering credentials are not configured"],
+            )
+
+        formats = kwargs.get("cloudflare_formats") or self.config.cloudflare_formats or ["markdown", "html"]
+        crawl_result = await crawl_with_cloudflare_browser_rendering(
+            url,
+            account_id=account_id,
+            api_token=api_token,
+            timeout_seconds=int(kwargs.get("cloudflare_timeout_seconds", self.config.cloudflare_timeout_seconds)),
+            poll_interval_seconds=float(kwargs.get("cloudflare_poll_interval_seconds", self.config.cloudflare_poll_interval_seconds)),
+            request_timeout_seconds=int(kwargs.get("cloudflare_request_timeout_seconds", self.config.timeout)),
+            limit=int(kwargs.get("cloudflare_limit", self.config.cloudflare_limit)),
+            depth=int(kwargs.get("cloudflare_depth", self.config.cloudflare_depth)),
+            formats=formats,
+            render=bool(kwargs.get("cloudflare_render", self.config.cloudflare_render)),
+            source=str(kwargs.get("cloudflare_source", self.config.cloudflare_source)),
+            include_external_links=bool(kwargs.get("cloudflare_include_external_links", self.config.cloudflare_include_external_links)),
+            include_subdomains=bool(kwargs.get("cloudflare_include_subdomains", self.config.cloudflare_include_subdomains)),
+            include_patterns=kwargs.get("cloudflare_include_patterns"),
+            exclude_patterns=kwargs.get("cloudflare_exclude_patterns"),
+            extra_body=kwargs.get("cloudflare_extra_body"),
+        )
+
+        if crawl_result.get("status") != "success":
+            error = str(crawl_result.get("error") or f"Cloudflare crawl failed with status {crawl_result.get('status')}")
+            return ScraperResult(
+                url=url,
+                success=False,
+                method_used=ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+                errors=[error],
+                metadata={
+                    "method": "cloudflare_browser_rendering",
+                    "cloudflare_status": crawl_result.get("status"),
+                    "cloudflare_job_id": crawl_result.get("job_id"),
+                },
+            )
+
+        records = list(crawl_result.get("records") or [])
+        selected_record: Optional[Dict[str, Any]] = None
+        normalized_url = url.rstrip("/")
+
+        for record in records:
+            if str(record.get("status") or "").lower() != "completed":
+                continue
+            record_url = str(record.get("url") or "").rstrip("/")
+            if record_url == normalized_url:
+                selected_record = record
+                break
+        if selected_record is None:
+            for record in records:
+                if str(record.get("status") or "").lower() == "completed":
+                    selected_record = record
+                    break
+        if selected_record is None and records:
+            selected_record = records[0]
+
+        if not selected_record:
+            return ScraperResult(
+                url=url,
+                success=False,
+                method_used=ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+                errors=["Cloudflare crawl completed without returning any records"],
+                metadata={
+                    "method": "cloudflare_browser_rendering",
+                    "cloudflare_job_id": crawl_result.get("job_id"),
+                },
+            )
+
+        metadata = dict(selected_record.get("metadata") or {})
+        html = str(selected_record.get("html") or "")
+        text = str(selected_record.get("markdown") or "").strip()
+        if not text and html and self.config.extract_text:
+            from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(html, "html.parser")
+            text = soup.get_text(separator="\n", strip=True)
+
+        title = str(metadata.get("title") or "").strip()
+        record_status = str(selected_record.get("status") or "").strip().lower()
+        success = record_status == "completed" and bool(text or html)
+        errors = [] if success else [f"Cloudflare crawl record status: {record_status or 'unknown'}"]
+
+        return ScraperResult(
+            url=url,
+            html=html,
+            title=title,
+            text=text,
+            content=text or html,
+            method_used=ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+            success=success,
+            errors=errors,
+            metadata={
+                "method": "cloudflare_browser_rendering",
+                "cloudflare_job_id": crawl_result.get("job_id"),
+                "cloudflare_job_status": str((crawl_result.get("job") or {}).get("status") or ""),
+                "cloudflare_record_status": record_status,
+                "cloudflare_record_count": len(records),
+                **metadata,
+            },
         )
     
     async def _scrape_ipwb(self, url: str, **kwargs) -> ScraperResult:

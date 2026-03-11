@@ -241,6 +241,9 @@ class StateLawsAgenticDaemonConfig:
     admin_agentic_max_hops: Optional[int] = None
     admin_agentic_max_pages: Optional[int] = None
     admin_agentic_fetch_concurrency: Optional[int] = None
+    router_llm_timeout_seconds: float = 20.0
+    router_embeddings_timeout_seconds: float = 10.0
+    router_ipfs_timeout_seconds: float = 10.0
     tactic_profiles: Dict[str, ScraperTacticProfile] = field(default_factory=default_tactic_profiles)
     random_seed: Optional[int] = None
     post_cycle_release: "PostCycleReleaseConfig" = field(default_factory=lambda: PostCycleReleaseConfig())
@@ -430,6 +433,9 @@ class StateLawsAgenticDaemon:
         corpus_gap_summary = filtered_metadata.get("corpus_gap_summary")
         if isinstance(corpus_gap_summary, dict):
             diagnostics["gap_analysis"] = corpus_gap_summary
+        timing_summary = filtered_metadata.get("phase_timings")
+        if isinstance(timing_summary, dict):
+            diagnostics["timing"] = timing_summary
         return diagnostics
 
     def _build_filtered_corpus_metadata(self, scrape_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -480,6 +486,9 @@ class StateLawsAgenticDaemon:
             "etl_readiness": _compute_etl_readiness_summary(data),
             "quality_by_state": quality_by_state if quality_by_state else None,
         }
+        timing_summary = self._build_phase_timing_summary(metadata)
+        if timing_summary:
+            filtered_metadata["phase_timings"] = timing_summary
         document_coverage = self._build_document_coverage(data=data, metadata=metadata)
         if document_coverage:
             filtered_metadata["document_coverage"] = document_coverage
@@ -487,6 +496,44 @@ class StateLawsAgenticDaemon:
         if corpus_gap_summary:
             filtered_metadata["corpus_gap_summary"] = corpus_gap_summary
         return filtered_metadata
+
+    @staticmethod
+    def _build_phase_timing_summary(metadata: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        phase_timings = metadata.get("phase_timings")
+        if not isinstance(phase_timings, dict):
+            return None
+
+        normalized: Dict[str, float] = {}
+        for key, value in phase_timings.items():
+            try:
+                seconds = float(value)
+            except (TypeError, ValueError):
+                continue
+            if seconds < 0.0:
+                continue
+            normalized[str(key)] = round(seconds, 4)
+
+        if not normalized:
+            return None
+
+        total_seconds = float(normalized.get("total_seconds") or metadata.get("elapsed_time_seconds") or 0.0)
+        phase_seconds = {key: value for key, value in normalized.items() if key != "total_seconds"}
+        dominant_phase = None
+        dominant_seconds = 0.0
+        if phase_seconds:
+            dominant_phase, dominant_seconds = max(phase_seconds.items(), key=lambda item: float(item[1] or 0.0))
+        slow_phases = [
+            key
+            for key, value in phase_seconds.items()
+            if total_seconds > 0.0 and float(value or 0.0) / float(total_seconds) >= 0.35
+        ]
+        return {
+            "total_seconds": round(total_seconds, 4),
+            "phase_seconds": phase_seconds,
+            "dominant_phase": dominant_phase,
+            "dominant_seconds": round(float(dominant_seconds or 0.0), 4),
+            "slow_phases": slow_phases,
+        }
 
     def _build_document_coverage(self, *, data: Sequence[Dict[str, Any]], metadata: Dict[str, Any]) -> Dict[str, Any]:
         per_state: Dict[str, Dict[str, int]] = {}
@@ -657,8 +704,8 @@ class StateLawsAgenticDaemon:
             report["reason"] = "no-critic-issues"
             return report
 
-        llm_review = await self._run_llm_router_review(tactic=tactic, diagnostics=diagnostics, critic=critic)
-        embeddings_ranking = await asyncio.to_thread(self._rank_tactics_with_embeddings, tactic, diagnostics, critic)
+        llm_review = await self._run_router_llm_review_with_timeout(tactic=tactic, diagnostics=diagnostics, critic=critic)
+        embeddings_ranking = await self._run_router_embeddings_ranking_with_timeout(tactic=tactic, diagnostics=diagnostics, critic=critic)
 
         report.update(
             {
@@ -672,7 +719,7 @@ class StateLawsAgenticDaemon:
         cycle_path = self._write_router_assist_report(cycle_index=cycle_index, report=report)
         report["artifact_path"] = str(cycle_path) if cycle_path else None
 
-        ipfs_persist = await self._persist_router_assist_to_ipfs(
+        ipfs_persist = await self._run_router_ipfs_persist_with_timeout(
             cycle_index=cycle_index,
             report=report,
             corpus_key=self.corpus.key,
@@ -748,7 +795,7 @@ class StateLawsAgenticDaemon:
         )
         try:
             response = await asyncio.to_thread(
-                llm_router.generate,
+                llm_router.generate_text,
                 prompt,
                 provider=tactic.llm_provider,
                 temperature=0.2,
@@ -763,6 +810,24 @@ class StateLawsAgenticDaemon:
         parsed["status"] = "success"
         parsed["provider"] = tactic.llm_provider
         return parsed
+
+    async def _run_router_llm_review_with_timeout(
+        self,
+        *,
+        tactic: ScraperTacticProfile,
+        diagnostics: Dict[str, Any],
+        critic: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        timeout_seconds = max(0.0, float(self.config.router_llm_timeout_seconds or 0.0))
+        if timeout_seconds <= 0.0:
+            return await self._run_llm_router_review(tactic=tactic, diagnostics=diagnostics, critic=critic)
+        try:
+            return await asyncio.wait_for(
+                self._run_llm_router_review(tactic=tactic, diagnostics=diagnostics, critic=critic),
+                timeout=timeout_seconds,
+            )
+        except asyncio.TimeoutError:
+            return {"status": "error", "error": f"timed out after {timeout_seconds:.1f} seconds"}
 
     @staticmethod
     def _parse_router_llm_response(response: Any) -> Optional[Dict[str, Any]]:
@@ -826,6 +891,22 @@ class StateLawsAgenticDaemon:
         ranking.sort(key=lambda item: float(item.get("score", 0.0) or 0.0), reverse=True)
         return ranking
 
+    async def _run_router_embeddings_ranking_with_timeout(
+        self,
+        *,
+        tactic: ScraperTacticProfile,
+        diagnostics: Dict[str, Any],
+        critic: Dict[str, Any],
+    ) -> Optional[List[Dict[str, Any]]]:
+        timeout_seconds = max(0.0, float(self.config.router_embeddings_timeout_seconds or 0.0))
+        ranking_task = asyncio.to_thread(self._rank_tactics_with_embeddings, tactic, diagnostics, critic)
+        if timeout_seconds <= 0.0:
+            return await ranking_task
+        try:
+            return await asyncio.wait_for(ranking_task, timeout=timeout_seconds)
+        except asyncio.TimeoutError:
+            return None
+
     @staticmethod
     def _cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
         if not left or not right or len(left) != len(right):
@@ -860,6 +941,26 @@ class StateLawsAgenticDaemon:
             return result
         except Exception as exc:
             return {"status": "error", "error": str(exc)}
+
+    async def _run_router_ipfs_persist_with_timeout(
+        self,
+        *,
+        cycle_index: int,
+        report: Dict[str, Any],
+        corpus_key: str,
+    ) -> Optional[Dict[str, Any]]:
+        timeout_seconds = max(0.0, float(self.config.router_ipfs_timeout_seconds or 0.0))
+        persist_task = self._persist_router_assist_to_ipfs(
+            cycle_index=cycle_index,
+            report=report,
+            corpus_key=corpus_key,
+        )
+        if timeout_seconds <= 0.0:
+            return await persist_task
+        try:
+            return await asyncio.wait_for(persist_task, timeout=timeout_seconds)
+        except asyncio.TimeoutError:
+            return {"status": "error", "error": f"timed out after {timeout_seconds:.1f} seconds"}
 
     def _write_router_assist_report(self, *, cycle_index: int, report: Dict[str, Any]) -> Optional[Path]:
         if not isinstance(report, dict) or not report:
@@ -1189,6 +1290,7 @@ class StateLawsAgenticDaemon:
         quality = diagnostics.get("quality") or {}
         documents = diagnostics.get("documents") or {}
         gap_analysis = diagnostics.get("gap_analysis") or {}
+        timing = diagnostics.get("timing") or {}
 
         issues: List[str] = []
         next_tactics: List[str] = []
@@ -1230,6 +1332,17 @@ class StateLawsAgenticDaemon:
         if weak_gap_states:
             issues.append(f"state-gap-analysis:{','.join(weak_gap_states[:8])}")
             next_tactics.extend(["discovery_first", "document_first", "router_assisted"])
+
+        dominant_phase = str(timing.get("dominant_phase") or "").strip()
+        if dominant_phase == "agentic_discovery_seconds":
+            issues.append("agentic-discovery-dominant")
+            next_tactics.extend(["document_first", "precision_first", "router_assisted"])
+        elif dominant_phase == "fallback_retry_seconds":
+            issues.append("fallback-retry-dominant")
+            next_tactics.extend(["archival_first", "render_first", "router_assisted"])
+        elif dominant_phase == "base_scrape_seconds" and no_attempt_states:
+            issues.append("base-scrape-dominant")
+            next_tactics.extend(["render_first", "discovery_first", "router_assisted"])
 
         if provider_summary and "common_crawl" not in provider_summary and coverage_gaps:
             issues.append("common-crawl-unused-on-gap-cycle")
@@ -1603,6 +1716,9 @@ async def run_state_laws_agentic_daemon(
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
     per_state_timeout_seconds: float = 480.0,
+    router_llm_timeout_seconds: float = 20.0,
+    router_embeddings_timeout_seconds: float = 10.0,
+    router_ipfs_timeout_seconds: float = 10.0,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -1627,6 +1743,9 @@ async def run_state_laws_agentic_daemon(
             explore_probability=explore_probability,
             archive_warmup_urls=archive_warmup_urls,
             per_state_timeout_seconds=per_state_timeout_seconds,
+            router_llm_timeout_seconds=router_llm_timeout_seconds,
+            router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
+            router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -1655,6 +1774,9 @@ async def run_state_admin_rules_agentic_daemon(
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
     per_state_timeout_seconds: float = 480.0,
+    router_llm_timeout_seconds: float = 20.0,
+    router_embeddings_timeout_seconds: float = 10.0,
+    router_ipfs_timeout_seconds: float = 10.0,
     admin_agentic_max_candidates_per_state: Optional[int] = None,
     admin_agentic_max_fetch_per_state: Optional[int] = None,
     admin_agentic_max_results_per_domain: Optional[int] = None,
@@ -1684,6 +1806,9 @@ async def run_state_admin_rules_agentic_daemon(
             explore_probability=explore_probability,
             archive_warmup_urls=archive_warmup_urls,
             per_state_timeout_seconds=per_state_timeout_seconds,
+            router_llm_timeout_seconds=router_llm_timeout_seconds,
+            router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
+            router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
             admin_agentic_max_candidates_per_state=admin_agentic_max_candidates_per_state,
             admin_agentic_max_fetch_per_state=admin_agentic_max_fetch_per_state,
             admin_agentic_max_results_per_domain=admin_agentic_max_results_per_domain,
@@ -1718,6 +1843,9 @@ async def run_state_court_rules_agentic_daemon(
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
     per_state_timeout_seconds: float = 480.0,
+    router_llm_timeout_seconds: float = 20.0,
+    router_embeddings_timeout_seconds: float = 10.0,
+    router_ipfs_timeout_seconds: float = 10.0,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -1741,6 +1869,9 @@ async def run_state_court_rules_agentic_daemon(
             explore_probability=explore_probability,
             archive_warmup_urls=archive_warmup_urls,
             per_state_timeout_seconds=per_state_timeout_seconds,
+            router_llm_timeout_seconds=router_llm_timeout_seconds,
+            router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
+            router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -1775,6 +1906,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--explore-probability", type=float, default=0.30, help="Exploration probability for tactic selection.")
     parser.add_argument("--archive-warmup-urls", type=int, default=25, help="Number of weak-state URLs to archive after each cycle.")
     parser.add_argument("--per-state-timeout-seconds", type=float, default=480.0, help="Timeout budget for each individual state scrape.")
+    parser.add_argument("--router-llm-timeout-seconds", type=float, default=20.0, help="Timeout budget for router-backed LLM review during each cycle.")
+    parser.add_argument("--router-embeddings-timeout-seconds", type=float, default=10.0, help="Timeout budget for router-backed embeddings ranking during each cycle.")
+    parser.add_argument("--router-ipfs-timeout-seconds", type=float, default=10.0, help="Timeout budget for persisting router-assist artifacts to IPFS.")
     parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=None, help="Optional state-admin-rules candidate cap passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=None, help="Optional state-admin-rules fetch cap passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=None, help="Optional state-admin-rules per-domain result cap passed through to the agentic fallback.")
@@ -1820,6 +1954,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             explore_probability=float(args.explore_probability),
             archive_warmup_urls=int(args.archive_warmup_urls),
             per_state_timeout_seconds=float(args.per_state_timeout_seconds),
+            router_llm_timeout_seconds=float(args.router_llm_timeout_seconds),
+            router_embeddings_timeout_seconds=float(args.router_embeddings_timeout_seconds),
+            router_ipfs_timeout_seconds=float(args.router_ipfs_timeout_seconds),
             admin_agentic_max_candidates_per_state=args.admin_agentic_max_candidates_per_state,
             admin_agentic_max_fetch_per_state=args.admin_agentic_max_fetch_per_state,
             admin_agentic_max_results_per_domain=args.admin_agentic_max_results_per_domain,

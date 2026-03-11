@@ -50,7 +50,10 @@ class IPFSStorageManager:
             logger.info("Initialized IPFS storage manager (router backend)")
 
     async def _router_add_bytes(self, data: bytes, *, pin: bool) -> str:
-        return await anyio.to_thread.run_sync(ipfs_router.add_bytes, data, pin=pin)
+        def _add_bytes() -> str:
+            return ipfs_router.add_bytes(data, pin=pin)
+
+        return await anyio.to_thread.run_sync(_add_bytes)
 
     async def _router_cat(self, cid: str) -> bytes:
         return await anyio.to_thread.run_sync(ipfs_router.cat, cid)

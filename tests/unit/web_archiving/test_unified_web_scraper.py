@@ -193,6 +193,15 @@ def test_common_crawl_search_options_enable_hf_remote_when_no_local_meta(
     assert options["hf_revision"] == "main"
 
 
+def test_parse_method_names_accepts_cloudflare_alias() -> None:
+    methods = UnifiedWebScraper._parse_method_names(["cloudflare", "requests"])
+
+    assert methods == [
+        ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+        ScraperMethod.REQUESTS_ONLY,
+    ]
+
+
 class _FakeResponse:
     def __init__(self, *, content: bytes, headers: dict[str, str] | None = None, status_code: int = 200, text: str | None = None):
         self.content = content
@@ -258,6 +267,51 @@ async def test_beautifulsoup_returns_pdf_bytes_and_text(monkeypatch: pytest.Monk
     assert result.metadata["binary_document"] is True
     assert result.metadata["content_type"] == "application/pdf"
     assert result.metadata["raw_bytes"] == pdf_bytes
+
+
+@pytest.mark.anyio
+async def test_cloudflare_browser_rendering_returns_completed_record(monkeypatch: pytest.MonkeyPatch) -> None:
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            cloudflare_account_id="acct-test",
+            cloudflare_api_token="token-test",
+        )
+    )
+
+    async def _fake_crawl(url: str, **kwargs):
+        assert url == "https://example.gov/rules"
+        assert kwargs["account_id"] == "acct-test"
+        assert kwargs["api_token"] == "token-test"
+        return {
+            "status": "success",
+            "job_id": "job-123",
+            "job": {"status": "completed"},
+            "records": [
+                {
+                    "url": "https://example.gov/rules",
+                    "status": "completed",
+                    "markdown": "# Rules\n\nCurrent administrative rules.",
+                    "metadata": {
+                        "title": "Example Rules",
+                        "status": 200,
+                    },
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine.crawl_with_cloudflare_browser_rendering",
+        _fake_crawl,
+    )
+
+    result = await scraper._scrape_cloudflare_browser_rendering("https://example.gov/rules")
+
+    assert result.success is True
+    assert result.method_used == ScraperMethod.CLOUDFLARE_BROWSER_RENDERING
+    assert result.title == "Example Rules"
+    assert result.text == "# Rules\n\nCurrent administrative rules."
+    assert result.metadata["cloudflare_job_id"] == "job-123"
+    assert result.metadata["cloudflare_record_status"] == "completed"
 
 
 @pytest.mark.anyio

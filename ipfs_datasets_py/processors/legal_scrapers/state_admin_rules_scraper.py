@@ -2578,6 +2578,82 @@ async def _agentic_discover_admin_state_blocks(
     require_substantive_text: bool,
     fetch_concurrency: int,
 ) -> Dict[str, Any]:
+    normalized_states = [str(state or "").upper() for state in list(states or []) if str(state or "").strip()]
+    if len(normalized_states) > 1:
+        max_parallel_states = min(len(normalized_states), 4)
+        semaphore = asyncio.Semaphore(max_parallel_states)
+
+        async def _run_single_state(single_state: str) -> Dict[str, Any]:
+            async with semaphore:
+                return await _agentic_discover_admin_state_blocks(
+                    states=[single_state],
+                    max_candidates_per_state=max_candidates_per_state,
+                    max_fetch_per_state=max_fetch_per_state,
+                    max_results_per_domain=max_results_per_domain,
+                    max_hops=max_hops,
+                    max_pages=max_pages,
+                    min_full_text_chars=min_full_text_chars,
+                    require_substantive_text=require_substantive_text,
+                    fetch_concurrency=fetch_concurrency,
+                )
+
+        state_results = await asyncio.gather(
+            *[_run_single_state(state_code) for state_code in normalized_states],
+            return_exceptions=True,
+        )
+
+        blocks: List[Dict[str, Any]] = []
+        kg_rows: List[Dict[str, Any]] = []
+        report: Dict[str, Any] = {}
+        errors: List[str] = []
+
+        for state_code, state_result in zip(normalized_states, state_results):
+            if isinstance(state_result, Exception):
+                errors.append(f"{state_code}:{state_result}")
+                report[state_code] = {
+                    "candidate_urls": 0,
+                    "inspected_urls": 0,
+                    "expanded_urls": 0,
+                    "fetched_rules": 0,
+                    "source_breakdown": {},
+                    "timed_out": False,
+                    "error": str(state_result),
+                }
+                blocks.append(
+                    {
+                        "state_code": state_code,
+                        "state_name": US_STATES.get(state_code, state_code),
+                        "title": f"{US_STATES.get(state_code, state_code)} Administrative Rules",
+                        "source": "Agentic web-archive discovery",
+                        "source_url": None,
+                        "scraped_at": datetime.now().isoformat(),
+                        "statutes": [],
+                        "rules_count": 0,
+                        "schema_version": "1.0",
+                        "normalized": True,
+                    }
+                )
+                continue
+
+            blocks.extend(list(state_result.get("state_blocks") or []))
+            kg_rows.extend(list(state_result.get("kg_rows") or []))
+            state_report = state_result.get("report") or {}
+            if isinstance(state_report, dict):
+                report.update(state_report)
+            if str(state_result.get("status") or "").lower() == "error":
+                errors.append(f"{state_code}:{state_result.get('error') or 'unknown_error'}")
+
+        aggregated: Dict[str, Any] = {
+            "status": "success" if not errors else ("partial" if blocks else "error"),
+            "state_blocks": blocks,
+            "kg_rows": kg_rows,
+            "report": report,
+            "parallel_state_workers": max_parallel_states,
+        }
+        if errors:
+            aggregated["error"] = "; ".join(errors)
+        return aggregated
+
     try:
         from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import LegalWebArchiveSearch
         from ipfs_datasets_py.processors.legal_scrapers.parallel_web_archiver import ParallelWebArchiver
@@ -3465,7 +3541,7 @@ async def _agentic_discover_admin_state_blocks(
                                         asyncio.to_thread(
                                             lambda: unified_api.agentic_discover_and_fetch(
                                                 seed_urls=[url],
-                                                target_terms=["administrative", "regulation", "rule", "code", "title", "chapter"],
+                                                target_terms=_query_target_terms_for_state(state_code),
                                                 max_hops=max(0, int(max_hops)),
                                                 max_pages=max(2, min(8, int(max_pages))),
                                                 mode=OperationMode.BALANCED,
@@ -3685,12 +3761,17 @@ async def scrape_state_admin_rules(
             selected_states = list(US_STATES.keys() if include_dc else US_50_STATE_CODES)
 
         source_diagnostics = _collect_admin_source_diagnostics(selected_states)
+        phase_timings: Dict[str, float] = {}
+
+        def _record_phase(phase_name: str, started_at: float) -> None:
+            phase_timings[phase_name] = round(max(0.0, time.time() - started_at), 4)
 
         start = time.time()
         effective_max_base_statutes = max_base_statutes
         if effective_max_base_statutes is None and max_rules and int(max_rules) > 0:
             effective_max_base_statutes = int(max_rules)
 
+        base_started_at = time.time()
         base_result = await scrape_state_laws(
             states=selected_states,
             legal_areas=["administrative"],
@@ -3708,7 +3789,9 @@ async def scrape_state_admin_rules(
             retry_zero_statute_states=retry_zero_rule_states,
             per_state_timeout_seconds=per_state_timeout_seconds,
         )
+        _record_phase("base_scrape_seconds", base_started_at)
 
+        filter_started_at = time.time()
         raw_data = list(base_result.get("data") or [])
         filtered_data, admin_rule_count, zero_rule_states = _filter_admin_state_blocks(
             raw_data,
@@ -3722,10 +3805,12 @@ async def scrape_state_admin_rules(
         )
         if added_zero_states:
             zero_rule_states = sorted(set(zero_rule_states).union(added_zero_states))
+        _record_phase("filter_seconds", filter_started_at)
 
         fallback_attempted_states: List[str] = []
         fallback_recovered_states: List[str] = []
         if retry_zero_rule_states and zero_rule_states:
+            fallback_started_at = time.time()
             fallback_attempted_states = sorted(set(zero_rule_states))
             fallback_result = await scrape_state_laws(
                 states=fallback_attempted_states,
@@ -3774,12 +3859,14 @@ async def scrape_state_admin_rules(
                 for item in filtered_data
                 if isinstance(item, dict) and int(item.get("rules_count") or 0) == 0
             ]
+            _record_phase("fallback_retry_seconds", fallback_started_at)
 
         agentic_attempted_states: List[str] = []
         agentic_recovered_states: List[str] = []
         agentic_report: Dict[str, Any] = {}
         kg_corpus_jsonl: Optional[str] = None
         if agentic_fallback_enabled and zero_rule_states:
+            agentic_started_at = time.time()
             agentic_attempted_states = sorted(set(zero_rule_states))
             agentic_result = await _agentic_discover_admin_state_blocks(
                 states=agentic_attempted_states,
@@ -3792,6 +3879,7 @@ async def scrape_state_admin_rules(
                 require_substantive_text=bool(require_substantive_rule_text),
                 fetch_concurrency=int(agentic_fetch_concurrency),
             )
+            _record_phase("agentic_discovery_seconds", agentic_started_at)
             agentic_report = {
                 "status": agentic_result.get("status"),
                 "error": agentic_result.get("error"),
@@ -3818,8 +3906,10 @@ async def scrape_state_admin_rules(
 
             kg_rows = list(agentic_result.get("kg_rows") or [])
             if write_agentic_kg_corpus and kg_rows:
+                kg_write_started_at = time.time()
                 output_root = _resolve_admin_output_dir(output_dir)
                 kg_corpus_jsonl = _write_agentic_kg_corpus_jsonl(kg_rows, output_root)
+                _record_phase("kg_corpus_write_seconds", kg_write_started_at)
 
             admin_rule_count = sum(int((item or {}).get("rules_count") or 0) for item in filtered_data)
             zero_rule_states = [
@@ -3842,13 +3932,16 @@ async def scrape_state_admin_rules(
         jsonld_paths: List[str] = []
         jsonld_dir: Optional[str] = None
         if write_jsonld:
+            jsonld_started_at = time.time()
             output_root = _resolve_admin_output_dir(output_dir)
             jsonld_root = canonical_corpus.jsonld_dir(str(output_root))
             jsonld_root.mkdir(parents=True, exist_ok=True)
             jsonld_paths = _write_state_admin_jsonld_files(filtered_data, jsonld_root)
             jsonld_dir = str(jsonld_root)
+            _record_phase("jsonld_write_seconds", jsonld_started_at)
 
         elapsed = time.time() - start
+        phase_timings["total_seconds"] = round(max(0.0, elapsed), 4)
         metadata = {
             "states_scraped": selected_states,
             "states_count": len(selected_states),
@@ -3890,6 +3983,7 @@ async def scrape_state_admin_rules(
             "missing_rule_states_count": len(missing_rule_states),
             "missing_rule_states": missing_rule_states,
             "coverage_ratio": (len(states_with_rules) / float(len(selected_states))) if selected_states else 0.0,
+            "phase_timings": phase_timings,
             "jsonld_dir": jsonld_dir,
             "jsonld_files": jsonld_paths if jsonld_paths else None,
             "base_status": base_result.get("status"),
