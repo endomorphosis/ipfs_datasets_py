@@ -2776,6 +2776,55 @@ async def test_scrape_state_admin_rules_recovers_missing_target_state_via_agenti
 
 
 @pytest.mark.anyio
+async def test_scrape_state_admin_rules_reports_cloudflare_availability_when_credentials_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "title": "Arizona Administrative Rules",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    for env_name in (
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+    ):
+        monkeypatch.delenv(env_name, raising=False)
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AZ"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=False,
+        agentic_fallback_enabled=False,
+        require_substantive_rule_text=True,
+    )
+
+    cloudflare = result["metadata"]["cloudflare_browser_rendering"]
+    assert cloudflare["available"] is False
+    assert cloudflare["status"] == "missing_credentials"
+    assert cloudflare["provider"] == "cloudflare_browser_rendering"
+    assert cloudflare["missing_credentials"] == ["account_id", "api_token"]
+
+
+@pytest.mark.anyio
 async def test_scrape_state_admin_rules_propagates_agentic_cloudflare_rate_limit_metadata(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

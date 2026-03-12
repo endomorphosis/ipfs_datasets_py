@@ -25,7 +25,9 @@ Cycle artifacts and `daemon_state.json` now also record a `tactic_selection` blo
 
 For `state_admin_rules`, the daemon now also carries richer per-state document recovery telemetry into `diagnostics.documents.per_state_recovery` and `document_gap_report.states[STATE]`. Those blocks surface the lower-level admin agentic report details that matter during PDF and RTF recovery work, including `source_breakdown`, `domains_seen`, `parallel_prefetch`, `candidate_urls`, `inspected_urls`, `expanded_urls`, and any processed document method counts the daemon can infer from recovered rows.
 
-The workspace wrapper now mirrors that at the shell level: successful runs emit a concise stderr summary with the selected tactic, selection mode, priority states, and cycle state order, while the pending-retry reporter includes the latest `tactic_selection` and `cycle_state_order` fields when `latest_summary.json` is present.
+That telemetry now also feeds back into the critic. When the daemon can see that candidate documents are being discovered but recovery is still stalled, it emits a more specific `document-recovery-stalled:STATE` issue, increases pressure toward `render_first` and `router_assisted`, and expands state query hints with host-specific `filetype:pdf` and `filetype:rtf` searches so the next cycle can narrow in on the failing document host.
+
+The workspace wrapper now mirrors that at the shell level: successful runs emit a concise stderr summary with the selected tactic, selection mode, priority states, cycle state order, and any stalled document recovery states surfaced by the critic. The pending-retry reporter includes the latest `tactic_selection`, `cycle_state_order`, and `stalled_document_recovery_states` fields when `latest_summary.json` is present.
 
 ## Basic Usage
 

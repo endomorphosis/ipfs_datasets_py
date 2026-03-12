@@ -2646,6 +2646,37 @@ def _merge_cloudflare_rate_limit_metadata(current: Dict[str, Any], candidate: An
     return merged
 
 
+def _cloudflare_browser_rendering_availability() -> Dict[str, Any]:
+    account_env_keys = [
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+    ]
+    token_env_keys = [
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+    ]
+
+    account_source = next((key for key in account_env_keys if str(os.getenv(key) or "").strip()), None)
+    token_source = next((key for key in token_env_keys if str(os.getenv(key) or "").strip()), None)
+    missing_credentials: List[str] = []
+    if not account_source:
+        missing_credentials.append("account_id")
+    if not token_source:
+        missing_credentials.append("api_token")
+
+    configured = not missing_credentials
+    return {
+        "available": configured,
+        "status": "configured" if configured else "missing_credentials",
+        "provider": "cloudflare_browser_rendering",
+        "account_id_env": account_source,
+        "api_token_env": token_source,
+        "missing_credentials": missing_credentials,
+    }
+
+
 async def _agentic_discover_admin_state_blocks(
     *,
     states: List[str],
@@ -3873,6 +3904,7 @@ async def scrape_state_admin_rules(
             selected_states = list(US_STATES.keys() if include_dc else US_50_STATE_CODES)
 
         source_diagnostics = _collect_admin_source_diagnostics(selected_states)
+        cloudflare_browser_rendering = _cloudflare_browser_rendering_availability()
         phase_timings: Dict[str, float] = {}
 
         def _record_phase(phase_name: str, started_at: float) -> None:
@@ -4107,6 +4139,7 @@ async def scrape_state_admin_rules(
             "base_status": base_result.get("status"),
             "base_metadata": base_result.get("metadata") if include_metadata else None,
             "source_diagnostics": source_diagnostics,
+            "cloudflare_browser_rendering": cloudflare_browser_rendering,
             "cloudflare_status": agentic_rate_limit_metadata.get("cloudflare_status") if agentic_rate_limit_metadata else None,
             "retry_after_seconds": agentic_rate_limit_metadata.get("retry_after_seconds") if agentic_rate_limit_metadata else None,
             "retry_at_utc": agentic_rate_limit_metadata.get("retry_at_utc") if agentic_rate_limit_metadata else None,

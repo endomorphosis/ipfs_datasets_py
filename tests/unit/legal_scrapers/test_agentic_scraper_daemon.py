@@ -227,6 +227,48 @@ def test_state_admin_rules_agentic_daemon_selection_context_reports_issue_pressu
     assert selection["details"]["score_breakdown"]["document_first"]["issue_pressure_bonus"] > 0.0
 
 
+def test_state_admin_rules_agentic_daemon_selection_context_escalates_document_recovery_stalls(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            random_seed=31,
+        )
+    )
+
+    daemon._state["recommended_tactics"] = []
+    daemon._state["priority_states"] = ["AZ"]
+    daemon._state["state_action_plan"] = {
+        "AZ": {
+            "priority_score": 5,
+            "recommended_tactics": ["render_first"],
+            "query_hints": ["AZ site:apps.azsos.gov filetype:pdf"],
+        }
+    }
+    daemon._state["tactics"] = {
+        name: {"trials": 2, "total_score": 1.0, "best_score": 0.5}
+        for name in daemon.config.tactic_profiles
+    }
+    daemon._state["recent_cycles"] = [
+        {
+            "cycle": 1,
+            "tactic": "document_first",
+            "score": 0.49,
+            "passed": False,
+            "issues": ["document-recovery-stalled:AZ"],
+        }
+    ]
+
+    selection = daemon._select_tactic_with_context()
+
+    assert selection["profile"].name == "render_first"
+    assert selection["details"]["score_breakdown"]["render_first"]["issue_pressure_bonus"] > 0.0
+
+
 @pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_runs_priority_states_first(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
@@ -969,6 +1011,54 @@ async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_surfaces_cloudflare_availability_diagnostics(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        assert kwargs["states"] == ["OR"]
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "OR",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {
+                "phase_timings": {"total_seconds": 1.5},
+                "cloudflare_browser_rendering": {
+                    "available": False,
+                    "status": "missing_credentials",
+                    "provider": "cloudflare_browser_rendering",
+                    "missing_credentials": ["account_id", "api_token"],
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=11,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    assert latest_cycle["metadata"]["cloudflare_browser_rendering"]["status"] == "missing_credentials"
+    assert latest_cycle["diagnostics"]["cloudflare"]["available"] is False
+    assert latest_cycle["diagnostics"]["documents"]["cloudflare_browser_rendering"]["provider"] == "cloudflare_browser_rendering"
+    assert latest_cycle["diagnostics"]["documents"]["cloudflare_browser_rendering"]["missing_credentials"] == ["account_id", "api_token"]
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_schedules_deferred_retry_from_base_metadata(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -1389,12 +1479,28 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     }
     assert diagnostics["gap_analysis"]["weak_states"] == ["AZ"]
     assert any(item.startswith("document-candidate-gaps:AZ") for item in critic["issues"])
+    assert any(item.startswith("document-recovery-stalled:AZ") for item in critic["issues"])
     assert "document_first" in critic["recommended_next_tactics"]
+    assert "render_first" in critic["recommended_next_tactics"]
+    assert "router_assisted" in critic["recommended_next_tactics"]
     assert critic["priority_states"] == ["AZ"]
     assert critic["state_action_plan"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
+    assert critic["state_action_plan"]["AZ"]["document_recovery_profile"] == {
+        "processed_method_counts": {},
+        "source_breakdown": {"seed": 1, "playwright": 2, "candidate_document": 2},
+        "domains_seen": ["apps.azsos.gov"],
+        "parallel_prefetch": {"attempted": 2, "successful": 1, "rule_hits": 0},
+        "candidate_urls": 6,
+        "inspected_urls": 4,
+        "expanded_urls": 3,
+        "timed_out": False,
+    }
+    assert "document_recovery_stalled" in critic["state_action_plan"]["AZ"]["reasons"]
     assert "AZ administrative code pdf" in critic["query_hints"]
     assert "AZ administrative code rtf" in critic["query_hints"]
     assert "AZ administrative rules site:apps.azsos.gov" in critic["query_hints"]
+    assert "AZ site:apps.azsos.gov filetype:pdf" in critic["query_hints"]
+    assert "AZ site:apps.azsos.gov filetype:rtf" in critic["query_hints"]
     assert document_gap_report["states_with_candidate_document_gaps"] == ["AZ"]
     assert document_gap_report["states"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
     assert document_gap_report["states"]["AZ"]["processed_method_counts"] == {}
@@ -1496,6 +1602,8 @@ async def test_state_admin_rules_agentic_daemon_falls_back_to_critic_query_hints
         "AZ administrative code pdf",
         "AZ administrative code rtf",
         "AZ administrative rules site:apps.azsos.gov",
+        "AZ site:apps.azsos.gov filetype:pdf",
+        "AZ site:apps.azsos.gov filetype:rtf",
     ]
 
 

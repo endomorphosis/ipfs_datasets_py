@@ -24,6 +24,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Sequence
+from urllib.parse import urlparse
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
 from .state_admin_rules_scraper import scrape_state_admin_rules
@@ -700,6 +701,9 @@ class StateLawsAgenticDaemon:
         corpus_gap_summary = filtered_metadata.get("corpus_gap_summary")
         if isinstance(corpus_gap_summary, dict):
             diagnostics["gap_analysis"] = corpus_gap_summary
+        cloudflare_summary = filtered_metadata.get("cloudflare_browser_rendering")
+        if isinstance(cloudflare_summary, dict):
+            diagnostics["cloudflare"] = cloudflare_summary
         timing_summary = filtered_metadata.get("phase_timings")
         if isinstance(timing_summary, dict):
             diagnostics["timing"] = timing_summary
@@ -759,6 +763,9 @@ class StateLawsAgenticDaemon:
         document_coverage = self._build_document_coverage(data=data, metadata=metadata)
         if document_coverage:
             filtered_metadata["document_coverage"] = document_coverage
+        cloudflare_summary = metadata.get("cloudflare_browser_rendering")
+        if isinstance(cloudflare_summary, dict):
+            filtered_metadata["cloudflare_browser_rendering"] = dict(cloudflare_summary)
         corpus_gap_summary = self._build_corpus_gap_summary(data=data, metadata=metadata, document_coverage=document_coverage)
         if corpus_gap_summary:
             filtered_metadata["corpus_gap_summary"] = corpus_gap_summary
@@ -895,6 +902,7 @@ class StateLawsAgenticDaemon:
             "states_with_candidate_document_gaps": sorted(set(states_with_candidate_document_gaps)),
             "per_state": per_state,
             "per_state_recovery": per_state_recovery,
+            "cloudflare_browser_rendering": dict(metadata.get("cloudflare_browser_rendering") or {}),
         }
 
     @staticmethod
@@ -1017,6 +1025,7 @@ class StateLawsAgenticDaemon:
 
         plan: Dict[str, Dict[str, Any]] = {}
         document_per_state = documents.get("per_state") or {}
+        document_recovery_per_state = documents.get("per_state_recovery") or {}
         candidate_format_counts_by_state = documents.get("candidate_format_counts_by_state") or {}
         gap_states = gap_analysis.get("states") or {}
 
@@ -1048,6 +1057,7 @@ class StateLawsAgenticDaemon:
                     "recommended_tactics": [],
                     "query_hints": [],
                     "candidate_document_format_counts": {"pdf": 0, "rtf": 0},
+                    "document_recovery_profile": {},
                     "hosts": [],
                 },
             )
@@ -1068,10 +1078,43 @@ class StateLawsAgenticDaemon:
             candidate_format_counts = candidate_format_counts_by_state.get(state_code) if isinstance(candidate_format_counts_by_state, dict) else {}
             if not isinstance(candidate_format_counts, dict):
                 candidate_format_counts = {}
+            state_recovery = document_recovery_per_state.get(state_code) if isinstance(document_recovery_per_state, dict) else {}
+            if not isinstance(state_recovery, dict):
+                state_recovery = {}
+            domains_seen = [str(item).strip().lower() for item in list(state_recovery.get("domains_seen") or []) if str(item).strip()]
+            processed_method_counts = dict(state_recovery.get("processed_method_counts") or {})
+            source_breakdown = dict(state_recovery.get("source_breakdown") or {})
+            parallel_prefetch = dict(state_recovery.get("parallel_prefetch") or {})
+            entry["document_recovery_profile"] = {
+                "processed_method_counts": processed_method_counts,
+                "source_breakdown": source_breakdown,
+                "domains_seen": domains_seen,
+                "parallel_prefetch": parallel_prefetch,
+                "candidate_urls": int(state_recovery.get("candidate_urls", 0) or 0),
+                "inspected_urls": int(state_recovery.get("inspected_urls", 0) or 0),
+                "expanded_urls": int(state_recovery.get("expanded_urls", 0) or 0),
+                "timed_out": bool(state_recovery.get("timed_out", False)),
+            }
             entry["candidate_document_format_counts"] = {
                 "pdf": int(candidate_format_counts.get("pdf", 0) or 0),
                 "rtf": int(candidate_format_counts.get("rtf", 0) or 0),
             }
+            if domains_seen:
+                entry["hosts"] = list(dict.fromkeys(list(entry.get("hosts") or []) + domains_seen))
+            if not processed_method_counts and (source_breakdown or int(state_recovery.get("candidate_urls", 0) or 0) > 0):
+                _add_reason(
+                    state_code,
+                    "document_recovery_stalled",
+                    score=2,
+                    tactics=["render_first", "router_assisted", "document_first"],
+                )
+            if int(parallel_prefetch.get("attempted", 0) or 0) > 0 and int(parallel_prefetch.get("successful", 0) or 0) <= 0:
+                _add_reason(
+                    state_code,
+                    "document_prefetch_underperforming",
+                    score=1,
+                    tactics=["archival_first", "router_assisted", "discovery_first"],
+                )
 
         for state_code in sorted(weak_gap_states):
             _add_reason(state_code, "coverage_gap", score=3, tactics=["discovery_first", "archival_first", "router_assisted"])
@@ -1106,8 +1149,12 @@ class StateLawsAgenticDaemon:
                 query_hints.append(f"{state_code} administrative code rtf")
             for host in hosts[:2]:
                 query_hints.append(f"{state_code} administrative rules site:{host}")
+                if int(format_counts.get("pdf", 0) or 0) > 0:
+                    query_hints.append(f"{state_code} site:{host} filetype:pdf")
+                if int(format_counts.get("rtf", 0) or 0) > 0:
+                    query_hints.append(f"{state_code} site:{host} filetype:rtf")
             entry["hosts"] = hosts
-            entry["query_hints"] = list(dict.fromkeys([hint for hint in query_hints if hint.strip()]))[:4]
+            entry["query_hints"] = list(dict.fromkeys([hint for hint in query_hints if hint.strip()]))[:6]
 
         ordered_plan: Dict[str, Dict[str, Any]] = {}
         for state_code, entry in sorted(
@@ -1123,9 +1170,20 @@ class StateLawsAgenticDaemon:
                 "recommended_tactics": list(normalized_entry.get("recommended_tactics") or []),
                 "query_hints": list(normalized_entry.get("query_hints") or []),
                 "candidate_document_format_counts": dict(normalized_entry.get("candidate_document_format_counts") or {}),
+                "document_recovery_profile": dict(normalized_entry.get("document_recovery_profile") or {}),
                 "hosts": list(normalized_entry.get("hosts") or []),
             }
         return ordered_plan
+
+    @staticmethod
+    def _host_from_url(value: Any) -> str:
+        url = str(value or "").strip()
+        if not url:
+            return ""
+        try:
+            return str(urlparse(url).netloc or "").strip().lower()
+        except Exception:
+            return ""
 
     @staticmethod
     def _priority_states_from_action_plan(state_action_plan: Dict[str, Dict[str, Any]], *, limit: int = 8) -> List[str]:
@@ -1904,6 +1962,10 @@ class StateLawsAgenticDaemon:
         normalized = str(issue or "").strip().lower()
         if not normalized:
             return []
+        if normalized.startswith("document-recovery-stalled"):
+            return ["render_first", "router_assisted", "document_first"]
+        if normalized.startswith("document-prefetch-underperforming"):
+            return ["archival_first", "router_assisted", "discovery_first"]
         if normalized.startswith(("document-candidate-gaps", "state-gap-analysis")) or normalized == "agentic-discovery-dominant":
             return ["document_first", "router_assisted", "render_first"]
         if normalized.startswith(("coverage-gaps", "no-attempt-states")) or normalized in {
@@ -1980,6 +2042,7 @@ class StateLawsAgenticDaemon:
         documents = diagnostics.get("documents") or {}
         gap_analysis = diagnostics.get("gap_analysis") or {}
         timing = diagnostics.get("timing") or {}
+        state_action_plan = self._build_state_action_plan(diagnostics)
 
         issues: List[str] = []
         next_tactics: List[str] = []
@@ -2017,6 +2080,24 @@ class StateLawsAgenticDaemon:
             issues.append(f"document-candidate-gaps:{','.join(document_gap_states[:8])}")
             next_tactics.extend(["document_first", "render_first", "discovery_first"])
 
+        stalled_recovery_states = [
+            state_code
+            for state_code, entry in state_action_plan.items()
+            if "document_recovery_stalled" in list((entry or {}).get("reasons") or [])
+        ]
+        if stalled_recovery_states:
+            issues.append(f"document-recovery-stalled:{','.join(stalled_recovery_states[:8])}")
+            next_tactics.extend(["render_first", "router_assisted", "document_first"])
+
+        weak_prefetch_states = [
+            state_code
+            for state_code, entry in state_action_plan.items()
+            if "document_prefetch_underperforming" in list((entry or {}).get("reasons") or [])
+        ]
+        if weak_prefetch_states:
+            issues.append(f"document-prefetch-underperforming:{','.join(weak_prefetch_states[:8])}")
+            next_tactics.extend(["archival_first", "router_assisted", "discovery_first"])
+
         weak_gap_states = list(gap_analysis.get("weak_states") or [])
         if weak_gap_states:
             issues.append(f"state-gap-analysis:{','.join(weak_gap_states[:8])}")
@@ -2044,7 +2125,6 @@ class StateLawsAgenticDaemon:
             next_tactics.append("archival_first")
 
         deduped_tactics = list(dict.fromkeys([name for name in next_tactics if name in self.config.tactic_profiles]))
-        state_action_plan = self._build_state_action_plan(diagnostics)
         priority_states = self._priority_states_from_action_plan(state_action_plan)
         query_hints: List[str] = []
         for state_code in priority_states:
@@ -2068,6 +2148,8 @@ class StateLawsAgenticDaemon:
             return "Coverage and ETL signals are stable; continue exploiting the best-known tactic."
         if any(item.startswith("coverage-gaps") for item in issues):
             return "Coverage gaps remain, so the next cycle should bias toward broader archival and search discovery."
+        if any(item.startswith("document-recovery-stalled") for item in issues):
+            return "Document candidates are being found but recovery is stalling, so the next cycle should bias toward renderer-backed downloads and router-guided troubleshooting."
         if any(item.startswith("document-candidate-gaps") for item in issues):
             return "Document-heavy gaps remain, so the next cycle should bias toward Playwright downloads and processor-backed PDF/RTF extraction."
         if "quality-weak" in issues:
