@@ -40,7 +40,7 @@ def test_build_operational_diagnostics_sorts_weak_states():
             "states_with_zero_statutes": 1,
         },
         "quality_by_state": {
-            "AA": {"total": 6, "scaffold_ratio": 0.4, "nav_like_ratio": 0.3, "fallback_section_ratio": 0.2, "numeric_section_name_ratio": 0.1},
+            "AA": {"total": 6, "scaffold_ratio": 0.4, "nav_like_ratio": 0.6, "fallback_section_ratio": 0.2, "numeric_section_name_ratio": 0.1},
             "BB": {"total": 4, "scaffold_ratio": 0.0, "nav_like_ratio": 0.1, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.9},
         },
     }
@@ -232,8 +232,8 @@ def test_build_operational_diagnostics_respects_top_n_limit():
         },
         "etl_readiness": {"ready_for_kg_etl": True, "total_statutes": 3},
         "quality_by_state": {
-            "AA": {"total": 3, "scaffold_ratio": 0.4, "nav_like_ratio": 0.2, "fallback_section_ratio": 0.1, "numeric_section_name_ratio": 0.1},
-            "BB": {"total": 3, "scaffold_ratio": 0.1, "nav_like_ratio": 0.1, "fallback_section_ratio": 0.1, "numeric_section_name_ratio": 0.7},
+            "AA": {"total": 3, "scaffold_ratio": 0.4, "nav_like_ratio": 0.7, "fallback_section_ratio": 0.1, "numeric_section_name_ratio": 0.1},
+            "BB": {"total": 3, "scaffold_ratio": 0.1, "nav_like_ratio": 0.55, "fallback_section_ratio": 0.1, "numeric_section_name_ratio": 0.7},
             "CC": {"total": 3, "scaffold_ratio": 0.0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.9},
         },
     }
@@ -244,6 +244,23 @@ def test_build_operational_diagnostics_respects_top_n_limit():
     assert diagnostics["fetch"]["weak_states"][0]["state"] == "AA"
     assert len(diagnostics["quality"]["weak_states"]) == 2
     assert diagnostics["quality"]["weak_states"][0]["state"] == "AA"
+
+
+def test_build_operational_diagnostics_omits_non_flagged_quality_states():
+    metadata = {
+        "coverage_summary": {"coverage_gap_states": []},
+        "fetch_analytics": {"attempted": 2, "success": 2, "success_ratio": 1.0, "fallback_count": 0, "providers": {}},
+        "fetch_analytics_by_state": {},
+        "etl_readiness": {"ready_for_kg_etl": True, "total_statutes": 2},
+        "quality_by_state": {
+            "AZ": {"total": 1, "scaffold_ratio": 0.0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0},
+            "CA": {"total": 4, "scaffold_ratio": 0.0, "nav_like_ratio": 0.25, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.9},
+        },
+    }
+
+    diagnostics = _build_operational_diagnostics(metadata)
+
+    assert diagnostics["quality"]["weak_states"] == []
 
 
 def test_write_operational_report_outputs_json_and_csv(tmp_path: Path):

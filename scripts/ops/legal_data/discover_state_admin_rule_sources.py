@@ -24,6 +24,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_web_archive_search import 
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import (
     _STATE_ADMIN_SOURCE_MAP,
+    _is_non_admin_seed_url,
     US_50_STATE_CODES,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
@@ -103,6 +104,8 @@ def _query_for_state(state_code: str) -> str:
 
 
 def _score_url(url: str) -> int:
+    if _is_non_admin_seed_url(url):
+        return -100
     score = 0
     u = url.lower()
     if ADMIN_URL_HINT_RE.search(u):
@@ -189,6 +192,8 @@ async def _discover_for_state(
     for row in raw.get("results", []) if isinstance(raw, dict) else []:
         url = str((row or {}).get("url") or "").strip()
         if not url:
+            continue
+        if _is_non_admin_seed_url(url):
             continue
         score = _score_url(url)
         if score <= 0:

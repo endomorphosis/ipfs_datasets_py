@@ -71,6 +71,17 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://adminrules.utah.gov/public/search" not in ut_urls
 
 
+def test_california_admin_seed_urls_exclude_leginfo_templates_and_hosts() -> None:
+    ca_urls = scraper_module._extract_seed_urls_for_state("CA", "California")
+    allowed_hosts = _allowed_discovery_hosts_for_state("CA", "California")
+
+    assert "https://oal.ca.gov/publications/ccr/" in ca_urls
+    assert "https://oal.ca.gov/publications/" in ca_urls
+    assert all("leginfo.legislature.ca.gov" not in url.lower() for url in ca_urls)
+    assert "oal.ca.gov" in allowed_hosts
+    assert "leginfo.legislature.ca.gov" not in allowed_hosts
+
+
 def test_pdf_request_headers_accept_env_cookie_and_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("IPFS_DATASETS_PY_DOC_REQUEST_USER_AGENT", "Custom Agent/1.0")
     monkeypatch.setenv("IPFS_DATASETS_PY_DOC_REQUEST_COOKIE", "ASPSESSIONID=abc123")
@@ -294,6 +305,26 @@ def test_rejects_alabama_page_not_found_admin_false_positive() -> None:
 
     assert _is_admin_rule_statute(statute) is True
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_california_oal_publication_contract_page_as_rule_content() -> None:
+    text = (
+        "2025 California Code of Regulations and California Regulatory Notice Register Publication Contract. "
+        "Notice of Intent to Award Contract. Request for Proposals issued by the Office of Administrative Law. "
+        "Sourcing Event 7910-0000036480."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="2025 California Code of Regulations and California Regulatory Notice Register Publication Contract | OAL",
+        url="https://oal.ca.gov/publications/2025-california-code-of-regulations-and-california-regulatory-notice-register-publication-contract/",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="2025 California Code of Regulations and California Regulatory Notice Register Publication Contract | OAL",
+        url="https://oal.ca.gov/publications/2025-california-code-of-regulations-and-california-regulatory-notice-register-publication-contract/",
+    ) is False
 
 
 def test_rejects_montana_history_magazine_false_positive() -> None:
@@ -2914,6 +2945,12 @@ async def test_scrape_state_admin_rules_recovers_missing_target_state_via_agenti
     assert len(result["data"]) == 1
     assert result["data"][0]["state_code"] == "AL"
     assert result["data"][0]["rules_count"] == 1
+    statute = result["data"][0]["statutes"][0]
+    assert statute["structured_data"]["jsonld"]["@type"] == "Legislation"
+    assert statute["structured_data"]["jsonld"]["legislationType"] == "StateAdministrativeRule"
+    assert statute["structured_data"]["jsonld"]["sectionNumber"] == "A1"
+    assert statute["structured_data"]["jsonld"]["sourceUrl"] == "https://admincode.legislature.state.al.us/administrative-code"
+    assert statute["structured_data"]["citations"]["official"] == ["AL Admin Rule A1"]
     assert result["metadata"]["agentic_recovered_states"] == ["AL"]
     assert result["metadata"]["missing_rule_states"] == []
     assert result["metadata"]["phase_timings"]["base_scrape_seconds"] >= 0.0

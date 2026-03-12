@@ -147,7 +147,9 @@ _GENERIC_ADMIN_INDEX_TITLE_RE = re.compile(
 
 _NON_RULE_POLICY_PAGE_RE = re.compile(
     r"department\s+of\s+corrections\s+policies|policies\s+manual|contracts\s+policies\s+procedures|"
-    r"social\s+media\s+terms\s+of\s+use|state\s+hr\s+policies|policy\s+and\s+procedure\s+management",
+    r"social\s+media\s+terms\s+of\s+use|state\s+hr\s+policies|policy\s+and\s+procedure\s+management|"
+    r"publication\s+contract|request\s+for\s+proposals?|notice\s+of\s+intent\s+to\s+award\s+contract|"
+    r"sourcing\s+event\s+\d+",
     re.IGNORECASE,
 )
 
@@ -248,6 +250,11 @@ _RI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/organizations/?$", re.IGNORECASE)
 
 _AZ_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
     r"^/(?:regulations|administrative-code|code-of-regulations)/?$",
+    re.IGNORECASE,
+)
+
+_CA_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
+    r"^/(?:|rules|regulations|administrative-code|code-of-regulations|agency-rules|policies|faces/(?:codes|codes_displaytext|codedisplayexpand|codes_displayexpandedbranch)\.xhtml)/?$",
     re.IGNORECASE,
 )
 
@@ -614,6 +621,7 @@ def _build_admin_fallback_jsonld_payload(*, state_code: str, state_name: str, st
     section_name = str(statute.get("section_name") or "").strip()
     code_name = str(statute.get("code_name") or "").strip()
     source_url = str(statute.get("source_url") or "").strip()
+    official_cite = str(statute.get("official_cite") or "").strip()
     statute_id = str(statute.get("statute_id") or "").strip() or section_number or section_name
 
     if not (full_text or section_name or section_number or statute_id):
@@ -632,14 +640,109 @@ def _build_admin_fallback_jsonld_payload(*, state_code: str, state_name: str, st
         "description": section_name or full_text[:500],
         "text": full_text or section_name,
         "url": source_url,
+        "sourceUrl": source_url,
+        "sectionNumber": section_number,
+        "sectionName": section_name,
     }
 
     if source_url:
+        payload["@id"] = source_url
         payload["sameAs"] = source_url
     if code_name:
         payload["legislationIdentifier"] = code_name
+    if official_cite:
+        payload["citation"] = official_cite
 
     return payload
+
+
+def _enrich_admin_rule_structured_data(*, state_code: str, state_name: str, statute: Dict[str, Any]) -> None:
+    structured_data = statute.get("structured_data")
+    if not isinstance(structured_data, dict):
+        structured_data = {}
+
+    if str(structured_data.get("type") or "").strip() == "":
+        structured_data["type"] = "regulation"
+
+    payload = structured_data.get("jsonld")
+    if not isinstance(payload, dict):
+        payload = _build_admin_fallback_jsonld_payload(
+            state_code=state_code,
+            state_name=state_name,
+            statute=statute,
+        )
+    else:
+        payload = dict(payload)
+
+    if isinstance(payload, dict):
+        section_number = str(statute.get("section_number") or "").strip()
+        section_name = str(statute.get("section_name") or statute.get("short_title") or "").strip()
+        source_url = str(statute.get("source_url") or "").strip()
+        full_text = str(statute.get("full_text") or statute.get("text") or "").strip()
+        statute_id = str(statute.get("statute_id") or "").strip()
+        code_name = str(statute.get("code_name") or "").strip()
+        official_cite = str(statute.get("official_cite") or "").strip()
+
+        payload.setdefault("@context", "https://schema.org")
+        payload.setdefault("@type", "Legislation")
+        payload.setdefault("legislationType", "StateAdministrativeRule")
+        payload.setdefault("legislationJurisdiction", f"US-{state_code}")
+        if statute_id:
+            payload.setdefault("identifier", statute_id)
+        if section_number:
+            payload.setdefault("sectionNumber", section_number)
+        if section_name:
+            payload.setdefault("sectionName", section_name)
+            payload.setdefault("name", section_name)
+        if full_text:
+            payload.setdefault("text", full_text)
+            payload.setdefault("description", section_name or full_text[:500])
+        if code_name:
+            payload.setdefault("legislationIdentifier", code_name)
+        if source_url:
+            payload.setdefault("url", source_url)
+            payload.setdefault("sourceUrl", source_url)
+            payload.setdefault("sameAs", source_url)
+            payload.setdefault("@id", source_url)
+        if official_cite:
+            payload.setdefault("citation", official_cite)
+
+        structured_data["jsonld"] = payload
+
+    citations = structured_data.get("citations")
+    if not isinstance(citations, dict):
+        citations = {}
+    official_cite = str(statute.get("official_cite") or "").strip()
+    if official_cite:
+        existing_official = citations.get("official")
+        if isinstance(existing_official, list):
+            if official_cite not in existing_official:
+                citations["official"] = [*existing_official, official_cite]
+        else:
+            citations["official"] = [official_cite]
+    if citations:
+        structured_data["citations"] = citations
+
+    statute["structured_data"] = structured_data
+
+
+def _normalize_admin_rule_payloads(scraped_rules: List[Dict[str, Any]]) -> None:
+    for state_block in scraped_rules:
+        if not isinstance(state_block, dict):
+            continue
+        state_code = str(state_block.get("state_code") or "").strip().upper()
+        state_name = str(state_block.get("state_name") or "").strip()
+        statutes = state_block.get("statutes")
+        if not state_code or not isinstance(statutes, list):
+            continue
+        for statute in statutes:
+            if not isinstance(statute, dict):
+                continue
+            _enrich_admin_rule_structured_data(
+                state_code=state_code,
+                state_name=state_name or state_code,
+                statute=statute,
+            )
 
 
 def _write_state_admin_jsonld_files(scraped_rules: List[Dict[str, Any]], jsonld_dir: Path) -> List[str]:
@@ -851,7 +954,9 @@ def _allowed_discovery_hosts_for_state(state_code: str, state_name: str) -> set[
             allowed_hosts.add(host)
 
     official_url = str(_get_official_state_url(state_code) or "").strip()
-    official_host = urlparse(official_url).netloc.lower().strip(".")
+    official_host = ""
+    if official_url and not _is_non_admin_seed_url(official_url):
+        official_host = urlparse(official_url).netloc.lower().strip(".")
     if official_host:
         allowed_hosts.add(official_host)
 
@@ -923,7 +1028,7 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
         if scraper is None:
             scraper = GenericStateScraper(state_code, state_name)
         base_url = str(scraper.get_base_url() or "").strip()
-        if base_url:
+        if base_url and not _is_non_admin_seed_url(base_url):
             urls.append(base_url)
         code_list = list(scraper.get_code_list() or [])
         admin_priority_urls: List[str] = []
@@ -936,6 +1041,8 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
             code_type = str(item.get("type") or "")
             if not value:
                 continue
+            if _is_non_admin_seed_url(value):
+                continue
             signal = " ".join([code_name, code_type, value])
             if _ADMIN_RULE_TEXT_RE.search(signal):
                 admin_priority_urls.append(value)
@@ -947,7 +1054,11 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
         urls.extend(generic_urls[:6])
 
         # Add deterministic admin URL templates as seed entrypoints too.
-        urls.extend(_template_admin_urls_for_state(state_code))
+        urls.extend(
+            url
+            for url in _template_admin_urls_for_state(state_code)
+            if not _is_non_admin_seed_url(url)
+        )
     except Exception:
         pass
 
@@ -968,6 +1079,8 @@ def _template_admin_urls_for_state(state_code: str) -> List[str]:
     base_url = str(_get_official_state_url(state_code) or "").strip()
     if not base_url:
         return []
+    if _is_non_admin_seed_url(base_url):
+        return []
     if not base_url.endswith("/"):
         base_url = base_url + "/"
 
@@ -984,6 +1097,25 @@ def _template_admin_urls_for_state(state_code: str) -> List[str]:
     for tail in tails:
         urls.append(base_url + tail)
     return urls
+
+
+def _is_non_admin_seed_url(url: str) -> bool:
+    value = str(url or "").strip()
+    if not value:
+        return False
+    if _NON_ADMIN_SOURCE_URL_RE.search(value):
+        return True
+    parsed = urlparse(value)
+    host = parsed.netloc.lower()
+    path = parsed.path or "/"
+    normalized_path = path.rstrip("/") or "/"
+    query = parsed.query or ""
+    if host == "leginfo.legislature.ca.gov":
+        if _CA_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
+            return True
+        if re.search(r"(?:^|[?&])(tocCode|lawCode|sectionNum)=", query, re.IGNORECASE):
+            return True
+    return False
 
 
 def _score_candidate_url(url: str) -> int:
@@ -4355,6 +4487,7 @@ async def scrape_state_admin_rules(
                 if isinstance(item, dict) and int(item.get("rules_count") or 0) > 0
             }
         )
+        _normalize_admin_rule_payloads(filtered_data)
         target_state_set = set(selected_states)
         missing_rule_states = sorted(target_state_set - set(states_with_rules))
 

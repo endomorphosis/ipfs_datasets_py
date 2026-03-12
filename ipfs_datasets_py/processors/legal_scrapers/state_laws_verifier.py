@@ -22,6 +22,12 @@ try:
 except Exception:
     US_STATES = {}
 
+try:
+    from .state_laws_scraper import _should_flag_quality
+except Exception:
+    def _should_flag_quality(quality_metrics: Dict[str, Any]) -> bool:
+        return False
+
 
 _VERIFY_SCAFFOLD_RE = re.compile(r"^\s*Section\s+Section-\d+\s*:", re.IGNORECASE)
 _VERIFY_STATUTE_SIGNAL_RE = re.compile(
@@ -77,6 +83,8 @@ def _build_operational_diagnostics(metadata: Dict[str, Any], *, top_n: int = 8) 
     if isinstance(quality_by_state, dict):
         for state_code, metrics in quality_by_state.items():
             if not isinstance(metrics, dict):
+                continue
+            if not _should_flag_quality(metrics):
                 continue
             weak_quality_states.append(
                 {
