@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import sys
 import time
+from enum import Enum
 from types import SimpleNamespace
 
 import pytest
@@ -109,6 +110,28 @@ def test_candidate_links_from_html_keeps_california_official_ccr_host_when_allow
     assert any(link.startswith("https://govt.westlaw.com/calregs/Index") for link in links)
 
 
+def test_candidate_links_from_html_keeps_california_westlaw_document_link() -> None:
+        html = """
+        <html>
+            <body>
+                <a href="/calregs/Document/I7A6B47D0FD4311ECBA0CE8BD2C3F45C2?viewType=FullText&amp;originationContext=documenttoc&amp;transitionType=CategoryPageItem&amp;contextData=(sc.Default)">&#167; 1. Chapter Definitions.</a>
+            </body>
+        </html>
+        """
+
+        links = _candidate_links_from_html(
+                html,
+                base_host="govt.westlaw.com",
+                page_url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=I7DA20CB04C6611EC93A8000D3A7C4BC3&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
+                limit=4,
+                allowed_hosts=_allowed_discovery_hosts_for_state("CA", "California"),
+        )
+
+        assert links == [
+                "https://govt.westlaw.com/calregs/Document/I7A6B47D0FD4311ECBA0CE8BD2C3F45C2?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)",
+        ]
+
+
 def test_gap_summary_host_key_collapses_california_portal_hosts_into_official_ccr_host() -> None:
     assert scraper_module._gap_summary_host_key("https://oal.ca.gov/publications/ccr/") == "govt.westlaw.com"
     assert scraper_module._gap_summary_host_key("http://carules.elaws.us/search/allcode") == "govt.westlaw.com"
@@ -120,6 +143,12 @@ def test_gap_summary_host_key_collapses_utah_admin_rule_host_family() -> None:
     assert scraper_module._gap_summary_host_key("https://rules.utah.gov/publications/code-updates/") == "adminrules.utah.gov"
     assert scraper_module._gap_summary_host_key("https://le.utah.gov/xcode/Title63G/Chapter3/63G-3.html") == "adminrules.utah.gov"
     assert scraper_module._gap_summary_host_key("https://legislature.ut.gov") == "adminrules.utah.gov"
+
+
+def test_is_direct_detail_candidate_url_recognizes_indiana_rule_detail_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/current/10/1.5") is True
+    assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/2006/25/7") is True
+    assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/current") is False
 
 
 def test_pdf_request_headers_accept_env_cookie_and_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -445,6 +474,67 @@ def test_rejects_california_westlaw_division_browse_page_as_rule_content() -> No
         text=text,
         title="Browse - California Code of Regulations",
         url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=IFAACB1F05A0911EC8227000D3A7C4BC3&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
+    ) is False
+
+
+def test_rejects_california_westlaw_title_browse_page_as_rule_content() -> None:
+    text = (
+        "Skip to Navigation Skip to Main Content California Code of Regulations Home Updates Search Help "
+        "California Code of Regulations Title 1. General Provisions Title 2. Administration Title 3. Food and Agriculture "
+        "Title 4. Business Regulations Title 5. Education Title 7. Harbors and Navigation Title 8. Industrial Relations "
+        "Title 9. Rehabilitative and Developmental Services Privacy Accessibility California Office of Administrative Law"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="California Code of Regulations - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=I7C2D715F65E64C2CA1E2A250D9FC3E4C",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="California Code of Regulations - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=I7C2D715F65E64C2CA1E2A250D9FC3E4C",
+    ) is False
+
+
+def test_rejects_california_westlaw_help_page_as_rule_content() -> None:
+    text = (
+        "California Code of Regulations Help About the California Code of Regulations Site CCR FAQ Technical FAQ Agency List "
+        "Contact Us California Legal Products Searching California Code of Regulations Browsing Documents "
+        "What is a regulation? What is the difference between a regulation and a statute?"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Help - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Help",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Help - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Help",
+    ) is False
+
+
+def test_rejects_california_westlaw_article_toc_page_as_rule_content() -> None:
+    text = (
+        "Skip to Navigation Skip to Main Content California Code of Regulations Home Updates Search Help Home "
+        "Title 1. General Provisions Division 1. Office of Administrative Law Chapter 1. Review of Proposed Regulations "
+        "Article 1. Chapter Definitions § 1. Chapter Definitions. Privacy Accessibility California Office of Administrative Law"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Browse - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=I7DA20CB04C6611ECBA0CE8BD2C3F45C2&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Browse - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=I7DA20CB04C6611ECBA0CE8BD2C3F45C2&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
     ) is False
 
 
@@ -2844,7 +2934,7 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 2
     assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [rtf_url, pdf_url]
-    assert pdf_calls == [rtf_url, pdf_url]
+    assert pdf_calls == [pdf_url]
     assert rtf_calls == [rtf_url]
     assert agentic_discovery_calls == 0
     assert archive_search_calls == 0
@@ -3711,9 +3801,190 @@ async def test_agentic_discovery_follows_live_prioritized_seed_links(monkeypatch
 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
-    assert [
-        statute["source_url"] for statute in result["state_blocks"][0]["statutes"]
-    ] == [deep_url]
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [deep_url]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_uses_seed_prefetch_signal_before_broad_search(monkeypatch: pytest.MonkeyPatch) -> None:
+    seed_url = "https://govt.westlaw.com/calregs/Index"
+    deep_url = "https://govt.westlaw.com/calregs/Document/ABC123?viewType=FullText"
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            raise AssertionError("archive search should not run once a curated seed prefetch yields an inventory signal")
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            raise AssertionError("broad search should not run once a curated seed prefetch yields an inventory signal")
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            raise AssertionError("agentic discovery should not run once a curated seed prefetch yields an inventory signal")
+
+        def fetch(self, request):
+            if request.url != seed_url:
+                raise AssertionError(f"unexpected prefetched URL: {request.url}")
+            document = SimpleNamespace(
+                text="California Code of Regulations Home Title 1. General Provisions",
+                title="California Code of Regulations",
+                html="<html><body>Title 1</body></html>",
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            if url == seed_url:
+                return SimpleNamespace(
+                    text="California Code of Regulations Home Title 1. General Provisions",
+                    title="California Code of Regulations",
+                    html=f"<a href='{deep_url}'>Section 1</a>",
+                    links=[{"url": deep_url, "text": "Section 1"}],
+                )
+            if url == deep_url:
+                return SimpleNamespace(
+                    text="Section 1. Chapter Definitions. Authority cited: Government Code section 11342.",
+                    title="Section 1",
+                    html="",
+                    links=[],
+                )
+            raise AssertionError(f"unexpected scrape URL: {url}")
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_looks_like_rule_inventory_page", lambda **kwargs: kwargs.get("url") == seed_url)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == deep_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["CA"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=1,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [deep_url]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_prefers_indiana_direct_detail_seed_before_broad_discovery(monkeypatch: pytest.MonkeyPatch) -> None:
+    seed_url = "https://iar.iga.in.gov/code/current/10/1.5"
+    deep_text = (
+        "TITLE 10 Office of Attorney General ARTICLE 1.5 authority effective section rule law "
+        "Sec. 1. The commissioner may adopt rules to administer the chapter. "
+        "Authority: IC 4-22-2-13; IC 4-6-2-1. Affected: IC 4-22-2; IC 4-6-1. "
+        "This rule governs agency procedures, notice requirements, filing obligations, and enforcement."
+    )
+
+    class _Method(Enum):
+        PLAYWRIGHT = "playwright"
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            raise AssertionError("archive search should not run when a direct Indiana rule seed is available")
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            raise AssertionError("broad search should not run when a direct Indiana rule seed is available")
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            raise AssertionError("agentic discovery should not run when a direct Indiana rule seed is available")
+
+        def fetch(self, request):
+            raise AssertionError("fallback fetch should not run when live direct seed scraping succeeds")
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            assert url == seed_url
+            return SimpleNamespace(
+                text=deep_text,
+                title="Title 10, Article 1.5",
+                html="",
+                links=[],
+                method_used=_Method.PLAYWRIGHT,
+            )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == seed_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["IN"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == seed_url
+    assert result["report"]["IN"]["source_breakdown"] == {}
 
 
 # ---------------------------------------------------------------------------

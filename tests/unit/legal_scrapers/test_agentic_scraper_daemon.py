@@ -36,6 +36,22 @@ def test_unified_web_scraper_applies_env_tactic_overrides(monkeypatch):
     assert scraper.config.archive_is_submit_on_miss is False
 
 
+def test_unified_web_scraper_applies_cloudflare_crawl_env_overrides(monkeypatch):
+    monkeypatch.setenv("IPFS_DATASETS_CLOUDFLARE_CRAWL_DEPTH", "2")
+    monkeypatch.setenv("IPFS_DATASETS_CLOUDFLARE_CRAWL_RENDER", "1")
+    monkeypatch.setenv("IPFS_DATASETS_CLOUDFLARE_CRAWL_INCLUDE_EXTERNAL_LINKS", "1")
+    monkeypatch.setenv("IPFS_DATASETS_CLOUDFLARE_CRAWL_INCLUDE_SUBDOMAINS", "1")
+    monkeypatch.setenv("IPFS_DATASETS_CLOUDFLARE_CRAWL_FORMATS", "markdown,html")
+
+    scraper = UnifiedWebScraper()
+
+    assert scraper.config.cloudflare_depth == 2
+    assert scraper.config.cloudflare_render is True
+    assert scraper.config.cloudflare_include_external_links is True
+    assert scraper.config.cloudflare_include_subdomains is True
+    assert scraper.config.cloudflare_formats == ["markdown", "html"]
+
+
 def test_unified_api_applies_env_search_engine_overrides(monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_SEARCH_ENGINES", "google_cse,brave")
     monkeypatch.setenv("IPFS_DATASETS_SEARCH_FALLBACK_ENABLED", "0")
@@ -84,6 +100,66 @@ def test_state_admin_rules_daemon_clears_generic_method_order_overrides(monkeypa
     with daemon._tactic_env(tactic):
         assert "IPFS_DATASETS_SCRAPER_METHOD_ORDER" not in daemon_module.os.environ
         assert "LEGAL_SCRAPER_METHOD_ORDER" not in daemon_module.os.environ
+
+
+def test_state_laws_daemon_injects_cloudflare_method_into_env_order(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "acct")
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "token")
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_laws",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+        )
+    )
+
+    tactic = daemon.config.tactic_profiles["document_first"]
+    with daemon._tactic_env(tactic):
+        configured = daemon_module.os.environ.get("IPFS_DATASETS_SCRAPER_METHOD_ORDER") or ""
+        configured_list = [item.strip() for item in configured.split(",") if item.strip()]
+        assert "cloudflare_browser_rendering" in configured_list
+        assert configured_list.index("cloudflare_browser_rendering") <= configured_list.index("playwright")
+
+
+def test_state_laws_daemon_document_recovery_ratio_gate_blocks_success_when_enabled(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_laws",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            min_document_recovery_ratio=0.75,
+        )
+    )
+
+    diagnostics = {
+        "coverage": {"coverage_gap_states": []},
+        "fetch": {"no_attempt_states": []},
+        "etl_readiness": {
+            "ready_for_kg_etl": True,
+            "full_text_ratio": 0.9,
+            "jsonld_ratio": 0.9,
+            "jsonld_legislation_ratio": 0.9,
+            "kg_payload_ratio": 0.9,
+            "statute_signal_ratio": 0.9,
+            "non_scaffold_ratio": 0.9,
+        },
+        "documents": {
+            "candidate_document_urls": 10,
+            "processed_document_urls": 3,
+            "states_with_candidate_document_gaps": [],
+        },
+    }
+
+    annotated = daemon._annotate_document_recovery_gate(diagnostics)
+    assert annotated["documents"]["document_recovery_ratio"] == 0.3
+    assert annotated["documents"]["required_document_recovery_ratio"] == 0.75
+    assert annotated["documents"]["document_recovery_ratio_ok"] is False
+    assert daemon._is_success(annotated, score=0.99) is False
 
 
 def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
@@ -267,6 +343,7 @@ def test_state_admin_rules_agentic_daemon_select_tactic_escalates_after_repeated
     }
     daemon._state["tactics"] = {
         "archival_first": {"trials": 3, "total_score": 1.65, "best_score": 0.57},
+        "cloudflare_explore": {"trials": 3, "total_score": 1.08, "best_score": 0.39},
         "document_first": {"trials": 3, "total_score": 1.44, "best_score": 0.50},
         "router_assisted": {"trials": 3, "total_score": 1.38, "best_score": 0.48},
         "render_first": {"trials": 3, "total_score": 1.20, "best_score": 0.43},
@@ -379,6 +456,137 @@ def test_state_admin_rules_agentic_daemon_selection_context_escalates_document_r
 
     assert selection["profile"].name == "render_first"
     assert selection["details"]["score_breakdown"]["render_first"]["issue_pressure_bonus"] > 0.0
+
+
+def test_state_admin_rules_agentic_daemon_selection_context_escalates_cloudflare_browser_challenges(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            random_seed=37,
+        )
+    )
+
+    daemon._state["recommended_tactics"] = []
+    daemon._state["priority_states"] = ["AZ"]
+    daemon._state["state_action_plan"] = {
+        "AZ": {
+            "priority_score": 7,
+            "recommended_tactics": ["cloudflare_explore", "document_first", "router_assisted"],
+            "query_hints": ["AZ administrative rules site:apps.azsos.gov"],
+        }
+    }
+    daemon._state["tactics"] = {
+        name: {"trials": 2, "total_score": 1.0, "best_score": 0.5}
+        for name in daemon.config.tactic_profiles
+    }
+    daemon._state["recent_cycles"] = [
+        {
+            "cycle": 1,
+            "tactic": "document_first",
+            "score": 0.46,
+            "passed": False,
+            "issues": ["cloudflare-browser-challenge:AZ", "document-candidate-gaps:AZ"],
+        }
+    ]
+
+    selection = daemon._select_tactic_with_context()
+
+    assert selection["profile"].name == "cloudflare_explore"
+    assert selection["details"]["score_breakdown"]["cloudflare_explore"]["issue_pressure_bonus"] > 0.0
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_detects_cloudflare_browser_challenge_and_recommends_cloudflare_explore(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AZ",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 4,
+                            "success": 1,
+                            "success_ratio": 0.25,
+                            "fallback_count": 2,
+                            "providers": {"playwright": 2, "cloudflare_browser_rendering": 1},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 5,
+                            "inspected_urls": 3,
+                            "expanded_urls": 2,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["apps.azsos.gov"],
+                            "parallel_prefetch": {"attempted": 1, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {"playwright": 1, "candidate_document": 1, "cloudflare_browser_rendering": 1},
+                            "cloudflare_status": "browser_challenge",
+                            "cloudflare_http_status": 403,
+                            "cloudflare_browser_challenge_detected": True,
+                            "cloudflare_error_excerpt": "Just a moment... Enable JavaScript and cookies to continue",
+                            "cloudflare_record_status": "errored",
+                            "cloudflare_job_status": "completed",
+                            "gap_summary": {
+                                "missing_seed_hosts": ["apps.azsos.gov"],
+                                "candidate_hosts_without_rules": ["apps.azsos.gov"],
+                            },
+                        }
+                    },
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=41,
+        )
+    )
+
+    summary = await daemon.run()
+
+    critic = summary["latest_cycle"]["critic"]
+    action_plan = critic["state_action_plan"]["AZ"]
+    document_gap_report = summary["latest_cycle"]["document_gap_report"]
+    directives = document_gap_report["states"]["AZ"]["recovery_directives"]
+
+    assert any(item.startswith("cloudflare-browser-challenge:AZ") for item in critic["issues"])
+    assert "cloudflare_explore" in critic["recommended_next_tactics"]
+    assert "cloudflare_browser_challenge" in action_plan["reasons"]
+    assert "cloudflare_explore" in action_plan["recommended_tactics"]
+    assert summary["latest_cycle"]["diagnostics"]["documents"]["per_state_recovery"]["AZ"]["cloudflare_status"] == "browser_challenge"
+    assert directives["cloudflare_status"] == "browser_challenge"
+    assert directives["cloudflare_browser_challenge_detected"] is True
+    assert "cloudflare_browser_rendering" in directives["download_methods"]
+    assert "pdf_processor" in directives["processor_modes"]
+    assert "cloudflare_explore" in directives["recommended_tactics"]
 
 
 @pytest.mark.asyncio
@@ -2148,6 +2356,119 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     persisted_report = json.loads(document_gap_report_path.read_text(encoding="utf-8"))
     assert persisted_report["cycle"] == 1
     assert persisted_report["states_with_candidate_document_gaps"] == ["AZ"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.web_archiving import unified_web_scraper as scraper_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AZ",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 3,
+                            "success": 1,
+                            "success_ratio": 0.333,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 2,
+                            "inspected_urls": 2,
+                            "expanded_urls": 1,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["apps.azsos.gov"],
+                            "parallel_prefetch": {"attempted": 1, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {"candidate_document": 1},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["apps.azsos.gov"],
+                                "candidate_hosts_without_rules": ["apps.azsos.gov"],
+                            },
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _fake_scrape(self, url, method=None, **kwargs):
+        assert url.endswith("18-04.pdf")
+        return scraper_module.ScraperResult(
+            url=url,
+            title="18-04.pdf",
+            text="Arizona Title 18 extracted text",
+            content="Arizona Title 18 extracted text",
+            method_used=ScraperMethod.PLAYWRIGHT,
+            success=True,
+            metadata={
+                "method": "playwright_binary_fetch",
+                "content_type": "application/pdf",
+                "content_length": 17,
+                "raw_bytes": b"%PDF-fake-content",
+                "binary_document": True,
+            },
+        )
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "scrape", _fake_scrape)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=43,
+            document_artifact_capture_enabled=True,
+            document_artifact_state_limit=1,
+            document_artifact_urls_per_state=1,
+            document_artifact_max_total=1,
+        )
+    )
+
+    summary = await daemon.run()
+
+    artifact_summary = summary["latest_cycle"]["document_artifacts"]
+    manifest_path = tmp_path / "cycles" / "cycle_0001_document_artifacts.json"
+    artifact_dir = tmp_path / "document_artifacts" / "cycle_0001"
+    binary_path = artifact_dir / "AZ_01_18-04.pdf"
+    text_path = artifact_dir / "AZ_01_18-04.txt"
+
+    assert artifact_summary["status"] == "completed"
+    assert artifact_summary["target_count"] == 1
+    assert artifact_summary["successful_count"] == 1
+    assert artifact_summary["artifact_path"] == str(manifest_path)
+    assert binary_path.exists()
+    assert text_path.exists()
+    assert binary_path.read_bytes() == b"%PDF-fake-content"
+    assert "Arizona Title 18 extracted text" in text_path.read_text(encoding="utf-8")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["successful_count"] == 1
+    assert manifest["entries"][0]["method_used"] == "playwright"
+    assert manifest["entries"][0]["binary_document"] is True
+    assert str(binary_path) in manifest["entries"][0]["saved_files"]
+    assert str(text_path) in manifest["entries"][0]["saved_files"]
 
 
 @pytest.mark.asyncio

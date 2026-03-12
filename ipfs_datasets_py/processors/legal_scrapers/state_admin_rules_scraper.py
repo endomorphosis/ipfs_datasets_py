@@ -58,7 +58,7 @@ _ADMIN_RULE_TEXT_RE = re.compile(
 
 _ADMIN_LINK_HINT_RE = re.compile(
     r"administrative|admin\.?\s+code|regulation|rules?|code|statute|chapter|subchapter|part|article|section|title|agency|board|commission|"
-    r"state_agencies/[\w.-]+\.html|\b[A-Za-z]{2,4}(?:-[A-Za-z]{1,3})?\s*\d{3}\b|\b\d{2}:\d{2}\b|\b\d{1,3}\.\d{1,3}(?:\.\d{1,4})?\b",
+    r"state_agencies/[\w.-]+\.html|§\s*\d+|\b[A-Za-z]{2,4}(?:-[A-Za-z]{1,3})?\s*\d{3}\b|\b\d{2}:\d{2}\b|\b\d{1,3}\.\d{1,3}(?:\.\d{1,4})?\b",
     re.IGNORECASE,
 )
 
@@ -758,7 +758,7 @@ def _normalize_admin_rule_payloads(scraped_rules: List[Dict[str, Any]]) -> None:
             continue
         state_code = str(state_block.get("state_code") or "").strip().upper()
         state_name = str(state_block.get("state_name") or "").strip()
-        statutes = state_block.get("statutes")
+        statutes = state_block.get("statutes") or []
         if not state_code or not isinstance(statutes, list):
             continue
         for statute in statutes:
@@ -1195,6 +1195,8 @@ def _score_candidate_url(url: str) -> int:
         score += 6
     if host == "govt.westlaw.com" and normalized_path.lower() == "/calregs/index":
         score += 4
+    if host == "govt.westlaw.com" and path.lower().startswith("/calregs/document/"):
+        score += 10
     if host == "carules.elaws.us" and path.lower().startswith("/code/"):
         score += 5
     if host == "oal.ca.gov" and normalized_path.lower() in {"/publications", "/publications/ccr"}:
@@ -1251,6 +1253,17 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score -= 6
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         score += 8
+    if host == "govt.westlaw.com" and path.lower().startswith("/calregs/document/"):
+        score += 12
+    if host == "govt.westlaw.com" and path.lower().startswith("/calregs/browse/home/california/californiacodeofregulations"):
+        if re.search(r"\barticle\b", hay, re.IGNORECASE):
+            score += 8
+        elif re.search(r"\bchapter\b", hay, re.IGNORECASE):
+            score += 6
+        elif re.search(r"\bdivision\b", hay, re.IGNORECASE):
+            score += 4
+        elif re.search(r"\btitle\b", hay, re.IGNORECASE):
+            score += 2
     if re.search(r"/code/(?:current|2006)/\d+/\d+(?:\.\d+)?", lower_url):
         score += 4
         if re.search(r"\b(?:article|rule)\b", hay, re.IGNORECASE):
@@ -1301,6 +1314,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
+        return True
+    if host == "iar.iga.in.gov" and re.search(r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?", path, re.IGNORECASE):
         return True
     return False
 
@@ -1429,13 +1444,21 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "carules.elaws.us" and normalized_path == "/search/allcode":
         return True
+    if host == "govt.westlaw.com" and normalized_path_lower == "/calregs/help":
+        return True
     if host == "govt.westlaw.com" and normalized_path_lower == "/calregs/index":
         title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
-        if title_hits >= 8 and _CA_WESTLAW_TOC_TEXT_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
+        if title_hits >= 8 and _CA_WESTLAW_TOC_TEXT_RE.search(hay):
             return True
     if host == "govt.westlaw.com" and normalized_path_lower == "/calregs/browse/home/california/californiacodeofregulations":
+        title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
         division_hits = len(re.findall(r"\bdivision\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE))
-        if division_hits >= 2 and _CA_WESTLAW_TOC_TEXT_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
+        if (title_hits >= 8 or division_hits >= 2) and _CA_WESTLAW_TOC_TEXT_RE.search(hay):
+            return True
+    if host == "govt.westlaw.com" and normalized_path_lower.startswith("/calregs/browse/home/california/californiacodeofregulations"):
+        toc_hits = len(re.findall(r"\b(?:title|division|chapter|article)\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE))
+        section_link_hits = len(re.findall(r"§\s*\d+", hay, re.IGNORECASE))
+        if (toc_hits >= 2 or section_link_hits >= 1) and _CA_WESTLAW_TOC_TEXT_RE.search(hay):
             return True
     if host == "ars.apps.lara.state.mi.us" and _MI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
         return True
@@ -2947,7 +2970,7 @@ def _candidate_links_from_html(
     ranked: List[tuple[int, str]] = []
     seen = set()
     for href, anchor_body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', body, re.IGNORECASE | re.DOTALL):
-        link_url = str(href or "").strip()
+        link_url = unescape(str(href or "").strip())
         link_text = re.sub(r"<[^>]+>", " ", str(anchor_body or ""))
         link_text = re.sub(r"\s+", " ", link_text).strip()
         if link_url and not link_url.startswith(("http://", "https://")) and page_url:
@@ -3313,6 +3336,7 @@ async def _agentic_discover_admin_state_blocks(
         state_start = time.monotonic()
         # Keep agentic fallback bounded per state so staged runs keep moving.
         per_state_budget_s = max(1.0, float(per_state_budget_seconds or 0.0))
+        presearch_budget_deadline = state_start + max(12.0, min(35.0, per_state_budget_s * 0.25))
         state_name = US_STATES.get(state_code, state_code)
         relaxed_recovery = str(state_code or "").upper() in _RECOVERY_RELAXED_STATES
         query = _agentic_query_for_state(state_code)
@@ -3373,94 +3397,6 @@ async def _agentic_discover_admin_state_blocks(
             max_fetch=max_fetch_per_state,
         )
 
-        if not direct_detail_ready:
-            remaining_budget_s = max(0.0, per_state_budget_s - (time.monotonic() - state_start))
-            try:
-                if remaining_budget_s > 0.0:
-                    archive_results = await asyncio.wait_for(
-                        legal_archive._search_archives_multi_domain(
-                            query=query,
-                            domains=_agentic_domains_for_state(state_code),
-                            max_results_per_domain=max(1, int(max_results_per_domain)),
-                        ),
-                        timeout=max(0.01, min(archive_search_timeout_seconds, remaining_budget_s)),
-                    )
-                else:
-                    archive_results = {"results": []}
-                for row in (archive_results or {}).get("results", []) or []:
-                    if not isinstance(row, dict):
-                        continue
-                    url = str(row.get("url") or "").strip()
-                    if not url or not _url_allowed_for_state(url, allowed_hosts):
-                        continue
-                    candidate_urls.append(url)
-                    source_breakdown["archives"] = int(source_breakdown.get("archives", 0)) + 1
-            except Exception:
-                pass
-
-            try:
-                unified_search = await asyncio.wait_for(
-                    asyncio.to_thread(
-                        unified_api.search,
-                        UnifiedSearchRequest(
-                            query=query,
-                            max_results=max(5, int(max_candidates_per_state)),
-                            mode=OperationMode.BALANCED,
-                            domain="legal",
-                        ),
-                    ),
-                    timeout=40.0,
-                )
-                for hit in getattr(unified_search, "results", []) or []:
-                    url = str(getattr(hit, "url", "") or "").strip()
-                    if not url or not _url_allowed_for_state(url, allowed_hosts):
-                        continue
-                    candidate_urls.append(url)
-                    source_breakdown["search"] = int(source_breakdown.get("search", 0)) + 1
-            except Exception:
-                pass
-
-        if (time.monotonic() - state_start) >= per_state_budget_s:
-            timed_out_candidate_samples: List[str] = []
-            for timed_out_url in candidate_urls:
-                if not str(timed_out_url or "").strip().startswith(("http://", "https://")):
-                    continue
-                if timed_out_url in timed_out_candidate_samples:
-                    continue
-                timed_out_candidate_samples.append(timed_out_url)
-                if len(timed_out_candidate_samples) >= 16:
-                    break
-            report[state_code] = {
-                "candidate_urls": len(
-                    {
-                        _url_key(url)
-                        for url in candidate_urls
-                        if str(url or "").strip().startswith(("http://", "https://"))
-                    }
-                ),
-                "inspected_urls": 0,
-                "expanded_urls": 0,
-                "fetched_rules": 0,
-                "source_breakdown": source_breakdown,
-                "timed_out": True,
-                "top_candidate_urls": timed_out_candidate_samples,
-            }
-            blocks.append(
-                {
-                    "state_code": state_code,
-                    "state_name": state_name,
-                    "title": f"{state_name} Administrative Rules",
-                    "source": "Agentic web-archive discovery",
-                    "source_url": None,
-                    "scraped_at": datetime.now().isoformat(),
-                    "statutes": [],
-                    "rules_count": 0,
-                    "schema_version": "1.0",
-                    "normalized": True,
-                }
-            )
-            continue
-
         # Curated seeds often already expose substantive rule pages or article/part
         # links. Prefetch them before broad agentic discovery so states like Indiana
         # and Rhode Island can short-circuit expensive exploration when the official
@@ -3468,6 +3404,9 @@ async def _agentic_discover_admin_state_blocks(
         preseed_signal = direct_detail_ready
         if not direct_detail_ready:
             for seed_url in ordered_seed_urls[:6]:
+                remaining_budget_s = max(0.0, presearch_budget_deadline - time.monotonic())
+                if remaining_budget_s <= 1.0:
+                    break
                 host = urlparse(seed_url).netloc
                 fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
                 try:
@@ -3481,7 +3420,7 @@ async def _agentic_discover_admin_state_blocks(
                                 domain=".gov" if host.endswith(".gov") else "legal",
                             ),
                         ),
-                        timeout=40.0,
+                        timeout=max(1.0, min(12.0, remaining_budget_s)),
                     )
                     _record_rate_limit_metadata(fetched)
                     fetched_doc = getattr(fetched, "document", None)
@@ -3508,6 +3447,7 @@ async def _agentic_discover_admin_state_blocks(
                     if seed_is_substantive or seed_is_relaxed or inventory_seed:
                         preseed_signal = True
                         source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
+                        break
 
                     if inventory_seed:
                         for rule_url in _candidate_montana_rule_urls_from_text(
@@ -3533,21 +3473,74 @@ async def _agentic_discover_admin_state_blocks(
                 except Exception:
                     pass
 
+        if not preseed_signal:
+            remaining_budget_s = max(0.0, presearch_budget_deadline - time.monotonic())
+            try:
+                if remaining_budget_s > 0.0:
+                    archive_results = await asyncio.wait_for(
+                        legal_archive._search_archives_multi_domain(
+                            query=query,
+                            domains=_agentic_domains_for_state(state_code),
+                            max_results_per_domain=max(1, int(max_results_per_domain)),
+                        ),
+                        timeout=max(0.01, min(archive_search_timeout_seconds, remaining_budget_s)),
+                    )
+                else:
+                    archive_results = {"results": []}
+                for row in (archive_results or {}).get("results", []) or []:
+                    if not isinstance(row, dict):
+                        continue
+                    url = str(row.get("url") or "").strip()
+                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                        continue
+                    candidate_urls.append(url)
+                    source_breakdown["archives"] = int(source_breakdown.get("archives", 0)) + 1
+            except Exception:
+                pass
+
+            remaining_budget_s = max(0.0, presearch_budget_deadline - time.monotonic())
+            try:
+                if remaining_budget_s > 0.0:
+                    unified_search = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            unified_api.search,
+                            UnifiedSearchRequest(
+                                query=query,
+                                max_results=max(5, int(max_candidates_per_state)),
+                                mode=OperationMode.BALANCED,
+                                domain="legal",
+                            ),
+                        ),
+                        timeout=max(0.01, min(40.0, remaining_budget_s)),
+                    )
+                else:
+                    unified_search = SimpleNamespace(results=[])
+                for hit in getattr(unified_search, "results", []) or []:
+                    url = str(getattr(hit, "url", "") or "").strip()
+                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                        continue
+                    candidate_urls.append(url)
+                    source_breakdown["search"] = int(source_breakdown.get("search", 0)) + 1
+            except Exception:
+                pass
+
         discovered: Dict[str, Any] = {}
         if not preseed_signal:
+            remaining_budget_s = max(0.0, presearch_budget_deadline - time.monotonic())
             try:
-                discovered = await asyncio.wait_for(
-                    asyncio.to_thread(
-                        lambda: unified_api.agentic_discover_and_fetch(
-                            seed_urls=seed_urls,
-                            target_terms=_query_target_terms_for_state(state_code),
-                            max_hops=max(0, int(max_hops)),
-                            max_pages=max(1, int(max_pages)),
-                            mode=OperationMode.BALANCED,
+                if remaining_budget_s > 0.0:
+                    discovered = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            lambda: unified_api.agentic_discover_and_fetch(
+                                seed_urls=seed_urls,
+                                target_terms=_query_target_terms_for_state(state_code),
+                                max_hops=max(0, int(max_hops)),
+                                max_pages=max(1, int(max_pages)),
+                                mode=OperationMode.BALANCED,
+                            ),
                         ),
-                    ),
-                    timeout=70.0,
-                )
+                        timeout=max(0.01, min(70.0, remaining_budget_s)),
+                    )
                 _record_rate_limit_metadata(discovered)
                 for fetch_row in discovered.get("results", []) or []:
                     if not isinstance(fetch_row, dict):
@@ -3781,22 +3774,56 @@ async def _agentic_discover_admin_state_blocks(
             remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
             if remaining_prefetch_budget_s <= 1.0:
                 break
+            direct_scraped = None
+            lower_document_url = str(document_url or "").lower()
+            direct_timeout_s = max(1.0, min(12.0, remaining_prefetch_budget_s))
             try:
-                direct_scraped = await asyncio.wait_for(
-                    _scrape_pdf_candidate_url_with_processor(document_url),
-                    timeout=max(1.0, min(12.0, remaining_prefetch_budget_s)),
-                )
+                if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_pdf_candidate_url_with_processor(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif lower_document_url.endswith(".rtf") or ".rtf?" in lower_document_url:
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                else:
+                    direct_scraped = await asyncio.wait_for(
+                        live_scraper.scrape(document_url),
+                        timeout=direct_timeout_s,
+                    )
             except Exception:
                 direct_scraped = None
             if direct_scraped is None:
                 remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
                 if remaining_prefetch_budget_s <= 1.0:
                     break
+                document_host = urlparse(document_url).netloc
+                fetch_api = live_fetch_api if _prefers_live_fetch(document_url) else direct_fetch_api
                 try:
-                    direct_scraped = await asyncio.wait_for(
-                        _scrape_rtf_candidate_url_with_processor(document_url),
-                        timeout=max(1.0, min(12.0, remaining_prefetch_budget_s)),
+                    fetched = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            fetch_api.fetch,
+                            UnifiedFetchRequest(
+                                url=document_url,
+                                timeout_seconds=35,
+                                mode=OperationMode.BALANCED,
+                                domain=".gov" if document_host.endswith(".gov") else "legal",
+                            ),
+                        ),
+                        timeout=max(1.0, min(18.0, remaining_prefetch_budget_s)),
                     )
+                    _record_rate_limit_metadata(fetched)
+                    fetched_doc = getattr(fetched, "document", None)
+                    if fetched_doc is not None:
+                        direct_scraped = SimpleNamespace(
+                            text=str(getattr(fetched_doc, "text", "") or "").strip(),
+                            title=str(getattr(fetched_doc, "title", "") or "").strip(),
+                            html=str(getattr(fetched_doc, "html", "") or ""),
+                            extraction_provenance=getattr(fetched_doc, "extraction_provenance", None),
+                            method_used=getattr(fetched_doc, "method_used", None),
+                        )
                 except Exception:
                     direct_scraped = None
             if direct_scraped is None:
@@ -3810,6 +3837,7 @@ async def _agentic_discover_admin_state_blocks(
                 direct_method_value = direct_provenance.get("method")
             if direct_method_value is None:
                 direct_method_value = getattr(direct_scraped, "method_used", None)
+            direct_method_value = getattr(direct_method_value, "value", direct_method_value)
             await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value)
 
         # Give curated/official entrypoints one deterministic direct fetch pass.
@@ -4019,6 +4047,7 @@ async def _agentic_discover_admin_state_blocks(
         )
         seen_urls = set(direct_doc_urls)
         inspected_urls = 0
+        inspected_url_samples: List[str] = []
         deep_discovery_calls = 0
         base_hosts = {
             urlparse(str(seed).strip()).netloc
@@ -4077,6 +4106,8 @@ async def _agentic_discover_admin_state_blocks(
                     continue
                 seen_urls.add(key)
                 inspected_urls += 1
+                if url not in inspected_url_samples and len(inspected_url_samples) < 16:
+                    inspected_url_samples.append(url)
                 batch_candidates.append((url, score))
 
             if not batch_candidates:
@@ -4099,8 +4130,9 @@ async def _agentic_discover_admin_state_blocks(
                     _record_rate_limit_metadata(scraped)
                     text = str(getattr(scraped, "text", "") or "").strip()
                     title = str(getattr(scraped, "title", "") or "").strip()
-                    fetched_html = ""
+                    fetched_html = str(getattr(scraped, "html", "") or "")
                     official_index_page = _looks_like_official_rule_index_page(text=text, title=title, url=url)
+                    inventory_page = _looks_like_rule_inventory_page(text=text, title=title, url=url)
 
                     if not _is_substantive_rule_text(
                         text=text,
@@ -4111,7 +4143,7 @@ async def _agentic_discover_admin_state_blocks(
                         # Dynamic official rule indexes can render as a thin JS shell through
                         # the lightweight scraper even when the fuller fetch path has real text.
                         host = urlparse(url).netloc
-                        if _url_key(url) in prioritized_seed_keys or host in base_hosts:
+                        if (_url_key(url) in prioritized_seed_keys or host in base_hosts) and not (official_index_page or inventory_page):
                             fetch_api = live_fetch_api if _prefers_live_fetch(url) else direct_fetch_api
                             try:
                                 fetched = await asyncio.wait_for(
@@ -4193,7 +4225,12 @@ async def _agentic_discover_admin_state_blocks(
                                 pending.append((rule_url, _score_candidate_url(rule_url) + 4))
                                 expanded_urls += 1
 
-                            if deep_discovery_calls < 2 and time.monotonic() - state_start < (per_state_budget_s * 0.8):
+                            if (
+                                not official_index_page
+                                and not inventory_page
+                                and deep_discovery_calls < 2
+                                and time.monotonic() - state_start < (per_state_budget_s * 0.8)
+                            ):
                                 try:
                                     deep_discovery_calls += 1
                                     deep_discovered = await asyncio.wait_for(
@@ -4237,7 +4274,7 @@ async def _agentic_discover_admin_state_blocks(
                     # Official rule-index pages are useful corpus rows in their own right,
                     # but they should also act as expansion hubs so the crawler can step
                     # from statewide/title indexes into deeper rule pages.
-                    if _looks_like_rule_inventory_page(text=text, title=title, url=url):
+                    if inventory_page:
                         same_host = host if host in base_hosts else urlparse(url).netloc
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=text,
@@ -4312,13 +4349,33 @@ async def _agentic_discover_admin_state_blocks(
                     candidate_url_samples.append(url)
                 if len(candidate_url_samples) >= 16:
                     break
+        direct_detail_candidate_samples: List[str] = []
+        for url, _score in pending:
+            if not _is_direct_detail_candidate_url(url):
+                continue
+            if url in direct_detail_candidate_samples:
+                continue
+            direct_detail_candidate_samples.append(url)
+            if len(direct_detail_candidate_samples) >= 16:
+                break
+        if len(direct_detail_candidate_samples) < 16:
+            for url in candidate_urls:
+                if not _is_direct_detail_candidate_url(url):
+                    continue
+                if url in direct_detail_candidate_samples:
+                    continue
+                direct_detail_candidate_samples.append(url)
+                if len(direct_detail_candidate_samples) >= 16:
+                    break
         report[state_code] = {
             "candidate_urls": len(ranked_urls),
             "inspected_urls": int(inspected_urls),
+            "inspected_url_samples": inspected_url_samples,
             "expanded_urls": int(expanded_urls),
             "fetched_rules": len(statutes),
             "seed_urls": [url for url in seed_urls[:8]],
             "top_candidate_urls": candidate_url_samples,
+            "direct_detail_candidate_samples": direct_detail_candidate_samples,
             "format_counts": dict(format_counts),
             "domains_seen": sorted(visited_hosts),
             "parallel_prefetch": {

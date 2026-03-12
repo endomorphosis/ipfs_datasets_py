@@ -80,7 +80,9 @@ _STATUTE_URL_HINTS = (
     "section=",
 )
 
-_NON_HTML_DOC_RE = re.compile(r"\.(?:pdf|docx?|xlsx?|pptx?)(?:$|[?#])", re.IGNORECASE)
+_NON_HTML_DOC_RE = re.compile(r"\.(?:pdf|rtf|docx?|xlsx?|pptx?)(?:$|[?#])", re.IGNORECASE)
+_PDF_HEADER_RE = re.compile(rb"^\s*%PDF-", re.IGNORECASE)
+_RTF_HEADER_RE = re.compile(rb"^\s*\{\\rtf", re.IGNORECASE)
 _SCAFFOLD_SECTION_TEXT_RE = re.compile(r"^\s*section\s+section-\d+\s*:", re.IGNORECASE)
 _NAV_URL_HINTS = (
     "/calendar",
@@ -908,6 +910,25 @@ class BaseStateScraper(ABC):
         if not raw_bytes:
             return
 
+        # For PDF/RTF statute URLs, route bytes through document processors first.
+        document_extraction = await self._extract_text_from_document_bytes(
+            source_url=source_url,
+            raw_bytes=raw_bytes,
+        )
+        if isinstance(document_extraction, dict):
+            fetched_text = self._normalize_legal_text(str(document_extraction.get("text") or ""))
+            fetched_text = self._trim_to_section_context(fetched_text, statute)
+            if len(fetched_text) >= 160:
+                statute.full_text = fetched_text
+                if not statute.section_name:
+                    statute.section_name = fetched_text[:200]
+                structured_update = statute.structured_data if isinstance(statute.structured_data, dict) else {}
+                structured_update = dict(structured_update)
+                structured_update["method_used"] = str(document_extraction.get("method") or "document_processor")
+                structured_update["source_content_type"] = str(document_extraction.get("content_type") or "")
+                statute.structured_data = structured_update
+                return
+
         try:
             html_text = raw_bytes.decode("utf-8", errors="replace")
         except Exception:
@@ -926,6 +947,54 @@ class BaseStateScraper(ABC):
         statute.full_text = fetched_text
         if not statute.section_name:
             statute.section_name = fetched_text[:200]
+
+    async def _extract_text_from_document_bytes(
+        self,
+        *,
+        source_url: str,
+        raw_bytes: bytes,
+    ) -> Optional[Dict[str, str]]:
+        if not raw_bytes:
+            return None
+
+        lowered_url = str(source_url or "").strip().lower()
+        pdf_candidate = lowered_url.endswith(".pdf") or ".pdf?" in lowered_url or bool(_PDF_HEADER_RE.search(raw_bytes[:16]))
+        rtf_candidate = lowered_url.endswith(".rtf") or ".rtf?" in lowered_url or bool(_RTF_HEADER_RE.search(raw_bytes[:32]))
+        if not (pdf_candidate or rtf_candidate):
+            return None
+
+        try:
+            from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedWebScraper
+        except Exception:
+            return None
+
+        if pdf_candidate:
+            try:
+                extracted = await UnifiedWebScraper._extract_pdf_text(raw_bytes)
+            except Exception:
+                extracted = ""
+            extracted = str(extracted or "").strip()
+            if extracted:
+                return {
+                    "text": extracted,
+                    "method": "pdf_processor",
+                    "content_type": "application/pdf",
+                }
+
+        if rtf_candidate:
+            try:
+                extracted = await UnifiedWebScraper._extract_rtf_text(raw_bytes)
+            except Exception:
+                extracted = ""
+            extracted = str(extracted or "").strip()
+            if extracted:
+                return {
+                    "text": extracted,
+                    "method": "rtf_processor",
+                    "content_type": "application/rtf",
+                }
+
+        return None
 
     def _normalize_legal_text(self, text: str) -> str:
         """Normalize whitespace and punctuation for legal-text parsing."""

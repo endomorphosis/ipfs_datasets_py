@@ -1,4 +1,5 @@
 import json
+import asyncio
 from pathlib import Path
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
@@ -73,6 +74,38 @@ def test_enrich_statute_structure_includes_uscode_style_fields():
     assert jsonld.get("preamble") == structured.get("preamble")
     assert jsonld.get("subsections") == structured.get("subsections")
     assert isinstance(jsonld.get("chapter"), dict)
+
+
+def test_hydrate_statute_text_uses_pdf_processor(monkeypatch):
+    scraper = _DummyStateScraper("XY", "Example State")
+
+    statute = NormalizedStatute(
+        state_code="XY",
+        state_name="Example State",
+        statute_id="Code § 12-1",
+        section_number="12-1",
+        section_name="Definitions",
+        full_text="Section 12-1: Definitions",
+        source_url="https://example.gov/statutes/12-1.pdf",
+    )
+
+    async def _fake_fetch(*_args, **_kwargs):
+        return b"%PDF-1.4 fake-pdf-content"
+
+    async def _fake_extract_pdf(_pdf_bytes):
+        return "Section 12-1 Definitions. This section contains substantive legal text. " + ("x" * 220)
+
+    monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.unified_web_scraper.UnifiedWebScraper._extract_pdf_text",
+        _fake_extract_pdf,
+    )
+
+    asyncio.run(scraper._hydrate_statute_text_if_needed(statute))
+
+    assert len(statute.full_text or "") >= 160
+    assert statute.structured_data.get("method_used") == "pdf_processor"
+    assert statute.structured_data.get("source_content_type") == "application/pdf"
 
 
 def test_write_state_jsonld_files_emits_per_state_jsonld(tmp_path: Path):

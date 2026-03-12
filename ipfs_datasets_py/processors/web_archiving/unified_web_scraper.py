@@ -471,6 +471,20 @@ class UnifiedWebScraper:
         if cloudflare_formats:
             self.config.cloudflare_formats = cloudflare_formats
 
+        cloudflare_include_external_links = self._env_bool(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_INCLUDE_EXTERNAL_LINKS",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_INCLUDE_EXTERNAL_LINKS",
+        )
+        if cloudflare_include_external_links is not None:
+            self.config.cloudflare_include_external_links = cloudflare_include_external_links
+
+        cloudflare_include_subdomains = self._env_bool(
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_INCLUDE_SUBDOMAINS",
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_INCLUDE_SUBDOMAINS",
+        )
+        if cloudflare_include_subdomains is not None:
+            self.config.cloudflare_include_subdomains = cloudflare_include_subdomains
+
     def _resolve_cloudflare_credentials(self) -> tuple[Optional[str], Optional[str]]:
         account_id = (
             self.config.cloudflare_account_id

@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import importlib.util
 import json
 import logging
 import math
 import os
 import random
+import re
 import shlex
 import sys
 import threading
@@ -197,6 +199,16 @@ class ScraperTacticProfile:
     embeddings_provider: Optional[str] = None
     ipfs_backend: Optional[str] = None
     enable_ipfs_accelerate: Optional[bool] = None
+    cloudflare_timeout_seconds: Optional[int] = None
+    cloudflare_poll_interval_seconds: Optional[float] = None
+    cloudflare_max_rate_limit_wait_seconds: Optional[float] = None
+    cloudflare_limit: Optional[int] = None
+    cloudflare_depth: Optional[int] = None
+    cloudflare_render: Optional[bool] = None
+    cloudflare_source: Optional[str] = None
+    cloudflare_formats: Optional[List[str]] = None
+    cloudflare_include_external_links: Optional[bool] = None
+    cloudflare_include_subdomains: Optional[bool] = None
 
 
 def default_tactic_profiles() -> Dict[str, ScraperTacticProfile]:
@@ -303,6 +315,35 @@ def default_tactic_profiles() -> Dict[str, ScraperTacticProfile]:
             min_full_text_chars=220,
             enable_ipfs_accelerate=True,
         ),
+        ScraperTacticProfile(
+            name="cloudflare_explore",
+            description="Bias toward Cloudflare Browser Rendering crawl, rendered document discovery, and subdomain exploration when official rule portals are challenge-heavy or JS-gated.",
+            scraper_method_order=[
+                "cloudflare_browser_rendering",
+                "playwright",
+                "beautifulsoup",
+                "readability",
+                "common_crawl",
+                "wayback_machine",
+                "archive_is",
+                "requests_only",
+            ],
+            search_engines=["google_cse", "brave", "duckduckgo"],
+            parallel_workers=4,
+            per_state_retry_attempts=2,
+            min_full_text_chars=160,
+            enable_ipfs_accelerate=True,
+            cloudflare_timeout_seconds=180,
+            cloudflare_poll_interval_seconds=2.0,
+            cloudflare_max_rate_limit_wait_seconds=60.0,
+            cloudflare_limit=4,
+            cloudflare_depth=1,
+            cloudflare_render=True,
+            cloudflare_source="all",
+            cloudflare_formats=["markdown", "html"],
+            cloudflare_include_external_links=False,
+            cloudflare_include_subdomains=True,
+        ),
     ]
     return {profile.name: profile for profile in profiles}
 
@@ -323,6 +364,10 @@ class StateLawsAgenticDaemonConfig:
     explore_probability: float = 0.30
     archive_warmup_urls: int = 25
     archive_warmup_concurrency: int = 8
+    document_artifact_capture_enabled: bool = True
+    document_artifact_state_limit: int = 4
+    document_artifact_urls_per_state: int = 2
+    document_artifact_max_total: int = 8
     per_state_timeout_seconds: float = 480.0
     scrape_timeout_seconds: float = 0.0
     admin_agentic_max_candidates_per_state: Optional[int] = None
@@ -338,6 +383,7 @@ class StateLawsAgenticDaemonConfig:
     router_llm_timeout_seconds: float = 20.0
     router_embeddings_timeout_seconds: float = 10.0
     router_ipfs_timeout_seconds: float = 10.0
+    min_document_recovery_ratio: float = 0.0
     tactic_profiles: Dict[str, ScraperTacticProfile] = field(default_factory=default_tactic_profiles)
     random_seed: Optional[int] = None
     post_cycle_release: "PostCycleReleaseConfig" = field(default_factory=lambda: PostCycleReleaseConfig())
@@ -367,6 +413,8 @@ class StateLawsAgenticDaemon:
         self.output_dir = self._resolve_output_dir(self.config.output_dir, self.corpus.default_output_subdir)
         self.cycles_dir = self.output_dir / "cycles"
         self.cycles_dir.mkdir(parents=True, exist_ok=True)
+        self.document_artifacts_dir = self.output_dir / "document_artifacts"
+        self.document_artifacts_dir.mkdir(parents=True, exist_ok=True)
         self.state_file = self.output_dir / "daemon_state.json"
         self.latest_file = self.output_dir / "latest_summary.json"
         self.pending_retry_file = self.output_dir / "latest_pending_retry.json"
@@ -481,6 +529,7 @@ class StateLawsAgenticDaemon:
             return cycle_payload
 
         diagnostics = self._build_diagnostics(scrape_result)
+        diagnostics = self._annotate_document_recovery_gate(diagnostics)
         critic_score = self._critic_score(diagnostics)
         passed = self._is_success(diagnostics, critic_score)
         critic = self._criticize_cycle(diagnostics)
@@ -542,9 +591,21 @@ class StateLawsAgenticDaemon:
         document_gap_report_path = self._write_document_gap_report(cycle_index=cycle_index, report=document_gap_report)
         checkpoint_payload.update(
             {
-                "stage": "post_cycle_release",
+                "stage": "document_gap_report",
                 "document_gap_report": document_gap_report,
                 "document_gap_report_path": str(document_gap_report_path) if document_gap_report_path else None,
+            }
+        )
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+        document_artifacts = await self._capture_document_artifacts(
+            cycle_index=cycle_index,
+            tactic=tactic,
+            document_gap_report=document_gap_report,
+        )
+        checkpoint_payload.update(
+            {
+                "stage": "post_cycle_release",
+                "document_artifacts": document_artifacts,
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
@@ -579,6 +640,7 @@ class StateLawsAgenticDaemon:
             "archive_warmup": archive_warmup,
             "document_gap_report": document_gap_report,
             "document_gap_report_path": str(document_gap_report_path) if document_gap_report_path else None,
+            "document_artifacts": document_artifacts,
             "post_cycle_release": post_cycle_release,
             "metadata": metadata,
         }
@@ -589,6 +651,30 @@ class StateLawsAgenticDaemon:
         self.latest_file.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
         self._clear_cycle_checkpoint(cycle_index=cycle_index)
         return cycle_payload
+
+    def _annotate_document_recovery_gate(self, diagnostics: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(diagnostics, dict):
+            return diagnostics
+
+        documents = diagnostics.get("documents") or {}
+        if not isinstance(documents, dict):
+            return diagnostics
+
+        candidate_document_urls = int(documents.get("candidate_document_urls", 0) or 0)
+        processed_document_urls = int(documents.get("processed_document_urls", 0) or 0)
+        ratio = (
+            float(processed_document_urls) / float(max(1, candidate_document_urls))
+            if candidate_document_urls > 0
+            else 1.0
+        )
+        required_ratio = max(0.0, min(1.0, float(self.config.min_document_recovery_ratio or 0.0)))
+
+        documents = dict(documents)
+        documents["document_recovery_ratio"] = round(ratio, 3)
+        documents["required_document_recovery_ratio"] = round(required_ratio, 3)
+        documents["document_recovery_ratio_ok"] = bool(ratio >= required_ratio)
+        diagnostics["documents"] = documents
+        return diagnostics
 
     def _build_deferred_retry_plan(self, scrape_result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         metadata = scrape_result.get("metadata") or {}
@@ -715,9 +801,187 @@ class StateLawsAgenticDaemon:
             "archive_warmup": dict(skipped),
             "document_gap_report": dict(skipped),
             "document_gap_report_path": None,
+            "document_artifacts": dict(skipped),
             "post_cycle_release": dict(skipped),
             "metadata": metadata,
             "deferred_retry": deferred_retry,
+        }
+
+    @staticmethod
+    def _safe_artifact_stem(value: Any, *, fallback: str) -> str:
+        stem = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value or "").strip()).strip("._")
+        return stem[:80] if stem else fallback
+
+    @staticmethod
+    def _content_type_extension(content_type: str) -> str:
+        lowered = str(content_type or "").strip().lower()
+        if "pdf" in lowered:
+            return ".pdf"
+        if "rtf" in lowered:
+            return ".rtf"
+        if "html" in lowered:
+            return ".html"
+        if "markdown" in lowered or "text/plain" in lowered:
+            return ".txt"
+        return ".bin"
+
+    def _document_artifact_targets(self, document_gap_report: Dict[str, Any]) -> List[Dict[str, Any]]:
+        states = document_gap_report.get("states") or {}
+        if not isinstance(states, dict):
+            return []
+
+        state_order = [
+            str(item).upper().strip()
+            for item in list(document_gap_report.get("weak_states") or []) + list(document_gap_report.get("states_with_candidate_document_gaps") or [])
+            if str(item).strip()
+        ]
+        ordered_states = list(dict.fromkeys(state_order))[: max(1, int(self.config.document_artifact_state_limit or 1))]
+        targets: List[Dict[str, Any]] = []
+        max_total = max(1, int(self.config.document_artifact_max_total or 1))
+        per_state_limit = max(1, int(self.config.document_artifact_urls_per_state or 1))
+
+        for state_code in ordered_states:
+            entry = states.get(state_code) or {}
+            urls = [
+                str(value).strip()
+                for value in list(entry.get("top_candidate_document_urls") or [])
+                if str(value).strip()
+            ][:per_state_limit]
+            directives = entry.get("recovery_directives") or {}
+            for url in urls:
+                if len(targets) >= max_total:
+                    return targets
+                targets.append(
+                    {
+                        "state": state_code,
+                        "url": url,
+                        "directives": dict(directives) if isinstance(directives, dict) else {},
+                    }
+                )
+        return targets
+
+    async def _capture_document_artifacts(
+        self,
+        *,
+        cycle_index: int,
+        tactic: ScraperTacticProfile,
+        document_gap_report: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        if self.corpus.key != "state_admin_rules":
+            return {"status": "skipped", "reason": "corpus-not-state-admin-rules"}
+        if not bool(self.config.document_artifact_capture_enabled):
+            return {"status": "skipped", "reason": "document-artifact-capture-disabled"}
+        if not isinstance(document_gap_report, dict) or not document_gap_report.get("states"):
+            return {"status": "skipped", "reason": "no-document-gap-report"}
+
+        targets = self._document_artifact_targets(document_gap_report)
+        if not targets:
+            return {"status": "skipped", "reason": "no-document-artifact-targets"}
+
+        try:
+            from ..web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper
+        except Exception as exc:
+            return {"status": "error", "reason": f"unified-web-scraper-unavailable:{exc}"}
+
+        method_map = {method.value: method for method in ScraperMethod}
+        preferred_methods = [
+            method_map[name]
+            for name in self._effective_scraper_method_order(tactic)
+            if name in method_map
+        ]
+        if not preferred_methods:
+            preferred_methods = [ScraperMethod.PLAYWRIGHT, ScraperMethod.REQUESTS_ONLY]
+
+        config = ScraperConfig(
+            timeout=max(30, int(self.config.per_state_timeout_seconds or 30)),
+            preferred_methods=preferred_methods,
+            fallback_enabled=True,
+            archive_is_submit_on_miss=bool(tactic.archive_is_submit_on_miss),
+            rate_limit_delay=max(0.0, float(tactic.rate_limit_delay or 0.0)),
+        )
+        scraper = UnifiedWebScraper(config)
+        cycle_dir = self.document_artifacts_dir / f"cycle_{cycle_index:04d}"
+        cycle_dir.mkdir(parents=True, exist_ok=True)
+        manifest_entries: List[Dict[str, Any]] = []
+
+        for index, target in enumerate(targets, start=1):
+            state_code = str(target.get("state") or "").upper().strip() or "UNK"
+            url = str(target.get("url") or "").strip()
+            if not url:
+                continue
+            result = await scraper.scrape(url)
+            metadata = dict(getattr(result, "metadata", {}) or {})
+            raw_bytes = metadata.pop("raw_bytes", None)
+            method_used = getattr(getattr(result, "method_used", None), "value", None) or str(metadata.get("method") or "")
+            suggested_name = Path(urlparse(url).path).name or f"artifact_{index}"
+            base_name = self._safe_artifact_stem(f"{state_code}_{index:02d}_{Path(suggested_name).stem}", fallback=f"{state_code}_{index:02d}")
+            saved_files: List[str] = []
+            sha256 = None
+            content_type = str(metadata.get("content_type") or "").strip()
+
+            if isinstance(raw_bytes, (bytes, bytearray)) and raw_bytes:
+                extension = Path(suggested_name).suffix or self._content_type_extension(content_type)
+                binary_path = cycle_dir / f"{base_name}{extension}"
+                binary_path.write_bytes(bytes(raw_bytes))
+                saved_files.append(str(binary_path))
+                sha256 = hashlib.sha256(bytes(raw_bytes)).hexdigest()
+
+            extracted_text = str(getattr(result, "text", "") or "").strip()
+            if extracted_text:
+                text_path = cycle_dir / f"{base_name}.txt"
+                text_path.write_text(extracted_text, encoding="utf-8")
+                saved_files.append(str(text_path))
+
+            html_text = str(getattr(result, "html", "") or "").strip()
+            if html_text and not isinstance(raw_bytes, (bytes, bytearray)):
+                html_path = cycle_dir / f"{base_name}.html"
+                html_path.write_text(html_text, encoding="utf-8")
+                saved_files.append(str(html_path))
+
+            manifest_entries.append(
+                {
+                    "state": state_code,
+                    "url": url,
+                    "success": bool(getattr(result, "success", False)),
+                    "method_used": method_used or None,
+                    "content_type": content_type or None,
+                    "content_length": int(metadata.get("content_length", 0) or 0),
+                    "binary_document": bool(metadata.get("binary_document", False)),
+                    "sha256": sha256,
+                    "saved_files": saved_files,
+                    "title": str(getattr(result, "title", "") or "").strip() or None,
+                    "error_count": len(list(getattr(result, "errors", []) or [])),
+                    "errors": [str(item) for item in list(getattr(result, "errors", []) or []) if str(item).strip()][:4],
+                    "metadata": {
+                        key: value
+                        for key, value in metadata.items()
+                        if not isinstance(value, (bytes, bytearray))
+                    },
+                    "recovery_directives": dict(target.get("directives") or {}),
+                }
+            )
+
+        manifest = {
+            "cycle": int(cycle_index),
+            "generated_at": datetime.now().isoformat(),
+            "corpus": self.corpus.key,
+            "preferred_methods": [method.value for method in preferred_methods],
+            "target_count": len(targets),
+            "successful_count": sum(1 for entry in manifest_entries if bool(entry.get("success"))),
+            "entries": manifest_entries,
+            "artifact_dir": str(cycle_dir),
+        }
+        manifest_path = self.cycles_dir / f"cycle_{cycle_index:04d}_document_artifacts.json"
+        latest_path = self.output_dir / "latest_document_artifacts.json"
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        latest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        return {
+            "status": "completed",
+            "artifact_dir": str(cycle_dir),
+            "artifact_path": str(manifest_path),
+            "target_count": len(targets),
+            "successful_count": int(manifest.get("successful_count", 0) or 0),
+            "entries": manifest_entries,
         }
 
     def _write_cycle_checkpoint(self, *, cycle_index: int, payload: Dict[str, Any]) -> Optional[Path]:
@@ -1147,6 +1411,12 @@ class StateLawsAgenticDaemon:
             for value in top_candidate_document_urls:
                 doc_format = self._document_format_from_url(value)
                 candidate_document_format_counts[doc_format] = int(candidate_document_format_counts.get(doc_format, 0) or 0) + 1
+            recovery_directives = self._document_recovery_directives(
+                state_code=state_code,
+                state_recovery=state_recovery,
+                candidate_document_format_counts=candidate_document_format_counts,
+                top_candidate_document_urls=top_candidate_document_urls,
+            )
 
             states[state_code] = {
                 "candidate_urls": int(state_gap.get("candidate_urls", state_report.get("candidate_urls", 0)) or 0),
@@ -1170,6 +1440,7 @@ class StateLawsAgenticDaemon:
                 "candidate_hosts_without_rules": [
                     str(item) for item in list(state_gap.get("candidate_hosts_without_rules") or []) if str(item).strip()
                 ],
+                "recovery_directives": recovery_directives,
             }
 
         return {
@@ -1181,6 +1452,54 @@ class StateLawsAgenticDaemon:
             "candidate_document_urls": int(documents.get("candidate_document_urls", 0) or 0),
             "processed_document_urls": int(documents.get("processed_document_urls", 0) or 0),
             "states": states,
+        }
+
+    def _document_recovery_directives(
+        self,
+        *,
+        state_code: str,
+        state_recovery: Dict[str, Any],
+        candidate_document_format_counts: Dict[str, int],
+        top_candidate_document_urls: Sequence[str],
+    ) -> Dict[str, Any]:
+        cloudflare_status = str(state_recovery.get("cloudflare_status") or "").strip().lower()
+        challenge_detected = bool(state_recovery.get("cloudflare_browser_challenge_detected", False))
+        download_methods: List[str] = []
+        processor_modes: List[str] = []
+        recommended_tactics: List[str] = []
+
+        has_pdf = int(candidate_document_format_counts.get("pdf", 0) or 0) > 0
+        has_rtf = int(candidate_document_format_counts.get("rtf", 0) or 0) > 0
+
+        if has_pdf or has_rtf:
+            download_methods.extend(["playwright_download", "page_fetch"])
+            recommended_tactics.extend(["document_first", "render_first"])
+        if has_pdf:
+            processor_modes.append("pdf_processor")
+        if has_rtf:
+            processor_modes.append("rtf_processor")
+        if challenge_detected or cloudflare_status == "browser_challenge":
+            download_methods.extend(["cloudflare_browser_rendering", "archival_replay"])
+            recommended_tactics.extend(["cloudflare_explore", "router_assisted"])
+        if cloudflare_status == "rate_limited":
+            recommended_tactics.extend(["archival_first", "router_assisted"])
+        if not processor_modes:
+            processor_modes.append("html_extraction")
+        if not download_methods:
+            download_methods.extend(["direct_fetch", "archival_replay"])
+        if not recommended_tactics:
+            recommended_tactics.append("router_assisted")
+
+        return {
+            "state": str(state_code).upper().strip(),
+            "download_methods": list(dict.fromkeys(download_methods)),
+            "processor_modes": list(dict.fromkeys(processor_modes)),
+            "recommended_tactics": [
+                name for name in list(dict.fromkeys(recommended_tactics)) if name in self.config.tactic_profiles
+            ],
+            "candidate_document_urls": list(top_candidate_document_urls)[:12],
+            "cloudflare_status": cloudflare_status or None,
+            "cloudflare_browser_challenge_detected": challenge_detected,
         }
 
     def _write_document_gap_report(self, *, cycle_index: int, report: Optional[Dict[str, Any]]) -> Optional[Path]:
@@ -1292,6 +1611,21 @@ class StateLawsAgenticDaemon:
                     "document_prefetch_underperforming",
                     score=1,
                     tactics=["archival_first", "router_assisted", "discovery_first"],
+                )
+            cloudflare_status = str(state_recovery.get("cloudflare_status") or "").strip().lower()
+            if bool(state_recovery.get("cloudflare_browser_challenge_detected", False)) or cloudflare_status == "browser_challenge":
+                _add_reason(
+                    state_code,
+                    "cloudflare_browser_challenge",
+                    score=3,
+                    tactics=["cloudflare_explore", "router_assisted", "render_first", "document_first"],
+                )
+            if cloudflare_status == "rate_limited":
+                _add_reason(
+                    state_code,
+                    "cloudflare_rate_limited",
+                    score=1,
+                    tactics=["archival_first", "router_assisted", "cloudflare_explore"],
                 )
 
         for state_code in sorted(weak_gap_states):
@@ -2396,8 +2730,14 @@ class StateLawsAgenticDaemon:
         normalized = str(issue or "").strip().lower()
         if not normalized:
             return []
+        if normalized.startswith("cloudflare-browser-challenge"):
+            return ["cloudflare_explore", "router_assisted", "render_first", "document_first"]
+        if normalized.startswith("cloudflare-rate-limited"):
+            return ["archival_first", "router_assisted", "cloudflare_explore"]
         if normalized.startswith("document-recovery-stalled"):
             return ["render_first", "router_assisted", "document_first"]
+        if normalized.startswith("document-recovery-ratio-low"):
+            return ["document_first", "render_first", "router_assisted"]
         if normalized.startswith("document-prefetch-underperforming"):
             return ["archival_first", "router_assisted", "discovery_first"]
         if normalized.startswith(("document-candidate-gaps", "state-gap-analysis")) or normalized == "agentic-discovery-dominant":
@@ -2428,8 +2768,13 @@ class StateLawsAgenticDaemon:
                 continue
             weight = 0.02 * float(index)
             for issue in issues:
+                normalized_issue = str(issue or "").strip().lower()
                 if tactic_name in self._issue_pressure_tactics(issue):
                     bonus += weight
+                if normalized_issue.startswith("cloudflare-browser-challenge") and tactic_name == "cloudflare_explore":
+                    bonus += 0.025 * float(index)
+                if normalized_issue.startswith("cloudflare-rate-limited") and tactic_name == "archival_first":
+                    bonus += 0.01 * float(index)
         return min(0.24, bonus)
 
     def _tactic_stagnation_penalty(self, tactic_name: str) -> float:
@@ -2514,6 +2859,18 @@ class StateLawsAgenticDaemon:
             issues.append(f"document-candidate-gaps:{','.join(document_gap_states[:8])}")
             next_tactics.extend(["document_first", "render_first", "discovery_first"])
 
+        candidate_document_urls = int(documents.get("candidate_document_urls", 0) or 0)
+        processed_document_urls = int(documents.get("processed_document_urls", 0) or 0)
+        required_document_recovery_ratio = max(0.0, min(1.0, float(self.config.min_document_recovery_ratio or 0.0)))
+        if candidate_document_urls > 0:
+            document_recovery_ratio = float(processed_document_urls) / float(max(1, candidate_document_urls))
+            if document_recovery_ratio < required_document_recovery_ratio:
+                issues.append(
+                    "document-recovery-ratio-low:"
+                    f"{round(document_recovery_ratio, 3)}<{round(required_document_recovery_ratio, 3)}"
+                )
+                next_tactics.extend(["document_first", "render_first", "router_assisted"])
+
         stalled_recovery_states = [
             state_code
             for state_code, entry in state_action_plan.items()
@@ -2531,6 +2888,24 @@ class StateLawsAgenticDaemon:
         if weak_prefetch_states:
             issues.append(f"document-prefetch-underperforming:{','.join(weak_prefetch_states[:8])}")
             next_tactics.extend(["archival_first", "router_assisted", "discovery_first"])
+
+        browser_challenge_states = [
+            state_code
+            for state_code, entry in state_action_plan.items()
+            if "cloudflare_browser_challenge" in list((entry or {}).get("reasons") or [])
+        ]
+        if browser_challenge_states:
+            issues.append(f"cloudflare-browser-challenge:{','.join(browser_challenge_states[:8])}")
+            next_tactics.extend(["cloudflare_explore", "router_assisted", "render_first", "document_first"])
+
+        cloudflare_rate_limited_states = [
+            state_code
+            for state_code, entry in state_action_plan.items()
+            if "cloudflare_rate_limited" in list((entry or {}).get("reasons") or [])
+        ]
+        if cloudflare_rate_limited_states:
+            issues.append(f"cloudflare-rate-limited:{','.join(cloudflare_rate_limited_states[:8])}")
+            next_tactics.extend(["archival_first", "router_assisted", "cloudflare_explore"])
 
         weak_gap_states = list(gap_analysis.get("weak_states") or [])
         if weak_gap_states:
@@ -2582,8 +2957,12 @@ class StateLawsAgenticDaemon:
             return "Coverage and ETL signals are stable; continue exploiting the best-known tactic."
         if any(item.startswith("coverage-gaps") for item in issues):
             return "Coverage gaps remain, so the next cycle should bias toward broader archival and search discovery."
+        if any(item.startswith("cloudflare-browser-challenge") for item in issues):
+            return "Browser challenges are blocking weak states, so the next cycle should bias toward Cloudflare rendering, Playwright downloads, and router-guided fallback selection."
         if any(item.startswith("document-recovery-stalled") for item in issues):
             return "Document candidates are being found but recovery is stalling, so the next cycle should bias toward renderer-backed downloads and router-guided troubleshooting."
+        if any(item.startswith("document-recovery-ratio-low") for item in issues):
+            return "Document extraction throughput is below the configured threshold, so the next cycle should bias toward document-first tactics and renderer-backed recovery."
         if any(item.startswith("document-candidate-gaps") for item in issues):
             return "Document-heavy gaps remain, so the next cycle should bias toward Playwright downloads and processor-backed PDF/RTF extraction."
         if "quality-weak" in issues:
@@ -3047,6 +3426,15 @@ class StateLawsAgenticDaemon:
         statute_signal_ratio = float(etl.get("statute_signal_ratio", 0.0) or 0.0)
         non_scaffold_ratio = float(etl.get("non_scaffold_ratio", 0.0) or 0.0)
 
+        candidate_document_urls = int(documents.get("candidate_document_urls", 0) or 0)
+        processed_document_urls = int(documents.get("processed_document_urls", 0) or 0)
+        required_document_recovery_ratio = max(0.0, min(1.0, float(self.config.min_document_recovery_ratio or 0.0)))
+        document_recovery_ratio = (
+            float(processed_document_urls) / float(max(1, candidate_document_urls))
+            if candidate_document_urls > 0
+            else 1.0
+        )
+
         return bool(
             score >= float(self.config.target_score)
             and bool(etl.get("ready_for_kg_etl"))
@@ -3059,11 +3447,12 @@ class StateLawsAgenticDaemon:
             and len(coverage_gaps) == 0
             and len(no_attempt_states) == 0
             and len(document_gap_states) == 0
+            and document_recovery_ratio >= required_document_recovery_ratio
         )
 
     def _effective_scraper_method_order(self, tactic: ScraperTacticProfile) -> List[str]:
         method_order = list(tactic.scraper_method_order)
-        if self.corpus.key != "state_admin_rules":
+        if self.corpus.key == "state_admin_rules":
             return method_order
 
         cloudflare_summary = self._cloudflare_browser_rendering_availability()
@@ -3113,6 +3502,40 @@ class StateLawsAgenticDaemon:
             overrides["IPFS_DATASETS_PY_IPFS_BACKEND"] = str(tactic.ipfs_backend)
         if tactic.enable_ipfs_accelerate is not None:
             overrides["IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE"] = "1" if tactic.enable_ipfs_accelerate else "0"
+        cloudflare_numeric_overrides = {
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS": tactic.cloudflare_timeout_seconds,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS": tactic.cloudflare_timeout_seconds,
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_POLL_INTERVAL_SECONDS": tactic.cloudflare_poll_interval_seconds,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_POLL_INTERVAL_SECONDS": tactic.cloudflare_poll_interval_seconds,
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS": tactic.cloudflare_max_rate_limit_wait_seconds,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS": tactic.cloudflare_max_rate_limit_wait_seconds,
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_LIMIT": tactic.cloudflare_limit,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_LIMIT": tactic.cloudflare_limit,
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_DEPTH": tactic.cloudflare_depth,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_DEPTH": tactic.cloudflare_depth,
+        }
+        for key, value in cloudflare_numeric_overrides.items():
+            if value is not None:
+                overrides[key] = str(value)
+        cloudflare_bool_overrides = {
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_RENDER": tactic.cloudflare_render,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_RENDER": tactic.cloudflare_render,
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_INCLUDE_EXTERNAL_LINKS": tactic.cloudflare_include_external_links,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_INCLUDE_EXTERNAL_LINKS": tactic.cloudflare_include_external_links,
+            "IPFS_DATASETS_CLOUDFLARE_CRAWL_INCLUDE_SUBDOMAINS": tactic.cloudflare_include_subdomains,
+            "LEGAL_SCRAPER_CLOUDFLARE_CRAWL_INCLUDE_SUBDOMAINS": tactic.cloudflare_include_subdomains,
+        }
+        for key, value in cloudflare_bool_overrides.items():
+            if value is not None:
+                overrides[key] = "1" if value else "0"
+        if tactic.cloudflare_source:
+            overrides["IPFS_DATASETS_CLOUDFLARE_CRAWL_SOURCE"] = str(tactic.cloudflare_source)
+            overrides["LEGAL_SCRAPER_CLOUDFLARE_CRAWL_SOURCE"] = str(tactic.cloudflare_source)
+        if tactic.cloudflare_formats:
+            serialized_formats = ",".join(str(item).strip() for item in tactic.cloudflare_formats if str(item).strip())
+            if serialized_formats:
+                overrides["IPFS_DATASETS_CLOUDFLARE_CRAWL_FORMATS"] = serialized_formats
+                overrides["LEGAL_SCRAPER_CLOUDFLARE_CRAWL_FORMATS"] = serialized_formats
         state_query_hints = self._state.get("state_query_hints") or {}
         if isinstance(state_query_hints, dict) and state_query_hints:
             try:
@@ -3151,6 +3574,7 @@ async def run_state_laws_agentic_daemon(
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
+    min_document_recovery_ratio: float = 0.0,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -3178,6 +3602,7 @@ async def run_state_laws_agentic_daemon(
             router_llm_timeout_seconds=router_llm_timeout_seconds,
             router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
             router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
+            min_document_recovery_ratio=min_document_recovery_ratio,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -3209,6 +3634,7 @@ async def run_state_admin_rules_agentic_daemon(
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
+    min_document_recovery_ratio: float = 0.0,
     admin_agentic_max_candidates_per_state: Optional[int] = None,
     admin_agentic_max_fetch_per_state: Optional[int] = None,
     admin_agentic_max_results_per_domain: Optional[int] = None,
@@ -3245,6 +3671,7 @@ async def run_state_admin_rules_agentic_daemon(
             router_llm_timeout_seconds=router_llm_timeout_seconds,
             router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
             router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
+            min_document_recovery_ratio=min_document_recovery_ratio,
             admin_agentic_max_candidates_per_state=admin_agentic_max_candidates_per_state,
             admin_agentic_max_fetch_per_state=admin_agentic_max_fetch_per_state,
             admin_agentic_max_results_per_domain=admin_agentic_max_results_per_domain,
@@ -3286,6 +3713,7 @@ async def run_state_court_rules_agentic_daemon(
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
+    min_document_recovery_ratio: float = 0.0,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -3312,6 +3740,7 @@ async def run_state_court_rules_agentic_daemon(
             router_llm_timeout_seconds=router_llm_timeout_seconds,
             router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
             router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
+            min_document_recovery_ratio=min_document_recovery_ratio,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -3350,6 +3779,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--router-llm-timeout-seconds", type=float, default=20.0, help="Timeout budget for router-backed LLM review during each cycle.")
     parser.add_argument("--router-embeddings-timeout-seconds", type=float, default=10.0, help="Timeout budget for router-backed embeddings ranking during each cycle.")
     parser.add_argument("--router-ipfs-timeout-seconds", type=float, default=10.0, help="Timeout budget for persisting router-assist artifacts to IPFS.")
+    parser.add_argument("--min-document-recovery-ratio", type=float, default=0.0, help="Optional minimum processed/(candidate PDF+RTF URLs) ratio required for pass criteria when candidate document URLs are present.")
     parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=None, help="Optional state-admin-rules candidate cap passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=None, help="Optional state-admin-rules fetch cap passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=None, help="Optional state-admin-rules per-domain result cap passed through to the agentic fallback.")
@@ -3403,6 +3833,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             router_llm_timeout_seconds=float(args.router_llm_timeout_seconds),
             router_embeddings_timeout_seconds=float(args.router_embeddings_timeout_seconds),
             router_ipfs_timeout_seconds=float(args.router_ipfs_timeout_seconds),
+            min_document_recovery_ratio=float(args.min_document_recovery_ratio),
             admin_agentic_max_candidates_per_state=args.admin_agentic_max_candidates_per_state,
             admin_agentic_max_fetch_per_state=args.admin_agentic_max_fetch_per_state,
             admin_agentic_max_results_per_domain=args.admin_agentic_max_results_per_domain,
