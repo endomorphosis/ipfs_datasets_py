@@ -678,15 +678,49 @@ class StateLawsAgenticDaemon:
             try:
                 return await asyncio.wait_for(scrape_coro, timeout=scrape_timeout_seconds)
             except asyncio.TimeoutError:
+                timeout_metadata: Dict[str, Any] = {
+                    "scrape_timeout_seconds": scrape_timeout_seconds,
+                    "scrape_timed_out": True,
+                }
+                if self.corpus.key == "state_admin_rules":
+                    timeout_metadata["cloudflare_browser_rendering"] = self._cloudflare_browser_rendering_availability()
                 return {
                     "status": "error",
                     "error": f"Corpus scrape timed out after {scrape_timeout_seconds} seconds",
                     "data": [],
-                    "metadata": {
-                        "scrape_timeout_seconds": scrape_timeout_seconds,
-                        "scrape_timed_out": True,
-                    },
+                    "metadata": timeout_metadata,
                 }
+
+    @staticmethod
+    def _cloudflare_browser_rendering_availability() -> Dict[str, Any]:
+        account_env_keys = [
+            "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+            "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_ACCOUNT_ID",
+        ]
+        token_env_keys = [
+            "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+            "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_API_TOKEN",
+        ]
+
+        account_source = next((key for key in account_env_keys if str(os.getenv(key) or "").strip()), None)
+        token_source = next((key for key in token_env_keys if str(os.getenv(key) or "").strip()), None)
+        missing_credentials: List[str] = []
+        if not account_source:
+            missing_credentials.append("account_id")
+        if not token_source:
+            missing_credentials.append("api_token")
+
+        configured = not missing_credentials
+        return {
+            "available": configured,
+            "status": "configured" if configured else "missing_credentials",
+            "provider": "cloudflare_browser_rendering",
+            "account_id_env": account_source,
+            "api_token_env": token_source,
+            "missing_credentials": missing_credentials,
+        }
 
     def _build_diagnostics(self, scrape_result: Dict[str, Any]) -> Dict[str, Any]:
         metadata = scrape_result.get("metadata") or {}
@@ -871,6 +905,12 @@ class StateLawsAgenticDaemon:
                     "candidate_urls": int(state_report.get("candidate_urls", 0) or 0),
                     "inspected_urls": int(state_report.get("inspected_urls", 0) or 0),
                     "expanded_urls": int(state_report.get("expanded_urls", 0) or 0),
+                    "cloudflare_status": state_report.get("cloudflare_status"),
+                    "cloudflare_http_status": state_report.get("cloudflare_http_status"),
+                    "cloudflare_browser_challenge_detected": bool(state_report.get("cloudflare_browser_challenge_detected", False)),
+                    "cloudflare_error_excerpt": state_report.get("cloudflare_error_excerpt"),
+                    "cloudflare_record_status": state_report.get("cloudflare_record_status"),
+                    "cloudflare_job_status": state_report.get("cloudflare_job_status"),
                 }
             else:
                 per_state_recovery[state_code] = {
@@ -882,6 +922,12 @@ class StateLawsAgenticDaemon:
                     "candidate_urls": 0,
                     "inspected_urls": 0,
                     "expanded_urls": 0,
+                    "cloudflare_status": None,
+                    "cloudflare_http_status": None,
+                    "cloudflare_browser_challenge_detected": False,
+                    "cloudflare_error_excerpt": None,
+                    "cloudflare_record_status": None,
+                    "cloudflare_job_status": None,
                 }
 
             per_state[state_code] = state_counts

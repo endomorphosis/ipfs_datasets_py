@@ -2597,9 +2597,19 @@ def _extract_cloudflare_rate_limit_metadata(candidate: Any) -> Dict[str, Any]:
         status = str(mapping.get("cloudflare_status") or "").strip().lower()
         provider = str(mapping.get("provider") or "").strip().lower()
         method = str(mapping.get("method") or mapping.get("method_used") or "").strip().lower()
-        has_signal = status == "rate_limited" or any(
+        has_signal = status in {"rate_limited", "browser_challenge", "record_errored", "error"} or any(
             mapping.get(key) is not None
-            for key in ("retry_after_seconds", "retry_at_utc", "rate_limit_diagnostics", "wait_budget_exhausted")
+            for key in (
+                "retry_after_seconds",
+                "retry_at_utc",
+                "rate_limit_diagnostics",
+                "wait_budget_exhausted",
+                "cloudflare_http_status",
+                "cloudflare_browser_challenge_detected",
+                "cloudflare_error_excerpt",
+                "cloudflare_record_status",
+                "cloudflare_job_status",
+            )
         )
         if not has_signal and provider != "cloudflare_browser_rendering" and method != "cloudflare_browser_rendering":
             continue
@@ -2610,6 +2620,11 @@ def _extract_cloudflare_rate_limit_metadata(candidate: Any) -> Dict[str, Any]:
             "retryable": mapping.get("retryable"),
             "wait_budget_exhausted": mapping.get("wait_budget_exhausted"),
             "rate_limit_diagnostics": mapping.get("rate_limit_diagnostics"),
+            "cloudflare_http_status": mapping.get("cloudflare_http_status", mapping.get("status")),
+            "cloudflare_browser_challenge_detected": mapping.get("cloudflare_browser_challenge_detected"),
+            "cloudflare_error_excerpt": mapping.get("cloudflare_error_excerpt"),
+            "cloudflare_record_status": mapping.get("cloudflare_record_status"),
+            "cloudflare_job_status": mapping.get("cloudflare_job_status"),
         }
         if provider:
             extracted["provider"] = provider
@@ -2630,6 +2645,10 @@ def _merge_cloudflare_rate_limit_metadata(current: Dict[str, Any], candidate: An
     current_status = str(merged.get("cloudflare_status") or "").strip().lower()
     candidate_status = str(candidate_metadata.get("cloudflare_status") or "").strip().lower()
     if current_status != "rate_limited" and candidate_status == "rate_limited":
+        merged.update(candidate_metadata)
+        return merged
+
+    if current_status not in {"rate_limited", "browser_challenge"} and candidate_status == "browser_challenge":
         merged.update(candidate_metadata)
         return merged
 
@@ -4010,6 +4029,7 @@ async def scrape_state_admin_rules(
         agentic_report: Dict[str, Any] = {}
         agentic_rate_limit_metadata: Dict[str, Any] = {}
         agentic_rate_limited_states: List[str] = []
+        agentic_browser_challenge_states: List[str] = []
         kg_corpus_jsonl: Optional[str] = None
         if agentic_fallback_enabled and zero_rule_states:
             agentic_started_at = time.time()
@@ -4033,8 +4053,11 @@ async def scrape_state_admin_rules(
             }
             for state_code, state_report in (agentic_report.get("per_state") or {}).items():
                 agentic_rate_limit_metadata = _merge_cloudflare_rate_limit_metadata(agentic_rate_limit_metadata, state_report)
-                if str((state_report or {}).get("cloudflare_status") or "").strip().lower() == "rate_limited":
+                state_cloudflare_status = str((state_report or {}).get("cloudflare_status") or "").strip().lower()
+                if state_cloudflare_status == "rate_limited":
                     agentic_rate_limited_states.append(str(state_code or "").upper())
+                if state_cloudflare_status == "browser_challenge":
+                    agentic_browser_challenge_states.append(str(state_code or "").upper())
 
             fallback_blocks = list(agentic_result.get("state_blocks") or [])
             fallback_by_state = {
@@ -4146,7 +4169,13 @@ async def scrape_state_admin_rules(
             "retryable": agentic_rate_limit_metadata.get("retryable") if agentic_rate_limit_metadata else None,
             "wait_budget_exhausted": agentic_rate_limit_metadata.get("wait_budget_exhausted") if agentic_rate_limit_metadata else None,
             "rate_limit_diagnostics": agentic_rate_limit_metadata.get("rate_limit_diagnostics") if agentic_rate_limit_metadata else None,
+            "cloudflare_http_status": agentic_rate_limit_metadata.get("cloudflare_http_status") if agentic_rate_limit_metadata else None,
+            "cloudflare_browser_challenge_detected": agentic_rate_limit_metadata.get("cloudflare_browser_challenge_detected") if agentic_rate_limit_metadata else None,
+            "cloudflare_error_excerpt": agentic_rate_limit_metadata.get("cloudflare_error_excerpt") if agentic_rate_limit_metadata else None,
+            "cloudflare_record_status": agentic_rate_limit_metadata.get("cloudflare_record_status") if agentic_rate_limit_metadata else None,
+            "cloudflare_job_status": agentic_rate_limit_metadata.get("cloudflare_job_status") if agentic_rate_limit_metadata else None,
             "rate_limited_states": sorted(set(agentic_rate_limited_states)) or None,
+            "browser_challenge_states": sorted(set(agentic_browser_challenge_states)) or None,
         }
 
         status = "success"

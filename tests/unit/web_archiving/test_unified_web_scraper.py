@@ -360,6 +360,48 @@ async def test_cloudflare_browser_rendering_preserves_rate_limit_schedule(monkey
 
 
 @pytest.mark.anyio
+async def test_cloudflare_browser_rendering_marks_browser_challenge_record(monkeypatch: pytest.MonkeyPatch) -> None:
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            cloudflare_account_id="acct-test",
+            cloudflare_api_token="token-test",
+        )
+    )
+
+    async def _fake_crawl(url: str, **kwargs):
+        return {
+            "status": "success",
+            "job_id": "job-403",
+            "job": {"status": "completed"},
+            "records": [
+                {
+                    "url": url,
+                    "status": "errored",
+                    "markdown": "Just a moment...\nEnable JavaScript and cookies to continue",
+                    "metadata": {
+                        "status": 403,
+                        "title": "Just a moment...",
+                    },
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine.crawl_with_cloudflare_browser_rendering",
+        _fake_crawl,
+    )
+
+    result = await scraper._scrape_cloudflare_browser_rendering("https://example.gov/rules")
+
+    assert result.success is False
+    assert result.method_used == ScraperMethod.CLOUDFLARE_BROWSER_RENDERING
+    assert result.metadata["cloudflare_status"] == "browser_challenge"
+    assert result.metadata["cloudflare_http_status"] == 403
+    assert result.metadata["cloudflare_browser_challenge_detected"] is True
+    assert "browser challenge detected" in result.errors[0]
+
+
+@pytest.mark.anyio
 async def test_binary_pdf_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePDFProcessor:
         async def _decompose_pdf(self, pdf_path):

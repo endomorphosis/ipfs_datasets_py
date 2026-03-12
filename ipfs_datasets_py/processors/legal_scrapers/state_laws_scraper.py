@@ -732,10 +732,16 @@ async def _run_sync_scrape_on_daemon_thread(
                 hydrate_statute_text=hydrate_statute_text,
             )
         except BaseException as exc:
-            loop.call_soon_threadsafe(_publish_exception, exc)
+            try:
+                loop.call_soon_threadsafe(_publish_exception, exc)
+            except RuntimeError:
+                pass  # event loop already closed (e.g. outer timeout fired)
             return
 
-        loop.call_soon_threadsafe(_publish_result, result)
+        try:
+            loop.call_soon_threadsafe(_publish_result, result)
+        except RuntimeError:
+            pass  # event loop already closed (e.g. outer timeout fired)
 
     worker = threading.Thread(
         target=_worker,

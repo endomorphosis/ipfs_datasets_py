@@ -38,6 +38,11 @@ import hashlib
 
 logger = logging.getLogger(__name__)
 
+_BROWSER_CHALLENGE_TEXT_RE = re.compile(
+    r"just\s+a\s+moment|cf-browser-verification|cloudflare|enable\s+javascript\s+and\s+cookies",
+    re.IGNORECASE,
+)
+
 
 class ScraperMethod(Enum):
     """Available scraping methods."""
@@ -68,6 +73,11 @@ class ScraperResult:
     errors: List[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     extraction_time: float = 0.0
+
+
+def _looks_like_browser_challenge_text(*, title: str, text: str, html: str) -> bool:
+    hay = "\n".join([str(title or ""), str(text or ""), str(html or "")[:2000]])
+    return bool(_BROWSER_CHALLENGE_TEXT_RE.search(hay))
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -1588,8 +1598,17 @@ class UnifiedWebScraper:
 
         title = str(metadata.get("title") or "").strip()
         record_status = str(selected_record.get("status") or "").strip().lower()
+        http_status = metadata.get("status")
+        challenge_detected = _looks_like_browser_challenge_text(title=title, text=text, html=html)
         success = record_status == "completed" and bool(text or html)
-        errors = [] if success else [f"Cloudflare crawl record status: {record_status or 'unknown'}"]
+        errors = []
+        if not success:
+            error_message = f"Cloudflare crawl record status: {record_status or 'unknown'}"
+            if http_status is not None:
+                error_message = f"{error_message} (http_status={http_status})"
+            if challenge_detected:
+                error_message = f"{error_message}; browser challenge detected"
+            errors = [error_message]
 
         return ScraperResult(
             url=url,
@@ -1602,10 +1621,14 @@ class UnifiedWebScraper:
             errors=errors,
             metadata={
                 "method": "cloudflare_browser_rendering",
+                "cloudflare_status": "success" if success else ("browser_challenge" if challenge_detected else "record_errored"),
                 "cloudflare_job_id": crawl_result.get("job_id"),
                 "cloudflare_job_status": str((crawl_result.get("job") or {}).get("status") or ""),
                 "cloudflare_record_status": record_status,
                 "cloudflare_record_count": len(records),
+                "cloudflare_http_status": int(http_status) if isinstance(http_status, (int, float, str)) and str(http_status).strip().isdigit() else http_status,
+                "cloudflare_browser_challenge_detected": challenge_detected,
+                "cloudflare_error_excerpt": (text or html or "")[:200],
                 **metadata,
             },
         )

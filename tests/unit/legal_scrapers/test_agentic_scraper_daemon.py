@@ -949,6 +949,41 @@ async def test_state_laws_agentic_daemon_applies_outer_scrape_timeout(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_availability(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _slow_scrape_state_admin_rules(**kwargs):
+        await asyncio.sleep(0.2)
+        return {"status": "success", "data": [], "metadata": {}}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _slow_scrape_state_admin_rules)
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "acct-test")
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "token-test")
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            scrape_timeout_seconds=0.05,
+            random_seed=7,
+        )
+    )
+    tactic = daemon._select_tactic()
+
+    scrape_result = await daemon._run_scrape_with_tactic(tactic)
+
+    assert scrape_result["status"] == "error"
+    assert scrape_result["metadata"]["scrape_timed_out"] is True
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["available"] is True
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["status"] == "configured"
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["account_id_env"] == "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID"
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["api_token_env"] == "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN"
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -1056,6 +1091,66 @@ async def test_state_admin_rules_agentic_daemon_surfaces_cloudflare_availability
     assert latest_cycle["diagnostics"]["cloudflare"]["available"] is False
     assert latest_cycle["diagnostics"]["documents"]["cloudflare_browser_rendering"]["provider"] == "cloudflare_browser_rendering"
     assert latest_cycle["diagnostics"]["documents"]["cloudflare_browser_rendering"]["missing_credentials"] == ["account_id", "api_token"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_surfaces_browser_challenge_recovery_details(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        assert kwargs["states"] == ["AZ"]
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "agentic_report": {
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 2,
+                            "inspected_urls": 1,
+                            "expanded_urls": 0,
+                            "source_breakdown": {"agentic_discovery": 1},
+                            "domains_seen": ["azsos.gov"],
+                            "parallel_prefetch": {},
+                            "timed_out": False,
+                            "cloudflare_status": "browser_challenge",
+                            "cloudflare_http_status": 403,
+                            "cloudflare_browser_challenge_detected": True,
+                            "cloudflare_error_excerpt": "Just a moment... Enable JavaScript and cookies to continue",
+                            "cloudflare_record_status": "errored",
+                            "cloudflare_job_status": "completed",
+                        }
+                    }
+                },
+                "cloudflare_status": "browser_challenge",
+                "cloudflare_http_status": 403,
+                "cloudflare_browser_challenge_detected": True,
+                "browser_challenge_states": ["AZ"],
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=11,
+        )
+    )
+
+    summary = await daemon.run()
+
+    recovery = summary["latest_cycle"]["diagnostics"]["documents"]["per_state_recovery"]["AZ"]
+    assert summary["latest_cycle"]["diagnostics"]["cloudflare"]["cloudflare_status"] == "browser_challenge"
+    assert recovery["cloudflare_status"] == "browser_challenge"
+    assert recovery["cloudflare_http_status"] == 403
+    assert recovery["cloudflare_browser_challenge_detected"] is True
+    assert recovery["cloudflare_record_status"] == "errored"
+    assert recovery["cloudflare_job_status"] == "completed"
 
 
 @pytest.mark.asyncio

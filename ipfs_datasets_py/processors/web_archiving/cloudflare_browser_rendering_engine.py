@@ -276,7 +276,7 @@ def _build_payload(
     payload: Dict[str, Any] = {"url": url}
     if limit is not None:
         payload["limit"] = int(limit)
-    if depth is not None:
+    if depth is not None and int(depth) > 0:
         payload["depth"] = int(depth)
     if formats:
         payload["formats"] = [str(item) for item in formats if str(item).strip()]

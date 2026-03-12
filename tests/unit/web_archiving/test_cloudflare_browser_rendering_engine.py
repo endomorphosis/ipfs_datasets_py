@@ -6,6 +6,7 @@ import types
 import pytest
 
 from ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine import (
+    _build_payload,
     get_cloudflare_browser_rendering_crawl,
     start_cloudflare_browser_rendering_crawl,
     wait_for_cloudflare_browser_rendering_crawl,
@@ -20,6 +21,21 @@ class _FakeResponse:
 
     def json(self):
         return self._payload
+
+
+def test_build_payload_omits_zero_depth() -> None:
+    payload = _build_payload(
+        url="https://example.com",
+        limit=1,
+        depth=0,
+        formats=["markdown", "html"],
+        render=False,
+        source="all",
+    )
+
+    assert payload["limit"] == 1
+    assert "depth" not in payload
+    assert payload["formats"] == ["markdown", "html"]
 
 
 @pytest.mark.anyio

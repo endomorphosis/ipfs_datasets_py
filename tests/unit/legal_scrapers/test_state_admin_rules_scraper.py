@@ -2898,6 +2898,77 @@ async def test_scrape_state_admin_rules_propagates_agentic_cloudflare_rate_limit
 
 
 @pytest.mark.anyio
+async def test_scrape_state_admin_rules_propagates_agentic_cloudflare_browser_challenge_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "title": "Arizona Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://azsos.gov/rules/arizona-administrative-code",
+                    "scraped_at": "2026-03-12T00:00:00",
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                    "cloudflare_status": "browser_challenge",
+                    "cloudflare_http_status": 403,
+                    "cloudflare_browser_challenge_detected": True,
+                    "cloudflare_error_excerpt": "Just a moment... Enable JavaScript and cookies to continue",
+                    "cloudflare_record_status": "errored",
+                    "cloudflare_job_status": "completed",
+                }
+            ],
+            "kg_rows": [],
+            "report": {
+                "AZ": {
+                    "rules_count": 0,
+                    "cloudflare_status": "browser_challenge",
+                    "cloudflare_http_status": 403,
+                    "cloudflare_browser_challenge_detected": True,
+                    "cloudflare_error_excerpt": "Just a moment... Enable JavaScript and cookies to continue",
+                    "cloudflare_record_status": "errored",
+                    "cloudflare_job_status": "completed",
+                }
+            },
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AZ"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        require_substantive_rule_text=True,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["cloudflare_status"] == "browser_challenge"
+    assert result["metadata"]["cloudflare_http_status"] == 403
+    assert result["metadata"]["cloudflare_browser_challenge_detected"] is True
+    assert result["metadata"]["cloudflare_record_status"] == "errored"
+    assert result["metadata"]["cloudflare_job_status"] == "completed"
+    assert result["metadata"]["browser_challenge_states"] == ["AZ"]
+
+
+@pytest.mark.anyio
 async def test_agentic_discovery_seed_fetch_expands_hydrated_seed_links(monkeypatch: pytest.MonkeyPatch) -> None:
     seed_url = "https://iar.iga.in.gov/code"
     deep_url = "https://iar.iga.in.gov/code/current/10/1"
