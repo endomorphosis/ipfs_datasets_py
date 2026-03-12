@@ -427,6 +427,126 @@ async def test_state_laws_agentic_daemon_runs_single_cycle(monkeypatch, tmp_path
 
 
 @pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_schedules_deferred_retry_for_rate_limited_scrape(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_laws(**kwargs):
+        assert kwargs["states"] == ["OR"]
+        return {
+            "status": "rate_limited",
+            "data": [],
+            "metadata": {
+                "cloudflare_status": "rate_limited",
+                "retryable": True,
+                "retry_after_seconds": 90.0,
+                "retry_at_utc": "2026-03-12T00:00:00+00:00",
+                "wait_budget_exhausted": True,
+                "rate_limit_diagnostics": {
+                    "operation": "create_crawl",
+                    "cf_ray": "test-ray",
+                    "cf_auditlog_id": "audit-id",
+                    "error_code": "2001",
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _fake_scrape_state_laws)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=7,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    assert summary["pending_retry"]["provider"] == "cloudflare_browser_rendering"
+    assert summary["pending_retry"]["retry_after_seconds"] == 90.0
+    assert latest_cycle["status"] == "rate_limited"
+    assert latest_cycle["passed"] is False
+    assert latest_cycle["critic_score"] == 0.0
+    assert latest_cycle["deferred_retry"]["status"] == "scheduled"
+    assert latest_cycle["deferred_retry"]["provider"] == "cloudflare_browser_rendering"
+    assert latest_cycle["deferred_retry"]["retry_after_seconds"] == 90.0
+    assert latest_cycle["diagnostics"]["rate_limit"]["rate_limit_diagnostics"]["cf_ray"] == "test-ray"
+    assert latest_cycle["critic"]["issues"] == ["rate-limited-deferred-retry:cloudflare_browser_rendering"]
+    assert latest_cycle["router_assist"]["reason"] == "deferred-retry-scheduled"
+    assert latest_cycle["archive_warmup"]["reason"] == "deferred-retry-scheduled"
+    assert latest_cycle["post_cycle_release"]["reason"] == "deferred-retry-scheduled"
+
+    state_payload = json.loads((tmp_path / "daemon_state.json").read_text(encoding="utf-8"))
+    assert state_payload["cycle_count"] == 1
+    assert state_payload["pending_retry"]["provider"] == "cloudflare_browser_rendering"
+    assert state_payload["pending_retry"]["retry_after_seconds"] == 90.0
+    assert state_payload["tactics"] == {}
+    assert state_payload["best_tactic"] == {}
+
+    latest_summary = json.loads((tmp_path / "latest_summary.json").read_text(encoding="utf-8"))
+    assert latest_summary["pending_retry"]["provider"] == "cloudflare_browser_rendering"
+    assert latest_summary["pending_retry"]["retry_after_seconds"] == 90.0
+
+    latest_pending_retry = json.loads((tmp_path / "latest_pending_retry.json").read_text(encoding="utf-8"))
+    assert latest_pending_retry["pending_retry"]["provider"] == "cloudflare_browser_rendering"
+    assert latest_pending_retry["pending_retry"]["retry_after_seconds"] == 90.0
+    assert (tmp_path / "cycles" / "cycle_0001_pending_retry.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_waits_until_deferred_retry_window(monkeypatch, tmp_path):
+    daemon = StateLawsAgenticDaemon(
+        StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=2,
+            archive_warmup_urls=0,
+            cycle_interval_seconds=900.0,
+            random_seed=7,
+        )
+    )
+
+    cycles = [
+        {
+            "cycle": 1,
+            "timestamp": "2026-03-11T00:00:00",
+            "status": "rate_limited",
+            "passed": False,
+            "deferred_retry": {
+                "status": "scheduled",
+                "retry_after_seconds": 42.0,
+                "provider": "cloudflare_browser_rendering",
+            },
+        },
+        {
+            "cycle": 2,
+            "timestamp": "2026-03-11T00:01:00",
+            "status": "success",
+            "passed": False,
+        },
+    ]
+
+    async def _fake_run_cycle():
+        return cycles.pop(0)
+
+    sleep_calls = []
+
+    async def _fake_sleep(seconds):
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr(daemon, "run_cycle", _fake_run_cycle)
+    monkeypatch.setattr(asyncio, "sleep", _fake_sleep)
+
+    summary = await daemon.run()
+
+    assert summary["cycles_executed"] == 2
+    assert sleep_calls == [42.0]
+
+
+@pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_writes_and_clears_in_progress_checkpoint(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -700,6 +820,104 @@ async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics
     assert "agentic-discovery-dominant" in summary["latest_cycle"]["critic"]["issues"]
     assert "document_first" in summary["latest_cycle"]["critic"]["recommended_next_tactics"]
     assert summary["latest_cycle"]["critic"]["recommended_next_tactics"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_schedules_deferred_retry_from_base_metadata(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        assert kwargs["states"] == ["OR"]
+        return {
+            "status": "partial_success",
+            "data": [],
+            "metadata": {
+                "phase_timings": {
+                    "total_seconds": 1.0,
+                },
+                "base_metadata": {
+                    "cloudflare_status": "rate_limited",
+                    "retryable": True,
+                    "retry_after_seconds": 120.0,
+                    "retry_at_utc": "2026-03-12T00:10:00+00:00",
+                    "wait_budget_exhausted": True,
+                    "rate_limit_diagnostics": {
+                        "operation": "get_crawl",
+                        "cf_ray": "nested-ray",
+                        "cf_auditlog_id": "nested-audit",
+                    },
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=11,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    assert summary["pending_retry"]["retry_after_seconds"] == 120.0
+    assert latest_cycle["status"] == "partial_success"
+    assert latest_cycle["deferred_retry"]["status"] == "scheduled"
+    assert latest_cycle["deferred_retry"]["provider"] == "cloudflare_browser_rendering"
+    assert latest_cycle["deferred_retry"]["retry_after_seconds"] == 120.0
+    assert latest_cycle["deferred_retry"]["wait_budget_exhausted"] is True
+    assert latest_cycle["diagnostics"]["rate_limit"]["rate_limit_diagnostics"]["cf_ray"] == "nested-ray"
+
+    state_payload = json.loads((tmp_path / "daemon_state.json").read_text(encoding="utf-8"))
+    assert state_payload["pending_retry"]["retry_after_seconds"] == 120.0
+    latest_pending_retry = json.loads((tmp_path / "latest_pending_retry.json").read_text(encoding="utf-8"))
+    assert latest_pending_retry["pending_retry"]["retry_after_seconds"] == 120.0
+
+
+def test_state_laws_agentic_daemon_clears_pending_retry_artifact_after_success(tmp_path):
+    daemon = StateLawsAgenticDaemon(
+        StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=7,
+        )
+    )
+
+    pending_cycle = {
+        "cycle": 1,
+        "timestamp": "2026-03-12T00:00:00",
+        "states": ["OR"],
+        "status": "rate_limited",
+        "deferred_retry": {
+            "status": "scheduled",
+            "provider": "cloudflare_browser_rendering",
+            "retry_after_seconds": 15.0,
+        },
+        "critic": {"recommended_next_tactics": [], "priority_states": [], "state_action_plan": {}},
+    }
+    daemon._update_state(tactic=daemon._select_tactic(), cycle_payload=pending_cycle)
+    assert (tmp_path / "latest_pending_retry.json").exists()
+
+    success_cycle = {
+        "cycle": 2,
+        "timestamp": "2026-03-12T00:01:00",
+        "states": ["OR"],
+        "status": "success",
+        "critic_score": 0.95,
+        "passed": True,
+        "critic": {"recommended_next_tactics": ["archival_first"], "priority_states": [], "state_action_plan": {}},
+    }
+    daemon._update_state(tactic=daemon._select_tactic(), cycle_payload=success_cycle)
+
+    assert not (tmp_path / "latest_pending_retry.json").exists()
 
 
 @pytest.mark.asyncio

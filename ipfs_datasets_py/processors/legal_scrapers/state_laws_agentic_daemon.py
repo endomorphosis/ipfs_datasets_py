@@ -20,7 +20,7 @@ import shlex
 import sys
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Sequence
 
@@ -276,6 +276,7 @@ class StateLawsAgenticDaemon:
         self.cycles_dir.mkdir(parents=True, exist_ok=True)
         self.state_file = self.output_dir / "daemon_state.json"
         self.latest_file = self.output_dir / "latest_summary.json"
+        self.pending_retry_file = self.output_dir / "latest_pending_retry.json"
         self._rand = random.Random(self.config.random_seed)
         self._state = self._load_state()
 
@@ -291,6 +292,7 @@ class StateLawsAgenticDaemon:
             cycle = await self.run_cycle()
             summaries.append(cycle)
             executed += 1
+            self._log_cycle_followup(cycle)
 
             if self.config.stop_on_target_score and bool(cycle.get("passed")):
                 break
@@ -298,7 +300,7 @@ class StateLawsAgenticDaemon:
             if self.config.max_cycles > 0 and executed >= int(self.config.max_cycles):
                 break
 
-            await asyncio.sleep(max(0.0, float(self.config.cycle_interval_seconds or 0.0)))
+            await asyncio.sleep(self._next_cycle_delay_seconds(cycle))
 
         summary = {
             "status": "success",
@@ -307,6 +309,7 @@ class StateLawsAgenticDaemon:
             "cycles_executed": executed,
             "states": list(self.states),
             "latest_cycle": summaries[-1] if summaries else None,
+            "pending_retry": self._state.get("pending_retry"),
             "best_tactic": self._state.get("best_tactic"),
             "recommended_tactics": list(self._state.get("recommended_tactics") or []),
         }
@@ -349,6 +352,35 @@ class StateLawsAgenticDaemon:
         scrape_result = await self._run_scrape_with_tactic(tactic)
 
         metadata = scrape_result.get("metadata") or {}
+        deferred_retry = self._build_deferred_retry_plan(scrape_result)
+        if deferred_retry:
+            cycle_payload = self._build_deferred_retry_cycle_payload(
+                cycle_index=cycle_index,
+                tactic=tactic,
+                scrape_result=scrape_result,
+                metadata=metadata,
+                deferred_retry=deferred_retry,
+            )
+            checkpoint_payload.update(
+                {
+                    "status": str(scrape_result.get("status") or "unknown"),
+                    "stage": "deferred_retry",
+                    "diagnostics": cycle_payload["diagnostics"],
+                    "critic_score": cycle_payload["critic_score"],
+                    "passed": False,
+                    "critic": cycle_payload["critic"],
+                    "metadata": metadata,
+                    "deferred_retry": deferred_retry,
+                }
+            )
+            self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+            self._update_state(tactic=tactic, cycle_payload=cycle_payload)
+            cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
+            cycle_path.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
+            self.latest_file.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
+            self._clear_cycle_checkpoint(cycle_index=cycle_index)
+            return cycle_payload
+
         diagnostics = self._build_diagnostics(scrape_result)
         critic_score = self._critic_score(diagnostics)
         passed = self._is_success(diagnostics, critic_score)
@@ -438,6 +470,135 @@ class StateLawsAgenticDaemon:
         self.latest_file.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
         self._clear_cycle_checkpoint(cycle_index=cycle_index)
         return cycle_payload
+
+    def _build_deferred_retry_plan(self, scrape_result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        metadata = scrape_result.get("metadata") or {}
+        candidate_metadata = self._rate_limit_metadata_candidates(scrape_result)
+        scrape_status = str(scrape_result.get("status") or "").strip().lower()
+        cloudflare_status = ""
+        rate_limit_source: Dict[str, Any] = metadata
+        for candidate in candidate_metadata:
+            candidate_cloudflare_status = str(candidate.get("cloudflare_status") or "").strip().lower()
+            if candidate_cloudflare_status == "rate_limited":
+                cloudflare_status = candidate_cloudflare_status
+                rate_limit_source = candidate
+                break
+        if scrape_status != "rate_limited" and cloudflare_status != "rate_limited":
+            return None
+
+        retry_after_seconds = self._coerce_optional_float(
+            rate_limit_source.get("retry_after_seconds", scrape_result.get("retry_after_seconds"))
+        )
+        retry_at_utc = self._normalize_retry_at_utc(
+            rate_limit_source.get("retry_at_utc", scrape_result.get("retry_at_utc"))
+        )
+        if retry_after_seconds is None and retry_at_utc:
+            retry_after_seconds = self._seconds_until_utc(retry_at_utc)
+
+        provider = "cloudflare_browser_rendering" if cloudflare_status == "rate_limited" else "unknown"
+        rate_limit_diagnostics = dict(
+            rate_limit_source.get("rate_limit_diagnostics") or scrape_result.get("rate_limit_diagnostics") or {}
+        )
+        return {
+            "status": "scheduled",
+            "reason": f"{provider}_rate_limited",
+            "provider": provider,
+            "retryable": bool(rate_limit_source.get("retryable", scrape_result.get("retryable", True))),
+            "retry_after_seconds": retry_after_seconds,
+            "retry_at_utc": retry_at_utc,
+            "wait_budget_exhausted": bool(
+                rate_limit_source.get("wait_budget_exhausted", scrape_result.get("wait_budget_exhausted", False))
+            ),
+            "source_status": scrape_status or cloudflare_status or "rate_limited",
+            "rate_limit_diagnostics": rate_limit_diagnostics,
+        }
+
+    @staticmethod
+    def _rate_limit_metadata_candidates(scrape_result: Dict[str, Any]) -> List[Dict[str, Any]]:
+        metadata = scrape_result.get("metadata") or {}
+        base_metadata = metadata.get("base_metadata") if isinstance(metadata, dict) else None
+        candidates: List[Dict[str, Any]] = []
+        if isinstance(metadata, dict):
+            candidates.append(metadata)
+        if isinstance(base_metadata, dict):
+            candidates.append(base_metadata)
+        return candidates
+
+    def _build_deferred_retry_cycle_payload(
+        self,
+        *,
+        cycle_index: int,
+        tactic: ScraperTacticProfile,
+        scrape_result: Dict[str, Any],
+        metadata: Dict[str, Any],
+        deferred_retry: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        provider = str(deferred_retry.get("provider") or "unknown")
+        diagnostics = {
+            "rate_limit": dict(deferred_retry),
+            "coverage": {
+                "states_targeted": len(self.states),
+                "states_returned": 0,
+                "states_with_nonzero_statutes": 0,
+                "coverage_gap_states": list(self.states),
+            },
+            "fetch": {
+                "attempted": 0,
+                "success": 0,
+                "success_ratio": 0.0,
+                "fallback_count": 0,
+                "providers": {provider: 0} if provider != "unknown" else {},
+                "no_attempt_states": list(self.states),
+                "weak_states": [],
+            },
+            "etl_readiness": {
+                "ready_for_kg_etl": False,
+                "full_text_ratio": 0.0,
+                "jsonld_ratio": 0.0,
+                "jsonld_legislation_ratio": 0.0,
+                "kg_payload_ratio": 0.0,
+                "citation_ratio": 0.0,
+                "statute_signal_ratio": 0.0,
+                "non_scaffold_ratio": 0.0,
+            },
+            "quality": {
+                "weak_states": [],
+            },
+            "documents": {
+                "candidate_document_urls": 0,
+                "processed_document_urls": 0,
+                "states_with_candidate_document_gaps": [],
+            },
+        }
+        critic = {
+            "issues": [f"rate-limited-deferred-retry:{provider}"],
+            "provider_summary": {provider: 0} if provider != "unknown" else {},
+            "recommended_next_tactics": [tactic.name] if tactic.name in self.config.tactic_profiles else [],
+            "priority_states": [],
+            "state_action_plan": {},
+            "query_hints": [],
+            "summary": "Provider-directed cooldown detected; defer the next cycle until the advertised retry window instead of grading this scrape as a tactic failure.",
+        }
+        skipped = {"status": "skipped", "reason": "deferred-retry-scheduled"}
+        return {
+            "cycle": cycle_index,
+            "timestamp": datetime.now().isoformat(),
+            "corpus": self.corpus.key,
+            "states": list(self.states),
+            "status": str(scrape_result.get("status") or "unknown"),
+            "tactic": asdict(tactic),
+            "critic_score": 0.0,
+            "passed": False,
+            "diagnostics": diagnostics,
+            "critic": critic,
+            "router_assist": dict(skipped),
+            "archive_warmup": dict(skipped),
+            "document_gap_report": dict(skipped),
+            "document_gap_report_path": None,
+            "post_cycle_release": dict(skipped),
+            "metadata": metadata,
+            "deferred_retry": deferred_retry,
+        }
 
     def _write_cycle_checkpoint(self, *, cycle_index: int, payload: Dict[str, Any]) -> Optional[Path]:
         if not isinstance(payload, dict) or not payload:
@@ -1784,6 +1945,14 @@ class StateLawsAgenticDaemon:
         self._state["priority_states"] = list((cycle_payload.get("critic") or {}).get("priority_states") or [])
         self._state["state_action_plan"] = dict((cycle_payload.get("critic") or {}).get("state_action_plan") or {})
         self._state["state_query_hints"] = self._next_state_query_hints(cycle_payload)
+        deferred_retry = cycle_payload.get("deferred_retry") or {}
+        if isinstance(deferred_retry, dict) and str(deferred_retry.get("status") or "") == "scheduled":
+            self._state["pending_retry"] = dict(deferred_retry)
+            self._write_pending_retry_artifact(cycle_payload)
+            self.state_file.write_text(json.dumps(self._state, indent=2), encoding="utf-8")
+            return
+        self._state.pop("pending_retry", None)
+        self._clear_pending_retry_artifact()
 
         tactics = self._state.setdefault("tactics", {})
         entry = tactics.setdefault(
@@ -1806,6 +1975,88 @@ class StateLawsAgenticDaemon:
             }
 
         self.state_file.write_text(json.dumps(self._state, indent=2), encoding="utf-8")
+
+    def _write_pending_retry_artifact(self, cycle_payload: Dict[str, Any]) -> Optional[Path]:
+        deferred_retry = cycle_payload.get("deferred_retry") or {}
+        if not isinstance(deferred_retry, dict) or str(deferred_retry.get("status") or "") != "scheduled":
+            return None
+        cycle_index = int(cycle_payload.get("cycle", 0) or 0)
+        cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}_pending_retry.json"
+        payload = {
+            "cycle": cycle_index,
+            "timestamp": cycle_payload.get("timestamp"),
+            "corpus": self.corpus.key,
+            "states": list(cycle_payload.get("states") or self.states),
+            "status": cycle_payload.get("status"),
+            "pending_retry": dict(deferred_retry),
+        }
+        cycle_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        self.pending_retry_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return cycle_path
+
+    def _clear_pending_retry_artifact(self) -> None:
+        try:
+            self.pending_retry_file.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+    def _next_cycle_delay_seconds(self, cycle: Dict[str, Any]) -> float:
+        deferred_retry = cycle.get("deferred_retry") or {}
+        if isinstance(deferred_retry, dict) and str(deferred_retry.get("status") or "") == "scheduled":
+            retry_after_seconds = self._coerce_optional_float(deferred_retry.get("retry_after_seconds"))
+            if retry_after_seconds is not None:
+                return max(0.0, retry_after_seconds)
+            retry_at_utc = self._normalize_retry_at_utc(deferred_retry.get("retry_at_utc"))
+            if retry_at_utc:
+                return self._seconds_until_utc(retry_at_utc)
+        return max(0.0, float(self.config.cycle_interval_seconds or 0.0))
+
+    def _log_cycle_followup(self, cycle: Dict[str, Any]) -> None:
+        deferred_retry = cycle.get("deferred_retry") or {}
+        if not isinstance(deferred_retry, dict) or str(deferred_retry.get("status") or "") != "scheduled":
+            return
+        provider = str(deferred_retry.get("provider") or "unknown")
+        retry_at_utc = self._normalize_retry_at_utc(deferred_retry.get("retry_at_utc"))
+        retry_after_seconds = self._coerce_optional_float(deferred_retry.get("retry_after_seconds"))
+        logger.warning(
+            "Deferred retry scheduled for %s: retry_after_seconds=%s retry_at_utc=%s reason=%s",
+            provider,
+            f"{retry_after_seconds:.1f}" if retry_after_seconds is not None else "unknown",
+            retry_at_utc or "unknown",
+            str(deferred_retry.get("reason") or "rate_limited"),
+        )
+
+    @staticmethod
+    def _coerce_optional_float(value: Any) -> Optional[float]:
+        if value is None or value == "":
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _normalize_retry_at_utc(value: Any) -> Optional[str]:
+        text = str(value or "").strip()
+        if not text:
+            return None
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        try:
+            parsed = datetime.fromisoformat(text)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat()
+
+    @staticmethod
+    def _seconds_until_utc(timestamp: str) -> float:
+        normalized = StateLawsAgenticDaemon._normalize_retry_at_utc(timestamp)
+        if not normalized:
+            return 0.0
+        parsed = datetime.fromisoformat(normalized)
+        return max(0.0, (parsed - datetime.now(timezone.utc)).total_seconds())
 
     @staticmethod
     def _resolve_output_dir(output_dir: Optional[str], default_output_subdir: str) -> Path:

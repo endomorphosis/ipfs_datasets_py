@@ -212,6 +212,8 @@ Cloudflare `/crawl` can also return transient `2001: Rate limit exceeded` respon
 If Cloudflare asks for a cooldown longer than the configured local wait budget, the client now returns a structured `rate_limited` result with `retry_after_seconds` and `retry_at_utc` so daemon orchestration can defer and requeue the crawl instead of spinning.
 Use `*_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS` to control how long the client should wait locally before returning that structured `rate_limited` defer result.
 The same `rate_limited` result now includes `rate_limit_diagnostics` with Cloudflare support identifiers such as `cf_ray`, `cf_auditlog_id`, `api_version`, `retry_after_header`, and the endpoint/operation that triggered the throttle.
+When the daemon sees that defer result, it now records `pending_retry` in both `daemon_state.json` and `latest_summary.json`, skips review/archive/release follow-up work for that cycle, and waits until `retry_after_seconds` or `retry_at_utc` before the next cycle.
+The daemon also writes a dedicated `latest_pending_retry.json` artifact, plus a per-cycle `cycle_XXXX_pending_retry.json` snapshot, so external monitors can poll the active cooldown without parsing the full summary.
 
 ## VS Code Tasks
 
@@ -250,9 +252,11 @@ Template variables available to the publish command:
 
 The daemon writes:
 
-- `daemon_state.json`: persistent tactic history and best-known tactic.
-- `latest_summary.json`: latest cycle summary or daemon run summary.
+- `daemon_state.json`: persistent tactic history, best-known tactic, and any scheduled `pending_retry` cooldown.
+- `latest_summary.json`: latest cycle summary or daemon run summary, including `pending_retry` when the next cycle has been deferred.
+- `latest_pending_retry.json`: the currently active deferred-retry cooldown, removed automatically once a later cycle is no longer deferred.
 - `cycles/cycle_XXXX.json`: one JSON summary per cycle.
+- `cycles/cycle_XXXX_pending_retry.json`: per-cycle deferred-retry snapshot when a provider-directed cooldown was scheduled.
 - `latest_document_gaps.json`: latest compact PDF/RTF gap summary when document candidates were detected but not processed.
 - `cycles/cycle_XXXX_document_gaps.json`: per-cycle compact document-gap artifact for operator review.
 - `latest_router_assist.json`: latest router-assisted review artifact, including LLM guidance, embeddings-based tactic ranking, and optional IPFS persistence metadata.
