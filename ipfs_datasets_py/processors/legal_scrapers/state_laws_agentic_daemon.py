@@ -800,6 +800,22 @@ class StateLawsAgenticDaemon:
         cloudflare_summary = metadata.get("cloudflare_browser_rendering")
         if isinstance(cloudflare_summary, dict):
             filtered_metadata["cloudflare_browser_rendering"] = dict(cloudflare_summary)
+        else:
+            derived_cloudflare_summary = {
+                "cloudflare_status": metadata.get("cloudflare_status"),
+                "cloudflare_http_status": metadata.get("cloudflare_http_status"),
+                "cloudflare_browser_challenge_detected": metadata.get("cloudflare_browser_challenge_detected"),
+                "cloudflare_error_excerpt": metadata.get("cloudflare_error_excerpt"),
+                "cloudflare_record_status": metadata.get("cloudflare_record_status"),
+                "cloudflare_job_status": metadata.get("cloudflare_job_status"),
+                "browser_challenge_states": metadata.get("browser_challenge_states"),
+                "rate_limited_states": metadata.get("rate_limited_states"),
+            }
+            derived_cloudflare_summary = {
+                key: value for key, value in derived_cloudflare_summary.items() if value is not None
+            }
+            if derived_cloudflare_summary:
+                filtered_metadata["cloudflare_browser_rendering"] = derived_cloudflare_summary
         corpus_gap_summary = self._build_corpus_gap_summary(data=data, metadata=metadata, document_coverage=document_coverage)
         if corpus_gap_summary:
             filtered_metadata["corpus_gap_summary"] = corpus_gap_summary
@@ -2673,11 +2689,33 @@ class StateLawsAgenticDaemon:
             and len(document_gap_states) == 0
         )
 
+    def _effective_scraper_method_order(self, tactic: ScraperTacticProfile) -> List[str]:
+        method_order = list(tactic.scraper_method_order)
+        if self.corpus.key != "state_admin_rules":
+            return method_order
+
+        cloudflare_summary = self._cloudflare_browser_rendering_availability()
+        if not bool(cloudflare_summary.get("available")):
+            return method_order
+
+        cloudflare_method = "cloudflare_browser_rendering"
+        if cloudflare_method in method_order:
+            return method_order
+
+        try:
+            playwright_index = method_order.index("playwright")
+        except ValueError:
+            method_order.append(cloudflare_method)
+        else:
+            method_order.insert(playwright_index, cloudflare_method)
+        return method_order
+
     @contextmanager
     def _tactic_env(self, tactic: ScraperTacticProfile) -> Iterable[None]:
+        effective_method_order = self._effective_scraper_method_order(tactic)
         overrides = {
-            "IPFS_DATASETS_SCRAPER_METHOD_ORDER": ",".join(tactic.scraper_method_order),
-            "LEGAL_SCRAPER_METHOD_ORDER": ",".join(tactic.scraper_method_order),
+            "IPFS_DATASETS_SCRAPER_METHOD_ORDER": ",".join(effective_method_order),
+            "LEGAL_SCRAPER_METHOD_ORDER": ",".join(effective_method_order),
             "IPFS_DATASETS_SEARCH_ENGINES": ",".join(tactic.search_engines),
             "LEGAL_SCRAPER_SEARCH_ENGINES": ",".join(tactic.search_engines),
             "IPFS_DATASETS_SCRAPER_FALLBACK_ENABLED": "1",

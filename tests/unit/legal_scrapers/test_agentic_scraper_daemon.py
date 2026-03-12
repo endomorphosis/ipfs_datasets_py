@@ -64,6 +64,35 @@ def test_state_admin_rules_query_hints_expand_agentic_query(monkeypatch):
     assert "18" not in target_terms
 
 
+def test_state_admin_rules_daemon_injects_cloudflare_into_effective_method_order(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "acct-test")
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "token-test")
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+        )
+    )
+
+    tactic = daemon.config.tactic_profiles["archival_first"]
+
+    assert daemon._effective_scraper_method_order(tactic) == [
+        "common_crawl",
+        "wayback_machine",
+        "archive_is",
+        "ipwb",
+        "cloudflare_browser_rendering",
+        "playwright",
+        "beautifulsoup",
+        "readability",
+        "requests_only",
+    ]
+
+
 def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -1571,6 +1600,12 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
         "candidate_urls": 6,
         "inspected_urls": 4,
         "expanded_urls": 3,
+        "cloudflare_status": None,
+        "cloudflare_http_status": None,
+        "cloudflare_browser_challenge_detected": False,
+        "cloudflare_error_excerpt": None,
+        "cloudflare_record_status": None,
+        "cloudflare_job_status": None,
     }
     assert diagnostics["gap_analysis"]["weak_states"] == ["AZ"]
     assert any(item.startswith("document-candidate-gaps:AZ") for item in critic["issues"])

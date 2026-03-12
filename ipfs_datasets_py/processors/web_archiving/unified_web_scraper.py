@@ -598,7 +598,7 @@ class UnifiedWebScraper:
             "per_parquet_limit": int(self.config.common_crawl_per_parquet_limit),
         }
 
-        if hf_remote_requested or hf_remote_auto:
+        if meta_mode == "none" and (hf_remote_requested or hf_remote_auto):
             search_options.update(
                 {
                     "hf_remote_meta": True,
