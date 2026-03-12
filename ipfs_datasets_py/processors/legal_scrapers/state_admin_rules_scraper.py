@@ -2894,7 +2894,7 @@ def _candidate_links_from_scrape(
     limit: int = 10,
     allowed_hosts: Optional[set[str]] = None,
 ) -> List[str]:
-    ranked: List[tuple[int, str]] = []
+    ranked: List[tuple[int, str, str]] = []
     seen = set()
     for item in list(getattr(scraped, "links", []) or []):
         if not isinstance(item, dict):
@@ -2920,9 +2920,10 @@ def _candidate_links_from_scrape(
         score = _score_candidate_link(link_url, link_text, page_url)
         if score <= 0:
             continue
-        ranked.append((score, link_url))
+        ranked.append((score, link_url, link_text))
+    ranked = _filter_california_westlaw_links_for_depth(ranked, page_url=page_url)
     ranked.sort(key=lambda item: item[0], reverse=True)
-    return [link_url for _, link_url in ranked[: max(1, int(limit))]]
+    return [link_url for _, link_url, _ in ranked[: max(1, int(limit))]]
 
 
 def _candidate_arizona_rule_urls_from_text(*, text: str, page_url: str = "", limit: int = 12) -> List[str]:
@@ -2967,7 +2968,7 @@ def _candidate_links_from_html(
     body = str(html or "")
     if not body:
         return []
-    ranked: List[tuple[int, str]] = []
+    ranked: List[tuple[int, str, str]] = []
     seen = set()
     for href, anchor_body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', body, re.IGNORECASE | re.DOTALL):
         link_url = unescape(str(href or "").strip())
@@ -2992,7 +2993,7 @@ def _candidate_links_from_html(
         score = _score_candidate_link(link_url, link_text, page_url)
         if score <= 0:
             continue
-        ranked.append((score, link_url))
+        ranked.append((score, link_url, link_text))
     for link_url in _candidate_arizona_rule_urls_from_text(text=body, page_url=page_url, limit=limit):
         host = urlparse(link_url).netloc
         if allowed_hosts:
@@ -3007,9 +3008,35 @@ def _candidate_links_from_html(
         score = _score_candidate_link(link_url, "", page_url)
         if score <= 0:
             continue
-        ranked.append((score, link_url))
+        ranked.append((score, link_url, ""))
+    ranked = _filter_california_westlaw_links_for_depth(ranked, page_url=page_url)
     ranked.sort(key=lambda item: item[0], reverse=True)
-    return [link_url for _, link_url in ranked[: max(1, int(limit))]]
+    return [link_url for _, link_url, _ in ranked[: max(1, int(limit))]]
+
+
+def _filter_california_westlaw_links_for_depth(
+    ranked_links: List[tuple[int, str, str]],
+    *,
+    page_url: str,
+) -> List[tuple[int, str, str]]:
+    page_parts = urlparse(str(page_url or "").strip())
+    if page_parts.netloc.lower() != "govt.westlaw.com":
+        return ranked_links
+    if not page_parts.path.lower().startswith("/calregs/browse/home/california/californiacodeofregulations"):
+        return ranked_links
+
+    document_links = [
+        item for item in ranked_links if urlparse(item[1]).path.lower().startswith("/calregs/document/")
+    ]
+    if document_links:
+        return document_links
+
+    for pattern in (r"\barticle\b", r"\bchapter\b", r"\bdivision\b", r"\btitle\b"):
+        filtered = [item for item in ranked_links if re.search(pattern, item[2], re.IGNORECASE)]
+        if filtered:
+            return filtered
+
+    return ranked_links
 
 
 def _write_agentic_kg_corpus_jsonl(rows: List[Dict[str, Any]], output_root: Path) -> Optional[str]:
