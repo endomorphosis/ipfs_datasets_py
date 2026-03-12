@@ -153,6 +153,7 @@ setup(
         "ddgs>=9.11.2",
         "google-api-python-client>=2.192.0",
         "cloudscraper>=1.2.71",
+        "cfscrape>=2.1.1; python_version < '3.12'",
         # 0.2.0 currently publishes invalid metadata on PyPI; 0.1.8 is the newest installable release.
         "brave-search==0.1.8",
         

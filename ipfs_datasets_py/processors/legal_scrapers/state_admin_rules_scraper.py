@@ -1341,6 +1341,11 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
 
     if host == "rules.mt.gov" and (chapter_hits >= 3 or subchapter_hits >= 2 or mt_rule_hits >= 2):
         return True
+    if host in {"sosmt.gov", "www.sosmt.gov"} and "/arm" in url_value.lower() and (
+        mt_rule_hits >= 2 or "administrative rules of montana" in hay.lower() or
+        len(re.findall(r"\bTitle\s+\d+\b", body, re.IGNORECASE)) >= 3
+    ):
+        return True
     if host == "admincode.legislature.state.al.us" and chapter_hits >= 3:
         return True
     if host == "sdlegislature.gov" and sd_row_hits >= 8:
@@ -1400,27 +1405,58 @@ def _looks_like_shallow_montana_inventory_page(*, text: str, title: str, url: st
 
 
 def _candidate_montana_rule_urls_from_text(*, text: str, url: str, limit: int = 12) -> List[str]:
+    """Extract candidate Montana ARM rule URLs from scrape text.
+
+    Handles:
+    - ``rules.mt.gov/browse/collections/<id>/sections/`` pages: extracts rule IDs (``N.N.NNN``)
+    - ``sosmt.gov/arm/`` index pages: extracts Title-level deep links to rules.mt.gov sections
+    """
     body = str(text or "")
     url_value = str(url or "").strip()
     parsed = urlparse(url_value)
-    if parsed.netloc.lower() != "rules.mt.gov":
-        return []
-
-    match = re.match(r"^/browse/collections/([0-9a-fA-F-]+)/sections/", parsed.path)
-    if not match:
-        return []
-
-    collection_id = match.group(1)
+    host = parsed.netloc.lower()
+    limit_n = max(1, int(limit))
     out: List[str] = []
-    seen = set()
-    for rule_id in re.findall(r"\b\d{1,2}\.\d{1,2}\.\d{2,4}\b", body):
-        if rule_id in seen:
-            continue
-        seen.add(rule_id)
-        out.append(f"https://rules.mt.gov/browse/collections/{collection_id}/rules/{rule_id}")
-        if len(out) >= max(1, int(limit)):
-            break
-    return out
+    seen: set = set()
+
+    if host == "rules.mt.gov":
+        match = re.match(r"^/browse/collections/([0-9a-fA-F-]+)/sections/", parsed.path)
+        if not match:
+            return []
+        collection_id = match.group(1)
+        for rule_id in re.findall(r"\b\d{1,2}\.\d{1,2}\.\d{2,4}\b", body):
+            if rule_id in seen:
+                continue
+            seen.add(rule_id)
+            out.append(f"https://rules.mt.gov/browse/collections/{collection_id}/rules/{rule_id}")
+            if len(out) >= limit_n:
+                break
+        return out
+
+    if host in {"sosmt.gov", "www.sosmt.gov"}:
+        # ARM index pages on sosmt.gov link out to rules.mt.gov collection/section URLs.
+        # Extract absolute and relative links that look like ARM Title entries.
+        for href in re.findall(r'href=["\']([^"\']+)["\']', body):
+            href = href.strip()
+            if not href:
+                continue
+            if href.startswith(("http://", "https://")) and "rules.mt.gov" in href:
+                candidate = href
+            elif href.startswith("/") and "rules.mt.gov" not in href:
+                continue
+            elif re.search(r"rules\.mt\.gov", href):
+                candidate = href if href.startswith("http") else "https://" + href.lstrip("/")
+            else:
+                continue
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            out.append(candidate)
+            if len(out) >= limit_n:
+                break
+        return out
+
+    return []
 
 
 def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> List[str]:
@@ -1827,38 +1863,49 @@ async def _apply_playwright_session_state(context: Any, page: Any, url: str) -> 
 
 
 def _download_document_bytes_via_cloudscraper(url: str) -> Optional[Dict[str, Any]]:
-    try:
-        import cloudscraper
-    except Exception:
-        return None
+    """Try to fetch a document URL using cloudscraper, then cfscrape, bypassing CF challenges."""
+    headers = _pdf_request_headers(url)
 
-    try:
-        scraper = cloudscraper.create_scraper(
-            browser={"browser": "chrome", "platform": "linux", "desktop": True}
-        )
-        response = scraper.get(url, timeout=35, headers=_pdf_request_headers(url))
-    except Exception:
-        return None
+    def _try_cloudscraper() -> Optional[Dict[str, Any]]:
+        try:
+            import cloudscraper as _cs
+        except Exception:
+            return None
+        try:
+            s = _cs.create_scraper(browser={"browser": "chrome", "platform": "linux", "desktop": True})
+            resp = s.get(url, timeout=35, headers=headers)
+        except Exception:
+            return None
+        sc = int(getattr(resp, "status_code", 599) or 599)
+        ct = str(getattr(resp, "headers", {}).get("content-type") or "").lower()
+        body = getattr(resp, "content", b"") or b""
+        h = body[:1024].decode("latin1", errors="ignore")
+        if sc >= 400 or _looks_like_browser_challenge(status_code=sc, content_type=ct, head=h):
+            return None
+        return {"body": body, "content_type": ct, "suggested_filename": Path(urlparse(str(url or "")).path).name}
 
-    status_code = int(getattr(response, "status_code", 599) or 599)
-    content_type = str(getattr(response, "headers", {}).get("content-type") or "").lower()
-    body = getattr(response, "content", b"") or b""
-    head = body[:1024].decode("latin1", errors="ignore")
+    def _try_cfscrape() -> Optional[Dict[str, Any]]:
+        try:
+            import cfscrape as _cfs
+        except Exception:
+            return None
+        try:
+            s = _cfs.create_scraper()
+            resp = s.get(url, timeout=35, headers=headers)
+        except Exception:
+            return None
+        sc = int(getattr(resp, "status_code", 599) or 599)
+        ct = str(getattr(resp, "headers", {}).get("content-type") or "").lower()
+        body = getattr(resp, "content", b"") or b""
+        h = body[:1024].decode("latin1", errors="ignore")
+        if sc >= 400 or _looks_like_browser_challenge(status_code=sc, content_type=ct, head=h):
+            return None
+        return {"body": body, "content_type": ct, "suggested_filename": Path(urlparse(str(url or "")).path).name}
 
-    if status_code >= 400 or _looks_like_browser_challenge(
-        status_code=status_code,
-        content_type=content_type,
-        head=head,
-    ):
-        return None
-    if not body:
-        return None
-
-    return {
-        "body": body,
-        "content_type": content_type,
-        "suggested_filename": Path(urlparse(str(url or "")).path).name,
-    }
+    result = _try_cloudscraper()
+    if result is not None:
+        return result
+    return _try_cfscrape()
 
 
 async def _download_document_bytes_via_page_fetch(page: Any, url: str) -> Optional[Dict[str, Any]]:
@@ -2163,11 +2210,61 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
                 pass
 
 
+async def _fetch_html_bypassing_challenge(url: str) -> Optional[Dict[str, Any]]:
+    """Return rendered text for a URL that is behind a browser challenge.
+
+    Fallback order:
+      1. ``cloudscraper`` (already handles many CF challenges via JS token emulation)
+      2. ``cfscrape`` (legacy CF bypass library)
+      3. Wayback Machine snapshot via :class:`UnifiedWebScraper`
+      4. Common Crawl index via :class:`UnifiedWebScraper`
+
+    Returns ``{text, html, source}`` or ``None``.
+    """
+    # --- 1 & 2: scraper-based bypass (binary-safe, returns bytes) ---------------
+    doc_bytes = _download_document_bytes_via_cloudscraper(url)
+    if doc_bytes is not None:
+        body = doc_bytes.get("body") or b""
+        body_text = body.decode("utf-8", errors="replace") if body else ""
+        ct = doc_bytes.get("content_type") or ""
+        if body_text.strip() and not _looks_like_browser_challenge(
+            status_code=200, content_type=ct, head=body_text[:1024]
+        ):
+            return {"text": body_text, "html": body_text, "source": "cloudscraper"}
+
+    # --- 3 & 4: archive fallback via UnifiedWebScraper --------------------------
+    try:
+        try:
+            from ..web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper as _UWS
+        except ImportError:
+            from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper as _UWS  # type: ignore[no-redef]
+    except ImportError:
+        return None
+
+    for method in (ScraperMethod.WAYBACK_MACHINE, ScraperMethod.COMMON_CRAWL):
+        try:
+            _cfg = ScraperConfig(timeout=35, max_retries=1, extract_links=False, extract_text=True, fallback_enabled=False, preferred_methods=[method])
+            _scraper = _UWS(_cfg)
+            scraped = await _scraper.scrape(url, method=method)
+            if getattr(scraped, "success", False):
+                _text = str(getattr(scraped, "text", "") or "").strip()
+                _html = str(getattr(scraped, "html", "") or "")
+                if _text and not _looks_like_browser_challenge(
+                    status_code=200, content_type="text/html", head=_text[:1024]
+                ):
+                    return {"text": _text, "html": _html, "source": str(getattr(method, "value", method))}
+        except Exception:
+            continue
+    return None
+
+
 async def _download_text_via_cloudflare_crawl(url: str) -> Optional[Dict[str, Any]]:
     """Retrieve rendered text from a URL via Cloudflare Browser Rendering API.
 
     Returns a dict with ``text``, ``html``, ``markdown``, ``record_url``, and
     cloudflare status fields, or ``None`` when unavailable or failed.
+    If the CF crawl itself returns a challenge page (e.g. the target is behind
+    a WAF), automatically falls back to :func:`_fetch_html_bypassing_challenge`.
     """
     cf = _cloudflare_browser_rendering_availability()
     if not cf.get("available"):
@@ -2218,6 +2315,23 @@ async def _download_text_via_cloudflare_crawl(url: str) -> Optional[Dict[str, An
     html_text = str(record.get("html") or "").strip()
     text = markdown or html_text
     if not text:
+        return None
+
+    # If Cloudflare Rendering itself returned a challenge page (e.g. the target
+    # host is protected by a different WAF layer), fall back to archive sources.
+    if _looks_like_browser_challenge(status_code=200, content_type="text/html", head=text[:1024]):
+        bypass = await _fetch_html_bypassing_challenge(url)
+        if bypass is not None and not _looks_like_browser_challenge(
+            status_code=200, content_type="text/html", head=(bypass.get("text") or "")[:1024]
+        ):
+            return {
+                "text": bypass["text"],
+                "html": bypass.get("html") or bypass["text"],
+                "markdown": "",
+                "record_url": url,
+                "cloudflare_record_status": "bypassed",
+                "cloudflare_job_status": bypass.get("source"),
+            }
         return None
 
     return {
@@ -2812,6 +2926,7 @@ async def _agentic_discover_admin_state_blocks(
     min_full_text_chars: int,
     require_substantive_text: bool,
     fetch_concurrency: int,
+    per_state_budget_seconds: float = 120.0,
 ) -> Dict[str, Any]:
     archive_search_timeout_seconds = 40.0
     normalized_states = [str(state or "").upper() for state in list(states or []) if str(state or "").strip()]
@@ -2831,6 +2946,7 @@ async def _agentic_discover_admin_state_blocks(
                     min_full_text_chars=min_full_text_chars,
                     require_substantive_text=require_substantive_text,
                     fetch_concurrency=fetch_concurrency,
+                    per_state_budget_seconds=per_state_budget_seconds,
                 )
 
         state_results = await asyncio.gather(
@@ -2978,7 +3094,7 @@ async def _agentic_discover_admin_state_blocks(
     for state_code in states:
         state_start = time.monotonic()
         # Keep agentic fallback bounded per state so staged runs keep moving.
-        per_state_budget_s = 120.0
+        per_state_budget_s = max(1.0, float(per_state_budget_seconds or 0.0))
         state_name = US_STATES.get(state_code, state_code)
         relaxed_recovery = str(state_code or "").upper() in _RECOVERY_RELAXED_STATES
         query = _agentic_query_for_state(state_code)
@@ -3669,7 +3785,26 @@ async def _agentic_discover_admin_state_blocks(
                 return rtf_scraped
             host = urlparse(url).netloc
             active_scraper = live_scraper if (_url_key(url) in prioritized_seed_keys or host in base_hosts) else scraper
-            return await active_scraper.scrape(url)
+            scraped = await active_scraper.scrape(url)
+            # When the scraper receives a browser challenge page (e.g. Cloudflare), escalate
+            # through cloudscraper → cfscrape → Wayback Machine → Common Crawl.
+            scraped_text = str(getattr(scraped, "text", "") or "").strip()
+            if scraped_text and _looks_like_browser_challenge(
+                status_code=int(getattr(scraped, "status_code", 200) or 200),
+                content_type="text/html",
+                head=scraped_text[:1024],
+            ):
+                bypass = await _fetch_html_bypassing_challenge(url)
+                if bypass is not None:
+                    return SimpleNamespace(
+                        text=bypass["text"],
+                        html=bypass.get("html") or "",
+                        title=str(getattr(scraped, "title", "") or ""),
+                        links=[],
+                        success=True,
+                        status_code=200,
+                    )
+            return scraped
 
         while pending and len(statutes) < max_fetch and inspected_urls < max(4, max_candidates * 4):
             if (time.monotonic() - state_start) >= per_state_budget_s:
@@ -4047,6 +4182,14 @@ async def scrape_state_admin_rules(
         if effective_max_base_statutes is None and max_rules and int(max_rules) > 0:
             effective_max_base_statutes = int(max_rules)
 
+        delegated_state_laws_timeout_seconds = max(1.0, float(per_state_timeout_seconds or 0.0))
+        delegated_base_timeout_seconds = delegated_state_laws_timeout_seconds
+        delegated_fallback_timeout_seconds = delegated_state_laws_timeout_seconds
+        agentic_per_state_budget_seconds = min(120.0, max(30.0, delegated_state_laws_timeout_seconds * (2.0 / 3.0)))
+        if delegated_state_laws_timeout_seconds > 1.0:
+            delegated_base_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
+            delegated_fallback_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
+
         base_started_at = time.time()
         base_result = await scrape_state_laws(
             states=selected_states,
@@ -4061,9 +4204,9 @@ async def scrape_state_admin_rules(
             min_full_text_chars=min_full_text_chars,
             hydrate_statute_text=hydrate_rule_text,
             parallel_workers=parallel_workers,
-            per_state_retry_attempts=per_state_retry_attempts,
-            retry_zero_statute_states=retry_zero_rule_states,
-            per_state_timeout_seconds=per_state_timeout_seconds,
+            per_state_retry_attempts=0,
+            retry_zero_statute_states=False,
+            per_state_timeout_seconds=delegated_base_timeout_seconds,
         )
         _record_phase("base_scrape_seconds", base_started_at)
 
@@ -4101,9 +4244,9 @@ async def scrape_state_admin_rules(
                 min_full_text_chars=min_full_text_chars,
                 hydrate_statute_text=hydrate_rule_text,
                 parallel_workers=parallel_workers,
-                per_state_retry_attempts=per_state_retry_attempts,
+                per_state_retry_attempts=0,
                 retry_zero_statute_states=False,
-                per_state_timeout_seconds=per_state_timeout_seconds,
+                per_state_timeout_seconds=delegated_fallback_timeout_seconds,
             )
 
             fallback_filtered, _, _ = _filter_admin_state_blocks(
@@ -4157,6 +4300,7 @@ async def scrape_state_admin_rules(
                 min_full_text_chars=int(min_full_text_chars),
                 require_substantive_text=bool(require_substantive_rule_text),
                 fetch_concurrency=int(agentic_fetch_concurrency),
+                per_state_budget_seconds=agentic_per_state_budget_seconds,
             )
             _record_phase("agentic_discovery_seconds", agentic_started_at)
             agentic_report = {
@@ -4243,6 +4387,11 @@ async def scrape_state_admin_rules(
             "rate_limit_delay": rate_limit_delay,
             "parallel_workers": int(parallel_workers),
             "per_state_retry_attempts": int(per_state_retry_attempts),
+            "state_laws_internal_retry_attempts": 0,
+            "state_laws_internal_retry_zero_statute_states": False,
+            "state_laws_base_per_state_timeout_seconds": float(delegated_base_timeout_seconds),
+            "state_laws_fallback_per_state_timeout_seconds": float(delegated_fallback_timeout_seconds),
+            "agentic_per_state_budget_seconds": float(agentic_per_state_budget_seconds),
             "retry_zero_rule_states": bool(retry_zero_rule_states),
             "fallback_attempted_states": fallback_attempted_states or None,
             "fallback_recovered_states": sorted(set(fallback_recovered_states)) or None,

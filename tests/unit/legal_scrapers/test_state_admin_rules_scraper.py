@@ -412,6 +412,23 @@ def test_synthesizes_montana_rule_urls_from_section_listing() -> None:
     ]
 
 
+def test_synthesizes_montana_rule_urls_from_sosmt_arm_index() -> None:
+    text = (
+        '<a href="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f">Title 1</a>'
+        '<a href="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f">Title 1 Duplicate</a>'
+        '<a href="https://rules.mt.gov/browse/collections/11111111-2222-3333-4444-555555555555/sections/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee">Title 2</a>'
+    )
+
+    assert _candidate_montana_rule_urls_from_text(
+        text=text,
+        url="https://sosmt.gov/arm/",
+        limit=5,
+    ) == [
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f",
+        "https://rules.mt.gov/browse/collections/11111111-2222-3333-4444-555555555555/sections/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    ]
+
+
 def test_rejects_montana_arm_listing_section_without_rule_detail() -> None:
     text = (
         "Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act | Montana SOS\n"
@@ -929,6 +946,51 @@ def test_download_document_bytes_via_cloudscraper_returns_binary_bytes(monkeypat
 
     assert fetched == {
         "body": b"%PDF-1.4 fake pdf bytes",
+        "content_type": "application/pdf",
+        "suggested_filename": "1-01.pdf",
+    }
+
+
+def test_download_document_bytes_via_cloudscraper_falls_back_to_cfscrape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class ChallengeResponse:
+        status_code = 200
+        headers = {"content-type": "text/html"}
+        content = b"<html><title>Just a moment...</title></html>"
+
+    class PdfResponse:
+        status_code = 200
+        headers = {"content-type": "application/pdf"}
+        content = b"%PDF-1.4 cfscrape bytes"
+
+    class FakeCloudscraperSession:
+        def get(self, url, timeout=0, headers=None):
+            return ChallengeResponse()
+
+    class FakeCloudscraperModule:
+        @staticmethod
+        def create_scraper(browser=None):
+            return FakeCloudscraperSession()
+
+    class FakeCfscrapeSession:
+        def get(self, url, timeout=0, headers=None):
+            return PdfResponse()
+
+    class FakeCfscrapeModule:
+        @staticmethod
+        def create_scraper():
+            return FakeCfscrapeSession()
+
+    monkeypatch.setitem(sys.modules, "cloudscraper", FakeCloudscraperModule)
+    monkeypatch.setitem(sys.modules, "cfscrape", FakeCfscrapeModule)
+
+    fetched = scraper_module._download_document_bytes_via_cloudscraper(
+        "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+    )
+
+    assert fetched == {
+        "body": b"%PDF-1.4 cfscrape bytes",
         "content_type": "application/pdf",
         "suggested_filename": "1-01.pdf",
     }
@@ -2147,7 +2209,7 @@ async def test_agentic_discovery_continues_when_archive_search_times_out(monkeyp
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
     assert result["report"]["AL"]["candidate_urls"] >= 1
-    assert result["report"]["AL"]["inspected_urls"] == 1
+    assert result["report"]["AL"]["fetched_rules"] == 1
     assert result["report"]["AL"]["timed_out"] is False
 
 
@@ -2861,6 +2923,69 @@ async def test_scrape_state_admin_rules_recovers_missing_target_state_via_agenti
 
 
 @pytest.mark.anyio
+async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    scrape_calls = []
+
+    async def _fake_scrape_state_laws(**kwargs):
+        scrape_calls.append(dict(kwargs))
+        legal_areas = kwargs.get("legal_areas")
+        if legal_areas == ["administrative"]:
+            return {
+                "status": "success",
+                "data": [
+                    {
+                        "state_code": "AZ",
+                        "state_name": "Arizona",
+                        "title": "Arizona Administrative Rules",
+                        "statutes": [],
+                        "rules_count": 0,
+                    }
+                ],
+                "metadata": {"states_scraped": kwargs.get("states") or []},
+            }
+        return {
+            "status": "success",
+            "data": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "title": "Arizona Administrative Rules",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AZ"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=False,
+        per_state_retry_attempts=3,
+        require_substantive_rule_text=True,
+    )
+
+    assert result["status"] in {"success", "partial_success"}
+    assert len(scrape_calls) == 2
+    for call in scrape_calls:
+        assert call["per_state_retry_attempts"] == 0
+        assert call["retry_zero_statute_states"] is False
+        assert call["per_state_timeout_seconds"] == 45.0
+    assert result["metadata"]["per_state_retry_attempts"] == 3
+    assert result["metadata"]["state_laws_internal_retry_attempts"] == 0
+    assert result["metadata"]["state_laws_internal_retry_zero_statute_states"] is False
+    assert result["metadata"]["state_laws_base_per_state_timeout_seconds"] == 45.0
+    assert result["metadata"]["state_laws_fallback_per_state_timeout_seconds"] == 45.0
+    assert result["metadata"]["agentic_per_state_budget_seconds"] == 60.0
+
+
+@pytest.mark.anyio
 async def test_scrape_state_admin_rules_reports_cloudflare_availability_when_credentials_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -3353,6 +3478,49 @@ async def test_download_text_via_cloudflare_crawl_returns_text_on_success(
     assert result is not None
     assert "text" in result
     assert len(result["text"]) > 100
+
+
+@pytest.mark.asyncio
+async def test_download_text_via_cloudflare_crawl_falls_back_on_challenge_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "fake-account")
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "fake-token")
+
+    async def _fake_crawl(url, **kwargs):
+        return {
+            "status": "success",
+            "records": [
+                {
+                    "url": url,
+                    "status": "completed",
+                    "markdown": "",
+                    "html": "<html><title>Just a moment...</title><body>Enable JavaScript and cookies</body></html>",
+                }
+            ],
+        }
+
+    async def _fake_bypass(url):
+        return {
+            "text": "Administrative Rules of Montana\n1.3.201 INTRODUCTION AND DEFINITIONS\n" * 8,
+            "html": "<html><body>Administrative Rules of Montana</body></html>",
+            "source": "wayback_machine",
+        }
+
+    from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as _sar
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine.crawl_with_cloudflare_browser_rendering",
+        _fake_crawl,
+    )
+    monkeypatch.setattr(_sar, "_fetch_html_bypassing_challenge", _fake_bypass)
+
+    result = await _sar._download_text_via_cloudflare_crawl("https://example.com/blocked")
+
+    assert result is not None
+    assert result["cloudflare_record_status"] == "bypassed"
+    assert result["cloudflare_job_status"] == "wayback_machine"
+    assert "Administrative Rules of Montana" in result["text"]
 
 
 @pytest.mark.asyncio

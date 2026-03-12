@@ -1,6 +1,7 @@
 import asyncio
 import json
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -64,11 +65,11 @@ def test_state_admin_rules_query_hints_expand_agentic_query(monkeypatch):
     assert "18" not in target_terms
 
 
-def test_state_admin_rules_daemon_injects_cloudflare_into_effective_method_order(monkeypatch, tmp_path):
+def test_state_admin_rules_daemon_clears_generic_method_order_overrides(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
-    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "acct-test")
-    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "token-test")
+    monkeypatch.setenv("IPFS_DATASETS_SCRAPER_METHOD_ORDER", "playwright,requests_only")
+    monkeypatch.setenv("LEGAL_SCRAPER_METHOD_ORDER", "playwright,requests_only")
 
     daemon = daemon_module.StateLawsAgenticDaemon(
         daemon_module.StateLawsAgenticDaemonConfig(
@@ -80,17 +81,9 @@ def test_state_admin_rules_daemon_injects_cloudflare_into_effective_method_order
 
     tactic = daemon.config.tactic_profiles["archival_first"]
 
-    assert daemon._effective_scraper_method_order(tactic) == [
-        "common_crawl",
-        "wayback_machine",
-        "archive_is",
-        "ipwb",
-        "cloudflare_browser_rendering",
-        "playwright",
-        "beautifulsoup",
-        "readability",
-        "requests_only",
-    ]
+    with daemon._tactic_env(tactic):
+        assert "IPFS_DATASETS_SCRAPER_METHOD_ORDER" not in daemon_module.os.environ
+        assert "LEGAL_SCRAPER_METHOD_ORDER" not in daemon_module.os.environ
 
 
 def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
@@ -343,6 +336,143 @@ async def test_state_admin_rules_agentic_daemon_runs_priority_states_first(monke
     assert captured_states == [["AZ", "WA", "CA"]]
     assert summary["latest_cycle"]["cycle_state_order"] == ["AZ", "WA", "CA"]
     assert summary["latest_cycle"]["tactic_selection"]["priority_states"] == ["AZ", "WA"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_runs_parallel_admin_assist(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    captured: dict = {}
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {"state_code": "AZ", "statutes": []},
+                {"state_code": "CA", "statutes": []},
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {"attempted": 1, "success": 0, "success_ratio": 0.0, "fallback_count": 1, "providers": {}},
+                        "CA": {"attempted": 1, "success": 0, "success_ratio": 0.0, "fallback_count": 1, "providers": {}},
+                    }
+                },
+                "agentic_report": {
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 5,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://azsos.gov/rules/title-18.pdf",
+                                "https://apps.azsos.gov/public_services/title_18/1-18.rtf",
+                            ],
+                            "domains_seen": ["azsos.gov", "apps.azsos.gov"],
+                            "source_breakdown": {"search": 2},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["apps.azsos.gov"],
+                                "candidate_hosts_without_rules": ["azsos.gov"],
+                            },
+                        }
+                    }
+                },
+                "phase_timings": {"agentic_discovery_seconds": 12.0, "total_seconds": 20.0},
+            },
+        }
+
+    class FakeParallelStateAdminOrchestrator:
+        def __init__(self, config=None, parallel_archiver=None, pdf_processor=None, scrape_optimizer=None):
+            captured["config"] = config
+
+        async def discover_state_rules_parallel(self, states, seed_urls_by_state, candidate_domains=None):
+            captured["states"] = list(states)
+            captured["seed_urls_by_state"] = dict(seed_urls_by_state)
+            captured["candidate_domains"] = dict(candidate_domains or {})
+            return {
+                "AZ": SimpleNamespace(
+                    status="success",
+                    rules=[
+                        {
+                            "url": "https://azsos.gov/rules/title-18.pdf",
+                            "source_url": "https://azsos.gov/rules/title-18.pdf",
+                        }
+                    ],
+                    urls_discovered=8,
+                    urls_fetched=4,
+                    fetch_errors=0,
+                    methods_used={"pdf_processor_playwright_download": 1, "common_crawl": 1},
+                    domains_visited={"azsos.gov", "apps.azsos.gov"},
+                    gap_analysis={"gap_analysis_status": "completed", "weak_coverage": False},
+                )
+            }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_scrapers.enhanced_state_admin_orchestrator.ParallelStateAdminOrchestrator",
+        FakeParallelStateAdminOrchestrator,
+    )
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ", "CA"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=23,
+            admin_parallel_assist_enabled=True,
+            admin_parallel_assist_state_limit=2,
+            admin_parallel_assist_timeout_seconds=45.0,
+        )
+    )
+
+    summary = await daemon.run()
+
+    assist = summary["latest_cycle"]["parallel_admin_assist"]
+    assert captured["states"][0] == "AZ"
+    assert set(captured["states"]).issubset({"AZ", "CA"})
+    assert "AZ" in assist["targeted_states"]
+    assert assist["status"] == "completed"
+    assert assist["discovered_rules_total"] == 1
+    assert assist["states_with_rules"] == ["AZ"]
+    assert "document_first" in assist["recommended_next_tactics"]
+    assert "archival_first" in assist["recommended_next_tactics"]
+    assert summary["latest_cycle"]["critic"]["parallel_admin_assist"]["discovered_rules_total"] == 1
+    assert (tmp_path / "latest_parallel_admin_assist.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_skips_parallel_admin_assist_when_disabled(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": []}],
+            "metadata": {
+                "base_metadata": {"fetch_analytics_by_state": {"AZ": {"attempted": 1, "success": 0, "success_ratio": 0.0, "fallback_count": 1, "providers": {}}}},
+                "agentic_report": {"per_state": {"AZ": {"candidate_urls": 2, "fetched_rules": 0, "top_candidate_urls": ["https://azsos.gov/rules/title-18.pdf"]}}},
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=29,
+            admin_parallel_assist_enabled=False,
+        )
+    )
+
+    summary = await daemon.run()
+
+    assert summary["latest_cycle"]["parallel_admin_assist"]["status"] == "skipped"
+    assert summary["latest_cycle"]["parallel_admin_assist"]["reason"] == "parallel-assist-disabled"
 
 
 @pytest.mark.asyncio

@@ -23,6 +23,7 @@ dependencies = [
     "ddgs>=9.11.2",
     "google-api-python-client>=2.192.0",
     "cloudscraper>=1.2.71",
+    "cfscrape>=2.1.1; python_version < '3.12'",
     "brave-search==0.1.8",
     "nltk>=3.8.1",
     "pdfplumber>=0.11.7",

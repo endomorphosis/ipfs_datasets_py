@@ -244,6 +244,10 @@ class StateLawsAgenticDaemonConfig:
     admin_agentic_max_hops: Optional[int] = None
     admin_agentic_max_pages: Optional[int] = None
     admin_agentic_fetch_concurrency: Optional[int] = None
+    admin_parallel_assist_enabled: bool = True
+    admin_parallel_assist_state_limit: int = 6
+    admin_parallel_assist_max_urls_per_domain: int = 20
+    admin_parallel_assist_timeout_seconds: float = 180.0
     router_llm_timeout_seconds: float = 20.0
     router_embeddings_timeout_seconds: float = 10.0
     router_ipfs_timeout_seconds: float = 10.0
@@ -417,9 +421,25 @@ class StateLawsAgenticDaemon:
         critic = self._merge_router_assist_into_critic(critic=critic, router_assist=router_assist)
         checkpoint_payload.update(
             {
-                "stage": "archive_warmup",
+                "stage": "parallel_admin_assist",
                 "critic": critic,
                 "router_assist": router_assist,
+            }
+        )
+        self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+        parallel_admin_assist = await self._run_parallel_admin_assist(
+            cycle_index=cycle_index,
+            tactic=tactic,
+            diagnostics=diagnostics,
+            critic=critic,
+            metadata=metadata,
+        )
+        critic = self._merge_parallel_admin_assist_into_critic(critic=critic, parallel_admin_assist=parallel_admin_assist)
+        checkpoint_payload.update(
+            {
+                "stage": "archive_warmup",
+                "critic": critic,
+                "parallel_admin_assist": parallel_admin_assist,
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
@@ -468,6 +488,7 @@ class StateLawsAgenticDaemon:
             "diagnostics": diagnostics,
             "critic": critic,
             "router_assist": router_assist,
+            "parallel_admin_assist": parallel_admin_assist,
             "archive_warmup": archive_warmup,
             "document_gap_report": document_gap_report,
             "document_gap_report_path": str(document_gap_report_path) if document_gap_report_path else None,
@@ -603,6 +624,7 @@ class StateLawsAgenticDaemon:
             "diagnostics": diagnostics,
             "critic": critic,
             "router_assist": dict(skipped),
+            "parallel_admin_assist": dict(skipped),
             "archive_warmup": dict(skipped),
             "document_gap_report": dict(skipped),
             "document_gap_report_path": None,
@@ -1629,6 +1651,212 @@ class StateLawsAgenticDaemon:
         if "router-assisted-review" not in issues:
             issues.append("router-assisted-review")
         updated["issues"] = issues
+        return updated
+
+    async def _run_parallel_admin_assist(
+        self,
+        *,
+        cycle_index: int,
+        tactic: ScraperTacticProfile,
+        diagnostics: Dict[str, Any],
+        critic: Dict[str, Any],
+        metadata: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        if self.corpus.key != "state_admin_rules":
+            return {"status": "skipped", "reason": "corpus-not-state-admin-rules"}
+        if not bool(self.config.admin_parallel_assist_enabled):
+            return {"status": "skipped", "reason": "parallel-assist-disabled"}
+
+        target_states = self._parallel_admin_target_states(diagnostics=diagnostics, critic=critic)
+        if not target_states:
+            return {"status": "skipped", "reason": "no-priority-states"}
+
+        try:
+            from .enhanced_state_admin_orchestrator import (
+                ParallelStateAdminOrchestrator,
+                ParallelStateDiscoveryConfig,
+            )
+            from .state_admin_rules_scraper import US_STATES as _ADMIN_US_STATES
+            from .state_admin_rules_scraper import _extract_seed_urls_for_state
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)}
+
+        seed_urls_by_state: Dict[str, List[str]] = {}
+        candidate_domains: Dict[str, List[str]] = {}
+        agentic_report = metadata.get("agentic_report") or {}
+        agentic_per_state = agentic_report.get("per_state") if isinstance(agentic_report, dict) else {}
+        if not isinstance(agentic_per_state, dict):
+            agentic_per_state = {}
+
+        for state_code in target_states:
+            state_name = str(_ADMIN_US_STATES.get(state_code, state_code))
+            seed_urls_by_state[state_code] = _extract_seed_urls_for_state(state_code, state_name)
+            state_report = agentic_per_state.get(state_code) if isinstance(agentic_per_state, dict) else None
+            if isinstance(state_report, dict):
+                candidate_domains[state_code] = [
+                    str(item)
+                    for item in list(state_report.get("top_candidate_urls") or [])
+                    if str(item).strip()
+                ]
+
+        config = ParallelStateDiscoveryConfig(
+            max_state_workers=max(1, min(len(target_states), int(self.config.admin_parallel_assist_state_limit or 1))),
+            max_domain_workers_per_state=max(1, int(self.config.admin_agentic_fetch_concurrency or 4)),
+            max_urls_per_domain=max(4, int(self.config.admin_parallel_assist_max_urls_per_domain or 4)),
+            max_fetch_per_state=max(1, int(self.config.admin_agentic_max_fetch_per_state or 4)),
+            max_candidates_per_state=max(4, int(self.config.admin_agentic_max_candidates_per_state or 12)),
+            state_timeout=max(15.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0)),
+            url_fetch_timeout=min(30.0, max(5.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0) / 6.0)),
+            domain_timeout=min(60.0, max(10.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0) / 3.0)),
+            min_rule_text_chars=max(120, int(tactic.min_full_text_chars or 120)),
+            enable_pdf_processing=True,
+            enable_gap_analysis=True,
+        )
+
+        orchestrator = ParallelStateAdminOrchestrator(config=config)
+        try:
+            results = await orchestrator.discover_state_rules_parallel(
+                states=target_states,
+                seed_urls_by_state=seed_urls_by_state,
+                candidate_domains=candidate_domains,
+            )
+        except Exception as exc:
+            return {"status": "error", "error": str(exc), "targeted_states": target_states}
+
+        per_state: Dict[str, Dict[str, Any]] = {}
+        recommended_tactics: List[str] = []
+        query_hints: List[str] = []
+        states_with_rules: List[str] = []
+        states_without_rules: List[str] = []
+        total_rules = 0
+
+        for state_code in target_states:
+            state_result = results.get(state_code)
+            if state_result is None:
+                states_without_rules.append(state_code)
+                continue
+            rules = list(getattr(state_result, "rules", []) or [])
+            methods_used = dict(getattr(state_result, "methods_used", {}) or {})
+            domains_visited = sorted(str(item) for item in list(getattr(state_result, "domains_visited", set()) or []))
+            gap_analysis = dict(getattr(state_result, "gap_analysis", {}) or {})
+            rules_found = len(rules)
+            total_rules += rules_found
+            if rules_found > 0:
+                states_with_rules.append(state_code)
+            else:
+                states_without_rules.append(state_code)
+
+            if any("playwright" in str(name).lower() or "pdf" in str(name).lower() or "rtf" in str(name).lower() for name in methods_used):
+                recommended_tactics.extend(["document_first", "render_first"])
+            if any(any(token in str(name).lower() for token in ("common_crawl", "wayback", "archive")) for name in methods_used):
+                recommended_tactics.extend(["archival_first", "discovery_first"])
+            if rules_found <= 0:
+                recommended_tactics.extend(["router_assisted", "discovery_first"])
+
+            for host in domains_visited[:2]:
+                query_hints.append(f"{state_code} administrative rules site:{host}")
+                query_hints.append(f"{state_code} site:{host} filetype:pdf")
+                query_hints.append(f"{state_code} site:{host} filetype:rtf")
+
+            per_state[state_code] = {
+                "status": str(getattr(state_result, "status", "unknown") or "unknown"),
+                "rules_found": rules_found,
+                "urls_discovered": int(getattr(state_result, "urls_discovered", 0) or 0),
+                "urls_fetched": int(getattr(state_result, "urls_fetched", 0) or 0),
+                "fetch_errors": int(getattr(state_result, "fetch_errors", 0) or 0),
+                "methods_used": methods_used,
+                "domains_visited": domains_visited,
+                "gap_analysis": gap_analysis,
+                "top_rule_urls": [str((row or {}).get("url") or (row or {}).get("source_url") or "") for row in rules[:8]],
+            }
+
+        report: Dict[str, Any] = {
+            "status": "completed",
+            "targeted_states": target_states,
+            "states_with_rules": states_with_rules,
+            "states_without_rules": states_without_rules,
+            "priority_states": states_without_rules or target_states,
+            "discovered_rules_total": total_rules,
+            "recommended_next_tactics": list(dict.fromkeys([name for name in recommended_tactics if name in self.config.tactic_profiles])),
+            "query_hints": list(dict.fromkeys([hint for hint in query_hints if hint.strip()]))[:12],
+            "per_state": per_state,
+        }
+        artifact_path = self._write_parallel_admin_assist_report(cycle_index=cycle_index, report=report)
+        report["artifact_path"] = str(artifact_path) if artifact_path else None
+        return report
+
+    def _parallel_admin_target_states(self, *, diagnostics: Dict[str, Any], critic: Dict[str, Any]) -> List[str]:
+        ordered: List[str] = []
+
+        def _push(values: Sequence[Any]) -> None:
+            for item in list(values or []):
+                state_code = str(item or "").upper().strip()
+                if state_code in self.states and state_code not in ordered:
+                    ordered.append(state_code)
+                    if len(ordered) >= max(1, int(self.config.admin_parallel_assist_state_limit or 1)):
+                        return
+
+        _push(list(critic.get("priority_states") or []))
+        documents = diagnostics.get("documents") or {}
+        coverage = diagnostics.get("coverage") or {}
+        gap_analysis = diagnostics.get("gap_analysis") or {}
+        _push(list(documents.get("states_with_candidate_document_gaps") or []))
+        _push(list(gap_analysis.get("weak_states") or []))
+        _push(list(coverage.get("coverage_gap_states") or []))
+        _push(list((diagnostics.get("fetch") or {}).get("no_attempt_states") or []))
+        return ordered[: max(1, int(self.config.admin_parallel_assist_state_limit or 1))]
+
+    def _write_parallel_admin_assist_report(self, *, cycle_index: int, report: Dict[str, Any]) -> Optional[Path]:
+        if not isinstance(report, dict) or not report:
+            return None
+        cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}_parallel_admin_assist.json"
+        latest_path = self.output_dir / "latest_parallel_admin_assist.json"
+        payload = dict(report)
+        payload["cycle"] = int(cycle_index)
+        cycle_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        latest_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return cycle_path
+
+    def _merge_parallel_admin_assist_into_critic(
+        self,
+        *,
+        critic: Dict[str, Any],
+        parallel_admin_assist: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        if not isinstance(parallel_admin_assist, dict) or str(parallel_admin_assist.get("status") or "") != "completed":
+            return critic
+        updated = dict(critic)
+        merged_tactics = list(updated.get("recommended_next_tactics") or [])
+        for name in list(parallel_admin_assist.get("recommended_next_tactics") or []):
+            if name in self.config.tactic_profiles and name not in merged_tactics:
+                merged_tactics.append(name)
+        updated["recommended_next_tactics"] = merged_tactics
+
+        merged_priority_states = [
+            str(item).upper().strip()
+            for item in list(updated.get("priority_states") or [])
+            if str(item).strip()
+        ]
+        for state_code in list(parallel_admin_assist.get("priority_states") or []):
+            normalized = str(state_code).upper().strip()
+            if normalized in self.states and normalized not in merged_priority_states:
+                merged_priority_states.insert(0, normalized)
+        updated["priority_states"] = merged_priority_states
+
+        query_hints = [str(item) for item in list(updated.get("query_hints") or []) if str(item).strip()]
+        for hint in list(parallel_admin_assist.get("query_hints") or []):
+            normalized_hint = str(hint).strip()
+            if normalized_hint and normalized_hint not in query_hints:
+                query_hints.append(normalized_hint)
+        if query_hints:
+            updated["query_hints"] = query_hints[:12]
+
+        updated["parallel_admin_assist"] = {
+            "targeted_states": list(parallel_admin_assist.get("targeted_states") or []),
+            "states_with_rules": list(parallel_admin_assist.get("states_with_rules") or []),
+            "states_without_rules": list(parallel_admin_assist.get("states_without_rules") or []),
+            "discovered_rules_total": int(parallel_admin_assist.get("discovered_rules_total", 0) or 0),
+        }
         return updated
 
     def _build_corpus_gap_summary(
@@ -2712,10 +2940,11 @@ class StateLawsAgenticDaemon:
 
     @contextmanager
     def _tactic_env(self, tactic: ScraperTacticProfile) -> Iterable[None]:
-        effective_method_order = self._effective_scraper_method_order(tactic)
+        method_order_keys = [
+            "IPFS_DATASETS_SCRAPER_METHOD_ORDER",
+            "LEGAL_SCRAPER_METHOD_ORDER",
+        ]
         overrides = {
-            "IPFS_DATASETS_SCRAPER_METHOD_ORDER": ",".join(effective_method_order),
-            "LEGAL_SCRAPER_METHOD_ORDER": ",".join(effective_method_order),
             "IPFS_DATASETS_SEARCH_ENGINES": ",".join(tactic.search_engines),
             "LEGAL_SCRAPER_SEARCH_ENGINES": ",".join(tactic.search_engines),
             "IPFS_DATASETS_SCRAPER_FALLBACK_ENABLED": "1",
@@ -2724,6 +2953,14 @@ class StateLawsAgenticDaemon:
             "IPFS_DATASETS_SEARCH_FALLBACK_ENABLED": "1" if tactic.search_fallback_enabled else "0",
             "IPFS_DATASETS_ARCHIVE_IS_SUBMIT_ON_MISS": "1" if tactic.archive_is_submit_on_miss else "0",
         }
+        if self.corpus.key != "state_admin_rules":
+            effective_method_order = self._effective_scraper_method_order(tactic)
+            overrides.update(
+                {
+                    "IPFS_DATASETS_SCRAPER_METHOD_ORDER": ",".join(effective_method_order),
+                    "LEGAL_SCRAPER_METHOD_ORDER": ",".join(effective_method_order),
+                }
+            )
         if tactic.llm_provider:
             overrides["IPFS_DATASETS_PY_LLM_PROVIDER"] = str(tactic.llm_provider)
         if tactic.embeddings_provider:
@@ -2738,8 +2975,14 @@ class StateLawsAgenticDaemon:
                 overrides["LEGAL_SCRAPER_QUERY_HINTS_JSON"] = json.dumps(state_query_hints, ensure_ascii=False, sort_keys=True)
             except Exception:
                 pass
-        previous = {key: os.environ.get(key) for key in overrides}
+        managed_keys = set(overrides)
+        if self.corpus.key == "state_admin_rules":
+            managed_keys.update(method_order_keys)
+        previous = {key: os.environ.get(key) for key in managed_keys}
         try:
+            if self.corpus.key == "state_admin_rules":
+                for key in method_order_keys:
+                    os.environ.pop(key, None)
             for key, value in overrides.items():
                 os.environ[key] = value
             yield
@@ -2828,6 +3071,10 @@ async def run_state_admin_rules_agentic_daemon(
     admin_agentic_max_hops: Optional[int] = None,
     admin_agentic_max_pages: Optional[int] = None,
     admin_agentic_fetch_concurrency: Optional[int] = None,
+    admin_parallel_assist_enabled: bool = True,
+    admin_parallel_assist_state_limit: int = 6,
+    admin_parallel_assist_max_urls_per_domain: int = 20,
+    admin_parallel_assist_timeout_seconds: float = 180.0,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -2860,6 +3107,10 @@ async def run_state_admin_rules_agentic_daemon(
             admin_agentic_max_hops=admin_agentic_max_hops,
             admin_agentic_max_pages=admin_agentic_max_pages,
             admin_agentic_fetch_concurrency=admin_agentic_fetch_concurrency,
+            admin_parallel_assist_enabled=admin_parallel_assist_enabled,
+            admin_parallel_assist_state_limit=admin_parallel_assist_state_limit,
+            admin_parallel_assist_max_urls_per_domain=admin_parallel_assist_max_urls_per_domain,
+            admin_parallel_assist_timeout_seconds=admin_parallel_assist_timeout_seconds,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -2961,6 +3212,10 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--admin-agentic-max-hops", type=int, default=None, help="Optional state-admin-rules traversal hop limit passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-max-pages", type=int, default=None, help="Optional state-admin-rules page limit passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-fetch-concurrency", type=int, default=None, help="Optional state-admin-rules fetch concurrency passed through to the agentic fallback.")
+    parser.add_argument("--admin-parallel-assist-enabled", action=argparse.BooleanOptionalAction, default=True, help="Enable the state-admin parallel supplemental discovery pass for weak states during each daemon cycle.")
+    parser.add_argument("--admin-parallel-assist-state-limit", type=int, default=6, help="Maximum number of weak state-admin targets to send through the parallel assist pass each cycle.")
+    parser.add_argument("--admin-parallel-assist-max-urls-per-domain", type=int, default=20, help="Maximum URLs per domain evaluated by the parallel state-admin assist pass.")
+    parser.add_argument("--admin-parallel-assist-timeout-seconds", type=float, default=180.0, help="Per-state timeout budget for the parallel state-admin assist pass.")
     parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold for convergence.")
     parser.add_argument("--stop-on-target-score", action="store_true", help="Stop once the daemon reaches the target critic score.")
     parser.add_argument("--random-seed", type=int, default=None, help="Optional deterministic seed for tactic selection.")
@@ -3010,6 +3265,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             admin_agentic_max_hops=args.admin_agentic_max_hops,
             admin_agentic_max_pages=args.admin_agentic_max_pages,
             admin_agentic_fetch_concurrency=args.admin_agentic_fetch_concurrency,
+            admin_parallel_assist_enabled=bool(args.admin_parallel_assist_enabled),
+            admin_parallel_assist_state_limit=int(args.admin_parallel_assist_state_limit),
+            admin_parallel_assist_max_urls_per_domain=int(args.admin_parallel_assist_max_urls_per_domain),
+            admin_parallel_assist_timeout_seconds=float(args.admin_parallel_assist_timeout_seconds),
             target_score=float(args.target_score),
             stop_on_target_score=bool(args.stop_on_target_score),
             random_seed=args.random_seed,

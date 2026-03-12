@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 try:
     import anyio
@@ -99,6 +99,7 @@ class ParallelStateAdminOrchestrator:
         config: Optional[ParallelStateDiscoveryConfig] = None,
         parallel_archiver=None,
         pdf_processor=None,
+        scrape_optimizer=None,
     ):
         """Initialize orchestrator.
         
@@ -110,10 +111,12 @@ class ParallelStateAdminOrchestrator:
         self.config = config or ParallelStateDiscoveryConfig()
         self.parallel_archiver = parallel_archiver
         self.pdf_processor = pdf_processor
+        self.scrape_optimizer = scrape_optimizer
         
         # Lazy-initialize if not provided
         self._archiver_initialized = False
         self._pdf_initialized = False
+        self._optimizer_initialized = False
     
     async def discover_state_rules_parallel(
         self,
@@ -262,6 +265,7 @@ class ParallelStateAdminOrchestrator:
             if self.config.enable_pdf_processing and len(result.rules) < self.config.max_fetch_per_state:
                 await self._process_pdfs_if_available(
                     state_code=state_code,
+                    candidate_urls=list(dict.fromkeys((seed_urls or []) + list(all_candidates or []))),
                     existing_rules=result.rules,
                     deadline=state_deadline,
                 )
@@ -271,6 +275,7 @@ class ParallelStateAdminOrchestrator:
                 gap_results = await self._analyze_corpus_gaps(
                     state_code=state_code,
                     discovered_rules=result.rules,
+                    candidate_urls=list(dict.fromkeys((seed_urls or []) + list(all_candidates or []))),
                 )
                 result.gap_analysis = gap_results
             
@@ -401,28 +406,64 @@ class ParallelStateAdminOrchestrator:
         self, url: str, content: str, state_code: str
     ) -> List[Dict[str, Any]]:
         """Extract rule records from gathered content."""
+        url_value = str(url or "").strip()
+        if not url_value:
+            return []
+
+        lowered_url = url_value.lower()
+        if lowered_url.endswith(".pdf") or ".pdf?" in lowered_url:
+            scraped = await self._scrape_document_url(url_value, file_type="pdf")
+            return self._normalize_scraped_rule_rows(scraped=scraped, state_code=state_code, url=url_value)
+        if lowered_url.endswith(".rtf") or ".rtf?" in lowered_url:
+            scraped = await self._scrape_document_url(url_value, file_type="rtf")
+            return self._normalize_scraped_rule_rows(scraped=scraped, state_code=state_code, url=url_value)
+
         if not content:
             return []
-        
-        # Simple heuristic filtering (can be enhanced with ML)
-        if len(content) < self.config.min_rule_text_chars:
+
+        await self._ensure_optimizer_initialized()
+        cleaned_text = str(content or "").strip()
+        structured_fields: Dict[str, Any] = {}
+        entities: List[Dict[str, Any]] = []
+        if self.scrape_optimizer is not None:
+            try:
+                parsed = self.scrape_optimizer.transform(
+                    url=url_value,
+                    title="",
+                    text=cleaned_text,
+                    metadata={"state_code": state_code},
+                    domain="legal",
+                )
+                cleaned_text = str(getattr(parsed, "cleaned_text", "") or cleaned_text).strip()
+                structured_fields = dict(getattr(parsed, "structured_fields", {}) or {})
+                entities = list(getattr(parsed, "entities", []) or [])
+            except Exception as exc:
+                logger.debug("Optimizer transform failed for %s: %s", url_value, exc)
+
+        if len(cleaned_text) < self.config.min_rule_text_chars:
             return []
-        
-        # Basic rule classification
-        is_admin_rule = self._looks_like_admin_rule(content)
+
+        is_admin_rule = self._looks_like_admin_rule(cleaned_text)
         if not is_admin_rule and self.config.require_substantive_text:
             return []
-        
-        # Return single rule record from content
+
         return [
             {
                 "state_code": state_code,
-                "url": url,
-                "title": content[:100] if content else "",
-                "text": content,
-                "length": len(content),
-                "domain": urlparse(url).netloc,
+                "url": url_value,
+                "source_url": url_value,
+                "title": cleaned_text[:100] if cleaned_text else "",
+                "text": cleaned_text,
+                "full_text": cleaned_text,
+                "length": len(cleaned_text),
+                "domain": urlparse(url_value).netloc,
                 "fetched_at": datetime.now().isoformat(),
+                "structured_data": {
+                    "optimizer": {
+                        "structured_fields": structured_fields,
+                        "entities": entities[:24],
+                    }
+                },
             }
         ]
     
@@ -446,7 +487,8 @@ class ParallelStateAdminOrchestrator:
                 if content:
                     # Extract links (simple regex-based)
                     links = self._extract_urls_from_html(content, seed_url)
-                    for link in links[: self.config.max_urls_per_domain]:
+                    ranked_links = await self._rank_candidate_urls(links, state_code=state_code)
+                    for link in ranked_links[: self.config.max_urls_per_domain]:
                         candidates.add(link)
             
             except Exception as exc:
@@ -469,32 +511,91 @@ class ParallelStateAdminOrchestrator:
             if url.startswith("http"):
                 urls.append(url)
             elif url.startswith("/"):
-                base = urlparse(base_url)
-                urls.append(f"{base.scheme}://{base.netloc}{url}")
+                urls.append(urljoin(base_url, url))
+            elif url and not url.startswith(("#", "javascript:", "mailto:")):
+                urls.append(urljoin(base_url, url))
         
-        return urls
+        return list(dict.fromkeys(urls))
     
     async def _process_pdfs_if_available(
         self,
         state_code: str,
+        candidate_urls: List[str],
         existing_rules: List[Dict[str, Any]],
         deadline: float,
     ) -> None:
         """Process PDF documents if available and enable_pdf_processing=True."""
-        if not self.pdf_processor:
+        if not self.config.enable_pdf_processing:
             return
-        
-        # TODO: Implement PDF discovery and processing
-        pass
+
+        seen_urls = {
+            str(rule.get("url") or rule.get("source_url") or "").strip().lower()
+            for rule in existing_rules
+            if isinstance(rule, dict)
+        }
+        document_urls = []
+        for candidate in list(candidate_urls or []):
+            lowered = str(candidate or "").strip().lower()
+            if not lowered:
+                continue
+            if lowered in seen_urls:
+                continue
+            if lowered.endswith(".pdf") or ".pdf?" in lowered or lowered.endswith(".rtf") or ".rtf?" in lowered:
+                document_urls.append(str(candidate).strip())
+
+        for document_url in document_urls:
+            if len(existing_rules) >= self.config.max_fetch_per_state or time.monotonic() > deadline:
+                break
+            file_type = "pdf" if ".pdf" in document_url.lower() else "rtf"
+            try:
+                scraped = await asyncio.wait_for(
+                    self._scrape_document_url(document_url, file_type=file_type),
+                    timeout=max(1.0, min(self.config.pdf_extract_timeout, deadline - time.monotonic())),
+                )
+            except Exception as exc:
+                logger.debug("Document processing failed for %s: %s", document_url, exc)
+                continue
+            rows = self._normalize_scraped_rule_rows(scraped=scraped, state_code=state_code, url=document_url)
+            for row in rows:
+                row_url = str(row.get("url") or row.get("source_url") or "").strip().lower()
+                if not row_url or row_url in seen_urls:
+                    continue
+                existing_rules.append(row)
+                seen_urls.add(row_url)
     
     async def _analyze_corpus_gaps(
-        self, state_code: str, discovered_rules: List[Dict[str, Any]]
+        self,
+        state_code: str,
+        discovered_rules: List[Dict[str, Any]],
+        candidate_urls: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Analyze gaps in corpus for the state."""
-        # TODO: Implement gap analysis
+        candidate_urls = [str(item).strip() for item in list(candidate_urls or []) if str(item).strip()]
+        document_candidates = [
+            url for url in candidate_urls if url.lower().endswith(".pdf") or ".pdf?" in url.lower() or url.lower().endswith(".rtf") or ".rtf?" in url.lower()
+        ]
+        processed_document_rules = sum(
+            1
+            for rule in discovered_rules
+            if self._document_format_from_url(rule.get("url") or rule.get("source_url")) in {"pdf", "rtf"}
+        )
+        visited_hosts = sorted(
+            {
+                str(urlparse(str(rule.get("url") or rule.get("source_url") or "")).netloc or "").strip().lower()
+                for rule in discovered_rules
+                if isinstance(rule, dict)
+            }
+        )
+        candidate_hosts = sorted({str(urlparse(url).netloc or "").strip().lower() for url in candidate_urls if url})
+        missing_hosts = [host for host in candidate_hosts if host and host not in visited_hosts]
         return {
-            "gap_analysis_status": "not_implemented",
+            "gap_analysis_status": "completed",
             "discovered_count": len(discovered_rules),
+            "candidate_count": len(candidate_urls),
+            "document_candidate_count": len(document_candidates),
+            "processed_document_rules": processed_document_rules,
+            "missing_candidate_hosts": missing_hosts,
+            "weak_coverage": len(discovered_rules) < max(2, min(4, self.config.max_fetch_per_state // 2)),
         }
     
     def _looks_like_admin_rule(self, text: str) -> bool:
@@ -526,6 +627,82 @@ class ParallelStateAdminOrchestrator:
         except ImportError:
             logger.warning("ParallelWebArchiver not available - using fallback")
             self._archiver_initialized = True
+
+    async def _ensure_optimizer_initialized(self) -> None:
+        if self._optimizer_initialized or self.scrape_optimizer is not None:
+            return
+        try:
+            from ipfs_datasets_py.processors.web_archiving.agentic_scrape_optimizer import AgenticScrapeOptimizer
+
+            self.scrape_optimizer = AgenticScrapeOptimizer()
+        except Exception as exc:
+            logger.debug("AgenticScrapeOptimizer unavailable: %s", exc)
+            self.scrape_optimizer = None
+        self._optimizer_initialized = True
+
+    async def _rank_candidate_urls(self, urls: List[str], *, state_code: str) -> List[str]:
+        deduped = list(dict.fromkeys([str(item).strip() for item in list(urls or []) if str(item).strip()]))
+        if not deduped:
+            return []
+        await self._ensure_optimizer_initialized()
+        if self.scrape_optimizer is None:
+            return deduped
+        try:
+            ranked = self.scrape_optimizer.rank_links(
+                [{"url": url, "text": urlparse(url).path} for url in deduped],
+                [state_code, "administrative", "rules", "rule", "code", "pdf", "rtf"],
+            )
+            return [str(item.get("url") or "").strip() for item in ranked if str(item.get("url") or "").strip()]
+        except Exception as exc:
+            logger.debug("Candidate ranking failed for %s: %s", state_code, exc)
+            return deduped
+
+    async def _scrape_document_url(self, url: str, *, file_type: str) -> Optional[Any]:
+        try:
+            from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as _scraper_module
+        except ImportError:
+            try:
+                from . import state_admin_rules_scraper as _scraper_module
+            except Exception:
+                return None
+
+        if file_type == "pdf":
+            return await _scraper_module._scrape_pdf_candidate_url_with_processor(url)
+        return await _scraper_module._scrape_rtf_candidate_url_with_processor(url)
+
+    def _normalize_scraped_rule_rows(self, *, scraped: Optional[Any], state_code: str, url: str) -> List[Dict[str, Any]]:
+        if scraped is None:
+            return []
+        text = str(getattr(scraped, "text", "") or "").strip()
+        if len(text) < self.config.min_rule_text_chars:
+            return []
+        title = str(getattr(scraped, "title", "") or text[:100]).strip()
+        source_url = str(getattr(scraped, "source_url", "") or url).strip()
+        method_used = str(getattr(scraped, "method_used", "") or "").strip()
+        return [
+            {
+                "state_code": state_code,
+                "url": source_url,
+                "source_url": source_url,
+                "title": title,
+                "text": text,
+                "full_text": text,
+                "length": len(text),
+                "domain": urlparse(source_url).netloc,
+                "fetched_at": datetime.now().isoformat(),
+                "method_used": method_used,
+                "structured_data": {"method_used": method_used},
+            }
+        ]
+
+    @staticmethod
+    def _document_format_from_url(value: Any) -> str:
+        lowered = str(value or "").strip().lower()
+        if lowered.endswith(".pdf") or ".pdf?" in lowered:
+            return "pdf"
+        if lowered.endswith(".rtf") or ".rtf?" in lowered:
+            return "rtf"
+        return "html"
 
 
 async def discover_multi_state_rules_parallel(
