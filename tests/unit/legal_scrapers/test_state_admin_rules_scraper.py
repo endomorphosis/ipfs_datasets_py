@@ -61,10 +61,15 @@ def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr
 def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoints() -> None:
     az_urls = scraper_module._extract_seed_urls_for_state("AZ", "Arizona")
     ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
+    az_allowed_hosts = _allowed_discovery_hosts_for_state("AZ", "Arizona")
 
     assert "https://azsos.gov/rules/arizona-administrative-code" in az_urls
     assert "https://apps.azsos.gov/public_services/CodeTOC.htm" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_00.htm" not in az_urls
+    assert all("legislature.az.gov" not in url.lower() for url in az_urls)
+    assert all("www.azleg.gov" not in url.lower() for url in az_urls)
+    assert "legislature.az.gov" not in az_allowed_hosts
+    assert "www.azleg.gov" not in az_allowed_hosts
 
     assert "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules" in ut_urls
     assert "https://adminrules.utah.gov/public/home" not in ut_urls
@@ -75,11 +80,46 @@ def test_california_admin_seed_urls_exclude_leginfo_templates_and_hosts() -> Non
     ca_urls = scraper_module._extract_seed_urls_for_state("CA", "California")
     allowed_hosts = _allowed_discovery_hosts_for_state("CA", "California")
 
+    assert "https://govt.westlaw.com/calregs/Index" in ca_urls
     assert "https://oal.ca.gov/publications/ccr/" in ca_urls
     assert "https://oal.ca.gov/publications/" in ca_urls
     assert all("leginfo.legislature.ca.gov" not in url.lower() for url in ca_urls)
+    assert "govt.westlaw.com" in allowed_hosts
     assert "oal.ca.gov" in allowed_hosts
     assert "leginfo.legislature.ca.gov" not in allowed_hosts
+
+
+def test_candidate_links_from_html_keeps_california_official_ccr_host_when_allowed() -> None:
+    html = """
+    <html>
+      <body>
+        <a href="https://govt.westlaw.com/calregs/Index?transitionType=Default&amp;contextData=%28sc.Default%29">California Code of Regulations</a>
+      </body>
+    </html>
+    """
+
+    links = _candidate_links_from_html(
+        html,
+        base_host="oal.ca.gov",
+        page_url="https://oal.ca.gov/publications/ccr/",
+        limit=4,
+        allowed_hosts=_allowed_discovery_hosts_for_state("CA", "California"),
+    )
+
+    assert any(link.startswith("https://govt.westlaw.com/calregs/Index") for link in links)
+
+
+def test_gap_summary_host_key_collapses_california_portal_hosts_into_official_ccr_host() -> None:
+    assert scraper_module._gap_summary_host_key("https://oal.ca.gov/publications/ccr/") == "govt.westlaw.com"
+    assert scraper_module._gap_summary_host_key("http://carules.elaws.us/search/allcode") == "govt.westlaw.com"
+    assert scraper_module._gap_summary_host_key("https://govt.westlaw.com/calregs/Index") == "govt.westlaw.com"
+
+
+def test_gap_summary_host_key_collapses_utah_admin_rule_host_family() -> None:
+    assert scraper_module._gap_summary_host_key("https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules") == "adminrules.utah.gov"
+    assert scraper_module._gap_summary_host_key("https://rules.utah.gov/publications/code-updates/") == "adminrules.utah.gov"
+    assert scraper_module._gap_summary_host_key("https://le.utah.gov/xcode/Title63G/Chapter3/63G-3.html") == "adminrules.utah.gov"
+    assert scraper_module._gap_summary_host_key("https://legislature.ut.gov") == "adminrules.utah.gov"
 
 
 def test_pdf_request_headers_accept_env_cookie_and_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -324,6 +364,87 @@ def test_rejects_california_oal_publication_contract_page_as_rule_content() -> N
         text=text,
         title="2025 California Code of Regulations and California Regulatory Notice Register Publication Contract | OAL",
         url="https://oal.ca.gov/publications/2025-california-code-of-regulations-and-california-regulatory-notice-register-publication-contract/",
+    ) is False
+
+
+def test_rejects_california_oal_ccr_landing_page_as_rule_content() -> None:
+    text = (
+        "California Code of Regulations (CCR). Online. OAL contracts with Barclays, a division of Thomson-Reuters "
+        "to provide a free online version of the Official CCR. Pop-Up Blocker/Westlaw. Documents in Sequence. "
+        "Quick Links. Recent Actions Taken By OAL On Regulations."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="California Code of Regulations (CCR) | OAL",
+        url="https://oal.ca.gov/publications/ccr/",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="California Code of Regulations (CCR) | OAL",
+        url="https://oal.ca.gov/publications/ccr/",
+    ) is False
+
+
+def test_rejects_california_elaws_search_index_as_rule_content() -> None:
+    text = (
+        "California Code of Regulations loading.. 1 CA Adc T. 1, Div. 2, Chap. 1, Refs & Annos "
+        "Title 1 General Provisions Title 2 Administration 1 2 3 ... 6887 6888 Next Go To Page"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="California Code of Regulations",
+        url="http://carules.elaws.us/search/allcode",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="California Code of Regulations",
+        url="http://carules.elaws.us/search/allcode",
+    ) is False
+
+
+def test_rejects_california_westlaw_index_page_as_rule_content() -> None:
+    text = (
+        "Skip to Navigation Skip to Main Content California Code of Regulations Home Updates Search Help "
+        "California Code of Regulations Title 1. General Provisions Title 2. Administration Title 3. Food and Agriculture "
+        "Title 4. Business Regulations Title 5. Education Title 7. Harbors and Navigation Title 8. Industrial Relations "
+        "Title 9. Rehabilitative and Developmental Services Privacy Accessibility California Office of Administrative Law"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="California Code of Regulations - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Index?transitionType=Default&contextData=%28sc.Default%29",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="California Code of Regulations - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Index?transitionType=Default&contextData=%28sc.Default%29",
+    ) is False
+
+
+def test_rejects_california_westlaw_division_browse_page_as_rule_content() -> None:
+    text = (
+        "Skip to Navigation Skip to Main Content California Code of Regulations Home Updates Search Help Home "
+        "Title 2. Administration Division 1. Administrative Personnel Division 2. Financial Operations "
+        "Division 3. State Property Operations Division 4. Fair Employment and Housing Commission [Renumbered] "
+        "Division 4.1. Civil Rights Department Privacy Accessibility California Office of Administrative Law"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Browse - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=IFAACB1F05A0911EC8227000D3A7C4BC3&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Browse - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=IFAACB1F05A0911EC8227000D3A7C4BC3&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
     ) is False
 
 
@@ -757,6 +878,26 @@ def test_rejects_arizona_public_services_subject_index_as_substantive_text() -> 
         title="Arizona Administrative Code",
         url="https://apps.azsos.gov/public_services/Index/",
         min_chars=160,
+    ) is False
+
+
+def test_rejects_arizona_secretary_of_state_rulemaking_meta_chapter_as_rule_content() -> None:
+    text = (
+        "Arizona Administrative Code Title 1, Ch. 1 Secretary of State - Rules and Rulemaking. "
+        "TITLE 1. RULES AND THE RULEMAKING PROCESS. CHAPTER 1. SECRETARY OF STATE RULES AND RULEMAKING. "
+        "R1-1-401 Rule Drafting Style and Format. R1-1-502 Notice of Proposed Rulemaking."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Arizona Administrative Code",
+        url="https://apps.azsos.gov/public_services/Title_01/1-01.pdf",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Administrative Code",
+        url="https://apps.azsos.gov/public_services/Title_01/1-01.pdf",
     ) is False
 
 
@@ -1796,6 +1937,42 @@ def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatc
     ]
 
 
+def test_candidate_utah_rule_urls_from_public_api_caps_broad_bootstrap_queries(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = [
+        {
+            "programs": [
+                {
+                    "rules": [
+                        {
+                            "referenceNumber": f"R70-10{index}",
+                            "linkToRule": f"R70-10{index}/Current Rules",
+                        }
+                        for index in range(12)
+                    ]
+                }
+            ]
+        }
+    ]
+
+    class _FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return payload
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: _FakeResponse())
+
+    urls = _candidate_utah_rule_urls_from_public_api(
+        url="https://adminrules.utah.gov/public/search//Current%20Rules",
+        limit=24,
+    )
+
+    assert len(urls) == 8
+    assert urls[0] == "https://adminrules.utah.gov/public/rule/R70-100/Current%20Rules"
+    assert urls[-1] == "https://adminrules.utah.gov/public/rule/R70-107/Current%20Rules"
+
+
 def test_candidate_utah_rule_urls_from_public_api_preserves_explicit_query(monkeypatch: pytest.MonkeyPatch) -> None:
     class _FakeResponse:
         def raise_for_status(self) -> None:
@@ -2674,7 +2851,7 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
     assert unified_search_calls == 0
     assert result["report"]["AZ"]["format_counts"]["pdf"] == 1
     assert result["report"]["AZ"]["format_counts"]["rtf"] == 1
-    assert result["report"]["AZ"]["gap_summary"]["rule_hosts"] == ["apps.azsos.gov"]
+    assert result["report"]["AZ"]["gap_summary"]["rule_hosts"] == ["azsos.gov"]
 
 
 @pytest.mark.anyio
@@ -2879,6 +3056,109 @@ async def test_agentic_discovery_does_not_spend_full_budget_in_utah_prefetch(mon
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] >= 1
     assert result["report"]["UT"]["inspected_urls"] >= 1
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_utah_bootstrap_stops_after_first_successful_public_api_seed(monkeypatch: pytest.MonkeyPatch) -> None:
+    api_seed = "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
+    search_seed = "https://adminrules.utah.gov/public/search/c/Current%20Rules"
+    rule_url = "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules"
+    api_calls: list[str] = []
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            return SimpleNamespace(
+                document=SimpleNamespace(
+                    text="Utah rules search shell.",
+                    title="Utah Administrative Rules Search",
+                    html="",
+                    extraction_provenance={"method": "requests_only"},
+                )
+            )
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_scrape_utah_rule_detail_via_public_download(url: str):
+        if url != rule_url:
+            return None
+        return SimpleNamespace(
+            url=url,
+            title="R70-101. Utah Rule",
+            text="R70-101. Utah administrative rule text with authority and implementation sections.",
+            html="",
+            links=[],
+            success=True,
+            method_used="utah_public_getfile_html",
+            extraction_provenance={"method": "utah_public_getfile_html"},
+        )
+
+    def _fake_candidate_utah_rule_urls_from_public_api(url: str, limit: int = 24):
+        api_calls.append(url)
+        if url == api_seed:
+            return [rule_url]
+        return []
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [api_seed, search_seed])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_candidate_utah_rule_urls_from_public_api", _fake_candidate_utah_rule_urls_from_public_api)
+    monkeypatch.setattr(scraper_module, "_scrape_utah_rule_detail_via_public_download", _fake_scrape_utah_rule_detail_via_public_download)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == rule_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["UT"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert api_calls == [api_seed]
 
 
 @pytest.mark.anyio

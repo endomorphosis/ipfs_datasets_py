@@ -44,6 +44,93 @@ logger = logging.getLogger(__name__)
 ScrapeFunction = Callable[..., Awaitable[Dict[str, Any]]]
 
 
+def _normalize_fetch_analytics_by_state(
+    fetch_analytics_by_state: Dict[str, Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    normalized: Dict[str, Dict[str, Any]] = {}
+    for state_code, metrics in fetch_analytics_by_state.items():
+        if not isinstance(metrics, dict):
+            continue
+
+        state_key = str(state_code or "").upper().strip()
+        if not state_key:
+            continue
+
+        current = dict(metrics)
+        attempted = max(0, int(current.get("attempted", 0) or 0))
+        success = max(0, int(current.get("success", 0) or 0))
+        fallback_count = max(0, int(current.get("fallback_count", 0) or 0))
+
+        if success > attempted:
+            attempted = success
+        if attempted > 0 and fallback_count > attempted:
+            fallback_count = attempted
+
+        current["attempted"] = attempted
+        current["success"] = success
+        current["fallback_count"] = fallback_count
+        current["providers"] = (
+            dict(current.get("providers") or {})
+            if isinstance(current.get("providers"), dict)
+            else {}
+        )
+        normalized[state_key] = current
+
+    return normalized
+
+
+def _merge_admin_agentic_fetch_analytics(
+    base_fetch_analytics_by_state: Dict[str, Dict[str, Any]],
+    *,
+    agentic_report: Dict[str, Any],
+) -> Dict[str, Dict[str, Any]]:
+    merged = _normalize_fetch_analytics_by_state(base_fetch_analytics_by_state)
+
+    per_state = agentic_report.get("per_state") if isinstance(agentic_report, dict) else {}
+    if not isinstance(per_state, dict):
+        return merged
+
+    for state_code, state_report in per_state.items():
+        if not isinstance(state_report, dict):
+            continue
+
+        inspected_urls = int(state_report.get("inspected_urls", 0) or 0)
+        fetched_rules = int(state_report.get("fetched_rules", 0) or 0)
+        if inspected_urls <= 0 and fetched_rules <= 0:
+            continue
+
+        state_key = str(state_code or "").upper().strip()
+        if not state_key:
+            continue
+
+        current = dict(merged.get(state_key) or {})
+        attempted = int(current.get("attempted", 0) or 0)
+        success = int(current.get("success", 0) or 0)
+        fallback_count = int(current.get("fallback_count", 0) or 0)
+        providers = dict(current.get("providers") or {}) if isinstance(current.get("providers"), dict) else {}
+
+        if attempted <= 0:
+            attempted = inspected_urls
+            success = fetched_rules
+        else:
+            attempted = max(attempted, inspected_urls)
+            success = max(success, fetched_rules)
+
+        if inspected_urls > 0:
+            providers["agentic_discovery"] = max(
+                int(providers.get("agentic_discovery", 0) or 0),
+                inspected_urls,
+            )
+
+        current["attempted"] = attempted
+        current["success"] = success
+        current["fallback_count"] = fallback_count
+        current["providers"] = providers
+        merged[state_key] = current
+
+    return _normalize_fetch_analytics_by_state(merged)
+
+
 @dataclass(frozen=True)
 class AgenticCorpusDefinition:
     """Configuration for one supported canonical legal corpus."""
@@ -770,6 +857,13 @@ class StateLawsAgenticDaemon:
         data = list(scrape_result.get("data") or [])
         base_metadata = metadata.get("base_metadata") or {}
         fetch_analytics_by_state = base_metadata.get("fetch_analytics_by_state") or metadata.get("fetch_analytics_by_state") or {}
+        if isinstance(fetch_analytics_by_state, dict):
+            fetch_analytics_by_state = _normalize_fetch_analytics_by_state(fetch_analytics_by_state)
+        if self.corpus.key == "state_admin_rules" and isinstance(fetch_analytics_by_state, dict):
+            fetch_analytics_by_state = _merge_admin_agentic_fetch_analytics(
+                fetch_analytics_by_state,
+                agentic_report=metadata.get("agentic_report") or {},
+            )
 
         quality_by_state: Dict[str, Dict[str, Any]] = {}
         present_states: set[str] = set()
@@ -1900,7 +1994,7 @@ class StateLawsAgenticDaemon:
                 "candidate_hosts_without_rules": candidate_hosts_without_rules,
                 "document_gap": state_code in document_gap_states,
             }
-            if candidate_urls > fetched_rules or missing_seed_hosts or candidate_hosts_without_rules or state_code in document_gap_states:
+            if missing_seed_hosts or candidate_hosts_without_rules or state_code in document_gap_states:
                 weak_states.append(state_code)
             by_state[state_code] = entry
 

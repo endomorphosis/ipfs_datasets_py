@@ -167,6 +167,24 @@ _FORUM_PAGE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_CA_OAL_CCR_LANDING_TEXT_RE = re.compile(
+    r"barclays,\s+a\s+division\s+of\s+thomson-reuters|documents\s+in\s+sequence|pop-up blocker/westlaw|"
+    r"quick\s+links|recent\s+actions\s+taken\s+by\s+oal\s+on\s+regulations",
+    re.IGNORECASE,
+)
+
+_CA_WESTLAW_TOC_TEXT_RE = re.compile(
+    r"skip\s+to\s+navigation|skip\s+to\s+main\s+content|home\s+updates\s+search\s+help|"
+    r"privacy\s+accessibility\s+california\s+office\s+of\s+administrative\s+law",
+    re.IGNORECASE,
+)
+
+_AZ_RULEMAKING_META_TEXT_RE = re.compile(
+    r"title\s+1\.\s+rules\s+and\s+the\s+rulemaking\s+process|"
+    r"secretary of state\s*[\-\u2013]?\s*rules and rulemaking",
+    re.IGNORECASE,
+)
+
 _VT_NON_RULE_PORTAL_PATH_RE = re.compile(
     r"/SOS/rules/(?:index\.php|search\.php|rssFeed\.php|calendar\.php|subscribe\.php|contact\.php|iCalendar\.php)$|"
     r"/secretary-of-state-services/apa-rules(?:/.*)?$",
@@ -253,6 +271,11 @@ _AZ_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
     re.IGNORECASE,
 )
 
+_AZLEG_NON_ADMIN_SEED_PATH_RE = re.compile(
+    r"^/(?:|rules|regulations|administrative-code|code-of-regulations|agency-rules|policies|departments|bbapc/background/rules-bba)/?$",
+    re.IGNORECASE,
+)
+
 _CA_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
     r"^/(?:|rules|regulations|administrative-code|code-of-regulations|agency-rules|policies|faces/(?:codes|codes_displaytext|codedisplayexpand|codes_displayexpandedbranch)\.xhtml)/?$",
     re.IGNORECASE,
@@ -293,6 +316,7 @@ _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"(?:^|https?://)(?:rules\.mt\.gov/browse/collections(?:/|$)|sdlegislature\.gov/Rules/Administrative(?:/|$)|"
     r"rules\.utah\.gov(?:/(?:utah-administrative-code|publications/(?:administrative-rules-register|code-updates))?)?(?:/|$)|"
     r"adminrules\.utah\.gov(?:/(?:public/(?:home|search)(?:/.*)?|api/public/searchRuleDataTotal/[^/]+/Current%20Rules))?(?:/|$)|"
+    r"govt\.westlaw\.com/calregs/(?:Index|Browse/Home/California/CaliforniaCodeofRegulations)(?:\?|/|$)|"
     r"iar\.iga\.in\.gov/code(?:/(?:current|2006))?(?:/|$)|"
     r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
     r"azsos\.gov/rules(?:/arizona-administrative-code)?(?:/|$)|"
@@ -347,6 +371,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://ark.org/rules_and_regs/index.php/rules/search/new",
     ],
     "CA": [
+        "https://govt.westlaw.com/calregs/Index?transitionType=Default&contextData=%28sc.Default%29",
+        "https://govt.westlaw.com/calregs/Index",
         "https://oal.ca.gov/publications/ccr/",
         "https://oal.ca.gov/publications/",
         "http://carules.elaws.us/search/allcode",
@@ -1110,6 +1136,10 @@ def _is_non_admin_seed_url(url: str) -> bool:
     path = parsed.path or "/"
     normalized_path = path.rstrip("/") or "/"
     query = parsed.query or ""
+    if host == "legislature.az.gov":
+        return True
+    if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
+        return True
     if host == "leginfo.legislature.ca.gov":
         if _CA_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
             return True
@@ -1124,6 +1154,7 @@ def _score_candidate_url(url: str) -> int:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
     path = parsed.path or ""
+    normalized_path = path.rstrip("/") or "/"
     if _ADMIN_RULE_TEXT_RE.search(value):
         score += 3
     if ".gov" in value or ".us" in value:
@@ -1160,11 +1191,43 @@ def _score_candidate_url(url: str) -> int:
         score -= 6
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         score += 8
+    if host == "govt.westlaw.com" and path.lower().startswith("/calregs/browse/home/california/californiacodeofregulations"):
+        score += 6
+    if host == "govt.westlaw.com" and normalized_path.lower() == "/calregs/index":
+        score += 4
+    if host == "carules.elaws.us" and path.lower().startswith("/code/"):
+        score += 5
+    if host == "oal.ca.gov" and normalized_path.lower() in {"/publications", "/publications/ccr"}:
+        score -= 6
+    if host == "carules.elaws.us" and normalized_path.lower() == "/search/allcode":
+        score -= 8
     return score
 
 
 def _url_key(url: str) -> str:
     return str(url or "").strip().lower().rstrip("/")
+
+
+def _gap_summary_host_key(host: str) -> str:
+    raw_value = str(host or "").strip()
+    if not raw_value:
+        return ""
+
+    parsed = urlparse(raw_value if "://" in raw_value or raw_value.startswith("//") else f"//{raw_value}")
+    value = str(parsed.netloc or raw_value).strip().lower().strip(".")
+    normalized_path = (parsed.path or "/").rstrip("/") or "/"
+
+    if value in {"apps.azsos.gov", "www.azsos.gov"}:
+        return "azsos.gov"
+    if value in {"adminrules.utah.gov", "rules.utah.gov", "le.utah.gov", "legislature.ut.gov"}:
+        return "adminrules.utah.gov"
+    if value == "oal.ca.gov" and normalized_path in {"/publications", "/publications/ccr"}:
+        return "govt.westlaw.com"
+    if value == "carules.elaws.us" and normalized_path == "/search/allcode":
+        return "govt.westlaw.com"
+    if value.startswith("www."):
+        return value[4:]
+    return value
 
 
 def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = "") -> int:
@@ -1354,6 +1417,7 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     host = parsed.netloc.lower()
     path = parsed.path or ""
     normalized_path = path.rstrip("/") or "/"
+    normalized_path_lower = normalized_path.lower()
     query = parsed.query or ""
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
         return True
@@ -1361,6 +1425,18 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "legislature.az.gov" and _AZ_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
         return True
+    if host == "oal.ca.gov" and normalized_path in {"/publications", "/publications/ccr"} and _CA_OAL_CCR_LANDING_TEXT_RE.search(hay):
+        return True
+    if host == "carules.elaws.us" and normalized_path == "/search/allcode":
+        return True
+    if host == "govt.westlaw.com" and normalized_path_lower == "/calregs/index":
+        title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
+        if title_hits >= 8 and _CA_WESTLAW_TOC_TEXT_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
+            return True
+    if host == "govt.westlaw.com" and normalized_path_lower == "/calregs/browse/home/california/californiacodeofregulations":
+        division_hits = len(re.findall(r"\bdivision\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE))
+        if division_hits >= 2 and _CA_WESTLAW_TOC_TEXT_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
+            return True
     if host == "ars.apps.lara.state.mi.us" and _MI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
         return True
     if host == "rules.sos.ri.gov" and _RI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
@@ -1380,6 +1456,8 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     if host == "rules.utah.gov" and (_UT_NON_RULE_NEWS_PATH_RE.search(path) or _UT_NON_RULE_NEWS_TEXT_RE.search(hay)):
         return True
     if host == "rules.utah.gov" and (_UT_BULLETIN_NEWS_TITLE_RE.search(title_value) or _UT_BULLETIN_PDF_PATH_RE.search(path)):
+        return True
+    if host == "apps.azsos.gov" and _AZ_RULEMAKING_META_TEXT_RE.search(hay):
         return True
     if _NON_RULE_ADMIN_LANDING_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
         return True
@@ -1632,6 +1710,14 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
         # index as JSON and is enough to bootstrap substantive detail pages.
         search_term = "R"
 
+    effective_limit = max(1, int(limit))
+    if len(search_term) <= 1:
+        # Broad single-letter Utah bootstrap queries can be large and slow.
+        # Keep the initial detail backlog intentionally small so bounded daemon
+        # runs can move on to rule fetches instead of spending the whole state
+        # budget enumerating the public search index.
+        effective_limit = min(effective_limit, 8)
+
     encoded_search_term = quote(search_term, safe="")
     api_url = f"https://adminrules.utah.gov/api/public/searchRuleDataTotal/{encoded_search_term}/Current%20Rules"
     out: List[str] = []
@@ -1671,7 +1757,7 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
                     if key and key not in seen:
                         seen.add(key)
                         out.append(candidate_url)
-                        if len(out) >= max(1, int(limit)):
+                        if len(out) >= effective_limit:
                             return out
     return out
 
@@ -3251,14 +3337,34 @@ async def _agentic_discover_admin_state_blocks(
         # Seed them immediately so bounded runs can hit substantive rule pages
         # without waiting for slower search/index fetches to expand first.
         if state_code == "UT":
-            for seed_url in ordered_seed_urls[:4]:
+            utah_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 8))
+            utah_bootstrap_seeds = sorted(
+                ordered_seed_urls[:6],
+                key=lambda value: (
+                    1
+                    if urlparse(value).path.startswith("/api/public/searchRuleDataTotal/")
+                    else 0
+                ),
+                reverse=True,
+            )
+            for seed_url in utah_bootstrap_seeds:
+                parsed_seed = urlparse(seed_url)
+                if parsed_seed.netloc.lower() != "adminrules.utah.gov":
+                    continue
+                if not (
+                    parsed_seed.path.startswith("/public/search")
+                    or parsed_seed.path.startswith("/api/public/searchRuleDataTotal/")
+                ):
+                    continue
                 for rule_url in _candidate_utah_rule_urls_from_public_api(
                     url=seed_url,
-                    limit=24,
+                    limit=utah_seed_limit,
                 ):
                     candidate_urls.append(rule_url)
                     utah_api_rule_urls.append(rule_url)
                     source_breakdown["utah_public_api"] = int(source_breakdown.get("utah_public_api", 0)) + 1
+                if utah_api_rule_urls:
+                    break
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_direct_detail_candidate_url(url)]
 
@@ -3315,13 +3421,29 @@ async def _agentic_discover_admin_state_blocks(
                 pass
 
         if (time.monotonic() - state_start) >= per_state_budget_s:
+            timed_out_candidate_samples: List[str] = []
+            for timed_out_url in candidate_urls:
+                if not str(timed_out_url or "").strip().startswith(("http://", "https://")):
+                    continue
+                if timed_out_url in timed_out_candidate_samples:
+                    continue
+                timed_out_candidate_samples.append(timed_out_url)
+                if len(timed_out_candidate_samples) >= 16:
+                    break
             report[state_code] = {
-                "candidate_urls": 0,
+                "candidate_urls": len(
+                    {
+                        _url_key(url)
+                        for url in candidate_urls
+                        if str(url or "").strip().startswith(("http://", "https://"))
+                    }
+                ),
                 "inspected_urls": 0,
                 "expanded_urls": 0,
                 "fetched_rules": 0,
                 "source_breakdown": source_breakdown,
                 "timed_out": True,
+                "top_candidate_urls": timed_out_candidate_samples,
             }
             blocks.append(
                 {
@@ -4205,21 +4327,43 @@ async def _agentic_discover_admin_state_blocks(
                 "rule_hits": int(parallel_prefetch_rule_hits),
             },
             "gap_summary": {
-                "seed_hosts": sorted({urlparse(url).netloc.lower() for url in seed_urls if urlparse(url).netloc}),
-                "candidate_hosts": sorted({urlparse(url).netloc.lower() for url, _score in ranked_urls if urlparse(url).netloc}),
-                "rule_hosts": sorted([host for host, count in rules_by_host.items() if int(count) > 0]),
+                "seed_hosts": sorted(
+                    {
+                        _gap_summary_host_key(url)
+                        for url in seed_urls
+                        if urlparse(url).netloc
+                    }
+                ),
+                "candidate_hosts": sorted(
+                    {
+                        _gap_summary_host_key(url)
+                        for url, _score in ranked_urls
+                        if urlparse(url).netloc
+                    }
+                ),
+                "rule_hosts": sorted(
+                    {
+                        _gap_summary_host_key(host)
+                        for host, count in rules_by_host.items()
+                        if int(count) > 0
+                    }
+                ),
                 "missing_seed_hosts": sorted(
                     {
-                        urlparse(url).netloc.lower()
+                        _gap_summary_host_key(url)
                         for url in seed_urls
-                        if urlparse(url).netloc and urlparse(url).netloc.lower() not in visited_hosts
+                        if urlparse(url).netloc
+                        and _gap_summary_host_key(url)
+                        not in {_gap_summary_host_key(host) for host in visited_hosts}
                     }
                 ),
                 "candidate_hosts_without_rules": sorted(
                     {
-                        urlparse(url).netloc.lower()
+                        _gap_summary_host_key(url)
                         for url, _score in ranked_urls
-                        if urlparse(url).netloc and rules_by_host.get(urlparse(url).netloc.lower(), 0) == 0
+                        if urlparse(url).netloc
+                        and _gap_summary_host_key(url)
+                        not in {_gap_summary_host_key(host) for host, count in rules_by_host.items() if int(count) > 0}
                     }
                 )[:12],
             },

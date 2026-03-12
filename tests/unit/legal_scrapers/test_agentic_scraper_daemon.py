@@ -1297,6 +1297,189 @@ async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_ignores_candidate_surplus_without_real_gap(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        assert kwargs["states"] == ["AZ"]
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "statutes": [
+                        {
+                            "state_code": "AZ",
+                            "section_number": "A1",
+                            "section_name": "Arizona Administrative Code",
+                            "full_text": "Arizona Administrative Code substantive rule text with section R1-1-101.",
+                            "structured_data": {
+                                "type": "regulation",
+                                "jsonld": {
+                                    "@type": "Legislation",
+                                    "identifier": "AZ-AGENTIC-A1",
+                                    "sectionNumber": "A1",
+                                    "name": "Arizona Administrative Code",
+                                    "text": "Arizona Administrative Code substantive rule text with section R1-1-101.",
+                                },
+                            },
+                        }
+                    ],
+                    "rules_count": 1,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {"attempted": 0, "success": 0, "fallback_count": 0, "providers": {}}
+                    }
+                },
+                "agentic_report": {
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 7,
+                            "inspected_urls": 1,
+                            "expanded_urls": 0,
+                            "fetched_rules": 1,
+                            "gap_summary": {
+                                "missing_seed_hosts": [],
+                                "candidate_hosts_without_rules": [],
+                            },
+                        }
+                    }
+                },
+                "phase_timings": {
+                    "agentic_discovery_seconds": 5.0,
+                    "total_seconds": 5.5,
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=11,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    assert latest_cycle["diagnostics"]["gap_analysis"]["weak_states"] == []
+    assert "state-gap-analysis:AZ" not in latest_cycle["critic"]["issues"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_normalizes_fetch_success_without_attempts(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        assert kwargs["states"] == ["CA"]
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "CA",
+                    "state_name": "California",
+                    "statutes": [
+                        {
+                            "state_code": "CA",
+                            "section_number": "1",
+                            "section_name": "California Administrative Rule",
+                            "full_text": "California administrative rule text with section 100 and authority citations.",
+                            "structured_data": {
+                                "type": "regulation",
+                                "jsonld": {
+                                    "@type": "Legislation",
+                                    "identifier": "CA-1",
+                                    "sectionNumber": "1",
+                                    "name": "California Administrative Rule",
+                                    "text": "California administrative rule text with section 100 and authority citations.",
+                                },
+                                "citations": {"official": ["1 CCR 100"]},
+                            },
+                        },
+                        {
+                            "state_code": "CA",
+                            "section_number": "2",
+                            "section_name": "California Administrative Rule 2",
+                            "full_text": "California administrative rule text with section 200 and authority citations.",
+                            "structured_data": {
+                                "type": "regulation",
+                                "jsonld": {
+                                    "@type": "Legislation",
+                                    "identifier": "CA-2",
+                                    "sectionNumber": "2",
+                                    "name": "California Administrative Rule 2",
+                                    "text": "California administrative rule text with section 200 and authority citations.",
+                                },
+                                "citations": {"official": ["2 CCR 200"]},
+                            },
+                        },
+                    ],
+                    "rules_count": 2,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "CA": {"attempted": 0, "success": 2, "fallback_count": 0, "providers": {}}
+                    }
+                },
+                "agentic_report": {
+                    "per_state": {
+                        "CA": {
+                            "candidate_urls": 2,
+                            "inspected_urls": 0,
+                            "expanded_urls": 0,
+                            "fetched_rules": 0,
+                            "gap_summary": {
+                                "missing_seed_hosts": [],
+                                "candidate_hosts_without_rules": [],
+                            },
+                        }
+                    }
+                },
+                "phase_timings": {
+                    "agentic_discovery_seconds": 3.0,
+                    "total_seconds": 3.5,
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["CA"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=11,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    fetch = latest_cycle["diagnostics"]["fetch"]
+    assert fetch["attempted"] == 2
+    assert fetch["success"] == 2
+    assert fetch["success_ratio"] == 1.0
+    assert fetch["no_attempt_states"] == []
+    assert "no-attempt-states:CA" not in latest_cycle["critic"]["issues"]
+    assert "fetch-success-low" not in latest_cycle["critic"]["issues"]
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_surfaces_cloudflare_availability_diagnostics(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -1402,6 +1585,98 @@ async def test_state_admin_rules_agentic_daemon_surfaces_browser_challenge_recov
     assert recovery["cloudflare_browser_challenge_detected"] is True
     assert recovery["cloudflare_record_status"] == "errored"
     assert recovery["cloudflare_job_status"] == "completed"
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_credits_agentic_fetch_analytics(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        assert kwargs["states"] == ["AZ"]
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "statutes": [
+                        {
+                            "state_code": "AZ",
+                            "section_number": "A1",
+                            "section_name": "Arizona Administrative Code",
+                            "full_text": "Arizona Administrative Code substantive rule text with section R1-1-101.",
+                            "structured_data": {
+                                "type": "regulation",
+                                "jsonld": {
+                                    "@type": "Legislation",
+                                    "identifier": "AZ-AGENTIC-A1",
+                                    "sectionNumber": "A1",
+                                    "name": "Arizona Administrative Code",
+                                    "text": "Arizona Administrative Code substantive rule text with section R1-1-101.",
+                                },
+                                "citations": {"official": ["AZ Admin Rule A1"]},
+                            },
+                        }
+                    ],
+                    "rules_count": 1,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 0,
+                            "success": 0,
+                            "fallback_count": 0,
+                            "providers": {},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 4,
+                            "inspected_urls": 1,
+                            "expanded_urls": 0,
+                            "fetched_rules": 1,
+                            "parallel_prefetch": {"attempted": 4, "successful": 2, "rule_hits": 1},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["azsos.gov"],
+                                "candidate_hosts_without_rules": ["azsos.gov"],
+                            },
+                        }
+                    }
+                },
+                "phase_timings": {
+                    "agentic_discovery_seconds": 4.0,
+                    "total_seconds": 4.5,
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=11,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    fetch = latest_cycle["diagnostics"]["fetch"]
+    assert fetch["attempted"] == 1
+    assert fetch["success"] == 1
+    assert fetch["success_ratio"] == 1.0
+    assert fetch["no_attempt_states"] == []
+    assert "fetch-success-low" not in latest_cycle["critic"]["issues"]
+    assert "no-attempt-states:AZ" not in latest_cycle["critic"]["issues"]
 
 
 @pytest.mark.asyncio
