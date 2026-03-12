@@ -110,12 +110,46 @@ def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
     assert preview["preview"] is True
     assert preview["corpus"] == "state_admin_rules"
     assert preview["critic_score"] == 0.975
-    assert len(preview["commands"]) == 4
+    assert len(preview["commands"]) == 5
     assert preview["commands"][0]["stage"] == "merge"
     assert "merge_state_admin_runs.py" in preview["commands"][0]["command"]
     assert "--state CA" in preview["commands"][0]["command"]
-    assert preview["commands"][3]["stage"] == "publish"
-    assert "release state_admin_rules" in preview["commands"][3]["command"]
+    assert preview["commands"][1]["stage"] == "clean"
+    assert "clean_state_admin_canonical.py" in preview["commands"][1]["command"]
+    assert preview["commands"][2]["stage"] == "parquet"
+    assert "_cleaned/state_admin_rules_jsonld" in preview["commands"][2]["command"]
+    assert preview["commands"][4]["stage"] == "publish"
+    assert "release state_admin_rules" in preview["commands"][4]["command"]
+    assert preview["artifacts"]["clean_output_dir"].endswith("_cleaned")
+
+
+def test_state_admin_rules_release_plan_routes_parquet_through_clean_bundle(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ", "CA"],
+            output_dir=str(tmp_path),
+            post_cycle_release=daemon_module.PostCycleReleaseConfig(
+                enabled=True,
+                dry_run=True,
+                workspace_root=str(tmp_path),
+                python_bin="/usr/bin/python3",
+            ),
+        )
+    )
+
+    plan = daemon.preview_post_cycle_release_plan(cycle_index=3, critic_score=0.95)
+
+    assert plan["commands"][0]["stage"] == "merge"
+    assert "--include-corpus-jsonl" in plan["commands"][0]["command"]
+    assert "--state AZ --state CA" in plan["commands"][0]["command"]
+    assert plan["commands"][1]["stage"] == "clean"
+    assert '--input-dir "' in plan["commands"][1]["command"]
+    assert plan["artifacts"]["clean_output_dir"].endswith("_cleaned")
+    assert plan["artifacts"]["jsonld_dir"].startswith(plan["artifacts"]["clean_output_dir"])
+    assert plan["artifacts"]["parquet_dir"].startswith(plan["artifacts"]["clean_output_dir"])
 
 
 def test_state_admin_rules_agentic_daemon_select_tactic_biases_priority_state_recommendations(tmp_path):
@@ -151,6 +185,62 @@ def test_state_admin_rules_agentic_daemon_select_tactic_biases_priority_state_re
     selected = daemon._select_tactic()
 
     assert selected.name == "document_first"
+
+
+def test_state_admin_rules_agentic_daemon_untried_selection_honors_priority_action_plan(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            random_seed=7,
+        )
+    )
+
+    daemon._state["recommended_tactics"] = [
+        "archival_first",
+        "discovery_first",
+        "render_first",
+        "precision_first",
+        "document_first",
+        "router_assisted",
+    ]
+    daemon._state["priority_states"] = ["AZ"]
+    daemon._state["state_action_plan"] = {
+        "AZ": {
+            "priority_score": 17,
+            "reasons": [
+                "document_candidate_gap",
+                "document_recovery_stalled",
+                "document_prefetch_underperforming",
+            ],
+            "recommended_tactics": [
+                "document_first",
+                "render_first",
+                "router_assisted",
+                "archival_first",
+                "discovery_first",
+            ],
+            "query_hints": ["AZ administrative code pdf"],
+        }
+    }
+    daemon._state["tactics"] = {
+        "archival_first": {"trials": 1, "total_score": 0.1, "best_score": 0.1},
+        "document_first": {"trials": 0, "total_score": 0.0, "best_score": 0.0},
+        "render_first": {"trials": 0, "total_score": 0.0, "best_score": 0.0},
+        "router_assisted": {"trials": 0, "total_score": 0.0, "best_score": 0.0},
+        "discovery_first": {"trials": 0, "total_score": 0.0, "best_score": 0.0},
+        "precision_first": {"trials": 0, "total_score": 0.0, "best_score": 0.0},
+    }
+
+    selection = daemon._select_tactic_with_context()
+
+    assert selection["profile"].name == "document_first"
+    assert selection["details"]["mode"] == "priority_untried"
+    assert selection["details"]["priority_recommended_tactics"][0] == "document_first"
 
 
 def test_state_admin_rules_agentic_daemon_select_tactic_escalates_after_repeated_document_gap_cycles(tmp_path):
@@ -431,6 +521,8 @@ async def test_state_admin_rules_agentic_daemon_runs_parallel_admin_assist(monke
     assist = summary["latest_cycle"]["parallel_admin_assist"]
     assert captured["states"][0] == "AZ"
     assert set(captured["states"]).issubset({"AZ", "CA"})
+    assert "https://azsos.gov/rules/title-18.pdf" in captured["seed_urls_by_state"]["AZ"]
+    assert "https://apps.azsos.gov/public_services/title_18/1-18.rtf" in captured["seed_urls_by_state"]["AZ"]
     assert "AZ" in assist["targeted_states"]
     assert assist["status"] == "completed"
     assert assist["discovered_rules_total"] == 1

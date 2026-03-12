@@ -2968,20 +2968,22 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
         retry_zero_rule_states=True,
         agentic_fallback_enabled=False,
         per_state_retry_attempts=3,
+        per_state_timeout_seconds=90.0,
         require_substantive_rule_text=True,
     )
 
     assert result["status"] in {"success", "partial_success"}
     assert len(scrape_calls) == 2
+    expected_delegated_timeout = float(result["metadata"]["state_laws_base_per_state_timeout_seconds"])
     for call in scrape_calls:
         assert call["per_state_retry_attempts"] == 0
         assert call["retry_zero_statute_states"] is False
-        assert call["per_state_timeout_seconds"] == 45.0
+        assert call["per_state_timeout_seconds"] == expected_delegated_timeout
     assert result["metadata"]["per_state_retry_attempts"] == 3
     assert result["metadata"]["state_laws_internal_retry_attempts"] == 0
     assert result["metadata"]["state_laws_internal_retry_zero_statute_states"] is False
-    assert result["metadata"]["state_laws_base_per_state_timeout_seconds"] == 45.0
-    assert result["metadata"]["state_laws_fallback_per_state_timeout_seconds"] == 45.0
+    assert result["metadata"]["state_laws_base_per_state_timeout_seconds"] == expected_delegated_timeout
+    assert result["metadata"]["state_laws_fallback_per_state_timeout_seconds"] == expected_delegated_timeout
     assert result["metadata"]["agentic_per_state_budget_seconds"] == 60.0
 
 

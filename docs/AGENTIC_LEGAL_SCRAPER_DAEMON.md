@@ -27,6 +27,8 @@ For `state_admin_rules`, the daemon now also carries richer per-state document r
 
 That telemetry now also feeds back into the critic. When the daemon can see that candidate documents are being discovered but recovery is still stalled, it emits a more specific `document-recovery-stalled:STATE` issue, increases pressure toward `render_first` and `router_assisted`, and expands state query hints with host-specific `filetype:pdf` and `filetype:rtf` searches so the next cycle can narrow in on the failing document host.
 
+For `state_admin_rules`, the daemon can also run a `parallel_admin_assist` stage after router review. That stage sends the current weak states through the enhanced state-admin orchestrator, reuses the existing processor-backed PDF and RTF recovery helpers, and merges any discovered rules, host gaps, and tactic recommendations back into the next critic cycle.
+
 The workspace wrapper now mirrors that at the shell level: successful runs emit a concise stderr summary with the selected tactic, selection mode, priority states, cycle state order, and any stalled document recovery states surfaced by the critic. The pending-retry reporter includes the latest `tactic_selection`, `cycle_state_order`, and `stalled_document_recovery_states` fields when `latest_summary.json` is present.
 
 ## Basic Usage
@@ -82,6 +84,21 @@ PYTHONPATH=src .venv/bin/python -m ipfs_datasets_py.processors.legal_scrapers.st
 
 Use `--scrape-timeout-seconds` for bounded recovery runs when you want a cycle to serialize an error result and checkpoints instead of hanging indefinitely in scrape.
 
+Long-running state-admin collection with Cloudflare crawl, router review, and the supplemental weak-state assist pass:
+
+```bash
+cd /home/barberb/municipal_scrape_workspace
+LEGAL_DAEMON_CORPUS=state_admin_rules \
+LEGAL_DAEMON_ENABLE_ROUTER_REVIEW=1 \
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_ENABLED=1 \
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_STATE_LIMIT=8 \
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_MAX_URLS_PER_DOMAIN=10 \
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_TIMEOUT_SECONDS=180 \
+LEGAL_SCRAPER_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS=120 \
+LEGAL_SCRAPER_CLOUDFLARE_CRAWL_MAX_RATE_LIMIT_WAIT_SECONDS=300 \
+bash scripts/ops/legal_data/run_agentic_legal_daemon.sh
+```
+
 ## Post-Cycle Release Automation
 
 Print a release plan without running a scrape cycle:
@@ -111,7 +128,7 @@ PYTHONPATH=src .venv/bin/python -m ipfs_datasets_py.processors.legal_scrapers.st
   --post-cycle-release-python-bin /home/barberb/municipal_scrape_workspace/.venv/bin/python
 ```
 
-Append a publish hook after merge, parquet, and embeddings:
+Append a publish hook after merge, corpus-specific cleanup, parquet, and embeddings:
 
 ```bash
 cd /home/barberb/municipal_scrape_workspace/ipfs_datasets_py
@@ -124,9 +141,11 @@ PYTHONPATH=src .venv/bin/python -m ipfs_datasets_py.processors.legal_scrapers.st
   --post-cycle-release-publish-command 'LEGAL_PUBLISH_CORPUS={corpus_key} LEGAL_PUBLISH_LOCAL_DIR="{parquet_dir}" bash /home/barberb/municipal_scrape_workspace/scripts/ops/legal_data/run_publish_canonical_legal_corpus.sh'
 ```
 
+For `state_admin_rules`, the release planner now inserts `clean_state_admin_canonical.py` between merge and parquet conversion, and downstream parquet and embeddings artifacts are produced from the cleaned bundle rather than the raw merged rows.
+
 Available release controls:
 
-- `--post-cycle-release`: enable merge/parquet/embeddings automation.
+- `--post-cycle-release`: enable merge/cleanup/parquet/embeddings automation.
 - `--print-post-cycle-release-plan`: emit the release command plan without scraping.
 - `--post-cycle-release-dry-run`: emit the command plan without executing it.
 - `--post-cycle-release-min-score`: require a minimum critic score before release.
@@ -150,6 +169,10 @@ The wrapper script recognizes these variables:
 - `LEGAL_DAEMON_ARCHIVE_WARMUP_URLS`
 - `LEGAL_DAEMON_PER_STATE_TIMEOUT_SECONDS`
 - `LEGAL_DAEMON_SCRAPE_TIMEOUT_SECONDS`
+- `LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_ENABLED`
+- `LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_STATE_LIMIT`
+- `LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_MAX_URLS_PER_DOMAIN`
+- `LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_TIMEOUT_SECONDS`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_CANDIDATES_PER_STATE`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_FETCH_PER_STATE`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_RESULTS_PER_DOMAIN`
@@ -217,6 +240,10 @@ LEGAL_DAEMON_MAX_CYCLES=1
 LEGAL_DAEMON_MAX_STATUTES=25
 LEGAL_DAEMON_PER_STATE_TIMEOUT_SECONDS=45
 LEGAL_DAEMON_SCRAPE_TIMEOUT_SECONDS=180
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_ENABLED=1
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_STATE_LIMIT=6
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_MAX_URLS_PER_DOMAIN=10
+LEGAL_DAEMON_ADMIN_PARALLEL_ASSIST_TIMEOUT_SECONDS=180
 CLOUDFLARE_ACCOUNT_ID=your_account_id
 CLOUDFLARE_API_TOKEN=your_browser_rendering_token
 LEGAL_SCRAPER_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS=120
@@ -321,6 +348,8 @@ The daemon writes:
 - `cycles/cycle_XXXX_document_gaps.json`: per-cycle compact document-gap artifact for operator review.
 - `latest_router_assist.json`: latest router-assisted review artifact, including LLM guidance, embeddings-based tactic ranking, and optional IPFS persistence metadata.
 - `cycles/cycle_XXXX_router_assist.json`: per-cycle router-assisted review artifact.
+- `latest_parallel_admin_assist.json`: latest weak-state supplemental discovery artifact for `state_admin_rules`.
+- `cycles/cycle_XXXX_parallel_admin_assist.json`: per-cycle parallel admin assist artifact.
 
 For `state_admin_rules`, the compact document-gap artifacts surface the states that still have candidate PDF or RTF URLs, the top candidate document URLs, per-format processed counts, and host-level gap hints from the agentic report.
 

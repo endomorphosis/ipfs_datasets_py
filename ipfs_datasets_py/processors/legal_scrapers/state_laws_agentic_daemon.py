@@ -1690,14 +1690,21 @@ class StateLawsAgenticDaemon:
 
         for state_code in target_states:
             state_name = str(_ADMIN_US_STATES.get(state_code, state_code))
-            seed_urls_by_state[state_code] = _extract_seed_urls_for_state(state_code, state_name)
+            seed_urls = list(_extract_seed_urls_for_state(state_code, state_name) or [])
             state_report = agentic_per_state.get(state_code) if isinstance(agentic_per_state, dict) else None
             if isinstance(state_report, dict):
+                for candidate_url in list(state_report.get("top_candidate_urls") or []):
+                    if self._document_format_from_url(candidate_url) not in {"pdf", "rtf"}:
+                        continue
+                    normalized_url = str(candidate_url or "").strip()
+                    if normalized_url and normalized_url not in seed_urls:
+                        seed_urls.append(normalized_url)
                 candidate_domains[state_code] = [
                     str(item)
                     for item in list(state_report.get("top_candidate_urls") or [])
                     if str(item).strip()
                 ]
+            seed_urls_by_state[state_code] = seed_urls
 
         config = ParallelStateDiscoveryConfig(
             max_state_workers=max(1, min(len(target_states), int(self.config.admin_parallel_assist_state_limit or 1))),
@@ -1972,13 +1979,19 @@ class StateLawsAgenticDaemon:
         canonical = get_canonical_legal_corpus(self.corpus.key)
         cycle_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         merge_output_dir = workspace_root / "artifacts" / self.corpus.key / f"canonical_merged_daemon_cycle_{cycle_index:04d}_{cycle_stamp}"
-        jsonld_dir = merge_output_dir / canonical.jsonld_dir_name
-        parquet_dir = merge_output_dir / canonical.parquet_dir_name
+        clean_output_dir = merge_output_dir.parent / f"{merge_output_dir.name}_cleaned"
+        if self.corpus.key == "state_admin_rules":
+            jsonld_dir = clean_output_dir / canonical.jsonld_dir_name
+            parquet_dir = clean_output_dir / canonical.parquet_dir_name
+        else:
+            jsonld_dir = merge_output_dir / canonical.jsonld_dir_name
+            parquet_dir = merge_output_dir / canonical.parquet_dir_name
 
         context = {
             "workspace_root": str(workspace_root),
             "python_bin": shlex.quote(str(python_bin)),
             "merge_output_dir": str(merge_output_dir),
+            "clean_output_dir": str(clean_output_dir),
             "jsonld_dir": str(jsonld_dir),
             "parquet_dir": str(parquet_dir),
             "combined_parquet": str(parquet_dir / canonical.combined_parquet_filename),
@@ -2013,6 +2026,7 @@ class StateLawsAgenticDaemon:
             "workspace_root": workspace_root,
             "artifacts": {
                 "merge_output_dir": str(merge_output_dir),
+                "clean_output_dir": str(clean_output_dir) if self.corpus.key == "state_admin_rules" else None,
                 "jsonld_dir": str(jsonld_dir),
                 "parquet_dir": str(parquet_dir),
                 "combined_parquet": str(parquet_dir / canonical.combined_parquet_filename),
@@ -2052,6 +2066,11 @@ class StateLawsAgenticDaemon:
                     base_prefix
                     + " scripts/ops/legal_data/merge_state_admin_runs.py"
                     + f' --input-root {shlex.quote(canonical_local_root)} --input-root artifacts/state_admin_rules --output-dir "{{merge_output_dir}}" --include-corpus-jsonl {{merge_state_args}}',
+                ),
+                (
+                    "clean",
+                    base_prefix
+                    + ' scripts/ops/legal_data/clean_state_admin_canonical.py --input-dir "{merge_output_dir}" --output-dir "{clean_output_dir}"',
                 ),
                 (
                     "parquet",
@@ -2111,21 +2130,50 @@ class StateLawsAgenticDaemon:
     def _select_tactic(self) -> ScraperTacticProfile:
         return self._select_tactic_with_context()["profile"]
 
+    def _priority_recommended_tactics(self, profiles: Dict[str, ScraperTacticProfile]) -> List[str]:
+        state_action_plan = self._state.get("state_action_plan") or {}
+        if not isinstance(state_action_plan, dict) or not state_action_plan:
+            return []
+
+        ordered_entries: List[tuple[int, str, Dict[str, Any]]] = []
+        for state_code in list(self._state.get("priority_states") or []):
+            normalized_state = str(state_code or "").upper().strip()
+            entry = state_action_plan.get(normalized_state)
+            if not isinstance(entry, dict):
+                continue
+            priority_score = int(entry.get("priority_score", 0) or 0)
+            ordered_entries.append((priority_score, normalized_state, entry))
+
+        ordered_entries.sort(key=lambda item: (-item[0], item[1]))
+
+        prioritized: List[str] = []
+        for priority_score, _state_code, entry in ordered_entries:
+            if priority_score <= 0:
+                continue
+            for tactic_name in list(entry.get("recommended_tactics") or []):
+                normalized_tactic = str(tactic_name or "").strip()
+                if normalized_tactic in profiles and normalized_tactic not in prioritized:
+                    prioritized.append(normalized_tactic)
+        return prioritized
+
     def _select_tactic_with_context(self) -> Dict[str, Any]:
         profiles = self.config.tactic_profiles
         recommended = [name for name in list(self._state.get("recommended_tactics") or []) if name in profiles]
-        ordered_names = recommended + [name for name in profiles if name not in recommended]
+        priority_recommended = self._priority_recommended_tactics(profiles)
+        ordered_names = priority_recommended + recommended + [name for name in profiles if name not in priority_recommended and name not in recommended]
         recent_issue_counts = self._recent_issue_counts()
 
         stats = self._state.get("tactics") or {}
         untried = [name for name in ordered_names if int((stats.get(name) or {}).get("trials", 0) or 0) <= 0]
         if untried:
             selected_name = untried[0]
+            mode = "priority_untried" if selected_name in priority_recommended else "untried"
             return {
                 "profile": profiles[selected_name],
                 "details": {
-                    "mode": "untried",
+                    "mode": mode,
                     "selected_tactic": selected_name,
+                    "priority_recommended_tactics": priority_recommended,
                     "recommended_tactics": recommended,
                     "priority_states": list(self._state.get("priority_states") or []),
                     "recent_issue_counts": recent_issue_counts,
@@ -2150,6 +2198,7 @@ class StateLawsAgenticDaemon:
                 "details": {
                     "mode": "explore",
                     "selected_tactic": selected_name,
+                    "priority_recommended_tactics": priority_recommended,
                     "recommended_tactics": recommended,
                     "priority_states": list(self._state.get("priority_states") or []),
                     "recent_issue_counts": recent_issue_counts,
@@ -2202,6 +2251,7 @@ class StateLawsAgenticDaemon:
             "details": {
                 "mode": "exploit",
                 "selected_tactic": selected_name,
+                "priority_recommended_tactics": priority_recommended,
                 "recommended_tactics": recommended,
                 "priority_states": list(self._state.get("priority_states") or []),
                 "recent_issue_counts": recent_issue_counts,
