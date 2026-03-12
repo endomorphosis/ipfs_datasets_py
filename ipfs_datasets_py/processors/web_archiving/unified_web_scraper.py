@@ -740,6 +740,7 @@ class UnifiedWebScraper:
         haystack = f"{url} {content_type} {content_disposition}".lower()
         binary_tokens = [
             ".pdf",
+            ".rtf",
             ".doc",
             ".docx",
             ".xls",
@@ -747,6 +748,8 @@ class UnifiedWebScraper:
             ".ppt",
             ".pptx",
             "application/pdf",
+            "application/rtf",
+            "text/rtf",
             "application/msword",
             "application/vnd.openxmlformats-officedocument",
             "application/vnd.ms-excel",
@@ -756,6 +759,65 @@ class UnifiedWebScraper:
         if any(token in haystack for token in binary_tokens):
             return True
         return "attachment" in (content_disposition or "").lower()
+
+    @staticmethod
+    async def _extract_rtf_text(rtf_bytes: bytes) -> str:
+        """Extract plain text from RTF bytes using RTFExtractor or regex fallback."""
+        import re as _re
+        if not rtf_bytes:
+            return ""
+
+        def _fallback() -> str:
+            try:
+                value = rtf_bytes.decode("latin1", errors="ignore")
+            except Exception:
+                return ""
+            value = _re.sub(
+                r"\\'([0-9a-fA-F]{2})",
+                lambda m: bytes.fromhex(m.group(1)).decode("latin1", errors="ignore"),
+                value,
+            )
+
+            def _decode_uni(m: Any) -> str:
+                try:
+                    cp = int(m.group(1))
+                    if cp < 0:
+                        cp += 65536
+                    return chr(cp)
+                except Exception:
+                    return ""
+
+            value = _re.sub(r"\\u(-?\d+)\??", _decode_uni, value)
+            value = _re.sub(r"\\(?:par[d]?|line)\b", "\n", value)
+            value = _re.sub(r"\\tab\b", " ", value)
+            value = _re.sub(r"\\([{}\\])", r"\1", value)
+            value = _re.sub(r"\\[a-zA-Z]+-?\d* ?", " ", value)
+            value = value.replace("{", " ").replace("}", " ")
+            lines = [_re.sub(r"\s+", " ", ln).strip() for ln in value.splitlines() if ln.strip()]
+            return "\n".join(lines).strip()
+
+        try:
+            from ipfs_datasets_py.processors.file_converter import RTFExtractor
+            import tempfile
+            import pathlib
+            with tempfile.NamedTemporaryFile(suffix=".rtf", delete=False) as fh:
+                fh.write(rtf_bytes)
+                tmp = pathlib.Path(fh.name)
+            try:
+                import asyncio as _asyncio
+                extractor = RTFExtractor()
+                result = await _asyncio.to_thread(extractor.extract, tmp)
+                extracted = str(getattr(result, "text", "") or "").strip()
+                if getattr(result, "success", False) and extracted:
+                    return extracted
+            finally:
+                try:
+                    tmp.unlink(missing_ok=True)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return _fallback()
 
     @staticmethod
     async def _extract_pdf_text(pdf_bytes: bytes) -> str:
@@ -822,6 +884,11 @@ class UnifiedWebScraper:
         text = ""
         if self._content_type_matches(content_type, "application/pdf") or url.lower().endswith(".pdf"):
             text = await self._extract_pdf_text(raw_bytes)
+        elif (
+            self._content_type_matches(content_type, "application/rtf", "text/rtf")
+            or url.lower().endswith(".rtf")
+        ):
+            text = await self._extract_rtf_text(raw_bytes)
 
         return ScraperResult(
             url=url,
@@ -1043,6 +1110,45 @@ class UnifiedWebScraper:
                 viewport={"width": 1440, "height": 900},
             )
             page = await context.new_page()
+
+            # For binary document URLs (PDF, RTF, etc.) use playwright's fetch API
+            # to retrieve raw bytes — page.goto() won't render binary content.
+            url_lower_pw = url.lower()
+            _binary_exts = (".pdf", ".rtf", ".doc", ".docx", ".xls", ".xlsx")
+            if any(url_lower_pw.endswith(ext) for ext in _binary_exts):
+                try:
+                    api_resp = await context.request.get(
+                        url,
+                        timeout=self.config.timeout * 1000,
+                    )
+                    if api_resp.ok:
+                        raw_bytes = await api_resp.body()
+                        content_type = api_resp.headers.get("content-type", "")
+                        content_disposition = api_resp.headers.get("content-disposition", "")
+                        filename = self._response_filename(url, content_disposition)
+                        text = ""
+                        if self._content_type_matches(content_type, "application/pdf") or url_lower_pw.endswith(".pdf"):
+                            text = await self._extract_pdf_text(raw_bytes)
+                        elif self._content_type_matches(content_type, "application/rtf", "text/rtf") or url_lower_pw.endswith(".rtf"):
+                            text = await self._extract_rtf_text(raw_bytes)
+                        return ScraperResult(
+                            url=url,
+                            title=filename,
+                            text=text,
+                            content=text,
+                            method_used=ScraperMethod.PLAYWRIGHT,
+                            success=bool(raw_bytes),
+                            metadata={
+                                "method": "playwright_binary_fetch",
+                                "content_type": content_type,
+                                "content_length": len(raw_bytes),
+                                "raw_bytes": raw_bytes,
+                                "binary_document": True,
+                                "ssl_verification_relaxed": False,
+                            },
+                        )
+                except Exception:
+                    pass  # Fall through to normal DOM scraping
             
             try:
                 # SPAs on state code hosts often return an initial shell before client-side

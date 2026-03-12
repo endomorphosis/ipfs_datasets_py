@@ -2163,6 +2163,73 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
                 pass
 
 
+async def _download_text_via_cloudflare_crawl(url: str) -> Optional[Dict[str, Any]]:
+    """Retrieve rendered text from a URL via Cloudflare Browser Rendering API.
+
+    Returns a dict with ``text``, ``html``, ``markdown``, ``record_url``, and
+    cloudflare status fields, or ``None`` when unavailable or failed.
+    """
+    cf = _cloudflare_browser_rendering_availability()
+    if not cf.get("available"):
+        return None
+
+    account_id_env = cf.get("account_id_env") or ""
+    api_token_env = cf.get("api_token_env") or ""
+    account_id = str(os.getenv(account_id_env) or "").strip() if account_id_env else ""
+    api_token = str(os.getenv(api_token_env) or "").strip() if api_token_env else ""
+    if not account_id or not api_token:
+        return None
+
+    try:
+        try:
+            from ..web_archiving.cloudflare_browser_rendering_engine import (
+                crawl_with_cloudflare_browser_rendering,
+            )
+        except ImportError:
+            from ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine import (  # type: ignore[no-redef]
+                crawl_with_cloudflare_browser_rendering,
+            )
+    except ImportError:
+        return None
+
+    try:
+        result = await crawl_with_cloudflare_browser_rendering(
+            url,
+            account_id=account_id,
+            api_token=api_token,
+            formats=["markdown", "html"],
+            render=True,
+            depth=0,
+            limit=1,
+            timeout_seconds=60,
+        )
+    except Exception:
+        return None
+
+    if str(result.get("status") or "").lower() != "success":
+        return None
+
+    records = list(result.get("records") or [])
+    if not records:
+        return None
+
+    record = records[0]
+    markdown = str(record.get("markdown") or "").strip()
+    html_text = str(record.get("html") or "").strip()
+    text = markdown or html_text
+    if not text:
+        return None
+
+    return {
+        "text": text,
+        "html": html_text,
+        "markdown": markdown,
+        "record_url": str(record.get("url") or url),
+        "cloudflare_record_status": record.get("status"),
+        "cloudflare_job_status": result.get("job_status") or result.get("status"),
+    }
+
+
 async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
     if not _is_pdf_candidate_url(url):
         return None
@@ -2194,6 +2261,25 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
         else:
             downloaded = await _download_document_bytes_via_playwright(url)
         if downloaded is None:
+            # Final fallback: Cloudflare Browser Rendering renders the page and
+            # returns markdown/HTML text even for challenge-protected PDF URLs.
+            cf_text = await _download_text_via_cloudflare_crawl(url)
+            if cf_text and len(cf_text.get("text") or "") > 100:
+                extracted = str(cf_text.get("text") or "").strip()
+                return SimpleNamespace(
+                    url=url,
+                    title=_title_from_extracted_pdf_text(text=extracted, url=url),
+                    text=extracted,
+                    html=cf_text.get("html") or "",
+                    links=[],
+                    success=True,
+                    method_used="pdf_processor_cloudflare_rendering",
+                    extraction_provenance={
+                        "method": "pdf_processor_cloudflare_rendering",
+                        "cloudflare_record_status": cf_text.get("cloudflare_record_status"),
+                        "cloudflare_job_status": cf_text.get("cloudflare_job_status"),
+                    },
+                )
             return None
         body = downloaded.get("body") or b""
         content_type = str(downloaded.get("content_type") or "").lower()
@@ -2267,6 +2353,25 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
         else:
             downloaded = await _download_document_bytes_via_playwright(url)
         if downloaded is None:
+            # Final fallback: Cloudflare Browser Rendering renders the page and
+            # returns markdown/HTML text even for challenge-protected RTF URLs.
+            cf_text = await _download_text_via_cloudflare_crawl(url)
+            if cf_text and len(cf_text.get("text") or "") > 100:
+                extracted = str(cf_text.get("text") or "").strip()
+                return SimpleNamespace(
+                    url=url,
+                    title=_title_from_extracted_rtf_text(text=extracted, url=url),
+                    text=extracted,
+                    html=cf_text.get("html") or "",
+                    links=[],
+                    success=True,
+                    method_used="rtf_processor_cloudflare_rendering",
+                    extraction_provenance={
+                        "method": "rtf_processor_cloudflare_rendering",
+                        "cloudflare_record_status": cf_text.get("cloudflare_record_status"),
+                        "cloudflare_job_status": cf_text.get("cloudflare_job_status"),
+                    },
+                )
             return None
         body = downloaded.get("body") or b""
         content_type = str(downloaded.get("content_type") or "").lower()
@@ -2708,6 +2813,7 @@ async def _agentic_discover_admin_state_blocks(
     require_substantive_text: bool,
     fetch_concurrency: int,
 ) -> Dict[str, Any]:
+    archive_search_timeout_seconds = 40.0
     normalized_states = [str(state or "").upper() for state in list(states or []) if str(state or "").strip()]
     if len(normalized_states) > 1:
         max_parallel_states = min(len(normalized_states), 4)
@@ -2914,12 +3020,19 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         if not direct_detail_ready:
+            remaining_budget_s = max(0.0, per_state_budget_s - (time.monotonic() - state_start))
             try:
-                archive_results = await legal_archive._search_archives_multi_domain(
-                    query=query,
-                    domains=_agentic_domains_for_state(state_code),
-                    max_results_per_domain=max(1, int(max_results_per_domain)),
-                )
+                if remaining_budget_s > 0.0:
+                    archive_results = await asyncio.wait_for(
+                        legal_archive._search_archives_multi_domain(
+                            query=query,
+                            domains=_agentic_domains_for_state(state_code),
+                            max_results_per_domain=max(1, int(max_results_per_domain)),
+                        ),
+                        timeout=max(0.01, min(archive_search_timeout_seconds, remaining_budget_s)),
+                    )
+                else:
+                    archive_results = {"results": []}
                 for row in (archive_results or {}).get("results", []) or []:
                     if not isinstance(row, dict):
                         continue

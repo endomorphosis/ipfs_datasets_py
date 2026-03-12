@@ -469,3 +469,63 @@ async def test_fallback_submits_archive_is_only_after_snapshot_miss(monkeypatch:
     assert calls == [False, True]
     assert "Archive.is capture submitted and is still pending" in result.errors
 
+
+# ---------------------------------------------------------------------------
+# RTF support in _is_binary_document_response and _build_binary_document_result
+# ---------------------------------------------------------------------------
+
+
+def test_rtf_url_flagged_as_binary_document_response() -> None:
+    scraper = UnifiedWebScraper(ScraperConfig())
+    assert scraper._is_binary_document_response(
+        url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        content_type="text/html",
+        content_disposition="",
+    )
+
+
+def test_rtf_content_type_flagged_as_binary_document_response() -> None:
+    scraper = UnifiedWebScraper(ScraperConfig())
+    assert scraper._is_binary_document_response(
+        url="https://example.gov/document",
+        content_type="application/rtf",
+        content_disposition="",
+    )
+
+
+@pytest.mark.anyio
+async def test_extract_rtf_text_fallback_regex(monkeypatch: pytest.MonkeyPatch) -> None:
+    """_extract_rtf_text returns plain text via regex fallback when RTFExtractor unavailable."""
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.processors.file_converter", None)
+
+    rtf_bytes = rb"{\rtf1\ansi{\*\generator Msftedit;}\pard ARTICLE I General Rules\par}"
+    extracted = await UnifiedWebScraper._extract_rtf_text(rtf_bytes)
+    assert "ARTICLE" in extracted or "General" in extracted
+
+
+@pytest.mark.anyio
+async def test_build_binary_document_result_extracts_rtf_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """_build_binary_document_result calls _extract_rtf_text for .rtf URLs."""
+    scraper = UnifiedWebScraper(ScraperConfig())
+
+    async def _fake_extract_rtf(rtf_bytes: bytes) -> str:
+        return "ARTICLE I General Rules"
+
+    monkeypatch.setattr(UnifiedWebScraper, "_extract_rtf_text", staticmethod(_fake_extract_rtf))
+
+    class _FakeResp:
+        headers: dict = {"Content-Type": "application/rtf", "Content-Disposition": ""}
+        content = b"{\\rtf1 fake rtf content}"
+        status_code = 200
+
+    result = await scraper._build_binary_document_result(
+        url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        response=_FakeResp(),
+        method=ScraperMethod.BEAUTIFULSOUP,
+        ssl_verification_relaxed=False,
+    )
+
+    assert result.success is True
+    assert "ARTICLE I" in result.text
