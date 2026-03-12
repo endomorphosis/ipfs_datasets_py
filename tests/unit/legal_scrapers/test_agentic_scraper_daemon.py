@@ -131,6 +131,149 @@ def test_state_admin_rules_agentic_daemon_select_tactic_biases_priority_state_re
     assert selected.name == "document_first"
 
 
+def test_state_admin_rules_agentic_daemon_select_tactic_escalates_after_repeated_document_gap_cycles(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ", "CA"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            random_seed=11,
+        )
+    )
+
+    daemon._state["recommended_tactics"] = []
+    daemon._state["priority_states"] = ["AZ"]
+    daemon._state["state_action_plan"] = {
+        "AZ": {
+            "priority_score": 4,
+            "recommended_tactics": ["document_first", "router_assisted"],
+            "query_hints": ["AZ administrative code pdf"],
+        }
+    }
+    daemon._state["tactics"] = {
+        "archival_first": {"trials": 3, "total_score": 1.65, "best_score": 0.57},
+        "document_first": {"trials": 3, "total_score": 1.44, "best_score": 0.50},
+        "router_assisted": {"trials": 3, "total_score": 1.38, "best_score": 0.48},
+        "render_first": {"trials": 3, "total_score": 1.20, "best_score": 0.43},
+        "discovery_first": {"trials": 3, "total_score": 1.32, "best_score": 0.46},
+        "precision_first": {"trials": 3, "total_score": 1.29, "best_score": 0.44},
+    }
+    daemon._state["recent_cycles"] = [
+        {
+            "cycle": 1,
+            "tactic": "archival_first",
+            "score": 0.55,
+            "passed": False,
+            "issues": ["document-candidate-gaps:AZ", "state-gap-analysis:AZ"],
+        },
+        {
+            "cycle": 2,
+            "tactic": "archival_first",
+            "score": 0.56,
+            "passed": False,
+            "issues": ["document-candidate-gaps:AZ", "state-gap-analysis:AZ"],
+        },
+    ]
+
+    selected = daemon._select_tactic()
+
+    assert selected.name == "document_first"
+
+
+def test_state_admin_rules_agentic_daemon_selection_context_reports_issue_pressure(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            random_seed=13,
+        )
+    )
+
+    daemon._state["recommended_tactics"] = ["document_first"]
+    daemon._state["priority_states"] = ["AZ"]
+    daemon._state["state_action_plan"] = {
+        "AZ": {
+            "priority_score": 5,
+            "recommended_tactics": ["document_first", "router_assisted"],
+            "query_hints": ["AZ administrative code pdf"],
+        }
+    }
+    daemon._state["tactics"] = {
+        name: {"trials": 2, "total_score": 1.0, "best_score": 0.5}
+        for name in daemon.config.tactic_profiles
+    }
+    daemon._state["recent_cycles"] = [
+        {
+            "cycle": 1,
+            "tactic": "archival_first",
+            "score": 0.50,
+            "passed": False,
+            "issues": ["document-candidate-gaps:AZ", "state-gap-analysis:AZ"],
+        }
+    ]
+
+    selection = daemon._select_tactic_with_context()
+
+    assert selection["details"]["selected_tactic"] == selection["profile"].name
+    assert selection["details"]["mode"] == "exploit"
+    assert selection["details"]["recent_issue_counts"]["document-candidate-gaps:AZ"] == 1
+    assert selection["details"]["score_breakdown"]["document_first"]["issue_pressure_bonus"] > 0.0
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_runs_priority_states_first(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    captured_states = []
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        captured_states.append(list(kwargs.get("states") or []))
+        return {
+            "status": "partial_success",
+            "data": [
+                {"state_code": "CA", "statutes": [], "rules_count": 0},
+                {"state_code": "AZ", "statutes": [], "rules_count": 0},
+                {"state_code": "WA", "statutes": [], "rules_count": 0},
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "CA": {"attempted": 1, "success": 0, "success_ratio": 0.0, "fallback_count": 1, "providers": {}},
+                        "AZ": {"attempted": 1, "success": 0, "success_ratio": 0.0, "fallback_count": 1, "providers": {}},
+                        "WA": {"attempted": 1, "success": 0, "success_ratio": 0.0, "fallback_count": 1, "providers": {}},
+                    }
+                }
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["CA", "AZ", "WA"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=17,
+        )
+    )
+    daemon._state["priority_states"] = ["AZ", "WA"]
+
+    summary = await daemon.run()
+
+    assert captured_states == [["AZ", "WA", "CA"]]
+    assert summary["latest_cycle"]["cycle_state_order"] == ["AZ", "WA", "CA"]
+    assert summary["latest_cycle"]["tactic_selection"]["priority_states"] == ["AZ", "WA"]
+
+
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_plans_post_cycle_release(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
@@ -420,10 +563,12 @@ async def test_state_laws_agentic_daemon_runs_single_cycle(monkeypatch, tmp_path
     assert summary["cycles_executed"] == 1
     assert summary["latest_cycle"]["passed"] is True
     assert summary["latest_cycle"]["critic_score"] >= 0.92
+    assert summary["latest_cycle"]["tactic_selection"]["selected_tactic"] == summary["latest_cycle"]["tactic"]["name"]
 
     state_payload = json.loads((tmp_path / "daemon_state.json").read_text(encoding="utf-8"))
     assert state_payload["cycle_count"] == 1
     assert state_payload["best_tactic"]["score"] == summary["latest_cycle"]["critic_score"]
+    assert state_payload["last_tactic_selection"]["selected_tactic"] == summary["latest_cycle"]["tactic"]["name"]
 
 
 @pytest.mark.asyncio
@@ -475,6 +620,7 @@ async def test_state_laws_agentic_daemon_schedules_deferred_retry_for_rate_limit
     assert latest_cycle["deferred_retry"]["retry_after_seconds"] == 90.0
     assert latest_cycle["diagnostics"]["rate_limit"]["rate_limit_diagnostics"]["cf_ray"] == "test-ray"
     assert latest_cycle["critic"]["issues"] == ["rate-limited-deferred-retry:cloudflare_browser_rendering"]
+    assert latest_cycle["tactic_selection"]["selected_tactic"] == latest_cycle["tactic"]["name"]
     assert latest_cycle["router_assist"]["reason"] == "deferred-retry-scheduled"
     assert latest_cycle["archive_warmup"]["reason"] == "deferred-retry-scheduled"
     assert latest_cycle["post_cycle_release"]["reason"] == "deferred-retry-scheduled"

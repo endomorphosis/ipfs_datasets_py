@@ -339,18 +339,22 @@ class StateLawsAgenticDaemon:
     async def run_cycle(self) -> Dict[str, Any]:
         """Run one scrape-review-criticize-optimize cycle."""
         cycle_index = int(self._state.get("cycle_count", 0) or 0) + 1
-        tactic = self._select_tactic()
+        tactic_selection = self._select_tactic_with_context()
+        tactic = tactic_selection["profile"]
+        cycle_states = self._ordered_states_for_cycle()
         checkpoint_payload: Dict[str, Any] = {
             "cycle": cycle_index,
             "timestamp": datetime.now().isoformat(),
             "corpus": self.corpus.key,
             "states": list(self.states),
+            "cycle_state_order": cycle_states,
             "status": "running",
             "stage": "scrape",
             "tactic": asdict(tactic),
+            "tactic_selection": tactic_selection["details"],
         }
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
-        scrape_result = await self._run_scrape_with_tactic(tactic)
+        scrape_result = await self._run_scrape_with_tactic(tactic, states=cycle_states)
 
         metadata = scrape_result.get("metadata") or {}
         deferred_retry = self._build_deferred_retry_plan(scrape_result)
@@ -372,9 +376,11 @@ class StateLawsAgenticDaemon:
                     "critic": cycle_payload["critic"],
                     "metadata": metadata,
                     "deferred_retry": deferred_retry,
+                    "tactic_selection": tactic_selection["details"],
                 }
             )
             self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+            cycle_payload["tactic_selection"] = tactic_selection["details"]
             self._update_state(tactic=tactic, cycle_payload=cycle_payload)
             cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
             cycle_path.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
@@ -395,6 +401,7 @@ class StateLawsAgenticDaemon:
                 "passed": passed,
                 "critic": critic,
                 "metadata": metadata,
+                "tactic_selection": tactic_selection["details"],
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
@@ -451,8 +458,10 @@ class StateLawsAgenticDaemon:
             "timestamp": datetime.now().isoformat(),
             "corpus": self.corpus.key,
             "states": list(self.states),
+            "cycle_state_order": cycle_states,
             "status": str(scrape_result.get("status") or "unknown"),
             "tactic": asdict(tactic),
+            "tactic_selection": tactic_selection["details"],
             "critic_score": critic_score,
             "passed": passed,
             "diagnostics": diagnostics,
@@ -619,9 +628,15 @@ class StateLawsAgenticDaemon:
             except Exception:
                 pass
 
-    async def _run_scrape_with_tactic(self, tactic: ScraperTacticProfile) -> Dict[str, Any]:
+    async def _run_scrape_with_tactic(
+        self,
+        tactic: ScraperTacticProfile,
+        *,
+        states: Optional[Sequence[str]] = None,
+    ) -> Dict[str, Any]:
+        cycle_states = self._normalize_cycle_states(states)
         kwargs: Dict[str, Any] = {
-            "states": list(self.states),
+            "states": cycle_states,
             "output_format": "json",
             "include_metadata": True,
             "rate_limit_delay": max(0.0, float(tactic.rate_limit_delay)),
@@ -1693,14 +1708,33 @@ class StateLawsAgenticDaemon:
         }
 
     def _select_tactic(self) -> ScraperTacticProfile:
+        return self._select_tactic_with_context()["profile"]
+
+    def _select_tactic_with_context(self) -> Dict[str, Any]:
         profiles = self.config.tactic_profiles
         recommended = [name for name in list(self._state.get("recommended_tactics") or []) if name in profiles]
         ordered_names = recommended + [name for name in profiles if name not in recommended]
+        recent_issue_counts = self._recent_issue_counts()
 
         stats = self._state.get("tactics") or {}
         untried = [name for name in ordered_names if int((stats.get(name) or {}).get("trials", 0) or 0) <= 0]
         if untried:
-            return profiles[untried[0]]
+            selected_name = untried[0]
+            return {
+                "profile": profiles[selected_name],
+                "details": {
+                    "mode": "untried",
+                    "selected_tactic": selected_name,
+                    "recommended_tactics": recommended,
+                    "priority_states": list(self._state.get("priority_states") or []),
+                    "recent_issue_counts": recent_issue_counts,
+                    "score_breakdown": {
+                        selected_name: {
+                            "untried_bonus": 1.0,
+                        }
+                    },
+                },
+            }
 
         if self._rand.random() < max(0.0, min(1.0, float(self.config.explore_probability or 0.0))):
             selected_name = min(
@@ -1710,8 +1744,25 @@ class StateLawsAgenticDaemon:
                     -float((stats.get(name) or {}).get("best_score", 0.0) or 0.0),
                 ),
             )
-            return profiles[selected_name]
+            return {
+                "profile": profiles[selected_name],
+                "details": {
+                    "mode": "explore",
+                    "selected_tactic": selected_name,
+                    "recommended_tactics": recommended,
+                    "priority_states": list(self._state.get("priority_states") or []),
+                    "recent_issue_counts": recent_issue_counts,
+                    "score_breakdown": {
+                        name: {
+                            "trials": int((stats.get(name) or {}).get("trials", 0) or 0),
+                            "best_score": float((stats.get(name) or {}).get("best_score", 0.0) or 0.0),
+                        }
+                        for name in ordered_names
+                    },
+                },
+            }
 
+        score_breakdown: Dict[str, Dict[str, Any]] = {}
         def _rank(name: str) -> float:
             entry = stats.get(name) or {}
             trials = max(1, int(entry.get("trials", 0) or 0))
@@ -1719,11 +1770,65 @@ class StateLawsAgenticDaemon:
             best_score = float(entry.get("best_score", 0.0) or 0.0)
             recommendation_bonus = 0.03 if name in recommended else 0.0
             priority_bonus = self._tactic_priority_bonus(name)
+            issue_pressure_bonus = self._tactic_issue_pressure_bonus(name)
             exploration_bonus = 0.04 / float(trials)
-            return avg_score + (0.20 * best_score) + recommendation_bonus + priority_bonus + exploration_bonus
+            stagnation_penalty = self._tactic_stagnation_penalty(name)
+            score = (
+                avg_score
+                + (0.20 * best_score)
+                + recommendation_bonus
+                + priority_bonus
+                + issue_pressure_bonus
+                + exploration_bonus
+                - stagnation_penalty
+            )
+            score_breakdown[name] = {
+                "trials": trials,
+                "avg_score": round(avg_score, 4),
+                "best_score": round(best_score, 4),
+                "recommendation_bonus": round(recommendation_bonus, 4),
+                "priority_bonus": round(priority_bonus, 4),
+                "issue_pressure_bonus": round(issue_pressure_bonus, 4),
+                "exploration_bonus": round(exploration_bonus, 4),
+                "stagnation_penalty": round(stagnation_penalty, 4),
+                "rank_score": round(score, 4),
+            }
+            return score
 
         selected_name = max(ordered_names, key=_rank)
-        return profiles[selected_name]
+        return {
+            "profile": profiles[selected_name],
+            "details": {
+                "mode": "exploit",
+                "selected_tactic": selected_name,
+                "recommended_tactics": recommended,
+                "priority_states": list(self._state.get("priority_states") or []),
+                "recent_issue_counts": recent_issue_counts,
+                "score_breakdown": score_breakdown,
+            },
+        }
+
+    def _ordered_states_for_cycle(self) -> List[str]:
+        priority_states = [
+            str(item).upper().strip()
+            for item in list(self._state.get("priority_states") or [])
+            if str(item).strip()
+        ]
+        ordered: List[str] = []
+        for state_code in priority_states + list(self.states):
+            if state_code in self.states and state_code not in ordered:
+                ordered.append(state_code)
+        return ordered or list(self.states)
+
+    def _normalize_cycle_states(self, states: Optional[Sequence[str]]) -> List[str]:
+        normalized = [
+            str(item).upper().strip()
+            for item in list(states or [])
+            if str(item).strip() and str(item).upper().strip() in self.states
+        ]
+        if normalized:
+            return list(dict.fromkeys(normalized))
+        return list(self.states)
 
     def _tactic_priority_bonus(self, tactic_name: str) -> float:
         state_action_plan = self._state.get("state_action_plan") or {}
@@ -1740,6 +1845,79 @@ class StateLawsAgenticDaemon:
             priority_score = int(entry.get("priority_score", 0) or 0)
             bonus += 0.03 * float(min(priority_score, 5))
         return min(0.18, bonus)
+
+    @staticmethod
+    def _issue_pressure_tactics(issue: str) -> List[str]:
+        normalized = str(issue or "").strip().lower()
+        if not normalized:
+            return []
+        if normalized.startswith(("document-candidate-gaps", "state-gap-analysis")) or normalized == "agentic-discovery-dominant":
+            return ["document_first", "router_assisted", "render_first"]
+        if normalized.startswith(("coverage-gaps", "no-attempt-states")) or normalized in {
+            "common-crawl-unused-on-gap-cycle",
+            "fallback-retry-dominant",
+            "base-scrape-dominant",
+        }:
+            return ["archival_first", "discovery_first", "router_assisted"]
+        if normalized in {"quality-weak", "kg-payload-low", "jsonld-legislation-low"}:
+            return ["render_first", "precision_first", "router_assisted"]
+        if normalized == "fetch-success-low":
+            return ["render_first", "archival_first", "router_assisted"]
+        return []
+
+    def _tactic_issue_pressure_bonus(self, tactic_name: str) -> float:
+        recent_cycles = list(self._state.get("recent_cycles") or [])
+        if not recent_cycles:
+            return 0.0
+
+        bonus = 0.0
+        for index, row in enumerate(recent_cycles[-4:], start=1):
+            if not isinstance(row, dict):
+                continue
+            issues = [str(item).strip() for item in list(row.get("issues") or []) if str(item).strip()]
+            if not issues:
+                continue
+            weight = 0.02 * float(index)
+            for issue in issues:
+                if tactic_name in self._issue_pressure_tactics(issue):
+                    bonus += weight
+        return min(0.24, bonus)
+
+    def _tactic_stagnation_penalty(self, tactic_name: str) -> float:
+        recent_cycles = [
+            row
+            for row in list(self._state.get("recent_cycles") or [])
+            if isinstance(row, dict) and str(row.get("tactic") or "") == tactic_name
+        ]
+        if len(recent_cycles) < 2:
+            return 0.0
+
+        window = recent_cycles[-2:]
+        if any(bool(row.get("passed")) for row in window):
+            return 0.0
+
+        scores = [float(row.get("score", 0.0) or 0.0) for row in window]
+        if max(scores) - min(scores) > 0.025:
+            return 0.0
+
+        issue_count = sum(len(list(row.get("issues") or [])) for row in window)
+        if issue_count <= 0:
+            return 0.0
+
+        recommended = set(str(name).strip() for name in list(self._state.get("recommended_tactics") or []) if str(name).strip())
+        return 0.05 if tactic_name in recommended else 0.08
+
+    def _recent_issue_counts(self) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for row in list(self._state.get("recent_cycles") or [])[-6:]:
+            if not isinstance(row, dict):
+                continue
+            for issue in list(row.get("issues") or []):
+                normalized = str(issue).strip()
+                if not normalized:
+                    continue
+                counts[normalized] = int(counts.get(normalized, 0) or 0) + 1
+        return counts
 
     def _criticize_cycle(self, diagnostics: Dict[str, Any]) -> Dict[str, Any]:
         coverage = diagnostics.get("coverage") or {}
@@ -1983,9 +2161,11 @@ class StateLawsAgenticDaemon:
         self._state["priority_states"] = list((cycle_payload.get("critic") or {}).get("priority_states") or [])
         self._state["state_action_plan"] = dict((cycle_payload.get("critic") or {}).get("state_action_plan") or {})
         self._state["state_query_hints"] = self._next_state_query_hints(cycle_payload)
+        self._state["last_tactic_selection"] = dict(cycle_payload.get("tactic_selection") or {})
         deferred_retry = cycle_payload.get("deferred_retry") or {}
         if isinstance(deferred_retry, dict) and str(deferred_retry.get("status") or "") == "scheduled":
             self._state["pending_retry"] = dict(deferred_retry)
+            self._record_recent_cycle(tactic=tactic, cycle_payload=cycle_payload)
             self._write_pending_retry_artifact(cycle_payload)
             self.state_file.write_text(json.dumps(self._state, indent=2), encoding="utf-8")
             return
@@ -2012,7 +2192,40 @@ class StateLawsAgenticDaemon:
                 "cycle": int(cycle_payload.get("cycle", 0) or 0),
             }
 
+        self._record_recent_cycle(tactic=tactic, cycle_payload=cycle_payload)
         self.state_file.write_text(json.dumps(self._state, indent=2), encoding="utf-8")
+
+    def _record_recent_cycle(self, *, tactic: ScraperTacticProfile, cycle_payload: Dict[str, Any]) -> None:
+        recent_cycles = list(self._state.get("recent_cycles") or [])
+        critic = cycle_payload.get("critic") or {}
+        diagnostics = cycle_payload.get("diagnostics") or {}
+        documents = diagnostics.get("documents") or {}
+        coverage = diagnostics.get("coverage") or {}
+        recent_cycles.append(
+            {
+                "cycle": int(cycle_payload.get("cycle", 0) or 0),
+                "tactic": tactic.name,
+                "score": float(cycle_payload.get("critic_score", 0.0) or 0.0),
+                "passed": bool(cycle_payload.get("passed")),
+                "issues": [str(item) for item in list(critic.get("issues") or []) if str(item).strip()],
+                "priority_states": [
+                    str(item).upper().strip()
+                    for item in list(critic.get("priority_states") or [])
+                    if str(item).strip()
+                ],
+                "document_gap_states": [
+                    str(item).upper().strip()
+                    for item in list(documents.get("states_with_candidate_document_gaps") or [])
+                    if str(item).strip()
+                ],
+                "coverage_gap_states": [
+                    str(item).upper().strip()
+                    for item in list(coverage.get("coverage_gap_states") or [])
+                    if str(item).strip()
+                ],
+            }
+        )
+        self._state["recent_cycles"] = recent_cycles[-6:]
 
     def _write_pending_retry_artifact(self, cycle_payload: Dict[str, Any]) -> Optional[Path]:
         deferred_retry = cycle_payload.get("deferred_retry") or {}
@@ -2134,6 +2347,7 @@ class StateLawsAgenticDaemon:
             "priority_states": [],
             "state_action_plan": {},
             "state_query_hints": {},
+            "recent_cycles": [],
             "tactics": {},
             "best_tactic": {},
         }

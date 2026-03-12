@@ -19,6 +19,10 @@ It currently supports these corpora:
 
 Built-in tactics now include `router_assisted`, which lets the daemon bias toward router-backed recovery on mixed or weak cycles while still using the existing `web_archiving` strategy stack in parallel.
 
+The daemon now also carries forward recent cycle failures when picking the next tactic. Repeated document-heavy or coverage-gap cycles increase pressure toward `document_first`, `discovery_first`, and `router_assisted`, and bounded runs front-load the current priority states first so weak states are processed earlier in the next cycle.
+
+Cycle artifacts and `daemon_state.json` now also record a `tactic_selection` block so you can inspect whether the daemon picked a tactic because it was untried, because it was exploring, or because exploit-mode ranking favored it due to recommendation bonuses, priority-state pressure, recurring issue pressure, or stagnation penalties.
+
 ## Basic Usage
 
 If you are working from the workspace root, you can also use the wrapper script:
@@ -51,6 +55,26 @@ PYTHONPATH=src .venv/bin/python -m ipfs_datasets_py.processors.legal_scrapers.st
   --target-score 0.94 \
   --stop-on-target-score
 ```
+
+Run a bounded live admin-rules probe that fails closed and still writes cycle artifacts:
+
+```bash
+cd /home/barberb/municipal_scrape_workspace/ipfs_datasets_py
+PYTHONPATH=src .venv/bin/python -m ipfs_datasets_py.processors.legal_scrapers.state_laws_agentic_daemon \
+  --corpus state_admin_rules \
+  --states AZ,UT,IN \
+  --output-dir /tmp/state_admin_rules_agentic_daemon_live_probe \
+  --max-cycles 1 \
+  --max-statutes 4 \
+  --archive-warmup-urls 6 \
+  --per-state-timeout-seconds 90 \
+  --scrape-timeout-seconds 180 \
+  --router-llm-timeout-seconds 5 \
+  --router-embeddings-timeout-seconds 5 \
+  --router-ipfs-timeout-seconds 5
+```
+
+Use `--scrape-timeout-seconds` for bounded recovery runs when you want a cycle to serialize an error result and checkpoints instead of hanging indefinitely in scrape.
 
 ## Post-Cycle Release Automation
 
@@ -119,6 +143,7 @@ The wrapper script recognizes these variables:
 - `LEGAL_DAEMON_CYCLE_INTERVAL_SECONDS`
 - `LEGAL_DAEMON_ARCHIVE_WARMUP_URLS`
 - `LEGAL_DAEMON_PER_STATE_TIMEOUT_SECONDS`
+- `LEGAL_DAEMON_SCRAPE_TIMEOUT_SECONDS`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_CANDIDATES_PER_STATE`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_FETCH_PER_STATE`
 - `LEGAL_DAEMON_ADMIN_AGENTIC_MAX_RESULTS_PER_DOMAIN`
@@ -185,6 +210,7 @@ LEGAL_DAEMON_STATES=NY,CA
 LEGAL_DAEMON_MAX_CYCLES=1
 LEGAL_DAEMON_MAX_STATUTES=25
 LEGAL_DAEMON_PER_STATE_TIMEOUT_SECONDS=45
+LEGAL_DAEMON_SCRAPE_TIMEOUT_SECONDS=180
 CLOUDFLARE_ACCOUNT_ID=your_account_id
 CLOUDFLARE_API_TOKEN=your_browser_rendering_token
 LEGAL_SCRAPER_CLOUDFLARE_CRAWL_TIMEOUT_SECONDS=120
@@ -206,6 +232,7 @@ LEGAL_PUBLISH_VERIFY=0
 ```
 
 Set `LEGAL_DAEMON_MAX_STATUTES=0` for an uncapped run.
+Set `LEGAL_DAEMON_SCRAPE_TIMEOUT_SECONDS` for bounded live probes so the daemon records a completed error cycle instead of depending on an outer shell timeout.
 Use the router timeout variables to bound unattended LLM, embeddings, and IPFS review stages.
 Cloudflare Browser Rendering requires a custom API token with `Browser Rendering - Edit` permission; a token can verify as active but still fail crawl calls without that scope.
 Cloudflare `/crawl` can also return transient `2001: Rate limit exceeded` responses during bursts of job creation or polling. The Cloudflare fallback now retries those responses automatically, but repeated smoke tests may still need a cooldown before the next live run succeeds.
