@@ -1440,6 +1440,7 @@ async def test_state_admin_rules_agentic_daemon_llm_router_review_uses_generate_
     def _fake_generate_text(prompt, **kwargs):
         assert 'recommended_next_tactics' in prompt
         assert kwargs["provider"] is None
+        assert kwargs["allow_local_fallback"] is False
         return json.dumps(
             {
                 "recommended_next_tactics": ["router_assisted", "document_first"],

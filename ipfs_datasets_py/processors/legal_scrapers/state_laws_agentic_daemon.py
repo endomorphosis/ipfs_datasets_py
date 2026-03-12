@@ -18,6 +18,7 @@ import os
 import random
 import shlex
 import sys
+import threading
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -1185,12 +1186,15 @@ class StateLawsAgenticDaemon:
             + json.dumps(prompt_payload, ensure_ascii=False)
         )
         try:
-            response = await asyncio.to_thread(
+            timeout_seconds = max(0.0, float(self.config.router_llm_timeout_seconds or 0.0))
+            response = await self._run_blocking_on_daemon_thread(
                 llm_router.generate_text,
                 prompt,
+                timeout_seconds=timeout_seconds,
                 provider=tactic.llm_provider,
                 temperature=0.2,
                 max_tokens=350,
+                allow_local_fallback=timeout_seconds <= 0.0,
             )
         except Exception as exc:
             return {"status": "error", "error": str(exc)}
@@ -1281,6 +1285,40 @@ class StateLawsAgenticDaemon:
             )
         ranking.sort(key=lambda item: float(item.get("score", 0.0) or 0.0), reverse=True)
         return ranking
+
+    async def _run_blocking_on_daemon_thread(
+        self,
+        func: Callable[..., Any],
+        *args: Any,
+        timeout_seconds: float = 0.0,
+        **kwargs: Any,
+    ) -> Any:
+        loop = asyncio.get_running_loop()
+        result_future: asyncio.Future[Any] = loop.create_future()
+
+        def _publish_result(result: Any) -> None:
+            if not result_future.done():
+                result_future.set_result(result)
+
+        def _publish_exception(exc: BaseException) -> None:
+            if not result_future.done():
+                result_future.set_exception(exc)
+
+        def _worker() -> None:
+            try:
+                result = func(*args, **kwargs)
+            except BaseException as exc:
+                loop.call_soon_threadsafe(_publish_exception, exc)
+                return
+
+            loop.call_soon_threadsafe(_publish_result, result)
+
+        worker = threading.Thread(target=_worker, name="agentic-daemon-blocking-call", daemon=True)
+        worker.start()
+
+        if float(timeout_seconds or 0.0) > 0.0:
+            return await asyncio.wait_for(result_future, timeout=float(timeout_seconds))
+        return await result_future
 
     async def _run_router_embeddings_ranking_with_timeout(
         self,

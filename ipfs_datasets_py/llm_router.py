@@ -2249,6 +2249,7 @@ def generate_text(
     provider: Optional[str] = None,
     provider_instance: Optional[LLMProvider] = None,
     deps: Optional[RouterDeps] = None,
+    allow_local_fallback: bool = True,
     **kwargs: object,
 ) -> str:
     """Generate text from an LLM."""
@@ -2317,7 +2318,7 @@ def generate_text(
                     continue
 
         # Fall back to local HF provider if optional provider fails.
-        if provider is None:
+        if allow_local_fallback and provider is None:
             local_hf = _get_local_hf_provider(deps=resolved_deps)
             if local_hf is not None and backend is not local_hf:
                 try:

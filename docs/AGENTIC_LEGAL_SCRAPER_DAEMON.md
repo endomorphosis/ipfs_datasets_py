@@ -222,6 +222,7 @@ The workspace root now exposes these tasks:
 - `Legal daemon: release plan preview`
 - `Legal daemon: one cycle dry run`
 - `Legal daemon: continuous`
+- `Legal daemon: pending retry watch`
 - `Legal publish: dry run`
 - `Legal publish: live`
 
@@ -235,6 +236,32 @@ bash scripts/ops/legal_data/run_publish_canonical_legal_corpus.sh
 ```
 
 The wrapper reads `LEGAL_PUBLISH_*` values from `.env` and executes `publish_canonical_legal_corpus_to_hf.py` with those defaults.
+
+To inspect the active retry window without parsing the full daemon summary, you can also run:
+
+```bash
+cd /home/barberb/municipal_scrape_workspace
+bash scripts/ops/legal_data/run_agentic_daemon_pending_retry_watch.sh \
+  --daemon-output-dir /home/barberb/.ipfs_datasets/state_admin_rules/agentic_daemon
+```
+
+The helper prints `status: idle` when no cooldown is active, or `status: pending_retry` with `seconds_remaining` when `latest_pending_retry.json` is present.
+Use `--watch` to poll until the cooldown reaches zero or the artifact disappears:
+
+```bash
+cd /home/barberb/municipal_scrape_workspace
+LEGAL_DAEMON_PENDING_RETRY_CORPUS=state_admin_rules \
+LEGAL_DAEMON_PENDING_RETRY_INTERVAL_SECONDS=10 \
+bash scripts/ops/legal_data/run_agentic_daemon_pending_retry_watch.sh
+```
+
+The watch wrapper reads `.env` and supports these overrides:
+
+- `LEGAL_DAEMON_PENDING_RETRY_CORPUS`
+- `LEGAL_DAEMON_PENDING_RETRY_OUTPUT_DIR`
+- `LEGAL_DAEMON_PENDING_RETRY_WATCH`
+- `LEGAL_DAEMON_PENDING_RETRY_INTERVAL_SECONDS`
+- `LEGAL_DAEMON_PENDING_RETRY_MAX_REPORTS`
 
 Template variables available to the publish command:
 
