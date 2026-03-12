@@ -1334,12 +1334,17 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
                     "per_state": {
                         "AZ": {
                             "candidate_urls": 6,
+                            "inspected_urls": 4,
+                            "expanded_urls": 3,
                             "fetched_rules": 0,
                             "top_candidate_urls": [
                                 "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
                                 "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
                             ],
                             "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["apps.azsos.gov"],
+                            "parallel_prefetch": {"attempted": 2, "successful": 1, "rule_hits": 0},
+                            "source_breakdown": {"seed": 1, "playwright": 2, "candidate_document": 2},
                             "gap_summary": {
                                 "missing_seed_hosts": ["apps.azsos.gov"],
                                 "candidate_hosts_without_rules": ["apps.azsos.gov"],
@@ -1372,6 +1377,16 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     assert diagnostics["documents"]["candidate_document_urls"] == 2
     assert diagnostics["documents"]["candidate_format_counts_by_state"] == {"AZ": {"pdf": 1, "rtf": 1}}
     assert diagnostics["documents"]["states_with_candidate_document_gaps"] == ["AZ"]
+    assert diagnostics["documents"]["per_state_recovery"]["AZ"] == {
+        "processed_method_counts": {},
+        "source_breakdown": {"seed": 1, "playwright": 2, "candidate_document": 2},
+        "domains_seen": ["apps.azsos.gov"],
+        "parallel_prefetch": {"attempted": 2, "successful": 1, "rule_hits": 0},
+        "timed_out": False,
+        "candidate_urls": 6,
+        "inspected_urls": 4,
+        "expanded_urls": 3,
+    }
     assert diagnostics["gap_analysis"]["weak_states"] == ["AZ"]
     assert any(item.startswith("document-candidate-gaps:AZ") for item in critic["issues"])
     assert "document_first" in critic["recommended_next_tactics"]
@@ -1382,6 +1397,16 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     assert "AZ administrative rules site:apps.azsos.gov" in critic["query_hints"]
     assert document_gap_report["states_with_candidate_document_gaps"] == ["AZ"]
     assert document_gap_report["states"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
+    assert document_gap_report["states"]["AZ"]["processed_method_counts"] == {}
+    assert document_gap_report["states"]["AZ"]["source_breakdown"] == {
+        "seed": 1,
+        "playwright": 2,
+        "candidate_document": 2,
+    }
+    assert document_gap_report["states"]["AZ"]["domains_seen"] == ["apps.azsos.gov"]
+    assert document_gap_report["states"]["AZ"]["parallel_prefetch"] == {"attempted": 2, "successful": 1, "rule_hits": 0}
+    assert document_gap_report["states"]["AZ"]["inspected_urls"] == 4
+    assert document_gap_report["states"]["AZ"]["expanded_urls"] == 3
     assert document_gap_report["states"]["AZ"]["top_candidate_document_urls"] == [
         "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",

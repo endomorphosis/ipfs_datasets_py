@@ -2167,6 +2167,98 @@ async def test_agentic_discovery_processes_multiple_states_in_parallel(monkeypat
 
 
 @pytest.mark.anyio
+async def test_agentic_discovery_records_cloudflare_rate_limit_metadata_and_prefers_cloudflare(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    configured_methods: list[list[str]] = []
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="",
+                title="Arizona Administrative Rules",
+                html="",
+                extraction_provenance={
+                    "method": "cloudflare_browser_rendering",
+                    "cloudflare_status": "rate_limited",
+                    "retry_after_seconds": 120.0,
+                    "retry_at_utc": "2026-03-12T00:02:00Z",
+                    "retryable": True,
+                    "wait_budget_exhausted": True,
+                    "rate_limit_diagnostics": {"provider": "cloudflare_browser_rendering"},
+                },
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            configured_methods.append(list(getattr(cfg, "preferred_methods", []) or []))
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: ["https://rules.az.gov/"])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: False)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            CLOUDFLARE_BROWSER_RENDERING="cloudflare_browser_rendering",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["AZ"],
+        max_candidates_per_state=3,
+        max_fetch_per_state=1,
+        max_results_per_domain=3,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 0
+    assert result["report"]["AZ"]["cloudflare_status"] == "rate_limited"
+    assert result["report"]["AZ"]["retry_after_seconds"] == 120.0
+    assert result["report"]["AZ"]["rate_limit_diagnostics"]["provider"] == "cloudflare_browser_rendering"
+    assert any("cloudflare_browser_rendering" in methods for methods in configured_methods)
+
+
+@pytest.mark.anyio
 async def test_agentic_discovery_short_circuits_utah_api_rule_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
     seed_url = "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
     rule_url = "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules"
@@ -2681,6 +2773,79 @@ async def test_scrape_state_admin_rules_recovers_missing_target_state_via_agenti
     assert result["metadata"]["phase_timings"]["filter_seconds"] >= 0.0
     assert result["metadata"]["phase_timings"]["agentic_discovery_seconds"] >= 0.0
     assert result["metadata"]["phase_timings"]["total_seconds"] >= result["metadata"]["phase_timings"]["agentic_discovery_seconds"]
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_propagates_agentic_cloudflare_rate_limit_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "title": "Arizona Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://rules.az.gov/",
+                    "scraped_at": "2026-03-12T00:00:00",
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                    "cloudflare_status": "rate_limited",
+                    "retry_after_seconds": 180.0,
+                    "retry_at_utc": "2026-03-12T00:03:00Z",
+                    "retryable": True,
+                    "wait_budget_exhausted": True,
+                    "rate_limit_diagnostics": {"provider": "cloudflare_browser_rendering", "budget_seconds": 60},
+                }
+            ],
+            "kg_rows": [],
+            "report": {
+                "AZ": {
+                    "rules_count": 0,
+                    "cloudflare_status": "rate_limited",
+                    "retry_after_seconds": 180.0,
+                    "retry_at_utc": "2026-03-12T00:03:00Z",
+                    "retryable": True,
+                    "wait_budget_exhausted": True,
+                    "rate_limit_diagnostics": {"provider": "cloudflare_browser_rendering", "budget_seconds": 60},
+                }
+            },
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AZ"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        require_substantive_rule_text=True,
+    )
+
+    assert result["status"] == "rate_limited"
+    assert result["metadata"]["cloudflare_status"] == "rate_limited"
+    assert result["metadata"]["retry_after_seconds"] == 180.0
+    assert result["metadata"]["retry_at_utc"] == "2026-03-12T00:03:00Z"
+    assert result["metadata"]["retryable"] is True
+    assert result["metadata"]["wait_budget_exhausted"] is True
+    assert result["metadata"]["rate_limit_diagnostics"]["provider"] == "cloudflare_browser_rendering"
+    assert result["metadata"]["rate_limited_states"] == ["AZ"]
+    assert result["metadata"]["missing_rule_states"] == ["AZ"]
 
 
 @pytest.mark.anyio

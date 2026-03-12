@@ -2566,6 +2566,86 @@ def _write_agentic_kg_corpus_jsonl(rows: List[Dict[str, Any]], output_root: Path
     return str(out_path)
 
 
+def _iter_cloudflare_metadata_mappings(candidate: Any) -> List[Dict[str, Any]]:
+    pending: List[Any] = [candidate]
+    seen: set[int] = set()
+    mappings: List[Dict[str, Any]] = []
+    while pending:
+        value = pending.pop(0)
+        if value is None:
+            continue
+        value_id = id(value)
+        if value_id in seen:
+            continue
+        seen.add(value_id)
+        if isinstance(value, dict):
+            mappings.append(value)
+            for nested_key in ("metadata", "extraction_provenance", "document"):
+                nested_value = value.get(nested_key)
+                if nested_value is not None:
+                    pending.append(nested_value)
+            continue
+        for nested_attr in ("metadata", "extraction_provenance", "document"):
+            nested_value = getattr(value, nested_attr, None)
+            if nested_value is not None:
+                pending.append(nested_value)
+    return mappings
+
+
+def _extract_cloudflare_rate_limit_metadata(candidate: Any) -> Dict[str, Any]:
+    for mapping in _iter_cloudflare_metadata_mappings(candidate):
+        status = str(mapping.get("cloudflare_status") or "").strip().lower()
+        provider = str(mapping.get("provider") or "").strip().lower()
+        method = str(mapping.get("method") or mapping.get("method_used") or "").strip().lower()
+        has_signal = status == "rate_limited" or any(
+            mapping.get(key) is not None
+            for key in ("retry_after_seconds", "retry_at_utc", "rate_limit_diagnostics", "wait_budget_exhausted")
+        )
+        if not has_signal and provider != "cloudflare_browser_rendering" and method != "cloudflare_browser_rendering":
+            continue
+        extracted = {
+            "cloudflare_status": status or None,
+            "retry_after_seconds": mapping.get("retry_after_seconds"),
+            "retry_at_utc": mapping.get("retry_at_utc"),
+            "retryable": mapping.get("retryable"),
+            "wait_budget_exhausted": mapping.get("wait_budget_exhausted"),
+            "rate_limit_diagnostics": mapping.get("rate_limit_diagnostics"),
+        }
+        if provider:
+            extracted["provider"] = provider
+        if method:
+            extracted["method"] = method
+        return {key: value for key, value in extracted.items() if value is not None}
+    return {}
+
+
+def _merge_cloudflare_rate_limit_metadata(current: Dict[str, Any], candidate: Any) -> Dict[str, Any]:
+    candidate_metadata = _extract_cloudflare_rate_limit_metadata(candidate)
+    if not candidate_metadata:
+        return dict(current or {})
+    if not current:
+        return dict(candidate_metadata)
+
+    merged = dict(current)
+    current_status = str(merged.get("cloudflare_status") or "").strip().lower()
+    candidate_status = str(candidate_metadata.get("cloudflare_status") or "").strip().lower()
+    if current_status != "rate_limited" and candidate_status == "rate_limited":
+        merged.update(candidate_metadata)
+        return merged
+
+    if "rate_limit_diagnostics" in candidate_metadata and "rate_limit_diagnostics" in merged:
+        merged["rate_limit_diagnostics"] = {
+            **dict(merged.get("rate_limit_diagnostics") or {}),
+            **dict(candidate_metadata.get("rate_limit_diagnostics") or {}),
+        }
+    for key, value in candidate_metadata.items():
+        if key == "rate_limit_diagnostics":
+            continue
+        if merged.get(key) is None and value is not None:
+            merged[key] = value
+    return merged
+
+
 async def _agentic_discover_admin_state_blocks(
     *,
     states: List[str],
@@ -2682,6 +2762,33 @@ async def _agentic_discover_admin_state_blocks(
             "report": {},
         }
 
+    cloudflare_browser_rendering_method = getattr(ScraperMethod, "CLOUDFLARE_BROWSER_RENDERING", None)
+    archive_preferred_methods = [
+        ScraperMethod.COMMON_CRAWL,
+        ScraperMethod.WAYBACK_MACHINE,
+    ]
+    if cloudflare_browser_rendering_method is not None:
+        archive_preferred_methods.append(cloudflare_browser_rendering_method)
+    archive_preferred_methods.extend(
+        [
+            ScraperMethod.PLAYWRIGHT,
+            ScraperMethod.BEAUTIFULSOUP,
+            ScraperMethod.REQUESTS_ONLY,
+        ]
+    )
+    live_preferred_methods = []
+    if cloudflare_browser_rendering_method is not None:
+        live_preferred_methods.append(cloudflare_browser_rendering_method)
+    live_preferred_methods.extend(
+        [
+            ScraperMethod.PLAYWRIGHT,
+            ScraperMethod.BEAUTIFULSOUP,
+            ScraperMethod.REQUESTS_ONLY,
+            ScraperMethod.WAYBACK_MACHINE,
+            ScraperMethod.COMMON_CRAWL,
+        ]
+    )
+
     cfg = ScraperConfig(
         timeout=40,
         max_retries=2,
@@ -2689,13 +2796,7 @@ async def _agentic_discover_admin_state_blocks(
         extract_text=True,
         fallback_enabled=True,
         rate_limit_delay=0.2,
-        preferred_methods=[
-            ScraperMethod.COMMON_CRAWL,
-            ScraperMethod.WAYBACK_MACHINE,
-            ScraperMethod.PLAYWRIGHT,
-            ScraperMethod.BEAUTIFULSOUP,
-            ScraperMethod.REQUESTS_ONLY,
-        ],
+        preferred_methods=archive_preferred_methods,
     )
     live_cfg = ScraperConfig(
         timeout=40,
@@ -2704,13 +2805,7 @@ async def _agentic_discover_admin_state_blocks(
         extract_text=True,
         fallback_enabled=True,
         rate_limit_delay=0.2,
-        preferred_methods=[
-            ScraperMethod.PLAYWRIGHT,
-            ScraperMethod.BEAUTIFULSOUP,
-            ScraperMethod.REQUESTS_ONLY,
-            ScraperMethod.WAYBACK_MACHINE,
-            ScraperMethod.COMMON_CRAWL,
-        ],
+        preferred_methods=live_preferred_methods,
     )
     scraper = UnifiedWebScraper(cfg)
     live_scraper = UnifiedWebScraper(live_cfg)
@@ -2855,6 +2950,7 @@ async def _agentic_discover_admin_state_blocks(
                         ),
                         timeout=40.0,
                     )
+                    _record_rate_limit_metadata(fetched)
                     fetched_doc = getattr(fetched, "document", None)
                     fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
                     fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
@@ -2919,9 +3015,11 @@ async def _agentic_discover_admin_state_blocks(
                     ),
                     timeout=70.0,
                 )
+                _record_rate_limit_metadata(discovered)
                 for fetch_row in discovered.get("results", []) or []:
                     if not isinstance(fetch_row, dict):
                         continue
+                    _record_rate_limit_metadata(fetch_row)
                     document = fetch_row.get("document") or {}
                     if isinstance(document, dict):
                         url = str(document.get("url") or fetch_row.get("url") or "").strip()
@@ -2951,6 +3049,7 @@ async def _agentic_discover_admin_state_blocks(
         rules_by_host: Dict[str, int] = defaultdict(int)
         format_counts: Dict[str, int] = {"html": 0, "pdf": 0, "rtf": 0}
         visited_hosts: set[str] = set()
+        state_rate_limit_metadata: Dict[str, Any] = {}
         parallel_prefetch_attempted = 0
         parallel_prefetch_succeeded = 0
         parallel_prefetch_rule_hits = 0
@@ -2961,6 +3060,10 @@ async def _agentic_discover_admin_state_blocks(
             min_text_chars = max(220, int(min_full_text_chars))
         effective_fetch_concurrency = max(1, int(fetch_concurrency))
         preloop_budget_deadline = state_start + max(12.0, min(45.0, per_state_budget_s * 0.25))
+
+        def _record_rate_limit_metadata(candidate: Any) -> None:
+            nonlocal state_rate_limit_metadata
+            state_rate_limit_metadata = _merge_cloudflare_rate_limit_metadata(state_rate_limit_metadata, candidate)
 
         async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
             if not doc_url.startswith(("http://", "https://")):
@@ -3199,6 +3302,7 @@ async def _agentic_discover_admin_state_blocks(
                     ),
                     timeout=40.0,
                 )
+                _record_rate_limit_metadata(fetched)
                 fetched_doc = getattr(fetched, "document", None)
                 fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
                 fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
@@ -3237,6 +3341,7 @@ async def _agentic_discover_admin_state_blocks(
                 if accepted_seed or inventory_seed or _prefers_live_fetch(seed_url) or bool(_OFFICIAL_RULE_INDEX_URL_RE.search(seed_url)):
                     try:
                         seed_scrape = await asyncio.wait_for(live_scraper.scrape(seed_url), timeout=25.0)
+                        _record_rate_limit_metadata(seed_scrape)
                         seed_scrape_text = str(getattr(seed_scrape, "text", "") or "").strip()
                         seed_scrape_title = str(getattr(seed_scrape, "title", "") or "").strip()
                         seed_scrape_html = str(getattr(seed_scrape, "html", "") or "")
@@ -3439,6 +3544,7 @@ async def _agentic_discover_admin_state_blocks(
 
                 try:
                     scraped = scrape_result
+                    _record_rate_limit_metadata(scraped)
                     text = str(getattr(scraped, "text", "") or "").strip()
                     title = str(getattr(scraped, "title", "") or "").strip()
                     fetched_html = ""
@@ -3468,6 +3574,7 @@ async def _agentic_discover_admin_state_blocks(
                                     ),
                                     timeout=40.0,
                                 )
+                                _record_rate_limit_metadata(fetched)
                                 fetched_doc = getattr(fetched, "document", None)
                                 fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
                                 fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
@@ -3549,9 +3656,11 @@ async def _agentic_discover_admin_state_blocks(
                                         ),
                                         timeout=35.0,
                                     )
+                                    _record_rate_limit_metadata(deep_discovered)
                                     for fetch_row in deep_discovered.get("results", []) or []:
                                         if not isinstance(fetch_row, dict):
                                             continue
+                                        _record_rate_limit_metadata(fetch_row)
                                         document = fetch_row.get("document") or {}
                                         deep_url = ""
                                         if isinstance(document, dict):
@@ -3624,20 +3733,21 @@ async def _agentic_discover_admin_state_blocks(
 
             pending = sorted(pending, key=lambda item: item[1], reverse=True)
 
-        blocks.append(
-            {
-                "state_code": state_code,
-                "state_name": state_name,
-                "title": f"{state_name} Administrative Rules",
-                "source": "Agentic web-archive discovery",
-                "source_url": seed_urls[0] if seed_urls else None,
-                "scraped_at": datetime.now().isoformat(),
-                "statutes": statutes,
-                "rules_count": len(statutes),
-                "schema_version": "1.0",
-                "normalized": True,
-            }
-        )
+        state_block = {
+            "state_code": state_code,
+            "state_name": state_name,
+            "title": f"{state_name} Administrative Rules",
+            "source": "Agentic web-archive discovery",
+            "source_url": seed_urls[0] if seed_urls else None,
+            "scraped_at": datetime.now().isoformat(),
+            "statutes": statutes,
+            "rules_count": len(statutes),
+            "schema_version": "1.0",
+            "normalized": True,
+        }
+        if state_rate_limit_metadata:
+            state_block.update(state_rate_limit_metadata)
+        blocks.append(state_block)
         candidate_url_samples: List[str] = []
         for url, _score in ranked_urls:
             if url not in candidate_url_samples:
@@ -3686,6 +3796,8 @@ async def _agentic_discover_admin_state_blocks(
             "source_breakdown": source_breakdown,
             "timed_out": bool((time.monotonic() - state_start) >= per_state_budget_s),
         }
+        if state_rate_limit_metadata:
+            report[state_code].update(state_rate_limit_metadata)
 
     return {
         "status": "success",
@@ -3864,6 +3976,8 @@ async def scrape_state_admin_rules(
         agentic_attempted_states: List[str] = []
         agentic_recovered_states: List[str] = []
         agentic_report: Dict[str, Any] = {}
+        agentic_rate_limit_metadata: Dict[str, Any] = {}
+        agentic_rate_limited_states: List[str] = []
         kg_corpus_jsonl: Optional[str] = None
         if agentic_fallback_enabled and zero_rule_states:
             agentic_started_at = time.time()
@@ -3885,6 +3999,10 @@ async def scrape_state_admin_rules(
                 "error": agentic_result.get("error"),
                 "per_state": agentic_result.get("report") or {},
             }
+            for state_code, state_report in (agentic_report.get("per_state") or {}).items():
+                agentic_rate_limit_metadata = _merge_cloudflare_rate_limit_metadata(agentic_rate_limit_metadata, state_report)
+                if str((state_report or {}).get("cloudflare_status") or "").strip().lower() == "rate_limited":
+                    agentic_rate_limited_states.append(str(state_code or "").upper())
 
             fallback_blocks = list(agentic_result.get("state_blocks") or [])
             fallback_by_state = {
@@ -3989,12 +4107,21 @@ async def scrape_state_admin_rules(
             "base_status": base_result.get("status"),
             "base_metadata": base_result.get("metadata") if include_metadata else None,
             "source_diagnostics": source_diagnostics,
+            "cloudflare_status": agentic_rate_limit_metadata.get("cloudflare_status") if agentic_rate_limit_metadata else None,
+            "retry_after_seconds": agentic_rate_limit_metadata.get("retry_after_seconds") if agentic_rate_limit_metadata else None,
+            "retry_at_utc": agentic_rate_limit_metadata.get("retry_at_utc") if agentic_rate_limit_metadata else None,
+            "retryable": agentic_rate_limit_metadata.get("retryable") if agentic_rate_limit_metadata else None,
+            "wait_budget_exhausted": agentic_rate_limit_metadata.get("wait_budget_exhausted") if agentic_rate_limit_metadata else None,
+            "rate_limit_diagnostics": agentic_rate_limit_metadata.get("rate_limit_diagnostics") if agentic_rate_limit_metadata else None,
+            "rate_limited_states": sorted(set(agentic_rate_limited_states)) or None,
         }
 
         status = "success"
         if base_result.get("status") in {"error", "partial_success"}:
             status = "partial_success"
-        if admin_rule_count == 0:
+        if admin_rule_count == 0 and str(metadata.get("cloudflare_status") or "").strip().lower() == "rate_limited":
+            status = "rate_limited"
+        elif admin_rule_count == 0:
             status = "partial_success"
 
         return {

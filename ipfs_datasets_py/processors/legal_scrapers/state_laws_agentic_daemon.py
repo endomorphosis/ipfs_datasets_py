@@ -808,6 +808,7 @@ class StateLawsAgenticDaemon:
         candidate_document_urls = 0
         states_with_candidate_document_gaps: List[str] = []
         candidate_format_counts_by_state: Dict[str, Dict[str, int]] = {}
+        per_state_recovery: Dict[str, Dict[str, Any]] = {}
 
         agentic_report = metadata.get("agentic_report") or {}
         agentic_per_state = agentic_report.get("per_state") if isinstance(agentic_report, dict) else {}
@@ -819,6 +820,7 @@ class StateLawsAgenticDaemon:
 
         for state_code in list(self.states):
             state_counts = {"html": 0, "pdf": 0, "rtf": 0}
+            processed_method_counts: Dict[str, int] = {}
             block = data_by_state.get(state_code)
             if isinstance(block, dict):
                 for statute in list(block.get("statutes") or []):
@@ -826,6 +828,9 @@ class StateLawsAgenticDaemon:
                         continue
                     doc_format = self._document_format_from_url(statute.get("source_url") or statute.get("sourceUrl"))
                     state_counts[doc_format] = int(state_counts.get(doc_format, 0) or 0) + 1
+                    method_name = self._document_method_from_row(statute)
+                    if method_name:
+                        processed_method_counts[method_name] = int(processed_method_counts.get(method_name, 0) or 0) + 1
 
             state_report = agentic_per_state.get(state_code) if isinstance(agentic_per_state, dict) else None
             if isinstance(state_report, dict):
@@ -850,6 +855,28 @@ class StateLawsAgenticDaemon:
                 if candidate_doc_count > 0 and (int(state_counts.get("pdf", 0) or 0) + int(state_counts.get("rtf", 0) or 0) <= 0):
                     states_with_candidate_document_gaps.append(state_code)
 
+                per_state_recovery[state_code] = {
+                    "processed_method_counts": dict(processed_method_counts),
+                    "source_breakdown": dict(state_report.get("source_breakdown") or {}),
+                    "domains_seen": list(state_report.get("domains_seen") or []),
+                    "parallel_prefetch": dict(state_report.get("parallel_prefetch") or {}),
+                    "timed_out": bool(state_report.get("timed_out", False)),
+                    "candidate_urls": int(state_report.get("candidate_urls", 0) or 0),
+                    "inspected_urls": int(state_report.get("inspected_urls", 0) or 0),
+                    "expanded_urls": int(state_report.get("expanded_urls", 0) or 0),
+                }
+            else:
+                per_state_recovery[state_code] = {
+                    "processed_method_counts": dict(processed_method_counts),
+                    "source_breakdown": {},
+                    "domains_seen": [],
+                    "parallel_prefetch": {},
+                    "timed_out": False,
+                    "candidate_urls": 0,
+                    "inspected_urls": 0,
+                    "expanded_urls": 0,
+                }
+
             per_state[state_code] = state_counts
             for name, value in state_counts.items():
                 total_by_format[name] = int(total_by_format.get(name, 0) or 0) + int(value or 0)
@@ -867,7 +894,22 @@ class StateLawsAgenticDaemon:
             "states_with_document_rules": states_with_document_rules,
             "states_with_candidate_document_gaps": sorted(set(states_with_candidate_document_gaps)),
             "per_state": per_state,
+            "per_state_recovery": per_state_recovery,
         }
+
+    @staticmethod
+    def _document_method_from_row(row: Dict[str, Any]) -> Optional[str]:
+        if not isinstance(row, dict):
+            return None
+        direct = str(row.get("method_used") or "").strip().lower()
+        if direct:
+            return direct
+        structured = row.get("structured_data") or {}
+        if isinstance(structured, dict):
+            nested = str(structured.get("method_used") or "").strip().lower()
+            if nested:
+                return nested
+        return None
 
     def _build_document_gap_report(
         self,
@@ -882,6 +924,7 @@ class StateLawsAgenticDaemon:
             return None
 
         document_per_state = documents.get("per_state") or {}
+        document_recovery_per_state = documents.get("per_state_recovery") or {}
         gap_states_set = set(gap_states)
         weak_states = [
             str(item).upper()
@@ -899,6 +942,9 @@ class StateLawsAgenticDaemon:
             processed_by_format = document_per_state.get(state_code) if isinstance(document_per_state, dict) else {}
             if not isinstance(processed_by_format, dict):
                 processed_by_format = {}
+            state_recovery = document_recovery_per_state.get(state_code) if isinstance(document_recovery_per_state, dict) else {}
+            if not isinstance(state_recovery, dict):
+                state_recovery = {}
             state_gap = gap_analysis.get("states", {}).get(state_code) if isinstance(gap_analysis.get("states"), dict) else {}
             if not isinstance(state_gap, dict):
                 state_gap = {}
@@ -927,6 +973,13 @@ class StateLawsAgenticDaemon:
                 "candidate_document_urls": len(top_candidate_document_urls),
                 "candidate_document_format_counts": candidate_document_format_counts,
                 "top_candidate_document_urls": top_candidate_document_urls[:12],
+                "processed_method_counts": dict(state_recovery.get("processed_method_counts") or {}),
+                "source_breakdown": dict(state_recovery.get("source_breakdown") or {}),
+                "domains_seen": list(state_recovery.get("domains_seen") or []),
+                "parallel_prefetch": dict(state_recovery.get("parallel_prefetch") or {}),
+                "timed_out": bool(state_recovery.get("timed_out", False)),
+                "inspected_urls": int(state_recovery.get("inspected_urls", 0) or 0),
+                "expanded_urls": int(state_recovery.get("expanded_urls", 0) or 0),
                 "missing_seed_hosts": [str(item) for item in list(state_gap.get("missing_seed_hosts") or []) if str(item).strip()],
                 "candidate_hosts_without_rules": [
                     str(item) for item in list(state_gap.get("candidate_hosts_without_rules") or []) if str(item).strip()

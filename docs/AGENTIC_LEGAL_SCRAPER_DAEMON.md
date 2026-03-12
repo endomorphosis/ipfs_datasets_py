@@ -23,6 +23,10 @@ The daemon now also carries forward recent cycle failures when picking the next 
 
 Cycle artifacts and `daemon_state.json` now also record a `tactic_selection` block so you can inspect whether the daemon picked a tactic because it was untried, because it was exploring, or because exploit-mode ranking favored it due to recommendation bonuses, priority-state pressure, recurring issue pressure, or stagnation penalties.
 
+For `state_admin_rules`, the daemon now also carries richer per-state document recovery telemetry into `diagnostics.documents.per_state_recovery` and `document_gap_report.states[STATE]`. Those blocks surface the lower-level admin agentic report details that matter during PDF and RTF recovery work, including `source_breakdown`, `domains_seen`, `parallel_prefetch`, `candidate_urls`, `inspected_urls`, `expanded_urls`, and any processed document method counts the daemon can infer from recovered rows.
+
+The workspace wrapper now mirrors that at the shell level: successful runs emit a concise stderr summary with the selected tactic, selection mode, priority states, and cycle state order, while the pending-retry reporter includes the latest `tactic_selection` and `cycle_state_order` fields when `latest_summary.json` is present.
+
 ## Basic Usage
 
 If you are working from the workspace root, you can also use the wrapper script:
