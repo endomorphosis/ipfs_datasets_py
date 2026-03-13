@@ -305,3 +305,39 @@ def test_hf_inference_api_uses_arch_router_to_select_model(monkeypatch) -> None:
         "https://router.huggingface.co/hf-inference/models/katanemo/Arch-Router-1.5B",
         "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
     ]
+
+
+def test_hf_inference_api_uses_first_candidate_when_arch_router_unavailable(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_USE_ARCH_ROUTER", "1")
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_HF_ROUTE_CANDIDATE_MODELS",
+        "meta-llama/Meta-Llama-3-8B-Instruct,google/flan-t5-small",
+    )
+
+    calls: list[str] = []
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        calls.append(req.full_url)
+        if req.full_url.endswith("/katanemo/Arch-Router-1.5B"):
+            raise llm_router.urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+        if req.full_url.endswith("/meta-llama/Meta-Llama-3-8B-Instruct"):
+            return _FakeHTTPResponse({"generated_text": "ok via first candidate"})
+        raise AssertionError(req.full_url)
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(
+        llm_router.importlib,
+        "import_module",
+        lambda name, package=None: (_ for _ in ()).throw(ImportError(name)) if name == "huggingface_hub" else __import__(name),
+    )
+
+    text = llm_router.generate_text("fix this bug", provider="hf_inference_api")
+
+    assert text == "ok via first candidate"
+    assert calls == [
+        "https://router.huggingface.co/hf-inference/models/katanemo/Arch-Router-1.5B",
+        "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
+    ]

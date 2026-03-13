@@ -1269,6 +1269,25 @@ def _route_hf_model_with_arch_router(
     return _parse_hf_arch_router_response(routed_text, candidate_models=candidate_models)
 
 
+def _default_hf_inference_model(*, kwargs: dict[str, object]) -> str:
+    explicit = (
+        os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
+        or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
+        or ""
+    ).strip()
+    if explicit:
+        return explicit
+
+    candidates = _hf_arch_router_candidate_models(kwargs=kwargs)
+    if candidates:
+        return candidates[0]
+
+    defaults = _hf_llm_default_fallback_models()
+    if defaults:
+        return defaults[0]
+    return "gpt2"
+
+
 def _hf_dynamic_model_discovery_enabled(*, kwargs: dict[str, object]) -> bool:
     raw = kwargs.get("hf_dynamic_model_discovery")
     if raw is None:
@@ -1637,12 +1656,7 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
 
                 raise RuntimeError("HF Inference API response missing generated text")
 
-            selected_model = (
-                model_name
-                or os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
-                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
-                or "gpt2"
-            ).strip()
+            selected_model = (model_name or _default_hf_inference_model(kwargs=dict(kwargs))).strip()
 
             if model_name is None and not bool(kwargs.get("hf_skip_model_routing")):
                 routed_model = _route_hf_model_with_arch_router(
