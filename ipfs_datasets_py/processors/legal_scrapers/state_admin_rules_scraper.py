@@ -88,6 +88,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sdlegislature\.gov/Statutes(?:\?|/|$)|"
+    r"(?:^|https?://)(?:www\.)?(?:malegislature\.gov|legislature\.ma\.gov)/Laws/GeneralLaws(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/(?:$|rules(?:\?|/|$)|Search/ExecuteSearch|Laws/(?:MCL|ChapterIndex)(?:\?|/|$))|"
     r"(?:^|https?://)(?:www\.)?legislature\.mi\.gov/Laws/Index\?(?:[^#]*&)?ObjectName=mcl-chap|(?:^|https?://)(?:www\.)?texashuntingforum\.com/|"
     r"(?:^|https?://)(?:www\.)?rules\.sos\.ga\.gov/(?:help\.aspx|download_pdf\.aspx)|"
@@ -182,6 +183,12 @@ _CA_WESTLAW_TOC_TEXT_RE = re.compile(
 _AZ_RULEMAKING_META_TEXT_RE = re.compile(
     r"title\s+1\.\s+rules\s+and\s+the\s+rulemaking\s+process|"
     r"secretary of state\s*[\-\u2013]?\s*rules and rulemaking",
+    re.IGNORECASE,
+)
+
+_AZ_ADMIN_REGISTER_TEXT_RE = re.compile(
+    r"arizona\s+administrative\s+register|issue\s+date\s+pages\s+authenticated\s+pdf|"
+    r"publishing\s+information|rules\s+and\s+your\s+rights",
     re.IGNORECASE,
 )
 
@@ -281,6 +288,17 @@ _CA_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
     re.IGNORECASE,
 )
 
+_MA_CMR_INVENTORY_PATH_RE = re.compile(
+    r"^/(?:guides/code-of-massachusetts-regulations-cmr-by-number|"
+    r"info-details/code-of-massachusetts-regulations-[a-z0-9-]+|"
+    r"law-library/\d{1,3}[a-z]?-cmr)/?$",
+    re.IGNORECASE,
+)
+
+_MA_CMR_DETAIL_PATH_RE = re.compile(r"^/regulations/[A-Za-z0-9-]+/?$", re.IGNORECASE)
+
+_MA_GENERAL_LAWS_PATH_RE = re.compile(r"^/Laws/GeneralLaws(?:/.*)?$", re.IGNORECASE)
+
 
 def _prefers_live_fetch(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
@@ -318,6 +336,7 @@ _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"adminrules\.utah\.gov(?:/(?:public/(?:home|search)(?:/.*)?|api/public/searchRuleDataTotal/[^/]+/Current%20Rules))?(?:/|$)|"
     r"govt\.westlaw\.com/calregs/(?:Index|Browse/Home/California/CaliforniaCodeofRegulations)(?:\?|/|$)|"
     r"iar\.iga\.in\.gov/code(?:/(?:current|2006))?(?:/|$)|"
+    r"ilga\.gov/(?:(?:agencies/JCAR/(?:AdminCode|Parts|Sections))|commission/jcar/admincode)(?:\?|/|$)|"
     r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
     r"azsos\.gov/rules(?:/arizona-administrative-code)?(?:/|$)|"
     r"apps\.azsos\.gov/public_services/(?:CodeTOC\.htm|Title_[\w.-]+\.htm)?$)",
@@ -329,6 +348,43 @@ _MT_RULE_INDEX_ROW_RE = re.compile(r"\bTitle\s+\d+\b", re.IGNORECASE)
 
 _PDF_BINARY_HEADER_RE = re.compile(r"^\s*%PDF-\d\.\d", re.IGNORECASE)
 _RTF_CONTENT_PREFIX_RE = re.compile(r"^\s*\{\\rtf", re.IGNORECASE)
+_RTF_CONTENT_START_RE = re.compile(
+    r"\b(?:chapter\s+\d+\.|article\s+\d+\.|title\s+\d+\.|r\d{1,2}-\d{1,2}-\d{2,4}\b)",
+    re.IGNORECASE,
+)
+_RTF_SPLIT_WORD_RE = re.compile(r"\b([A-Za-z]{1,8})(?: |\n)([A-Za-z]{1,12})\b")
+_RTF_EXTRACTION_NOISE_RE = re.compile(
+    r"Times New Roman;|Arial;|Calibri;|Aptos;|Cambria Math;|Default Paragraph Font|Normal Table|panose",
+    re.IGNORECASE,
+)
+_RTF_COMMON_JOINED_WORDS = {
+    "administrative",
+    "applicability",
+    "april",
+    "article",
+    "authority",
+    "chapter",
+    "codified",
+    "definitions",
+    "department",
+    "environmental",
+    "historical",
+    "information",
+    "legislature",
+    "preface",
+    "quality",
+    "quarterly",
+    "regulations",
+    "secretary",
+    "subject",
+    "supplement",
+    "through",
+}
+_RTF_LEADING_CONTENT_LINE_RE = re.compile(
+    r"\b(?:article|chapter|title)\s+\d+\b|\bR\d{1,2}-\d{1,2}-\d{2,4}\b|"
+    r"\b\d+\s+A\.A\.C\.\s+\d+\b|\badministrative\s+code\b|\bcode\s+of\s+regulations\b",
+    re.IGNORECASE,
+)
 _BROWSER_CHALLENGE_HTML_RE = re.compile(
     r"just\s+a\s+moment|cf-browser-verification|cloudflare|enable\s+javascript\s+and\s+cookies",
     re.IGNORECASE,
@@ -449,12 +505,30 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://iar.iga.in.gov/search",
         "https://iga.in.gov/legislative/laws/iac/",
     ],
+    "IL": [
+        "https://www.ilga.gov/agencies/JCAR/AdminCode",
+        "https://www.ilga.gov/agencies/JCAR/Parts?TitleID=001&TitleDescription=TITLE%201:%20%20GENERAL%20PROVISIONS",
+        "https://www.ilga.gov/agencies/JCAR/Sections?PartID=00100100&TitleDescription=TITLE%201:%20%20GENERAL%20PROVISIONS",
+        "https://www.ilga.gov/agencies/JCAR/EntirePart?titlepart=00100100",
+        "https://www.ilga.gov/commission/jcar/admincode/",
+        "https://www.ilga.gov/commission/jcar/admincode/001/001001000A01000R.html",
+    ],
     "LA": [
         "https://www.doa.la.gov/doa/osr/lac/",
         "https://www.doa.la.gov/doa/osr/",
         "https://www.sos.la.gov/BusinessServices/Pages/ReadAdministrativeRules.aspx",
         "https://www.sos.la.gov/ElectionsAndVoting/ReviewAdministrationAndHistory/ReadAdministrativeRules/Pages/default.aspx",
         "https://www.sos.la.gov/OurOffice/FindAdministrativeRules/Pages/default.aspx",
+    ],
+    "MA": [
+        "https://www.sec.state.ma.us/divisions/pubs-regs/about-cmr.htm",
+        "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number",
+        "https://www.mass.gov/info-details/code-of-massachusetts-regulations-a-e",
+        "https://www.mass.gov/info-details/code-of-massachusetts-regulations-f-j",
+        "https://www.mass.gov/info-details/code-of-massachusetts-regulations-k-p",
+        "https://www.mass.gov/info-details/code-of-massachusetts-regulations-q-z",
+        "https://www.mass.gov/law-library/310-cmr",
+        "https://www.mass.gov/regulations/310-CMR-700-air-pollution-control-0",
     ],
     "MS": [
         "https://sos.ms.gov/regulation-enforcement/administrative-code",
@@ -683,6 +757,48 @@ def _build_admin_fallback_jsonld_payload(*, state_code: str, state_name: str, st
 
 
 def _enrich_admin_rule_structured_data(*, state_code: str, state_name: str, statute: Dict[str, Any]) -> None:
+    section_number = str(statute.get("section_number") or "").strip()
+    section_name = str(statute.get("section_name") or statute.get("short_title") or "").strip()
+    source_url = str(statute.get("source_url") or "").strip()
+    full_text = str(statute.get("full_text") or statute.get("text") or "").strip()
+    statute_id = str(statute.get("statute_id") or "").strip()
+    code_name = str(statute.get("code_name") or "").strip()
+    official_cite = str(statute.get("official_cite") or "").strip()
+
+    if section_number:
+        statute["section_number"] = section_number
+    if section_name:
+        statute["section_name"] = section_name
+        statute.setdefault("short_title", section_name)
+    if source_url:
+        statute["source_url"] = source_url
+    if full_text:
+        statute["full_text"] = full_text
+
+    if section_name and not str(statute.get("title") or "").strip():
+        statute["title"] = section_name
+    if full_text and not str(statute.get("text") or "").strip():
+        statute["text"] = full_text
+    if source_url:
+        if not str(statute.get("url") or "").strip():
+            statute["url"] = source_url
+        if not str(statute.get("sourceUrl") or "").strip():
+            statute["sourceUrl"] = source_url
+    if section_number and not str(statute.get("sectionNumber") or "").strip():
+        statute["sectionNumber"] = section_number
+    if section_name and not str(statute.get("sectionName") or "").strip():
+        statute["sectionName"] = section_name
+    if statute_id and not str(statute.get("identifier") or "").strip():
+        statute["identifier"] = statute_id
+    if official_cite and not str(statute.get("citation") or "").strip():
+        statute["citation"] = official_cite
+    if code_name and not str(statute.get("codeName") or "").strip():
+        statute["codeName"] = code_name
+    if not str(statute.get("description") or "").strip():
+        description = section_name or full_text[:500]
+        if description:
+            statute["description"] = description
+
     structured_data = statute.get("structured_data")
     if not isinstance(structured_data, dict):
         structured_data = {}
@@ -701,14 +817,6 @@ def _enrich_admin_rule_structured_data(*, state_code: str, state_name: str, stat
         payload = dict(payload)
 
     if isinstance(payload, dict):
-        section_number = str(statute.get("section_number") or "").strip()
-        section_name = str(statute.get("section_name") or statute.get("short_title") or "").strip()
-        source_url = str(statute.get("source_url") or "").strip()
-        full_text = str(statute.get("full_text") or statute.get("text") or "").strip()
-        statute_id = str(statute.get("statute_id") or "").strip()
-        code_name = str(statute.get("code_name") or "").strip()
-        official_cite = str(statute.get("official_cite") or "").strip()
-
         payload.setdefault("@context", "https://schema.org")
         payload.setdefault("@type", "Legislation")
         payload.setdefault("legislationType", "StateAdministrativeRule")
@@ -1203,6 +1311,26 @@ def _score_candidate_url(url: str) -> int:
         score -= 6
     if host == "carules.elaws.us" and normalized_path.lower() == "/search/allcode":
         score -= 8
+    if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/admincode":
+        score += 6
+    if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/parts":
+        score += 7
+    if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/sections":
+        score += 9
+    if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/entirepart":
+        score += 11
+    if host == "www.ilga.gov" and re.search(r"^/commission/jcar/admincode/\d+/[\w.-]+\.html$", path, re.IGNORECASE):
+        score += 12
+    if host == "www.ilga.gov" and normalized_path.lower() == "/commission/jcar/admincode":
+        score += 5
+    if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(normalized_path):
+        score += 7
+    if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
+        score += 12
+    if host == "www.sec.state.ma.us" and normalized_path.lower() == "/divisions/pubs-regs/about-cmr.htm":
+        score += 6
+    if host in {"malegislature.gov", "www.malegislature.gov", "legislature.ma.gov"} and _MA_GENERAL_LAWS_PATH_RE.search(path):
+        score -= 10
     return score
 
 
@@ -1223,6 +1351,18 @@ def _gap_summary_host_key(host: str) -> str:
         return "azsos.gov"
     if value in {"adminrules.utah.gov", "rules.utah.gov", "le.utah.gov", "legislature.ut.gov"}:
         return "adminrules.utah.gov"
+    if value in {"rules.sos.ri.gov", "sos.ri.gov", "www.sos.ri.gov", "legislature.ri.gov", "webserver.rilin.state.ri.us"}:
+        return "rules.sos.ri.gov"
+    if value in {
+        "mass.gov",
+        "www.mass.gov",
+        "sec.state.ma.us",
+        "www.sec.state.ma.us",
+        "legislature.ma.gov",
+        "malegislature.gov",
+        "www.malegislature.gov",
+    }:
+        return "mass.gov"
     if value == "oal.ca.gov" and normalized_path in {"/publications", "/publications/ccr"}:
         return "govt.westlaw.com"
     if value == "carules.elaws.us" and normalized_path == "/search/allcode":
@@ -1268,6 +1408,24 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score += 4
         if re.search(r"\b(?:article|rule)\b", hay, re.IGNORECASE):
             score += 2
+    if host == "www.ilga.gov" and path.lower() == "/agencies/jcar/parts":
+        score += 5
+    if host == "www.ilga.gov" and path.lower() == "/agencies/jcar/sections":
+        score += 8
+    if host == "www.ilga.gov" and path.lower() == "/agencies/jcar/entirepart":
+        score += 10
+    if host == "www.ilga.gov" and re.search(r"^/commission/jcar/admincode/\d+/[\w.-]+\.html$", path, re.IGNORECASE):
+        score += 11
+    if host == "www.ilga.gov" and re.search(r"\bsection\s+\d+\.\d+\b", hay, re.IGNORECASE):
+        score += 4
+    if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(path):
+        score += 5
+    if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
+        score += 10
+        if re.search(r"\b\d{3}\s+cmr\b", hay, re.IGNORECASE):
+            score += 3
+    if host in {"malegislature.gov", "www.malegislature.gov", "legislature.ma.gov"} and _MA_GENERAL_LAWS_PATH_RE.search(path):
+        score -= 10
 
     low_text = str(link_text or "").strip()
     if low_text and _LOW_VALUE_LINK_TEXT_RE.fullmatch(low_text):
@@ -1317,6 +1475,12 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return True
     if host == "iar.iga.in.gov" and re.search(r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?", path, re.IGNORECASE):
         return True
+    if host == "www.ilga.gov" and path.lower() == "/agencies/jcar/entirepart":
+        return True
+    if host == "www.ilga.gov" and re.search(r"^/commission/jcar/admincode/\d+/[\w.-]+\.html$", path, re.IGNORECASE):
+        return True
+    if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
+        return True
     return False
 
 
@@ -1347,6 +1511,32 @@ def _seed_prefetch_priority(url: str) -> int:
         score += 4
 
     return score
+
+
+def _prioritized_direct_detail_urls_from_candidates(
+    candidates: List[tuple[str, int]],
+    *,
+    limit: int,
+    exclude_urls: Optional[set[str]] = None,
+) -> List[str]:
+    prioritized: List[str] = []
+    seen: set[str] = set()
+    excluded = {_url_key(url) for url in (exclude_urls or set()) if _url_key(url)}
+
+    for url, score in sorted(candidates, key=lambda item: int(item[1]), reverse=True):
+        if int(score) <= 0:
+            continue
+        if not _is_direct_detail_candidate_url(url):
+            continue
+        key = _url_key(url)
+        if not key or key in seen or key in excluded:
+            continue
+        seen.add(key)
+        prioritized.append(url)
+        if len(prioritized) >= max(1, int(limit)):
+            break
+
+    return prioritized
 
 
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
@@ -1440,6 +1630,10 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "legislature.az.gov" and _AZ_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
         return True
+    if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
+        return True
+    if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay):
+        return True
     if host == "oal.ca.gov" and normalized_path in {"/publications", "/publications/ccr"} and _CA_OAL_CCR_LANDING_TEXT_RE.search(hay):
         return True
     if host == "carules.elaws.us" and normalized_path == "/search/allcode":
@@ -1460,6 +1654,24 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         section_link_hits = len(re.findall(r"§\s*\d+", hay, re.IGNORECASE))
         if (toc_hits >= 2 or section_link_hits >= 1) and _CA_WESTLAW_TOC_TEXT_RE.search(hay):
             return True
+    if host == "www.ilga.gov" and normalized_path_lower == "/agencies/jcar/admincode":
+        if len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE)) >= 8:
+            return True
+    if host == "www.ilga.gov" and normalized_path_lower == "/agencies/jcar/parts":
+        if len(re.findall(r"\bpart\s+\d+\b", hay, re.IGNORECASE)) >= 6:
+            return True
+    if host == "www.ilga.gov" and normalized_path_lower == "/agencies/jcar/sections":
+        if len(re.findall(r"\bsection\s+\d+\.\d+\b", hay, re.IGNORECASE)) >= 6:
+            return True
+    if host == "www.ilga.gov" and normalized_path_lower == "/commission/jcar/admincode":
+        if len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE)) >= 8:
+            return True
+    if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(normalized_path):
+        return True
+    if host == "www.sec.state.ma.us" and normalized_path_lower == "/divisions/pubs-regs/about-cmr.htm":
+        return True
+    if host in {"malegislature.gov", "www.malegislature.gov", "legislature.ma.gov"} and _MA_GENERAL_LAWS_PATH_RE.search(path):
+        return True
     if host == "ars.apps.lara.state.mi.us" and _MI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
         return True
     if host == "rules.sos.ri.gov" and _RI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
@@ -1548,6 +1760,9 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
         return True
     if host == "iar.iga.in.gov" and "indiana administrative code" in hay.lower() and len(re.findall(r"\btitle\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE)) >= 8:
         return True
+    if host == "www.ilga.gov" and path in {"/agencies/jcar/admincode", "/commission/jcar/admincode", "/commission/jcar/admincode/"}:
+        if "administrative code" in hay.lower() and len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE)) >= 8:
+            return True
     if host in {"adminrules.utah.gov", "rules.utah.gov"} and "utah administrative code" in hay.lower() and len(re.findall(r"\b(?:code|rule|agency|administrative)\b", hay, re.IGNORECASE)) >= 4:
         return True
     if host == "adminrules.utah.gov" and path.startswith("/public/search") and "administrative rules search" in hay.lower():
@@ -1565,12 +1780,21 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
 
     host = urlparse(url_value).netloc.lower()
+    path = (urlparse(url_value).path or "").lower()
     hay = " ".join([title_value, body])
     chapter_hits = len(re.findall(r"\bchapter\b", body, re.IGNORECASE))
     subchapter_hits = len(re.findall(r"\bsubchapter\b", body, re.IGNORECASE))
     sd_row_hits = len(_SD_RULE_INDEX_ROW_RE.findall(body))
     mt_rule_hits = len(re.findall(r"\b\d{1,3}\.\d{1,3}\.\d{2,4}\b", body))
     nh_prefix_hits = len(_NH_ARCHIVED_RULE_PREFIX_RE.findall(hay))
+    ca_title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
+    ca_division_hits = len(re.findall(r"\bdivision\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE))
+    ca_chapter_hits = len(re.findall(r"\bchapter\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE))
+    ca_article_hits = len(re.findall(r"\barticle\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE))
+    ca_section_hits = len(re.findall(r"§\s*\d+", hay, re.IGNORECASE))
+    il_title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
+    il_part_hits = len(re.findall(r"\bpart\s+\d+\b", hay, re.IGNORECASE))
+    il_section_hits = len(re.findall(r"\bsection\s+\d+\.\d+\b", hay, re.IGNORECASE))
 
     if host == "rules.mt.gov" and (chapter_hits >= 3 or subchapter_hits >= 2 or mt_rule_hits >= 2):
         return True
@@ -1583,10 +1807,38 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "sdlegislature.gov" and sd_row_hits >= 8:
         return True
+    if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay):
+        return True
     if host == "web.archive.org" and "gc.nh.gov/rules" in url_value.lower() and (
         "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
     ):
         return True
+    if host == "www.ilga.gov" and path in {"/agencies/jcar/admincode", "/commission/jcar/admincode", "/commission/jcar/admincode/"}:
+        if "administrative code" in hay.lower() and il_title_hits >= 8:
+            return True
+    if host == "www.ilga.gov" and path == "/agencies/jcar/parts":
+        if il_part_hits >= 6 and "administrative code" in hay.lower():
+            return True
+    if host == "www.ilga.gov" and path == "/agencies/jcar/sections":
+        if il_section_hits >= 6 and "view entire part" in hay.lower():
+            return True
+    if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(path):
+        return True
+    if host == "www.sec.state.ma.us" and path == "/divisions/pubs-regs/about-cmr.htm":
+        if "code of massachusetts regulations" in hay.lower() or "cmr" in hay.lower():
+            return True
+    if host == "govt.westlaw.com" and path == "/calregs/index":
+        if ca_title_hits >= 8 and _CA_WESTLAW_TOC_TEXT_RE.search(hay):
+            return True
+    if host == "govt.westlaw.com" and path.startswith("/calregs/browse/home/california/californiacodeofregulations"):
+        if (
+            ca_division_hits >= 1
+            or ca_chapter_hits >= 1
+            or ca_article_hits >= 1
+            or ca_section_hits >= 1
+            or ca_title_hits >= 8
+        ) and _CA_WESTLAW_TOC_TEXT_RE.search(hay):
+            return True
     return False
 
 
@@ -2318,6 +2570,26 @@ def _title_from_extracted_rtf_text(*, text: str, url: str) -> str:
     return _title_from_extracted_pdf_text(text=text, url=url)
 
 
+async def _normalize_candidate_document_content(*, url: str, title: str, text: str) -> tuple[str, str]:
+    normalized_title = str(title or "").strip()
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return normalized_title, normalized_text
+
+    if _is_rtf_candidate_url(url) and _RTF_CONTENT_PREFIX_RE.search(normalized_text[:1024]):
+        extracted_text = await _extract_text_from_rtf_bytes_with_processor(
+            normalized_text.encode("latin1", errors="ignore"),
+            source_url=url,
+        )
+        extracted_text = str(extracted_text or "").strip()
+        if extracted_text and not _RTF_CONTENT_PREFIX_RE.search(extracted_text[:1024]):
+            normalized_text = extracted_text
+            if not normalized_title or _RTF_CONTENT_PREFIX_RE.search(normalized_title[:1024]):
+                normalized_title = _title_from_extracted_rtf_text(text=normalized_text, url=url)
+
+    return normalized_title, normalized_text
+
+
 def _document_format_for_url(url: str) -> str:
     if _is_pdf_candidate_url(url):
         return "pdf"
@@ -2384,11 +2656,93 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
     if not rtf_bytes:
         return ""
 
-    def _fallback_extract() -> str:
-        try:
-            value = rtf_bytes.decode("latin1", errors="ignore")
-        except Exception:
+    try:
+        preview = rtf_bytes[:8192].decode("latin1", errors="ignore")
+    except Exception:
+        preview = ""
+    preview_stripped = preview.lstrip()
+    if preview_stripped.startswith("<") and _BROWSER_CHALLENGE_HTML_RE.search(preview):
+        return ""
+
+    def _trim_leading_rtf_noise(value: str) -> str:
+        text = str(value or "").strip()
+        if not text:
             return ""
+
+        lines = [re.sub(r"\s+", " ", line).strip() for line in text.splitlines()]
+        lines = [line for line in lines if line]
+        if len(lines) <= 3:
+            return "\n".join(lines).strip()
+
+        candidate_index: Optional[int] = None
+        for index, line in enumerate(lines[:120]):
+            if _RTF_LEADING_CONTENT_LINE_RE.search(line) or _RULE_BODY_SIGNAL_RE.search(line):
+                candidate_index = index
+                break
+
+        if candidate_index is None or candidate_index <= 0:
+            return "\n".join(lines).strip()
+
+        trimmed = "\n".join(lines[candidate_index:]).strip()
+        if len(trimmed) < 200:
+            return "\n".join(lines).strip()
+        return trimmed
+
+    def _repair_split_rtf_words(value: str) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+
+        intact_words = {
+            match.group(0).lower()
+            for match in re.finditer(r"\b[A-Za-z]{4,}\b", text)
+        }
+
+        def _replace(match: re.Match[str]) -> str:
+            left = match.group(1)
+            right = match.group(2)
+            if len(left) > 4 and len(right) > 4:
+                return match.group(0)
+
+            joined = f"{left}{right}"
+            joined_lower = joined.lower()
+            if joined_lower not in intact_words and joined_lower not in _RTF_COMMON_JOINED_WORDS:
+                return match.group(0)
+
+            if left.isupper() and right.isupper():
+                return joined.upper()
+            if left[:1].isupper() and right[:1].islower():
+                return joined[:1].upper() + joined[1:]
+            return joined
+
+        repaired = text
+        for _ in range(2):
+            updated = _RTF_SPLIT_WORD_RE.sub(_replace, repaired)
+            if updated == repaired:
+                break
+            repaired = updated
+
+        def _case_preserving_common_word(match: re.Match[str], joined_word: str) -> str:
+            collapsed = re.sub(r"[^A-Za-z]", "", match.group(0))
+            if collapsed.isupper():
+                return joined_word.upper()
+            if collapsed[:1].isupper():
+                return joined_word[:1].upper() + joined_word[1:]
+            return joined_word
+
+        for joined_word in sorted(_RTF_COMMON_JOINED_WORDS, key=len, reverse=True):
+            for split_index in range(1, min(4, len(joined_word) - 1) + 1):
+                pattern = re.compile(
+                    rf"\b{re.escape(joined_word[:split_index])}(?: |\n){re.escape(joined_word[split_index:])}\b",
+                    re.IGNORECASE,
+                )
+                repaired = pattern.sub(
+                    lambda match, joined_word=joined_word: _case_preserving_common_word(match, joined_word),
+                    repaired,
+                )
+        return repaired
+
+    def _fallback_extract_text(value: str) -> str:
         if not value:
             return ""
 
@@ -2413,21 +2767,53 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
         value = re.sub(r"\\u(-?\d+)\??", _decode_unicode, value)
         value = re.sub(r"\\(?:par[d]?|line)\b", "\n", value)
         value = re.sub(r"\\tab\b", " ", value)
+        value = value.replace("\\*", " ")
         value = re.sub(r"\\([{}\\])", r"\1", value)
         value = re.sub(r"\\[a-zA-Z]+-?\d* ?", " ", value)
         value = value.replace("{", " ").replace("}", " ")
+        value = re.sub(r'HYPERLINK\s+"[^"]+"', " ", value, flags=re.IGNORECASE)
+        value = re.sub(r"\bPAGE\s+-?\d+\b", " ", value, flags=re.IGNORECASE)
 
         lines = []
         for raw_line in value.splitlines():
             cleaned = re.sub(r"\s+", " ", raw_line).strip()
             if cleaned:
                 lines.append(cleaned)
-        return "\n".join(lines).strip()
+        return _repair_split_rtf_words(_trim_leading_rtf_noise("\n".join(lines).strip()))
+
+    def _fallback_extract() -> str:
+        try:
+            value = rtf_bytes.decode("latin1", errors="ignore")
+        except Exception:
+            return ""
+        return _fallback_extract_text(value)
+
+    def _score_extracted_text(value: str) -> float:
+        text = str(value or "").strip()
+        if not text:
+            return float("-inf")
+        prefix = text[:4000]
+        legal_hits = len(re.findall(r"\b(?:chapter|article|title|section|rule|supp\.)\b|R\d{1,2}-\d{1,2}-\d{2,4}", prefix, re.IGNORECASE))
+        noise_hits = len(_RTF_EXTRACTION_NOISE_RE.findall(prefix))
+        leading_noise_penalty = 12.0 if _RTF_EXTRACTION_NOISE_RE.search(text[:600]) else 0.0
+        leading_signal_bonus = 6.0 if _RTF_LEADING_CONTENT_LINE_RE.search(text[:600]) else 0.0
+        return float(legal_hits * 8 - noise_hits * 5 - leading_noise_penalty + leading_signal_bonus + min(len(text), 12000) / 1000.0)
+
+    def _best_fallback_extract() -> str:
+        try:
+            value = rtf_bytes.decode("latin1", errors="ignore")
+        except Exception:
+            return ""
+        candidates = [_fallback_extract_text(value)]
+        content_start_match = _RTF_CONTENT_START_RE.search(value)
+        if content_start_match:
+            candidates.append(_fallback_extract_text(value[content_start_match.start() :]))
+        return max(candidates, key=_score_extracted_text)
 
     try:
         from ipfs_datasets_py.processors.file_converter import RTFExtractor
     except Exception:
-        return _fallback_extract()
+        return _best_fallback_extract()
 
     temp_path: Optional[Path] = None
     try:
@@ -2437,12 +2823,16 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
 
         extractor = RTFExtractor()
         result = await asyncio.to_thread(extractor.extract, temp_path)
-        extracted_text = str(getattr(result, "text", "") or "").strip()
+        extracted_text = _trim_leading_rtf_noise(str(getattr(result, "text", "") or "").strip())
+        fallback_text = _best_fallback_extract()
         if getattr(result, "success", False) and extracted_text:
+            extracted_text = _repair_split_rtf_words(_trim_leading_rtf_noise(extracted_text))
+            if _score_extracted_text(fallback_text) > _score_extracted_text(extracted_text):
+                return fallback_text
             return extracted_text
-        return _fallback_extract()
+        return fallback_text
     except Exception:
-        return _fallback_extract()
+        return _best_fallback_extract()
     finally:
         if temp_path is not None:
             try:
@@ -2887,6 +3277,19 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     return False
 
 
+def _should_emit_relaxed_recovery_statute(*, text: str, title: str, url: str) -> bool:
+    body = str(text or "").strip()
+    title_value = str(title or "").strip()
+    url_value = str(url or "").strip()
+
+    if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value):
+        return False
+    if _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value):
+        return False
+
+    return True
+
+
 def _candidate_links_from_scrape(
     scraped: Any,
     base_host: str,
@@ -3037,6 +3440,111 @@ def _filter_california_westlaw_links_for_depth(
             return filtered
 
     return ranked_links
+
+
+async def _discover_california_westlaw_document_urls(
+    *,
+    seed_urls: List[str],
+    live_scraper: Any,
+    live_fetch_api: Any,
+    direct_fetch_api: Any,
+    allowed_hosts: set[str],
+    limit: int = 8,
+) -> List[str]:
+    frontier: List[str] = [
+        url
+        for url in seed_urls
+        if urlparse(str(url or "").strip()).netloc.lower() == "govt.westlaw.com"
+    ]
+    if not frontier:
+        return []
+
+    document_urls: List[str] = []
+    seen_pages: set[str] = set()
+    seen_documents: set[str] = set()
+
+    for _depth in range(5):
+        next_frontier: List[str] = []
+        # This bootstrap is only meant to prime the main traversal with a small
+        # number of concrete document URLs. Keep the breadth narrow so bounded
+        # daemon cycles still have budget left to fetch the discovered rules.
+        for page_url in frontier[:2]:
+            page_key = _url_key(page_url)
+            if not page_key or page_key in seen_pages:
+                continue
+            seen_pages.add(page_key)
+
+            html = ""
+            scraped = None
+            try:
+                scraped = await asyncio.wait_for(live_scraper.scrape(page_url), timeout=12.0)
+                html = str(getattr(scraped, "html", "") or "")
+            except Exception:
+                scraped = None
+
+            if not html:
+                page_host = urlparse(page_url).netloc
+                fetch_api = live_fetch_api if _prefers_live_fetch(page_url) else direct_fetch_api
+                try:
+                    fetched = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            fetch_api.fetch,
+                            UnifiedFetchRequest(
+                                url=page_url,
+                                timeout_seconds=25,
+                                mode=OperationMode.BALANCED,
+                                domain=".gov" if page_host.endswith(".gov") else "legal",
+                            ),
+                        ),
+                        timeout=12.0,
+                    )
+                    fetched_doc = getattr(fetched, "document", None)
+                    html = str(getattr(fetched_doc, "html", "") or "")
+                except Exception:
+                    html = ""
+
+            links = _candidate_links_from_html(
+                html,
+                base_host="govt.westlaw.com",
+                page_url=page_url,
+                limit=24,
+                allowed_hosts=allowed_hosts,
+            )
+            if scraped is not None:
+                for link_url in _candidate_links_from_scrape(
+                    scraped,
+                    base_host="govt.westlaw.com",
+                    page_url=page_url,
+                    limit=24,
+                    allowed_hosts=allowed_hosts,
+                ):
+                    if link_url not in links:
+                        links.append(link_url)
+
+            for link_url in links:
+                if urlparse(link_url).path.lower().startswith("/calregs/document/"):
+                    document_key = _url_key(link_url)
+                    if not document_key or document_key in seen_documents:
+                        continue
+                    seen_documents.add(document_key)
+                    document_urls.append(link_url)
+                    if len(document_urls) >= max(1, int(limit)):
+                        return document_urls
+
+            for link_url in links:
+                if not urlparse(link_url).path.lower().startswith("/calregs/browse/home/california/californiacodeofregulations"):
+                    continue
+                link_key = _url_key(link_url)
+                if not link_key or link_key in seen_pages:
+                    continue
+                if link_url not in next_frontier:
+                    next_frontier.append(link_url)
+
+        frontier = next_frontier
+        if not frontier:
+            break
+
+    return document_urls
 
 
 def _write_agentic_kg_corpus_jsonl(rows: List[Dict[str, Any]], output_root: Path) -> Optional[str]:
@@ -3418,8 +3926,22 @@ async def _agentic_discover_admin_state_blocks(
                     break
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_direct_detail_candidate_url(url)]
+        california_bootstrap_document_urls: List[str] = []
+        if state_code == "CA" and not seeded_direct_detail_urls:
+            california_bootstrap_document_urls = await _discover_california_westlaw_document_urls(
+                seed_urls=ordered_seed_urls,
+                live_scraper=live_scraper,
+                live_fetch_api=live_fetch_api,
+                direct_fetch_api=direct_fetch_api,
+                allowed_hosts=allowed_hosts,
+                limit=min(max(1, int(max_fetch_per_state)), 2),
+            )
+            for document_url in california_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if california_bootstrap_document_urls:
+                source_breakdown["california_westlaw_document_bootstrap"] = len(california_bootstrap_document_urls)
 
-        direct_detail_ready = bool(utah_api_rule_urls or seeded_direct_detail_urls) or _direct_detail_candidate_backlog_is_ready(
+        direct_detail_ready = bool(utah_api_rule_urls or seeded_direct_detail_urls or california_bootstrap_document_urls) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
             max_fetch=max_fetch_per_state,
         )
@@ -3619,17 +4141,25 @@ async def _agentic_discover_admin_state_blocks(
             state_rate_limit_metadata = _merge_cloudflare_rate_limit_metadata(state_rate_limit_metadata, candidate)
 
         async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
+            doc_title, doc_text = await _normalize_candidate_document_content(
+                url=doc_url,
+                title=doc_title,
+                text=doc_text,
+            )
             if not doc_url.startswith(("http://", "https://")):
                 return False
             if not _url_allowed_for_state(doc_url, allowed_hosts):
                 return False
-            if not _is_substantive_rule_text(
+            is_substantive = _is_substantive_rule_text(
                 text=doc_text,
                 title=doc_title,
                 url=doc_url,
                 min_chars=min_text_chars,
-            ):
+            )
+            if not is_substantive:
                 if not (relaxed_recovery and _is_relaxed_recovery_text(text=doc_text, title=doc_title, url=doc_url)):
+                    return False
+                if not _should_emit_relaxed_recovery_statute(text=doc_text, title=doc_title, url=doc_url):
                     return False
             doc_key = _url_key(doc_url)
             if doc_key in direct_doc_urls:
@@ -3978,6 +4508,55 @@ async def _agentic_discover_admin_state_blocks(
             except Exception:
                 pass
 
+        prioritized_seed_expansion_document_urls = _prioritized_direct_detail_urls_from_candidates(
+            seed_expansion_candidates,
+            limit=min(max_fetch * 3, 12),
+            exclude_urls=direct_doc_urls,
+        )
+
+        for document_url in prioritized_seed_expansion_document_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
+            if remaining_prefetch_budget_s <= 1.0:
+                break
+            expanded_scraped = None
+            lower_document_url = str(document_url or "").lower()
+            direct_timeout_s = max(1.0, min(12.0, remaining_prefetch_budget_s))
+            try:
+                if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
+                    expanded_scraped = await asyncio.wait_for(
+                        _scrape_pdf_candidate_url_with_processor(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif lower_document_url.endswith(".rtf") or ".rtf?" in lower_document_url:
+                    expanded_scraped = await asyncio.wait_for(
+                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                else:
+                    expanded_scraped = await asyncio.wait_for(
+                        live_scraper.scrape(document_url),
+                        timeout=direct_timeout_s,
+                    )
+            except Exception:
+                expanded_scraped = None
+            if expanded_scraped is None:
+                continue
+
+            expanded_text = str(getattr(expanded_scraped, "text", "") or "").strip()
+            expanded_title = str(getattr(expanded_scraped, "title", "") or "").strip()
+            expanded_provenance = getattr(expanded_scraped, "extraction_provenance", None) or {}
+            expanded_method_value = None
+            if isinstance(expanded_provenance, dict):
+                expanded_method_value = expanded_provenance.get("method")
+            if expanded_method_value is None:
+                expanded_method_value = getattr(expanded_scraped, "method_used", None)
+            expanded_method_value = getattr(expanded_method_value, "value", expanded_method_value)
+            await _append_document_if_rule(document_url, expanded_title, expanded_text, expanded_method_value)
+
         try:
             if "discovered" in locals() and isinstance(discovered, dict):
                 for fetch_row in discovered.get("results", []) or []:
@@ -4158,6 +4737,7 @@ async def _agentic_discover_admin_state_blocks(
                     text = str(getattr(scraped, "text", "") or "").strip()
                     title = str(getattr(scraped, "title", "") or "").strip()
                     fetched_html = str(getattr(scraped, "html", "") or "")
+                    current_host = urlparse(url).netloc
                     official_index_page = _looks_like_official_rule_index_page(text=text, title=title, url=url)
                     inventory_page = _looks_like_rule_inventory_page(text=text, title=title, url=url)
 
@@ -4169,8 +4749,7 @@ async def _agentic_discover_admin_state_blocks(
                     ):
                         # Dynamic official rule indexes can render as a thin JS shell through
                         # the lightweight scraper even when the fuller fetch path has real text.
-                        host = urlparse(url).netloc
-                        if (_url_key(url) in prioritized_seed_keys or host in base_hosts) and not (official_index_page or inventory_page):
+                        if (_url_key(url) in prioritized_seed_keys or current_host in base_hosts) and not (official_index_page or inventory_page):
                             fetch_api = live_fetch_api if _prefers_live_fetch(url) else direct_fetch_api
                             try:
                                 fetched = await asyncio.wait_for(
@@ -4180,7 +4759,7 @@ async def _agentic_discover_admin_state_blocks(
                                             url=url,
                                             timeout_seconds=35,
                                             mode=OperationMode.BALANCED,
-                                            domain=".gov" if host.endswith(".gov") else "legal",
+                                            domain=".gov" if current_host.endswith(".gov") else "legal",
                                         ),
                                     ),
                                     timeout=40.0,
@@ -4213,43 +4792,53 @@ async def _agentic_discover_admin_state_blocks(
                         if relaxed_recovery and _is_relaxed_recovery_text(text=text, title=title, url=url):
                             pass
                         else:
+                            inventory_link_bonus = 2 if inventory_page else 0
+                            inventory_html_bonus = 2 if inventory_page else 1
+                            inventory_rule_bonus = 4 if inventory_page else 3
+                            inventory_utah_bonus = 5 if inventory_page else 4
                             for rule_url in _candidate_montana_rule_urls_from_text(
                                 text=text,
                                 url=url,
                                 limit=24,
                             ):
-                                pending.append((rule_url, _score_candidate_url(rule_url) + 3))
+                                pending.append((rule_url, _score_candidate_url(rule_url) + inventory_rule_bonus))
                                 expanded_urls += 1
-                            same_host = host if host in base_hosts else ""
-                            for link_url in _candidate_links_from_scrape(
-                                scraped,
-                                base_host=same_host,
-                                page_url=url,
-                                limit=8,
-                                allowed_hosts=allowed_hosts,
+                            same_host = current_host if current_host in base_hosts else ""
+                            for link_rank, link_url in enumerate(
+                                _candidate_links_from_scrape(
+                                    scraped,
+                                    base_host=same_host,
+                                    page_url=url,
+                                    limit=8,
+                                    allowed_hosts=allowed_hosts,
+                                )
                             ):
                                 link_score = _score_candidate_url(link_url)
                                 if link_score <= 0:
                                     continue
-                                pending.append((link_url, link_score))
+                                depth_bonus = max(0, 6 - int(link_rank)) if inventory_page else 0
+                                pending.append((link_url, link_score + inventory_link_bonus + depth_bonus))
                                 expanded_urls += 1
-                            for link_url in _candidate_links_from_html(
-                                fetched_html,
-                                base_host=same_host,
-                                page_url=url,
-                                limit=12,
-                                allowed_hosts=allowed_hosts,
+                            for link_rank, link_url in enumerate(
+                                _candidate_links_from_html(
+                                    fetched_html,
+                                    base_host=same_host,
+                                    page_url=url,
+                                    limit=12,
+                                    allowed_hosts=allowed_hosts,
+                                )
                             ):
                                 link_score = _score_candidate_url(link_url)
                                 if link_score <= 0:
                                     continue
-                                pending.append((link_url, link_score + 1))
+                                depth_bonus = max(0, 6 - int(link_rank)) if inventory_page else 0
+                                pending.append((link_url, link_score + inventory_html_bonus + depth_bonus))
                                 expanded_urls += 1
                             for rule_url in _candidate_utah_rule_urls_from_public_api(
                                 url=url,
                                 limit=24,
                             ):
-                                pending.append((rule_url, _score_candidate_url(rule_url) + 4))
+                                pending.append((rule_url, _score_candidate_url(rule_url) + inventory_utah_bonus))
                                 expanded_urls += 1
 
                             if (

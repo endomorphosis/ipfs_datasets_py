@@ -22,6 +22,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
     _is_relaxed_recovery_text,
     _is_substantive_rule_text,
     _is_substantive_admin_statute,
+    _normalize_admin_rule_payloads,
     _url_allowed_for_state,
     scrape_state_admin_rules,
 )
@@ -42,11 +43,52 @@ def test_rejects_rhode_island_statute_index_as_admin_rule() -> None:
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
+def test_normalize_admin_rule_payloads_adds_trimmed_generic_aliases() -> None:
+    scraped_rules = [
+        {
+            "state_code": "AZ",
+            "state_name": "Arizona",
+            "statutes": [
+                {
+                    "section_number": " A1 ",
+                    "section_name": " TITLE 18. ENVIRONMENTAL QUALITY \n",
+                    "source_url": "https://apps.azsos.gov/public_services/Title_18/18-04.rtf\n",
+                    "full_text": " TITLE 18 text body\n",
+                    "code_name": " Arizona Administrative Rules ",
+                    "official_cite": " AZ Admin Rule A1 ",
+                }
+            ],
+        }
+    ]
+
+    _normalize_admin_rule_payloads(scraped_rules)
+
+    statute = scraped_rules[0]["statutes"][0]
+    assert statute["section_number"] == "A1"
+    assert statute["section_name"] == "TITLE 18. ENVIRONMENTAL QUALITY"
+    assert statute["source_url"] == "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+    assert statute["full_text"] == "TITLE 18 text body"
+    assert statute["title"] == "TITLE 18. ENVIRONMENTAL QUALITY"
+    assert statute["text"] == "TITLE 18 text body"
+    assert statute["url"] == "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+    assert statute["sourceUrl"] == "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+    assert statute["sectionNumber"] == "A1"
+    assert statute["sectionName"] == "TITLE 18. ENVIRONMENTAL QUALITY"
+    assert statute["citation"] == "AZ Admin Rule A1"
+    assert statute["codeName"] == "Arizona Administrative Rules"
+    assert statute["description"] == "TITLE 18. ENVIRONMENTAL QUALITY"
+    assert statute["structured_data"]["jsonld"]["sourceUrl"] == "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+
+
 def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr() -> None:
+    il_urls = scraper_module._extract_seed_urls_for_state("IL", "Illinois")
     mi_urls = scraper_module._extract_seed_urls_for_state("MI", "Michigan")
     ri_urls = scraper_module._extract_seed_urls_for_state("RI", "Rhode Island")
     ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
 
+    assert "https://www.ilga.gov/agencies/JCAR/AdminCode" in il_urls
+    assert "https://www.ilga.gov/agencies/JCAR/EntirePart?titlepart=00100100" in il_urls
+    assert "https://www.ilga.gov/commission/jcar/admincode/001/001001000A01000R.html" in il_urls
     assert "https://ars.apps.lara.state.mi.us/AdminCode/AdminCode" in mi_urls
     assert "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306" in mi_urls
     assert "https://ars.apps.lara.state.mi.us/" not in mi_urls
@@ -75,6 +117,18 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules" in ut_urls
     assert "https://adminrules.utah.gov/public/home" not in ut_urls
     assert "https://adminrules.utah.gov/public/search" not in ut_urls
+
+
+def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
+    ma_urls = scraper_module._extract_seed_urls_for_state("MA", "Massachusetts")
+    ma_allowed_hosts = _allowed_discovery_hosts_for_state("MA", "Massachusetts")
+
+    assert "https://www.sec.state.ma.us/divisions/pubs-regs/about-cmr.htm" in ma_urls
+    assert "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number" in ma_urls
+    assert "https://www.mass.gov/law-library/310-cmr" in ma_urls
+    assert "https://www.mass.gov/regulations/310-CMR-700-air-pollution-control-0" in ma_urls
+    assert "www.mass.gov" in ma_allowed_hosts
+    assert "www.sec.state.ma.us" in ma_allowed_hosts
 
 
 def test_california_admin_seed_urls_exclude_leginfo_templates_and_hosts() -> None:
@@ -145,10 +199,85 @@ def test_gap_summary_host_key_collapses_utah_admin_rule_host_family() -> None:
     assert scraper_module._gap_summary_host_key("https://legislature.ut.gov") == "adminrules.utah.gov"
 
 
+def test_gap_summary_host_key_collapses_rhode_island_admin_rule_host_family() -> None:
+    assert scraper_module._gap_summary_host_key("https://rules.sos.ri.gov/regulations/part/510-00-00-4") == "rules.sos.ri.gov"
+    assert scraper_module._gap_summary_host_key("https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations") == "rules.sos.ri.gov"
+    assert scraper_module._gap_summary_host_key("https://sos.ri.gov/open-government-center") == "rules.sos.ri.gov"
+    assert scraper_module._gap_summary_host_key("https://legislature.ri.gov/ricr") == "rules.sos.ri.gov"
+    assert scraper_module._gap_summary_host_key("http://webserver.rilin.state.ri.us/Statutes/TITLE6/INDEX.HTM") == "rules.sos.ri.gov"
+
+
+def test_gap_summary_host_key_collapses_massachusetts_admin_rule_host_family() -> None:
+    assert scraper_module._gap_summary_host_key("https://www.mass.gov/regulations/310-CMR-700-air-pollution-control-0") == "mass.gov"
+    assert scraper_module._gap_summary_host_key("https://www.sec.state.ma.us/divisions/pubs-regs/about-cmr.htm") == "mass.gov"
+    assert scraper_module._gap_summary_host_key("https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXVI/Chapter111/Section142A") == "mass.gov"
+    assert scraper_module._gap_summary_host_key("https://legislature.ma.gov/") == "mass.gov"
+
+
 def test_is_direct_detail_candidate_url_recognizes_indiana_rule_detail_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/current/10/1.5") is True
     assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/2006/25/7") is True
     assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/current") is False
+
+
+def test_massachusetts_inventory_pages_are_rejected_as_substantive_rule_text() -> None:
+    guide_url = "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number"
+    law_library_url = "https://www.mass.gov/law-library/310-cmr"
+    guide_text = (
+        "Code of Massachusetts Regulations CMR by number. Browse 105 CMR, 310 CMR, 801 CMR, "
+        "and other titles of the Code of Massachusetts Regulations by number."
+    )
+    law_library_text = (
+        "310 CMR. The following regulations are available under 310 CMR. 310 CMR 7.00 Air Pollution Control. "
+        "310 CMR 30.00 Hazardous Waste. More regulations and law library resources."
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=guide_text,
+        title="Code of Massachusetts Regulations CMR by number",
+        url=guide_url,
+    ) is True
+    assert _is_substantive_rule_text(
+        text=guide_text,
+        title="Code of Massachusetts Regulations CMR by number",
+        url=guide_url,
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=law_library_text,
+        title="310 CMR",
+        url=law_library_url,
+    ) is False
+
+
+def test_massachusetts_regulation_detail_page_is_direct_and_outscores_inventory() -> None:
+    detail_url = "https://www.mass.gov/regulations/310-CMR-700-air-pollution-control-0"
+    inventory_url = "https://www.mass.gov/law-library/310-cmr"
+    detail_text = (
+        "310 CMR 7.00 Air Pollution Control. Organization: Department of Environmental Protection. "
+        "Regulatory Authority: M.G.L. c. 111, section 142A. Summary: This regulation establishes air pollution control requirements."
+    )
+
+    assert scraper_module._is_direct_detail_candidate_url(detail_url) is True
+    assert _is_substantive_rule_text(
+        text=detail_text,
+        title="310 CMR 7.00: Air Pollution Control",
+        url=detail_url,
+        min_chars=160,
+    ) is True
+    assert scraper_module._score_candidate_url(detail_url) > scraper_module._score_candidate_url(inventory_url)
+
+
+def test_rejects_massachusetts_general_laws_pages_as_admin_rules() -> None:
+    statute = {
+        "code_name": "Code of Massachusetts Regulations",
+        "section_name": "General Law - Part I, Title XVI, Chapter 111, Section 142A",
+        "source_url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXVI/Chapter111/Section142A",
+        "full_text": "General Law - Part I, Title XVI, Chapter 111, Section 142A. Authority of the department.",
+    }
+
+    assert _is_admin_rule_statute(statute) is False
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
 def test_pdf_request_headers_accept_env_cookie_and_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -454,6 +583,11 @@ def test_rejects_california_westlaw_index_page_as_rule_content() -> None:
         title="California Code of Regulations - California Code of Regulations",
         url="https://govt.westlaw.com/calregs/Index?transitionType=Default&contextData=%28sc.Default%29",
     ) is False
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="California Code of Regulations - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Index?transitionType=Default&contextData=%28sc.Default%29",
+    ) is True
 
 
 def test_rejects_california_westlaw_division_browse_page_as_rule_content() -> None:
@@ -536,6 +670,11 @@ def test_rejects_california_westlaw_article_toc_page_as_rule_content() -> None:
         title="Browse - California Code of Regulations",
         url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=I7DA20CB04C6611ECBA0CE8BD2C3F45C2&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
     ) is False
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Browse - California Code of Regulations",
+        url="https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=I7DA20CB04C6611ECBA0CE8BD2C3F45C2&originationContext=documenttoc&transitionType=Default&contextData=(sc.Default)",
+    ) is True
 
 
 def test_rejects_montana_history_magazine_false_positive() -> None:
@@ -929,6 +1068,45 @@ def test_rejects_arizona_rule_index_seo_mirror_false_positive() -> None:
     ) is False
 
 
+def test_should_not_emit_relaxed_recovery_arizona_inventory_page() -> None:
+    text = (
+        "Arizona Administrative Code. Title 1 State Government. Title 2 Administration. "
+        "Title 3 Agriculture. Title 4 Professions and Occupations. Browse the official rules index, "
+        "agency rules, notices, and codified administrative materials published by the Arizona Secretary of State."
+    )
+
+    assert scraper_module._should_emit_relaxed_recovery_statute(
+        text=text,
+        title="Arizona Administrative Code",
+        url="https://azsos.gov/rules/arizona-administrative-code",
+    ) is False
+
+
+def test_rejects_arizona_admin_register_toc_as_non_rule_page() -> None:
+    text = (
+        "ARIZONA SECRETARY OF STATE Home / Rules / Arizona Administrative Register / 2025, Volume 31. "
+        "Publishing Information. Table of Contents. Issue Date Pages Authenticated PDF. "
+        "Rules and Your Rights."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Arizona Administrative Register - 2025",
+        url="https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Administrative Register - 2025",
+        url="https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+    ) is False
+    assert scraper_module._should_emit_relaxed_recovery_statute(
+        text=text,
+        title="Arizona Administrative Register - 2025",
+        url="https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+    ) is False
+
+
 def test_rejects_arizona_legislature_landing_pages_as_relaxed_recovery_text() -> None:
     text = (
         "Arizona Legislature Skip to main content Skip to footer Bill # Search Legislative Events "
@@ -939,6 +1117,25 @@ def test_rejects_arizona_legislature_landing_pages_as_relaxed_recovery_text() ->
         text=text,
         title="Arizona Legislature",
         url="https://legislature.az.gov/regulations",
+    ) is False
+
+
+def test_rejects_www_azleg_root_landing_pages_as_non_rule_text() -> None:
+    text = (
+        "Arizona Legislature. Home. Rules. Regulations. Policies. Departments. Contact Us. "
+        "Skip to main content."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Arizona Administrative Rules",
+        url="https://www.azleg.gov/",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Administrative Rules",
+        url="https://www.azleg.gov/",
     ) is False
 
 
@@ -1079,6 +1276,27 @@ def test_seed_prefetch_priority_prefers_arizona_direct_documents_and_codetoc() -
     assert scored == [rtf_url, pdf_url, codetoc_url, landing_url]
 
 
+def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_docs() -> None:
+    candidates = [
+        ("https://azsos.gov/rules/arizona-administrative-code", 90),
+        ("https://apps.azsos.gov/public_services/CodeTOC.htm", 85),
+        ("https://apps.azsos.gov/public_services/Title_07/7-02.pdf", 80),
+        ("https://apps.azsos.gov/public_services/Title_18/18-04.rtf", 95),
+        ("https://apps.azsos.gov/public_services/Title_18/18-04.rtf", 70),
+    ]
+
+    prioritized = scraper_module._prioritized_direct_detail_urls_from_candidates(
+        candidates,
+        limit=3,
+        exclude_urls={"https://apps.azsos.gov/public_services/CodeTOC.htm"},
+    )
+
+    assert prioritized == [
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
+    ]
+
+
 @pytest.mark.asyncio
 async def test_extract_text_from_pdf_bytes_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePDFProcessor:
@@ -1148,6 +1366,79 @@ async def test_extract_text_from_rtf_bytes_falls_back_without_striprtf(monkeypat
 
     assert "R1-1-101." in extracted
     assert "Authority and definitions." in extracted
+
+
+@pytest.mark.asyncio
+async def test_extract_text_from_rtf_bytes_prefers_trimmed_legal_content_over_noisy_front_matter(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRTFResult:
+        success = True
+        text = (
+            "Times New Roman; Arial; Cambria Math; Default Paragraph Font; "
+            "Normal Table; panose 02020603050405020304"
+        )
+
+    class FakeRTFExtractor:
+        def extract(self, file_path):
+            return FakeRTFResult()
+
+    monkeypatch.setattr(file_converter_module, "RTFExtractor", FakeRTFExtractor)
+
+    front_matter = ("Times New Roman; Arial; Cambria Math; Default Paragraph Font; Normal Table; panose " * 80)
+    rtf_bytes = (
+        "{\\rtf1\\ansi "
+        f"{front_matter}"
+        "\\par CHAPTER 4. DEPARTMENT OF ENVIRONMENTAL QUALITY - SAFE DRINKING WATER"
+        "\\par ARTICLE 1. PRIMARY DRINKING WATER REGULATIONS"
+        "\\par R18-4-101. Applicability and definitions."
+        "}"
+    ).encode("latin1")
+
+    extracted = await scraper_module._extract_text_from_rtf_bytes_with_processor(
+        rtf_bytes,
+        source_url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    )
+
+    assert extracted.startswith("CHAPTER 4. DEPARTMENT OF ENVIRONMENTAL QUALITY - SAFE DRINKING WATER")
+    assert "R18-4-101. Applicability and definitions." in extracted
+
+
+@pytest.mark.asyncio
+async def test_extract_text_from_rtf_bytes_repairs_split_words_in_salvaged_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRTFResult:
+        success = True
+        text = "TITLE 18. ENVIRONMENTAL QUALI TY\nArizona Adm inistrative Code\nA pril 1, 2023"
+
+    class FakeRTFExtractor:
+        def extract(self, file_path):
+            return FakeRTFResult()
+
+    monkeypatch.setattr(file_converter_module, "RTFExtractor", FakeRTFExtractor)
+
+    extracted = await scraper_module._extract_text_from_rtf_bytes_with_processor(
+        b"{\\rtf1\\ansi TITLE 18. ENVIRONMENTAL QUALI TY\\par Arizona Adm inistrative Code\\par A pril 1, 2023}",
+        source_url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    )
+
+    assert "QUALITY" in extracted
+    assert "Administrative Code" in extracted
+    assert "April 1, 2023" in extracted
+    assert "QUALI TY" not in extracted
+    assert "Adm inistrative" not in extracted
+    assert "A pril" not in extracted
+
+
+@pytest.mark.asyncio
+async def test_extract_text_from_rtf_bytes_rejects_cloudflare_challenge_html() -> None:
+    extracted = await scraper_module._extract_text_from_rtf_bytes_with_processor(
+        b"<!DOCTYPE html><html><head><title>Just a moment...</title></head><body>Enable JavaScript and cookies to continue</body></html>",
+        source_url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    )
+
+    assert extracted == ""
 
 
 @pytest.mark.asyncio
@@ -1926,6 +2217,66 @@ def test_rejects_utah_adminrules_home_landing_page() -> None:
         title=statute["section_name"],
         url=statute["source_url"],
     ) is False
+
+
+def test_rejects_illinois_jcar_admin_index_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Illinois Administrative Rules (Agentic Discovery)",
+        "section_name": "Illinois General Assembly - ADMINISTRATIVE CODE",
+        "source_url": "https://www.ilga.gov/agencies/JCAR/AdminCode",
+        "full_text": (
+            "Illinois Administrative Code Disclaimer TITLE 1 GENERAL PROVISIONS TITLE 2 GOVERNMENTAL ORGANIZATION "
+            "TITLE 3 LEGISLATURE TITLE 4 DISCRIMINATION PROCEDURES TITLE 8 AGRICULTURE AND ANIMALS TITLE 11 ALCOHOL, HORSE RACING, LOTTERY, AND VIDEO GAMING "
+            "TITLE 14 COMMERCE TITLE 17 CONSERVATION TITLE 20 CORRECTIONS, CRIMINAL JUSTICE, AND LAW ENFORCEMENT TITLE 23 EDUCATION AND CULTURAL RESOURCES."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+
+
+def test_rejects_illinois_jcar_sections_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Illinois Administrative Rules (Agentic Discovery)",
+        "section_name": "Illinois General Assembly - ADMINISTRATIVE CODE",
+        "source_url": "https://www.ilga.gov/agencies/JCAR/Sections?PartID=00100100&TitleDescription=TITLE%201:%20%20GENERAL%20PROVISIONS",
+        "full_text": (
+            "TITLE 1 GENERAL PROVISIONS CHAPTER I SECRETARY OF STATE PART 100 RULEMAKING IN ILLINOIS View Entire Part "
+            "Section 100.100 Rulemaking Compliance Section 100.110 Definitions Section 100.120 Agencies Covered "
+            "Section 100.130 Illinois Administrative Code Organization Section 100.140 Codification Outline Section 100.150 Notice of Codification Changes "
+            "Section 100.160 Deletion or Transfer of Rules Section 100.170 Re-using Part or Section Numbers."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+
+
+def test_accepts_illinois_jcar_static_section_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Illinois Administrative Rules (Agentic Discovery)",
+        "section_name": "Section 100.100 Rulemaking Compliance",
+        "source_url": "https://www.ilga.gov/commission/jcar/admincode/001/001001000A01000R.html",
+        "full_text": (
+            "TITLE 1 GENERAL PROVISIONS CHAPTER I SECRETARY OF STATE PART 100 RULEMAKING IN ILLINOIS SECTION 100.100 RULEMAKING COMPLIANCE. "
+            "This Part describes the procedures involved in promulgating rules in codified form, including both Illinois Register publication and filing requirements. "
+            "All rules filed with the Index Department must be in compliance with the rulemaking system described within this Part pursuant to Article 5 of the Illinois Administrative Procedure Act. "
+            "Source: Amended at 18 Ill. Reg. 13067, effective August 11, 1994."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is True
 
 
 def test_rejects_indiana_current_code_index_page_as_substantive_rule_text() -> None:
@@ -3048,6 +3399,110 @@ async def test_agentic_discovery_archive_prefetch_inventory_expands_without_cras
 
 
 @pytest.mark.anyio
+async def test_agentic_discovery_normalizes_raw_rtf_prefetch_content(monkeypatch: pytest.MonkeyPatch) -> None:
+    rtf_url = "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls):
+            return [
+                SimpleNamespace(
+                    success=True,
+                    url=rtf_url,
+                    content=r"{\rtf1\ansi R18-4-101.\par Applicability. Arizona administrative code article text.}",
+                    source="wayback",
+                )
+            ]
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            return SimpleNamespace(document=SimpleNamespace(text="", title="", html="", extraction_provenance={}))
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, source_url: str) -> str:
+        assert source_url == rtf_url
+        assert b"\\rtf1" in rtf_bytes
+        return "R18-4-101. Applicability. Arizona administrative code article text."
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [rtf_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(
+        scraper_module,
+        "_extract_text_from_rtf_bytes_with_processor",
+        _fake_extract_text_from_rtf_bytes_with_processor,
+    )
+    monkeypatch.setattr(
+        scraper_module,
+        "_is_substantive_rule_text",
+        lambda **kwargs: kwargs.get("url") == rtf_url and "Applicability." in str(kwargs.get("text") or ""),
+    )
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["AZ"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=1,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    statute = result["state_blocks"][0]["statutes"][0]
+    assert statute["source_url"] == rtf_url
+    assert statute["full_text"] == "R18-4-101. Applicability. Arizona administrative code article text."
+    assert statute["section_name"] == "R18-4-101. Applicability. Arizona administrative code article text."
+    assert result["report"]["AZ"]["format_counts"]["rtf"] == 1
+
+
+@pytest.mark.anyio
 async def test_agentic_discovery_does_not_spend_full_budget_in_utah_prefetch(monkeypatch: pytest.MonkeyPatch) -> None:
     seed_url = "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
     rule_urls = [
@@ -3892,6 +4347,154 @@ async def test_agentic_discovery_uses_seed_prefetch_signal_before_broad_search(m
         min_full_text_chars=100,
         require_substantive_text=True,
         fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [deep_url]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_prioritizes_deeper_california_inventory_links(monkeypatch: pytest.MonkeyPatch) -> None:
+    seed_url = "https://govt.westlaw.com/calregs/Index"
+    title_urls = [
+        f"https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=TITLE{i}"
+        for i in range(1, 7)
+    ]
+    division_url = "https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=DIV1"
+    chapter_url = "https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=CH1"
+    article_url = "https://govt.westlaw.com/calregs/Browse/Home/California/CaliforniaCodeofRegulations?guid=ART1"
+    deep_url = "https://govt.westlaw.com/calregs/Document/ABC123?viewType=FullText"
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            raise AssertionError("archive search should not run once California seed prefetch yields an inventory signal")
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            raise AssertionError("broad search should not run once California seed prefetch yields an inventory signal")
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            raise AssertionError("deep discovery should not run for recognized California inventory hops in this regression")
+
+        def fetch(self, request):
+            if request.url != seed_url:
+                raise AssertionError(f"unexpected prefetched URL: {request.url}")
+            document = SimpleNamespace(
+                text="California Code of Regulations Title 1. General Provisions Title 2. Administration Title 3. Food and Agriculture Title 4. Business Regulations Title 5. Education Title 7. Harbors and Navigation Title 8. Industrial Relations Title 9. Rehabilitative and Developmental Services Privacy Accessibility California Office of Administrative Law",
+                title="California Code of Regulations - California Code of Regulations",
+                html="",
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
+
+    def _browse_page(link_url: str, text: str, link_text: str) -> SimpleNamespace:
+        return SimpleNamespace(
+            text=text,
+            title="Browse - California Code of Regulations",
+            html=f"<a href='{link_url}'>{link_text}</a>",
+            links=[{"url": link_url, "text": link_text}],
+        )
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            if url == seed_url:
+                html = "".join([f"<a href='{title_url}'>Title {index}. Sample</a>" for index, title_url in enumerate(title_urls, start=1)])
+                links = [{"url": title_url, "text": f"Title {index}. Sample"} for index, title_url in enumerate(title_urls, start=1)]
+                return SimpleNamespace(
+                    text="California Code of Regulations Title 1. General Provisions Title 2. Administration Title 3. Food and Agriculture Title 4. Business Regulations Title 5. Education Title 7. Harbors and Navigation Title 8. Industrial Relations Title 9. Rehabilitative and Developmental Services Privacy Accessibility California Office of Administrative Law",
+                    title="California Code of Regulations - California Code of Regulations",
+                    html=html,
+                    links=links,
+                )
+            if url == title_urls[0]:
+                return _browse_page(
+                    division_url,
+                    "Home Title 1. General Provisions Division 1. Office of Administrative Law Privacy Accessibility California Office of Administrative Law",
+                    "Division 1. Office of Administrative Law",
+                )
+            if url in set(title_urls[1:]):
+                return SimpleNamespace(
+                    text="Home Title Sample Privacy Accessibility California Office of Administrative Law",
+                    title="Browse - California Code of Regulations",
+                    html="",
+                    links=[],
+                )
+            if url == division_url:
+                return _browse_page(
+                    chapter_url,
+                    "Home Title 1. General Provisions Division 1. Office of Administrative Law Chapter 1. Review of Proposed Regulations Privacy Accessibility California Office of Administrative Law",
+                    "Chapter 1. Review of Proposed Regulations",
+                )
+            if url == chapter_url:
+                return _browse_page(
+                    article_url,
+                    "Home Title 1. General Provisions Division 1. Office of Administrative Law Chapter 1. Review of Proposed Regulations Article 1. Chapter Definitions Privacy Accessibility California Office of Administrative Law",
+                    "Article 1. Chapter Definitions",
+                )
+            if url == article_url:
+                return _browse_page(
+                    deep_url,
+                    "Home Title 1. General Provisions Division 1. Office of Administrative Law Chapter 1. Review of Proposed Regulations Article 1. Chapter Definitions § 1. Chapter Definitions. Privacy Accessibility California Office of Administrative Law",
+                    "§ 1. Chapter Definitions.",
+                )
+            if url == deep_url:
+                return SimpleNamespace(
+                    text="§ 1. Chapter Definitions. Authority cited: Government Code section 11342. Reference: Sections 11340.2 and 11342.550, Government Code.",
+                    title="View Document - California Code of Regulations",
+                    html="",
+                    links=[],
+                )
+            raise AssertionError(f"unexpected scrape URL: {url}")
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(
+        scraper_module,
+        "_looks_like_rule_inventory_page",
+        lambda **kwargs: str(kwargs.get("url") or "").startswith("https://govt.westlaw.com/calregs/") and "/Document/" not in str(kwargs.get("url") or ""),
+    )
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == deep_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["CA"],
+        max_candidates_per_state=2,
+        max_fetch_per_state=1,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+        per_state_budget_seconds=60,
     )
 
     assert result["status"] == "success"

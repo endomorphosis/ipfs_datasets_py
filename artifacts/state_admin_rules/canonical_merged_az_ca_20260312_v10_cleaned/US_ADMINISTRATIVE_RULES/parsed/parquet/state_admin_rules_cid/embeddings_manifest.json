@@ -1,0 +1,41 @@
+{
+  "device": "cpu",
+  "files": {
+    "STATE-AZ.parquet": {
+      "embedded_rows": 1,
+      "output_file": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10_cleaned/US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-AZ_embeddings.parquet",
+      "skipped_duplicate_cid": 0,
+      "skipped_empty_or_short": 0,
+      "source_file": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10_cleaned/US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-AZ.parquet",
+      "source_rows": 1,
+      "unique_cids": 1
+    },
+    "STATE-CA.parquet": {
+      "embedded_rows": 8,
+      "output_file": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10_cleaned/US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-CA_embeddings.parquet",
+      "skipped_duplicate_cid": 0,
+      "skipped_empty_or_short": 0,
+      "source_file": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10_cleaned/US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-CA.parquet",
+      "source_rows": 8,
+      "unique_cids": 8
+    },
+    "state_admin_rules_all_states.parquet": {
+      "embedded_rows": 9,
+      "output_file": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10_cleaned/US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/state_admin_rules_all_states_embeddings.parquet",
+      "skipped_duplicate_cid": 0,
+      "skipped_empty_or_short": 0,
+      "source_file": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10_cleaned/US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/state_admin_rules_all_states.parquet",
+      "source_rows": 9,
+      "unique_cids": 9
+    }
+  },
+  "generated_at_utc": "2026-03-12T20:07:06.927197+00:00",
+  "input_dir": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10_cleaned/US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid",
+  "model": "thenlper/gte-small",
+  "provider": "local_adapter",
+  "totals": {
+    "embedded_rows": 18,
+    "source_rows": 18,
+    "unique_cids": 9
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "generated_at_utc": "2026-03-12T20:06:36.386230+00:00",
+  "include_corpus_jsonl": true,
+  "input_roots": [
+    "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/fresh_validation_az_ca_20260312_v10"
+  ],
+  "output_dir": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10",
+  "selected_states": [
+    "AZ",
+    "CA"
+  ],
+  "states": {
+    "AZ": {
+      "canonical_jsonld": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10/state_admin_rules_jsonld/STATE-AZ.jsonld",
+      "merged_rows_total": 1,
+      "source_corpus_rows": 1,
+      "source_jsonld_files": 2,
+      "source_rows_total": 2,
+      "source_summary_files": 0,
+      "state": "AZ"
+    },
+    "CA": {
+      "canonical_jsonld": "/home/barberb/municipal_scrape_workspace/ipfs_datasets_py/artifacts/state_admin_rules/canonical_merged_az_ca_20260312_v10/state_admin_rules_jsonld/STATE-CA.jsonld",
+      "merged_rows_total": 8,
+      "source_corpus_rows": 8,
+      "source_jsonld_files": 2,
+      "source_rows_total": 16,
+      "source_summary_files": 0,
+      "state": "CA"
+    }
+  },
+  "totals": {
+    "rows_combined_jsonl": 9,
+    "source_corpus_jsonl_files": 1,
+    "states_seen": 2,
+    "states_with_jsonld": 2
+  }
+}
