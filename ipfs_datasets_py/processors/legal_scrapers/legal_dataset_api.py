@@ -47,7 +47,7 @@ DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
 DEFAULT_STATE_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("state_laws").hf_dataset_id
 DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_admin_rules").hf_dataset_id
 DEFAULT_COURT_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_court_rules").hf_dataset_id
-DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = "justicedao/ipfs_federal_register"
+DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = get_canonical_legal_corpus("federal_register").hf_dataset_id
 
 
 def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
@@ -1459,23 +1459,28 @@ async def search_federal_register_corpus_from_parameters(
     `justicedao/ipfs_federal_register`.
     """
     fr_params = dict(parameters)
+    federal_register_corpus = get_canonical_legal_corpus("federal_register")
 
-    fr_params.setdefault("hf_dataset_id", DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID)
-    fr_params.setdefault("hf_parquet_file", "federal_register.parquet")
+    fr_params.setdefault("hf_dataset_id", federal_register_corpus.hf_dataset_id)
+    fr_params.setdefault("hf_parquet_file", federal_register_corpus.combined_parquet_filename)
     fr_params.setdefault("hf_parquet_prefix", None)
-    fr_params.setdefault("cid_metadata_field", "cid")
-    fr_params.setdefault("cid_column", "cid")
+    fr_params.setdefault("cid_metadata_field", federal_register_corpus.cid_field)
+    fr_params.setdefault("cid_column", federal_register_corpus.cid_field)
     fr_params.setdefault(
         "text_field_candidates",
         [
-            "name",
             "title",
+            "name",
             "text",
+            "agency_name",
+            "document_type",
+            "publication_date",
             "description",
             "summary",
             "abstract",
             "agency",
             "legislation_type",
+            "raw_json",
             "jsonld",
         ],
     )
@@ -1484,7 +1489,12 @@ async def search_federal_register_corpus_from_parameters(
     fr_params.setdefault("chunk_hf_parquet_prefix", None)
     fr_params.setdefault(
         "preferred_case_parquet_names",
-        ["federal_register.parquet", "federal_register", "laws"],
+        [
+            federal_register_corpus.combined_parquet_filename,
+            "federal_register.parquet",
+            "federal_register",
+            "laws",
+        ],
     )
 
     return await search_caselaw_access_cases_from_parameters(

@@ -185,6 +185,11 @@ _CA_WESTLAW_DOCUMENT_BOILERPLATE_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_CA_WESTLAW_DOCUMENT_BREADCRUMB_LINE_RE = re.compile(
+    r"^(?:Title\s+\d+\.|Division\s+\d+(?:\.\d+)?\.|Chapter\s+\d+(?:\.\d+)?\.|Article\s+(?:\d+|[IVXLCM]+)\.)\b.*$",
+    re.IGNORECASE,
+)
+
 _AZ_RULEMAKING_META_TEXT_RE = re.compile(
     r"title\s+1\.\s+rules\s+and\s+the\s+rulemaking\s+process|"
     r"secretary of state\s*[\-\u2013]?\s*rules and rulemaking",
@@ -2751,6 +2756,8 @@ def _trim_california_westlaw_document_chrome(*, text: str, url: str, title: str 
     lines = [re.sub(r"\s+", " ", line).strip() for line in trimmed.splitlines()]
     cleaned_lines: List[str] = []
     seen_heading = False
+    heading_line = candidate_markers[0] if candidate_markers else ""
+    heading_is_section = bool(re.match(r"^§\s*[\w.-]+", heading_line, re.IGNORECASE))
     for line in lines:
         if not line:
             continue
@@ -2758,6 +2765,15 @@ def _trim_california_westlaw_document_chrome(*, text: str, url: str, title: str 
             cleaned_lines.append(line)
             seen_heading = True
             continue
+        if heading_is_section:
+            if heading_line and line == heading_line:
+                continue
+            if _CA_WESTLAW_DOCUMENT_BREADCRUMB_LINE_RE.match(line):
+                continue
+            if re.match(r"^\d+\s+CCR\s+§\s*[\w.-]+$", line, re.IGNORECASE):
+                continue
+            if line.lower() == "currentness":
+                continue
         if _CA_WESTLAW_DOCUMENT_BOILERPLATE_LINE_RE.match(line):
             continue
         cleaned_lines.append(line)

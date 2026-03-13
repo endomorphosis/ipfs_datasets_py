@@ -720,6 +720,58 @@ class StateLawsAgenticDaemon:
         }
 
     @staticmethod
+    def _coalesce_router_llm_env(*names: str) -> str:
+        for name in names:
+            value = os.environ.get(name)
+            if value is not None and str(value).strip():
+                return str(value).strip()
+        return ""
+
+    @staticmethod
+    def _truthy_env(name: str) -> Optional[bool]:
+        value = os.environ.get(name)
+        if value is None or not str(value).strip():
+            return None
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    def _router_llm_kwargs(self, *, tactic: ScraperTacticProfile, timeout_seconds: float) -> Dict[str, Any]:
+        provider_override = self._coalesce_router_llm_env(
+            "LEGAL_DAEMON_ROUTER_LLM_PROVIDER",
+            "IPFS_DATASETS_PY_ROUTER_REVIEW_LLM_PROVIDER",
+        )
+        model_override = self._coalesce_router_llm_env(
+            "LEGAL_DAEMON_ROUTER_LLM_MODEL",
+            "IPFS_DATASETS_PY_ROUTER_REVIEW_LLM_MODEL",
+        )
+        hf_provider_override = self._coalesce_router_llm_env(
+            "LEGAL_DAEMON_ROUTER_LLM_HF_PROVIDER",
+            "IPFS_DATASETS_PY_ROUTER_REVIEW_HF_PROVIDER",
+        )
+        hf_use_chat_env = self._truthy_env("LEGAL_DAEMON_ROUTER_LLM_HF_USE_CHAT_COMPLETIONS")
+        if hf_use_chat_env is None:
+            hf_use_chat_env = self._truthy_env("IPFS_DATASETS_PY_ROUTER_REVIEW_HF_USE_CHAT_COMPLETIONS")
+
+        selected_provider = provider_override or tactic.llm_provider
+        kwargs: Dict[str, Any] = {
+            "provider": selected_provider,
+            "temperature": 0.2,
+            "max_tokens": 350,
+            "allow_local_fallback": timeout_seconds <= 0.0,
+        }
+        if model_override:
+            kwargs["model_name"] = model_override
+        if hf_provider_override:
+            kwargs["hf_provider"] = hf_provider_override
+        if hf_use_chat_env is not None:
+            kwargs["hf_use_chat_completions"] = hf_use_chat_env
+
+        if kwargs.get("provider") == "hf_inference_api":
+            if hf_use_chat_env is None and model_override and ":" in model_override:
+                kwargs["hf_use_chat_completions"] = True
+
+        return kwargs
+
+    @staticmethod
     def _rate_limit_metadata_candidates(scrape_result: Dict[str, Any]) -> List[Dict[str, Any]]:
         metadata = scrape_result.get("metadata") or {}
         base_metadata = metadata.get("base_metadata") if isinstance(metadata, dict) else None
@@ -2061,17 +2113,15 @@ class StateLawsAgenticDaemon:
         )
         try:
             timeout_seconds = max(0.0, float(self.config.router_llm_timeout_seconds or 0.0))
+            router_llm_kwargs = self._router_llm_kwargs(tactic=tactic, timeout_seconds=timeout_seconds)
             response = await self._run_blocking_on_daemon_thread(
                 llm_router.generate_text,
                 prompt,
                 timeout_seconds=timeout_seconds,
-                provider=tactic.llm_provider,
-                temperature=0.2,
-                max_tokens=350,
-                allow_local_fallback=timeout_seconds <= 0.0,
+                **router_llm_kwargs,
             )
         except Exception as exc:
-            if tactic.llm_provider is None:
+            if router_llm_kwargs.get("provider") is None:
                 exc_text = str(exc)
                 if "ipfs_accelerate_py provider did not return generated text" in exc_text:
                     return {
@@ -2091,7 +2141,11 @@ class StateLawsAgenticDaemon:
         if parsed is None:
             return {"status": "error", "error": "invalid-json-response", "raw": str(response)[:1200]}
         parsed["status"] = "success"
-        parsed["provider"] = tactic.llm_provider
+        parsed["provider"] = router_llm_kwargs.get("provider")
+        if router_llm_kwargs.get("model_name"):
+            parsed["model_name"] = str(router_llm_kwargs.get("model_name"))
+        if router_llm_kwargs.get("hf_provider"):
+            parsed["hf_provider"] = str(router_llm_kwargs.get("hf_provider"))
         return parsed
 
     async def _run_router_llm_review_with_timeout(

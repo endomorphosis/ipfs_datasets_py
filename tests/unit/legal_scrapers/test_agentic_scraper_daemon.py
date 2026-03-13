@@ -3192,7 +3192,7 @@ async def test_state_admin_rules_agentic_daemon_router_llm_timeout_is_unavailabl
     monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_run_llm_router_review", _fake_review)
 
     result = await daemon._run_router_llm_review_with_timeout(
-        tactic=daemon.config.tactic_profiles[daemon.config.initial_tactic],
+        tactic=daemon.config.tactic_profiles["router_assisted"],
         diagnostics={},
         critic={},
     )
@@ -3201,6 +3201,62 @@ async def test_state_admin_rules_agentic_daemon_router_llm_timeout_is_unavailabl
         "status": "unavailable",
         "error": "timed out after 0.0 seconds",
         "reason": "timed-out",
+    }
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_router_llm_env_overrides_forward_to_router(monkeypatch, tmp_path):
+    from ipfs_datasets_py import llm_router as llm_router_module
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    captured: dict[str, object] = {}
+
+    def _fake_generate_text(prompt, **kwargs):
+        captured["prompt"] = prompt
+        captured["kwargs"] = dict(kwargs)
+        return json.dumps(
+            {
+                "recommended_next_tactics": ["router_assisted"],
+                "priority_states": ["AZ"],
+                "query_hints": ["arizona admin code"],
+                "rationale": "ok",
+            }
+        )
+
+    monkeypatch.setattr(llm_router_module, "generate_text", _fake_generate_text)
+    monkeypatch.setenv("LEGAL_DAEMON_ROUTER_LLM_PROVIDER", "hf_inference_api")
+    monkeypatch.setenv("LEGAL_DAEMON_ROUTER_LLM_MODEL", "deepseek-ai/DeepSeek-R1:preferred")
+    monkeypatch.setenv("LEGAL_DAEMON_ROUTER_LLM_HF_PROVIDER", "auto")
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            router_llm_timeout_seconds=0.0,
+        )
+    )
+
+    result = await daemon._run_llm_router_review(
+        tactic=daemon.config.tactic_profiles["router_assisted"],
+        diagnostics={},
+        critic={},
+    )
+
+    assert result["status"] == "success"
+    assert result["provider"] == "hf_inference_api"
+    assert result["model_name"] == "deepseek-ai/DeepSeek-R1:preferred"
+    assert result["hf_provider"] == "auto"
+    assert captured["kwargs"] == {
+        "provider": "hf_inference_api",
+        "model_name": "deepseek-ai/DeepSeek-R1:preferred",
+        "hf_provider": "auto",
+        "hf_use_chat_completions": True,
+        "temperature": 0.2,
+        "max_tokens": 350,
+        "allow_local_fallback": True,
     }
 
 

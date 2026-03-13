@@ -43,6 +43,16 @@ class CanonicalLegalCorpus:
 
 
 _CORPORA: Dict[str, CanonicalLegalCorpus] = {
+    "federal_register": CanonicalLegalCorpus(
+        key="federal_register",
+        display_name="Federal Register",
+        hf_dataset_id="justicedao/ipfs_federal_register",
+        local_root_name="federal_register",
+        jsonld_dir_name="federal_register_jsonld",
+        parquet_dir_name="federal_register_parquet",
+        combined_parquet_filename="laws.parquet",
+        combined_embeddings_filename="laws_embeddings.parquet",
+    ),
     "state_laws": CanonicalLegalCorpus(
         key="state_laws",
         display_name="State Laws",

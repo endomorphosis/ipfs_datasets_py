@@ -6,6 +6,7 @@ import json
 import types
 
 from ipfs_datasets_py import llm_router
+from ipfs_datasets_py.utils import model_manager as hf_model_manager
 
 
 class _FakeHTTPResponse:
@@ -200,6 +201,7 @@ def test_hf_inference_api_retries_with_discovered_models(monkeypatch) -> None:
     monkeypatch.setenv("IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY", "1")
     monkeypatch.setenv("IPFS_DATASETS_PY_HF_LLM_DISCOVERY_TAGS", "text-generation")
     monkeypatch.setenv("IPFS_DATASETS_PY_HF_LLM_DISCOVERY_LIMIT", "5")
+    monkeypatch.setattr(hf_model_manager, "list_hf_inference_models", lambda model_kind=None: [])
 
     class _FakeHfApi:
         def list_models(self, **kwargs):
@@ -496,4 +498,66 @@ def test_hf_inference_api_retries_next_candidate_when_routed_model_is_unavailabl
         "https://router.huggingface.co/hf-inference/models/katanemo/Arch-Router-1.5B",
         "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
         "https://router.huggingface.co/hf-inference/models/tiiuae/falcon-7b-instruct",
+    ]
+
+
+def test_hf_inference_api_prefers_live_model_manager_chat_candidates(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.delenv("IPFS_DATASETS_PY_HF_ROUTE_CANDIDATE_MODELS", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY", "0")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_USE_ARCH_ROUTER", "1")
+
+    monkeypatch.setattr(
+        hf_model_manager,
+        "list_hf_inference_models",
+        lambda model_kind=None: [
+            {
+                "model_id": "facebook/bart-large-cnn",
+                "model_kind": "llm",
+                "pipeline_tag": "summarization",
+                "supported_backends": ["hf_inference_api"],
+                "source_url": "https://huggingface.co/facebook/bart-large-cnn",
+            },
+            {
+                "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+                "model_kind": "llm",
+                "pipeline_tag": "text-generation",
+                "supported_backends": ["hf_inference_api"],
+                "source_url": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct",
+            },
+            {
+                "model_id": "katanemo/Arch-Router-1.5B",
+                "model_kind": "llm",
+                "pipeline_tag": "text-generation",
+                "supported_backends": ["hf_inference_api"],
+                "source_url": "https://huggingface.co/katanemo/Arch-Router-1.5B",
+            },
+        ],
+    )
+
+    calls: list[str] = []
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        calls.append(req.full_url)
+        if req.full_url.endswith("/katanemo/Arch-Router-1.5B"):
+            raise llm_router.urllib.error.HTTPError(req.full_url, 404, "Not Found", None, None)
+        if req.full_url.endswith("/Qwen/Qwen2.5-1.5B-Instruct"):
+            return _FakeHTTPResponse({"generated_text": "ok via live manager candidate"})
+        raise AssertionError(req.full_url)
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(
+        llm_router.importlib,
+        "import_module",
+        lambda name, package=None: (_ for _ in ()).throw(ImportError(name)) if name == "huggingface_hub" else __import__(name),
+    )
+
+    text = llm_router.generate_text("fix this bug", provider="hf_inference_api")
+
+    assert text == "ok via live manager candidate"
+    assert calls == [
+        "https://router.huggingface.co/hf-inference/models/katanemo/Arch-Router-1.5B",
+        "https://router.huggingface.co/hf-inference/models/Qwen/Qwen2.5-1.5B-Instruct",
     ]

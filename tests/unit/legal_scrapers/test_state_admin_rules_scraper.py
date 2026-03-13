@@ -1474,7 +1474,9 @@ async def test_normalize_candidate_document_content_trims_california_westlaw_chr
         text=(
             "Skip to Navigation\nSkip to Main Content\nCalifornia Code of Regulations\n"
             "Home Updates Search Help\nHome Table of Contents\n§ 250. Definitions.\n"
-            "1 CA ADC § 250\nBarclays Official California Code of Regulations\n"
+            "Title 1. General Provisions\nDivision 1. Office of Administrative Law\n"
+            "Chapter 2. Underground Regulations\n1 CCR § 250\n§ 250. Definitions.\n"
+            "Currentness\n1 CA ADC § 250\nBarclays Official California Code of Regulations\n"
             "Authority cited: Government Code section 11342.2. Reference: Government Code section 11342."
         ),
     )
@@ -1483,6 +1485,11 @@ async def test_normalize_candidate_document_content_trims_california_westlaw_chr
     assert text.startswith("§ 250. Definitions.")
     assert "Skip to Navigation" not in text
     assert "Home Updates Search Help" not in text
+    assert "Title 1. General Provisions" not in text
+    assert "Division 1. Office of Administrative Law" not in text
+    assert "Chapter 2. Underground Regulations" not in text
+    assert "1 CCR § 250" not in text
+    assert "Currentness" not in text
     assert "1 CA ADC § 250" not in text
     assert "Barclays Official California Code of Regulations" not in text
 

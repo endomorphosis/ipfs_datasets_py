@@ -1158,11 +1158,18 @@ def _hf_llm_fallback_models(*, kwargs: dict[str, object]) -> list[str]:
         return [item.strip() for item in text.split(",") if item and item.strip()]
 
     models: list[str] = []
+    for model_id in _hf_live_model_manager_candidate_models():
+        if model_id not in models:
+            models.append(model_id)
+
     if _hf_dynamic_model_discovery_enabled(kwargs=kwargs):
         tags = _hf_llm_discovery_tags(kwargs=kwargs)
         limit = _hf_llm_discovery_limit(kwargs=kwargs)
         for tag in tags:
-            models.extend(_discover_hf_models_for_pipeline(pipeline_tag=tag, limit=limit))
+            for model_id in _discover_hf_models_for_pipeline(pipeline_tag=tag, limit=limit):
+                text = str(model_id or "").strip()
+                if text and text not in models:
+                    models.append(text)
 
     for candidate in _hf_llm_default_fallback_models():
         if candidate not in models:
@@ -1186,6 +1193,45 @@ def _is_probably_text_generation_model(model_id: str) -> bool:
     if any(token in lower for token in ("bart", "pegasus", "t5", "mbart", "summar")):
         return False
     return True
+
+
+def _hf_live_model_manager_candidate_models() -> list[str]:
+    try:
+        from ipfs_datasets_py.utils import model_manager
+
+        records = model_manager.list_hf_inference_models(model_kind="llm")
+    except Exception:
+        return []
+
+    def _score(record: dict[str, object]) -> tuple[int, int, str]:
+        model_id = str(record.get("model_id") or "").strip()
+        lower = model_id.lower()
+        pipeline_tag = str(record.get("pipeline_tag") or "").strip().lower()
+
+        if not model_id or not _is_probably_text_generation_model(model_id):
+            return (-100, -100, model_id)
+
+        score = 0
+        if pipeline_tag == "text-generation":
+            score += 40
+        elif pipeline_tag == "text2text-generation":
+            score += 20
+        elif pipeline_tag == "summarization":
+            score -= 40
+
+        if any(token in lower for token in ("instruct", "chat", "assistant", "gpt", "deepseek", "qwen", "mistral", "llama", "zephyr", "oss", "router")):
+            score += 50
+        if any(token in lower for token in ("bart", "pegasus", "xsum", "headline", "booksum", "summar")):
+            score -= 50
+
+        return (score, len(model_id), model_id)
+
+    ordered: list[str] = []
+    for record in sorted(records, key=_score, reverse=True):
+        model_id = str(record.get("model_id") or "").strip()
+        if model_id and model_id not in ordered and _is_probably_text_generation_model(model_id):
+            ordered.append(model_id)
+    return ordered
 
 
 def _hf_arch_router_enabled(*, kwargs: dict[str, object]) -> bool:
@@ -1233,23 +1279,17 @@ def _hf_arch_router_candidate_models(*, kwargs: dict[str, object]) -> list[str]:
                     models.append(text)
 
     if not models:
+        for model_id in _hf_live_model_manager_candidate_models():
+            if model_id not in models:
+                models.append(model_id)
+
+    if not models:
         if _hf_dynamic_model_discovery_enabled(kwargs=kwargs):
             limit = _hf_llm_discovery_limit(kwargs=kwargs)
             for model_id in _discover_hf_models_for_pipeline(pipeline_tag="text-generation", limit=limit):
                 text = str(model_id or "").strip()
                 if text and text not in models:
                     models.append(text)
-
-    if not models:
-        try:
-            from ipfs_datasets_py.utils import model_manager
-
-            for record in model_manager.list_hf_inference_models(model_kind="llm"):
-                model_id = str(record.get("model_id") or "").strip()
-                if model_id and _is_probably_text_generation_model(model_id) and model_id not in models:
-                    models.append(model_id)
-        except Exception:
-            pass
 
     if not models:
         for model_id in _hf_llm_default_fallback_models():
