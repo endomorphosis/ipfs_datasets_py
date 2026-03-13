@@ -367,6 +367,7 @@ _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"ilga\.gov/(?:(?:agencies/JCAR/(?:AdminCode|Parts|Sections))|commission/jcar/admincode)(?:\?|/|$)|"
     r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
     r"azsos\.gov/rules(?:/arizona-administrative-code)?(?:/|$)|"
+    r"sharetngov\.tnsosfiles\.com/sos/(?:rules/(?:index\.htm|rules2\.htm|rules_list\.shtml|effectives/effectives\.htm)|pub/tar/index\.htm)(?:\?|/|$)|"
     r"apps\.azsos\.gov/public_services/(?:CodeTOC\.htm|Title_[\w.-]+\.htm)?$)",
     re.IGNORECASE,
 )
@@ -1932,6 +1933,22 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
         return True
     if host == "adminrules.utah.gov" and path.startswith("/public/search") and "administrative rules search" in hay.lower():
         return True
+    if host == "sharetngov.tnsosfiles.com" and path in {
+        "/sos/rules/index.htm",
+        "/sos/pub/tar/index.htm",
+        "/sos/rules/rules2.htm",
+        "/sos/rules/rules_list.shtml",
+        "/sos/rules/effectives/effectives.htm",
+    }:
+        if "tennessee department of state: publications" in hay.lower() and (
+            "administrative register" in hay.lower()
+            or "rules & regulations" in hay.lower()
+            or "effective rules" in hay.lower()
+            or "view all effective rule chapters" in hay.lower()
+            or "view effective rules by month" in hay.lower()
+            or "archived rule filings" in hay.lower()
+        ):
+            return True
     return False
 
 
@@ -1987,6 +2004,21 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
             return True
     if host == "www.ilga.gov" and path == "/agencies/jcar/sections":
         if il_section_hits >= 6 and "view entire part" in hay.lower():
+            return True
+    if host == "sharetngov.tnsosfiles.com" and path in {
+        "/sos/rules/index.htm",
+        "/sos/pub/tar/index.htm",
+        "/sos/rules/rules2.htm",
+        "/sos/rules/rules_list.shtml",
+        "/sos/rules/effectives/effectives.htm",
+    }:
+        if (
+            "administrative register" in hay.lower()
+            or "effective rules" in hay.lower()
+            or "view all effective rule chapters" in hay.lower()
+            or "view effective rules by month" in hay.lower()
+            or "archived rule filings" in hay.lower()
+        ):
             return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(path):
         return True
@@ -3555,6 +3587,10 @@ def _should_emit_relaxed_recovery_statute(*, text: str, title: str, url: str) ->
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
 
+    if title_value and _looks_like_placeholder_text(title_value):
+        return False
+    if body and _looks_like_placeholder_text(body):
+        return False
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
     if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value):

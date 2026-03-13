@@ -262,6 +262,24 @@ def test_is_direct_detail_candidate_url_recognizes_tennessee_sharetngov_rule_cha
     ) is False
 
 
+def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
+    text = (
+        "Tennessee Department of State: Publications Administrative Register Rules & Regulations "
+        "Effective Rules View All Effective Rule Chapters View Effective Rules by Month Archived Rule Filings"
+    )
+
+    assert scraper_module._looks_like_official_rule_index_page(
+        text=text,
+        title="Tennessee Department of State: Publications",
+        url="https://sharetngov.tnsosfiles.com/sos/rules/index.htm",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Tennessee Department of State: Publications",
+        url="https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
+    ) is True
+
+
 def test_massachusetts_inventory_pages_are_rejected_as_substantive_rule_text() -> None:
     guide_url = "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number"
     law_library_url = "https://www.mass.gov/law-library/310-cmr"
@@ -561,6 +579,11 @@ def test_rejects_tennessee_tn_gov_page_not_found_admin_false_positive() -> None:
 
     assert _is_admin_rule_statute(statute) is True
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert scraper_module._should_emit_relaxed_recovery_statute(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
 
 
 def test_rejects_california_oal_publication_contract_page_as_rule_content() -> None:
