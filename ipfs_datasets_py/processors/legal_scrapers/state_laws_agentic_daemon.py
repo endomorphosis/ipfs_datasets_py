@@ -2110,7 +2110,11 @@ class StateLawsAgenticDaemon:
                 timeout=timeout_seconds,
             )
         except asyncio.TimeoutError:
-            return {"status": "error", "error": f"timed out after {timeout_seconds:.1f} seconds"}
+            return {
+                "status": "unavailable",
+                "error": f"timed out after {timeout_seconds:.1f} seconds",
+                "reason": "timed-out",
+            }
 
     @staticmethod
     def _parse_router_llm_response(response: Any) -> Optional[Dict[str, Any]]:

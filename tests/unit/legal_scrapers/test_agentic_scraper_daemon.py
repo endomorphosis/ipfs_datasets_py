@@ -3170,6 +3170,41 @@ async def test_state_admin_rules_agentic_daemon_router_llm_accelerate_no_remote_
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_router_llm_timeout_is_unavailable(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_review(self, *, tactic, diagnostics, critic):
+        _ = (self, tactic, diagnostics, critic)
+        await asyncio.sleep(0.05)
+        return {"status": "success"}
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            router_llm_timeout_seconds=0.01,
+        )
+    )
+
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_run_llm_router_review", _fake_review)
+
+    result = await daemon._run_router_llm_review_with_timeout(
+        tactic=daemon.config.tactic_profiles[daemon.config.initial_tactic],
+        diagnostics={},
+        critic={},
+    )
+
+    assert result == {
+        "status": "unavailable",
+        "error": "timed out after 0.0 seconds",
+        "reason": "timed-out",
+    }
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_skips_router_ipfs_persist_when_cli_missing(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 

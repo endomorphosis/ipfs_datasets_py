@@ -1350,6 +1350,29 @@ def _score_candidate_url(url: str) -> int:
         score += 10
     if host == "legislature.nh.gov" and normalized_path.lower() in {"/regulations", "/administrative-code", "/code-of-regulations"}:
         score -= 5
+    if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php" and re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
+        score += 10
+    if host == "secure.vermont.gov" and normalized_path.lower() in {"/sos/rules", "/sos/rules/index.php"}:
+        score += 4
+    if host == "secure.vermont.gov" and normalized_path.lower() in {
+        "/sos/rules/search.php",
+        "/sos/rules/rssfeed.php",
+        "/sos/rules/calendar.php",
+        "/sos/rules/subscribe.php",
+        "/sos/rules/contact.php",
+        "/sos/rules/icalendar.php",
+    }:
+        score -= 3
+    if host in {"legislature.vt.gov", "legislature.vermont.gov"} and normalized_path.lower() in {
+        "/",
+        "/rules",
+        "/regulations",
+        "/administrative-code",
+        "/code-of-regulations",
+        "/agency-rules",
+        "/policies",
+    }:
+        score -= 6
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/admincode":
         score += 6
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/parts":
@@ -1527,6 +1550,9 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         re.IGNORECASE,
     ):
         return True
+    if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php":
+        if re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
+            return True
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):

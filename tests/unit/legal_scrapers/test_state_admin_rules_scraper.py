@@ -244,6 +244,15 @@ def test_is_direct_detail_candidate_url_recognizes_new_hampshire_archived_rule_c
     ) is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_vermont_rule_display_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://secure.vermont.gov/SOS/rules/display.php?r=1049"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://secure.vermont.gov/SOS/rules/search.php"
+    ) is False
+
+
 def test_massachusetts_inventory_pages_are_rejected_as_substantive_rule_text() -> None:
     guide_url = "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number"
     law_library_url = "https://www.mass.gov/law-library/310-cmr"
@@ -2678,6 +2687,26 @@ def test_score_candidate_url_prioritizes_new_hampshire_archived_rule_chapters() 
     assert archived_detail_score > archived_inventory_score
     assert archived_detail_score > live_template_score
     assert archived_inventory_score > live_template_score
+
+
+def test_score_candidate_url_prioritizes_vermont_rule_display_pages() -> None:
+    detail_score = scraper_module._score_candidate_url(
+        "https://secure.vermont.gov/SOS/rules/display.php?r=1049"
+    )
+    inventory_score = scraper_module._score_candidate_url(
+        "https://secure.vermont.gov/SOS/rules/"
+    )
+    search_score = scraper_module._score_candidate_url(
+        "https://secure.vermont.gov/SOS/rules/search.php"
+    )
+    legislature_score = scraper_module._score_candidate_url(
+        "https://legislature.vt.gov/regulations"
+    )
+
+    assert detail_score > inventory_score
+    assert inventory_score > search_score
+    assert detail_score > legislature_score
+    assert inventory_score > legislature_score
 
 
 def test_prefers_live_fetch_for_utah_detail_pages() -> None:
