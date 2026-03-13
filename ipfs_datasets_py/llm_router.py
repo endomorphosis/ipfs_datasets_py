@@ -76,6 +76,17 @@ class LLMRouterError(RuntimeError):
 
 
 _P2P_TASK_PREFIX = "p2p://"
+_UNPINNED_OPTIONAL_PROVIDER_ORDER = [
+    "openrouter",
+    "hf_inference_api",
+    "codex_cli",
+    "copilot_cli",
+    "gemini_cli",
+    "claude_code",
+    "claude_py",
+    "gemini_py",
+    "copilot_sdk",
+]
 
 
 def _truthy_env(name: str, *, default: bool) -> bool:
@@ -1875,6 +1886,37 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
         if manager is None:
             return None
 
+        def _extract_generated_text(result: object) -> Optional[str]:
+            if isinstance(result, str) and result.strip():
+                return result
+            if isinstance(result, dict):
+                for key in ("text", "generated_text", "output_text", "completion", "content"):
+                    value = result.get(key)
+                    if isinstance(value, str) and value.strip():
+                        return value
+                for key in ("result", "data", "output", "response", "payload"):
+                    nested = _extract_generated_text(result.get(key))
+                    if nested:
+                        return nested
+                choices = result.get("choices")
+                if isinstance(choices, list) and choices:
+                    first = choices[0]
+                    if isinstance(first, dict):
+                        message = first.get("message")
+                        if isinstance(message, dict):
+                            content = message.get("content")
+                            if isinstance(content, str) and content.strip():
+                                return content
+                        text = first.get("text")
+                        if isinstance(text, str) and text.strip():
+                            return text
+            if isinstance(result, list):
+                for item in result:
+                    nested = _extract_generated_text(item)
+                    if nested:
+                        return nested
+            return None
+
         class _AccelerateLLMProvider:
             def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
                 # Best-effort hook: if accelerate cannot produce an answer, raise so
@@ -1885,9 +1927,13 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
                     payload,
                     task_type="text-generation",
                 )
-                text = result.get("text")
+                text = _extract_generated_text(result)
                 if isinstance(text, str) and text:
                     return text
+                if isinstance(result, dict):
+                    message = result.get("message")
+                    if isinstance(message, str) and message.strip():
+                        raise RuntimeError(message.strip())
                 raise RuntimeError("ipfs_accelerate_py provider did not return generated text")
 
         return _AccelerateLLMProvider()
@@ -1994,6 +2040,53 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
     if key in {"hf", "huggingface", "local_hf"}:
         return _get_local_hf_provider(deps=get_default_router_deps())
     return None
+
+
+def _iter_unpinned_optional_providers() -> list[tuple[str, LLMProvider]]:
+    providers: list[tuple[str, LLMProvider]] = []
+    for name in _UNPINNED_OPTIONAL_PROVIDER_ORDER:
+        candidate = _builtin_provider_by_name(name)
+        if candidate is not None:
+            providers.append((name, candidate))
+    return providers
+
+
+def _generate_with_provider_fallbacks(
+    provider_name: Optional[str],
+    backend: LLMProvider,
+    prompt: str,
+    *,
+    model_name: Optional[str],
+    kwargs: dict[str, object],
+) -> str:
+    effective_provider_name = (provider_name or "").strip().lower()
+
+    try:
+        return backend.generate(prompt, model_name=model_name, **kwargs)
+    except Exception as initial_exc:
+        if model_name is not None:
+            try:
+                return backend.generate(prompt, model_name=None, **kwargs)
+            except Exception:
+                pass
+
+        if _is_hf_inference_provider_name(effective_provider_name) and _is_hf_model_compatibility_error(initial_exc):
+            attempted = set()
+            if model_name is not None and str(model_name).strip():
+                attempted.add(str(model_name).strip())
+            env_default = (os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL") or "").strip()
+            if env_default:
+                attempted.add(env_default)
+
+            for fallback_model in _hf_llm_fallback_models(kwargs=dict(kwargs)):
+                if fallback_model in attempted:
+                    continue
+                attempted.add(fallback_model)
+                try:
+                    return backend.generate(prompt, model_name=fallback_model, **kwargs)
+                except Exception:
+                    continue
+        raise initial_exc
 
 
 def _get_mock_provider() -> LLMProvider:
@@ -2193,10 +2286,8 @@ def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) ->
         return accelerate_provider
 
     # Try common optional CLI/API providers if available.
-    for name in ["openrouter", "hf_inference_api", "codex_cli", "copilot_cli", "gemini_cli", "claude_code", "claude_py", "gemini_py", "copilot_sdk"]:
-        candidate = _builtin_provider_by_name(name)
-        if candidate is not None:
-            return candidate
+    for _, candidate in _iter_unpinned_optional_providers():
+        return candidate
 
     local_hf = _get_local_hf_provider(deps=deps)
     if local_hf is not None:
@@ -2282,40 +2373,35 @@ def generate_text(
             pass
 
     try:
-        result = backend.generate(prompt, model_name=model_name, **kwargs)
+        result = _generate_with_provider_fallbacks(
+            effective_provider_name,
+            backend,
+            prompt,
+            model_name=model_name,
+            kwargs=dict(kwargs),
+        )
         _cache_result(str(result), used_model_name=model_name)
         return result
     except Exception as initial_exc:
-        # If a specific model was requested but isn't available for this provider,
-        # retry with the provider's default model before other fallbacks.
-        if model_name is not None:
-            try:
-                result = backend.generate(prompt, model_name=None, **kwargs)
-                _cache_result(str(result), used_model_name=None)
-                return result
-            except Exception:
-                pass
-
-        # For HF Inference API, retry with a vetted candidate model list when the
-        # failure looks like model/task compatibility.
-        if _is_hf_inference_provider_name(effective_provider_name) and _is_hf_model_compatibility_error(initial_exc):
-            attempted = set()
-            if model_name is not None and str(model_name).strip():
-                attempted.add(str(model_name).strip())
-            env_default = (os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL") or "").strip()
-            if env_default:
-                attempted.add(env_default)
-
-            for fallback_model in _hf_llm_fallback_models(kwargs=dict(kwargs)):
-                if fallback_model in attempted:
+        # When provider selection is automatic, a failed accelerate attempt should
+        # still fall through to the existing remote-provider order before giving up
+        # or considering heavyweight local fallback.
+        if provider is None:
+            for fallback_name, fallback_provider in _iter_unpinned_optional_providers():
+                if fallback_provider is backend:
                     continue
-                attempted.add(fallback_model)
                 try:
-                    result = backend.generate(prompt, model_name=fallback_model, **kwargs)
-                    _cache_result(str(result), used_model_name=fallback_model)
+                    result = _generate_with_provider_fallbacks(
+                        fallback_name,
+                        fallback_provider,
+                        prompt,
+                        model_name=model_name,
+                        kwargs=dict(kwargs),
+                    )
+                    _cache_result(str(result), used_model_name=model_name)
                     return result
                 except Exception:
-                    continue
+                    pass
 
         # Fall back to local HF provider if optional provider fails.
         if allow_local_fallback and provider is None:

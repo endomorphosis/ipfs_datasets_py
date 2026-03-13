@@ -2071,12 +2071,20 @@ class StateLawsAgenticDaemon:
                 allow_local_fallback=timeout_seconds <= 0.0,
             )
         except Exception as exc:
-            if tactic.llm_provider is None and "ipfs_accelerate_py provider did not return generated text" in str(exc):
-                return {
-                    "status": "unavailable",
-                    "error": str(exc),
-                    "reason": "accelerate-empty-response",
-                }
+            if tactic.llm_provider is None:
+                exc_text = str(exc)
+                if "ipfs_accelerate_py provider did not return generated text" in exc_text:
+                    return {
+                        "status": "unavailable",
+                        "error": exc_text,
+                        "reason": "accelerate-empty-response",
+                    }
+                if "Accelerate not available, using local fallback" in exc_text:
+                    return {
+                        "status": "unavailable",
+                        "error": exc_text,
+                        "reason": "accelerate-no-remote-fallback",
+                    }
             return {"status": "error", "error": str(exc)}
 
         parsed = self._parse_router_llm_response(response)

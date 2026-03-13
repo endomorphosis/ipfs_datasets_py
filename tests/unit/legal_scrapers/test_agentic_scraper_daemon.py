@@ -3115,6 +3115,61 @@ async def test_state_admin_rules_agentic_daemon_router_llm_empty_accelerate_resp
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_router_llm_accelerate_no_remote_fallback_is_unavailable(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py import llm_router as llm_router_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 1,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                }
+            },
+        }
+
+    def _fake_generate_text(prompt, **kwargs):
+        raise RuntimeError("Accelerate not available, using local fallback")
+
+    def _fake_embeddings_ranking(self, tactic, diagnostics, critic):
+        return [{"tactic": "router_assisted", "score": 0.88}]
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(llm_router_module, "generate_text", _fake_generate_text)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_rank_tactics_with_embeddings", _fake_embeddings_ranking)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=59,
+            router_llm_timeout_seconds=0.0,
+        )
+    )
+
+    summary = await daemon.run()
+
+    router_assist = summary["latest_cycle"]["router_assist"]
+    assert router_assist["status"] == "completed"
+    assert router_assist["llm_review"]["status"] == "unavailable"
+    assert router_assist["llm_review"]["reason"] == "accelerate-no-remote-fallback"
+    assert router_assist["embeddings_ranking"]
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_skips_router_ipfs_persist_when_cli_missing(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
