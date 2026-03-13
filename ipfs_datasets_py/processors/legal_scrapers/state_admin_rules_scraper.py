@@ -1336,6 +1336,20 @@ def _score_candidate_url(url: str) -> int:
         score -= 4
     if host in {"www.alabamaadministrativecode.state.al.us", "alabamaadministrativecode.state.al.us"} and normalized_path.lower() == "/":
         score -= 3
+    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
+        score += 12
+    if host == "web.archive.org" and "gc.nh.gov/rules/about_rules/listagencies.aspx" in value:
+        score += 8
+    if host == "web.archive.org" and value.rstrip("/").endswith("https://gc.nh.gov/rules"):
+        score += 5
+    if host in {"gencourt.state.nh.us", "www.gencourt.state.nh.us"} and re.search(
+        r"^/rules/state_agencies/[\w.-]+\.html$",
+        path,
+        re.IGNORECASE,
+    ):
+        score += 10
+    if host == "legislature.nh.gov" and normalized_path.lower() in {"/regulations", "/administrative-code", "/code-of-regulations"}:
+        score -= 5
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/admincode":
         score += 6
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/parts":
@@ -1504,6 +1518,14 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
         return True
     if host == "admincode.legislature.state.al.us" and normalized_path.lower().startswith("/administrative-code#"):
+        return True
+    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
+        return True
+    if host in {"gencourt.state.nh.us", "www.gencourt.state.nh.us"} and re.search(
+        r"^/rules/state_agencies/[\w.-]+\.html$",
+        path,
+        re.IGNORECASE,
+    ):
         return True
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True

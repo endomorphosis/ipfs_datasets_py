@@ -232,6 +232,18 @@ def test_is_direct_detail_candidate_url_recognizes_alabama_admin_code_detail_pag
     ) is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_new_hampshire_archived_rule_chapters() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://www.gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+    ) is False
+
+
 def test_massachusetts_inventory_pages_are_rejected_as_substantive_rule_text() -> None:
     guide_url = "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number"
     law_library_url = "https://www.mass.gov/law-library/310-cmr"
@@ -2650,6 +2662,22 @@ def test_score_candidate_url_prioritizes_alabama_admin_code_detail_pages() -> No
     assert detail_score > search_score
     assert anchor_score > search_score
     assert detail_score > agency_score
+
+
+def test_score_candidate_url_prioritizes_new_hampshire_archived_rule_chapters() -> None:
+    archived_detail_score = scraper_module._score_candidate_url(
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html"
+    )
+    archived_inventory_score = scraper_module._score_candidate_url(
+        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+    )
+    live_template_score = scraper_module._score_candidate_url(
+        "https://legislature.nh.gov/regulations"
+    )
+
+    assert archived_detail_score > archived_inventory_score
+    assert archived_detail_score > live_template_score
+    assert archived_inventory_score > live_template_score
 
 
 def test_prefers_live_fetch_for_utah_detail_pages() -> None:
