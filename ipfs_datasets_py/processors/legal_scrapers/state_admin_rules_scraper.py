@@ -180,6 +180,11 @@ _CA_WESTLAW_TOC_TEXT_RE = re.compile(
     re.IGNORECASE,
 )
 
+_CA_WESTLAW_DOCUMENT_BOILERPLATE_LINE_RE = re.compile(
+    r"^(?:\d+\s+CA\s+ADC\s+§\s*[\w.-]+|Barclays\b.*)$",
+    re.IGNORECASE,
+)
+
 _AZ_RULEMAKING_META_TEXT_RE = re.compile(
     r"title\s+1\.\s+rules\s+and\s+the\s+rulemaking\s+process|"
     r"secretary of state\s*[\-\u2013]?\s*rules and rulemaking",
@@ -2702,6 +2707,65 @@ def _title_from_california_westlaw_document_text(*, text: str, url: str) -> str:
     return ""
 
 
+def _trim_california_westlaw_document_chrome(*, text: str, url: str, title: str = "") -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "govt.westlaw.com" or not parsed.path.lower().startswith("/calregs/document/"):
+        return str(text or "").strip()
+
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return normalized_text
+
+    candidate_markers: List[str] = []
+    normalized_title = str(title or "").strip()
+    if normalized_title and "california code of regulations" not in normalized_title.lower():
+        candidate_markers.append(normalized_title)
+
+    extracted_title = _title_from_california_westlaw_document_text(text=normalized_text, url=url)
+    if extracted_title and extracted_title not in candidate_markers:
+        candidate_markers.append(extracted_title)
+
+    start_index: Optional[int] = None
+    for marker in candidate_markers:
+        marker_index = normalized_text.find(marker)
+        if marker_index >= 0 and (start_index is None or marker_index < start_index):
+            start_index = marker_index
+
+    if start_index is None:
+        section_match = re.search(
+            r"(?:^|\n)(§\s*[\w.-]+\.?\s+[^\n]{1,220}?\.|Article\s+[\w.-]+\.?[^\n]{0,220}|Chapter\s+[\w.-]+\.?[^\n]{0,220}|Title\s+[\w.-]+\.?[^\n]{0,220})",
+            normalized_text,
+            re.IGNORECASE,
+        )
+        if section_match:
+            start_index = section_match.start(1)
+
+    if start_index is None or start_index <= 0:
+        trimmed = normalized_text
+    else:
+        trimmed = normalized_text[start_index:].strip()
+
+    if not trimmed:
+        return normalized_text
+
+    lines = [re.sub(r"\s+", " ", line).strip() for line in trimmed.splitlines()]
+    cleaned_lines: List[str] = []
+    seen_heading = False
+    for line in lines:
+        if not line:
+            continue
+        if not seen_heading:
+            cleaned_lines.append(line)
+            seen_heading = True
+            continue
+        if _CA_WESTLAW_DOCUMENT_BOILERPLATE_LINE_RE.match(line):
+            continue
+        cleaned_lines.append(line)
+
+    cleaned = "\n".join(cleaned_lines).strip()
+    return cleaned or trimmed
+
+
 async def _normalize_candidate_document_content(*, url: str, title: str, text: str) -> tuple[str, str]:
     normalized_title = str(title or "").strip()
     normalized_text = str(text or "").strip()
@@ -2726,6 +2790,12 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
         california_title = _title_from_california_westlaw_document_text(text=normalized_text, url=url)
         if california_title:
             normalized_title = california_title
+
+    normalized_text = _trim_california_westlaw_document_chrome(
+        text=normalized_text,
+        url=url,
+        title=normalized_title,
+    )
 
     return normalized_title, normalized_text
 
@@ -3503,6 +3573,40 @@ def _candidate_arizona_rule_urls_from_text(*, text: str, page_url: str = "", lim
     return out
 
 
+def _candidate_vermont_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
+    body = str(html or "")
+    if not body:
+        return []
+
+    parsed_page = urlparse(str(page_url or "").strip())
+    host = parsed_page.netloc.lower()
+    path = (parsed_page.path or "").lower()
+    if host != "secure.vermont.gov":
+        return []
+    if path not in {"/sos/rules/", "/sos/rules/index.php"}:
+        return []
+
+    out: List[str] = []
+    seen: set[str] = set()
+    for match in re.finditer(
+        r'<input\b[^>]*name=["\']RuleID["\'][^>]*value=["\'](\d+)["\'][^>]*>',
+        body,
+        re.IGNORECASE,
+    ):
+        rule_id = str(match.group(1) or "").strip()
+        if not rule_id:
+            continue
+        candidate_url = f"https://secure.vermont.gov/SOS/rules/display.php?r={rule_id}"
+        key = _url_key(candidate_url)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(candidate_url)
+        if len(out) >= max(1, int(limit)):
+            break
+    return out
+
+
 def _candidate_links_from_html(
     html: str,
     base_host: str,
@@ -3540,6 +3644,21 @@ def _candidate_links_from_html(
             continue
         ranked.append((score, link_url, link_text))
     for link_url in _candidate_arizona_rule_urls_from_text(text=body, page_url=page_url, limit=limit):
+        host = urlparse(link_url).netloc
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
+            continue
+        key = link_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        score = _score_candidate_link(link_url, "", page_url)
+        if score <= 0:
+            continue
+        ranked.append((score, link_url, ""))
+    for link_url in _candidate_vermont_rule_urls_from_html(html=body, page_url=page_url, limit=limit):
         host = urlparse(link_url).netloc
         if allowed_hosts:
             if host and not _host_matches_allowed(host, allowed_hosts):

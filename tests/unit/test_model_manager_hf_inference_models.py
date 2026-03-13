@@ -19,6 +19,79 @@ EXPECTED_EMBEDDING_MODELS = {
 }
 
 
+def _install_fake_live_registry(monkeypatch) -> None:
+    model_manager._get_hf_inference_model_manager_cached.cache_clear()
+    model_manager._load_ipfs_accelerate_model_manager_bindings.cache_clear()
+
+    monkeypatch.setattr(
+        model_manager,
+        "_discover_live_hf_inference_model_specs",
+        lambda model_kind=None: [
+            {
+                "model_id": "katanemo/Arch-Router-1.5B",
+                "pipeline_tag": "text-generation",
+                "model_kind": "llm",
+                "description": "live llm",
+                "live_discovered": True,
+            },
+            {
+                "model_id": "facebook/bart-large-cnn",
+                "pipeline_tag": "summarization",
+                "model_kind": "llm",
+                "description": "live summarizer",
+                "live_discovered": True,
+            },
+            {
+                "model_id": "google/pegasus-xsum",
+                "pipeline_tag": "summarization",
+                "model_kind": "llm",
+                "description": "live pegasus",
+                "live_discovered": True,
+            },
+            {
+                "model_id": "sshleifer/distilbart-cnn-12-6",
+                "pipeline_tag": "summarization",
+                "model_kind": "llm",
+                "description": "live distilbart",
+                "live_discovered": True,
+            },
+            {
+                "model_id": "BAAI/bge-small-en-v1.5",
+                "pipeline_tag": "feature-extraction",
+                "model_kind": "embedding",
+                "description": "live embedding",
+                "live_discovered": True,
+            },
+            {
+                "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+                "pipeline_tag": "feature-extraction",
+                "model_kind": "embedding",
+                "description": "live sentence transformer",
+                "live_discovered": True,
+            },
+            {
+                "model_id": "thenlper/gte-small",
+                "pipeline_tag": "feature-extraction",
+                "model_kind": "embedding",
+                "description": "live gte",
+                "live_discovered": True,
+            },
+        ],
+    )
+    monkeypatch.setattr(
+        model_manager,
+        "_load_ipfs_accelerate_model_manager_bindings",
+        lambda: model_manager._ModelManagerBindings(
+            ModelManager=model_manager._CompatModelManager,
+            ModelMetadata=model_manager._CompatModelMetadata,
+            ModelType=model_manager._CompatModelType,
+            DataType=model_manager._CompatDataType,
+            IOSpec=model_manager._CompatIOSpec,
+            source="compat-test",
+        ),
+    )
+
+
 def test_default_config_includes_hf_inference_provider_model_lists() -> None:
     cfg = model_manager._DEFAULT_CONFIG
 
@@ -49,16 +122,16 @@ def test_load_model_config_keeps_hf_inference_provider_defaults_when_no_file(mon
     assert EXPECTED_LLM_MODELS.union(EXPECTED_EMBEDDING_MODELS).issubset(combined)
 
 
-def test_hf_inference_models_are_registered_in_rich_model_manager() -> None:
-    model_manager._get_hf_inference_model_manager_cached.cache_clear()
+def test_hf_inference_models_are_registered_in_rich_model_manager(monkeypatch) -> None:
+    _install_fake_live_registry(monkeypatch)
     manager = model_manager.get_hf_inference_model_manager(use_cache=False, persist=False)
 
     for model_id in EXPECTED_LLM_MODELS.union(EXPECTED_EMBEDDING_MODELS):
         assert manager.get_model(model_id) is not None
 
 
-def test_list_hf_inference_models_supports_kind_filter() -> None:
-    model_manager._get_hf_inference_model_manager_cached.cache_clear()
+def test_list_hf_inference_models_supports_kind_filter(monkeypatch) -> None:
+    _install_fake_live_registry(monkeypatch)
 
     llm_records = model_manager.list_hf_inference_models(model_kind="llm")
     emb_records = model_manager.list_hf_inference_models(model_kind="embedding")
@@ -70,8 +143,8 @@ def test_list_hf_inference_models_supports_kind_filter() -> None:
     assert EXPECTED_EMBEDDING_MODELS.issubset(emb_ids)
 
 
-def test_get_hf_inference_model_metadata_returns_queryable_fields() -> None:
-    model_manager._get_hf_inference_model_manager_cached.cache_clear()
+def test_get_hf_inference_model_metadata_returns_queryable_fields(monkeypatch) -> None:
+    _install_fake_live_registry(monkeypatch)
 
     meta = model_manager.get_hf_inference_model_metadata("BAAI/bge-small-en-v1.5")
 
@@ -82,8 +155,8 @@ def test_get_hf_inference_model_metadata_returns_queryable_fields() -> None:
 
 
 def test_rich_model_manager_does_not_persist_by_default(monkeypatch, tmp_path) -> None:
+    _install_fake_live_registry(monkeypatch)
     runtime_path = tmp_path / "hf_runtime.json"
-    model_manager._get_hf_inference_model_manager_cached.cache_clear()
     monkeypatch.setattr(model_manager, "_project_runtime_metadata_path", lambda: str(runtime_path))
 
     _ = model_manager.get_hf_inference_model_manager(use_cache=False, persist=False)
@@ -91,7 +164,8 @@ def test_rich_model_manager_does_not_persist_by_default(monkeypatch, tmp_path) -
     assert not runtime_path.exists()
 
 
-def test_build_hf_inference_ipld_document_contains_expected_shape() -> None:
+def test_build_hf_inference_ipld_document_contains_expected_shape(monkeypatch) -> None:
+    _install_fake_live_registry(monkeypatch)
     doc = model_manager.build_hf_inference_ipld_document()
 
     assert doc["kind"] == "ipfs_datasets_py.hf_inference_model_registry"
@@ -100,7 +174,8 @@ def test_build_hf_inference_ipld_document_contains_expected_shape() -> None:
     assert doc["count"] == len(doc["models"])
 
 
-def test_get_hf_inference_ipld_cid_is_deterministic_for_same_data() -> None:
+def test_get_hf_inference_ipld_cid_is_deterministic_for_same_data(monkeypatch) -> None:
+    _install_fake_live_registry(monkeypatch)
     cid1 = model_manager.get_hf_inference_ipld_cid(model_kind="embedding")
     cid2 = model_manager.get_hf_inference_ipld_cid(model_kind="embedding")
 
@@ -108,7 +183,8 @@ def test_get_hf_inference_ipld_cid_is_deterministic_for_same_data() -> None:
     assert cid1 == cid2
 
 
-def test_publish_and_load_hf_inference_ipld_via_ipfs_backend_instance() -> None:
+def test_publish_and_load_hf_inference_ipld_via_ipfs_backend_instance(monkeypatch) -> None:
+    _install_fake_live_registry(monkeypatch)
     store = {}
 
     class _FakeBackend:

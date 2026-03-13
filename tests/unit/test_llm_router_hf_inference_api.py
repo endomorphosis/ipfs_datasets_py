@@ -63,6 +63,25 @@ def test_hf_inference_api_generate_builds_expected_request(monkeypatch) -> None:
     assert body["parameters"]["top_p"] == 0.9
 
 
+def test_hf_inference_api_accepts_summary_text_response_shape(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+
+    def fake_urlopen(req, timeout=0):
+        _ = (req, timeout)
+        return _FakeHTTPResponse([{"summary_text": "ok from summary"}])
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    text = llm_router.generate_text(
+        "hello",
+        provider="hf_inference_api",
+        model_name="some-summary-model",
+    )
+
+    assert text == "ok from summary"
+
+
 def test_hf_inference_api_sets_bill_to_header_from_env(monkeypatch) -> None:
     llm_router.clear_llm_router_caches()
     monkeypatch.setenv("HF_TOKEN", "test-token")
@@ -273,6 +292,109 @@ def test_hf_inference_api_falls_back_to_inference_client_after_router_404(monkey
     }
 
 
+def test_hf_inference_api_generate_supports_inference_providers_chat(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_BILL_TO", "Publicus")
+
+    captured: dict[str, object] = {}
+
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            captured["create_kwargs"] = dict(kwargs)
+            return {"choices": [{"message": {"content": "ok via providers chat"}}]}
+
+    class _FakeInferenceClient:
+        def __init__(self, **kwargs):
+            captured["client_kwargs"] = dict(kwargs)
+            self.chat = types.SimpleNamespace(completions=_FakeCompletions())
+
+    fake_hub = types.SimpleNamespace(InferenceClient=_FakeInferenceClient, get_token=lambda: "test-token")
+    original_import_module = llm_router.importlib.import_module
+
+    def fake_import_module(name: str, package=None):
+        if name == "huggingface_hub":
+            return fake_hub
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(llm_router.importlib, "import_module", fake_import_module)
+
+    text = llm_router.generate_text(
+        "hello",
+        provider="hf_inference_api",
+        model_name="openai/gpt-oss-120b",
+        hf_provider="together",
+        max_tokens=32,
+        temperature=0.1,
+    )
+
+    assert text == "ok via providers chat"
+    assert captured["client_kwargs"] == {
+        "provider": "together",
+        "token": "test-token",
+        "bill_to": "Publicus",
+        "timeout": 120.0,
+    }
+    assert captured["create_kwargs"] == {
+        "messages": [{"role": "user", "content": "hello"}],
+        "model": "openai/gpt-oss-120b",
+        "stream": False,
+        "max_tokens": 32,
+        "temperature": 0.1,
+    }
+
+
+def test_hf_inference_api_chat_completions_create_supports_provider_auto(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.delenv("IPFS_DATASETS_PY_HF_BILL_TO", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_BILL_TO", raising=False)
+    monkeypatch.delenv("HF_BILL_TO", raising=False)
+
+    captured: dict[str, object] = {}
+
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            captured["create_kwargs"] = dict(kwargs)
+            return types.SimpleNamespace(
+                choices=[types.SimpleNamespace(message=types.SimpleNamespace(content="ok from chat completions"))]
+            )
+
+    class _FakeInferenceClient:
+        def __init__(self, **kwargs):
+            captured["client_kwargs"] = dict(kwargs)
+            self.chat = types.SimpleNamespace(completions=_FakeCompletions())
+
+    fake_hub = types.SimpleNamespace(InferenceClient=_FakeInferenceClient, get_token=lambda: "test-token")
+    original_import_module = llm_router.importlib.import_module
+
+    def fake_import_module(name: str, package=None):
+        if name == "huggingface_hub":
+            return fake_hub
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(llm_router.importlib, "import_module", fake_import_module)
+
+    response = llm_router.chat_completions_create(
+        provider="hf_inference_api",
+        model="deepseek-ai/DeepSeek-R1:preferred",
+        messages=[{"role": "user", "content": "Hello"}],
+    )
+
+    assert response.choices[0].message.content == "ok from chat completions"
+    assert captured["client_kwargs"] == {
+        "provider": "auto",
+        "token": "test-token",
+        "bill_to": "",
+        "timeout": 120.0,
+    }
+    assert captured["create_kwargs"] == {
+        "messages": [{"role": "user", "content": "Hello"}],
+        "model": "deepseek-ai/DeepSeek-R1:preferred",
+        "stream": False,
+    }
+
+
 def test_hf_inference_api_uses_arch_router_to_select_model(monkeypatch) -> None:
     llm_router.clear_llm_router_caches()
     monkeypatch.setenv("HF_TOKEN", "test-token")
@@ -340,4 +462,38 @@ def test_hf_inference_api_uses_first_candidate_when_arch_router_unavailable(monk
     assert calls == [
         "https://router.huggingface.co/hf-inference/models/katanemo/Arch-Router-1.5B",
         "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
+    ]
+
+
+def test_hf_inference_api_retries_next_candidate_when_routed_model_is_unavailable(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_USE_ARCH_ROUTER", "1")
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_HF_ROUTE_CANDIDATE_MODELS",
+        "meta-llama/Meta-Llama-3-8B-Instruct,tiiuae/falcon-7b-instruct",
+    )
+
+    calls: list[str] = []
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        calls.append(req.full_url)
+        if req.full_url.endswith("/katanemo/Arch-Router-1.5B"):
+            return _FakeHTTPResponse({"generated_text": '{"route": "meta-llama/Meta-Llama-3-8B-Instruct"}'})
+        if req.full_url.endswith("/meta-llama/Meta-Llama-3-8B-Instruct"):
+            raise RuntimeError("HF Inference API HTTP 404: Not Found")
+        if req.full_url.endswith("/tiiuae/falcon-7b-instruct"):
+            return _FakeHTTPResponse({"generated_text": "ok via fallback candidate"})
+        raise AssertionError(req.full_url)
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    text = llm_router.generate_text("fix this bug", provider="hf_inference_api")
+
+    assert text == "ok via fallback candidate"
+    assert calls == [
+        "https://router.huggingface.co/hf-inference/models/katanemo/Arch-Router-1.5B",
+        "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
+        "https://router.huggingface.co/hf-inference/models/tiiuae/falcon-7b-instruct",
     ]

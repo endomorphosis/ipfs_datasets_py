@@ -1343,6 +1343,31 @@ def test_candidate_links_from_html_extracts_arizona_official_chapter_document_li
     assert "https://apps.azsos.gov/public_services/Title_18/18-04.rtf" in links
 
 
+def test_candidate_links_from_html_extracts_vermont_rule_display_urls_from_ruleid_forms() -> None:
+        html = """
+        <html><body>
+            <form action="results.php" method="post">
+                <input type="hidden" name="RuleID" value="1050">
+            </form>
+            <form action="results.php" method="post">
+                <input type="hidden" name="RuleID" value="1049">
+            </form>
+            <a href="search.php">Search Rules</a>
+        </body></html>
+        """
+
+        links = _candidate_links_from_html(
+                html,
+                base_host="secure.vermont.gov",
+                page_url="https://secure.vermont.gov/SOS/rules/",
+                limit=5,
+                allowed_hosts={"secure.vermont.gov", "sos.vermont.gov"},
+        )
+
+        assert "https://secure.vermont.gov/SOS/rules/display.php?r=1050" in links
+        assert "https://secure.vermont.gov/SOS/rules/display.php?r=1049" in links
+
+
 def test_scores_arizona_official_chapter_documents_above_inventory_page() -> None:
     inventory_url = "https://apps.azsos.gov/public_services/CodeTOC.htm"
     chapter_pdf_url = "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
@@ -1439,6 +1464,27 @@ async def test_extract_text_from_pdf_bytes_uses_repo_pdf_processor(monkeypatch: 
 
     assert "R1-1-101. Purpose." in extracted
     assert "Authority and definitions." in extracted
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_trims_california_westlaw_chrome() -> None:
+    title, text = await scraper_module._normalize_candidate_document_content(
+        url="https://govt.westlaw.com/calregs/Document/ICF14695063E711EDB5569A0BCCD916B?viewType=FullText",
+        title="View Document - California Code of Regulations",
+        text=(
+            "Skip to Navigation\nSkip to Main Content\nCalifornia Code of Regulations\n"
+            "Home Updates Search Help\nHome Table of Contents\n§ 250. Definitions.\n"
+            "1 CA ADC § 250\nBarclays Official California Code of Regulations\n"
+            "Authority cited: Government Code section 11342.2. Reference: Government Code section 11342."
+        ),
+    )
+
+    assert title == "§ 250. Definitions."
+    assert text.startswith("§ 250. Definitions.")
+    assert "Skip to Navigation" not in text
+    assert "Home Updates Search Help" not in text
+    assert "1 CA ADC § 250" not in text
+    assert "Barclays Official California Code of Regulations" not in text
 
 
 @pytest.mark.asyncio
