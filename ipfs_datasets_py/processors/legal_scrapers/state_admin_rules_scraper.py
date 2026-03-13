@@ -4398,7 +4398,10 @@ async def _agentic_discover_admin_state_blocks(
                 break
             direct_scraped = None
             lower_document_url = str(document_url or "").lower()
-            direct_timeout_s = max(1.0, min(12.0, remaining_prefetch_budget_s))
+            # Official direct-detail pages can require a slower hydrated browser pass
+            # than generic seed pages; give them more of the preloop budget before
+            # falling back to the fetch API, which may return no document at all.
+            direct_timeout_s = max(1.0, min(25.0, remaining_prefetch_budget_s))
             try:
                 if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
                     direct_scraped = await asyncio.wait_for(
