@@ -1413,6 +1413,39 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
             if bill_to:
                 headers["X-HF-Bill-To"] = bill_to
 
+            def _generate_via_inference_client() -> str:
+                try:
+                    hub = importlib.import_module("huggingface_hub")
+                    client_cls = getattr(hub, "InferenceClient", None)
+                    if client_cls is None:
+                        raise RuntimeError("huggingface_hub.InferenceClient not available")
+                    client = client_cls(
+                        provider="hf-inference",
+                        token=api_token,
+                        bill_to=bill_to,
+                        timeout=timeout,
+                    )
+                    result = client.text_generation(
+                        prompt,
+                        model=model,
+                        max_new_tokens=max_new_tokens,
+                        temperature=temperature,
+                        top_p=parameters.get("top_p"),
+                        top_k=parameters.get("top_k"),
+                        repetition_penalty=parameters.get("repetition_penalty"),
+                        do_sample=parameters.get("do_sample"),
+                        return_full_text=parameters.get("return_full_text"),
+                    )
+                except Exception as exc:
+                    raise RuntimeError(f"HF Inference Client request failed: {exc}") from exc
+
+                if isinstance(result, str) and result:
+                    return result
+                generated = getattr(result, "generated_text", None)
+                if isinstance(generated, str) and generated:
+                    return generated
+                raise RuntimeError("HF Inference Client response missing generated text")
+
             request = urllib.request.Request(
                 f"{base_url}/{model}",
                 data=json.dumps(payload).encode("utf-8"),
@@ -1425,8 +1458,12 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                     raw = response.read().decode("utf-8", errors="replace")
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+                if exc.code in {400, 404, 422, 503}:
+                    return _generate_via_inference_client()
                 raise RuntimeError(f"HF Inference API HTTP {exc.code}: {detail or exc.reason}") from exc
             except Exception as exc:
+                if "404" in str(exc) or "Not Found" in str(exc):
+                    return _generate_via_inference_client()
                 raise RuntimeError(f"HF Inference API request failed: {exc}") from exc
 
             try:

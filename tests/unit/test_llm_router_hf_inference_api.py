@@ -216,3 +216,49 @@ def test_hf_inference_api_retries_with_discovered_models(monkeypatch) -> None:
 
     assert text == "ok via discovered"
     assert calls == ["bad-model", None, "discovered-llm"]
+
+
+def test_hf_inference_api_falls_back_to_inference_client_after_router_404(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+
+    class _FakeHTTPError(llm_router.urllib.error.HTTPError):
+        def __init__(self):
+            super().__init__(
+                url="https://example.invalid/models/bad-model",
+                code=404,
+                msg="Not Found",
+                hdrs=None,
+                fp=None,
+            )
+
+        def read(self) -> bytes:
+            return b'{"detail":"Not Found"}'
+
+    def fake_urlopen(req, timeout=0):
+        _ = (req, timeout)
+        raise _FakeHTTPError()
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    class _FakeInferenceClient:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def text_generation(self, prompt, **kwargs):
+            _ = (prompt, kwargs)
+            return "ok via inference client"
+
+    fake_hub = types.SimpleNamespace(InferenceClient=_FakeInferenceClient, get_token=lambda: "test-token")
+    original_import_module = llm_router.importlib.import_module
+
+    def fake_import_module(name: str, package=None):
+        if name == "huggingface_hub":
+            return fake_hub
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(llm_router.importlib, "import_module", fake_import_module)
+
+    text = llm_router.generate_text("hello", provider="hf_inference_api", model_name="bad-model")
+
+    assert text == "ok via inference client"
