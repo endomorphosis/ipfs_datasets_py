@@ -39,7 +39,8 @@ import hashlib
 logger = logging.getLogger(__name__)
 
 _BROWSER_CHALLENGE_TEXT_RE = re.compile(
-    r"just\s+a\s+moment|cf-browser-verification|cloudflare|enable\s+javascript\s+and\s+cookies",
+    r"just\s+a\s+moment|cf-browser-verification|cloudflare|enable\s+javascript\s+and\s+cookies|"
+    r"you\s+need\s+to\s+enable\s+javascript\s+to\s+run\s+this\s+app",
     re.IGNORECASE,
 )
 
@@ -1720,7 +1721,7 @@ class UnifiedWebScraper:
         record_status = str(selected_record.get("status") or "").strip().lower()
         http_status = metadata.get("status")
         challenge_detected = _looks_like_browser_challenge_text(title=title, text=text, html=html)
-        success = record_status == "completed" and bool(text or html)
+        success = record_status == "completed" and bool(text or html) and not challenge_detected
         errors = []
         if not success:
             error_message = f"Cloudflare crawl record status: {record_status or 'unknown'}"

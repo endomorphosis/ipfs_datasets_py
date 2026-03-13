@@ -402,6 +402,49 @@ async def test_cloudflare_browser_rendering_marks_browser_challenge_record(monke
 
 
 @pytest.mark.anyio
+async def test_cloudflare_browser_rendering_rejects_completed_js_shell_record(monkeypatch: pytest.MonkeyPatch) -> None:
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            cloudflare_account_id="acct-test",
+            cloudflare_api_token="token-test",
+        )
+    )
+
+    async def _fake_crawl(url: str, **kwargs):
+        return {
+            "status": "success",
+            "job_id": "job-shell",
+            "job": {"status": "completed"},
+            "records": [
+                {
+                    "url": url,
+                    "status": "completed",
+                    "markdown": "Indiana Register\nYou need to enable JavaScript to run this app.",
+                    "html": "<html><head><title>Indiana Register</title></head><body>You need to enable JavaScript to run this app.</body></html>",
+                    "metadata": {
+                        "status": 200,
+                        "title": "Indiana Register",
+                    },
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine.crawl_with_cloudflare_browser_rendering",
+        _fake_crawl,
+    )
+
+    result = await scraper._scrape_cloudflare_browser_rendering("https://example.gov/rules")
+
+    assert result.success is False
+    assert result.method_used == ScraperMethod.CLOUDFLARE_BROWSER_RENDERING
+    assert result.metadata["cloudflare_status"] == "browser_challenge"
+    assert result.metadata["cloudflare_http_status"] == 200
+    assert result.metadata["cloudflare_browser_challenge_detected"] is True
+    assert "browser challenge detected" in result.errors[0]
+
+
+@pytest.mark.anyio
 async def test_binary_pdf_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePDFProcessor:
         async def _decompose_pdf(self, pdf_path):

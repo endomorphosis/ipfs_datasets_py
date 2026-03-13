@@ -19,6 +19,7 @@ import os
 import random
 import re
 import shlex
+import shutil
 import sys
 import threading
 from contextlib import contextmanager
@@ -832,13 +833,17 @@ class StateLawsAgenticDaemon:
 
         state_order = [
             str(item).upper().strip()
-            for item in list(document_gap_report.get("weak_states") or []) + list(document_gap_report.get("states_with_candidate_document_gaps") or [])
+            for item in list(document_gap_report.get("weak_states") or [])
+            + list(document_gap_report.get("states_with_candidate_document_gaps") or [])
+            + list(document_gap_report.get("states_with_artifact_candidates") or [])
             if str(item).strip()
         ]
         ordered_states = list(dict.fromkeys(state_order))[: max(1, int(self.config.document_artifact_state_limit or 1))]
         targets: List[Dict[str, Any]] = []
         max_total = max(1, int(self.config.document_artifact_max_total or 1))
         per_state_limit = max(1, int(self.config.document_artifact_urls_per_state or 1))
+        per_state_attempt_limit = max(per_state_limit, per_state_limit * 4)
+        total_attempt_limit = max(max_total, max_total * 4)
 
         for state_code in ordered_states:
             entry = states.get(state_code) or {}
@@ -846,10 +851,39 @@ class StateLawsAgenticDaemon:
                 str(value).strip()
                 for value in list(entry.get("top_candidate_document_urls") or [])
                 if str(value).strip()
-            ][:per_state_limit]
+            ]
+            if not urls:
+                urls = [
+                    str(value).strip()
+                    for value in list(entry.get("top_candidate_urls") or [])
+                    if str(value).strip()
+                ]
+            domains_seen = {
+                str(value).strip().lower()
+                for value in list(entry.get("domains_seen") or [])
+                if str(value).strip()
+            }
+            deprioritized_hosts = {
+                str(value).strip().lower()
+                for value in list(entry.get("candidate_hosts_without_rules") or [])
+                if str(value).strip()
+            }
+            if urls and (domains_seen or deprioritized_hosts):
+                ranked_urls: List[str] = []
+                for _, url in sorted(
+                    enumerate(urls),
+                    key=lambda item: (
+                        0 if urlparse(item[1]).netloc.strip().lower() in domains_seen else 1,
+                        1 if urlparse(item[1]).netloc.strip().lower() in deprioritized_hosts and urlparse(item[1]).netloc.strip().lower() not in domains_seen else 0,
+                        item[0],
+                    ),
+                ):
+                    ranked_urls.append(url)
+                urls = ranked_urls
+            urls = urls[:per_state_attempt_limit]
             directives = entry.get("recovery_directives") or {}
             for url in urls:
-                if len(targets) >= max_total:
+                if len(targets) >= total_attempt_limit:
                     return targets
                 targets.append(
                     {
@@ -903,9 +937,16 @@ class StateLawsAgenticDaemon:
         cycle_dir = self.document_artifacts_dir / f"cycle_{cycle_index:04d}"
         cycle_dir.mkdir(parents=True, exist_ok=True)
         manifest_entries: List[Dict[str, Any]] = []
+        max_success_total = max(1, int(self.config.document_artifact_max_total or 1))
+        per_state_success_limit = max(1, int(self.config.document_artifact_urls_per_state or 1))
+        successful_by_state: Dict[str, int] = {}
 
         for index, target in enumerate(targets, start=1):
             state_code = str(target.get("state") or "").upper().strip() or "UNK"
+            if int(successful_by_state.get(state_code, 0) or 0) >= per_state_success_limit:
+                continue
+            if sum(1 for entry in manifest_entries if bool(entry.get("success"))) >= max_success_total:
+                break
             url = str(target.get("url") or "").strip()
             if not url:
                 continue
@@ -960,14 +1001,17 @@ class StateLawsAgenticDaemon:
                     "recovery_directives": dict(target.get("directives") or {}),
                 }
             )
+            if bool(getattr(result, "success", False)):
+                successful_by_state[state_code] = int(successful_by_state.get(state_code, 0) or 0) + 1
 
+        successful_count = sum(1 for entry in manifest_entries if bool(entry.get("success")))
         manifest = {
             "cycle": int(cycle_index),
             "generated_at": datetime.now().isoformat(),
             "corpus": self.corpus.key,
             "preferred_methods": [method.value for method in preferred_methods],
-            "target_count": len(targets),
-            "successful_count": sum(1 for entry in manifest_entries if bool(entry.get("success"))),
+            "target_count": len(manifest_entries),
+            "successful_count": successful_count,
             "entries": manifest_entries,
             "artifact_dir": str(cycle_dir),
         }
@@ -979,8 +1023,8 @@ class StateLawsAgenticDaemon:
             "status": "completed",
             "artifact_dir": str(cycle_dir),
             "artifact_path": str(manifest_path),
-            "target_count": len(targets),
-            "successful_count": int(manifest.get("successful_count", 0) or 0),
+            "target_count": len(manifest_entries),
+            "successful_count": int(successful_count or 0),
             "entries": manifest_entries,
         }
 
@@ -1245,6 +1289,7 @@ class StateLawsAgenticDaemon:
         candidate_document_urls = 0
         states_with_candidate_document_gaps: List[str] = []
         candidate_format_counts_by_state: Dict[str, Dict[str, int]] = {}
+        candidate_urls_by_state: Dict[str, List[str]] = {}
         per_state_recovery: Dict[str, Dict[str, Any]] = {}
 
         agentic_report = metadata.get("agentic_report") or {}
@@ -1271,6 +1316,12 @@ class StateLawsAgenticDaemon:
 
             state_report = agentic_per_state.get(state_code) if isinstance(agentic_per_state, dict) else None
             if isinstance(state_report, dict):
+                candidate_urls = [
+                    str(value).strip()
+                    for value in list(state_report.get("top_candidate_urls") or [])
+                    if str(value).strip()
+                ]
+                candidate_urls_by_state[state_code] = candidate_urls
                 report_format_counts = state_report.get("format_counts") or {}
                 for name in ("pdf", "rtf"):
                     state_counts[name] = max(
@@ -1279,11 +1330,11 @@ class StateLawsAgenticDaemon:
                     )
                 candidate_doc_count = sum(
                     1
-                    for value in list(state_report.get("top_candidate_urls") or [])
+                    for value in candidate_urls
                     if self._document_format_from_url(value) in {"pdf", "rtf"}
                 )
                 candidate_format_counts = {"pdf": 0, "rtf": 0}
-                for value in list(state_report.get("top_candidate_urls") or []):
+                for value in candidate_urls:
                     doc_format = self._document_format_from_url(value)
                     if doc_format in {"pdf", "rtf"}:
                         candidate_format_counts[doc_format] = int(candidate_format_counts.get(doc_format, 0) or 0) + 1
@@ -1291,6 +1342,21 @@ class StateLawsAgenticDaemon:
                 candidate_document_urls += candidate_doc_count
                 if candidate_doc_count > 0 and (int(state_counts.get("pdf", 0) or 0) + int(state_counts.get("rtf", 0) or 0) <= 0):
                     states_with_candidate_document_gaps.append(state_code)
+
+                cloudflare_status = str(state_report.get("cloudflare_status") or "").strip().lower()
+                cloudflare_challenge = bool(state_report.get("cloudflare_browser_challenge_detected", False))
+                cloudflare_http_status = state_report.get("cloudflare_http_status")
+                try:
+                    normalized_cloudflare_http_status = int(cloudflare_http_status) if cloudflare_http_status is not None and str(cloudflare_http_status).strip() else None
+                except (TypeError, ValueError):
+                    normalized_cloudflare_http_status = None
+                cloudflare_record_status = str(state_report.get("cloudflare_record_status") or "").strip().lower()
+                actionable_cloudflare = (
+                    cloudflare_status in {"rate_limited", "browser_challenge", "record_errored", "error"}
+                    or cloudflare_challenge
+                    or normalized_cloudflare_http_status is not None and normalized_cloudflare_http_status >= 400
+                    or cloudflare_record_status in {"errored", "failed", "timed_out"}
+                )
 
                 per_state_recovery[state_code] = {
                     "processed_method_counts": dict(processed_method_counts),
@@ -1301,14 +1367,15 @@ class StateLawsAgenticDaemon:
                     "candidate_urls": int(state_report.get("candidate_urls", 0) or 0),
                     "inspected_urls": int(state_report.get("inspected_urls", 0) or 0),
                     "expanded_urls": int(state_report.get("expanded_urls", 0) or 0),
-                    "cloudflare_status": state_report.get("cloudflare_status"),
-                    "cloudflare_http_status": state_report.get("cloudflare_http_status"),
-                    "cloudflare_browser_challenge_detected": bool(state_report.get("cloudflare_browser_challenge_detected", False)),
-                    "cloudflare_error_excerpt": state_report.get("cloudflare_error_excerpt"),
-                    "cloudflare_record_status": state_report.get("cloudflare_record_status"),
-                    "cloudflare_job_status": state_report.get("cloudflare_job_status"),
+                    "cloudflare_status": cloudflare_status if actionable_cloudflare else None,
+                    "cloudflare_http_status": cloudflare_http_status if actionable_cloudflare else None,
+                    "cloudflare_browser_challenge_detected": cloudflare_challenge if actionable_cloudflare else False,
+                    "cloudflare_error_excerpt": state_report.get("cloudflare_error_excerpt") if actionable_cloudflare else None,
+                    "cloudflare_record_status": state_report.get("cloudflare_record_status") if actionable_cloudflare else None,
+                    "cloudflare_job_status": state_report.get("cloudflare_job_status") if actionable_cloudflare else None,
                 }
             else:
+                candidate_urls_by_state[state_code] = []
                 per_state_recovery[state_code] = {
                     "processed_method_counts": dict(processed_method_counts),
                     "source_breakdown": {},
@@ -1340,6 +1407,7 @@ class StateLawsAgenticDaemon:
             "processed_document_urls": processed_document_urls,
             "candidate_document_urls": int(candidate_document_urls),
             "candidate_format_counts_by_state": candidate_format_counts_by_state,
+            "candidate_urls_by_state": candidate_urls_by_state,
             "states_with_document_rules": states_with_document_rules,
             "states_with_candidate_document_gaps": sorted(set(states_with_candidate_document_gaps)),
             "per_state": per_state,
@@ -1370,25 +1438,34 @@ class StateLawsAgenticDaemon:
         documents = diagnostics.get("documents") or {}
         gap_analysis = diagnostics.get("gap_analysis") or {}
         gap_states = [str(item).upper() for item in list(documents.get("states_with_candidate_document_gaps") or []) if str(item).strip()]
-        if not gap_states:
-            return None
-
-        document_per_state = documents.get("per_state") or {}
-        document_recovery_per_state = documents.get("per_state_recovery") or {}
-        gap_states_set = set(gap_states)
-        weak_states = [
-            str(item).upper()
-            for item in list(gap_analysis.get("weak_states") or [])
-            if str(item).strip() and str(item).upper() in gap_states_set
-        ]
+        weak_states_all = [str(item).upper() for item in list(gap_analysis.get("weak_states") or []) if str(item).strip()]
 
         agentic_report = metadata.get("agentic_report") or {}
         agentic_per_state = agentic_report.get("per_state") if isinstance(agentic_report, dict) else {}
         if not isinstance(agentic_per_state, dict):
             agentic_per_state = {}
 
+        capture_states = list(gap_states)
+        for state_code in weak_states_all:
+            state_report = agentic_per_state.get(state_code)
+            candidate_urls = list((state_report or {}).get("top_candidate_urls") or []) if isinstance(state_report, dict) else []
+            if candidate_urls and state_code not in capture_states:
+                capture_states.append(state_code)
+
+        if not capture_states:
+            return None
+
+        document_per_state = documents.get("per_state") or {}
+        document_recovery_per_state = documents.get("per_state_recovery") or {}
+        gap_states_set = set(capture_states)
+        weak_states = [
+            str(item).upper()
+            for item in weak_states_all
+            if str(item).strip() and str(item).upper() in gap_states_set
+        ]
+
         states: Dict[str, Dict[str, Any]] = {}
-        for state_code in gap_states:
+        for state_code in capture_states:
             processed_by_format = document_per_state.get(state_code) if isinstance(document_per_state, dict) else {}
             if not isinstance(processed_by_format, dict):
                 processed_by_format = {}
@@ -1407,6 +1484,11 @@ class StateLawsAgenticDaemon:
                 for value in list(state_report.get("top_candidate_urls") or [])
                 if self._document_format_from_url(value) in {"pdf", "rtf"}
             ]
+            top_candidate_urls = [
+                str(value)
+                for value in list(state_report.get("top_candidate_urls") or [])
+                if str(value).strip()
+            ]
             candidate_document_format_counts = {"pdf": 0, "rtf": 0}
             for value in top_candidate_document_urls:
                 doc_format = self._document_format_from_url(value)
@@ -1415,6 +1497,7 @@ class StateLawsAgenticDaemon:
                 state_code=state_code,
                 state_recovery=state_recovery,
                 candidate_document_format_counts=candidate_document_format_counts,
+                top_candidate_urls=top_candidate_urls,
                 top_candidate_document_urls=top_candidate_document_urls,
             )
 
@@ -1426,8 +1509,10 @@ class StateLawsAgenticDaemon:
                     "pdf": int(processed_by_format.get("pdf", 0) or 0),
                     "rtf": int(processed_by_format.get("rtf", 0) or 0),
                 },
+                "candidate_artifact_urls": len(top_candidate_urls),
                 "candidate_document_urls": len(top_candidate_document_urls),
                 "candidate_document_format_counts": candidate_document_format_counts,
+                "top_candidate_urls": top_candidate_urls[:12],
                 "top_candidate_document_urls": top_candidate_document_urls[:12],
                 "processed_method_counts": dict(state_recovery.get("processed_method_counts") or {}),
                 "source_breakdown": dict(state_recovery.get("source_breakdown") or {}),
@@ -1448,6 +1533,7 @@ class StateLawsAgenticDaemon:
             "corpus": self.corpus.key,
             "states_targeted": list(self.states),
             "states_with_candidate_document_gaps": gap_states,
+            "states_with_artifact_candidates": capture_states,
             "weak_states": weak_states,
             "candidate_document_urls": int(documents.get("candidate_document_urls", 0) or 0),
             "processed_document_urls": int(documents.get("processed_document_urls", 0) or 0),
@@ -1460,6 +1546,7 @@ class StateLawsAgenticDaemon:
         state_code: str,
         state_recovery: Dict[str, Any],
         candidate_document_format_counts: Dict[str, int],
+        top_candidate_urls: Sequence[str],
         top_candidate_document_urls: Sequence[str],
     ) -> Dict[str, Any]:
         cloudflare_status = str(state_recovery.get("cloudflare_status") or "").strip().lower()
@@ -1489,6 +1576,8 @@ class StateLawsAgenticDaemon:
             download_methods.extend(["direct_fetch", "archival_replay"])
         if not recommended_tactics:
             recommended_tactics.append("router_assisted")
+        if top_candidate_urls and not top_candidate_document_urls:
+            recommended_tactics.extend(["discovery_first", "render_first"])
 
         return {
             "state": str(state_code).upper().strip(),
@@ -1497,6 +1586,7 @@ class StateLawsAgenticDaemon:
             "recommended_tactics": [
                 name for name in list(dict.fromkeys(recommended_tactics)) if name in self.config.tactic_profiles
             ],
+            "candidate_urls": list(top_candidate_urls)[:12],
             "candidate_document_urls": list(top_candidate_document_urls)[:12],
             "cloudflare_status": cloudflare_status or None,
             "cloudflare_browser_challenge_detected": challenge_detected,
@@ -1747,11 +1837,22 @@ class StateLawsAgenticDaemon:
         cycle_path = self._write_router_assist_report(cycle_index=cycle_index, report=report)
         report["artifact_path"] = str(cycle_path) if cycle_path else None
 
-        ipfs_persist = await self._run_router_ipfs_persist_with_timeout(
-            cycle_index=cycle_index,
-            report=report,
-            corpus_key=self.corpus.key,
-        )
+        ipfs_preflight = self._router_ipfs_persist_preflight()
+        if not bool(ipfs_preflight.get("available", False)):
+            ipfs_persist = {
+                "status": "skipped",
+                "reason": str(ipfs_preflight.get("reason") or "ipfs-persist-unavailable"),
+                "backend": ipfs_preflight.get("backend"),
+                "command": ipfs_preflight.get("command"),
+            }
+            if ipfs_preflight.get("error"):
+                ipfs_persist["error"] = ipfs_preflight.get("error")
+        else:
+            ipfs_persist = await self._run_router_ipfs_persist_with_timeout(
+                cycle_index=cycle_index,
+                report=report,
+                corpus_key=self.corpus.key,
+            )
         if ipfs_persist is not None:
             report["ipfs_persist"] = ipfs_persist
         return report
@@ -1783,6 +1884,141 @@ class StateLawsAgenticDaemon:
             availability["ipfs_backend"] = None
             availability["ipfs_backend_error"] = str(exc)
         return availability
+
+    def _router_ipfs_persist_preflight(self) -> Dict[str, Any]:
+        try:
+            from ipfs_datasets_py import ipfs_backend_router
+
+            backend = ipfs_backend_router.get_ipfs_backend()
+            backend_name = type(backend).__name__
+            command = getattr(backend, "_cmd", None)
+            if backend_name == "KuboCLIBackend":
+                cmd_text = str(command or os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")).strip() or "ipfs"
+                executable = shlex.split(cmd_text)[0] if cmd_text else "ipfs"
+                if shutil.which(executable) is None:
+                    install_attempt = self._attempt_router_ipfs_kit_bootstrap()
+                    if bool(install_attempt.get("available", False)):
+                        return install_attempt
+                    return {
+                        "available": False,
+                        "reason": str(install_attempt.get("reason") or "ipfs-cli-missing"),
+                        "backend": install_attempt.get("backend") or backend_name,
+                        "command": install_attempt.get("command") or cmd_text,
+                        "install_attempted": bool(install_attempt.get("install_attempted", False)),
+                        "installer": install_attempt.get("installer"),
+                        "error": install_attempt.get("error"),
+                    }
+            return {
+                "available": True,
+                "backend": backend_name,
+                "command": str(command).strip() if command else None,
+            }
+        except Exception as exc:
+            return {
+                "available": False,
+                "reason": "ipfs-backend-unavailable",
+                "backend": None,
+                "command": None,
+                "error": str(exc),
+            }
+
+    def _attempt_router_ipfs_kit_bootstrap(self) -> Dict[str, Any]:
+        repo_root = Path(__file__).resolve().parents[3]
+        installer_path = repo_root / "scripts" / "setup" / "install.py"
+        if not installer_path.exists():
+            return {
+                "available": False,
+                "reason": "ipfs-kit-installer-missing",
+                "backend": None,
+                "command": None,
+                "installer": str(installer_path),
+            }
+
+        try:
+            spec = importlib.util.spec_from_file_location("ipfs_datasets_setup_install", installer_path)
+            if spec is None or spec.loader is None:
+                raise RuntimeError(f"unable to load installer module from {installer_path}")
+            install_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(install_module)
+            ensure_main_ipfs_kit_py = getattr(install_module, "ensure_main_ipfs_kit_py", None)
+            if not callable(ensure_main_ipfs_kit_py):
+                raise RuntimeError("ensure_main_ipfs_kit_py helper not available")
+            os.environ.setdefault("IPFS_KIT_PY_USE_GIT", "true")
+            os.environ["IPFS_DATASETS_PY_ENABLE_IPFS_KIT"] = "1"
+            ensure_main_ipfs_kit_py()
+        except Exception as exc:
+            return {
+                "available": False,
+                "reason": "ipfs-kit-install-failed",
+                "backend": None,
+                "command": None,
+                "installer": str(installer_path),
+                "install_attempted": True,
+                "error": str(exc),
+            }
+
+        backend_result = self._resolve_router_ipfs_backend_after_bootstrap(installer_path=installer_path)
+        if bool(backend_result.get("available", False)):
+            return backend_result
+
+        quick_setup = getattr(install_module, "quick_setup", None)
+        if callable(quick_setup):
+            try:
+                quick_setup_result = quick_setup()
+            except Exception as exc:
+                quick_setup_result = exc
+            if not isinstance(quick_setup_result, BaseException):
+                backend_result = self._resolve_router_ipfs_backend_after_bootstrap(installer_path=installer_path)
+                backend_result["quick_setup_attempted"] = True
+                backend_result["quick_setup_result"] = int(quick_setup_result or 0)
+                if bool(backend_result.get("available", False)):
+                    return backend_result
+            else:
+                backend_result = dict(backend_result)
+                backend_result["quick_setup_attempted"] = True
+                backend_result["quick_setup_error"] = str(quick_setup_result)
+
+        return backend_result
+
+    def _resolve_router_ipfs_backend_after_bootstrap(self, *, installer_path: Path) -> Dict[str, Any]:
+        try:
+            from ipfs_datasets_py import ipfs_backend_router, router_deps
+
+            ipfs_backend_router.clear_ipfs_backend_router_caches()
+            deps = router_deps.get_default_router_deps()
+            deps.ipfs_backend = None
+            backend = ipfs_backend_router.get_ipfs_backend(use_cache=False, deps=deps)
+            backend_name = type(backend).__name__
+            command = getattr(backend, "_cmd", None)
+            if backend_name == "KuboCLIBackend":
+                cmd_text = str(command or os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")).strip() or "ipfs"
+                executable = shlex.split(cmd_text)[0] if cmd_text else "ipfs"
+                if shutil.which(executable) is None:
+                    return {
+                        "available": False,
+                        "reason": "ipfs-kit-install-did-not-change-backend",
+                        "backend": backend_name,
+                        "command": cmd_text,
+                        "installer": str(installer_path),
+                        "install_attempted": True,
+                    }
+            return {
+                "available": True,
+                "backend": backend_name,
+                "command": str(command).strip() if command else None,
+                "installer": str(installer_path),
+                "install_attempted": True,
+            }
+        except Exception as exc:
+            return {
+                "available": False,
+                "reason": "ipfs-kit-backend-unavailable-after-install",
+                "backend": None,
+                "command": None,
+                "installer": str(installer_path),
+                "install_attempted": True,
+                "error": str(exc),
+            }
 
     async def _run_llm_router_review(
         self,
@@ -1835,6 +2071,12 @@ class StateLawsAgenticDaemon:
                 allow_local_fallback=timeout_seconds <= 0.0,
             )
         except Exception as exc:
+            if tactic.llm_provider is None and "ipfs_accelerate_py provider did not return generated text" in str(exc):
+                return {
+                    "status": "unavailable",
+                    "error": str(exc),
+                    "reason": "accelerate-empty-response",
+                }
             return {"status": "error", "error": str(exc)}
 
         parsed = self._parse_router_llm_response(response)

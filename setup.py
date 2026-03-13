@@ -20,7 +20,12 @@ def _ipfs_kit_dependency() -> str:
     """
 
     local_path = os.path.join(os.path.dirname(__file__), "ipfs_kit_py")
-    if os.path.isdir(local_path):
+    local_markers = (
+        os.path.join(local_path, "setup.py"),
+        os.path.join(local_path, "pyproject.toml"),
+        os.path.join(local_path, ".git"),
+    )
+    if os.path.isdir(local_path) and any(os.path.exists(marker) for marker in local_markers):
         # `file:` URL must be absolute for reliability.
         return f"ipfs_kit_py @ file://{os.path.abspath(local_path)}"
 

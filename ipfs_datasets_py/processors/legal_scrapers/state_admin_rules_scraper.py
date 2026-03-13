@@ -192,6 +192,18 @@ _AZ_ADMIN_REGISTER_TEXT_RE = re.compile(
     re.IGNORECASE,
 )
 
+_AZSOS_RULES_PORTAL_NAV_TEXT_RE = re.compile(
+    r"visit\s+openbooks|ombudsman\s+citizens\s+aide|register\s+to\s+vote|save\s+with\s+azrx",
+    re.IGNORECASE,
+)
+
+_AZ_RULES_PORTAL_CHROME_RE = re.compile(
+    r"tracking\s+pixel\s+disclaimer|visit\s+openbooks|save\s+with\s+azrx|"
+    r"subscriber\s+info\s+subscribe|arizona\s+administrative\s+code\s+on\s+amp|"
+    r"subscribe\s+to\s+our\s+code\s+update\s+email\s+service|main\s+navigation",
+    re.IGNORECASE,
+)
+
 _VT_NON_RULE_PORTAL_PATH_RE = re.compile(
     r"/SOS/rules/(?:index\.php|search\.php|rssFeed\.php|calendar\.php|subscribe\.php|contact\.php|iCalendar\.php)$|"
     r"/secretary-of-state-services/apa-rules(?:/.*)?$",
@@ -285,6 +297,11 @@ _AZLEG_NON_ADMIN_SEED_PATH_RE = re.compile(
 
 _CA_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
     r"^/(?:|rules|regulations|administrative-code|code-of-regulations|agency-rules|policies|faces/(?:codes|codes_displaytext|codedisplayexpand|codes_displayexpandedbranch)\.xhtml)/?$",
+    re.IGNORECASE,
+)
+
+_IN_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
+    r"^/(?:regulations|administrative-code|code-of-regulations)/?$",
     re.IGNORECASE,
 )
 
@@ -1323,6 +1340,12 @@ def _score_candidate_url(url: str) -> int:
         score += 12
     if host == "www.ilga.gov" and normalized_path.lower() == "/commission/jcar/admincode":
         score += 5
+    if host == "iar.iga.in.gov" and normalized_path.lower() in {"/code", "/code/current", "/code/2006", "/code/2024"}:
+        score += 9
+    if host == "iar.iga.in.gov" and re.search(r"^/code/(?:current|2006|2024)/\d+(?:/\d+(?:\.\d+)?)", path, re.IGNORECASE):
+        score += 11
+    if host == "legislature.in.gov" and _IN_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
+        score -= 8
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(normalized_path):
         score += 7
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
@@ -1624,15 +1647,24 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     normalized_path = path.rstrip("/") or "/"
     normalized_path_lower = normalized_path.lower()
     query = parsed.query or ""
+    arizona_official_rule_document = _looks_like_arizona_official_rule_document(text=text, title=title, url=url)
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
         return True
     if _SEO_MIRROR_PAGE_RE.search(hay):
+        return True
+    if host == "azsos.gov" and normalized_path_lower.startswith("/rules") and _AZSOS_RULES_PORTAL_NAV_TEXT_RE.search(hay):
         return True
     if host == "legislature.az.gov" and _AZ_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
         return True
     if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
         return True
-    if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay):
+    if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay) and not arizona_official_rule_document:
+        return True
+    if host in {"azsos.gov", "www.azsos.gov"} and normalized_path_lower in {
+        "/rules",
+        "/rules/arizona-administrative-code",
+        "/rules/arizona-administrative-register",
+    } and _AZ_RULES_PORTAL_CHROME_RE.search(hay):
         return True
     if host == "oal.ca.gov" and normalized_path in {"/publications", "/publications/ccr"} and _CA_OAL_CCR_LANDING_TEXT_RE.search(hay):
         return True
@@ -1732,6 +1764,21 @@ def _looks_like_binary_document_text(*, text: str, url: str) -> bool:
     return False
 
 
+def _looks_like_arizona_official_rule_document(*, text: str, title: str, url: str) -> bool:
+    body = str(text or "").strip()
+    title_value = str(title or "").strip()
+    url_value = str(url or "").strip()
+    parsed = urlparse(url_value)
+    if parsed.netloc.lower() != "apps.azsos.gov" or not _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or ""):
+        return False
+    hay = " ".join([title_value, body])
+    title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
+    chapter_hits = len(re.findall(r"\bchapter\s+\d+\b", hay, re.IGNORECASE))
+    article_hits = len(re.findall(r"\barticle\s+(?:\d+|[ivxlcdm]+)\b", hay, re.IGNORECASE))
+    aac_hits = len(re.findall(r"\b\d+\s+a\.a\.c\.\s+\d+\b", hay, re.IGNORECASE))
+    return title_hits >= 1 and (chapter_hits >= 1 or article_hits >= 1 or aac_hits >= 1)
+
+
 def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
@@ -1782,6 +1829,7 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     host = urlparse(url_value).netloc.lower()
     path = (urlparse(url_value).path or "").lower()
     hay = " ".join([title_value, body])
+    arizona_official_rule_document = _looks_like_arizona_official_rule_document(text=body, title=title_value, url=url_value)
     chapter_hits = len(re.findall(r"\bchapter\b", body, re.IGNORECASE))
     subchapter_hits = len(re.findall(r"\bsubchapter\b", body, re.IGNORECASE))
     sd_row_hits = len(_SD_RULE_INDEX_ROW_RE.findall(body))
@@ -1807,7 +1855,7 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "sdlegislature.gov" and sd_row_hits >= 8:
         return True
-    if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay):
+    if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay) and not arizona_official_rule_document:
         return True
     if host == "web.archive.org" and "gc.nh.gov/rules" in url_value.lower() and (
         "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
@@ -2731,7 +2779,7 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
             return joined_word
 
         for joined_word in sorted(_RTF_COMMON_JOINED_WORDS, key=len, reverse=True):
-            for split_index in range(1, min(4, len(joined_word) - 1) + 1):
+            for split_index in range(1, len(joined_word)):
                 pattern = re.compile(
                     rf"\b{re.escape(joined_word[:split_index])}(?: |\n){re.escape(joined_word[split_index:])}\b",
                     re.IGNORECASE,
@@ -3282,6 +3330,8 @@ def _should_emit_relaxed_recovery_statute(*, text: str, title: str, url: str) ->
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
 
+    if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
+        return False
     if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value):
         return False
     if _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value):
@@ -3592,21 +3642,23 @@ def _extract_cloudflare_rate_limit_metadata(candidate: Any) -> Dict[str, Any]:
         status = str(mapping.get("cloudflare_status") or "").strip().lower()
         provider = str(mapping.get("provider") or "").strip().lower()
         method = str(mapping.get("method") or mapping.get("method_used") or "").strip().lower()
-        has_signal = status in {"rate_limited", "browser_challenge", "record_errored", "error"} or any(
-            mapping.get(key) is not None
-            for key in (
-                "retry_after_seconds",
-                "retry_at_utc",
-                "rate_limit_diagnostics",
-                "wait_budget_exhausted",
-                "cloudflare_http_status",
-                "cloudflare_browser_challenge_detected",
-                "cloudflare_error_excerpt",
-                "cloudflare_record_status",
-                "cloudflare_job_status",
-            )
+        http_status = mapping.get("cloudflare_http_status", mapping.get("status"))
+        try:
+            normalized_http_status = int(http_status) if http_status is not None and str(http_status).strip() else None
+        except (TypeError, ValueError):
+            normalized_http_status = None
+        record_status = str(mapping.get("cloudflare_record_status") or "").strip().lower()
+        has_signal = (
+            status in {"rate_limited", "browser_challenge", "record_errored", "error"}
+            or mapping.get("retry_after_seconds") is not None
+            or mapping.get("retry_at_utc") is not None
+            or mapping.get("rate_limit_diagnostics") is not None
+            or bool(mapping.get("wait_budget_exhausted"))
+            or bool(mapping.get("cloudflare_browser_challenge_detected"))
+            or normalized_http_status is not None and normalized_http_status >= 400
+            or record_status in {"errored", "failed", "timed_out"}
         )
-        if not has_signal and provider != "cloudflare_browser_rendering" and method != "cloudflare_browser_rendering":
+        if not has_signal:
             continue
         extracted = {
             "cloudflare_status": status or None,

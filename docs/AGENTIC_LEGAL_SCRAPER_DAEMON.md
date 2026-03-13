@@ -267,6 +267,7 @@ LEGAL_PUBLISH_VERIFY=0
 Set `LEGAL_DAEMON_MAX_STATUTES=0` for an uncapped run.
 Set `LEGAL_DAEMON_SCRAPE_TIMEOUT_SECONDS` for bounded live probes so the daemon records a completed error cycle instead of depending on an outer shell timeout.
 Use the router timeout variables to bound unattended LLM, embeddings, and IPFS review stages.
+When router IPFS persistence resolves to `KuboCLIBackend` but the local `ipfs` CLI is missing, the daemon now attempts to bootstrap `ipfs_kit_py` via `scripts/setup/install.py` and re-resolves the backend in-process before skipping persistence.
 Cloudflare Browser Rendering requires a custom API token with `Browser Rendering - Edit` permission; a token can verify as active but still fail crawl calls without that scope.
 Cloudflare `/crawl` can also return transient `2001: Rate limit exceeded` responses during bursts of job creation or polling. The Cloudflare fallback now retries those responses automatically, but repeated smoke tests may still need a cooldown before the next live run succeeds.
 If Cloudflare asks for a cooldown longer than the configured local wait budget, the client now returns a structured `rate_limited` result with `retry_after_seconds` and `retry_at_utc` so daemon orchestration can defer and requeue the crawl instead of spinning.

@@ -93,7 +93,7 @@ def ensure_main_ipfs_kit_py(logger):
         return
 
     os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
-    repo_root = Path(__file__).resolve().parent
+    repo_root = _repo_root()
     repo_path = repo_root / '.tools' / 'ipfs_kit_py'
     marker_file = repo_path / '.main_installed'
 

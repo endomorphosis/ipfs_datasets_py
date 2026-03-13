@@ -75,7 +75,7 @@ def ensure_main_ipfs_kit_py() -> None:
 
     os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
 
-    repo_root = Path(__file__).resolve().parent
+    repo_root = Path(__file__).resolve().parents[2]
     repo_path = repo_root / '.tools' / 'ipfs_kit_py'
     marker_file = repo_path / '.main_installed'
 
@@ -210,7 +210,8 @@ def quick_setup():
     print("\n🚀 Running Quick Setup...")
     
     try:
-        result = subprocess.run([sys.executable, 'quick_setup.py'], 
+        quick_setup_path = Path(__file__).resolve().with_name('quick_setup.py')
+        result = subprocess.run([sys.executable, str(quick_setup_path)], 
                               check=False, text=True)
         return result.returncode
     except Exception as e:

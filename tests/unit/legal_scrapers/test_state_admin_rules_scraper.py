@@ -1068,6 +1068,36 @@ def test_rejects_arizona_rule_index_seo_mirror_false_positive() -> None:
     ) is False
 
 
+def test_rejects_current_arizona_rules_portal_chrome_as_substantive_rule_text() -> None:
+    text = (
+        "Skip to main content State of Arizona Visit OpenBooks Save with AZRx Main navigation Rules About Search "
+        "Tracking Pixel Disclaimer Arizona Administrative Code As Published by the Administrative Rules Division "
+        "Table of Contents - Browse by Title and Chapter Subject Index - Search by Keyword Arizona Administrative Code on AMP "
+        "Subscriber Info Subscribe Subscribe to our Code Update Email Service"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Arizona Administrative Code | Arizona Secretary of State",
+        url="https://azsos.gov/rules/arizona-administrative-code",
+        min_chars=160,
+    ) is False
+
+
+def test_rejects_current_arizona_rules_portal_chrome_as_relaxed_recovery_text() -> None:
+    text = (
+        "Skip to main content State of Arizona Visit OpenBooks Save with AZRx Main navigation Rules About Search "
+        "Tracking Pixel Disclaimer Arizona Administrative Register Published weekly Subscriber Info Subscribe "
+        "Subscribe to our Code Update Email Service"
+    )
+
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Administrative Register | Arizona Secretary of State",
+        url="https://azsos.gov/rules/arizona-administrative-register",
+    ) is False
+
+
 def test_should_not_emit_relaxed_recovery_arizona_inventory_page() -> None:
     text = (
         "Arizona Administrative Code. Title 1 State Government. Title 2 Administration. "
@@ -1099,6 +1129,58 @@ def test_rejects_arizona_admin_register_toc_as_non_rule_page() -> None:
         text=text,
         title="Arizona Administrative Register - 2025",
         url="https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+    ) is False
+
+
+def test_accepts_arizona_official_chapter_document_with_register_boilerplate() -> None:
+    text = (
+        "TITLE 18. ENVIRONMENTAL QUALITY CHAPTER 4. DEPARTMENT OF ENVIRONMENTAL QUALITY - SAFE DRINKING WATER "
+        "Arizona Administrative Code 18 A.A.C. 4 TITLE 18. ENVIRONMENTAL QUALITY CHAPTER 4. "
+        "DEPARTMENT OF ENVIRONMENTAL QUALITY - SAFE DRINKING WATER Page Supp. 25-4 December 31, 2025 "
+        "Please note that the Chapter you are about to replace may have rules still in effect after the repeal of this Chapter. "
+        "Rules and Your Rights. Article 1. General Provisions. R18-4-101. Definitions."
+    )
+    url = "https://apps.azsos.gov/public_services/Title_18/18-04.rtf"
+
+    assert scraper_module._looks_like_non_rule_admin_page(
+        text=text,
+        title="TITLE 18. ENVIRONMENTAL QUALITY",
+        url=url,
+    ) is False
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="TITLE 18. ENVIRONMENTAL QUALITY",
+        url=url,
+    ) is False
+    assert _is_substantive_rule_text(
+        text=text,
+        title="TITLE 18. ENVIRONMENTAL QUALITY",
+        url=url,
+        min_chars=160,
+    ) is True
+
+
+def test_rejects_azsos_rules_portal_navigation_wrapper() -> None:
+    text = (
+        "Skip to main content State of Arizona Visit OpenBooks Ombudsman Citizens Aide "
+        "Register to Vote Save with AZRx Main navigation Rules Arizona Administrative Code."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Arizona Administrative Code | Arizona Secretary of State",
+        url="https://azsos.gov/rules/arizona-administrative-code",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Arizona Administrative Code | Arizona Secretary of State",
+        url="https://azsos.gov/rules/arizona-administrative-code",
+    ) is False
+    assert scraper_module._should_emit_relaxed_recovery_statute(
+        text=text,
+        title="Arizona Administrative Code | Arizona Secretary of State",
+        url="https://azsos.gov/rules/arizona-administrative-code",
     ) is False
     assert scraper_module._should_emit_relaxed_recovery_statute(
         text=text,
@@ -1410,7 +1492,10 @@ async def test_extract_text_from_rtf_bytes_repairs_split_words_in_salvaged_text(
 ) -> None:
     class FakeRTFResult:
         success = True
-        text = "TITLE 18. ENVIRONMENTAL QUALI TY\nArizona Adm inistrative Code\nA pril 1, 2023"
+        text = (
+            "TITLE 18. ENVIRONMENTAL QUALI TY\nArizona Adm inistrative Code\n"
+            "A pril 1, 2023\nThe Code is separated by subjec t into Titles."
+        )
 
     class FakeRTFExtractor:
         def extract(self, file_path):
@@ -1419,16 +1504,21 @@ async def test_extract_text_from_rtf_bytes_repairs_split_words_in_salvaged_text(
     monkeypatch.setattr(file_converter_module, "RTFExtractor", FakeRTFExtractor)
 
     extracted = await scraper_module._extract_text_from_rtf_bytes_with_processor(
-        b"{\\rtf1\\ansi TITLE 18. ENVIRONMENTAL QUALI TY\\par Arizona Adm inistrative Code\\par A pril 1, 2023}",
+        (
+            b"{\\rtf1\\ansi TITLE 18. ENVIRONMENTAL QUALI TY\\par Arizona Adm inistrative Code"
+            b"\\par A pril 1, 2023\\par The Code is separated by subjec t into Titles.}"
+        ),
         source_url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
     )
 
     assert "QUALITY" in extracted
     assert "Administrative Code" in extracted
     assert "April 1, 2023" in extracted
+    assert "subject into Titles" in extracted
     assert "QUALI TY" not in extracted
     assert "Adm inistrative" not in extracted
     assert "A pril" not in extracted
+    assert "subjec t" not in extracted
 
 
 @pytest.mark.asyncio
@@ -2514,6 +2604,21 @@ def test_score_candidate_url_prioritizes_utah_detail_pages_over_search_indexes()
     )
 
     assert detail_score > search_score
+
+
+def test_score_candidate_url_prioritizes_indiana_iar_pages_over_dead_legislature_pages() -> None:
+    inventory_score = scraper_module._score_candidate_url(
+        "https://iar.iga.in.gov/code/current"
+    )
+    detail_score = scraper_module._score_candidate_url(
+        "https://iar.iga.in.gov/code/current/25/1.5"
+    )
+    dead_legislature_score = scraper_module._score_candidate_url(
+        "https://legislature.in.gov/regulations"
+    )
+
+    assert inventory_score > dead_legislature_score
+    assert detail_score > inventory_score
 
 
 def test_prefers_live_fetch_for_utah_detail_pages() -> None:
@@ -4040,6 +4145,76 @@ async def test_scrape_state_admin_rules_propagates_agentic_cloudflare_browser_ch
     assert result["metadata"]["cloudflare_record_status"] == "errored"
     assert result["metadata"]["cloudflare_job_status"] == "completed"
     assert result["metadata"]["browser_challenge_states"] == ["AZ"]
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_ignores_benign_agentic_cloudflare_success_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "IN",
+                    "state_name": "Indiana",
+                    "title": "Indiana Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://iar.iga.in.gov/code/current",
+                    "scraped_at": "2026-03-13T00:00:00",
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                    "cloudflare_status": "success",
+                    "cloudflare_http_status": 200,
+                    "cloudflare_browser_challenge_detected": False,
+                    "cloudflare_error_excerpt": "Indiana Register You need to enable JavaScript to run this app.",
+                    "cloudflare_record_status": "completed",
+                    "cloudflare_job_status": "completed",
+                }
+            ],
+            "kg_rows": [],
+            "report": {
+                "IN": {
+                    "rules_count": 0,
+                    "cloudflare_status": "success",
+                    "cloudflare_http_status": 200,
+                    "cloudflare_browser_challenge_detected": False,
+                    "cloudflare_error_excerpt": "Indiana Register You need to enable JavaScript to run this app.",
+                    "cloudflare_record_status": "completed",
+                    "cloudflare_job_status": "completed",
+                }
+            },
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["IN"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        require_substantive_rule_text=True,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["cloudflare_status"] is None
+    assert result["metadata"]["cloudflare_http_status"] is None
+    assert result["metadata"]["cloudflare_record_status"] is None
+    assert result["metadata"]["cloudflare_job_status"] is None
+    assert result["metadata"]["browser_challenge_states"] is None
 
 
 @pytest.mark.anyio

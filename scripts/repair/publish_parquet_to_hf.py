@@ -38,10 +38,32 @@ def _duckdb_remote_probe(url: str, cid_column: str) -> Dict[str, Any]:
     import duckdb
 
     con = duckdb.connect()
+    schema_rows = con.execute(
+        f"DESCRIBE SELECT * FROM read_parquet('{url}')"
+    ).fetchall()
+    column_names = [str(row[0]) for row in schema_rows]
+    probe: Dict[str, Any] = {
+        "columns": column_names,
+        "cid_column": cid_column,
+        "cid_column_present": cid_column in column_names,
+    }
+    if cid_column not in column_names:
+        return probe
+
     rows = con.execute(
         f"SELECT {cid_column} FROM read_parquet('{url}') WHERE {cid_column} IS NOT NULL LIMIT 5"
     ).fetchall()
-    return {"cid_sample": [r[0] for r in rows]}
+    probe["cid_sample"] = [r[0] for r in rows]
+    return probe
+
+
+def _uploaded_parquet_repo_paths(local_dir: Path, path_in_repo: str) -> List[str]:
+    prefix = path_in_repo.strip("/")
+    repo_paths: List[str] = []
+    for path in sorted(local_dir.rglob("*.parquet")):
+        relative = path.relative_to(local_dir).as_posix()
+        repo_paths.append(f"{prefix}/{relative}" if prefix else relative)
+    return repo_paths
 
 
 def publish(
@@ -79,6 +101,9 @@ def publish(
 
     files = list_repo_files(repo_id=repo_id, repo_type="dataset", token=token)
     parquet_files = [f for f in files if f.endswith(".parquet")]
+    uploaded_parquet_files = _uploaded_parquet_repo_paths(local_dir=local_dir, path_in_repo=path_in_repo)
+    remote_file_set = set(files)
+    matched_uploaded_parquet_files = [path for path in uploaded_parquet_files if path in remote_file_set]
 
     normalized_prefix = path_in_repo.strip("/")
     if normalized_prefix:
@@ -87,12 +112,16 @@ def publish(
             parquet_files = scoped
 
     report["remote_parquet_count"] = len(parquet_files)
+    report["uploaded_parquet_count"] = len(uploaded_parquet_files)
+    report["matched_uploaded_parquet_count"] = len(matched_uploaded_parquet_files)
 
-    if not parquet_files:
+    verification_candidates = matched_uploaded_parquet_files or parquet_files
+
+    if not verification_candidates:
         report["verify_error"] = "No parquet files found after upload"
         return report
 
-    first_file = sorted(parquet_files)[0]
+    first_file = sorted(verification_candidates)[0]
     url = hf_hub_url(repo_id=repo_id, repo_type="dataset", filename=first_file)
 
     magic = _range_magic_check(url)

@@ -2337,7 +2337,12 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     assert "AZ site:apps.azsos.gov filetype:pdf" in critic["query_hints"]
     assert "AZ site:apps.azsos.gov filetype:rtf" in critic["query_hints"]
     assert document_gap_report["states_with_candidate_document_gaps"] == ["AZ"]
+    assert document_gap_report["states_with_artifact_candidates"] == ["AZ"]
     assert document_gap_report["states"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
+    assert document_gap_report["states"]["AZ"]["top_candidate_urls"] == [
+        "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    ]
     assert document_gap_report["states"]["AZ"]["processed_method_counts"] == {}
     assert document_gap_report["states"]["AZ"]["source_breakdown"] == {
         "seed": 1,
@@ -2349,6 +2354,10 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
     assert document_gap_report["states"]["AZ"]["inspected_urls"] == 4
     assert document_gap_report["states"]["AZ"]["expanded_urls"] == 3
     assert document_gap_report["states"]["AZ"]["top_candidate_document_urls"] == [
+        "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    ]
+    assert document_gap_report["states"]["AZ"]["recovery_directives"]["candidate_urls"] == [
         "https://apps.azsos.gov/public_services/Title_18/18-04.pdf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
     ]
@@ -2469,6 +2478,265 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     assert manifest["entries"][0]["binary_document"] is True
     assert str(binary_path) in manifest["entries"][0]["saved_files"]
     assert str(text_path) in manifest["entries"][0]["saved_files"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_persists_html_artifacts_for_weak_states(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.web_archiving import unified_web_scraper as scraper_module
+
+    called_urls = []
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "IN",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "IN": {
+                            "attempted": 2,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 0,
+                            "providers": {"agentic_discovery": 2},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "IN": {
+                            "candidate_urls": 4,
+                            "inspected_urls": 2,
+                            "expanded_urls": 0,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://legislature.in.gov/regulations",
+                                "https://legislature.in.gov/administrative-code",
+                                "https://iar.iga.in.gov/code/current",
+                                "https://iar.iga.in.gov/code/2024",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["iar.iga.in.gov"],
+                            "parallel_prefetch": {"attempted": 2, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["iar.iga.in.gov"],
+                                "candidate_hosts_without_rules": ["iar.iga.in.gov"],
+                            },
+                            "timed_out": True,
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _fake_scrape(self, url, method=None, **kwargs):
+        called_urls.append(url)
+        if "iar.iga.in.gov" not in url:
+            raise AssertionError(f"artifact capture selected non-responsive candidate first: {url}")
+        return scraper_module.ScraperResult(
+            url=url,
+            title="Indiana Administrative Code",
+            text="Indiana administrative code rendered text",
+            html="<html><body>Indiana administrative code rendered text</body></html>",
+            content="Indiana administrative code rendered text",
+            method_used=ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+            success=True,
+            metadata={
+                "method": "cloudflare_browser_rendering",
+                "content_type": "text/html",
+                "content_length": 64,
+                "binary_document": False,
+                "cloudflare_status": "success",
+            },
+        )
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "scrape", _fake_scrape)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["IN"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=47,
+            document_artifact_capture_enabled=True,
+            document_artifact_state_limit=1,
+            document_artifact_urls_per_state=1,
+            document_artifact_max_total=1,
+        )
+    )
+
+    summary = await daemon.run()
+
+    document_gap_report = summary["latest_cycle"]["document_gap_report"]
+    artifact_summary = summary["latest_cycle"]["document_artifacts"]
+    manifest_path = tmp_path / "cycles" / "cycle_0001_document_artifacts.json"
+    artifact_dir = tmp_path / "document_artifacts" / "cycle_0001"
+    text_path = artifact_dir / "IN_01_current.txt"
+    html_path = artifact_dir / "IN_01_current.html"
+
+    assert document_gap_report["states_with_candidate_document_gaps"] == []
+    assert document_gap_report["states_with_artifact_candidates"] == ["IN"]
+    assert document_gap_report["states"]["IN"]["top_candidate_urls"] == [
+        "https://legislature.in.gov/regulations",
+        "https://legislature.in.gov/administrative-code",
+        "https://iar.iga.in.gov/code/current",
+        "https://iar.iga.in.gov/code/2024",
+    ]
+    assert artifact_summary["status"] == "completed"
+    assert artifact_summary["target_count"] == 1
+    assert artifact_summary["successful_count"] == 1
+    assert called_urls == ["https://iar.iga.in.gov/code/current"]
+    assert text_path.exists()
+    assert html_path.exists()
+    assert "Indiana administrative code rendered text" in text_path.read_text(encoding="utf-8")
+    assert "Indiana administrative code rendered text" in html_path.read_text(encoding="utf-8")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["entries"][0]["method_used"] == "cloudflare_browser_rendering"
+    assert manifest["entries"][0]["binary_document"] is False
+    assert str(text_path) in manifest["entries"][0]["saved_files"]
+    assert str(html_path) in manifest["entries"][0]["saved_files"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_retries_html_artifacts_past_failed_candidates(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.web_archiving import unified_web_scraper as scraper_module
+
+    called_urls = []
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "IN",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "IN": {
+                            "attempted": 2,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 0,
+                            "providers": {"agentic_discovery": 2},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "IN": {
+                            "candidate_urls": 2,
+                            "inspected_urls": 2,
+                            "expanded_urls": 0,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://legislature.in.gov/regulations",
+                                "https://iar.iga.in.gov/code/current",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": [],
+                            "parallel_prefetch": {"attempted": 2, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["iar.iga.in.gov"],
+                                "candidate_hosts_without_rules": ["iar.iga.in.gov", "legislature.in.gov"],
+                            },
+                            "timed_out": True,
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _fake_scrape(self, url, method=None, **kwargs):
+        called_urls.append(url)
+        if "legislature.in.gov" in url:
+            return scraper_module.ScraperResult(
+                url=url,
+                success=False,
+                method_used=scraper_module.ScraperMethod.PLAYWRIGHT,
+                metadata={"content_type": "text/html", "content_length": 0, "binary_document": False},
+                errors=["dns failure"],
+            )
+        return scraper_module.ScraperResult(
+            url=url,
+            title="Indiana Administrative Code",
+            text="Indiana administrative code rendered text",
+            html="<html><body>Indiana administrative code rendered text</body></html>",
+            content="Indiana administrative code rendered text",
+            method_used=scraper_module.ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+            success=True,
+            metadata={
+                "method": "cloudflare_browser_rendering",
+                "content_type": "text/html",
+                "content_length": 64,
+                "binary_document": False,
+                "cloudflare_status": "success",
+            },
+        )
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "scrape", _fake_scrape)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["IN"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=53,
+            document_artifact_capture_enabled=True,
+            document_artifact_state_limit=1,
+            document_artifact_urls_per_state=1,
+            document_artifact_max_total=1,
+        )
+    )
+
+    summary = await daemon.run()
+
+    artifact_summary = summary["latest_cycle"]["document_artifacts"]
+    manifest_path = tmp_path / "cycles" / "cycle_0001_document_artifacts.json"
+    artifact_dir = tmp_path / "document_artifacts" / "cycle_0001"
+    text_path = artifact_dir / "IN_02_current.txt"
+    html_path = artifact_dir / "IN_02_current.html"
+
+    assert artifact_summary["status"] == "completed"
+    assert artifact_summary["target_count"] == 2
+    assert artifact_summary["successful_count"] == 1
+    assert called_urls == [
+        "https://legislature.in.gov/regulations",
+        "https://iar.iga.in.gov/code/current",
+    ]
+    assert text_path.exists()
+    assert html_path.exists()
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["target_count"] == 2
+    assert manifest["successful_count"] == 1
+    assert manifest["entries"][0]["success"] is False
+    assert manifest["entries"][1]["success"] is True
+    assert manifest["entries"][1]["method_used"] == "cloudflare_browser_rendering"
+    assert str(text_path) in manifest["entries"][1]["saved_files"]
+    assert str(html_path) in manifest["entries"][1]["saved_files"]
 
 
 @pytest.mark.asyncio
@@ -2620,9 +2888,13 @@ async def test_state_admin_rules_agentic_daemon_uses_router_assist_review(monkey
     async def _fake_ipfs_persist(self, *, cycle_index, report, corpus_key):
         return {"status": "success", "cid": "bafyrouterreview", "name": f"{corpus_key}-{cycle_index}"}
 
+    def _fake_preflight(self):
+        return {"available": True, "backend": "KuboCLIBackend", "command": "ipfs"}
+
     monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
     monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_run_llm_router_review", _fake_router_review)
     monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_rank_tactics_with_embeddings", _fake_embeddings_ranking)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_router_ipfs_persist_preflight", _fake_preflight)
     monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_persist_router_assist_to_ipfs", _fake_ipfs_persist)
 
     daemon = daemon_module.StateLawsAgenticDaemon(
@@ -2785,6 +3057,184 @@ async def test_state_admin_rules_agentic_daemon_router_timeout_does_not_block_cy
     assert summary["latest_cycle"]["router_assist"]["llm_review"]["status"] == "error"
     assert "timed out" in summary["latest_cycle"]["router_assist"]["llm_review"]["error"]
     assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_router_llm_empty_accelerate_response_is_unavailable(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py import llm_router as llm_router_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 1,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                }
+            },
+        }
+
+    def _fake_generate_text(prompt, **kwargs):
+        raise RuntimeError("ipfs_accelerate_py provider did not return generated text")
+
+    def _fake_embeddings_ranking(self, tactic, diagnostics, critic):
+        return [{"tactic": "router_assisted", "score": 0.88}]
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(llm_router_module, "generate_text", _fake_generate_text)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_rank_tactics_with_embeddings", _fake_embeddings_ranking)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=59,
+            router_llm_timeout_seconds=0.0,
+        )
+    )
+
+    summary = await daemon.run()
+
+    router_assist = summary["latest_cycle"]["router_assist"]
+    assert router_assist["status"] == "completed"
+    assert router_assist["llm_review"]["status"] == "unavailable"
+    assert router_assist["llm_review"]["reason"] == "accelerate-empty-response"
+    assert router_assist["embeddings_ranking"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_skips_router_ipfs_persist_when_cli_missing(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 1,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                }
+            },
+        }
+
+    async def _fake_router_review(self, *, tactic, diagnostics, critic):
+        return {
+            "status": "success",
+            "recommended_next_tactics": ["router_assisted", "document_first"],
+            "priority_states": ["AZ"],
+            "query_hints": ["Arizona administrative code pdf title 18"],
+            "rationale": "Document candidates remain unresolved.",
+        }
+
+    def _fake_embeddings_ranking(self, tactic, diagnostics, critic):
+        return [{"tactic": "router_assisted", "score": 0.9}]
+
+    def _fake_preflight(self):
+        return {
+            "available": False,
+            "reason": "ipfs-cli-missing",
+            "backend": "KuboCLIBackend",
+            "command": "ipfs",
+        }
+
+    async def _should_not_run(self, *, cycle_index, report, corpus_key):
+        raise AssertionError("router IPFS persist should be skipped when preflight fails")
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_run_llm_router_review", _fake_router_review)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_rank_tactics_with_embeddings", _fake_embeddings_ranking)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_router_ipfs_persist_preflight", _fake_preflight)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_persist_router_assist_to_ipfs", _should_not_run)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=61,
+        )
+    )
+
+    summary = await daemon.run()
+
+    router_assist = summary["latest_cycle"]["router_assist"]
+    assert router_assist["status"] == "completed"
+    assert router_assist["ipfs_persist"]["status"] == "skipped"
+    assert router_assist["ipfs_persist"]["reason"] == "ipfs-cli-missing"
+    assert router_assist["ipfs_persist"]["backend"] == "KuboCLIBackend"
+
+
+def test_router_ipfs_persist_preflight_bootstraps_ipfs_kit_when_cli_missing(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    class _FakeKuboBackend:
+        _cmd = "ipfs"
+
+    class _FakeIPFSKitBackend:
+        pass
+
+    class _FakeDeps:
+        def __init__(self):
+            self.ipfs_backend = _FakeKuboBackend()
+
+    fake_deps = _FakeDeps()
+    state = {"bootstrapped": False}
+
+    def _fake_get_ipfs_backend(*args, **kwargs):
+        if state["bootstrapped"]:
+            return _FakeIPFSKitBackend()
+        return _FakeKuboBackend()
+
+    def _fake_bootstrap(self):
+        state["bootstrapped"] = True
+        return {
+            "available": True,
+            "backend": "_FakeIPFSKitBackend",
+            "command": None,
+            "install_attempted": True,
+            "installer": "/tmp/fake-install.py",
+        }
+
+    monkeypatch.setattr(daemon_module.shutil, "which", lambda cmd: None if cmd == "ipfs" else "/usr/bin/true")
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_attempt_router_ipfs_kit_bootstrap", _fake_bootstrap)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+        )
+    )
+
+    result = daemon._router_ipfs_persist_preflight()
+
+    assert result["available"] is True
+    assert result["backend"] == "_FakeIPFSKitBackend"
+    assert result["install_attempted"] is True
 
 
 

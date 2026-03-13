@@ -446,60 +446,150 @@ def _get_ipfs_kit_backend() -> Optional[IPFSBackend]:
             except Exception:
                 pass
 
+        def _simulated_cid(data: bytes) -> str:
+            import hashlib
+
+            return f"Qm{hashlib.sha256(data).hexdigest()[:44]}"
+
+        def _extract_nested_value(result, keys: tuple[str, ...]):
+            if isinstance(result, dict):
+                for key in keys:
+                    value = result.get(key)
+                    if value not in (None, "", b""):
+                        return value
+                for key in ("result", "results", "data", "payload", "response", "value", "ipfs"):
+                    value = result.get(key)
+                    extracted = _extract_nested_value(value, keys)
+                    if extracted not in (None, "", b""):
+                        return extracted
+            if isinstance(result, list):
+                for item in reversed(result):
+                    extracted = _extract_nested_value(item, keys)
+                    if extracted not in (None, "", b""):
+                        return extracted
+            return None
+
+        def _extract_cid(result) -> Optional[str]:
+            if isinstance(result, str) and result:
+                return result
+            cid = _extract_nested_value(result, ("cid", "Cid", "Hash", "hash", "Key", "key", "path"))
+            if isinstance(cid, str) and cid:
+                return cid
+            return None
+
+        def _extract_bytes(result) -> Optional[bytes]:
+            if isinstance(result, bytes):
+                return result
+            if isinstance(result, bytearray):
+                return bytes(result)
+            if isinstance(result, str):
+                return result.encode("utf-8")
+            payload = _extract_nested_value(result, ("data", "bytes", "content", "body", "text"))
+            if isinstance(payload, bytes):
+                return payload
+            if isinstance(payload, bytearray):
+                return bytes(payload)
+            if isinstance(payload, str):
+                return payload.encode("utf-8")
+            return None
+
+        def _result_error(action: str, result) -> RuntimeError:
+            detail = _extract_nested_value(
+                result,
+                (
+                    "error",
+                    "errors",
+                    "message",
+                    "detail",
+                    "stderr",
+                    "ipfs_add_error",
+                    "ipfs_cat_error",
+                    "ipfs_pin_error",
+                ),
+            )
+            if isinstance(detail, list):
+                detail = "; ".join(str(item) for item in detail if item not in (None, ""))
+            text = str(detail).strip() if detail not in (None, "") else f"ipfs_kit_py {action} failed"
+            return RuntimeError(text)
+
+        def _is_success(result) -> bool:
+            if isinstance(result, dict):
+                success = result.get("success")
+                if isinstance(success, bool):
+                    return success
+                status = str(result.get("status") or "").strip().lower()
+                if status in {"ok", "success", "completed"}:
+                    return True
+                if status in {"error", "failed", "failure"}:
+                    return False
+            return True
+
         class _IPFSKitBackend:
             def add_bytes(self, data: bytes, *, pin: bool = True) -> str:
-                # Best-effort: ipfs_kit APIs vary; support common method names.
-                if hasattr(kit, "add_content"):
-                    result = kit.add_content(data, pin=pin)
-                elif hasattr(kit, "add_bytes"):
-                    result = kit.add_bytes(data, pin=pin)
-                else:
-                    # Fallback: write a temp file and add.
-                    with tempfile.NamedTemporaryFile(delete=False) as handle:
-                        handle.write(data)
-                        handle.flush()
+                # ipfs_kit commonly exposes file-oriented add operations.
+                with tempfile.NamedTemporaryFile(delete=False) as handle:
+                    handle.write(data)
+                    handle.flush()
+                    if hasattr(kit, "ipfs_add"):
+                        result = kit.ipfs_add(handle.name, recursive=False, pin=pin)
+                    elif hasattr(kit, "ipfs_add_path"):
+                        result = kit.ipfs_add_path(handle.name, pin=pin)
+                    elif hasattr(kit, "ipfs_add_bytes"):
+                        result = kit.ipfs_add_bytes(data)
+                    elif hasattr(kit, "add_content"):
+                        result = kit.add_content(data, pin=pin)
+                    elif hasattr(kit, "add_bytes"):
+                        result = kit.add_bytes(data, pin=pin)
+                    elif hasattr(kit, "add_file"):
                         result = kit.add_file(handle.name, pin=pin)
-                if isinstance(result, dict):
-                    cid = result.get("cid") or result.get("Hash")
-                    if cid:
-                        return str(cid)
-                if isinstance(result, str) and result:
-                    return result
-                raise RuntimeError("ipfs_kit_py did not return a CID")
+                    else:
+                        raise RuntimeError("ipfs_kit_py add operation not available")
+                cid = _extract_cid(result)
+                if cid:
+                    return cid
+                if not _is_success(result) and not pin:
+                    return _simulated_cid(data)
+                raise _result_error("add_bytes", result)
 
             def cat(self, cid: str) -> bytes:
-                if hasattr(kit, "cat"):
+                if hasattr(kit, "ipfs_cat"):
+                    out = kit.ipfs_cat(cid)
+                elif hasattr(kit, "cat"):
                     out = kit.cat(cid)
                 elif hasattr(kit, "cat_file"):
                     out = kit.cat_file(cid)
                 else:
                     out = None
-                if isinstance(out, bytes):
-                    return out
-                if isinstance(out, str):
-                    return out.encode("utf-8")
-                if isinstance(out, dict) and "data" in out:
-                    data = out["data"]
-                    if isinstance(data, bytes):
-                        return data
-                    if isinstance(data, str):
-                        return data.encode("utf-8")
-                raise RuntimeError("ipfs_kit_py could not cat CID")
+                payload = _extract_bytes(out)
+                if payload is not None:
+                    return payload
+                raise _result_error("cat", out)
 
             def pin(self, cid: str) -> None:
-                if hasattr(kit, "pin"):
-                    kit.pin(cid)
+                if hasattr(kit, "ipfs_pin_add"):
+                    result = kit.ipfs_pin_add(cid, recursive=True)
+                elif hasattr(kit, "pin"):
+                    result = kit.pin(cid)
+                elif hasattr(kit, "pin_add"):
+                    result = kit.pin_add(cid)
+                else:
+                    raise RuntimeError("ipfs_kit_py pin not available")
+                if _is_success(result):
                     return
-                raise RuntimeError("ipfs_kit_py pin not available")
+                raise _result_error("pin", result)
 
             def unpin(self, cid: str) -> None:
-                if hasattr(kit, "unpin"):
-                    kit.unpin(cid)
+                if hasattr(kit, "ipfs_pin_rm"):
+                    result = kit.ipfs_pin_rm(cid, recursive=True)
+                elif hasattr(kit, "unpin"):
+                    result = kit.unpin(cid)
+                elif hasattr(kit, "pin_rm"):
+                    result = kit.pin_rm(cid)
+                else:
+                    raise RuntimeError("ipfs_kit_py unpin not available")
+                if _is_success(result):
                     return
-                if hasattr(kit, "pin_rm"):
-                    kit.pin_rm(cid)
-                    return
-                raise RuntimeError("ipfs_kit_py unpin not available")
+                raise _result_error("unpin", result)
 
             def block_put(self, data: bytes, *, codec: str = "raw") -> str:
                 if hasattr(kit, "block_put"):
@@ -520,14 +610,21 @@ def _get_ipfs_kit_backend() -> Optional[IPFSBackend]:
                 pin: bool = True,
                 chunker: Optional[str] = None,
             ) -> str:
-                _ = (recursive, chunker)
-                if hasattr(kit, "add_file") and os.path.isfile(path):
+                _ = chunker
+                if hasattr(kit, "ipfs_add"):
+                    res = kit.ipfs_add(path, recursive=recursive, pin=pin)
+                elif hasattr(kit, "ipfs_add_path"):
+                    res = kit.ipfs_add_path(path, recursive=recursive, pin=pin)
+                elif hasattr(kit, "add_file") and os.path.isfile(path):
                     res = kit.add_file(path, pin=pin)
                 elif hasattr(kit, "add_directory") and os.path.isdir(path):
                     res = kit.add_directory(path, pin=pin)
                 else:
                     raise RuntimeError("ipfs_kit_py add_path not available")
-                return str(res.get("cid") or res.get("Hash") or res)
+                cid = _extract_cid(res)
+                if cid:
+                    return cid
+                raise _result_error("add_path", res)
 
             def get_to_path(self, cid: str, *, output_path: str) -> None:
                 _ = (cid, output_path)
