@@ -220,6 +220,18 @@ def test_is_direct_detail_candidate_url_recognizes_indiana_rule_detail_pages() -
     assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/current") is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_alabama_admin_code_detail_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code#A"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://admincode.legislature.state.al.us/agency"
+    ) is False
+
+
 def test_massachusetts_inventory_pages_are_rejected_as_substantive_rule_text() -> None:
     guide_url = "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number"
     law_library_url = "https://www.mass.gov/law-library/310-cmr"
@@ -2619,6 +2631,25 @@ def test_score_candidate_url_prioritizes_indiana_iar_pages_over_dead_legislature
 
     assert inventory_score > dead_legislature_score
     assert detail_score > inventory_score
+
+
+def test_score_candidate_url_prioritizes_alabama_admin_code_detail_pages() -> None:
+    detail_score = scraper_module._score_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code"
+    )
+    anchor_score = scraper_module._score_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code#A"
+    )
+    search_score = scraper_module._score_candidate_url(
+        "https://admincode.legislature.state.al.us/search"
+    )
+    agency_score = scraper_module._score_candidate_url(
+        "https://admincode.legislature.state.al.us/agency"
+    )
+
+    assert detail_score > search_score
+    assert anchor_score > search_score
+    assert detail_score > agency_score
 
 
 def test_prefers_live_fetch_for_utah_detail_pages() -> None:

@@ -3188,36 +3188,21 @@ async def test_state_admin_rules_agentic_daemon_skips_router_ipfs_persist_when_c
 
 def test_router_ipfs_persist_preflight_bootstraps_ipfs_kit_when_cli_missing(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py import ipfs_backend_router
 
-    class _FakeKuboBackend:
-        _cmd = "ipfs"
-
-    class _FakeIPFSKitBackend:
-        pass
-
-    class _FakeDeps:
-        def __init__(self):
-            self.ipfs_backend = _FakeKuboBackend()
-
-    fake_deps = _FakeDeps()
-    state = {"bootstrapped": False}
-
-    def _fake_get_ipfs_backend(*args, **kwargs):
-        if state["bootstrapped"]:
-            return _FakeIPFSKitBackend()
-        return _FakeKuboBackend()
+    KuboCLIBackend = type("KuboCLIBackend", (), {"_cmd": "ipfs"})
 
     def _fake_bootstrap(self):
-        state["bootstrapped"] = True
         return {
             "available": True,
-            "backend": "_FakeIPFSKitBackend",
+            "backend": "_IPFSKitBackend",
             "command": None,
             "install_attempted": True,
             "installer": "/tmp/fake-install.py",
         }
 
     monkeypatch.setattr(daemon_module.shutil, "which", lambda cmd: None if cmd == "ipfs" else "/usr/bin/true")
+    monkeypatch.setattr(ipfs_backend_router, "get_ipfs_backend", lambda *args, **kwargs: KuboCLIBackend())
     monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_attempt_router_ipfs_kit_bootstrap", _fake_bootstrap)
 
     daemon = daemon_module.StateLawsAgenticDaemon(
@@ -3233,7 +3218,7 @@ def test_router_ipfs_persist_preflight_bootstraps_ipfs_kit_when_cli_missing(monk
     result = daemon._router_ipfs_persist_preflight()
 
     assert result["available"] is True
-    assert result["backend"] == "_FakeIPFSKitBackend"
+    assert result["backend"] == "_IPFSKitBackend"
     assert result["install_attempted"] is True
 
 

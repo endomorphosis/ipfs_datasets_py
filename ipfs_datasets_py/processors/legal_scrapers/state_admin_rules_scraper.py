@@ -1328,6 +1328,14 @@ def _score_candidate_url(url: str) -> int:
         score -= 6
     if host == "carules.elaws.us" and normalized_path.lower() == "/search/allcode":
         score -= 8
+    if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
+        score += 10
+    if host == "admincode.legislature.state.al.us" and normalized_path.lower().startswith("/administrative-code#"):
+        score += 8
+    if host == "admincode.legislature.state.al.us" and normalized_path.lower() in {"/", "/agency", "/search"}:
+        score -= 4
+    if host in {"www.alabamaadministrativecode.state.al.us", "alabamaadministrativecode.state.al.us"} and normalized_path.lower() == "/":
+        score -= 3
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/admincode":
         score += 6
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/parts":
@@ -1492,6 +1500,11 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
     path = parsed.path or ""
+    normalized_path = path.rstrip("/") or "/"
+    if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
+        return True
+    if host == "admincode.legislature.state.al.us" and normalized_path.lower().startswith("/administrative-code#"):
+        return True
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
