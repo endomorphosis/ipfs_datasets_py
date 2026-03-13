@@ -82,6 +82,37 @@ result = await scrape_federal_register(
 
 **API Endpoint:** `POST /api/mcp/dataset/federal_register/scrape`
 
+### Federal Register Corpus Search Defaults
+
+The vector-search wrapper for Federal Register now targets the published CID-keyed corpus by default:
+
+- Dataset: `justicedao/ipfs_federal_register`
+- Parquet: `laws.parquet`
+- CID field: `ipfs_cid`
+
+That means `search_federal_register_corpus` does not need manual parquet or CID overrides in the common case.
+
+**Python usage:**
+```python
+from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+    search_federal_register_corpus_from_parameters,
+)
+
+result = await search_federal_register_corpus_from_parameters(
+    {
+        "collection_name": "federal_register_docs",
+        "query_vector": [0.1, 0.2, 0.3],
+    }
+)
+```
+
+**CLI shortcut:**
+```bash
+ipfs-datasets legal search-federal-register \
+  --collection_name federal_register_docs \
+  --query_text "EPA emissions reporting rule"
+```
+
 ---
 
 ### 3. State Laws Scraper (`state_laws_scraper.py`)

@@ -1383,6 +1383,38 @@ def _score_candidate_url(url: str) -> int:
         "/policies",
     }:
         score -= 6
+    if host == "sharetngov.tnsosfiles.com" and normalized_path.lower() in {
+        "/sos/rules/index.htm",
+        "/sos/pub/tar/index.htm",
+        "/sos/rules/rules2.htm",
+        "/sos/rules/rules_list.shtml",
+        "/sos/rules/effectives/effectives.htm",
+        "/sos/rules/tenncare.htm",
+    }:
+        score += 9
+    if host == "publications.tnsosfiles.com" and normalized_path.lower() in {"/rules", "/rules/"}:
+        score += 6
+    if host == "sos.tn.gov" and normalized_path.lower() in {
+        "/publications/services/administrative-register",
+        "/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee",
+    }:
+        score -= 2
+    if host in {"www.tn.gov", "tn.gov"} and normalized_path.lower() in {
+        "/sos/rules-and-regulations.html",
+        "/tga",
+    }:
+        score -= 8
+    if host == "legislature.tn.gov" and normalized_path.lower() in {
+        "/",
+        "/rules",
+        "/regulations",
+        "/administrative-code",
+        "/code-of-regulations",
+        "/agency-rules",
+        "/policies",
+        "/departments",
+    }:
+        score -= 10
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/admincode":
         score += 6
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/parts":
@@ -1768,6 +1800,12 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
             return True
     if host == "www.ilga.gov" and normalized_path_lower == "/commission/jcar/admincode":
         if len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE)) >= 8:
+            return True
+    if host in {"www.tn.gov", "tn.gov"} and normalized_path_lower in {
+        "/sos/rules-and-regulations.html",
+        "/tga",
+    }:
+        if "404 - page not found" in hay.lower() or _BAD_DISCOVERY_TEXT_RE.search(hay):
             return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(normalized_path):
         return True

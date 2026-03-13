@@ -538,6 +538,21 @@ def test_rejects_alabama_page_not_found_admin_false_positive() -> None:
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
+def test_rejects_tennessee_tn_gov_page_not_found_admin_false_positive() -> None:
+    statute = {
+        "code_name": "Tennessee Rules and Regulations",
+        "section_name": "404 - Page Not Found - TN.gov",
+        "source_url": "https://www.tn.gov/sos/rules-and-regulations.html",
+        "full_text": (
+            "404 - Page Not Found - TN.gov. Rules and regulations resources are not available at this page. "
+            "Use Tennessee Department of State navigation, publications, and sitemap links to continue."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
 def test_rejects_california_oal_publication_contract_page_as_rule_content() -> None:
     text = (
         "2025 California Code of Regulations and California Regulatory Notice Register Publication Contract. "
@@ -2760,6 +2775,30 @@ def test_score_candidate_url_prioritizes_vermont_rule_display_pages() -> None:
     assert inventory_score > search_score
     assert detail_score > legislature_score
     assert inventory_score > legislature_score
+
+
+def test_score_candidate_url_prioritizes_tennessee_sharetngov_rule_pages() -> None:
+    tar_index_score = scraper_module._score_candidate_url(
+        "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm"
+    )
+    effective_rules_score = scraper_module._score_candidate_url(
+        "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm"
+    )
+    sos_service_score = scraper_module._score_candidate_url(
+        "https://sos.tn.gov/publications/services/administrative-register"
+    )
+    tn_gov_404_score = scraper_module._score_candidate_url(
+        "https://www.tn.gov/sos/rules-and-regulations.html"
+    )
+    legislature_score = scraper_module._score_candidate_url(
+        "https://legislature.tn.gov/regulations"
+    )
+
+    assert tar_index_score > sos_service_score
+    assert effective_rules_score > sos_service_score
+    assert sos_service_score > tn_gov_404_score
+    assert effective_rules_score > legislature_score
+    assert tar_index_score > legislature_score
 
 
 def test_prefers_live_fetch_for_utah_detail_pages() -> None:

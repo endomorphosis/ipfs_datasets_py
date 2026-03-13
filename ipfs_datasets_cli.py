@@ -340,6 +340,7 @@ Commands:
 
         legal        Legal dataset search shortcuts
             search-court-rules  Search federal/state court rules via legal dataset tools
+            search-federal-register Search Federal Register corpus via legal dataset tools
       
     finance      Financial analysis and data pipelines
       stock      Fetch stock market data
@@ -410,6 +411,7 @@ Examples:
     ipfs-datasets graph query --cypher "MATCH (n) RETURN n LIMIT 10"
     ipfs-datasets legal search-court-rules --collection_name court_rules --query_vector "[0.1,0.2,0.3]" --jurisdiction both
     ipfs-datasets legal search-court-rules --collection_name court_rules --query_text "rules for filing motions" --jurisdiction federal
+    ipfs-datasets legal search-federal-register --collection_name federal_register_docs --query_text "EPA emissions reporting rule"
     
 For detailed help on a specific command:
     ipfs-datasets [command] --help
@@ -601,7 +603,74 @@ def execute_heavy_command(args):
                         print(json.dumps(err, indent=2))
                 return
 
+            if subcommand in (
+                "search-federal-register",
+                "federal-register-search",
+                "search_federal_register",
+            ):
+                tool_args = args[2:]
+                parameters = parse_tool_args(tool_args)
+                parameters = {str(k).replace("-", "_"): v for k, v in parameters.items()}
+
+                if not parameters.get("collection_name"):
+                    print(
+                        "Usage: ipfs-datasets legal search-federal-register --collection_name NAME (--query_vector '[...]' | --query_text '...')"
+                    )
+                    return
+
+                if "query_vector" not in parameters:
+                    query_text = str(parameters.get("query_text") or "").strip()
+                    if not query_text:
+                        print(
+                            "Usage: ipfs-datasets legal search-federal-register --collection_name NAME (--query_vector '[...]' | --query_text '...')"
+                        )
+                        return
+
+                    try:
+                        from ipfs_datasets_py.embeddings_router import embed_text
+
+                        embedding_model = (
+                            str(parameters.get("embedding_model") or parameters.get("model_name") or "").strip()
+                            or "thenlper/gte-small"
+                        )
+                        embedding_provider = str(parameters.get("embedding_provider") or "").strip() or None
+                        query_vector = embed_text(
+                            query_text,
+                            model_name=embedding_model,
+                            provider=embedding_provider,
+                        )
+                        parameters["query_vector"] = query_vector
+                    except Exception as e:
+                        err = {
+                            "status": "error",
+                            "error": f"Failed to generate query embedding from query_text: {e}",
+                        }
+                        if json_output:
+                            print(json.dumps(err))
+                        else:
+                            print(json.dumps(err, indent=2))
+                        return
+
+                try:
+                    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+                        search_federal_register_corpus_from_parameters,
+                    )
+
+                    result = anyio.run(search_federal_register_corpus_from_parameters, parameters)
+                    if json_output:
+                        print(json.dumps(result))
+                    else:
+                        print(json.dumps(result, indent=2))
+                except Exception as e:
+                    err = {"status": "error", "error": str(e)}
+                    if json_output:
+                        print(json.dumps(err))
+                    else:
+                        print(json.dumps(err, indent=2))
+                return
+
             print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
+            print("       ipfs-datasets legal search-federal-register --collection_name NAME (--query_vector '[...]' | --query_text '...')")
             return
         
         if command == "tools":
