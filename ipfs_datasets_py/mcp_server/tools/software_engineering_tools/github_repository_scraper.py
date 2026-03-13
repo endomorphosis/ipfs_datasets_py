@@ -8,14 +8,41 @@ This file re-exports domain classes for backward compatibility and provides
 MCP-callable standalone async functions.
 """
 
+import importlib
 import logging
 from typing import Any, Dict, Optional
 
-from ipfs_datasets_py.web_archiving.github_repository_engine import (  # noqa: F401
-    GitHubRepositoryScraper,
-    analyze_repository_health,
-    scrape_github_repository,
-)
+_engine_module = None
+_last_import_error: Optional[Exception] = None
+for _module_name in (
+    "ipfs_datasets_py.web_archiving.github_repository_engine",
+    "ipfs_datasets_py.processors.web_archiving.github_repository_engine",
+):
+    try:
+        _engine_module = importlib.import_module(_module_name)
+        break
+    except Exception as exc:
+        _last_import_error = exc
+
+if _engine_module is not None:
+    GitHubRepositoryScraper = getattr(_engine_module, "GitHubRepositoryScraper")
+    analyze_repository_health = getattr(_engine_module, "analyze_repository_health")
+    scrape_github_repository = getattr(_engine_module, "scrape_github_repository")
+else:
+    GitHubRepositoryScraper = None  # type: ignore[assignment]
+
+    def analyze_repository_health(repository_data: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "status": "error",
+            "error": f"github repository engine unavailable: {_last_import_error}",
+            "repository_data": repository_data,
+        }
+
+    def scrape_github_repository(*args: Any, **kwargs: Any) -> Dict[str, Any]:
+        return {
+            "status": "error",
+            "error": f"github repository engine unavailable: {_last_import_error}",
+        }
 
 logger = logging.getLogger(__name__)
 

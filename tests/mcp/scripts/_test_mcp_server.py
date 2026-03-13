@@ -18,6 +18,7 @@ import sys
 import json
 import logging
 import os
+import pytest
 from pathlib import Path
 import random
 import time
@@ -37,7 +38,12 @@ if str(parent_dir) not in sys.path:
     sys.path.insert(0, str(parent_dir))
 
 from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer, configs
-from mcp_server.client import MCPClient
+
+_mcp_client_module = pytest.importorskip(
+    "mcp_server.client",
+    reason="optional mcp_server client dependency is not installed in this environment",
+)
+MCPClient = _mcp_client_module.MCPClient
 
 # Test data
 TEST_DATA = {

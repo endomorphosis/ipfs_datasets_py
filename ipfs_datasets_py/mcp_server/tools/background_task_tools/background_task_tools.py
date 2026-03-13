@@ -10,7 +10,7 @@ responses.
 import logging
 from typing import Dict, List, Any, Optional
 
-from ipfs_datasets_py.ipfs_datasets_py.workflow_automation.background_task_engine import (  # noqa: F401
+from ipfs_datasets_py.workflow_automation.background_task_engine import (  # noqa: F401
     TaskStatus,
     TaskType,
     MockBackgroundTask,

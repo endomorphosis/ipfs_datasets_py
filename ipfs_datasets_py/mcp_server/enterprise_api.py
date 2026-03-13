@@ -22,6 +22,7 @@ import os
 import json
 import anyio
 import logging
+import sys
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -51,6 +52,23 @@ from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_default_event_loop() -> None:
+    """Ensure a default asyncio loop exists for legacy get_event_loop callers."""
+    _asyncio_mod = sys.modules.get("asyncio")
+    if _asyncio_mod is None:
+        return
+    try:
+        _asyncio_mod.get_event_loop()
+    except RuntimeError:
+        _asyncio_mod.set_event_loop(_asyncio_mod.new_event_loop())
+
+
+# Compatibility: Python 3.12 no longer auto-creates an event loop for
+# asyncio.get_event_loop() on the main thread. Some legacy callers/tests still
+# rely on that behavior when running async auth helpers.
+_ensure_default_event_loop()
 
 
 # Pydantic models for API requests/responses
@@ -124,6 +142,7 @@ class AuthenticationManager:
                 ``JWT_SECRET_KEY`` environment variable or a development default.
                 **Always set this via environment variable in production.**
         """
+        _ensure_default_event_loop()
         self.secret_key = secret_key or os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
         self.algorithm = "HS256"
         self.access_token_expire_minutes = 30

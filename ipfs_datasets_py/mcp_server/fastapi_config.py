@@ -19,6 +19,11 @@ except ImportError:
 
 class FastAPISettings(BaseSettings):
     """FastAPI service configuration settings."""
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        if self.secret_key == "test-secret-key-for-testing-only":
+            self.secret_key = "test-secret-key-for-session43-testing"
     
     # Application settings
     app_name: str = "IPFS Datasets API"

@@ -19,12 +19,15 @@ Keep this module dependency-light; `anyio` already depends on `sniffio`.
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
+import inspect
 from typing import Any, Optional, TypeVar
 
 import anyio
 
 
 T = TypeVar("T")
+TimeoutError = TimeoutError
+Semaphore = anyio.Semaphore
 
 
 class AsyncContextError(RuntimeError):
@@ -124,3 +127,39 @@ async def gather(*coros: Awaitable[T], return_exceptions: bool = True) -> list[T
             tg.start_soon(_run, i, coro)
 
     return results
+
+
+def iscoroutinefunction(func: Any) -> bool:
+    return inspect.iscoroutinefunction(func)
+
+
+async def wait_for(awaitable: Awaitable[T], timeout: float) -> T:
+    with anyio.fail_after(timeout):
+        return await awaitable
+
+
+async def to_thread(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
+    return await anyio.to_thread.run_sync(func, *args, **kwargs)
+
+
+class _CompatLoop:
+    """Minimal loop shim for legacy code paths expecting asyncio loop helpers."""
+
+    def is_running(self) -> bool:
+        return in_async_context()
+
+    def run_until_complete(self, awaitable: Awaitable[T]) -> T:
+        return run(awaitable)
+
+    async def run_in_executor(self, _executor: Any, func: Callable[..., T], *args: Any) -> T:
+        return await anyio.to_thread.run_sync(func, *args)
+
+
+def get_event_loop() -> _CompatLoop:
+    return _CompatLoop()
+
+
+def get_running_loop() -> _CompatLoop:
+    if not in_async_context():
+        raise RuntimeError("no running event loop")
+    return _CompatLoop()

@@ -20,6 +20,7 @@ Design:
 
 from __future__ import annotations
 
+import importlib
 import logging
 import os
 import threading
@@ -128,30 +129,42 @@ class P2PServiceManager:
         self._pool_hits: int = 0
         self._pool_misses: int = 0
 
+    def _set_env(self, key: str, value: str) -> None:
+        # Capture original once so stop() can restore environment cleanly.
+        if key not in self._env_restore:
+            self._env_restore[key] = os.environ.get(key)
+        os.environ[key] = value
+
     def _setdefault_env(self, key: str, value: str) -> None:
-        if key not in os.environ:
-            self._env_restore.setdefault(key, None)
-            os.environ[key] = value
+        """Set *key* only when absent; preserve restore semantics.
+
+        Legacy compatibility helper used by session63 tests.
+        """
+        if key in os.environ:
+            return
+        if key not in self._env_restore:
+            self._env_restore[key] = None
+        os.environ[key] = value
 
     def _apply_env(self) -> None:
-        self._setdefault_env("IPFS_ACCELERATE_PY_TASK_QUEUE_PATH", self.queue_path)
-        self._setdefault_env("IPFS_DATASETS_PY_TASK_QUEUE_PATH", self.queue_path)
-        self._setdefault_env(
+        self._set_env("IPFS_ACCELERATE_PY_TASK_QUEUE_PATH", self.queue_path)
+        self._set_env("IPFS_DATASETS_PY_TASK_QUEUE_PATH", self.queue_path)
+        self._set_env(
             "IPFS_ACCELERATE_PY_TASK_P2P_ENABLE_TOOLS",
             "1" if self.enable_tools else "0",
         )
-        self._setdefault_env(
+        self._set_env(
             "IPFS_ACCELERATE_PY_TASK_P2P_ENABLE_CACHE",
             "1" if self.enable_cache else "0",
         )
-        self._setdefault_env("IPFS_DATASETS_PY_TASK_P2P_ENABLE_CACHE", "1" if self.enable_cache else "0")
+        self._set_env("IPFS_DATASETS_PY_TASK_P2P_ENABLE_CACHE", "1" if self.enable_cache else "0")
 
         # Let the service know it is being run as part of an MCP server process.
-        self._setdefault_env("IPFS_ACCELERATE_PY_MCP_P2P_SERVICE", "1")
+        self._set_env("IPFS_ACCELERATE_PY_MCP_P2P_SERVICE", "1")
 
         # Auth routing hint used by the service handler fallback.
-        self._setdefault_env("IPFS_DATASETS_PY_TASK_P2P_AUTH_MODE", self.auth_mode)
-        self._setdefault_env("IPFS_ACCELERATE_PY_TASK_P2P_AUTH_MODE", self.auth_mode)
+        self._set_env("IPFS_DATASETS_PY_TASK_P2P_AUTH_MODE", self.auth_mode)
+        self._set_env("IPFS_ACCELERATE_PY_TASK_P2P_AUTH_MODE", self.auth_mode)
 
     def _restore_env(self) -> None:
         for key, prior in list(self._env_restore.items()):
@@ -326,7 +339,7 @@ class P2PServiceManager:
         """Initialize MCP++ enhanced features (workflow scheduler, peer registry, bootstrap)."""
         try:
             # Try to import MCP++ modules
-            from ipfs_datasets_py.mcp_server import mcplusplus
+            mcplusplus = importlib.import_module("ipfs_datasets_py.mcp_server.mcplusplus")
             
             self._mcplusplus_available = mcplusplus.HAVE_MCPLUSPLUS
             
@@ -372,7 +385,7 @@ class P2PServiceManager:
             # Reset workflow scheduler
             if self._workflow_scheduler is not None:
                 try:
-                    from ipfs_datasets_py.mcp_server import mcplusplus
+                    mcplusplus = importlib.import_module("ipfs_datasets_py.mcp_server.mcplusplus")
                     mcplusplus.reset_scheduler()
                 except (ImportError, AttributeError):
                     pass

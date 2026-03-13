@@ -4,7 +4,7 @@ This module contains the scraper for New Mexico statutes from archived
 NMOneSource statute PDFs.
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import json
 import re
 import subprocess

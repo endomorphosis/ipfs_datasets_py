@@ -16,7 +16,6 @@ Available Tools:
 from .test_generator import test_generator
 from .documentation_generator import documentation_generator
 from .linting_tools import lint_python_codebase
-from .test_runner import run_comprehensive_tests
 from .codebase_search import codebase_search
 from .vscode_cli_tools import (
     vscode_cli_status,
@@ -28,6 +27,16 @@ from .vscode_cli_tools import (
     vscode_cli_tunnel_login,
     vscode_cli_tunnel_install_service,
 )
+
+try:
+    from .test_runner import run_comprehensive_tests
+except (ImportError, ModuleNotFoundError):
+    def run_comprehensive_tests(*args, **kwargs):
+        return {
+            "success": False,
+            "error": "test_runner_unavailable",
+            "message": "Optional testing backend is not available in this environment.",
+        }
 
 __all__ = [
     'test_generator',

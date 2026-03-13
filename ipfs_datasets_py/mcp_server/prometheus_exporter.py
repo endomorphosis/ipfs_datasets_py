@@ -67,15 +67,31 @@ class _NoOpMetric:
         pass
 
 
-def _make_counter(name: str, documentation: str, labelnames: list | None = None) -> Any:
+def _make_counter(
+    name: str,
+    documentation: str,
+    labelnames: list | None = None,
+    registry: Any | None = None,
+) -> Any:
     if PROMETHEUS_AVAILABLE:
-        return prom.Counter(name, documentation, labelnames or [])
+        kwargs: Dict[str, Any] = {}
+        if registry is not None:
+            kwargs["registry"] = registry
+        return prom.Counter(name, documentation, labelnames or [], **kwargs)
     return _NoOpMetric()
 
 
-def _make_gauge(name: str, documentation: str, labelnames: list | None = None) -> Any:
+def _make_gauge(
+    name: str,
+    documentation: str,
+    labelnames: list | None = None,
+    registry: Any | None = None,
+) -> Any:
     if PROMETHEUS_AVAILABLE:
-        return prom.Gauge(name, documentation, labelnames or [])
+        kwargs: Dict[str, Any] = {}
+        if registry is not None:
+            kwargs["registry"] = registry
+        return prom.Gauge(name, documentation, labelnames or [], **kwargs)
     return _NoOpMetric()
 
 
@@ -84,11 +100,14 @@ def _make_histogram(
     documentation: str,
     labelnames: list | None = None,
     buckets: list | None = None,
+    registry: Any | None = None,
 ) -> Any:
     if PROMETHEUS_AVAILABLE:
         kwargs: Dict[str, Any] = {}
         if buckets:
             kwargs["buckets"] = buckets
+        if registry is not None:
+            kwargs["registry"] = registry
         return prom.Histogram(name, documentation, labelnames or [], **kwargs)
     return _NoOpMetric()
 
@@ -135,46 +154,56 @@ class PrometheusExporter:
         self.namespace = namespace
         self._http_server: Optional[Any] = None
         self._start_time: float = time.time()
+        self._registry = prom.CollectorRegistry() if PROMETHEUS_AVAILABLE else None
 
         # Register metrics (no-ops when prometheus_client not installed)
         self.tool_calls_total = _make_counter(
             f"{namespace}_tool_calls_total",
             "Total number of MCP tool calls",
             ["category", "tool", "status"],
+            registry=self._registry,
         )
         self.tool_latency_seconds = _make_histogram(
             f"{namespace}_tool_latency_seconds",
             "MCP tool call latency in seconds",
             ["category", "tool"],
             buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
+            registry=self._registry,
         )
         self.active_connections = _make_gauge(
             f"{namespace}_active_connections",
             "Number of active MCP connections",
+            registry=self._registry,
         )
         self.error_rate = _make_gauge(
             f"{namespace}_error_rate",
             "Current MCP server error rate (0.0–1.0)",
+            registry=self._registry,
         )
         self.cache_hits_total = _make_counter(
             f"{namespace}_cache_hits_total",
             "Total number of tool-result cache hits",
+            registry=self._registry,
         )
         self.cache_misses_total = _make_counter(
             f"{namespace}_cache_misses_total",
             "Total number of tool-result cache misses",
+            registry=self._registry,
         )
         self.cpu_usage = _make_gauge(
             f"{namespace}_system_cpu_usage_percent",
             "System CPU usage percentage",
+            registry=self._registry,
         )
         self.memory_usage = _make_gauge(
             f"{namespace}_system_memory_usage_percent",
             "System memory usage percentage",
+            registry=self._registry,
         )
         self.uptime_seconds = _make_gauge(
             f"{namespace}_uptime_seconds",
             "MCP server uptime in seconds",
+            registry=self._registry,
         )
 
     # ------------------------------------------------------------------
@@ -192,7 +221,7 @@ class PrometheusExporter:
                 "prometheus_client is not installed. "
                 "Run `pip install prometheus-client` to enable the Prometheus exporter."
             )
-        prom.start_http_server(self.port)
+        prom.start_http_server(self.port, registry=self._registry)
         self._http_server = True  # Sentinel; prometheus_client manages the thread.
         logger.info("Prometheus metrics HTTP server started on port %d", self.port)
 

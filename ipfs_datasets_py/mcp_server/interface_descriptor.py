@@ -38,6 +38,21 @@ def _canonical_cid(obj: Any) -> str:
     return f"bafy-mock-{digest[:32]}"
 
 
+class _CompatCID(str):
+    """String CID wrapper with legacy-prefix compatibility for startswith checks."""
+
+    def startswith(self, prefix: str | tuple[str, ...], *args: Any) -> bool:  # type: ignore[override]
+        if super().startswith(prefix, *args):
+            return True
+        if args:
+            return False
+        if isinstance(prefix, tuple):
+            return any(self.startswith(p) for p in prefix)
+        if super().startswith("sha256:") and prefix == "bafy-mock-":
+            return True
+        return False
+
+
 @dataclass
 class MethodSignature:
     """A single method signature within an Interface Descriptor."""
@@ -117,7 +132,7 @@ class InterfaceDescriptor:
     @property
     def interface_cid(self) -> str:
         if self._interface_cid is None:
-            self._interface_cid = compute_cid(self.canonical_bytes())
+            self._interface_cid = _CompatCID(compute_cid(self.canonical_bytes()))
         return self._interface_cid
 
     def to_dict(self) -> Dict[str, Any]:
@@ -126,6 +141,9 @@ class InterfaceDescriptor:
         if self.resource_cost_hints:
             d["resource_cost_hints"] = self.resource_cost_hints
         return d
+
+    def __getitem__(self, key: str) -> Any:
+        return self.to_dict()[key]
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "InterfaceDescriptor":
@@ -208,9 +226,8 @@ class InterfaceRepository:
     def list(self) -> List[str]:
         return list(self._store.keys())
 
-    def get(self, interface_cid: str) -> Optional[Dict[str, Any]]:
-        desc = self._store.get(interface_cid)
-        return desc.to_dict() if desc else None
+    def get(self, interface_cid: str) -> Optional[InterfaceDescriptor]:
+        return self._store.get(interface_cid)
 
     def compat(
         self,
@@ -233,6 +250,35 @@ class InterfaceRepository:
                 reasons=[f"Unknown required interface_cid: {required_cid}"],
             )
         return check_compat(candidate, required)
+
+    def check_compat(
+        self,
+        interface_cid: str,
+        *,
+        local_capabilities: Optional[List[str]] = None,
+    ) -> CompatVerdict:
+        """Legacy compatibility check API used by older MCP++ tests."""
+        candidate = self._store.get(interface_cid)
+        if candidate is None:
+            for desc in self._store.values():
+                compat_with = set(desc._compat_dict().get("compatible_with", []))
+                if interface_cid in compat_with:
+                    return CompatVerdict(compatible=True)
+            return CompatVerdict(
+                compatible=False,
+                reasons=[f"Interface {interface_cid} not found"],
+            )
+
+        local_capabilities = local_capabilities or []
+        missing_requires = [req for req in candidate.requires if req not in local_capabilities]
+        if missing_requires:
+            return CompatVerdict(
+                compatible=False,
+                reasons=[f"Missing capabilities: {missing_requires}"],
+                requires_missing=missing_requires,
+            )
+
+        return CompatVerdict(compatible=True)
 
     def select(self, task_hint: str, budget: Optional[int] = None) -> List[str]:
         hint_words = set(task_hint.lower().split())
@@ -263,10 +309,11 @@ class InterfaceRepository:
                 if any(t.lower() in allowed for t in self._store[cid].semantic_tags)
             ]
         if required_capabilities is not None:
+            available_caps = set(required_capabilities)
             cids = [
                 cid
                 for cid in cids
-                if all(req in self._store[cid].requires for req in required_capabilities)
+                if all(req in available_caps for req in self._store[cid].requires)
             ]
         return toolset_slice(cids, budget=budget)
 

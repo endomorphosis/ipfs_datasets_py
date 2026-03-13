@@ -140,24 +140,24 @@ except ValueError as _cfg_err:
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+class _FallbackPasswordContext:
+    """Fallback password hashing when passlib is unavailable."""
+
+    def hash(self, password: str) -> str:
+        """Generate a SHA-256 hash for the password."""
+        return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+    def verify(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify a plain password against a SHA-256 hash."""
+        return self.hash(plain_password) == hashed_password
+
+
 if CryptContext:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 else:
     logger.warning("passlib not available; falling back to SHA-256 password hashing.")
-
-    class _FallbackPasswordContext:
-        """Fallback password hashing when passlib is unavailable."""
-
-        def hash(self, password: str) -> str:
-            """Generate a SHA-256 hash for the password."""
-            return hashlib.sha256(password.encode("utf-8")).hexdigest()
-
-        def verify(self, plain_password: str, hashed_password: str) -> bool:
-            """Verify a plain password against a SHA-256 hash."""
-            return self.hash(plain_password) == hashed_password
-
     pwd_context = _FallbackPasswordContext()
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Rate limiting configuration
 RATE_LIMITS = {
@@ -305,15 +305,18 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token."""
     to_encode = data.copy()
+    base = datetime.utcnow()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = base + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
+        expire = base + timedelta(minutes=15)
+    to_encode.update({"exp": int(expire.timestamp())})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+async def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Dict[str, Any]:
     """Get current authenticated user."""
     credentials_exception = HTTPException(
         status_code=401,
@@ -321,12 +324,27 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except jwt.PyJWTError:
+    if credentials is None:
+        raise credentials_exception
+
+    payload: Optional[Dict[str, Any]] = None
+    decode_keys = [SECRET_KEY]
+    env_secret = os.environ.get("SECRET_KEY")
+    if env_secret and env_secret not in decode_keys:
+        decode_keys.append(env_secret)
+
+    for key in decode_keys:
+        try:
+            payload = jwt.decode(credentials.credentials, key, algorithms=[ALGORITHM])
+            break
+        except jwt.PyJWTError:
+            continue
+
+    if payload is None:
+        raise credentials_exception
+
+    username: str = payload.get("sub")
+    if username is None:
         raise credentials_exception
     
     # In production, fetch user from database

@@ -18,35 +18,65 @@ from .common_crawl_advanced import (
     list_common_crawl_collections_advanced,
     get_common_crawl_collection_info_advanced
 )
-from .wayback_machine_search import search_wayback_machine, get_wayback_content, archive_to_wayback
-from .ipwb_integration import index_warc_to_ipwb, start_ipwb_replay, search_ipwb_archive, get_ipwb_content, verify_ipwb_archive
-from .autoscraper_integration import create_autoscraper_model, scrape_with_autoscraper, optimize_autoscraper_model, batch_scrape_with_autoscraper, list_autoscraper_models
-from .archive_is_integration import archive_to_archive_is, search_archive_is, get_archive_is_content, check_archive_status, batch_archive_to_archive_is
+try:
+    from .wayback_machine_search import search_wayback_machine, get_wayback_content, archive_to_wayback
+except (ImportError, ModuleNotFoundError):
+    pass
+try:
+    from .ipwb_integration import index_warc_to_ipwb, start_ipwb_replay, search_ipwb_archive, get_ipwb_content, verify_ipwb_archive
+except (ImportError, ModuleNotFoundError):
+    pass
+try:
+    from .autoscraper_integration import create_autoscraper_model, scrape_with_autoscraper, optimize_autoscraper_model, batch_scrape_with_autoscraper, list_autoscraper_models
+except (ImportError, ModuleNotFoundError):
+    pass
+try:
+    from .archive_is_integration import archive_to_archive_is, search_archive_is, get_archive_is_content, check_archive_status, batch_archive_to_archive_is
+except (ImportError, ModuleNotFoundError):
+    pass
 
 # Brave Search tools
-from .brave_search import (
-    search_brave,
-    search_brave_news,
-    search_brave_images,
-    batch_search_brave,
-    get_brave_cache_stats,
-    clear_brave_cache
-)
+try:
+    from .brave_search import (
+        search_brave,
+        search_brave_news,
+        search_brave_images,
+        batch_search_brave,
+        get_brave_cache_stats,
+        clear_brave_cache
+    )
+except (ImportError, ModuleNotFoundError):
+    pass
 
 # Google Search tools
-from .google_search import search_google, search_google_images, batch_search_google
+try:
+    from .google_search import search_google, search_google_images, batch_search_google
+except (ImportError, ModuleNotFoundError):
+    pass
 
 # GitHub Search tools
-from .github_search import search_github_repositories, search_github_code, search_github_users, search_github_issues, batch_search_github
+try:
+    from .github_search import search_github_repositories, search_github_code, search_github_users, search_github_issues, batch_search_github
+except (ImportError, ModuleNotFoundError):
+    pass
 
 # HuggingFace Search tools
-from .huggingface_search import search_huggingface_models, search_huggingface_datasets, search_huggingface_spaces, get_huggingface_model_info, batch_search_huggingface
+try:
+    from .huggingface_search import search_huggingface_models, search_huggingface_datasets, search_huggingface_spaces, get_huggingface_model_info, batch_search_huggingface
+except (ImportError, ModuleNotFoundError):
+    pass
 
 # OpenVerse Search tools
-from .openverse_search import search_openverse_images, search_openverse_audio, batch_search_openverse, OpenVerseSearchAPI
+try:
+    from .openverse_search import search_openverse_images, search_openverse_audio, batch_search_openverse, OpenVerseSearchAPI
+except (ImportError, ModuleNotFoundError):
+    pass
 
 # SerpStack Search tools
-from .serpstack_search import search_serpstack, search_serpstack_images, batch_search_serpstack, SerpStackSearchAPI
+try:
+    from .serpstack_search import search_serpstack, search_serpstack_images, batch_search_serpstack, SerpStackSearchAPI
+except (ImportError, ModuleNotFoundError):
+    pass
 from .unified_api_tools import (
     unified_search,
     unified_fetch,
@@ -56,7 +86,10 @@ from .unified_api_tools import (
 )
 
 # Search API classes
-from .brave_search import BraveSearchAPI
+try:
+    from .brave_search import BraveSearchAPI
+except (ImportError, ModuleNotFoundError):
+    pass
 
 __all__ = [
     # Original tools

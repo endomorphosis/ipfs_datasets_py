@@ -129,9 +129,9 @@ except Exception as e:  # pragma: no cover
     class ReasoningNodeType:  # type: ignore
         def __init__(self, *args, **kwargs):
             raise ImportError("LLM reasoning tracer modules are unavailable")
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-    Entity, Relationship, KnowledgeGraph
-)
+from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+from ipfs_datasets_py.knowledge_graphs.extraction.graph import KnowledgeGraph
 
 # Forward references for type hints
 class GraphRAGQueryEngine: pass

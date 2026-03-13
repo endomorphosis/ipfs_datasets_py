@@ -6,7 +6,7 @@ This module provides:
 3. Common utilities for parsing and normalizing state law data
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional, Any
 from datetime import datetime

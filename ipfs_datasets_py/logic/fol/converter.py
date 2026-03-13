@@ -13,7 +13,7 @@ and integrates all 6 core features:
 
 from __future__ import annotations
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional, Union

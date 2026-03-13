@@ -760,7 +760,7 @@ def _parse_args() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    import asyncio
+    from ipfs_datasets_py.utils import anyio_compat as asyncio
 
     args = _parse_args()
     if str(args.states).strip().lower() == "all":

@@ -45,11 +45,23 @@ async def run_in_trio(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T
         logger.debug("Async library detection failed; falling back to Trio thread runner", exc_info=True)
 
     def _runner() -> T:
-        async def _inner() -> T:
-            result = func(*args, **kwargs)
-            return await result if inspect.isawaitable(result) else result
+        result = func(*args, **kwargs)
+        if not inspect.isawaitable(result):
+            return result
 
-        return anyio.run(_inner, backend="trio")
+        async def _inner() -> T:
+            return await result
+
+        try:
+            return anyio.run(_inner, backend="trio")
+        except Exception:
+            closer = getattr(result, "close", None)
+            if callable(closer):
+                try:
+                    closer()
+                except Exception:
+                    pass
+            raise
 
     return await anyio.to_thread.run_sync(_runner)
 

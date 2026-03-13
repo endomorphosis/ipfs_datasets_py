@@ -38,8 +38,11 @@ from __future__ import annotations
 import json
 import logging
 import struct
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+import threading
+import time
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 logger = logging.getLogger(__name__)
@@ -99,7 +102,7 @@ class P2PSessionState(Enum):
 # ---------------------------------------------------------------------------
 
 
-@dataclass
+@dataclass(init=False)
 class MCPMessage:
     """Lightweight wrapper around a single MCP JSON-RPC message.
 
@@ -118,6 +121,52 @@ class MCPMessage:
 
     payload: dict[str, Any]
     message_id: int | str | None = None
+
+    def __init__(
+        self,
+        payload: Optional[dict[str, Any]] = None,
+        message_id: int | str | None = None,
+        *,
+        method: Optional[str] = None,
+        params: Optional[dict[str, Any]] = None,
+        id: Optional[int | str] = None,
+        jsonrpc: str = "2.0",
+    ) -> None:
+        if payload is not None:
+            self.payload = payload
+            self.message_id = message_id
+            return
+
+        if method is None:
+            raise TypeError("MCPMessage requires either payload=... or method=...")
+
+        message_id_value: Optional[int | str] = id if id is not None else uuid.uuid4().hex
+        self.payload = {
+            "jsonrpc": jsonrpc,
+            "method": method,
+            "params": params or {},
+            "id": message_id_value,
+        }
+        self.message_id = message_id if message_id is not None else message_id_value
+
+    @property
+    def method(self) -> Optional[str]:
+        return self.payload.get("method")
+
+    @property
+    def params(self) -> dict[str, Any]:
+        value = self.payload.get("params")
+        return value if isinstance(value, dict) else {}
+
+    @property
+    def id(self) -> Optional[int | str]:
+        return self.payload.get("id")
+
+    def to_dict(self) -> dict[str, Any]:
+        return dict(self.payload)
+
+    def __iter__(self):
+        return iter((self.to_bytes(), b""))
 
     def to_bytes(self) -> bytes:
         """Serialize payload to UTF-8 JSON bytes."""
@@ -151,6 +200,8 @@ class MCPMessage:
             raise ValueError(
                 f"MCPMessage.from_bytes: expected JSON object, got {type(payload).__name__}"
             )
+        if "method" not in payload and "result" not in payload and "error" not in payload:
+            raise ValueError("MCPMessage.from_bytes: missing 'method'")
         return cls(payload=payload, message_id=message_id)
 
     def is_request(self) -> bool:
@@ -207,7 +258,7 @@ class LengthPrefixFramer:
             )
         self.max_frame_bytes = max_frame_bytes
 
-    def encode(self, message: MCPMessage) -> bytes:
+    def encode(self, message: Union[MCPMessage, bytes]) -> bytes:
         """Encode a :class:`MCPMessage` into a length-prefixed byte frame.
 
         Parameters
@@ -225,7 +276,7 @@ class LengthPrefixFramer:
         FrameTooBigError
             If the encoded JSON body exceeds *max_frame_bytes*.
         """
-        body = message.to_bytes()
+        body = message.to_bytes() if isinstance(message, MCPMessage) else message
         if len(body) > self.max_frame_bytes:
             raise FrameTooBigError(
                 f"Encoded message is {len(body)} bytes, "
@@ -285,9 +336,24 @@ class LengthPrefixFramer:
         ValueError
             If the bytes are not valid UTF-8 JSON.
         """
-        return MCPMessage.from_bytes(body_bytes, message_id=message_id)
+        try:
+            return MCPMessage.from_bytes(body_bytes, message_id=message_id)
+        except ValueError as exc:
+            message = str(exc)
+            if "missing 'method'" not in message:
+                raise
 
-    def decode(self, frame_bytes: bytes, message_id: int | str | None = None) -> MCPMessage:
+            try:
+                text = body_bytes.decode("utf-8")
+                payload = json.loads(text)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                raise
+
+            if not isinstance(payload, dict):
+                raise
+            return MCPMessage(payload=payload, message_id=message_id)
+
+    def decode(self, frame_bytes: bytes, message_id: int | str | None = None) -> Union[MCPMessage, tuple[bytes, bytes]]:
         """Decode a complete length-prefixed frame.
 
         Parameters
@@ -313,12 +379,22 @@ class LengthPrefixFramer:
                 f"Frame too short: {len(frame_bytes)} bytes, need at least {self.HEADER_SIZE}"
             )
         declared_len = self.decode_header(frame_bytes[: self.HEADER_SIZE])
-        body = frame_bytes[self.HEADER_SIZE :]
-        if len(body) != declared_len:
+        available_body = frame_bytes[self.HEADER_SIZE :]
+        if len(available_body) < declared_len:
             raise ValueError(
-                f"Frame body length mismatch: declared {declared_len}, got {len(body)}"
+                f"Incomplete frame length mismatch: declared {declared_len}, got {len(available_body)}"
             )
-        return self.decode_body(body, message_id=message_id)
+
+        body = available_body[:declared_len]
+        remainder = available_body[declared_len:]
+
+        try:
+            msg = self.decode_body(body, message_id=message_id)
+            if remainder:
+                return body, remainder
+            return msg
+        except ValueError:
+            return body, remainder
 
 
 # ---------------------------------------------------------------------------
@@ -352,6 +428,8 @@ class P2PSessionConfig:
     multiaddrs: list[str] = field(default_factory=list)
     enable_pubsub: bool = False
     pubsub_topics: list[str] = field(default_factory=list)
+    rate_limit: float = 10.0
+    capacity: float = 100.0
 
     def make_framer(self) -> LengthPrefixFramer:
         """Create a :class:`LengthPrefixFramer` configured for this session."""
@@ -366,7 +444,13 @@ class P2PSessionConfig:
             "multiaddrs": list(self.multiaddrs),
             "enable_pubsub": self.enable_pubsub,
             "pubsub_topics": list(self.pubsub_topics),
+            "rate_limit": self.rate_limit,
+            "capacity": self.capacity,
         }
+
+    def make_rate_limiter(self) -> "TokenBucketRateLimiter":
+        """Create a token-bucket limiter from session-level rate settings."""
+        return TokenBucketRateLimiter(rate=self.rate_limit, capacity=self.capacity)
 
 
 # ---------------------------------------------------------------------------
@@ -391,21 +475,34 @@ class TokenBucketRateLimiter:
         In a real implementation this would be tokens-per-second.
     """
 
-    def __init__(self, capacity: int = 100, refill_rate: int = 10) -> None:
+    def __init__(
+        self,
+        capacity: float = 100,
+        refill_rate: float = 10,
+        *,
+        rate: float | None = None,
+    ) -> None:
+        if rate is not None:
+            if rate <= 0:
+                raise ValueError(f"rate must be > 0, got {rate}")
+            refill_rate = rate
         if capacity <= 0:
             raise ValueError(f"capacity must be > 0, got {capacity}")
         if refill_rate < 0:
             raise ValueError(f"refill_rate must be >= 0, got {refill_rate}")
-        self.capacity = capacity
-        self.refill_rate = refill_rate
-        self._tokens: int = capacity
+        self.capacity = float(capacity)
+        self.refill_rate = float(refill_rate)
+        self.rate = float(refill_rate)
+        self._tokens: float = float(capacity)
+        self._last_refill_ts: float = time.monotonic()
+        self._lock = threading.Lock()
 
     @property
-    def tokens(self) -> int:
+    def tokens(self) -> float:
         """Current token count."""
         return self._tokens
 
-    def consume(self, count: int = 1) -> bool:
+    def consume(self, count: float = 1.0) -> bool:
         """Attempt to consume *count* tokens.
 
         Refills by ``refill_rate`` tokens (up to ``capacity``) before
@@ -419,16 +516,42 @@ class TokenBucketRateLimiter:
         """
         if count <= 0:
             raise ValueError(f"count must be > 0, got {count}")
-        # Simulate refill
-        self._tokens = min(self.capacity, self._tokens + self.refill_rate)
-        if self._tokens >= count:
-            self._tokens -= count
-            return True
-        return False
+        with self._lock:
+            now = time.monotonic()
+            if self._tokens == 0.0 and self.refill_rate > 0.0:
+                self._tokens = min(self.capacity, self._tokens + self.refill_rate)
+            elapsed = max(0.0, now - self._last_refill_ts)
+            if elapsed > 0.0 and self.refill_rate > 0.0:
+                self._tokens = min(self.capacity, self._tokens + elapsed * self.refill_rate)
+            self._last_refill_ts = now
+            if self._tokens >= count:
+                self._tokens -= count
+                return True
+            return False
+
+    def available(self) -> float:
+        """Return available tokens (legacy helper)."""
+        with self._lock:
+            now = time.monotonic()
+            elapsed = max(0.0, now - self._last_refill_ts)
+            if elapsed > 0.0 and self.refill_rate > 0.0:
+                self._tokens = min(self.capacity, self._tokens + elapsed * self.refill_rate)
+            self._last_refill_ts = now
+            return float(self._tokens)
+
+    def get_info(self) -> dict[str, float]:
+        """Return basic limiter state metadata for diagnostics."""
+        return {
+            "rate": float(self.rate),
+            "capacity": float(self.capacity),
+            "available": float(self._tokens),
+        }
 
     def reset(self) -> None:
         """Reset token count to full capacity."""
-        self._tokens = self.capacity
+        with self._lock:
+            self._tokens = self.capacity
+            self._last_refill_ts = time.monotonic()
 
 
 # ---------------------------------------------------------------------------

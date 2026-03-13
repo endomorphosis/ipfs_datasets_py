@@ -27,6 +27,7 @@ import os
 import json
 import uuid
 import logging
+import warnings
 from typing import Dict, List, Any, Optional, Set, Tuple, Union
 from collections import defaultdict
 import numpy as np
@@ -34,7 +35,13 @@ import numpy as np
 from .storage import IPLDStorage
 from .dag_pb import create_dag_node, parse_dag_node
 from .optimized_codec import OptimizedEncoder, OptimizedDecoder
-from .vector_store import IPLDVectorStore, SearchResult
+try:
+    from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
+    from ipfs_datasets_py.vector_stores.schema import SearchResult
+except Exception:  # pragma: no cover
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        from .vector_store import IPLDVectorStore, SearchResult
 
 try:
     from slugify import slugify

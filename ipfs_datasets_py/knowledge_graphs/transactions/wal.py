@@ -5,7 +5,7 @@ Provides persistent transaction logging on IPLD for crash recovery
 and ACID guarantees.
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import anyio
 import json
 import logging

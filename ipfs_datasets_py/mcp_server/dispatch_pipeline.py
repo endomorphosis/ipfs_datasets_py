@@ -13,7 +13,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
-from .cid_artifacts import DecisionObject, ReceiptObject, EventNode, artifact_cid
+from .cid_artifacts import DecisionObject, ReceiptObject, EventNode, CompatCID, artifact_cid
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,10 @@ class PipelineIntent:
     @property
     def tool(self) -> str:
         return self.tool_name
+
+    @property
+    def cid(self) -> str:
+        return self.intent_cid
 
     def get(self, field_name: str, default: Any = None) -> Any:
         return getattr(self, field_name, default)
@@ -147,23 +151,20 @@ class PipelineResult:
         return len(self.stages_executed) + len(self.stages_skipped)
 
     def to_dict(self) -> Dict[str, Any]:
-        if self.stage_outcomes:
-            return {
-                "allowed": self.allowed,
-                "verdict": self.verdict,
-                "blocking_stage": self.blocking_stage.value if self.blocking_stage else None,
-                "stages": [
-                    {
-                        "stage": o.stage.value,
-                        "passed": o.passed,
-                        "reason": o.reason,
-                        "metadata": o.metadata,
-                    }
-                    for o in self.stage_outcomes
-                ],
+        stages_payload = [
+            {
+                "stage": o.stage.value,
+                "passed": o.passed,
+                "reason": o.reason,
+                "metadata": o.metadata,
             }
+            for o in self.stage_outcomes
+        ]
         return {
             "allowed": self.allowed,
+            "verdict": self.verdict,
+            "blocking_stage": self.blocking_stage.value if self.blocking_stage else None,
+            "stages": stages_payload,
             "stages_executed": list(self.stages_executed),
             "stages_skipped": list(self.stages_skipped),
             "denied_by": self.denied_by,
@@ -173,16 +174,64 @@ class PipelineResult:
 class PipelineMetricsRecorder:
     """Collects aggregate stage metrics across multiple DispatchPipeline runs."""
 
-    def __init__(self, namespace: str = "mcp_pipeline", audit_log: Optional[Any] = None) -> None:
-        self.namespace = namespace
+    def __init__(
+        self,
+        pipeline_or_namespace: Any = "mcp_pipeline",
+        collector: Optional[Any] = None,
+        audit_log: Optional[Any] = None,
+        *,
+        namespace: Optional[str] = None,
+    ) -> None:
+        if isinstance(pipeline_or_namespace, str):
+            self.pipeline = None
+            self.namespace = namespace or pipeline_or_namespace
+        else:
+            self.pipeline = pipeline_or_namespace
+            self.namespace = namespace or "mcp_pipeline"
+        self._collector = collector
         self._audit_log = audit_log
         self._stage_durations: Dict[str, List[float]] = {}
         self._stage_executions: Dict[str, int] = {}
         self._stage_skips: Dict[str, int] = {}
         self._stage_denials: Dict[str, int] = {}
+        self._allow_counts: Dict[str, int] = {}
+        self._denial_counts: Dict[str, int] = {}
         self._total_runs: int = 0
         self._total_allowed: int = 0
         self._total_denied: int = 0
+
+    def _get_collector(self) -> Optional[Any]:
+        return self._collector
+
+    def check_and_record(self, intent: Any) -> Any:
+        if self.pipeline is None:
+            raise RuntimeError("PipelineMetricsRecorder has no bound pipeline")
+
+        result = self.pipeline.check(intent)
+        allowed = bool(getattr(result, "allowed", False))
+
+        tool_name = ""
+        if hasattr(intent, "tool_name"):
+            tool_name = str(getattr(intent, "tool_name") or "")
+        elif hasattr(intent, "tool"):
+            tool_name = str(getattr(intent, "tool") or "")
+        elif isinstance(intent, dict):
+            tool_name = str(intent.get("tool") or intent.get("tool_name") or "")
+
+        self.record_run(allowed=allowed)
+        if allowed:
+            self._allow_counts[tool_name] = self._allow_counts.get(tool_name, 0) + 1
+        else:
+            self._denial_counts[tool_name] = self._denial_counts.get(tool_name, 0) + 1
+
+        collector = self._get_collector()
+        if collector is not None:
+            try:
+                collector.track_tool_execution(f"pipeline:{tool_name}", success=allowed)
+            except Exception as exc:
+                logger.debug("PipelineMetricsRecorder collector update failed: %s", exc)
+
+        return result
 
     def record_stage(
         self,
@@ -239,11 +288,23 @@ class PipelineMetricsRecorder:
             "avg_stage_duration_ms": avg_durations,
         }
 
+    def get_stats(self) -> Dict[str, Any]:
+        metrics = self.get_metrics()
+        return {
+            **metrics,
+            "total_allows": self._total_allowed,
+            "total_denials": self._total_denied,
+            "allow_counts": dict(self._allow_counts),
+            "denial_counts": dict(self._denial_counts),
+        }
+
     def reset(self) -> None:
         self._stage_durations.clear()
         self._stage_executions.clear()
         self._stage_skips.clear()
         self._stage_denials.clear()
+        self._allow_counts.clear()
+        self._denial_counts.clear()
         self._total_runs = 0
         self._total_allowed = 0
         self._total_denied = 0
@@ -284,7 +345,15 @@ class DispatchPipeline:
         audit_log: Optional[Any] = None,
         config: PipelineConfig | None = None,
     ) -> None:
-        self._legacy_mode = stages is not None
+        if isinstance(stages, PipelineConfig) and config is None:
+            config = stages
+            stages = None
+
+        # Compatibility behavior:
+        # - DispatchPipeline() defaults to legacy stage mode.
+        # - DispatchPipeline(config=PipelineConfig(...)) uses integrated mode.
+        # - DispatchPipeline(PipelineConfig(...)) also uses integrated mode.
+        self._legacy_mode = config is None
         if self._legacy_mode:
             self._stages: List[PipelineStage] = list(stages or [])
             self._recorder = metrics_recorder or PipelineMetricsRecorder()
@@ -302,6 +371,74 @@ class DispatchPipeline:
 
     def attach_event_dag(self, dag: Any) -> None:
         self._event_dag = dag
+
+    def record_execution(
+        self,
+        intent: PipelineIntent | Dict[str, Any],
+        output: Any,
+        *,
+        error: Any = None,
+    ) -> ReceiptObject:
+        if isinstance(intent, dict):
+            intent = PipelineIntent(
+                tool_name=intent.get("tool_name") or intent.get("tool", ""),
+                actor=intent.get("actor", ""),
+                params=intent.get("params", {}),
+            )
+
+        output_cid: Optional[str] = None
+        if output is not None:
+            payload = output if isinstance(output, dict) else {"output": output}
+            output_cid = CompatCID(
+                str(artifact_cid(payload)),
+                legacy_prefixes=("bafy", "bafy-mock-"),
+            )
+
+        if error is None:
+            decision = DecisionObject(
+                intent_cid=intent.intent_cid,
+                decision="allow",
+                policy_cid="pipeline",
+                justification="execution recorded",
+                obligations=[],
+            )
+            decision_cid: str = decision.decision_cid
+        else:
+            error_text = str(error)
+            if not error_text:
+                error_text = type(error).__name__
+            decision_cid = f"error:{error_text}"
+
+        receipt = ReceiptObject(
+            intent_cid=intent.intent_cid,
+            output_cid=output_cid,
+            decision_cid=decision_cid,
+        )
+
+        dag = self._event_dag
+        if dag is not None:
+            try:
+                parents: List[str] = []
+                frontier = getattr(dag, "frontier", None)
+                if callable(frontier):
+                    frontier_nodes = frontier()
+                    if isinstance(frontier_nodes, list):
+                        parents = list(frontier_nodes)
+
+                node = EventNode(
+                    parents=parents,
+                    intent_cid=intent.intent_cid,
+                    decision_cid=decision_cid,
+                    output_cid=output_cid or "",
+                    receipt_cid=receipt.receipt_cid,
+                )
+                append = getattr(dag, "append", None)
+                if callable(append):
+                    append(node)
+            except Exception as exc:
+                logger.debug("Failed to append pipeline event node to DAG: %s", exc)
+
+        return receipt
 
     def add_stage(self, stage: PipelineStage) -> None:
         if not self._legacy_mode:
@@ -337,6 +474,23 @@ class DispatchPipeline:
     @property
     def stage_names(self) -> List[str]:
         return [s.name for s in self._stages]
+
+    def get_metrics(self) -> Dict[str, Any]:
+        recorder = self._recorder
+        if recorder is None:
+            return {
+                "namespace": "mcp_pipeline",
+                "total_runs": 0,
+                "allowed": 0,
+                "denied": 0,
+                "stage_executions": {},
+                "stage_skips": {},
+                "stage_denials": {},
+                "avg_stage_duration_ms": {},
+                "tool_allow_counts": {},
+                "tool_denial_counts": {},
+            }
+        return recorder.get_metrics()
 
     def run(self, intent: Dict[str, Any] | PipelineIntent) -> PipelineResult:
         if self._legacy_mode:
@@ -458,6 +612,15 @@ class DispatchPipeline:
             if not outcome.passed:
                 return self._build_result(False, stages, outcome.stage, intent)
 
+        if not stages:
+            stages.append(
+                StageOutcome(
+                    stage=PipelineStage.PASS,
+                    passed=True,
+                    reason="all checks disabled; pass-through",
+                )
+            )
+
         return self._build_result(True, stages, None, intent)
 
     def _run_compliance(self, intent: PipelineIntent, cfg: PipelineConfig) -> StageOutcome:
@@ -485,6 +648,10 @@ class DispatchPipeline:
             from .risk_scorer import RiskScorer
 
             scorer = cfg.risk_scorer or RiskScorer(cfg.risk_policy)
+            if cfg.risk_policy is not None and cfg.risk_scorer is not None:
+                current_policy = getattr(scorer, "policy", None)
+                if current_policy is not cfg.risk_policy:
+                    scorer = RiskScorer(cfg.risk_policy)
             score = scorer.score_intent(
                 tool=intent.tool_name,
                 actor=intent.actor,
@@ -511,6 +678,12 @@ class DispatchPipeline:
             evaluator = cfg.delegation_evaluator or DelegationEvaluator()
             actor = intent.actor or "anonymous"
             leaf_cid = cfg.delegation_leaf_cid or ""
+            if not leaf_cid:
+                return StageOutcome(
+                    stage=PipelineStage.DELEGATION,
+                    passed=True,
+                    reason="no delegation_leaf_cid configured, skipping",
+                )
             ok, reason = evaluator.can_invoke(
                 leaf_cid=leaf_cid,
                 resource=intent.tool_name,
@@ -635,7 +808,15 @@ def make_full_pipeline(
         "nl_ucan_gate",
     ]
     stages = [PipelineStage(name=n, handler=_allow_all) for n in stage_names]
-    return DispatchPipeline(stages=stages, metrics_recorder=metrics_recorder)
+    pipeline = DispatchPipeline(stages=stages, metrics_recorder=metrics_recorder)
+    pipeline.config = PipelineConfig(
+        enable_compliance=True,
+        enable_risk=True,
+        enable_delegation=True,
+        enable_policy=True,
+        enable_nl_ucan_gate=True,
+    )
+    return pipeline
 
 
 def make_delegation_stage(manager: Any) -> PipelineStage:
@@ -643,7 +824,7 @@ def make_delegation_stage(manager: Any) -> PipelineStage:
         actor = intent.get("actor", "")
         tool = intent.get("tool", "")
         leaf_cid = intent.get("leaf_cid", "")
-        ok, reason = manager.can_invoke(leaf_cid, tool, actor)
+        ok, reason = manager.can_invoke(actor, tool, "tools/invoke", leaf_cid=leaf_cid)
         return {"allowed": bool(ok), "reason": str(reason)}
 
     return PipelineStage(name="delegation", handler=_handler)

@@ -133,9 +133,19 @@ def list_tools_in_cli_dir(get_help_menu: bool = True) -> list[dict[str, str]]:
             If `get_help_menu` is True, each dictionary will also contain the tool's help menu.
         If no working tools are found, returns an empty list.
     """
-    # Keep this path hardcoded so that we aren't running argparse tools we haven't vetted.
+    if not isinstance(get_help_menu, bool):
+        raise ValueError("get_help_menu must be a bool")
+
+    # Keep this path constrained so we only inspect vetted CLI tool directories.
     tools_dir = Path(__file__).parent.parent
-    cli_tools_dir = tools_dir / 'cli'
+    cli_candidates = [
+        tools_dir / 'cli',
+        tools_dir.parent / 'cli',
+    ]
+    cli_tools_dir = next((p for p in cli_candidates if p.exists() and p.is_dir()), None)
+    if cli_tools_dir is None:
+        return []
+
     python_files = []
 
     for tool_dir in cli_tools_dir.iterdir():

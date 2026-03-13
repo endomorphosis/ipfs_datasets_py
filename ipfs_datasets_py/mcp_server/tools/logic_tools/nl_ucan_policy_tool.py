@@ -13,9 +13,11 @@ Tools
 
 from __future__ import annotations
 
-import asyncio
+import concurrent.futures
 import logging
 from typing import Any, Dict, List, Optional
+
+import anyio
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +25,14 @@ logger = logging.getLogger(__name__)
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 def _run_async(coro):
-    """Run a coroutine synchronously, compatible with Python 3.12."""
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
-                future = ex.submit(asyncio.run, coro)
-                return future.result()
-        return loop.run_until_complete(coro)
-    except RuntimeError:
-        return asyncio.run(coro)
+    """Run a coroutine synchronously without importing asyncio in this module."""
+
+    async def _await_coro(awaitable):
+        return await awaitable
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(anyio.run, _await_coro, coro)
+        return future.result()
 
 
 def _get_compiler_class():

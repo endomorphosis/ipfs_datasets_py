@@ -4,7 +4,7 @@ Provides async/await versions of batch operations for concurrent processing
 of multiple items using asyncio instead of ThreadPoolExecutor.
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import logging
 from typing import List, Any, Optional, Callable, TypeVar, Awaitable, Union
 from dataclasses import dataclass

@@ -589,7 +589,7 @@ class FederatedQueryExecutor:
         Returns:
             :class:`FederatedQueryResult` with merged, deduplicated records.
         """
-        import asyncio
+        from ipfs_datasets_py.utils import anyio_compat as asyncio
 
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.execute_cypher, query, params)

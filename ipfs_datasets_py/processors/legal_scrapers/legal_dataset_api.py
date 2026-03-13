@@ -140,7 +140,7 @@ def _run_cap_vector_operation_in_venv(
     )
 
     script = r'''
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import importlib.util
 import json
 import os

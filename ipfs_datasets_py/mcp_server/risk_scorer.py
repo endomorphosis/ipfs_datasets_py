@@ -16,6 +16,7 @@ __all__ = [
     "RiskGateError",
     "make_default_risk_policy",
     "score_intent",
+    "risk_score_from_dag",
 ]
 
 
@@ -122,14 +123,38 @@ class RiskScorer:
     def policy(self) -> RiskScoringPolicy:
         return self._policy
 
+    def _normalize_intent(
+        self,
+        tool: Any,
+        actor: str = "",
+        params: Optional[Dict[str, Any]] = None,
+    ) -> tuple[str, str, Dict[str, Any]]:
+        if isinstance(tool, dict):
+            tool_name = str(tool.get("tool_name") or tool.get("tool") or "")
+            actor_name = str(tool.get("actor") or actor or "")
+            params_obj = tool.get("params")
+            if not isinstance(params_obj, dict):
+                params_obj = params or {}
+            return tool_name, actor_name, params_obj
+
+        if not isinstance(tool, str):
+            tool_name = str(getattr(tool, "tool_name", getattr(tool, "tool", "")) or "")
+            actor_name = str(getattr(tool, "actor", actor) or "")
+            params_obj = getattr(tool, "params", params or {})
+            if not isinstance(params_obj, dict):
+                params_obj = params or {}
+            return tool_name, actor_name, params_obj
+
+        return tool, actor, params or {}
+
     def score_intent(
         self,
-        tool: str,
+        tool: Any,
         actor: str = "",
         params: Optional[Dict[str, Any]] = None,
     ) -> RiskAssessment:
         policy = self._policy
-        params = params or {}
+        tool, actor, params = self._normalize_intent(tool, actor, params)
 
         base_risk = policy.tool_risk_overrides.get(tool, policy.default_risk)
         trust_bonus = min(0.5, policy.actor_trust_levels.get(actor, 0.0))
@@ -163,10 +188,19 @@ class RiskScorer:
 
     def score_and_gate(
         self,
-        tool: str,
-        actor: str = "",
+        tool: Any,
+        actor: Any = "",
         params: Optional[Dict[str, Any]] = None,
-    ) -> RiskAssessment:
+    ) -> Any:
+        if isinstance(actor, RiskScoringPolicy) and params is None:
+            legacy_policy = actor
+            assessment = RiskScorer(legacy_policy).score_intent(tool)
+            return {
+                "decision": "allow" if assessment.is_acceptable else "deny",
+                "risk_score": assessment.score,
+                "risk_level": assessment.level.value,
+            }
+
         assessment = self.score_intent(tool=tool, actor=actor, params=params)
         if not assessment.is_acceptable:
             raise RiskGateError(
@@ -182,9 +216,60 @@ class RiskScorer:
         }
 
 
-def make_default_risk_policy() -> RiskScoringPolicy:
-    return RiskScoringPolicy()
+def make_default_risk_policy(
+    high_risk_tools: Optional[List[str]] = None,
+    *,
+    default_risk: float = 0.3,
+    max_acceptable_risk: float = 0.75,
+    actor_trust_levels: Optional[Dict[str, float]] = None,
+    tool_risk_overrides: Optional[Dict[str, float]] = None,
+) -> RiskScoringPolicy:
+    overrides = dict(tool_risk_overrides or {})
+    for tool_name in high_risk_tools or []:
+        overrides.setdefault(str(tool_name), 0.70)
+    return RiskScoringPolicy(
+        tool_risk_overrides=overrides,
+        default_risk=default_risk,
+        actor_trust_levels=dict(actor_trust_levels or {}),
+        max_acceptable_risk=max_acceptable_risk,
+    )
 
 
-def score_intent(tool: str, actor: str = "", params: Optional[Dict[str, Any]] = None) -> RiskAssessment:
+def score_intent(tool: Any, actor: str = "", params: Optional[Dict[str, Any]] = None) -> RiskAssessment:
     return RiskScorer().score_intent(tool=tool, actor=actor, params=params)
+
+
+def risk_score_from_dag(
+    dag: Any,
+    tool_name: str = "",
+    *,
+    rollback_penalty: float = 0.15,
+    error_penalty: float = 0.10,
+    max_penalty: float = 1.0,
+) -> float:
+    """Compatibility helper: derive a small risk penalty from EventDAG history.
+
+    Returns a value in ``[0.0, 1.0]``. Empty DAGs return ``0.0``.
+    """
+    nodes: List[Any] = []
+    raw_nodes = getattr(dag, "_nodes", None)
+    if isinstance(raw_nodes, dict):
+        nodes = list(raw_nodes.values())
+
+    if not nodes:
+        return 0.0
+
+    penalty = 0.0
+    for node in nodes:
+        output_cid = str(getattr(node, "output_cid", "") or "").lower()
+        receipt_cid = getattr(node, "receipt_cid", None)
+
+        if "rollback" in output_cid:
+            penalty += float(rollback_penalty)
+        if receipt_cid in (None, ""):
+            penalty += float(error_penalty)
+
+    if "delete" in (tool_name or "").lower():
+        penalty += 0.05
+
+    return min(float(max_penalty), penalty)

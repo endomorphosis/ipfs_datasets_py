@@ -10,12 +10,27 @@ business logic in ipfs_datasets_py.scrapers.medical.research_scraper_core.
 import logging
 from typing import Dict, List, Optional, Any
 
-from ipfs_datasets_py.scrapers.medical import (
-    MedicalResearchCore,
-    MedicalTheoremCore,
-    BiomoleculeDiscoveryCore,
-    AIDatasetBuilderCore
-)
+try:
+    from ipfs_datasets_py.scrapers.medical import (
+        MedicalResearchCore,
+        MedicalTheoremCore,
+        BiomoleculeDiscoveryCore,
+        AIDatasetBuilderCore,
+    )
+except Exception as exc:
+    _import_error = exc
+
+    class _MissingMedicalCore:
+        def __init__(self, *args: Any, **kwargs: Any):
+            self._error = _import_error
+
+        def __getattr__(self, name: str):
+            raise RuntimeError(f"medical research core unavailable: {self._error}")
+
+    MedicalResearchCore = _MissingMedicalCore  # type: ignore[assignment]
+    MedicalTheoremCore = _MissingMedicalCore  # type: ignore[assignment]
+    BiomoleculeDiscoveryCore = _MissingMedicalCore  # type: ignore[assignment]
+    AIDatasetBuilderCore = _MissingMedicalCore  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ Implements resilient URL retrieval with fallback order:
 
 from __future__ import annotations
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import gzip
 import importlib
 import logging

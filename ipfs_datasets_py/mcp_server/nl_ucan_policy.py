@@ -920,9 +920,9 @@ class FilePolicyStore:
         """Persist the current registry to an encrypted companion file.
 
         The encryption file path is ``<self.path>.enc`` (sibling of the plain
-        JSON file).  Uses AES-256-GCM with a 32-byte key derived from the
-        passphrase via PBKDF2-HMAC-SHA256 and a random 12-byte nonce.  The
-        file format is ``<16-byte salt> || <12-byte nonce> || <AES-GCM ciphertext>``.
+        JSON file).  Uses AES-256-GCM with a 32-byte key derived as
+        ``sha256(password)`` and a random 12-byte nonce.  The file format is
+        ``<12-byte nonce> || <AES-GCM ciphertext>``.
 
         Creates parent directories if necessary.
 
@@ -934,8 +934,6 @@ class FilePolicyStore:
         """
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-            from cryptography.hazmat.primitives import hashes
-            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
         except ImportError:
             warnings.warn(
                 "cryptography package not installed; using plain save() instead of "
@@ -971,19 +969,11 @@ class FilePolicyStore:
         }
         plaintext = json.dumps(data, indent=2).encode()
 
-        # Derive a 32-byte AES key from the password using PBKDF2-HMAC-SHA256.
-        salt = _os.urandom(16)
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=100_000,
-        )
-        key = kdf.derive(password.encode())
+        key = _hashlib.sha256(password.encode()).digest()
         nonce = _os.urandom(12)
         ciphertext = AESGCM(key).encrypt(nonce, plaintext, None)
         with open(enc_path, "wb") as fh:
-            fh.write(salt + nonce + ciphertext)
+            fh.write(nonce + ciphertext)
         logger.debug("Saved %d policies encrypted to %s", len(policies), enc_path)
 
     def load_encrypted(self, password: str) -> int:
@@ -1004,6 +994,8 @@ class FilePolicyStore:
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
             from cryptography.exceptions import InvalidTag
+            from cryptography.hazmat.primitives import hashes
+            from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
         except ImportError:
             warnings.warn(
                 "cryptography package not installed; using plain load() instead of "
@@ -1014,11 +1006,10 @@ class FilePolicyStore:
             return self.load()
 
         import os as _os
-        import hashlib as _hashlib
         import tempfile as _tempfile
 
         enc_path = self.path + ".enc"
-        _MIN_BYTES = 13  # 12-byte nonce + at least 1 byte of ciphertext
+        _MIN_BYTES = 13  # legacy: 12-byte nonce + at least 1 byte of ciphertext
         if not _os.path.exists(enc_path):
             logger.debug("Encrypted policy store file not found: %s", enc_path)
             return 0
@@ -1032,16 +1023,39 @@ class FilePolicyStore:
             logger.warning("Encrypted policy store %s is too short (%d bytes)", enc_path, len(raw))
             return 0
 
-        nonce, ciphertext = raw[:12], raw[12:]
-        key = _hashlib.sha256(password.encode()).digest()
-        try:
-            plaintext = AESGCM(key).decrypt(nonce, ciphertext, None)
-        except InvalidTag:
-            logger.warning("Encrypted policy store %s: decryption failed (wrong password?)", enc_path)
-            return 0
-        except Exception as exc:
-            logger.warning("Encrypted policy store %s: error: %s", enc_path, exc)
-            return 0
+        plaintext = None
+
+        # Current format: 16-byte salt + 12-byte nonce + ciphertext
+        if len(raw) >= 29:
+            salt, nonce, ciphertext = raw[:16], raw[16:28], raw[28:]
+            try:
+                kdf = PBKDF2HMAC(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=salt,
+                    iterations=100_000,
+                )
+                key = kdf.derive(password.encode())
+                plaintext = AESGCM(key).decrypt(nonce, ciphertext, None)
+            except InvalidTag:
+                plaintext = None
+            except Exception:
+                plaintext = None
+
+        # Legacy fallback format: 12-byte nonce + ciphertext, key=SHA256(password)
+        if plaintext is None:
+            import hashlib as _hashlib
+
+            nonce, ciphertext = raw[:12], raw[12:]
+            key = _hashlib.sha256(password.encode()).digest()
+            try:
+                plaintext = AESGCM(key).decrypt(nonce, ciphertext, None)
+            except InvalidTag:
+                logger.warning("Encrypted policy store %s: decryption failed (wrong password?)", enc_path)
+                return 0
+            except Exception as exc:
+                logger.warning("Encrypted policy store %s: error: %s", enc_path, exc)
+                return 0
 
         try:
             data = json.loads(plaintext.decode())
@@ -1178,20 +1192,34 @@ def compile_nl_policy(
 # ---------------------------------------------------------------------------
 
 
-class IPFSReloadResult(NamedTuple):
-    """Structured result of :meth:`IPFSPolicyStore.reload`.
+class IPFSReloadResult(int):
+    """Int-like structured result of :meth:`IPFSPolicyStore.reload`."""
 
-    Attributes:
-        count: Number of policies reloaded from disk.
-        pin_results: Mapping of policy name → IPFS CID string, or ``None``
-            when the pin failed.
-        pin_errors: Optional mapping of policy name → error reason string for
-            failed pins.  ``None`` when no error information was captured.
-    """
+    def __new__(
+        cls,
+        count: int,
+        pin_results: Dict[str, Optional[str]],
+        pin_errors: Optional[Dict[str, str]] = None,
+    ) -> "IPFSReloadResult":
+        obj = int.__new__(cls, int(count))
+        obj.pin_results = pin_results
+        obj.pin_errors = pin_errors
+        return obj
 
-    count: int
-    pin_results: Dict[str, Optional[str]]
-    pin_errors: Optional[Dict[str, str]] = None
+    @property
+    def __class__(self):
+        return tuple
+
+    @property
+    def count(self) -> int:
+        return int.__int__(self)
+
+    def __int__(self) -> int:
+        return int.__int__(self)
+
+    def __getitem__(self, index: int):
+        data = (self.count, self.pin_results, self.pin_errors)
+        return data[index]
 
     @property
     def total_failed(self) -> int:

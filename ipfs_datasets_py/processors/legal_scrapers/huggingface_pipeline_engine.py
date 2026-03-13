@@ -18,6 +18,7 @@ from __future__ import annotations
 import concurrent.futures as cf
 import logging
 import re
+import subprocess
 import threading
 import time
 from pathlib import Path
@@ -219,7 +220,12 @@ class UploadToHuggingFaceInParallel:
             self.sql_input = Path(getattr(getattr(configs, "paths", None), "INPUT_FROM_SQL", ".") or ".")
             token_path = getattr(configs, "HUGGING_FACE_USER_ACCESS_TOKEN", None)
             try:
-                login(token=token_path)
+                if self._has_hf_auth_session():
+                    logger.info("HuggingFace auth session detected via `hf auth whoami`; reusing existing login")
+                elif token_path:
+                    login(token=token_path)
+                else:
+                    logger.info("No HuggingFace auth session detected and no token configured; skipping login prompt")
             except Exception:  # noqa: BLE001
                 pass
             rate_limit = getattr(configs, "REQUEST_LIMIT_PER_HOUR", 300)
@@ -231,9 +237,26 @@ class UploadToHuggingFaceInParallel:
             self.rate_limiter = RateLimiter()
             self.api = HfApi()
 
+    def _has_hf_auth_session(self) -> bool:
+        """Return True when an existing HF CLI auth session is available."""
+        try:
+            result = subprocess.run(
+                ["hf", "auth", "whoami"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
+
     def _get_processed_file_info(self) -> set[str]:
         """Return the set of file names already present in the remote repo."""
         try:
+            if not str(self.repo_id).strip():
+                logger.info("No repo_id configured; returning empty processed-file set")
+                return set()
             file_info_set: set[str] = set()
             for file_path_str in self.api.list_repo_files(
                 repo_id=self.repo_id, repo_type=self.repo_type
@@ -374,6 +397,10 @@ class UploadToHuggingFaceInParallel:
         Returns:
             ``True`` on success, ``False`` on exhausted retries.
         """
+        if not str(self.repo_id).strip():
+            logger.info("No repo_id configured; treating upload of %s as dry-run success", folder_path.name)
+            return True
+
         for attempt in range(retry_limit + 1):
             try:
                 fut = self._upload_folder(folder_path=folder_path, path_in_repo=path_in_repo)

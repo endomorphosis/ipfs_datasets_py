@@ -31,7 +31,7 @@ Usage:
     )
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import anyio
 import logging
 from typing import Any, Dict, List, Optional, Set, Tuple

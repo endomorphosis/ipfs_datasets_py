@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import anyio
 import json
+import inspect
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -37,14 +38,65 @@ from ipfs_datasets_py.mcp_server.exceptions import (
     ToolNotFoundError,
     ServerStartupError,
 )
-from ipfs_datasets_py.mcp_server.tools.logic_tools.temporal_deontic_logic_tools import (
-    TEMPORAL_DEONTIC_LOGIC_TOOLS,
-)
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
-    LEGAL_DATASET_MCP_TOOLS,
-)
+try:
+    from ipfs_datasets_py.mcp_server.tools.logic_tools.temporal_deontic_logic_tools import (
+        TEMPORAL_DEONTIC_LOGIC_TOOLS,
+    )
+except ImportError:
+    from ipfs_datasets_py.mcp_server.tools.logic_tools import temporal_deontic_logic_tools as _tdl_tools
+
+    TEMPORAL_DEONTIC_LOGIC_TOOLS = [
+        _tdl_tools.check_document_consistency,
+        _tdl_tools.query_theorems,
+        _tdl_tools.bulk_process_caselaw,
+        _tdl_tools.add_theorem,
+    ]
+try:
+    from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
+        LEGAL_DATASET_MCP_TOOLS,
+    )
+except (ImportError, ModuleNotFoundError):
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import (
+        LEGAL_DATASET_MCP_TOOLS,
+    )
 
 logger = logging.getLogger(__name__)
+
+
+class _FunctionToolAdapter:
+    """Adapter exposing plain callables as MCP-style tool objects."""
+
+    def __init__(self, fn: Any, name: Optional[str] = None):
+        self._fn = fn
+        self.name = name or getattr(fn, "name", getattr(fn, "__name__", "unknown_tool"))
+        self.description = getattr(fn, "description", (getattr(fn, "__doc__", "") or "").strip().splitlines()[0] if getattr(fn, "__doc__", None) else "")
+        self.category = getattr(fn, "category", "mcp")
+        self.tags = list(getattr(fn, "tags", []))
+
+    async def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if inspect.iscoroutinefunction(self._fn):
+            try:
+                return await self._fn(arguments)
+            except TypeError:
+                return await self._fn(**arguments)
+        try:
+            return self._fn(arguments)
+        except TypeError:
+            return self._fn(**arguments)
+
+    def get_schema(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description or self.name,
+            "input_schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": True,
+            },
+            "category": self.category,
+            "tags": self.tags,
+            "version": "function-adapter",
+        }
 
 
 class TemporalDeonticMCPServer:
@@ -65,9 +117,17 @@ class TemporalDeonticMCPServer:
         self.port = port
         self.server = None
         
-        # Combine temporal deontic logic tools and legal dataset tools
+        # Combine temporal deontic logic tools and legal dataset tools.
+        # Both MCP-style objects and plain callables are supported.
         all_tools = TEMPORAL_DEONTIC_LOGIC_TOOLS + LEGAL_DATASET_MCP_TOOLS
-        self.tools = {tool.name: tool for tool in all_tools}
+        normalized_tools: List[Any] = []
+        for tool in all_tools:
+            if hasattr(tool, "name") and callable(getattr(tool, "execute", None)):
+                normalized_tools.append(tool)
+            elif callable(tool):
+                normalized_tools.append(_FunctionToolAdapter(tool))
+
+        self.tools = {tool.name: tool for tool in normalized_tools}
         
         if not MCP_AVAILABLE:
             logger.warning("MCP library not available - server will not function")

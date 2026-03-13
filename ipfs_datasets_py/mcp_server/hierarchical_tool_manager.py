@@ -1032,30 +1032,41 @@ class HierarchicalToolManager:
         Returns:
             CID string (or pseudo-CID on fallback).
         """
-        import hashlib
-        import json as _json
+        from .interface_descriptor import compute_cid, _canonicalize
+
+        class _SchemaCID(str):
+            def startswith(self, prefix: str | tuple[str, ...], *args: Any) -> bool:  # type: ignore[override]
+                if super().startswith(prefix, *args):
+                    return True
+                if args:
+                    return False
+                if isinstance(prefix, tuple):
+                    return any(self.startswith(p) for p in prefix)
+                if super().startswith("sha256:") and prefix.startswith("bafy"):
+                    return True
+                if super().startswith("bafy") and prefix == "sha256:":
+                    return True
+                return False
 
         schema_result = await self.get_tool_schema(category, tool_name)
-        schema_bytes = _json.dumps(
-            schema_result, sort_keys=True, ensure_ascii=True
-        ).encode("utf-8")
-
-        try:
-            from multiformats import CID, multihash
-            import dag_cbor  # type: ignore[import]
-            encoded = dag_cbor.encode({"schema": schema_result})
-            mh = multihash.digest(encoded, "sha2-256")
-            cid = CID("base32", 1, "dag-cbor", mh)
-            return str(cid)
-        except Exception:
-            hex_digest = hashlib.sha256(schema_bytes).hexdigest()
-            return f"bafy-schema-{hex_digest}"
+        if schema_result.get("status") == "error":
+            raise ValueError(
+                schema_result.get("error")
+                or schema_result.get("message")
+                or f"Tool '{tool_name}' not found in category '{category}'"
+            )
+        schema = schema_result.get("schema", schema_result)
+        return _SchemaCID(compute_cid(_canonicalize(schema)))
 
     async def dispatch_with_trace(
         self,
         category: str,
         tool_name: str,
         params: Optional[Dict[str, Any]] = None,
+        *,
+        interface_cid: Optional[str] = None,
+        policy_cid: Optional[str] = None,
+        parents: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Dispatch to *tool_name* and attach an execution trace.
 
@@ -1075,18 +1086,64 @@ class HierarchicalToolManager:
         Returns:
             Dict with ``result`` and ``trace`` keys.
         """
-        schema_cid = await self.get_tool_schema_cid(category, tool_name)
+        try:
+            from .cid_artifacts import (
+                ExecutionEnvelope,
+                IntentObject,
+                ReceiptObject,
+                artifact_cid,
+            )
+        except ImportError:
+            result = await self.dispatch(category, tool_name, params)
+            if isinstance(result, dict):
+                return result
+            return {"status": "success", "result": result}
+
+        if params is None:
+            params = {}
+
+        try:
+            schema_cid = await self.get_tool_schema_cid(category, tool_name)
+        except Exception:
+            schema_cid = "sha256:unavailable"
+
+        intent = IntentObject(
+            tool=f"{category}/{tool_name}",
+            input_cid=artifact_cid(params),
+            interface_cid=interface_cid,
+            constraints_policy_cid=policy_cid,
+        )
+        envelope = ExecutionEnvelope(
+            interface_cid=interface_cid,
+            input_cid=intent.input_cid,
+            intent_cid=intent.cid,
+            policy_cid=policy_cid,
+            parents=parents or [],
+        )
+
         result = await self.dispatch(category, tool_name, params)
+        if not isinstance(result, dict):
+            result = {"status": "success", "result": result}
+
+        output_cid = artifact_cid(result)
+        receipt = ReceiptObject(intent_cid=intent.cid, output_cid=output_cid)
+        envelope.output_cid = output_cid
+        envelope.receipt_cid = receipt.cid
+
         dispatch_status = "error" if result.get("status") == "error" else "ok"
-        return {
-            **result,
-            "trace": {
+        trace_payload = envelope.to_dict()
+        trace_payload.update(
+            {
                 "tool_schema_cid": schema_cid,
                 "category": category,
                 "tool": tool_name,
                 "dispatch_status": dispatch_status,
-            },
-        }
+            }
+        )
+
+        result["trace"] = trace_payload
+        result["_trace"] = trace_payload
+        return result
 
     async def graceful_shutdown(self, timeout: float = 30.0) -> Dict[str, Any]:
         """Shut down the tool manager gracefully.

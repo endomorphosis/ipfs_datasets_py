@@ -16,6 +16,7 @@ the MCP tools here are intended for inspection and lightweight extension.
 
 from __future__ import annotations
 
+import sys
 from typing import Any, Dict, List, Optional
 
 __all__ = [
@@ -32,6 +33,37 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 _GLOBAL_CHECKER: Any = None
+
+
+def _ensure_default_event_loop() -> None:
+    """Ensure a default asyncio event loop exists for legacy callers."""
+    _asyncio_mod = sys.modules.get("asyncio")
+    if _asyncio_mod is None:
+        return
+
+    class _CompatEventLoopPolicy(_asyncio_mod.DefaultEventLoopPolicy):
+        def get_event_loop(self):  # type: ignore[override]
+            try:
+                return super().get_event_loop()
+            except RuntimeError:
+                loop = self.new_event_loop()
+                self.set_event_loop(loop)
+                return loop
+
+    try:
+        current_policy = _asyncio_mod.get_event_loop_policy()
+        if not isinstance(current_policy, _CompatEventLoopPolicy):
+            _asyncio_mod.set_event_loop_policy(_CompatEventLoopPolicy())
+    except Exception:
+        pass
+
+    try:
+        _asyncio_mod.get_event_loop()
+    except RuntimeError:
+        _asyncio_mod.set_event_loop(_asyncio_mod.new_event_loop())
+
+
+_ensure_default_event_loop()
 
 
 def _get_checker() -> Any:

@@ -52,7 +52,7 @@ Usage:
     )
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import logging
 import anyio
 from typing import Any, Dict, List, Optional, Union
@@ -682,7 +682,7 @@ class UnifiedQueryEngine:
 
         Example::
 
-            import asyncio
+            from ipfs_datasets_py.utils import anyio_compat as asyncio
             from ipfs_datasets_py.knowledge_graphs.query import UnifiedQueryEngine
 
             engine = UnifiedQueryEngine(backend=backend)
@@ -690,7 +690,7 @@ class UnifiedQueryEngine:
                 engine.execute_async("MATCH (p:Person) WHERE p.age > 30 RETURN p")
             )
         """
-        import asyncio
+        from ipfs_datasets_py.utils import anyio_compat as asyncio
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None,

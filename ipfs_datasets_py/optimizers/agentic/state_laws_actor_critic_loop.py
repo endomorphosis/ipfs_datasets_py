@@ -9,7 +9,7 @@ workflows and produce patch-target guidance artifacts.
 from __future__ import annotations
 
 import argparse
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import fnmatch
 import json
 import py_compile

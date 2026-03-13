@@ -26,15 +26,6 @@ from .coordinator import (
     AgentStatus,
     ConflictResolver,
 )
-from .github_api_unified import (
-    UnifiedGitHubAPICache,
-    GitHubAPICache,  # Backward compatibility alias
-    GitHubAPICounter,  # Backward compatibility alias
-    CacheBackend,
-    CacheEntry,
-    APICallRecord,
-)
-from .github_control import GitHubChangeController
 from .methods import (
     TestDrivenOptimizer,
     AdversarialOptimizer,
@@ -102,6 +93,30 @@ from .refinement_control_loop import (
     RefinementIteration,
     BatchRefinementController,
 )
+
+
+_LAZY_EXPORTS = {
+    # Deprecated GitHub integration symbols (kept for compatibility)
+    "UnifiedGitHubAPICache": (".github_api_unified", "UnifiedGitHubAPICache"),
+    "GitHubAPICache": (".github_api_unified", "GitHubAPICache"),
+    "GitHubAPICounter": (".github_api_unified", "GitHubAPICounter"),
+    "CacheBackend": (".github_api_unified", "CacheBackend"),
+    "CacheEntry": (".github_api_unified", "CacheEntry"),
+    "APICallRecord": (".github_api_unified", "APICallRecord"),
+    "GitHubChangeController": (".github_control", "GitHubChangeController"),
+}
+
+
+def __getattr__(name: str):
+    if name not in _LAZY_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    import importlib
+
+    module_name, attr_name = _LAZY_EXPORTS[name]
+    module = importlib.import_module(module_name, __name__)
+    value = getattr(module, attr_name)
+    globals()[name] = value
+    return value
 
 __all__ = [
     # Base classes

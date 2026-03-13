@@ -39,6 +39,23 @@ def _get_from_keyring(service: str, name: str) -> Optional[str]:
     return value
 
 
+def _get_from_vault(name: str) -> Optional[str]:
+    try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+    except Exception:
+        return None
+
+    try:
+        vault = get_secrets_vault()
+        value = vault.get(name)
+    except Exception:
+        return None
+
+    if not value:
+        return None
+    return value
+
+
 def _first_env(*names: str) -> Optional[str]:
     for name in names:
         value = os.environ.get(name)
@@ -156,6 +173,7 @@ def autoconfigure_engine_env(
     defaults: EngineEnvDefaults | None = None,
     keyring_service: str = "ipfs_datasets_py",
     allow_keyring: bool = True,
+    allow_vault: bool = True,
 ) -> Dict[str, str]:
     """Populate missing engine env vars from existing auth sources.
 
@@ -189,10 +207,16 @@ def autoconfigure_engine_env(
             return None
         return _get_from_keyring(keyring_service, name)
 
+    def vault_or_none(name: str) -> Optional[str]:
+        if not allow_vault:
+            return None
+        return _get_from_vault(name)
+
     # Keys
     discovered_openai_key = (
         _first_env("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN")
         or _secret_from_file_env("OPENAI_API_KEY_FILE", "OPENAI_KEY_FILE")
+        or vault_or_none("OPENAI_API_KEY")
         or keyring_or_none("OPENAI_API_KEY")
         or _openai_key_from_common_files()
     )
@@ -211,6 +235,7 @@ def autoconfigure_engine_env(
         _first_env("NEUROSYMBOLIC_ENGINE_API_KEY")
         or _secret_from_file_env("NEUROSYMBOLIC_ENGINE_API_KEY_FILE")
         or openai_key
+        or vault_or_none("NEUROSYMBOLIC_ENGINE_API_KEY")
         or keyring_or_none("NEUROSYMBOLIC_ENGINE_API_KEY"),
     )
     set_if_missing(
@@ -218,6 +243,7 @@ def autoconfigure_engine_env(
         _first_env("EMBEDDING_ENGINE_API_KEY")
         or _secret_from_file_env("EMBEDDING_ENGINE_API_KEY_FILE")
         or openai_key
+        or vault_or_none("EMBEDDING_ENGINE_API_KEY")
         or keyring_or_none("EMBEDDING_ENGINE_API_KEY"),
     )
     set_if_missing(
@@ -225,6 +251,7 @@ def autoconfigure_engine_env(
         _first_env("TEXT_TO_SPEECH_ENGINE_API_KEY")
         or _secret_from_file_env("TEXT_TO_SPEECH_ENGINE_API_KEY_FILE")
         or openai_key
+        or vault_or_none("TEXT_TO_SPEECH_ENGINE_API_KEY")
         or keyring_or_none("TEXT_TO_SPEECH_ENGINE_API_KEY"),
     )
     set_if_missing(
@@ -232,6 +259,7 @@ def autoconfigure_engine_env(
         _first_env("DRAWING_ENGINE_API_KEY")
         or _secret_from_file_env("DRAWING_ENGINE_API_KEY_FILE")
         or openai_key
+        or vault_or_none("DRAWING_ENGINE_API_KEY")
         or keyring_or_none("DRAWING_ENGINE_API_KEY"),
     )
     set_if_missing(
@@ -239,6 +267,7 @@ def autoconfigure_engine_env(
         _first_env("SPEECH_TO_TEXT_API_KEY")
         or _secret_from_file_env("SPEECH_TO_TEXT_API_KEY_FILE")
         or openai_key
+        or vault_or_none("SPEECH_TO_TEXT_API_KEY")
         or keyring_or_none("SPEECH_TO_TEXT_API_KEY"),
     )
 
@@ -247,6 +276,7 @@ def autoconfigure_engine_env(
         _first_env("SYMBOLIC_ENGINE_API_KEY")
         or _secret_from_file_env("SYMBOLIC_ENGINE_API_KEY_FILE")
         or wolfram_key
+        or vault_or_none("SYMBOLIC_ENGINE_API_KEY")
         or keyring_or_none("SYMBOLIC_ENGINE_API_KEY"),
     )
     set_if_missing(
@@ -254,6 +284,7 @@ def autoconfigure_engine_env(
         _first_env("SEARCH_ENGINE_API_KEY")
         or _secret_from_file_env("SEARCH_ENGINE_API_KEY_FILE")
         or perplexity_key
+        or vault_or_none("SEARCH_ENGINE_API_KEY")
         or keyring_or_none("SEARCH_ENGINE_API_KEY"),
     )
     set_if_missing(
@@ -261,6 +292,7 @@ def autoconfigure_engine_env(
         _first_env("INDEXING_ENGINE_API_KEY")
         or _secret_from_file_env("INDEXING_ENGINE_API_KEY_FILE")
         or pinecone_key
+        or vault_or_none("INDEXING_ENGINE_API_KEY")
         or keyring_or_none("INDEXING_ENGINE_API_KEY"),
     )
     set_if_missing(
@@ -268,6 +300,7 @@ def autoconfigure_engine_env(
         _first_env("OCR_ENGINE_API_KEY")
         or _secret_from_file_env("OCR_ENGINE_API_KEY_FILE")
         or apilayer_key
+        or vault_or_none("OCR_ENGINE_API_KEY")
         or keyring_or_none("OCR_ENGINE_API_KEY"),
     )
 

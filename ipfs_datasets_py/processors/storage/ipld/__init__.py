@@ -26,7 +26,8 @@ from .optimized_codec import (
 # Optional components: these can pull in heavy deps (e.g., numpy). Keep the
 # package import-safe so modules that only need core storage can still import.
 try:
-    from .vector_store import IPLDVectorStore, SearchResult
+    from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
+    from ipfs_datasets_py.vector_stores.schema import SearchResult
 except Exception:  # pragma: no cover
     IPLDVectorStore = None  # type: ignore[assignment]
     SearchResult = None  # type: ignore[assignment]

@@ -7,7 +7,7 @@ and integrates all 6 core features for legal/deontic logic conversion.
 
 from __future__ import annotations
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import logging
 import time
 from datetime import datetime

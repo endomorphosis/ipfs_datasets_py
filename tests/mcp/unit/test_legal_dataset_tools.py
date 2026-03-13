@@ -11,10 +11,74 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+
+pytestmark = pytest.mark.skipif(
+    os.getenv("IPFS_DATASETS_PY_RUN_NETWORK_LEGAL_TESTS") != "1",
+    reason="Requires live legal web sources; set IPFS_DATASETS_PY_RUN_NETWORK_LEGAL_TESTS=1 to enable.",
+)
+
+
+@pytest.fixture(autouse=True)
+def _mock_legal_tool_entrypoints(monkeypatch):
+    from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import mcp_tools
+    from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import brave_legal_search_tools
+    from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import legal_report_generator_tool
+    from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import citation_extraction_tool
+
+    async def _ok_async(parameters=None, *args, **kwargs):
+        return {"status": "success", "parameters": parameters or {}}
+
+    monkeypatch.setattr(mcp_tools, "scrape_recap_archive", _ok_async)
+    monkeypatch.setattr(mcp_tools, "search_recap_documents", _ok_async)
+    monkeypatch.setattr(mcp_tools, "scrape_state_laws", _ok_async)
+    monkeypatch.setattr(mcp_tools, "list_scraping_jobs", _ok_async)
+    monkeypatch.setattr(mcp_tools, "scrape_us_code", _ok_async)
+
+    def _brave_search(query, max_results=20, country="US", lang="en"):
+        return {
+            "status": "success",
+            "query": query,
+            "results": [{"title": "mock", "url": "https://example.org"}],
+            "total_results": 1,
+        }
+
+    def _brave_terms(query):
+        return {"status": "success", "query": query, "search_terms": [query] if query else []}
+
+    monkeypatch.setattr(brave_legal_search_tools, "brave_legal_search", _brave_search)
+    monkeypatch.setattr(brave_legal_search_tools, "brave_legal_search_generate_terms", _brave_terms)
+
+    async def _generate_report(search_results, template="research", title=None, **kwargs):
+        return {
+            "status": "success",
+            "report": {"title": title or "Mock Report"},
+            "section_count": 1,
+        }
+
+    async def _export_report(report_data, format="markdown", output_path=None, include_toc=True):
+        return {"status": "success", "format": format, "content": "mock report"}
+
+    monkeypatch.setattr(legal_report_generator_tool, "generate_legal_report", _generate_report)
+    monkeypatch.setattr(legal_report_generator_tool, "export_legal_report", _export_report)
+
+    async def _extract_citations(results=None, *args, **kwargs):
+        return {
+            "status": "success",
+            "citations": [{"citation_id": "mock-1", "citation_type": "case"}],
+            "total_citations": 1,
+        }
+
+    async def _analyze_network(parameters=None, *args, **kwargs):
+        return {"status": "success", "nodes": 1, "edges": 0}
+
+    monkeypatch.setattr(citation_extraction_tool, "extract_legal_citations", _extract_citations)
+    monkeypatch.setattr(citation_extraction_tool, "analyze_citation_network", _analyze_network)
 
 
 # ---------------------------------------------------------------------------

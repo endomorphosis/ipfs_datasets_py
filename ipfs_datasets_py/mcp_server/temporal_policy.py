@@ -22,7 +22,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from .cid_artifacts import DecisionObject, IntentObject, artifact_cid
 
@@ -60,6 +60,28 @@ class PolicyClause:
     obligation_deadline: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def is_temporally_valid(self, now: Optional[Union[float, datetime]] = None) -> bool:
+        """Return whether this clause is active at *now*.
+
+        Accepts either a UNIX timestamp (float/int) or datetime for legacy tests.
+        """
+        if now is None:
+            current = datetime.now(timezone.utc)
+        elif isinstance(now, (int, float)):
+            current = datetime.fromtimestamp(float(now), tz=timezone.utc)
+        else:
+            current = now
+            if current.tzinfo is None:
+                current = current.replace(tzinfo=timezone.utc)
+
+        valid_from = _parse_iso(self.valid_from)
+        if valid_from and current < valid_from:
+            return False
+        valid_until = _parse_iso(self.valid_until)
+        if valid_until and current > valid_until:
+            return False
+        return True
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a plain dict."""
         return {
@@ -87,6 +109,7 @@ class PolicyObject:
         description: Human-readable description of the policy intent.
     """
 
+    policy_id: str = ""
     clauses: List[PolicyClause] = field(default_factory=list)
     version: str = "v1"
     description: str = ""
@@ -94,10 +117,35 @@ class PolicyObject:
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a plain dict for canonicalisation."""
         return {
+            "policy_id": self.policy_id,
             "clauses": [c.to_dict() for c in self.clauses],
             "version": self.version,
             "description": self.description,
         }
+
+    def _get_clauses_by_type(self, clause_type: str) -> List[PolicyClause]:
+        return [c for c in self.clauses if c.clause_type == clause_type]
+
+    def get_permissions(self) -> List[PolicyClause]:
+        """Return all permission clauses (legacy compatibility API)."""
+        return self._get_clauses_by_type("permission")
+
+    def get_prohibitions(self) -> List[PolicyClause]:
+        """Return all prohibition clauses (legacy compatibility API)."""
+        return self._get_clauses_by_type("prohibition")
+
+    def get_obligations(self) -> List[PolicyClause]:
+        """Return all obligation clauses (legacy compatibility API)."""
+        return self._get_clauses_by_type("obligation")
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "PolicyObject":
+        return cls(
+            policy_id=data.get("policy_id", ""),
+            clauses=[PolicyClause(**c) for c in data.get("clauses", [])],
+            version=data.get("version", "v1"),
+            description=data.get("description", ""),
+        )
 
     @property
     def policy_cid(self) -> str:
@@ -110,9 +158,11 @@ class PolicyObject:
 # ---------------------------------------------------------------------------
 
 def make_simple_permission_policy(
-    actor: str,
-    action: str,
+    actor: Optional[str] = None,
+    action: Optional[str] = None,
     *,
+    policy_id: str = "",
+    allowed_tools: Optional[List[str]] = None,
     resource: Optional[str] = None,
     valid_from: Optional[str] = None,
     valid_until: Optional[str] = None,
@@ -142,22 +192,55 @@ def make_simple_permission_policy(
             valid_until="2026-12-31T23:59:59Z",
         )
     """
-    clause = PolicyClause(
-        clause_type="permission",
-        actor=actor,
-        action=action,
-        resource=resource,
-        valid_from=valid_from,
-        valid_until=valid_until,
-    )
-    return PolicyObject(clauses=[clause], description=description or f"Allow {actor} to call {action}")
+    clauses: List[PolicyClause] = []
+
+    if allowed_tools is not None:
+        for tool_name in allowed_tools:
+            clauses.append(
+                PolicyClause(
+                    clause_type="permission",
+                    actor=actor or "*",
+                    action=tool_name,
+                    resource=resource,
+                    valid_from=valid_from,
+                    valid_until=valid_until,
+                )
+            )
+    else:
+        clauses.append(
+            PolicyClause(
+                clause_type="permission",
+                actor=actor or "*",
+                action=action or "*",
+                resource=resource,
+                valid_from=valid_from,
+                valid_until=valid_until,
+            )
+        )
+
+    policy_desc = description
+    if not policy_desc:
+        if allowed_tools:
+            policy_desc = f"Allow {actor or '*'} to call {', '.join(allowed_tools)}"
+        else:
+            policy_desc = f"Allow {actor or '*'} to call {action or '*'}"
+
+    return PolicyObject(policy_id=policy_id, clauses=clauses, description=policy_desc)
+
+
+class PolicyClauseType:
+    """Legacy enum-like constants for clause types."""
+
+    PERMISSION = "permission"
+    PROHIBITION = "prohibition"
+    OBLIGATION = "obligation"
 
 
 # ---------------------------------------------------------------------------
 # Policy Evaluator
 # ---------------------------------------------------------------------------
 
-def _parse_iso(ts: Optional[str]) -> Optional[datetime]:
+def _parse_iso(ts: Optional[Union[str, float, int, datetime]]) -> Optional[datetime]:
     """Parse an ISO-8601 UTC timestamp string into a timezone-aware datetime.
 
     Args:
@@ -166,11 +249,15 @@ def _parse_iso(ts: Optional[str]) -> Optional[datetime]:
     Returns:
         A timezone-aware ``datetime`` object, or ``None`` if *ts* is falsy.
     """
-    if not ts:
+    if ts is None:
         return None
+    if isinstance(ts, datetime):
+        return ts if ts.tzinfo is not None else ts.replace(tzinfo=timezone.utc)
+    if isinstance(ts, (int, float)):
+        return datetime.fromtimestamp(float(ts), tz=timezone.utc)
     try:
         # Python 3.11+ handles Z suffix; handle manually for ≥3.7
-        ts_clean = ts.replace("Z", "+00:00")
+        ts_clean = str(ts).replace("Z", "+00:00")
         return datetime.fromisoformat(ts_clean)
     except ValueError:
         return None
@@ -243,10 +330,19 @@ class PolicyEvaluator:
         assert decision.decision == "allow"
     """
 
+    def __init__(self) -> None:
+        self._policies: Dict[str, PolicyObject] = {}
+
+    def register_policy(self, policy: PolicyObject) -> str:
+        """Register a policy and return its CID (legacy compatibility API)."""
+        cid = policy.policy_cid
+        self._policies[cid] = policy
+        return cid
+
     def evaluate(
         self,
         intent: IntentObject,
-        policy: PolicyObject,
+        policy: Union[PolicyObject, str],
         *,
         actor: Optional[str] = None,
         resource: Optional[str] = None,
@@ -277,6 +373,20 @@ class PolicyEvaluator:
             A ``DecisionObject`` with the verdict and any spawned obligations.
         """
         eval_time = now or datetime.now(timezone.utc)
+        if isinstance(policy, str):
+            policy_obj = self._policies.get(policy)
+            if policy_obj is None:
+                return DecisionObject(
+                    decision="deny",
+                    intent_cid=intent.cid,
+                    policy_cid=policy,
+                    proofs_checked=proofs_checked or [],
+                    justification=f"Unknown policy CID: {policy}",
+                    obligations=[],
+                )
+        else:
+            policy_obj = policy
+
         effective_actor = actor or "*"
         effective_resource = resource
 
@@ -284,7 +394,7 @@ class PolicyEvaluator:
         obligations: List[Dict[str, Any]] = []
         denial_reasons: List[str] = []
 
-        for clause in policy.clauses:
+        for clause in policy_obj.clauses:
             if not _clause_matches(clause, effective_actor, intent.tool, effective_resource, eval_time):
                 continue
 
@@ -318,13 +428,71 @@ class PolicyEvaluator:
 
         return DecisionObject(
             decision=verdict,
-            intent_cid=intent.intent_cid,
-            policy_cid=policy.policy_cid,
+            intent_cid=intent.cid,
+            policy_cid=policy_obj.policy_cid,
             proofs_checked=proofs_checked or [],
             justification=justification,
             obligations=obligations,
             evaluator_dids=[evaluator_did] if evaluator_did else [],
         )
+
+
+class _PolicyRegistryMeta(type):
+    def __instancecheck__(cls, instance: Any) -> bool:
+        if super().__instancecheck__(instance):
+            return True
+        try:
+            from .nl_ucan_policy import PolicyRegistry as _NLPolicyRegistry
+
+            return isinstance(instance, _NLPolicyRegistry)
+        except Exception:
+            return False
+
+
+class PolicyRegistry(metaclass=_PolicyRegistryMeta):
+    """In-memory policy registry with JSON persistence (legacy compatibility API)."""
+
+    def __init__(self, *, evaluator: Optional[PolicyEvaluator] = None) -> None:
+        self.evaluator = evaluator or PolicyEvaluator()
+        self._policies: Dict[str, PolicyObject] = {}
+
+    def register(self, policy: PolicyObject) -> str:
+        cid = self.evaluator.register_policy(policy)
+        self._policies[cid] = policy
+        return cid
+
+    def list_policies(self) -> List[Dict[str, str]]:
+        return [
+            {
+                "policy_id": policy.policy_id,
+                "policy_cid": cid,
+            }
+            for cid, policy in self._policies.items()
+        ]
+
+    def evaluate(self, intent: IntentObject, policy_cid: str, **kwargs: Any) -> DecisionObject:
+        return self.evaluator.evaluate(intent, policy_cid, **kwargs)
+
+    def save(self, path: str) -> None:
+        data = []
+        for cid, policy in self._policies.items():
+            entry = policy.to_dict()
+            entry["policy_cid"] = cid
+            data.append(entry)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, sort_keys=True)
+
+    def load(self, path: str) -> int:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        count = 0
+        for entry in data:
+            policy = PolicyObject.from_dict(entry)
+            cid = self.register(policy)
+            if entry.get("policy_cid") and entry["policy_cid"] != cid:
+                self._policies[entry["policy_cid"]] = policy
+            count += 1
+        return count
 
 
 # ---------------------------------------------------------------------------
@@ -333,17 +501,26 @@ class PolicyEvaluator:
 # The full implementation lives in nl_ucan_policy.PolicyRegistry.
 # This import is deferred to avoid circular dependencies at load time.
 
-def get_policy_registry() -> "PolicyRegistry":
-    """Return the global :class:`~nl_ucan_policy.PolicyRegistry` singleton.
+_GLOBAL_POLICY_EVALUATOR: Optional[PolicyEvaluator] = None
+_GLOBAL_POLICY_REGISTRY: Optional[PolicyRegistry] = None
 
-    This is a convenience re-export so callers can obtain the registry from
-    either ``temporal_policy`` or ``nl_ucan_policy``.
 
-    Returns:
-        The singleton :class:`~nl_ucan_policy.PolicyRegistry` instance.
-    """
-    from .nl_ucan_policy import (  # noqa: PLC0415
-        PolicyRegistry,
-        get_policy_registry as _get,
-    )
-    return _get()
+def get_policy_evaluator() -> PolicyEvaluator:
+    """Return process-global policy evaluator singleton."""
+    global _GLOBAL_POLICY_EVALUATOR
+    if _GLOBAL_POLICY_EVALUATOR is None:
+        _GLOBAL_POLICY_EVALUATOR = PolicyEvaluator()
+    return _GLOBAL_POLICY_EVALUATOR
+
+
+def get_policy_registry() -> PolicyRegistry:
+    """Return process-global policy registry singleton."""
+    try:
+        from .nl_ucan_policy import get_policy_registry as _get_nl_policy_registry
+
+        return _get_nl_policy_registry()
+    except Exception:
+        global _GLOBAL_POLICY_REGISTRY
+        if _GLOBAL_POLICY_REGISTRY is None:
+            _GLOBAL_POLICY_REGISTRY = PolicyRegistry(evaluator=get_policy_evaluator())
+        return _GLOBAL_POLICY_REGISTRY

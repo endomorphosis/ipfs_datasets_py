@@ -9,6 +9,7 @@ against the local DuckDB queue and local cache directories.
 
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 from typing import Any, Dict, Optional
 from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata, RUNTIME_TRIO
@@ -39,7 +40,13 @@ def _ensure_ipfs_accelerate_on_path() -> None:
 def p2p_service_status(include_peers: bool = True, peers_limit: int = 50) -> Dict[str, Any]:
     """Return local P2P service status and (optionally) recently seen peers."""
 
-    out: Dict[str, Any] = {"ok": True, "service": {}, "peers": []}
+    out: Dict[str, Any] = {
+        "ok": True,
+        "status": "ok",
+        "degraded_mode": False,
+        "service": {},
+        "peers": [],
+    }
 
     _ensure_ipfs_accelerate_on_path()
 
@@ -49,6 +56,8 @@ def p2p_service_status(include_peers: bool = True, peers_limit: int = 50) -> Dic
         out["service"] = get_local_service_state() or {}
     except Exception as e:
         out["ok"] = False
+        out["status"] = "error"
+        out["degraded_mode"] = True
         out["error"] = f"status_unavailable: {e}"
         out["service"] = {}
 
@@ -271,7 +280,19 @@ async def p2p_remote_status(
         from ipfs_accelerate_py.p2p_tasks.client import request_status
 
         remote = _remote_queue(peer_id=peer_id, multiaddr=remote_multiaddr)
-        resp = await run_in_trio(request_status, remote=remote, timeout_s=float(timeout_s), detail=bool(detail))
+        if inspect.iscoroutinefunction(request_status):
+            resp = await request_status(
+                remote=remote,
+                timeout_s=float(timeout_s),
+                detail=bool(detail),
+            )
+        else:
+            resp = await run_in_trio(
+                request_status,
+                remote=remote,
+                timeout_s=float(timeout_s),
+                detail=bool(detail),
+            )
         return resp if isinstance(resp, dict) else {"ok": False, "error": "invalid_response"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -300,13 +321,21 @@ async def p2p_remote_call_tool(
         from ipfs_accelerate_py.p2p_tasks.client import call_tool
 
         remote = _remote_queue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
-        resp = await run_in_trio(
-            call_tool,
-            remote=remote,
-            tool_name=str(tool_name),
-            args=(args if isinstance(args, dict) else {}),
-            timeout_s=float(timeout_s),
-        )
+        if inspect.iscoroutinefunction(call_tool):
+            resp = await call_tool(
+                remote=remote,
+                tool_name=str(tool_name),
+                args=(args if isinstance(args, dict) else {}),
+                timeout_s=float(timeout_s),
+            )
+        else:
+            resp = await run_in_trio(
+                call_tool,
+                remote=remote,
+                tool_name=str(tool_name),
+                args=(args if isinstance(args, dict) else {}),
+                timeout_s=float(timeout_s),
+            )
         return resp if isinstance(resp, dict) else {"ok": False, "error": "invalid_response"}
     except Exception as e:
         return {"ok": False, "error": str(e)}

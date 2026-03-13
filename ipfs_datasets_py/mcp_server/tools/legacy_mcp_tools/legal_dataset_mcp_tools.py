@@ -13,9 +13,110 @@ warnings.warn(
 )
 
 import logging
+import inspect
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+class _LegacyFunctionToolAdapter:
+    """Adapter exposing callable legacy tools via MCP-style attributes."""
+
+    def __init__(self, fn: Any, name: str, description: str, category: str = "legal_datasets") -> None:
+        self._fn = fn
+        self.name = name
+        self.description = description
+        self.category = category
+        self.tags = ["legacy", "legal", "dataset"]
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        if inspect.iscoroutinefunction(self._fn):
+            try:
+                return await self._fn(**parameters)
+            except TypeError:
+                return await self._fn(parameters)
+        try:
+            return self._fn(**parameters)
+        except TypeError:
+            return self._fn(parameters)
+
+    def get_schema(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "input_schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": True,
+            },
+            "category": self.category,
+            "tags": list(self.tags),
+            "version": "legacy-compat",
+        }
+
+
+class ScrapeMunicipalCodesTool:
+    """Backward-compatible class wrapper for legacy municipal codes MCP tool."""
+
+    def __init__(self) -> None:
+        self.name = "scrape_municipal_codes"
+        self.description = (
+            "Scrape municipal legal codes using scrape_the_law_mk3 with "
+            "fallback strategy support."
+        )
+        self.category = "legal_datasets"
+        self.tags = ["municipal", "codes", "scraping", "legacy"]
+        self.input_schema = {
+            "type": "object",
+            "properties": {
+                "jurisdiction": {"type": "string"},
+                "jurisdictions": {"type": "array", "items": {"type": "string"}},
+                "provider": {"type": "string", "default": "auto"},
+                "output_format": {"type": "string", "default": "json"},
+                "include_metadata": {"type": "boolean", "default": True},
+                "include_text": {"type": "boolean", "default": True},
+                "rate_limit_delay": {"type": "number", "default": 1.0},
+                "max_sections": {"type": ["integer", "null"], "default": None},
+                "scraper_type": {"type": "string", "default": "playwright"},
+                "enable_fallbacks": {"type": "boolean", "default": True},
+                "fallback_methods": {"type": "array", "items": {"type": "string"}},
+                "job_id": {"type": ["string", "null"], "default": None},
+                "resume": {"type": "boolean", "default": False},
+            },
+            "additionalProperties": True,
+        }
+
+    def get_schema(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "input_schema": dict(self.input_schema),
+            "category": self.category,
+            "tags": list(self.tags),
+            "version": "legacy-compat",
+        }
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        return await scrape_municipal_codes(
+            jurisdiction=parameters.get("jurisdiction"),
+            jurisdictions=parameters.get("jurisdictions"),
+            provider=parameters.get("provider", "auto"),
+            scraper_type=parameters.get("scraper_type", "playwright"),
+            output_format=parameters.get("output_format", "json"),
+            enable_fallbacks=parameters.get("enable_fallbacks", True),
+            fallback_methods=parameters.get("fallback_methods"),
+            job_id=parameters.get("job_id"),
+        )
+
+
+def _annotate_legacy_tool(fn: Any, name: str, description: str) -> Any:
+    """Attach compatibility metadata expected by older MCP callers/tests."""
+    setattr(fn, "name", name)
+    setattr(fn, "description", description)
+    setattr(fn, "category", "legal_datasets")
+    setattr(fn, "tags", ["legacy", "legal", "dataset"])
+    setattr(fn, "adapter", _LegacyFunctionToolAdapter(fn, name=name, description=description))
+    return fn
 
 
 async def scrape_recap_archive(
@@ -191,9 +292,19 @@ except ImportError:
     PATENT_DATASET_MCP_TOOLS = []
 
 LEGAL_DATASET_MCP_TOOLS = [
-    scrape_recap_archive, search_recap_documents, scrape_state_laws,
-    list_scraping_jobs, scrape_us_code, scrape_municipal_codes,
+    _annotate_legacy_tool(scrape_recap_archive, "scrape_recap_archive", "Scrape federal court documents from RECAP Archive."),
+    _annotate_legacy_tool(search_recap_documents, "search_recap_documents", "Search RECAP Archive documents."),
+    _annotate_legacy_tool(scrape_state_laws, "scrape_state_laws", "Scrape state statutes and legislation."),
+    _annotate_legacy_tool(list_scraping_jobs, "list_scraping_jobs", "List legal dataset scraping jobs."),
+    _annotate_legacy_tool(scrape_us_code, "scrape_us_code", "Scrape United States Code sections."),
+    _annotate_legacy_tool(scrape_municipal_codes, "scrape_municipal_codes", "Scrape municipal legal codes with fallback support."),
 ]
 
 if _patent_tools_available:
-    LEGAL_DATASET_MCP_TOOLS.extend(PATENT_DATASET_MCP_TOOLS)
+    for patent_tool in PATENT_DATASET_MCP_TOOLS:
+        if hasattr(patent_tool, "name"):
+            LEGAL_DATASET_MCP_TOOLS.append(patent_tool)
+            continue
+        patent_name = getattr(patent_tool, "__name__", "patent_tool")
+        patent_desc = (getattr(patent_tool, "__doc__", "") or patent_name).strip().splitlines()[0]
+        LEGAL_DATASET_MCP_TOOLS.append(_annotate_legacy_tool(patent_tool, patent_name, patent_desc))

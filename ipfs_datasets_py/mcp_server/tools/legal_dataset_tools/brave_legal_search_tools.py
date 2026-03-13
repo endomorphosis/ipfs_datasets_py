@@ -36,6 +36,7 @@ def _entity_display_name(entity: Any) -> str:
     )
 
 
+def _no_service(name: str) -> Dict[str, Any]:
     return {"status": "error", "error": f"BraveLegalSearch unavailable ({name})"}
 
 

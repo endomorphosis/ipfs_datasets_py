@@ -7,7 +7,7 @@ ensuring compatibility with Kubo, ipfs_kit_py, and ipfs_accelerate_py backends.
 All IPFS operations go through ipfs_backend_router for maximum compatibility.
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import anyio
 import json
 import logging

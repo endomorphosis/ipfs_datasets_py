@@ -32,7 +32,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Environment setup (required before any module imports)
 # ---------------------------------------------------------------------------
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-session43-testing")
+os.environ["SECRET_KEY"] = "test-secret-key-for-session43-testing"
 
 # Inject a stub for the missing mock_modelcontextprotocol_for_testing module
 # before client.py is imported so that its optional import chain succeeds.
@@ -457,11 +457,11 @@ class TestTrioMCPServerAdapterStart:
 
     @pytest.mark.anyio
     async def test_start_raises_when_trio_not_available(self):
-        """TRIO_AVAILABLE is False in this environment — start() must raise."""
+        """When Trio is unavailable, start() must raise."""
         a = TrioMCPServerAdapter()
-        assert not TRIO_AVAILABLE
-        with pytest.raises(RuntimeError, match="Trio is not available"):
-            await a.start()
+        with patch.object(trio_adapter_mod, "TRIO_AVAILABLE", False):
+            with pytest.raises(RuntimeError, match="Trio is not available"):
+                await a.start()
 
     @pytest.mark.anyio
     async def test_start_when_trio_available_sets_is_running(self):

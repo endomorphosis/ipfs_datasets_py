@@ -3,7 +3,7 @@
 This module contains the scraper for Mississippi statutes from the official state legislative website.
 """
 
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import re
 from html import unescape
 from typing import Dict, List, Optional

@@ -6,6 +6,7 @@ legislative websites and legal databases.
 import logging
 import asyncio
 import threading
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime

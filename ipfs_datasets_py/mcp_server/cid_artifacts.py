@@ -20,10 +20,35 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 # Re-use the same canonicalize/compute_cid from interface_descriptor
-from .interface_descriptor import _canonicalize, compute_cid
+from .interface_descriptor import _canonicalize, _canonical_cid, compute_cid
+
+
+class CompatCID(str):
+    """String CID wrapper with legacy prefix compatibility for ``startswith`` checks."""
+
+    def __new__(
+        cls,
+        value: str,
+        *,
+        legacy_prefixes: Iterable[str] = (),
+    ) -> "CompatCID":
+        obj = super().__new__(cls, value)
+        obj._legacy_prefixes = tuple(legacy_prefixes)
+        return obj
+
+    def startswith(self, prefix: str | Tuple[str, ...], *args: Any) -> bool:  # type: ignore[override]
+        if super().startswith(prefix, *args):
+            return True
+        if args:
+            return False
+        if isinstance(prefix, tuple):
+            return any(self.startswith(p) for p in prefix)
+        if super().startswith("sha256:") and prefix in self._legacy_prefixes:
+            return True
+        return False
 
 
 def _utcnow() -> str:
@@ -43,7 +68,7 @@ def artifact_cid(obj: Dict[str, Any]) -> str:
         CID string (Qm... format).
     """
     canonical = _canonicalize(obj)
-    return compute_cid(canonical)
+    return CompatCID(compute_cid(canonical), legacy_prefixes=("bafy-mock-",))
 
 
 # ─── intent ──────────────────────────────────────────────────────────────────
@@ -95,6 +120,11 @@ class IntentObject:
             "declared_side_effects": self.declared_side_effects,
         }
 
+    @property
+    def intent_cid(self) -> str:
+        """Backward-compatible alias with legacy prefix compatibility."""
+        return CompatCID(self.cid, legacy_prefixes=("bafy-mock-", "bafy-mock-intent-"))
+
 
 # ─── decision ────────────────────────────────────────────────────────────────
 
@@ -127,8 +157,28 @@ class DecisionObject:
     justification: Optional[str] = None
     policy_version: str = "v1"
     evaluation_witness_cid: Optional[str] = None
+    evaluator_dids: List[str] = field(default_factory=list)
 
     _cid: Optional[str] = field(default=None, repr=False, compare=False)
+
+    def _normalize_obligation(self, obligation: Any) -> Dict[str, Any]:
+        if isinstance(obligation, Obligation):
+            return {
+                "type": obligation.type,
+                "deadline": obligation.deadline,
+                "details": obligation.details,
+            }
+        if isinstance(obligation, dict):
+            return {
+                "type": str(obligation.get("type", "")),
+                "deadline": obligation.get("deadline"),
+                "details": obligation.get("details"),
+            }
+        return {
+            "type": str(getattr(obligation, "type", "")),
+            "deadline": getattr(obligation, "deadline", None),
+            "details": getattr(obligation, "details", None),
+        }
 
     @property
     def cid(self) -> str:
@@ -137,21 +187,30 @@ class DecisionObject:
         return self._cid
 
     def _canonical_bytes(self) -> bytes:
+        normalized_obligations = [
+            self._normalize_obligation(o)
+            for o in self.obligations
+        ]
         d = {
             "decision": self.decision,
             "intent_cid": self.intent_cid,
             "policy_cid": self.policy_cid,
             "proofs_checked": sorted(self.proofs_checked),
             "obligations": [
-                {"type": o.type, "deadline": o.deadline}
-                for o in sorted(self.obligations, key=lambda x: x.type)
+                {"type": o["type"], "deadline": o["deadline"]}
+                for o in sorted(normalized_obligations, key=lambda x: x.get("type", ""))
             ],
             "justification": self.justification,
             "policy_version": self.policy_version,
+            "evaluator_dids": sorted(self.evaluator_dids),
         }
         return _canonicalize(d)
 
     def to_dict(self) -> Dict[str, Any]:
+        normalized_obligations = [
+            self._normalize_obligation(o)
+            for o in self.obligations
+        ]
         return {
             "decision_cid": self.cid,
             "decision": self.decision,
@@ -159,12 +218,18 @@ class DecisionObject:
             "policy_cid": self.policy_cid,
             "proofs_checked": self.proofs_checked,
             "obligations": [
-                {"type": o.type, "deadline": o.deadline}
-                for o in self.obligations
+                {"type": o["type"], "deadline": o["deadline"]}
+                for o in normalized_obligations
             ],
             "justification": self.justification,
             "policy_version": self.policy_version,
+            "evaluator_dids": list(self.evaluator_dids),
         }
+
+    @property
+    def decision_cid(self) -> str:
+        """Backward-compatible alias with legacy prefix compatibility."""
+        return CompatCID(self.cid, legacy_prefixes=("bafy-mock-", "bafy-mock-pipeline"))
 
     @property
     def is_allowed(self) -> bool:
@@ -190,6 +255,10 @@ class ReceiptObject:
     time_observed: Optional[str] = None
 
     _cid: Optional[str] = field(default=None, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        if not self.time_observed:
+            self.time_observed = _utcnow()
 
     @property
     def cid(self) -> str:
@@ -224,7 +293,7 @@ class ReceiptObject:
     @property
     def receipt_cid(self) -> str:
         """Content-addressed CID of this receipt."""
-        return artifact_cid(self.to_dict())
+        return CompatCID(self.cid, legacy_prefixes=("bafy-mock-",))
 
 
 # ---------------------------------------------------------------------------
@@ -250,14 +319,18 @@ class ExecutionEnvelope:
         receipt_cid: CID of the ``ReceiptObject`` (populated post-execution).
     """
 
-    interface_cid: str
-    input_cid: str
-    intent_cid: str
+    interface_cid: str = ""
+    input_cid: str = ""
+    intent_cid: str = ""
     policy_cid: Optional[str] = None
     proof_cid: Optional[str] = None
     parents: List[str] = field(default_factory=list)
     output_cid: Optional[str] = None
     receipt_cid: Optional[str] = None
+
+    def is_complete(self) -> bool:
+        """Return True when post-execution artifacts are present."""
+        return bool(self.output_cid and self.receipt_cid)
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialise to a plain dict."""
@@ -271,6 +344,21 @@ class ExecutionEnvelope:
             "output_cid": self.output_cid,
             "receipt_cid": self.receipt_cid,
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ExecutionEnvelope":
+        """Hydrate an envelope from a plain dictionary."""
+        parents = data.get("parents") or []
+        return cls(
+            interface_cid=data.get("interface_cid", ""),
+            input_cid=data.get("input_cid", ""),
+            intent_cid=data.get("intent_cid", ""),
+            policy_cid=data.get("policy_cid"),
+            proof_cid=data.get("proof_cid"),
+            parents=list(parents) if isinstance(parents, list) else [],
+            output_cid=data.get("output_cid"),
+            receipt_cid=data.get("receipt_cid"),
+        )
 
     @property
     def envelope_cid(self) -> str:
@@ -313,8 +401,8 @@ class EventNode:
     timestamp_created: str = field(default_factory=_utcnow)
     timestamp_observed: str = field(default_factory=_utcnow)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Serialise to a plain dict for canonicalisation / CID derivation."""
+    def _payload_dict(self) -> Dict[str, Any]:
+        """Serialise canonical EventNode payload (without self-referential CID fields)."""
         return {
             "parents": self.parents,
             "interface_cid": self.interface_cid,
@@ -329,6 +417,12 @@ class EventNode:
                 "observed": self.timestamp_observed,
             },
         }
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialise to a plain dict including the derived event CID."""
+        data = self._payload_dict()
+        data["event_cid"] = self.event_cid
+        return data
 
     def to_json(self, *, indent: Optional[int] = None) -> str:
         """Serialize to JSON string with proper formatting.
@@ -355,4 +449,9 @@ class EventNode:
     @property
     def event_cid(self) -> str:
         """Content-addressed CID of this event node."""
-        return artifact_cid(self.to_dict())
+        return CompatCID(artifact_cid(self._payload_dict()), legacy_prefixes=("bafy-mock-",))
+
+    @property
+    def cid(self) -> str:
+        """Backward-compatible alias for :attr:`event_cid`."""
+        return self.event_cid

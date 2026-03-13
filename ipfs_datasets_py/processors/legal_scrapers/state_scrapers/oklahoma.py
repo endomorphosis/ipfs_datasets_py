@@ -5,7 +5,7 @@ DeliverDocument statute pages.
 """
 
 import json
-import asyncio
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import re
 from typing import Dict, List, Set
 from urllib.parse import quote, urljoin

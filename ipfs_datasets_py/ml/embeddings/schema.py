@@ -311,10 +311,11 @@ class EmbeddingRequest(BaseModel):
     normalize: Optional[bool] = Field(default=True, description="Whether to normalize embeddings")
     batch_size: Optional[int] = Field(default=32, description="Batch size for processing")
     
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             # Handle any custom encoding if needed
         }
+    )
 
 
 class EmbeddingResponse(BaseModel):
@@ -326,10 +327,11 @@ class EmbeddingResponse(BaseModel):
     texts_processed: int = Field(..., description="Number of texts processed")
     processing_time: Optional[float] = Field(default=None, description="Processing time in seconds")
     
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             # Handle any custom encoding if needed
         }
+    )
 
 
 class EmbeddingModel:

@@ -9246,7 +9246,7 @@ class OntologyGenerator:
             ... )
             >>> print(f"Found {len(result.entities)} entities")
         """
-        import asyncio
+        from ipfs_datasets_py.utils import anyio_compat as asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -9286,7 +9286,7 @@ class OntologyGenerator:
             ... )
             >>> total_entities = sum(len(r.entities) for r in results)
         """
-        import asyncio
+        from ipfs_datasets_py.utils import anyio_compat as asyncio
         
         # Handle single context for all items
         if isinstance(contexts, OntologyGenerationContext):
@@ -9343,7 +9343,7 @@ class OntologyGenerator:
             ... )
             >>> print(f"Found {len(relationships)} relationships")
         """
-        import asyncio
+        from ipfs_datasets_py.utils import anyio_compat as asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None,
@@ -9381,7 +9381,7 @@ class OntologyGenerator:
             ...     print(f"Received {len(chunk.entities)} entities")
             ...     # Process chunk immediately
         """
-        import asyncio
+        from ipfs_datasets_py.utils import anyio_compat as asyncio
         
         # For now, delegate to sync streaming and wrap in async
         # Future enhancement: true async streaming with backpressure

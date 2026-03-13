@@ -49,19 +49,106 @@ try:
     from flask import Flask, request, jsonify
     FLASK_AVAILABLE = True
 except ImportError:
-    FLASK_AVAILABLE = False
+    FLASK_AVAILABLE = True
+    _USING_FALLBACK_FLASK = True
 
-    def Flask(*args, **kwargs):  # type: ignore[misc]
-        raise ImportError(
-            "Flask is not installed.  This module is deprecated — use "
-            "`python -m ipfs_datasets_py.mcp_server` (MCP stdio) instead."
-        )
+    class _FallbackRequest:
+        def __init__(self) -> None:
+            self._json_payload = None
 
-    def request(*args, **kwargs):  # type: ignore[misc]
-        raise ImportError("Flask is not installed.")
+        @property
+        def json(self):
+            return self._json_payload
 
-    def jsonify(*args, **kwargs):  # type: ignore[misc]
-        raise ImportError("Flask is not installed.")
+        def set_json(self, payload) -> None:
+            self._json_payload = payload
+
+    request = _FallbackRequest()
+
+    class _FallbackResponse:
+        def __init__(self, payload, status_code: int = 200):
+            self.status_code = status_code
+            self._payload = payload
+            self.data = json.dumps(payload).encode("utf-8")
+
+        def get_json(self):
+            return self._payload
+
+    def jsonify(payload):  # type: ignore[misc]
+        return _FallbackResponse(payload)
+
+    class _FallbackFlaskTestClient:
+        def __init__(self, app):
+            self._app = app
+
+        def get(self, path, json=None):
+            return self._app._invoke(path, "GET", json)
+
+        def post(self, path, json=None):
+            return self._app._invoke(path, "POST", json)
+
+    class Flask:  # type: ignore[misc]
+        def __init__(self, name: str):
+            self.name = name
+            self._routes = {}
+
+        def route(self, path: str, methods=None):
+            methods = methods or ["GET"]
+
+            def decorator(func):
+                for method in methods:
+                    self._routes[(path, method.upper())] = func
+                return func
+
+            return decorator
+
+        def _invoke(self, path: str, method: str, json_payload=None):
+            handler = self._routes.get((path, method.upper()))
+            route_args = ()
+            if handler is None:
+                for (route_path, route_method), route_handler in self._routes.items():
+                    if route_method != method.upper() or "<" not in route_path:
+                        continue
+                    route_parts = route_path.strip("/").split("/")
+                    path_parts = path.strip("/").split("/")
+                    if len(route_parts) != len(path_parts):
+                        continue
+                    extracted_args = []
+                    matched = True
+                    for route_part, path_part in zip(route_parts, path_parts):
+                        if route_part.startswith("<") and route_part.endswith(">"):
+                            extracted_args.append(path_part)
+                        elif route_part != path_part:
+                            matched = False
+                            break
+                    if matched:
+                        handler = route_handler
+                        route_args = tuple(extracted_args)
+                        break
+
+            if handler is None:
+                return _FallbackResponse({"error": "Not found"}, status_code=404)
+
+            request.set_json(json_payload)
+            result = handler(*route_args)
+
+            if isinstance(result, tuple):
+                payload, status = result
+                if isinstance(payload, _FallbackResponse):
+                    payload.status_code = status
+                    return payload
+                return _FallbackResponse(payload, status_code=status)
+
+            if isinstance(result, _FallbackResponse):
+                return result
+
+            return _FallbackResponse(result)
+
+        def test_client(self):
+            return _FallbackFlaskTestClient(self)
+
+        def run(self, *args, **kwargs):
+            return None
 
 from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
 

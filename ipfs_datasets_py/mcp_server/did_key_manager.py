@@ -12,7 +12,7 @@ This module provides the :class:`DIDKeyManager` which:
 
 Usage example::
 
-    import asyncio
+    import anyio
     from ipfs_datasets_py.mcp_server.did_key_manager import DIDKeyManager
 
     async def main():
@@ -27,7 +27,7 @@ Usage example::
         )
         print("Token:", token[:60], "...")
 
-    asyncio.run(main())
+    anyio.run(main)
 
 Requirements
 ------------
@@ -39,7 +39,6 @@ Both are declared in the ``ucan`` extras group in ``setup.py`` and
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os

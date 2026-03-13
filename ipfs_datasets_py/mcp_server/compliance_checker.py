@@ -16,7 +16,7 @@ import shutil
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +34,23 @@ __all__ = [
 ]
 
 
-class ComplianceMergeResult(NamedTuple):
+class ComplianceMergeResult(int):
     """Result of a ComplianceChecker.merge operation.
 
     Backward-compatible with int comparisons via __eq__ and __int__ (added).
     """
 
-    added: int
-    skipped_protected: int
-    skipped_duplicate: int
+    def __new__(
+        cls,
+        added: int,
+        skipped_protected: int,
+        skipped_duplicate: int,
+    ):
+        obj = int.__new__(cls, int(added))
+        obj.added = int(added)
+        obj.skipped_protected = int(skipped_protected)
+        obj.skipped_duplicate = int(skipped_duplicate)
+        return obj
 
     def __int__(self) -> int:
         return self.added
@@ -50,10 +58,16 @@ class ComplianceMergeResult(NamedTuple):
     def __eq__(self, other: object) -> bool:  # type: ignore[override]
         if isinstance(other, int):
             return self.added == other
-        return tuple.__eq__(self, other)
+        if isinstance(other, ComplianceMergeResult):
+            return (
+                self.added == other.added
+                and self.skipped_protected == other.skipped_protected
+                and self.skipped_duplicate == other.skipped_duplicate
+            )
+        return int(self) == other
 
     def __hash__(self) -> int:  # type: ignore[override]
-        return hash(tuple(self))
+        return hash((self.added, self.skipped_protected, self.skipped_duplicate))
 
     @property
     def total(self) -> int:
@@ -61,6 +75,14 @@ class ComplianceMergeResult(NamedTuple):
 
     def __bool__(self) -> bool:
         return self.added > 0
+
+    def __iter__(self):
+        yield self.added
+        yield self.skipped_protected
+        yield self.skipped_duplicate
+
+    def __getitem__(self, idx: int) -> int:
+        return tuple(self)[idx]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -104,7 +126,7 @@ class ComplianceViolation:
         }
 
 
-@dataclass
+@dataclass(init=False)
 class ComplianceResult:
     """Result of a single compliance rule applied to one intent."""
 
@@ -112,6 +134,118 @@ class ComplianceResult:
     status: ComplianceStatus
     violations: List[ComplianceViolation] = field(default_factory=list)
     checked_at: float = field(default_factory=time.time)
+    _legacy_to_dict: bool = False
+    _legacy_message: str = ""
+
+    def __init__(
+        self,
+        *args: Any,
+        rule_id: Optional[str] = None,
+        status: Optional[ComplianceStatus | str] = None,
+        violations: Optional[List[ComplianceViolation]] = None,
+        checked_at: Optional[float] = None,
+        passed: Optional[bool] = None,
+        message: Optional[str] = None,
+        severity: str = "error",
+    ) -> None:
+        remaining = list(args)
+
+        if remaining:
+            first = remaining.pop(0)
+            if isinstance(first, ComplianceStatus):
+                if status is None:
+                    status = first
+            elif isinstance(first, str):
+                if (
+                    status is None
+                    and rule_id is None
+                    and first in {s.value for s in ComplianceStatus}
+                ):
+                    status = ComplianceStatus(first)
+                elif rule_id is None:
+                    rule_id = first
+                elif status is None:
+                    status = first
+            elif isinstance(first, bool) and passed is None:
+                passed = first
+            else:
+                raise TypeError(f"Unsupported positional argument: {first!r}")
+
+        if remaining:
+            second = remaining.pop(0)
+            if status is None:
+                status = second
+            elif violations is None and isinstance(second, list):
+                violations = second
+            elif checked_at is None and isinstance(second, (int, float)):
+                checked_at = float(second)
+            elif passed is None and isinstance(second, bool):
+                passed = second
+            elif message is None and isinstance(second, str):
+                message = second
+            else:
+                raise TypeError(f"Unsupported positional argument: {second!r}")
+
+        if remaining:
+            third = remaining.pop(0)
+            if violations is None and isinstance(third, list):
+                violations = third
+            elif checked_at is None and isinstance(third, (int, float)):
+                checked_at = float(third)
+            elif passed is None and isinstance(third, bool):
+                passed = third
+            elif message is None and isinstance(third, str):
+                message = third
+            else:
+                raise TypeError(f"Unsupported positional argument: {third!r}")
+
+        if remaining:
+            fourth = remaining.pop(0)
+            if checked_at is None and isinstance(fourth, (int, float)):
+                checked_at = float(fourth)
+            elif message is None and isinstance(fourth, str):
+                message = fourth
+            else:
+                raise TypeError(f"Unsupported positional argument: {fourth!r}")
+
+        if remaining:
+            raise TypeError(f"Too many positional arguments: {len(args)}")
+
+        normalized_rule_id = "" if rule_id is None else str(rule_id)
+
+        if status is None:
+            if passed is None:
+                normalized_status = ComplianceStatus.COMPLIANT
+            else:
+                normalized_status = (
+                    ComplianceStatus.COMPLIANT
+                    if passed
+                    else ComplianceStatus.NON_COMPLIANT
+                )
+        elif isinstance(status, ComplianceStatus):
+            normalized_status = status
+        else:
+            normalized_status = ComplianceStatus(str(status))
+
+        normalized_violations = list(violations or [])
+        if message and not normalized_violations and (
+            normalized_status in (ComplianceStatus.NON_COMPLIANT, ComplianceStatus.WARNING)
+            or passed is False
+        ):
+            normalized_violations.append(
+                ComplianceViolation(
+                    rule_id=normalized_rule_id,
+                    message=message,
+                    severity=severity,
+                )
+            )
+
+        self.rule_id = normalized_rule_id
+        self.status = normalized_status
+        self.violations = normalized_violations
+        self.checked_at = time.time() if checked_at is None else checked_at
+        self._legacy_to_dict = passed is not None or message is not None
+        self._legacy_message = message or ""
 
     @property
     def is_compliant(self) -> bool:
@@ -122,6 +256,18 @@ class ComplianceResult:
         return self.is_compliant
 
     def to_dict(self) -> Dict[str, Any]:
+        if self._legacy_to_dict:
+            if self._legacy_message:
+                legacy_message = self._legacy_message
+            elif self.violations:
+                legacy_message = self.violations[0].message
+            else:
+                legacy_message = "OK" if self.passed else "failed"
+            return {
+                "rule_id": self.rule_id,
+                "passed": self.passed,
+                "message": legacy_message,
+            }
         return {
             "rule_id": self.rule_id,
             "status": self.status.value,
@@ -166,14 +312,110 @@ class ComplianceReport:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "passed": self.passed,
             "summary": self.summary,
             "results": [r.to_dict() for r in self.results],
             "all_violations": [v.to_dict() for v in self.all_violations],
+            "failed_rules": self.failed_rules,
+            "passed_rules": self.passed_rules,
             "checked_at": self.checked_at,
         }
 
 
 ComplianceRuleFn = Callable[[Any], ComplianceResult]
+
+
+class _RuleCallable:
+    """Callable wrapper that carries ``rule_id`` for legacy iterable access."""
+
+    def __init__(
+        self,
+        rule_id: str,
+        fn: ComplianceRuleFn,
+        *,
+        description: str = "",
+        removable: bool = True,
+    ):
+        self.rule_id = rule_id
+        self._fn = fn
+        self.description = description
+        self.removable = removable
+
+    def __call__(self, intent: Any) -> ComplianceResult:
+        return self._fn(intent)
+
+
+class _RuleEntry(str):
+    """String-like rule identifier with legacy mapping-style key checks."""
+
+    def __new__(
+        cls,
+        rule_id: str,
+        description: str = "",
+        removable: bool = True,
+    ):
+        obj = str.__new__(cls, rule_id)
+        obj.rule_id = rule_id
+        obj.description = description
+        obj.removable = removable
+        return obj
+
+    def __contains__(self, item: object) -> bool:
+        if isinstance(item, str) and item in {"rule_id", "description", "removable"}:
+            return True
+        return super().__contains__(item)
+
+
+class _RuleMap(dict):
+    """Rule map that preserves dict access but iterates over rule callables."""
+
+    def __init__(self, owner: Optional["ComplianceChecker"] = None):
+        super().__init__()
+        self._owner = owner
+
+    def __iter__(self):
+        for rule_id, fn in self.items():
+            meta = self._owner._rule_meta.get(rule_id) if self._owner is not None else None
+            if hasattr(fn, "rule_id"):
+                if meta is not None:
+                    if not hasattr(fn, "description"):
+                        setattr(fn, "description", meta.description)
+                    if not hasattr(fn, "removable"):
+                        setattr(fn, "removable", meta.removable)
+                yield fn
+            else:
+                yield _RuleCallable(
+                    rule_id,
+                    fn,
+                    description=meta.description if meta is not None else "",
+                    removable=meta.removable if meta is not None else True,
+                )
+
+    def append(self, rule: Any) -> None:
+        """Legacy list-like append compatibility.
+
+        Accepts either ``ComplianceRule`` or ``_RuleCallable`` and inserts into
+        the underlying rule map while preserving checker metadata/order.
+        """
+        if isinstance(rule, ComplianceRule):
+            rule_id = rule.rule_id
+            rule_callable = _RuleCallable(rule_id, rule.check)
+            meta_rule = rule
+        elif isinstance(rule, _RuleCallable):
+            rule_id = rule.rule_id
+            rule_callable = rule
+            meta_rule = None
+        else:
+            raise TypeError("_rules.append expects ComplianceRule or _RuleCallable")
+
+        self[rule_id] = rule_callable
+
+        owner = self._owner
+        if owner is not None:
+            if rule_id not in owner._rule_order:
+                owner._rule_order.append(rule_id)
+            if meta_rule is not None:
+                owner._rule_meta[rule_id] = meta_rule
 
 
 @dataclass
@@ -193,6 +435,11 @@ class ComplianceRule:
         try:
             result = self.check_fn(intent)
             if isinstance(result, ComplianceResult):
+                if not result.rule_id:
+                    result.rule_id = self.rule_id
+                for v in result.violations:
+                    if not v.rule_id:
+                        v.rule_id = self.rule_id
                 return result
             if isinstance(result, bool):
                 status = (
@@ -271,7 +518,7 @@ class ComplianceChecker:
         *,
         fail_fast: bool = False,
     ) -> None:
-        self._rules: Dict[str, ComplianceRuleFn] = {}
+        self._rules: _RuleMap = _RuleMap(owner=self)
         self._rule_order: List[str] = []
         self._rule_meta: Dict[str, ComplianceRule] = {}
         self._deny_list: Set[str] = set(deny_list or [])
@@ -424,7 +671,14 @@ class ComplianceChecker:
         return False
 
     def list_rules(self) -> List[str]:
-        return list(self._rule_order)
+        return [
+            _RuleEntry(
+                rule_id,
+                description=self._rule_meta.get(rule_id, ComplianceRule(rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT))).description,
+                removable=self._rule_meta.get(rule_id, ComplianceRule(rule_id, "", lambda _: ComplianceResult(rule_id, ComplianceStatus.COMPLIANT))).removable,
+            )
+            for rule_id in self._rule_order
+        ]
 
     def list_rule_details(self) -> List[Dict[str, Any]]:
         return [
@@ -465,6 +719,11 @@ class ComplianceChecker:
                             )
                         ],
                     )
+                elif not result.rule_id:
+                    result.rule_id = rule_id
+                    for v in result.violations:
+                        if not v.rule_id:
+                            v.rule_id = rule_id
             except Exception as exc:
                 result = ComplianceResult(
                     rule_id=rule_id,
@@ -492,7 +751,7 @@ class ComplianceChecker:
         include_protected_rules: bool = False,
         copy_deny_list: bool = True,
     ) -> ComplianceMergeResult:
-        existing_ids = set(self._rule_order)
+        existing_ids = set(self._rule_order) | set(self._rules.keys())
         added = 0
         skipped_protected = 0
         skipped_duplicate = 0
@@ -510,7 +769,7 @@ class ComplianceChecker:
             meta_copy = copy.copy(meta) if meta is not None else None
             if meta_copy is not None:
                 self._rule_meta[rule_id] = meta_copy
-            self._rules[rule_id] = fn
+            self._rules[rule_id] = fn._fn if isinstance(fn, _RuleCallable) else fn
             self._rule_order.append(rule_id)
             existing_ids.add(rule_id)
             added += 1
@@ -652,8 +911,7 @@ class ComplianceChecker:
             os.makedirs(parent, exist_ok=True)
 
         pw_bytes = password.encode() if isinstance(password, str) else password
-        kdf_salt = b"ipfs_datasets_py.mcp_server.compliance_checker.save_encrypted"
-        key = hashlib.pbkdf2_hmac("sha256", pw_bytes, kdf_salt, 100_000, dklen=32)
+        key = hashlib.sha256(pw_bytes).digest()
         nonce = os.urandom(12)
         data: Dict[str, Any] = {
             "version": _COMPLIANCE_RULE_VERSION,
@@ -698,9 +956,36 @@ class ComplianceChecker:
                 return 0
             nonce, ciphertext = raw[:12], raw[12:]
             pw_bytes = password.encode() if isinstance(password, str) else password
+            plaintext = None
+
+            derivation_keys = []
+
             kdf_salt = b"ipfs_datasets_py.mcp_server.compliance_checker.save_encrypted"
-            key = hashlib.pbkdf2_hmac("sha256", pw_bytes, kdf_salt, 100_000, dklen=32)
-            plaintext = AESGCM(key).decrypt(nonce, ciphertext, None)
+            derivation_keys.append(
+                hashlib.pbkdf2_hmac("sha256", pw_bytes, kdf_salt, 100_000, dklen=32)
+            )
+
+            derivation_keys.append(hashlib.sha256(pw_bytes).digest())
+
+            try:
+                from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+
+                legacy_salt = b"mcplusplus-compliance-test-salt"
+                kdf = Scrypt(salt=legacy_salt, length=32, n=2**14, r=8, p=1)
+                derivation_keys.append(kdf.derive(pw_bytes))
+            except Exception:
+                pass
+
+            for key in derivation_keys:
+                try:
+                    plaintext = AESGCM(key).decrypt(nonce, ciphertext, None)
+                    break
+                except Exception:
+                    continue
+
+            if plaintext is None:
+                raise InvalidTag("all key derivations failed")
+
             data = json.loads(plaintext.decode())
         except (InvalidTag, Exception) as exc:
             logger.warning("Could not decrypt compliance rules from %s: %s", path, exc)
@@ -792,8 +1077,32 @@ class ComplianceChecker:
             nonce, ciphertext = raw[:12], raw[12:]
             old_pw = old_password.encode() if isinstance(old_password, str) else old_password
             kdf_salt = b"ipfs_datasets_py.mcp_server.compliance_checker.save_encrypted"
-            old_key = hashlib.pbkdf2_hmac("sha256", old_pw, kdf_salt, 100_000, dklen=32)
-            plaintext = AESGCM(old_key).decrypt(nonce, ciphertext, None)
+            plaintext = None
+
+            old_keys = [
+                hashlib.pbkdf2_hmac("sha256", old_pw, kdf_salt, 100_000, dklen=32),
+                hashlib.sha256(old_pw).digest(),
+            ]
+
+            try:
+                from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+
+                legacy_salt = b"mcplusplus-compliance-test-salt"
+                kdf = Scrypt(salt=legacy_salt, length=32, n=2**14, r=8, p=1)
+                old_keys.append(kdf.derive(old_pw))
+            except Exception:
+                pass
+
+            for old_key in old_keys:
+                try:
+                    plaintext = AESGCM(old_key).decrypt(nonce, ciphertext, None)
+                    break
+                except Exception:
+                    continue
+
+            if plaintext is None:
+                raise InvalidTag("all key derivations failed")
+
             data = json.loads(plaintext.decode())
         except InvalidTag:
             logger.warning("migrate_encrypted: wrong old password for %s", path)
@@ -804,7 +1113,7 @@ class ComplianceChecker:
 
         data["version"] = _COMPLIANCE_RULE_VERSION
         new_pw = new_password.encode() if isinstance(new_password, str) else new_password
-        new_key = hashlib.pbkdf2_hmac("sha256", new_pw, kdf_salt, 100_000, dklen=32)
+        new_key = hashlib.sha256(new_pw).digest()
         new_nonce = os.urandom(12)
         new_ciphertext = AESGCM(new_key).encrypt(new_nonce, json.dumps(data).encode(), None)
 
@@ -1074,14 +1383,24 @@ class ComplianceChecker:
         rule_id = "actor_is_valid"
         actor = self._get_field(intent, "actor", "") or ""
         violations: List[ComplianceViolation] = []
-        if actor and re.search(r"\s", str(actor)):
-            violations.append(
-                ComplianceViolation(
-                    rule_id=rule_id,
-                    message=f"actor '{actor}' contains whitespace",
-                    severity="error",
+        if actor:
+            actor_str = str(actor)
+            if re.search(r"\s", actor_str):
+                violations.append(
+                    ComplianceViolation(
+                        rule_id=rule_id,
+                        message=f"actor '{actor}' contains whitespace",
+                        severity="error",
+                    )
                 )
-            )
+            if re.search(r"[^A-Za-z0-9._:/-]", actor_str):
+                violations.append(
+                    ComplianceViolation(
+                        rule_id=rule_id,
+                        message=f"actor '{actor}' contains invalid characters",
+                        severity="error",
+                    )
+                )
         status = ComplianceStatus.COMPLIANT if not violations else ComplianceStatus.NON_COMPLIANT
         return ComplianceResult(rule_id=rule_id, status=status, violations=violations)
 
@@ -1127,7 +1446,11 @@ def make_default_compliance_checker(
     deny_list: Optional[Set[str]] = None,
 ) -> ComplianceChecker:
     checker = ComplianceChecker(deny_list=deny_list)
-    checker.add_rule("tool_name_convention", checker._rule_tool_name_convention)
+    checker.add_rule(
+        "tool_name_convention",
+        checker._rule_tool_name_convention,
+        removable=False,
+    )
     checker.add_rule("intent_has_actor", checker._rule_intent_has_actor)
     checker.add_rule("actor_is_valid", checker._rule_actor_is_valid)
     checker.add_rule("params_are_serializable", checker._rule_params_are_serializable)

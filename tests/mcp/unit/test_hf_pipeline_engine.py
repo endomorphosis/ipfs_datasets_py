@@ -107,6 +107,50 @@ class TestUploadToHuggingFaceInParallel:
         assert uploader.repo_id == "owner/my-dataset"
         assert isinstance(uploader.rate_limiter, RateLimiter)
 
+    def test_init_checks_existing_auth_before_login(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """GIVEN active `hf auth whoami`; THEN login() is not called."""
+        class MockConfigs:
+            REPO_ID = "owner/my-dataset"
+            HUGGING_FACE_USER_ACCESS_TOKEN = "token-value"
+            REQUEST_LIMIT_PER_HOUR = 100
+
+        class _Completed:
+            returncode = 0
+
+        monkeypatch.setattr(_engine_mod.subprocess, "run", lambda *args, **kwargs: _Completed())
+
+        login_called = {"count": 0}
+
+        def _fake_login(*args, **kwargs):
+            login_called["count"] += 1
+
+        monkeypatch.setattr(_engine_mod, "login", _fake_login)
+
+        UploadToHuggingFaceInParallel(configs=MockConfigs())
+        assert login_called["count"] == 0
+
+    def test_init_without_auth_and_without_token_skips_login(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """GIVEN no `hf auth whoami` session and no token; THEN login() is not called."""
+        class MockConfigs:
+            REPO_ID = "owner/my-dataset"
+            HUGGING_FACE_USER_ACCESS_TOKEN = None
+            REQUEST_LIMIT_PER_HOUR = 100
+
+        class _Completed:
+            returncode = 1
+
+        monkeypatch.setattr(_engine_mod.subprocess, "run", lambda *args, **kwargs: _Completed())
+
+        login_called = {"count": 0}
+
+        def _fake_login(*args, **kwargs):
+            login_called["count"] += 1
+
+        monkeypatch.setattr(_engine_mod, "login", _fake_login)
+
+        UploadToHuggingFaceInParallel(configs=MockConfigs())
+        assert login_called["count"] == 0
+
     def test_api_attribute_is_hfapi(self) -> None:
         """GIVEN new uploader; THEN api is an HfApi instance."""
         uploader = UploadToHuggingFaceInParallel()
