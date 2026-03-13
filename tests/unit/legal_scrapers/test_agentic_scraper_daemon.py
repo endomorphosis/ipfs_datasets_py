@@ -3227,6 +3227,7 @@ async def test_state_admin_rules_agentic_daemon_router_llm_env_overrides_forward
     monkeypatch.setenv("LEGAL_DAEMON_ROUTER_LLM_PROVIDER", "hf_inference_api")
     monkeypatch.setenv("LEGAL_DAEMON_ROUTER_LLM_MODEL", "deepseek-ai/DeepSeek-R1:preferred")
     monkeypatch.setenv("LEGAL_DAEMON_ROUTER_LLM_HF_PROVIDER", "auto")
+    monkeypatch.setenv("LEGAL_DAEMON_ROUTER_LLM_HF_BILL_TO", "Publicus")
 
     daemon = daemon_module.StateLawsAgenticDaemon(
         daemon_module.StateLawsAgenticDaemonConfig(
@@ -3249,10 +3250,12 @@ async def test_state_admin_rules_agentic_daemon_router_llm_env_overrides_forward
     assert result["provider"] == "hf_inference_api"
     assert result["model_name"] == "deepseek-ai/DeepSeek-R1:preferred"
     assert result["hf_provider"] == "auto"
+    assert result["hf_bill_to"] == "Publicus"
     assert captured["kwargs"] == {
         "provider": "hf_inference_api",
         "model_name": "deepseek-ai/DeepSeek-R1:preferred",
         "hf_provider": "auto",
+        "hf_bill_to": "Publicus",
         "hf_use_chat_completions": True,
         "temperature": 0.2,
         "max_tokens": 350,

@@ -1073,6 +1073,23 @@ def _resolve_hf_provider(*, kwargs: Optional[dict[str, object]] = None) -> str:
     )
 
 
+def _build_hf_inference_client_kwargs(
+    *,
+    provider: str,
+    token: str,
+    timeout: float,
+    bill_to: str = "",
+) -> dict[str, object]:
+    client_kwargs: dict[str, object] = {
+        "provider": provider,
+        "token": token,
+        "timeout": timeout,
+    }
+    if bill_to.strip():
+        client_kwargs["bill_to"] = bill_to.strip()
+    return client_kwargs
+
+
 def _hf_model_uses_provider_policy(model_name: Optional[str]) -> bool:
     return ":" in str(model_name or "").strip()
 
@@ -1721,10 +1738,12 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                 if client_cls is None:
                     raise RuntimeError("huggingface_hub.InferenceClient not available")
                 client = client_cls(
-                    provider=provider_name,
-                    token=api_token,
-                    bill_to=bill_to,
-                    timeout=timeout,
+                    **_build_hf_inference_client_kwargs(
+                        provider=provider_name,
+                        token=api_token,
+                        bill_to=bill_to,
+                        timeout=timeout,
+                    )
                 )
                 chat = getattr(client, "chat", None)
                 completions = getattr(chat, "completions", None) if chat is not None else None
@@ -1833,10 +1852,12 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
                         if client_cls is None:
                             raise RuntimeError("huggingface_hub.InferenceClient not available")
                         client = client_cls(
-                            provider="hf-inference",
-                            token=api_token,
-                            bill_to=bill_to,
-                            timeout=timeout,
+                            **_build_hf_inference_client_kwargs(
+                                provider="hf-inference",
+                                token=api_token,
+                                bill_to=bill_to,
+                                timeout=timeout,
+                            )
                         )
                         result = client.text_generation(
                             prompt,

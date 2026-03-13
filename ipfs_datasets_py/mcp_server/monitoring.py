@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover
     psutil = None  # type: ignore[assignment]
     HAVE_PSUTIL = False
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Callable, Union, AsyncGenerator
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def _utcnow() -> datetime:
     """Return naive UTC datetime without using deprecated datetime.utcnow()."""
-    return datetime.now(datetime.UTC).replace(tzinfo=None)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 @dataclass
 class MetricData:

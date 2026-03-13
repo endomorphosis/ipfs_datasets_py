@@ -387,13 +387,68 @@ def test_hf_inference_api_chat_completions_create_supports_provider_auto(monkeyp
     assert captured["client_kwargs"] == {
         "provider": "auto",
         "token": "test-token",
-        "bill_to": "",
         "timeout": 120.0,
     }
     assert captured["create_kwargs"] == {
         "messages": [{"role": "user", "content": "Hello"}],
         "model": "deepseek-ai/DeepSeek-R1:preferred",
         "stream": False,
+    }
+
+
+def test_hf_inference_api_generate_omits_blank_bill_to_for_inference_client(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.delenv("IPFS_DATASETS_PY_HF_BILL_TO", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_BILL_TO", raising=False)
+    monkeypatch.delenv("HF_BILL_TO", raising=False)
+
+    captured: dict[str, object] = {}
+
+    class _FakeHTTPError(llm_router.urllib.error.HTTPError):
+        def __init__(self):
+            super().__init__(
+                url="https://example.invalid/models/bad-model",
+                code=404,
+                msg="Not Found",
+                hdrs=None,
+                fp=None,
+            )
+
+        def read(self) -> bytes:
+            return b'{"detail":"Not Found"}'
+
+    def fake_urlopen(req, timeout=0):
+        _ = (req, timeout)
+        raise _FakeHTTPError()
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    class _FakeInferenceClient:
+        def __init__(self, **kwargs):
+            captured["client_kwargs"] = dict(kwargs)
+
+        def text_generation(self, prompt, **kwargs):
+            _ = (prompt, kwargs)
+            return "ok via inference client"
+
+    fake_hub = types.SimpleNamespace(InferenceClient=_FakeInferenceClient, get_token=lambda: "test-token")
+    original_import_module = llm_router.importlib.import_module
+
+    def fake_import_module(name: str, package=None):
+        if name == "huggingface_hub":
+            return fake_hub
+        return original_import_module(name, package)
+
+    monkeypatch.setattr(llm_router.importlib, "import_module", fake_import_module)
+
+    text = llm_router.generate_text("hello", provider="hf_inference_api", model_name="bad-model")
+
+    assert text == "ok via inference client"
+    assert captured["client_kwargs"] == {
+        "provider": "hf-inference",
+        "token": "test-token",
+        "timeout": 120.0,
     }
 
 

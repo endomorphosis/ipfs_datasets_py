@@ -186,7 +186,7 @@ _CA_WESTLAW_DOCUMENT_BOILERPLATE_LINE_RE = re.compile(
 )
 
 _CA_WESTLAW_DOCUMENT_BREADCRUMB_LINE_RE = re.compile(
-    r"^(?:Title\s+\d+\.|Division\s+\d+(?:\.\d+)?\.|Chapter\s+\d+(?:\.\d+)?\.|Article\s+(?:\d+|[IVXLCM]+)\.)\b.*$",
+    r"^(?:Title\s+\d+\.|Division\s+\d+(?:\.\d+)?\.|Chapter\s+\d+(?:\.\d+)?\.|Article\s+(?:\d+|[IVXLCM]+)\.)(?:\s+.*)?$",
     re.IGNORECASE,
 )
 

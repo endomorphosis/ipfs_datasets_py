@@ -747,6 +747,10 @@ class StateLawsAgenticDaemon:
             "LEGAL_DAEMON_ROUTER_LLM_HF_PROVIDER",
             "IPFS_DATASETS_PY_ROUTER_REVIEW_HF_PROVIDER",
         )
+        hf_bill_to_override = self._coalesce_router_llm_env(
+            "LEGAL_DAEMON_ROUTER_LLM_HF_BILL_TO",
+            "IPFS_DATASETS_PY_ROUTER_REVIEW_HF_BILL_TO",
+        )
         hf_use_chat_env = self._truthy_env("LEGAL_DAEMON_ROUTER_LLM_HF_USE_CHAT_COMPLETIONS")
         if hf_use_chat_env is None:
             hf_use_chat_env = self._truthy_env("IPFS_DATASETS_PY_ROUTER_REVIEW_HF_USE_CHAT_COMPLETIONS")
@@ -762,6 +766,8 @@ class StateLawsAgenticDaemon:
             kwargs["model_name"] = model_override
         if hf_provider_override:
             kwargs["hf_provider"] = hf_provider_override
+        if hf_bill_to_override:
+            kwargs["hf_bill_to"] = hf_bill_to_override
         if hf_use_chat_env is not None:
             kwargs["hf_use_chat_completions"] = hf_use_chat_env
 
@@ -2146,6 +2152,8 @@ class StateLawsAgenticDaemon:
             parsed["model_name"] = str(router_llm_kwargs.get("model_name"))
         if router_llm_kwargs.get("hf_provider"):
             parsed["hf_provider"] = str(router_llm_kwargs.get("hf_provider"))
+        if router_llm_kwargs.get("hf_bill_to"):
+            parsed["hf_bill_to"] = str(router_llm_kwargs.get("hf_bill_to"))
         return parsed
 
     async def _run_router_llm_review_with_timeout(
