@@ -103,6 +103,7 @@ _BAD_DISCOVERY_DOMAIN_RE = re.compile(
 
 _BAD_DISCOVERY_TEXT_RE = re.compile(
     r"site\s+has\s+moved|redirected\s+shortly|page\s+not\s+found|404\s+not\s+found|403\s+forbidden|toggle\s+navigation|submit\s+your\s+own\s+pictures|"
+    r"the\s+request\s+could\s+not\s+be\s+satisfied|generated\s+by\s+cloudfront|request\s+blocked|"
     r"city-data\.com\s+does\s+not\s+guarantee|forum\s+cities\s+schools\s+neighborhoods|"
     r"administrative\s+rules\s+source\s+url:\s*https?://|you\s+need\s+to\s+enable\s+javascript\s+to\s+run\s+this\s+app|"
     r"javascript\s+is\s+not\s+enabled|there\s+are\s+currently\s+no\s+rules\s+pending\s+for\s+this\s+agency|"
@@ -1392,6 +1393,12 @@ def _score_candidate_url(url: str) -> int:
         "/sos/rules/tenncare.htm",
     }:
         score += 9
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE):
+        score += 12
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\w.-]+\.pdf$", path, re.IGNORECASE):
+        score += 10
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules_filings/[\w.-]+\.pdf$", path, re.IGNORECASE):
+        score += 8
     if host == "publications.tnsosfiles.com" and normalized_path.lower() in {"/rules", "/rules/"}:
         score += 6
     if host == "sos.tn.gov" and normalized_path.lower() in {
@@ -1595,6 +1602,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php":
         if re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
             return True
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE):
+        return True
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
