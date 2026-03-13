@@ -711,6 +711,11 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
 # States that still need broader, controlled acceptance during recovery runs.
 _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 
+# These states are better served by direct admin-rule discovery than by the
+# delegated state-laws scrape, which can consume the bounded budget on
+# statute-specific work before admin-rule recovery starts.
+_DIRECT_AGENTIC_RECOVERY_STATES = {"WY"}
+
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
     legal_area = str(statute.get("legal_area") or "")
@@ -5504,24 +5509,38 @@ async def scrape_state_admin_rules(
             delegated_base_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
             delegated_fallback_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
 
+        direct_agentic_states = [
+            state_code for state_code in selected_states if state_code in _DIRECT_AGENTIC_RECOVERY_STATES
+        ]
+        delegated_base_states = [
+            state_code for state_code in selected_states if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
+        ]
+
         base_started_at = time.time()
-        base_result = await scrape_state_laws(
-            states=selected_states,
-            legal_areas=["administrative"],
-            output_format=output_format,
-            include_metadata=include_metadata,
-            rate_limit_delay=rate_limit_delay,
-            max_statutes=effective_max_base_statutes,
-            output_dir=None,  # Keep separate admin-rules output root.
-            write_jsonld=False,
-            strict_full_text=strict_full_text,
-            min_full_text_chars=min_full_text_chars,
-            hydrate_statute_text=hydrate_rule_text,
-            parallel_workers=parallel_workers,
-            per_state_retry_attempts=0,
-            retry_zero_statute_states=False,
-            per_state_timeout_seconds=delegated_base_timeout_seconds,
-        )
+        if delegated_base_states:
+            base_result = await scrape_state_laws(
+                states=delegated_base_states,
+                legal_areas=["administrative"],
+                output_format=output_format,
+                include_metadata=include_metadata,
+                rate_limit_delay=rate_limit_delay,
+                max_statutes=effective_max_base_statutes,
+                output_dir=None,  # Keep separate admin-rules output root.
+                write_jsonld=False,
+                strict_full_text=strict_full_text,
+                min_full_text_chars=min_full_text_chars,
+                hydrate_statute_text=hydrate_rule_text,
+                parallel_workers=parallel_workers,
+                per_state_retry_attempts=0,
+                retry_zero_statute_states=False,
+                per_state_timeout_seconds=delegated_base_timeout_seconds,
+            )
+        else:
+            base_result = {
+                "status": "success",
+                "data": [],
+                "metadata": {"states_scraped": []},
+            }
         _record_phase("base_scrape_seconds", base_started_at)
 
         filter_started_at = time.time()
@@ -5544,54 +5563,59 @@ async def scrape_state_admin_rules(
         fallback_recovered_states: List[str] = []
         if retry_zero_rule_states and zero_rule_states:
             fallback_started_at = time.time()
-            fallback_attempted_states = sorted(set(zero_rule_states))
-            fallback_result = await scrape_state_laws(
-                states=fallback_attempted_states,
-                legal_areas=None,
-                output_format=output_format,
-                include_metadata=include_metadata,
-                rate_limit_delay=rate_limit_delay,
-                max_statutes=effective_max_base_statutes,
-                output_dir=None,
-                write_jsonld=False,
-                strict_full_text=strict_full_text,
-                min_full_text_chars=min_full_text_chars,
-                hydrate_statute_text=hydrate_rule_text,
-                parallel_workers=parallel_workers,
-                per_state_retry_attempts=0,
-                retry_zero_statute_states=False,
-                per_state_timeout_seconds=delegated_fallback_timeout_seconds,
+            fallback_attempted_states = sorted(
+                state_code
+                for state_code in set(zero_rule_states)
+                if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
             )
+            if fallback_attempted_states:
+                fallback_result = await scrape_state_laws(
+                    states=fallback_attempted_states,
+                    legal_areas=None,
+                    output_format=output_format,
+                    include_metadata=include_metadata,
+                    rate_limit_delay=rate_limit_delay,
+                    max_statutes=effective_max_base_statutes,
+                    output_dir=None,
+                    write_jsonld=False,
+                    strict_full_text=strict_full_text,
+                    min_full_text_chars=min_full_text_chars,
+                    hydrate_statute_text=hydrate_rule_text,
+                    parallel_workers=parallel_workers,
+                    per_state_retry_attempts=0,
+                    retry_zero_statute_states=False,
+                    per_state_timeout_seconds=delegated_fallback_timeout_seconds,
+                )
 
-            fallback_filtered, _, _ = _filter_admin_state_blocks(
-                list(fallback_result.get("data") or []),
-                max_rules=max_rules,
-                min_full_text_chars=int(min_full_text_chars),
-                require_substantive_text=bool(require_substantive_rule_text),
-            )
-            fallback_by_state = {
-                str(item.get("state_code") or "").upper(): item
-                for item in fallback_filtered
-                if isinstance(item, dict)
-            }
+                fallback_filtered, _, _ = _filter_admin_state_blocks(
+                    list(fallback_result.get("data") or []),
+                    max_rules=max_rules,
+                    min_full_text_chars=int(min_full_text_chars),
+                    require_substantive_text=bool(require_substantive_rule_text),
+                )
+                fallback_by_state = {
+                    str(item.get("state_code") or "").upper(): item
+                    for item in fallback_filtered
+                    if isinstance(item, dict)
+                }
 
-            merged: List[Dict[str, Any]] = []
-            for block in filtered_data:
-                state_code = str((block or {}).get("state_code") or "").upper()
-                replacement = fallback_by_state.get(state_code)
-                if replacement and int(replacement.get("rules_count") or 0) > int(block.get("rules_count") or 0):
-                    merged.append(replacement)
-                    if int(block.get("rules_count") or 0) == 0:
-                        fallback_recovered_states.append(state_code)
-                else:
-                    merged.append(block)
-            filtered_data = merged
-            admin_rule_count = sum(int((item or {}).get("rules_count") or 0) for item in filtered_data)
-            zero_rule_states = [
-                str(item.get("state_code") or "").upper()
-                for item in filtered_data
-                if isinstance(item, dict) and int(item.get("rules_count") or 0) == 0
-            ]
+                merged: List[Dict[str, Any]] = []
+                for block in filtered_data:
+                    state_code = str((block or {}).get("state_code") or "").upper()
+                    replacement = fallback_by_state.get(state_code)
+                    if replacement and int(replacement.get("rules_count") or 0) > int(block.get("rules_count") or 0):
+                        merged.append(replacement)
+                        if int(block.get("rules_count") or 0) == 0:
+                            fallback_recovered_states.append(state_code)
+                    else:
+                        merged.append(block)
+                filtered_data = merged
+                admin_rule_count = sum(int((item or {}).get("rules_count") or 0) for item in filtered_data)
+                zero_rule_states = [
+                    str(item.get("state_code") or "").upper()
+                    for item in filtered_data
+                    if isinstance(item, dict) and int(item.get("rules_count") or 0) == 0
+                ]
             _record_phase("fallback_retry_seconds", fallback_started_at)
 
         agentic_attempted_states: List[str] = []
@@ -5706,6 +5730,7 @@ async def scrape_state_admin_rules(
             "state_laws_internal_retry_zero_statute_states": False,
             "state_laws_base_per_state_timeout_seconds": float(delegated_base_timeout_seconds),
             "state_laws_fallback_per_state_timeout_seconds": float(delegated_fallback_timeout_seconds),
+            "base_scrape_skipped_states": direct_agentic_states or None,
             "agentic_per_state_budget_seconds": float(agentic_per_state_budget_seconds),
             "retry_zero_rule_states": bool(retry_zero_rule_states),
             "fallback_attempted_states": fallback_attempted_states or None,

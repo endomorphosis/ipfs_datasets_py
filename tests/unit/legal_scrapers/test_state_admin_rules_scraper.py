@@ -4173,6 +4173,82 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
 
 
 @pytest.mark.anyio
+async def test_scrape_state_admin_rules_skips_wyoming_base_scrape_and_goes_direct_agentic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scrape_calls = []
+
+    async def _fake_scrape_state_laws(**kwargs):
+        scrape_calls.append(dict(kwargs))
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        assert kwargs["states"] == ["WY"]
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "WY",
+                    "state_name": "Wyoming",
+                    "title": "Wyoming Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://rules.wyo.gov/",
+                    "scraped_at": "2026-03-13T00:00:00",
+                    "statutes": [
+                        {
+                            "state_code": "WY",
+                            "state_name": "Wyoming",
+                            "statute_id": "WY-AGENTIC-1",
+                            "code_name": "Wyoming Administrative Rules (Agentic Discovery)",
+                            "section_number": "1",
+                            "section_name": "Wyoming Administrative Rules Index",
+                            "short_title": "Wyoming Administrative Rules Index",
+                            "full_text": "Wyoming administrative rules chapter inventory and official filing links.",
+                            "summary": "Wyoming administrative rules chapter inventory and official filing links.",
+                            "legal_area": "administrative",
+                            "source_url": "https://rules.wyo.gov/Help/Public/wyoming-administrative-rules-h.html",
+                            "official_cite": "WY Admin Rule 1",
+                            "structured_data": {"type": "regulation", "agentic_discovery": True},
+                        }
+                    ],
+                    "rules_count": 1,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            ],
+            "kg_rows": [],
+            "report": {"WY": {"rules_count": 1}},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["WY"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        require_substantive_rule_text=True,
+    )
+
+    assert scrape_calls == []
+    assert result["status"] == "success"
+    assert result["metadata"]["base_scrape_skipped_states"] == ["WY"]
+    assert result["metadata"]["fallback_attempted_states"] is None
+    assert result["metadata"]["agentic_attempted_states"] == ["WY"]
+    assert result["metadata"]["agentic_recovered_states"] == ["WY"]
+    assert result["data"][0]["state_code"] == "WY"
+    assert result["data"][0]["rules_count"] == 1
+
+
+@pytest.mark.anyio
 async def test_scrape_state_admin_rules_reports_cloudflare_availability_when_credentials_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
