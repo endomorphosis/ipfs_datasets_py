@@ -4763,6 +4763,7 @@ async def test_agentic_discovery_prioritizes_deeper_california_inventory_links(m
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
     assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [deep_url]
+    assert result["state_blocks"][0]["statutes"][0]["section_name"] == "§ 1. Chapter Definitions."
 
 
 @pytest.mark.anyio

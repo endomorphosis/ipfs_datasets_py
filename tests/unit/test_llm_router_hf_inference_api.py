@@ -221,6 +221,9 @@ def test_hf_inference_api_retries_with_discovered_models(monkeypatch) -> None:
 def test_hf_inference_api_falls_back_to_inference_client_after_router_404(monkeypatch) -> None:
     llm_router.clear_llm_router_caches()
     monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_BILL_TO", "Publicus")
+
+    captured: dict[str, object] = {}
 
     class _FakeHTTPError(llm_router.urllib.error.HTTPError):
         def __init__(self):
@@ -243,7 +246,7 @@ def test_hf_inference_api_falls_back_to_inference_client_after_router_404(monkey
 
     class _FakeInferenceClient:
         def __init__(self, **kwargs):
-            self.kwargs = kwargs
+            captured["client_kwargs"] = dict(kwargs)
 
         def text_generation(self, prompt, **kwargs):
             _ = (prompt, kwargs)
@@ -262,3 +265,9 @@ def test_hf_inference_api_falls_back_to_inference_client_after_router_404(monkey
     text = llm_router.generate_text("hello", provider="hf_inference_api", model_name="bad-model")
 
     assert text == "ok via inference client"
+    assert captured["client_kwargs"] == {
+        "provider": "hf-inference",
+        "token": "test-token",
+        "bill_to": "Publicus",
+        "timeout": 120.0,
+    }

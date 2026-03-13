@@ -2679,6 +2679,29 @@ def _title_from_extracted_rtf_text(*, text: str, url: str) -> str:
     return _title_from_extracted_pdf_text(text=text, url=url)
 
 
+def _title_from_california_westlaw_document_text(*, text: str, url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "govt.westlaw.com" or not parsed.path.lower().startswith("/calregs/document/"):
+        return ""
+
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return ""
+
+    section_match = re.search(r"(§\s*[\w.-]+\.?\s+[^\n]{1,220}?\.)", normalized_text)
+    if section_match:
+        return re.sub(r"\s+", " ", section_match.group(1)).strip()[:240]
+
+    for line in normalized_text.splitlines():
+        cleaned = re.sub(r"\s+", " ", line).strip()
+        if not cleaned:
+            continue
+        if re.match(r"^(?:§\s*[\w.-]+\.?|Article\s+[\w.-]+\.?|Chapter\s+[\w.-]+\.?|Title\s+[\w.-]+\.?)\b", cleaned, re.IGNORECASE):
+            return cleaned[:240]
+
+    return ""
+
+
 async def _normalize_candidate_document_content(*, url: str, title: str, text: str) -> tuple[str, str]:
     normalized_title = str(title or "").strip()
     normalized_text = str(text or "").strip()
@@ -2695,6 +2718,14 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
             normalized_text = extracted_text
             if not normalized_title or _RTF_CONTENT_PREFIX_RE.search(normalized_title[:1024]):
                 normalized_title = _title_from_extracted_rtf_text(text=normalized_text, url=url)
+
+    if (
+        normalized_title.lower() == "view document - california code of regulations"
+        or normalized_title.lower() == "california code of regulations"
+    ):
+        california_title = _title_from_california_westlaw_document_text(text=normalized_text, url=url)
+        if california_title:
+            normalized_title = california_title
 
     return normalized_title, normalized_text
 
