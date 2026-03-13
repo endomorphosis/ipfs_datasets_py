@@ -25,6 +25,10 @@ Additional optional providers (opt-in by selecting provider):
     - `IPFS_DATASETS_PY_HF_INFERENCE_MODEL` (default model)
     - `IPFS_DATASETS_PY_HF_INFERENCE_BASE_URL` (default: https://router.huggingface.co/hf-inference/models)
     - `IPFS_DATASETS_PY_HF_BILL_TO` / `HUGGINGFACE_BILL_TO` / `HF_BILL_TO` (optional org billing scope)
+    - `IPFS_DATASETS_PY_HF_USE_ARCH_ROUTER` (default: 1; use katanemo/Arch-Router-1.5B to auto-select a model when no explicit model is pinned)
+    - `IPFS_DATASETS_PY_HF_ARCH_ROUTER_MODEL` (default: katanemo/Arch-Router-1.5B)
+    - `IPFS_DATASETS_PY_HF_ROUTE_CANDIDATE_MODELS` (optional comma-separated candidate model list for Arch-Router)
+    - `IPFS_DATASETS_PY_HF_ARCH_ROUTER_TIMEOUT` (default: min(request timeout, 8s))
     - `IPFS_DATASETS_PY_HF_LLM_FALLBACK_MODELS` (optional comma-separated retry models)
     - `IPFS_DATASETS_PY_HF_DYNAMIC_MODEL_DISCOVERY` (default: 1; discover hf-inference fallback models)
     - `IPFS_DATASETS_PY_HF_LLM_DISCOVERY_LIMIT` (default: 20)
@@ -76,6 +80,7 @@ class LLMRouterError(RuntimeError):
 
 
 _P2P_TASK_PREFIX = "p2p://"
+_HF_ARCH_ROUTER_MODEL_ID = "katanemo/Arch-Router-1.5B"
 _UNPINNED_OPTIONAL_PROVIDER_ORDER = [
     "openrouter",
     "hf_inference_api",
@@ -1114,6 +1119,156 @@ def _hf_llm_default_fallback_models() -> list[str]:
     ]
 
 
+def _hf_arch_router_enabled(*, kwargs: dict[str, object]) -> bool:
+    raw = kwargs.get("hf_use_arch_router")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_USE_ARCH_ROUTER", "1")
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _hf_arch_router_model(*, kwargs: dict[str, object]) -> str:
+    raw = kwargs.get("hf_arch_router_model")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_ARCH_ROUTER_MODEL", _HF_ARCH_ROUTER_MODEL_ID)
+    return str(raw or _HF_ARCH_ROUTER_MODEL_ID).strip() or _HF_ARCH_ROUTER_MODEL_ID
+
+
+def _hf_arch_router_timeout(*, kwargs: dict[str, object], request_timeout: float) -> float:
+    raw = kwargs.get("hf_arch_router_timeout")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_ARCH_ROUTER_TIMEOUT", "")
+    if raw not in (None, ""):
+        try:
+            return max(1.0, float(raw))
+        except Exception:
+            pass
+    return max(1.0, min(float(request_timeout), 8.0))
+
+
+def _hf_arch_router_candidate_models(*, kwargs: dict[str, object]) -> list[str]:
+    raw = kwargs.get("hf_route_candidate_models")
+    if raw is None:
+        raw = os.getenv("IPFS_DATASETS_PY_HF_ROUTE_CANDIDATE_MODELS", "")
+
+    models: list[str] = []
+    if raw not in (None, ""):
+        if isinstance(raw, (list, tuple, set)):
+            for item in raw:
+                text = str(item or "").strip()
+                if text and text not in models:
+                    models.append(text)
+        else:
+            for item in str(raw).split(","):
+                text = item.strip()
+                if text and text not in models:
+                    models.append(text)
+
+    if not models:
+        try:
+            from ipfs_datasets_py.utils import model_manager
+
+            for record in model_manager.list_hf_inference_models(model_kind="llm"):
+                model_id = str(record.get("model_id") or "").strip()
+                if model_id and model_id not in models:
+                    models.append(model_id)
+        except Exception:
+            pass
+
+    if not models:
+        for model_id in _hf_llm_default_fallback_models():
+            if model_id not in models:
+                models.append(model_id)
+
+    router_model = _hf_arch_router_model(kwargs=kwargs)
+    return [model_id for model_id in models if model_id and model_id != router_model]
+
+
+def _describe_hf_route_candidate(model_id: str) -> str:
+    lower = model_id.lower()
+    if "llama" in lower and "instruct" in lower:
+        return "General instruction-following, reasoning, coding, and multi-step assistant tasks."
+    if "arch-router" in lower:
+        return "Routing model for choosing the best downstream model based on user intent."
+    if "bart" in lower or "pegasus" in lower or "xsum" in lower:
+        return "Summarization and concise rewriting of long passages or reports."
+    if "t5" in lower:
+        return "Instruction following, extraction, classification, and short structured responses."
+    if "zephyr" in lower or "qwen" in lower:
+        return "General chat, instruction following, and assistant-style responses."
+    return "General Hugging Face inference model for text generation tasks."
+
+
+def _build_hf_arch_router_prompt(*, route_config: list[dict[str, str]], prompt: str) -> str:
+    task_instruction = (
+        "You are a helpful assistant designed to find the best suited route.\n"
+        "You are provided with route description within <routes></routes> XML tags:\n"
+        "<routes>\n\n{routes}\n\n</routes>\n\n"
+        "<conversation>\n\n{conversation}\n\n</conversation>\n"
+    )
+    format_prompt = (
+        "Your task is to decide which route is best suit with user intent on the conversation in <conversation></conversation> XML tags. Follow the instruction:\n"
+        "1. If the latest intent from user is irrelevant or user intent is full filled, response with other route {\"route\": \"other\"}.\n"
+        "2. You must analyze the route descriptions and find the best match route for user latest intent.\n"
+        "3. You only response the name of the route that best matches the user's request, use the exact name in the <routes></routes>.\n\n"
+        "Based on your analysis, provide your response in the following JSON formats if you decide to match any route:\n"
+        "{\"route\": \"route_name\"}"
+    )
+    conversation = [{"role": "user", "content": prompt}]
+    return task_instruction.format(
+        routes=json.dumps(route_config, ensure_ascii=False),
+        conversation=json.dumps(conversation, ensure_ascii=False),
+    ) + format_prompt
+
+
+def _parse_hf_arch_router_response(response_text: str, *, candidate_models: list[str]) -> Optional[str]:
+    text = str(response_text or "").strip()
+    if not text:
+        return None
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            route = str(data.get("route") or "").strip()
+            if route in candidate_models:
+                return route
+            if route.lower() == "other":
+                return None
+    except Exception:
+        pass
+    for model_id in candidate_models:
+        if model_id in text:
+            return model_id
+    return None
+
+
+def _route_hf_model_with_arch_router(
+    *,
+    prompt: str,
+    kwargs: dict[str, object],
+    request_timeout: float,
+    generate_fn: Callable[[str, str, float], str],
+) -> Optional[str]:
+    if not _hf_arch_router_enabled(kwargs=kwargs):
+        return None
+
+    candidate_models = _hf_arch_router_candidate_models(kwargs=kwargs)
+    if not candidate_models:
+        return None
+
+    route_config = [
+        {"name": model_id, "description": _describe_hf_route_candidate(model_id)}
+        for model_id in candidate_models
+    ]
+    router_prompt = _build_hf_arch_router_prompt(route_config=route_config, prompt=prompt)
+    router_model = _hf_arch_router_model(kwargs=kwargs)
+    router_timeout = _hf_arch_router_timeout(kwargs=kwargs, request_timeout=request_timeout)
+
+    try:
+        routed_text = generate_fn(router_prompt, router_model, router_timeout)
+    except Exception:
+        return None
+    return _parse_hf_arch_router_response(routed_text, candidate_models=candidate_models)
+
+
 def _hf_dynamic_model_discovery_enabled(*, kwargs: dict[str, object]) -> bool:
     raw = kwargs.get("hf_dynamic_model_discovery")
     if raw is None:
@@ -1371,13 +1526,6 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
 
     class _HFInferenceAPIProvider:
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
-            model = (
-                model_name
-                or os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
-                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
-                or "gpt2"
-            ).strip()
-
             max_new_tokens = int(kwargs.get("max_new_tokens", kwargs.get("max_tokens", 128)))
             temperature = float(kwargs.get("temperature", 0.2))
             timeout = float(kwargs.get("timeout", 120))
@@ -1413,80 +1561,107 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
             if bill_to:
                 headers["X-HF-Bill-To"] = bill_to
 
-            def _generate_via_inference_client() -> str:
+            def _generate_with_model(selected_model: str) -> str:
+                request = urllib.request.Request(
+                    f"{base_url}/{selected_model}",
+                    data=json.dumps(payload).encode("utf-8"),
+                    method="POST",
+                    headers=headers,
+                )
+
+                def _generate_via_inference_client() -> str:
+                    try:
+                        hub = importlib.import_module("huggingface_hub")
+                        client_cls = getattr(hub, "InferenceClient", None)
+                        if client_cls is None:
+                            raise RuntimeError("huggingface_hub.InferenceClient not available")
+                        client = client_cls(
+                            provider="hf-inference",
+                            token=api_token,
+                            bill_to=bill_to,
+                            timeout=timeout,
+                        )
+                        result = client.text_generation(
+                            prompt,
+                            model=selected_model,
+                            max_new_tokens=max_new_tokens,
+                            temperature=temperature,
+                            top_p=parameters.get("top_p"),
+                            top_k=parameters.get("top_k"),
+                            repetition_penalty=parameters.get("repetition_penalty"),
+                            do_sample=parameters.get("do_sample"),
+                            return_full_text=parameters.get("return_full_text"),
+                        )
+                    except Exception as exc:
+                        raise RuntimeError(f"HF Inference Client request failed: {exc}") from exc
+
+                    if isinstance(result, str) and result:
+                        return result
+                    generated = getattr(result, "generated_text", None)
+                    if isinstance(generated, str) and generated:
+                        return generated
+                    raise RuntimeError("HF Inference Client response missing generated text")
+
                 try:
-                    hub = importlib.import_module("huggingface_hub")
-                    client_cls = getattr(hub, "InferenceClient", None)
-                    if client_cls is None:
-                        raise RuntimeError("huggingface_hub.InferenceClient not available")
-                    client = client_cls(
-                        provider="hf-inference",
-                        token=api_token,
-                        bill_to=bill_to,
-                        timeout=timeout,
-                    )
-                    result = client.text_generation(
-                        prompt,
-                        model=model,
-                        max_new_tokens=max_new_tokens,
-                        temperature=temperature,
-                        top_p=parameters.get("top_p"),
-                        top_k=parameters.get("top_k"),
-                        repetition_penalty=parameters.get("repetition_penalty"),
-                        do_sample=parameters.get("do_sample"),
-                        return_full_text=parameters.get("return_full_text"),
-                    )
+                    with urllib.request.urlopen(request, timeout=timeout) as response:
+                        raw = response.read().decode("utf-8", errors="replace")
+                except urllib.error.HTTPError as exc:
+                    detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+                    if exc.code in {400, 404, 422, 503}:
+                        return _generate_via_inference_client()
+                    raise RuntimeError(f"HF Inference API HTTP {exc.code}: {detail or exc.reason}") from exc
                 except Exception as exc:
-                    raise RuntimeError(f"HF Inference Client request failed: {exc}") from exc
+                    if "404" in str(exc) or "Not Found" in str(exc):
+                        return _generate_via_inference_client()
+                    raise RuntimeError(f"HF Inference API request failed: {exc}") from exc
 
-                if isinstance(result, str) and result:
-                    return result
-                generated = getattr(result, "generated_text", None)
-                if isinstance(generated, str) and generated:
-                    return generated
-                raise RuntimeError("HF Inference Client response missing generated text")
+                try:
+                    data = json.loads(raw)
+                except Exception as exc:
+                    raise RuntimeError("HF Inference API returned invalid JSON") from exc
 
-            request = urllib.request.Request(
-                f"{base_url}/{model}",
-                data=json.dumps(payload).encode("utf-8"),
-                method="POST",
-                headers=headers,
-            )
+                if isinstance(data, dict) and isinstance(data.get("error"), str):
+                    raise RuntimeError(f"HF Inference API error: {data.get('error')}")
 
-            try:
-                with urllib.request.urlopen(request, timeout=timeout) as response:
-                    raw = response.read().decode("utf-8", errors="replace")
-            except urllib.error.HTTPError as exc:
-                detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
-                if exc.code in {400, 404, 422, 503}:
-                    return _generate_via_inference_client()
-                raise RuntimeError(f"HF Inference API HTTP {exc.code}: {detail or exc.reason}") from exc
-            except Exception as exc:
-                if "404" in str(exc) or "Not Found" in str(exc):
-                    return _generate_via_inference_client()
-                raise RuntimeError(f"HF Inference API request failed: {exc}") from exc
+                if isinstance(data, list) and data:
+                    first = data[0]
+                    if isinstance(first, dict):
+                        generated = first.get("generated_text")
+                        if isinstance(generated, str):
+                            return generated
 
-            try:
-                data = json.loads(raw)
-            except Exception as exc:
-                raise RuntimeError("HF Inference API returned invalid JSON") from exc
-
-            if isinstance(data, dict) and isinstance(data.get("error"), str):
-                raise RuntimeError(f"HF Inference API error: {data.get('error')}")
-
-            if isinstance(data, list) and data:
-                first = data[0]
-                if isinstance(first, dict):
-                    generated = first.get("generated_text")
+                if isinstance(data, dict):
+                    generated = data.get("generated_text")
                     if isinstance(generated, str):
                         return generated
 
-            if isinstance(data, dict):
-                generated = data.get("generated_text")
-                if isinstance(generated, str):
-                    return generated
+                raise RuntimeError("HF Inference API response missing generated text")
 
-            raise RuntimeError("HF Inference API response missing generated text")
+            selected_model = (
+                model_name
+                or os.getenv("IPFS_DATASETS_PY_HF_INFERENCE_MODEL")
+                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
+                or "gpt2"
+            ).strip()
+
+            if model_name is None and not bool(kwargs.get("hf_skip_model_routing")):
+                routed_model = _route_hf_model_with_arch_router(
+                    prompt=prompt,
+                    kwargs=dict(kwargs),
+                    request_timeout=timeout,
+                    generate_fn=lambda router_prompt, router_model, router_timeout: _HFInferenceAPIProvider().generate(
+                        router_prompt,
+                        model_name=router_model,
+                        hf_skip_model_routing=True,
+                        max_new_tokens=128,
+                        temperature=0.0,
+                        timeout=router_timeout,
+                        return_full_text=False,
+                    ),
+                )
+                if routed_model:
+                    selected_model = routed_model
+            return _generate_with_model(selected_model)
 
     return _HFInferenceAPIProvider()
 

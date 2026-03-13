@@ -271,3 +271,37 @@ def test_hf_inference_api_falls_back_to_inference_client_after_router_404(monkey
         "bill_to": "Publicus",
         "timeout": 120.0,
     }
+
+
+def test_hf_inference_api_uses_arch_router_to_select_model(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("HF_TOKEN", "test-token")
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_USE_ARCH_ROUTER", "1")
+    monkeypatch.setenv(
+        "IPFS_DATASETS_PY_HF_ROUTE_CANDIDATE_MODELS",
+        "meta-llama/Meta-Llama-3-8B-Instruct,google/flan-t5-small",
+    )
+
+    calls: list[dict[str, object]] = []
+
+    def fake_urlopen(req, timeout=0):
+        body = json.loads(req.data.decode("utf-8"))
+        calls.append({"url": req.full_url, "timeout": timeout, "body": body})
+        if req.full_url.endswith("/katanemo/Arch-Router-1.5B"):
+            prompt = body["inputs"]
+            assert "meta-llama/Meta-Llama-3-8B-Instruct" in prompt
+            assert "google/flan-t5-small" in prompt
+            return _FakeHTTPResponse({"generated_text": '{"route": "meta-llama/Meta-Llama-3-8B-Instruct"}'})
+        if req.full_url.endswith("/meta-llama/Meta-Llama-3-8B-Instruct"):
+            return _FakeHTTPResponse({"generated_text": "ok via llama"})
+        raise AssertionError(req.full_url)
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    text = llm_router.generate_text("fix this bug", provider="hf_inference_api")
+
+    assert text == "ok via llama"
+    assert [call["url"] for call in calls] == [
+        "https://router.huggingface.co/hf-inference/models/katanemo/Arch-Router-1.5B",
+        "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct",
+    ]
