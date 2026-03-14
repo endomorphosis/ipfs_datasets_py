@@ -149,6 +149,11 @@ def test_wyoming_admin_seed_urls_exclude_dead_legislature_hosts() -> None:
     allowed_hosts = _allowed_discovery_hosts_for_state("WY", "Wyoming")
 
     assert "https://rules.wyo.gov/Search.aspx?mode=7" in wy_urls
+    assert all(not url.rstrip("/").endswith("rules.wyo.gov") for url in wy_urls)
+    assert all(
+        not (url.lower().endswith("rules.wyo.gov/search.aspx") and "mode=7" not in url.lower())
+        for url in wy_urls
+    )
     assert all("wyoleg.gov" not in url.lower() for url in wy_urls)
     assert all("legislature.wy.gov" not in url.lower() for url in wy_urls)
     assert "rules.wyo.gov" in allowed_hosts
@@ -330,6 +335,37 @@ def test_wyoming_search_and_program_results_are_inventory_pages() -> None:
         title="Accountants, Board of Certified Public",
         url="https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7",
     ) is True
+
+
+def test_rejects_wyoming_empty_search_page_as_substantive_rule_text() -> None:
+    text = (
+        "HOME | ABOUT | HELP | CONTACT | QUICKLINKS | SUBSCRIBE | STATE LOGIN "
+        "ADMINISTRATIVE RULES SEARCH Search Clear Fields Current Rules Proposed Rules Emergency Rules "
+        "Expired Emergency Rules Superceded Rules Repealed Rules Advanced Search Results (0) No Results Found. "
+        "Wyoming Secretary of State 2016 All Rights Reserved."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Administrative Rules Search",
+        url="https://rules.wyo.gov/Search.aspx",
+        min_chars=160,
+    ) is False
+
+
+def test_rejects_wyoming_rules_landing_page_as_substantive_rule_text() -> None:
+    text = (
+        "Administrative Rules Advanced Search Current Rules Proposed Rules Emergency Rules HOME | ABOUT | HELP | CONTACT | "
+        "QUICKLINKS | SUBSCRIBE | STATE LOGIN ABOUT US The Secretary of State's Office is the repository for rules and regulations, "
+        "and provides this centralized system to promote transparency and ease of access to rules by state agencies and the public."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Wyoming Administration Rules",
+        url="https://rules.wyo.gov/",
+        min_chars=160,
+    ) is False
 
 
 def test_massachusetts_inventory_pages_are_rejected_as_substantive_rule_text() -> None:

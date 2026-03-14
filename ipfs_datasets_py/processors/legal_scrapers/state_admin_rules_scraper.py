@@ -250,6 +250,13 @@ _RAW_HTML_TEXT_RE = re.compile(
     re.IGNORECASE,
 )
 
+_WY_NON_RULE_PORTAL_TEXT_RE = re.compile(
+    r"administrative\s+rules\s+search|advanced\s+search|results\s*\(\s*0\s*\)|no\s+results\s+found|"
+    r"repository\s+for\s+rules\s+and\s+regulations|wyoming\s+secretary\s+of\s+state|"
+    r"current\s+rules\s+proposed\s+rules\s+emergency\s+rules|quicklinks|state\s+login",
+    re.IGNORECASE,
+)
+
 _UT_NON_RULE_PORTAL_PATH_RE = re.compile(
     r"^/(?:$|public/home/?|publications/?|about(?:/.*)?|contact(?:-us)?/?|help(?:/.*)?|category/public-news/?|"
     r"rulewriting-manual/?|administrative-rules-dashboard/?|researching(?:/.*)?|"
@@ -733,9 +740,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "http://web.archive.org/web/20260207213344/https://rules.wyo.gov/",
         "http://web.archive.org/web/20250917082256/https://rules.wyo.gov/Search.aspx",
         "https://rules.wyo.gov/Search.aspx?mode=7",
-        "https://rules.wyo.gov/",
         "https://rules.wyo.gov/Help/Public/wyoming-administrative-rules-h.html",
-        "https://rules.wyo.gov/Search.aspx",
     ],
 }
 
@@ -1269,6 +1274,8 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
             continue
         if not key.startswith(("http://", "https://")):
             continue
+        if _is_non_admin_seed_url(value):
+            continue
         seen.add(key)
         deduped.append(value)
     return deduped[:20]
@@ -1302,6 +1309,7 @@ def _is_non_admin_seed_url(url: str) -> bool:
     value = str(url or "").strip()
     if not value:
         return False
+    lower_value = value.lower()
     if _NON_ADMIN_SOURCE_URL_RE.search(value):
         return True
     parsed = urlparse(value)
@@ -1315,6 +1323,18 @@ def _is_non_admin_seed_url(url: str) -> bool:
         return True
     if host in {"www.wyoleg.gov", "wyoleg.gov", "legislature.wy.gov"}:
         return True
+    if host == "rules.wyo.gov":
+        handler = str((parse_qs(query).get("handler") or [""])[0]).strip().lower()
+        mode = str((parse_qs(query).get("mode") or [""])[0]).strip()
+        if normalized_path == "/":
+            return True
+        if normalized_path.lower() == "/search.aspx" and handler != "search" and mode != "7":
+            return True
+    if host == "web.archive.org":
+        if re.search(r"/https://rules\.wyo\.gov/?$", lower_value):
+            return True
+        if re.search(r"/https://rules\.wyo\.gov/search\.aspx(?:$|[^a-z0-9])", lower_value) and "mode=7" not in lower_value:
+            return True
     if host == "leginfo.legislature.ca.gov":
         if _CA_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
             return True
@@ -1908,6 +1928,13 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         "/statestatutes/statutesdownload",
     }:
         if nav_hits >= 3 and not _RULE_BODY_SIGNAL_RE.search(hay):
+            return True
+    if host == "rules.wyo.gov" and normalized_path_lower in {
+        "/",
+        "/search.aspx",
+        "/help/public/wyoming-administrative-rules-h.html",
+    }:
+        if _WY_NON_RULE_PORTAL_TEXT_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
             return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(normalized_path):
         return True
