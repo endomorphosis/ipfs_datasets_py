@@ -162,6 +162,21 @@ def test_wyoming_admin_seed_urls_exclude_dead_legislature_hosts() -> None:
     assert "legislature.wy.gov" not in allowed_hosts
 
 
+def test_arkansas_admin_seed_urls_exclude_dead_legislature_hosts() -> None:
+    ar_urls = scraper_module._extract_seed_urls_for_state("AR", "Arkansas")
+    allowed_hosts = _allowed_discovery_hosts_for_state("AR", "Arkansas")
+
+    assert "https://codeofarrules.arkansas.gov/" in ar_urls
+    assert "https://sos-rules-reg.ark.org/" in ar_urls
+    assert "https://www.sos.arkansas.gov/rules-regulations/" in ar_urls
+    assert all("legislature.ar.gov" not in url.lower() for url in ar_urls)
+    assert all("arkleg.state.ar.us" not in url.lower() for url in ar_urls)
+    assert "codeofarrules.arkansas.gov" in allowed_hosts
+    assert "sos-rules-reg.ark.org" in allowed_hosts
+    assert "legislature.ar.gov" not in allowed_hosts
+    assert "arkleg.state.ar.us" not in allowed_hosts
+
+
 def test_candidate_links_from_html_keeps_california_official_ccr_host_when_allowed() -> None:
     html = """
     <html>
@@ -462,6 +477,94 @@ def test_wyoming_search_and_program_results_are_inventory_pages() -> None:
     ) is True
 
 
+def test_arkansas_rule_portals_are_inventory_pages() -> None:
+    sos_landing = (
+        "Rules & Regulations The Administrative Procedures Act requires state agencies, boards and commissions to file with the Secretary of State. "
+        "Search Arkansas Administrative Rules Code of Arkansas Rules State Agency Public Meeting Calendar Agency Rule Filing Instructions Bulk Data Download"
+    )
+    sos_search = (
+        "Search Arkansas Agencies, Boards and Commissions Rules Arkansas Secretary of State Search Results "
+        "https://sos-rules-reg.ark.org/rules/pdf/018.00.14-001F-14511.pdf https://sos-rules-reg.ark.org/rules/search/10"
+    )
+    code_search = "Search - Code of Arkansas Rules Rule Quick Search Title Number Chapter Number"
+
+    assert scraper_module._looks_like_official_rule_index_page(
+        text=sos_landing,
+        title="Arkansas Secretary of State",
+        url="https://www.sos.arkansas.gov/rules-regulations/",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=sos_search,
+        title="Search Results - Arkansas Secretary of State",
+        url="https://sos-rules-reg.ark.org/rules/search",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=code_search,
+        title="Search - Code of Arkansas Rules",
+        url="https://codeofarrules.arkansas.gov/Rules/Search",
+    ) is True
+
+
+def test_rejects_arkansas_rules_landing_page_as_substantive_rule_text() -> None:
+    text = (
+        "Rules & Regulations The Administrative Procedures Act requires state agencies, boards and commissions to file with the Secretary of State. "
+        "Search Arkansas Administrative Rules Code of Arkansas Rules State Agency Public Meeting Calendar Agency Rule Filing Instructions Bulk Data Download"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Arkansas Secretary of State",
+        url="https://www.sos.arkansas.gov/rules-regulations/",
+        min_chars=160,
+    ) is False
+
+
+def test_candidate_arkansas_rule_urls_from_html_extracts_pdf_and_rule_links() -> None:
+    sos_html = """
+    <html><body>
+      <a href="https://sos-rules-reg.ark.org/rules/pdf/018.00.14-001F-14511.pdf">Final Rule</a>
+      <a href="https://sos-rules-reg.ark.org/rules/search/10">Next Page</a>
+    </body></html>
+    """
+    code_html = """
+    <html><body>
+      <a href="?levelType=title&amp;titleID=1&amp;chapterID=&amp;subChapterID=&amp;partID=&amp;subPartID=&amp;sectionID=">Title 1. General Provisions</a>
+    </body></html>
+    """
+
+    sos_links = scraper_module._candidate_arkansas_rule_urls_from_html(
+        html=sos_html,
+        page_url="https://sos-rules-reg.ark.org/rules/search",
+        limit=4,
+    )
+    code_links = scraper_module._candidate_arkansas_rule_urls_from_html(
+        html=code_html,
+        page_url="https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=9",
+        limit=4,
+    )
+
+    assert sos_links == [
+        "https://sos-rules-reg.ark.org/rules/pdf/018.00.14-001F-14511.pdf",
+        "https://sos-rules-reg.ark.org/rules/search/10",
+    ]
+    assert code_links == [
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=1&chapterID=&subChapterID=&partID=&subPartID=&sectionID=",
+    ]
+
+
+def test_score_candidate_url_prioritizes_arkansas_official_rule_hosts_over_dead_legislature_hosts() -> None:
+    pdf_score = scraper_module._score_candidate_url(
+        "https://sos-rules-reg.ark.org/rules/pdf/018.00.14-001F-14511.pdf"
+    )
+    code_score = scraper_module._score_candidate_url(
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=1"
+    )
+    dead_score = scraper_module._score_candidate_url("https://legislature.ar.gov/regulations")
+
+    assert pdf_score > dead_score
+    assert code_score > dead_score
+
+
 def test_rejects_wyoming_empty_search_page_as_substantive_rule_text() -> None:
     text = (
         "HOME | ABOUT | HELP | CONTACT | QUICKLINKS | SUBSCRIBE | STATE LOGIN "
@@ -641,6 +744,47 @@ def test_rejects_michigan_admin_portal_home_pages_as_rule_content(url: str, titl
         text=text,
         title=title,
         url=url,
+    ) is False
+
+
+def test_rejects_michigan_rulemaking_transaction_page_as_rule_content() -> None:
+    text = (
+        "Request For Rulemaking Rule set #: 2021-48 LR Department: Licensing and Regulatory Affairs Bureau: Bureau of Construction Codes "
+        "Title of rule set: Construction Code - Part 10. Michigan Uniform Energy Code Filing date: 5/1/2025 Effective date: 8/29/2025 "
+        "Request for Rulemaking Draft Rule Language Regulatory Impact Statement Joint Committee on Administrative Rules Package Transcript Approved on: 2/3/2025"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="ARS Public - RFR Transaction",
+        url="https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="ARS Public - RFR Transaction",
+        url="https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306",
+    ) is False
+
+
+def test_michigan_elaws_search_page_is_inventory_not_substantive_rule_text() -> None:
+    text = (
+        "Message loading.. eLaws eCases State of Michigan Search this site by Google Michigan Administrative Code Michigan Register "
+        "Department ST State Division Administrative_Hearings. Administrative Hearings Section 11.101. Definitions. "
+        "Department IF Insurance and Financial Services Division Insurance. Insurance Section 11.102. Assigned claims facility. "
+        "Go To Page Copyright © 2026 by eLaws. All rights reserved."
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Michigan Administrative Code",
+        url="http://mirules.elaws.us/search/allcode",
+    ) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Michigan Administrative Code",
+        url="http://mirules.elaws.us/search/allcode",
+        min_chars=160,
     ) is False
 
 

@@ -166,6 +166,19 @@ _KS_RESOURCE_TOOLS_TEXT_RE = re.compile(
 
 _KS_RULE_LISTING_ROW_RE = re.compile(r"\b\d{1,2}-\d{1,2}-\d+[A-Za-z-]*\.\s", re.IGNORECASE)
 
+_MI_RULEMAKING_TRANSACTION_TEXT_RE = re.compile(
+    r"request\s+for\s+rulemaking|draft\s+rule\s+language|regulatory\s+impact\s+statement|"
+    r"joint\s+committee\s+on\s+administrative\s+rules\s+package|"
+    r"transaction\s+id=\d+|approved\s+on:",
+    re.IGNORECASE,
+)
+
+_MI_ELAWS_INDEX_TEXT_RE = re.compile(
+    r"search\s+this\s+site\s+by\s+google|michigan\s+administrative\s+code|michigan\s+register|"
+    r"go\s+to\s+page|copyright\s+©\s+\d{4}\s+by\s+elaws|department\s+[A-Z]{1,4}\s+.+division",
+    re.IGNORECASE,
+)
+
 _NON_RULE_POLICY_PAGE_RE = re.compile(
     r"department\s+of\s+corrections\s+policies|policies\s+manual|contracts\s+policies\s+procedures|"
     r"social\s+media\s+terms\s+of\s+use|state\s+hr\s+policies|policy\s+and\s+procedure\s+management|"
@@ -248,6 +261,13 @@ _AZ_RULES_PORTAL_CHROME_RE = re.compile(
     r"tracking\s+pixel\s+disclaimer|visit\s+openbooks|save\s+with\s+azrx|"
     r"subscriber\s+info\s+subscribe|arizona\s+administrative\s+code\s+on\s+amp|"
     r"subscribe\s+to\s+our\s+code\s+update\s+email\s+service|main\s+navigation",
+    re.IGNORECASE,
+)
+
+_AR_SOS_PORTAL_TEXT_RE = re.compile(
+    r"search\s+arkansas\s+administrative\s+rules|code\s+of\s+arkansas\s+rules|"
+    r"state\s+agency\s+public\s+meeting\s+calendar|agency\s+rule\s+filing\s+instructions|"
+    r"bulk\s+data\s+download|arkansas\s+secretary\s+of\s+state",
     re.IGNORECASE,
 )
 
@@ -1350,6 +1370,8 @@ def _is_non_admin_seed_url(url: str) -> bool:
         return True
     if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
         return True
+    if host in {"legislature.ar.gov", "arkleg.state.ar.us", "www.arkleg.state.ar.us"}:
+        return True
     if host in {"www.wyoleg.gov", "wyoleg.gov", "legislature.wy.gov"}:
         return True
     if host == "rules.wyo.gov":
@@ -1434,6 +1456,31 @@ def _score_candidate_url(url: str) -> int:
         score += 8
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() in {"/", "/agency", "/search"}:
         score -= 4
+    if host in {"www.sos.arkansas.gov", "sos.arkansas.gov"} and normalized_path.lower() == "/rules-regulations":
+        score += 4
+    if host == "sos-rules-reg.ark.org" and normalized_path.lower() in {"/rules/search", "/rules/search/new"}:
+        score += 8
+    if host == "sos-rules-reg.ark.org" and normalized_path.lower() == "/rules/text_search":
+        score += 9
+    if host == "sos-rules-reg.ark.org" and re.search(r"^/rules/(?:search/\d+|text_search/\w+/\d+)$", path, re.IGNORECASE):
+        score += 10
+    if host == "sos-rules-reg.ark.org" and re.search(r"^/rules/pdf/[\w.-]+\.pdf$", path, re.IGNORECASE):
+        score += 12
+    if host == "codeofarrules.arkansas.gov" and normalized_path.lower() == "/rules/search":
+        score += 8
+    if host == "codeofarrules.arkansas.gov" and normalized_path.lower() == "/rules/rule" and "leveltype=" in query.lower():
+        score += 11
+    if host in {"legislature.ar.gov", "arkleg.state.ar.us", "www.arkleg.state.ar.us"} and normalized_path.lower() in {
+        "/",
+        "/rules",
+        "/regulations",
+        "/administrative-code",
+        "/code-of-regulations",
+        "/agency-rules",
+        "/policies",
+        "/departments",
+    }:
+        score -= 10
     if host in {"www.alabamaadministrativecode.state.al.us", "alabamaadministrativecode.state.al.us"} and normalized_path.lower() == "/":
         score -= 3
     if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
@@ -1901,6 +1948,9 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay) and not arizona_official_rule_document:
         return True
+    if host in {"www.sos.arkansas.gov", "sos.arkansas.gov"} and normalized_path_lower == "/rules-regulations":
+        if _AR_SOS_PORTAL_TEXT_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
+            return True
     if host in {"azsos.gov", "www.azsos.gov"} and normalized_path_lower in {
         "/rules",
         "/rules/arizona-administrative-code",
@@ -1911,6 +1961,9 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "carules.elaws.us" and normalized_path == "/search/allcode":
         return True
+    if host == "ars.apps.lara.state.mi.us" and normalized_path_lower == "/transaction/rfrtransaction":
+        if _MI_RULEMAKING_TRANSACTION_TEXT_RE.search(hay):
+            return True
     if host == "web.archive.org" and "gc.nh.gov/rules/about_rules/checkrule.aspx" in url_value.lower():
         if _NH_CHECKRULE_GUIDE_TEXT_RE.search(hay):
             return True
@@ -2091,6 +2144,9 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
         return True
     if host == "iar.iga.in.gov" and "indiana administrative code" in hay.lower() and len(re.findall(r"\btitle\s+\d+(?:\.\d+)?\b", hay, re.IGNORECASE)) >= 8:
         return True
+    if host in {"www.sos.arkansas.gov", "sos.arkansas.gov"} and path.rstrip("/") == "/rules-regulations":
+        if _AR_SOS_PORTAL_TEXT_RE.search(hay) and "search arkansas administrative rules" in hay.lower():
+            return True
     if host == "www.ilga.gov" and path in {"/agencies/jcar/admincode", "/commission/jcar/admincode", "/commission/jcar/admincode/"}:
         if "administrative code" in hay.lower() and len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE)) >= 8:
             return True
@@ -2168,6 +2224,17 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "admincode.legislature.state.al.us" and chapter_hits >= 3:
         return True
+    if host == "codeofarrules.arkansas.gov" and path == "/rules/search":
+        if "code of arkansas rules" in hay.lower() and "search" in title_value.lower():
+            return True
+    if host == "sos-rules-reg.ark.org" and (path.startswith("/rules/search") or path.startswith("/rules/text_search")):
+        if "arkansas secretary of state" in hay.lower() and (
+            "search arkansas agencies" in hay.lower()
+            or "search results" in hay.lower()
+            or "full text search results" in hay.lower()
+            or len(re.findall(r"/rules/pdf/", body, re.IGNORECASE)) >= 3
+        ):
+            return True
     if host == "rules.wyo.gov" and path == "/search.aspx":
         mode = str((query.get("mode") or [""])[0]).strip()
         agency_hits = len(re.findall(r"\bagency\b", hay, re.IGNORECASE))
@@ -2181,6 +2248,9 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay) and not arizona_official_rule_document:
         return True
+    if host == "mirules.elaws.us" and path == "/search/allcode":
+        if _MI_ELAWS_INDEX_TEXT_RE.search(hay):
+            return True
     if host == "web.archive.org" and "gc.nh.gov/rules" in url_value.lower() and (
         "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
     ):
@@ -2425,6 +2495,152 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
                         if len(out) >= effective_limit:
                             return out
     return out
+
+
+def _candidate_arkansas_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
+    body = str(html or "")
+    if not body:
+        return []
+
+    parsed_page = urlparse(str(page_url or "").strip())
+    host = parsed_page.netloc.lower()
+    if host not in {"sos-rules-reg.ark.org", "codeofarrules.arkansas.gov", "ark.org"}:
+        return []
+
+    limit_n = max(1, int(limit))
+    out: List[str] = []
+    seen: set[str] = set()
+    base_url = page_url or (
+        "https://sos-rules-reg.ark.org/rules/search/new"
+        if host in {"sos-rules-reg.ark.org", "ark.org"}
+        else "https://codeofarrules.arkansas.gov/Rules/Search"
+    )
+
+    for href in re.findall(r'href=["\']([^"\']+)["\']', body, re.IGNORECASE):
+        raw_href = unescape(str(href or "").strip())
+        if not raw_href:
+            continue
+        candidate_url = urljoin(base_url, raw_href)
+        parsed_candidate = urlparse(candidate_url)
+        candidate_host = parsed_candidate.netloc.lower()
+        candidate_path = parsed_candidate.path or ""
+        candidate_query = parsed_candidate.query or ""
+
+        keep = False
+        if candidate_host == "sos-rules-reg.ark.org":
+            keep = bool(
+                re.search(r"^/rules/pdf/[\w.-]+\.pdf$", candidate_path, re.IGNORECASE)
+                or re.search(r"^/rules/(?:search/\d+|text_search/\w+/\d+)$", candidate_path, re.IGNORECASE)
+            )
+        elif candidate_host == "codeofarrules.arkansas.gov":
+            keep = candidate_path.lower() == "/rules/rule" and "leveltype=" in candidate_query.lower()
+
+        if not keep:
+            continue
+        key = _url_key(candidate_url)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(candidate_url)
+        if len(out) >= limit_n:
+            break
+
+    return out
+
+
+async def _discover_arkansas_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        url
+        for url in seed_urls
+        if urlparse(str(url or "").strip()).netloc.lower()
+        in {"sos-rules-reg.ark.org", "ark.org", "www.sos.arkansas.gov", "codeofarrules.arkansas.gov"}
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        discovered_urls: List[str] = []
+        seen: set[str] = set()
+        session = requests.Session()
+
+        def _record(urls: List[str], *, pdf_only: bool = False) -> bool:
+            for candidate_url in urls:
+                if pdf_only and not _is_pdf_candidate_url(candidate_url):
+                    continue
+                key = _url_key(candidate_url)
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                discovered_urls.append(candidate_url)
+                if len(discovered_urls) >= limit_n:
+                    return True
+            return False
+
+        try:
+            search_page = session.get(
+                "https://sos-rules-reg.ark.org/rules/search/new",
+                timeout=25,
+                headers=headers,
+            )
+            search_page.raise_for_status()
+            token_match = re.search(
+                r'name=["\']_token["\'][^>]*value=["\']([^"\']+)["\']',
+                search_page.text,
+                re.IGNORECASE,
+            )
+            token = str(token_match.group(1) or "").strip() if token_match else ""
+            if token:
+                for action, payload in (
+                    (
+                        "https://sos-rules-reg.ark.org/rules/text_search",
+                        {"_token": token, "words": "rule"},
+                    ),
+                    (
+                        "https://sos-rules-reg.ark.org/rules/search",
+                        {"_token": token, "keywords": "board"},
+                    ),
+                ):
+                    response = session.post(action, data=payload, timeout=25, headers=headers)
+                    response.raise_for_status()
+                    if _record(
+                        _candidate_arkansas_rule_urls_from_html(
+                            html=response.text,
+                            page_url=str(response.url or action),
+                            limit=max(limit_n * 4, 12),
+                        ),
+                        pdf_only=True,
+                    ):
+                        return discovered_urls
+        except Exception:
+            pass
+
+        try:
+            quick_search = session.get(
+                "https://codeofarrules.arkansas.gov/Rules/RuleQuickSearch",
+                params={"titleNumber": "1"},
+                timeout=25,
+                headers=headers,
+            )
+            quick_search.raise_for_status()
+            _record(
+                _candidate_arkansas_rule_urls_from_html(
+                    html=quick_search.text,
+                    page_url=str(quick_search.url or "https://codeofarrules.arkansas.gov/Rules/Search"),
+                    limit=max(limit_n * 2, 8),
+                )
+            )
+        except Exception:
+            pass
+
+        return discovered_urls
+
+    return await asyncio.to_thread(_run)
 
 
 def _is_pdf_candidate_url(url: str) -> bool:
@@ -4268,6 +4484,21 @@ def _candidate_links_from_html(
         if score <= 0:
             continue
         ranked.append((score, link_url, ""))
+    for link_url in _candidate_arkansas_rule_urls_from_html(html=body, page_url=page_url, limit=limit):
+        host = urlparse(link_url).netloc
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
+            continue
+        key = link_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        score = _score_candidate_link(link_url, "", page_url)
+        if score <= 0:
+            continue
+        ranked.append((score, link_url, ""))
     ranked = _filter_california_westlaw_links_for_depth(ranked, page_url=page_url)
     ranked.sort(key=lambda item: item[0], reverse=True)
     return [link_url for _, link_url, _ in ranked[: max(1, int(limit))]]
@@ -4749,6 +4980,7 @@ async def _agentic_discover_admin_state_blocks(
         candidate_urls.extend(_template_admin_urls_for_state(state_code))
 
         utah_api_rule_urls: List[str] = []
+        arkansas_bootstrap_document_urls: List[str] = []
 
         # Utah's public search API already exposes canonical detail-page URLs.
         # Seed them immediately so bounded runs can hit substantive rule pages
@@ -4783,6 +5015,17 @@ async def _agentic_discover_admin_state_blocks(
                 if utah_api_rule_urls:
                     break
 
+        if state_code == "AR":
+            arkansas_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 8))
+            arkansas_bootstrap_document_urls = await _discover_arkansas_rule_document_urls(
+                seed_urls=ordered_seed_urls[:6],
+                limit=arkansas_seed_limit,
+            )
+            for document_url in arkansas_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if arkansas_bootstrap_document_urls:
+                source_breakdown["arkansas_sos_search_bootstrap"] = len(arkansas_bootstrap_document_urls)
+
         seeded_direct_detail_urls = [url for url in seed_urls if _is_direct_detail_candidate_url(url)]
         california_bootstrap_document_urls: List[str] = []
         if state_code == "CA" and not seeded_direct_detail_urls:
@@ -4799,7 +5042,12 @@ async def _agentic_discover_admin_state_blocks(
             if california_bootstrap_document_urls:
                 source_breakdown["california_westlaw_document_bootstrap"] = len(california_bootstrap_document_urls)
 
-        direct_detail_ready = bool(utah_api_rule_urls or seeded_direct_detail_urls or california_bootstrap_document_urls) or _direct_detail_candidate_backlog_is_ready(
+        direct_detail_ready = bool(
+            utah_api_rule_urls
+            or arkansas_bootstrap_document_urls
+            or seeded_direct_detail_urls
+            or california_bootstrap_document_urls
+        ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
             max_fetch=max_fetch_per_state,
         )
@@ -4851,12 +5099,9 @@ async def _agentic_discover_admin_state_blocks(
                         url=seed_url,
                     )
 
-                    if seed_is_substantive or seed_is_relaxed or inventory_seed:
+                    if inventory_seed:
                         preseed_signal = True
                         source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
-                        break
-
-                    if inventory_seed:
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=fetched_text,
                             url=seed_url,
@@ -4877,6 +5122,12 @@ async def _agentic_discover_admin_state_blocks(
                             limit=24,
                         ):
                             candidate_urls.append(rule_url)
+                        break
+
+                    if seed_is_substantive or seed_is_relaxed:
+                        preseed_signal = True
+                        source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
+                        break
                 except Exception:
                     pass
 
