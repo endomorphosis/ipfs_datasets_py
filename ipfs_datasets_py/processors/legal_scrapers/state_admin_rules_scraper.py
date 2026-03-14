@@ -147,6 +147,25 @@ _GENERIC_ADMIN_INDEX_TITLE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_KS_PORTAL_CHROME_RE = re.compile(
+    r"an\s+official\s+state\s+of\s+kansas\s+government\s+website|"
+    r"kansas\s+secretary\s+of\s+state|business\s+services\s+division|"
+    r"elections\s+division|publications\s+division|online\s+administrative\s+regulations|"
+    r"proposed\s+regulations\s+open\s+for\s+comment|future\s+effective\s+regulations|"
+    r"administrative\s+regulations\s+agency\s+resources|regulation\s+modernization\s+initiative",
+    re.IGNORECASE,
+)
+
+_KS_RESOURCE_TOOLS_TEXT_RE = re.compile(
+    r"permanent\s+regulation\s+tools|temporary\s+regulation\s+tools|"
+    r"revocation\s+by\s+notice\s+tools|policy\s+and\s+procedure\s+manual|"
+    r"secretary\s+of\s+state\s+permanent\s+regulation\s+filing\s+checklist|"
+    r"other\s+useful\s+links",
+    re.IGNORECASE,
+)
+
+_KS_RULE_LISTING_ROW_RE = re.compile(r"\b\d{1,2}-\d{1,2}-\d+[A-Za-z-]*\.\s", re.IGNORECASE)
+
 _NON_RULE_POLICY_PAGE_RE = re.compile(
     r"department\s+of\s+corrections\s+policies|policies\s+manual|contracts\s+policies\s+procedures|"
     r"social\s+media\s+terms\s+of\s+use|state\s+hr\s+policies|policy\s+and\s+procedure\s+management|"
@@ -388,6 +407,20 @@ _NH_ARCHIVED_RULE_CHAPTER_TEXT_RE = re.compile(
 
 _NH_ARCHIVED_RULE_PREFIX_RE = re.compile(r"\b[A-Za-z]{2,4}(?:-[A-Za-z]{1,3})?\s*\d{3}\b")
 
+_NH_RULES_PORTAL_TEXT_RE = re.compile(
+    r"office\s+of\s+legislative\s+services|rulemaking\s+search|jlcar\s+meeting\s+dates|"
+    r"rules\s+by\s+agency|administrative\s+rules\s+office|effective\s+adopted\s+rules\s+as\s+filed|"
+    r"emergency\s+rules\s+currently\s+in\s+effect|quick\s+links|the\s+general\s+court\s+of\s+new\s+hampshire",
+    re.IGNORECASE,
+)
+
+_NH_CHECKRULE_GUIDE_TEXT_RE = re.compile(
+    r"how\s+to\s+double-check\s+the\s+online\s+rule|checking\s+for\s+later\s+filings\s+not\s+yet\s+online|"
+    r"checking\s+for\s+expiration|official\s+version\s+of\s+a\s+rule|"
+    r"administrative\s+rules\s+office\s+can\s+provide\s+information\s+about\s+rules",
+    re.IGNORECASE,
+)
+
 _RULE_BODY_SIGNAL_RE = re.compile(
     r"§\s*\d|\barm\s+\d|\b\d{1,3}\.\d{1,3}\.\d{1,4}\b|authority\s*:|history\s*:|implementing\s*:|"
     r"purpose\s+of\s+regulations|notice\s+of\s+adoption|notice\s+of\s+proposed\s+(?:amendment|adoption|repeal)",
@@ -614,11 +647,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/env-wq400.html",
         "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/rev100.html",
         "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/saf-c200.html",
-        "https://gc.nh.gov/rules/state_agencies/",
-        "https://gc.nh.gov/rules/",
         "https://gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html",
-        "https://www.gencourt.state.nh.us/rules/state_agencies/",
-        "https://www.gencourt.state.nh.us/rules/",
     ],
     "NM": [
         "http://web.archive.org/web/20260210051847/https://www.srca.nm.gov/nmac-home/",
@@ -1882,6 +1911,12 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "carules.elaws.us" and normalized_path == "/search/allcode":
         return True
+    if host == "web.archive.org" and "gc.nh.gov/rules/about_rules/checkrule.aspx" in url_value.lower():
+        if _NH_CHECKRULE_GUIDE_TEXT_RE.search(hay):
+            return True
+    if host == "www.sos.ks.gov" and normalized_path_lower == "/publications/agency-regulation-resources.html":
+        if _KS_RESOURCE_TOOLS_TEXT_RE.search(hay):
+            return True
     if host == "govt.westlaw.com" and normalized_path_lower == "/calregs/help":
         return True
     if host == "govt.westlaw.com" and normalized_path_lower == "/calregs/index":
@@ -2033,7 +2068,8 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
     path = parsed.path.lower()
     query = parse_qs(parsed.query or "")
     wyoming_index_like = host == "rules.wyo.gov" and path in {"/search.aspx", "/agencies.aspx"}
-    if not wyoming_index_like and not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
+    kansas_index_like = host == "www.sos.ks.gov" and path == "/publications/kansas-administrative-regulations.html"
+    if not wyoming_index_like and not kansas_index_like and not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
         return False
 
     hay = " ".join([title_value, body])
@@ -2042,6 +2078,9 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
 
     if "administrative rules of montana" in hay.lower() and mt_title_hits >= 5:
         return True
+    if host == "www.sos.ks.gov" and path == "/publications/kansas-administrative-regulations.html":
+        if "kansas administrative regulations" in hay.lower() and _KS_PORTAL_CHROME_RE.search(hay):
+            return True
     if "general provisions" in hay.lower() and mt_title_hits >= 3:
         return True
     if "administrative rules" in hay.lower() and sd_row_hits >= 8:
@@ -2118,6 +2157,10 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
 
     if host == "rules.mt.gov" and (chapter_hits >= 3 or subchapter_hits >= 2 or mt_rule_hits >= 2):
         return True
+    if host == "www.sos.ks.gov" and path == "/publications/pubs_kar_regs.aspx":
+        ks_rule_hits = len(_KS_RULE_LISTING_ROW_RE.findall(body))
+        if "kansas administrative regulations" in hay.lower() and "agency" in hay.lower() and ks_rule_hits >= 8:
+            return True
     if host in {"sosmt.gov", "www.sosmt.gov"} and "/arm" in url_value.lower() and (
         mt_rule_hits >= 2 or "administrative rules of montana" in hay.lower() or
         len(re.findall(r"\bTitle\s+\d+\b", body, re.IGNORECASE)) >= 3
@@ -2142,6 +2185,9 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
     ):
         return True
+    if host == "web.archive.org" and url_value.rstrip("/").endswith("https://gc.nh.gov/rules"):
+        if _NH_RULES_PORTAL_TEXT_RE.search(hay):
+            return True
     if host == "www.ilga.gov" and path in {"/agencies/jcar/admincode", "/commission/jcar/admincode", "/commission/jcar/admincode/"}:
         if "administrative code" in hay.lower() and il_title_hits >= 8:
             return True
@@ -3824,6 +3870,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
     path = parsed.path or ""
+    query = parse_qs(parsed.query or "")
     official_index_page = _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value)
     if _has_disallowed_discovery_domain(url_value):
         return False
@@ -3862,6 +3909,20 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     # Arizona public-services inventory pages are crawl hubs, not substantive rule text.
     if host == "apps.azsos.gov" and path.rstrip("/") in {"/public_services/Index", "/public_services/CodeTOC.htm"}:
         return False
+
+    if host == "rules.wyo.gov" and path.lower() == "/ajaxhandler.ashx":
+        handler = str((query.get("handler") or [""])[0]).strip().lower()
+        wy_hay = " ".join([title_value, body])
+        wy_section_hits = len(re.findall(r"\bsection\s+\d+[A-Za-z0-9.-]*\.", wy_hay, re.IGNORECASE))
+        wy_statute_hits = len(re.findall(r"\bW\.?\s*S\.?\s*\d{1,2}-\d+-\d+[A-Za-z0-9.-]*\b", wy_hay, re.IGNORECASE))
+        wy_min_chars = max(160, min(int(min_chars), 220))
+        if (
+            handler == "getruleversionhtml"
+            and len(body) >= wy_min_chars
+            and wy_section_hits >= 2
+            and (_LEGAL_CONTENT_SIGNAL_RE.search(wy_hay) or wy_statute_hits >= 1)
+        ):
+            return True
 
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         if len(body) < max(120, int(min_chars)):

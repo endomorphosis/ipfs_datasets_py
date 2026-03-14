@@ -262,6 +262,61 @@ def test_is_direct_detail_candidate_url_recognizes_new_hampshire_archived_rule_c
     ) is False
 
 
+def test_new_hampshire_admin_seed_urls_exclude_live_root_pages() -> None:
+    nh_urls = scraper_module._extract_seed_urls_for_state("NH", "New Hampshire")
+    allowed_hosts = _allowed_discovery_hosts_for_state("NH", "New Hampshire")
+
+    assert "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html" in nh_urls
+    assert "https://gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html" in nh_urls
+    assert "https://gc.nh.gov/rules/state_agencies/" not in nh_urls
+    assert "https://gc.nh.gov/rules/" not in nh_urls
+    assert "https://www.gencourt.state.nh.us/rules/state_agencies/" not in nh_urls
+    assert "https://www.gencourt.state.nh.us/rules/" not in nh_urls
+    assert "web.archive.org" in allowed_hosts
+    assert "gencourt.state.nh.us" in allowed_hosts
+
+
+def test_new_hampshire_archived_rules_root_is_inventory_page() -> None:
+    text = (
+        "Office of Legislative Services Administrative Rules QUICK LINKS Rulemaking Search JLCAR Meeting Dates Rules by Agency "
+        "CONTACT Administrative Rules office can provide information about rules and RSA 541-A but cannot give legal advice. "
+        "WELCOME The Office of Legislative Services, Administrative Rules is the New Hampshire state government office where all proposed and adopted administrative rules must be filed. "
+        "NEWS Emergency Rules Currently in Effect Effective Adopted Rules as Filed The General Court of New Hampshire"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Administrative Rules",
+        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+    ) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Administrative Rules",
+        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+        min_chars=160,
+    ) is False
+
+
+def test_new_hampshire_archived_checkrule_page_is_not_substantive_rule_text() -> None:
+    text = (
+        "Administrative Rules HOW TO DOUBLE-CHECK THE ONLINE RULE CAUTION ALWAYS DOUBLE-CHECK ANY ONLINE RULE. "
+        "CHECKING FOR LATER FILINGS NOT YET ONLINE CHECKING FOR EXPIRATION Official Version of a Rule "
+        "Administrative Rules office can provide information about rules and RSA 541-A but cannot give legal advice."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="How To Double-Check the Online Rule",
+        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="How To Double-Check the Online Rule",
+        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
+    ) is False
+
+
 def test_is_direct_detail_candidate_url_recognizes_vermont_rule_display_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
         "https://secure.vermont.gov/SOS/rules/display.php?r=1049"
@@ -305,6 +360,76 @@ def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
         title="Tennessee Department of State: Publications",
         url="https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
     ) is True
+
+
+def test_kansas_publications_hub_is_inventory_page() -> None:
+    text = (
+        "Kansas Administrative Regulations The Secretary of State is the filing agency for all permanent and temporary regulations. "
+        "Online Administrative Regulations Proposed Regulations Open for Comment Future Effective Regulations "
+        "Administrative Regulations Agency Resources 2022 Kansas Administrative Regulations Volumes Regulation Modernization Initiative "
+        "Kansas Secretary of State Business Services Division Elections Division Publications Division "
+        "An official State of Kansas government website. Here's how you know."
+    )
+
+    assert scraper_module._looks_like_official_rule_index_page(
+        text=text,
+        title="Kansas Secretary of State | Publications | Kansas Administrative Regulations Home",
+        url="https://www.sos.ks.gov/publications/kansas-administrative-regulations.html",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Kansas Secretary of State | Publications | Kansas Administrative Regulations Home",
+        url="https://www.sos.ks.gov/publications/kansas-administrative-regulations.html",
+    ) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Kansas Secretary of State | Publications | Kansas Administrative Regulations Home",
+        url="https://www.sos.ks.gov/publications/kansas-administrative-regulations.html",
+        min_chars=160,
+    ) is False
+
+
+def test_kansas_agency_regulation_resources_page_is_not_substantive_rule_text() -> None:
+    text = (
+        "Administrative Regulations Agency Resources The Rules and Regulations Filing Act provides the framework for the promulgation, adoption, filing, and publication of permanent and temporary regulations. "
+        "Policy and Procedure Manual for Filing Kansas Administrative Rules and Regulations Permanent Regulation Tools Temporary Regulation Tools "
+        "Revocation by Notice Tools Other Useful Links Secretary of State Permanent Regulation Filing Checklist "
+        "Kansas Secretary of State Publications Division"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Administrative Regulations Agency Resources",
+        url="https://www.sos.ks.gov/publications/agency-regulation-resources.html",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Administrative Regulations Agency Resources",
+        url="https://www.sos.ks.gov/publications/agency-regulation-resources.html",
+    ) is False
+
+
+def test_kansas_agency_listing_page_is_inventory_not_substantive_text() -> None:
+    text = (
+        "Kansas Administrative Regulations You searched for: Agency = '7' Agency 7 Secretary of State REGULATIONS "
+        "7-16-1. Information and services fee 7-16-2. Technology communication fee 7-17-1. Definitions "
+        "7-17-2. Delivery of records 7-17-3. Forms 7-17-4. Fees 7-17-5. Methods of payment "
+        "7-17-6. Overpayment and underpayment of fees 7-17-7. Filing officer's duties deemed ministerial "
+        "7-17-8. Notification of defects 7-17-9. Defects in filing 7-17-10. Deadline to refuse filing"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Kansas Administrative Regulations",
+        url="https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR=7&Srch=Y",
+    ) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Kansas Administrative Regulations",
+        url="https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR=7&Srch=Y",
+        min_chars=160,
+    ) is False
 
 
 def test_wyoming_search_and_program_results_are_inventory_pages() -> None:
@@ -2426,6 +2551,12 @@ async def test_scrape_wyoming_rule_detail_via_ajax_uses_rule_version_id(monkeypa
     assert scraped.method_used == "wyoming_rules_ajax_viewer"
     assert scraped.title == "Chapter 1: General Provisions - Accountants, Board of Certified Public"
     assert "Section 1. Authority." in scraped.text
+    assert scraper_module._is_substantive_rule_text(
+        text=scraped.text,
+        title=scraped.title,
+        url="https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225",
+        min_chars=300,
+    ) is True
 
 
 def test_accepts_new_hampshire_archived_rule_chapter() -> None:
