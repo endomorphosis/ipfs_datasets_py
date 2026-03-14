@@ -19,10 +19,12 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
     _candidate_montana_rule_urls_from_text,
     _candidate_utah_rule_urls_from_public_api,
     _is_admin_rule_statute,
+    _is_direct_detail_candidate_url,
     _is_relaxed_recovery_text,
     _is_substantive_rule_text,
     _is_substantive_admin_statute,
     _normalize_admin_rule_payloads,
+    _score_candidate_url,
     _url_allowed_for_state,
     scrape_state_admin_rules,
 )
@@ -509,7 +511,7 @@ def test_arkansas_rule_portals_are_inventory_pages() -> None:
     )
     code_search = "Search - Code of Arkansas Rules Rule Quick Search Title Number Chapter Number"
 
-    assert scraper_module._looks_like_official_rule_index_page(
+    assert scraper_module._looks_like_rule_inventory_page(
         text=sos_landing,
         title="Arkansas Secretary of State",
         url="https://www.sos.arkansas.gov/rules-regulations/",
@@ -1235,10 +1237,9 @@ def test_rejects_montana_chapter_landing_page_false_positive() -> None:
 
 def test_synthesizes_montana_rule_urls_from_section_listing() -> None:
     text = (
-        "Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act\n"
-        "1.3.201 INTRODUCTION AND DEFINITIONS\n"
-        "1.3.202 APPLICATION OF MONTANA ADMINISTRATIVE PROCEDURE ACT\n"
-        "1.3.233 GENERAL PROVISIONS, PUBLIC INSPECTION OF ORDERS AND DECISIONS\n"
+        '<a href="/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865">1.3.201 INTRODUCTION AND DEFINITIONS</a>'
+        '<a href="/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/7c56d2e3-746d-4525-b439-bbfc9c0f5304">1.3.202 APPLICATION OF MONTANA ADMINISTRATIVE PROCEDURE ACT</a>'
+        '<a href="/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/be7e2ff7-54c5-4ada-94be-c4fc1a14b13d">1.3.233 GENERAL PROVISIONS, PUBLIC INSPECTION OF ORDERS AND DECISIONS</a>'
     )
 
     assert _candidate_montana_rule_urls_from_text(
@@ -1246,10 +1247,20 @@ def test_synthesizes_montana_rule_urls_from_section_listing() -> None:
         url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f",
         limit=5,
     ) == [
-        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/1.3.201",
-        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/1.3.202",
-        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/1.3.233",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/7c56d2e3-746d-4525-b439-bbfc9c0f5304",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/be7e2ff7-54c5-4ada-94be-c4fc1a14b13d",
     ]
+
+
+def test_montana_policy_urls_rank_above_portals_and_are_direct_detail() -> None:
+    policy_url = "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865"
+    section_url = "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f"
+    portal_url = "https://legislature.mt.gov/regulations"
+
+    assert _is_direct_detail_candidate_url(policy_url) is True
+    assert _score_candidate_url(policy_url) > _score_candidate_url(section_url)
+    assert _score_candidate_url(section_url) > _score_candidate_url(portal_url)
 
 
 def test_synthesizes_montana_rule_urls_from_sosmt_arm_index() -> None:
@@ -2003,6 +2014,34 @@ async def test_normalize_candidate_document_content_trims_indiana_iarp_chrome() 
     assert "Indiana Administrative Rules and Policies" not in text
     assert "Copy Article" not in text
     assert "Administrative Drafting Manual" not in text
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_trims_rhode_island_ricr_chrome() -> None:
+    title, text = await scraper_module._normalize_candidate_document_content(
+        url="https://rules.sos.ri.gov/regulations/part/510-00-00-1",
+        title="RISBC-1 Rhode Island Building Code - Rhode Island Department of State",
+        text=(
+            "An Official Rhode Island State Website\nRhode Island Department of State\nGregg M. Amore\n"
+            "Secretary of State\nSelect Language\nAbkhaz\nArabic\nRISBC-1 Rhode Island Building Code\n"
+            "510-RICR-00-00-1 ACTIVE RULE\nRegulation TextOverviewRegulationHistoryRulemaking Documents\n"
+            "1.1 Authority\nAuthority\nR.I. Gen. Laws Chapter 23-27.3 authorizes the building code standards committee to adopt and maintain the state building code.\n"
+            "1.2 Incorporated Materials\nThe International Building Code 2021 is incorporated by reference.\n"
+            "2002-Current Regulations\nFAQs\nSubscribe to Notifications\nReturn to top\nAdditional Links\n"
+            "Business Services\nOpen Government\nPowered by Google Translate Translate"
+        ),
+    )
+
+    assert title == "RISBC-1 Rhode Island Building Code"
+    assert text.startswith("RISBC-1 Rhode Island Building Code")
+    assert "An Official Rhode Island State Website" not in text
+    assert "Gregg M. Amore" not in text
+    assert "Select Language" not in text
+    assert "Abkhaz" not in text
+    assert "Regulation TextOverviewRegulationHistoryRulemaking Documents" not in text
+    assert "Subscribe to Notifications" not in text
+    assert "Additional Links" not in text
+    assert "Powered by Google Translate" not in text
 
 
 @pytest.mark.asyncio
@@ -5219,6 +5258,164 @@ async def test_agentic_discovery_seed_fetch_expands_hydrated_seed_links(monkeypa
     assert [
         statute["source_url"] for statute in result["state_blocks"][0]["statutes"]
     ] == [seed_url, deep_url]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_inventory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://rules.wyo.gov/Search.aspx?mode=7"
+    program_url = "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7"
+    viewer_url_1 = "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225"
+    viewer_url_2 = "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=24261"
+
+    search_text = (
+        "Administrative Rules (Code) Agency Accountants Program Accountants Result(s) "
+        "Agency Administration Program Human Resources Result(s)"
+    )
+    search_html = (
+        "<span class='program_id hidden'>347</span>"
+        "<span class='program_id hidden'>11</span>"
+    )
+    program_html = (
+        '<a href="#" class="search-rule-link" data-whatever="16225">Chapter 1: General Provisions</a>'
+        " <strong>Reference Number:</strong> 061.0001.1.10282019 "
+        '<a href="#" class="search-rule-link" data-whatever="24261">Chapter 2: Examination</a>'
+        " <strong>Reference Number:</strong> 061.0001.2.08082024"
+    )
+    viewer_text_1 = (
+        "Accountants, Board of Certified Public\n"
+        "Chapter 1: General Provisions\n"
+        "Section 1. Authority.\n"
+        "The Wyoming Board hereby adopts these rules pursuant to W.S. 16-3-103.\n"
+        "Section 2. Definitions.\n"
+        "Definitions apply throughout this chapter."
+    )
+    viewer_text_2 = (
+        "Accountants, Board of Certified Public\n"
+        "Chapter 2: Examination\n"
+        "Section 1. Examination requirement.\n"
+        "Applicants shall satisfy the examination requirements under W.S. 33-3-103.\n"
+        "Section 2. Scoring.\n"
+        "The board shall publish passing scores and administration requirements."
+    )
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            assert request.url == seed_url
+            document = SimpleNamespace(
+                text=search_text,
+                title="Administrative Rules (Code)",
+                html=search_html,
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            if url == seed_url:
+                return SimpleNamespace(
+                    text=search_text,
+                    title="Administrative Rules (Code)",
+                    html=search_html,
+                    links=[],
+                )
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_scrape_wyoming_rule_detail_via_ajax(url: str):
+        if url == program_url:
+            return SimpleNamespace(
+                url=url,
+                title="Wyoming Administrative Rules Program 347",
+                text="Chapter 1: General Provisions Reference Number 061.0001.1.10282019 Chapter 2: Examination Reference Number 061.0001.2.08082024",
+                html=program_html,
+                links=[],
+                success=True,
+                method_used="wyoming_rules_ajax_program",
+                extraction_provenance={"method": "wyoming_rules_ajax_program"},
+            )
+        if url == viewer_url_1:
+            return SimpleNamespace(
+                url=url,
+                title="Chapter 1: General Provisions - Accountants, Board of Certified Public",
+                text=viewer_text_1,
+                html="",
+                links=[],
+                success=True,
+                method_used="wyoming_rules_ajax_viewer",
+                extraction_provenance={"method": "wyoming_rules_ajax_viewer"},
+            )
+        if url == viewer_url_2:
+            return SimpleNamespace(
+                url=url,
+                title="Chapter 2: Examination - Accountants, Board of Certified Public",
+                text=viewer_text_2,
+                html="",
+                links=[],
+                success=True,
+                method_used="wyoming_rules_ajax_viewer",
+                extraction_provenance={"method": "wyoming_rules_ajax_viewer"},
+            )
+        return None
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_scrape_wyoming_rule_detail_via_ajax", _fake_scrape_wyoming_rule_detail_via_ajax)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["WY"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=2,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=300,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 2
+    assert [
+        statute["source_url"] for statute in result["state_blocks"][0]["statutes"]
+    ] == [viewer_url_1, viewer_url_2]
 
 
 @pytest.mark.anyio

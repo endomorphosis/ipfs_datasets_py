@@ -378,6 +378,7 @@ _TX_TRANSFER_INDEX_PATH_RE = re.compile(r"^/texreg/transfers(?:/|/index\.shtml)?
 _MI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/(?:|home/?|admincode/admincode/?)$", re.IGNORECASE)
 
 _RI_NON_RULE_PORTAL_PATH_RE = re.compile(r"^/organizations/?$", re.IGNORECASE)
+_RI_RICR_DETAIL_PATH_RE = re.compile(r"^/regulations/part/[\w.-]+/?$", re.IGNORECASE)
 
 _AZ_NON_RULE_LEGISLATURE_PATH_RE = re.compile(
     r"^/(?:regulations|administrative-code|code-of-regulations)/?$",
@@ -463,6 +464,7 @@ _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"iar\.iga\.in\.gov/code(?:/(?:current|2006))?(?:/|$)|"
     r"ilga\.gov/(?:(?:agencies/JCAR/(?:AdminCode|Parts|Sections))|commission/jcar/admincode)(?:\?|/|$)|"
     r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
+    r"(?:www\.)?sos\.arkansas\.gov/rules-regulations(?:/|$)|"
     r"azsos\.gov/rules(?:/arizona-administrative-code)?(?:/|$)|"
     r"rules\.wyo\.gov/(?:Search\.aspx(?:\?mode=7)?|Agencies\.aspx)(?:\?|/|$)|"
     r"sharetngov\.tnsosfiles\.com/sos/(?:rules/(?:index\.htm|rules2\.htm|rules_list\.shtml|effectives/effectives\.htm)|pub/tar/index\.htm)(?:\?|/|$)|"
@@ -1458,6 +1460,23 @@ def _score_candidate_url(url: str) -> int:
         score -= 6
     if host == "carules.elaws.us" and normalized_path.lower() == "/search/allcode":
         score -= 8
+    if host in {"legislature.mt.gov", "www.legislature.mt.gov"} and normalized_path.lower() in {
+        "/regulations",
+        "/administrative-code",
+        "/code-of-regulations",
+    }:
+        score -= 6
+    if host == "rules.mt.gov":
+        if re.search(r"^/browse/collections/[0-9a-fA-F-]+/policies/[0-9a-fA-F-]+$", path, re.IGNORECASE):
+            score += 12
+        elif re.search(r"^/browse/collections/[0-9a-fA-F-]+/sections/[0-9a-fA-F-]+$", path, re.IGNORECASE):
+            score += 8
+        elif re.fullmatch(r"/browse/collections/[0-9a-fA-F-]+", normalized_path, re.IGNORECASE):
+            score += 5
+        elif normalized_path.lower() in {"/browse/collections", "/search"}:
+            score += 2
+    if host in {"sosmt.gov", "www.sosmt.gov"} and "/arm" in normalized_path.lower():
+        score += 2
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
         score += 10
     if host == "admincode.legislature.state.al.us" and normalized_path.lower().startswith("/administrative-code#"):
@@ -1726,6 +1745,37 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
     return score
 
 
+def _candidate_montana_policy_urls_from_html(*, html: str, url: str, limit: int = 24) -> List[str]:
+    body = str(html or "")
+    url_value = str(url or "").strip()
+    parsed = urlparse(url_value)
+    if parsed.netloc.lower() != "rules.mt.gov" or "/browse/collections/" not in (parsed.path or ""):
+        return []
+
+    out: List[str] = []
+    seen: set[str] = set()
+    limit_n = max(1, int(limit))
+    for href in re.findall(r'href=["\']([^"\']+)["\']', body, re.IGNORECASE):
+        candidate = urljoin(url_value, href.strip())
+        candidate_parsed = urlparse(candidate)
+        if candidate_parsed.netloc.lower() != "rules.mt.gov":
+            continue
+        if not re.search(
+            r"^/browse/collections/[0-9a-fA-F-]+/policies/[0-9a-fA-F-]+$",
+            candidate_parsed.path,
+            re.IGNORECASE,
+        ):
+            continue
+        normalized = candidate_parsed.geturl()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        out.append(normalized)
+        if len(out) >= limit_n:
+            break
+    return out
+
+
 def _build_initial_pending_candidates(
     ranked_urls: List[tuple[str, int]],
     seed_expansion_candidates: List[tuple[str, int]],
@@ -1759,8 +1809,6 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     host = parsed.netloc.lower()
     path = parsed.path or ""
     normalized_path = path.rstrip("/") or "/"
-    if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
-        return True
     if host == "admincode.legislature.state.al.us" and normalized_path.lower().startswith("/administrative-code#"):
         return True
     if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
@@ -1775,6 +1823,12 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         if re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
             return True
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE):
+        return True
+    if host == "rules.mt.gov" and re.search(
+        r"^/browse/collections/[0-9a-fA-F-]+/policies/[0-9a-fA-F-]+$",
+        path,
+        re.IGNORECASE,
+    ):
         return True
     if host == "rules.wyo.gov" and normalized_path.lower() == "/ajaxhandler.ashx":
         handler = str((parse_qs(parsed.query or "").get("handler") or [""])[0]).strip().lower()
@@ -2219,6 +2273,13 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     wy_result_hits = len(re.findall(r"\bresult(?:\(s\)|s)?\b", hay, re.IGNORECASE))
     wy_reference_hits = len(re.findall(r"\breference\s+number\b", hay, re.IGNORECASE))
 
+    if host == "rules.mt.gov" and "/rules/" in path:
+        mt_detail_hay = " ".join([title_value, body])
+        if re.search(r"\bARM\s*\d{1,2}\.\d{1,2}\.\d{2,4}\b", mt_detail_hay, re.IGNORECASE) and len(
+            re.findall(r"\b(?:authority|implementing|history|effective|amd\.|rep\.|trans)\b", mt_detail_hay, re.IGNORECASE)
+        ) >= 2:
+            return False
+
     if host == "rules.mt.gov" and (chapter_hits >= 3 or subchapter_hits >= 2 or mt_rule_hits >= 2):
         return True
     if host == "www.sos.ks.gov" and path == "/publications/pubs_kar_regs.aspx":
@@ -2232,6 +2293,9 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "admincode.legislature.state.al.us" and chapter_hits >= 3:
         return True
+    if host in {"www.sos.arkansas.gov", "sos.arkansas.gov"} and path.rstrip("/") == "/rules-regulations":
+        if _AR_SOS_PORTAL_TEXT_RE.search(hay) and "search arkansas administrative rules" in hay.lower():
+            return True
     if host == "codeofarrules.arkansas.gov" and path == "/rules/search":
         if "code of arkansas rules" in hay.lower() and "search" in title_value.lower():
             return True
@@ -2367,7 +2431,8 @@ def _candidate_montana_rule_urls_from_text(*, text: str, url: str, limit: int = 
     """Extract candidate Montana ARM rule URLs from scrape text.
 
     Handles:
-    - ``rules.mt.gov/browse/collections/<id>/sections/`` pages: extracts rule IDs (``N.N.NNN``)
+        - ``rules.mt.gov/browse/collections/<id>/sections/`` pages: extracts linked
+            ``/policies/<uuid>`` detail URLs from rendered HTML
     - ``sosmt.gov/arm/`` index pages: extracts Title-level deep links to rules.mt.gov sections
     """
     body = str(text or "")
@@ -2379,18 +2444,7 @@ def _candidate_montana_rule_urls_from_text(*, text: str, url: str, limit: int = 
     seen: set = set()
 
     if host == "rules.mt.gov":
-        match = re.match(r"^/browse/collections/([0-9a-fA-F-]+)/sections/", parsed.path)
-        if not match:
-            return []
-        collection_id = match.group(1)
-        for rule_id in re.findall(r"\b\d{1,2}\.\d{1,2}\.\d{2,4}\b", body):
-            if rule_id in seen:
-                continue
-            seen.add(rule_id)
-            out.append(f"https://rules.mt.gov/browse/collections/{collection_id}/rules/{rule_id}")
-            if len(out) >= limit_n:
-                break
-        return out
+        return _candidate_montana_policy_urls_from_html(html=body, url=url_value, limit=limit_n)
 
     if host in {"sosmt.gov", "www.sosmt.gov"}:
         # ARM index pages on sosmt.gov link out to rules.mt.gov collection/section URLs.
@@ -3306,6 +3360,93 @@ def _title_from_california_westlaw_document_text(*, text: str, url: str) -> str:
     return ""
 
 
+def _trim_rhode_island_ricr_document_chrome(*, text: str, url: str, title: str = "") -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "rules.sos.ri.gov" or not _RI_RICR_DETAIL_PATH_RE.match(parsed.path or ""):
+        return str(text or "").strip()
+
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return normalized_text
+
+    normalized_title = re.sub(
+        r"\s*-\s*Rhode\s+Island\s+Department\s+of\s+State\s*$",
+        "",
+        str(title or "").strip(),
+        flags=re.IGNORECASE,
+    ).strip()
+
+    start_index: Optional[int] = None
+    if normalized_title:
+        title_index = normalized_text.find(normalized_title)
+        if title_index >= 0:
+            start_index = title_index
+
+    if start_index is None:
+        active_rule_match = re.search(
+            r"(?:^|\n)(\d{3}-RICR-\d{2}-\d{2}-\d+\s+ACTIVE\s+RULE)\b",
+            normalized_text,
+            re.IGNORECASE,
+        )
+        if active_rule_match:
+            start_index = active_rule_match.start(1)
+
+    if start_index is not None and start_index > 0:
+        trimmed = normalized_text[start_index:].strip()
+    else:
+        trimmed = normalized_text
+
+    end_markers = [
+        "2002-Current Regulations",
+        "Additional Links",
+        "Powered by Google Translate",
+        "Return to top",
+    ]
+    end_index: Optional[int] = None
+    for marker in end_markers:
+        marker_index = trimmed.find(marker)
+        if marker_index >= 0 and (end_index is None or marker_index < end_index):
+            end_index = marker_index
+    if end_index is not None and end_index > 0:
+        trimmed = trimmed[:end_index].strip()
+
+    lines = [re.sub(r"\s+", " ", line).strip() for line in trimmed.splitlines()]
+    cleaned_lines: List[str] = []
+    seen_title = False
+    seen_active_rule = False
+    for line in lines:
+        if not line:
+            continue
+        if re.match(r"^An Official Rhode Island State Website\.?$", line, re.IGNORECASE):
+            continue
+        if re.match(r"^Rhode Island Department of State$", line, re.IGNORECASE):
+            continue
+        if re.match(r"^Gregg M\. Amore$", line, re.IGNORECASE):
+            continue
+        if re.match(r"^Secretary of State$", line, re.IGNORECASE):
+            continue
+        if re.match(r"^Select Language$", line, re.IGNORECASE):
+            continue
+        if re.match(r"^Regulation TextOverviewRegulationHistoryRulemaking Documents$", line, re.IGNORECASE):
+            continue
+        if line in {"Regulation Text", "Overview", "Regulation", "History", "Rulemaking Documents"}:
+            continue
+        if re.search(r"(?:Subscribe to Notifications|Return to top|Powered by Google Translate|Image of the Rhode Island coat of arms)", line, re.IGNORECASE):
+            continue
+        if normalized_title and line == normalized_title:
+            if seen_title:
+                continue
+            seen_title = True
+        if re.match(r"^\d{3}-RICR-\d{2}-\d{2}-\d+\s+ACTIVE\s+RULE$", line, re.IGNORECASE):
+            if seen_active_rule:
+                continue
+            seen_active_rule = True
+        cleaned_lines.append(line)
+
+    cleaned = "\n".join(cleaned_lines).strip()
+    return cleaned or trimmed
+
+
 def _trim_california_westlaw_document_chrome(*, text: str, url: str, title: str = "") -> str:
     parsed = urlparse(str(url or "").strip())
     if parsed.netloc.lower() != "govt.westlaw.com" or not parsed.path.lower().startswith("/calregs/document/"):
@@ -3511,6 +3652,19 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
     )
 
     parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() == "rules.sos.ri.gov" and _RI_RICR_DETAIL_PATH_RE.match(parsed.path or ""):
+        normalized_title = re.sub(
+            r"\s*-\s*Rhode\s+Island\s+Department\s+of\s+State\s*$",
+            "",
+            normalized_title,
+            flags=re.IGNORECASE,
+        ).strip()
+        normalized_text = _trim_rhode_island_ricr_document_chrome(
+            text=normalized_text,
+            url=url,
+            title=normalized_title,
+        )
+
     if parsed.netloc.lower() == "iar.iga.in.gov" and re.search(
         r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?",
         parsed.path or "",
@@ -4114,7 +4268,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         return False
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
-    if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value):
+    if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value) and not official_index_page:
         return False
     if _looks_like_shallow_montana_inventory_page(text=body, title=title_value, url=url_value):
         return False
@@ -5589,7 +5743,7 @@ async def _agentic_discover_admin_state_blocks(
                 inventory_seed = _looks_like_rule_inventory_page(text=fetched_text, title=fetched_title, url=seed_url)
                 if inventory_seed:
                     for rule_url in _candidate_montana_rule_urls_from_text(
-                        text=fetched_text,
+                        text=fetched_html or fetched_text,
                         url=seed_url,
                         limit=24,
                     ):
@@ -5626,7 +5780,7 @@ async def _agentic_discover_admin_state_blocks(
                             live_method_value = seed_scrape_provenance.get("method")
                         await _append_document_if_rule(seed_url, seed_scrape_title, seed_scrape_text, live_method_value)
                         for rule_url in _candidate_montana_rule_urls_from_text(
-                            text=seed_scrape_text,
+                            text=seed_scrape_html or seed_scrape_text,
                             url=seed_url,
                             limit=24,
                         ):
@@ -5770,7 +5924,7 @@ async def _agentic_discover_admin_state_blocks(
                         continue
 
                     for rule_url in _candidate_montana_rule_urls_from_text(
-                        text=cc_text,
+                        text=cc_html or cc_text,
                         url=cc_url,
                         limit=32,
                     ):
@@ -5957,7 +6111,7 @@ async def _agentic_discover_admin_state_blocks(
                             inventory_rule_bonus = 4 if inventory_page else 3
                             inventory_utah_bonus = 5 if inventory_page else 4
                             for rule_url in _candidate_montana_rule_urls_from_text(
-                                text=text,
+                                text=fetched_html or text,
                                 url=url,
                                 limit=24,
                             ):
@@ -6053,7 +6207,7 @@ async def _agentic_discover_admin_state_blocks(
                     if inventory_page:
                         same_host = host if host in base_hosts else urlparse(url).netloc
                         for rule_url in _candidate_montana_rule_urls_from_text(
-                            text=text,
+                            text=fetched_html or text,
                             url=url,
                             limit=24,
                         ):
