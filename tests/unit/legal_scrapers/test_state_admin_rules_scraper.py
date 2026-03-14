@@ -391,6 +391,9 @@ def test_is_direct_detail_candidate_url_recognizes_tennessee_sharetngov_rule_cha
         "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020.htm"
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
+        "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-14.20150930.pdf"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
         "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm"
     ) is False
 
@@ -452,6 +455,19 @@ def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
         text=text,
         title="Tennessee Department of State: Publications",
         url="https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
+    ) is True
+
+
+def test_tennessee_tenncare_rules_page_is_inventory_page() -> None:
+    text = (
+        "Tennessee Department of State: Publications TennCare Rules Effective Rules Pending Rules Rulemaking Hearings "
+        "Archived Rule Filings TennCare Rules Filing Rule Filing Rule"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Tennessee Department of State: Publications",
+        url="https://sharetngov.tnsosfiles.com/sos/rules/tenncare.htm",
     ) is True
 
 
@@ -4042,6 +4058,9 @@ def test_score_candidate_url_prioritizes_tennessee_sharetngov_rule_pages() -> No
     chapter_score = scraper_module._score_candidate_url(
         "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020.htm"
     )
+    nested_pdf_score = scraper_module._score_candidate_url(
+        "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-14.20150930.pdf"
+    )
     tar_index_score = scraper_module._score_candidate_url(
         "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm"
     )
@@ -4059,6 +4078,7 @@ def test_score_candidate_url_prioritizes_tennessee_sharetngov_rule_pages() -> No
     )
 
     assert chapter_score > tar_index_score
+    assert nested_pdf_score > tar_index_score
     assert tar_index_score > sos_service_score
     assert effective_rules_score > sos_service_score
     assert sos_service_score > tn_gov_404_score

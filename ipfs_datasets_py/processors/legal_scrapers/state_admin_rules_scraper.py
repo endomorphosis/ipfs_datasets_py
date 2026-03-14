@@ -1685,6 +1685,8 @@ def _score_candidate_url(url: str) -> int:
         score += 12
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\w.-]+\.pdf$", path, re.IGNORECASE):
         score += 10
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\d-]+/[\w.-]+\.pdf$", path, re.IGNORECASE):
+        score += 10
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules_filings/[\w.-]+\.pdf$", path, re.IGNORECASE):
         score += 8
     if host == "rules.wyo.gov" and normalized_path.lower() == "/search.aspx":
@@ -1956,6 +1958,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         if re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
             return True
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE):
+        return True
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\d-]+/[\w.-]+\.pdf$", path, re.IGNORECASE):
         return True
     if host == "rules.mt.gov" and re.search(
         r"^/browse/collections/[0-9a-fA-F-]+/policies/[0-9a-fA-F-]+$",
@@ -2425,6 +2429,7 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
         "/sos/rules/rules2.htm",
         "/sos/rules/rules_list.shtml",
         "/sos/rules/effectives/effectives.htm",
+        "/sos/rules/tenncare.htm",
     }:
         if "tennessee department of state: publications" in hay.lower() and (
             "administrative register" in hay.lower()
@@ -2433,6 +2438,7 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
             or "view all effective rule chapters" in hay.lower()
             or "view effective rules by month" in hay.lower()
             or "archived rule filings" in hay.lower()
+            or "tenncare rules" in hay.lower()
         ):
             return True
     return False
@@ -2604,6 +2610,7 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         "/sos/rules/rules2.htm",
         "/sos/rules/rules_list.shtml",
         "/sos/rules/effectives/effectives.htm",
+        "/sos/rules/tenncare.htm",
     }:
         if (
             "administrative register" in hay.lower()
@@ -2611,6 +2618,7 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
             or "view all effective rule chapters" in hay.lower()
             or "view effective rules by month" in hay.lower()
             or "archived rule filings" in hay.lower()
+            or "tenncare rules" in hay.lower()
         ):
             return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(path):
