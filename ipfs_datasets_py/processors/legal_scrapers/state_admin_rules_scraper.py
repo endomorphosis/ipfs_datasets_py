@@ -279,6 +279,14 @@ _AR_SOS_PORTAL_TEXT_RE = re.compile(
     re.IGNORECASE,
 )
 
+_GA_GAC_DEPARTMENT_PATH_RE = re.compile(r"^/gac/\d+/?$", re.IGNORECASE)
+_GA_GAC_CHAPTER_PATH_RE = re.compile(r"^/gac/\d+-\d+/?$", re.IGNORECASE)
+_GA_GAC_SUBJECT_PATH_RE = re.compile(r"^/gac/\d+(?:-\d+){2,}/?$", re.IGNORECASE)
+_GA_GAC_RULE_PATH_RE = re.compile(r"^/gac/\d+(?:-\d+){2,}-\.\d+[A-Za-z0-9-]*/?$", re.IGNORECASE)
+_GA_GAC_DEPARTMENT_ROW_RE = re.compile(r"\bDepartment\s+\d+\.\s", re.IGNORECASE)
+_GA_GAC_SUBJECT_ROW_RE = re.compile(r"\bSubject\s+\d+(?:-\d+){2,}\.\s", re.IGNORECASE)
+_GA_GAC_RULE_ROW_RE = re.compile(r"\bRule\s+\d+(?:-\d+){2,}-\.\d+[A-Za-z0-9-]*\b", re.IGNORECASE)
+
 _AK_AAC_TITLE_PATH_RE = re.compile(r"^/aac/\d+/?$", re.IGNORECASE)
 _AK_AAC_CHAPTER_PATH_RE = re.compile(r"^/aac/\d+\.\d+/?$", re.IGNORECASE)
 _AK_AAC_SECTION_PATH_RE = re.compile(r"^/aac/\d+(?:\.\d+){2,3}/?$", re.IGNORECASE)
@@ -286,6 +294,21 @@ _AK_BOOKVIEW_PATH_RE = re.compile(r"^/bookview/(?:\d+(?:\.\d+)*)/?$", re.IGNOREC
 _AK_AAC_TITLE_ROW_RE = re.compile(r"\bTitle\s+\d+\.\s", re.IGNORECASE)
 _AK_AAC_CHAPTER_ROW_RE = re.compile(r"\bChapter\s+\d+\.\d+\.\s", re.IGNORECASE)
 _AK_AAC_SECTION_ROW_RE = re.compile(r"\bSection\s+\d+(?:\.\d+){2,3}\.\s", re.IGNORECASE)
+
+_NM_NMAC_TITLES_PATH_RE = re.compile(r"^/nmac-home/nmac-titles/?$", re.IGNORECASE)
+_NM_NMAC_TITLE_PATH_RE = re.compile(r"^/nmac-home/nmac-titles/title-\d+(?:-[a-z0-9]+)+/?$", re.IGNORECASE)
+_NM_NMAC_CHAPTER_PATH_RE = re.compile(
+    r"^/nmac-home/nmac-titles/title-\d+(?:-[a-z0-9]+)+/chapter-\d+(?:-[a-z0-9]+)+/?$",
+    re.IGNORECASE,
+)
+_NM_NMAC_TITLE_ROW_RE = re.compile(r"\bTitle\s+0?\d+\s+[\u2013-]\s+[A-Z]", re.IGNORECASE)
+_NM_NMAC_CHAPTER_ROW_RE = re.compile(r"\bChapter\s+\d+(?:[\u2013-]\d+)?\b", re.IGNORECASE)
+_NM_NMAC_RULE_ROW_RE = re.compile(r"\b\d{1,2}\.\d{1,3}\.\d{1,3}\s+NMAC\b", re.IGNORECASE)
+_NM_NMAC_PORTAL_TEXT_RE = re.compile(
+    r"skip\s+to\s+content|related\s+pages|expand\s+list|powered\s+by\s+real\s+time\s+solutions|"
+    r"state\s+records\s+center\s+&\s+archives|new\s+mexico\s+administrative\s+code",
+    re.IGNORECASE,
+)
 
 _VT_NON_RULE_PORTAL_PATH_RE = re.compile(
     r"/SOS/rules/?$|/SOS/rules/(?:index\.php|search\.php|rssFeed\.php|calendar\.php|subscribe\.php|contact\.php|iCalendar\.php)$|"
@@ -699,12 +722,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html",
     ],
     "NM": [
-        "http://web.archive.org/web/20260210051847/https://www.srca.nm.gov/nmac-home/",
-        "http://web.archive.org/web/20260210051847/https://www.srca.nm.gov/nmac-home/nmac-titles/",
+        "https://web.archive.org/web/20260210051847/https://www.srca.nm.gov/nmac-home/",
+        "https://web.archive.org/web/20260210051847/https://www.srca.nm.gov/nmac-home/nmac-titles/",
         "https://www.srca.nm.gov/nmac-home/",
         "https://www.srca.nm.gov/nmac-home/nmac-titles/",
-        "https://www.srca.nm.gov/nmac-home/explanation-of-the-new-mexico-administrative-code/",
-        "https://www.srca.nm.gov/",
     ],
     "NY": [
         "https://dos.ny.gov/new-york-codes-rules-and-regulations-nycrr",
@@ -1399,6 +1420,10 @@ def _is_non_admin_seed_url(url: str) -> bool:
         return True
     if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
         return True
+    if host in {"www.legis.ga.gov", "legis.ga.gov"}:
+        return True
+    if host in {"legislature.nm.gov", "nmlegis.gov", "www.nmlegis.gov"}:
+        return True
     if host in {"legislature.ak.gov", "legis.state.ak.us", "www.legis.state.ak.us"}:
         return True
     if host in {"legislature.ar.gov", "arkleg.state.ar.us", "www.arkleg.state.ar.us"}:
@@ -1471,6 +1496,43 @@ def _score_candidate_url(url: str) -> int:
         score += 4
     if host == "www.akleg.gov" and normalized_path.lower() == "/basis/aac.asp":
         score += 6
+    if host == "rules.sos.ga.gov":
+        if normalized_path.lower() == "/gac":
+            score += 6
+        elif _GA_GAC_DEPARTMENT_PATH_RE.fullmatch(path):
+            score += 7
+        elif _GA_GAC_CHAPTER_PATH_RE.fullmatch(path):
+            score += 8
+        elif _GA_GAC_SUBJECT_PATH_RE.fullmatch(path):
+            score += 9
+        elif _GA_GAC_RULE_PATH_RE.fullmatch(path):
+            score += 13
+        elif normalized_path.lower() in {"/", "/help.aspx", "/download_pdf.aspx"}:
+            score -= 3
+    if host == "www.srca.nm.gov":
+        if _NM_NMAC_TITLES_PATH_RE.fullmatch(path):
+            score += 8
+        elif _NM_NMAC_TITLE_PATH_RE.fullmatch(path):
+            score += 9
+        elif _NM_NMAC_CHAPTER_PATH_RE.fullmatch(path):
+            score += 10
+        elif normalized_path.lower() == "/nmac-home":
+            score += 4
+        elif normalized_path.lower() == "/nmac-home/explanation-of-the-new-mexico-administrative-code":
+            score -= 5
+        elif normalized_path.lower() == "/":
+            score -= 4
+    if host in {"legislature.nm.gov", "nmlegis.gov", "www.nmlegis.gov"} and normalized_path.lower() in {
+        "/",
+        "/rules",
+        "/regulations",
+        "/administrative-code",
+        "/code-of-regulations",
+        "/agency-rules",
+        "/policies",
+        "/departments",
+    }:
+        score -= 10
     if host == "akrules.elaws.us":
         if normalized_path.lower() == "/aac":
             score += 7
@@ -1898,6 +1960,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return True
     if host == "akrules.elaws.us" and _AK_AAC_SECTION_PATH_RE.fullmatch(path):
         return True
+    if host == "rules.sos.ga.gov" and _GA_GAC_RULE_PATH_RE.fullmatch(path):
+        return True
     if host == "sdlegislature.gov" and _SD_RULE_DETAIL_PATH_RE.fullmatch(path):
         return True
     if host == "sdlegislature.gov" and _SD_DISPLAY_RULE_PATH_RE.search(path):
@@ -2088,6 +2152,21 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay) and not arizona_official_rule_document:
         return True
+    if host in {"www.legis.ga.gov", "legis.ga.gov"}:
+        return True
+    if host in {"legislature.nm.gov", "nmlegis.gov", "www.nmlegis.gov"}:
+        return True
+    if host == "www.srca.nm.gov" and normalized_path_lower == "/nmac-home/explanation-of-the-new-mexico-administrative-code":
+        if all(
+            needle in hay.lower()
+            for needle in (
+                "what are state rules",
+                "history of the code",
+                "structure of the nmac",
+                "anatomy of a rule",
+            )
+        ):
+            return True
     if host == "ltgov.alaska.gov" and normalized_path_lower == "/information/regulations":
         if "proposed regulations" in hay.lower() and "adopted regulations" in hay.lower() and "alaska administrative code" in hay.lower():
             return True
@@ -2203,6 +2282,15 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     if _NON_RULE_ADMIN_LANDING_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
         return True
     if _NON_RULE_POLICY_PAGE_RE.search(hay):
+        if host == "iar.iga.in.gov" and re.search(
+            r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?",
+            path,
+            re.IGNORECASE,
+        ):
+            if _has_admin_signal(text=text, title=title, url=url) and (
+                _RULE_BODY_SIGNAL_RE.search(hay) or _LEGAL_CONTENT_SIGNAL_RE.search(hay)
+            ):
+                return False
         return True
     if _GENERIC_ADMIN_INDEX_TITLE_RE.fullmatch(title_value) and nav_hits >= 4:
         return True
@@ -2264,11 +2352,15 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
     path = parsed.path.lower()
     query = parse_qs(parsed.query or "")
     ak_title_hits = len(_AK_AAC_TITLE_ROW_RE.findall(body))
+    ga_department_hits = len(_GA_GAC_DEPARTMENT_ROW_RE.findall(body))
+    nm_title_hits = len(_NM_NMAC_TITLE_ROW_RE.findall(body))
     wyoming_index_like = host == "rules.wyo.gov" and path in {"/search.aspx", "/agencies.aspx"}
     kansas_index_like = host == "www.sos.ks.gov" and path == "/publications/kansas-administrative-regulations.html"
     sd_index_like = host == "sdlegislature.gov" and _SD_RULE_INDEX_PATH_RE.fullmatch(parsed.path or "") is not None
     alaska_index_like = (host == "akrules.elaws.us" and path == "/aac") or (host == "www.akleg.gov" and path == "/basis/aac.asp")
-    if not wyoming_index_like and not kansas_index_like and not sd_index_like and not alaska_index_like and not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
+    georgia_index_like = host == "rules.sos.ga.gov" and path == "/gac"
+    new_mexico_index_like = host == "www.srca.nm.gov" and _NM_NMAC_TITLES_PATH_RE.fullmatch(parsed.path or "") is not None
+    if not wyoming_index_like and not kansas_index_like and not sd_index_like and not alaska_index_like and not georgia_index_like and not new_mexico_index_like and not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
         return False
 
     hay = " ".join([title_value, body])
@@ -2285,6 +2377,10 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
     if sd_index_like and "administrative rules" in hay.lower() and sd_row_hits >= 8:
         return True
     if alaska_index_like and "alaska administrative code" in hay.lower() and ak_title_hits >= 8:
+        return True
+    if georgia_index_like and "ga r&r" in hay.lower() and ga_department_hits >= 8:
+        return True
+    if new_mexico_index_like and "new mexico administrative code" in hay.lower() and nm_title_hits >= 8:
         return True
     if "alabama administrative code" in hay.lower() and len(re.findall(r"\b(?:agency|chapter|rule|title)\b", hay, re.IGNORECASE)) >= 4:
         return True
@@ -2346,6 +2442,11 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     sd_row_hits = len(_SD_RULE_INDEX_ROW_RE.findall(body))
     ak_chapter_hits = len(_AK_AAC_CHAPTER_ROW_RE.findall(body))
     ak_section_hits = len(_AK_AAC_SECTION_ROW_RE.findall(body))
+    ga_subject_hits = len(_GA_GAC_SUBJECT_ROW_RE.findall(body))
+    ga_rule_hits = len(_GA_GAC_RULE_ROW_RE.findall(body))
+    nm_title_hits = len(_NM_NMAC_TITLE_ROW_RE.findall(body))
+    nm_chapter_hits = len(_NM_NMAC_CHAPTER_ROW_RE.findall(body))
+    nm_rule_hits = len(_NM_NMAC_RULE_ROW_RE.findall(body))
     mt_rule_hits = len(re.findall(r"\b\d{1,3}\.\d{1,3}\.\d{2,4}\b", body))
     nh_prefix_hits = len(_NH_ARCHIVED_RULE_PREFIX_RE.findall(hay))
     ca_title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
@@ -2363,6 +2464,37 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
 
     if host == "rules.mt.gov" and "/policies/" in path:
         return False
+
+    if host == "rules.sos.ga.gov" and _GA_GAC_RULE_PATH_RE.fullmatch(path):
+        return False
+    if host == "rules.sos.ga.gov" and path == "/gac":
+        if ga_subject_hits >= 4 or len(_GA_GAC_DEPARTMENT_ROW_RE.findall(hay)) >= 8:
+            return True
+    if host == "rules.sos.ga.gov" and _GA_GAC_DEPARTMENT_PATH_RE.fullmatch(path):
+        if chapter_hits >= 2 and ga_subject_hits >= 3:
+            return True
+    if host == "rules.sos.ga.gov" and _GA_GAC_CHAPTER_PATH_RE.fullmatch(path):
+        if ga_subject_hits >= 4:
+            return True
+    if host == "rules.sos.ga.gov" and _GA_GAC_SUBJECT_PATH_RE.fullmatch(path):
+        if ga_rule_hits >= 2:
+            return True
+
+    if host == "www.srca.nm.gov" and path == "/nmac-home":
+        if "nmac titles" in hay.lower() and _NM_NMAC_PORTAL_TEXT_RE.search(hay):
+            return True
+    if host == "www.srca.nm.gov" and path == "/nmac-home/explanation-of-the-new-mexico-administrative-code":
+        if _NM_NMAC_PORTAL_TEXT_RE.search(hay) and "what are state rules" in hay.lower():
+            return True
+    if host == "www.srca.nm.gov" and _NM_NMAC_TITLES_PATH_RE.fullmatch(path):
+        if nm_title_hits >= 8 and _NM_NMAC_PORTAL_TEXT_RE.search(hay):
+            return True
+    if host == "www.srca.nm.gov" and _NM_NMAC_TITLE_PATH_RE.fullmatch(path):
+        if nm_chapter_hits >= 6 and nm_rule_hits >= 4 and _NM_NMAC_PORTAL_TEXT_RE.search(hay):
+            return True
+    if host == "www.srca.nm.gov" and _NM_NMAC_CHAPTER_PATH_RE.fullmatch(path):
+        if nm_chapter_hits >= 6 and nm_rule_hits >= 4 and _NM_NMAC_PORTAL_TEXT_RE.search(hay):
+            return True
 
     if host == "akrules.elaws.us" and _AK_AAC_SECTION_PATH_RE.fullmatch(path):
         return False
@@ -5622,6 +5754,11 @@ async def _agentic_discover_admin_state_blocks(
         candidate_urls: List[str] = []
         source_breakdown: Dict[str, int] = {}
         allowed_hosts = _allowed_discovery_hosts_for_state(state_code, state_name)
+        state_rate_limit_metadata: Dict[str, Any] = {}
+
+        def _record_rate_limit_metadata(candidate: Any) -> None:
+            nonlocal state_rate_limit_metadata
+            state_rate_limit_metadata = _merge_cloudflare_rate_limit_metadata(state_rate_limit_metadata, candidate)
 
         seed_urls = _extract_seed_urls_for_state(state_code, state_name)
         if not seed_urls:
@@ -5636,6 +5773,7 @@ async def _agentic_discover_admin_state_blocks(
 
         utah_api_rule_urls: List[str] = []
         arkansas_bootstrap_document_urls: List[str] = []
+        preseed_substantive_url_keys: set[str] = set()
 
         # Utah's public search API already exposes canonical detail-page URLs.
         # Seed them immediately so bounded runs can hit substantive rule pages
@@ -5737,6 +5875,11 @@ async def _agentic_discover_admin_state_blocks(
                     fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
                     fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
                     fetched_html = str(getattr(fetched_doc, "html", "") or "")
+                    fetched_title, fetched_text = await _normalize_candidate_document_content(
+                        url=seed_url,
+                        title=fetched_title,
+                        text=fetched_text,
+                    )
                     seed_is_substantive = _is_substantive_rule_text(
                         text=fetched_text,
                         title=fetched_title,
@@ -5812,6 +5955,9 @@ async def _agentic_discover_admin_state_blocks(
 
                     if seed_is_substantive or seed_is_relaxed:
                         preseed_signal = True
+                        seed_key = _url_key(seed_url)
+                        if seed_key:
+                            preseed_substantive_url_keys.add(seed_key)
                         source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
                         break
                 except Exception:
@@ -5919,7 +6065,6 @@ async def _agentic_discover_admin_state_blocks(
         rules_by_host: Dict[str, int] = defaultdict(int)
         format_counts: Dict[str, int] = {"html": 0, "pdf": 0, "rtf": 0}
         visited_hosts: set[str] = set()
-        state_rate_limit_metadata: Dict[str, Any] = {}
         parallel_prefetch_attempted = 0
         parallel_prefetch_succeeded = 0
         parallel_prefetch_rule_hits = 0
@@ -5930,10 +6075,6 @@ async def _agentic_discover_admin_state_blocks(
             min_text_chars = max(220, int(min_full_text_chars))
         effective_fetch_concurrency = max(1, int(fetch_concurrency))
         preloop_budget_deadline = state_start + max(12.0, min(45.0, per_state_budget_s * 0.25))
-
-        def _record_rate_limit_metadata(candidate: Any) -> None:
-            nonlocal state_rate_limit_metadata
-            state_rate_limit_metadata = _merge_cloudflare_rate_limit_metadata(state_rate_limit_metadata, candidate)
 
         async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
             doc_title, doc_text = await _normalize_candidate_document_content(
@@ -6011,7 +6152,7 @@ async def _agentic_discover_admin_state_blocks(
         prefetch_candidates = [
             url
             for url, score in ranked_urls
-            if int(score) > 0 and _url_key(url) not in direct_doc_urls
+            if int(score) > 0 and _url_key(url) not in direct_doc_urls and _url_key(url) not in preseed_substantive_url_keys
         ][: max(2, min(max_candidates_per_state, max_fetch * 3, effective_fetch_concurrency * 4))]
 
         if prefetch_candidates and time.monotonic() < preloop_budget_deadline:
@@ -6062,6 +6203,110 @@ async def _agentic_discover_admin_state_blocks(
                         seed_expansion_candidates.append((link_url, link_score + 1))
                         expanded_urls += 1
 
+        prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
+            ranked_urls,
+            limit=min(max_fetch * 3, 12),
+            exclude_urls=direct_doc_urls | preseed_substantive_url_keys,
+        )
+
+        for document_url in prioritized_ranked_document_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
+            if remaining_prefetch_budget_s <= 1.0:
+                break
+            direct_scraped = None
+            lower_document_url = str(document_url or "").lower()
+            direct_timeout_s = max(1.0, min(25.0, remaining_prefetch_budget_s))
+            try:
+                if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_pdf_candidate_url_with_processor(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif lower_document_url.endswith(".rtf") or ".rtf?" in lower_document_url:
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "AL":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_alabama_rule_detail_via_api(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "SD":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_south_dakota_rule_detail_via_api(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                else:
+                    direct_scraped = await asyncio.wait_for(
+                        live_scraper.scrape(document_url),
+                        timeout=direct_timeout_s,
+                    )
+            except Exception:
+                direct_scraped = None
+            if direct_scraped is None:
+                remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
+                if remaining_prefetch_budget_s <= 1.0:
+                    break
+                document_host = urlparse(document_url).netloc
+                fetch_api = live_fetch_api if _prefers_live_fetch(document_url) else direct_fetch_api
+                try:
+                    fetched = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            fetch_api.fetch,
+                            UnifiedFetchRequest(
+                                url=document_url,
+                                timeout_seconds=35,
+                                mode=OperationMode.BALANCED,
+                                domain=".gov" if document_host.endswith(".gov") else "legal",
+                            ),
+                        ),
+                        timeout=max(1.0, min(18.0, remaining_prefetch_budget_s)),
+                    )
+                    _record_rate_limit_metadata(fetched)
+                    fetched_doc = getattr(fetched, "document", None)
+                    if fetched_doc is not None:
+                        direct_scraped = SimpleNamespace(
+                            text=str(getattr(fetched_doc, "text", "") or "").strip(),
+                            title=str(getattr(fetched_doc, "title", "") or "").strip(),
+                            html=str(getattr(fetched_doc, "html", "") or ""),
+                            extraction_provenance=getattr(fetched_doc, "extraction_provenance", None),
+                            method_used=getattr(fetched_doc, "method_used", None),
+                        )
+                except Exception:
+                    direct_scraped = None
+            if direct_scraped is None:
+                continue
+
+            direct_text = str(getattr(direct_scraped, "text", "") or "").strip()
+            direct_title = str(getattr(direct_scraped, "title", "") or "").strip()
+            direct_provenance = getattr(direct_scraped, "extraction_provenance", None) or {}
+            direct_method_value = None
+            if isinstance(direct_provenance, dict):
+                direct_method_value = direct_provenance.get("method")
+            if direct_method_value is None:
+                direct_method_value = getattr(direct_scraped, "method_used", None)
+            direct_method_value = getattr(direct_method_value, "value", direct_method_value)
+            accepted_direct = await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value)
+            direct_html = str(getattr(direct_scraped, "html", "") or "")
+            if not accepted_direct and _looks_like_rule_inventory_page(text=direct_text, title=direct_title, url=document_url):
+                document_host = urlparse(document_url).netloc
+                for link_url in _candidate_links_from_html(
+                    direct_html,
+                    base_host=document_host,
+                    page_url=document_url,
+                    limit=24,
+                    allowed_hosts=allowed_hosts,
+                ):
+                    link_score = _score_candidate_url(link_url)
+                    if link_score <= 0:
+                        continue
+                    seed_expansion_candidates.append((link_url, link_score + 3))
+
         prioritized_utah_seed_rule_urls: List[str] = []
         if state_code == "UT" and utah_api_rule_urls:
             seen_utah_rule_keys: set[str] = set()
@@ -6077,7 +6322,7 @@ async def _agentic_discover_admin_state_blocks(
                     break
 
         prioritized_alabama_seed_rule_urls: List[str] = []
-        if state_code == "AL":
+        if state_code == "AL" and not preseed_signal:
             try:
                 alabama_api_rule_urls = await asyncio.wait_for(
                     _discover_alabama_rule_document_urls(limit=min(max_fetch * 3, 12)),
@@ -6624,6 +6869,11 @@ async def _agentic_discover_admin_state_blocks(
                     text = str(getattr(scraped, "text", "") or "").strip()
                     title = str(getattr(scraped, "title", "") or "").strip()
                     fetched_html = str(getattr(scraped, "html", "") or "")
+                    title, text = await _normalize_candidate_document_content(
+                        url=url,
+                        title=title,
+                        text=text,
+                    )
                     current_host = urlparse(url).netloc
                     official_index_page = _looks_like_official_rule_index_page(text=text, title=title, url=url)
                     inventory_page = _looks_like_rule_inventory_page(text=text, title=title, url=url)
@@ -6656,6 +6906,11 @@ async def _agentic_discover_admin_state_blocks(
                                 fetched_text = str(getattr(fetched_doc, "text", "") or "").strip()
                                 fetched_title = str(getattr(fetched_doc, "title", "") or "").strip()
                                 fetched_html = str(getattr(fetched_doc, "html", "") or "")
+                                fetched_title, fetched_text = await _normalize_candidate_document_content(
+                                    url=url,
+                                    title=fetched_title,
+                                    text=fetched_text,
+                                )
                                 if _is_substantive_rule_text(
                                     text=fetched_text,
                                     title=fetched_title,

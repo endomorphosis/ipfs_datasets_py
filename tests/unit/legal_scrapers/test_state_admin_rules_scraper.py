@@ -396,6 +396,12 @@ def test_is_direct_detail_candidate_url_recognizes_alaska_aac_section_pages() ->
     assert scraper_module._is_direct_detail_candidate_url("https://akrules.elaws.us/aac/1.05") is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_georgia_gac_rule_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url("https://rules.sos.ga.gov/gac/120-2-1-.01") is True
+    assert scraper_module._is_direct_detail_candidate_url("https://rules.sos.ga.gov/gac/120-2") is False
+    assert scraper_module._is_direct_detail_candidate_url("https://rules.sos.ga.gov/gac/120-2-1") is False
+
+
 def test_is_direct_detail_candidate_url_recognizes_south_dakota_rule_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
         "https://sdlegislature.gov/Rules/Administrative/01:15"
@@ -497,6 +503,159 @@ def test_alaska_candidate_url_scoring_prefers_section_detail_over_indexes() -> N
     assert chapter_score > title_score
     assert section_score > chapter_score
     assert bookview_score < chapter_score
+
+
+def test_georgia_rule_inventory_detection_distinguishes_gac_index_chapter_subject_and_rule_pages() -> None:
+    gac_index_text = " ".join(
+        ["GA R&R", "Home Browse Help"]
+        + [f"Department {index}. Sample agency" for index in range(20, 30)]
+    )
+    gac_department_text = (
+        "GA R&R Department 120. OFFICE OF COMMISSIONER OF INSURANCE "
+        "Chapter 120-1. General Rules Chapter 120-2. Rules of Commissioner of Insurance "
+        "Subject 120-2-1. Organization Subject 120-2-2. Practice and Procedure "
+        "Subject 120-2-3. Licensing"
+    )
+    gac_chapter_text = (
+        "GA R&R Chapter 120-2. RULES OF COMMISSIONER OF INSURANCE "
+        "Subject 120-2-1. Organization Subject 120-2-2. Practice and Procedure "
+        "Subject 120-2-3. Licensing Subject 120-2-4. Enforcement"
+    )
+    gac_subject_text = (
+        "GA R&R Subject 120-2-1 ORGANIZATION "
+        "Rule 120-2-1-.01 The Commissioner of Insurance "
+        "Rule 120-2-1-.02 Agents Licensing Section "
+        "Rule 120-2-1-.03 Consumer Services Section"
+    )
+    gac_rule_text = (
+        "Ga. Comp. R. & Regs. r. 120-2-1-.01 The Commissioner of Insurance Georgia Administrative Code "
+        "Department 120. OFFICE OF COMMISSIONER OF INSURANCE Chapter 120-2. RULES OF COMMISSIONER OF INSURANCE "
+        "Subject 120-2-1. ORGANIZATION Current through Rules and Regulations filed through February 19, 2026 "
+        "The Commissioner of Insurance of the State of Georgia is charged with the administration and enforcement of the Georgia Insurance Code."
+    )
+
+    assert scraper_module._looks_like_official_rule_index_page(
+        text=gac_index_text,
+        title="GA R&R - GAC",
+        url="https://rules.sos.ga.gov/gac",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=gac_department_text,
+        title="GA R&R - Department 120",
+        url="https://rules.sos.ga.gov/gac/120",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=gac_chapter_text,
+        title="GA R&R - GAC - Chapter 120-2. RULES OF COMMISSIONER OF INSURANCE",
+        url="https://rules.sos.ga.gov/gac/120-2",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=gac_subject_text,
+        title="GA R&R - GAC - Subject 120-2-1 ORGANIZATION",
+        url="https://rules.sos.ga.gov/gac/120-2-1",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=gac_rule_text,
+        title="GA R&R - GAC - Rule 120-2-1-.01. The Commissioner of Insurance",
+        url="https://rules.sos.ga.gov/gac/120-2-1-.01",
+    ) is False
+
+
+def test_georgia_candidate_url_scoring_prefers_rule_over_subject_and_chapter() -> None:
+    root_score = _score_candidate_url("https://rules.sos.ga.gov/gac")
+    department_score = _score_candidate_url("https://rules.sos.ga.gov/gac/120")
+    chapter_score = _score_candidate_url("https://rules.sos.ga.gov/gac/120-2")
+    subject_score = _score_candidate_url("https://rules.sos.ga.gov/gac/120-2-1")
+    rule_score = _score_candidate_url("https://rules.sos.ga.gov/gac/120-2-1-.01")
+    legislature_score = _score_candidate_url("http://www.legis.ga.gov/regulations")
+
+    assert department_score > root_score
+    assert chapter_score > department_score
+    assert subject_score > chapter_score
+    assert rule_score > subject_score
+    assert legislature_score < root_score
+
+
+def test_new_mexico_rule_inventory_detection_distinguishes_explanation_titles_title_and_chapter_pages() -> None:
+    explanation_text = (
+        "Explanation of the New Mexico Administrative Code What Are State Rules? "
+        "History of the Code Structure of the NMAC Anatomy of a Rule Related Pages "
+        "Powered by Real Time Solutions"
+    )
+    titles_text = " ".join(
+        ["New Mexico Administrative Code", "NMAC Titles", "Expand List"]
+        + [f"Title {index} - Sample subject" for index in range(1, 11)]
+    )
+    title_text = (
+        "Title 07 - Health New Mexico Administrative Code Expand List "
+        "Chapter 1 7.1.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 2 7.2.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 3 7.3.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 4 7.4.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 5 7.5.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 6 7.6.1 NMAC GENERAL PROVISIONS [RESERVED] "
+    )
+    chapter_text = (
+        "Title 07 - Health New Mexico Administrative Code Expand List "
+        "Chapter 25 7.25.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 26 7.26.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 28 7.28.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 29 7.29.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 30 7.30.1 NMAC GENERAL PROVISIONS [RESERVED] "
+        "Chapter 31 7.31.1 NMAC GENERAL PROVISIONS [RESERVED] "
+    )
+
+    assert scraper_module._looks_like_non_rule_admin_page(
+        text=explanation_text,
+        title="Explanation of the New Mexico Administrative Code - State Records Center & Archives",
+        url="https://www.srca.nm.gov/nmac-home/explanation-of-the-new-mexico-administrative-code/",
+    ) is True
+    assert scraper_module._looks_like_official_rule_index_page(
+        text=titles_text,
+        title="New Mexico Administrative Code Titles - State Records Center & Archives",
+        url="https://www.srca.nm.gov/nmac-home/nmac-titles/",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=title_text,
+        title="Title 07 – Health | New Mexico Administrative Code - State Records Center & Archives",
+        url="https://www.srca.nm.gov/nmac-home/nmac-titles/title-7-health/",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=chapter_text,
+        title="Title 07 – Health | New Mexico Administrative Code - State Records Center & Archives",
+        url="https://www.srca.nm.gov/nmac-home/nmac-titles/title-7-health/chapter-34-medical-use-of-cannabis/",
+    ) is True
+    assert _is_substantive_rule_text(
+        text=explanation_text,
+        title="Explanation of the New Mexico Administrative Code - State Records Center & Archives",
+        url="https://www.srca.nm.gov/nmac-home/explanation-of-the-new-mexico-administrative-code/",
+        min_chars=160,
+    ) is False
+    assert _is_substantive_rule_text(
+        text=titles_text,
+        title="New Mexico Administrative Code Titles - State Records Center & Archives",
+        url="https://www.srca.nm.gov/nmac-home/nmac-titles/",
+        min_chars=160,
+    ) is False
+
+
+def test_new_mexico_candidate_url_scoring_prefers_chapter_and_title_over_portal_and_dead_hosts() -> None:
+    home_score = _score_candidate_url("https://www.srca.nm.gov/nmac-home/")
+    titles_score = _score_candidate_url("https://www.srca.nm.gov/nmac-home/nmac-titles/")
+    title_score = _score_candidate_url("https://www.srca.nm.gov/nmac-home/nmac-titles/title-7-health/")
+    chapter_score = _score_candidate_url(
+        "https://www.srca.nm.gov/nmac-home/nmac-titles/title-7-health/chapter-34-medical-use-of-cannabis/"
+    )
+    explanation_score = _score_candidate_url(
+        "https://www.srca.nm.gov/nmac-home/explanation-of-the-new-mexico-administrative-code/"
+    )
+    legislature_score = _score_candidate_url("https://legislature.nm.gov/regulations")
+
+    assert titles_score > home_score
+    assert title_score > titles_score
+    assert chapter_score > title_score
+    assert explanation_score < home_score
+    assert legislature_score < home_score
 
 
 def test_south_dakota_inventory_detection_is_limited_to_index_path() -> None:
@@ -3495,6 +3654,28 @@ def test_accepts_indiana_article_detail_page_as_substantive_rule_text() -> None:
     assert _is_substantive_admin_statute(statute, min_chars=100) is True
 
 
+def test_accepts_indiana_procurement_article_detail_page_despite_policy_terms() -> None:
+    statute = {
+        "code_name": "Indiana Administrative Rules (Agentic Discovery)",
+        "section_name": "Title 25, Article 1.1",
+        "short_title": "Title 25, Article 1.1",
+        "source_url": "https://iar.iga.in.gov/code/current/25/1.1",
+        "full_text": (
+            "25 IAC 1.1-1-1 Definitions "
+            "Authority: IC 4-13-1.3-4 Affected: IC 5-22-2 "
+            "Sec. 1. The requirements of IC 5-22 do not apply to employment agreements. "
+            "25 IAC 1.1-1-2 Competitive sealed bids; bid guarantee "
+            "Sec. 2. At the discretion of the department, bidders may be required to submit a bid guarantee. "
+            "The invitation to bid may also describe the request for proposals process and contract award requirements."
+        ),
+        "legal_area": "administrative",
+        "official_cite": "IN Admin Rule A2",
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=100) is True
+
+
 def test_rejects_vermont_rules_service_pages_as_substantive_rule_text() -> None:
     statute = {
         "code_name": "Vermont Administrative Rules (Agentic Discovery)",
@@ -5914,6 +6095,232 @@ async def test_agentic_discovery_follows_live_prioritized_seed_links(monkeypatch
         states=["IN"],
         max_candidates_per_state=4,
         max_fetch_per_state=2,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [deep_url]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_live_fetches_ranked_indiana_direct_detail_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://iar.iga.in.gov/code/current"
+    deep_url = "https://iar.iga.in.gov/code/current/10/1.5"
+    deep_text = (
+        "TITLE 10 Office of Attorney General ARTICLE 1.5 authority effective section rule law "
+        "Sec. 1. The commissioner may adopt rules to administer the chapter. "
+        "Authority: IC 4-22-2-13; IC 4-6-2-1. Affected: IC 4-22-2; IC 4-6-1. "
+        "This rule governs agency procedures, notice requirements, filing obligations, and enforcement."
+    )
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls):
+            return []
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[SimpleNamespace(url=deep_url)])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="Indiana Register. You need to enable JavaScript to run this app.",
+                title="Indiana Register",
+                html="<div id='root'></div>",
+                extraction_provenance={"method": "beautifulsoup"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _GenericScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text="Indiana Register. You need to enable JavaScript to run this app.",
+                title="Indiana Register",
+                html="<div id='root'></div>",
+                links=[],
+            )
+
+    class _LiveScraper(_GenericScraper):
+        async def scrape(self, url: str):
+            if url == deep_url:
+                return SimpleNamespace(
+                    text=deep_text,
+                    title="Title 10, Article 1.5",
+                    html="",
+                    links=[],
+                )
+            return await super().scrape(url)
+
+    def _fake_scraper_factory(cfg):
+        preferred = list(getattr(cfg, "preferred_methods", []) or [])
+        if preferred and preferred[0] == "playwright":
+            return _LiveScraper(cfg)
+        return _GenericScraper(cfg)
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _fake_scraper_factory)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == deep_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["IN"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=1,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [deep_url]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_ranked_indiana_direct_detail_candidates_fall_back_to_fetch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://iar.iga.in.gov/code/current"
+    deep_url = "https://iar.iga.in.gov/code/current/10/1.5"
+    deep_text = (
+        "TITLE 10 Office of Attorney General ARTICLE 1.5 authority effective section rule law "
+        "Sec. 1. The commissioner may adopt rules to administer the chapter. "
+        "Authority: IC 4-22-2-13; IC 4-6-2-1. Affected: IC 4-22-2; IC 4-6-1. "
+        "This rule governs agency procedures, notice requirements, filing obligations, and enforcement."
+    )
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls):
+            return []
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[SimpleNamespace(url=deep_url)])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            if request.url == deep_url:
+                document = SimpleNamespace(
+                    text=deep_text,
+                    title="Title 10, Article 1.5",
+                    html="",
+                    extraction_provenance={"method": "beautifulsoup"},
+                )
+            else:
+                document = SimpleNamespace(
+                    text="Indiana Register. You need to enable JavaScript to run this app.",
+                    title="Indiana Register",
+                    html="<div id='root'></div>",
+                    extraction_provenance={"method": "beautifulsoup"},
+                )
+            return SimpleNamespace(document=document)
+
+    class _GenericScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text="Indiana Register. You need to enable JavaScript to run this app.",
+                title="Indiana Register",
+                html="<div id='root'></div>",
+                links=[],
+            )
+
+    def _fake_scraper_factory(cfg):
+        return _GenericScraper(cfg)
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _fake_scraper_factory)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == deep_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["IN"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=1,
         max_results_per_domain=4,
         max_hops=1,
         max_pages=1,
