@@ -1422,11 +1422,24 @@ def _is_non_admin_seed_url(url: str) -> bool:
         return True
     if host in {"www.legis.ga.gov", "legis.ga.gov"}:
         return True
+    if host in {"legislature.in.gov", "www.legislature.in.gov"}:
+        return True
     if host in {"legislature.nm.gov", "nmlegis.gov", "www.nmlegis.gov"}:
         return True
     if host in {"legislature.ak.gov", "legis.state.ak.us", "www.legis.state.ak.us"}:
         return True
     if host in {"legislature.ar.gov", "arkleg.state.ar.us", "www.arkleg.state.ar.us"}:
+        return True
+    if host == "legislature.tn.gov":
+        return True
+    if host in {"www.capitol.tn.gov", "capitol.tn.gov"} and normalized_path.lower() == "/legislation/archives.html":
+        return True
+    if host in {"www.tn.gov", "tn.gov"} and normalized_path.lower() in {
+        "/",
+        "/tga",
+        "/sos/rules-and-regulations.html",
+        "/sos/rules/tnnewrules.xml",
+    }:
         return True
     if host in {"www.wyoleg.gov", "wyoleg.gov", "legislature.wy.gov"}:
         return True
@@ -1438,6 +1451,8 @@ def _is_non_admin_seed_url(url: str) -> bool:
         if normalized_path.lower() == "/search.aspx" and handler != "search" and mode != "7":
             return True
     if host == "web.archive.org":
+        if re.search(r"/https://publications\.tnsosfiles\.com/rules/?$", lower_value):
+            return True
         if re.search(r"/https://rules\.wyo\.gov/?$", lower_value):
             return True
         if re.search(r"/https://rules\.wyo\.gov/search\.aspx(?:$|[^a-z0-9])", lower_value) and "mode=7" not in lower_value:
@@ -2009,7 +2024,7 @@ def _seed_prefetch_priority(url: str) -> int:
     if _is_direct_detail_candidate_url(url):
         score += 12
         if _is_rtf_candidate_url(url):
-            score += 2
+            score += 4
 
     if host == "apps.azsos.gov" and path in {"/public_services/codetoc.htm", "/public_services/index/"}:
         score += 10
@@ -6149,11 +6164,13 @@ async def _agentic_discover_admin_state_blocks(
             )
             return True
 
-        prefetch_candidates = [
-            url
-            for url, score in ranked_urls
-            if int(score) > 0 and _url_key(url) not in direct_doc_urls and _url_key(url) not in preseed_substantive_url_keys
-        ][: max(2, min(max_candidates_per_state, max_fetch * 3, effective_fetch_concurrency * 4))]
+        prefetch_candidates: List[str] = []
+        if not direct_detail_ready:
+            prefetch_candidates = [
+                url
+                for url, score in ranked_urls
+                if int(score) > 0 and _url_key(url) not in direct_doc_urls and _url_key(url) not in preseed_substantive_url_keys
+            ][: max(2, min(max_candidates_per_state, max_fetch * 3, effective_fetch_concurrency * 4))]
 
         if prefetch_candidates and time.monotonic() < preloop_budget_deadline:
             parallel_prefetch_attempted = len(prefetch_candidates)
@@ -6203,10 +6220,34 @@ async def _agentic_discover_admin_state_blocks(
                         seed_expansion_candidates.append((link_url, link_score + 1))
                         expanded_urls += 1
 
+        prioritized_seed_document_urls: List[str] = []
+        seen_seed_document_keys: set[str] = set()
+        for seed_url in ordered_seed_urls:
+            if not _is_immediate_direct_detail_candidate_url(seed_url):
+                continue
+            doc_key = _url_key(seed_url)
+            if not doc_key or doc_key in seen_seed_document_keys:
+                continue
+            seen_seed_document_keys.add(doc_key)
+            prioritized_seed_document_urls.append(seed_url)
+            if len(prioritized_seed_document_urls) >= min(max_fetch, 8):
+                break
+
+        prioritized_seed_document_urls = [
+            *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
+            *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
+        ]
+
+        ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
+        if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
+            ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
+                url for url in prioritized_seed_document_urls if _url_key(url)
+            }
+
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
             ranked_urls,
             limit=min(max_fetch * 3, 12),
-            exclude_urls=direct_doc_urls | preseed_substantive_url_keys,
+            exclude_urls=ranked_direct_exclude_urls,
         )
 
         for document_url in prioritized_ranked_document_urls:
@@ -6344,19 +6385,6 @@ async def _agentic_discover_admin_state_blocks(
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
                 if len(prioritized_alabama_seed_rule_urls) >= min(max_fetch, 8):
                     break
-
-        prioritized_seed_document_urls: List[str] = []
-        seen_seed_document_keys: set[str] = set()
-        for seed_url in ordered_seed_urls:
-            if not _is_immediate_direct_detail_candidate_url(seed_url):
-                continue
-            doc_key = _url_key(seed_url)
-            if not doc_key or doc_key in seen_seed_document_keys:
-                continue
-            seen_seed_document_keys.add(doc_key)
-            prioritized_seed_document_urls.append(seed_url)
-            if len(prioritized_seed_document_urls) >= min(max_fetch, 8):
-                break
 
         for rule_url in prioritized_utah_seed_rule_urls:
             if len(statutes) >= max_fetch:

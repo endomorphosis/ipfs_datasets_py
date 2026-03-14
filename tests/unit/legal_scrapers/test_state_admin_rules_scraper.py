@@ -132,6 +132,29 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "legis.state.ak.us" not in ak_allowed_hosts
 
 
+def test_indiana_curated_seeds_focus_on_live_iar_hosts() -> None:
+    in_urls = scraper_module._extract_seed_urls_for_state("IN", "Indiana")
+
+    assert "https://iar.iga.in.gov/code/current" in in_urls
+    assert "https://iar.iga.in.gov/code/2024" in in_urls
+    assert "https://iar.iga.in.gov/code/current/10/1.5" in in_urls
+    assert all("legislature.in.gov" not in url.lower() for url in in_urls)
+
+
+def test_tennessee_curated_seeds_keep_service_pages_but_drop_dead_placeholders() -> None:
+    tn_urls = scraper_module._extract_seed_urls_for_state("TN", "Tennessee")
+
+    assert "https://publications.tnsosfiles.com/rules/" in tn_urls
+    assert "https://sos.tn.gov/publications/services/administrative-register" in tn_urls
+    assert "https://sos.tn.gov/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee" in tn_urls
+    assert "https://sharetngov.tnsosfiles.com/sos/rules/index.htm" in tn_urls
+    assert "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm" in tn_urls
+    assert all("web.archive.org" not in url.lower() for url in tn_urls)
+    assert all("www.tn.gov/sos/rules-and-regulations.html" not in url.lower() for url in tn_urls)
+    assert all("legislature.tn.gov" not in url.lower() for url in tn_urls)
+    assert all("capitol.tn.gov" not in url.lower() for url in tn_urls)
+
+
 def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
     ma_urls = scraper_module._extract_seed_urls_for_state("MA", "Massachusetts")
     ma_allowed_hosts = _allowed_discovery_hosts_for_state("MA", "Massachusetts")
