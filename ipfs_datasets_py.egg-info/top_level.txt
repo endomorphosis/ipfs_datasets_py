@@ -1,0 +1,17 @@
+archive
+artifacts
+benchmarks
+config
+datasets
+deployments
+docker
+docs
+examples
+ipfs_accelerate_py
+ipfs_datasets_cli
+ipfs_datasets_py
+ipfs_kit_py
+outputs
+scripts
+state
+tests

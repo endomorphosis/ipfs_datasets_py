@@ -1,0 +1,43 @@
+ddgs>=9.11.2
+google-api-python-client>=2.192.0
+cloudscraper>=1.2.71
+playwright>=1.40.0
+brave-search==0.1.8
+nltk>=3.8.1
+pdfplumber>=0.11.7
+pymupdf>=1.26.3
+pillow<11.0.0,>=10.2.0
+PyPDF2>=3.0.0
+pypdf>=5.0.0
+pytesseract>=0.3.13
+striprtf>=0.0.29
+tiktoken>=0.6.0
+pysbd
+
+[:platform_system != "Windows" and python_version < "3.14"]
+surya-ocr>=0.14.6
+
+[:python_version < "3.12"]
+cfscrape>=2.1.1
+
+[:python_version < "3.14"]
+numpy<2.0.0,>=1.21.0
+
+[:python_version >= "3.14"]
+numpy>=2.0.0
+
+[ipld]
+libipld>=3.3.2
+ipld-car>=0.0.1
+ipld-dag-pb>=0.0.1
+dag-cbor>=0.3.3
+multiformats>=0.3.0
+
+[knowledge_graphs]
+spacy>=3.0.0
+networkx>=2.8.0
+transformers>=4.30.0
+scipy>=1.7.0
+matplotlib>=3.5.0
+plotly>=5.9.0
+rdflib>=6.0.0

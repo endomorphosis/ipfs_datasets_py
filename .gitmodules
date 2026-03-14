@@ -2,13 +2,13 @@
         path = ipfs_kit_py
         url = https://github.com/endomorphosis/ipfs_kit_py.git
         branch = main
+[submodule ".tools/ipfs_kit_py"]
+	path = .tools/ipfs_kit_py
+	url = https://github.com/endomorphosis/ipfs_kit_py.git
+	branch = main
 [submodule "ipfs_accelerate_py"]
 	path = ipfs_accelerate_py
 	url = https://github.com/endomorphosis/ipfs_accelerate_py.git
-	branch = main
-[submodule "ipfs_datasets_py/web_archiving/common_crawl_search_engine"]
-	path = ipfs_datasets_py/web_archiving/common_crawl_search_engine
-	url = https://github.com/endomorphosis/common_crawl_search_engine
 	branch = main
 [submodule "ipfs_datasets_py/logic/CEC/DCEC_Library"]
 	path = ipfs_datasets_py/logic/CEC/DCEC_Library
@@ -22,7 +22,11 @@
 [submodule "ipfs_datasets_py/logic/CEC/ShadowProver"]
 	path = ipfs_datasets_py/logic/CEC/ShadowProver
 	url = https://github.com/endomorphosis/ShadowProver.git
-[submodule "ipfs_datasets_py/logic/ErgoAI"]
-	path = ipfs_datasets_py/logic/ErgoAI
-	url = https://github.com/ErgoAI/ErgoEngine.git
-	branch = master
+[submodule "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type"]
+	path = ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type
+	url = https://github.com/endomorphosis/convert_to_txt_based_on_mime_type.git
+	branch = main
+[submodule "ipfs_datasets_py/multimedia/omni_converter_mk2"]
+	path = ipfs_datasets_py/multimedia/omni_converter_mk2
+	url = https://github.com/endomorphosis/omni_converter_mk2.git
+	branch = main
