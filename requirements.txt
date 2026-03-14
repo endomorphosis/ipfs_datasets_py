@@ -63,6 +63,7 @@ scipy>=1.7.0
 matplotlib>=3.5.0
 plotly>=5.9.0
 rdflib>=6.0.0
+markitdown>=0.1.0
 pdfplumber>=0.11.7
 PyPDF2>=3.0.0
 pytesseract>=0.3.13
@@ -156,6 +157,8 @@ datasets>=2.10.0,<3.0.0
 huggingface-hub>=0.34.0,<1.0.0
 # Vector store backend
 faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0,<6.0.0
+scikit-learn>=1.3.0,<2.0.0
 # transformers>=4.0.0,<5.0.0
 # torch>=1.9.0,<3.0.0
 # Alert system dependencies

@@ -180,6 +180,8 @@ setup(
         'striprtf>=0.0.29',
         'tiktoken>=0.6.0',
         'pysbd',
+        'markitdown>=0.1.0',
+        'python-docx>=1.1.2',
     ],
     extras_require={
         # Logic integration / legal reasoning

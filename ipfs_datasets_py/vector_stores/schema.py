@@ -40,29 +40,98 @@ except ImportError:
     TRUNCATE_LENGTH = 350
     WRAP_WIDTH = 70
     
-    @dataclass
+    @dataclass(init=False)
     class EmbeddingResult:
-        """Fallback EmbeddingResult.
+        """Fallback EmbeddingResult with compatibility aliases."""
 
-        This mirrors the interface of the real EmbeddingResult used throughout
-        the codebase, exposing both ``chunk_id`` and ``content`` attributes,
-        while remaining backwards compatible with the older fallback that used
-        ``text`` instead of ``content`` and did not define ``chunk_id``.
-        """
-        vector: List[float]
-        text: Optional[str] = None
+        embedding: List[float]
+        chunk_id: str
+        content: str
         metadata: Optional[Dict[str, Any]] = None
-        id: Optional[str] = None
-        chunk_id: Optional[str] = None
-        content: Optional[str] = None
+        model_name: Optional[str] = None
+
+        def __init__(
+            self,
+            embedding: Optional[List[float]] = None,
+            chunk_id: Optional[str] = None,
+            content: Optional[str] = None,
+            metadata: Optional[Dict[str, Any]] = None,
+            model_name: Optional[str] = None,
+            *,
+            vector: Optional[List[float]] = None,
+            text: Optional[str] = None,
+            id: Optional[str] = None,
+        ):
+            self.embedding = embedding if embedding is not None else vector or []
+            self.chunk_id = chunk_id or id or ""
+            self.content = content if content is not None else text or ""
+            self.metadata = metadata or {}
+            self.model_name = model_name
+
+        @property
+        def vector(self) -> List[float]:
+            return self.embedding
+
+        @property
+        def text(self) -> str:
+            return self.content
+
+        @property
+        def id(self) -> str:
+            return self.chunk_id
+
+        def to_dict(self) -> Dict[str, Any]:
+            return {
+                "embedding": self.embedding,
+                "chunk_id": self.chunk_id,
+                "content": self.content,
+                "metadata": self.metadata,
+                "model_name": self.model_name,
+            }
     
-    @dataclass  
+    @dataclass(init=False)
     class SearchResult:
-        """Fallback SearchResult."""
-        id: str
+        """Fallback SearchResult with compatibility aliases."""
+
+        chunk_id: str
+        content: str
         score: float
         metadata: Optional[Dict[str, Any]] = None
-        content: Optional[str] = None
+        embedding: Optional[List[float]] = None
+
+        def __init__(
+            self,
+            chunk_id: Optional[str] = None,
+            content: Optional[str] = None,
+            score: float = 0.0,
+            metadata: Optional[Dict[str, Any]] = None,
+            embedding: Optional[List[float]] = None,
+            *,
+            id: Optional[str] = None,
+            text: Optional[str] = None,
+        ):
+            self.chunk_id = chunk_id or id or ""
+            self.content = content if content is not None else text or ""
+            self.score = score
+            self.metadata = metadata or {}
+            self.embedding = embedding
+
+        @property
+        def id(self) -> str:
+            return self.chunk_id
+
+        @property
+        def text(self) -> str:
+            return self.content
+
+        def to_dict(self) -> Dict[str, Any]:
+            return {
+                "chunk_id": self.chunk_id,
+                "content": self.content,
+                "score": self.score,
+                "metadata": self.metadata,
+                "embedding": self.embedding,
+            }
 
 
 # IPLD-specific extensions
