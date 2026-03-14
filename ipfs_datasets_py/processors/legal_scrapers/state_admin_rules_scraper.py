@@ -21,7 +21,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
-from urllib.parse import parse_qs, quote, unquote, urldefrag, urljoin, urlparse
+from urllib.parse import parse_qs, quote, unquote, urldefrag, urlencode, urljoin, urlparse
 
 try:
     from .canonical_legal_corpora import get_canonical_legal_corpus
@@ -442,6 +442,20 @@ _MA_CMR_DETAIL_PATH_RE = re.compile(r"^/regulations/[A-Za-z0-9-]+/?$", re.IGNORE
 
 _MA_GENERAL_LAWS_PATH_RE = re.compile(r"^/Laws/GeneralLaws(?:/.*)?$", re.IGNORECASE)
 
+_MT_COLLECTION_PATH_RE = re.compile(
+    r"^/browse/collections/(?P<collection>[0-9a-fA-F-]+)/?$",
+    re.IGNORECASE,
+)
+_MT_SECTION_PATH_RE = re.compile(
+    r"^/browse/collections/(?P<collection>[0-9a-fA-F-]+)/sections/(?P<section>[0-9a-fA-F-]+)/?$",
+    re.IGNORECASE,
+)
+_MT_POLICY_PATH_RE = re.compile(
+    r"^/browse/collections/(?P<collection>[0-9a-fA-F-]+)/policies/(?P<policy>[0-9a-fA-F-]+)/?$",
+    re.IGNORECASE,
+)
+_MT_PUBLIC_API_BASE_URL = "https://rules.mt.gov/api/policy-library-public"
+
 _AL_PUBLIC_CODE_PATH_RE = re.compile(r"^/administrative-code/?$", re.IGNORECASE)
 _AL_RULE_NUMBER_RE = re.compile(r"^\d{1,3}-[A-Z]-\d+(?:-\.\d+)+$", re.IGNORECASE)
 _AL_PUBLIC_CODE_GRAPHQL_URL = "https://admincode.legislature.state.al.us/api/graphql"
@@ -459,6 +473,15 @@ def _prefers_live_fetch(url: str) -> bool:
     host = parsed.netloc.lower()
     path = parsed.path.lower()
     if host in _LIVE_FETCH_PREFERRED_HOSTS:
+        return True
+    if host == "sharetngov.tnsosfiles.com" and path in {
+        "/sos/rules/index.htm",
+        "/sos/rules/rules2.htm",
+        "/sos/rules/rules_list.shtml",
+        "/sos/rules/effectives/effectives.htm",
+        "/sos/rules/tenncare.htm",
+        "/sos/pub/tar/index.htm",
+    }:
         return True
     if host == "adminrules.utah.gov" and (
         path.startswith("/public/search") or bool(_UT_RULE_DETAIL_PATH_RE.search(parsed.path or ""))
@@ -699,6 +722,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.mass.gov/info-details/code-of-massachusetts-regulations-k-p",
         "https://www.mass.gov/info-details/code-of-massachusetts-regulations-q-z",
         "https://www.mass.gov/law-library/310-cmr",
+        "https://www.mass.gov/regulations/310-CMR-100-adjudicatory-proceedings-0",
+        "https://www.mass.gov/regulations/310-CMR-200-adopting-administrative-regulations",
+        "https://www.mass.gov/regulations/310-CMR-300-access-to-and-confidentiality-of-department-records-and-files",
+        "https://www.mass.gov/regulations/310-CMR-400-timely-action-schedule-and-fee-provisions-0",
         "https://www.mass.gov/regulations/310-CMR-700-air-pollution-control-0",
     ],
     "MS": [
@@ -832,6 +859,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sos.tn.gov/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee",
         "https://sos.tn.gov/publications/services/administrative-register",
         "https://sharetngov.tnsosfiles.com/sos/rules/index.htm",
+        "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
         "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm",
         "https://www.tn.gov/sos/rules-and-regulations.html",
     ],
@@ -1613,7 +1641,13 @@ def _score_candidate_url(url: str) -> int:
     if host == "codeofarrules.arkansas.gov" and normalized_path.lower() == "/rules/search":
         score += 8
     if host == "codeofarrules.arkansas.gov" and normalized_path.lower() == "/rules/rule" and "leveltype=" in query.lower():
-        score += 11
+        arkansas_level = _arkansas_rule_level_from_url(url)
+        if arkansas_level == "section":
+            score += 16
+        elif arkansas_level in {"part", "subpart"}:
+            score += 8
+        else:
+            score += 5
     if host in {"legislature.ar.gov", "arkleg.state.ar.us", "www.arkleg.state.ar.us"} and normalized_path.lower() in {
         "/",
         "/rules",
@@ -1943,9 +1977,7 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     path = parsed.path or ""
     normalized_path = path.rstrip("/") or "/"
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
-        return True
-    if host == "admincode.legislature.state.al.us" and normalized_path.lower().startswith("/administrative-code#"):
-        return True
+        return bool(_AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url)))
     if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
         return True
     if host in {"gencourt.state.nh.us", "www.gencourt.state.nh.us"} and re.search(
@@ -1994,7 +2026,7 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
         return True
     if host == "codeofarrules.arkansas.gov" and path.lower() == "/rules/rule":
-        if "leveltype=" in (parsed.query or "").lower():
+        if _arkansas_rule_level_from_url(url) == "section":
             return True
     return False
 
@@ -2097,6 +2129,16 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
             return True
         if _RULE_BODY_SIGNAL_RE.search(in_hay) and _LEGAL_CONTENT_SIGNAL_RE.search(in_hay):
             return True
+
+    if host == "codeofarrules.arkansas.gov" and path.lower() == "/rules/rule":
+        ar_hay = " ".join([title_value, body, url_value])
+        if _arkansas_rule_level_from_url(url_value) == "section":
+            if re.search(r"\b\d+\s+CAR\s+§\s*[\w.-]+", ar_hay, re.IGNORECASE):
+                return True
+            if "code of arkansas rules" in ar_hay.lower() and (
+                _RULE_BODY_SIGNAL_RE.search(ar_hay) or _LEGAL_CONTENT_SIGNAL_RE.search(ar_hay)
+            ):
+                return True
 
     if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(url_value):
         nh_hay = " ".join([title_value, body])
@@ -2545,6 +2587,9 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         len(re.findall(r"\bTitle\s+\d+\b", body, re.IGNORECASE)) >= 3
     ):
         return True
+    if host == "admincode.legislature.state.al.us" and path == "/administrative-code":
+        if not _AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url_value)):
+            return True
     if host == "admincode.legislature.state.al.us" and chapter_hits >= 3:
         return True
     if host in {"www.sos.arkansas.gov", "sos.arkansas.gov"} and path.rstrip("/") == "/rules-regulations":
@@ -2553,6 +2598,11 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     if host == "codeofarrules.arkansas.gov" and path == "/rules/search":
         if "code of arkansas rules" in hay.lower() and "search" in title_value.lower():
             return True
+    if host == "codeofarrules.arkansas.gov" and path == "/rules/rule":
+        arkansas_level = _arkansas_rule_level_from_url(url_value)
+        if arkansas_level in {"title", "chapter", "subchapter", "part", "subpart"}:
+            if "code of arkansas rules" in hay.lower() or chapter_hits >= 2 or subchapter_hits >= 1:
+                return True
     if host == "sos-rules-reg.ark.org" and (path.startswith("/rules/search") or path.startswith("/rules/text_search")):
         if "arkansas secretary of state" in hay.lower() and (
             "search arkansas agencies" in hay.lower()
@@ -2588,6 +2638,8 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     }:
         if _TN_SOS_SERVICE_PAGE_TEXT_RE.search(hay):
             return True
+    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(url_value):
+        return False
     if host == "web.archive.org" and "gc.nh.gov/rules" in url_value.lower() and (
         "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
     ):
@@ -2881,6 +2933,74 @@ def _candidate_arkansas_rule_urls_from_html(*, html: str, page_url: str = "", li
     return out
 
 
+def _arkansas_rule_level_from_url(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "codeofarrules.arkansas.gov":
+        return ""
+    if (parsed.path or "").lower() != "/rules/rule":
+        return ""
+    return str((parse_qs(parsed.query or "").get("levelType") or [""])[0]).strip().lower()
+
+
+def _arkansas_rule_url_from_tree_node(node: Dict[str, Any]) -> str:
+    if not isinstance(node, dict):
+        return ""
+    if str(node.get("nodeType") or "").strip().upper() != "SECTION":
+        return ""
+    section_id = str(node.get("sectionID") or "").strip()
+    if not section_id:
+        return ""
+    params = {
+        "levelType": "section",
+        "titleID": str(node.get("titleID") or "").strip(),
+        "chapterID": str(node.get("chapterID") or "").strip(),
+        "subChapterID": str(node.get("subchapterID") or "").strip(),
+        "partID": str(node.get("partID") or "").strip(),
+        "subPartID": str(node.get("subpartID") or "").strip(),
+        "sectionID": section_id,
+    }
+    if not params["titleID"] or not params["chapterID"]:
+        return ""
+    return "https://codeofarrules.arkansas.gov/Rules/Rule?" + urlencode(params)
+
+
+def _fetch_arkansas_tree_nodes(
+    session: requests.Session,
+    *,
+    level_type: str,
+    title_id: str = "",
+    chapter_id: str = "",
+    subchapter_id: str = "",
+    timeout: float = 25.0,
+    headers: Optional[Dict[str, str]] = None,
+) -> List[Dict[str, Any]]:
+    params = {"levelType": str(level_type or "").strip().upper()}
+    if title_id:
+        params["titleID"] = str(title_id).strip()
+    if chapter_id:
+        params["chapterID"] = str(chapter_id).strip()
+    if subchapter_id:
+        params["subchapterID"] = str(subchapter_id).strip()
+
+    try:
+        response = session.get(
+            "https://codeofarrules.arkansas.gov/Home/GetRulesTreeViewData",
+            params=params,
+            timeout=timeout,
+            headers=headers,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception:
+        return []
+
+    out: List[Dict[str, Any]] = []
+    for node in payload or []:
+        if isinstance(node, dict):
+            out.append(node)
+    return out
+
+
 async def _discover_arkansas_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
     relevant_seed_urls = [
         url
@@ -2900,6 +3020,7 @@ async def _discover_arkansas_rule_document_urls(*, seed_urls: List[str], limit: 
         }
         discovered_urls: List[str] = []
         seen: set[str] = set()
+        seen_title_ids: set[str] = set()
         session = requests.Session()
 
         def _record(urls: List[str], *, pdf_only: bool = False) -> bool:
@@ -2915,6 +3036,84 @@ async def _discover_arkansas_rule_document_urls(*, seed_urls: List[str], limit: 
                     return True
             return False
 
+        def _record_arkansas_title_urls(urls: List[str]) -> None:
+            for candidate_url in urls:
+                parsed = urlparse(candidate_url)
+                if parsed.netloc.lower() != "codeofarrules.arkansas.gov":
+                    continue
+                if (parsed.path or "").lower() != "/rules/rule":
+                    continue
+                title_id = str((parse_qs(parsed.query or "").get("titleID") or [""])[0]).strip()
+                if title_id:
+                    seen_title_ids.add(title_id)
+
+        def _expand_title_ids(title_ids: List[str]) -> bool:
+            for title_id in title_ids:
+                if not title_id:
+                    continue
+                chapter_nodes = _fetch_arkansas_tree_nodes(
+                    session,
+                    level_type="CHAPTER",
+                    title_id=title_id,
+                    headers=headers,
+                )
+                for chapter_node in chapter_nodes:
+                    chapter_id = str(chapter_node.get("nodeID") or chapter_node.get("chapterID") or "").strip()
+                    if not chapter_id:
+                        continue
+
+                    subchapter_nodes = _fetch_arkansas_tree_nodes(
+                        session,
+                        level_type="SUBCHAPTER",
+                        title_id=title_id,
+                        chapter_id=chapter_id,
+                        headers=headers,
+                    )
+                    if subchapter_nodes:
+                        for subchapter_node in subchapter_nodes:
+                            subchapter_id = str(
+                                subchapter_node.get("nodeID") or subchapter_node.get("subchapterID") or ""
+                            ).strip()
+                            if not subchapter_id:
+                                continue
+                            section_nodes = _fetch_arkansas_tree_nodes(
+                                session,
+                                level_type="SECTION",
+                                title_id=title_id,
+                                chapter_id=chapter_id,
+                                subchapter_id=subchapter_id,
+                                headers=headers,
+                            )
+                            section_urls = [
+                                section_url
+                                for section_url in (
+                                    _arkansas_rule_url_from_tree_node(node)
+                                    for node in section_nodes
+                                )
+                                if section_url
+                            ]
+                            if _record(section_urls):
+                                return True
+                    else:
+                        section_nodes = _fetch_arkansas_tree_nodes(
+                            session,
+                            level_type="SECTION",
+                            title_id=title_id,
+                            chapter_id=chapter_id,
+                            headers=headers,
+                        )
+                        section_urls = [
+                            section_url
+                            for section_url in (
+                                _arkansas_rule_url_from_tree_node(node)
+                                for node in section_nodes
+                            )
+                            if section_url
+                        ]
+                        if _record(section_urls):
+                            return True
+            return False
+
         try:
             quick_search = session.get(
                 "https://codeofarrules.arkansas.gov/Rules/RuleQuickSearch",
@@ -2923,13 +3122,23 @@ async def _discover_arkansas_rule_document_urls(*, seed_urls: List[str], limit: 
                 headers=headers,
             )
             quick_search.raise_for_status()
-            if _record(
-                _candidate_arkansas_rule_urls_from_html(
-                    html=quick_search.text,
-                    page_url=str(quick_search.url or "https://codeofarrules.arkansas.gov/Rules/Search"),
-                    limit=max(limit_n * 2, 8),
-                )
-            ):
+            quick_search_urls = _candidate_arkansas_rule_urls_from_html(
+                html=quick_search.text,
+                page_url=str(quick_search.url or "https://codeofarrules.arkansas.gov/Rules/Search"),
+                limit=max(limit_n * 2, 12),
+            )
+            direct_quick_search_urls = [
+                candidate_url
+                for candidate_url in quick_search_urls
+                if _is_pdf_candidate_url(candidate_url)
+                or _arkansas_rule_level_from_url(candidate_url) == "section"
+            ]
+            if _record(direct_quick_search_urls):
+                return discovered_urls
+            _record_arkansas_title_urls(quick_search_urls)
+            if seen_title_ids and _expand_title_ids(sorted(seen_title_ids, key=lambda value: int(value))):
+                return discovered_urls
+            if _expand_title_ids([str(index) for index in range(1, 6)]):
                 return discovered_urls
             if discovered_urls:
                 return discovered_urls
@@ -3029,6 +3238,133 @@ def _extract_text_from_downloaded_html_document(document_html: str) -> str:
     return "\n".join(lines).strip()
 
 
+def _montana_collection_uuid_from_url(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "rules.mt.gov":
+        return ""
+    for pattern in (_MT_POLICY_PATH_RE, _MT_SECTION_PATH_RE, _MT_COLLECTION_PATH_RE):
+        match = pattern.fullmatch(parsed.path or "")
+        if match:
+            return str(match.group("collection") or "").strip()
+    return ""
+
+
+def _montana_section_uuid_from_url(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "rules.mt.gov":
+        return ""
+    match = _MT_SECTION_PATH_RE.fullmatch(parsed.path or "")
+    if not match:
+        return ""
+    return str(match.group("section") or "").strip()
+
+
+def _montana_policy_uuid_from_url(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "rules.mt.gov":
+        return ""
+    match = _MT_POLICY_PATH_RE.fullmatch(parsed.path or "")
+    if not match:
+        return ""
+    return str(match.group("policy") or "").strip()
+
+
+def _montana_policy_browse_url(collection_uuid: str, policy_uuid: str) -> str:
+    return (
+        "https://rules.mt.gov/browse/collections/"
+        f"{quote(str(collection_uuid or '').strip(), safe='-')}/policies/{quote(str(policy_uuid or '').strip(), safe='-')}"
+    )
+
+
+def _montana_public_api_headers(*, referer: str = "https://rules.mt.gov/") -> Dict[str, str]:
+    return {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/json, text/plain, */*",
+        "Referer": referer,
+    }
+
+
+def _montana_field_lines(fields: Any) -> List[str]:
+    out: List[str] = []
+    for field in fields or []:
+        if not isinstance(field, dict):
+            continue
+        label = str(field.get("label") or field.get("key") or "").strip()
+        value = str(field.get("value") or "").strip()
+        if not label or not value:
+            continue
+        line = f"{label}: {value}"
+        if line not in out:
+            out.append(line)
+    return out
+
+
+async def _discover_montana_rule_document_urls(url: str, *, limit: int = 8) -> List[str]:
+    url_value = str(url or "").strip()
+    collection_uuid = _montana_collection_uuid_from_url(url_value)
+    if not collection_uuid:
+        return []
+    if _montana_policy_uuid_from_url(url_value):
+        return [url_value]
+
+    section_uuid = _montana_section_uuid_from_url(url_value)
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        out: List[str] = []
+        seen_policies: set[str] = set()
+        seen_sections: set[str] = set()
+        pending_sections: List[Optional[str]] = [section_uuid or None]
+        requests_made = 0
+
+        while pending_sections and len(out) < limit_n and requests_made < max(12, limit_n * 6):
+            current_section = pending_sections.pop(0)
+            if current_section:
+                if current_section in seen_sections:
+                    continue
+                seen_sections.add(current_section)
+                api_url = (
+                    f"{_MT_PUBLIC_API_BASE_URL}/collections/{collection_uuid}/sections/{current_section}"
+                )
+            else:
+                api_url = f"{_MT_PUBLIC_API_BASE_URL}/collections/{collection_uuid}"
+            requests_made += 1
+            try:
+                response = requests.get(
+                    api_url,
+                    timeout=25,
+                    headers=_montana_public_api_headers(referer=url_value or "https://rules.mt.gov/"),
+                )
+                response.raise_for_status()
+                payload = response.json()
+            except Exception:
+                continue
+            if not isinstance(payload, dict):
+                continue
+            for policy in payload.get("childPolicies") or []:
+                if not isinstance(policy, dict):
+                    continue
+                policy_uuid = str(policy.get("uuid") or "").strip()
+                if not policy_uuid or policy_uuid in seen_policies:
+                    continue
+                seen_policies.add(policy_uuid)
+                out.append(_montana_policy_browse_url(collection_uuid, policy_uuid))
+                if len(out) >= limit_n:
+                    break
+            if len(out) >= limit_n:
+                break
+            for child in payload.get("childSections") or []:
+                if not isinstance(child, dict):
+                    continue
+                child_uuid = str(child.get("uuid") or "").strip()
+                if not child_uuid or child_uuid in seen_sections:
+                    continue
+                pending_sections.append(child_uuid)
+        return out
+
+    return await asyncio.to_thread(_run)
+
+
 async def _scrape_wyoming_rule_detail_via_ajax(url: str) -> Optional[Any]:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
@@ -3119,6 +3455,148 @@ async def _scrape_wyoming_rule_detail_via_ajax(url: str) -> Optional[Any]:
         success=True,
         method_used=method_name,
         extraction_provenance={"method": method_name},
+    )
+
+
+async def _scrape_montana_rule_detail_via_api(url: str) -> Optional[Any]:
+    collection_uuid = _montana_collection_uuid_from_url(url)
+    policy_uuid = _montana_policy_uuid_from_url(url)
+    if not collection_uuid or not policy_uuid:
+        return None
+
+    def _run() -> Optional[Dict[str, Any]]:
+        try:
+            response = requests.get(
+                f"{_MT_PUBLIC_API_BASE_URL}/collections/{collection_uuid}/policies/{policy_uuid}",
+                timeout=30,
+                headers=_montana_public_api_headers(referer=url),
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except Exception:
+            return None
+
+        policy = (payload or {}).get("policy") or {}
+        if not isinstance(policy, dict):
+            return None
+
+        policy_versions = [version for version in (policy.get("policyVersions") or []) if isinstance(version, dict)]
+        current_version_uuid = str(policy.get("currentVersionUuid") or "").strip()
+        selected_version: Optional[Dict[str, Any]] = None
+        if current_version_uuid:
+            for version in policy_versions:
+                if str(version.get("uuid") or "").strip() == current_version_uuid:
+                    selected_version = version
+                    break
+        if selected_version is None:
+            for version in policy_versions:
+                if bool(version.get("isActive")):
+                    selected_version = version
+                    break
+        if selected_version is None and policy_versions:
+            selected_version = policy_versions[0]
+
+        citation_id = str(policy.get("citationId") or "").strip()
+        name = str(policy.get("name") or "").strip()
+        title = f"{citation_id} {name}".strip() or name or citation_id
+
+        html = ""
+        text = ""
+        preview_pdf_url = ""
+        for doc_key in ("accessibleHtmlDocument", "previewDocument", "originalDocument"):
+            document = dict((selected_version or {}).get(doc_key) or {})
+            content_url = str(document.get("contentUrl") or "").strip()
+            content_type = str(document.get("contentType") or "").strip().lower()
+            if not content_url:
+                continue
+            absolute_content_url = urljoin("https://rules.mt.gov/", content_url)
+            if content_type.startswith("text/html"):
+                try:
+                    content_response = requests.get(
+                        absolute_content_url,
+                        timeout=30,
+                        headers={
+                            **_montana_public_api_headers(referer=url),
+                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        },
+                    )
+                    content_response.raise_for_status()
+                    html = str(content_response.text or "")
+                    text = _extract_text_from_downloaded_html_document(html)
+                except Exception:
+                    html = ""
+                    text = ""
+                if text:
+                    break
+            if not preview_pdf_url and "pdf" in content_type:
+                preview_pdf_url = absolute_content_url
+
+        return {
+            "title": title,
+            "text": text,
+            "html": html,
+            "preview_pdf_url": preview_pdf_url,
+            "policy_fields": _montana_field_lines(policy.get("fields") or []),
+            "version_fields": _montana_field_lines((selected_version or {}).get("fields") or []),
+            "substatuses": [str(value).strip() for value in ((selected_version or {}).get("subStatuses") or []) if str(value).strip()],
+        }
+
+    result = await asyncio.to_thread(_run)
+    if not isinstance(result, dict):
+        return None
+
+    text = str(result.get("text") or "").strip()
+    html = str(result.get("html") or "")
+    preview_pdf_url = str(result.get("preview_pdf_url") or "").strip()
+    if not text and preview_pdf_url:
+        try:
+            pdf_response = await asyncio.to_thread(
+                requests.get,
+                preview_pdf_url,
+                timeout=30,
+                headers={
+                    **_montana_public_api_headers(referer=url),
+                    "Accept": "application/pdf,*/*",
+                },
+            )
+            pdf_response.raise_for_status()
+            text = await _extract_text_from_pdf_bytes_with_processor(
+                bytes(getattr(pdf_response, "content", b"") or b""),
+                source_url=preview_pdf_url,
+            )
+        except Exception:
+            text = ""
+
+    extra_lines: List[str] = []
+    title = str(result.get("title") or "").strip()
+    if title:
+        extra_lines.append(title)
+    for line in result.get("policy_fields") or []:
+        value = str(line or "").strip()
+        if value and value not in extra_lines:
+            extra_lines.append(value)
+    for line in result.get("version_fields") or []:
+        value = str(line or "").strip()
+        if value and value not in extra_lines:
+            extra_lines.append(value)
+    substatuses = [value for value in (result.get("substatuses") or []) if str(value or "").strip()]
+    if substatuses:
+        extra_lines.append(f"Status: {', '.join(substatuses)}")
+
+    extra_text = "\n".join(extra_lines).strip()
+    combined_text = "\n\n".join(part for part in (text, extra_text) if str(part or "").strip()).strip()
+    if not combined_text:
+        return None
+
+    return SimpleNamespace(
+        url=url,
+        title=title,
+        text=combined_text,
+        html=html,
+        links=[],
+        success=True,
+        method_used="montana_public_policy_api",
+        extraction_provenance={"method": "montana_public_policy_api"},
     )
 
 
@@ -4986,6 +5464,9 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
     path = parsed.path.rstrip("/") or "/"
+    if host == "admincode.legislature.state.al.us" and path == "/administrative-code":
+        if not _AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url_value)):
+            return False
     if host == "apps.azsos.gov" and path in {"/public_services/CodeTOC.htm", "/public_services/Index"}:
         return False
     if host == "iar.iga.in.gov" and path == "/iac":
@@ -5943,6 +6424,20 @@ async def _agentic_discover_admin_state_blocks(
                             limit=24,
                         ):
                             candidate_urls.append(rule_url)
+                        if state_code == "MT":
+                            try:
+                                montana_rule_urls = await asyncio.wait_for(
+                                    _discover_montana_rule_document_urls(seed_url, limit=24),
+                                    timeout=20.0,
+                                )
+                            except Exception:
+                                montana_rule_urls = []
+                            for rule_rank, rule_url in enumerate(montana_rule_urls):
+                                if rule_url not in candidate_urls:
+                                    candidate_urls.append(rule_url)
+                                seed_expansion_candidates.append(
+                                    (rule_url, _score_candidate_url(rule_url) + 4 + max(0, 4 - int(rule_rank)))
+                                )
                         if state_code == "WY" and urlparse(seed_url).netloc.lower() == "rules.wyo.gov":
                             wy_program_urls = _candidate_wyoming_rule_urls_from_html(
                                 html=fetched_html,
@@ -6092,6 +6587,7 @@ async def _agentic_discover_admin_state_blocks(
         parallel_prefetch_succeeded = 0
         parallel_prefetch_rule_hits = 0
         expanded_urls = 0
+        inspected_urls = 0
         max_fetch = max(1, int(max_fetch_per_state))
         min_text_chars = max(140, int(min_full_text_chars // 2))
         if require_substantive_text:
@@ -6269,6 +6765,7 @@ async def _agentic_discover_admin_state_blocks(
             direct_scraped = None
             lower_document_url = str(document_url or "").lower()
             direct_timeout_s = max(1.0, min(25.0, remaining_prefetch_budget_s))
+            inspected_urls += 1
             try:
                 if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
                     direct_scraped = await asyncio.wait_for(
@@ -6283,6 +6780,11 @@ async def _agentic_discover_admin_state_blocks(
                 elif state_code == "AL":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_alabama_rule_detail_via_api(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "MT":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_montana_rule_detail_via_api(document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "SD":
@@ -6371,7 +6873,7 @@ async def _agentic_discover_admin_state_blocks(
                     break
 
         prioritized_alabama_seed_rule_urls: List[str] = []
-        if state_code == "AL" and not preseed_signal:
+        if state_code == "AL":
             try:
                 alabama_api_rule_urls = await asyncio.wait_for(
                     _discover_alabama_rule_document_urls(limit=min(max_fetch * 3, 12)),
@@ -6401,6 +6903,7 @@ async def _agentic_discover_admin_state_blocks(
                 break
             if time.monotonic() >= preloop_budget_deadline:
                 break
+            inspected_urls += 1
             try:
                 utah_scraped = await asyncio.wait_for(
                     _scrape_utah_rule_detail_via_public_download(rule_url),
@@ -6428,6 +6931,7 @@ async def _agentic_discover_admin_state_blocks(
                 break
             if time.monotonic() >= preloop_budget_deadline:
                 break
+            inspected_urls += 1
             try:
                 alabama_scraped = await asyncio.wait_for(
                     _scrape_alabama_rule_detail_via_api(rule_url),
@@ -6464,6 +6968,7 @@ async def _agentic_discover_admin_state_blocks(
             # than generic seed pages; give them more of the preloop budget before
             # falling back to the fetch API, which may return no document at all.
             direct_timeout_s = max(1.0, min(25.0, remaining_prefetch_budget_s))
+            inspected_urls += 1
             try:
                 if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
                     direct_scraped = await asyncio.wait_for(
@@ -6478,6 +6983,11 @@ async def _agentic_discover_admin_state_blocks(
                 elif state_code == "AL":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_alabama_rule_detail_via_api(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "MT":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_montana_rule_detail_via_api(document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "SD":
@@ -6679,6 +7189,7 @@ async def _agentic_discover_admin_state_blocks(
             expanded_scraped = None
             lower_document_url = str(document_url or "").lower()
             direct_timeout_s = max(1.0, min(12.0, remaining_prefetch_budget_s))
+            inspected_urls += 1
             try:
                 if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
                     expanded_scraped = await asyncio.wait_for(
@@ -6811,7 +7322,6 @@ async def _agentic_discover_admin_state_blocks(
             max_candidates=max_candidates,
         )
         seen_urls = set(direct_doc_urls)
-        inspected_urls = 0
         inspected_url_samples: List[str] = []
         deep_discovery_calls = 0
         base_hosts = {
@@ -6825,6 +7335,9 @@ async def _agentic_discover_admin_state_blocks(
             alabama_scraped = await _scrape_alabama_rule_detail_via_api(url)
             if alabama_scraped is not None:
                 return alabama_scraped
+            montana_scraped = await _scrape_montana_rule_detail_via_api(url)
+            if montana_scraped is not None:
+                return montana_scraped
             south_dakota_scraped = await _scrape_south_dakota_rule_detail_via_api(url)
             if south_dakota_scraped is not None:
                 return south_dakota_scraped
@@ -6981,6 +7494,22 @@ async def _agentic_discover_admin_state_blocks(
                             ):
                                 pending.append((rule_url, _score_candidate_url(rule_url) + inventory_rule_bonus))
                                 expanded_urls += 1
+                            if state_code == "MT":
+                                try:
+                                    montana_rule_urls = await asyncio.wait_for(
+                                        _discover_montana_rule_document_urls(url, limit=24),
+                                        timeout=20.0,
+                                    )
+                                except Exception:
+                                    montana_rule_urls = []
+                                for rule_rank, rule_url in enumerate(montana_rule_urls):
+                                    pending.append(
+                                        (
+                                            rule_url,
+                                            _score_candidate_url(rule_url) + inventory_rule_bonus + max(0, 4 - int(rule_rank)),
+                                        )
+                                    )
+                                    expanded_urls += 1
                             same_host = current_host if current_host in base_hosts else ""
                             for link_rank, link_url in enumerate(
                                 _candidate_links_from_scrape(
@@ -7077,6 +7606,17 @@ async def _agentic_discover_admin_state_blocks(
                         ):
                             pending.append((rule_url, _score_candidate_url(rule_url) + 4))
                             expanded_urls += 1
+                        if state_code == "MT":
+                            try:
+                                montana_rule_urls = await asyncio.wait_for(
+                                    _discover_montana_rule_document_urls(url, limit=24),
+                                    timeout=20.0,
+                                )
+                            except Exception:
+                                montana_rule_urls = []
+                            for rule_rank, rule_url in enumerate(montana_rule_urls):
+                                pending.append((rule_url, _score_candidate_url(rule_url) + 4 + max(0, 4 - int(rule_rank))))
+                                expanded_urls += 1
                         for link_url in _candidate_links_from_scrape(
                             scraped,
                             base_host=same_host,

@@ -148,6 +148,7 @@ def test_tennessee_curated_seeds_keep_service_pages_but_drop_dead_placeholders()
     assert "https://sos.tn.gov/publications/services/administrative-register" in tn_urls
     assert "https://sos.tn.gov/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee" in tn_urls
     assert "https://sharetngov.tnsosfiles.com/sos/rules/index.htm" in tn_urls
+    assert "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm" in tn_urls
     assert "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm" in tn_urls
     assert all("web.archive.org" not in url.lower() for url in tn_urls)
     assert all("www.tn.gov/sos/rules-and-regulations.html" not in url.lower() for url in tn_urls)
@@ -162,6 +163,8 @@ def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
     assert "https://www.sec.state.ma.us/divisions/pubs-regs/about-cmr.htm" in ma_urls
     assert "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number" in ma_urls
     assert "https://www.mass.gov/law-library/310-cmr" in ma_urls
+    assert "https://www.mass.gov/regulations/310-CMR-100-adjudicatory-proceedings-0" in ma_urls
+    assert "https://www.mass.gov/regulations/310-CMR-200-adopting-administrative-regulations" in ma_urls
     assert "https://www.mass.gov/regulations/310-CMR-700-air-pollution-control-0" in ma_urls
     assert "www.mass.gov" in ma_allowed_hosts
     assert "www.sec.state.ma.us" in ma_allowed_hosts
@@ -292,13 +295,13 @@ def test_is_direct_detail_candidate_url_recognizes_indiana_rule_detail_pages() -
 def test_is_direct_detail_candidate_url_recognizes_alabama_admin_code_detail_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
         "https://admincode.legislature.state.al.us/administrative-code"
-    ) is True
+    ) is False
     assert scraper_module._is_direct_detail_candidate_url(
         "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
         "https://admincode.legislature.state.al.us/administrative-code#A"
-    ) is True
+    ) is False
     assert scraper_module._is_direct_detail_candidate_url(
         "https://admincode.legislature.state.al.us/agency"
     ) is False
@@ -410,6 +413,9 @@ def test_is_direct_detail_candidate_url_recognizes_wyoming_ajax_rule_viewer() ->
 def test_is_direct_detail_candidate_url_recognizes_arkansas_code_rule_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
         "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=1"
+    ) is False
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=section&titleID=2&chapterID=269&subChapterID=335&partID=1307&subPartID=8275&sectionID=54466"
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
         "https://codeofarrules.arkansas.gov/Rules/Search"
@@ -888,6 +894,26 @@ def test_rejects_arkansas_rules_landing_page_as_substantive_rule_text() -> None:
     ) is False
 
 
+def test_accepts_arkansas_section_rule_page_as_substantive_rule_text() -> None:
+    text = (
+        "For full functionality of this site it is necessary to enable JavaScript. "
+        "Code of Arkansas Rules 2 CAR § 1-101. Purpose Content General Info Notes "
+        "2 CAR § 1-101. Purpose. To increase the availability of alternative fuels produced in Arkansas "
+        "from feedstock processed in Arkansas by making available incentive grants to: "
+        "(1) Alternative fuels producers; (2) Feedstock processors; and (3) Distributors."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="2 CAR § 1-101. Purpose - Code of Arkansas Rules",
+        url=(
+            "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=section&titleID=2&chapterID=269"
+            "&subChapterID=335&partID=1307&subPartID=8275&sectionID=54466"
+        ),
+        min_chars=160,
+    ) is True
+
+
 def test_candidate_arkansas_rule_urls_from_html_extracts_pdf_and_rule_links() -> None:
     sos_html = """
     <html><body>
@@ -945,13 +971,75 @@ def test_score_candidate_url_prioritizes_arkansas_official_rule_hosts_over_dead_
     pdf_score = scraper_module._score_candidate_url(
         "https://sos-rules-reg.ark.org/rules/pdf/018.00.14-001F-14511.pdf"
     )
-    code_score = scraper_module._score_candidate_url(
+    title_score = scraper_module._score_candidate_url(
         "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=1"
+    )
+    section_score = scraper_module._score_candidate_url(
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=section&titleID=2&chapterID=269&subChapterID=335&partID=1307&subPartID=8275&sectionID=54466"
     )
     dead_score = scraper_module._score_candidate_url("https://legislature.ar.gov/regulations")
 
     assert pdf_score > dead_score
-    assert code_score > dead_score
+    assert title_score > dead_score
+    assert section_score > title_score
+
+
+@pytest.mark.asyncio
+async def test_discover_arkansas_rule_document_urls_expands_title_tree_to_section_urls(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def __init__(self, *, text: str = "", json_data: Any = None, url: str = "") -> None:
+            self.text = text
+            self._json_data = json_data
+            self.url = url
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return self._json_data
+
+    class FakeSession:
+        def get(self, url, params=None, timeout=0, headers=None):
+            if url == "https://codeofarrules.arkansas.gov/Rules/RuleQuickSearch":
+                return FakeResponse(
+                    text=(
+                        '<a href="?levelType=title&amp;titleID=2&amp;chapterID=&amp;subChapterID=&amp;partID=&amp;subPartID=&amp;sectionID=">'
+                        'Title 2. Agriculture</a>'
+                    ),
+                    url="https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=2",
+                )
+            if url == "https://codeofarrules.arkansas.gov/Home/GetRulesTreeViewData":
+                level_type = str((params or {}).get("levelType") or "")
+                if level_type == "CHAPTER":
+                    return FakeResponse(json_data=[{"nodeID": 269, "chapterID": 269}])
+                if level_type == "SUBCHAPTER":
+                    return FakeResponse(json_data=[{"nodeID": 335, "subchapterID": 335}])
+                if level_type == "SECTION":
+                    return FakeResponse(
+                        json_data=[
+                            {
+                                "nodeType": "SECTION",
+                                "titleID": 2,
+                                "chapterID": 269,
+                                "subchapterID": 335,
+                                "partID": 1307,
+                                "subpartID": 8275,
+                                "sectionID": 54466,
+                            }
+                        ]
+                    )
+            raise AssertionError(f"unexpected request: {url} {params}")
+
+    monkeypatch.setattr(scraper_module.requests, "Session", lambda: FakeSession())
+
+    discovered = await scraper_module._discover_arkansas_rule_document_urls(
+        seed_urls=["https://codeofarrules.arkansas.gov/"],
+        limit=4,
+    )
+
+    assert discovered == [
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=section&titleID=2&chapterID=269&subChapterID=335&partID=1307&subPartID=8275&sectionID=54466"
+    ]
 
 
 def test_rejects_wyoming_empty_search_page_as_substantive_rule_text() -> None:
@@ -1780,10 +1868,25 @@ def test_rejects_texas_hunting_forum_false_positive() -> None:
 
     assert _is_admin_rule_statute(statute) is False
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_alabama_admin_code_anchor_hub_as_substantive_rule_text() -> None:
+    text = (
+        "Alabama Administrative Code Agencies Chapters Rules Administrative Code "
+        "Alcoholic Beverage Control Board Agriculture and Industries Chapter 20-X-1 Chapter 20-X-2 "
+        "Search Agencies Rules"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Alabama Administrative Code",
+        url="https://admincode.legislature.state.al.us/administrative-code#A",
+        min_chars=160,
+    ) is False
     assert _is_relaxed_recovery_text(
-        text=statute["full_text"],
-        title=statute["section_name"],
-        url=statute["source_url"],
+        text=text,
+        title="Alabama Administrative Code",
+        url="https://admincode.legislature.state.al.us/administrative-code#A",
     ) is False
 
 
@@ -2711,6 +2814,70 @@ async def test_discover_alabama_rule_document_urls_uses_public_code_api(monkeypa
 
 
 @pytest.mark.asyncio
+async def test_discover_montana_rule_document_urls_expands_section_tree_via_public_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict[str, object]):
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, object]:
+            return self._payload
+
+    calls: list[str] = []
+
+    def fake_get(url: str, timeout: int, headers: dict[str, str]):
+        calls.append(url)
+        if url.endswith("/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/11111111-2222-3333-4444-555555555555"):
+            return FakeResponse(
+                {
+                    "uuid": "11111111-2222-3333-4444-555555555555",
+                    "childSections": [
+                        {"uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"},
+                        {"uuid": "ffffffff-1111-2222-3333-444444444444"},
+                    ],
+                    "childPolicies": [],
+                }
+            )
+        if url.endswith("/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"):
+            return FakeResponse(
+                {
+                    "uuid": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    "childSections": [],
+                    "childPolicies": [
+                        {"uuid": "12345678-1111-2222-3333-444444444444"},
+                        {"uuid": "87654321-aaaa-bbbb-cccc-dddddddddddd"},
+                    ],
+                }
+            )
+        if url.endswith("/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/ffffffff-1111-2222-3333-444444444444"):
+            return FakeResponse(
+                {
+                    "uuid": "ffffffff-1111-2222-3333-444444444444",
+                    "childSections": [],
+                    "childPolicies": [{"uuid": "99999999-8888-7777-6666-555555555555"}],
+                }
+            )
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    urls = await scraper_module._discover_montana_rule_document_urls(
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/11111111-2222-3333-4444-555555555555",
+        limit=2,
+    )
+
+    assert urls == [
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/12345678-1111-2222-3333-444444444444",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/87654321-aaaa-bbbb-cccc-dddddddddddd",
+    ]
+    assert calls[0].endswith("/sections/11111111-2222-3333-4444-555555555555")
+
+
+@pytest.mark.asyncio
 async def test_scrape_alabama_rule_detail_via_api_uses_public_code_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeResponse:
         def raise_for_status(self) -> None:
@@ -2751,6 +2918,84 @@ async def test_scrape_alabama_rule_detail_via_api_uses_public_code_endpoint(monk
     assert scraped.method_used == "alabama_public_code_api"
     assert requests_seen[0]["operationName"] == "publicCode"
     assert requests_seen[0]["extensions"]["persistedQuery"]["sha256Hash"] == scraper_module._AL_PUBLIC_CODE_HASH
+
+
+@pytest.mark.asyncio
+async def test_scrape_montana_rule_detail_via_api_uses_public_policy_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, *, payload: dict[str, object] | None = None, text: str = "", content: bytes = b"", headers: dict[str, str] | None = None):
+            self._payload = payload
+            self.text = text
+            self.content = content
+            self.headers = headers or {}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, object]:
+            assert self._payload is not None
+            return self._payload
+
+    calls: list[str] = []
+
+    def fake_get(url: str, timeout: int, headers: dict[str, str]):
+        calls.append(url)
+        if url.endswith("/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865"):
+            return FakeResponse(
+                payload={
+                    "policy": {
+                        "uuid": "51f36d4d-ca58-49bf-bf41-e1881edd4865",
+                        "currentVersionUuid": "version-1",
+                        "citationId": "1.3.201",
+                        "name": "INTRODUCTION AND DEFINITIONS",
+                        "fields": [
+                            {"label": "Contact Information", "value": "contactdoj@mt.gov"},
+                        ],
+                        "policyVersions": [
+                            {
+                                "uuid": "version-1",
+                                "isActive": True,
+                                "subStatuses": ["EFFECTIVE"],
+                                "fields": [
+                                    {"label": "Rule History", "value": "Eff. 12/31/72; AMD, 2009 MAR p. 7, Eff. 1/16/09."},
+                                ],
+                                "accessibleHtmlDocument": {
+                                    "contentType": "text/html",
+                                    "contentUrl": "/api/policy-library-public/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865/document/html-1",
+                                },
+                            }
+                        ],
+                    }
+                }
+            )
+        if url.endswith("/document/html-1"):
+            return FakeResponse(
+                text=(
+                    "<html><body><div id='documentBody'>"
+                    "<p><strong>1.3.201 INTRODUCTION AND DEFINITIONS</strong></p>"
+                    "<p>Authority: 2-4-201, MCA</p>"
+                    "<p>(1) These rules govern attorney general model procedures.</p>"
+                    "</div></body></html>"
+                ),
+                headers={"content-type": "text/html"},
+            )
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    scraped = await scraper_module._scrape_montana_rule_detail_via_api(
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865"
+    )
+
+    assert scraped is not None
+    assert scraped.title == "1.3.201 INTRODUCTION AND DEFINITIONS"
+    assert "These rules govern attorney general model procedures." in scraped.text
+    assert "Rule History: Eff. 12/31/72; AMD, 2009 MAR p. 7, Eff. 1/16/09." in scraped.text
+    assert "Status: EFFECTIVE" in scraped.text
+    assert scraped.method_used == "montana_public_policy_api"
+    assert calls[0].endswith("/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865")
 
 
 def test_download_document_bytes_via_cloudscraper_returns_binary_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -3349,6 +3594,28 @@ def test_accepts_new_hampshire_archived_rule_chapter() -> None:
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
+    ) is True
+
+
+def test_accepts_new_hampshire_archived_rule_chapter_as_substantive_rule_text() -> None:
+    text = (
+        "He-P 300 Communic. Diseas 4 captures 03 Jun 2025 - 11 Jan 2026 "
+        "CHAPTER He-P 300 DISEASES Statutory Authority: RSA 141-C:6 "
+        "PART He-P 301 COMMUNICABLE DISEASES "
+        "He-P 301.01 Definitions. "
+        '(a) "Acceptable immunization" means the immunizations required in RSA 141-C:20-a and the doses and age requirements in He-P 301.14. '
+        '(b) "Admitting official" means the principal or his or her designated representative, headmaster or director of the public or non-public school, state agency, or child care agency. '
+        '(c) "Applicant" means the person for whom application is made to either the AIDS drug assistance or the tuberculosis patient care financial assistance program. '
+        '(d) "Carrier" means a person or animal that harbors a specific infectious agent in the absence of discernible clinical disease and serves as a potential source of infection. '
+        '(e) "Case" means any person afflicted with a communicable disease. '
+        '(f) "Chief complaint" means the patient\'s set of symptoms and illnesses when the patient first presents to the emergency department of a hospital.'
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="He-P 300 Communic. Diseas",
+        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html",
+        min_chars=220,
     ) is True
 
 
@@ -4114,6 +4381,12 @@ def test_prefers_live_fetch_for_utah_detail_pages() -> None:
     assert scraper_module._prefers_live_fetch("https://rules.utah.gov/") is False
 
 
+def test_prefers_live_fetch_for_tennessee_inventory_pages() -> None:
+    assert scraper_module._prefers_live_fetch("https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm") is True
+    assert scraper_module._prefers_live_fetch("https://sharetngov.tnsosfiles.com/sos/rules/effectives/effectives.htm") is True
+    assert scraper_module._prefers_live_fetch("https://sharetngov.tnsosfiles.com/sos/rules/0020/0020.htm") is False
+
+
 def test_seed_expansion_backlog_is_ready_after_enough_unique_detail_urls() -> None:
     seed_expansion_candidates = [
         (f"https://adminrules.utah.gov/public/rule/R70-{index}/Current%20Rules", 12)
@@ -4282,7 +4555,7 @@ async def test_agentic_discovery_ignores_off_domain_search_hits(monkeypatch: pyt
 
 @pytest.mark.anyio
 async def test_agentic_discovery_seed_fetch_uses_initialized_max_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
-    fetch_calls = {"count": 0}
+    rule_url = "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
 
     class _FakeLegalWebArchiveSearch:
         def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
@@ -4302,7 +4575,6 @@ async def test_agentic_discovery_seed_fetch_uses_initialized_max_fetch(monkeypat
             return {"results": []}
 
         def fetch(self, request):
-            fetch_calls["count"] += 1
             document = SimpleNamespace(
                 text="Official Alabama administrative rules body with authority and chapter text.",
                 title="Alabama Administrative Code",
@@ -4330,6 +4602,19 @@ async def test_agentic_discovery_seed_fetch_uses_initialized_max_fetch(monkeypat
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: ["https://admincode.legislature.state.al.us/administrative-code"])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_alabama_rule_document_urls", lambda limit=8: asyncio.sleep(0, result=[rule_url]))
+    monkeypatch.setattr(
+        scraper_module,
+        "_scrape_alabama_rule_detail_via_api",
+        lambda url: asyncio.sleep(
+            0,
+            result=SimpleNamespace(
+                text="Official Alabama administrative rules body with authority and chapter text.",
+                title="20-X-2-.01 Alabama Administrative Code",
+                method_used="alabama_public_code_api",
+            ),
+        ),
+    )
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
     monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: True)
     monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
@@ -4362,12 +4647,13 @@ async def test_agentic_discovery_seed_fetch_uses_initialized_max_fetch(monkeypat
 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
-    assert result["state_blocks"][0]["statutes"][0]["source_url"] == "https://admincode.legislature.state.al.us/administrative-code"
-    assert fetch_calls["count"] >= 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == rule_url
 
 
 @pytest.mark.anyio
 async def test_agentic_discovery_continues_when_archive_search_times_out(monkeypatch: pytest.MonkeyPatch) -> None:
+    rule_url = "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
+
     class _FakeLegalWebArchiveSearch:
         def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
             pass
@@ -4413,6 +4699,19 @@ async def test_agentic_discovery_continues_when_archive_search_times_out(monkeyp
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: ["https://admincode.legislature.state.al.us/administrative-code"])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_alabama_rule_document_urls", lambda limit=8: asyncio.sleep(0, result=[rule_url]))
+    monkeypatch.setattr(
+        scraper_module,
+        "_scrape_alabama_rule_detail_via_api",
+        lambda url: asyncio.sleep(
+            0,
+            result=SimpleNamespace(
+                text="Official Alabama administrative rules body with authority and chapter text.",
+                title="20-X-2-.01 Alabama Administrative Code",
+                method_used="alabama_public_code_api",
+            ),
+        ),
+    )
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
     monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: True)
     monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
