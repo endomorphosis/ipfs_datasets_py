@@ -144,6 +144,19 @@ def test_california_admin_seed_urls_exclude_leginfo_templates_and_hosts() -> Non
     assert "leginfo.legislature.ca.gov" not in allowed_hosts
 
 
+def test_wyoming_admin_seed_urls_exclude_dead_legislature_hosts() -> None:
+    wy_urls = scraper_module._extract_seed_urls_for_state("WY", "Wyoming")
+    allowed_hosts = _allowed_discovery_hosts_for_state("WY", "Wyoming")
+
+    assert "https://rules.wyo.gov/Search.aspx?mode=7" in wy_urls
+    assert all("wyoleg.gov" not in url.lower() for url in wy_urls)
+    assert all("legislature.wy.gov" not in url.lower() for url in wy_urls)
+    assert "rules.wyo.gov" in allowed_hosts
+    assert "wyoleg.gov" not in allowed_hosts
+    assert "www.wyoleg.gov" not in allowed_hosts
+    assert "legislature.wy.gov" not in allowed_hosts
+
+
 def test_candidate_links_from_html_keeps_california_official_ccr_host_when_allowed() -> None:
     html = """
     <html>
@@ -262,6 +275,15 @@ def test_is_direct_detail_candidate_url_recognizes_tennessee_sharetngov_rule_cha
     ) is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_wyoming_ajax_rule_viewer() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7"
+    ) is False
+
+
 def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
     text = (
         "Tennessee Department of State: Publications Administrative Register Rules & Regulations "
@@ -277,6 +299,36 @@ def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
         text=text,
         title="Tennessee Department of State: Publications",
         url="https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
+    ) is True
+
+
+def test_wyoming_search_and_program_results_are_inventory_pages() -> None:
+    search_body = (
+        "Administrative Rules (Code) Agency Accountants Program Accountants Result(s) "
+        "Agency Administration Program Human Resources Result(s) "
+        "<span class='program_id hidden'>347</span><span class='program_id hidden'>11</span>"
+    )
+    program_body = (
+        '<a href="#" class="search-rule-link" data-whatever="16225">Chapter 1: General Provisions</a>'
+        " <strong>Reference Number:</strong> 061.0001.1.10282019 "
+        '<a href="#" class="search-rule-link" data-whatever="24261">Chapter 2: Examination</a>'
+        " <strong>Reference Number:</strong> 061.0001.2.08082024"
+    )
+
+    assert scraper_module._looks_like_official_rule_index_page(
+        text=search_body,
+        title="Administrative Rules (Code)",
+        url="https://rules.wyo.gov/Search.aspx?mode=7",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=search_body,
+        title="Administrative Rules (Code)",
+        url="https://rules.wyo.gov/Search.aspx?mode=7",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=program_body,
+        title="Accountants, Board of Certified Public",
+        url="https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7",
     ) is True
 
 
@@ -1416,6 +1468,43 @@ def test_candidate_links_from_html_extracts_vermont_rule_display_urls_from_rulei
         assert "https://secure.vermont.gov/SOS/rules/display.php?r=1049" in links
 
 
+def test_candidate_links_from_html_extracts_wyoming_ajax_program_and_rule_urls() -> None:
+        search_html = """
+        <html><body>
+            <div class="agency_container">
+                <span class="program_id hidden">347</span>
+                <span class="program_id hidden">11</span>
+            </div>
+        </body></html>
+        """
+        program_html = """
+        <html><body>
+            <a href="#" class="search-rule-link" data-whatever="16225">Chapter 1: General Provisions</a>
+            <a href="#" class="search-rule-link" data-whatever="24261">Chapter 2: Examination</a>
+        </body></html>
+        """
+
+        search_links = _candidate_links_from_html(
+                search_html,
+                base_host="rules.wyo.gov",
+                page_url="https://rules.wyo.gov/Search.aspx?mode=7",
+                limit=5,
+                allowed_hosts={"rules.wyo.gov"},
+        )
+        program_links = _candidate_links_from_html(
+                program_html,
+                base_host="rules.wyo.gov",
+                page_url="https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7",
+                limit=5,
+                allowed_hosts={"rules.wyo.gov"},
+        )
+
+        assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7" in search_links
+        assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=11&MODE=7" in search_links
+        assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225" in program_links
+        assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=24261" in program_links
+
+
 def test_scores_arizona_official_chapter_documents_above_inventory_page() -> None:
     inventory_url = "https://apps.azsos.gov/public_services/CodeTOC.htm"
     chapter_pdf_url = "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
@@ -1423,6 +1512,29 @@ def test_scores_arizona_official_chapter_documents_above_inventory_page() -> Non
 
     assert scraper_module._score_candidate_url(chapter_pdf_url) > scraper_module._score_candidate_url(inventory_url)
     assert scraper_module._score_candidate_url(chapter_rtf_url) > scraper_module._score_candidate_url(inventory_url)
+
+
+def test_score_candidate_url_prioritizes_wyoming_ajax_rule_pages_over_portals() -> None:
+    detail_score = scraper_module._score_candidate_url(
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225"
+    )
+    program_score = scraper_module._score_candidate_url(
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7"
+    )
+    search_score = scraper_module._score_candidate_url(
+        "https://rules.wyo.gov/Search.aspx?mode=7"
+    )
+    help_score = scraper_module._score_candidate_url(
+        "https://rules.wyo.gov/Help/Public/wyoming-administrative-rules-h.html"
+    )
+    legislature_score = scraper_module._score_candidate_url(
+        "https://www.wyoleg.gov/"
+    )
+
+    assert detail_score > program_score
+    assert program_score > search_score
+    assert search_score >= help_score
+    assert help_score > legislature_score
 
 
 def test_direct_detail_candidate_backlog_is_ready_for_utah_and_arizona_detail_urls() -> None:
@@ -1540,6 +1652,61 @@ async def test_normalize_candidate_document_content_trims_california_westlaw_chr
     assert "Currentness" not in text
     assert "1 CA ADC § 250" not in text
     assert "Barclays Official California Code of Regulations" not in text
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_trims_indiana_iarp_chrome() -> None:
+    title, text = await scraper_module._normalize_candidate_document_content(
+        url="https://iar.iga.in.gov/code/current/10/1.5",
+        title="Title 10, ARTICLE 1.5. UNCLAIMED PROPERTY | IARP",
+        text=(
+            "Indiana Administrative Rules and Policies\nHome\nIndiana Register\nAdministrative Code\n"
+            "MyIAR\nIndiana Administrative Code\nCurrent\n"
+            "TITLE 10 Office of Attorney General for the State\nARTICLE 1 UNCLAIMED PROPERTY SECTION (REPEALED)\n"
+            "ARTICLE 1.5 UNCLAIMED PROPERTY\nARTICLE 2 CONTRACT APPROVAL\nTITLE 11 Consumer Protection Division of the Office of the Attorney General\n"
+            "TITLE 10 Office of Attorney General for the State\nARTICLE 1.5 UNCLAIMED PROPERTY\nPDF\nCopy Article\n"
+            "Article 1\nArticle 2\nTITLE 10 OFFICE OF ATTORNEY GENERAL FOR THE STATE\nARTICLE 1.5. UNCLAIMED PROPERTY\n"
+            "Rule 1.\nDefinitions\nRule 2.\nHolders\n10 IAC 1.5-1-1 Applicability\nAuthority: IC 32-34-1.5-87\n"
+            "Affected: IC 32-34-1.5\nSec. 1. The definitions in the Unclaimed Property Act and in this rule apply throughout this article.\n"
+            "Administrative Drafting Manual\nHistorical List of Executive Orders\nSite Map"
+        ),
+    )
+
+    assert title == "Title 10, ARTICLE 1.5. UNCLAIMED PROPERTY"
+    assert text.startswith("10 IAC 1.5-1-1 Applicability")
+    assert "Indiana Administrative Rules and Policies" not in text
+    assert "Copy Article" not in text
+    assert "Administrative Drafting Manual" not in text
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_trims_indiana_expired_article_to_notice() -> None:
+    title, text = await scraper_module._normalize_candidate_document_content(
+        url="https://iar.iga.in.gov/code/current/16/2",
+        title="Title 16, ARTICLE 2. INDIANA RESIDENTIAL CONSERVATION SERVICE PROGRAM (EXPIRED) | IARP",
+        text=(
+            "Indiana Administrative Rules and Policies\nHome\nIndiana Register\nAdministrative Code\nMyIAR\n"
+            "Indiana Administrative Code\nCurrent\nTITLE 10 Office of Attorney General for the State\n"
+            "TITLE 16 Office of the Lieutenant Governor\nARTICLE 1 ENERGY DEVELOPMENT BOARD (EXPIRED)\n"
+            "ARTICLE 2 INDIANA RESIDENTIAL CONSERVATION SERVICE PROGRAM (EXPIRED)\nARTICLE 3 SOLAR ENERGY INCOME TAX CREDIT (EXPIRED)\n"
+            "TITLE 16 Office of the Lieutenant Governor\nARTICLE 2 INDIANA RESIDENTIAL CONSERVATION SERVICE PROGRAM (EXPIRED)\n"
+            "PDF\nCopy Article\nArticle 1\nArticle 3\nTITLE 16 OFFICE OF THE LIEUTENANT GOVERNOR\n"
+            "ARTICLE 2. INDIANA RESIDENTIAL CONSERVATION SERVICE PROGRAM (EXPIRED)\n"
+            "(Expired under IC 4-22-2.5, effective January 1, 2009.)\n"
+            "Administrative Drafting Manual\nHistorical List of Executive Orders\nSite Map"
+        ),
+    )
+
+    assert title == "Title 16, ARTICLE 2. INDIANA RESIDENTIAL CONSERVATION SERVICE PROGRAM (EXPIRED)"
+    assert text.startswith("ARTICLE 2 INDIANA RESIDENTIAL CONSERVATION SERVICE PROGRAM (EXPIRED)")
+    assert "Copy Article" not in text
+    assert "Administrative Drafting Manual" not in text
+    assert _is_substantive_rule_text(
+        text=text,
+        title=title,
+        url="https://iar.iga.in.gov/code/current/16/2",
+        min_chars=160,
+    ) is False
 
 
 @pytest.mark.asyncio
@@ -2183,6 +2350,48 @@ async def test_scrape_utah_rule_detail_via_public_download_uses_html_attachment(
     assert scraped.title == "R70-101. Bedding, Upholstered Furniture, and Quilted Clothing"
 
 
+@pytest.mark.asyncio
+async def test_scrape_wyoming_rule_detail_via_ajax_uses_rule_version_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def __init__(self, *, status_code=200, headers=None, text=""):
+            self.status_code = status_code
+            self.headers = headers or {"content-type": "text/html; charset=utf-8"}
+            self.text = text
+
+    observed: dict[str, object] = {}
+
+    def fake_post(url, data=None, timeout=0, headers=None):
+        observed["url"] = url
+        observed["data"] = data
+        observed["headers"] = headers
+        return FakeResponse(
+            text=(
+                '<div class="rule_viewer_agency">Accountants, Board of Certified Public</div>'
+                '<div class="rule_viewer_chapter">Chapter 1: General Provisions</div>'
+                '<div id="rule_viewer_html">'
+                '<p>Section 1. Authority.</p><p>The Wyoming Board hereby adopts these rules pursuant to W.S. 16-3-103.</p>'
+                '<p>Section 2. Definitions.</p><p>Definitions apply throughout this chapter.</p>'
+                '</div>'
+            )
+        )
+
+    monkeypatch.setattr(scraper_module.requests, "post", fake_post)
+
+    scraped = await scraper_module._scrape_wyoming_rule_detail_via_ajax(
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225"
+    )
+
+    assert observed["url"] == "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML"
+    assert observed["data"] == {"RULE_VERSION_ID": "16225"}
+    headers = observed["headers"]
+    assert isinstance(headers, dict)
+    assert headers.get("X-Requested-With") == "XMLHttpRequest"
+    assert scraped is not None
+    assert scraped.method_used == "wyoming_rules_ajax_viewer"
+    assert scraped.title == "Chapter 1: General Provisions - Accountants, Board of Certified Public"
+    assert "Section 1. Authority." in scraped.text
+
+
 def test_accepts_new_hampshire_archived_rule_chapter() -> None:
     statute = {
         "code_name": "New Hampshire Administrative Rules (Agentic Discovery)",
@@ -2542,6 +2751,75 @@ def test_accepts_indiana_article_detail_page_as_substantive_rule_text() -> None:
 
     assert _is_admin_rule_statute(statute) is True
     assert _is_substantive_admin_statute(statute, min_chars=100) is True
+
+
+def test_rejects_vermont_rules_service_pages_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Vermont Administrative Rules (Agentic Discovery)",
+        "section_name": "Vermont Secretary of State Rules Service",
+        "source_url": "https://secure.vermont.gov/SOS/rules/display.php?r=1049",
+        "full_text": (
+            "Vermont Secretary of State Rules Service Proposed Rules Postings A Service of the Office of the Secretary of State "
+            "Code of Vermont Rules Search Rules Deadline For Public Comment Deadline: May 08, 2026 Posting date: Mar 04, 2026 "
+            "Hearing Information Information for Hearing # 1 Contact Information Information for Contact # 1."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_rejects_vermont_rules_root_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Vermont Administrative Rules (Agentic Discovery)",
+        "section_name": "Vermont Secretary of State Rules Service",
+        "source_url": "https://secure.vermont.gov/SOS/rules/",
+        "full_text": (
+            "Vermont Secretary of State Rules Service Proposed Rules Postings A Service of the Office of the Secretary of State "
+            "Code of Vermont Rules Recent Search Rules Calendar Subscribe APA Contact Info Proposed State Rules Recent Postings."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_raw_html_payload_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Vermont Administrative Rules (Agentic Discovery)",
+        "section_name": "<!DOCTYPE html>",
+        "source_url": "https://aoa.vermont.gov/ICAR",
+        "full_text": "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"/><script>window.dataLayer = [];</script></head><body><div>ICAR</div></body></html>",
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_rejects_vermont_icar_service_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Vermont Administrative Rules (Agentic Discovery)",
+        "section_name": "ICAR | Agency of Administration",
+        "source_url": "https://aoa.vermont.gov/ICAR",
+        "full_text": (
+            "Skip to main content An Official Vermont Government Website State of Vermont Agency of Administration "
+            "Administrative Bulletins Revenue Report Fiscal Transparency Strategic Plan Workers' Compensation Public Information "
+            "Home About the Agency Administrative Bulletins Boards and Commissions Interagency Committee on Administrative Rules."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
 def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatch) -> None:

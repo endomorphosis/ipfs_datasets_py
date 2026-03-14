@@ -21,7 +21,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
-from urllib.parse import quote, unquote, urljoin, urlparse
+from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
 
 try:
     from .canonical_legal_corpora import get_canonical_legal_corpus
@@ -191,6 +191,23 @@ _CA_WESTLAW_DOCUMENT_BREADCRUMB_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
+_INDIANA_IARP_FOOTER_LINE_RE = re.compile(
+    r"^(?:Administrative\s+Drafting\s+Manual|Historical\s+List\s+of\s+Executive\s+Orders|"
+    r"Submissions\s+to\s+Attorney\s+General's\s+Office|General\s+Assembly|Agency\s+List|"
+    r"LSA\s+Rulemaking\s+Templates|Contact/About\s+Us|Site\s+Map)$",
+    re.IGNORECASE,
+)
+
+_INDIANA_IARP_TOOLBAR_LINE_RE = re.compile(
+    r"^(?:PDF|Copy\s+Article|Article\s+\d+(?:\.\d+)?|Rule\s+\d+\.?|Current)$",
+    re.IGNORECASE,
+)
+
+_INDIANA_IARP_BODY_LINE_RE = re.compile(
+    r"^(?:\d+\s+IAC\s+[\w.-]+(?:\s+.+)?|Authority:\s*.+|Affected:\s*.+|Sec\.\s*\d+\.)$",
+    re.IGNORECASE,
+)
+
 _AZ_RULEMAKING_META_TEXT_RE = re.compile(
     r"title\s+1\.\s+rules\s+and\s+the\s+rulemaking\s+process|"
     r"secretary of state\s*[\-\u2013]?\s*rules and rulemaking",
@@ -216,8 +233,20 @@ _AZ_RULES_PORTAL_CHROME_RE = re.compile(
 )
 
 _VT_NON_RULE_PORTAL_PATH_RE = re.compile(
-    r"/SOS/rules/(?:index\.php|search\.php|rssFeed\.php|calendar\.php|subscribe\.php|contact\.php|iCalendar\.php)$|"
+    r"/SOS/rules/?$|/SOS/rules/(?:index\.php|search\.php|rssFeed\.php|calendar\.php|subscribe\.php|contact\.php|iCalendar\.php)$|"
     r"/secretary-of-state-services/apa-rules(?:/.*)?$",
+    re.IGNORECASE,
+)
+
+_VT_PROPOSAL_POSTING_TEXT_RE = re.compile(
+    r"proposed\s+rules\s+postings|deadline\s+for\s+public\s+comment|posting\s+date:|"
+    r"hearing\s+information|rulemaking\s+contact\s+information|proposed\s+state\s+rules|"
+    r"subscribe\s+to\s+rule\s+notices|upcoming\s+events",
+    re.IGNORECASE,
+)
+
+_RAW_HTML_TEXT_RE = re.compile(
+    r"^\s*(?:<!DOCTYPE\s+html\b|<html\b|<head\b|<body\b)|<script\b|<meta\b|<noscript\b|</html>",
     re.IGNORECASE,
 )
 
@@ -367,6 +396,7 @@ _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"ilga\.gov/(?:(?:agencies/JCAR/(?:AdminCode|Parts|Sections))|commission/jcar/admincode)(?:\?|/|$)|"
     r"admincode\.legislature\.state\.al\.us/(?:administrative-code|agency|search)?(?:/|$)|"
     r"azsos\.gov/rules(?:/arizona-administrative-code)?(?:/|$)|"
+    r"rules\.wyo\.gov/(?:Search\.aspx(?:\?mode=7)?|Agencies\.aspx)(?:\?|/|$)|"
     r"sharetngov\.tnsosfiles\.com/sos/(?:rules/(?:index\.htm|rules2\.htm|rules_list\.shtml|effectives/effectives\.htm)|pub/tar/index\.htm)(?:\?|/|$)|"
     r"apps\.azsos\.gov/public_services/(?:CodeTOC\.htm|Title_[\w.-]+\.htm)?$)",
     re.IGNORECASE,
@@ -702,6 +732,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "WY": [
         "http://web.archive.org/web/20260207213344/https://rules.wyo.gov/",
         "http://web.archive.org/web/20250917082256/https://rules.wyo.gov/Search.aspx",
+        "https://rules.wyo.gov/Search.aspx?mode=7",
         "https://rules.wyo.gov/",
         "https://rules.wyo.gov/Help/Public/wyoming-administrative-rules-h.html",
         "https://rules.wyo.gov/Search.aspx",
@@ -1282,6 +1313,8 @@ def _is_non_admin_seed_url(url: str) -> bool:
         return True
     if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
         return True
+    if host in {"www.wyoleg.gov", "wyoleg.gov", "legislature.wy.gov"}:
+        return True
     if host == "leginfo.legislature.ca.gov":
         if _CA_NON_RULE_LEGISLATURE_PATH_RE.fullmatch(normalized_path):
             return True
@@ -1297,6 +1330,7 @@ def _score_candidate_url(url: str) -> int:
     host = parsed.netloc.lower()
     path = parsed.path or ""
     normalized_path = path.rstrip("/") or "/"
+    query = parsed.query or ""
     if _ADMIN_RULE_TEXT_RE.search(value):
         score += 3
     if ".gov" in value or ".us" in value:
@@ -1405,6 +1439,22 @@ def _score_candidate_url(url: str) -> int:
         score += 10
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules_filings/[\w.-]+\.pdf$", path, re.IGNORECASE):
         score += 8
+    if host == "rules.wyo.gov" and normalized_path.lower() == "/search.aspx":
+        mode = str((parse_qs(query).get("mode") or [""])[0]).strip()
+        if mode == "7":
+            score += 9
+        else:
+            score += 4
+    if host == "rules.wyo.gov" and normalized_path.lower() == "/agencies.aspx":
+        score += 5
+    if host == "rules.wyo.gov" and normalized_path.lower() == "/help/public/wyoming-administrative-rules-h.html":
+        score += 5
+    if host == "rules.wyo.gov" and normalized_path.lower() == "/ajaxhandler.ashx":
+        handler = str((parse_qs(query).get("handler") or [""])[0]).strip().lower()
+        if handler == "search_getprogramrules":
+            score += 10
+        elif handler == "getruleversionhtml":
+            score += 12
     if host == "publications.tnsosfiles.com" and normalized_path.lower() in {"/rules", "/rules/"}:
         score += 6
     if host == "sos.tn.gov" and normalized_path.lower() in {
@@ -1426,6 +1476,18 @@ def _score_candidate_url(url: str) -> int:
         "/agency-rules",
         "/policies",
         "/departments",
+    }:
+        score -= 10
+    if host in {"www.wyoleg.gov", "wyoleg.gov", "legislature.wy.gov"} and normalized_path.lower() in {
+        "/",
+        "/rules",
+        "/regulations",
+        "/administrative-code",
+        "/code-of-regulations",
+        "/agency-rules",
+        "/policies",
+        "/departments",
+        "/statestatutes/statutesdownload",
     }:
         score -= 10
     if host == "www.ilga.gov" and normalized_path.lower() == "/agencies/jcar/admincode":
@@ -1610,6 +1672,10 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
             return True
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE):
         return True
+    if host == "rules.wyo.gov" and normalized_path.lower() == "/ajaxhandler.ashx":
+        handler = str((parse_qs(parsed.query or "").get("handler") or [""])[0]).strip().lower()
+        if handler == "getruleversionhtml":
+            return True
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
@@ -1732,6 +1798,14 @@ def _looks_like_placeholder_text(text: str) -> bool:
     )
 
 
+def _looks_like_raw_html_text(text: str) -> bool:
+    value = str(text or "").strip()
+    if not value:
+        return False
+    head = value[:2000]
+    return bool(_RAW_HTML_TEXT_RE.search(head))
+
+
 def _has_disallowed_discovery_domain(url: str) -> bool:
     host = urlparse(str(url or "").strip()).netloc
     return bool(host and _BAD_DISCOVERY_DOMAIN_RE.search(host))
@@ -1822,6 +1896,19 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     }:
         if "404 - page not found" in hay.lower() or _BAD_DISCOVERY_TEXT_RE.search(hay):
             return True
+    if host in {"www.wyoleg.gov", "wyoleg.gov", "legislature.wy.gov"} and normalized_path_lower in {
+        "/",
+        "/rules",
+        "/regulations",
+        "/administrative-code",
+        "/code-of-regulations",
+        "/agency-rules",
+        "/policies",
+        "/departments",
+        "/statestatutes/statutesdownload",
+    }:
+        if nav_hits >= 3 and not _RULE_BODY_SIGNAL_RE.search(hay):
+            return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(normalized_path):
         return True
     if host == "www.sec.state.ma.us" and normalized_path_lower == "/divisions/pubs-regs/about-cmr.htm":
@@ -1832,8 +1919,13 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "rules.sos.ri.gov" and _RI_NON_RULE_PORTAL_PATH_RE.fullmatch(normalized_path):
         return True
+    if host == "aoa.vermont.gov" and normalized_path_lower == "/icar":
+        return True
     if host in {"secure.vermont.gov", "sos.vermont.gov"} and _VT_NON_RULE_PORTAL_PATH_RE.search(path):
         return True
+    if host == "secure.vermont.gov" and normalized_path_lower == "/sos/rules/display.php":
+        if _VT_PROPOSAL_POSTING_TEXT_RE.search(hay):
+            return True
     if host == "texas-sos.appianportalsgov.com" and _TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE.search(query):
         return True
     if host == "www.sos.state.tx.us" and _TX_TRANSFER_INDEX_PATH_RE.search(path):
@@ -1909,13 +2001,15 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
     url_value = str(url or "").strip()
     if not body or not url_value:
         return False
-    if not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
-        return False
-
-    hay = " ".join([title_value, body])
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
     path = parsed.path.lower()
+    query = parse_qs(parsed.query or "")
+    wyoming_index_like = host == "rules.wyo.gov" and path in {"/search.aspx", "/agencies.aspx"}
+    if not wyoming_index_like and not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
+        return False
+
+    hay = " ".join([title_value, body])
     mt_title_hits = len(_MT_RULE_INDEX_ROW_RE.findall(body))
     sd_row_hits = len(_SD_RULE_INDEX_ROW_RE.findall(body))
 
@@ -1938,6 +2032,12 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
         return True
     if host == "adminrules.utah.gov" and path.startswith("/public/search") and "administrative rules search" in hay.lower():
         return True
+    if host == "rules.wyo.gov" and path == "/search.aspx":
+        mode = str((query.get("mode") or [""])[0]).strip()
+        agency_hits = len(re.findall(r"\bagency\b", hay, re.IGNORECASE))
+        result_hits = len(re.findall(r"\bresult(?:\(s\)|s)?\b", hay, re.IGNORECASE))
+        if mode == "7" and "administrative rules (code)" in hay.lower() and agency_hits >= 2 and result_hits >= 2:
+            return True
     if host == "sharetngov.tnsosfiles.com" and path in {
         "/sos/rules/index.htm",
         "/sos/pub/tar/index.htm",
@@ -1968,6 +2068,7 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
 
     host = urlparse(url_value).netloc.lower()
     path = (urlparse(url_value).path or "").lower()
+    query = parse_qs(urlparse(url_value).query or "")
     hay = " ".join([title_value, body])
     arizona_official_rule_document = _looks_like_arizona_official_rule_document(text=body, title=title_value, url=url_value)
     chapter_hits = len(re.findall(r"\bchapter\b", body, re.IGNORECASE))
@@ -1983,6 +2084,10 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     il_title_hits = len(re.findall(r"\btitle\s+\d+\b", hay, re.IGNORECASE))
     il_part_hits = len(re.findall(r"\bpart\s+\d+\b", hay, re.IGNORECASE))
     il_section_hits = len(re.findall(r"\bsection\s+\d+\.\d+\b", hay, re.IGNORECASE))
+    wy_rule_hits = len(re.findall(r'data-whatever=["\']([1-9]\d*)["\']', body, re.IGNORECASE))
+    wy_program_hits = len(re.findall(r'class=["\'][^"\']*\bprogram_id\b[^"\']*["\']', body, re.IGNORECASE))
+    wy_result_hits = len(re.findall(r"\bresult(?:\(s\)|s)?\b", hay, re.IGNORECASE))
+    wy_reference_hits = len(re.findall(r"\breference\s+number\b", hay, re.IGNORECASE))
 
     if host == "rules.mt.gov" and (chapter_hits >= 3 or subchapter_hits >= 2 or mt_rule_hits >= 2):
         return True
@@ -1993,6 +2098,15 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "admincode.legislature.state.al.us" and chapter_hits >= 3:
         return True
+    if host == "rules.wyo.gov" and path == "/search.aspx":
+        mode = str((query.get("mode") or [""])[0]).strip()
+        agency_hits = len(re.findall(r"\bagency\b", hay, re.IGNORECASE))
+        if mode == "7" and "administrative rules (code)" in hay.lower() and agency_hits >= 2 and wy_result_hits >= 2:
+            return True
+    if host == "rules.wyo.gov" and path == "/ajaxhandler.ashx":
+        handler = str((query.get("handler") or [""])[0]).strip().lower()
+        if handler == "search_getprogramrules" and chapter_hits >= 2 and wy_reference_hits >= 2:
+            return True
     if host == "sdlegislature.gov" and sd_row_hits >= 8:
         return True
     if host == "apps.azsos.gov" and _AZ_ADMIN_REGISTER_TEXT_RE.search(hay) and not arizona_official_rule_document:
@@ -2288,6 +2402,99 @@ def _extract_text_from_downloaded_html_document(document_html: str) -> str:
         if cleaned:
             lines.append(cleaned)
     return "\n".join(lines).strip()
+
+
+async def _scrape_wyoming_rule_detail_via_ajax(url: str) -> Optional[Any]:
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+    path = (parsed.path or "").lower()
+    if host != "rules.wyo.gov" or path != "/ajaxhandler.ashx":
+        return None
+
+    query = parse_qs(parsed.query or "")
+    handler = str((query.get("handler") or [""])[0]).strip()
+    handler_key = handler.lower()
+    if handler_key not in {"search_getprogramrules", "getruleversionhtml"}:
+        return None
+
+    if handler_key == "search_getprogramrules":
+        program_id = str((query.get("PROGRAM_ID") or [""])[0]).strip()
+        if not program_id:
+            return None
+        payload = {
+            "PROGRAM_ID": program_id,
+            "KEYWORD": "",
+            "CURRENT_YN": "Y",
+            "PROPOSED_YN": "N",
+            "EMERGENCY_YN": "N",
+            "SUPERCEDED_YN": "N",
+            "REPEALED_YN": "Y",
+            "EXPIRED_YN": "N",
+            "CHAPTER_NUM": "",
+            "REF_NUM": "",
+            "MODE": str((query.get("MODE") or ["7"])[0]).strip() or "7",
+            "DATE_START": "",
+            "DATE_END": "",
+        }
+        method_name = "wyoming_rules_ajax_program"
+        fallback_title = f"Wyoming Administrative Rules Program {program_id}"
+    else:
+        rule_version_id = str((query.get("RULE_VERSION_ID") or [""])[0]).strip()
+        if not rule_version_id:
+            return None
+        payload = {"RULE_VERSION_ID": rule_version_id}
+        method_name = "wyoming_rules_ajax_viewer"
+        fallback_title = f"Wyoming Administrative Rule {rule_version_id}"
+
+    try:
+        response = requests.post(
+            f"https://rules.wyo.gov/AjaxHandler.ashx?handler={handler}",
+            data=payload,
+            timeout=35,
+            headers={
+                "User-Agent": "Mozilla/5.0",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        )
+    except Exception:
+        return None
+
+    if int(getattr(response, "status_code", 599) or 599) >= 400:
+        return None
+
+    html = str(getattr(response, "text", "") or "")
+    if not html:
+        return None
+    if _looks_like_browser_challenge(
+        status_code=int(getattr(response, "status_code", 200) or 200),
+        content_type=str(getattr(response, "headers", {}).get("content-type") or "text/html"),
+        head=html[:1024],
+    ):
+        return None
+
+    chapter_match = re.search(r'class=["\'][^"\']*\brule_viewer_chapter\b[^"\']*["\'][^>]*>(.*?)</', html, re.IGNORECASE | re.DOTALL)
+    agency_match = re.search(r'class=["\'][^"\']*\brule_viewer_agency\b[^"\']*["\'][^>]*>(.*?)</', html, re.IGNORECASE | re.DOTALL)
+    chapter_title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", chapter_match.group(1) if chapter_match else "")).strip()
+    agency_title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", agency_match.group(1) if agency_match else "")).strip()
+    if chapter_title and agency_title:
+        title = f"{chapter_title} - {agency_title}"
+    else:
+        title = chapter_title or agency_title or fallback_title
+
+    text = _extract_text_from_downloaded_html_document(html)
+    if not text:
+        return None
+
+    return SimpleNamespace(
+        url=url,
+        title=title,
+        text=text,
+        html=html,
+        links=[],
+        success=True,
+        method_used=method_name,
+        extraction_provenance={"method": method_name},
+    )
 
 
 def _iter_utah_public_search_rules(payload: Any) -> List[Dict[str, Any]]:
@@ -2866,6 +3073,109 @@ def _trim_california_westlaw_document_chrome(*, text: str, url: str, title: str 
     return cleaned or trimmed
 
 
+def _trim_indiana_iarp_document_chrome(*, text: str, url: str, title: str = "") -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "iar.iga.in.gov" or not re.search(
+        r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?",
+        parsed.path or "",
+        re.IGNORECASE,
+    ):
+        return str(text or "").strip()
+
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return normalized_text
+
+    lines = [re.sub(r"\s+", " ", line).strip() for line in normalized_text.splitlines()]
+    cleaned_lines = [line for line in lines if line]
+    if not cleaned_lines:
+        return normalized_text
+
+    normalized_title = re.sub(r"\s*\|\s*IARP\s*$", "", str(title or "").strip(), flags=re.IGNORECASE).strip()
+    title_match = re.match(
+        r"Title\s+(?P<title_num>\d+),\s*ARTICLE\s+(?P<article_num>\d+(?:\.\d+)?)\.?\s*(?P<subject>.+)$",
+        normalized_title,
+        re.IGNORECASE,
+    )
+    title_num = title_match.group("title_num") if title_match else ""
+    article_line_re: Optional[re.Pattern[str]] = None
+    if title_match:
+        subject_pattern = re.sub(r"\\ ", r"\\s+", re.escape(title_match.group("subject").strip()))
+        article_line_re = re.compile(
+            rf"^ARTICLE\s+{re.escape(title_match.group('article_num'))}\.?\s+{subject_pattern}$",
+            re.IGNORECASE,
+        )
+
+    footer_index: Optional[int] = None
+    for index, line in enumerate(cleaned_lines):
+        if _INDIANA_IARP_FOOTER_LINE_RE.match(line):
+            footer_index = index
+            break
+    if footer_index is not None:
+        cleaned_lines = cleaned_lines[:footer_index]
+
+    body_index: Optional[int] = None
+    detail_heading_index: Optional[int] = None
+    for index, line in enumerate(cleaned_lines):
+        if re.match(r"^\d+\s+IAC\s+[\w.-]+\b", line, re.IGNORECASE):
+            body_index = index
+            break
+
+    if body_index is None:
+        for index, line in enumerate(cleaned_lines):
+            if _INDIANA_IARP_BODY_LINE_RE.match(line):
+                body_index = index
+                break
+
+    if article_line_re is not None:
+        article_matches = [index for index, line in enumerate(cleaned_lines) if article_line_re.match(line)]
+        if len(article_matches) >= 2:
+            detail_heading_index = article_matches[1]
+        elif article_matches:
+            detail_heading_index = article_matches[0]
+
+    if body_index is None and detail_heading_index is not None:
+        body_index = detail_heading_index
+
+    if body_index is None:
+        while cleaned_lines and (
+            cleaned_lines[0].lower() in {
+                "indiana administrative rules and policies",
+                "home",
+                "indiana register",
+                "administrative code",
+                "myiar",
+                "current",
+            }
+            or _INDIANA_IARP_TOOLBAR_LINE_RE.match(cleaned_lines[0])
+        ):
+            cleaned_lines.pop(0)
+        trimmed = "\n".join(cleaned_lines).strip()
+        return trimmed or normalized_text
+
+    trimmed_lines = cleaned_lines[body_index:]
+    filtered_lines: List[str] = []
+    article_heading_seen = False
+    title_heading_seen = False
+    for line in trimmed_lines:
+        if _INDIANA_IARP_TOOLBAR_LINE_RE.match(line):
+            continue
+        if article_line_re is not None and article_line_re.match(line):
+            if article_heading_seen:
+                continue
+            article_heading_seen = True
+        if title_num and re.match(rf"^TITLE\s+{re.escape(title_num)}\b", line, re.IGNORECASE):
+            if title_heading_seen:
+                continue
+            if article_heading_seen:
+                continue
+            title_heading_seen = True
+        filtered_lines.append(line)
+
+    trimmed = "\n".join(filtered_lines).strip()
+    return trimmed or normalized_text
+
+
 async def _normalize_candidate_document_content(*, url: str, title: str, text: str) -> tuple[str, str]:
     normalized_title = str(title or "").strip()
     normalized_text = str(text or "").strip()
@@ -2896,6 +3206,19 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
         url=url,
         title=normalized_title,
     )
+
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() == "iar.iga.in.gov" and re.search(
+        r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?",
+        parsed.path or "",
+        re.IGNORECASE,
+    ):
+        normalized_title = re.sub(r"\s*\|\s*IARP\s*$", "", normalized_title, flags=re.IGNORECASE).strip()
+        normalized_text = _trim_indiana_iarp_document_chrome(
+            text=normalized_text,
+            url=url,
+            title=normalized_title,
+        )
 
     return normalized_title, normalized_text
 
@@ -3481,9 +3804,13 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         return False
     if _looks_like_binary_document_text(text=body, url=url_value):
         return False
+    if _looks_like_raw_html_text(body):
+        return False
     if _looks_like_forum_page(text=body, title=title_value, url=url_value):
         return False
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
+        return False
+    if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value):
         return False
     if _looks_like_shallow_montana_inventory_page(text=body, title=title_value, url=url_value):
         return False
@@ -3560,6 +3887,8 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
         return False
     if _looks_like_binary_document_text(text=body, url=url_value):
+        return False
+    if _looks_like_raw_html_text(body):
         return False
     if _looks_like_forum_page(text=body, title=title_value, url=url_value):
         return False
@@ -3711,6 +4040,65 @@ def _candidate_vermont_rule_urls_from_html(*, html: str, page_url: str = "", lim
     return out
 
 
+def _candidate_wyoming_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
+    body = str(html or "")
+    if not body:
+        return []
+
+    parsed_page = urlparse(str(page_url or "").strip())
+    host = parsed_page.netloc.lower()
+    path = (parsed_page.path or "").lower()
+    query = parse_qs(parsed_page.query or "")
+    if host != "rules.wyo.gov":
+        return []
+
+    out: List[str] = []
+    seen: set[str] = set()
+    limit_n = max(1, int(limit))
+
+    for match in re.finditer(
+        r'<a\b[^>]*class=["\'][^"\']*\bsearch-rule-link\b[^"\']*["\'][^>]*data-whatever=["\']([1-9]\d*)["\']',
+        body,
+        re.IGNORECASE,
+    ):
+        rule_id = str(match.group(1) or "").strip()
+        if not rule_id:
+            continue
+        candidate_url = f"https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID={rule_id}"
+        key = _url_key(candidate_url)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(candidate_url)
+        if len(out) >= limit_n:
+            return out
+
+    if path in {"/search.aspx", "/agencies.aspx"} or (
+        path == "/ajaxhandler.ashx" and str((query.get("handler") or [""])[0]).strip().lower() == "search"
+    ):
+        for match in re.finditer(
+            r'<span\b[^>]*class=["\'][^"\']*\bprogram_id\b[^"\']*["\'][^>]*>\s*(\d+)\s*</span>',
+            body,
+            re.IGNORECASE,
+        ):
+            program_id = str(match.group(1) or "").strip()
+            if not program_id:
+                continue
+            candidate_url = (
+                "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules"
+                f"&PROGRAM_ID={program_id}&MODE=7"
+            )
+            key = _url_key(candidate_url)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(candidate_url)
+            if len(out) >= limit_n:
+                break
+
+    return out
+
+
 def _candidate_links_from_html(
     html: str,
     base_host: str,
@@ -3763,6 +4151,21 @@ def _candidate_links_from_html(
             continue
         ranked.append((score, link_url, ""))
     for link_url in _candidate_vermont_rule_urls_from_html(html=body, page_url=page_url, limit=limit):
+        host = urlparse(link_url).netloc
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
+            continue
+        key = link_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        score = _score_candidate_link(link_url, "", page_url)
+        if score <= 0:
+            continue
+        ranked.append((score, link_url, ""))
+    for link_url in _candidate_wyoming_rule_urls_from_html(html=body, page_url=page_url, limit=limit):
         host = urlparse(link_url).netloc
         if allowed_hosts:
             if host and not _host_matches_allowed(host, allowed_hosts):
@@ -5033,6 +5436,9 @@ async def _agentic_discover_admin_state_blocks(
         prioritized_seed_keys = {_url_key(url) for url in seed_urls}
 
         async def _scrape_candidate_url(url: str):
+            wyoming_scraped = await _scrape_wyoming_rule_detail_via_ajax(url)
+            if wyoming_scraped is not None:
+                return wyoming_scraped
             utah_scraped = await _scrape_utah_rule_detail_via_public_download(url)
             if utah_scraped is not None:
                 return utah_scraped
