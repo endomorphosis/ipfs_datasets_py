@@ -179,6 +179,14 @@ _MI_ELAWS_INDEX_TEXT_RE = re.compile(
     re.IGNORECASE,
 )
 
+_TN_SOS_SERVICE_PAGE_TEXT_RE = re.compile(
+    r"current\s+filings|search\s+past\s+rule\s+filings|search\s+past\s+rulemaking\s+hearing\s+notices|"
+    r"related\s+services|related\s+links|administrative\s+register\s+archive|"
+    r"effective\s+rules\s+and\s+regulations\s+of\s+the\s+state\s+of\s+tennessee|"
+    r"secretary\s+of\s+state\s+tre\s+hargett|uniform\s+administrative\s+procedures\s+act",
+    re.IGNORECASE,
+)
+
 _NON_RULE_POLICY_PAGE_RE = re.compile(
     r"department\s+of\s+corrections\s+policies|policies\s+manual|contracts\s+policies\s+procedures|"
     r"social\s+media\s+terms\s+of\s+use|state\s+hr\s+policies|policy\s+and\s+procedure\s+management|"
@@ -2250,6 +2258,12 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "mirules.elaws.us" and path == "/search/allcode":
         if _MI_ELAWS_INDEX_TEXT_RE.search(hay):
+            return True
+    if host == "sos.tn.gov" and path in {
+        "/publications/services/administrative-register",
+        "/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee",
+    }:
+        if _TN_SOS_SERVICE_PAGE_TEXT_RE.search(hay):
             return True
     if host == "web.archive.org" and "gc.nh.gov/rules" in url_value.lower() and (
         "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
@@ -5122,6 +5136,37 @@ async def _agentic_discover_admin_state_blocks(
                             limit=24,
                         ):
                             candidate_urls.append(rule_url)
+                        if state_code == "WY" and urlparse(seed_url).netloc.lower() == "rules.wyo.gov":
+                            wy_program_urls = _candidate_wyoming_rule_urls_from_html(
+                                html=fetched_html,
+                                page_url=seed_url,
+                                limit=max(12, min(48, max(1, int(max_fetch_per_state)) * 8)),
+                            )
+                            for program_rank, program_url in enumerate(wy_program_urls[: max(4, min(8, int(max_fetch_per_state) * 2))]):
+                                candidate_urls.append(program_url)
+                                seed_expansion_candidates.append(
+                                    (program_url, _score_candidate_url(program_url) + 8 + max(0, 4 - int(program_rank)))
+                                )
+                                try:
+                                    program_scraped = await asyncio.wait_for(
+                                        _scrape_wyoming_rule_detail_via_ajax(program_url),
+                                        timeout=8.0,
+                                    )
+                                except Exception:
+                                    program_scraped = None
+                                if program_scraped is None:
+                                    continue
+                                program_html = str(getattr(program_scraped, "html", "") or "")
+                                for viewer_rank, viewer_url in enumerate(
+                                    _candidate_wyoming_rule_urls_from_html(
+                                        html=program_html,
+                                        page_url=program_url,
+                                        limit=max(12, min(48, max(1, int(max_fetch_per_state)) * 8)),
+                                    )
+                                ):
+                                    seed_expansion_candidates.append(
+                                        (viewer_url, _score_candidate_url(viewer_url) + 12 + max(0, 6 - int(viewer_rank)))
+                                    )
                         break
 
                     if seed_is_substantive or seed_is_relaxed:

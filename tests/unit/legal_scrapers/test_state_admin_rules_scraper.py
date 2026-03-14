@@ -377,6 +377,27 @@ def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
     ) is True
 
 
+def test_tennessee_administrative_register_service_page_is_inventory_not_substantive() -> None:
+    text = (
+        "Administrative Register The Tennessee Administrative Web site is a register of filings pursuant to the Uniform Administrative Procedures Act. "
+        "Current Filings Announcements Emergency Rules Pending Rules Rulemaking Hearing Notices Wildlife Proclamations Archives "
+        "Search Past Rule Filings Search Past Rulemaking Hearing Notices Related Services Administrative Register Archive "
+        "Effective Rules and Regulations of the State of Tennessee Secretary of State Tre Hargett"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Administrative Register | Tennessee Secretary of State",
+        url="https://sos.tn.gov/publications/services/administrative-register",
+    ) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Administrative Register | Tennessee Secretary of State",
+        url="https://sos.tn.gov/publications/services/administrative-register",
+        min_chars=160,
+    ) is False
+
+
 def test_kansas_publications_hub_is_inventory_page() -> None:
     text = (
         "Kansas Administrative Regulations The Secretary of State is the filing agency for all permanent and temporary regulations. "
