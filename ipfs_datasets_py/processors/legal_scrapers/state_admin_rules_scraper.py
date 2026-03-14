@@ -16,6 +16,7 @@ import os
 import re
 import time
 import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -1539,6 +1540,11 @@ def _score_candidate_url(url: str) -> int:
         score += 4
     if host == "www.akleg.gov" and normalized_path.lower() == "/basis/aac.asp":
         score += 6
+        query_lower = query.lower()
+        sec_start = str((parse_qs(query).get("secStart") or [""])[0]).strip()
+        sec_end = str((parse_qs(query).get("secEnd") or [""])[0]).strip()
+        if "media=print" in query_lower and _AK_AAC_SECTION_PATH_RE.fullmatch(f"/aac/{sec_start}") and sec_start == sec_end:
+            score += 8
     if host == "rules.sos.ga.gov":
         if normalized_path.lower() == "/gac":
             score += 6
@@ -1723,6 +1729,18 @@ def _score_candidate_url(url: str) -> int:
         score += 10
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules_filings/[\w.-]+\.pdf$", path, re.IGNORECASE):
         score += 8
+    if host == "ars.apps.lara.state.mi.us" and normalized_path.lower() == "/admincode/deptbureauadmincode":
+        score += 8
+    if host == "ars.apps.lara.state.mi.us" and normalized_path.lower() == "/transaction/rfrtransaction":
+        score += 9
+    if host == "ars.apps.lara.state.mi.us" and normalized_path.lower() == "/admincode/downloadadmincodefile":
+        query_lower = query.lower()
+        if "returnhtml=true" in query_lower:
+            score += 12
+    if host == "ars.apps.lara.state.mi.us" and normalized_path.lower() == "/transaction/downloadfile":
+        query_lower = query.lower()
+        if "returnhtml=true" in query_lower and "filetype=finalrule" in query_lower:
+            score += 12
     if host == "rules.wyo.gov" and normalized_path.lower() == "/search.aspx":
         mode = str((parse_qs(query).get("mode") or [""])[0]).strip()
         if mode == "7":
@@ -2011,6 +2029,13 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return True
     if host == "akrules.elaws.us" and _AK_AAC_SECTION_PATH_RE.fullmatch(path):
         return True
+    if host == "www.akleg.gov" and normalized_path.lower() == "/basis/aac.asp":
+        query_params = parse_qs(parsed.query or "")
+        sec_start = str((query_params.get("secStart") or [""])[0]).strip()
+        sec_end = str((query_params.get("secEnd") or [""])[0]).strip()
+        media = str((query_params.get("media") or [""])[0]).strip().lower()
+        if media == "print" and sec_start == sec_end and _AK_AAC_SECTION_PATH_RE.fullmatch(f"/aac/{sec_start}"):
+            return True
     if host == "rules.sos.ga.gov" and _GA_GAC_RULE_PATH_RE.fullmatch(path):
         return True
     if host == "sdlegislature.gov" and _SD_RULE_DETAIL_PATH_RE.fullmatch(path):
@@ -2018,6 +2043,14 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "sdlegislature.gov" and _SD_DISPLAY_RULE_PATH_RE.search(path):
         rule_value = str((parse_qs(parsed.query or "").get("Rule") or [""])[0]).strip()
         if _SD_RULE_REFERENCE_RE.fullmatch(rule_value):
+            return True
+    if host == "ars.apps.lara.state.mi.us" and normalized_path.lower() == "/admincode/downloadadmincodefile":
+        query_lower = (parsed.query or "").lower()
+        if "returnhtml=true" in query_lower:
+            return True
+    if host == "ars.apps.lara.state.mi.us" and normalized_path.lower() == "/transaction/downloadfile":
+        query_lower = (parsed.query or "").lower()
+        if "returnhtml=true" in query_lower and "filetype=finalrule" in query_lower:
             return True
     if host == "www.ilga.gov" and path.lower() == "/agencies/jcar/entirepart":
         return True
@@ -2244,6 +2277,12 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "carules.elaws.us" and normalized_path == "/search/allcode":
         return True
+    if host in {"www.michigan.gov", "michigan.gov"} and normalized_path_lower.startswith("/lara/bureau-list/moahr/"):
+        if "scam alert" in hay.lower() and "licensing and regulatory affairs" in hay.lower():
+            return True
+    if host in {"www.michigan.gov", "michigan.gov"} and "/lara/-/media/project/websites/lara/moahr/" in normalized_path_lower:
+        if re.search(r"(?:administrative-hearing-standard|annual-administrative-code-supplement|_aacs_intro)", normalized_path_lower):
+            return True
     if host == "ars.apps.lara.state.mi.us" and normalized_path_lower == "/transaction/rfrtransaction":
         if _MI_RULEMAKING_TRANSACTION_TEXT_RE.search(hay):
             return True
@@ -3716,6 +3755,192 @@ async def _discover_alabama_rule_document_urls(*, limit: int = 8) -> List[str]:
                     results.append(rule_url)
                     if len(results) >= limit_n:
                         return results
+        return results
+
+    return await asyncio.to_thread(_run)
+
+
+async def _discover_michigan_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        url
+        for url in seed_urls
+        if urlparse(str(url or "").strip()).netloc.lower() == "ars.apps.lara.state.mi.us"
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        results: List[str] = []
+        seen: set[str] = set()
+        seen_department_pages: set[str] = set()
+
+        def _fetch_text(url: str) -> str:
+            response = requests.get(url, timeout=25, headers=headers)
+            response.raise_for_status()
+            return str(response.text or "")
+
+        def _record_links_from_html(html: str, *, page_url: str) -> bool:
+            soup = BeautifulSoup(html or "", "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                candidate_url = urljoin(page_url, str(anchor.get("href") or "").strip())
+                if not _is_direct_detail_candidate_url(candidate_url):
+                    continue
+                key = _url_key(candidate_url)
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                results.append(candidate_url)
+                if len(results) >= limit_n:
+                    return True
+            return False
+
+        for seed_url in relevant_seed_urls:
+            parsed = urlparse(str(seed_url or "").strip())
+            normalized_path = (parsed.path or "").rstrip("/").lower() or "/"
+
+            if normalized_path == "/transaction/rfrtransaction":
+                try:
+                    if _record_links_from_html(_fetch_text(seed_url), page_url=seed_url):
+                        return results
+                except Exception:
+                    pass
+                continue
+
+            if normalized_path == "/admincode/deptbureauadmincode":
+                try:
+                    if _record_links_from_html(_fetch_text(seed_url), page_url=seed_url):
+                        return results
+                except Exception:
+                    pass
+                continue
+
+            if normalized_path != "/admincode/admincode":
+                continue
+
+            try:
+                home_html = _fetch_text(seed_url)
+            except Exception:
+                continue
+
+            soup = BeautifulSoup(home_html, "html.parser")
+            department_values: List[str] = []
+            for option in soup.select("select[name='Department'] option"):
+                department_value = str(option.get("value") or option.get_text(" ", strip=True) or "").strip()
+                if not department_value or department_value.lower().startswith("select department"):
+                    continue
+                if department_value in department_values:
+                    continue
+                department_values.append(department_value)
+
+            for department_value in department_values:
+                department_page_url = (
+                    "https://ars.apps.lara.state.mi.us/AdminCode/DeptBureauAdminCode?"
+                    + urlencode({"Department": department_value, "Bureau": "All"})
+                )
+                page_key = _url_key(department_page_url)
+                if not page_key or page_key in seen_department_pages:
+                    continue
+                seen_department_pages.add(page_key)
+                try:
+                    if _record_links_from_html(_fetch_text(department_page_url), page_url=department_page_url):
+                        return results
+                except Exception:
+                    continue
+
+        return results
+
+    return await asyncio.to_thread(_run)
+
+
+async def _discover_alaska_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        url
+        for url in seed_urls
+        if urlparse(str(url or "").strip()).netloc.lower() in {"www.akleg.gov", "akleg.gov"}
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        results: List[str] = []
+        seen: set[str] = set()
+        session = requests.Session()
+
+        def _record(section_id: str) -> bool:
+            section_value = str(section_id or "").strip()
+            if not _AK_AAC_SECTION_PATH_RE.fullmatch(f"/aac/{section_value}"):
+                return False
+            print_url = (
+                "https://www.akleg.gov/basis/aac.asp?"
+                + urlencode({"media": "print", "secStart": section_value, "secEnd": section_value})
+            )
+            key = _url_key(print_url)
+            if not key or key in seen:
+                return False
+            seen.add(key)
+            results.append(print_url)
+            return len(results) >= limit_n
+
+        for seed_url in relevant_seed_urls:
+            parsed = urlparse(str(seed_url or "").strip())
+            if (parsed.path or "").lower() != "/basis/aac.asp":
+                continue
+            try:
+                root_html = session.get(seed_url, timeout=25, headers=headers).text
+            except Exception:
+                continue
+
+            title_ids = [
+                match.strip()
+                for match in re.findall(r"loadTOC\((?:'|\")\s*(\d+)\s*(?:'|\")\)", root_html)
+                if match.strip()
+            ]
+
+            for title_id in title_ids:
+                try:
+                    title_html = session.get(
+                        f"https://www.akleg.gov/basis/aac.asp?media=js&type=TOC&title={quote(title_id)}",
+                        timeout=25,
+                        headers=headers,
+                    ).text
+                except Exception:
+                    continue
+
+                chapter_ids = []
+                for chapter_match in re.findall(r"loadTOC\((?:'|\")\s*(\d+\.\d+)\s*(?:'|\")\)", title_html):
+                    chapter_value = str(chapter_match or "").strip()
+                    if not chapter_value or chapter_value.endswith(".0"):
+                        continue
+                    if chapter_value in chapter_ids:
+                        continue
+                    chapter_ids.append(chapter_value)
+
+                for chapter_id in chapter_ids:
+                    try:
+                        chapter_html = session.get(
+                            f"https://www.akleg.gov/basis/aac.asp?media=js&type=TOC&title={quote(chapter_id)}",
+                            timeout=25,
+                            headers=headers,
+                        ).text
+                    except Exception:
+                        continue
+
+                    for section_id in re.findall(r"checkLink\('([0-9]+\.[0-9]+\.[0-9]+)'\)", chapter_html):
+                        if _record(section_id):
+                            return results
+
         return results
 
     return await asyncio.to_thread(_run)
@@ -6896,6 +7121,60 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_alabama_seed_rule_urls) >= min(max_fetch, 8):
                     break
 
+        prioritized_michigan_seed_rule_urls: List[str] = []
+        if state_code == "MI":
+            try:
+                michigan_rule_urls = await asyncio.wait_for(
+                    _discover_michigan_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max_fetch * 4, 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                michigan_rule_urls = []
+            seen_michigan_rule_keys: set[str] = set()
+            for rule_url in michigan_rule_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_michigan_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_michigan_rule_keys.add(rule_key)
+                prioritized_michigan_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_michigan_seed_rule_urls) >= min(max_fetch * 2, 12):
+                    break
+
+        prioritized_alaska_seed_rule_urls: List[str] = []
+        if state_code == "AK":
+            try:
+                alaska_rule_urls = await asyncio.wait_for(
+                    _discover_alaska_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max_fetch * 4, 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                alaska_rule_urls = []
+            seen_alaska_rule_keys: set[str] = set()
+            for rule_url in alaska_rule_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_alaska_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_alaska_rule_keys.add(rule_key)
+                prioritized_alaska_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_alaska_seed_rule_urls) >= min(max_fetch * 2, 12):
+                    break
+
         for rule_url in prioritized_utah_seed_rule_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -6951,6 +7230,62 @@ async def _agentic_discover_admin_state_blocks(
             if alabama_method_value is None:
                 alabama_method_value = getattr(alabama_scraped, "method_used", None)
             await _append_document_if_rule(rule_url, alabama_title, alabama_text, alabama_method_value)
+
+        for rule_url in prioritized_michigan_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            inspected_urls += 1
+            try:
+                michigan_scraped = await asyncio.wait_for(
+                    live_scraper.scrape(rule_url),
+                    timeout=25.0,
+                )
+            except Exception:
+                michigan_scraped = None
+            if michigan_scraped is None:
+                continue
+
+            michigan_text = str(getattr(michigan_scraped, "text", "") or "").strip()
+            michigan_title = str(getattr(michigan_scraped, "title", "") or "").strip()
+            michigan_provenance = getattr(michigan_scraped, "extraction_provenance", None) or {}
+            michigan_method_value = None
+            if isinstance(michigan_provenance, dict):
+                michigan_method_value = michigan_provenance.get("method")
+            if michigan_method_value is None:
+                michigan_method_value = getattr(michigan_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, michigan_title, michigan_text, michigan_method_value)
+
+        for rule_url in prioritized_alaska_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            inspected_urls += 1
+            try:
+                alaska_scraped = await asyncio.wait_for(
+                    live_scraper.scrape(rule_url),
+                    timeout=25.0,
+                )
+            except Exception:
+                alaska_scraped = None
+            if alaska_scraped is None:
+                continue
+
+            alaska_text = str(getattr(alaska_scraped, "text", "") or "").strip()
+            alaska_title = str(getattr(alaska_scraped, "title", "") or "").strip()
+            alaska_provenance = getattr(alaska_scraped, "extraction_provenance", None) or {}
+            alaska_method_value = None
+            if isinstance(alaska_provenance, dict):
+                alaska_method_value = alaska_provenance.get("method")
+            if alaska_method_value is None:
+                alaska_method_value = getattr(alaska_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, alaska_title, alaska_text, alaska_method_value)
 
         for document_url in prioritized_seed_document_urls:
             if len(statutes) >= max_fetch:

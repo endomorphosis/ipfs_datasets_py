@@ -424,6 +424,9 @@ def test_is_direct_detail_candidate_url_recognizes_arkansas_code_rule_pages() ->
 
 def test_is_direct_detail_candidate_url_recognizes_alaska_aac_section_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url("https://akrules.elaws.us/aac/1.05.010") is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.010&secEnd=1.05.010"
+    ) is True
     assert scraper_module._is_direct_detail_candidate_url("https://akrules.elaws.us/aac/1") is False
     assert scraper_module._is_direct_detail_candidate_url("https://akrules.elaws.us/aac/1.05") is False
 
@@ -540,6 +543,9 @@ def test_alaska_candidate_url_scoring_prefers_section_detail_over_indexes() -> N
     title_score = _score_candidate_url("https://akrules.elaws.us/aac/1")
     chapter_score = _score_candidate_url("https://akrules.elaws.us/aac/1.05")
     section_score = _score_candidate_url("https://akrules.elaws.us/aac/1.05.010")
+    akleg_print_score = _score_candidate_url(
+        "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.010&secEnd=1.05.010"
+    )
     bookview_score = _score_candidate_url("https://akrules.elaws.us/bookview/1.05")
 
     assert ltgov_score > 0
@@ -547,6 +553,7 @@ def test_alaska_candidate_url_scoring_prefers_section_detail_over_indexes() -> N
     assert title_score > index_score
     assert chapter_score > title_score
     assert section_score > chapter_score
+    assert akleg_print_score >= section_score
     assert bookview_score < chapter_score
 
 
@@ -1241,6 +1248,82 @@ def test_rejects_michigan_rulemaking_transaction_page_as_rule_content() -> None:
         text=text,
         title="ARS Public - RFR Transaction",
         url="https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306",
+    ) is False
+
+
+def test_recognizes_michigan_final_rule_returnhtml_as_direct_detail_candidate() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://ars.apps.lara.state.mi.us/Transaction/DownloadFile?FileName=FinalRule%28s%29.pdf&FileType=FinalRule&TransactionID=1306&EffectiveDate=8%2F29%2F2025&ReturnHTML=True"
+    ) is True
+
+
+def test_recognizes_michigan_admincode_returnhtml_as_direct_detail_candidate() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://ars.apps.lara.state.mi.us/AdminCode/DownloadAdminCodeFile?FileName=R%20338.1%20to%20R%20338.13.pdf&ReturnHTML=True"
+    ) is True
+
+
+def test_score_candidate_url_prioritizes_michigan_final_rule_returnhtml() -> None:
+    final_rule_score = scraper_module._score_candidate_url(
+        "https://ars.apps.lara.state.mi.us/Transaction/DownloadFile?FileName=FinalRule%28s%29.pdf&FileType=FinalRule&TransactionID=1306&EffectiveDate=8%2F29%2F2025&ReturnHTML=True"
+    )
+    transaction_score = scraper_module._score_candidate_url(
+        "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306"
+    )
+
+    assert final_rule_score > transaction_score
+
+
+def test_score_candidate_url_prioritizes_michigan_transaction_page_over_admincode_home() -> None:
+    transaction_score = scraper_module._score_candidate_url(
+        "https://ars.apps.lara.state.mi.us/Transaction/RFRTransaction?TransactionID=1306"
+    )
+    admincode_home_score = scraper_module._score_candidate_url(
+        "https://ars.apps.lara.state.mi.us/AdminCode/AdminCode"
+    )
+
+    assert transaction_score > admincode_home_score
+
+
+def test_score_candidate_url_prioritizes_michigan_admincode_returnhtml_over_department_index() -> None:
+    document_score = scraper_module._score_candidate_url(
+        "https://ars.apps.lara.state.mi.us/AdminCode/DownloadAdminCodeFile?FileName=R%20338.1%20to%20R%20338.13.pdf&ReturnHTML=True"
+    )
+    department_score = scraper_module._score_candidate_url(
+        "https://ars.apps.lara.state.mi.us/AdminCode/DeptBureauAdminCode?Department=Licensing+and+Regulatory+Affairs&Bureau=All"
+    )
+
+    assert document_score > department_score
+
+
+def test_rejects_michigan_lara_guidance_page_with_site_chrome_as_rule_content() -> None:
+    text = (
+        "Using the Michigan Administrative Code Scam Alert The Michigan Department of Licensing and Regulatory Affairs will never ask you "
+        "to provide your credit card numbers or other personal information over the phone. LARA Licensing and Regulatory Affairs About Us "
+        "Bureaus I Need to Learn About News Events Meetings Contact Us."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Using the Michigan Administrative Code",
+        url="https://www.michigan.gov/lara/bureau-list/moahr/admin-rules/using-the-michigan-administrative-code",
+        min_chars=160,
+    ) is False
+    assert _is_relaxed_recovery_text(
+        text=text,
+        title="Using the Michigan Administrative Code",
+        url="https://www.michigan.gov/lara/bureau-list/moahr/admin-rules/using-the-michigan-administrative-code",
+    ) is False
+
+
+def test_rejects_michigan_moahr_intro_pdf_as_rule_content() -> None:
+    text = "2024 Annual Administrative Code Supplement Introduction Michigan Office of Administrative Hearings and Rules."
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="2024 Annual Administrative Code Supplement Introduction",
+        url="https://www.michigan.gov/lara/-/media/Project/Websites/lara/moahr/ARD/2024-Annual-Administrative-Code-Supplement/2024_AACS_Intro.pdf",
+        min_chars=160,
     ) is False
 
 
@@ -2875,6 +2958,90 @@ async def test_discover_montana_rule_document_urls_expands_section_tree_via_publ
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/87654321-aaaa-bbbb-cccc-dddddddddddd",
     ]
     assert calls[0].endswith("/sections/11111111-2222-3333-4444-555555555555")
+
+
+@pytest.mark.asyncio
+async def test_discover_michigan_rule_document_urls_expands_admincode_home_to_returnhtml_docs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    admincode_home = "https://ars.apps.lara.state.mi.us/AdminCode/AdminCode"
+    licensing_all = (
+        "https://ars.apps.lara.state.mi.us/AdminCode/DeptBureauAdminCode?"
+        "Department=Licensing+and+Regulatory+Affairs&Bureau=All"
+    )
+
+    def fake_get(url: str, timeout: int, headers: dict[str, str]):
+        if url == admincode_home:
+            return FakeResponse(
+                """
+                <html><body>
+                    <select name=\"Department\">
+                        <option value=\"Select Department\">Select Department</option>
+                        <option value=\"Licensing and Regulatory Affairs\">Licensing and Regulatory Affairs</option>
+                    </select>
+                </body></html>
+                """
+            )
+        if url == licensing_all:
+            return FakeResponse(
+                """
+                <html><body>
+                    <a href=\"/AdminCode/DownloadAdminCodeFile?FileName=R%20338.1%20to%20R%20338.13.pdf&ReturnHTML=True\">HTML</a>
+                    <a href=\"/AdminCode/DownloadAdminCodeFile?FileName=R%20338.111%20to%20R%20338.143.pdf&ReturnHTML=True\">HTML</a>
+                </body></html>
+                """
+            )
+        raise AssertionError(url)
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    urls = await scraper_module._discover_michigan_rule_document_urls(seed_urls=[admincode_home], limit=2)
+
+    assert urls == [
+        "https://ars.apps.lara.state.mi.us/AdminCode/DownloadAdminCodeFile?FileName=R%20338.1%20to%20R%20338.13.pdf&ReturnHTML=True",
+        "https://ars.apps.lara.state.mi.us/AdminCode/DownloadAdminCodeFile?FileName=R%20338.111%20to%20R%20338.143.pdf&ReturnHTML=True",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discover_alaska_rule_document_urls_expands_toc_to_print_section_urls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+    class FakeSession:
+        def get(self, url: str, timeout: int, headers: dict[str, str]):
+            if url == "https://www.akleg.gov/basis/aac.asp":
+                return FakeResponse("<a onclick=\"loadTOC(' 1')\">Title 1</a>")
+            if url == "https://www.akleg.gov/basis/aac.asp?media=js&type=TOC&title=1":
+                return FakeResponse('<a onclick=loadTOC("1.05")>Chapter 05</a>')
+            if url == "https://www.akleg.gov/basis/aac.asp?media=js&type=TOC&title=1.05":
+                return FakeResponse(
+                    '<a onclick="closeTOC();checkLink(\'1.05.010\'); ">Sec. 1 AAC 05.010</a>'
+                    '<a onclick="closeTOC();checkLink(\'1.05.020\'); ">Sec. 1 AAC 05.020</a>'
+                )
+            raise AssertionError(url)
+
+    monkeypatch.setattr(scraper_module.requests, "Session", lambda: FakeSession())
+
+    urls = await scraper_module._discover_alaska_rule_document_urls(
+        seed_urls=["https://www.akleg.gov/basis/aac.asp"],
+        limit=2,
+    )
+
+    assert urls == [
+        "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.010&secEnd=1.05.010",
+        "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.020&secEnd=1.05.020",
+    ]
 
 
 @pytest.mark.asyncio
