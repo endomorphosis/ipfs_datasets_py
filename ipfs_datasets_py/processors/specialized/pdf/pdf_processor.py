@@ -1241,7 +1241,6 @@ class PDFProcessor:
                     decomposed_content['pages'][i]['words'] = words
 
             self.logger.info(f"Successfully decomposed {page_count} pages")
-            print(decomposed_content)
             return decomposed_content
 
         except (ValueError, pymupdf.FileDataError, pymupdf.mupdf.FzErrorFormat) as e:

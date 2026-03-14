@@ -52,6 +52,10 @@ _QUALITY_NAV_URL_RE = re.compile(
     r"/(?:calendar|meeting|roster|blog|news|jobs|photo|links?|home|bulletin|live|staff|contact|interim|committee|reports?|member|media)\b",
     re.IGNORECASE,
 )
+_QUALITY_LEGAL_METADATA_RE = re.compile(
+    r"\b(?:authority|implementing|history|rule history|relevant notices|relevant mar notices|references|referenced by|rule version|active version|effective|statutory authority|citation(?:s)?)\b",
+    re.IGNORECASE,
+)
 
 
 def _extract_statute_quality_fields(statute: Any) -> Dict[str, str]:
@@ -99,6 +103,22 @@ def _is_scaffold_or_navigation_record(statute: Any) -> bool:
     if nav_like_text and not has_statute_signal and len(text) < 1200:
         return True
 
+    return False
+
+
+def _has_quality_legal_signal(statute: Any) -> bool:
+    fields = _extract_statute_quality_fields(statute)
+    text = fields["full_text"]
+    section_number = fields["section_number"]
+    section_name = fields["section_name"]
+    hay = " ".join([text, section_name, section_number])
+
+    if _QUALITY_SECTION_SIGNAL_RE.search(text) or _QUALITY_SECTION_SIGNAL_RE.search(section_name):
+        return True
+    if _QUALITY_SECTION_NUMBER_RE.match(section_number):
+        return True
+    if len(_QUALITY_LEGAL_METADATA_RE.findall(hay)) >= 2:
+        return True
     return False
 
 # US States and territories
@@ -571,9 +591,10 @@ def _compute_state_quality_metrics(statutes: List[Dict[str, Any]]) -> Dict[str, 
         text = str(statute.get("full_text") or statute.get("text") or "")
         section_number = str(statute.get("section_number") or statute.get("sectionNumber") or "")
         section_name = str(statute.get("section_name") or statute.get("sectionName") or "")
+        has_quality_legal_signal = _has_quality_legal_signal(statute)
 
         # Treat nav markers as quality failures only when the text is mostly chrome/boilerplate.
-        if _QUALITY_NAV_RE.search(text) and len(text) < 2000:
+        if _QUALITY_NAV_RE.search(text) and len(text) < 2000 and not has_quality_legal_signal:
             nav_like += 1
         if _QUALITY_SECTION_FALLBACK_RE.match(section_number):
             fallback_section += 1

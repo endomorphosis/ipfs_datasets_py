@@ -105,6 +105,8 @@ def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr
 
 def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoints() -> None:
     az_urls = scraper_module._extract_seed_urls_for_state("AZ", "Arizona")
+    ak_urls = scraper_module._extract_seed_urls_for_state("AK", "Alaska")
+    ak_allowed_hosts = _allowed_discovery_hosts_for_state("AK", "Alaska")
     ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
     az_allowed_hosts = _allowed_discovery_hosts_for_state("AZ", "Arizona")
 
@@ -119,6 +121,15 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules" in ut_urls
     assert "https://adminrules.utah.gov/public/home" not in ut_urls
     assert "https://adminrules.utah.gov/public/search" not in ut_urls
+
+    assert "https://akrules.elaws.us/aac" in ak_urls
+    assert all("legislature.ak.gov" not in url.lower() for url in ak_urls)
+    assert all("legis.state.ak.us" not in url.lower() for url in ak_urls)
+    assert "akrules.elaws.us" in ak_allowed_hosts
+    assert "ltgov.alaska.gov" in ak_allowed_hosts
+    assert "www.akleg.gov" in ak_allowed_hosts
+    assert "legislature.ak.gov" not in ak_allowed_hosts
+    assert "legis.state.ak.us" not in ak_allowed_hosts
 
 
 def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
@@ -260,10 +271,19 @@ def test_is_direct_detail_candidate_url_recognizes_alabama_admin_code_detail_pag
         "https://admincode.legislature.state.al.us/administrative-code"
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
         "https://admincode.legislature.state.al.us/administrative-code#A"
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
         "https://admincode.legislature.state.al.us/agency"
+    ) is False
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
+    ) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code"
     ) is False
 
 
@@ -361,6 +381,33 @@ def test_is_direct_detail_candidate_url_recognizes_wyoming_ajax_rule_viewer() ->
     ) is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_arkansas_code_rule_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=1"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://codeofarrules.arkansas.gov/Rules/Search"
+    ) is False
+
+
+def test_is_direct_detail_candidate_url_recognizes_alaska_aac_section_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url("https://akrules.elaws.us/aac/1.05.010") is True
+    assert scraper_module._is_direct_detail_candidate_url("https://akrules.elaws.us/aac/1") is False
+    assert scraper_module._is_direct_detail_candidate_url("https://akrules.elaws.us/aac/1.05") is False
+
+
+def test_is_direct_detail_candidate_url_recognizes_south_dakota_rule_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://sdlegislature.gov/Rules/Administrative/01:15"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx?Rule=20:48:03:01"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://sdlegislature.gov/Rules/Administrative"
+    ) is False
+
+
 def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
     text = (
         "Tennessee Department of State: Publications Administrative Register Rules & Regulations "
@@ -377,6 +424,107 @@ def test_tennessee_sharetngov_rule_hubs_are_inventory_pages() -> None:
         title="Tennessee Department of State: Publications",
         url="https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
     ) is True
+
+
+def test_alaska_rule_inventory_detection_distinguishes_index_chapter_and_section_pages() -> None:
+    ltgov_text = (
+        "Regulations Proposed Regulations Adopted Regulations Alaska Administrative Code "
+        "Department of Law "
+    )
+    aac_index_text = " ".join(
+        ["Alaska Administrative Code"]
+        + [f"Title {index}. Sample title" for index in range(1, 10)]
+    )
+    aac_title_text = (
+        "Alaska Administrative Code Title 1. General Provisions "
+        "Chapter 1.05. Procedures Chapter 1.10. Licensing"
+    )
+    aac_chapter_text = (
+        "Alaska Administrative Code Chapter 1.05. Procedures "
+        "Section 1.05.010. Purpose Section 1.05.020. Scope Section 1.05.030. Filing"
+    )
+    aac_section_text = (
+        "Alaska Administrative Code 1 AAC 1.05.010. Purpose Authority: AS 44.62.020 History: Eff. 1/1/2024"
+    )
+    akleg_text = " ".join(
+        ["Alaska Administrative Code", "This page is no longer used please use www.akleg.gov"]
+        + [f"Title {index}. Legacy title" for index in range(1, 10)]
+    )
+
+    assert scraper_module._looks_like_non_rule_admin_page(
+        text=ltgov_text,
+        title="Regulations",
+        url="https://ltgov.alaska.gov/information/regulations/",
+    ) is True
+    assert scraper_module._looks_like_official_rule_index_page(
+        text=aac_index_text,
+        title="Alaska Administrative Code",
+        url="https://akrules.elaws.us/aac",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=aac_title_text,
+        title="Alaska Administrative Code",
+        url="https://akrules.elaws.us/aac/1",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=aac_chapter_text,
+        title="Alaska Administrative Code",
+        url="https://akrules.elaws.us/aac/1.05",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=aac_section_text,
+        title="1 AAC 1.05.010",
+        url="https://akrules.elaws.us/aac/1.05.010",
+    ) is False
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=akleg_text,
+        title="Alaska Administrative Code",
+        url="https://www.akleg.gov/basis/aac.asp",
+    ) is True
+
+
+def test_alaska_candidate_url_scoring_prefers_section_detail_over_indexes() -> None:
+    ltgov_score = _score_candidate_url("https://ltgov.alaska.gov/information/regulations/")
+    index_score = _score_candidate_url("https://akrules.elaws.us/aac")
+    title_score = _score_candidate_url("https://akrules.elaws.us/aac/1")
+    chapter_score = _score_candidate_url("https://akrules.elaws.us/aac/1.05")
+    section_score = _score_candidate_url("https://akrules.elaws.us/aac/1.05.010")
+    bookview_score = _score_candidate_url("https://akrules.elaws.us/bookview/1.05")
+
+    assert ltgov_score > 0
+    assert index_score > ltgov_score
+    assert title_score > index_score
+    assert chapter_score > title_score
+    assert section_score > chapter_score
+    assert bookview_score < chapter_score
+
+
+def test_south_dakota_inventory_detection_is_limited_to_index_path() -> None:
+    text = (
+        "Administrative Rules Rule 01:15 TELECOMMUNICATIONS NETWORK Chapter 1:15 1:15:01 Definitions. "
+        "1:15:02 Organization and operation of the board. 1:15:03 Site selection procedures. "
+        "1:15:04 Telecommunications relay service. 1:15:05 Funding. 1:15:06 Reporting. "
+        "1:15:07 Hearings. 1:15:08 Enforcement."
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="Administrative Rules | South Dakota Legislature",
+        url="https://sdlegislature.gov/Rules/Administrative",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="01:15 TELECOMMUNICATIONS NETWORK",
+        url="https://sdlegislature.gov/Rules/Administrative/01:15",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=(
+            "20:48:03:01 Application for licensure by examination. An applicant shall submit the required application and fee to the board. "
+            "The board may require supporting documentation and verification."
+        ),
+        title="20:48:03:01 Application for licensure by examination.",
+        url="https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx?Rule=20:48:03:01",
+    ) is False
 
 
 def test_tennessee_administrative_register_service_page_is_inventory_not_substantive() -> None:
@@ -572,6 +720,26 @@ def test_candidate_arkansas_rule_urls_from_html_extracts_pdf_and_rule_links() ->
     ]
     assert code_links == [
         "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=1&chapterID=&subChapterID=&partID=&subPartID=&sectionID=",
+    ]
+
+
+def test_candidate_arkansas_rule_urls_from_html_normalizes_live_sectionid_encoding() -> None:
+    code_html = """
+    <html><body>
+      <a href="?levelType=title&titleID=1&chapterID=&subChapterID=&partID=&subPartID=&sectionID=#rules-tabs-general">Title 1</a>
+      <a href="?levelType=title&titleID=2&chapterID=&subChapterID=&partID=&subPartID=&sect;ionID=">Title 2</a>
+    </body></html>
+    """
+
+    code_links = scraper_module._candidate_arkansas_rule_urls_from_html(
+        html=code_html,
+        page_url="https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=9",
+        limit=4,
+    )
+
+    assert code_links == [
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=1&chapterID=&subChapterID=&partID=&subPartID=&sectionID=",
+        "https://codeofarrules.arkansas.gov/Rules/Rule?levelType=title&titleID=2&chapterID=&subChapterID=&partID=&subPartID=&sectionID=",
     ]
 
 
@@ -1232,6 +1400,33 @@ def test_rejects_montana_chapter_landing_page_false_positive() -> None:
         text=text,
         title="ORGANIZATIONAL RULE | Montana SOS",
         url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1892387a-b61e-4aa2-a1dd-d9f7a535fd42",
+    ) is False
+
+
+def test_rejects_montana_chapter_section_listing_with_subchapters() -> None:
+    text = (
+        "Administrative Rules of Montana\n"
+        "Montana Administrative Register\n"
+        "Administrative Rules of Montana\n"
+        "/\n"
+        "Title 1 GENERAL PROVISIONS\n"
+        "/\n"
+        "Chapter 1.3 ATTORNEY GENERAL MODEL RULES\n"
+        "Show Not Effective Rules\n"
+        "GENERAL PROVISIONS\n"
+        "Chapter 1.1 FOREWORD (REPEALED)\n"
+        "Chapter 1.2 GENERAL PROVISIONS (REPEALED)\n"
+        "Chapter 1.3 ATTORNEY GENERAL MODEL RULES\n"
+        "Subchapter 1.3.1 Procedural Rules Required by MCA Chapter Implementing Article II, Section 8 of the 1972 Constitution - Right of Participation (REPEALED)\n"
+        "Subchapter 1.3.2 Attorney General's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act\n"
+        "Subchapter 1.3.3 Secretary of State's Organizational and Procedural Rules Required by the Montana Administrative Procedure Act (REPEALED)\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="ATTORNEY GENERAL MODEL RULES | Montana SOS",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/ed446fdb-2d8d-4759-89ac-9cab3b21695c",
+        min_chars=160,
     ) is False
 
 
@@ -1937,6 +2132,13 @@ def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_d
 @pytest.mark.asyncio
 async def test_extract_text_from_pdf_bytes_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePDFProcessor:
+        def __init__(self, *args, **kwargs):
+            assert kwargs.get("enable_audit") is False
+            mock_dict = kwargs.get("mock_dict")
+            assert isinstance(mock_dict, dict)
+            assert set(mock_dict) == {"storage", "integrator", "ocr_engine", "optimizer"}
+            assert all(value is not None for value in mock_dict.values())
+
         async def _decompose_pdf(self, pdf_path):
             assert str(pdf_path).endswith(".pdf")
             return {
@@ -2042,6 +2244,26 @@ async def test_normalize_candidate_document_content_trims_rhode_island_ricr_chro
     assert "Subscribe to Notifications" not in text
     assert "Additional Links" not in text
     assert "Powered by Google Translate" not in text
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_trims_south_dakota_legislature_chrome() -> None:
+    title, text = await scraper_module._normalize_candidate_document_content(
+        url="https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx?Rule=01:15:01:01",
+        title="Administrative Rule 01:15:01:01 | South Dakota Legislature",
+        text=(
+            "LEGISLATORS\nSESSION\nINTERIM\nLAWS\nADMINISTRATIVE RULES\nBUDGET\nSTUDENTS\nREFERENCES\nMYLRC +\n"
+            "Administrative Rules List\nCurrent Register (PDF)\nArchived Registers\nAdministrative Rules Manual\n"
+            "Rules Review Committee\nRules.sd.gov\nAdministrative Rules Process (PDF)\n"
+            "1:15:01:01. Meaning of terms.\nThe terms used in this article mean:\n(1) \"Board,\" the rural development telecommunications network board of directors."
+        ),
+    )
+
+    assert title == "1:15:01:01. Meaning of terms."
+    assert text.startswith("1:15:01:01. Meaning of terms.")
+    assert "LEGISLATORS" not in text
+    assert "Administrative Rules List" not in text
+    assert "Rules.sd.gov" not in text
 
 
 @pytest.mark.asyncio
@@ -2227,6 +2449,110 @@ async def test_scrape_pdf_candidate_url_uses_playwright_download_fallback(monkey
     assert scraped is not None
     assert scraped.method_used == "pdf_processor_playwright_download"
     assert "Authority and definitions." in scraped.text
+
+
+@pytest.mark.asyncio
+async def test_discover_alabama_rule_document_urls_uses_public_code_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict[str, Any]):
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, Any]:
+            return self._payload
+
+    calls: list[dict[str, Any]] = []
+
+    def fake_post(url: str, timeout: int, headers: dict[str, str], json: dict[str, Any]):
+        calls.append({"url": url, "json": json})
+        operation_name = json.get("operationName")
+        if operation_name == "agencySortTitles":
+            return FakeResponse(
+                {
+                    "data": {
+                        "agencies": [
+                            {"controlNumber": "20", "shown": True, "sortableTitle": "Alcoholic Beverage Control Board, Alabama"},
+                        ]
+                    }
+                }
+            )
+        if operation_name == "publicCode":
+            return FakeResponse(
+                {
+                    "data": {
+                        "document": {
+                            "__typename": "Agency",
+                            "chapters": [
+                                {
+                                    "idText": "20-X-2",
+                                    "title": "General Provisions",
+                                    "rules": [
+                                        {"idText": "20-X-2-.01", "title": "Glossary Of Terms"},
+                                        {"idText": "20-X-2-.02", "title": "Possession Of ABC Board Regulations On Licensed Premises"},
+                                    ],
+                                }
+                            ],
+                        }
+                    }
+                }
+            )
+        raise AssertionError(f"unexpected operation: {operation_name}")
+
+    monkeypatch.setattr(scraper_module.requests, "post", fake_post)
+
+    urls = await scraper_module._discover_alabama_rule_document_urls(limit=2)
+
+    assert urls == [
+        "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01",
+        "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.02",
+    ]
+    assert calls[0]["json"]["extensions"]["persistedQuery"]["sha256Hash"] == scraper_module._AL_AGENCY_SORT_TITLES_HASH
+    assert calls[1]["json"]["extensions"]["persistedQuery"]["sha256Hash"] == scraper_module._AL_PUBLIC_CODE_HASH
+
+
+@pytest.mark.asyncio
+async def test_scrape_alabama_rule_detail_via_api_uses_public_code_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, Any]:
+            return {
+                "data": {
+                    "document": {
+                        "__typename": "Rule",
+                        "idText": "20-X-2-.01",
+                        "title": "Glossary Of Terms",
+                        "description": "<p>Alcoholic beverages are defined for this chapter.</p>",
+                        "authority": "Code of Ala. 1975, Section 28-3-49.",
+                        "history": "Filed January 1, 2024.",
+                        "penalty": "None.",
+                        "editorsNote": "Editorial note.",
+                    }
+                }
+            }
+
+    requests_seen: list[dict[str, Any]] = []
+
+    def fake_post(url: str, timeout: int, headers: dict[str, str], json: dict[str, Any]):
+        requests_seen.append(json)
+        return FakeResponse()
+
+    monkeypatch.setattr(scraper_module.requests, "post", fake_post)
+
+    scraped = await scraper_module._scrape_alabama_rule_detail_via_api(
+        "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
+    )
+
+    assert scraped is not None
+    assert scraped.title == "20-X-2-.01 Glossary Of Terms"
+    assert "Alcoholic beverages are defined" in scraped.text
+    assert "Authority:" in scraped.text
+    assert scraped.method_used == "alabama_public_code_api"
+    assert requests_seen[0]["operationName"] == "publicCode"
+    assert requests_seen[0]["extensions"]["persistedQuery"]["sha256Hash"] == scraper_module._AL_PUBLIC_CODE_HASH
 
 
 def test_download_document_bytes_via_cloudscraper_returns_binary_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -2761,6 +3087,51 @@ async def test_scrape_wyoming_rule_detail_via_ajax_uses_rule_version_id(monkeypa
         url="https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225",
         min_chars=300,
     ) is True
+
+
+@pytest.mark.asyncio
+async def test_scrape_south_dakota_rule_detail_via_api_uses_rule_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def __init__(self, *, status_code=200, json_data=None):
+            self.status_code = status_code
+            self._json_data = json_data
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise scraper_module.requests.HTTPError(f"status {self.status_code}")
+
+        def json(self):
+            return self._json_data
+
+    observed: list[str] = []
+
+    def fake_get(url, timeout=0, headers=None, params=None):
+        observed.append(url)
+        assert params is None
+        return FakeResponse(
+            json_data={
+                "RuleNumber": "20:48:03:01",
+                "Catchline": "Application for licensure by examination.",
+                "Html": (
+                    "<html><body><p align='center'><b>20:48:03:01</b></p>"
+                    "<p><b>Application for licensure by examination.</b></p>"
+                    "<p>An applicant shall submit the required application and fee to the board.</p>"
+                    "<p>The board may require supporting documentation and verification.</p></body></html>"
+                ),
+            }
+        )
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    scraped = await scraper_module._scrape_south_dakota_rule_detail_via_api(
+        "https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx?Rule=20:48:03:01"
+    )
+
+    assert observed == ["https://sdlegislature.gov/api/Rules/20:48:03:01"]
+    assert scraped is not None
+    assert scraped.method_used == "south_dakota_rules_api"
+    assert scraped.title == "20:48:03:01 Application for licensure by examination."
+    assert "An applicant shall submit the required application and fee to the board." in scraped.text
 
 
 def test_accepts_new_hampshire_archived_rule_chapter() -> None:
@@ -3408,6 +3779,9 @@ def test_score_candidate_url_prioritizes_alabama_admin_code_detail_pages() -> No
     detail_score = scraper_module._score_candidate_url(
         "https://admincode.legislature.state.al.us/administrative-code"
     )
+    query_detail_score = scraper_module._score_candidate_url(
+        "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
+    )
     anchor_score = scraper_module._score_candidate_url(
         "https://admincode.legislature.state.al.us/administrative-code#A"
     )
@@ -3419,6 +3793,7 @@ def test_score_candidate_url_prioritizes_alabama_admin_code_detail_pages() -> No
     )
 
     assert detail_score > search_score
+    assert query_detail_score > detail_score
     assert anchor_score > search_score
     assert detail_score > agency_score
 
@@ -3486,6 +3861,23 @@ def test_score_candidate_url_prioritizes_tennessee_sharetngov_rule_pages() -> No
     assert chapter_score > legislature_score
     assert effective_rules_score > legislature_score
     assert tar_index_score > legislature_score
+
+
+def test_score_candidate_url_prioritizes_south_dakota_rule_pages_over_index() -> None:
+    section_score = scraper_module._score_candidate_url(
+        "https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx?Rule=20:48:03:01"
+    )
+    chapter_score = scraper_module._score_candidate_url(
+        "https://sdlegislature.gov/Rules/Administrative/01:15"
+    )
+    index_score = scraper_module._score_candidate_url(
+        "https://sdlegislature.gov/Rules/Administrative"
+    )
+    root_score = scraper_module._score_candidate_url("https://rules.sd.gov/")
+
+    assert section_score > chapter_score
+    assert chapter_score > index_score
+    assert index_score >= root_score
 
 
 def test_prefers_live_fetch_for_utah_detail_pages() -> None:

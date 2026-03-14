@@ -206,6 +206,35 @@ def test_compute_state_quality_metrics_tracks_scaffold_ratio():
     assert metrics["scaffold_ratio"] == 0.5
 
 
+def test_compute_state_quality_metrics_does_not_flag_short_rule_metadata_page_as_nav_like():
+    statutes = [
+        {
+            "section_number": "A1",
+            "section_name": "INTRODUCTION AND DEFINITIONS | Montana SOS",
+            "full_text": (
+                "Administrative Rules of Montana\n"
+                "Back\n"
+                "1.3.201 INTRODUCTION AND DEFINITIONS\n"
+                "Rule Version 27282\n"
+                "Active Version\n"
+                "Effective 01/16/2009 - Present\n"
+                "Rule History Eff. 12/31/72; AMD, 2009 MAR p. 7, Eff. 1/16/09.\n"
+                "References 2-4-101, MCA Short Title -- Purpose -- Exception\n"
+                "Referenced by 2025-195.1 Implementation of Senate Bill 315 (2025)\n"
+                "View More\n"
+                "Home"
+            ),
+            "source_url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/51f36d4d-ca58-49bf-bf41-e1881edd4865",
+        }
+    ]
+
+    metrics = _compute_state_quality_metrics(statutes)
+
+    assert metrics["total"] == 1
+    assert metrics["nav_like_ratio"] == 0.0
+    assert metrics["scaffold_ratio"] == 0.0
+
+
 def test_trim_scraped_statutes_to_max_truncates_in_state_order():
     scraped = [
         {
