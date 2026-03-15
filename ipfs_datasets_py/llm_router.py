@@ -1999,6 +1999,10 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 )
             except FileNotFoundError as exc:
                 raise LLMRouterError("codex CLI not found on PATH") from exc
+            except subprocess.TimeoutExpired as exc:
+                raise LLMRouterError(
+                    f"codex exec timed out after {timeout:.0f}s for model {model or 'default'}"
+                ) from exc
 
             try:
                 with open(last_msg_path, "r", encoding="utf-8", errors="replace") as handle:

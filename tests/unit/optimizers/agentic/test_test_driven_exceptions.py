@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -97,9 +98,180 @@ def test_generate_optimizations_skips_file_on_typed_llm_error(optimizer, task):
     optimizer.llm_router.generate.side_effect = ValueError("llm unavailable")
     result = optimizer._generate_optimizations(task, analysis={}, baseline={})
     assert result == {}
+    assert optimizer._last_generation_diagnostics == [
+        {
+            "file": str(task.target_files[0]),
+            "status": "error",
+            "mode": "full_file",
+            "target_symbols": [],
+            "error_type": "ValueError",
+            "error_message": "llm unavailable",
+            "raw_response_preview": "",
+        }
+    ]
 
 
 def test_generate_optimizations_propagates_base_exception(optimizer, task):
     optimizer.llm_router.generate.side_effect = KeyboardInterrupt("stop")
     with pytest.raises(KeyboardInterrupt):
         optimizer._generate_optimizations(task, analysis={}, baseline={})
+
+
+def test_optimize_failed_result_includes_generation_diagnostics(optimizer, task, monkeypatch):
+    monkeypatch.setattr(optimizer, "_analyze_targets", lambda _targets: {})
+    monkeypatch.setattr(optimizer, "_generate_tests", lambda _task, analysis: {"success": True})
+    monkeypatch.setattr(
+        optimizer,
+        "_generate_optimizations",
+        lambda _task, analysis, baseline: (
+            optimizer._last_generation_diagnostics.append(
+                {
+                    "file": str(task.target_files[0]),
+                    "status": "error",
+                    "error_type": "ValueError",
+                    "error_message": "codex exec timed out after 60s",
+                }
+            )
+            or {}
+        ),
+    )
+
+    result = optimizer.optimize(task)
+
+    assert result.success is False
+    assert "No changes found in worktree" in (result.error_message or "")
+    assert result.metadata["generation_diagnostics"][0]["error_message"] == "codex exec timed out after 60s"
+
+
+def test_generate_optimizations_can_patch_target_symbols(tmp_path):
+    router = Mock()
+    router.generate.return_value = """
+def _is_intake_complete(self) -> bool:
+    data = self.phase_data[ComplaintPhase.INTAKE]
+    return bool(data.get("knowledge_graph")) and bool(data.get("dependency_graph")) and data.get("remaining_gaps", 99) <= 2
+
+def _get_intake_action(self) -> Dict[str, Any]:
+    data = self.phase_data[ComplaintPhase.INTAKE]
+    if not data.get("knowledge_graph"):
+        return {"action": "build_knowledge_graph"}
+    if not data.get("dependency_graph"):
+        return {"action": "build_dependency_graph"}
+    if data.get("current_gaps"):
+        return {"action": "address_gaps", "gaps": data.get("current_gaps")}
+    return {"action": "complete_intake"}
+"""
+    optimizer = TestDrivenOptimizer(agent_id="td-symbols", llm_router=router)
+
+    target = tmp_path / "phase_manager.py"
+    target.write_text(
+        "from typing import Dict, Any\n\n"
+        "class ComplaintPhase:\n"
+        "    INTAKE = 'intake'\n\n"
+        "class PhaseManager:\n"
+        "    def __init__(self):\n"
+        "        self.phase_data = {ComplaintPhase.INTAKE: {}}\n\n"
+        "    def _is_intake_complete(self) -> bool:\n"
+        "        return False\n\n"
+        "    def _get_intake_action(self) -> Dict[str, Any]:\n"
+        "        return {'action': 'continue_denoising'}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-symbols",
+        target_files=[target],
+        description="Optimize symbol targets",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["_is_intake_complete", "_get_intake_action"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "_is_intake_complete" in updated
+    assert "_get_intake_action" in updated
+    assert "return False" not in updated
+    assert "continue_denoising" not in updated
+    assert optimizer._last_generation_diagnostics[0]["mode"] == "symbol_level"
+    ast.parse(updated)
+
+
+def test_generate_optimizations_normalizes_indented_symbol_response(tmp_path):
+    router = Mock()
+    router.generate.return_value = """
+    def _is_intake_complete(self) -> bool:
+        data = self.phase_data[ComplaintPhase.INTAKE]
+        return bool(data.get("knowledge_graph"))
+
+    def _get_intake_action(self) -> Dict[str, Any]:
+        return {"action": "complete_intake"}
+"""
+    optimizer = TestDrivenOptimizer(agent_id="td-symbols-indented", llm_router=router)
+
+    target = tmp_path / "phase_manager.py"
+    target.write_text(
+        "from typing import Dict, Any\n\n"
+        "class ComplaintPhase:\n"
+        "    INTAKE = 'intake'\n\n"
+        "class PhaseManager:\n"
+        "    def __init__(self):\n"
+        "        self.phase_data = {ComplaintPhase.INTAKE: {}}\n\n"
+        "    def _is_intake_complete(self) -> bool:\n"
+        "        return False\n\n"
+        "    def _get_intake_action(self) -> Dict[str, Any]:\n"
+        "        return {'action': 'continue_denoising'}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-symbols-indented",
+        target_files=[target],
+        description="Optimize symbol targets",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["_is_intake_complete", "_get_intake_action"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "complete_intake" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_records_raw_symbol_response_on_error(tmp_path):
+    router = Mock()
+    router.generate.return_value = """
+def _get_intake_action(self) -> Dict[str, Any]:
+    return {"action": "broken"
+"""
+    optimizer = TestDrivenOptimizer(agent_id="td-symbols-error", llm_router=router)
+
+    target = tmp_path / "phase_manager.py"
+    target.write_text(
+        "from typing import Dict, Any\n\n"
+        "class PhaseManager:\n"
+        "    def _get_intake_action(self) -> Dict[str, Any]:\n"
+        "        return {'action': 'continue_denoising'}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-symbols-error",
+        target_files=[target],
+        description="Optimize one symbol",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["_get_intake_action"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+
+    assert result == {}
+    assert optimizer._last_generation_diagnostics[0]["mode"] == "symbol_level"
+    assert "raw_response_preview" in optimizer._last_generation_diagnostics[0]
+    assert "_get_intake_action" in optimizer._last_generation_diagnostics[0]["raw_response_preview"]

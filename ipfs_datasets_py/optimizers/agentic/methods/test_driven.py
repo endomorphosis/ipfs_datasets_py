@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -78,6 +79,8 @@ class TestDrivenOptimizer(AgenticOptimizer):
         super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
         self.use_temp_worktree = bool((config or {}).get("use_temp_worktree", False))
+        self._last_generation_diagnostics: List[Dict[str, Any]] = []
+        self._last_raw_responses: Dict[str, str] = {}
         self._meta_request_markers = (
             "please paste",
             "paste the current contents",
@@ -198,6 +201,10 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 },
                 execution_time=execution_time,
                 agent_id=self.agent_id,
+                metadata={
+                    "generation_diagnostics": list(self._last_generation_diagnostics),
+                    "target_files": [str(path) for path in task.target_files],
+                },
             )
             
         except (
@@ -225,6 +232,10 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 error_message=str(e),
                 execution_time=execution_time,
                 agent_id=self.agent_id,
+                metadata={
+                    "generation_diagnostics": list(self._last_generation_diagnostics),
+                    "target_files": [str(path) for path in task.target_files],
+                },
             )
     
     def validate(self, result: OptimizationResult) -> ValidationResult:
@@ -383,6 +394,8 @@ class TestDrivenOptimizer(AgenticOptimizer):
     ) -> Dict[str, str]:
         """Generate optimized code using LLM."""
         optimizations = {}
+        diagnostics: List[Dict[str, Any]] = []
+        self._last_raw_responses = {}
         
         for target_file in task.target_files:
             if not target_file.exists():
@@ -395,16 +408,38 @@ class TestDrivenOptimizer(AgenticOptimizer):
             with open(safe_path, 'r') as f:
                 current_code = f.read()
             
-            # Generate optimization prompt
-            prompt = self._build_optimization_prompt(
-                target_file,
-                current_code,
-                analysis,
-                baseline,
-                task
-            )
-            
             try:
+                target_symbols = self._target_symbols_for_file(task, target_file)
+                if target_symbols:
+                    optimized_content = self._generate_symbol_level_optimization(
+                        target_file=target_file,
+                        current_code=current_code,
+                        analysis=analysis,
+                        baseline=baseline,
+                        task=task,
+                        target_symbols=target_symbols,
+                    )
+                    diagnostics.append(
+                        {
+                            "file": str(target_file),
+                            "status": "optimized",
+                            "mode": "symbol_level",
+                            "target_symbols": list(target_symbols),
+                            "response_length": len(optimized_content),
+                            "changed": optimized_content.strip() != current_code.strip(),
+                        }
+                    )
+                    optimizations[str(target_file)] = optimized_content
+                    continue
+
+                prompt = self._build_optimization_prompt(
+                    target_file,
+                    current_code,
+                    analysis,
+                    baseline,
+                    task
+                )
+
                 response = self.llm_router.generate(
                     prompt=prompt,
                     max_tokens=4000,
@@ -415,21 +450,93 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     file_path=target_file,
                     current_code=current_code,
                 )
-                
+
                 self._log.debug("Generated optimization", extra={
                     'file': str(target_file),
                     'response_length': len(normalized_response),
                 })
-                
+
                 optimizations[str(target_file)] = normalized_response
+                diagnostics.append(
+                    {
+                        "file": str(target_file),
+                        "status": "optimized",
+                        "mode": "full_file",
+                        "response_length": len(normalized_response),
+                        "changed": normalized_response.strip() != current_code.strip(),
+                    }
+                )
             except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._log.error("Error generating optimization", extra={
                     'file': str(target_file),
                     'error_type': type(e).__name__,
                     'error_message': str(e),
                 })
-        
+                diagnostics.append(
+                    {
+                        "file": str(target_file),
+                        "status": "error",
+                        "mode": "symbol_level" if target_symbols else "full_file",
+                        "target_symbols": list(target_symbols),
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                        "raw_response_preview": self._raw_response_preview(target_file),
+                    }
+                )
+        self._last_generation_diagnostics = diagnostics
         return optimizations
+
+    def _target_symbols_for_file(self, task: OptimizationTask, target_file: Path) -> List[str]:
+        constraints = task.constraints or {}
+        target_map = constraints.get("target_symbols")
+        if not isinstance(target_map, dict):
+            return []
+
+        candidates = {
+            str(target_file),
+            str(target_file.resolve()),
+        }
+        for key, value in target_map.items():
+            if str(key) in candidates and isinstance(value, list):
+                return [str(item).strip() for item in value if str(item).strip()]
+        return []
+
+    def _generate_symbol_level_optimization(
+        self,
+        *,
+        target_file: Path,
+        current_code: str,
+        analysis: Dict[str, Any],
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+        target_symbols: List[str],
+    ) -> str:
+        symbol_blocks = self._extract_target_symbol_blocks(current_code, target_symbols)
+        prompt = self._build_symbol_optimization_prompt(
+            file_path=target_file,
+            current_code=current_code,
+            symbol_blocks=symbol_blocks,
+            analysis=analysis,
+            baseline=baseline,
+            task=task,
+            target_symbols=target_symbols,
+        )
+        response = self.llm_router.generate(
+            prompt=prompt,
+            max_tokens=1200,
+            temperature=0.2,
+        )
+        self._remember_raw_response(target_file, response)
+        replacements = self._normalize_optimized_symbol_response(
+            response=response,
+            file_path=target_file,
+            target_symbols=target_symbols,
+        )
+        return self._replace_symbols_in_source(
+            original_code=current_code,
+            target_symbols=target_symbols,
+            replacement_sources=replacements,
+        )
     
     def _apply_optimizations(
         self,
@@ -568,6 +675,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
     ) -> Patch:
         changes = list(apply_results.get("changes") or [])
         if not changes:
+            diagnostics = list(self._last_generation_diagnostics)
             worktree_path = apply_results.get("worktree")
             if worktree_path:
                 return self.patch_manager.create_patch(
@@ -575,6 +683,14 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     task_id=task.task_id,
                     worktree_path=Path(worktree_path),
                     description=task.description,
+                )
+            if diagnostics:
+                diagnostic_summary = "; ".join(
+                    f"{item.get('file')}: {item.get('status')} ({item.get('error_message', 'no diff generated')})"
+                    for item in diagnostics
+                )
+                raise ValueError(
+                    f"No changes found in worktree: {apply_results.get('worktree')}. Generation diagnostics: {diagnostic_summary}"
                 )
             raise ValueError(f"No changes found in worktree: {apply_results.get('worktree')}")
 
@@ -590,6 +706,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
             metadata={
                 "patch_mode": apply_results.get("patch_mode"),
                 "repo_root": str(apply_results.get("repo_root") or ""),
+                "generation_diagnostics": list(self._last_generation_diagnostics),
             },
         )
 
@@ -737,6 +854,74 @@ Do not ask for more files, more context, AGENTS instructions, shell access, or p
 Do not include markdown fences, explanations, apologies, or commentary.
 """
 
+    def _build_symbol_optimization_prompt(
+        self,
+        *,
+        file_path: Path,
+        current_code: str,
+        symbol_blocks: Dict[str, str],
+        analysis: Dict[str, Any],
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+        target_symbols: List[str],
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:3])
+        if not recommendations:
+            recommendations = "- Improve question quality and coverage without regressing current behavior."
+
+        symbol_text = "\n\n".join(
+            f"# Symbol: {name}\n{symbol_blocks.get(name, '# missing')}"
+            for name in target_symbols
+        )
+
+        return f"""Optimize specific Python methods in the following file:
+
+File: {file_path}
+Task: {task.description}
+
+Target methods:
+{", ".join(target_symbols)}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Current method implementations:
+```python
+{symbol_text}
+```
+
+Instructions:
+- Return only replacement Python method definitions for the target methods.
+- Do not return the whole file.
+- Keep method names unchanged.
+- Preserve compatibility with the existing class and call sites.
+- Focus on clearer intake progression, targeted follow-up selection, and better coverage.
+- Do not include markdown fences, explanations, or commentary.
+"""
+
+    def _extract_target_symbol_blocks(self, current_code: str, target_symbols: List[str]) -> Dict[str, str]:
+        tree = ast.parse(current_code)
+        lines = current_code.splitlines(keepends=True)
+        blocks: Dict[str, str] = {}
+
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+                if node.name in blocks:
+                    continue
+                start = node.lineno - 1
+                end = node.end_lineno
+                blocks[node.name] = "".join(lines[start:end])
+
+        missing = [name for name in target_symbols if name not in blocks]
+        if missing:
+            raise ValueError(f"Could not locate target symbols in source: {', '.join(missing)}")
+        return blocks
+
     def _normalize_optimized_code_response(
         self,
         *,
@@ -752,6 +937,8 @@ Do not include markdown fences, explanations, apologies, or commentary.
             match = re.search(r"```(?:python)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
             if match:
                 text = match.group(1).strip()
+
+        text = textwrap.dedent(text).strip()
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):
@@ -769,3 +956,157 @@ Do not include markdown fences, explanations, apologies, or commentary.
             raise ValueError(f"Optimization response for {file_path} did not modify the file")
 
         return text if text.endswith("\n") else f"{text}\n"
+
+    def _normalize_optimized_symbol_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+        target_symbols: List[str],
+    ) -> Dict[str, str]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty symbol optimization response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:python)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Symbol optimization response for {file_path} requested external context instead of code")
+
+        parsed = None
+        wrapper_used = False
+        try:
+            parsed = ast.parse(text)
+        except SyntaxError:
+            extracted = self._extract_symbol_replacements_from_text(
+                text=text,
+                file_path=file_path,
+                target_symbols=target_symbols,
+            )
+            if extracted:
+                return extracted
+            wrapped = "class _Temp:\n" + textwrap.indent(text, "    ")
+            parsed = ast.parse(wrapped)
+            wrapper_used = True
+
+        replacements: Dict[str, str] = {}
+
+        def _normalized_snippet(node: ast.AST) -> str:
+            snippet = ast.unparse(node).strip()
+            return snippet + "\n"
+
+        if wrapper_used:
+            class_node = next((node for node in parsed.body if isinstance(node, ast.ClassDef)), None)
+            if class_node is None:
+                raise ValueError(f"Symbol optimization response for {file_path} did not contain replacement methods")
+            for node in class_node.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+                    replacements[node.name] = _normalized_snippet(node)
+        else:
+            for node in parsed.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+                    replacements[node.name] = _normalized_snippet(node)
+
+        missing = [name for name in target_symbols if name not in replacements]
+        if missing:
+            raise ValueError(
+                f"Symbol optimization response for {file_path} did not return all target methods: {', '.join(missing)}"
+            )
+        return replacements
+
+    def _extract_symbol_replacements_from_text(
+        self,
+        *,
+        text: str,
+        file_path: Path,
+        target_symbols: List[str],
+    ) -> Dict[str, str]:
+        lines = text.splitlines()
+        start_points: List[tuple[int, str]] = []
+
+        for index, line in enumerate(lines):
+            stripped = line.lstrip()
+            for name in target_symbols:
+                if re.match(rf"(?:async\s+def|def)\s+{re.escape(name)}\b", stripped):
+                    start_points.append((index, name))
+                    break
+
+        if not start_points:
+            return {}
+
+        replacements: Dict[str, str] = {}
+        ordered = sorted(start_points, key=lambda item: item[0])
+        for position, (start, name) in enumerate(ordered):
+            end = ordered[position + 1][0] if position + 1 < len(ordered) else len(lines)
+            snippet = textwrap.dedent("\n".join(lines[start:end])).strip()
+            if not snippet:
+                continue
+            try:
+                parsed = ast.parse(snippet)
+            except SyntaxError as exc:
+                raise ValueError(
+                    f"Symbol optimization response for {file_path} returned invalid code for {name}: {exc}"
+                ) from exc
+            function_node = next(
+                (node for node in parsed.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))),
+                None,
+            )
+            if function_node is None or function_node.name != name:
+                raise ValueError(
+                    f"Symbol optimization response for {file_path} did not start with a replacement for {name}"
+                )
+            replacements[name] = ast.unparse(function_node).strip() + "\n"
+
+        return replacements
+
+    def _replace_symbols_in_source(
+        self,
+        *,
+        original_code: str,
+        target_symbols: List[str],
+        replacement_sources: Dict[str, str],
+    ) -> str:
+        tree = ast.parse(original_code)
+        lines = original_code.splitlines(keepends=True)
+        replacements: List[tuple[int, int, str]] = []
+
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
+                snippet = replacement_sources.get(node.name)
+                if not snippet:
+                    continue
+                indent = " " * node.col_offset
+                replacement = textwrap.indent(textwrap.dedent(snippet).rstrip() + "\n", indent)
+                replacements.append((node.lineno - 1, node.end_lineno, replacement))
+
+        if not replacements:
+            raise ValueError(f"No matching source locations found for target symbols: {', '.join(target_symbols)}")
+
+        for start, end, replacement in sorted(replacements, key=lambda item: item[0], reverse=True):
+            lines[start:end] = [replacement]
+
+        updated = "".join(lines)
+        try:
+            ast.parse(updated)
+        except SyntaxError as exc:
+            raise ValueError(f"Symbol replacement produced invalid Python: {exc}") from exc
+        if updated.strip() == original_code.strip():
+            raise ValueError("Symbol optimization did not modify the file")
+        return updated
+
+    def _remember_raw_response(self, target_file: Path, response: str) -> None:
+        text = str(response or "")
+        self._last_raw_responses[str(target_file)] = text
+
+    def _raw_response_preview(self, target_file: Path, limit: int = 1200) -> str:
+        text = self._last_raw_responses.get(str(target_file), "")
+        if not text:
+            return ""
+        sanitized = text.replace("\r\n", "\n").replace("\r", "\n")
+        if len(sanitized) <= limit:
+            return sanitized
+        return sanitized[:limit] + "\n...[truncated]..."
