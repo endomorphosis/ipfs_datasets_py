@@ -325,7 +325,7 @@ setup(
         # Web scraping
         'scraping': [
             'beautifulsoup4>=4.12.0',
-            'selenium>=4.15.0',
+            'selenium>=4.15.0,<4.16.0',
             'scrapy>=2.11.0',
             'autoscraper>=1.1.14',
             'cdx-toolkit>=0.9.37',
@@ -424,7 +424,7 @@ setup(
             'striprtf>=0.0.29',
             # Scraping
             'beautifulsoup4>=4.12.0',
-            'selenium>=4.15.0',
+            'selenium>=4.15.0,<4.16.0',
             'scrapy>=2.11.0',
             'autoscraper>=1.1.14',
             'cdx-toolkit>=0.9.37',

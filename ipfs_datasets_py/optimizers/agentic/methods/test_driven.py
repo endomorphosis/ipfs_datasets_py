@@ -5,7 +5,11 @@ while improving performance and code quality.
 """
 
 import ast
+import difflib
 import logging as _logging
+import os
+import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -24,7 +28,7 @@ from ..base import (
     OptimizationTask,
     ValidationResult,
 )
-from ..patch_control import PatchManager
+from ..patch_control import Patch, PatchManager
 
 
 class TestDrivenOptimizer(AgenticOptimizer):
@@ -73,6 +77,18 @@ class TestDrivenOptimizer(AgenticOptimizer):
         """
         super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
+        self.use_temp_worktree = bool((config or {}).get("use_temp_worktree", False))
+        self._meta_request_markers = (
+            "please paste",
+            "paste the current contents",
+            "ag​​ents.md",
+            "agents.md",
+            "i can’t access",
+            "i can't access",
+            "commands fail",
+            "sandbox error",
+            "proceed without agents",
+        )
         
     def _get_method(self) -> OptimizationMethod:
         """Return the optimization method."""
@@ -132,23 +148,22 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 'optimizations_count': len(optimized_code),
             })
             
-            # Step 5: Apply optimizations to temporary location
-            temp_results = self._apply_optimizations(
+            # Step 5: Apply optimizations using the configured patch strategy.
+            apply_results = self._apply_optimizations(
                 task.target_files,
                 optimized_code
             )
             self._log.info("Applied optimizations", extra={
                 'task_id': task.task_id,
-                'optimized_time': temp_results.get('execution_time', 0),
-                'tests_passed_after': temp_results.get('tests_passed', 0),
+                'optimized_time': apply_results.get('execution_time', 0),
+                'tests_passed_after': apply_results.get('tests_passed', 0),
+                'patch_mode': apply_results.get('patch_mode'),
             })
             
             # Step 6: Create patch
-            patch = self.patch_manager.create_patch(
-                agent_id=self.agent_id,
-                task_id=task.task_id,
-                worktree_path=temp_results['worktree'],
-                description=task.description,
+            patch = self._create_patch_from_results(
+                task=task,
+                apply_results=apply_results,
             )
             
             # Save patch
@@ -158,7 +173,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
             
             improvement = self._calculate_improvement(
                 baseline_metrics.get('execution_time', 1),
-                temp_results.get('execution_time', 1)
+                apply_results.get('execution_time', 1)
             )
             
             self._log.info("Optimization completed successfully", extra={
@@ -176,10 +191,10 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 patch_path=patch_path,
                 metrics={
                     'baseline_time': baseline_metrics.get('execution_time', 0),
-                    'optimized_time': temp_results.get('execution_time', 0),
+                    'optimized_time': apply_results.get('execution_time', 0),
                     'improvement_percent': improvement,
-                    'tests_passed': temp_results.get('tests_passed', 0),
-                    'test_coverage': temp_results.get('coverage', 0),
+                    'tests_passed': apply_results.get('tests_passed', 0),
+                    'test_coverage': apply_results.get('coverage', 0),
                 },
                 execution_time=execution_time,
                 agent_id=self.agent_id,
@@ -395,13 +410,18 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     max_tokens=4000,
                     temperature=0.2,
                 )
+                normalized_response = self._normalize_optimized_code_response(
+                    response=response,
+                    file_path=target_file,
+                    current_code=current_code,
+                )
                 
                 self._log.debug("Generated optimization", extra={
                     'file': str(target_file),
-                    'response_length': len(response),
+                    'response_length': len(normalized_response),
                 })
                 
-                optimizations[str(target_file)] = response
+                optimizations[str(target_file)] = normalized_response
             except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
                 self._log.error("Error generating optimization", extra={
                     'file': str(target_file),
@@ -416,27 +436,180 @@ class TestDrivenOptimizer(AgenticOptimizer):
         target_files: List[Path],
         optimizations: Dict[str, str]
     ) -> Dict[str, Any]:
-        """Apply optimizations in temporary location for testing."""
-        # Create temporary worktree
+        """Apply optimizations using direct diffs by default.
+
+        Temp worktrees remain available as an opt-in mode, but the default path
+        avoids spawning extra git worktrees and instead produces a patch from
+        repo-relative file diffs.
+        """
+        if self.use_temp_worktree:
+            return self._apply_optimizations_in_temp_worktree(target_files, optimizations)
+        return self._apply_optimizations_direct(target_files, optimizations)
+
+    def _apply_optimizations_direct(
+        self,
+        target_files: List[Path],
+        optimizations: Dict[str, str]
+    ) -> Dict[str, Any]:
+        repo_root = self._resolve_repo_root(target_files)
+        changes: List[Dict[str, Any]] = []
+
+        for target_file in target_files:
+            if not target_file.exists():
+                continue
+            optimized_content = optimizations.get(str(target_file))
+            if not optimized_content:
+                continue
+
+            base_dir = target_file.parent if target_file.is_absolute() else None
+            safe_path = validate_input_path(str(target_file), must_exist=True, base_dir=base_dir)
+            original_content = Path(safe_path).read_text()
+            if original_content == optimized_content:
+                continue
+
+            relative_path = str(Path(safe_path).resolve().relative_to(repo_root))
+            diff_content = "".join(
+                difflib.unified_diff(
+                    original_content.splitlines(keepends=True),
+                    optimized_content.splitlines(keepends=True),
+                    fromfile=f"a/{relative_path}",
+                    tofile=f"b/{relative_path}",
+                )
+            )
+            if not diff_content:
+                continue
+
+            changes.append(
+                {
+                    "file_path": str(Path(safe_path).resolve()),
+                    "relative_path": relative_path,
+                    "original_content": original_content,
+                    "optimized_content": optimized_content,
+                    "diff_content": diff_content,
+                }
+            )
+
+        test_results = self._run_tests_in_worktree(repo_root)
+        return {
+            "patch_mode": "direct_diff",
+            "repo_root": repo_root,
+            "changes": changes,
+            "execution_time": test_results.get("execution_time", 0),
+            "tests_passed": test_results.get("tests_passed", 0),
+            "coverage": test_results.get("coverage", 0),
+        }
+
+    def _apply_optimizations_in_temp_worktree(
+        self,
+        target_files: List[Path],
+        optimizations: Dict[str, str]
+    ) -> Dict[str, Any]:
+        repo_root = self._resolve_repo_root(target_files)
         temp_dir = Path(tempfile.mkdtemp(prefix="optimizer-"))
-        
-        # Copy and apply optimizations
-        for file_path_str, optimized_content in optimizations.items():
-            target_path = temp_dir / Path(file_path_str).name
-            # Validate output path
+        changes: List[Dict[str, Any]] = []
+
+        for target_file in target_files:
+            if not target_file.exists():
+                continue
+            optimized_content = optimizations.get(str(target_file))
+            if not optimized_content:
+                continue
+
+            resolved_target = target_file.resolve()
+            relative_path = resolved_target.relative_to(repo_root)
+            target_path = temp_dir / relative_path
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(resolved_target, target_path)
+
+            original_content = target_path.read_text()
+            if original_content == optimized_content:
+                continue
+
             base_dir = target_path.parent if target_path.is_absolute() else None
             safe_path = validate_output_path(str(target_path), allow_overwrite=True, base_dir=base_dir)
             Path(safe_path).write_text(optimized_content)
-        
-        # Run tests in temporary location
+
+            diff_content = "".join(
+                difflib.unified_diff(
+                    original_content.splitlines(keepends=True),
+                    optimized_content.splitlines(keepends=True),
+                    fromfile=f"a/{relative_path.as_posix()}",
+                    tofile=f"b/{relative_path.as_posix()}",
+                )
+            )
+            if not diff_content:
+                continue
+
+            changes.append(
+                {
+                    "file_path": str(resolved_target),
+                    "relative_path": relative_path.as_posix(),
+                    "original_content": original_content,
+                    "optimized_content": optimized_content,
+                    "diff_content": diff_content,
+                }
+            )
+
         test_results = self._run_tests_in_worktree(temp_dir)
-        
         return {
-            'worktree': temp_dir,
-            'execution_time': test_results.get('execution_time', 0),
-            'tests_passed': test_results.get('tests_passed', 0),
-            'coverage': test_results.get('coverage', 0),
+            "patch_mode": "temp_worktree",
+            "worktree": temp_dir,
+            "repo_root": repo_root,
+            "changes": changes,
+            "execution_time": test_results.get("execution_time", 0),
+            "tests_passed": test_results.get("tests_passed", 0),
+            "coverage": test_results.get("coverage", 0),
         }
+
+    def _create_patch_from_results(
+        self,
+        task: OptimizationTask,
+        apply_results: Dict[str, Any],
+    ) -> Patch:
+        changes = list(apply_results.get("changes") or [])
+        if not changes:
+            worktree_path = apply_results.get("worktree")
+            if worktree_path:
+                return self.patch_manager.create_patch(
+                    agent_id=self.agent_id,
+                    task_id=task.task_id,
+                    worktree_path=Path(worktree_path),
+                    description=task.description,
+                )
+            raise ValueError(f"No changes found in worktree: {apply_results.get('worktree')}")
+
+        diff_content = "".join(change["diff_content"] for change in changes)
+        return Patch(
+            patch_id=self.patch_manager._generate_patch_id(self.agent_id, task.task_id),
+            agent_id=self.agent_id,
+            task_id=task.task_id,
+            description=task.description,
+            diff_content=diff_content,
+            target_files=[change["relative_path"] for change in changes],
+            worktree_path=str(apply_results.get("worktree") or ""),
+            metadata={
+                "patch_mode": apply_results.get("patch_mode"),
+                "repo_root": str(apply_results.get("repo_root") or ""),
+            },
+        )
+
+    def _resolve_repo_root(self, target_files: List[Path]) -> Path:
+        existing_targets = [path.resolve() for path in target_files if path.exists()]
+        if not existing_targets:
+            raise ValueError("No existing target files provided for optimization")
+
+        probe_dir = existing_targets[0].parent
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=probe_dir,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            repo_root = result.stdout.strip()
+            if repo_root:
+                return Path(repo_root).resolve()
+        return Path(os.path.commonpath([str(path.parent) for path in existing_targets])).resolve()
     
     def _run_tests_in_worktree(self, worktree: Path) -> Dict[str, Any]:
         """Run tests in temporary worktree."""
@@ -559,5 +732,40 @@ Optimization goals:
 Constraints:
 {task.constraints}
 
-Return only the optimized code, no explanations.
+Return only the complete optimized Python file contents.
+Do not ask for more files, more context, AGENTS instructions, shell access, or pasted contents.
+Do not include markdown fences, explanations, apologies, or commentary.
 """
+
+    def _normalize_optimized_code_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+        current_code: str,
+    ) -> str:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty optimization response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:python)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Optimization response for {file_path} requested external context instead of code")
+
+        if len(text.splitlines()) < 3:
+            raise ValueError(f"Optimization response for {file_path} is too short to be a full file replacement")
+
+        try:
+            ast.parse(text)
+        except SyntaxError as exc:
+            raise ValueError(f"Optimization response for {file_path} is not valid Python: {exc}") from exc
+
+        if text.strip() == current_code.strip():
+            raise ValueError(f"Optimization response for {file_path} did not modify the file")
+
+        return text if text.endswith("\n") else f"{text}\n"

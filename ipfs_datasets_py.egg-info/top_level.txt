@@ -1,6 +1,7 @@
 archive
 artifacts
 benchmarks
+bin
 config
 datasets
 deployments

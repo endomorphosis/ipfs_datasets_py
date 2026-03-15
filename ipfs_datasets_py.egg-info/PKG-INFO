@@ -9,6 +9,8 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: numpy<2.0.0,>=1.21.0; python_version < "3.14"
 Requires-Dist: numpy>=2.0.0; python_version >= "3.14"
+Requires-Dist: requests<3.0.0,>=2.25.0
+Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0
 Requires-Dist: ddgs>=9.11.2
 Requires-Dist: google-api-python-client>=2.192.0
 Requires-Dist: cloudscraper>=1.2.71
@@ -25,6 +27,8 @@ Requires-Dist: pytesseract>=0.3.13
 Requires-Dist: striprtf>=0.0.29
 Requires-Dist: tiktoken>=0.6.0
 Requires-Dist: pysbd
+Requires-Dist: markitdown>=0.1.0
+Requires-Dist: python-docx>=1.1.2
 Requires-Dist: surya-ocr>=0.14.6; platform_system != "Windows" and python_version < "3.14"
 Provides-Extra: ipld
 Requires-Dist: libipld>=3.3.2; extra == "ipld"
@@ -40,6 +44,60 @@ Requires-Dist: scipy>=1.7.0; extra == "knowledge-graphs"
 Requires-Dist: matplotlib>=3.5.0; extra == "knowledge-graphs"
 Requires-Dist: plotly>=5.9.0; extra == "knowledge-graphs"
 Requires-Dist: rdflib>=6.0.0; extra == "knowledge-graphs"
+Provides-Extra: file-conversion
+Requires-Dist: markitdown>=0.1.0; extra == "file-conversion"
+Requires-Dist: aiohttp>=3.8.0; extra == "file-conversion"
+Requires-Dist: playwright>=1.40.0; extra == "file-conversion"
+Requires-Dist: striprtf>=0.0.29; extra == "file-conversion"
+Requires-Dist: python-docx>=1.1.2; extra == "file-conversion"
+Provides-Extra: vectors
+Requires-Dist: sentence-transformers<6.0.0,>=3.0.0; extra == "vectors"
+Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "vectors"
+Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "vectors"
+Requires-Dist: scikit-learn<2.0.0,>=1.3.0; extra == "vectors"
+Requires-Dist: qdrant-client>=1.0.0; extra == "vectors"
+Requires-Dist: elasticsearch>=8.0.0; extra == "vectors"
+Provides-Extra: scraping
+Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0; extra == "scraping"
+Requires-Dist: selenium<4.16.0,>=4.15.0; extra == "scraping"
+Requires-Dist: scrapy>=2.11.0; extra == "scraping"
+Requires-Dist: autoscraper>=1.1.14; extra == "scraping"
+Requires-Dist: cdx-toolkit>=0.9.37; extra == "scraping"
+Requires-Dist: wayback>=0.4.5; extra == "scraping"
+Requires-Dist: internetarchive>=5.5.0; extra == "scraping"
+Requires-Dist: aiohttp>=3.8.0; extra == "scraping"
+Provides-Extra: test
+Requires-Dist: pytest>=7.3.1; extra == "test"
+Requires-Dist: pytest-cov>=4.1.0; extra == "test"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "test"
+Requires-Dist: pytest-timeout>=2.0.2; extra == "test"
+Requires-Dist: pytest-xdist>=3.8.0; extra == "test"
+Requires-Dist: pytest-parallel>=0.1.1; extra == "test"
+Requires-Dist: pytest-benchmark>=4.0.0; extra == "test"
+Requires-Dist: pytest-mock>=3.12.0; extra == "test"
+Requires-Dist: hypothesis>=6.0.0; extra == "test"
+Provides-Extra: all
+Requires-Dist: spacy>=3.0.0; extra == "all"
+Requires-Dist: networkx>=2.8.0; extra == "all"
+Requires-Dist: transformers>=4.30.0; extra == "all"
+Requires-Dist: scipy>=1.7.0; extra == "all"
+Requires-Dist: matplotlib>=3.5.0; extra == "all"
+Requires-Dist: plotly>=5.9.0; extra == "all"
+Requires-Dist: rdflib>=6.0.0; extra == "all"
+Requires-Dist: aiohttp>=3.8.0; extra == "all"
+Requires-Dist: python-docx>=1.1.2; extra == "all"
+Requires-Dist: sentence-transformers<6.0.0,>=3.0.0; extra == "all"
+Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "all"
+Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "all"
+Requires-Dist: scikit-learn<2.0.0,>=1.3.0; extra == "all"
+Requires-Dist: qdrant-client>=1.0.0; extra == "all"
+Requires-Dist: elasticsearch>=8.0.0; extra == "all"
+Requires-Dist: selenium<4.16.0,>=4.15.0; extra == "all"
+Requires-Dist: scrapy>=2.11.0; extra == "all"
+Requires-Dist: autoscraper>=1.1.14; extra == "all"
+Requires-Dist: cdx-toolkit>=0.9.37; extra == "all"
+Requires-Dist: wayback>=0.4.5; extra == "all"
+Requires-Dist: internetarchive>=5.5.0; extra == "all"
 Dynamic: author
 Dynamic: license-file
 Dynamic: requires-python
