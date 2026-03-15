@@ -412,6 +412,38 @@ def test_wayback_iframe_replay_url_transforms_html_replay_pages() -> None:
     assert _wayback_iframe_replay_url(
         "https://web.archive.org/web/20250308091642if_/https://gc.nh.gov/rules/state_agencies/he-p300.html"
     ) == "https://web.archive.org/web/20250308091642if_/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    assert scraper_module._wayback_replay_timestamp(
+        "https://web.archive.org/web/20250308091642if_/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    ) == "20250308091642"
+
+
+@pytest.mark.asyncio
+async def test_scrape_new_hampshire_archived_rule_detail_uses_exact_wayback_capture_first(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archived_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    from ipfs_datasets_py.processors.web_archiving import wayback_machine_engine
+
+    async def _fake_get_wayback_content(url: str, timestamp: str, closest: bool = True):
+        assert url == "https://gc.nh.gov/rules/state_agencies/he-p300.html"
+        assert timestamp == "20250308091642"
+        return {
+            "status": "success",
+            "content": b"<html><head><title>He-P 300</title></head><body><p>Chapter He-P 300 Communicable Diseases</p><p>Statutory Authority: RSA 141-C.</p></body></html>",
+            "wayback_url": archived_url,
+            "capture_timestamp": timestamp,
+        }
+
+    monkeypatch.setattr(wayback_machine_engine, "get_wayback_content", _fake_get_wayback_content)
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("direct requests should not be used")))
+    monkeypatch.setattr(scraper_module, "_fetch_html_bypassing_challenge", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("fallback fetch should not be used")))
+
+    scraped = await scraper_module._scrape_new_hampshire_archived_rule_detail(archived_url)
+
+    assert scraped is not None
+    assert scraped.extraction_provenance["source"] == "wayback_engine"
+    assert scraped.extraction_provenance["capture_timestamp"] == "20250308091642"
+    assert "Statutory Authority" in scraped.text
 
 
 @pytest.mark.asyncio
@@ -420,6 +452,7 @@ async def test_scrape_new_hampshire_archived_rule_detail_prefers_archived_waybac
 ) -> None:
     archived_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html"
     observed_urls: list[str] = []
+    from ipfs_datasets_py.processors.web_archiving import wayback_machine_engine
 
     async def _fake_fetch_html_bypassing_challenge(url: str):
         observed_urls.append(url)
@@ -429,6 +462,7 @@ async def test_scrape_new_hampshire_archived_rule_detail_prefers_archived_waybac
             "source": "wayback_machine",
         }
 
+    monkeypatch.setattr(wayback_machine_engine, "get_wayback_content", lambda *args, **kwargs: {"status": "error"})
     monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("direct requests should not be used")))
     monkeypatch.setattr(scraper_module, "_fetch_html_bypassing_challenge", _fake_fetch_html_bypassing_challenge)
 
@@ -449,6 +483,7 @@ async def test_scrape_new_hampshire_archived_rule_detail_skips_wayback_shell(
     archived_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html"
     original_url = "https://gc.nh.gov/rules/state_agencies/he-p300.html"
     observed_urls: list[str] = []
+    from ipfs_datasets_py.processors.web_archiving import wayback_machine_engine
 
     async def _fake_fetch_html_bypassing_challenge(url: str):
         observed_urls.append(url)
@@ -466,6 +501,7 @@ async def test_scrape_new_hampshire_archived_rule_detail_skips_wayback_shell(
             }
         return None
 
+    monkeypatch.setattr(wayback_machine_engine, "get_wayback_content", lambda *args, **kwargs: {"status": "error"})
     monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("direct requests should not be used")))
     monkeypatch.setattr(scraper_module, "_fetch_html_bypassing_challenge", _fake_fetch_html_bypassing_challenge)
 

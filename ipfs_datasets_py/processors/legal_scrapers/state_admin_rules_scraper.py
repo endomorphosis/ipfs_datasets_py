@@ -1609,6 +1609,14 @@ def _wayback_replay_original_url(url: str) -> str:
     return str(match.group(1) or "").strip()
 
 
+def _wayback_replay_timestamp(url: str) -> str:
+    value = str(url or "").strip()
+    match = re.match(r"^https?://web\.archive\.org/web/(\d{14})(?:if_|id_)?/https?://", value, re.IGNORECASE)
+    if not match:
+        return ""
+    return str(match.group(1) or "").strip()
+
+
 def _score_candidate_url(url: str) -> int:
     value = str(url or "").lower()
     score = 0
@@ -4941,6 +4949,7 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
         return None
 
     original_url = _wayback_replay_original_url(archived_url)
+    replay_timestamp = _wayback_replay_timestamp(archived_url)
     fetch_candidates: List[str] = []
     fetch_candidates.append(archived_url)
     if original_url:
@@ -4950,6 +4959,52 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
         fetch_candidates.append(iframe_url)
 
     headers = {"User-Agent": "Mozilla/5.0"}
+
+    if original_url and replay_timestamp:
+        try:
+            from ipfs_datasets_py.processors.web_archiving import wayback_machine_engine
+        except Exception:
+            wayback_machine_engine = None
+
+        if wayback_machine_engine is not None:
+            try:
+                content_result = await wayback_machine_engine.get_wayback_content(
+                    url=original_url,
+                    timestamp=replay_timestamp,
+                    closest=True,
+                )
+            except Exception:
+                content_result = {"status": "error"}
+
+            if isinstance(content_result, dict) and content_result.get("status") == "success":
+                content = content_result.get("content", b"")
+                if isinstance(content, bytes):
+                    html = content.decode("utf-8", errors="replace")
+                else:
+                    html = str(content or "")
+                if html.strip():
+                    soup = BeautifulSoup(html, "html.parser")
+                    title = ""
+                    if soup.title is not None:
+                        title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
+                    text = soup.get_text(" ", strip=True)
+                    if text.strip() and not _looks_like_wayback_shell_page(title=title, text=text):
+                        return SimpleNamespace(
+                            url=archived_url,
+                            title=title,
+                            text=text,
+                            html=html,
+                            links=[],
+                            success=True,
+                            method_used="new_hampshire_wayback_replay",
+                            extraction_provenance={
+                                "method": "new_hampshire_wayback_replay",
+                                "source": "wayback_engine",
+                                "fetch_url": str(content_result.get("wayback_url") or original_url),
+                                "original_url": original_url or archived_url,
+                                "capture_timestamp": str(content_result.get("capture_timestamp") or replay_timestamp),
+                            },
+                        )
 
     for fetch_url in fetch_candidates:
         for attempt in range(2):
@@ -4986,6 +5041,7 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
                                 "source": "requests",
                                 "fetch_url": fetch_url,
                                 "original_url": original_url or archived_url,
+                                "capture_timestamp": replay_timestamp,
                             },
                         )
             if attempt == 0:
@@ -5018,6 +5074,7 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
                 "source": str(fetched.get("source") or ""),
                 "fetch_url": fetch_url,
                 "original_url": original_url or archived_url,
+                "capture_timestamp": replay_timestamp,
             },
         )
 
