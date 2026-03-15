@@ -20,6 +20,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
     _candidate_massachusetts_cmr_urls_from_html,
     _candidate_montana_rule_urls_from_text,
     _candidate_utah_rule_urls_from_public_api,
+    _discover_new_hampshire_archived_rule_document_urls,
     _is_admin_rule_statute,
     _is_direct_detail_candidate_url,
     _is_relaxed_recovery_text,
@@ -27,6 +28,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
     _is_substantive_admin_statute,
     _normalize_admin_rule_payloads,
     _score_candidate_url,
+    _wayback_iframe_replay_url,
     _url_allowed_for_state,
     scrape_state_admin_rules,
 )
@@ -335,13 +337,16 @@ def test_is_direct_detail_candidate_url_recognizes_alabama_admin_code_detail_pag
 
 def test_is_direct_detail_candidate_url_recognizes_new_hampshire_archived_rule_chapters() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html"
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html"
     ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html"
+    ) is False
     assert scraper_module._is_direct_detail_candidate_url(
         "https://www.gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html"
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
     ) is False
 
 
@@ -349,7 +354,7 @@ def test_new_hampshire_admin_seed_urls_exclude_live_root_pages() -> None:
     nh_urls = scraper_module._extract_seed_urls_for_state("NH", "New Hampshire")
     allowed_hosts = _allowed_discovery_hosts_for_state("NH", "New Hampshire")
 
-    assert "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html" in nh_urls
+    assert "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html" in nh_urls
     assert "https://gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html" in nh_urls
     assert "https://gc.nh.gov/rules/state_agencies/" not in nh_urls
     assert "https://gc.nh.gov/rules/" not in nh_urls
@@ -370,14 +375,106 @@ def test_new_hampshire_archived_rules_root_is_inventory_page() -> None:
     assert scraper_module._looks_like_rule_inventory_page(
         text=text,
         title="Administrative Rules",
-        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+        url="https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
     ) is True
     assert _is_substantive_rule_text(
         text=text,
         title="Administrative Rules",
-        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+        url="https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
         min_chars=160,
     ) is False
+
+
+def test_new_hampshire_archived_agency_toc_is_inventory_page() -> None:
+    text = (
+        "TABLE OF CONTENTS CHAPTER Agr 100 ORGANIZATIONAL RULES PART Agr 101 PURPOSE "
+        "CHAPTER Agr 200 AGRICULTURAL COMMODITIES CHAPTER Agr 300 ANIMAL INDUSTRY "
+        "CHAPTER Agr 400 PEST CONTROL AND PLANT INDUSTRY"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="TABLE OF CONTENTS",
+        url="https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html",
+    ) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="TABLE OF CONTENTS",
+        url="https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html",
+        min_chars=160,
+    ) is False
+
+
+def test_wayback_iframe_replay_url_transforms_html_replay_pages() -> None:
+    assert _wayback_iframe_replay_url(
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    ) == "https://web.archive.org/web/20250308091642if_/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    assert _wayback_iframe_replay_url(
+        "https://web.archive.org/web/20250308091642if_/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    ) == "https://web.archive.org/web/20250308091642if_/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+
+
+@pytest.mark.asyncio
+async def test_scrape_new_hampshire_archived_rule_detail_prefers_archived_wayback_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archived_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    observed_urls: list[str] = []
+
+    async def _fake_fetch_html_bypassing_challenge(url: str):
+        observed_urls.append(url)
+        return {
+            "text": "Chapter He-P 300 Communicable Diseases Statutory Authority: RSA 141-C. Source. #6039, eff 7-1-95.",
+            "html": "<html><head><title>He-P 300</title></head><body><p>Chapter He-P 300 Communicable Diseases</p></body></html>",
+            "source": "wayback_machine",
+        }
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("direct requests should not be used")))
+    monkeypatch.setattr(scraper_module, "_fetch_html_bypassing_challenge", _fake_fetch_html_bypassing_challenge)
+
+    scraped = await scraper_module._scrape_new_hampshire_archived_rule_detail(archived_url)
+
+    assert observed_urls == [archived_url]
+    assert scraped is not None
+    assert scraped.url == archived_url
+    assert scraped.method_used == "new_hampshire_wayback_replay"
+    assert scraped.extraction_provenance["fetch_url"] == archived_url
+    assert "Statutory Authority" in scraped.text
+
+
+@pytest.mark.asyncio
+async def test_scrape_new_hampshire_archived_rule_detail_skips_wayback_shell(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archived_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    original_url = "https://gc.nh.gov/rules/state_agencies/he-p300.html"
+    observed_urls: list[str] = []
+
+    async def _fake_fetch_html_bypassing_challenge(url: str):
+        observed_urls.append(url)
+        if url == archived_url:
+            return {
+                "text": "Wayback Machine Ask the publishers to restore access to 500,000+ books. Internet Archive logo.",
+                "html": "<html><head><title>Wayback Machine</title></head><body>Ask the publishers Internet Archive</body></html>",
+                "source": "common_crawl",
+            }
+        if url == original_url:
+            return {
+                "text": "Chapter He-P 300 Communicable Diseases Statutory Authority: RSA 141-C. Source. #6039, eff 7-1-95.",
+                "html": "<html><head><title>He-P 300</title></head><body><p>Chapter He-P 300 Communicable Diseases</p></body></html>",
+                "source": "wayback_machine",
+            }
+        return None
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("direct requests should not be used")))
+    monkeypatch.setattr(scraper_module, "_fetch_html_bypassing_challenge", _fake_fetch_html_bypassing_challenge)
+
+    scraped = await scraper_module._scrape_new_hampshire_archived_rule_detail(archived_url)
+
+    assert observed_urls == [archived_url, original_url]
+    assert scraped is not None
+    assert scraped.extraction_provenance["fetch_url"] == original_url
+    assert "Statutory Authority" in scraped.text
 
 
 def test_new_hampshire_archived_checkrule_page_is_not_substantive_rule_text() -> None:
@@ -390,14 +487,71 @@ def test_new_hampshire_archived_checkrule_page_is_not_substantive_rule_text() ->
     assert _is_substantive_rule_text(
         text=text,
         title="How To Double-Check the Online Rule",
-        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
+        url="https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
         min_chars=160,
     ) is False
     assert _is_relaxed_recovery_text(
         text=text,
         title="How To Double-Check the Online Rule",
-        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
+        url="https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
     ) is False
+
+
+@pytest.mark.anyio
+async def test_discover_new_hampshire_archived_rule_document_urls_from_listagencies(monkeypatch: pytest.MonkeyPatch) -> None:
+    seed_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+    listagencies_html = """
+    <html>
+      <body>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html">Agr</a>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/env-wq300.html">Env-Wq 300</a>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/about_rules/checkrule.aspx">Check Rule</a>
+      </body>
+    </html>
+    """
+    agr_toc_html = """
+    <html>
+      <body>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr100.html">Agr 100</a>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr200.html">Agr 200</a>
+      </body>
+    </html>
+    """
+
+    class _FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def _fake_get(url: str, *args, **kwargs):
+        if url in {
+            seed_url,
+            scraper_module._wayback_iframe_replay_url(seed_url),
+        }:
+            return _FakeResponse(listagencies_html)
+        agr_url = "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html"
+        if url in {
+            agr_url,
+            scraper_module._wayback_iframe_replay_url(agr_url),
+        }:
+            return _FakeResponse(agr_toc_html)
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    urls = await _discover_new_hampshire_archived_rule_document_urls(
+        seed_urls=[seed_url],
+        allowed_hosts=_allowed_discovery_hosts_for_state("NH", "New Hampshire"),
+        limit=4,
+    )
+
+    assert urls == [
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/env-wq300.html",
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr100.html",
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr200.html",
+    ]
 
 
 def test_is_direct_detail_candidate_url_recognizes_vermont_rule_display_pages() -> None:
@@ -3991,7 +4145,7 @@ def test_accepts_new_hampshire_archived_rule_chapter() -> None:
     statute = {
         "code_name": "New Hampshire Administrative Rules (Agentic Discovery)",
         "section_name": "Agr 500",
-        "source_url": "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr500.html",
+        "source_url": "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr500.html",
         "full_text": (
             "CHAPTER Agr 500 WEEKLY MARKET BULLETIN Statutory Authority: RSA 425:21-a, RSA 541-A:16, I(b). "
             "PART Agr 501 WEEKLY MARKET BULLETIN PURPOSE AND DEFINITIONS. Source. #6039, eff 7-1-95."
@@ -4024,7 +4178,7 @@ def test_accepts_new_hampshire_archived_rule_chapter_as_substantive_rule_text() 
     assert _is_substantive_rule_text(
         text=text,
         title="He-P 300 Communic. Diseas",
-        url="http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html",
+        url="https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html",
         min_chars=220,
     ) is True
 
@@ -4874,10 +5028,10 @@ def test_score_candidate_url_prioritizes_alabama_admin_code_detail_pages() -> No
 
 def test_score_candidate_url_prioritizes_new_hampshire_archived_rule_chapters() -> None:
     archived_detail_score = scraper_module._score_candidate_url(
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html"
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html"
     )
     archived_inventory_score = scraper_module._score_candidate_url(
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
     )
     live_template_score = scraper_module._score_candidate_url(
         "https://legislature.nh.gov/regulations"

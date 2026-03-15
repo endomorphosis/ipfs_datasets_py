@@ -792,16 +792,16 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ms.gov/adminsearch/",
     ],
     "NH": [
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr200.html",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/env-wq300.html",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/env-wq400.html",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/rev100.html",
-        "http://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/saf-c200.html",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr200.html",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/env-wq300.html",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/env-wq400.html",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/rev100.html",
+        "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/saf-c200.html",
         "https://gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html",
     ],
     "NM": [
@@ -1548,6 +1548,67 @@ def _is_non_admin_seed_url(url: str) -> bool:
     return False
 
 
+def _new_hampshire_archived_rule_slug(url: str) -> str:
+    value = str(url or "").strip()
+    if not _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(value):
+        return ""
+    parsed = urlparse(value)
+    filename = Path(unquote(parsed.path or "")).name
+    if not filename.lower().endswith(".html"):
+        return ""
+    return filename[:-5].strip().lower()
+
+
+def _is_new_hampshire_archived_rule_leaf_url(url: str) -> bool:
+    slug = _new_hampshire_archived_rule_slug(url)
+    return bool(slug and re.search(r"\d", slug))
+
+
+def _looks_like_new_hampshire_archived_rule_inventory(*, text: str, title: str, url: str) -> bool:
+    if not _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
+        return False
+    if _is_new_hampshire_archived_rule_leaf_url(url):
+        return False
+    if not str(text or "").strip() and not str(title or "").strip():
+        return True
+    hay = " ".join([str(title or ""), str(text or "")]).lower()
+    chapter_hits = len(re.findall(r"\bchapter\s+[A-Za-z-]+\s*\d{3}\b", hay, re.IGNORECASE))
+    return "table of contents" in hay or chapter_hits >= 3
+
+
+def _normalize_new_hampshire_archived_wayback_url(url: str) -> str:
+    value = str(url or "").strip()
+    if value.startswith("http://web.archive.org/"):
+        return "https://" + value[len("http://") :]
+    return value
+
+
+def _wayback_iframe_replay_url(url: str) -> str:
+    value = str(url or "").strip()
+    if not value or "web.archive.org/web/" not in value:
+        return ""
+    if "/if_/" in value or re.search(r"/web/\d+if_/https?://", value, re.IGNORECASE):
+        return value
+    return re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", value, count=1)
+
+
+def _looks_like_wayback_shell_page(*, title: str, text: str) -> bool:
+    hay = " ".join([str(title or ""), str(text or "")]).lower()
+    return (
+        "wayback machine" in hay
+        and "internet archive" in hay
+        and "ask the publishers" in hay
+    )
+
+
+def _wayback_replay_original_url(url: str) -> str:
+    value = str(url or "").strip()
+    match = re.match(r"^https?://web\.archive\.org/web/\d+(?:if_|id_)?/(https?://.+)$", value, re.IGNORECASE)
+    if not match:
+        return ""
+    return str(match.group(1) or "").strip()
+
+
 def _score_candidate_url(url: str) -> int:
     value = str(url or "").lower()
     score = 0
@@ -1725,8 +1786,10 @@ def _score_candidate_url(url: str) -> int:
         score -= 10
     if host in {"www.alabamaadministrativecode.state.al.us", "alabamaadministrativecode.state.al.us"} and normalized_path.lower() == "/":
         score -= 3
-    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
+    if _is_new_hampshire_archived_rule_leaf_url(url):
         score += 12
+    elif _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
+        score += 6
     if host == "web.archive.org" and "gc.nh.gov/rules/about_rules/listagencies.aspx" in value:
         score += 8
     if host == "web.archive.org" and value.rstrip("/").endswith("https://gc.nh.gov/rules"):
@@ -2103,7 +2166,7 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     normalized_path = path.rstrip("/") or "/"
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
         return bool(_AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url)))
-    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(str(url or "").strip()):
+    if _is_new_hampshire_archived_rule_leaf_url(url):
         return True
     if host in {"gencourt.state.nh.us", "www.gencourt.state.nh.us"} and re.search(
         r"^/rules/state_agencies/[\w.-]+\.html$",
@@ -2325,7 +2388,10 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
             if _RULE_BODY_SIGNAL_RE.search(tx_hay) and _LEGAL_CONTENT_SIGNAL_RE.search(tx_hay):
                 return True
 
-    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(url_value):
+    if _looks_like_new_hampshire_archived_rule_inventory(text=body, title=title_value, url=url_value):
+        return False
+
+    if _is_new_hampshire_archived_rule_leaf_url(url_value):
         nh_hay = " ".join([title_value, body])
         if _NH_ARCHIVED_RULE_CHAPTER_TEXT_RE.search(nh_hay):
             return True
@@ -2895,7 +2961,9 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     }:
         if _TN_SOS_SERVICE_PAGE_TEXT_RE.search(hay):
             return True
-    if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(url_value):
+    if _looks_like_new_hampshire_archived_rule_inventory(text=body, title=title_value, url=url_value):
+        return True
+    if _is_new_hampshire_archived_rule_leaf_url(url_value):
         return False
     if host == "web.archive.org" and "gc.nh.gov/rules" in url_value.lower() and (
         "rules listed by state agency" in hay.lower() or nh_prefix_hits >= 12
@@ -4778,6 +4846,182 @@ async def _discover_alaska_rule_document_urls(*, seed_urls: List[str], limit: in
         return results
 
     return await asyncio.to_thread(_run)
+
+
+async def _discover_new_hampshire_archived_rule_document_urls(
+    *,
+    seed_urls: List[str],
+    allowed_hosts: Optional[set[str]] = None,
+    limit: int = 8,
+) -> List[str]:
+    frontier = [
+        _normalize_new_hampshire_archived_wayback_url(url)
+        for url in seed_urls
+        if "gc.nh.gov/rules/about_rules/listagencies.aspx" in str(url or "").strip().lower()
+    ]
+    if not frontier:
+        return []
+
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        document_urls: List[str] = []
+        seen_document_urls: set[str] = set()
+        seen_pages: set[str] = set()
+        pending_pages: List[str] = list(frontier[:2])
+
+        def _fetch_html(page_url: str) -> str:
+            last_exc: Optional[Exception] = None
+            fetch_urls = []
+            iframe_url = _wayback_iframe_replay_url(page_url)
+            fetch_urls.append(page_url)
+            if iframe_url and iframe_url != page_url:
+                fetch_urls.append(iframe_url)
+            for fetch_url in fetch_urls:
+                for attempt in range(3):
+                    try:
+                        response = requests.get(fetch_url, timeout=25, headers=headers)
+                        response.raise_for_status()
+                        return str(response.text or "")
+                    except Exception as exc:
+                        last_exc = exc
+                        if attempt < 2:
+                            time.sleep(0.5 * (attempt + 1))
+            if last_exc is not None:
+                raise last_exc
+            return ""
+
+        def _record_document_url(link_url: str) -> bool:
+            link_url = _normalize_new_hampshire_archived_wayback_url(link_url)
+            if not _is_new_hampshire_archived_rule_leaf_url(link_url):
+                return False
+            link_key = _url_key(link_url)
+            if not link_key or link_key in seen_document_urls:
+                return False
+            seen_document_urls.add(link_key)
+            document_urls.append(link_url)
+            return len(document_urls) >= limit_n
+
+        while pending_pages and len(document_urls) < limit_n:
+            page_url = pending_pages.pop(0)
+            page_key = _url_key(page_url)
+            if not page_key or page_key in seen_pages:
+                continue
+            seen_pages.add(page_key)
+            try:
+                html = _fetch_html(page_url)
+            except Exception:
+                continue
+            if not html:
+                continue
+            page_host = urlparse(str(page_url or "").strip()).netloc
+            for link_url in _candidate_links_from_html(
+                html,
+                base_host=page_host,
+                page_url=page_url,
+                limit=max(limit_n * 8, 48),
+                allowed_hosts=allowed_hosts,
+            ):
+                link_url = _normalize_new_hampshire_archived_wayback_url(link_url)
+                if _record_document_url(link_url):
+                    return document_urls
+                if _looks_like_new_hampshire_archived_rule_inventory(text="", title="", url=link_url):
+                    link_page_key = _url_key(link_url)
+                    if link_page_key and link_page_key not in seen_pages and link_url not in pending_pages:
+                        pending_pages.append(link_url)
+        return document_urls
+
+    return await asyncio.to_thread(_run)
+
+
+async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
+    archived_url = _normalize_new_hampshire_archived_wayback_url(url)
+    if not _is_new_hampshire_archived_rule_leaf_url(archived_url):
+        return None
+
+    original_url = _wayback_replay_original_url(archived_url)
+    fetch_candidates: List[str] = []
+    fetch_candidates.append(archived_url)
+    if original_url:
+        fetch_candidates.append(original_url)
+    iframe_url = _wayback_iframe_replay_url(archived_url)
+    if iframe_url and iframe_url not in fetch_candidates and iframe_url != archived_url:
+        fetch_candidates.append(iframe_url)
+
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    for fetch_url in fetch_candidates:
+        for attempt in range(2):
+            try:
+                response = requests.get(fetch_url, timeout=25, headers=headers)
+                response.raise_for_status()
+            except Exception:
+                response = None
+            if response is not None:
+                html = str(response.text or "")
+                content_type = str(response.headers.get("content-type") or "")
+                head = html[:1024]
+                if html.strip() and not _looks_like_browser_challenge(
+                    status_code=int(response.status_code or 200),
+                    content_type=content_type,
+                    head=head,
+                ):
+                    soup = BeautifulSoup(html, "html.parser")
+                    title = ""
+                    if soup.title is not None:
+                        title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
+                    text = soup.get_text(" ", strip=True)
+                    if text.strip() and not _looks_like_wayback_shell_page(title=title, text=text):
+                        return SimpleNamespace(
+                            url=archived_url,
+                            title=title,
+                            text=text,
+                            html=html,
+                            links=[],
+                            success=True,
+                            method_used="new_hampshire_wayback_replay",
+                            extraction_provenance={
+                                "method": "new_hampshire_wayback_replay",
+                                "source": "requests",
+                                "fetch_url": fetch_url,
+                                "original_url": original_url or archived_url,
+                            },
+                        )
+            if attempt == 0:
+                await asyncio.sleep(0.5)
+
+        fetched = await _fetch_html_bypassing_challenge(fetch_url)
+        if fetched is None:
+            continue
+        text = str(fetched.get("text") or "").strip()
+        html = str(fetched.get("html") or "")
+        if not text and not html:
+            continue
+        title = ""
+        if html:
+            soup = BeautifulSoup(html, "html.parser")
+            if soup.title is not None:
+                title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
+        if _looks_like_wayback_shell_page(title=title, text=text):
+            continue
+        return SimpleNamespace(
+            url=archived_url,
+            title=title,
+            text=text,
+            html=html,
+            links=[],
+            success=True,
+            method_used="new_hampshire_wayback_replay",
+            extraction_provenance={
+                "method": "new_hampshire_wayback_replay",
+                "source": str(fetched.get("source") or ""),
+                "fetch_url": fetch_url,
+                "original_url": original_url or archived_url,
+            },
+        )
+
+    return None
 
 
 async def _scrape_alabama_rule_detail_via_api(url: str) -> Optional[Any]:
@@ -7772,6 +8016,7 @@ async def _agentic_discover_admin_state_blocks(
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
         california_bootstrap_document_urls: List[str] = []
+        new_hampshire_bootstrap_document_urls: List[str] = []
         if state_code == "CA" and not seeded_direct_detail_urls:
             california_bootstrap_document_urls = await _discover_california_westlaw_document_urls(
                 seed_urls=ordered_seed_urls,
@@ -7786,6 +8031,24 @@ async def _agentic_discover_admin_state_blocks(
             if california_bootstrap_document_urls:
                 source_breakdown["california_westlaw_document_bootstrap"] = len(california_bootstrap_document_urls)
 
+        if state_code == "NH":
+            nh_seed_limit = min(max(1, int(max_fetch_per_state)) * 4, 24)
+            try:
+                new_hampshire_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_new_hampshire_archived_rule_document_urls(
+                        seed_urls=ordered_seed_urls,
+                        allowed_hosts=allowed_hosts,
+                        limit=nh_seed_limit,
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                new_hampshire_bootstrap_document_urls = []
+            for document_url in new_hampshire_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if new_hampshire_bootstrap_document_urls:
+                source_breakdown["new_hampshire_archive_bootstrap"] = len(new_hampshire_bootstrap_document_urls)
+
         direct_detail_ready = bool(
             utah_api_rule_urls
             or arkansas_bootstrap_document_urls
@@ -7793,6 +8056,7 @@ async def _agentic_discover_admin_state_blocks(
             or oklahoma_bootstrap_document_urls
             or seeded_direct_detail_urls
             or california_bootstrap_document_urls
+            or new_hampshire_bootstrap_document_urls
         ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
             max_fetch=max_fetch_per_state,
@@ -8281,43 +8545,49 @@ async def _agentic_discover_admin_state_blocks(
             if remaining_prefetch_budget_s <= 1.0:
                 break
             direct_scraped = None
-            lower_document_url = str(document_url or "").lower()
+            fetch_document_url = str(document_url or "").strip()
+            lower_document_url = fetch_document_url.lower()
             direct_timeout_s = max(1.0, min(25.0, remaining_prefetch_budget_s))
             inspected_urls += 1
             try:
                 if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
                     direct_scraped = await asyncio.wait_for(
-                        _scrape_pdf_candidate_url_with_processor(document_url),
+                        _scrape_pdf_candidate_url_with_processor(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif lower_document_url.endswith(".rtf") or ".rtf?" in lower_document_url:
                     direct_scraped = await asyncio.wait_for(
-                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        _scrape_rtf_candidate_url_with_processor(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "AL":
                     direct_scraped = await asyncio.wait_for(
-                        _scrape_alabama_rule_detail_via_api(document_url),
+                        _scrape_alabama_rule_detail_via_api(fetch_document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "NH":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_new_hampshire_archived_rule_detail(document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "MT":
                     direct_scraped = await asyncio.wait_for(
-                        _scrape_montana_rule_detail_via_api(document_url),
+                        _scrape_montana_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "SD":
                     direct_scraped = await asyncio.wait_for(
-                        _scrape_south_dakota_rule_detail_via_api(document_url),
+                        _scrape_south_dakota_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "OK":
                     direct_scraped = await asyncio.wait_for(
-                        _scrape_oklahoma_rule_detail_via_api(document_url),
+                        _scrape_oklahoma_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 else:
                     direct_scraped = await asyncio.wait_for(
-                        live_scraper.scrape(document_url),
+                        live_scraper.scrape(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
             except Exception:
@@ -8326,14 +8596,14 @@ async def _agentic_discover_admin_state_blocks(
                 remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
                 if remaining_prefetch_budget_s <= 1.0:
                     break
-                document_host = urlparse(document_url).netloc
-                fetch_api = live_fetch_api if _prefers_live_fetch(document_url) else direct_fetch_api
+                document_host = urlparse(fetch_document_url).netloc
+                fetch_api = live_fetch_api if _prefers_live_fetch(fetch_document_url) else direct_fetch_api
                 try:
                     fetched = await asyncio.wait_for(
                         asyncio.to_thread(
                             fetch_api.fetch,
                             UnifiedFetchRequest(
-                                url=document_url,
+                                url=fetch_document_url,
                                 timeout_seconds=35,
                                 mode=OperationMode.BALANCED,
                                 domain=".gov" if document_host.endswith(".gov") else "legal",
@@ -8866,28 +9136,34 @@ async def _agentic_discover_admin_state_blocks(
             if remaining_prefetch_budget_s <= 1.0:
                 break
             expanded_scraped = None
-            lower_document_url = str(document_url or "").lower()
+            fetch_document_url = str(document_url or "").strip()
+            lower_document_url = fetch_document_url.lower()
             direct_timeout_s = max(1.0, min(12.0, remaining_prefetch_budget_s))
             inspected_urls += 1
             try:
                 if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
                     expanded_scraped = await asyncio.wait_for(
-                        _scrape_pdf_candidate_url_with_processor(document_url),
+                        _scrape_pdf_candidate_url_with_processor(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif lower_document_url.endswith(".rtf") or ".rtf?" in lower_document_url:
                     expanded_scraped = await asyncio.wait_for(
-                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        _scrape_rtf_candidate_url_with_processor(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "AL":
                     expanded_scraped = await asyncio.wait_for(
-                        _scrape_alabama_rule_detail_via_api(document_url),
+                        _scrape_alabama_rule_detail_via_api(fetch_document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "NH":
+                    expanded_scraped = await asyncio.wait_for(
+                        _scrape_new_hampshire_archived_rule_detail(document_url),
                         timeout=direct_timeout_s,
                     )
                 else:
                     expanded_scraped = await asyncio.wait_for(
-                        live_scraper.scrape(document_url),
+                        live_scraper.scrape(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
             except Exception:
@@ -9025,6 +9301,9 @@ async def _agentic_discover_admin_state_blocks(
             south_dakota_scraped = await _scrape_south_dakota_rule_detail_via_api(url)
             if south_dakota_scraped is not None:
                 return south_dakota_scraped
+            new_hampshire_scraped = await _scrape_new_hampshire_archived_rule_detail(url)
+            if new_hampshire_scraped is not None:
+                return new_hampshire_scraped
             wyoming_scraped = await _scrape_wyoming_rule_detail_via_ajax(url)
             if wyoming_scraped is not None:
                 return wyoming_scraped
@@ -9043,9 +9322,10 @@ async def _agentic_discover_admin_state_blocks(
             rtf_scraped = await _scrape_rtf_candidate_url_with_processor(url)
             if rtf_scraped is not None:
                 return rtf_scraped
-            host = urlparse(url).netloc
+            scrape_url = str(url or "").strip()
+            host = urlparse(scrape_url).netloc
             active_scraper = live_scraper if (_url_key(url) in prioritized_seed_keys or host in base_hosts) else scraper
-            scraped = await active_scraper.scrape(url)
+            scraped = await active_scraper.scrape(scrape_url)
             # When the scraper receives a browser challenge page (e.g. Cloudflare), escalate
             # through cloudscraper → cfscrape → Wayback Machine → Common Crawl.
             scraped_text = str(getattr(scraped, "text", "") or "").strip()
