@@ -544,7 +544,7 @@ def _prefers_live_fetch(url: str) -> bool:
     return False
 
 _NH_ARCHIVED_RULE_CHAPTER_URL_RE = re.compile(
-    r"^https?://web\.archive\.org/web/\d+/https?://gc\.nh\.gov/rules/state_agencies/[\w.-]+\.html$",
+    r"^https?://web\.archive\.org/web/\d+/https?://(?:gc\.nh\.gov|(?:www\.)?gencourt\.state\.nh\.us)/rules/state_agencies/[\w.-]+\.html$",
     re.IGNORECASE,
 )
 
@@ -793,6 +793,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     ],
     "NH": [
         "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/",
+        "https://web.archive.org/web/20250129103908/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
+        "https://web.archive.org/web/20250207090111/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
         "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx",
         "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
         "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/he-p300.html",
@@ -1615,6 +1617,73 @@ def _wayback_replay_timestamp(url: str) -> str:
     if not match:
         return ""
     return str(match.group(1) or "").strip()
+
+
+def _wayback_replay_url(timestamp: str, original_url: str) -> str:
+    ts = str(timestamp or "").strip()
+    original = str(original_url or "").strip()
+    if not ts or not original:
+        return ""
+    return f"https://web.archive.org/web/{ts}/{original}"
+
+
+def _discover_wayback_capture_candidates(url: str, *, limit: int = 5) -> List[str]:
+    value = str(url or "").strip()
+    original_url = _wayback_replay_original_url(value) or value
+    if not original_url:
+        return []
+
+    headers = {"User-Agent": "Mozilla/5.0"}
+    api_url = "https://web.archive.org/cdx/search/cdx"
+    query_urls = [original_url]
+    if "://gc.nh.gov/" in original_url:
+        query_urls.append(original_url.replace("://gc.nh.gov/", "://www.gc.nh.gov/", 1))
+        query_urls.append(original_url.replace("://gc.nh.gov/", "://www.gencourt.state.nh.us/", 1))
+    elif "://www.gc.nh.gov/" in original_url:
+        query_urls.append(original_url.replace("://www.gc.nh.gov/", "://gc.nh.gov/", 1))
+        query_urls.append(original_url.replace("://www.gc.nh.gov/", "://www.gencourt.state.nh.us/", 1))
+    elif "://www.gencourt.state.nh.us/" in original_url:
+        query_urls.append(original_url.replace("://www.gencourt.state.nh.us/", "://gc.nh.gov/", 1))
+
+    candidates: List[str] = []
+    seen: set[str] = {value}
+    for query_url in query_urls:
+        try:
+            response = requests.get(
+                api_url,
+                params={
+                    "url": query_url,
+                    "output": "json",
+                    "fl": "timestamp,original,statuscode,mimetype",
+                    "filter": "statuscode:200",
+                    "limit": str(max(1, int(limit or 1)) * 2),
+                    "from": "2024",
+                    "to": "2026",
+                    "collapse": "digest",
+                },
+                timeout=25,
+                headers=headers,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except Exception:
+            continue
+
+        if not isinstance(payload, list) or len(payload) <= 1:
+            continue
+        for row in payload[1:]:
+            if not isinstance(row, list) or len(row) < 2:
+                continue
+            replay_url = _normalize_new_hampshire_archived_wayback_url(
+                _wayback_replay_url(str(row[0] or "").strip(), str(row[1] or query_url).strip())
+            )
+            if not replay_url or replay_url in seen:
+                continue
+            seen.add(replay_url)
+            candidates.append(replay_url)
+            if len(candidates) >= max(1, int(limit or 1)):
+                return candidates
+    return candidates
 
 
 def _score_candidate_url(url: str) -> int:
@@ -4856,91 +4925,187 @@ async def _discover_alaska_rule_document_urls(*, seed_urls: List[str], limit: in
     return await asyncio.to_thread(_run)
 
 
+async def _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
+    *,
+    seed_urls: List[str],
+    allowed_hosts: Optional[set[str]] = None,
+    limit: int = 8,
+) -> Dict[str, Any]:
+    frontier = [
+        _normalize_new_hampshire_archived_wayback_url(url)
+        for url in seed_urls
+        if "gc.nh.gov/rules/about_rules/listagencies.aspx" in str(url or "").strip().lower()
+    ]
+    diagnostics: Dict[str, Any] = {
+        "frontier_count": len(frontier),
+        "pages_attempted": 0,
+        "pages_fetched": 0,
+        "fetch_attempts": 0,
+        "fetch_failures": 0,
+        "shell_pages_rejected": 0,
+        "capture_candidates_discovered": 0,
+        "inventory_pages_enqueued": 0,
+        "links_considered": 0,
+        "document_urls_found": 0,
+    }
+    if not frontier:
+        diagnostics["reason"] = "no_frontier"
+        return {"document_urls": [], "diagnostics": diagnostics}
+
+    limit_n = max(1, int(limit or 1))
+
+    headers = {"User-Agent": "Mozilla/5.0"}
+    document_urls: List[str] = []
+    seen_document_urls: set[str] = set()
+    seen_pages: set[str] = set()
+    pending_pages: List[str] = list(frontier[:2])
+
+    async def _requests_get_text(fetch_url: str) -> str:
+        response = await asyncio.to_thread(requests.get, fetch_url, timeout=25, headers=headers)
+        response.raise_for_status()
+        return str(response.text or "")
+
+    async def _fetch_html(page_url: str) -> str:
+        last_exc: Optional[Exception] = None
+        fetch_urls = []
+        iframe_url = _wayback_iframe_replay_url(page_url)
+        fetch_urls.append(page_url)
+        if iframe_url and iframe_url != page_url:
+            fetch_urls.append(iframe_url)
+        attempted_urls: set[str] = set(fetch_urls)
+        for fetch_url in fetch_urls:
+            for attempt in range(3):
+                diagnostics["fetch_attempts"] = int(diagnostics.get("fetch_attempts", 0)) + 1
+                try:
+                    html = await _requests_get_text(fetch_url)
+                    if html:
+                        soup = BeautifulSoup(html, "html.parser")
+                        title = ""
+                        text = soup.get_text(" ", strip=True)
+                        if soup.title is not None:
+                            title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
+                        if _looks_like_wayback_shell_page(title=title, text=text):
+                            diagnostics["shell_pages_rejected"] = int(diagnostics.get("shell_pages_rejected", 0)) + 1
+                            continue
+                    diagnostics["pages_fetched"] = int(diagnostics.get("pages_fetched", 0)) + 1
+                    return html
+                except Exception as exc:
+                    last_exc = exc
+                    if attempt < 2:
+                        await asyncio.sleep(0.5 * (attempt + 1))
+        capture_candidates = await asyncio.to_thread(_discover_wayback_capture_candidates, page_url, limit=4)
+        diagnostics["capture_candidates_discovered"] = int(diagnostics.get("capture_candidates_discovered", 0)) + len(capture_candidates)
+        for candidate_url in capture_candidates:
+            if candidate_url in attempted_urls:
+                continue
+            attempted_urls.add(candidate_url)
+            candidate_iframe = _wayback_iframe_replay_url(candidate_url)
+            candidate_fetch_urls = [candidate_url]
+            if candidate_iframe and candidate_iframe != candidate_url and candidate_iframe not in attempted_urls:
+                candidate_fetch_urls.append(candidate_iframe)
+                attempted_urls.add(candidate_iframe)
+            for fetch_url in candidate_fetch_urls:
+                diagnostics["fetch_attempts"] = int(diagnostics.get("fetch_attempts", 0)) + 1
+                try:
+                    html = await _requests_get_text(fetch_url)
+                except Exception as exc:
+                    last_exc = exc
+                    continue
+                if html:
+                    soup = BeautifulSoup(html, "html.parser")
+                    title = ""
+                    text = soup.get_text(" ", strip=True)
+                    if soup.title is not None:
+                        title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
+                    if _looks_like_wayback_shell_page(title=title, text=text):
+                        diagnostics["shell_pages_rejected"] = int(diagnostics.get("shell_pages_rejected", 0)) + 1
+                        continue
+                diagnostics["pages_fetched"] = int(diagnostics.get("pages_fetched", 0)) + 1
+                return html
+        for fetch_url in fetch_urls:
+            diagnostics["fetch_attempts"] = int(diagnostics.get("fetch_attempts", 0)) + 1
+            fetched = await _fetch_html_bypassing_challenge(fetch_url)
+            if fetched is None:
+                continue
+            html = str(fetched.get("html") or "")
+            text = str(fetched.get("text") or "")
+            if not html and text:
+                html = text
+            if html:
+                soup = BeautifulSoup(html, "html.parser")
+                title = ""
+                extracted_text = text or soup.get_text(" ", strip=True)
+                if soup.title is not None:
+                    title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
+                if _looks_like_wayback_shell_page(title=title, text=extracted_text):
+                    diagnostics["shell_pages_rejected"] = int(diagnostics.get("shell_pages_rejected", 0)) + 1
+                    continue
+                diagnostics["pages_fetched"] = int(diagnostics.get("pages_fetched", 0)) + 1
+                return html
+        if last_exc is not None:
+            diagnostics["fetch_failures"] = int(diagnostics.get("fetch_failures", 0)) + 1
+            raise last_exc
+        diagnostics["fetch_failures"] = int(diagnostics.get("fetch_failures", 0)) + 1
+        return ""
+
+    def _record_document_url(link_url: str) -> bool:
+        link_url = _normalize_new_hampshire_archived_wayback_url(link_url)
+        if not _is_new_hampshire_archived_rule_leaf_url(link_url):
+            return False
+        link_key = _url_key(link_url)
+        if not link_key or link_key in seen_document_urls:
+            return False
+        seen_document_urls.add(link_key)
+        document_urls.append(link_url)
+        diagnostics["document_urls_found"] = len(document_urls)
+        return len(document_urls) >= limit_n
+
+    while pending_pages and len(document_urls) < limit_n:
+        page_url = pending_pages.pop(0)
+        page_key = _url_key(page_url)
+        if not page_key or page_key in seen_pages:
+            continue
+        seen_pages.add(page_key)
+        diagnostics["pages_attempted"] = int(diagnostics.get("pages_attempted", 0)) + 1
+        try:
+            html = await _fetch_html(page_url)
+        except Exception:
+            continue
+        if not html:
+            continue
+        page_host = urlparse(str(page_url or "").strip()).netloc
+        candidate_links = _candidate_links_from_html(
+            html,
+            base_host=page_host,
+            page_url=page_url,
+            limit=max(limit_n * 8, 48),
+            allowed_hosts=allowed_hosts,
+        )
+        diagnostics["links_considered"] = int(diagnostics.get("links_considered", 0)) + len(candidate_links)
+        for link_url in candidate_links:
+            link_url = _normalize_new_hampshire_archived_wayback_url(link_url)
+            if _record_document_url(link_url):
+                return {"document_urls": document_urls, "diagnostics": diagnostics}
+            if _looks_like_new_hampshire_archived_rule_inventory(text="", title="", url=link_url):
+                link_page_key = _url_key(link_url)
+                if link_page_key and link_page_key not in seen_pages and link_url not in pending_pages:
+                    pending_pages.append(link_url)
+                    diagnostics["inventory_pages_enqueued"] = int(diagnostics.get("inventory_pages_enqueued", 0)) + 1
+    return {"document_urls": document_urls, "diagnostics": diagnostics}
+
+
 async def _discover_new_hampshire_archived_rule_document_urls(
     *,
     seed_urls: List[str],
     allowed_hosts: Optional[set[str]] = None,
     limit: int = 8,
 ) -> List[str]:
-    frontier = [
-        _normalize_new_hampshire_archived_wayback_url(url)
-        for url in seed_urls
-        if "gc.nh.gov/rules/about_rules/listagencies.aspx" in str(url or "").strip().lower()
-    ]
-    if not frontier:
-        return []
-
-    limit_n = max(1, int(limit or 1))
-
-    def _run() -> List[str]:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        document_urls: List[str] = []
-        seen_document_urls: set[str] = set()
-        seen_pages: set[str] = set()
-        pending_pages: List[str] = list(frontier[:2])
-
-        def _fetch_html(page_url: str) -> str:
-            last_exc: Optional[Exception] = None
-            fetch_urls = []
-            iframe_url = _wayback_iframe_replay_url(page_url)
-            fetch_urls.append(page_url)
-            if iframe_url and iframe_url != page_url:
-                fetch_urls.append(iframe_url)
-            for fetch_url in fetch_urls:
-                for attempt in range(3):
-                    try:
-                        response = requests.get(fetch_url, timeout=25, headers=headers)
-                        response.raise_for_status()
-                        return str(response.text or "")
-                    except Exception as exc:
-                        last_exc = exc
-                        if attempt < 2:
-                            time.sleep(0.5 * (attempt + 1))
-            if last_exc is not None:
-                raise last_exc
-            return ""
-
-        def _record_document_url(link_url: str) -> bool:
-            link_url = _normalize_new_hampshire_archived_wayback_url(link_url)
-            if not _is_new_hampshire_archived_rule_leaf_url(link_url):
-                return False
-            link_key = _url_key(link_url)
-            if not link_key or link_key in seen_document_urls:
-                return False
-            seen_document_urls.add(link_key)
-            document_urls.append(link_url)
-            return len(document_urls) >= limit_n
-
-        while pending_pages and len(document_urls) < limit_n:
-            page_url = pending_pages.pop(0)
-            page_key = _url_key(page_url)
-            if not page_key or page_key in seen_pages:
-                continue
-            seen_pages.add(page_key)
-            try:
-                html = _fetch_html(page_url)
-            except Exception:
-                continue
-            if not html:
-                continue
-            page_host = urlparse(str(page_url or "").strip()).netloc
-            for link_url in _candidate_links_from_html(
-                html,
-                base_host=page_host,
-                page_url=page_url,
-                limit=max(limit_n * 8, 48),
-                allowed_hosts=allowed_hosts,
-            ):
-                link_url = _normalize_new_hampshire_archived_wayback_url(link_url)
-                if _record_document_url(link_url):
-                    return document_urls
-                if _looks_like_new_hampshire_archived_rule_inventory(text="", title="", url=link_url):
-                    link_page_key = _url_key(link_url)
-                    if link_page_key and link_page_key not in seen_pages and link_url not in pending_pages:
-                        pending_pages.append(link_url)
-        return document_urls
-
-    return await asyncio.to_thread(_run)
+    result = await _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
+        seed_urls=seed_urls,
+        allowed_hosts=allowed_hosts,
+        limit=limit,
+    )
+    return list(result.get("document_urls") or [])
 
 
 async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
@@ -4957,8 +5122,6 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
     iframe_url = _wayback_iframe_replay_url(archived_url)
     if iframe_url and iframe_url not in fetch_candidates and iframe_url != archived_url:
         fetch_candidates.append(iframe_url)
-
-    headers = {"User-Agent": "Mozilla/5.0"}
 
     if original_url and replay_timestamp:
         try:
@@ -5007,46 +5170,6 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
                         )
 
     for fetch_url in fetch_candidates:
-        for attempt in range(2):
-            try:
-                response = requests.get(fetch_url, timeout=25, headers=headers)
-                response.raise_for_status()
-            except Exception:
-                response = None
-            if response is not None:
-                html = str(response.text or "")
-                content_type = str(response.headers.get("content-type") or "")
-                head = html[:1024]
-                if html.strip() and not _looks_like_browser_challenge(
-                    status_code=int(response.status_code or 200),
-                    content_type=content_type,
-                    head=head,
-                ):
-                    soup = BeautifulSoup(html, "html.parser")
-                    title = ""
-                    if soup.title is not None:
-                        title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
-                    text = soup.get_text(" ", strip=True)
-                    if text.strip() and not _looks_like_wayback_shell_page(title=title, text=text):
-                        return SimpleNamespace(
-                            url=archived_url,
-                            title=title,
-                            text=text,
-                            html=html,
-                            links=[],
-                            success=True,
-                            method_used="new_hampshire_wayback_replay",
-                            extraction_provenance={
-                                "method": "new_hampshire_wayback_replay",
-                                "source": "requests",
-                                "fetch_url": fetch_url,
-                                "original_url": original_url or archived_url,
-                                "capture_timestamp": replay_timestamp,
-                            },
-                        )
-            if attempt == 0:
-                await asyncio.sleep(0.5)
-
         fetched = await _fetch_html_bypassing_challenge(fetch_url)
         if fetched is None:
             continue
@@ -7967,6 +8090,7 @@ async def _agentic_discover_admin_state_blocks(
         query = _agentic_query_for_state(state_code)
         candidate_urls: List[str] = []
         source_breakdown: Dict[str, int] = {}
+        new_hampshire_bootstrap_diagnostics: Dict[str, Any] = {}
         allowed_hosts = _allowed_discovery_hosts_for_state(state_code, state_name)
         state_rate_limit_metadata: Dict[str, Any] = {}
 
@@ -8089,10 +8213,10 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["california_westlaw_document_bootstrap"] = len(california_bootstrap_document_urls)
 
         if state_code == "NH":
-            nh_seed_limit = min(max(1, int(max_fetch_per_state)) * 4, 24)
+            nh_seed_limit = min(max(1, int(max_fetch_per_state)) * 2, 8)
             try:
-                new_hampshire_bootstrap_document_urls = await asyncio.wait_for(
-                    _discover_new_hampshire_archived_rule_document_urls(
+                new_hampshire_bootstrap_result = await asyncio.wait_for(
+                    _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
                         seed_urls=ordered_seed_urls,
                         allowed_hosts=allowed_hosts,
                         limit=nh_seed_limit,
@@ -8101,6 +8225,10 @@ async def _agentic_discover_admin_state_blocks(
                 )
             except Exception:
                 new_hampshire_bootstrap_document_urls = []
+                new_hampshire_bootstrap_diagnostics = {"error": "bootstrap_failed"}
+            else:
+                new_hampshire_bootstrap_document_urls = list(new_hampshire_bootstrap_result.get("document_urls") or [])
+                new_hampshire_bootstrap_diagnostics = dict(new_hampshire_bootstrap_result.get("diagnostics") or {})
             for document_url in new_hampshire_bootstrap_document_urls:
                 candidate_urls.append(document_url)
             if new_hampshire_bootstrap_document_urls:
@@ -9818,6 +9946,7 @@ async def _agentic_discover_admin_state_blocks(
                 )[:12],
             },
             "source_breakdown": source_breakdown,
+            "new_hampshire_bootstrap_diagnostics": new_hampshire_bootstrap_diagnostics if state_code == "NH" else {},
             "timed_out": bool((time.monotonic() - state_start) >= per_state_budget_s),
         }
         if state_rate_limit_metadata:

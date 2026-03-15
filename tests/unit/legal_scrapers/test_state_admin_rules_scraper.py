@@ -21,6 +21,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
     _candidate_montana_rule_urls_from_text,
     _candidate_utah_rule_urls_from_public_api,
     _discover_new_hampshire_archived_rule_document_urls,
+    _discover_new_hampshire_archived_rule_document_urls_with_diagnostics,
     _is_admin_rule_statute,
     _is_direct_detail_candidate_url,
     _is_relaxed_recovery_text,
@@ -354,6 +355,8 @@ def test_new_hampshire_admin_seed_urls_exclude_live_root_pages() -> None:
     nh_urls = scraper_module._extract_seed_urls_for_state("NH", "New Hampshire")
     allowed_hosts = _allowed_discovery_hosts_for_state("NH", "New Hampshire")
 
+    assert "https://web.archive.org/web/20250129103908/https://gc.nh.gov/rules/about_rules/listagencies.aspx" in nh_urls
+    assert "https://web.archive.org/web/20250207090111/https://gc.nh.gov/rules/about_rules/listagencies.aspx" in nh_urls
     assert "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/state_agencies/agr100.html" in nh_urls
     assert "https://gencourt.state.nh.us/rules/state_agencies/env-ws1101-1105.html" in nh_urls
     assert "https://gc.nh.gov/rules/state_agencies/" not in nh_urls
@@ -588,6 +591,169 @@ async def test_discover_new_hampshire_archived_rule_document_urls_from_listagenc
         "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr100.html",
         "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr200.html",
     ]
+
+
+@pytest.mark.asyncio
+async def test_discover_new_hampshire_archived_rule_document_urls_with_diagnostics(monkeypatch: pytest.MonkeyPatch) -> None:
+    seed_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+    listagencies_html = """
+    <html>
+      <body>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html">Agr</a>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/env-wq300.html">Env-Wq 300</a>
+      </body>
+    </html>
+    """
+    agr_toc_html = """
+    <html>
+      <body>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr100.html">Agr 100</a>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr200.html">Agr 200</a>
+      </body>
+    </html>
+    """
+
+    class _FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def _fake_get(url: str, *args, **kwargs):
+        if url in {
+            seed_url,
+            scraper_module._wayback_iframe_replay_url(seed_url),
+        }:
+            return _FakeResponse(listagencies_html)
+        agr_url = "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr.html"
+        if url in {
+            agr_url,
+            scraper_module._wayback_iframe_replay_url(agr_url),
+        }:
+            return _FakeResponse(agr_toc_html)
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    result = await _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
+        seed_urls=[seed_url],
+        allowed_hosts=_allowed_discovery_hosts_for_state("NH", "New Hampshire"),
+        limit=4,
+    )
+
+    assert result["document_urls"] == [
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/env-wq300.html",
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr100.html",
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/agr200.html",
+    ]
+    assert result["diagnostics"] == {
+        "frontier_count": 1,
+        "pages_attempted": 2,
+        "pages_fetched": 2,
+        "fetch_attempts": 2,
+        "fetch_failures": 0,
+        "shell_pages_rejected": 0,
+        "capture_candidates_discovered": 0,
+        "inventory_pages_enqueued": 1,
+        "links_considered": 4,
+        "document_urls_found": 3,
+    }
+
+
+@pytest.mark.asyncio
+async def test_discover_new_hampshire_archived_rule_document_urls_recovers_via_cdx_capture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+    recovered_seed_url = "https://web.archive.org/web/20250129103908/https://gc.nh.gov/rules/about_rules/listagencies.aspx"
+    recovered_agr_url = "https://web.archive.org/web/20250211224211/https://gc.nh.gov/rules/state_agencies/agr.html"
+    shell_html = """
+    <html><head><title>Wayback Machine</title></head><body>Wayback Machine Internet Archive Ask the publishers</body></html>
+    """
+    listagencies_html = """
+    <html>
+      <body>
+        <a href="/web/20250211224211/https://gc.nh.gov/rules/state_agencies/agr.html">Agr</a>
+        <a href="/web/20250307175245/https://gc.nh.gov/rules/state_agencies/env-wq300.html">Env-Wq 300</a>
+      </body>
+    </html>
+    """
+    agr_toc_html = """
+    <html>
+      <body>
+        <a href="https://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr100.html">Agr 100</a>
+        <a href="https://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr200.html">Agr 200</a>
+      </body>
+    </html>
+    """
+
+    class _FakeResponse:
+        def __init__(self, text: str, *, json_payload=None):
+            self.text = text
+            self._json_payload = json_payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            if self._json_payload is None:
+                raise AssertionError("unexpected json() call")
+            return self._json_payload
+
+    def _fake_get(url: str, *args, **kwargs):
+        params = kwargs.get("params") or {}
+        if url == "https://web.archive.org/cdx/search/cdx":
+            if params.get("url") == "https://gc.nh.gov/rules/about_rules/listagencies.aspx":
+                return _FakeResponse(
+                    "",
+                    json_payload=[
+                        ["timestamp", "original", "statuscode", "mimetype"],
+                        ["20250129103908", "https://gc.nh.gov/rules/about_rules/listagencies.aspx", "200", "text/html"],
+                    ],
+                )
+            if params.get("url") == "https://gc.nh.gov/rules/state_agencies/agr.html":
+                return _FakeResponse(
+                    "",
+                    json_payload=[
+                        ["timestamp", "original", "statuscode", "mimetype"],
+                        ["20250211224211", "https://gc.nh.gov/rules/state_agencies/agr.html", "200", "text/html"],
+                    ],
+                )
+            raise AssertionError(f"unexpected CDX params: {params}")
+        if url in {
+            seed_url,
+            scraper_module._wayback_iframe_replay_url(seed_url),
+        }:
+            return _FakeResponse(shell_html)
+        if url in {
+            recovered_seed_url,
+            scraper_module._wayback_iframe_replay_url(recovered_seed_url),
+        }:
+            return _FakeResponse(listagencies_html)
+        if url in {
+            recovered_agr_url,
+            scraper_module._wayback_iframe_replay_url(recovered_agr_url),
+        }:
+            return _FakeResponse(agr_toc_html)
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    result = await _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
+        seed_urls=[seed_url],
+        allowed_hosts=_allowed_discovery_hosts_for_state("NH", "New Hampshire"),
+        limit=4,
+    )
+
+    assert result["document_urls"] == [
+        "https://web.archive.org/web/20250307175245/https://gc.nh.gov/rules/state_agencies/env-wq300.html",
+        "https://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr100.html",
+        "https://web.archive.org/web/20250211224211/http://www.gencourt.state.nh.us/rules/state_agencies/agr200.html",
+    ]
+    assert result["diagnostics"]["shell_pages_rejected"] >= 1
+    assert result["diagnostics"]["capture_candidates_discovered"] >= 1
+    assert result["diagnostics"]["pages_fetched"] == 2
 
 
 def test_is_direct_detail_candidate_url_recognizes_vermont_rule_display_pages() -> None:
