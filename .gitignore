@@ -26,7 +26,9 @@ test_outputs/
 *.parquet
 outputs/
 venv/
+artifacts
 ipfs_datasets_py/processors/groth16_backend/target/
+ipfs_datasets_py/artifacts/
 deprecated/
 configs.yaml
 bin/
