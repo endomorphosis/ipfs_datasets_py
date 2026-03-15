@@ -2331,6 +2331,7 @@ def test_accepts_arizona_official_pdf_chapter_with_preface_text() -> None:
         "TITLE 7. EDUCATION CHAPTER 2. STATE BOARD OF EDUCATION 7 A.A.C. 2 Supplement Information Supp. 25-4 "
         "Arizona Administrative Code Publisher Department of State Office of the Secretary of State Administrative Rules Division. "
         "Published electronically under the authority of A.R.S. § 41-1012. "
+        "Reviewed by the Office editor. Request for Proposals for unrelated services appears in a vendor appendix. "
         "TITLE 7. EDUCATION CHAPTER 2. STATE BOARD OF EDUCATION Authority: A.R.S. § 15-203. "
         "ARTICLE 1. GENERAL PROVISIONS. R7-2-101. Definitions. R7-2-102. Applicability."
     )
@@ -5081,6 +5082,8 @@ def test_candidate_oklahoma_rule_urls_from_text_extracts_title_urls() -> None:
 
 @pytest.mark.asyncio
 async def test_scrape_oklahoma_rule_detail_via_api_extracts_section_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    scraper_module._OKLAHOMA_TITLE_SEGMENTS_CACHE.clear()
+
     class FakeResponse:
         def raise_for_status(self) -> None:
             return None
@@ -5115,6 +5118,8 @@ async def test_scrape_oklahoma_rule_detail_via_api_extracts_section_text(monkeyp
 async def test_scrape_oklahoma_rule_detail_via_api_extracts_title_text_for_title_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    scraper_module._OKLAHOMA_TITLE_SEGMENTS_CACHE.clear()
+
     class FakeResponse:
         def raise_for_status(self) -> None:
             return None
@@ -5152,6 +5157,61 @@ async def test_scrape_oklahoma_rule_detail_via_api_extracts_title_text_for_title
     assert "10:1-1-1 Purpose" in scraped.text
     assert "10:1-1-2 Definitions" in scraped.text
     assert scraped.method_used == "oklahoma_rules_api"
+
+
+@pytest.mark.asyncio
+async def test_scrape_oklahoma_rule_detail_via_api_reuses_cached_title_segments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper_module._OKLAHOMA_TITLE_SEGMENTS_CACHE.clear()
+    request_calls: list[dict[str, object]] = []
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return [
+                {
+                    "name": "Title",
+                    "description": "Oklahoma Abstractors Board",
+                    "sectionNum": None,
+                    "text": None,
+                },
+                {
+                    "name": "Section",
+                    "sectionNum": "5:2-1-3",
+                    "description": "Authority, interpretation, and severability of rules",
+                    "text": "<div>(a) Rule text one.</div>",
+                },
+                {
+                    "name": "Section",
+                    "sectionNum": "5:2-3-4",
+                    "description": "Availability of records; copies",
+                    "text": "<div>(b) Rule text two.</div>",
+                },
+            ]
+
+    def fake_get(url, params=None, timeout=0, headers=None):
+        request_calls.append({"url": url, "params": params, "timeout": timeout})
+        assert url == "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum"
+        assert (params or {}).get("titleNum") == "5"
+        return FakeResponse()
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    first_scraped = await scraper_module._scrape_oklahoma_rule_detail_via_api(
+        "https://rules.ok.gov/code?titleNum=5&sectionNum=5%3A2-1-3"
+    )
+    second_scraped = await scraper_module._scrape_oklahoma_rule_detail_via_api(
+        "https://rules.ok.gov/code?titleNum=5&sectionNum=5%3A2-3-4"
+    )
+
+    assert first_scraped is not None
+    assert second_scraped is not None
+    assert len(request_calls) == 1
+    assert "Rule text one." in first_scraped.text
+    assert "Rule text two." in second_scraped.text
 
 
 def test_seed_expansion_backlog_is_ready_after_enough_unique_detail_urls() -> None:

@@ -2394,7 +2394,7 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     arizona_official_rule_document = _looks_like_arizona_official_rule_document(text=text, title=title, url=url)
     if _is_vermont_rule_detail_page(text=text, title=title, url=url):
         return False
-    if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
+    if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay) and not arizona_official_rule_document:
         return True
     if _SEO_MIRROR_PAGE_RE.search(hay):
         return True
@@ -2562,6 +2562,10 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     if _NON_RULE_ADMIN_LANDING_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
         return True
     if _NON_RULE_POLICY_PAGE_RE.search(hay):
+        if arizona_official_rule_document and (
+            _RULE_BODY_SIGNAL_RE.search(hay) or _LEGAL_CONTENT_SIGNAL_RE.search(hay)
+        ):
+            return False
         if host == "iar.iga.in.gov" and re.search(
             r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?",
             path,
@@ -4466,6 +4470,36 @@ def _oklahoma_rule_identifiers_from_url(url: str) -> tuple[str, str]:
     return title_num, section_num
 
 
+_OKLAHOMA_TITLE_SEGMENTS_CACHE: Dict[str, List[Dict[str, Any]]] = {}
+
+
+def _get_oklahoma_title_segments_payload(title_num: str) -> List[Dict[str, Any]]:
+    normalized_title_num = str(title_num or "").strip()
+    if not normalized_title_num.isdigit():
+        return []
+
+    cached_payload = _OKLAHOMA_TITLE_SEGMENTS_CACHE.get(normalized_title_num)
+    if cached_payload is not None:
+        return cached_payload
+
+    headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"}
+    try:
+        response = requests.get(
+            "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum",
+            params={"titleNum": normalized_title_num},
+            timeout=25,
+            headers=headers,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception:
+        return []
+
+    normalized_payload = [item for item in payload or [] if isinstance(item, dict)]
+    _OKLAHOMA_TITLE_SEGMENTS_CACHE[normalized_title_num] = normalized_payload
+    return normalized_payload
+
+
 async def _discover_oklahoma_rule_document_urls(*, limit: int = 8) -> List[str]:
     limit_n = max(1, int(limit or 1))
 
@@ -4491,16 +4525,8 @@ async def _discover_oklahoma_rule_document_urls(*, limit: int = 8) -> List[str]:
             title_num = str(rule.get("referenceCode") or "").strip()
             if not title_num.isdigit():
                 continue
-            try:
-                segments_response = requests.get(
-                    "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum",
-                    params={"titleNum": title_num},
-                    timeout=25,
-                    headers=headers,
-                )
-                segments_response.raise_for_status()
-                segments_payload = segments_response.json()
-            except Exception:
+            segments_payload = _get_oklahoma_title_segments_payload(title_num)
+            if not segments_payload:
                 continue
 
             for segment in segments_payload or []:
@@ -4773,17 +4799,8 @@ async def _scrape_oklahoma_rule_detail_via_api(url: str) -> Optional[Any]:
         return None
 
     def _run() -> Optional[Any]:
-        headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"}
-        try:
-            response = requests.get(
-                "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum",
-                params={"titleNum": title_num},
-                timeout=25,
-                headers=headers,
-            )
-            response.raise_for_status()
-            segments_payload = response.json()
-        except Exception:
+        segments_payload = _get_oklahoma_title_segments_payload(title_num)
+        if not segments_payload:
             return None
 
         title_label = next(
@@ -6435,6 +6452,11 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     query = parse_qs(parsed.query or "")
     official_index_page = _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value)
     official_index_can_be_substantive = host == "sdlegislature.gov" and path.rstrip("/") == "/Rules/Administrative"
+    arizona_official_rule_document = _looks_like_arizona_official_rule_document(
+        text=body,
+        title=title_value,
+        url=url_value,
+    )
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
@@ -6505,9 +6527,9 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
             and _LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body]))
         ):
             return False
-    if title_value and _looks_like_placeholder_text(title_value) and not official_index_can_be_substantive:
+    if title_value and _looks_like_placeholder_text(title_value) and not official_index_can_be_substantive and not arizona_official_rule_document:
         return False
-    if _looks_like_placeholder_text(body) and not official_index_can_be_substantive:
+    if _looks_like_placeholder_text(body) and not official_index_can_be_substantive and not arizona_official_rule_document:
         return False
     if not _has_admin_signal(text=body, title=title_value, url=url_value):
         return False
@@ -6533,6 +6555,11 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
     official_index_page = _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value)
+    arizona_official_rule_document = _looks_like_arizona_official_rule_document(
+        text=body,
+        title=title_value,
+        url=url_value,
+    )
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):
@@ -6559,9 +6586,9 @@ def _is_relaxed_recovery_text(*, text: str, title: str, url: str) -> bool:
         return False
     if host == "rules.sos.ri.gov" and path.startswith("/subscriptions"):
         return False
-    if title_value and _looks_like_placeholder_text(title_value) and not official_index_page:
+    if title_value and _looks_like_placeholder_text(title_value) and not official_index_page and not arizona_official_rule_document:
         return False
-    if body and _looks_like_placeholder_text(body) and not official_index_page:
+    if body and _looks_like_placeholder_text(body) and not official_index_page and not arizona_official_rule_document:
         return False
     if official_index_page and len(body) >= 120 and _has_admin_signal(text=body, title=title_value, url=url_value):
         return True
@@ -6574,10 +6601,15 @@ def _should_emit_relaxed_recovery_statute(*, text: str, title: str, url: str) ->
     body = str(text or "").strip()
     title_value = str(title or "").strip()
     url_value = str(url or "").strip()
+    arizona_official_rule_document = _looks_like_arizona_official_rule_document(
+        text=body,
+        title=title_value,
+        url=url_value,
+    )
 
-    if title_value and _looks_like_placeholder_text(title_value):
+    if title_value and _looks_like_placeholder_text(title_value) and not arizona_official_rule_document:
         return False
-    if body and _looks_like_placeholder_text(body):
+    if body and _looks_like_placeholder_text(body) and not arizona_official_rule_document:
         return False
     if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
         return False
