@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import sys
 import time
+import types
 from enum import Enum
 from types import SimpleNamespace
 
@@ -113,6 +114,8 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
 
     assert "https://azsos.gov/rules/arizona-administrative-code" in az_urls
     assert "https://apps.azsos.gov/public_services/CodeTOC.htm" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_04/4-08.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_06/6-11.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_00.htm" not in az_urls
     assert all("legislature.az.gov" not in url.lower() for url in az_urls)
     assert all("www.azleg.gov" not in url.lower() for url in az_urls)
@@ -2587,6 +2590,15 @@ def test_candidate_links_from_html_extracts_wyoming_ajax_program_and_rule_urls()
         assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=24261" in program_links
 
 
+def test_url_key_strips_fragment_identifiers() -> None:
+    assert scraper_module._url_key("https://rules.wyo.gov/Search.aspx?mode=7#toTop") == (
+        "https://rules.wyo.gov/search.aspx?mode=7"
+    )
+    assert scraper_module._url_key("https://rules.wyo.gov/Search.aspx?mode=7#ModaltoTop") == (
+        "https://rules.wyo.gov/search.aspx?mode=7"
+    )
+
+
 def test_candidate_links_from_html_extracts_texas_appian_inventory_and_detail_urls() -> None:
     html = """
     <html><body>
@@ -2703,6 +2715,7 @@ def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_d
 
     assert prioritized == [
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
         "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
     ]
 
@@ -2741,6 +2754,42 @@ async def test_extract_text_from_pdf_bytes_uses_repo_pdf_processor(monkeypatch: 
 
     assert "R1-1-101. Purpose." in extracted
     assert "Authority and definitions." in extracted
+
+
+@pytest.mark.asyncio
+async def test_extract_text_from_pdf_bytes_prefers_pypdf_native_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakePdfPage:
+        def __init__(self, text: str):
+            self._text = text
+
+        def extract_text(self) -> str:
+            return self._text
+
+    class FakePdfReader:
+        def __init__(self, stream) -> None:
+            self.pages = [
+                FakePdfPage("R7-2-101. Definitions. This section defines terms used throughout the chapter."),
+                FakePdfPage("Authority: A.R.S. § 15-203. Applicability and enforcement provisions follow in this chapter."),
+            ]
+
+    fake_pypdf_module = types.ModuleType("pypdf")
+    fake_pypdf_module.PdfReader = FakePdfReader
+    monkeypatch.setitem(sys.modules, "pypdf", fake_pypdf_module)
+
+    class FailingPDFProcessor:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("repo PDF processor should not run when pypdf native text succeeds")
+
+    fake_pdf_module = SimpleNamespace(PDFProcessor=FailingPDFProcessor)
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.processors.specialized.pdf", fake_pdf_module)
+
+    extracted = await scraper_module._extract_text_from_pdf_bytes_with_processor(
+        b"%PDF-1.4 fake pdf bytes",
+        source_url="https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
+    )
+
+    assert "R7-2-101. Definitions." in extracted
+    assert "Authority: A.R.S. § 15-203." in extracted
 
 
 @pytest.mark.asyncio
@@ -4558,6 +4607,24 @@ def test_rejects_oklahoma_rules_portal_shell_for_section_url() -> None:
     )
 
 
+def test_accepts_oklahoma_rules_api_section_text_as_substantive_rule_text() -> None:
+    rule_text = (
+        "In addition to the terms defined in the Oklahoma Abstractors Act, the definitions of the following words and terms "
+        "shall be applied when implementing the Act and rules adopted by the Board: \n"
+        '"Abstractor" means the holder of an abstract license, certificate of authority, or temporary certificate of authority. \n'
+        '"Act" means the Oklahoma Abstractors Act. \n'
+        '"Board" means the Oklahoma Abstractors Board. \n'
+        '"Certificate of authority" means the authority granted by the Board to own and operate an abstract business in Oklahoma.'
+    )
+
+    assert _is_substantive_rule_text(
+        text=rule_text,
+        title="5:2-1-2 Definitions",
+        url="https://rules.ok.gov/code?titleNum=5&sectionNum=5%3A2-1-2",
+        min_chars=300,
+    ) is True
+
+
 def test_vermont_lexis_toc_counts_as_inventory_not_substantive_detail() -> None:
     toc_text = (
         "Vermont Statutes, Court Rules and Administrative Code Public Access Code of Vermont Rules PAW - ET Table of Contents "
@@ -5112,6 +5179,57 @@ async def test_scrape_oklahoma_rule_detail_via_api_extracts_section_text(monkeyp
     assert scraped.title == "10:1-1-1 Purpose"
     assert "The Oklahoma Accountancy Act protects the public." in scraped.text
     assert scraped.method_used == "oklahoma_rules_api"
+
+
+@pytest.mark.asyncio
+async def test_discover_oklahoma_rule_document_urls_prefers_longer_section_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scraper_module._OKLAHOMA_TITLE_SEGMENTS_CACHE.clear()
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return self._payload
+
+    def fake_get(url, params=None, timeout=0, headers=None):
+        if url == "https://okadminrules-api.azurewebsites.net/GetAllRules":
+            return FakeResponse([
+                {"referenceCode": "5"},
+            ])
+        assert url == "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum"
+        assert (params or {}).get("titleNum") == "5"
+        return FakeResponse([
+            {
+                "name": "Section",
+                "sectionNum": "5:2-1-1",
+                "text": "<div>short text</div>",
+            },
+            {
+                "name": "Section",
+                "sectionNum": "5:2-1-2",
+                "text": "<div>" + ("medium text " * 20) + "</div>",
+            },
+            {
+                "name": "Section",
+                "sectionNum": "5:2-1-3",
+                "text": "<div>" + ("long text " * 40) + "</div>",
+            },
+        ])
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    urls = await scraper_module._discover_oklahoma_rule_document_urls(limit=2)
+
+    assert urls == [
+        "https://rules.ok.gov/code?titleNum=5&sectionNum=5%3A2-1-3",
+        "https://rules.ok.gov/code?titleNum=5&sectionNum=5%3A2-1-2",
+    ]
 
 
 @pytest.mark.asyncio
@@ -6000,7 +6118,10 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
     assert result["state_blocks"][0]["rules_count"] == 2
     assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [rtf_url, pdf_url]
     assert pdf_calls == [pdf_url]
-    assert rtf_calls == [rtf_url]
+    assert rtf_calls == [
+        rtf_url,
+        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
+    ]
     assert agentic_discovery_calls == 0
     assert archive_search_calls == 0
     assert unified_search_calls == 0

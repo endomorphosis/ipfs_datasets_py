@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 from html import unescape
+import io
 import json
 import logging
 import os
@@ -659,6 +660,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://azsos.gov/rules/arizona-administrative-register",
         "https://apps.azsos.gov/public_services/CodeTOC.htm",
         "https://apps.azsos.gov/public_services/Index/",
+        "https://apps.azsos.gov/public_services/Title_04/4-08.rtf",
+        "https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
         "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
     ],
@@ -1917,7 +1920,8 @@ def _score_candidate_url(url: str) -> int:
 
 
 def _url_key(url: str) -> str:
-    return str(url or "").strip().lower().rstrip("/")
+    normalized_url = urldefrag(str(url or "").strip()).url
+    return normalized_url.lower().rstrip("/")
 
 
 def _gap_summary_host_key(host: str) -> str:
@@ -2230,16 +2234,35 @@ def _prioritized_direct_detail_urls_from_candidates(
     seen: set[str] = set()
     excluded = {_url_key(url) for url in (exclude_urls or set()) if _url_key(url)}
 
-    for url, score in sorted(candidates, key=lambda item: int(item[1]), reverse=True):
+    def _append_prioritized_url(candidate_url: str) -> bool:
+        key = _url_key(candidate_url)
+        if not key or key in seen or key in excluded:
+            return False
+        seen.add(key)
+        prioritized.append(candidate_url)
+        return True
+
+    for url, score in sorted(
+        candidates,
+        key=lambda item: (
+            1 if _is_rtf_candidate_url(item[0]) else 0,
+            int(item[1]),
+        ),
+        reverse=True,
+    ):
         if int(score) <= 0:
             continue
         if not _is_direct_detail_candidate_url(url):
             continue
-        key = _url_key(url)
-        if not key or key in seen or key in excluded:
-            continue
-        seen.add(key)
-        prioritized.append(url)
+        if _is_pdf_candidate_url(url):
+            parsed = urlparse(url)
+            if parsed.netloc.lower() == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or ""):
+                rtf_sibling_url = re.sub(r"(?i)\.pdf(?=$|\?)", ".rtf", url)
+                if rtf_sibling_url != url:
+                    _append_prioritized_url(rtf_sibling_url)
+                    if len(prioritized) >= max(1, int(limit)):
+                        break
+        _append_prioritized_url(url)
         if len(prioritized) >= max(1, int(limit)):
             break
 
@@ -2306,6 +2329,17 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
         nh_hay = " ".join([title_value, body])
         if _NH_ARCHIVED_RULE_CHAPTER_TEXT_RE.search(nh_hay):
             return True
+
+    if host == "rules.ok.gov" and path.lower() == "/code":
+        title_num, section_num = _oklahoma_rule_identifiers_from_url(url_value)
+        ok_hay = " ".join([title_value, body, url_value])
+        if _OK_RULE_SECTION_NUM_RE.fullmatch(section_num):
+            if _LEGAL_CONTENT_SIGNAL_RE.search(ok_hay) or _RULE_BODY_SIGNAL_RE.search(ok_hay):
+                return True
+        if title_num and not section_num:
+            section_hits = len(re.findall(r"\b\d{1,3}:\d+(?:-\d+)+(?:\.\d+)?\b", ok_hay))
+            if section_hits >= 2 and _LEGAL_CONTENT_SIGNAL_RE.search(ok_hay):
+                return True
 
     return False
 
@@ -2557,7 +2591,7 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "rules.utah.gov" and (_UT_BULLETIN_NEWS_TITLE_RE.search(title_value) or _UT_BULLETIN_PDF_PATH_RE.search(path)):
         return True
-    if host == "apps.azsos.gov" and _AZ_RULEMAKING_META_TEXT_RE.search(hay) and not arizona_official_rule_document:
+    if host == "apps.azsos.gov" and _AZ_RULEMAKING_META_TEXT_RE.search(hay):
         return True
     if _NON_RULE_ADMIN_LANDING_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
         return True
@@ -4529,6 +4563,7 @@ async def _discover_oklahoma_rule_document_urls(*, limit: int = 8) -> List[str]:
             if not segments_payload:
                 continue
 
+            ranked_segments: List[tuple[int, str]] = []
             for segment in segments_payload or []:
                 if not isinstance(segment, dict):
                     continue
@@ -4538,6 +4573,14 @@ async def _discover_oklahoma_rule_document_urls(*, limit: int = 8) -> List[str]:
                 segment_text = str(segment.get("text") or "").strip()
                 if not _OK_RULE_SECTION_NUM_RE.fullmatch(section_num) or not segment_text:
                     continue
+                ranked_segments.append(
+                    (
+                        len(_extract_text_from_downloaded_html_document(segment_text) or segment_text),
+                        section_num,
+                    )
+                )
+
+            for _text_length, section_num in sorted(ranked_segments, key=lambda item: (-item[0], item[1])):
                 candidate_url = _oklahoma_public_rule_url(title_num=title_num, section_num=section_num)
                 candidate_key = _url_key(candidate_url)
                 if not candidate_key or candidate_key in seen:
@@ -5874,6 +5917,29 @@ def _document_format_for_url(url: str) -> str:
 async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, source_url: str) -> str:
     if not pdf_bytes:
         return ""
+
+    try:
+        from pypdf import PdfReader
+    except Exception:
+        PdfReader = None  # type: ignore[assignment]
+
+    if PdfReader is not None:
+        try:
+            reader = PdfReader(io.BytesIO(pdf_bytes))
+            text_parts: List[str] = []
+            for page in reader.pages:
+                try:
+                    page_text = str(page.extract_text() or "").strip()
+                except Exception:
+                    page_text = ""
+                if page_text:
+                    text_parts.append(page_text)
+
+            extracted_text = "\n\n".join(text_parts).strip()
+            if len(extracted_text) >= 80:
+                return extracted_text
+        except Exception:
+            pass
 
     try:
         from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
@@ -7610,6 +7676,11 @@ async def _agentic_discover_admin_state_blocks(
         seed_urls = _extract_seed_urls_for_state(state_code, state_name)
         if not seed_urls:
             seed_urls = [f"https://{state_code.lower()}.gov"]
+        if state_code == "AZ" and any(
+            _is_immediate_direct_detail_candidate_url(seed_url) and _is_pdf_candidate_url(seed_url)
+            for seed_url in seed_urls[:8]
+        ):
+            per_state_budget_s = max(per_state_budget_s, 110.0)
         ordered_seed_urls = sorted(seed_urls, key=_seed_prefetch_priority, reverse=True)
 
         # Always inspect curated seed entrypoints directly as ranked candidates.
@@ -7980,6 +8051,14 @@ async def _agentic_discover_admin_state_blocks(
             min_text_chars = max(220, int(min_full_text_chars))
         effective_fetch_concurrency = max(1, int(fetch_concurrency))
         preloop_budget_deadline = state_start + max(12.0, min(45.0, per_state_budget_s * 0.25))
+        if state_code == "AZ" and any(
+            _is_immediate_direct_detail_candidate_url(seed_url) and _is_pdf_candidate_url(seed_url)
+            for seed_url in ordered_seed_urls[:8]
+        ):
+            preloop_budget_deadline = max(
+                preloop_budget_deadline,
+                state_start + max(30.0, min(90.0, per_state_budget_s - 0.5)),
+            )
 
         async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
             doc_title, doc_text = await _normalize_candidate_document_content(
@@ -8112,15 +8191,26 @@ async def _agentic_discover_admin_state_blocks(
 
         prioritized_seed_document_urls: List[str] = []
         seen_seed_document_keys: set[str] = set()
+        seed_document_limit = min(max(max_fetch * 3, max_fetch + 2), 12)
         for seed_url in ordered_seed_urls:
             if not _is_immediate_direct_detail_candidate_url(seed_url):
                 continue
-            doc_key = _url_key(seed_url)
-            if not doc_key or doc_key in seen_seed_document_keys:
-                continue
-            seen_seed_document_keys.add(doc_key)
-            prioritized_seed_document_urls.append(seed_url)
-            if len(prioritized_seed_document_urls) >= min(max_fetch, 8):
+            seed_candidates = [seed_url]
+            if _is_pdf_candidate_url(seed_url):
+                parsed_seed = urlparse(seed_url)
+                if parsed_seed.netloc.lower() == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed_seed.path or ""):
+                    rtf_sibling_url = re.sub(r"(?i)\.pdf(?=$|\?)", ".rtf", seed_url)
+                    if rtf_sibling_url != seed_url:
+                        seed_candidates = [rtf_sibling_url, seed_url]
+            for candidate_url in seed_candidates:
+                doc_key = _url_key(candidate_url)
+                if not doc_key or doc_key in seen_seed_document_keys:
+                    continue
+                seen_seed_document_keys.add(doc_key)
+                prioritized_seed_document_urls.append(candidate_url)
+                if len(prioritized_seed_document_urls) >= seed_document_limit:
+                    break
+            if len(prioritized_seed_document_urls) >= seed_document_limit:
                 break
 
         prioritized_seed_document_urls = [
