@@ -6,6 +6,7 @@ while improving performance and code quality.
 
 import ast
 import difflib
+import json
 import logging as _logging
 import os
 import re
@@ -511,6 +512,28 @@ class TestDrivenOptimizer(AgenticOptimizer):
         task: OptimizationTask,
         target_symbols: List[str],
     ) -> str:
+        if self._use_action_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_action_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            replacement_sources = {
+                "_get_intake_action": self._render_get_intake_action_from_policy(
+                    self._normalize_action_policy_response(response=response, file_path=target_file)
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+
         symbol_blocks = self._extract_target_symbol_blocks(current_code, target_symbols)
         prompt = self._build_symbol_optimization_prompt(
             file_path=target_file,
@@ -537,6 +560,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
             target_symbols=target_symbols,
             replacement_sources=replacements,
         )
+
+    def _use_action_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "phase_manager.py" and target_symbols == ["_get_intake_action"]
     
     def _apply_optimizations(
         self,
@@ -904,6 +930,55 @@ Instructions:
 - Do not include markdown fences, explanations, or commentary.
 """
 
+    def _build_action_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Improve question quality and coverage without regressing current behavior."
+
+        return f"""Return a compact JSON object describing how _get_intake_action should decide the next intake action.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Allowed actions are exactly:
+- build_knowledge_graph
+- build_dependency_graph
+- address_gaps
+- continue_denoising
+- complete_intake
+
+Return JSON only with these keys:
+- "remaining_gaps_threshold": integer from 0 to 5
+- "address_gaps_before_denoising": true or false
+- "require_convergence_for_completion": true or false
+- "complete_when_iteration_cap_hit": true or false
+- "prefer_current_gaps_key": true or false
+
+Behavioral guardrails:
+- Treat empty containers like {{}} as present graphs once the keys exist.
+- Do not replace `"knowledge_graph" in data` / `'knowledge_graph' not in data` style presence checks with truthiness checks like `not data.get('knowledge_graph')`.
+- Do not replace `"dependency_graph" in data` / `'dependency_graph' not in data` style presence checks with truthiness checks like `not data.get('dependency_graph')`.
+- Preserve the build_knowledge_graph and build_dependency_graph preconditions based on key presence, not container truthiness.
+- Do not tighten the default `_INTAKE_GAPS_THRESHOLD` below its current value.
+- Preserve the final fallback action as `complete_intake` unless an earlier explicit branch already chose `continue_denoising`.
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
     def _extract_target_symbol_blocks(self, current_code: str, target_symbols: List[str]) -> Dict[str, str]:
         tree = ast.parse(current_code)
         lines = current_code.splitlines(keepends=True)
@@ -1017,6 +1092,154 @@ Instructions:
                 f"Symbol optimization response for {file_path} did not return all target methods: {', '.join(missing)}"
             )
         return replacements
+
+    def _normalize_action_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty action policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Action policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Action policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "remaining_gaps_threshold",
+            "address_gaps_before_denoising",
+            "require_convergence_for_completion",
+            "complete_when_iteration_cap_hit",
+            "prefer_current_gaps_key",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(f"Action policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}")
+
+        try:
+            threshold = int(data["remaining_gaps_threshold"])
+        except Exception as exc:
+            raise ValueError(f"Action policy response for {file_path} must include integer remaining_gaps_threshold") from exc
+        if threshold < 0 or threshold > 5:
+            raise ValueError(f"Action policy response for {file_path} used out-of-range remaining_gaps_threshold: {threshold}")
+
+        normalized = {
+            "remaining_gaps_threshold": threshold,
+            "address_gaps_before_denoising": bool(data.get("address_gaps_before_denoising", True)),
+            "require_convergence_for_completion": bool(data.get("require_convergence_for_completion", True)),
+            "complete_when_iteration_cap_hit": bool(data.get("complete_when_iteration_cap_hit", False)),
+            "prefer_current_gaps_key": bool(data.get("prefer_current_gaps_key", True)),
+        }
+        return normalized
+
+    def _render_get_intake_action_from_policy(self, policy: Dict[str, Any]) -> str:
+        threshold = int(policy["remaining_gaps_threshold"])
+        address_first = bool(policy["address_gaps_before_denoising"])
+        require_convergence = bool(policy["require_convergence_for_completion"])
+        complete_when_cap = bool(policy["complete_when_iteration_cap_hit"])
+        prefer_current_gaps_key = bool(policy["prefer_current_gaps_key"])
+
+        gap_assignment = (
+            "    gaps = data.get('current_gaps', [])\n"
+            if prefer_current_gaps_key
+            else "    gaps = data.get('remaining_gap_items', data.get('current_gaps', []))\n"
+        )
+        threshold_assignment = (
+            f"    configured_gap_threshold = {threshold}\n"
+            "    gap_threshold = max(_INTAKE_GAPS_THRESHOLD, configured_gap_threshold)\n"
+        )
+        remaining_gaps_assignment = "    remaining_gaps = data.get('remaining_gaps', float('inf'))\n"
+        gap_condition = "(gaps and len(gaps) > 0) or remaining_gaps > gap_threshold"
+        denoising_guard = "not data.get('denoising_converged', False)"
+        completion_guard = "data.get('denoising_converged', False) and remaining_gaps <= gap_threshold"
+        if complete_when_cap:
+            completion_guard = f"({completion_guard}) or self.iteration_count >= _DENOISING_MAX_ITERATIONS"
+
+        gap_block = (
+            f"    if {gap_condition}:\n"
+            "        return {\n"
+            "            'action': 'address_gaps',\n"
+            "            'gaps': gaps,\n"
+            "            'intake_readiness_score': readiness['score'],\n"
+            "            'intake_blockers': readiness['blockers'],\n"
+            "        }\n\n"
+        )
+        semantic_blocker_block = (
+            "    semantic_blockers = [\n"
+            "        blocker for blocker in readiness['blockers']\n"
+            "        if blocker not in {\n"
+            "            'missing_knowledge_graph',\n"
+            "            'missing_dependency_graph',\n"
+            "            'unresolved_gaps',\n"
+            "            'denoising_not_converged',\n"
+            "        }\n"
+            "    ]\n"
+            "    if semantic_blockers:\n"
+            "        return {\n"
+            "            'action': 'address_gaps',\n"
+            "            'gaps': gaps,\n"
+            "            'intake_readiness_score': readiness['score'],\n"
+            "            'intake_blockers': readiness['blockers'],\n"
+            "        }\n\n"
+        )
+        denoise_block = (
+            f"    if {denoising_guard} and self.iteration_count < _DENOISING_MAX_ITERATIONS:\n"
+            "        return {\n"
+            "            'action': 'continue_denoising',\n"
+            "            'intake_readiness_score': readiness['score'],\n"
+            "            'intake_blockers': readiness['blockers'],\n"
+            "        }\n\n"
+        )
+        if not address_first:
+            gap_block, denoise_block = denoise_block, gap_block
+
+        return (
+            "def _get_intake_action(self) -> Dict[str, Any]:\n"
+            "    \"\"\"Get next action for intake phase.\"\"\"\n"
+            "    data = self.phase_data[ComplaintPhase.INTAKE]\n\n"
+            "    readiness = self.get_intake_readiness()\n\n"
+            "    if 'knowledge_graph' not in data:\n"
+            "        return {\n"
+            "            'action': 'build_knowledge_graph',\n"
+            "            'intake_readiness_score': readiness['score'],\n"
+            "            'intake_blockers': readiness['blockers'],\n"
+            "        }\n\n"
+            "    if 'dependency_graph' not in data:\n"
+            "        return {\n"
+            "            'action': 'build_dependency_graph',\n"
+            "            'intake_readiness_score': readiness['score'],\n"
+            "            'intake_blockers': readiness['blockers'],\n"
+            "        }\n\n"
+            f"{gap_assignment}"
+            f"{threshold_assignment}"
+            f"{remaining_gaps_assignment}"
+            f"{gap_block}"
+            f"{semantic_blocker_block}"
+            f"{denoise_block}"
+            f"    if {completion_guard}:\n"
+            "        return {\n"
+            "            'action': 'complete_intake',\n"
+            "            'intake_readiness_score': readiness['score'],\n"
+            "            'intake_blockers': readiness['blockers'],\n"
+            "        }\n\n"
+            "    return {\n"
+            "        'action': 'complete_intake',\n"
+            "        'intake_readiness_score': readiness['score'],\n"
+            "        'intake_blockers': readiness['blockers'],\n"
+            "    }\n"
+        )
 
     def _extract_symbol_replacements_from_text(
         self,

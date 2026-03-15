@@ -56,6 +56,7 @@ import os
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import tempfile
 import urllib.error
@@ -1989,20 +1990,30 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             cmd.append("-")
 
             try:
-                proc = subprocess.run(
+                proc = subprocess.Popen(
                     cmd,
-                    input=str(prompt),
                     text=True,
-                    capture_output=True,
-                    check=False,
-                    timeout=timeout,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    start_new_session=True,
                 )
+                try:
+                    stdout, stderr = proc.communicate(input=str(prompt), timeout=timeout)
+                except subprocess.TimeoutExpired as exc:
+                    try:
+                        os.killpg(proc.pid, signal.SIGKILL)
+                    except Exception:
+                        proc.kill()
+                    try:
+                        proc.wait(timeout=5)
+                    except Exception:
+                        pass
+                    raise LLMRouterError(
+                        f"codex exec timed out after {timeout:.0f}s for model {model or 'default'}"
+                    ) from exc
             except FileNotFoundError as exc:
                 raise LLMRouterError("codex CLI not found on PATH") from exc
-            except subprocess.TimeoutExpired as exc:
-                raise LLMRouterError(
-                    f"codex exec timed out after {timeout:.0f}s for model {model or 'default'}"
-                ) from exc
 
             try:
                 with open(last_msg_path, "r", encoding="utf-8", errors="replace") as handle:
@@ -2016,23 +2027,23 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                     pass
 
             if proc.returncode == 0 or text_out:
-                if json_mode and proc.stdout:
-                    extracted = _extract_last_agent_message_from_codex_jsonl(proc.stdout)
+                if json_mode and stdout:
+                    extracted = _extract_last_agent_message_from_codex_jsonl(stdout)
                     if extracted:
                         return _clean_codex_output(extracted)
                 return _clean_codex_output(text_out)
 
-            if trace_enabled and proc.stdout and isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
+            if trace_enabled and stdout and isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
                 try:
                     os.makedirs(os.path.dirname(trace_jsonl_path.strip()) or ".", exist_ok=True)
                     with open(trace_jsonl_path.strip(), "a", encoding="utf-8") as handle:
-                        handle.write(proc.stdout)
-                        if not proc.stdout.endswith("\n"):
+                        handle.write(stdout)
+                        if not stdout.endswith("\n"):
                             handle.write("\n")
                 except OSError:
                     pass
 
-            kind = _classify_codex_error_kind(stdout=proc.stdout or "", stderr=proc.stderr or "")
+            kind = _classify_codex_error_kind(stdout=stdout or "", stderr=stderr or "")
             resets = _extract_resets_in_seconds_from_codex_jsonl(proc.stdout or "")
             if kind == "quota_exceeded":
                 raise LLMRouterError("Codex quota exceeded (billing/plan hard limit)")
@@ -2563,11 +2574,12 @@ def _generate_with_provider_fallbacks(
     kwargs: dict[str, object],
 ) -> str:
     effective_provider_name = (provider_name or "").strip().lower()
+    disable_model_retry = bool(kwargs.pop("disable_model_retry", False))
 
     try:
         return backend.generate(prompt, model_name=model_name, **kwargs)
     except Exception as initial_exc:
-        if model_name is not None:
+        if model_name is not None and not disable_model_retry:
             try:
                 return backend.generate(prompt, model_name=None, **kwargs)
             except Exception:

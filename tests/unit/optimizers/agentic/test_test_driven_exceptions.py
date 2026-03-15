@@ -242,6 +242,30 @@ def test_generate_optimizations_normalizes_indented_symbol_response(tmp_path):
     ast.parse(updated)
 
 
+def test_action_policy_renderer_preserves_graph_presence_checks():
+    optimizer = TestDrivenOptimizer(agent_id="td-action-policy", llm_router=Mock())
+
+    rendered = optimizer._render_get_intake_action_from_policy(
+        {
+            "remaining_gaps_threshold": 1,
+            "address_gaps_before_denoising": True,
+            "require_convergence_for_completion": True,
+            "complete_when_iteration_cap_hit": False,
+            "prefer_current_gaps_key": True,
+        }
+    )
+
+    assert "if 'knowledge_graph' not in data:" in rendered
+    assert "if 'dependency_graph' not in data:" in rendered
+    assert "if not data.get('knowledge_graph')" not in rendered
+    assert "if not data.get('dependency_graph')" not in rendered
+    assert "gap_threshold = max(_INTAKE_GAPS_THRESHOLD, configured_gap_threshold)" in rendered
+    assert "min(_INTAKE_GAPS_THRESHOLD" not in rendered
+    assert rendered.count("'action': 'complete_intake'") >= 2
+    assert "'action': 'continue_denoising'" in rendered
+    ast.parse("class _Temp:\n" + "\n".join(f"    {line}" for line in rendered.splitlines()))
+
+
 def test_generate_optimizations_records_raw_symbol_response_on_error(tmp_path):
     router = Mock()
     router.generate.return_value = """
@@ -275,3 +299,58 @@ def _get_intake_action(self) -> Dict[str, Any]:
     assert optimizer._last_generation_diagnostics[0]["mode"] == "symbol_level"
     assert "raw_response_preview" in optimizer._last_generation_diagnostics[0]
     assert "_get_intake_action" in optimizer._last_generation_diagnostics[0]["raw_response_preview"]
+
+
+def test_generate_optimizations_can_use_action_policy_mode(tmp_path):
+    router = Mock()
+    router.generate.return_value = """{
+  "remaining_gaps_threshold": 1,
+  "address_gaps_before_denoising": true,
+  "require_convergence_for_completion": true,
+  "complete_when_iteration_cap_hit": false,
+  "prefer_current_gaps_key": true
+}"""
+    optimizer = TestDrivenOptimizer(agent_id="td-action-policy", llm_router=router)
+
+    target = tmp_path / "phase_manager.py"
+    target.write_text(
+        "from typing import Dict, Any\n\n"
+        "class ComplaintPhase:\n"
+        "    INTAKE = 'intake'\n\n"
+        "_DENOISING_MAX_ITERATIONS = 5\n\n"
+        "class PhaseManager:\n"
+        "    def __init__(self):\n"
+        "        self.iteration_count = 0\n"
+        "        self.phase_data = {ComplaintPhase.INTAKE: {}}\n\n"
+        "    def _get_intake_action(self) -> Dict[str, Any]:\n"
+        "        return {'action': 'continue_denoising'}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-action-policy",
+        target_files=[target],
+        description="Optimize one symbol",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["_get_intake_action"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "readiness = self.get_intake_readiness()" in updated
+    assert "remaining_gaps" in updated
+    assert "address_gaps" in updated
+    assert "complete_intake" in updated
+    assert "intake_readiness_score" in updated
+    assert "intake_blockers" in updated
+    assert "semantic_blockers" in updated
+    assert "if (True)" not in updated
+    assert "_INTAKE_GAPS_THRESHOLD" in updated
+    assert "gap_threshold" in updated
+    assert "data.get('denoising_converged', False)" in updated
+    assert "if 'knowledge_graph' not in data" in updated
+    assert "if 'dependency_graph' not in data" in updated
+    ast.parse(updated)
