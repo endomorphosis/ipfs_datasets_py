@@ -516,6 +516,43 @@ async def test_scrape_new_hampshire_archived_rule_detail_skips_wayback_shell(
     assert "Statutory Authority" in scraped.text
 
 
+@pytest.mark.asyncio
+async def test_scrape_new_hampshire_archived_rule_detail_skips_blocked_403_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    archived_url = "https://web.archive.org/web/20250129103908/https://gc.nh.gov/rules/state_agencies/stra1100.html"
+    original_url = "https://gc.nh.gov/rules/state_agencies/stra1100.html"
+    observed_urls: list[str] = []
+    from ipfs_datasets_py.processors.web_archiving import wayback_machine_engine
+
+    async def _fake_fetch_html_bypassing_challenge(url: str):
+        observed_urls.append(url)
+        if url == archived_url:
+            return {
+                "text": "Error 403 Web Page Blocked block URL: www.gc.nh.gov/robots.txt Attack ID: 20000051 Message ID: 000402357687",
+                "html": "<html><head><title>Error 403</title></head><body><h1>Error 403</h1><p>Web Page Blocked</p><p>URL: www.gc.nh.gov/robots.txt</p></body></html>",
+                "source": "common_crawl",
+            }
+        if url == original_url:
+            return {
+                "text": "Chapter Stra 1100 Hearings Statutory Authority: RSA 541-A. Source. #1234, eff 1-1-24.",
+                "html": "<html><head><title>Stra 1100</title></head><body><p>Chapter Stra 1100 Hearings</p><p>Statutory Authority: RSA 541-A.</p></body></html>",
+                "source": "wayback_machine",
+            }
+        return None
+
+    monkeypatch.setattr(wayback_machine_engine, "get_wayback_content", lambda *args, **kwargs: {"status": "error"})
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("direct requests should not be used")))
+    monkeypatch.setattr(scraper_module, "_fetch_html_bypassing_challenge", _fake_fetch_html_bypassing_challenge)
+
+    scraped = await scraper_module._scrape_new_hampshire_archived_rule_detail(archived_url)
+
+    assert observed_urls == [archived_url, original_url]
+    assert scraped is not None
+    assert scraped.extraction_provenance["fetch_url"] == original_url
+    assert "Statutory Authority" in scraped.text
+
+
 def test_new_hampshire_archived_checkrule_page_is_not_substantive_rule_text() -> None:
     text = (
         "Administrative Rules HOW TO DOUBLE-CHECK THE ONLINE RULE CAUTION ALWAYS DOUBLE-CHECK ANY ONLINE RULE. "
@@ -533,6 +570,20 @@ def test_new_hampshire_archived_checkrule_page_is_not_substantive_rule_text() ->
         text=text,
         title="How To Double-Check the Online Rule",
         url="https://web.archive.org/web/20250308091642/https://gc.nh.gov/rules/about_rules/checkrule.aspx",
+    ) is False
+
+
+def test_new_hampshire_archived_blocked_403_page_is_not_substantive_rule_text() -> None:
+    text = (
+        "Error 403 Web Page Blocked block URL: www.gc.nh.gov/robots.txt Client IP: 18.97.14.91 "
+        "Attack ID: 20000051 Message ID: 000402357687 What happened? The page cannot be displayed."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Error 403",
+        url="https://web.archive.org/web/20250129103908/https://gc.nh.gov/rules/state_agencies/stra1100.html",
+        min_chars=160,
     ) is False
 
 

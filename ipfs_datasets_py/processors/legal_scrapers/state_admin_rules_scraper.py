@@ -1603,6 +1603,15 @@ def _looks_like_wayback_shell_page(*, title: str, text: str) -> bool:
     )
 
 
+def _looks_like_new_hampshire_blocked_page(*, title: str, text: str) -> bool:
+    hay = " ".join([str(title or ""), str(text or "")]).lower()
+    return (
+        "error 403" in hay
+        and "web page blocked" in hay
+        and "robots.txt" in hay
+    )
+
+
 def _wayback_replay_original_url(url: str) -> str:
     value = str(url or "").strip()
     match = re.match(r"^https?://web\.archive\.org/web/\d+(?:if_|id_)?/(https?://.+)$", value, re.IGNORECASE)
@@ -4984,7 +4993,7 @@ async def _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
                         text = soup.get_text(" ", strip=True)
                         if soup.title is not None:
                             title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
-                        if _looks_like_wayback_shell_page(title=title, text=text):
+                        if _looks_like_wayback_shell_page(title=title, text=text) or _looks_like_new_hampshire_blocked_page(title=title, text=text):
                             diagnostics["shell_pages_rejected"] = int(diagnostics.get("shell_pages_rejected", 0)) + 1
                             continue
                     diagnostics["pages_fetched"] = int(diagnostics.get("pages_fetched", 0)) + 1
@@ -5017,7 +5026,7 @@ async def _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
                     text = soup.get_text(" ", strip=True)
                     if soup.title is not None:
                         title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
-                    if _looks_like_wayback_shell_page(title=title, text=text):
+                    if _looks_like_wayback_shell_page(title=title, text=text) or _looks_like_new_hampshire_blocked_page(title=title, text=text):
                         diagnostics["shell_pages_rejected"] = int(diagnostics.get("shell_pages_rejected", 0)) + 1
                         continue
                 diagnostics["pages_fetched"] = int(diagnostics.get("pages_fetched", 0)) + 1
@@ -5037,7 +5046,7 @@ async def _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
                 extracted_text = text or soup.get_text(" ", strip=True)
                 if soup.title is not None:
                     title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
-                if _looks_like_wayback_shell_page(title=title, text=extracted_text):
+                if _looks_like_wayback_shell_page(title=title, text=extracted_text) or _looks_like_new_hampshire_blocked_page(title=title, text=extracted_text):
                     diagnostics["shell_pages_rejected"] = int(diagnostics.get("shell_pages_rejected", 0)) + 1
                     continue
                 diagnostics["pages_fetched"] = int(diagnostics.get("pages_fetched", 0)) + 1
@@ -5151,7 +5160,7 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
                     if soup.title is not None:
                         title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
                     text = soup.get_text(" ", strip=True)
-                    if text.strip() and not _looks_like_wayback_shell_page(title=title, text=text):
+                    if text.strip() and not _looks_like_wayback_shell_page(title=title, text=text) and not _looks_like_new_hampshire_blocked_page(title=title, text=text):
                         return SimpleNamespace(
                             url=archived_url,
                             title=title,
@@ -5182,7 +5191,7 @@ async def _scrape_new_hampshire_archived_rule_detail(url: str) -> Optional[Any]:
             soup = BeautifulSoup(html, "html.parser")
             if soup.title is not None:
                 title = re.sub(r"\s+", " ", soup.title.get_text(" ", strip=True)).strip()
-        if _looks_like_wayback_shell_page(title=title, text=text):
+        if _looks_like_wayback_shell_page(title=title, text=text) or _looks_like_new_hampshire_blocked_page(title=title, text=text):
             continue
         return SimpleNamespace(
             url=archived_url,
@@ -6954,6 +6963,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     if _looks_like_binary_document_text(text=body, url=url_value):
         return False
     if _looks_like_raw_html_text(body):
+        return False
+    if _looks_like_new_hampshire_blocked_page(title=title_value, text=body):
         return False
     if _looks_like_forum_page(text=body, title=title_value, url=url_value):
         return False
