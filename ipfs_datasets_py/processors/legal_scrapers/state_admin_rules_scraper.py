@@ -323,6 +323,25 @@ _VT_PROPOSAL_POSTING_TEXT_RE = re.compile(
     r"subscribe\s+to\s+rule\s+notices|upcoming\s+events",
     re.IGNORECASE,
 )
+_VT_RULE_DETAIL_TEXT_RE = re.compile(
+    r"\brule\s+details\b|\brule\s+number\s*:|\bagency\s*:|\blegal\s+authority\s*:",
+    re.IGNORECASE,
+)
+
+_VT_LEXIS_TOC_PATH_RE = re.compile(r"^/hottopics/codeofvtrules/?$", re.IGNORECASE)
+_VT_LEXIS_DOC_PATH_RE = re.compile(
+    r"^/shared/document/administrative-codes/urn:contentItem:[A-Za-z0-9:-]+$",
+    re.IGNORECASE,
+)
+_VT_LEXIS_SHELL_TEXT_RE = re.compile(
+    r"captcha\s+validation|robot\s+validation|we\s+use\s+captcha\s+on\s+this\s+site|"
+    r"sign\s+in\s*\|\s*lexisnexis|sign\s+in\s+to\s+continue",
+    re.IGNORECASE,
+)
+_VT_LEXIS_TOC_TEXT_RE = re.compile(
+    r"code\s+of\s+vermont\s+rules|table\s+of\s+contents|agency\s+\d+\.\s+[A-Z]",
+    re.IGNORECASE,
+)
 
 _RAW_HTML_TEXT_RE = re.compile(
     r"^\s*(?:<!DOCTYPE\s+html\b|<html\b|<head\b|<body\b)|<script\b|<meta\b|<noscript\b|</html>",
@@ -389,6 +408,26 @@ _TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE = re.compile(
 )
 
 _TX_TRANSFER_PATH_RE = re.compile(r"^/texreg/transfers(?:/|$)", re.IGNORECASE)
+_TX_TRANSFER_NOTICE_TEXT_RE = re.compile(
+    r"\brule\s+transfer\b|administratively\s+transferring|will\s+be\s+transferred\s+from\s+title\b|"
+    r"conversion\s+chart|transfer\s+charts?\b",
+    re.IGNORECASE,
+)
+_OK_NON_SUBSTANTIVE_LEGISLATURE_PATH_RE = re.compile(
+    r"^/(?:regulations|administrative-code|code-of-regulations|rules|agency-rules|policies|departments)?/?$",
+    re.IGNORECASE,
+)
+_OK_LLSDC_TEXT_RE = re.compile(
+    r"law\s+librarians'?\s+society\s+of\s+washington|legislative\s+source\s+book|"
+    r"state\s+legislatures,?\s+state\s+laws,?\s+and\s+state\s+regulations",
+    re.IGNORECASE,
+)
+_OK_RULES_PORTAL_SHELL_TEXT_RE = re.compile(
+    r"oklahoma\s+administrative\s+code.*administrative\s+code\s+search.*"
+    r"title\s+1\.\s*executive\s+orders",
+    re.IGNORECASE | re.DOTALL,
+)
+_OK_RULE_SECTION_NUM_RE = re.compile(r"^\d{1,3}:\d+(?:-\d+)+(?:\.\d+)?$")
 
 _LOW_VALUE_LINK_TEXT_RE = re.compile(
     r"^(?:home|about(?:\s+us)?|contact(?:\s+us)?|help|privacy|services|state\s+login|login|myiar|subscriptions?)$",
@@ -473,7 +512,20 @@ def _prefers_live_fetch(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
     path = parsed.path.lower()
+    if host == "advance.lexis.com" and _VT_LEXIS_DOC_PATH_RE.fullmatch(parsed.path or ""):
+        return False
     if host in _LIVE_FETCH_PREFERRED_HOSTS:
+        return True
+    if host == "texas-sos.appianportalsgov.com" and path == "/rules-and-meetings":
+        interface = str((parse_qs(parsed.query or "").get("interface") or [""])[0]).strip().upper()
+        if interface in {"VIEW_TAC", "VIEW_TAC_SUMMARY"}:
+            return True
+    if host == "rules.ok.gov" and path == "/code":
+        if str((parse_qs(parsed.query or "").get("titleNum") or [""])[0]).strip():
+            return True
+    if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(parsed.path or ""):
+        return True
+    if host == "advance.lexis.com" and path == "/container":
         return True
     if host == "sharetngov.tnsosfiles.com" and path in {
         "/sos/rules/index.htm",
@@ -849,7 +901,6 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://secure.vermont.gov/SOS/rules/index.php",
         "https://secure.vermont.gov/SOS/rules/search.php",
         "https://secure.vermont.gov/SOS/rules/rssFeed.php",
-        "https://secure.vermont.gov/SOS/rules/display.php?r=1049",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/notices-of-rulemaking/",
         "https://aoa.vermont.gov/ICAR",
@@ -878,7 +929,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -1535,7 +1586,7 @@ def _score_candidate_url(url: str) -> int:
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         score += 8
     if host == "rules.utah.gov" and _UT_NON_RULE_NEWS_PATH_RE.search(path):
-        score -= 6
+        score += 10
     if host == "ltgov.alaska.gov" and normalized_path.lower() == "/information/regulations":
         score += 4
     if host == "www.akleg.gov" and normalized_path.lower() == "/basis/aac.asp":
@@ -1595,6 +1646,10 @@ def _score_candidate_url(url: str) -> int:
             score -= 4
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         score += 8
+    if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(path):
+        score += 10
+    if host == "advance.lexis.com" and _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
+        score += 13
     if host == "govt.westlaw.com" and path.lower().startswith("/calregs/browse/home/california/californiacodeofregulations"):
         score += 6
     if host == "govt.westlaw.com" and normalized_path.lower() == "/calregs/index":
@@ -1681,8 +1736,46 @@ def _score_candidate_url(url: str) -> int:
         score += 10
     if host == "legislature.nh.gov" and normalized_path.lower() in {"/regulations", "/administrative-code", "/code-of-regulations"}:
         score -= 5
-    if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php" and re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
+    if host == "rules.ok.gov" and normalized_path.lower() == "/code":
+        query_params = parse_qs(parsed.query or "")
+        title_num = str((query_params.get("titleNum") or [""])[0]).strip()
+        section_num = str((query_params.get("sectionNum") or [""])[0]).strip()
+        if title_num and _OK_RULE_SECTION_NUM_RE.fullmatch(section_num):
+            score += 13
+        elif title_num:
+            score += 6
+        else:
+            score += 4
+    if host == "legislature.ok.gov" and _OK_NON_SUBSTANTIVE_LEGISLATURE_PATH_RE.fullmatch(path):
+        score -= 8
+    if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(path):
         score += 10
+    if host == "advance.lexis.com":
+        if _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
+            score += 13
+        elif normalized_path.lower() == "/container":
+            score += 6
+    if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php" and re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
+        score -= 4
+    if host == "texas-sos.appianportalsgov.com" and normalized_path.lower() == "/rules-and-meetings":
+        query_params = parse_qs(parsed.query or "")
+        interface = str((query_params.get("interface") or [""])[0]).strip().upper()
+        record_id = str((query_params.get("recordId") or [""])[0]).strip()
+        if interface == "VIEW_TAC_SUMMARY" and record_id.isdigit():
+            score += 13
+        elif interface == "VIEW_TAC":
+            if str((query_params.get("subchapter") or [""])[0]).strip() and str((query_params.get("chapter") or [""])[0]).strip():
+                score += 10
+            elif str((query_params.get("chapter") or [""])[0]).strip() and str((query_params.get("part") or [""])[0]).strip():
+                score += 8
+            elif str((query_params.get("part") or [""])[0]).strip() and str((query_params.get("title") or [""])[0]).strip():
+                score += 7
+            elif str((query_params.get("title") or [""])[0]).strip():
+                score += 6
+            else:
+                score += 5
+    if host == "www.sos.state.tx.us" and _TX_TRANSFER_PATH_RE.search(path):
+        score -= 8
     if host == "secure.vermont.gov" and normalized_path.lower() in {"/sos/rules", "/sos/rules/index.php"}:
         score += 4
     if host == "secure.vermont.gov" and normalized_path.lower() in {
@@ -1723,6 +1816,8 @@ def _score_candidate_url(url: str) -> int:
         score += 9
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE):
         score += 12
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\d-]+/[\d-]+\.htm$", path, re.IGNORECASE):
+        score += 9
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\w.-]+\.pdf$", path, re.IGNORECASE):
         score += 10
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\d-]+/[\w.-]+\.pdf$", path, re.IGNORECASE):
@@ -1880,6 +1975,14 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score -= 6
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         score += 8
+    if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(path):
+        if re.search(r"code\s+of\s+vermont\s+rules", hay, re.IGNORECASE):
+            score += 8
+    if host == "advance.lexis.com" and _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
+        score += 10
+    if host == "secure.vermont.gov" and path.lower() == "/sos/rules/display.php":
+        if re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
+            score += 2
     if host == "govt.westlaw.com" and path.lower().startswith("/calregs/document/"):
         score += 12
     if host == "govt.westlaw.com" and path.lower().startswith("/calregs/browse/home/california/californiacodeofregulations"):
@@ -2004,10 +2107,23 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         re.IGNORECASE,
     ):
         return True
-    if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php":
-        if re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
+    if host == "advance.lexis.com" and _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
+        return True
+    if host == "rules.ok.gov" and normalized_path.lower() == "/code":
+        query_params = parse_qs(parsed.query or "")
+        title_num = str((query_params.get("titleNum") or [""])[0]).strip()
+        section_num = str((query_params.get("sectionNum") or [""])[0]).strip()
+        if title_num and (not section_num or _OK_RULE_SECTION_NUM_RE.fullmatch(section_num)):
+            return True
+    if host == "texas-sos.appianportalsgov.com" and normalized_path.lower() == "/rules-and-meetings":
+        query_params = parse_qs(parsed.query or "")
+        interface = str((query_params.get("interface") or [""])[0]).strip().upper()
+        record_id = str((query_params.get("recordId") or [""])[0]).strip()
+        if interface == "VIEW_TAC_SUMMARY" and record_id.isdigit():
             return True
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE):
+        return True
+    if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\w.-]+\.pdf$", path, re.IGNORECASE):
         return True
     if host == "sharetngov.tnsosfiles.com" and re.search(r"^/sos/rules/\d{4}/[\d-]+/[\w.-]+\.pdf$", path, re.IGNORECASE):
         return True
@@ -2142,6 +2258,9 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
     host = parsed.netloc.lower()
     path = parsed.path or ""
 
+    if _is_vermont_rule_detail_page(text=text, title=title, url=url):
+        return True
+
     # Utah detail pages often omit explicit "administrative rule" phrasing while still
     # containing the real rule body. Treat canonical detail routes as admin-signal pages
     # when they expose rule-like citations or body markers.
@@ -2173,6 +2292,16 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
             ):
                 return True
 
+    if host == "texas-sos.appianportalsgov.com" and path.lower() == "/rules-and-meetings":
+        interface = str((parse_qs(parsed.query or "").get("interface") or [""])[0]).strip().upper()
+        record_id = str((parse_qs(parsed.query or "").get("recordId") or [""])[0]).strip()
+        tx_hay = " ".join([title_value, body])
+        if interface == "VIEW_TAC_SUMMARY" and record_id.isdigit():
+            if re.search(r"\bRule\s+§\s*\d", tx_hay, re.IGNORECASE):
+                return True
+            if _RULE_BODY_SIGNAL_RE.search(tx_hay) and _LEGAL_CONTENT_SIGNAL_RE.search(tx_hay):
+                return True
+
     if _NH_ARCHIVED_RULE_CHAPTER_URL_RE.search(url_value):
         nh_hay = " ".join([title_value, body])
         if _NH_ARCHIVED_RULE_CHAPTER_TEXT_RE.search(nh_hay):
@@ -2200,6 +2329,15 @@ def _looks_like_raw_html_text(text: str) -> bool:
     return bool(_RAW_HTML_TEXT_RE.search(head))
 
 
+def _should_abort_vermont_after_lexis_block(
+    *,
+    state_code: str,
+    vermont_lexis_access_blocked: bool,
+    statutes_count: int,
+) -> bool:
+    return state_code == "VT" and vermont_lexis_access_blocked and int(statutes_count) <= 0
+
+
 def _has_disallowed_discovery_domain(url: str) -> bool:
     host = urlparse(str(url or "").strip()).netloc
     return bool(host and _BAD_DISCOVERY_DOMAIN_RE.search(host))
@@ -2222,6 +2360,26 @@ def _looks_like_navigation_page(text: str) -> bool:
     return False
 
 
+def _is_vermont_rule_detail_page(*, text: str, title: str, url: str) -> bool:
+    url_value = str(url or "").strip()
+    parsed = urlparse(url_value)
+    host = parsed.netloc.lower()
+    path = (parsed.path or "").lower()
+    if host != "secure.vermont.gov" or path != "/sos/rules/display.php":
+        return False
+    rule_id = str((parse_qs(parsed.query or "").get("r") or [""])[0]).strip()
+    if not rule_id.isdigit():
+        return False
+    hay = " ".join([str(title or ""), str(text or "")])
+    if _VT_PROPOSAL_POSTING_TEXT_RE.search(hay):
+        return False
+    if not re.search(r"\brule\s+details\b", hay, re.IGNORECASE):
+        return False
+    if not re.search(r"\brule\s+number\s*:", hay, re.IGNORECASE):
+        return False
+    return bool(_VT_RULE_DETAIL_TEXT_RE.search(hay))
+
+
 def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     hay = " ".join([str(title or ""), str(url or ""), str(text or "")])
     title_value = str(title or "").strip()
@@ -2234,6 +2392,8 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     normalized_path_lower = normalized_path.lower()
     query = parsed.query or ""
     arizona_official_rule_document = _looks_like_arizona_official_rule_document(text=text, title=title, url=url)
+    if _is_vermont_rule_detail_page(text=text, title=title, url=url):
+        return False
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay):
         return True
     if _SEO_MIRROR_PAGE_RE.search(hay):
@@ -2363,6 +2523,26 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     if host == "secure.vermont.gov" and normalized_path_lower == "/sos/rules/display.php":
         if _VT_PROPOSAL_POSTING_TEXT_RE.search(hay):
             return True
+    if host in {"lexisnexis.com", "www.lexisnexis.com", "advance.lexis.com"} and _VT_LEXIS_SHELL_TEXT_RE.search(hay):
+        return True
+    if host == "legislature.ok.gov" and _OK_NON_SUBSTANTIVE_LEGISLATURE_PATH_RE.fullmatch(path):
+        if _OK_LLSDC_TEXT_RE.search(hay) or "home legislators legislation committees calendars" in hay.lower():
+            return True
+    if host == "rules.ok.gov" and normalized_path_lower == "/code":
+        query_params = parse_qs(query)
+        title_num = str((query_params.get("titleNum") or [""])[0]).strip()
+        section_num = str((query_params.get("sectionNum") or [""])[0]).strip()
+        title_hits = len(re.findall(r"\btitle\s+\d+\.", hay, re.IGNORECASE))
+        if (
+            title_num
+            and _OK_RULE_SECTION_NUM_RE.fullmatch(section_num)
+            and title_hits >= 8
+            and _OK_RULES_PORTAL_SHELL_TEXT_RE.search(hay)
+        ):
+            return True
+    if host == "www.sos.state.tx.us" and _TX_TRANSFER_PATH_RE.search(path):
+        if _TX_TRANSFER_NOTICE_TEXT_RE.search(hay):
+            return True
     if host == "texas-sos.appianportalsgov.com" and _TX_NON_SUBSTANTIVE_PORTAL_QUERY_RE.search(query):
         return True
     if host == "www.sos.state.tx.us" and _TX_TRANSFER_INDEX_PATH_RE.search(path):
@@ -2377,7 +2557,7 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         return True
     if host == "rules.utah.gov" and (_UT_BULLETIN_NEWS_TITLE_RE.search(title_value) or _UT_BULLETIN_PDF_PATH_RE.search(path)):
         return True
-    if host == "apps.azsos.gov" and _AZ_RULEMAKING_META_TEXT_RE.search(hay):
+    if host == "apps.azsos.gov" and _AZ_RULEMAKING_META_TEXT_RE.search(hay) and not arizona_official_rule_document:
         return True
     if _NON_RULE_ADMIN_LANDING_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
         return True
@@ -2686,6 +2866,11 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     if host == "web.archive.org" and url_value.rstrip("/").endswith("https://gc.nh.gov/rules"):
         if _NH_RULES_PORTAL_TEXT_RE.search(hay):
             return True
+    if host in {"lexisnexis.com", "www.lexisnexis.com", "advance.lexis.com"}:
+        if _VT_LEXIS_DOC_PATH_RE.fullmatch(urlparse(url_value).path or ""):
+            return False
+        if _VT_LEXIS_TOC_TEXT_RE.search(hay):
+            return True
     if host == "www.ilga.gov" and path in {"/agencies/jcar/admincode", "/commission/jcar/admincode", "/commission/jcar/admincode/"}:
         if "administrative code" in hay.lower() and il_title_hits >= 8:
             return True
@@ -2710,6 +2895,16 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
             or "view effective rules by month" in hay.lower()
             or "archived rule filings" in hay.lower()
             or "tenncare rules" in hay.lower()
+        ):
+            return True
+    if host == "sharetngov.tnsosfiles.com" and re.search(
+        r"^/sos/rules/\d{4}/(?:\d{4}|[\d-]+/[\d-]+)\.htm$",
+        path,
+        re.IGNORECASE,
+    ):
+        if (
+            "click on the rule you want to view or print" in hay.lower()
+            and "keywords may be searched for in individual pdf files" in hay.lower()
         ):
             return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(path):
@@ -3639,6 +3834,458 @@ async def _scrape_montana_rule_detail_via_api(url: str) -> Optional[Any]:
     )
 
 
+async def _discover_vermont_lexis_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        str(url or "").strip()
+        for url in list(seed_urls or [])
+        if urlparse(str(url or "").strip()).netloc.lower() in {"lexisnexis.com", "www.lexisnexis.com", "advance.lexis.com"}
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit))
+    target_url = next(
+        (
+            url
+            for url in relevant_seed_urls
+            if _VT_LEXIS_TOC_PATH_RE.fullmatch(urlparse(url).path or "")
+        ),
+        relevant_seed_urls[0],
+    )
+    discovered_rule_urls: List[str] = []
+    seen_rule_keys: set[str] = set()
+    expanded_node_ids: set[str] = set()
+    max_expand = max(6, min(36, limit_n * 6))
+
+    try:
+        from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+        from playwright.async_api import async_playwright
+    except Exception:
+        return []
+
+    browser_user_agent = _pdf_request_headers(target_url).get("User-Agent") or (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+
+    async def _load_page(page: Any, start_url: str) -> None:
+        await page.goto(start_url, wait_until="domcontentloaded", timeout=120000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=10000)
+        except Exception:
+            pass
+        try:
+            await page.wait_for_selector("li.js-node", timeout=15000)
+        except Exception:
+            pass
+        await page.wait_for_timeout(750)
+
+    async def _visible_nodes(page: Any) -> List[Dict[str, Any]]:
+        return list(
+            await page.evaluate(
+                """
+                () => Array.from(document.querySelectorAll('li.js-node')).map((el, index) => ({
+                  ordinal: index,
+                  nodeid: el.getAttribute('data-nodeid') || '',
+                  nodepath: el.getAttribute('data-nodepath') || '',
+                  level: el.getAttribute('data-level') || '',
+                  title: el.getAttribute('data-title') || '',
+                  haschildren: el.getAttribute('data-haschildren') || '',
+                  populated: el.getAttribute('data-populated') || '',
+                  docfullpath: el.getAttribute('data-docfullpath') || '',
+                  expanded: el.getAttribute('aria-expanded') || ''
+                }))
+                """
+            )
+            or []
+        )
+
+    async def _expand_node(page: Any, node_id: str) -> bool:
+        if not node_id:
+            return False
+        locator = page.locator(f'li.js-node[data-nodeid="{node_id}"] button.toc-tree__toggle-expansion').first
+        try:
+            if await locator.count() == 0:
+                return False
+            await locator.scroll_into_view_if_needed(timeout=3000)
+            await locator.click(timeout=5000)
+            await page.wait_for_timeout(900)
+            return True
+        except PlaywrightTimeoutError:
+            return False
+        except Exception:
+            return False
+
+    async with async_playwright() as p:
+        browser = None
+        context = None
+        try:
+            if _use_persistent_playwright_profile():
+                profile_dir = _playwright_persistent_profile_dir()
+                profile_dir.mkdir(parents=True, exist_ok=True)
+                context = await p.chromium.launch_persistent_context(
+                    str(profile_dir),
+                    headless=_playwright_headless_enabled(),
+                    user_agent=browser_user_agent,
+                )
+                page = await context.new_page()
+            else:
+                browser = await p.chromium.launch(headless=_playwright_headless_enabled())
+                context = await browser.new_context(user_agent=browser_user_agent)
+                page = await context.new_page()
+
+            await _apply_playwright_session_state(context, page, target_url)
+            await _load_page(page, target_url)
+
+            expand_attempts = 0
+            while len(discovered_rule_urls) < limit_n and expand_attempts < max_expand:
+                nodes = await _visible_nodes(page)
+                if not nodes:
+                    break
+
+                for node in nodes:
+                    docfullpath = str(node.get("docfullpath") or "").strip()
+                    if not docfullpath:
+                        continue
+                    candidate_url = urljoin("https://advance.lexis.com", docfullpath)
+                    if not _VT_LEXIS_DOC_PATH_RE.fullmatch(urlparse(candidate_url).path or ""):
+                        continue
+                    candidate_key = _url_key(candidate_url)
+                    if not candidate_key or candidate_key in seen_rule_keys:
+                        continue
+                    seen_rule_keys.add(candidate_key)
+                    discovered_rule_urls.append(candidate_url)
+                    if len(discovered_rule_urls) >= limit_n:
+                        break
+                if len(discovered_rule_urls) >= limit_n:
+                    break
+
+                expandable_nodes = [
+                    node
+                    for node in nodes
+                    if str(node.get("haschildren") or "").lower() == "true"
+                    and str(node.get("expanded") or "").lower() != "true"
+                    and str(node.get("nodeid") or "") not in expanded_node_ids
+                ]
+                if not expandable_nodes:
+                    break
+
+                expandable_nodes.sort(
+                    key=lambda node: (
+                        -int(str(node.get("level") or "0") or 0),
+                        int(node.get("ordinal") or 0),
+                    )
+                )
+                next_node_id = str(expandable_nodes[0].get("nodeid") or "").strip()
+                if not next_node_id:
+                    break
+                expanded_node_ids.add(next_node_id)
+                if not await _expand_node(page, next_node_id):
+                    continue
+                expand_attempts += 1
+
+            return discovered_rule_urls
+        finally:
+            if context is not None:
+                await context.close()
+            elif browser is not None:
+                await browser.close()
+
+
+def _scrape_vermont_lexis_document_candidate(url: str) -> Optional[Any]:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "advance.lexis.com":
+        return None
+    if not _VT_LEXIS_DOC_PATH_RE.fullmatch(parsed.path or ""):
+        return None
+
+    try:
+        response = requests.get(
+            url,
+            timeout=10,
+            headers=_pdf_request_headers(url),
+            allow_redirects=True,
+        )
+        final_url = str(getattr(response, "url", "") or url)
+        final_text = response.text or ""
+        title_match = re.search(r"<title[^>]*>(.*?)</title>", final_text, re.IGNORECASE | re.DOTALL)
+        title = re.sub(r"\s+", " ", title_match.group(1)).strip()[:240] if title_match else ""
+        return SimpleNamespace(
+            text=final_text,
+            html=final_text,
+            title=title,
+            links=[],
+            success=bool(response.ok),
+            status_code=int(getattr(response, "status_code", 200) or 200),
+            url=final_url,
+        )
+    except Exception:
+        return None
+
+
+async def _discover_texas_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        str(url or "").strip()
+        for url in list(seed_urls or [])
+        if urlparse(str(url or "").strip()).netloc.lower() == "texas-sos.appianportalsgov.com"
+        and (urlparse(str(url or "").strip()).path or "").lower() == "/rules-and-meetings"
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit))
+    base_url = "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC"
+    discovered_rule_urls: List[str] = []
+    seen_rule_keys: set[str] = set()
+
+    try:
+        from playwright.async_api import async_playwright
+    except Exception:
+        return []
+
+    browser_user_agent = _pdf_request_headers(base_url).get("User-Agent") or (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+
+    def _dedupe(values: List[str]) -> List[str]:
+        out: List[str] = []
+        seen: set[str] = set()
+        for value in values:
+            normalized = str(value or "").strip()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            out.append(normalized)
+        return out
+
+    def _collect_regex_values(pattern: str, text: str, *, upper: bool = False) -> List[str]:
+        matches = [str(match or "").strip() for match in re.findall(pattern, str(text or ""), re.IGNORECASE)]
+        if upper:
+            matches = [match.upper() for match in matches]
+        return _dedupe(matches)
+
+    def _collect_query_values(html: str, key: str, *, upper: bool = False) -> List[str]:
+        pattern = rf"[?&]{re.escape(key)}=([^&#\"'\s>]+)"
+        matches = [unquote(str(match or "").strip()) for match in re.findall(pattern, str(html or ""), re.IGNORECASE)]
+        if upper:
+            matches = [match.upper() for match in matches]
+        return _dedupe(matches)
+
+    def _maybe_add_rule_urls(page_url: str, html: str) -> None:
+        for candidate_url in _candidate_texas_rule_urls_from_html(
+            html=html,
+            page_url=page_url,
+            limit=max(limit_n * 3, 12),
+        ):
+            if not _is_direct_detail_candidate_url(candidate_url):
+                continue
+            candidate_key = _url_key(candidate_url)
+            if not candidate_key or candidate_key in seen_rule_keys:
+                continue
+            seen_rule_keys.add(candidate_key)
+            discovered_rule_urls.append(candidate_url)
+            if len(discovered_rule_urls) >= limit_n:
+                break
+
+    async def _load_page(page: Any, target_url: str) -> tuple[str, str, str]:
+        await page.goto(target_url, wait_until="domcontentloaded", timeout=120000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=10000)
+        except Exception:
+            pass
+        await page.wait_for_timeout(750)
+        try:
+            text = str(await page.locator("body").inner_text() or "")
+        except Exception:
+            text = ""
+        try:
+            html = str(await page.content() or "")
+        except Exception:
+            html = ""
+        return str(page.url or target_url), text, html
+
+    async with async_playwright() as p:
+        browser = None
+        context = None
+        try:
+            if _use_persistent_playwright_profile():
+                profile_dir = _playwright_persistent_profile_dir()
+                profile_dir.mkdir(parents=True, exist_ok=True)
+                context = await p.chromium.launch_persistent_context(
+                    str(profile_dir),
+                    headless=_playwright_headless_enabled(),
+                    user_agent=browser_user_agent,
+                )
+                page = await context.new_page()
+            else:
+                browser = await p.chromium.launch(headless=_playwright_headless_enabled())
+                context = await browser.new_context(user_agent=browser_user_agent)
+                page = await context.new_page()
+
+            await _apply_playwright_session_state(context, page, base_url)
+            current_url, current_text, current_html = await _load_page(page, relevant_seed_urls[0] or base_url)
+            _maybe_add_rule_urls(current_url, current_html)
+            if len(discovered_rule_urls) >= limit_n:
+                return discovered_rule_urls
+
+            title_ids = _dedupe(
+                _collect_regex_values(r"\bTitle\s+(\d{1,3})\b", current_text)
+                + _collect_query_values(current_html, "title")
+            )
+            for title_id in title_ids[: min(3, limit_n)]:
+                title_url = f"{base_url}&title={quote(title_id, safe='')}"
+                current_url, current_text, current_html = await _load_page(page, title_url)
+                _maybe_add_rule_urls(current_url, current_html)
+                if len(discovered_rule_urls) >= limit_n:
+                    break
+
+                part_ids = _dedupe(
+                    _collect_regex_values(r"\bPart\s+(\d{1,3})\b", current_text)
+                    + _collect_query_values(current_html, "part")
+                )
+                for part_id in part_ids[: min(3, limit_n)]:
+                    part_url = f"{base_url}&title={quote(title_id, safe='')}&part={quote(part_id, safe='')}"
+                    current_url, current_text, current_html = await _load_page(page, part_url)
+                    _maybe_add_rule_urls(current_url, current_html)
+                    if len(discovered_rule_urls) >= limit_n:
+                        break
+
+                    chapter_ids = _dedupe(
+                        _collect_regex_values(r"\bChapter\s+(\d{1,4})\b", current_text)
+                        + _collect_query_values(current_html, "chapter")
+                    )
+                    for chapter_id in chapter_ids[: min(3, limit_n)]:
+                        chapter_url = (
+                            f"{base_url}&title={quote(title_id, safe='')}&part={quote(part_id, safe='')}"
+                            f"&chapter={quote(chapter_id, safe='')}"
+                        )
+                        current_url, current_text, current_html = await _load_page(page, chapter_url)
+                        _maybe_add_rule_urls(current_url, current_html)
+                        if len(discovered_rule_urls) >= limit_n:
+                            break
+
+                        subchapter_ids = _dedupe(
+                            _collect_regex_values(r"\bSubchapter\s+([A-Z0-9]{1,4})\b", current_text, upper=True)
+                            + _collect_query_values(current_html, "subchapter", upper=True)
+                        )
+                        for subchapter_id in subchapter_ids[: min(3, limit_n)]:
+                            subchapter_url = (
+                                f"{base_url}&title={quote(title_id, safe='')}&part={quote(part_id, safe='')}"
+                                f"&chapter={quote(chapter_id, safe='')}&subchapter={quote(subchapter_id, safe='')}"
+                            )
+                            current_url, current_text, current_html = await _load_page(page, subchapter_url)
+                            _maybe_add_rule_urls(current_url, current_html)
+                            if len(discovered_rule_urls) >= limit_n:
+                                break
+                        if len(discovered_rule_urls) >= limit_n:
+                            break
+                    if len(discovered_rule_urls) >= limit_n:
+                        break
+                if len(discovered_rule_urls) >= limit_n:
+                    break
+
+            return discovered_rule_urls
+        finally:
+            if context is not None:
+                await context.close()
+            elif browser is not None:
+                await browser.close()
+
+
+async def _scrape_texas_tac_rule_detail_via_playwright(url: str) -> Optional[SimpleNamespace]:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "texas-sos.appianportalsgov.com":
+        return None
+    if (parsed.path or "").lower() != "/rules-and-meetings":
+        return None
+
+    query_params = parse_qs(parsed.query or "")
+    interface = str((query_params.get("interface") or [""])[0]).strip().upper()
+    record_id = str((query_params.get("recordId") or [""])[0]).strip()
+    if interface != "VIEW_TAC_SUMMARY" or not record_id.isdigit():
+        return None
+
+    try:
+        from playwright.async_api import async_playwright
+    except Exception:
+        return None
+
+    browser_user_agent = _pdf_request_headers(url).get("User-Agent") or (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+
+    async with async_playwright() as p:
+        browser = None
+        context = None
+        try:
+            if _use_persistent_playwright_profile():
+                profile_dir = _playwright_persistent_profile_dir()
+                profile_dir.mkdir(parents=True, exist_ok=True)
+                context = await p.chromium.launch_persistent_context(
+                    str(profile_dir),
+                    headless=_playwright_headless_enabled(),
+                    user_agent=browser_user_agent,
+                )
+                page = await context.new_page()
+            else:
+                browser = await p.chromium.launch(headless=_playwright_headless_enabled())
+                context = await browser.new_context(user_agent=browser_user_agent)
+                page = await context.new_page()
+
+            await _apply_playwright_session_state(context, page, url)
+            await page.goto(url, wait_until="networkidle", timeout=120000)
+            try:
+                await page.wait_for_selector("iframe", timeout=10000)
+            except Exception:
+                pass
+            await page.wait_for_timeout(1000)
+
+            main_text = str(await page.locator("body").inner_text() or "").strip()
+            frame_texts: List[str] = []
+            for frame in page.frames[1:]:
+                try:
+                    frame_text = str(await frame.locator("body").inner_text(timeout=5000) or "").strip()
+                except Exception:
+                    frame_text = ""
+                if len(frame_text) < 40:
+                    continue
+                if frame_text not in frame_texts:
+                    frame_texts.append(frame_text)
+
+            if not frame_texts:
+                return None
+
+            title = ""
+            lines = [line.strip() for line in main_text.splitlines() if line.strip()]
+            for idx, line in enumerate(lines):
+                if re.match(r"^Rule\s+§", line):
+                    next_line = lines[idx + 1] if idx + 1 < len(lines) else ""
+                    title = " ".join(part for part in (line, next_line) if part).strip()
+                    break
+
+            combined_text = "\n\n".join(part for part in ([title] if title else []) + frame_texts if str(part or "").strip())
+            if not combined_text:
+                return None
+
+            return SimpleNamespace(
+                url=url,
+                title=title,
+                text=combined_text,
+                html="",
+                links=[],
+                success=True,
+                method_used="texas_tac_playwright",
+                extraction_provenance={"method": "texas_tac_playwright"},
+            )
+        finally:
+            if context is not None:
+                await context.close()
+            elif browser is not None:
+                await browser.close()
+
+
 def _south_dakota_rule_reference_from_url(url: str) -> str:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
@@ -3755,6 +4402,124 @@ async def _discover_alabama_rule_document_urls(*, limit: int = 8) -> List[str]:
                     results.append(rule_url)
                     if len(results) >= limit_n:
                         return results
+        return results
+
+    return await asyncio.to_thread(_run)
+
+
+def _oklahoma_public_rule_url(*, title_num: str, section_num: str) -> str:
+    return "https://rules.ok.gov/code?" + urlencode(
+        {
+            "titleNum": str(title_num or "").strip(),
+            "sectionNum": str(section_num or "").strip(),
+        }
+    )
+
+
+def _candidate_oklahoma_rule_urls_from_text(*, text: str, page_url: str = "", limit: int = 12) -> List[str]:
+    body = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not body or "oklahoma administrative code" not in body.lower():
+        return []
+
+    parsed_page = urlparse(str(page_url or "").strip())
+    if parsed_page.netloc.lower() not in {"", "rules.ok.gov"}:
+        return []
+    if parsed_page.netloc and (parsed_page.path or "").rstrip("/").lower() != "/code":
+        return []
+
+    results: List[str] = []
+    seen: set[str] = set()
+    limit_n = max(1, int(limit or 1))
+    title_listing_re = re.compile(
+        r"Title\s+(?P<title_num>\d{1,3})\.\s+(?P<title_name>.*?)(?=Title\s+\d{1,3}\.\s+|$)",
+        re.IGNORECASE | re.DOTALL,
+    )
+    for match in title_listing_re.finditer(body):
+        title_num = str(match.group("title_num") or "").strip()
+        title_name = re.sub(r"\s+", " ", str(match.group("title_name") or "")).strip(" -")
+        if not title_num or not title_name:
+            continue
+        if any(token in title_name.lower() for token in ("abolished", "terminated", "repealed", "reserved")):
+            continue
+        candidate_url = "https://rules.ok.gov/code?" + urlencode({"titleNum": title_num})
+        candidate_key = _url_key(candidate_url)
+        if not candidate_key or candidate_key in seen:
+            continue
+        seen.add(candidate_key)
+        results.append(candidate_url)
+        if len(results) >= limit_n:
+            break
+    return results
+
+
+def _oklahoma_rule_identifiers_from_url(url: str) -> tuple[str, str]:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "rules.ok.gov" or (parsed.path or "").lower() != "/code":
+        return "", ""
+    query_params = parse_qs(parsed.query or "")
+    title_num = str((query_params.get("titleNum") or [""])[0]).strip()
+    section_num = str((query_params.get("sectionNum") or [""])[0]).strip()
+    if not title_num:
+        return "", ""
+    if section_num and not _OK_RULE_SECTION_NUM_RE.fullmatch(section_num):
+        return "", ""
+    return title_num, section_num
+
+
+async def _discover_oklahoma_rule_document_urls(*, limit: int = 8) -> List[str]:
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"}
+        try:
+            rules_response = requests.get(
+                "https://okadminrules-api.azurewebsites.net/GetAllRules",
+                params={"pageNumber": 1, "pageSize": max(25, min(limit_n * 10, 200)), "filter": "false"},
+                timeout=25,
+                headers=headers,
+            )
+            rules_response.raise_for_status()
+            rules_payload = rules_response.json()
+        except Exception:
+            return []
+
+        results: List[str] = []
+        seen: set[str] = set()
+        for rule in rules_payload or []:
+            if not isinstance(rule, dict):
+                continue
+            title_num = str(rule.get("referenceCode") or "").strip()
+            if not title_num.isdigit():
+                continue
+            try:
+                segments_response = requests.get(
+                    "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum",
+                    params={"titleNum": title_num},
+                    timeout=25,
+                    headers=headers,
+                )
+                segments_response.raise_for_status()
+                segments_payload = segments_response.json()
+            except Exception:
+                continue
+
+            for segment in segments_payload or []:
+                if not isinstance(segment, dict):
+                    continue
+                if str(segment.get("name") or "").strip().lower() != "section":
+                    continue
+                section_num = str(segment.get("sectionNum") or "").strip()
+                segment_text = str(segment.get("text") or "").strip()
+                if not _OK_RULE_SECTION_NUM_RE.fullmatch(section_num) or not segment_text:
+                    continue
+                candidate_url = _oklahoma_public_rule_url(title_num=title_num, section_num=section_num)
+                candidate_key = _url_key(candidate_url)
+                if not candidate_key or candidate_key in seen:
+                    continue
+                seen.add(candidate_key)
+                results.append(candidate_url)
+                if len(results) >= limit_n:
+                    return results
         return results
 
     return await asyncio.to_thread(_run)
@@ -3997,6 +4762,102 @@ async def _scrape_alabama_rule_detail_via_api(url: str) -> Optional[Any]:
             success=True,
             method_used="alabama_public_code_api",
             extraction_provenance={"method": "alabama_public_code_api"},
+        )
+
+    return await asyncio.to_thread(_run)
+
+
+async def _scrape_oklahoma_rule_detail_via_api(url: str) -> Optional[Any]:
+    title_num, section_num = _oklahoma_rule_identifiers_from_url(url)
+    if not title_num:
+        return None
+
+    def _run() -> Optional[Any]:
+        headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"}
+        try:
+            response = requests.get(
+                "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum",
+                params={"titleNum": title_num},
+                timeout=25,
+                headers=headers,
+            )
+            response.raise_for_status()
+            segments_payload = response.json()
+        except Exception:
+            return None
+
+        title_label = next(
+            (
+                str(item.get("description") or "").strip()
+                for item in segments_payload or []
+                if isinstance(item, dict) and str(item.get("name") or "").strip().lower() == "title"
+            ),
+            "",
+        )
+
+        if section_num:
+            segment = next(
+                (
+                    item
+                    for item in segments_payload or []
+                    if isinstance(item, dict) and str(item.get("sectionNum") or "").strip() == section_num
+                ),
+                None,
+            )
+            if not isinstance(segment, dict):
+                return None
+
+            description = str(segment.get("description") or "").strip()
+            segment_html = str(segment.get("text") or "").strip()
+            text = _extract_text_from_downloaded_html_document(segment_html)
+            if not text:
+                text = BeautifulSoup(segment_html, "html.parser").get_text("\n", strip=True)
+            if not text:
+                return None
+
+            title = " ".join(part for part in (section_num, description) if part).strip()
+            html = segment_html
+        else:
+            text_parts: List[str] = []
+            html_parts: List[str] = []
+            for item in segments_payload or []:
+                if not isinstance(item, dict):
+                    continue
+                if str(item.get("name") or "").strip().lower() != "section":
+                    continue
+                item_section_num = str(item.get("sectionNum") or "").strip()
+                if not _OK_RULE_SECTION_NUM_RE.fullmatch(item_section_num):
+                    continue
+                item_description = str(item.get("description") or "").strip()
+                item_html = str(item.get("text") or "").strip()
+                item_text = _extract_text_from_downloaded_html_document(item_html)
+                if not item_text:
+                    item_text = BeautifulSoup(item_html, "html.parser").get_text("\n", strip=True)
+                if not item_text:
+                    continue
+                item_title = " ".join(part for part in (item_section_num, item_description) if part).strip()
+                if item_title:
+                    text_parts.append(item_title)
+                    html_parts.append(f"<h2>{__import__('html').escape(item_title)}</h2>")
+                text_parts.append(item_text)
+                if item_html:
+                    html_parts.append(item_html)
+
+            text = "\n\n".join(part for part in text_parts if part).strip()
+            html = "".join(html_parts).strip()
+            if not text:
+                return None
+            title = " ".join(part for part in (f"Title {title_num}", title_label) if part).strip()
+
+        return SimpleNamespace(
+            url=url,
+            title=title,
+            text=text,
+            html=html,
+            links=[],
+            success=True,
+            method_used="oklahoma_rules_api",
+            extraction_provenance={"method": "oklahoma_rules_api"},
         )
 
     return await asyncio.to_thread(_run)
@@ -5807,28 +6668,223 @@ def _candidate_vermont_rule_urls_from_html(*, html: str, page_url: str = "", lim
     parsed_page = urlparse(str(page_url or "").strip())
     host = parsed_page.netloc.lower()
     path = (parsed_page.path or "").lower()
-    if host != "secure.vermont.gov":
+
+    out: List[str] = []
+    seen: set[str] = set()
+    limit_n = max(1, int(limit))
+
+    if host in {"lexisnexis.com", "www.lexisnexis.com", "advance.lexis.com"}:
+        for doc_path in re.findall(r'data-docfullpath=["\']([^"\']+)["\']', body, re.IGNORECASE):
+            normalized_path = str(doc_path or "").strip()
+            if not normalized_path:
+                continue
+            candidate_url = urljoin("https://advance.lexis.com", normalized_path)
+            if not _VT_LEXIS_DOC_PATH_RE.fullmatch(urlparse(candidate_url).path or ""):
+                continue
+            key = _url_key(candidate_url)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(candidate_url)
+            if len(out) >= limit_n:
+                return out
+    return out
+
+
+def _candidate_massachusetts_cmr_urls_from_html(
+    *,
+    html: str,
+    page_url: str,
+    limit: int = 20,
+    include_inventory: bool = True,
+) -> List[str]:
+    body = str(html or "")
+    if not body:
         return []
-    if path not in {"/sos/rules/", "/sos/rules/index.php"}:
+
+    limit_n = max(1, int(limit))
+    ranked: List[tuple[int, str, str]] = []
+    seen: set[str] = set()
+    for href, anchor_body in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', body, re.IGNORECASE | re.DOTALL):
+        link_url = unescape(str(href or "").strip())
+        link_text = re.sub(r"<[^>]+>", " ", str(anchor_body or ""))
+        link_text = re.sub(r"\s+", " ", link_text).strip()
+        if link_url and not link_url.startswith(("http://", "https://")):
+            link_url = urljoin(page_url, link_url)
+        if not link_url.startswith(("http://", "https://")):
+            continue
+
+        parsed = urlparse(link_url)
+        host = parsed.netloc.lower()
+        if host not in {"www.mass.gov", "mass.gov"}:
+            continue
+
+        path = parsed.path or ""
+        is_detail = bool(_MA_CMR_DETAIL_PATH_RE.search(path))
+        is_inventory = bool(_MA_CMR_INVENTORY_PATH_RE.search(path))
+        if _MA_GENERAL_LAWS_PATH_RE.search(path):
+            continue
+        if not is_detail and not is_inventory:
+            continue
+        if not include_inventory and not is_detail:
+            continue
+
+        key = _url_key(link_url)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+
+        score = _score_candidate_link(link_url, link_text, page_url)
+        if is_detail:
+            score += 4
+        elif path.lower().startswith("/law-library/"):
+            score += 2
+        if score <= 0:
+            continue
+        ranked.append((score, link_url, link_text))
+
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    return [link_url for _, link_url, _ in ranked[:limit_n]]
+
+
+async def _discover_massachusetts_cmr_document_urls(
+    *,
+    seed_urls: List[str],
+    live_scraper: Any,
+    live_fetch_api: Any,
+    direct_fetch_api: Any,
+    allowed_hosts: set[str],
+    limit: int = 12,
+) -> List[str]:
+    frontier: List[str] = [
+        url
+        for url in seed_urls
+        if urlparse(str(url or "").strip()).netloc.lower() in {"www.mass.gov", "mass.gov"}
+        and _MA_CMR_INVENTORY_PATH_RE.search(urlparse(str(url or "").strip()).path or "")
+    ]
+    if not frontier:
+        return []
+
+    document_urls: List[str] = []
+    seen_pages: set[str] = set()
+    seen_inventory: set[str] = {_url_key(url) for url in frontier if _url_key(url)}
+    seen_documents: set[str] = set()
+
+    for _depth in range(3):
+        next_frontier: List[str] = []
+        for page_url in frontier[:4]:
+            page_key = _url_key(page_url)
+            if not page_key or page_key in seen_pages:
+                continue
+            seen_pages.add(page_key)
+
+            html = ""
+            scraped = None
+            try:
+                scraped = await asyncio.wait_for(live_scraper.scrape(page_url), timeout=12.0)
+                html = str(getattr(scraped, "html", "") or "")
+            except Exception:
+                scraped = None
+
+            if not html:
+                page_host = urlparse(page_url).netloc
+                fetch_api = live_fetch_api if _prefers_live_fetch(page_url) else direct_fetch_api
+                try:
+                    fetched = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            fetch_api.fetch,
+                            UnifiedFetchRequest(
+                                url=page_url,
+                                timeout_seconds=25,
+                                mode=OperationMode.BALANCED,
+                                domain=".gov" if page_host.endswith(".gov") else "legal",
+                            ),
+                        ),
+                        timeout=12.0,
+                    )
+                    fetched_doc = getattr(fetched, "document", None)
+                    html = str(getattr(fetched_doc, "html", "") or "")
+                except Exception:
+                    html = ""
+
+            if not html:
+                continue
+
+            links = _candidate_massachusetts_cmr_urls_from_html(
+                html=html,
+                page_url=page_url,
+                limit=max(limit * 4, 24),
+                include_inventory=True,
+            )
+            for link_url in links:
+                parsed_link = urlparse(link_url)
+                host = parsed_link.netloc
+                if allowed_hosts and host and not _host_matches_allowed(host, allowed_hosts):
+                    continue
+
+                path = parsed_link.path or ""
+                link_key = _url_key(link_url)
+                if _MA_CMR_DETAIL_PATH_RE.search(path):
+                    if link_key and link_key not in seen_documents:
+                        seen_documents.add(link_key)
+                        document_urls.append(link_url)
+                elif _MA_CMR_INVENTORY_PATH_RE.search(path):
+                    if link_key and link_key not in seen_inventory:
+                        seen_inventory.add(link_key)
+                        next_frontier.append(link_url)
+
+                if len(document_urls) >= max(1, int(limit)):
+                    return document_urls[: max(1, int(limit))]
+
+        if not next_frontier:
+            break
+        frontier = next_frontier
+
+    return document_urls[: max(1, int(limit))]
+
+
+def _candidate_texas_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
+    body = str(html or "")
+    if not body:
+        return []
+
+    parsed_page = urlparse(str(page_url or "").strip())
+    host = parsed_page.netloc.lower()
+    path = (parsed_page.path or "").lower()
+    if host != "texas-sos.appianportalsgov.com" or path != "/rules-and-meetings":
         return []
 
     out: List[str] = []
     seen: set[str] = set()
-    for match in re.finditer(
-        r'<input\b[^>]*name=["\']RuleID["\'][^>]*value=["\'](\d+)["\'][^>]*>',
-        body,
-        re.IGNORECASE,
-    ):
-        rule_id = str(match.group(1) or "").strip()
-        if not rule_id:
+    limit_n = max(1, int(limit))
+    for href in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\']', body, re.IGNORECASE):
+        candidate_url = unescape(str(href or "").strip())
+        if candidate_url and not candidate_url.startswith(("http://", "https://")) and page_url:
+            candidate_url = urljoin(page_url, candidate_url)
+        if not candidate_url.startswith(("http://", "https://")):
             continue
-        candidate_url = f"https://secure.vermont.gov/SOS/rules/display.php?r={rule_id}"
+        parsed_candidate = urlparse(candidate_url)
+        if parsed_candidate.netloc.lower() != "texas-sos.appianportalsgov.com":
+            continue
+        if (parsed_candidate.path or "").lower() != "/rules-and-meetings":
+            continue
+        query_params = parse_qs(parsed_candidate.query or "")
+        interface = str((query_params.get("interface") or [""])[0]).strip().upper()
+        if interface == "VIEW_TAC_SUMMARY":
+            record_id = str((query_params.get("recordId") or [""])[0]).strip()
+            if not record_id.isdigit():
+                continue
+        elif interface == "VIEW_TAC":
+            if not any(str((query_params.get(key) or [""])[0]).strip() for key in ("title", "part", "chapter", "subchapter")):
+                continue
+        else:
+            continue
         key = _url_key(candidate_url)
         if not key or key in seen:
             continue
         seen.add(key)
         out.append(candidate_url)
-        if len(out) >= max(1, int(limit)):
+        if len(out) >= limit_n:
             break
     return out
 
@@ -5943,6 +6999,21 @@ def _candidate_links_from_html(
         if score <= 0:
             continue
         ranked.append((score, link_url, ""))
+    for link_url in _candidate_texas_rule_urls_from_html(html=body, page_url=page_url, limit=limit):
+        host = urlparse(link_url).netloc
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
+            continue
+        key = link_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        score = _score_candidate_link(link_url, "", page_url)
+        if score <= 0:
+            continue
+        ranked.append((score, link_url, ""))
     for link_url in _candidate_vermont_rule_urls_from_html(html=body, page_url=page_url, limit=limit):
         host = urlparse(link_url).netloc
         if allowed_hosts:
@@ -5974,6 +7045,21 @@ def _candidate_links_from_html(
             continue
         ranked.append((score, link_url, ""))
     for link_url in _candidate_arkansas_rule_urls_from_html(html=body, page_url=page_url, limit=limit):
+        host = urlparse(link_url).netloc
+        if allowed_hosts:
+            if host and not _host_matches_allowed(host, allowed_hosts):
+                continue
+        elif base_host and host and host != base_host:
+            continue
+        key = link_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        score = _score_candidate_link(link_url, "", page_url)
+        if score <= 0:
+            continue
+        ranked.append((score, link_url, ""))
+    for link_url in _candidate_oklahoma_rule_urls_from_text(text=body, page_url=page_url, limit=limit):
         host = urlparse(link_url).netloc
         if allowed_hosts:
             if host and not _host_matches_allowed(host, allowed_hosts):
@@ -6502,6 +7588,8 @@ async def _agentic_discover_admin_state_blocks(
 
         utah_api_rule_urls: List[str] = []
         arkansas_bootstrap_document_urls: List[str] = []
+        texas_bootstrap_document_urls: List[str] = []
+        oklahoma_bootstrap_document_urls: List[str] = []
         preseed_substantive_url_keys: set[str] = set()
 
         # Utah's public search API already exposes canonical detail-page URLs.
@@ -6548,6 +7636,37 @@ async def _agentic_discover_admin_state_blocks(
             if arkansas_bootstrap_document_urls:
                 source_breakdown["arkansas_sos_search_bootstrap"] = len(arkansas_bootstrap_document_urls)
 
+        if state_code == "TX":
+            texas_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 12))
+            try:
+                texas_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_texas_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=texas_seed_limit,
+                    ),
+                    timeout=35.0,
+                )
+            except Exception:
+                texas_bootstrap_document_urls = []
+            for document_url in texas_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if texas_bootstrap_document_urls:
+                source_breakdown["texas_appian_bootstrap"] = len(texas_bootstrap_document_urls)
+
+        if state_code == "OK":
+            oklahoma_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 12))
+            try:
+                oklahoma_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_oklahoma_rule_document_urls(limit=oklahoma_seed_limit),
+                    timeout=25.0,
+                )
+            except Exception:
+                oklahoma_bootstrap_document_urls = []
+            for document_url in oklahoma_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if oklahoma_bootstrap_document_urls:
+                source_breakdown["oklahoma_rules_api_bootstrap"] = len(oklahoma_bootstrap_document_urls)
+
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
         california_bootstrap_document_urls: List[str] = []
         if state_code == "CA" and not seeded_direct_detail_urls:
@@ -6567,6 +7686,8 @@ async def _agentic_discover_admin_state_blocks(
         direct_detail_ready = bool(
             utah_api_rule_urls
             or arkansas_bootstrap_document_urls
+            or texas_bootstrap_document_urls
+            or oklahoma_bootstrap_document_urls
             or seeded_direct_detail_urls
             or california_bootstrap_document_urls
         ) or _direct_detail_candidate_backlog_is_ready(
@@ -6629,6 +7750,11 @@ async def _agentic_discover_admin_state_blocks(
                     if inventory_seed:
                         preseed_signal = True
                         source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
+                        if state_code == "VT":
+                            # Vermont's public SOS/ICAR pages are discovery/inventory surfaces,
+                            # not substantive rule text. Once we've confirmed that shape, stop
+                            # expanding them so bounded runs do not spend the full state budget.
+                            break
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=fetched_text,
                             url=seed_url,
@@ -6802,6 +7928,9 @@ async def _agentic_discover_admin_state_blocks(
             reverse=True,
         )
 
+        if state_code == "VT" and not direct_detail_ready:
+            ranked_urls = []
+
         statutes: List[Dict[str, Any]] = []
         direct_doc_urls: set[str] = set()
         seed_expansion_candidates: List[tuple[str, int]] = []
@@ -6967,6 +8096,48 @@ async def _agentic_discover_admin_state_blocks(
             *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
         ]
 
+        prioritized_utah_seed_rule_urls: List[str] = []
+        if state_code == "UT" and utah_api_rule_urls:
+            seen_utah_rule_keys: set[str] = set()
+            for rule_url in utah_api_rule_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_utah_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_utah_rule_keys.add(rule_key)
+                prioritized_utah_seed_rule_urls.append(rule_url)
+                if len(prioritized_utah_seed_rule_urls) >= min(max_fetch, 8):
+                    break
+
+        for rule_url in prioritized_utah_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            inspected_urls += 1
+            try:
+                utah_scraped = await asyncio.wait_for(
+                    _scrape_utah_rule_detail_via_public_download(rule_url),
+                    timeout=25.0,
+                )
+            except Exception:
+                utah_scraped = None
+            if utah_scraped is None:
+                continue
+
+            utah_text = str(getattr(utah_scraped, "text", "") or "").strip()
+            utah_title = str(getattr(utah_scraped, "title", "") or "").strip()
+            utah_provenance = getattr(utah_scraped, "extraction_provenance", None) or {}
+            utah_method_value = None
+            if isinstance(utah_provenance, dict):
+                utah_method_value = utah_provenance.get("method")
+            if utah_method_value is None:
+                utah_method_value = getattr(utah_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, utah_title, utah_text, utah_method_value)
+
         ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
         if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
@@ -7015,6 +8186,11 @@ async def _agentic_discover_admin_state_blocks(
                 elif state_code == "SD":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_south_dakota_rule_detail_via_api(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "OK":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_oklahoma_rule_detail_via_api(document_url),
                         timeout=direct_timeout_s,
                     )
                 else:
@@ -7082,20 +8258,6 @@ async def _agentic_discover_admin_state_blocks(
                     if link_score <= 0:
                         continue
                     seed_expansion_candidates.append((link_url, link_score + 3))
-
-        prioritized_utah_seed_rule_urls: List[str] = []
-        if state_code == "UT" and utah_api_rule_urls:
-            seen_utah_rule_keys: set[str] = set()
-            for rule_url in utah_api_rule_urls:
-                rule_key = _url_key(rule_url)
-                if not rule_key or rule_key in seen_utah_rule_keys:
-                    continue
-                if not _url_allowed_for_state(rule_url, allowed_hosts):
-                    continue
-                seen_utah_rule_keys.add(rule_key)
-                prioritized_utah_seed_rule_urls.append(rule_url)
-                if len(prioritized_utah_seed_rule_urls) >= min(max_fetch, 8):
-                    break
 
         prioritized_alabama_seed_rule_urls: List[str] = []
         if state_code == "AL":
@@ -7175,33 +8337,39 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_alaska_seed_rule_urls) >= min(max_fetch * 2, 12):
                     break
 
-        for rule_url in prioritized_utah_seed_rule_urls:
-            if len(statutes) >= max_fetch:
-                break
-            if (time.monotonic() - state_start) >= per_state_budget_s:
-                break
-            if time.monotonic() >= preloop_budget_deadline:
-                break
-            inspected_urls += 1
-            try:
-                utah_scraped = await asyncio.wait_for(
-                    _scrape_utah_rule_detail_via_public_download(rule_url),
-                    timeout=25.0,
-                )
-            except Exception:
-                utah_scraped = None
-            if utah_scraped is None:
-                continue
+        prioritized_texas_seed_rule_urls: List[str] = []
+        if state_code == "TX" and texas_bootstrap_document_urls:
+            seen_texas_rule_keys: set[str] = set()
+            for rule_url in texas_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_texas_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_texas_rule_keys.add(rule_key)
+                prioritized_texas_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_texas_seed_rule_urls) >= min(max_fetch * 2, 12):
+                    break
 
-            utah_text = str(getattr(utah_scraped, "text", "") or "").strip()
-            utah_title = str(getattr(utah_scraped, "title", "") or "").strip()
-            utah_provenance = getattr(utah_scraped, "extraction_provenance", None) or {}
-            utah_method_value = None
-            if isinstance(utah_provenance, dict):
-                utah_method_value = utah_provenance.get("method")
-            if utah_method_value is None:
-                utah_method_value = getattr(utah_scraped, "method_used", None)
-            await _append_document_if_rule(rule_url, utah_title, utah_text, utah_method_value)
+        prioritized_oklahoma_seed_rule_urls: List[str] = []
+        if state_code == "OK" and oklahoma_bootstrap_document_urls:
+            seen_oklahoma_rule_keys: set[str] = set()
+            for rule_url in oklahoma_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_oklahoma_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_oklahoma_rule_keys.add(rule_key)
+                prioritized_oklahoma_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_oklahoma_seed_rule_urls) >= min(max_fetch * 2, 12):
+                    break
 
         for rule_url in prioritized_alabama_seed_rule_urls:
             if len(statutes) >= max_fetch:
@@ -7286,6 +8454,60 @@ async def _agentic_discover_admin_state_blocks(
             if alaska_method_value is None:
                 alaska_method_value = getattr(alaska_scraped, "method_used", None)
             await _append_document_if_rule(rule_url, alaska_title, alaska_text, alaska_method_value)
+
+        for rule_url in prioritized_texas_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            inspected_urls += 1
+            try:
+                texas_scraped = await asyncio.wait_for(
+                    _scrape_texas_tac_rule_detail_via_playwright(rule_url),
+                    timeout=30.0,
+                )
+            except Exception:
+                texas_scraped = None
+            if texas_scraped is None:
+                continue
+
+            texas_text = str(getattr(texas_scraped, "text", "") or "").strip()
+            texas_title = str(getattr(texas_scraped, "title", "") or "").strip()
+            texas_provenance = getattr(texas_scraped, "extraction_provenance", None) or {}
+            texas_method_value = None
+            if isinstance(texas_provenance, dict):
+                texas_method_value = texas_provenance.get("method")
+            if texas_method_value is None:
+                texas_method_value = getattr(texas_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, texas_title, texas_text, texas_method_value)
+
+        for rule_url in prioritized_oklahoma_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            inspected_urls += 1
+            try:
+                oklahoma_scraped = await asyncio.wait_for(
+                    _scrape_oklahoma_rule_detail_via_api(rule_url),
+                    timeout=20.0,
+                )
+            except Exception:
+                oklahoma_scraped = None
+            if oklahoma_scraped is None:
+                continue
+
+            oklahoma_text = str(getattr(oklahoma_scraped, "text", "") or "").strip()
+            oklahoma_title = str(getattr(oklahoma_scraped, "title", "") or "").strip()
+            oklahoma_provenance = getattr(oklahoma_scraped, "extraction_provenance", None) or {}
+            oklahoma_method_value = None
+            if isinstance(oklahoma_provenance, dict):
+                oklahoma_method_value = oklahoma_provenance.get("method")
+            if oklahoma_method_value is None:
+                oklahoma_method_value = getattr(oklahoma_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, oklahoma_title, oklahoma_text, oklahoma_method_value)
 
         for document_url in prioritized_seed_document_urls:
             if len(statutes) >= max_fetch:
@@ -7659,6 +8881,8 @@ async def _agentic_discover_admin_state_blocks(
         seen_urls = set(direct_doc_urls)
         inspected_url_samples: List[str] = []
         deep_discovery_calls = 0
+        vermont_lexis_signin_block_count = 0
+        vermont_lexis_access_blocked = False
         base_hosts = {
             urlparse(str(seed).strip()).netloc
             for seed in seed_urls
@@ -7673,6 +8897,9 @@ async def _agentic_discover_admin_state_blocks(
             montana_scraped = await _scrape_montana_rule_detail_via_api(url)
             if montana_scraped is not None:
                 return montana_scraped
+            vermont_lexis_scraped = await asyncio.to_thread(_scrape_vermont_lexis_document_candidate, url)
+            if vermont_lexis_scraped is not None:
+                return vermont_lexis_scraped
             south_dakota_scraped = await _scrape_south_dakota_rule_detail_via_api(url)
             if south_dakota_scraped is not None:
                 return south_dakota_scraped
@@ -7682,6 +8909,12 @@ async def _agentic_discover_admin_state_blocks(
             utah_scraped = await _scrape_utah_rule_detail_via_public_download(url)
             if utah_scraped is not None:
                 return utah_scraped
+            texas_scraped = await _scrape_texas_tac_rule_detail_via_playwright(url)
+            if texas_scraped is not None:
+                return texas_scraped
+            oklahoma_scraped = await _scrape_oklahoma_rule_detail_via_api(url)
+            if oklahoma_scraped is not None:
+                return oklahoma_scraped
             pdf_scraped = await _scrape_pdf_candidate_url_with_processor(url)
             if pdf_scraped is not None:
                 return pdf_scraped
@@ -7713,6 +8946,12 @@ async def _agentic_discover_admin_state_blocks(
 
         while pending and len(statutes) < max_fetch and inspected_urls < max(4, max_candidates * 4):
             if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if _should_abort_vermont_after_lexis_block(
+                state_code=state_code,
+                vermont_lexis_access_blocked=vermont_lexis_access_blocked,
+                statutes_count=len(statutes),
+            ):
                 break
 
             batch_candidates: List[tuple[str, int]] = []
@@ -7759,8 +8998,32 @@ async def _agentic_discover_admin_state_blocks(
                         text=text,
                     )
                     current_host = urlparse(url).netloc
+                    final_url = str(getattr(scraped, "url", "") or "").strip()
+                    final_host = urlparse(final_url).netloc.lower() if final_url else ""
                     official_index_page = _looks_like_official_rule_index_page(text=text, title=title, url=url)
                     inventory_page = _looks_like_rule_inventory_page(text=text, title=title, url=url)
+
+                    if (
+                        state_code == "VT"
+                        and current_host.lower() == "advance.lexis.com"
+                        and _VT_LEXIS_DOC_PATH_RE.fullmatch(urlparse(url).path or "")
+                        and (
+                            final_host == "signin.lexisnexis.com"
+                            or _VT_LEXIS_SHELL_TEXT_RE.search(f"{title}\n{text}")
+                        )
+                    ):
+                        vermont_lexis_signin_block_count += 1
+                        if vermont_lexis_signin_block_count >= 3 and not vermont_lexis_access_blocked:
+                            vermont_lexis_access_blocked = True
+                            pending = [
+                                item
+                                for item in pending
+                                if not (
+                                    urlparse(item[0]).netloc.lower() == "advance.lexis.com"
+                                    and _VT_LEXIS_DOC_PATH_RE.fullmatch(urlparse(item[0]).path or "")
+                                )
+                            ]
+                        continue
 
                     if not _is_substantive_rule_text(
                         text=text,
@@ -8042,6 +9305,8 @@ async def _agentic_discover_admin_state_blocks(
             "inspected_url_samples": inspected_url_samples,
             "expanded_urls": int(expanded_urls),
             "fetched_rules": len(statutes),
+            "vermont_lexis_signin_block_count": int(vermont_lexis_signin_block_count),
+            "vermont_lexis_access_blocked": bool(vermont_lexis_access_blocked),
             "seed_urls": [url for url in seed_urls[:8]],
             "top_candidate_urls": candidate_url_samples,
             "direct_detail_candidate_samples": direct_detail_candidate_samples,

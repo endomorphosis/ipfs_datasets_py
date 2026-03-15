@@ -16,6 +16,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import
     _agentic_discover_admin_state_blocks,
     _allowed_discovery_hosts_for_state,
     _candidate_links_from_html,
+    _candidate_massachusetts_cmr_urls_from_html,
     _candidate_montana_rule_urls_from_text,
     _candidate_utah_rule_urls_from_public_api,
     _is_admin_rule_statute,
@@ -139,6 +140,22 @@ def test_indiana_curated_seeds_focus_on_live_iar_hosts() -> None:
     assert "https://iar.iga.in.gov/code/2024" in in_urls
     assert "https://iar.iga.in.gov/code/current/10/1.5" in in_urls
     assert all("legislature.in.gov" not in url.lower() for url in in_urls)
+
+
+def test_vermont_curated_seeds_drop_blocked_lexis_hosts() -> None:
+    vt_urls = scraper_module._extract_seed_urls_for_state("VT", "Vermont")
+    vt_allowed_hosts = _allowed_discovery_hosts_for_state("VT", "Vermont")
+
+    assert "https://secure.vermont.gov/SOS/rules/" in vt_urls
+    assert "https://secure.vermont.gov/SOS/rules/index.php" in vt_urls
+    assert "https://sos.vermont.gov/secretary-of-state-services/apa-rules/" in vt_urls
+    assert all("lexis" not in url.lower() for url in vt_urls)
+    assert all("display.php?r=1049" not in url.lower() for url in vt_urls)
+    assert "secure.vermont.gov" in vt_allowed_hosts
+    assert "sos.vermont.gov" in vt_allowed_hosts
+    assert "aoa.vermont.gov" in vt_allowed_hosts
+    assert "www.lexisnexis.com" not in vt_allowed_hosts
+    assert "advance.lexis.com" not in vt_allowed_hosts
 
 
 def test_tennessee_curated_seeds_keep_service_pages_but_drop_dead_placeholders() -> None:
@@ -382,8 +399,11 @@ def test_new_hampshire_archived_checkrule_page_is_not_substantive_rule_text() ->
 
 def test_is_direct_detail_candidate_url_recognizes_vermont_rule_display_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
-        "https://secure.vermont.gov/SOS/rules/display.php?r=1049"
+        "https://advance.lexis.com/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00008-00"
     ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://secure.vermont.gov/SOS/rules/display.php?r=1049"
+    ) is False
     assert scraper_module._is_direct_detail_candidate_url(
         "https://secure.vermont.gov/SOS/rules/search.php"
     ) is False
@@ -392,6 +412,9 @@ def test_is_direct_detail_candidate_url_recognizes_vermont_rule_display_pages() 
 def test_is_direct_detail_candidate_url_recognizes_tennessee_sharetngov_rule_chapters() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
         "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020.htm"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf"
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
         "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-14.20150930.pdf"
@@ -408,6 +431,23 @@ def test_is_direct_detail_candidate_url_recognizes_wyoming_ajax_rule_viewer() ->
     assert scraper_module._is_direct_detail_candidate_url(
         "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7"
     ) is False
+
+
+def test_is_direct_detail_candidate_url_recognizes_texas_appian_rule_summary_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?recordId=204859&queryAsDate=03/14/2026&interface=VIEW_TAC_SUMMARY&$locale=en_US"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC&title=1&part=1"
+    ) is False
+
+
+def test_is_direct_detail_candidate_url_recognizes_oklahoma_rules_api_section_urls() -> None:
+    assert scraper_module._is_direct_detail_candidate_url("https://rules.ok.gov/code?titleNum=10") is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://rules.ok.gov/code?titleNum=10&sectionNum=10%3A1-1-1"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url("https://rules.ok.gov/code") is False
 
 
 def test_is_direct_detail_candidate_url_recognizes_arkansas_code_rule_pages() -> None:
@@ -477,6 +517,30 @@ def test_tennessee_tenncare_rules_page_is_inventory_page() -> None:
         text=text,
         title="Tennessee Department of State: Publications",
         url="https://sharetngov.tnsosfiles.com/sos/rules/tenncare.htm",
+    ) is True
+
+
+def test_tennessee_sharetngov_rule_chapter_toc_pages_are_inventory_pages() -> None:
+    text = (
+        "Rules of the Tennessee State Board of Accountancy Click on the rule you want to view or print. "
+        "Keywords may be searched for in individual PDF files by using the Find button. "
+        "Chapter Description Introduction Table of Contents and Administrative History 0020-01 Board of Accountancy"
+    )
+    nested_text = (
+        "Rules of the Tennessee Department of Health Click on the rule you want to view or print. "
+        "Keywords may be searched for in individual PDF files by using the Find button. "
+        "Chapter Description 1200-13-01 TennCare 1200-13-02 Eligibility"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="0020 - Tennessee State Board of Accountancy Rules",
+        url="https://sharetngov.tnsosfiles.com/sos/rules/0020/0020.htm",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=nested_text,
+        title="1200-13 Tennessee Rules and Regulations",
+        url="https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13.htm",
     ) is True
 
 
@@ -1126,6 +1190,57 @@ def test_massachusetts_regulation_detail_page_is_direct_and_outscores_inventory(
         min_chars=160,
     ) is True
     assert scraper_module._score_candidate_url(detail_url) > scraper_module._score_candidate_url(inventory_url)
+
+
+def test_candidate_massachusetts_cmr_urls_from_subject_index_prefers_detail_and_keeps_inventory() -> None:
+    html = """
+    <table>
+        <tr>
+            <td>Abortion Services, MassHealth</td>
+            <td><a href="/regulations/130-CMR-484000-abortion-clinic-services">130 CMR 484</a></td>
+        </tr>
+        <tr>
+            <td>Abuse of Disabled Person</td>
+            <td><a href="/law-library/118-cmr">118 CMR</a></td>
+        </tr>
+        <tr>
+            <td>General Laws</td>
+            <td><a href="https://malegislature.gov/Laws/GeneralLaws">MGL</a></td>
+        </tr>
+    </table>
+    """
+
+    urls = _candidate_massachusetts_cmr_urls_from_html(
+        html=html,
+        page_url="https://www.mass.gov/info-details/code-of-massachusetts-regulations-a-e",
+        limit=5,
+    )
+
+    assert urls[0] == "https://www.mass.gov/regulations/130-CMR-484000-abortion-clinic-services"
+    assert "https://www.mass.gov/law-library/118-cmr" in urls
+    assert all("malegislature.gov" not in url for url in urls)
+
+
+def test_candidate_massachusetts_cmr_urls_from_title_page_returns_detail_links_only() -> None:
+    html = """
+    <ul>
+        <li><a href="/regulations/310-CMR-100-adjudicatory-proceedings-0">310 CMR 1.00: Adjudicatory proceedings</a></li>
+        <li><a href="/regulations/310-CMR-500-administrative-penalty">310 CMR 5.00: Administrative penalty</a></li>
+        <li><a href="/law-library/310-cmr">310 CMR</a></li>
+    </ul>
+    """
+
+    urls = _candidate_massachusetts_cmr_urls_from_html(
+        html=html,
+        page_url="https://www.mass.gov/law-library/310-cmr",
+        limit=5,
+        include_inventory=False,
+    )
+
+    assert urls == [
+        "https://www.mass.gov/regulations/310-CMR-100-adjudicatory-proceedings-0",
+        "https://www.mass.gov/regulations/310-CMR-500-administrative-penalty",
+    ]
 
 
 def test_rejects_massachusetts_general_laws_pages_as_admin_rules() -> None:
@@ -2209,6 +2324,36 @@ def test_accepts_arizona_official_chapter_document_with_register_boilerplate() -
     ) is True
 
 
+def test_accepts_arizona_official_pdf_chapter_with_preface_text() -> None:
+    text = (
+        "Please note that the Chapter you are about to replace may have rules still in effect after the publication date of this supplement. "
+        "Therefore, all superseded material should be retained in a separate binder and archived for future reference. "
+        "TITLE 7. EDUCATION CHAPTER 2. STATE BOARD OF EDUCATION 7 A.A.C. 2 Supplement Information Supp. 25-4 "
+        "Arizona Administrative Code Publisher Department of State Office of the Secretary of State Administrative Rules Division. "
+        "Published electronically under the authority of A.R.S. § 41-1012. "
+        "TITLE 7. EDUCATION CHAPTER 2. STATE BOARD OF EDUCATION Authority: A.R.S. § 15-203. "
+        "ARTICLE 1. GENERAL PROVISIONS. R7-2-101. Definitions. R7-2-102. Applicability."
+    )
+    url = "https://apps.azsos.gov/public_services/Title_07/7-02.pdf"
+
+    assert scraper_module._looks_like_non_rule_admin_page(
+        text=text,
+        title="TITLE 7. EDUCATION",
+        url=url,
+    ) is False
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=text,
+        title="TITLE 7. EDUCATION",
+        url=url,
+    ) is False
+    assert _is_substantive_rule_text(
+        text=text,
+        title="TITLE 7. EDUCATION",
+        url=url,
+        min_chars=160,
+    ) is True
+
+
 def test_rejects_azsos_rules_portal_navigation_wrapper() -> None:
     text = (
         "Skip to main content State of Arizona Visit OpenBooks Ombudsman Citizens Aide "
@@ -2359,29 +2504,49 @@ def test_candidate_links_from_html_extracts_arizona_official_chapter_document_li
     assert "https://apps.azsos.gov/public_services/Title_18/18-04.rtf" in links
 
 
-def test_candidate_links_from_html_extracts_vermont_rule_display_urls_from_ruleid_forms() -> None:
-        html = """
-        <html><body>
-            <form action="results.php" method="post">
-                <input type="hidden" name="RuleID" value="1050">
-            </form>
-            <form action="results.php" method="post">
-                <input type="hidden" name="RuleID" value="1049">
-            </form>
-            <a href="search.php">Search Rules</a>
-        </body></html>
-        """
+def test_candidate_links_from_html_ignores_vermont_ruleid_forms() -> None:
+    html = """
+    <html><body>
+        <form action="results.php" method="post">
+            <input type="hidden" name="RuleID" value="1050">
+        </form>
+        <form action="results.php" method="post">
+            <input type="hidden" name="RuleID" value="1049">
+        </form>
+        <a href="search.php">Search Rules</a>
+    </body></html>
+    """
 
-        links = _candidate_links_from_html(
-                html,
-                base_host="secure.vermont.gov",
-                page_url="https://secure.vermont.gov/SOS/rules/",
-                limit=5,
-                allowed_hosts={"secure.vermont.gov", "sos.vermont.gov"},
-        )
+    links = _candidate_links_from_html(
+        html,
+        base_host="secure.vermont.gov",
+        page_url="https://secure.vermont.gov/SOS/rules/",
+        limit=5,
+        allowed_hosts={"secure.vermont.gov", "sos.vermont.gov"},
+    )
 
-        assert "https://secure.vermont.gov/SOS/rules/display.php?r=1050" in links
-        assert "https://secure.vermont.gov/SOS/rules/display.php?r=1049" in links
+    assert "https://secure.vermont.gov/SOS/rules/display.php?r=1050" not in links
+    assert "https://secure.vermont.gov/SOS/rules/display.php?r=1049" not in links
+
+
+def test_candidate_links_from_html_extracts_vermont_lexis_doc_paths_from_toc() -> None:
+    html = """
+    <html><body>
+        <div data-title="10 000 001. RULES FOR STATE MATCHING FUNDS" data-docfullpath="/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00008-00"></div>
+        <div data-title="10 000 002. ANOTHER RULE" data-docfullpath="/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00009-00"></div>
+    </body></html>
+    """
+
+    links = _candidate_links_from_html(
+        html,
+        base_host="advance.lexis.com",
+        page_url="https://www.lexisnexis.com/hottopics/codeofvtrules/",
+        limit=5,
+        allowed_hosts={"www.lexisnexis.com", "advance.lexis.com"},
+    )
+
+    assert "https://advance.lexis.com/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00008-00" in links
+    assert "https://advance.lexis.com/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00009-00" in links
 
 
 def test_candidate_links_from_html_extracts_wyoming_ajax_program_and_rule_urls() -> None:
@@ -2419,6 +2584,34 @@ def test_candidate_links_from_html_extracts_wyoming_ajax_program_and_rule_urls()
         assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=11&MODE=7" in search_links
         assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225" in program_links
         assert "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=24261" in program_links
+
+
+def test_candidate_links_from_html_extracts_texas_appian_inventory_and_detail_urls() -> None:
+    html = """
+    <html><body>
+        <a href="?interface=VIEW_TAC&title=1">Title 1</a>
+        <a href="?interface=VIEW_TAC&title=1&part=1&chapter=3&subchapter=A">Subchapter A</a>
+        <a href="?recordId=204859&queryAsDate=03/14/2026&interface=VIEW_TAC_SUMMARY&$locale=en_US">Rule 1.21</a>
+    </body></html>
+    """
+
+    links = _candidate_links_from_html(
+        html,
+        base_host="texas-sos.appianportalsgov.com",
+        page_url="https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC",
+        limit=10,
+        allowed_hosts={"texas-sos.appianportalsgov.com"},
+    )
+
+    assert "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC&title=1" in links
+    assert (
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC&title=1&part=1&chapter=3&subchapter=A"
+        in links
+    )
+    assert (
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?recordId=204859&queryAsDate=03/14/2026&interface=VIEW_TAC_SUMMARY&$locale=en_US"
+        in links
+    )
 
 
 def test_scores_arizona_official_chapter_documents_above_inventory_page() -> None:
@@ -3786,7 +3979,7 @@ def test_accepts_new_hampshire_archived_rule_chapter_as_substantive_rule_text() 
     ) is True
 
 
-def test_accepts_texas_transfer_page_as_substantive_admin_rule() -> None:
+def test_rejects_texas_transfer_page_as_substantive_admin_rule() -> None:
     statute = {
         "code_name": "Texas Administrative Rules (Agentic Discovery)",
         "section_name": "Texas Department on Aging Rule Transfer",
@@ -3801,7 +3994,40 @@ def test_accepts_texas_transfer_page_as_substantive_admin_rule() -> None:
     }
 
     assert _is_admin_rule_statute(statute) is True
-    assert _is_substantive_admin_statute(statute, min_chars=160) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_accepts_texas_appian_summary_rule_body_as_substantive_admin_rule() -> None:
+    statute = {
+        "code_name": "Texas Administrative Rules (Agentic Discovery)",
+        "section_name": "Rule §3.5 Submission Process",
+        "source_url": (
+            "https://texas-sos.appianportalsgov.com/rules-and-meetings?recordId=204852"
+            "&queryAsDate=03/14/2026&interface=VIEW_TAC_SUMMARY&$locale=en_US"
+        ),
+        "full_text": (
+            "Rule §3.5 Submission Process. "
+            "(a) When applying for a grant pursuant to a RFA published by the PSO in either eGrants or the Texas Register, "
+            "applicants must submit and certify their grant applications in eGrants. "
+            "(b) The PSO may require additional supporting documents, certifications, and budget detail forms as part of the application process. "
+            "(c) Applications that do not comply with submission requirements may be denied without further review."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=220) is True
+
+
+def test_score_candidate_url_prioritizes_texas_appian_rule_pages_over_transfer_notices() -> None:
+    inventory_url = "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC&title=1"
+    detail_url = (
+        "https://texas-sos.appianportalsgov.com/rules-and-meetings?recordId=204859&queryAsDate=03/14/2026"
+        "&interface=VIEW_TAC_SUMMARY&$locale=en_US"
+    )
+    transfer_url = "https://www.sos.state.tx.us/texreg/transfers/aging091004.html"
+
+    assert scraper_module._score_candidate_url(detail_url) > scraper_module._score_candidate_url(inventory_url)
+    assert scraper_module._score_candidate_url(inventory_url) > scraper_module._score_candidate_url(transfer_url)
 
 
 def test_accepts_south_dakota_official_rule_index_page() -> None:
@@ -4149,7 +4375,30 @@ def test_accepts_indiana_procurement_article_detail_page_despite_policy_terms() 
     assert _is_substantive_admin_statute(statute, min_chars=100) is True
 
 
-def test_rejects_vermont_rules_service_pages_as_substantive_rule_text() -> None:
+def test_rejects_vermont_proposed_rule_detail_page_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Vermont Administrative Rules (Agentic Discovery)",
+        "section_name": "Vermont Secretary of State Rules Service",
+        "source_url": "https://secure.vermont.gov/SOS/rules/display.php?r=1049",
+        "full_text": (
+            "Vermont Secretary of State Rules Service Proposed Rules Postings A Service of the Office of the Secretary of State "
+            "Code of Vermont Rules Search Rules Rule Details Rule Number: 25P039 Title: Example Rule Type: Proposed Rule "
+            "Status: Proposed Agency: Agency of Administration Legal Authority: 3 V.S.A. section 845 Summary: Example summary text. "
+            "Persons Affected: Agencies and members of the public. Economic Impact: Minimal. Posting date: Mar 04, 2026 "
+            "Hearing Information Information for Hearing # 1 Contact Information Information for Contact # 1."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_rejects_vermont_rules_service_shell_without_rule_details() -> None:
     statute = {
         "code_name": "Vermont Administrative Rules (Agentic Discovery)",
         "section_name": "Vermont Secretary of State Rules Service",
@@ -4216,6 +4465,109 @@ def test_rejects_vermont_icar_service_page_as_substantive_rule_text() -> None:
 
     assert _is_admin_rule_statute(statute) is True
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_vermont_lexis_sign_in_shell_as_substantive_rule_text() -> None:
+    statute = {
+        "code_name": "Vermont Administrative Rules (Agentic Discovery)",
+        "section_name": "Lexis Sign In",
+        "source_url": "https://advance.lexis.com/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00008-00",
+        "full_text": (
+            "Lexis - Sign In | LexisNexis Sign in to continue accessing this document. "
+            "We use CAPTCHA on this site to prevent automated software from overburdening the system."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_relaxed_recovery_text(
+        text=statute["full_text"],
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is False
+
+
+def test_should_abort_vermont_after_lexis_block_only_for_empty_vt_recovery() -> None:
+    assert (
+        scraper_module._should_abort_vermont_after_lexis_block(
+            state_code="VT",
+            vermont_lexis_access_blocked=True,
+            statutes_count=0,
+        )
+        is True
+    )
+    assert (
+        scraper_module._should_abort_vermont_after_lexis_block(
+            state_code="VT",
+            vermont_lexis_access_blocked=False,
+            statutes_count=0,
+        )
+        is False
+    )
+    assert (
+        scraper_module._should_abort_vermont_after_lexis_block(
+            state_code="VT",
+            vermont_lexis_access_blocked=True,
+            statutes_count=1,
+        )
+        is False
+    )
+    assert (
+        scraper_module._should_abort_vermont_after_lexis_block(
+            state_code="TX",
+            vermont_lexis_access_blocked=True,
+            statutes_count=0,
+        )
+        is False
+    )
+
+
+def test_rejects_oklahoma_legislature_placeholder_as_substantive_admin_rule() -> None:
+    statute = {
+        "code_name": "Oklahoma Administrative Rules (Agentic Discovery)",
+        "section_name": "State Legislatures, State Laws, and State Regulations: Websites / Telephone Numbers",
+        "source_url": "https://legislature.ok.gov/regulations",
+        "full_text": (
+            "Member Login Law Librarians' Society of Washington, D.C. Legislative Source Book "
+            "State Legislatures, State Laws, and State Regulations: Website Links and Telephone Numbers. "
+            "Oklahoma State Legislature, Oklahoma Statutes - Search, OK Admn. Code & Register."
+        ),
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_rejects_oklahoma_rules_portal_shell_for_section_url() -> None:
+    shell_text = (
+        "Skip to Main Content HOME CODE REGISTER NEWS QUICKLINKS PROPOSED RULES USER OPTIONS "
+        "OKLAHOMA ADMINISTRATIVE CODE Administrative Code Search CLEAR SEARCH Search Code: Emergency Rules "
+        "Title 1. Executive Orders Title 5. Oklahoma Abstractors Board Title 10. Oklahoma Accountancy Board "
+        "Title 15. State Accrediting Agency Title 20. Ad Valorem Task Force Title 25. Oklahoma Department of Aerospace and Aeronautics "
+        "Title 30. Board of Regents for the Oklahoma Agricultural and Mechanical Colleges Title 35. Oklahoma Department of Agriculture, Food, and Forestry"
+    )
+
+    assert (
+        scraper_module._looks_like_non_rule_admin_page(
+            text=shell_text,
+            title="Oklahoma Rules",
+            url="https://rules.ok.gov/code?titleNum=5&sectionNum=5%3A2-1-1",
+        )
+        is True
+    )
+
+
+def test_vermont_lexis_toc_counts_as_inventory_not_substantive_detail() -> None:
+    toc_text = (
+        "Vermont Statutes, Court Rules and Administrative Code Public Access Code of Vermont Rules PAW - ET Table of Contents "
+        "AGENCY 01. GOVERNOR AGENCY 10. AGENCY OF ADMINISTRATION AGENCY 13. AGENCY OF HUMAN SERVICES"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=toc_text,
+        title="Vermont Statutes, Court Rules and Administrative Code Public Access | Code Main Page",
+        url="https://www.lexisnexis.com/hottopics/codeofvtrules/",
+    ) is True
 
 
 def test_candidate_utah_rule_urls_from_public_api(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -4469,7 +4821,10 @@ def test_score_candidate_url_prioritizes_new_hampshire_archived_rule_chapters() 
 
 
 def test_score_candidate_url_prioritizes_vermont_rule_display_pages() -> None:
-    detail_score = scraper_module._score_candidate_url(
+    lexis_doc_score = scraper_module._score_candidate_url(
+        "https://advance.lexis.com/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00008-00"
+    )
+    proposal_score = scraper_module._score_candidate_url(
         "https://secure.vermont.gov/SOS/rules/display.php?r=1049"
     )
     inventory_score = scraper_module._score_candidate_url(
@@ -4482,15 +4837,133 @@ def test_score_candidate_url_prioritizes_vermont_rule_display_pages() -> None:
         "https://legislature.vt.gov/regulations"
     )
 
-    assert detail_score > inventory_score
+    assert inventory_score > proposal_score
     assert inventory_score > search_score
-    assert detail_score > legislature_score
     assert inventory_score > legislature_score
+
+
+def test_vermont_proposal_display_page_is_not_rule_detail_page() -> None:
+    text = (
+        "Proposed Rules Postings A Service of the Office of the Secretary of State "
+        "Code of Vermont Rules Search Rules Deadline For Public Comment Deadline: May 08, 2026 "
+        "Rule Details Rule Number: 26P006 Title: Estate Recovery Type: Standard Status: Proposed "
+        "Agency: Agency of Human Services Legal Authority: 3 V.S.A. section 801(b)(11)."
+    )
+
+    assert scraper_module._is_vermont_rule_detail_page(
+        text=text,
+        title="Vermont Secretary of State Rules Service",
+        url="https://secure.vermont.gov/SOS/rules/display.php?r=1049",
+    ) is False
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_does_not_bootstrap_vermont_lexis_documents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://secure.vermont.gov/SOS/rules/"
+    called = False
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="Vermont Secretary of State Rules Service Code of Vermont Rules Recent Search Rules Calendar",
+                title="Vermont Secretary of State Rules Service",
+                html="<form><input name='r' value='1049'></form>",
+                extraction_provenance={"method": "beautifulsoup"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text="Vermont Secretary of State Rules Service Code of Vermont Rules Recent Search Rules Calendar",
+                title="Vermont Secretary of State Rules Service",
+                html="<form><input name='r' value='1049'></form>",
+                links=[],
+            )
+
+    async def _fake_discover_vermont_lexis_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+        nonlocal called
+        called = True
+        return []
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_discover_vermont_lexis_document_urls", _fake_discover_vermont_lexis_document_urls)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["VT"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=2,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=160,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 0
+    assert called is False
+
+
+def test_score_candidate_url_prioritizes_oklahoma_rules_api_sections_over_legislature_placeholders() -> None:
+    detail_url = "https://rules.ok.gov/code?titleNum=10&sectionNum=10%3A1-1-1"
+    inventory_url = "https://rules.ok.gov/code"
+    placeholder_url = "https://legislature.ok.gov/regulations"
+
+    assert scraper_module._score_candidate_url(detail_url) > scraper_module._score_candidate_url(inventory_url)
+    assert scraper_module._score_candidate_url(inventory_url) > scraper_module._score_candidate_url(placeholder_url)
 
 
 def test_score_candidate_url_prioritizes_tennessee_sharetngov_rule_pages() -> None:
     chapter_score = scraper_module._score_candidate_url(
         "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020.htm"
+    )
+    flat_pdf_score = scraper_module._score_candidate_url(
+        "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf"
+    )
+    nested_chapter_score = scraper_module._score_candidate_url(
+        "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13.htm"
     )
     nested_pdf_score = scraper_module._score_candidate_url(
         "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-14.20150930.pdf"
@@ -4512,6 +4985,8 @@ def test_score_candidate_url_prioritizes_tennessee_sharetngov_rule_pages() -> No
     )
 
     assert chapter_score > tar_index_score
+    assert flat_pdf_score > tar_index_score
+    assert nested_chapter_score > tar_index_score
     assert nested_pdf_score > tar_index_score
     assert tar_index_score > sos_service_score
     assert effective_rules_score > sos_service_score
@@ -4552,6 +5027,131 @@ def test_prefers_live_fetch_for_tennessee_inventory_pages() -> None:
     assert scraper_module._prefers_live_fetch("https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm") is True
     assert scraper_module._prefers_live_fetch("https://sharetngov.tnsosfiles.com/sos/rules/effectives/effectives.htm") is True
     assert scraper_module._prefers_live_fetch("https://sharetngov.tnsosfiles.com/sos/rules/0020/0020.htm") is False
+
+
+def test_prefers_live_fetch_for_texas_appian_tac_pages() -> None:
+    assert (
+        scraper_module._prefers_live_fetch(
+            "https://texas-sos.appianportalsgov.com/rules-and-meetings?interface=VIEW_TAC&title=1"
+        )
+        is True
+    )
+    assert (
+        scraper_module._prefers_live_fetch(
+            "https://texas-sos.appianportalsgov.com/rules-and-meetings?recordId=204859&queryAsDate=03/14/2026&interface=VIEW_TAC_SUMMARY&$locale=en_US"
+        )
+        is True
+    )
+    assert scraper_module._prefers_live_fetch("https://www.sos.state.tx.us/texreg/transfers/aging091004.html") is False
+
+
+def test_prefers_live_fetch_for_vermont_lexis_sources() -> None:
+    assert scraper_module._prefers_live_fetch("https://www.lexisnexis.com/hottopics/codeofvtrules/") is True
+    assert (
+        scraper_module._prefers_live_fetch(
+            "https://advance.lexis.com/shared/document/administrative-codes/urn:contentItem:5WS0-FPD1-FGRY-B08T-00008-00"
+        )
+        is False
+    )
+
+
+def test_prefers_live_fetch_for_oklahoma_rules_code_pages() -> None:
+    assert scraper_module._prefers_live_fetch("https://rules.ok.gov/code?titleNum=10&sectionNum=10%3A1-1-1") is True
+    assert scraper_module._prefers_live_fetch("https://rules.ok.gov/code") is False
+
+
+def test_candidate_oklahoma_rule_urls_from_text_extracts_title_urls() -> None:
+    text = (
+        "Oklahoma Administrative Code Administrative Code Search Title 1. Executive Orders "
+        "Title 5. Oklahoma Abstractors Board Title 10. Oklahoma Accountancy Board "
+        "Title 15. State Accrediting Agency (abolished 7-1-19) Title 25. Oklahoma Department of Aerospace and Aeronautics"
+    )
+
+    assert scraper_module._candidate_oklahoma_rule_urls_from_text(
+        text=text,
+        page_url="https://rules.ok.gov/code",
+        limit=8,
+    ) == [
+        "https://rules.ok.gov/code?titleNum=1",
+        "https://rules.ok.gov/code?titleNum=5",
+        "https://rules.ok.gov/code?titleNum=10",
+        "https://rules.ok.gov/code?titleNum=25",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_scrape_oklahoma_rule_detail_via_api_extracts_section_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return [
+                {
+                    "sectionNum": "10:1-1-1",
+                    "description": "Purpose",
+                    "text": "<div>(a) The Oklahoma Accountancy Act protects the public.</div>",
+                }
+            ]
+
+    def fake_get(url, params=None, timeout=0, headers=None):
+        assert url == "https://okadminrules-api.azurewebsites.net/GetSegmentsByTitleNum"
+        assert (params or {}).get("titleNum") == "10"
+        return FakeResponse()
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    scraped = await scraper_module._scrape_oklahoma_rule_detail_via_api(
+        "https://rules.ok.gov/code?titleNum=10&sectionNum=10%3A1-1-1"
+    )
+
+    assert scraped is not None
+    assert scraped.title == "10:1-1-1 Purpose"
+    assert "The Oklahoma Accountancy Act protects the public." in scraped.text
+    assert scraped.method_used == "oklahoma_rules_api"
+
+
+@pytest.mark.asyncio
+async def test_scrape_oklahoma_rule_detail_via_api_extracts_title_text_for_title_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return [
+                {
+                    "name": "Title",
+                    "description": "Oklahoma Accountancy Board",
+                    "sectionNum": None,
+                    "text": None,
+                },
+                {
+                    "name": "Section",
+                    "sectionNum": "10:1-1-1",
+                    "description": "Purpose",
+                    "text": "<div>(a) The Oklahoma Accountancy Act protects the public.</div>",
+                },
+                {
+                    "name": "Section",
+                    "sectionNum": "10:1-1-2",
+                    "description": "Definitions",
+                    "text": "<div>(b) Terms used in this chapter have the following meanings.</div>",
+                },
+            ]
+
+    monkeypatch.setattr(scraper_module.requests, "get", lambda *args, **kwargs: FakeResponse())
+
+    scraped = await scraper_module._scrape_oklahoma_rule_detail_via_api(
+        "https://rules.ok.gov/code?titleNum=10"
+    )
+
+    assert scraped is not None
+    assert scraped.title == "Title 10 Oklahoma Accountancy Board"
+    assert "10:1-1-1 Purpose" in scraped.text
+    assert "10:1-1-2 Definitions" in scraped.text
+    assert scraped.method_used == "oklahoma_rules_api"
 
 
 def test_seed_expansion_backlog_is_ready_after_enough_unique_detail_urls() -> None:

@@ -239,33 +239,11 @@ class TexasScraper(BaseStateScraper):
                     link_text = "Texas Administrative Code"
                 candidate_links.append((link_text, absolute_url))
 
-            # If nav links are not present, parse the landing page itself as a code-level record.
             if not candidate_links:
-                page_text = self._extract_text_from_html(index_html)
-                if len(page_text) < 200:
-                    page_text = self._extract_text_from_html(original_index_html)
-                if len(page_text) >= 80:
-                    fallback_text = (
-                        "Section 1.1 Texas Administrative Code portal notice. "
-                        "Chapter 1 administrative rules access and publication details.\n\n"
-                        + page_text
-                    )
-                    statutes.append(
-                        NormalizedStatute(
-                            state_code=self.state_code,
-                            state_name=self.state_name,
-                            statute_id=f"{code_name} § 1.1",
-                            code_name=code_name,
-                            section_number="1.1",
-                            section_name="Section 1.1 Texas Administrative Code (landing page)",
-                            full_text=fallback_text,
-                            source_url=f"{fetch_url}{'&' if '?' in fetch_url else '?'}section=1.1",
-                            legal_area="administrative",
-                            official_cite="Tex. Admin. Code § 1.1",
-                            metadata=StatuteMetadata(),
-                        )
-                    )
-                return statutes
+                self.logger.info(
+                    "Texas Administrative Code landing page exposed no direct rule links; returning no substantive sections"
+                )
+                return []
 
             for idx, (link_text, link_url) in enumerate(candidate_links[:180], start=1):
                 if link_url in seen_urls:
@@ -305,30 +283,10 @@ class TexasScraper(BaseStateScraper):
                 )
 
             if not statutes:
-                page_text = self._extract_text_from_html(index_html)
-                if len(page_text) < 200:
-                    page_text = self._extract_text_from_html(original_index_html)
-                if len(page_text) >= 80:
-                    fallback_text = (
-                        "Section 1.1 Texas Administrative Code portal reference. "
-                        "Chapter 1 administrative rules access and publication details.\n\n"
-                        + page_text
-                    )
-                    statutes.append(
-                        NormalizedStatute(
-                            state_code=self.state_code,
-                            state_name=self.state_name,
-                            statute_id=f"{code_name} § 1.1",
-                            code_name=code_name,
-                            section_number="1.1",
-                            section_name="Section 1.1 Texas Administrative Code (portal reference)",
-                            full_text=fallback_text,
-                            source_url=f"{fetch_url}{'&' if '?' in fetch_url else '?'}section=1.1",
-                            legal_area="administrative",
-                            official_cite="Tex. Admin. Code § 1.1",
-                            metadata=StatuteMetadata(),
-                        )
-                    )
+                self.logger.info(
+                    "Texas Administrative Code bootstrap produced no substantive sections from %s",
+                    fetch_url,
+                )
 
             self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
             return statutes

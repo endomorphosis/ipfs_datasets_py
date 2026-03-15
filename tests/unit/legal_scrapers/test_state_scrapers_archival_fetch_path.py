@@ -198,6 +198,29 @@ async def test_texas_section_fetch_records_fetch_analytics(monkeypatch: pytest.M
 
 
 @pytest.mark.anyio
+async def test_texas_admin_code_landing_page_returns_no_synthetic_section(monkeypatch: pytest.MonkeyPatch):
+    landing_html = (
+        "<html><head><meta http-equiv='refresh' content='0; url=https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC' /></head>"
+        "<body><h1>Texas Administrative Code</h1><p>Welcome to the Texas Administrative Code.</p>"
+        "<p>View the current Texas Administrative Code and publication details.</p></body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return landing_html
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = TexasScraper("TX", "Texas")
+    statutes = await scraper._scrape_texas_admin_code(
+        code_name="Texas Administrative Code",
+        code_url="https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC",
+    )
+
+    assert statutes == []
+
+
+@pytest.mark.anyio
 async def test_florida_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
         return b""
