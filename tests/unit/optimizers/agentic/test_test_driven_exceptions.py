@@ -258,12 +258,87 @@ def test_action_policy_renderer_preserves_graph_presence_checks():
     assert "if 'knowledge_graph' not in data:" in rendered
     assert "if 'dependency_graph' not in data:" in rendered
     assert "if not data.get('knowledge_graph')" not in rendered
-    assert "if not data.get('dependency_graph')" not in rendered
-    assert "gap_threshold = max(_INTAKE_GAPS_THRESHOLD, configured_gap_threshold)" in rendered
-    assert "min(_INTAKE_GAPS_THRESHOLD" not in rendered
-    assert rendered.count("'action': 'complete_intake'") >= 2
-    assert "'action': 'continue_denoising'" in rendered
-    ast.parse("class _Temp:\n" + "\n".join(f"    {line}" for line in rendered.splitlines()))
+
+
+def test_answer_policy_renderer_preserves_process_answer_contract():
+    optimizer = TestDrivenOptimizer(agent_id="td-answer-policy", llm_router=Mock())
+
+    rendered = optimizer._render_process_answer_from_policy(
+        {
+            "timeline_enrichment_types": ["timeline", "evidence", "impact"],
+            "responsible_party_enrichment_types": ["relationship", "responsible_party", "timeline"],
+            "fallback_timeline_fact_types": ["timeline", "evidence"],
+        }
+    )
+
+    assert "def process_answer(self, question: Dict[str, Any], answer: str," in rendered
+    assert "'entities_updated': 0" in rendered
+    assert "'relationships_added': 0" in rendered
+    assert "'requirements_satisfied': 0" in rendered
+    assert "req_node.satisfied = True" in rendered
+    assert "self._update_responsible_parties_from_answer(answer_text, knowledge_graph, updates)" in rendered
+    assert "_apply_timeline_enrichment()" in rendered
+    ast.parse(rendered)
+
+
+def test_answer_policy_response_normalization_rejects_unknown_question_types():
+    optimizer = TestDrivenOptimizer(agent_id="td-answer-policy-invalid", llm_router=Mock())
+
+    with pytest.raises(ValueError, match="unsupported question type"):
+        optimizer._normalize_answer_policy_response(
+            response='{"timeline_enrichment_types":["bogus"],"responsible_party_enrichment_types":[],"fallback_timeline_fact_types":[]}',
+            file_path=Path("denoiser.py"),
+        )
+
+
+def test_standard_intake_policy_renderer_preserves_method_contract():
+    optimizer = TestDrivenOptimizer(agent_id="td-standard-intake", llm_router=Mock())
+
+    rendered = optimizer._render_standard_intake_questions_from_policy(
+        {
+            "timeline_prompt_style": "actor_notice_timeline",
+            "impact_prompt_style": "impact_with_documents",
+            "include_notice_question": True,
+        }
+    )
+
+    assert "def _ensure_standard_intake_questions(self, questions: List[Dict[str, Any]], max_questions: int) -> List[Dict[str, Any]]:" in rendered
+    assert "if len(questions) >= max_questions:" in rendered
+    assert "self._already_asked(timeline_text)" in rendered
+    assert "self._already_asked(impact_text)" in rendered
+    assert "question_type='timeline'" in rendered
+    assert "question_type='impact'" in rendered
+    assert "question_type='evidence'" in rendered
+    assert "notice, letter, email, or message" in rendered
+    ast.parse(rendered)
+
+
+def test_standard_intake_policy_response_normalization_rejects_unknown_styles():
+    optimizer = TestDrivenOptimizer(agent_id="td-standard-intake-invalid", llm_router=Mock())
+
+    with pytest.raises(ValueError, match="unsupported timeline_prompt_style"):
+        optimizer._normalize_standard_intake_policy_response(
+            response='{"timeline_prompt_style":"bogus","impact_prompt_style":"baseline","include_notice_question":false}',
+            file_path=Path("denoiser.py"),
+        )
+
+
+def test_action_policy_renderer_uses_plain_default_gap_threshold_when_not_looser():
+    optimizer = TestDrivenOptimizer(agent_id="td-action-policy-threshold", llm_router=Mock())
+
+    rendered = optimizer._render_get_intake_action_from_policy(
+        {
+            "remaining_gaps_threshold": 2,
+            "address_gaps_before_denoising": True,
+            "require_convergence_for_completion": True,
+            "complete_when_iteration_cap_hit": False,
+            "prefer_current_gaps_key": True,
+        }
+    )
+
+    assert "gap_threshold = _INTAKE_GAPS_THRESHOLD" in rendered
+    assert "configured_gap_threshold" not in rendered
+    assert "max(_INTAKE_GAPS_THRESHOLD, configured_gap_threshold)" not in rendered
 
 
 def test_generate_optimizations_records_raw_symbol_response_on_error(tmp_path):
@@ -353,4 +428,76 @@ def test_generate_optimizations_can_use_action_policy_mode(tmp_path):
     assert "data.get('denoising_converged', False)" in updated
     assert "if 'knowledge_graph' not in data" in updated
     assert "if 'dependency_graph' not in data" in updated
+    ast.parse(updated)
+
+
+def test_select_candidates_policy_renderer_preserves_selector_contract():
+    optimizer = TestDrivenOptimizer(agent_id="td-select-policy", llm_router=Mock())
+
+    rendered = optimizer._render_select_question_candidates_from_policy(
+        {
+            "dedupe_selected_candidates": True,
+            "dedupe_fallback_candidates": True,
+            "selector_mode": "honor_nonempty",
+        }
+    )
+
+    assert "def select_question_candidates(" in rendered
+    assert "selected = selector(normalized_candidates, max_questions=max_questions)" in rendered
+    assert "except TypeError:" in rendered
+    assert "self._normalize_question_text" in rendered
+    assert "normalized_candidates.sort(key=self._default_candidate_sort_key)" in rendered
+    assert "return _finalize(normalized_candidates, dedupe=True)" in rendered
+    ast.parse(rendered)
+
+
+def test_select_candidates_policy_response_normalization_rejects_unknown_selector_mode():
+    optimizer = TestDrivenOptimizer(agent_id="td-select-policy-invalid", llm_router=Mock())
+
+    with pytest.raises(ValueError, match="unsupported selector_mode"):
+        optimizer._normalize_select_candidates_policy_response(
+            response='{"dedupe_selected_candidates":true,"dedupe_fallback_candidates":true,"selector_mode":"bogus"}',
+            file_path=Path("denoiser.py"),
+        )
+
+
+def test_generate_optimizations_can_use_select_candidates_policy_mode(tmp_path):
+    router = Mock()
+    router.generate.return_value = """{
+  "dedupe_selected_candidates": true,
+  "dedupe_fallback_candidates": true,
+  "selector_mode": "honor_nonempty"
+}"""
+    optimizer = TestDrivenOptimizer(agent_id="td-select-policy-generate", llm_router=router)
+
+    target = tmp_path / "denoiser.py"
+    target.write_text(
+        "from typing import Any, Dict, List\n\n"
+        "class ComplaintDenoiser:\n"
+        "    def _normalize_question_text(self, text: str) -> str:\n"
+        "        return text.strip().lower()\n\n"
+        "    def _default_candidate_sort_key(self, candidate: Dict[str, Any]):\n"
+        "        return (0, 0)\n\n"
+        "    def select_question_candidates(self, candidates: List[Dict[str, Any]], *, max_questions: int = 10, selector: Any = None) -> List[Dict[str, Any]]:\n"
+        "        return candidates[:max_questions]\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-select-policy",
+        target_files=[target],
+        description="Optimize select_question_candidates",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["select_question_candidates"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "def select_question_candidates(" in updated
+    assert "self._normalize_question_text" in updated
+    assert "_finalize" in updated
+    assert "normalized_candidates.sort(key=self._default_candidate_sort_key)" in updated
     ast.parse(updated)

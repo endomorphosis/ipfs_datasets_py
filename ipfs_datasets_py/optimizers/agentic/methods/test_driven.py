@@ -512,6 +512,69 @@ class TestDrivenOptimizer(AgenticOptimizer):
         task: OptimizationTask,
         target_symbols: List[str],
     ) -> str:
+        if self._use_select_candidates_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_select_candidates_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            replacement_sources = {
+                "select_question_candidates": self._render_select_question_candidates_from_policy(
+                    self._normalize_select_candidates_policy_response(response=response, file_path=target_file)
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+        if self._use_standard_intake_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_standard_intake_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                max_tokens=700,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            replacement_sources = {
+                "_ensure_standard_intake_questions": self._render_standard_intake_questions_from_policy(
+                    self._normalize_standard_intake_policy_response(response=response, file_path=target_file)
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+        if self._use_answer_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_answer_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                max_tokens=700,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            replacement_sources = {
+                "process_answer": self._render_process_answer_from_policy(
+                    self._normalize_answer_policy_response(response=response, file_path=target_file)
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
         if self._use_action_policy_mode(target_file=target_file, target_symbols=target_symbols):
             response = self.llm_router.generate(
                 prompt=self._build_action_policy_prompt(
@@ -563,6 +626,15 @@ class TestDrivenOptimizer(AgenticOptimizer):
 
     def _use_action_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "phase_manager.py" and target_symbols == ["_get_intake_action"]
+
+    def _use_answer_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "denoiser.py" and target_symbols == ["process_answer"]
+
+    def _use_select_candidates_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "denoiser.py" and target_symbols == ["select_question_candidates"]
+
+    def _use_standard_intake_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "denoiser.py" and target_symbols == ["_ensure_standard_intake_questions"]
     
     def _apply_optimizations(
         self,
@@ -979,6 +1051,127 @@ Behavioral guardrails:
 Do not include explanations, markdown, comments, or extra keys.
 """
 
+    def _build_answer_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Improve process_answer so answers produce more timeline and actor evidence without breaking current graph updates."
+
+        return f"""Return a compact JSON object describing how process_answer should enrich the knowledge graph from a complainant answer.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "timeline_enrichment_types": array of question types chosen from:
+  ["timeline", "evidence", "impact", "remedy", "clarification", "relationship", "responsible_party", "requirement"]
+- "responsible_party_enrichment_types": array of question types chosen from the same allowed list
+- "fallback_timeline_fact_types": array of question types chosen from:
+  ["timeline", "evidence", "impact", "remedy", "clarification", "relationship", "responsible_party", "requirement"]
+
+Behavioral guardrails:
+- Preserve the existing return shape with keys:
+  "entities_updated", "relationships_added", "requirements_satisfied"
+- Preserve requirement satisfaction handling when question_type == "requirement"
+- Do not remove current evidence, impact, remedy, and timeline graph updates
+- Do not add imports or reference helpers that do not already exist on the class
+- Prefer enrichment from the existing answer text over speculative follow-up generation
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
+    def _build_standard_intake_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Improve default intake prompts so they capture timeline, decision-maker, and notice details without breaking current prompt coverage."
+
+        return f"""Return a compact JSON object describing how _ensure_standard_intake_questions should add default intake prompts.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "timeline_prompt_style": one of ["baseline", "actor_notice_timeline"]
+- "impact_prompt_style": one of ["baseline", "impact_with_documents"]
+- "include_notice_question": true or false
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve the max_questions cap
+- Preserve duplicate suppression using _already_asked and existing question text/type checks
+- Preserve the stable priority ordering at the end
+- Do not remove the timeline or impact/remedy defaults entirely
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
+    def _build_select_candidates_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Improve candidate selection by preserving selector overrides, suppressing duplicate questions, and keeping fallback ordering deterministic."
+
+        return f"""Return a compact JSON object describing how select_question_candidates should finalize question candidates.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "dedupe_selected_candidates": true or false
+- "dedupe_fallback_candidates": true or false
+- "selector_mode": one of ["honor_nonempty", "fallback_only"]
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve selector override support and TypeError fallback when invoking selector
+- Preserve filtering to dict candidates only
+- Preserve the proof-priority then priority fallback ordering
+- Preserve max_questions slicing
+- Do not add imports or rely on helpers that do not already exist on the class
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
     def _extract_target_symbol_blocks(self, current_code: str, target_symbols: List[str]) -> Dict[str, str]:
         tree = ast.parse(current_code)
         lines = current_code.splitlines(keepends=True)
@@ -1144,6 +1337,181 @@ Do not include explanations, markdown, comments, or extra keys.
         }
         return normalized
 
+    def _normalize_answer_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty answer policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Answer policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Answer policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "timeline_enrichment_types",
+            "responsible_party_enrichment_types",
+            "fallback_timeline_fact_types",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(f"Answer policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}")
+
+        allowed_types = {
+            "timeline",
+            "evidence",
+            "impact",
+            "remedy",
+            "clarification",
+            "relationship",
+            "responsible_party",
+            "requirement",
+        }
+
+        def _normalize_type_list(key: str, default: List[str]) -> List[str]:
+            raw = data.get(key, default)
+            if not isinstance(raw, list):
+                raise ValueError(f"Answer policy response for {file_path} must use a list for {key}")
+            normalized: List[str] = []
+            for item in raw:
+                value = str(item or "").strip()
+                if not value:
+                    continue
+                if value not in allowed_types:
+                    raise ValueError(f"Answer policy response for {file_path} used unsupported question type '{value}' for {key}")
+                if value not in normalized:
+                    normalized.append(value)
+            return normalized
+
+        return {
+            "timeline_enrichment_types": _normalize_type_list(
+                "timeline_enrichment_types",
+                ["timeline", "evidence", "impact", "remedy"],
+            ),
+            "responsible_party_enrichment_types": _normalize_type_list(
+                "responsible_party_enrichment_types",
+                ["relationship", "responsible_party", "timeline", "evidence"],
+            ),
+            "fallback_timeline_fact_types": _normalize_type_list(
+                "fallback_timeline_fact_types",
+                ["timeline", "evidence"],
+            ),
+        }
+
+    def _normalize_standard_intake_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty standard intake policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Standard intake policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Standard intake policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "timeline_prompt_style",
+            "impact_prompt_style",
+            "include_notice_question",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Standard intake policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        timeline_style = str(data.get("timeline_prompt_style", "baseline")).strip()
+        impact_style = str(data.get("impact_prompt_style", "baseline")).strip()
+        allowed_timeline_styles = {"baseline", "actor_notice_timeline"}
+        allowed_impact_styles = {"baseline", "impact_with_documents"}
+        if timeline_style not in allowed_timeline_styles:
+            raise ValueError(
+                f"Standard intake policy response for {file_path} used unsupported timeline_prompt_style '{timeline_style}'"
+            )
+        if impact_style not in allowed_impact_styles:
+            raise ValueError(
+                f"Standard intake policy response for {file_path} used unsupported impact_prompt_style '{impact_style}'"
+            )
+
+        return {
+            "timeline_prompt_style": timeline_style,
+            "impact_prompt_style": impact_style,
+            "include_notice_question": bool(data.get("include_notice_question", False)),
+        }
+
+    def _normalize_select_candidates_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty select-candidates policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Select-candidates policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Select-candidates policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "dedupe_selected_candidates",
+            "dedupe_fallback_candidates",
+            "selector_mode",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Select-candidates policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        selector_mode = str(data.get("selector_mode", "honor_nonempty")).strip()
+        if selector_mode not in {"honor_nonempty", "fallback_only"}:
+            raise ValueError(
+                f"Select-candidates policy response for {file_path} used unsupported selector_mode '{selector_mode}'"
+            )
+
+        return {
+            "dedupe_selected_candidates": bool(data.get("dedupe_selected_candidates", True)),
+            "dedupe_fallback_candidates": bool(data.get("dedupe_fallback_candidates", True)),
+            "selector_mode": selector_mode,
+        }
+
     def _render_get_intake_action_from_policy(self, policy: Dict[str, Any]) -> str:
         threshold = int(policy["remaining_gaps_threshold"])
         address_first = bool(policy["address_gaps_before_denoising"])
@@ -1156,10 +1524,13 @@ Do not include explanations, markdown, comments, or extra keys.
             if prefer_current_gaps_key
             else "    gaps = data.get('remaining_gap_items', data.get('current_gaps', []))\n"
         )
-        threshold_assignment = (
-            f"    configured_gap_threshold = {threshold}\n"
-            "    gap_threshold = max(_INTAKE_GAPS_THRESHOLD, configured_gap_threshold)\n"
-        )
+        if threshold <= 3:
+            threshold_assignment = "    gap_threshold = _INTAKE_GAPS_THRESHOLD\n"
+        else:
+            threshold_assignment = (
+                f"    configured_gap_threshold = {threshold}\n"
+                "    gap_threshold = max(_INTAKE_GAPS_THRESHOLD, configured_gap_threshold)\n"
+            )
         remaining_gaps_assignment = "    remaining_gaps = data.get('remaining_gaps', float('inf'))\n"
         gap_condition = "(gaps and len(gaps) > 0) or remaining_gaps > gap_threshold"
         denoising_guard = "not data.get('denoising_converged', False)"
@@ -1239,6 +1610,407 @@ Do not include explanations, markdown, comments, or extra keys.
             "        'intake_readiness_score': readiness['score'],\n"
             "        'intake_blockers': readiness['blockers'],\n"
             "    }\n"
+        )
+
+    def _render_process_answer_from_policy(self, policy: Dict[str, Any]) -> str:
+        timeline_types = sorted(policy["timeline_enrichment_types"])
+        responsible_types = sorted(policy["responsible_party_enrichment_types"])
+        fallback_types = sorted(policy["fallback_timeline_fact_types"])
+
+        def _render_set(values: List[str]) -> str:
+            if not values:
+                return "set()"
+            rendered = ", ".join(repr(value) for value in values)
+            return "{" + rendered + "}"
+
+        return (
+            "def process_answer(self, question: Dict[str, Any], answer: str,\n"
+            "                  knowledge_graph: KnowledgeGraph,\n"
+            "                  dependency_graph: Optional[DependencyGraph] = None) -> Dict[str, Any]:\n"
+            "    \"\"\"\n"
+            "    Process an answer to a denoising question.\n"
+            "    \n"
+            "    Args:\n"
+            "        question: The question that was asked\n"
+            "        answer: The user's answer\n"
+            "        knowledge_graph: Knowledge graph to update\n"
+            "        dependency_graph: Optional dependency graph to update\n"
+            "        \n"
+            "    Returns:\n"
+            "        Information about what was updated\n"
+            "    \"\"\"\n"
+            "    self.questions_asked.append({\n"
+            "        'question': question,\n"
+            "        'answer': answer\n"
+            "    })\n"
+            "\n"
+            "    updates = {\n"
+            "        'entities_updated': 0,\n"
+            "        'relationships_added': 0,\n"
+            "        'requirements_satisfied': 0\n"
+            "    }\n"
+            "\n"
+            "    question_type = question.get('type')\n"
+            "    context = question.get('context', {})\n"
+            "    answer_text = str(answer or '').strip()\n"
+            f"    timeline_enrichment_types = {_render_set(timeline_types)}\n"
+            f"    responsible_party_enrichment_types = {_render_set(responsible_types)}\n"
+            f"    fallback_timeline_fact_types = {_render_set(fallback_types)}\n"
+            "\n"
+            "    def _single_claim_id() -> Optional[str]:\n"
+            "        claims = knowledge_graph.get_entities_by_type('claim')\n"
+            "        return claims[0].id if len(claims) == 1 else None\n"
+            "\n"
+            "    def _apply_timeline_enrichment() -> None:\n"
+            "        nonlocal updates\n"
+            "        if question_type not in timeline_enrichment_types or not answer_text:\n"
+            "            return\n"
+            "        claim_id = _single_claim_id()\n"
+            "        dates = self._extract_date_strings(answer_text)\n"
+            "        if dates:\n"
+            "            for date_str in dates:\n"
+            "                date_entity, created = self._add_entity_if_missing(\n"
+            "                    knowledge_graph,\n"
+            "                    'date',\n"
+            "                    date_str,\n"
+            "                    {},\n"
+            "                    0.7\n"
+            "                )\n"
+            "                if created:\n"
+            "                    updates['entities_updated'] += 1\n"
+            "                if claim_id and date_entity:\n"
+            "                    _, rel_created = self._add_relationship_if_missing(\n"
+            "                        knowledge_graph,\n"
+            "                        claim_id,\n"
+            "                        date_entity.id,\n"
+            "                        'occurred_on',\n"
+            "                        0.6\n"
+            "                    )\n"
+            "                    if rel_created:\n"
+            "                        updates['relationships_added'] += 1\n"
+            "            return\n"
+            "        if question_type not in fallback_timeline_fact_types:\n"
+            "            return\n"
+            "        claim_id = _single_claim_id()\n"
+            "        snippet = self._short_description(answer_text, 120)\n"
+            "        fact_name = f\"Timeline detail: {self._short_description(answer_text, 60)}\"\n"
+            "        fact_entity, created = self._add_entity_if_missing(\n"
+            "            knowledge_graph,\n"
+            "            'fact',\n"
+            "            fact_name,\n"
+            "            {'fact_type': 'timeline', 'description': snippet},\n"
+            "            0.6\n"
+            "        )\n"
+            "        if created:\n"
+            "            updates['entities_updated'] += 1\n"
+            "        if claim_id and fact_entity:\n"
+            "            _, rel_created = self._add_relationship_if_missing(\n"
+            "                knowledge_graph,\n"
+            "                claim_id,\n"
+            "                fact_entity.id,\n"
+            "                'has_timeline_detail',\n"
+            "                0.6\n"
+            "            )\n"
+            "            if rel_created:\n"
+            "                updates['relationships_added'] += 1\n"
+            "\n"
+            "    if question_type == 'clarification':\n"
+            "        entity_id = context.get('entity_id')\n"
+            "        entity = knowledge_graph.get_entity(entity_id)\n"
+            "        if entity:\n"
+            "            entity.confidence = min(1.0, entity.confidence + 0.2)\n"
+            "            entity.attributes['clarification'] = answer\n"
+            "            updates['entities_updated'] += 1\n"
+            "\n"
+            "    elif question_type == 'relationship':\n"
+            "        entity_id = context.get('entity_id')\n"
+            "        if entity_id and len(answer_text) > 10:\n"
+            "            entity = knowledge_graph.get_entity(entity_id)\n"
+            "            if entity:\n"
+            "                entity.attributes['relationship_described'] = True\n"
+            "                updates['entities_updated'] += 1\n"
+            "\n"
+            "    elif question_type == 'responsible_party':\n"
+            "        pass\n"
+            "\n"
+            "    elif question_type == 'evidence':\n"
+            "        claim_id = context.get('claim_id')\n"
+            "        entity = knowledge_graph.get_entity(claim_id)\n"
+            "        if entity:\n"
+            "            if 'evidence_descriptions' not in entity.attributes:\n"
+            "                entity.attributes['evidence_descriptions'] = []\n"
+            "            entity.attributes['evidence_descriptions'].append(answer)\n"
+            "            updates['entities_updated'] += 1\n"
+            "        if not claim_id:\n"
+            "            claim_id = _single_claim_id()\n"
+            "        if claim_id and len(answer_text) > 10:\n"
+            "            snippet = self._short_description(answer_text, 120)\n"
+            "            evidence_name = f\"Evidence: {self._short_description(answer_text, 80)}\"\n"
+            "            evidence_entity, created = self._add_entity_if_missing(\n"
+            "                knowledge_graph,\n"
+            "                'evidence',\n"
+            "                evidence_name,\n"
+            "                {'description': snippet},\n"
+            "                0.6\n"
+            "            )\n"
+            "            if created:\n"
+            "                updates['entities_updated'] += 1\n"
+            "            if evidence_entity:\n"
+            "                _, rel_created = self._add_relationship_if_missing(\n"
+            "                    knowledge_graph,\n"
+            "                    claim_id,\n"
+            "                    evidence_entity.id,\n"
+            "                    'supported_by',\n"
+            "                    0.6\n"
+            "                )\n"
+            "                if rel_created:\n"
+            "                    updates['relationships_added'] += 1\n"
+            "\n"
+            "    elif question_type == 'timeline':\n"
+            "        pass\n"
+            "\n"
+            "    elif question_type in {'impact', 'remedy'}:\n"
+            "        if answer_text:\n"
+            "            claim_id = _single_claim_id()\n"
+            "            snippet = self._short_description(answer_text, 120)\n"
+            "            if question_type == 'remedy':\n"
+            "                fact_type = 'remedy'\n"
+            "                fact_name = f\"Requested remedy: {self._short_description(answer_text, 60)}\"\n"
+            "                rel_type = 'seeks_remedy'\n"
+            "            else:\n"
+            "                fact_type = 'impact'\n"
+            "                fact_name = f\"Impact: {self._short_description(answer_text, 60)}\"\n"
+            "                rel_type = 'has_impact'\n"
+            "            fact_entity, created = self._add_entity_if_missing(\n"
+            "                knowledge_graph,\n"
+            "                'fact',\n"
+            "                fact_name,\n"
+            "                {'fact_type': fact_type, 'description': snippet},\n"
+            "                0.6\n"
+            "            )\n"
+            "            if created:\n"
+            "                updates['entities_updated'] += 1\n"
+            "            if claim_id and fact_entity:\n"
+            "                _, rel_created = self._add_relationship_if_missing(\n"
+            "                    knowledge_graph,\n"
+            "                    claim_id,\n"
+            "                    fact_entity.id,\n"
+            "                    rel_type,\n"
+            "                    0.6\n"
+            "                )\n"
+            "                if rel_created:\n"
+            "                    updates['relationships_added'] += 1\n"
+            "            if question_type == 'impact' and self._contains_remedy_cue(answer_text):\n"
+            "                remedy_name = f\"Requested remedy: {self._short_description(answer_text, 60)}\"\n"
+            "                remedy_entity, remedy_created = self._add_entity_if_missing(\n"
+            "                    knowledge_graph,\n"
+            "                    'fact',\n"
+            "                    remedy_name,\n"
+            "                    {'fact_type': 'remedy', 'description': snippet},\n"
+            "                    0.55\n"
+            "                )\n"
+            "                if remedy_created:\n"
+            "                    updates['entities_updated'] += 1\n"
+            "                if claim_id and remedy_entity:\n"
+            "                    _, rel_created = self._add_relationship_if_missing(\n"
+            "                        knowledge_graph,\n"
+            "                        claim_id,\n"
+            "                        remedy_entity.id,\n"
+            "                        'seeks_remedy',\n"
+            "                        0.55\n"
+            "                    )\n"
+            "                    if rel_created:\n"
+            "                        updates['relationships_added'] += 1\n"
+            "\n"
+            "    elif question_type == 'requirement':\n"
+            "        if dependency_graph:\n"
+            "            req_id = context.get('requirement_id')\n"
+            "            req_node = dependency_graph.get_node(req_id)\n"
+            "            if req_node and len(answer_text) > 10:\n"
+            "                req_node.satisfied = True\n"
+            "                req_node.confidence = 0.7\n"
+            "                updates['requirements_satisfied'] += 1\n"
+            "\n"
+            "    if question_type in responsible_party_enrichment_types and answer_text:\n"
+            "        updates = self._update_responsible_parties_from_answer(answer_text, knowledge_graph, updates)\n"
+            "\n"
+            "    if question_type in timeline_enrichment_types and answer_text:\n"
+            "        _apply_timeline_enrichment()\n"
+            "\n"
+            "    logger.info(f\"Processed answer: {updates}\")\n"
+            "\n"
+            "    try:\n"
+            "        gain = self._compute_gain(updates)\n"
+            "        self._recent_gains.append(gain)\n"
+            "        if len(self._recent_gains) > 50:\n"
+            "            self._recent_gains = self._recent_gains[-50:]\n"
+            "        qtype = question.get('type') if isinstance(question, dict) else 'unknown'\n"
+            "        self._update_momentum(str(qtype or 'unknown'), gain)\n"
+            "    except Exception:\n"
+            "        pass\n"
+            "\n"
+            "    return updates\n"
+        )
+
+    def _render_standard_intake_questions_from_policy(self, policy: Dict[str, Any]) -> str:
+        timeline_style = policy["timeline_prompt_style"]
+        impact_style = policy["impact_prompt_style"]
+        include_notice_question = bool(policy["include_notice_question"])
+
+        if timeline_style == "actor_notice_timeline":
+            timeline_text = (
+                "What is the timeline of key events, including dates, who made each decision, "
+                "what notice or communication you received, and when you requested help or accommodation?"
+            )
+            timeline_keywords = ['timeline', 'when did', 'what date', 'dates', 'notice', 'who made']
+        else:
+            timeline_text = (
+                "What is the timeline of key events (dates, who was involved, what was said or done, and when you requested help/accommodation)?"
+            )
+            timeline_keywords = ['timeline', 'when did', 'what date', 'dates']
+
+        if impact_style == "impact_with_documents":
+            impact_text = (
+                "What harm did you experience (financial, emotional, professional), what outcome or remedy are you seeking, "
+                "and what notices, letters, or messages document that harm?"
+            )
+            impact_keywords = ['harm', 'damages', 'remedy', 'seeking', 'notice', 'letter', 'message']
+        else:
+            impact_text = (
+                "What harm did you experience (financial, emotional, professional), and what outcome or remedy are you seeking?"
+            )
+            impact_keywords = ['harm', 'damages', 'remedy', 'seeking']
+
+        notice_block = ""
+        if include_notice_question:
+            notice_block = (
+                "        notice_text = (\n"
+                "            \"What exact notice, letter, email, or message did you receive, on what date, and who sent it?\"\n"
+                "        )\n"
+                "        if len(questions) + len(added) < max_questions:\n"
+                "            if not any(q.get('type') == 'evidence' for q in questions) and not any(k in existing_text for k in ['notice', 'letter', 'email', 'message', 'sent it']):\n"
+                "                if not self._already_asked(notice_text):\n"
+                "                    added.append(self._build_phase1_question(\n"
+                "                        question_type='evidence',\n"
+                "                        question_text=notice_text,\n"
+                "                        context={},\n"
+                "                        priority='high',\n"
+                "                    ))\n"
+                "\n"
+            )
+
+        return (
+            "def _ensure_standard_intake_questions(self, questions: List[Dict[str, Any]], max_questions: int) -> List[Dict[str, Any]]:\n"
+            "    if len(questions) >= max_questions:\n"
+            "        return questions\n"
+            "\n"
+            "    existing_text = \" \".join([q.get('question', '') for q in questions]).lower()\n"
+            "    added: List[Dict[str, Any]] = []\n"
+            "\n"
+            "    timeline_text = (\n"
+            f"        {timeline_text!r}\n"
+            "    )\n"
+            "    if len(questions) + len(added) < max_questions:\n"
+            f"        if not any(q.get('type') == 'timeline' for q in questions) and not any(k in existing_text for k in {timeline_keywords!r}):\n"
+            "            if not self._already_asked(timeline_text):\n"
+            "                added.append(self._build_phase1_question(\n"
+            "                    question_type='timeline',\n"
+            "                    question_text=timeline_text,\n"
+            "                    context={},\n"
+            "                    priority='high',\n"
+            "                ))\n"
+            "\n"
+            "    impact_text = (\n"
+            f"        {impact_text!r}\n"
+            "    )\n"
+            "    if len(questions) + len(added) < max_questions:\n"
+            f"        if not any(q.get('type') in {{'impact', 'remedy'}} for q in questions) and not any(k in existing_text for k in {impact_keywords!r}):\n"
+            "            if not self._already_asked(impact_text):\n"
+            "                added.append(self._build_phase1_question(\n"
+            "                    question_type='impact',\n"
+            "                    question_text=impact_text,\n"
+            "                    context={},\n"
+            "                    priority='high',\n"
+            "                ))\n"
+            "\n"
+            f"{notice_block}"
+            "    if not added:\n"
+            "        return questions\n"
+            "\n"
+            "    priority_order = {'high': 0, 'medium': 1, 'low': 2}\n"
+            "    combined = questions + added\n"
+            "    combined.sort(\n"
+            "        key=lambda q: (\n"
+            "            int(q.get('proof_priority', self._phase1_proof_priority(q.get('type', '')))),\n"
+            "            priority_order.get(q.get('priority', 'low'), 3),\n"
+            "        )\n"
+            "    )\n"
+            "    return combined[:max_questions]\n"
+        )
+
+    def _render_select_question_candidates_from_policy(self, policy: Dict[str, Any]) -> str:
+        selector_mode = policy["selector_mode"]
+        dedupe_selected = bool(policy["dedupe_selected_candidates"])
+        dedupe_fallback = bool(policy["dedupe_fallback_candidates"])
+
+        selector_block = (
+            "    if isinstance(selected, list):\n"
+            f"        normalized_selected = _finalize(selected, dedupe={str(dedupe_selected)})\n"
+            "        if normalized_selected:\n"
+            "            return normalized_selected\n"
+        )
+        if selector_mode == "fallback_only":
+            selector_block = (
+                "    if isinstance(selected, list):\n"
+                f"        normalized_selected = _finalize(selected, dedupe={str(dedupe_selected)})\n"
+                "        if len(normalized_selected) >= max_questions:\n"
+                "            return normalized_selected\n"
+            )
+
+        return (
+            "def select_question_candidates(\n"
+            "    self,\n"
+            "    candidates: List[Dict[str, Any]],\n"
+            "    *,\n"
+            "    max_questions: int = 10,\n"
+            "    selector: Any = None,\n"
+            ") -> List[Dict[str, Any]]:\n"
+            "    \"\"\"Select final question candidates, allowing a router/prover override.\"\"\"\n"
+            "    normalized_candidates = [candidate for candidate in (candidates or []) if isinstance(candidate, dict)]\n"
+            "    if not normalized_candidates or max_questions <= 0:\n"
+            "        return []\n"
+            "\n"
+            "    def _finalize(items: Any, *, dedupe: bool) -> List[Dict[str, Any]]:\n"
+            "        normalized_items = [candidate for candidate in (items or []) if isinstance(candidate, dict)]\n"
+            "        if not dedupe:\n"
+            "            return normalized_items[:max_questions]\n"
+            "        seen_keys = set()\n"
+            "        finalized: List[Dict[str, Any]] = []\n"
+            "        for candidate in normalized_items:\n"
+            "            candidate_key = (\n"
+            "                self._normalize_question_text(str(candidate.get('question', ''))),\n"
+            "                str(candidate.get('type', '')).strip().lower(),\n"
+            "            )\n"
+            "            if candidate_key in seen_keys:\n"
+            "                continue\n"
+            "            seen_keys.add(candidate_key)\n"
+            "            finalized.append(candidate)\n"
+            "            if len(finalized) >= max_questions:\n"
+            "                break\n"
+            "        return finalized\n"
+            "\n"
+            "    selected: Any = None\n"
+            "    if callable(selector):\n"
+            "        try:\n"
+            "            selected = selector(normalized_candidates, max_questions=max_questions)\n"
+            "        except TypeError:\n"
+            "            selected = selector(normalized_candidates)\n"
+            "        except Exception:\n"
+            "            selected = None\n"
+            "\n"
+            f"{selector_block}\n"
+            "    normalized_candidates.sort(key=self._default_candidate_sort_key)\n"
+            f"    return _finalize(normalized_candidates, dedupe={str(dedupe_fallback)})\n"
         )
 
     def _extract_symbol_replacements_from_text(
