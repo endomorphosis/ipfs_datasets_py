@@ -8,6 +8,7 @@ administrative rules/codes.
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 from html import unescape
 import io
@@ -50,6 +51,19 @@ from .state_laws_scraper import (
 )
 
 logger = logging.getLogger(__name__)
+
+_BLOCKING_FETCH_EXECUTOR = ThreadPoolExecutor(max_workers=8)
+_STATE_WORKER_EXECUTOR = ThreadPoolExecutor(max_workers=4)
+
+
+async def _run_blocking_fetch(fetch_callable: Any, request: Any) -> Any:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_BLOCKING_FETCH_EXECUTOR, lambda: fetch_callable(request))
+
+
+async def _run_state_worker(worker_callable: Any) -> Any:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_STATE_WORKER_EXECUTOR, worker_callable)
 
 US_50_STATE_CODES: List[str] = [code for code in US_STATES.keys() if code != "DC"]
 
@@ -2222,8 +2236,18 @@ def _build_initial_pending_candidates(
     seed_expansion_candidates: List[tuple[str, int]],
     max_candidates: int,
 ) -> List[tuple[str, int]]:
-    pending: List[tuple[str, int]] = list(ranked_urls[:max(1, int(max_candidates))])
-    pending.extend(seed_expansion_candidates)
+    pending_by_key: Dict[str, tuple[str, int]] = {}
+    pending: List[tuple[str, int]] = []
+
+    for url, score in [*ranked_urls[: max(1, int(max_candidates))], *seed_expansion_candidates]:
+        key = _url_key(url)
+        if not key:
+            continue
+        existing = pending_by_key.get(key)
+        if existing is None or int(score) > int(existing[1]):
+            pending_by_key[key] = (url, int(score))
+
+    pending.extend(pending_by_key.values())
     pending.sort(key=lambda item: item[1], reverse=True)
     return pending
 
@@ -7324,7 +7348,7 @@ async def _discover_massachusetts_cmr_document_urls(
                 fetch_api = live_fetch_api if _prefers_live_fetch(page_url) else direct_fetch_api
                 try:
                     fetched = await asyncio.wait_for(
-                        asyncio.to_thread(
+                        _run_blocking_fetch(
                             fetch_api.fetch,
                             UnifiedFetchRequest(
                                 url=page_url,
@@ -7682,7 +7706,7 @@ async def _discover_california_westlaw_document_urls(
                 fetch_api = live_fetch_api if _prefers_live_fetch(page_url) else direct_fetch_api
                 try:
                     fetched = await asyncio.wait_for(
-                        asyncio.to_thread(
+                        _run_blocking_fetch(
                             fetch_api.fetch,
                             UnifiedFetchRequest(
                                 url=page_url,
@@ -7936,17 +7960,21 @@ async def _agentic_discover_admin_state_blocks(
 
         async def _run_single_state(single_state: str) -> Dict[str, Any]:
             async with semaphore:
-                return await _agentic_discover_admin_state_blocks(
-                    states=[single_state],
-                    max_candidates_per_state=max_candidates_per_state,
-                    max_fetch_per_state=max_fetch_per_state,
-                    max_results_per_domain=max_results_per_domain,
-                    max_hops=max_hops,
-                    max_pages=max_pages,
-                    min_full_text_chars=min_full_text_chars,
-                    require_substantive_text=require_substantive_text,
-                    fetch_concurrency=fetch_concurrency,
-                    per_state_budget_seconds=per_state_budget_seconds,
+                return await _run_state_worker(
+                    lambda: asyncio.run(
+                        _agentic_discover_admin_state_blocks(
+                            states=[single_state],
+                            max_candidates_per_state=max_candidates_per_state,
+                            max_fetch_per_state=max_fetch_per_state,
+                            max_results_per_domain=max_results_per_domain,
+                            max_hops=max_hops,
+                            max_pages=max_pages,
+                            min_full_text_chars=min_full_text_chars,
+                            require_substantive_text=require_substantive_text,
+                            fetch_concurrency=fetch_concurrency,
+                            per_state_budget_seconds=per_state_budget_seconds,
+                        )
+                    )
                 )
 
         state_results = await asyncio.gather(
@@ -8272,7 +8300,7 @@ async def _agentic_discover_admin_state_blocks(
                 fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
                 try:
                     fetched = await asyncio.wait_for(
-                        asyncio.to_thread(
+                        _run_blocking_fetch(
                             fetch_api.fetch,
                             UnifiedFetchRequest(
                                 url=seed_url,
@@ -8692,6 +8720,48 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_utah_seed_rule_urls) >= min(max_fetch, 8):
                     break
 
+        prioritized_california_bootstrap_document_urls: List[str] = []
+        if state_code == "CA" and california_bootstrap_document_urls:
+            seen_california_document_keys: set[str] = set()
+            for rule_url in california_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_california_document_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_california_document_keys.add(rule_key)
+                prioritized_california_bootstrap_document_urls.append(rule_url)
+                if len(prioritized_california_bootstrap_document_urls) >= min(max_fetch, 8):
+                    break
+
+        for rule_url in prioritized_california_bootstrap_document_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            inspected_urls += 1
+            try:
+                california_scraped = await asyncio.wait_for(
+                    live_scraper.scrape(rule_url),
+                    timeout=25.0,
+                )
+            except Exception:
+                california_scraped = None
+            if california_scraped is None:
+                continue
+
+            california_text = str(getattr(california_scraped, "text", "") or "").strip()
+            california_title = str(getattr(california_scraped, "title", "") or "").strip()
+            california_provenance = getattr(california_scraped, "extraction_provenance", None) or {}
+            california_method_value = None
+            if isinstance(california_provenance, dict):
+                california_method_value = california_provenance.get("method")
+            if california_method_value is None:
+                california_method_value = getattr(california_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, california_title, california_text, california_method_value)
+
         for rule_url in prioritized_utah_seed_rule_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -8796,7 +8866,7 @@ async def _agentic_discover_admin_state_blocks(
                 fetch_api = live_fetch_api if _prefers_live_fetch(fetch_document_url) else direct_fetch_api
                 try:
                     fetched = await asyncio.wait_for(
-                        asyncio.to_thread(
+                        _run_blocking_fetch(
                             fetch_api.fetch,
                             UnifiedFetchRequest(
                                 url=fetch_document_url,
@@ -9155,7 +9225,7 @@ async def _agentic_discover_admin_state_blocks(
                 fetch_api = live_fetch_api if _prefers_live_fetch(document_url) else direct_fetch_api
                 try:
                     fetched = await asyncio.wait_for(
-                        asyncio.to_thread(
+                        _run_blocking_fetch(
                             fetch_api.fetch,
                             UnifiedFetchRequest(
                                 url=document_url,
@@ -9214,11 +9284,14 @@ async def _agentic_discover_admin_state_blocks(
                 break
             if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
                 break
+            seed_key = _url_key(seed_url)
+            if seed_key and seed_key in preseed_substantive_url_keys:
+                continue
             host = urlparse(seed_url).netloc
             fetch_api = live_fetch_api if _prefers_live_fetch(seed_url) else direct_fetch_api
             try:
                 fetched = await asyncio.wait_for(
-                    asyncio.to_thread(
+                    _run_blocking_fetch(
                         fetch_api.fetch,
                         UnifiedFetchRequest(
                             url=seed_url,
@@ -9473,6 +9546,11 @@ async def _agentic_discover_admin_state_blocks(
             max_candidates=max_candidates,
         )
         seen_urls = set(direct_doc_urls)
+        pending_candidate_keys: set[str] = {
+            _url_key(candidate_url)
+            for candidate_url, _ in pending
+            if _url_key(candidate_url)
+        }
         inspected_url_samples: List[str] = []
         deep_discovery_calls = 0
         vermont_lexis_signin_block_count = 0
@@ -9483,6 +9561,14 @@ async def _agentic_discover_admin_state_blocks(
             if str(seed).strip().startswith(("http://", "https://"))
         }
         prioritized_seed_keys = {_url_key(url) for url in seed_urls}
+
+        def _enqueue_pending_candidate(candidate_url: str, candidate_score: int) -> bool:
+            candidate_key = _url_key(candidate_url)
+            if not candidate_key or candidate_key in seen_urls or candidate_key in pending_candidate_keys:
+                return False
+            pending.append((candidate_url, int(candidate_score)))
+            pending_candidate_keys.add(candidate_key)
+            return True
 
         async def _scrape_candidate_url(url: str):
             alabama_scraped = await _scrape_alabama_rule_detail_via_api(url)
@@ -9635,7 +9721,7 @@ async def _agentic_discover_admin_state_blocks(
                             fetch_api = live_fetch_api if _prefers_live_fetch(url) else direct_fetch_api
                             try:
                                 fetched = await asyncio.wait_for(
-                                    asyncio.to_thread(
+                                    _run_blocking_fetch(
                                         fetch_api.fetch,
                                         UnifiedFetchRequest(
                                             url=url,
@@ -9688,8 +9774,8 @@ async def _agentic_discover_admin_state_blocks(
                                 url=url,
                                 limit=24,
                             ):
-                                pending.append((rule_url, _score_candidate_url(rule_url) + inventory_rule_bonus))
-                                expanded_urls += 1
+                                if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + inventory_rule_bonus):
+                                    expanded_urls += 1
                             if state_code == "MT":
                                 try:
                                     montana_rule_urls = await asyncio.wait_for(
@@ -9699,13 +9785,11 @@ async def _agentic_discover_admin_state_blocks(
                                 except Exception:
                                     montana_rule_urls = []
                                 for rule_rank, rule_url in enumerate(montana_rule_urls):
-                                    pending.append(
-                                        (
-                                            rule_url,
-                                            _score_candidate_url(rule_url) + inventory_rule_bonus + max(0, 4 - int(rule_rank)),
-                                        )
-                                    )
-                                    expanded_urls += 1
+                                    if _enqueue_pending_candidate(
+                                        rule_url,
+                                        _score_candidate_url(rule_url) + inventory_rule_bonus + max(0, 4 - int(rule_rank)),
+                                    ):
+                                        expanded_urls += 1
                             same_host = current_host if current_host in base_hosts else ""
                             for link_rank, link_url in enumerate(
                                 _candidate_links_from_scrape(
@@ -9720,8 +9804,8 @@ async def _agentic_discover_admin_state_blocks(
                                 if link_score <= 0:
                                     continue
                                 depth_bonus = max(0, 6 - int(link_rank)) if inventory_page else 0
-                                pending.append((link_url, link_score + inventory_link_bonus + depth_bonus))
-                                expanded_urls += 1
+                                if _enqueue_pending_candidate(link_url, link_score + inventory_link_bonus + depth_bonus):
+                                    expanded_urls += 1
                             for link_rank, link_url in enumerate(
                                 _candidate_links_from_html(
                                     fetched_html,
@@ -9735,14 +9819,14 @@ async def _agentic_discover_admin_state_blocks(
                                 if link_score <= 0:
                                     continue
                                 depth_bonus = max(0, 6 - int(link_rank)) if inventory_page else 0
-                                pending.append((link_url, link_score + inventory_html_bonus + depth_bonus))
-                                expanded_urls += 1
+                                if _enqueue_pending_candidate(link_url, link_score + inventory_html_bonus + depth_bonus):
+                                    expanded_urls += 1
                             for rule_url in _candidate_utah_rule_urls_from_public_api(
                                 url=url,
                                 limit=24,
                             ):
-                                pending.append((rule_url, _score_candidate_url(rule_url) + inventory_utah_bonus))
-                                expanded_urls += 1
+                                if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + inventory_utah_bonus):
+                                    expanded_urls += 1
 
                             if (
                                 not official_index_page
@@ -9779,8 +9863,8 @@ async def _agentic_discover_admin_state_blocks(
                                             continue
                                         if not _url_allowed_for_state(deep_url, allowed_hosts):
                                             continue
-                                        pending.append((deep_url, _score_candidate_url(deep_url) + 1))
-                                        expanded_urls += 1
+                                        if _enqueue_pending_candidate(deep_url, _score_candidate_url(deep_url) + 1):
+                                            expanded_urls += 1
                                 except Exception:
                                     pass
 
@@ -9800,8 +9884,8 @@ async def _agentic_discover_admin_state_blocks(
                             url=url,
                             limit=24,
                         ):
-                            pending.append((rule_url, _score_candidate_url(rule_url) + 4))
-                            expanded_urls += 1
+                            if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + 4):
+                                expanded_urls += 1
                         if state_code == "MT":
                             try:
                                 montana_rule_urls = await asyncio.wait_for(
@@ -9811,8 +9895,11 @@ async def _agentic_discover_admin_state_blocks(
                             except Exception:
                                 montana_rule_urls = []
                             for rule_rank, rule_url in enumerate(montana_rule_urls):
-                                pending.append((rule_url, _score_candidate_url(rule_url) + 4 + max(0, 4 - int(rule_rank))))
-                                expanded_urls += 1
+                                if _enqueue_pending_candidate(
+                                    rule_url,
+                                    _score_candidate_url(rule_url) + 4 + max(0, 4 - int(rule_rank)),
+                                ):
+                                    expanded_urls += 1
                         for link_url in _candidate_links_from_scrape(
                             scraped,
                             base_host=same_host,
@@ -9823,8 +9910,8 @@ async def _agentic_discover_admin_state_blocks(
                             link_score = _score_candidate_url(link_url)
                             if link_score <= 0:
                                 continue
-                            pending.append((link_url, link_score + 2))
-                            expanded_urls += 1
+                            if _enqueue_pending_candidate(link_url, link_score + 2):
+                                expanded_urls += 1
                         for link_url in _candidate_links_from_html(
                             fetched_html,
                             base_host=same_host,
@@ -9835,14 +9922,14 @@ async def _agentic_discover_admin_state_blocks(
                             link_score = _score_candidate_url(link_url)
                             if link_score <= 0:
                                 continue
-                            pending.append((link_url, link_score + 2))
-                            expanded_urls += 1
+                            if _enqueue_pending_candidate(link_url, link_score + 2):
+                                expanded_urls += 1
                         for rule_url in _candidate_utah_rule_urls_from_public_api(
                             url=url,
                             limit=24,
                         ):
-                            pending.append((rule_url, _score_candidate_url(rule_url) + 5))
-                            expanded_urls += 1
+                            if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + 5):
+                                expanded_urls += 1
                         pending.sort(key=lambda item: item[1], reverse=True)
 
                     if len(statutes) >= max_fetch:

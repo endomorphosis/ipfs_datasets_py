@@ -3006,6 +3006,25 @@ def test_url_key_strips_fragment_identifiers() -> None:
     )
 
 
+def test_build_initial_pending_candidates_dedupes_canonical_urls_and_keeps_highest_score() -> None:
+    pending = scraper_module._build_initial_pending_candidates(
+        ranked_urls=[
+            ("https://rules.wyo.gov/Search.aspx?mode=7#toTop", 3),
+            ("https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225", 8),
+        ],
+        seed_expansion_candidates=[
+            ("https://rules.wyo.gov/Search.aspx?mode=7#ModaltoTop", 9),
+            ("https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225", 6),
+        ],
+        max_candidates=4,
+    )
+
+    assert pending == [
+        ("https://rules.wyo.gov/Search.aspx?mode=7#ModaltoTop", 9),
+        ("https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225", 8),
+    ]
+
+
 def test_candidate_links_from_html_extracts_texas_appian_inventory_and_detail_urls() -> None:
     html = """
     <html><body>
@@ -7686,6 +7705,7 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
     assert [
         statute["source_url"] for statute in result["state_blocks"][0]["statutes"]
     ] == [viewer_url_1, viewer_url_2]
+    assert result["report"]["WY"]["expanded_urls"] == 2
 
 
 @pytest.mark.anyio
