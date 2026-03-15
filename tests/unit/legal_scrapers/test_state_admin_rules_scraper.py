@@ -3566,6 +3566,61 @@ async def test_discover_alabama_rule_document_urls_uses_public_code_api(monkeypa
 
 
 @pytest.mark.asyncio
+async def test_discover_indiana_rule_document_urls_uses_public_tree_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict[str, Any]):
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, Any]:
+            return self._payload
+
+    calls: list[dict[str, Any]] = []
+
+    def fake_get(url: str, timeout: int, headers: dict[str, str], params: dict[str, Any] | None = None):
+        calls.append({"url": url, "headers": headers, "params": params})
+        if url.endswith("/adminCodeEditions"):
+            return FakeResponse(
+                {
+                    "iar_iac_edition_list": [
+                        {"edition_year": 2024},
+                        {"edition_year": 2027},
+                    ]
+                }
+            )
+        if url.endswith("/adminCodeTree"):
+            assert params == {"edition_year": 2027, "doc_stage": "public"}
+            return FakeResponse(
+                {
+                    "iar_iac_title_article_list": [
+                        {
+                            "title_num": "10",
+                            "article": [
+                                {"article_num": "1", "article_name": "ARTICLE 1. OLD RULE (REPEALED)"},
+                                {"article_num": "1.5", "article_name": "ARTICLE 1.5. UNCLAIMED PROPERTY"},
+                                {"article_num": "2", "article_name": "ARTICLE 2. CONTRACT APPROVAL"},
+                            ],
+                        }
+                    ]
+                }
+            )
+        raise AssertionError(url)
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    urls = await scraper_module._discover_indiana_rule_document_urls(limit=2)
+
+    assert urls == [
+        "https://iar.iga.in.gov/code/current/10/1.5",
+        "https://iar.iga.in.gov/code/current/10/2",
+    ]
+    assert calls[0]["headers"]["Origin"] == "https://iar.iga.in.gov"
+    assert "Chrome/142.0.0.0" in calls[0]["headers"]["User-Agent"]
+
+
+@pytest.mark.asyncio
 async def test_discover_montana_rule_document_urls_expands_section_tree_via_public_api(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -3754,6 +3809,62 @@ async def test_scrape_alabama_rule_detail_via_api_uses_public_code_endpoint(monk
     assert scraped.method_used == "alabama_public_code_api"
     assert requests_seen[0]["operationName"] == "publicCode"
     assert requests_seen[0]["extensions"]["persistedQuery"]["sha256Hash"] == scraper_module._AL_PUBLIC_CODE_HASH
+
+
+@pytest.mark.asyncio
+async def test_scrape_indiana_rule_detail_via_api_uses_public_article_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict[str, Any]):
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, Any]:
+            return self._payload
+
+    calls: list[dict[str, Any]] = []
+
+    def fake_get(url: str, timeout: int, headers: dict[str, str], params: dict[str, Any] | None = None):
+        calls.append({"url": url, "headers": headers, "params": params})
+        if url.endswith("/adminCodeArticle"):
+            assert params == {
+                "doc_stage": "public",
+                "edition_year": 2027,
+                "title_num": "10",
+                "article_num": "1.5",
+            }
+            return FakeResponse(
+                {
+                    "iar_iac_article_doc": {
+                        "title_num": "10",
+                        "title_name": "Office of Attorney General for the State",
+                        "article_name": "ARTICLE 1.5. UNCLAIMED PROPERTY",
+                        "doc_html": (
+                            "<h1>TITLE 10 OFFICE OF ATTORNEY GENERAL FOR THE STATE</h1>"
+                            "<h1>ARTICLE 1.5. UNCLAIMED PROPERTY</h1>"
+                            "<div>Authority: IC 32-34-1.5-87</div>"
+                            "<div>Sec. 1. The definitions in the Unclaimed Property Act apply.</div>"
+                        ),
+                    }
+                }
+            )
+        if url.endswith("/adminCodeEditions"):
+            return FakeResponse({"iar_iac_edition_list": [{"edition_year": 2027}]})
+        raise AssertionError(url)
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    scraped = await scraper_module._scrape_indiana_rule_detail_via_api(
+        "https://iar.iga.in.gov/code/current/10/1.5"
+    )
+
+    assert scraped is not None
+    assert scraped.title == "Title 10 ARTICLE 1.5. UNCLAIMED PROPERTY, Office of Attorney General for the State"
+    assert "Sec. 1. The definitions in the Unclaimed Property Act apply." in scraped.text
+    assert scraped.method_used == "indiana_admin_code_api"
+    article_call = next(call for call in calls if call["url"].endswith("/adminCodeArticle"))
+    assert article_call["headers"]["Referer"] == "https://iar.iga.in.gov/code/current/10/1.5"
 
 
 @pytest.mark.asyncio
@@ -8345,6 +8456,7 @@ async def test_agentic_discovery_prefers_indiana_direct_detail_seed_before_broad
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_discover_indiana_rule_document_urls", lambda limit=8: asyncio.sleep(0, result=[]))
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == seed_url)

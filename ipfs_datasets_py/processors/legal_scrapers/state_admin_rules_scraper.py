@@ -517,6 +517,13 @@ _AL_PUBLIC_CODE_GRAPHQL_URL = "https://admincode.legislature.state.al.us/api/gra
 _AL_PUBLIC_CODE_HASH = "b72bac93737153227218ba9055454a07afe68f2d"
 _AL_AGENCY_SORT_TITLES_HASH = "97eb45e3d6371acfc256baecb90e51f2074a00c5"
 
+_INDIANA_ADMIN_CODE_ARTICLE_PATH_RE = re.compile(
+    r"^/code/(?P<edition>current|\d{4})/(?P<title_num>\d+)/(?P<article_num>\d+(?:\.\d+)*)/?$",
+    re.IGNORECASE,
+)
+_INDIANA_ADMIN_CODE_API_BASE_URL = "https://drxya2s1hkmtl.cloudfront.net/api"
+_INDIANA_NONCURRENT_ARTICLE_RE = re.compile(r"\((?:expired|repealed|transferred)\)", re.IGNORECASE)
+
 _SD_RULE_INDEX_PATH_RE = re.compile(r"^/Rules/Administrative/?$", re.IGNORECASE)
 _SD_RULE_DETAIL_PATH_RE = re.compile(r"^/Rules/Administrative/(?P<rule>\d{2}:\d{2}(?::\d{2}){0,3})/?$", re.IGNORECASE)
 _SD_RULE_REFERENCE_RE = re.compile(r"^\d{2}:\d{2}(?::\d{2}){0,3}$")
@@ -4619,6 +4626,197 @@ async def _discover_alabama_rule_document_urls(*, limit: int = 8) -> List[str]:
                     if len(results) >= limit_n:
                         return results
         return results
+
+    return await asyncio.to_thread(_run)
+
+
+def _indiana_api_request_headers(*, referer_url: str = "https://iar.iga.in.gov/code/current") -> Dict[str, str]:
+    return {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json,text/plain,*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": referer_url,
+        "Origin": "https://iar.iga.in.gov",
+        "Sec-Fetch-Site": "cross-site",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+    }
+
+
+def _indiana_article_identifiers_from_url(url: str) -> tuple[str, str, str]:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "iar.iga.in.gov":
+        return "", "", ""
+    match = _INDIANA_ADMIN_CODE_ARTICLE_PATH_RE.fullmatch(parsed.path or "")
+    if not match:
+        return "", "", ""
+    return (
+        str(match.group("edition") or "").strip(),
+        str(match.group("title_num") or "").strip(),
+        str(match.group("article_num") or "").strip(),
+    )
+
+
+def _get_indiana_admin_code_editions_payload() -> List[Dict[str, Any]]:
+    try:
+        response = requests.get(
+            f"{_INDIANA_ADMIN_CODE_API_BASE_URL}/adminCodeEditions",
+            timeout=25,
+            headers=_indiana_api_request_headers(),
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception:
+        return []
+
+    edition_list = (payload or {}).get("iar_iac_edition_list") or []
+    return [item for item in edition_list if isinstance(item, dict)]
+
+
+def _candidate_indiana_edition_years(edition_token: str) -> List[int]:
+    normalized_token = str(edition_token or "").strip().lower()
+    if normalized_token.isdigit():
+        return [int(normalized_token)]
+
+    candidate_years: List[int] = []
+    for item in _get_indiana_admin_code_editions_payload():
+        edition_year = str(item.get("edition_year") or "").strip()
+        if edition_year.isdigit():
+            candidate_years.append(int(edition_year))
+
+    if not candidate_years:
+        current_year = datetime.utcnow().year
+        candidate_years = [current_year + 1, current_year, current_year - 1, 2027, 2026, 2025, 2024, 2006]
+
+    ordered_years: List[int] = []
+    for year in sorted(candidate_years, reverse=True):
+        if year not in ordered_years:
+            ordered_years.append(year)
+    return ordered_years
+
+
+async def _discover_indiana_rule_document_urls(*, limit: int = 8) -> List[str]:
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        results: List[str] = []
+        seen: set[str] = set()
+
+        for edition_year in _candidate_indiana_edition_years("current"):
+            try:
+                response = requests.get(
+                    f"{_INDIANA_ADMIN_CODE_API_BASE_URL}/adminCodeTree",
+                    params={"edition_year": edition_year, "doc_stage": "public"},
+                    timeout=25,
+                    headers=_indiana_api_request_headers(),
+                )
+                response.raise_for_status()
+                payload = response.json()
+            except Exception:
+                continue
+
+            title_list = (payload or {}).get("iar_iac_title_article_list") or []
+            if not isinstance(title_list, list):
+                continue
+
+            for title_item in title_list:
+                if not isinstance(title_item, dict):
+                    continue
+                title_num = str(title_item.get("title_num") or "").strip()
+                if not title_num.isdigit():
+                    continue
+                for article in title_item.get("article") or []:
+                    if not isinstance(article, dict):
+                        continue
+                    article_num = str(article.get("article_num") or "").strip()
+                    article_name = str(article.get("article_name") or "").strip()
+                    if not article_num or _INDIANA_NONCURRENT_ARTICLE_RE.search(article_name):
+                        continue
+                    candidate_url = f"https://iar.iga.in.gov/code/current/{title_num}/{article_num}"
+                    candidate_key = _url_key(candidate_url)
+                    if not candidate_key or candidate_key in seen:
+                        continue
+                    seen.add(candidate_key)
+                    results.append(candidate_url)
+                    if len(results) >= limit_n:
+                        return results
+
+            if results:
+                return results
+
+        return results
+
+    return await asyncio.to_thread(_run)
+
+
+async def _scrape_indiana_rule_detail_via_api(url: str) -> Optional[Any]:
+    edition_token, title_num, article_num = _indiana_article_identifiers_from_url(url)
+    if not title_num or not article_num:
+        return None
+
+    def _run() -> Optional[Any]:
+        referer_url = f"https://iar.iga.in.gov/code/{edition_token or 'current'}/{title_num}/{article_num}"
+        for edition_year in _candidate_indiana_edition_years(edition_token or "current"):
+            try:
+                response = requests.get(
+                    f"{_INDIANA_ADMIN_CODE_API_BASE_URL}/adminCodeArticle",
+                    params={
+                        "doc_stage": "public",
+                        "edition_year": edition_year,
+                        "title_num": title_num,
+                        "article_num": article_num,
+                    },
+                    timeout=25,
+                    headers=_indiana_api_request_headers(referer_url=referer_url),
+                )
+                response.raise_for_status()
+                payload = response.json()
+            except Exception:
+                continue
+
+            article_payload = (payload or {}).get("iar_iac_article_doc") or {}
+            if not isinstance(article_payload, dict):
+                continue
+
+            doc_html = str(article_payload.get("doc_html") or "").strip()
+            if not doc_html:
+                continue
+
+            text = _extract_text_from_downloaded_html_document(doc_html)
+            if not text:
+                text = BeautifulSoup(doc_html, "html.parser").get_text("\n", strip=True)
+            if not text:
+                continue
+
+            title_num_value = str(article_payload.get("title_num") or title_num).strip()
+            title_name = str(article_payload.get("title_name") or "").strip()
+            article_name = str(article_payload.get("article_name") or "").strip()
+            title = ", ".join(
+                part
+                for part in (
+                    " ".join(part for part in (f"Title {title_num_value}", article_name) if part).strip(),
+                    title_name or "",
+                )
+                if part
+            ).strip()
+            if not title:
+                title = f"Title {title_num_value}, Article {article_num}"
+
+            return SimpleNamespace(
+                url=url,
+                title=title,
+                text=text,
+                html=doc_html,
+                links=[],
+                success=True,
+                method_used="indiana_admin_code_api",
+                extraction_provenance={"method": "indiana_admin_code_api"},
+            )
+
+        return None
 
     return await asyncio.to_thread(_run)
 
@@ -8831,6 +9029,11 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_alabama_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
+                elif state_code == "IN":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_indiana_rule_detail_via_api(fetch_document_url),
+                        timeout=direct_timeout_s,
+                    )
                 elif state_code == "NH":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_new_hampshire_archived_rule_detail(document_url),
@@ -8916,6 +9119,33 @@ async def _agentic_discover_admin_state_blocks(
                     if link_score <= 0:
                         continue
                     seed_expansion_candidates.append((link_url, link_score + 3))
+
+        prioritized_alabama_seed_rule_urls: List[str] = []
+        prioritized_indiana_seed_rule_urls: List[str] = []
+        if state_code == "IN":
+            try:
+                indiana_api_rule_urls = await asyncio.wait_for(
+                    _discover_indiana_rule_document_urls(limit=min(max_fetch * 3, 12)),
+                    timeout=25.0,
+                )
+            except Exception:
+                indiana_api_rule_urls = []
+            seen_indiana_rule_keys: set[str] = set()
+            for rule_url in indiana_api_rule_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_indiana_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_indiana_rule_keys.add(rule_key)
+                prioritized_indiana_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
+                if len(prioritized_indiana_seed_rule_urls) >= min(max_fetch, 8):
+                    break
+            if prioritized_indiana_seed_rule_urls:
+                source_breakdown["indiana_api_bootstrap"] = len(prioritized_indiana_seed_rule_urls)
 
         prioritized_alabama_seed_rule_urls: List[str] = []
         if state_code == "AL":
@@ -9200,6 +9430,11 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_alabama_rule_detail_via_api(document_url),
                         timeout=direct_timeout_s,
                     )
+                elif state_code == "IN":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_indiana_rule_detail_via_api(document_url),
+                        timeout=direct_timeout_s,
+                    )
                 elif state_code == "MT":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_montana_rule_detail_via_api(document_url),
@@ -9423,6 +9658,11 @@ async def _agentic_discover_admin_state_blocks(
                 elif state_code == "AL":
                     expanded_scraped = await asyncio.wait_for(
                         _scrape_alabama_rule_detail_via_api(fetch_document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "IN":
+                    expanded_scraped = await asyncio.wait_for(
+                        _scrape_indiana_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "NH":
