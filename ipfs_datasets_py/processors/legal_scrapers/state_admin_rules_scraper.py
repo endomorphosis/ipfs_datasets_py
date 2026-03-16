@@ -2321,6 +2321,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         handler = str((parse_qs(parsed.query or "").get("handler") or [""])[0]).strip().lower()
         if handler == "getruleversionhtml":
             return True
+    if host == "rules.sos.ri.gov" and _RI_RICR_DETAIL_PATH_RE.fullmatch(path):
+        return True
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
@@ -3266,7 +3268,7 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
             "superseded",
         }:
             search_term = candidate_term
-    elif len(path_parts) >= 6 and path_parts[:4] == ["api", "public", "searchRuleDataTotal", path_parts[3]]:
+    elif len(path_parts) >= 5 and path_parts[:3] == ["api", "public", "searchRuleDataTotal"]:
         candidate_term = str(path_parts[3] or "").strip()
         if candidate_term.lower() not in {
             "current rules",
@@ -3277,61 +3279,67 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
             "superseded",
         }:
             search_term = candidate_term
+    search_terms: List[str] = []
     if not search_term or search_term.lower() == "undefined":
         # Utah's empty search route no longer serves JSON for the legacy
-        # `undefined` token, but the broad `R` query still returns the current-rule
-        # index as JSON and is enough to bootstrap substantive detail pages.
-        search_term = "R"
+        # `undefined` token. The broad `R` query still returns the current-rule
+        # index, but it is slow enough to consume most bounded state budgets.
+        # Prefer narrower stable prefixes first; they still return more than
+        # enough rule-detail URLs for the initial bootstrap backlog.
+        search_terms = ["R51", "R52", "R58", "R59", "R70", "R590"]
+    else:
+        search_terms = [search_term]
 
     effective_limit = max(1, int(limit))
-    if len(search_term) <= 1:
+    if (not search_term or search_term.lower() == "undefined") or (len(search_terms) == 1 and len(search_terms[0]) <= 1):
         # Broad single-letter Utah bootstrap queries can be large and slow.
         # Keep the initial detail backlog intentionally small so bounded daemon
         # runs can move on to rule fetches instead of spending the whole state
         # budget enumerating the public search index.
         effective_limit = min(effective_limit, 8)
-
-    encoded_search_term = quote(search_term, safe="")
-    api_url = f"https://adminrules.utah.gov/api/public/searchRuleDataTotal/{encoded_search_term}/Current%20Rules"
     out: List[str] = []
     seen = set()
 
-    try:
-        response = requests.get(
-            api_url,
-            timeout=25,
-            headers={
-                "User-Agent": "Mozilla/5.0",
-                "Accept": "application/json, text/plain, */*",
-                "Referer": url_value or "https://adminrules.utah.gov/public/search//Current%20Rules",
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
-    except Exception:
-        return []
+    for active_search_term in search_terms:
+        encoded_search_term = quote(active_search_term, safe="")
+        api_url = f"https://adminrules.utah.gov/api/public/searchRuleDataTotal/{encoded_search_term}/Current%20Rules"
 
-    for agency in payload or []:
-        if not isinstance(agency, dict):
+        try:
+            response = requests.get(
+                api_url,
+                timeout=25,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": "application/json, text/plain, */*",
+                    "Referer": url_value or "https://adminrules.utah.gov/public/search//Current%20Rules",
+                },
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except Exception:
             continue
-        for program in agency.get("programs") or []:
-            if not isinstance(program, dict):
+
+        for agency in payload or []:
+            if not isinstance(agency, dict):
                 continue
-            for rule in program.get("rules") or []:
-                if not isinstance(rule, dict):
+            for program in agency.get("programs") or []:
+                if not isinstance(program, dict):
                     continue
-                link_to_rule = str(rule.get("linkToRule") or "").strip()
-                if link_to_rule:
-                    candidate_url = urljoin(
-                        "https://adminrules.utah.gov/public/rule/",
-                        link_to_rule.replace(" ", "%20"),
-                    )
-                    key = _url_key(candidate_url)
-                    if key and key not in seen:
-                        seen.add(key)
-                        out.append(candidate_url)
-                        if len(out) >= effective_limit:
-                            return out
+                for rule in program.get("rules") or []:
+                    if not isinstance(rule, dict):
+                        continue
+                    link_to_rule = str(rule.get("linkToRule") or "").strip()
+                    if link_to_rule:
+                        candidate_url = urljoin(
+                            "https://adminrules.utah.gov/public/rule/",
+                            link_to_rule.replace(" ", "%20"),
+                        )
+                        key = _url_key(candidate_url)
+                        if key and key not in seen:
+                            seen.add(key)
+                            out.append(candidate_url)
+                            if len(out) >= effective_limit:
+                                return out
     return out
 
 
@@ -3731,6 +3739,21 @@ def _montana_policy_browse_url(collection_uuid: str, policy_uuid: str) -> str:
         "https://rules.mt.gov/browse/collections/"
         f"{quote(str(collection_uuid or '').strip(), safe='-')}/policies/{quote(str(policy_uuid or '').strip(), safe='-')}"
     )
+
+
+def _is_montana_inventory_candidate_url(url: str) -> bool:
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+    path = (parsed.path or "").rstrip("/") or "/"
+    if host in {"sosmt.gov", "www.sosmt.gov", "legislature.mt.gov", "www.legislature.mt.gov"}:
+        return True
+    if host != "rules.mt.gov":
+        return False
+    if _montana_policy_uuid_from_url(url):
+        return False
+    if _montana_collection_uuid_from_url(url):
+        return True
+    return path == "/"
 
 
 def _montana_public_api_headers(*, referer: str = "https://rules.mt.gov/") -> Dict[str, str]:
@@ -8932,10 +8955,6 @@ async def _agentic_discover_admin_state_blocks(
                                 limit=max(12, min(48, max(1, int(max_fetch_per_state)) * 8)),
                             )
                             for program_rank, program_url in enumerate(wy_program_urls[: max(4, min(8, int(max_fetch_per_state) * 2))]):
-                                candidate_urls.append(program_url)
-                                seed_expansion_candidates.append(
-                                    (program_url, _score_candidate_url(program_url) + 8 + max(0, 4 - int(program_rank)))
-                                )
                                 try:
                                     program_scraped = await asyncio.wait_for(
                                         _scrape_wyoming_rule_detail_via_ajax(program_url),
@@ -8944,18 +8963,32 @@ async def _agentic_discover_admin_state_blocks(
                                 except Exception:
                                     program_scraped = None
                                 if program_scraped is None:
+                                    candidate_urls.append(program_url)
+                                    seed_expansion_candidates.append(
+                                        (program_url, _score_candidate_url(program_url) + 8 + max(0, 4 - int(program_rank)))
+                                    )
                                     continue
                                 program_html = str(getattr(program_scraped, "html", "") or "")
-                                for viewer_rank, viewer_url in enumerate(
-                                    _candidate_wyoming_rule_urls_from_html(
-                                        html=program_html,
-                                        page_url=program_url,
-                                        limit=max(12, min(48, max(1, int(max_fetch_per_state)) * 8)),
+                                viewer_urls = _candidate_wyoming_rule_urls_from_html(
+                                    html=program_html,
+                                    page_url=program_url,
+                                    limit=max(12, min(48, max(1, int(max_fetch_per_state)) * 8)),
+                                )
+                                if not viewer_urls:
+                                    candidate_urls.append(program_url)
+                                    seed_expansion_candidates.append(
+                                        (program_url, _score_candidate_url(program_url) + 8 + max(0, 4 - int(program_rank)))
                                     )
-                                ):
+                                    continue
+                                for viewer_rank, viewer_url in enumerate(viewer_urls):
+                                    if viewer_url not in candidate_urls:
+                                        candidate_urls.append(viewer_url)
                                     seed_expansion_candidates.append(
                                         (viewer_url, _score_candidate_url(viewer_url) + 12 + max(0, 6 - int(viewer_rank)))
                                     )
+                                    source_breakdown["wyoming_ajax_bootstrap"] = int(
+                                        source_breakdown.get("wyoming_ajax_bootstrap", 0)
+                                    ) + 1
                         break
 
                     if seed_is_substantive or seed_is_relaxed:
@@ -8967,6 +9000,12 @@ async def _agentic_discover_admin_state_blocks(
                         break
                 except Exception:
                     pass
+
+        if not direct_detail_ready:
+            direct_detail_ready = _direct_detail_candidate_backlog_is_ready(
+                candidate_urls,
+                max_fetch=max_fetch_per_state,
+            )
 
         if not preseed_signal:
             remaining_budget_s = max(0.0, presearch_budget_deadline - time.monotonic())
@@ -9307,33 +9346,46 @@ async def _agentic_discover_admin_state_blocks(
                 california_method_value = getattr(california_scraped, "method_used", None)
             await _append_document_if_rule(rule_url, california_title, california_text, california_method_value)
 
-        for rule_url in prioritized_utah_seed_rule_urls:
+        utah_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+        for batch_start in range(0, len(prioritized_utah_seed_rule_urls), utah_batch_size):
             if len(statutes) >= max_fetch:
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
-            if time.monotonic() >= preloop_budget_deadline:
-                break
-            inspected_urls += 1
-            try:
-                utah_scraped = await asyncio.wait_for(
-                    _scrape_utah_rule_detail_via_public_download(rule_url),
-                    timeout=25.0,
-                )
-            except Exception:
-                utah_scraped = None
-            if utah_scraped is None:
+
+            remaining_slots = max_fetch - len(statutes)
+            batch_rule_urls = prioritized_utah_seed_rule_urls[batch_start : batch_start + min(utah_batch_size, remaining_slots)]
+            if not batch_rule_urls:
                 continue
 
-            utah_text = str(getattr(utah_scraped, "text", "") or "").strip()
-            utah_title = str(getattr(utah_scraped, "title", "") or "").strip()
-            utah_provenance = getattr(utah_scraped, "extraction_provenance", None) or {}
-            utah_method_value = None
-            if isinstance(utah_provenance, dict):
-                utah_method_value = utah_provenance.get("method")
-            if utah_method_value is None:
-                utah_method_value = getattr(utah_scraped, "method_used", None)
-            await _append_document_if_rule(rule_url, utah_title, utah_text, utah_method_value)
+            inspected_urls += len(batch_rule_urls)
+            batch_timeout_s = max(1.0, min(25.0, per_state_budget_s - (time.monotonic() - state_start)))
+            batch_results = await asyncio.gather(
+                *[
+                    asyncio.wait_for(
+                        _scrape_utah_rule_detail_via_public_download(rule_url),
+                        timeout=batch_timeout_s,
+                    )
+                    for rule_url in batch_rule_urls
+                ],
+                return_exceptions=True,
+            )
+
+            for rule_url, utah_scraped in zip(batch_rule_urls, batch_results):
+                if isinstance(utah_scraped, Exception) or utah_scraped is None:
+                    continue
+
+                utah_text = str(getattr(utah_scraped, "text", "") or "").strip()
+                utah_title = str(getattr(utah_scraped, "title", "") or "").strip()
+                utah_provenance = getattr(utah_scraped, "extraction_provenance", None) or {}
+                utah_method_value = None
+                if isinstance(utah_provenance, dict):
+                    utah_method_value = utah_provenance.get("method")
+                if utah_method_value is None:
+                    utah_method_value = getattr(utah_scraped, "method_used", None)
+                await _append_document_if_rule(rule_url, utah_title, utah_text, utah_method_value)
+                if len(statutes) >= max_fetch:
+                    break
 
         ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
         if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
@@ -10154,6 +10206,12 @@ async def _agentic_discover_admin_state_blocks(
             seed_expansion_candidates=seed_expansion_candidates,
             max_candidates=max_candidates,
         )
+        if state_code == "MT" and montana_bootstrap_document_urls:
+            pending = [
+                item
+                for item in pending
+                if not _is_montana_inventory_candidate_url(item[0])
+            ]
         seen_urls = set(direct_doc_urls)
         pending_candidate_keys: set[str] = {
             _url_key(candidate_url)
@@ -10174,6 +10232,8 @@ async def _agentic_discover_admin_state_blocks(
         def _enqueue_pending_candidate(candidate_url: str, candidate_score: int) -> bool:
             candidate_key = _url_key(candidate_url)
             if not candidate_key or candidate_key in seen_urls or candidate_key in pending_candidate_keys:
+                return False
+            if state_code == "MT" and montana_bootstrap_document_urls and _is_montana_inventory_candidate_url(candidate_url):
                 return False
             pending.append((candidate_url, int(candidate_score)))
             pending_candidate_keys.add(candidate_key)
