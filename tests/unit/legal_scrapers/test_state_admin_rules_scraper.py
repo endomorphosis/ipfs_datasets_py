@@ -4161,15 +4161,7 @@ async def test_agentic_discovery_bootstraps_alaska_print_rule_urls_before_search
             self.cfg = cfg
 
         async def scrape(self, url: str):
-            assert url == rule_url
-            return SimpleNamespace(
-                text=("Alaska Administrative Code\n1 AAC 05.010\n" * 8).strip(),
-                title="1 AAC 05.010",
-                html="<html><body>Alaska Administrative Code</body></html>",
-                links=[],
-                method_used="requests_only",
-                extraction_provenance={"method": "requests_only"},
-            )
+            raise AssertionError("generic live scrape should not run when Alaska bootstrap succeeds")
 
         async def scrape_domain(self, url: str, max_pages: int = 0):
             raise AssertionError("scrape_domain should not run when Alaska bootstrap succeeds")
@@ -4183,6 +4175,21 @@ async def test_agentic_discovery_bootstraps_alaska_print_rule_urls_before_search
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
     monkeypatch.setattr(scraper_module, "_discover_alaska_rule_document_urls", _fake_discover_alaska_rule_document_urls)
+    monkeypatch.setattr(
+        scraper_module,
+        "_scrape_alaska_rule_detail_via_print_view",
+        lambda url: asyncio.sleep(
+            0,
+            result=SimpleNamespace(
+                text=("Alaska Administrative Code\n1 AAC 05.010\n" * 8).strip(),
+                title="1 AAC 05.010",
+                html="<html><body>Alaska Administrative Code</body></html>",
+                links=[],
+                method_used="alaska_print_view",
+                extraction_provenance={"method": "alaska_print_view"},
+            ),
+        ),
+    )
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
@@ -4410,6 +4417,43 @@ async def test_discover_alaska_rule_document_urls_expands_toc_to_print_section_u
         "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.010&secEnd=1.05.010",
         "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.020&secEnd=1.05.020",
     ]
+
+
+@pytest.mark.asyncio
+async def test_scrape_alaska_rule_detail_via_print_view_uses_print_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    observed: list[str] = []
+
+    def fake_get(url: str, timeout: int = 0, headers: dict[str, str] | None = None):
+        observed.append(url)
+        return FakeResponse(
+            '<div class="statute"><p><b><a name="1.05.010"></a>'
+            ' <a onclick="checkLink(\'1.05.010\')" href="aac.asp#1.05.010"><b>1 AAC 05.010. Administrative code and register.</b></a>'
+            '</b> The Alaska Administrative Code is an official publication. '
+            'Authority: AS 44.62.020. History: Eff. 1/1/2024.</p></div>'
+        )
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    scraped = await scraper_module._scrape_alaska_rule_detail_via_print_view(
+        "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.010&secEnd=1.05.010"
+    )
+
+    assert observed == [
+        "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.010&secEnd=1.05.010"
+    ]
+    assert scraped is not None
+    assert scraped.method_used == "alaska_print_view"
+    assert scraped.title == "1 AAC 05.010. Administrative code and register."
+    assert "Authority: AS 44.62.020." in scraped.text
 
 
 @pytest.mark.asyncio
@@ -8195,6 +8239,110 @@ async def test_agentic_discovery_utah_bootstrap_stops_after_first_successful_pub
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
     assert api_calls == [api_seed]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_utah_prefers_seeded_rule_detail_before_public_api_bootstrap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    direct_seed = "https://adminrules.utah.gov/public/rule/R590-190/Current+Rules"
+    api_seed = "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            return SimpleNamespace(
+                document=SimpleNamespace(
+                    text="Utah rules search shell.",
+                    title="Utah Administrative Rules Search",
+                    html="",
+                    extraction_provenance={"method": "requests_only"},
+                )
+            )
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_scrape_utah_rule_detail_via_public_download(url: str):
+        if url != direct_seed:
+            return None
+        return SimpleNamespace(
+            url=url,
+            title="R590-190. Utah Rule",
+            text="R590-190. Utah administrative rule text with authority, purpose, and implementation sections.",
+            html="",
+            links=[],
+            success=True,
+            method_used="utah_public_getfile_html",
+            extraction_provenance={"method": "utah_public_getfile_html"},
+        )
+
+    def _unexpected_candidate_utah_rule_urls_from_public_api(url: str, limit: int = 24):
+        raise AssertionError(
+            f"Utah API bootstrap should not run when a curated direct-detail seed already satisfies the fetch target: {url}"
+        )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [direct_seed, api_seed])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_candidate_utah_rule_urls_from_public_api", _unexpected_candidate_utah_rule_urls_from_public_api)
+    monkeypatch.setattr(scraper_module, "_scrape_utah_rule_detail_via_public_download", _fake_scrape_utah_rule_detail_via_public_download)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == direct_seed)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["UT"],
+        max_candidates_per_state=8,
+        max_fetch_per_state=1,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == direct_seed
+    assert result["report"]["UT"]["source_breakdown"]["utah_direct_seed"] == 1
+    assert result["report"]["UT"]["inspected_urls"] == 1
 
 
 @pytest.mark.anyio

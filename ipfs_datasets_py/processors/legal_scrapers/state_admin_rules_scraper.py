@@ -404,7 +404,7 @@ _UT_NON_RULE_NEWS_TEXT_RE = re.compile(
 )
 
 _UT_RULE_DETAIL_PATH_RE = re.compile(
-    r"^/(?:public/rule/[^/]+/Current%20Rules|api/public/getHTML/[^?#]+)",
+    r"^/(?:public/rule/[^/]+/Current(?:%20|\+)Rules|api/public/getHTML/[^?#]+)",
     re.IGNORECASE,
 )
 
@@ -3678,7 +3678,7 @@ def _utah_rule_type_from_url(url: str) -> str:
     match = re.search(r"/public/rule/[^/]+/([^/?#]+)", path, re.IGNORECASE)
     if not match:
         return "Current Rules"
-    value = str(match.group(1) or "").replace("%20", " ").strip()
+    value = str(match.group(1) or "").replace("%20", " ").replace("+", " ").strip()
     return value or "Current Rules"
 
 
@@ -5282,6 +5282,86 @@ async def _discover_alaska_rule_document_urls(*, seed_urls: List[str], limit: in
                             return results
 
         return results
+
+    return await asyncio.to_thread(_run)
+
+
+def _alaska_rule_section_reference_from_url(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
+
+    if host == "akrules.elaws.us" and _AK_AAC_SECTION_PATH_RE.fullmatch(path):
+        return path.strip("/").split("/")[-1]
+
+    if host == "www.akleg.gov" and path.lower() == "/basis/aac.asp":
+        query_params = parse_qs(parsed.query or "")
+        media = str((query_params.get("media") or [""])[0]).strip().lower()
+        sec_start = str((query_params.get("secStart") or [""])[0]).strip()
+        sec_end = str((query_params.get("secEnd") or [""])[0]).strip()
+        if media == "print" and sec_start == sec_end and _AK_AAC_SECTION_PATH_RE.fullmatch(f"/aac/{sec_start}"):
+            return sec_start
+
+    return ""
+
+
+def _alaska_rule_print_view_url(section_reference: str) -> str:
+    normalized_reference = str(section_reference or "").strip()
+    return "https://www.akleg.gov/basis/aac.asp?" + urlencode(
+        {"media": "print", "secStart": normalized_reference, "secEnd": normalized_reference}
+    )
+
+
+async def _scrape_alaska_rule_detail_via_print_view(url: str) -> Optional[Any]:
+    section_reference = _alaska_rule_section_reference_from_url(url)
+    if not section_reference:
+        return None
+
+    def _run() -> Optional[Any]:
+        fetch_url = _alaska_rule_print_view_url(section_reference)
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Referer": "https://www.akleg.gov/basis/aac.asp",
+        }
+        try:
+            response = requests.get(fetch_url, timeout=25, headers=headers)
+            response.raise_for_status()
+            html = str(response.text or "").strip()
+        except Exception:
+            return None
+
+        if not html:
+            return None
+
+        text = _extract_text_from_downloaded_html_document(html)
+        if not text:
+            text = BeautifulSoup(html, "html.parser").get_text("\n", strip=True)
+        if not text:
+            return None
+
+        soup = BeautifulSoup(html, "html.parser")
+        title = ""
+        section_anchor = soup.find("a", attrs={"name": section_reference})
+        if section_anchor is not None:
+            next_link = section_anchor.find_next("a")
+            if next_link is not None:
+                title = re.sub(r"\s+", " ", next_link.get_text(" ", strip=True)).strip()
+
+        if not title:
+            reference_parts = section_reference.split(".")
+            title = f"{reference_parts[0]} AAC {'.'.join(reference_parts[1:])}" if len(reference_parts) >= 3 else section_reference
+
+        return SimpleNamespace(
+            url=url,
+            title=title,
+            text=text,
+            html=html,
+            links=[],
+            success=True,
+            method_used="alaska_print_view",
+            extraction_provenance={"method": "alaska_print_view", "fetch_url": fetch_url},
+        )
 
     return await asyncio.to_thread(_run)
 
@@ -8556,7 +8636,23 @@ async def _agentic_discover_admin_state_blocks(
         # Seed them immediately so bounded runs can hit substantive rule pages
         # without waiting for slower search/index fetches to expand first.
         if state_code == "UT":
-            utah_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 8))
+            seen_utah_bootstrap_rule_keys: set[str] = set()
+            utah_direct_seed_limit = min(max(1, int(max_fetch_per_state)), 4)
+            for seed_url in ordered_seed_urls:
+                if not _is_immediate_direct_detail_candidate_url(seed_url):
+                    continue
+                seed_key = _url_key(seed_url)
+                if not seed_key or seed_key in seen_utah_bootstrap_rule_keys:
+                    continue
+                seen_utah_bootstrap_rule_keys.add(seed_key)
+                candidate_urls.append(seed_url)
+                utah_api_rule_urls.append(seed_url)
+                source_breakdown["utah_direct_seed"] = int(source_breakdown.get("utah_direct_seed", 0)) + 1
+                if len(utah_api_rule_urls) >= utah_direct_seed_limit:
+                    break
+
+            utah_bootstrap_target = min(max(1, int(max_fetch_per_state)), 4)
+            utah_seed_limit = max(0, utah_bootstrap_target - len(utah_api_rule_urls))
             utah_bootstrap_seeds = sorted(
                 ordered_seed_urls[:6],
                 key=lambda value: (
@@ -8567,6 +8663,8 @@ async def _agentic_discover_admin_state_blocks(
                 reverse=True,
             )
             for seed_url in utah_bootstrap_seeds:
+                if utah_seed_limit <= 0:
+                    break
                 parsed_seed = urlparse(seed_url)
                 if parsed_seed.netloc.lower() != "adminrules.utah.gov":
                     continue
@@ -8579,9 +8677,16 @@ async def _agentic_discover_admin_state_blocks(
                     url=seed_url,
                     limit=utah_seed_limit,
                 ):
+                    rule_key = _url_key(rule_url)
+                    if not rule_key or rule_key in seen_utah_bootstrap_rule_keys:
+                        continue
+                    seen_utah_bootstrap_rule_keys.add(rule_key)
                     candidate_urls.append(rule_url)
                     utah_api_rule_urls.append(rule_url)
                     source_breakdown["utah_public_api"] = int(source_breakdown.get("utah_public_api", 0)) + 1
+                    utah_seed_limit = max(0, utah_seed_limit - 1)
+                    if utah_seed_limit <= 0:
+                        break
                 if utah_api_rule_urls:
                     break
 
@@ -9448,6 +9553,11 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_south_dakota_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
+                elif state_code == "AK":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_alaska_rule_detail_via_print_view(fetch_document_url),
+                        timeout=direct_timeout_s,
+                    )
                 elif state_code == "OK":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_oklahoma_rule_detail_via_api(fetch_document_url),
@@ -9740,8 +9850,8 @@ async def _agentic_discover_admin_state_blocks(
             inspected_urls += 1
             try:
                 alaska_scraped = await asyncio.wait_for(
-                    live_scraper.scrape(rule_url),
-                    timeout=25.0,
+                    _scrape_alaska_rule_detail_via_print_view(rule_url),
+                    timeout=20.0,
                 )
             except Exception:
                 alaska_scraped = None
