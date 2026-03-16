@@ -4534,6 +4534,113 @@ def _south_dakota_rule_reference_from_url(url: str) -> str:
     return ""
 
 
+async def _discover_south_dakota_rule_document_urls(*, limit: int = 8) -> List[str]:
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        request_headers = {
+            "Accept": "application/json",
+            "Referer": "https://sdlegislature.gov/Rules/Administrative",
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+            ),
+        }
+
+        def _extract_child_rule_urls(html_text: str) -> List[str]:
+            extracted: List[str] = []
+            local_seen: set[str] = set()
+            for rule_reference in re.findall(
+                r"(?:DisplayRule\.aspx\?Rule=|/Rules/Administrative/)(\d{2}:\d{2}(?::\d{2}){1,3})",
+                html_text or "",
+                re.IGNORECASE,
+            ):
+                normalized_reference = str(rule_reference or "").strip()
+                if not _SD_RULE_REFERENCE_RE.fullmatch(normalized_reference):
+                    continue
+                rule_url = (
+                    "https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx"
+                    f"?Rule={normalized_reference}"
+                )
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in local_seen:
+                    continue
+                local_seen.add(rule_key)
+                extracted.append(rule_url)
+            return extracted
+
+        try:
+            response = requests.get(
+                "https://sdlegislature.gov/api/Rules",
+                timeout=25,
+                headers=request_headers,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except Exception:
+            return []
+        if not isinstance(payload, list):
+            return []
+
+        direct_rule_urls: List[str] = []
+        container_rule_refs: List[str] = []
+        seen: set[str] = set()
+        excluded_statuses = {"repealed", "reserved", "transferred"}
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            rule_number = str(item.get("RuleNumber") or "").strip()
+            if not _SD_RULE_REFERENCE_RE.fullmatch(rule_number):
+                continue
+            status_value = str(item.get("Status") or "").strip().lower()
+            catchline = str(item.get("Catchline") or "").strip()
+            if status_value in excluded_statuses:
+                continue
+            if catchline.upper() == "RESERVED":
+                continue
+            rule_url = f"https://sdlegislature.gov/Rules/Administrative/{rule_number}"
+            rule_key = _url_key(rule_url)
+            if not rule_key or rule_key in seen:
+                continue
+            seen.add(rule_key)
+            if rule_number.count(":") >= 2:
+                direct_rule_urls.append(rule_url)
+            else:
+                container_rule_refs.append(rule_number)
+
+        results: List[str] = direct_rule_urls[:limit_n]
+        result_keys = {_url_key(url) for url in results}
+        if len(results) >= limit_n:
+            return results
+
+        for container_rule_ref in container_rule_refs:
+            try:
+                container_response = requests.get(
+                    f"https://sdlegislature.gov/api/Rules/{container_rule_ref}",
+                    timeout=25,
+                    headers=request_headers,
+                )
+                container_response.raise_for_status()
+                container_payload = container_response.json()
+            except Exception:
+                continue
+            if not isinstance(container_payload, dict):
+                continue
+            child_rule_urls = _extract_child_rule_urls(str(container_payload.get("Html") or ""))
+            for child_rule_url in child_rule_urls:
+                child_rule_key = _url_key(child_rule_url)
+                if not child_rule_key or child_rule_key in result_keys:
+                    continue
+                result_keys.add(child_rule_key)
+                results.append(child_rule_url)
+                if len(results) >= limit_n:
+                    return results
+
+        return results
+
+    return await asyncio.to_thread(_run)
+
+
 def _alabama_public_code_number_from_url(url: str) -> str:
     parsed = urlparse(str(url or "").strip())
     if parsed.netloc.lower() != "admincode.legislature.state.al.us":
@@ -8433,8 +8540,101 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["oklahoma_rules_api_bootstrap"] = len(oklahoma_bootstrap_document_urls)
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
+        alabama_bootstrap_document_urls: List[str] = []
+        michigan_bootstrap_document_urls: List[str] = []
+        alaska_bootstrap_document_urls: List[str] = []
+        south_dakota_bootstrap_document_urls: List[str] = []
+        montana_bootstrap_document_urls: List[str] = []
         california_bootstrap_document_urls: List[str] = []
         new_hampshire_bootstrap_document_urls: List[str] = []
+        if state_code == "AL" and not seeded_direct_detail_urls:
+            try:
+                alabama_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_alabama_rule_document_urls(limit=min(max_fetch_per_state * 3, 12)),
+                    timeout=25.0,
+                )
+            except Exception:
+                alabama_bootstrap_document_urls = []
+            for document_url in alabama_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if alabama_bootstrap_document_urls:
+                source_breakdown["alabama_public_code_bootstrap"] = len(alabama_bootstrap_document_urls)
+
+        if state_code == "MI" and not seeded_direct_detail_urls:
+            try:
+                michigan_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_michigan_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max_fetch_per_state * 4, 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                michigan_bootstrap_document_urls = []
+            for document_url in michigan_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if michigan_bootstrap_document_urls:
+                source_breakdown["michigan_admincode_bootstrap"] = len(michigan_bootstrap_document_urls)
+
+        if state_code == "AK" and not seeded_direct_detail_urls:
+            try:
+                alaska_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_alaska_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max_fetch_per_state * 4, 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                alaska_bootstrap_document_urls = []
+            for document_url in alaska_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if alaska_bootstrap_document_urls:
+                source_breakdown["alaska_print_view_bootstrap"] = len(alaska_bootstrap_document_urls)
+
+        if state_code == "SD":
+            try:
+                south_dakota_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_south_dakota_rule_document_urls(limit=min(max(max_fetch_per_state * 4, 8), 16)),
+                    timeout=25.0,
+                )
+            except Exception:
+                south_dakota_bootstrap_document_urls = []
+            for document_url in south_dakota_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if south_dakota_bootstrap_document_urls:
+                source_breakdown["south_dakota_rules_api_bootstrap"] = len(south_dakota_bootstrap_document_urls)
+
+        if state_code == "MT" and not seeded_direct_detail_urls:
+            montana_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 12))
+            seen_montana_document_keys: set[str] = set()
+            for seed_url in ordered_seed_urls[:8]:
+                if not _montana_collection_uuid_from_url(seed_url):
+                    continue
+                try:
+                    montana_document_urls = await asyncio.wait_for(
+                        _discover_montana_rule_document_urls(
+                            seed_url,
+                            limit=max(1, montana_seed_limit - len(montana_bootstrap_document_urls)),
+                        ),
+                        timeout=20.0,
+                    )
+                except Exception:
+                    montana_document_urls = []
+                for document_url in montana_document_urls:
+                    document_key = _url_key(document_url)
+                    if not document_key or document_key in seen_montana_document_keys:
+                        continue
+                    seen_montana_document_keys.add(document_key)
+                    montana_bootstrap_document_urls.append(document_url)
+                    candidate_urls.append(document_url)
+                    if len(montana_bootstrap_document_urls) >= montana_seed_limit:
+                        break
+                if len(montana_bootstrap_document_urls) >= montana_seed_limit:
+                    break
+            if montana_bootstrap_document_urls:
+                source_breakdown["montana_public_api_bootstrap"] = len(montana_bootstrap_document_urls)
+
         if state_code == "CA" and not seeded_direct_detail_urls:
             california_bootstrap_document_urls = await _discover_california_westlaw_document_urls(
                 seed_urls=ordered_seed_urls,
@@ -8472,11 +8672,16 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["new_hampshire_archive_bootstrap"] = len(new_hampshire_bootstrap_document_urls)
 
         direct_detail_ready = bool(
-            utah_api_rule_urls
+            alabama_bootstrap_document_urls
+            or michigan_bootstrap_document_urls
+            or alaska_bootstrap_document_urls
+            or south_dakota_bootstrap_document_urls
+            or utah_api_rule_urls
             or arkansas_bootstrap_document_urls
             or texas_bootstrap_document_urls
             or oklahoma_bootstrap_document_urls
             or seeded_direct_detail_urls
+            or montana_bootstrap_document_urls
             or california_bootstrap_document_urls
             or new_hampshire_bootstrap_document_urls
         ) or _direct_detail_candidate_backlog_is_ready(
@@ -9121,6 +9326,7 @@ async def _agentic_discover_admin_state_blocks(
                     seed_expansion_candidates.append((link_url, link_score + 3))
 
         prioritized_alabama_seed_rule_urls: List[str] = []
+        prioritized_south_dakota_seed_rule_urls: List[str] = []
         prioritized_indiana_seed_rule_urls: List[str] = []
         if state_code == "IN":
             try:
@@ -9147,17 +9353,26 @@ async def _agentic_discover_admin_state_blocks(
             if prioritized_indiana_seed_rule_urls:
                 source_breakdown["indiana_api_bootstrap"] = len(prioritized_indiana_seed_rule_urls)
 
+        if state_code == "SD":
+            seen_south_dakota_rule_keys: set[str] = set()
+            for rule_url in south_dakota_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_south_dakota_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_south_dakota_rule_keys.add(rule_key)
+                prioritized_south_dakota_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_south_dakota_seed_rule_urls) >= min(max_fetch * 2, 12):
+                    break
+
         prioritized_alabama_seed_rule_urls: List[str] = []
         if state_code == "AL":
-            try:
-                alabama_api_rule_urls = await asyncio.wait_for(
-                    _discover_alabama_rule_document_urls(limit=min(max_fetch * 3, 12)),
-                    timeout=25.0,
-                )
-            except Exception:
-                alabama_api_rule_urls = []
             seen_alabama_rule_keys: set[str] = set()
-            for rule_url in alabama_api_rule_urls:
+            for rule_url in alabama_bootstrap_document_urls:
                 rule_key = _url_key(rule_url)
                 if not rule_key or rule_key in seen_alabama_rule_keys:
                     continue
@@ -9171,20 +9386,36 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_alabama_seed_rule_urls) >= min(max_fetch, 8):
                     break
 
-        prioritized_michigan_seed_rule_urls: List[str] = []
-        if state_code == "MI":
+        for rule_url in prioritized_south_dakota_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            inspected_urls += 1
             try:
-                michigan_rule_urls = await asyncio.wait_for(
-                    _discover_michigan_rule_document_urls(
-                        seed_urls=ordered_seed_urls[:6],
-                        limit=min(max_fetch * 4, 16),
-                    ),
-                    timeout=25.0,
+                south_dakota_scraped = await asyncio.wait_for(
+                    _scrape_south_dakota_rule_detail_via_api(rule_url),
+                    timeout=15.0,
                 )
             except Exception:
-                michigan_rule_urls = []
+                south_dakota_scraped = None
+            if south_dakota_scraped is None:
+                continue
+
+            south_dakota_text = str(getattr(south_dakota_scraped, "text", "") or "").strip()
+            south_dakota_title = str(getattr(south_dakota_scraped, "title", "") or "").strip()
+            south_dakota_provenance = getattr(south_dakota_scraped, "extraction_provenance", None) or {}
+            south_dakota_method_value = None
+            if isinstance(south_dakota_provenance, dict):
+                south_dakota_method_value = south_dakota_provenance.get("method")
+            if south_dakota_method_value is None:
+                south_dakota_method_value = getattr(south_dakota_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, south_dakota_title, south_dakota_text, south_dakota_method_value)
+
+        prioritized_michigan_seed_rule_urls: List[str] = []
+        if state_code == "MI":
             seen_michigan_rule_keys: set[str] = set()
-            for rule_url in michigan_rule_urls:
+            for rule_url in michigan_bootstrap_document_urls:
                 rule_key = _url_key(rule_url)
                 if not rule_key or rule_key in seen_michigan_rule_keys:
                     continue
@@ -9200,18 +9431,8 @@ async def _agentic_discover_admin_state_blocks(
 
         prioritized_alaska_seed_rule_urls: List[str] = []
         if state_code == "AK":
-            try:
-                alaska_rule_urls = await asyncio.wait_for(
-                    _discover_alaska_rule_document_urls(
-                        seed_urls=ordered_seed_urls[:6],
-                        limit=min(max_fetch * 4, 16),
-                    ),
-                    timeout=25.0,
-                )
-            except Exception:
-                alaska_rule_urls = []
             seen_alaska_rule_keys: set[str] = set()
-            for rule_url in alaska_rule_urls:
+            for rule_url in alaska_bootstrap_document_urls:
                 rule_key = _url_key(rule_url)
                 if not rule_key or rule_key in seen_alaska_rule_keys:
                     continue
@@ -9402,6 +9623,8 @@ async def _agentic_discover_admin_state_blocks(
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
+            if _url_key(document_url) in direct_doc_urls:
+                continue
             if time.monotonic() >= preloop_budget_deadline:
                 break
             remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
@@ -9716,7 +9939,11 @@ async def _agentic_discover_admin_state_blocks(
         # Montana's `rules.mt.gov` host is often easier to traverse from Common Crawl
         # than from repeated origin fetches. Supplement the candidate pool with an
         # archive-first domain scrape before the bounded live crawl loop runs.
-        if state_code == "MT" and len(statutes) < min(max(1, int(max_fetch_per_state)), 12):
+        if (
+            state_code == "MT"
+            and not montana_bootstrap_document_urls
+            and len(statutes) < min(max(1, int(max_fetch_per_state)), 12)
+        ):
             try:
                 cc_domain_results = await asyncio.wait_for(
                     scraper.scrape_domain(
