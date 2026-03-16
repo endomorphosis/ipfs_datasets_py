@@ -3782,6 +3782,41 @@ def _montana_field_lines(fields: Any) -> List[str]:
     return out
 
 
+def _montana_name_looks_repealed(value: Any) -> bool:
+    text = str(value or "").strip().lower()
+    return "repealed" in text or "revoked" in text
+
+
+def _ordered_montana_child_sections(children: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return sorted(
+        children,
+        key=lambda child: (
+            _montana_name_looks_repealed(child.get("name")),
+            str(child.get("sectionId") or ""),
+            str(child.get("name") or ""),
+        ),
+    )
+
+
+def _ordered_montana_child_policies(policies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _policy_key(policy: Dict[str, Any]) -> tuple[Any, ...]:
+        effective_status = str(policy.get("effectiveStatus") or "").strip().upper()
+        substatuses = {
+            str(value or "").strip().upper()
+            for value in (policy.get("substatuses") or [])
+            if str(value or "").strip()
+        }
+        has_bad_substatus = bool(substatuses & {"REVOKED", "REPEALED", "TRANSFERRED", "SUPERSEDED", "EXPIRED"})
+        return (
+            effective_status != "EFFECTIVE",
+            has_bad_substatus,
+            _montana_name_looks_repealed(policy.get("name")),
+            str(policy.get("sectionId") or policy.get("name") or ""),
+        )
+
+    return sorted(policies, key=_policy_key)
+
+
 async def _discover_montana_rule_document_urls(url: str, *, limit: int = 8) -> List[str]:
     url_value = str(url or "").strip()
     collection_uuid = _montana_collection_uuid_from_url(url_value)
@@ -3824,16 +3859,20 @@ async def _discover_montana_rule_document_urls(url: str, *, limit: int = 8) -> L
                 continue
             if not isinstance(payload, dict):
                 continue
-            child_sections = [
-                child
-                for child in (payload.get("childSections") or [])
-                if isinstance(child, dict)
-            ]
-            child_policies = [
-                policy
-                for policy in (payload.get("childPolicies") or [])
-                if isinstance(policy, dict)
-            ]
+            child_sections = _ordered_montana_child_sections(
+                [
+                    child
+                    for child in (payload.get("childSections") or [])
+                    if isinstance(child, dict)
+                ]
+            )
+            child_policies = _ordered_montana_child_policies(
+                [
+                    policy
+                    for policy in (payload.get("childPolicies") or [])
+                    if isinstance(policy, dict)
+                ]
+            )
             if current_section is None and child_sections:
                 for child in child_sections:
                     child_uuid = str(child.get("uuid") or "").strip()
