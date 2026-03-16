@@ -7810,6 +7810,71 @@ def _candidate_wyoming_rule_urls_from_html(*, html: str, page_url: str = "", lim
     return out
 
 
+async def _discover_wyoming_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        url
+        for url in seed_urls
+        if urlparse(str(url or "").strip()).netloc.lower() == "rules.wyo.gov"
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit or 1))
+
+    def _run() -> List[str]:
+        session = requests.Session()
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        discovered_urls: List[str] = []
+        seen_keys: set[str] = set()
+        seen_program_keys: set[str] = set()
+
+        def _record(candidate_url: str) -> bool:
+            candidate_key = _url_key(candidate_url)
+            if not candidate_key or candidate_key in seen_keys:
+                return False
+            seen_keys.add(candidate_key)
+            discovered_urls.append(candidate_url)
+            return len(discovered_urls) >= limit_n
+
+        for seed_url in relevant_seed_urls[:6]:
+            try:
+                seed_response = session.get(seed_url, timeout=25, headers=headers)
+                seed_response.raise_for_status()
+            except Exception:
+                continue
+
+            program_urls = _candidate_wyoming_rule_urls_from_html(
+                html=seed_response.text,
+                page_url=seed_url,
+                limit=max(12, limit_n * 4),
+            )
+            for program_url in program_urls:
+                program_key = _url_key(program_url)
+                if not program_key or program_key in seen_program_keys:
+                    continue
+                seen_program_keys.add(program_key)
+                try:
+                    program_response = session.get(program_url, timeout=25, headers=headers)
+                    program_response.raise_for_status()
+                except Exception:
+                    continue
+                viewer_urls = _candidate_wyoming_rule_urls_from_html(
+                    html=program_response.text,
+                    page_url=program_url,
+                    limit=max(12, limit_n * 4),
+                )
+                for viewer_url in viewer_urls:
+                    if _record(viewer_url):
+                        return discovered_urls
+
+        return discovered_urls
+
+    return await asyncio.to_thread(_run)
+
+
 def _candidate_links_from_html(
     html: str,
     base_host: str,
@@ -8543,6 +8608,7 @@ async def _agentic_discover_admin_state_blocks(
         alabama_bootstrap_document_urls: List[str] = []
         michigan_bootstrap_document_urls: List[str] = []
         alaska_bootstrap_document_urls: List[str] = []
+        wyoming_bootstrap_document_urls: List[str] = []
         south_dakota_bootstrap_document_urls: List[str] = []
         montana_bootstrap_document_urls: List[str] = []
         california_bootstrap_document_urls: List[str] = []
@@ -8591,6 +8657,22 @@ async def _agentic_discover_admin_state_blocks(
                 candidate_urls.append(document_url)
             if alaska_bootstrap_document_urls:
                 source_breakdown["alaska_print_view_bootstrap"] = len(alaska_bootstrap_document_urls)
+
+        if state_code == "WY" and not seeded_direct_detail_urls:
+            try:
+                wyoming_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_wyoming_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max_fetch_per_state * 4, 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                wyoming_bootstrap_document_urls = []
+            for document_url in wyoming_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if wyoming_bootstrap_document_urls:
+                source_breakdown["wyoming_ajax_bootstrap"] = len(wyoming_bootstrap_document_urls)
 
         if state_code == "SD":
             try:
@@ -8675,6 +8757,7 @@ async def _agentic_discover_admin_state_blocks(
             alabama_bootstrap_document_urls
             or michigan_bootstrap_document_urls
             or alaska_bootstrap_document_urls
+            or wyoming_bootstrap_document_urls
             or south_dakota_bootstrap_document_urls
             or utah_api_rule_urls
             or arkansas_bootstrap_document_urls
@@ -8783,7 +8866,11 @@ async def _agentic_discover_admin_state_blocks(
                                 seed_expansion_candidates.append(
                                     (rule_url, _score_candidate_url(rule_url) + 4 + max(0, 4 - int(rule_rank)))
                                 )
-                        if state_code == "WY" and urlparse(seed_url).netloc.lower() == "rules.wyo.gov":
+                        if (
+                            state_code == "WY"
+                            and not wyoming_bootstrap_document_urls
+                            and urlparse(seed_url).netloc.lower() == "rules.wyo.gov"
+                        ):
                             wy_program_urls = _candidate_wyoming_rule_urls_from_html(
                                 html=fetched_html,
                                 page_url=seed_url,

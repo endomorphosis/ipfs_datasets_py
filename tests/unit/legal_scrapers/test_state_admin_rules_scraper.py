@@ -1523,6 +1523,53 @@ async def test_discover_arkansas_rule_document_urls_expands_title_tree_to_sectio
     ]
 
 
+@pytest.mark.asyncio
+async def test_discover_wyoming_rule_document_urls_expands_seed_inventory_to_viewer_urls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://rules.wyo.gov/Search.aspx?mode=7"
+    program_url = "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7"
+
+    class FakeResponse:
+        def __init__(self, *, text: str = "") -> None:
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeSession:
+        def get(self, url, timeout=0, headers=None):
+            if url == seed_url:
+                return FakeResponse(
+                    text=(
+                        "<span class='program_id hidden'>347</span>"
+                        "<span class='program_id hidden'>11</span>"
+                    )
+                )
+            if url == program_url:
+                return FakeResponse(
+                    text=(
+                        '<a href="#" class="search-rule-link" data-whatever="16225">Chapter 1</a>'
+                        '<a href="#" class="search-rule-link" data-whatever="24261">Chapter 2</a>'
+                    )
+                )
+            if url == "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=11&MODE=7":
+                return FakeResponse(text="<div>No rules</div>")
+            raise AssertionError(url)
+
+    monkeypatch.setattr(scraper_module.requests, "Session", lambda: FakeSession())
+
+    discovered = await scraper_module._discover_wyoming_rule_document_urls(
+        seed_urls=[seed_url],
+        limit=4,
+    )
+
+    assert discovered == [
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225",
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=24261",
+    ]
+
+
 def test_rejects_wyoming_empty_search_page_as_substantive_rule_text() -> None:
     text = (
         "HOME | ABOUT | HELP | CONTACT | QUICKLINKS | SUBSCRIBE | STATE LOGIN "
@@ -8303,11 +8350,10 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
     program_url = "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7"
     viewer_url_1 = "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225"
     viewer_url_2 = "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=24261"
+    archive_calls = 0
+    unified_search_calls = 0
+    agentic_calls = 0
 
-    search_text = (
-        "Administrative Rules (Code) Agency Accountants Program Accountants Result(s) "
-        "Agency Administration Program Human Resources Result(s)"
-    )
     search_html = (
         "<span class='program_id hidden'>347</span>"
         "<span class='program_id hidden'>11</span>"
@@ -8340,6 +8386,8 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
             pass
 
         async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_calls
+            archive_calls += 1
             return {"results": []}
 
     class _FakeUnifiedWebArchivingAPI:
@@ -8347,47 +8395,43 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
             self.scraper = scraper
 
         def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
             return SimpleNamespace(results=[])
 
         def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_calls
+            agentic_calls += 1
             return {"results": []}
 
         def fetch(self, request):
-            assert request.url == seed_url
-            document = SimpleNamespace(
-                text=search_text,
-                title="Administrative Rules (Code)",
-                html=search_html,
-                extraction_provenance={"method": "playwright"},
-            )
-            return SimpleNamespace(document=document)
+            raise AssertionError("unified fetch should not run when Wyoming bootstrap succeeds")
 
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
             self.cfg = cfg
 
         async def scrape(self, url: str):
-            if url == seed_url:
-                return SimpleNamespace(
-                    text=search_text,
-                    title="Administrative Rules (Code)",
-                    html=search_html,
-                    links=[],
-                )
             return SimpleNamespace(text="", title="", html="", links=[])
 
+    class FakeResponse:
+        def __init__(self, *, text: str = "") -> None:
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeSession:
+        def get(self, url, timeout=0, headers=None):
+            if url == seed_url:
+                return FakeResponse(text=search_html)
+            if url == program_url:
+                return FakeResponse(text=program_html)
+            if url == "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=11&MODE=7":
+                return FakeResponse(text="<div>No rules</div>")
+            raise AssertionError(url)
+
     async def _fake_scrape_wyoming_rule_detail_via_ajax(url: str):
-        if url == program_url:
-            return SimpleNamespace(
-                url=url,
-                title="Wyoming Administrative Rules Program 347",
-                text="Chapter 1: General Provisions Reference Number 061.0001.1.10282019 Chapter 2: Examination Reference Number 061.0001.2.08082024",
-                html=program_html,
-                links=[],
-                success=True,
-                method_used="wyoming_rules_ajax_program",
-                extraction_provenance={"method": "wyoming_rules_ajax_program"},
-            )
         if url == viewer_url_1:
             return SimpleNamespace(
                 url=url,
@@ -8415,6 +8459,7 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module.requests, "Session", lambda: FakeSession())
     monkeypatch.setattr(scraper_module, "_scrape_wyoming_rule_detail_via_ajax", _fake_scrape_wyoming_rule_detail_via_ajax)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
@@ -8451,7 +8496,11 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
     assert [
         statute["source_url"] for statute in result["state_blocks"][0]["statutes"]
     ] == [viewer_url_1, viewer_url_2]
-    assert result["report"]["WY"]["expanded_urls"] == 2
+    assert result["report"]["WY"]["source_breakdown"]["wyoming_ajax_bootstrap"] == 2
+    assert result["report"]["WY"]["expanded_urls"] == 0
+    assert archive_calls == 0
+    assert unified_search_calls == 0
+    assert agentic_calls == 0
 
 
 @pytest.mark.anyio
