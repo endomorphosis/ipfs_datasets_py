@@ -8974,7 +8974,7 @@ async def _agentic_discover_admin_state_blocks(
                 michigan_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_michigan_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max(1, int(max_fetch_per_state)), 8),
+                        limit=min(max_fetch_per_state * 4, 16),
                     ),
                     timeout=25.0,
                 )
@@ -8990,7 +8990,7 @@ async def _agentic_discover_admin_state_blocks(
                 alaska_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_alaska_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max_fetch_per_state * 4, 16),
+                        limit=min(max(1, int(max_fetch_per_state)), 8),
                     ),
                     timeout=25.0,
                 )
