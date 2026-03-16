@@ -1546,18 +1546,22 @@ async def test_discover_wyoming_rule_document_urls_expands_seed_inventory_to_vie
                         "<span class='program_id hidden'>11</span>"
                     )
                 )
-            if url == program_url:
-                return FakeResponse(
-                    text=(
-                        '<a href="#" class="search-rule-link" data-whatever="16225">Chapter 1</a>'
-                        '<a href="#" class="search-rule-link" data-whatever="24261">Chapter 2</a>'
-                    )
-                )
-            if url == "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=11&MODE=7":
-                return FakeResponse(text="<div>No rules</div>")
             raise AssertionError(url)
 
+    async def _fake_scrape_wyoming_rule_detail_via_ajax(url: str):
+        if url == program_url:
+            return SimpleNamespace(
+                html=(
+                    '<a href="#" class="search-rule-link" data-whatever="16225">Chapter 1</a>'
+                    '<a href="#" class="search-rule-link" data-whatever="24261">Chapter 2</a>'
+                )
+            )
+        if url == "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=11&MODE=7":
+            return SimpleNamespace(html="<div>No rules</div>")
+        raise AssertionError(url)
+
     monkeypatch.setattr(scraper_module.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(scraper_module, "_scrape_wyoming_rule_detail_via_ajax", _fake_scrape_wyoming_rule_detail_via_ajax)
 
     discovered = await scraper_module._discover_wyoming_rule_document_urls(
         seed_urls=[seed_url],
@@ -8432,6 +8436,28 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
             raise AssertionError(url)
 
     async def _fake_scrape_wyoming_rule_detail_via_ajax(url: str):
+        if url == program_url:
+            return SimpleNamespace(
+                url=url,
+                title="Wyoming Administrative Rules Program 347",
+                text="Chapter 1: General Provisions Reference Number 061.0001.1.10282019 Chapter 2: Examination Reference Number 061.0001.2.08082024",
+                html=program_html,
+                links=[],
+                success=True,
+                method_used="wyoming_rules_ajax_program",
+                extraction_provenance={"method": "wyoming_rules_ajax_program"},
+            )
+        if url == "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=11&MODE=7":
+            return SimpleNamespace(
+                url=url,
+                title="Wyoming Administrative Rules Program 11",
+                text="No rules.",
+                html="<div>No rules</div>",
+                links=[],
+                success=True,
+                method_used="wyoming_rules_ajax_program",
+                extraction_provenance={"method": "wyoming_rules_ajax_program"},
+            )
         if url == viewer_url_1:
             return SimpleNamespace(
                 url=url,

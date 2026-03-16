@@ -7820,59 +7820,59 @@ async def _discover_wyoming_rule_document_urls(*, seed_urls: List[str], limit: i
         return []
 
     limit_n = max(1, int(limit or 1))
+    session = requests.Session()
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+    discovered_urls: List[str] = []
+    seen_keys: set[str] = set()
+    seen_program_keys: set[str] = set()
 
-    def _run() -> List[str]:
-        session = requests.Session()
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        }
-        discovered_urls: List[str] = []
-        seen_keys: set[str] = set()
-        seen_program_keys: set[str] = set()
+    def _record(candidate_url: str) -> bool:
+        candidate_key = _url_key(candidate_url)
+        if not candidate_key or candidate_key in seen_keys:
+            return False
+        seen_keys.add(candidate_key)
+        discovered_urls.append(candidate_url)
+        return len(discovered_urls) >= limit_n
 
-        def _record(candidate_url: str) -> bool:
-            candidate_key = _url_key(candidate_url)
-            if not candidate_key or candidate_key in seen_keys:
-                return False
-            seen_keys.add(candidate_key)
-            discovered_urls.append(candidate_url)
-            return len(discovered_urls) >= limit_n
+    for seed_url in relevant_seed_urls[:6]:
+        try:
+            seed_response = await asyncio.to_thread(
+                session.get,
+                seed_url,
+                timeout=25,
+                headers=headers,
+            )
+            seed_response.raise_for_status()
+        except Exception:
+            continue
 
-        for seed_url in relevant_seed_urls[:6]:
-            try:
-                seed_response = session.get(seed_url, timeout=25, headers=headers)
-                seed_response.raise_for_status()
-            except Exception:
+        program_urls = _candidate_wyoming_rule_urls_from_html(
+            html=seed_response.text,
+            page_url=seed_url,
+            limit=max(12, limit_n * 4),
+        )
+        for program_url in program_urls:
+            program_key = _url_key(program_url)
+            if not program_key or program_key in seen_program_keys:
                 continue
-
-            program_urls = _candidate_wyoming_rule_urls_from_html(
-                html=seed_response.text,
-                page_url=seed_url,
+            seen_program_keys.add(program_key)
+            program_scraped = await _scrape_wyoming_rule_detail_via_ajax(program_url)
+            if program_scraped is None:
+                continue
+            program_html = str(getattr(program_scraped, "html", "") or "")
+            viewer_urls = _candidate_wyoming_rule_urls_from_html(
+                html=program_html,
+                page_url=program_url,
                 limit=max(12, limit_n * 4),
             )
-            for program_url in program_urls:
-                program_key = _url_key(program_url)
-                if not program_key or program_key in seen_program_keys:
-                    continue
-                seen_program_keys.add(program_key)
-                try:
-                    program_response = session.get(program_url, timeout=25, headers=headers)
-                    program_response.raise_for_status()
-                except Exception:
-                    continue
-                viewer_urls = _candidate_wyoming_rule_urls_from_html(
-                    html=program_response.text,
-                    page_url=program_url,
-                    limit=max(12, limit_n * 4),
-                )
-                for viewer_url in viewer_urls:
-                    if _record(viewer_url):
-                        return discovered_urls
+            for viewer_url in viewer_urls:
+                if _record(viewer_url):
+                    return discovered_urls
 
-        return discovered_urls
-
-    return await asyncio.to_thread(_run)
+    return discovered_urls
 
 
 def _candidate_links_from_html(
