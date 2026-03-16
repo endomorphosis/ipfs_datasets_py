@@ -918,6 +918,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://adminrules.utah.gov/",
         "https://adminrules.utah.gov/public/search/c/Current+Rules",
         "https://adminrules.utah.gov/public/rule/R590-190/Current+Rules",
+        "https://adminrules.utah.gov/public/rule/R51-2/Current+Rules",
+        "https://adminrules.utah.gov/public/rule/R51-3/Current+Rules",
+        "https://adminrules.utah.gov/public/rule/R51-4/Current+Rules",
         "https://rules.utah.gov/utah-administrative-code/",
         "https://rules.utah.gov/publications/administrative-rules-register/",
         "https://rules.utah.gov/publications/code-updates/",
@@ -3821,9 +3824,24 @@ async def _discover_montana_rule_document_urls(url: str, *, limit: int = 8) -> L
                 continue
             if not isinstance(payload, dict):
                 continue
-            for policy in payload.get("childPolicies") or []:
-                if not isinstance(policy, dict):
-                    continue
+            child_sections = [
+                child
+                for child in (payload.get("childSections") or [])
+                if isinstance(child, dict)
+            ]
+            child_policies = [
+                policy
+                for policy in (payload.get("childPolicies") or [])
+                if isinstance(policy, dict)
+            ]
+            if current_section is None and child_sections:
+                for child in child_sections:
+                    child_uuid = str(child.get("uuid") or "").strip()
+                    if not child_uuid or child_uuid in seen_sections:
+                        continue
+                    pending_sections.append(child_uuid)
+                continue
+            for policy in child_policies:
                 policy_uuid = str(policy.get("uuid") or "").strip()
                 if not policy_uuid or policy_uuid in seen_policies:
                     continue
@@ -3833,9 +3851,7 @@ async def _discover_montana_rule_document_urls(url: str, *, limit: int = 8) -> L
                     break
             if len(out) >= limit_n:
                 break
-            for child in payload.get("childSections") or []:
-                if not isinstance(child, dict):
-                    continue
+            for child in child_sections:
                 child_uuid = str(child.get("uuid") or "").strip()
                 if not child_uuid or child_uuid in seen_sections:
                     continue
@@ -9551,11 +9567,6 @@ async def _agentic_discover_admin_state_blocks(
                 elif state_code == "SD":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_south_dakota_rule_detail_via_api(fetch_document_url),
-                        timeout=direct_timeout_s,
-                    )
-                elif state_code == "AK":
-                    direct_scraped = await asyncio.wait_for(
-                        _scrape_alaska_rule_detail_via_print_view(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "OK":

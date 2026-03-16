@@ -3747,6 +3747,62 @@ async def test_discover_montana_rule_document_urls_expands_section_tree_via_publ
     assert calls[0].endswith("/sections/11111111-2222-3333-4444-555555555555")
 
 
+@pytest.mark.asyncio
+async def test_discover_montana_rule_document_urls_prefers_section_children_over_root_policies(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return self._payload
+
+    calls: list[str] = []
+    collection_url = "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74"
+
+    def fake_get(url: str, timeout: int = 0, headers: dict[str, str] | None = None):
+        calls.append(url)
+        if url.endswith("/collections/aec52c46-128e-4279-9068-8af5d5432d74"):
+            return FakeResponse(
+                {
+                    "childPolicies": [
+                        {"uuid": "root-policy-1111-2222-3333-444444444444"},
+                    ],
+                    "childSections": [
+                        {"uuid": "11111111-2222-3333-4444-555555555555"},
+                    ],
+                }
+            )
+        if url.endswith("/sections/11111111-2222-3333-4444-555555555555"):
+            return FakeResponse(
+                {
+                    "childPolicies": [
+                        {"uuid": "section-policy-aaaa-bbbb-cccc-dddddddddddd"},
+                        {"uuid": "section-policy-eeee-ffff-0000-111111111111"},
+                    ],
+                    "childSections": [],
+                }
+            )
+        raise AssertionError(url)
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    urls = await scraper_module._discover_montana_rule_document_urls(collection_url, limit=2)
+
+    assert urls == [
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/section-policy-aaaa-bbbb-cccc-dddddddddddd",
+        "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/section-policy-eeee-ffff-0000-111111111111",
+    ]
+    assert calls == [
+        "https://rules.mt.gov/api/policy-library-public/collections/aec52c46-128e-4279-9068-8af5d5432d74",
+        "https://rules.mt.gov/api/policy-library-public/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/11111111-2222-3333-4444-555555555555",
+    ]
+
+
 @pytest.mark.anyio
 async def test_agentic_discovery_bootstraps_montana_public_api_policy_urls_from_seed_sections(
     monkeypatch: pytest.MonkeyPatch,
