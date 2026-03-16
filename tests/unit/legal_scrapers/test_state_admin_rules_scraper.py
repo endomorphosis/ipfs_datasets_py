@@ -3480,6 +3480,40 @@ async def test_extract_text_from_pdf_bytes_prefers_pypdf_native_text(monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_extract_text_from_pdf_bytes_skips_ocr_for_tennessee_sharetngov_rules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakePDFProcessor:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def _decompose_pdf(self, pdf_path):
+            return {"pages": [{"text_blocks": []}]}
+
+        def _extract_native_text(self, text_blocks):
+            return ""
+
+        async def _process_ocr(self, decomposed_content):
+            raise AssertionError("OCR fallback should be skipped for Tennessee sharetngov rule PDFs")
+
+    fake_pdf_module = SimpleNamespace(PDFProcessor=FakePDFProcessor)
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.processors.specialized.pdf", fake_pdf_module)
+
+    extracted = await scraper_module._extract_text_from_pdf_bytes_with_processor(
+        b"%PDF-1.4 fake pdf bytes",
+        source_url="https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf",
+    )
+
+    assert extracted == ""
+    assert scraper_module._should_attempt_admin_rules_pdf_ocr_fallback(
+        "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf"
+    ) is False
+    assert scraper_module._should_attempt_admin_rules_pdf_ocr_fallback(
+        "https://apps.azsos.gov/public_services/Title_18/18-01.pdf"
+    ) is True
+
+
+@pytest.mark.asyncio
 async def test_normalize_candidate_document_content_trims_california_westlaw_chrome() -> None:
     title, text = await scraper_module._normalize_candidate_document_content(
         url="https://govt.westlaw.com/calregs/Document/ICF14695063E711EDB5569A0BCCD916B?viewType=FullText",
