@@ -8957,7 +8957,9 @@ async def _agentic_discover_admin_state_blocks(
             if oklahoma_bootstrap_document_urls:
                 source_breakdown["oklahoma_rules_api_bootstrap"] = len(oklahoma_bootstrap_document_urls)
 
-        if state_code == "TN" and not any(_is_immediate_direct_detail_candidate_url(url) for url in seed_urls):
+        seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
+
+        if state_code == "TN" and len(seeded_direct_detail_urls) < max(1, int(max_fetch_per_state)):
             try:
                 tennessee_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_tennessee_rule_document_urls(
@@ -8973,7 +8975,6 @@ async def _agentic_discover_admin_state_blocks(
             if tennessee_bootstrap_document_urls:
                 source_breakdown["tennessee_sharetngov_bootstrap"] = len(tennessee_bootstrap_document_urls)
 
-        seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
         alabama_bootstrap_document_urls: List[str] = []
         michigan_bootstrap_document_urls: List[str] = []
         alaska_bootstrap_document_urls: List[str] = []

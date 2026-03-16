@@ -8080,6 +8080,7 @@ async def test_agentic_discovery_bootstraps_tennessee_pdf_rules_before_broad_dis
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     landing_url = "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm"
+    seeded_pdf_url = "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf"
     rule_url = "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-01.20161229.pdf"
     archive_calls = 0
     unified_search_calls = 0
@@ -8132,12 +8133,13 @@ async def test_agentic_discovery_bootstraps_tennessee_pdf_rules_before_broad_dis
 
     async def _fake_discover_tennessee_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
         assert landing_url in seed_urls
+        assert seeded_pdf_url in seed_urls
         return [rule_url]
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
-    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [landing_url])
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [landing_url, seeded_pdf_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
     monkeypatch.setattr(scraper_module, "_discover_tennessee_rule_document_urls", _fake_discover_tennessee_rule_document_urls)
     monkeypatch.setattr(scraper_module, "_scrape_pdf_candidate_url_with_processor", _fake_scrape_pdf_candidate_url_with_processor)
@@ -8174,7 +8176,7 @@ async def test_agentic_discovery_bootstraps_tennessee_pdf_rules_before_broad_dis
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
     assert result["state_blocks"][0]["statutes"][0]["source_url"] == rule_url
-    assert pdf_calls == [rule_url]
+    assert pdf_calls == [seeded_pdf_url, rule_url]
     assert result["report"]["TN"]["source_breakdown"]["tennessee_sharetngov_bootstrap"] == 1
     assert result["report"]["TN"]["format_counts"]["pdf"] == 1
     assert archive_calls == 0
