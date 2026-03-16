@@ -102,6 +102,7 @@ def test_curated_seeds_include_michigan_admin_rules_and_public_rhode_island_ricr
     assert "https://ars.apps.lara.state.mi.us/Home" not in mi_urls
     assert any("rules.sos.ri.gov/regulations/part/" in url.lower() for url in ri_urls)
     assert "https://rules.sos.ri.gov/regulations/part/510-00-00-4" in ri_urls
+    assert "https://rules.sos.ri.gov/regulations/part/510-00-00-6" in ri_urls
     assert "https://rules.sos.ri.gov/regulations/part/510-00-00-20" in ri_urls
     assert all("rules.sos.ri.gov/organizations" not in url.lower() for url in ri_urls)
     assert "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations" in ri_urls
