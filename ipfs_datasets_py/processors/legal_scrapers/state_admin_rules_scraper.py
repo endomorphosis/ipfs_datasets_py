@@ -684,6 +684,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://apps.azsos.gov/public_services/Title_04/4-08.rtf",
         "https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
         "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-01.pdf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
     ],
     "AK": [
@@ -939,6 +940,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sos.tn.gov/publications/services/administrative-register",
         "https://sharetngov.tnsosfiles.com/sos/rules/index.htm",
         "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
+        "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf",
         "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm",
         "https://www.tn.gov/sos/rules-and-regulations.html",
     ],
@@ -7581,6 +7583,28 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     query = parse_qs(parsed.query or "")
     official_index_page = _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value)
     official_index_can_be_substantive = host == "sdlegislature.gov" and path.rstrip("/") == "/Rules/Administrative"
+    alaska_official_print_section = False
+    alaska_print_section_id = ""
+    alaska_print_section_cite = ""
+    if host == "www.akleg.gov" and path == "/basis/aac.asp":
+        media = str((query.get("media") or [""])[0]).strip().lower()
+        sec_start = str((query.get("secStart") or [""])[0]).strip()
+        sec_end = str((query.get("secEnd") or [""])[0]).strip()
+        if media == "print" and sec_start == sec_end and _AK_AAC_SECTION_PATH_RE.fullmatch(f"/aac/{sec_start}"):
+            alaska_official_print_section = True
+            alaska_print_section_id = sec_start
+            if "." in sec_start:
+                alaska_title_num, alaska_rule_num = sec_start.split(".", 1)
+                alaska_print_section_cite = f"{alaska_title_num} AAC {alaska_rule_num}"
+    short_alaska_official_section = (
+        alaska_official_print_section
+        and len(body) >= 160
+        and "repealed" not in body.lower()
+        and (
+            (bool(alaska_print_section_id) and alaska_print_section_id in " ".join([title_value, body]))
+            or (bool(alaska_print_section_cite) and alaska_print_section_cite in " ".join([title_value, body]))
+        )
+    )
     arizona_official_rule_document = _looks_like_arizona_official_rule_document(
         text=body,
         title=title_value,
@@ -7656,7 +7680,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
             and len(body) >= 60
             and _has_admin_signal(text=body, title=title_value, url=url_value)
             and _LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body]))
-        ):
+        ) and not short_alaska_official_section:
             return False
     if title_value and _looks_like_placeholder_text(title_value) and not official_index_can_be_substantive and not arizona_official_rule_document:
         return False
@@ -7664,6 +7688,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         return False
     if not _has_admin_signal(text=body, title=title_value, url=url_value):
         return False
+    if short_alaska_official_section:
+        return True
     if not official_index_can_be_substantive and not _LEGAL_CONTENT_SIGNAL_RE.search(body):
         return False
     return True
@@ -8990,7 +9016,7 @@ async def _agentic_discover_admin_state_blocks(
                 alaska_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_alaska_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max(1, int(max_fetch_per_state)), 8),
+                            limit=min(max(1, int(max_fetch_per_state)) * 3, 20),
                     ),
                     timeout=25.0,
                 )
@@ -9713,6 +9739,10 @@ async def _agentic_discover_admin_state_blocks(
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
                 url for url in prioritized_seed_document_urls if _url_key(url)
             }
+            if state_code == "AK" and alaska_bootstrap_document_urls:
+                ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
+                    url for url in alaska_bootstrap_document_urls if _url_key(url)
+                }
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
             ranked_urls,
@@ -9958,7 +9988,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_alaska_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if len(prioritized_alaska_seed_rule_urls) >= min(max_fetch * 3, 20):
                     break
 
         prioritized_texas_seed_rule_urls: List[str] = []

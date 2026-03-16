@@ -121,6 +121,7 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://apps.azsos.gov/public_services/CodeTOC.htm" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_04/4-08.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_06/6-11.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_18/18-01.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_00.htm" not in az_urls
     assert all("legislature.az.gov" not in url.lower() for url in az_urls)
     assert all("www.azleg.gov" not in url.lower() for url in az_urls)
@@ -186,6 +187,7 @@ def test_tennessee_curated_seeds_keep_service_pages_but_drop_dead_placeholders()
     assert "https://sos.tn.gov/publications/services/effective-rules-and-regulations-of-the-state-of-tennessee" in tn_urls
     assert "https://sharetngov.tnsosfiles.com/sos/rules/index.htm" in tn_urls
     assert "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm" in tn_urls
+    assert "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-01.20170126.pdf" in tn_urls
     assert "https://sharetngov.tnsosfiles.com/sos/pub/tar/index.htm" in tn_urls
     assert all("web.archive.org" not in url.lower() for url in tn_urls)
     assert all("www.tn.gov/sos/rules-and-regulations.html" not in url.lower() for url in tn_urls)
@@ -2693,6 +2695,34 @@ def test_accepts_montana_contested_case_policy_detail_without_administrative_phr
     ) is True
 
 
+def test_accepts_short_official_alaska_print_rule_detail_as_substantive_rule_text() -> None:
+    text = (
+        "2 AAC 05.200. Establishment of department's electronic signature verification system.\n"
+        "2 AAC 05.200\n"
+        "-\n"
+        "2 AAC 05.290\n"
+        "establishes the department's electronic signature verification system."
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="2 AAC 05.200. Establishment of department's electronic signature verification system.",
+        url="https://www.akleg.gov/basis/aac.asp?media=print&secStart=2.05.200&secEnd=2.05.200",
+        min_chars=220,
+    ) is True
+
+
+def test_rejects_repealed_alaska_print_rule_stub_as_substantive_rule_text() -> None:
+    text = "2 AAC 05.110. Use of agency records.\nRepealed."
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="2 AAC 05.110. Use of agency records.",
+        url="https://www.akleg.gov/basis/aac.asp?media=print&secStart=2.05.110&secEnd=2.05.110",
+        min_chars=220,
+    ) is False
+
+
 def test_rejects_texas_hunting_forum_false_positive() -> None:
     statute = {
         "code_name": "Texas Administrative Rules (Agentic Discovery)",
@@ -4482,7 +4512,7 @@ async def test_agentic_discovery_bootstraps_alaska_print_rule_urls_before_search
 
     async def _fake_discover_alaska_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
         assert seed_urls == [seed_url]
-        assert limit == 6
+        assert limit == 18
         return [rule_url]
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
