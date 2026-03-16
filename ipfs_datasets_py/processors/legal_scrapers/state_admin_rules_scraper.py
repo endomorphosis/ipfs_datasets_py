@@ -852,17 +852,11 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR=1-45&Srch=Y",
     ],
     "MT": [
-        "https://rules.mt.gov/",
-        "https://sosmt.gov/arm/",
-        "https://sosmt.gov/arm/secretary-of-state-administrative-rules/",
-        "https://sosmt.gov/?liquid-mega-menu=arm",
-        "https://rules.mt.gov/browse/collections",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/ed446fdb-2d8d-4759-89ac-9cab3b21695c",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/f15f6670-85c3-43bc-a946-4632329a8e23",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1892387a-b61e-4aa2-a1dd-d9f7a535fd42",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/f504ae22-401c-4752-ac93-50e35903f1cd",
-        "https://rules.mt.gov/search",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/1f2ff5c5-b709-420b-bdd4-f6009ca7d33f",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/b68c4d42-26f2-4fb4-b6a8-e1a2d4d265d2",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/5eaf58c6-ae9f-4ebe-afe2-c617e962b390",
@@ -871,8 +865,6 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/11f11d0c-eb65-430a-baab-8728335a0c1b",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f",
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/c51b386c-09d3-476e-ab0b-ba97d644b619",
-        "https://sosmt.gov/arm/register/",
-        "https://sosmt.gov/arm/rulemaking-resources/",
     ],
     "MI": [
         "https://www.michigan.gov/lara/bureau-list/moahr/admin-rules",
@@ -930,6 +922,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://secure.vermont.gov/SOS/rules/index.php",
         "https://secure.vermont.gov/SOS/rules/search.php",
         "https://secure.vermont.gov/SOS/rules/rssFeed.php",
+        "https://secure.vermont.gov/SOS/rules/display.php?r=1032",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/notices-of-rulemaking/",
         "https://aoa.vermont.gov/ICAR",
@@ -1530,6 +1523,8 @@ def _is_non_admin_seed_url(url: str) -> bool:
     if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
         return True
     if host in {"www.legis.ga.gov", "legis.ga.gov"}:
+        return True
+    if host in {"leg.mt.gov", "www.leg.mt.gov"}:
         return True
     if host in {"legislature.in.gov", "www.legislature.in.gov"}:
         return True
@@ -2296,6 +2291,9 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return True
     if host == "advance.lexis.com" and _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
         return True
+    if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php":
+        if re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
+            return True
     if host == "rules.ok.gov" and normalized_path.lower() == "/code":
         query_params = parse_qs(parsed.query or "")
         title_num = str((query_params.get("titleNum") or [""])[0]).strip()
@@ -2593,7 +2591,7 @@ def _is_vermont_rule_detail_page(*, text: str, title: str, url: str) -> bool:
     if not rule_id.isdigit():
         return False
     hay = " ".join([str(title or ""), str(text or "")])
-    if _VT_PROPOSAL_POSTING_TEXT_RE.search(hay):
+    if _VT_PROPOSAL_POSTING_TEXT_RE.search(hay) and not re.search(r"\bstatus\s*:\s*adopted\b", hay, re.IGNORECASE):
         return False
     if not re.search(r"\brule\s+details\b", hay, re.IGNORECASE):
         return False

@@ -112,6 +112,7 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     az_urls = scraper_module._extract_seed_urls_for_state("AZ", "Arizona")
     ak_urls = scraper_module._extract_seed_urls_for_state("AK", "Alaska")
     ak_allowed_hosts = _allowed_discovery_hosts_for_state("AK", "Alaska")
+    mt_urls = scraper_module._extract_seed_urls_for_state("MT", "Montana")
     ut_urls = scraper_module._extract_seed_urls_for_state("UT", "Utah")
     az_allowed_hosts = _allowed_discovery_hosts_for_state("AZ", "Arizona")
 
@@ -128,6 +129,13 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules" in ut_urls
     assert "https://adminrules.utah.gov/public/home" not in ut_urls
     assert "https://adminrules.utah.gov/public/search" not in ut_urls
+
+    assert "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74" in mt_urls
+    assert "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f" in mt_urls
+    assert "https://rules.mt.gov/" not in mt_urls
+    assert "https://rules.mt.gov/browse/collections" not in mt_urls
+    assert "https://rules.mt.gov/search" not in mt_urls
+    assert all("sosmt.gov" not in url.lower() for url in mt_urls)
 
     assert "https://akrules.elaws.us/aac" in ak_urls
     assert all("legislature.ak.gov" not in url.lower() for url in ak_urls)
@@ -154,6 +162,7 @@ def test_vermont_curated_seeds_drop_blocked_lexis_hosts() -> None:
 
     assert "https://secure.vermont.gov/SOS/rules/" in vt_urls
     assert "https://secure.vermont.gov/SOS/rules/index.php" in vt_urls
+    assert "https://secure.vermont.gov/SOS/rules/display.php?r=1032" in vt_urls
     assert "https://sos.vermont.gov/secretary-of-state-services/apa-rules/" in vt_urls
     assert all("lexis" not in url.lower() for url in vt_urls)
     assert all("display.php?r=1049" not in url.lower() for url in vt_urls)
@@ -361,6 +370,113 @@ def test_is_direct_detail_candidate_url_recognizes_rhode_island_ricr_parts() -> 
     assert scraper_module._is_direct_detail_candidate_url(
         "https://rules.sos.ri.gov/organizations"
     ) is False
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_uses_seeded_vermont_rule_display_before_search(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rule_url = "https://secure.vermont.gov/SOS/rules/display.php?r=1032"
+    archive_calls = 0
+    unified_search_calls = 0
+    agentic_calls = 0
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_calls
+            archive_calls += 1
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_calls
+            agentic_calls += 1
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="",
+                title="",
+                html="",
+                extraction_provenance={"method": "requests_only"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            assert url == rule_url
+            return SimpleNamespace(
+                text=(
+                    "Vermont Secretary of State Rules Service Search Rules Rule Details "
+                    "Rule Number:25P039 Title:Vermont Saves Program Rule Type:Standard Status:Adopted "
+                    "Agency:Office of State Treasurer Legal Authority:3 V.S.A. § 533(1)"
+                ),
+                title="Vermont Secretary of State Rules Service",
+                html="<html><body>Rule Details Rule Number:25P039 Status:Adopted</body></html>",
+                links=[],
+                method_used="requests_only",
+                extraction_provenance={"method": "requests_only"},
+            )
+
+        async def scrape_domain(self, url: str, max_pages: int = 0):
+            raise AssertionError("scrape_domain should not run when Vermont direct detail seeds succeed")
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [rule_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["VT"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=2,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=160,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] >= 1
+    assert result["report"]["VT"]["fetched_rules"] >= 1
+    assert result["report"]["VT"]["top_candidate_urls"][0] == rule_url
+    assert archive_calls == 0
+    assert unified_search_calls == 0
+    assert agentic_calls == 0
 
 
 def test_new_hampshire_admin_seed_urls_exclude_live_root_pages() -> None:
@@ -825,7 +941,7 @@ def test_is_direct_detail_candidate_url_recognizes_vermont_rule_display_pages() 
     ) is True
     assert scraper_module._is_direct_detail_candidate_url(
         "https://secure.vermont.gov/SOS/rules/display.php?r=1049"
-    ) is False
+    ) is True
     assert scraper_module._is_direct_detail_candidate_url(
         "https://secure.vermont.gov/SOS/rules/search.php"
     ) is False
@@ -6423,6 +6539,21 @@ def test_vermont_proposal_display_page_is_not_rule_detail_page() -> None:
         title="Vermont Secretary of State Rules Service",
         url="https://secure.vermont.gov/SOS/rules/display.php?r=1049",
     ) is False
+
+
+def test_vermont_adopted_display_page_is_rule_detail_page() -> None:
+    text = (
+        "Proposed Rules Postings A Service of the Office of the Secretary of State "
+        "Code of Vermont Rules Search Rules Deadline For Public Comment Deadline: Dec 15, 2025 "
+        "Rule Details Rule Number: 25P039 Title: Vermont Saves Program Rule Type: Standard Status: Adopted "
+        "Agency: Office of State Treasurer Legal Authority: 3 V.S.A. section 533(1)."
+    )
+
+    assert scraper_module._is_vermont_rule_detail_page(
+        text=text,
+        title="Vermont Secretary of State Rules Service",
+        url="https://secure.vermont.gov/SOS/rules/display.php?r=1032",
+    ) is True
 
 
 @pytest.mark.anyio
