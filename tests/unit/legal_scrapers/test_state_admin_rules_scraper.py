@@ -8176,7 +8176,7 @@ async def test_agentic_discovery_bootstraps_tennessee_pdf_rules_before_broad_dis
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 1
     assert result["state_blocks"][0]["statutes"][0]["source_url"] == rule_url
-    assert pdf_calls == [seeded_pdf_url, rule_url]
+    assert pdf_calls == [rule_url]
     assert result["report"]["TN"]["source_breakdown"]["tennessee_sharetngov_bootstrap"] == 1
     assert result["report"]["TN"]["format_counts"]["pdf"] == 1
     assert archive_calls == 0

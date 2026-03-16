@@ -8959,7 +8959,7 @@ async def _agentic_discover_admin_state_blocks(
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
 
-        if state_code == "TN" and len(seeded_direct_detail_urls) < max(1, int(max_fetch_per_state)):
+        if state_code == "TN" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
             try:
                 tennessee_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_tennessee_rule_document_urls(
@@ -9744,6 +9744,10 @@ async def _agentic_discover_admin_state_blocks(
                 ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
                     url for url in alaska_bootstrap_document_urls if _url_key(url)
                 }
+        if state_code == "TN" and tennessee_bootstrap_document_urls:
+            ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
+                url for url in prioritized_seed_document_urls if _url_key(url)
+            }
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
             ranked_urls,
@@ -10026,6 +10030,23 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_oklahoma_seed_rule_urls) >= min(max_fetch * 2, 12):
                     break
 
+        prioritized_tennessee_seed_rule_urls: List[str] = []
+        if state_code == "TN" and tennessee_bootstrap_document_urls:
+            seen_tennessee_rule_keys: set[str] = set()
+            for rule_url in tennessee_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_tennessee_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_tennessee_rule_keys.add(rule_key)
+                prioritized_tennessee_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_tennessee_seed_rule_urls) >= min(max_fetch * 2, 12):
+                    break
+
         for rule_url in prioritized_alabama_seed_rule_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -10163,6 +10184,36 @@ async def _agentic_discover_admin_state_blocks(
             if oklahoma_method_value is None:
                 oklahoma_method_value = getattr(oklahoma_scraped, "method_used", None)
             await _append_document_if_rule(rule_url, oklahoma_title, oklahoma_text, oklahoma_method_value)
+
+        for rule_url in prioritized_tennessee_seed_rule_urls:
+            if len(statutes) >= max_fetch:
+                break
+            if (time.monotonic() - state_start) >= per_state_budget_s:
+                break
+            if time.monotonic() >= preloop_budget_deadline:
+                break
+            if _url_key(rule_url) in direct_doc_urls:
+                continue
+            inspected_urls += 1
+            try:
+                tennessee_scraped = await asyncio.wait_for(
+                    _scrape_pdf_candidate_url_with_processor(rule_url),
+                    timeout=20.0,
+                )
+            except Exception:
+                tennessee_scraped = None
+            if tennessee_scraped is None:
+                continue
+
+            tennessee_text = str(getattr(tennessee_scraped, "text", "") or "").strip()
+            tennessee_title = str(getattr(tennessee_scraped, "title", "") or "").strip()
+            tennessee_provenance = getattr(tennessee_scraped, "extraction_provenance", None) or {}
+            tennessee_method_value = None
+            if isinstance(tennessee_provenance, dict):
+                tennessee_method_value = tennessee_provenance.get("method")
+            if tennessee_method_value is None:
+                tennessee_method_value = getattr(tennessee_scraped, "method_used", None)
+            await _append_document_if_rule(rule_url, tennessee_title, tennessee_text, tennessee_method_value)
 
         for document_url in prioritized_seed_document_urls:
             if len(statutes) >= max_fetch:
