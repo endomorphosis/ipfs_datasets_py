@@ -2467,6 +2467,11 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
     if _is_vermont_rule_detail_page(text=text, title=title, url=url):
         return True
 
+    if host == "rules.mt.gov" and _MT_POLICY_PATH_RE.fullmatch(path):
+        mt_hay = " ".join([title_value, body, url_value])
+        if re.search(r"\b\d{1,3}\.\d{1,3}\.\d{2,4}\b", mt_hay):
+            return True
+
     # Utah detail pages often omit explicit "administrative rule" phrasing while still
     # containing the real rule body. Treat canonical detail routes as admin-signal pages
     # when they expose rule-like citations or body markers.
@@ -5774,6 +5779,141 @@ async def _scrape_oklahoma_rule_detail_via_api(url: str) -> Optional[Any]:
         )
 
         if section_num:
+            def _candidate_tennessee_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
+                body = str(html or "")
+                if not body:
+                    return []
+
+                page_host = urlparse(str(page_url or "").strip()).netloc.lower()
+                if page_host not in {"sharetngov.tnsosfiles.com", "publications.tnsosfiles.com", "sos.tn.gov", "www.tn.gov", "tn.gov"}:
+                    if "sharetngov.tnsosfiles.com/sos/rules" not in body.lower():
+                        return []
+
+                ranked: List[tuple[int, str]] = []
+                seen: set[str] = set()
+
+                def _maybe_add(candidate_url: str) -> None:
+                    normalized_url = str(candidate_url or "").strip()
+                    if not normalized_url:
+                        return
+                    if not normalized_url.startswith(("http://", "https://")) and page_url:
+                        normalized_url = urljoin(page_url, normalized_url)
+                    if not normalized_url.startswith(("http://", "https://")):
+                        return
+
+                    parsed = urlparse(normalized_url)
+                    host = parsed.netloc.lower()
+                    path = parsed.path or ""
+                    if host != "sharetngov.tnsosfiles.com":
+                        return
+                    if not (
+                        re.search(r"^/sos/rules/\d{4}/\d{4}\.htm$", path, re.IGNORECASE)
+                        or re.search(r"^/sos/rules/\d{4}/[\d-]+/[\d-]+\.htm$", path, re.IGNORECASE)
+                        or re.search(r"^/sos/rules/\d{4}/[\w.-]+\.pdf$", path, re.IGNORECASE)
+                        or re.search(r"^/sos/rules/\d{4}/[\d-]+/[\w.-]+\.pdf$", path, re.IGNORECASE)
+                    ):
+                        return
+
+                    key = _url_key(normalized_url)
+                    if not key or key in seen:
+                        return
+                    seen.add(key)
+
+                    score = _score_candidate_url(normalized_url)
+                    if _is_pdf_candidate_url(normalized_url):
+                        score += 4
+                    elif re.search(r"^/sos/rules/\d{4}/[\d-]+/[\d-]+\.htm$", path, re.IGNORECASE):
+                        score += 1
+                    if score <= 0:
+                        return
+                    ranked.append((score, normalized_url))
+
+                for href in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\']', body, re.IGNORECASE):
+                    _maybe_add(unescape(str(href or "").strip()))
+
+                ranked.sort(key=lambda item: item[0], reverse=True)
+                return [value for _, value in ranked[: max(1, int(limit))]]
+
+
+            async def _discover_tennessee_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+                relevant_seed_urls = [
+                    str(url or "").strip()
+                    for url in list(seed_urls or [])
+                    if urlparse(str(url or "").strip()).netloc.lower()
+                    in {"sharetngov.tnsosfiles.com", "publications.tnsosfiles.com", "sos.tn.gov", "www.tn.gov", "tn.gov"}
+                ]
+                if not relevant_seed_urls:
+                    return []
+
+                limit_n = max(1, int(limit))
+
+                def _run() -> List[str]:
+                    headers = {
+                        "User-Agent": "Mozilla/5.0",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    }
+                    session = requests.Session()
+                    discovered_urls: List[str] = []
+                    seen_documents: set[str] = set()
+                    seen_pages: set[str] = set()
+
+                    frontier: List[str] = [
+                        "https://sharetngov.tnsosfiles.com/sos/rules/index.htm",
+                        "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
+                        "https://sharetngov.tnsosfiles.com/sos/rules/tenncare.htm",
+                    ]
+                    for seed_url in relevant_seed_urls:
+                        if seed_url not in frontier:
+                            frontier.append(seed_url)
+
+                    def _record(candidate_url: str) -> bool:
+                        if not _is_pdf_candidate_url(candidate_url):
+                            return False
+                        key = _url_key(candidate_url)
+                        if not key or key in seen_documents:
+                            return False
+                        seen_documents.add(key)
+                        discovered_urls.append(candidate_url)
+                        return len(discovered_urls) >= limit_n
+
+                    for _depth in range(3):
+                        next_frontier: List[str] = []
+                        for page_url in frontier[:4]:
+                            page_key = _url_key(page_url)
+                            if not page_key or page_key in seen_pages:
+                                continue
+                            seen_pages.add(page_key)
+
+                            try:
+                                response = session.get(page_url, timeout=15, headers=headers)
+                                response.raise_for_status()
+                            except Exception:
+                                continue
+
+                            for candidate_url in _candidate_tennessee_rule_urls_from_html(
+                                html=response.text,
+                                page_url=page_url,
+                                limit=max(limit_n * 6, 24),
+                            ):
+                                if _record(candidate_url):
+                                    return discovered_urls
+                                if _is_pdf_candidate_url(candidate_url):
+                                    continue
+                                candidate_key = _url_key(candidate_url)
+                                if not candidate_key or candidate_key in seen_pages:
+                                    continue
+                                if candidate_url not in next_frontier:
+                                    next_frontier.append(candidate_url)
+
+                        frontier = next_frontier
+                        if not frontier:
+                            break
+
+                    return discovered_urls
+
+                return await asyncio.to_thread(_run)
+
+
             segment = next(
                 (
                     item
@@ -8683,6 +8823,7 @@ async def _agentic_discover_admin_state_blocks(
         arkansas_bootstrap_document_urls: List[str] = []
         texas_bootstrap_document_urls: List[str] = []
         oklahoma_bootstrap_document_urls: List[str] = []
+        tennessee_bootstrap_document_urls: List[str] = []
         preseed_substantive_url_keys: set[str] = set()
 
         # Utah's public search API already exposes canonical detail-page URLs.
@@ -8784,6 +8925,22 @@ async def _agentic_discover_admin_state_blocks(
                 candidate_urls.append(document_url)
             if oklahoma_bootstrap_document_urls:
                 source_breakdown["oklahoma_rules_api_bootstrap"] = len(oklahoma_bootstrap_document_urls)
+
+        if state_code == "TN" and not any(_is_immediate_direct_detail_candidate_url(url) for url in seed_urls):
+            try:
+                tennessee_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_tennessee_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                tennessee_bootstrap_document_urls = []
+            for document_url in tennessee_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if tennessee_bootstrap_document_urls:
+                source_breakdown["tennessee_sharetngov_bootstrap"] = len(tennessee_bootstrap_document_urls)
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
         alabama_bootstrap_document_urls: List[str] = []
@@ -8999,6 +9156,7 @@ async def _agentic_discover_admin_state_blocks(
             or arkansas_bootstrap_document_urls
             or texas_bootstrap_document_urls
             or oklahoma_bootstrap_document_urls
+            or tennessee_bootstrap_document_urls
             or seeded_direct_detail_urls
             or montana_bootstrap_document_urls
             or california_bootstrap_document_urls

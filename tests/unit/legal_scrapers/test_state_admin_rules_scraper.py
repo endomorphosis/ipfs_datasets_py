@@ -1082,6 +1082,30 @@ def test_tennessee_sharetngov_rule_chapter_toc_pages_are_inventory_pages() -> No
     ) is True
 
 
+def test_candidate_tennessee_rule_urls_from_html_extracts_chapter_and_pdf_links() -> None:
+    html = """
+    <html><body>
+      <a href="/sos/rules/1200/1200-13/1200-13.htm">1200-13 Bureau of Medicaid</a>
+      <a href="/sos/rules/1200/1200-13/1200-13-01.20161229.pdf">1200-13-01</a>
+      <a href="/sos/rules/1200/1200-13/1200-13-05.20151220.pdf">1200-13-05</a>
+      <a href="/sos/rules/rules2.htm">Rules home</a>
+    </body></html>
+    """
+
+    urls = scraper_module._candidate_tennessee_rule_urls_from_html(
+        html=html,
+        page_url="https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13.htm",
+        limit=4,
+    )
+
+    assert urls[:2] == [
+        "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-01.20161229.pdf",
+        "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-05.20151220.pdf",
+    ]
+    assert "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13.htm" in urls
+    assert "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm" not in urls
+
+
 def test_alaska_rule_inventory_detection_distinguishes_index_chapter_and_section_pages() -> None:
     ltgov_text = (
         "Regulations Proposed Regulations Adopted Regulations Alaska Administrative Code "
@@ -2637,6 +2661,29 @@ def test_accepts_montana_rule_body_page_with_arm_citations() -> None:
         text=text,
         title="Definitions | Montana SOS",
         url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/rules/4.3.101",
+        min_chars=160,
+    ) is True
+
+
+def test_accepts_montana_contested_case_policy_detail_without_administrative_phrase() -> None:
+    text = (
+        "1.3.214\n"
+        "CONTESTED CASES, DEFAULT ORDER\n"
+        "In a contested case, if a party does not appear to contest an intended agency action, the agency may enter a default order. "
+        "If a default is entered, pursuant to 2-4-623, MCA, the order must be in writing and include findings of fact and conclusions of law.\n"
+        "See sample form 214a.\n"
+        "Sample Form 214a: Default Order\n"
+        "FINDINGS OF FACT\n"
+        "CONCLUSIONS OF LAW\n"
+        "Authorizing statute(s): 2-4-202, MCA\n"
+        "Implementing statute(s): 2-4-202, MCA\n"
+        "History: Eff. 12/31/72; AMD, 1977 MAR p. 1192, Eff. 12/24/77.\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="1.3.214 CONTESTED CASES, DEFAULT ORDER",
+        url="https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/035a04cc-6f68-40c6-af77-5d4372b2e315",
         min_chars=160,
     ) is True
 
@@ -7991,6 +8038,113 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
     assert result["report"]["AZ"]["format_counts"]["pdf"] == 1
     assert result["report"]["AZ"]["format_counts"]["rtf"] == 1
     assert result["report"]["AZ"]["gap_summary"]["rule_hosts"] == ["azsos.gov"]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_bootstraps_tennessee_pdf_rules_before_broad_discovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    landing_url = "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm"
+    rule_url = "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-01.20161229.pdf"
+    archive_calls = 0
+    unified_search_calls = 0
+    agentic_calls = 0
+    pdf_calls: list[str] = []
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_calls
+            archive_calls += 1
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_calls
+            agentic_calls += 1
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(text="", title="", html="", extraction_provenance={"method": "requests_only"})
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_scrape_pdf_candidate_url_with_processor(url: str):
+        pdf_calls.append(url)
+        if url != rule_url:
+            return None
+        return SimpleNamespace(
+            text="1200-13-01 TennCare Long-Term Care Programs rule text with authority and administrative history.",
+            title="1200-13-01 TennCare Long-Term Care Programs",
+            extraction_provenance={"method": "pdf_processor"},
+        )
+
+    async def _fake_discover_tennessee_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+        assert landing_url in seed_urls
+        return [rule_url]
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [landing_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_tennessee_rule_document_urls", _fake_discover_tennessee_rule_document_urls)
+    monkeypatch.setattr(scraper_module, "_scrape_pdf_candidate_url_with_processor", _fake_scrape_pdf_candidate_url_with_processor)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == rule_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["TN"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == rule_url
+    assert pdf_calls == [rule_url]
+    assert result["report"]["TN"]["source_breakdown"]["tennessee_sharetngov_bootstrap"] == 1
+    assert result["report"]["TN"]["format_counts"]["pdf"] == 1
+    assert archive_calls == 0
+    assert unified_search_calls == 0
+    assert agentic_calls == 0
 
 
 @pytest.mark.anyio
