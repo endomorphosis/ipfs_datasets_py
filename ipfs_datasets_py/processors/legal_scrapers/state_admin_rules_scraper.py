@@ -8669,6 +8669,61 @@ async def _agentic_discover_admin_state_blocks(
                 )
             except Exception:
                 wyoming_bootstrap_document_urls = []
+            if not wyoming_bootstrap_document_urls:
+                seen_wyoming_document_keys: set[str] = set()
+                for seed_url in ordered_seed_urls[:4]:
+                    if urlparse(seed_url).netloc.lower() != "rules.wyo.gov":
+                        continue
+                    try:
+                        fetched = await asyncio.wait_for(
+                            _run_blocking_fetch(
+                                live_fetch_api.fetch,
+                                UnifiedFetchRequest(
+                                    url=seed_url,
+                                    timeout_seconds=35,
+                                    mode=OperationMode.BALANCED,
+                                    domain="legal",
+                                ),
+                            ),
+                            timeout=18.0,
+                        )
+                    except Exception:
+                        continue
+                    _record_rate_limit_metadata(fetched)
+                    fetched_doc = getattr(fetched, "document", None)
+                    fetched_html = str(getattr(fetched_doc, "html", "") or "")
+                    program_urls = _candidate_wyoming_rule_urls_from_html(
+                        html=fetched_html,
+                        page_url=seed_url,
+                        limit=max(12, min(48, max(1, int(max_fetch_per_state)) * 8)),
+                    )
+                    for program_url in program_urls[: max(4, min(8, int(max_fetch_per_state) * 2))]:
+                        try:
+                            program_scraped = await asyncio.wait_for(
+                                _scrape_wyoming_rule_detail_via_ajax(program_url),
+                                timeout=8.0,
+                            )
+                        except Exception:
+                            program_scraped = None
+                        if program_scraped is None:
+                            continue
+                        program_html = str(getattr(program_scraped, "html", "") or "")
+                        for viewer_url in _candidate_wyoming_rule_urls_from_html(
+                            html=program_html,
+                            page_url=program_url,
+                            limit=max(12, min(48, max(1, int(max_fetch_per_state)) * 8)),
+                        ):
+                            viewer_key = _url_key(viewer_url)
+                            if not viewer_key or viewer_key in seen_wyoming_document_keys:
+                                continue
+                            seen_wyoming_document_keys.add(viewer_key)
+                            wyoming_bootstrap_document_urls.append(viewer_url)
+                            if len(wyoming_bootstrap_document_urls) >= min(max_fetch_per_state * 4, 16):
+                                break
+                        if len(wyoming_bootstrap_document_urls) >= min(max_fetch_per_state * 4, 16):
+                            break
+                    if wyoming_bootstrap_document_urls:
+                        break
             for document_url in wyoming_bootstrap_document_urls:
                 candidate_urls.append(document_url)
             if wyoming_bootstrap_document_urls:

@@ -8357,6 +8357,7 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
     archive_calls = 0
     unified_search_calls = 0
     agentic_calls = 0
+    fetch_calls = 0
 
     search_html = (
         "<span class='program_id hidden'>347</span>"
@@ -8409,7 +8410,16 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
             return {"results": []}
 
         def fetch(self, request):
-            raise AssertionError("unified fetch should not run when Wyoming bootstrap succeeds")
+            nonlocal fetch_calls
+            fetch_calls += 1
+            assert request.url == seed_url
+            document = SimpleNamespace(
+                text="Administrative Rules (Code)",
+                title="Administrative Rules (Code)",
+                html=search_html,
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
 
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
@@ -8525,6 +8535,7 @@ async def test_agentic_discovery_bootstraps_wyoming_viewer_urls_from_seed_invent
     assert result["report"]["WY"]["source_breakdown"]["wyoming_ajax_bootstrap"] == 2
     assert result["report"]["WY"]["expanded_urls"] == 0
     assert archive_calls == 0
+    assert fetch_calls >= 1
     assert unified_search_calls == 0
     assert agentic_calls == 0
 
