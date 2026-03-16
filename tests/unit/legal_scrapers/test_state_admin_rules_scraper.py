@@ -163,6 +163,10 @@ def test_vermont_curated_seeds_drop_blocked_lexis_hosts() -> None:
 
     assert "https://secure.vermont.gov/SOS/rules/" in vt_urls
     assert "https://secure.vermont.gov/SOS/rules/index.php" in vt_urls
+    assert "https://secure.vermont.gov/SOS/rules/display.php?r=900" in vt_urls
+    assert "https://secure.vermont.gov/SOS/rules/display.php?r=901" in vt_urls
+    assert "https://secure.vermont.gov/SOS/rules/display.php?r=902" in vt_urls
+    assert "https://secure.vermont.gov/SOS/rules/display.php?r=903" in vt_urls
     assert "https://secure.vermont.gov/SOS/rules/display.php?r=1032" in vt_urls
     assert "https://sos.vermont.gov/secretary-of-state-services/apa-rules/" in vt_urls
     assert all("lexis" not in url.lower() for url in vt_urls)
@@ -4478,7 +4482,7 @@ async def test_agentic_discovery_bootstraps_alaska_print_rule_urls_before_search
 
     async def _fake_discover_alaska_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
         assert seed_urls == [seed_url]
-        assert limit >= 1
+        assert limit == 6
         return [rule_url]
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)

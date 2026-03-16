@@ -879,6 +879,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.sos.ri.gov/regulations/part/510-00-00-3",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-4",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-5",
+        "https://rules.sos.ri.gov/regulations/part/510-00-00-6",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-7",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-20",
     ],
@@ -922,6 +923,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://secure.vermont.gov/SOS/rules/index.php",
         "https://secure.vermont.gov/SOS/rules/search.php",
         "https://secure.vermont.gov/SOS/rules/rssFeed.php",
+        "https://secure.vermont.gov/SOS/rules/display.php?r=900",
+        "https://secure.vermont.gov/SOS/rules/display.php?r=901",
+        "https://secure.vermont.gov/SOS/rules/display.php?r=902",
+        "https://secure.vermont.gov/SOS/rules/display.php?r=903",
         "https://secure.vermont.gov/SOS/rules/display.php?r=1032",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/notices-of-rulemaking/",
@@ -8969,7 +8974,7 @@ async def _agentic_discover_admin_state_blocks(
                 michigan_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_michigan_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max_fetch_per_state * 4, 16),
+                        limit=min(max(1, int(max_fetch_per_state)), 8),
                     ),
                     timeout=25.0,
                 )
