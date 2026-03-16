@@ -6979,15 +6979,6 @@ def _document_format_for_url(url: str) -> str:
     return "html"
 
 
-def _should_attempt_admin_rules_pdf_ocr_fallback(source_url: str) -> bool:
-    normalized_url = str(source_url or "").strip().lower()
-    if not normalized_url:
-        return True
-    if "sharetngov.tnsosfiles.com/sos/rules/" in normalized_url:
-        return False
-    return True
-
-
 async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, source_url: str) -> str:
     if not pdf_bytes:
         return ""
@@ -7054,9 +7045,6 @@ async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, sourc
 
         if text_parts:
             return "\n\n".join(text_parts).strip()
-
-        if not _should_attempt_admin_rules_pdf_ocr_fallback(source_url):
-            return ""
 
         try:
             ocr_results = await processor._process_ocr(decomposed_content)
