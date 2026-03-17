@@ -700,7 +700,17 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://azsos.gov/rules/arizona-administrative-register",
         "https://apps.azsos.gov/public_services/CodeTOC.htm",
         "https://apps.azsos.gov/public_services/Index/",
+        "https://apps.azsos.gov/public_services/Title_02/2-01.pdf",
+        "https://apps.azsos.gov/public_services/Title_02/2-02.pdf",
+        "https://apps.azsos.gov/public_services/Title_02/2-03.pdf",
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_09/9-30.pdf",
         "https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
+        "https://apps.azsos.gov/public_services/Title_13/13-01.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-02.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-05.pdf",
         "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
         "https://apps.azsos.gov/public_services/Title_04/4-08.pdf",
@@ -972,6 +982,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
 
 _AZ_LATE_RETRY_DOCUMENT_URLS: tuple[str, ...] = (
     "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+    "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
+    "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
 )
 _AZ_LATE_RETRY_MIN_TIMEOUT_S = 45.0
 _AZ_LATE_RETRY_MAX_TIMEOUT_S = 70.0

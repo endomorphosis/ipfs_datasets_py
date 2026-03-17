@@ -119,9 +119,17 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
 
     assert "https://azsos.gov/rules/arizona-administrative-code" in az_urls
     assert "https://apps.azsos.gov/public_services/CodeTOC.htm" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_02/2-01.pdf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_02/2-04.pdf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_02/2-12.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_04/4-08.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_06/6-11.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_07/7-02.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_09/9-30.pdf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_13/13-01.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_15/15-02.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_15/15-03.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_15/15-05.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_18/18-01.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_18/18-04.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_04/4-08.rtf" not in az_urls
@@ -3904,16 +3912,18 @@ def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_d
 
 def test_prioritized_arizona_late_retry_urls_prefers_productive_title_two_pdf() -> None:
     candidate_urls = [
+        "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
         "https://apps.azsos.gov/public_services/Title_07/7-03.pdf",
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
         "https://apps.azsos.gov/public_services/Title_01/1-01.pdf",
     ]
 
-    prioritized = scraper_module._prioritized_arizona_late_retry_urls(candidate_urls, limit=3)
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(candidate_urls, limit=4)
 
     assert prioritized == [
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
         "https://apps.azsos.gov/public_services/Title_07/7-03.pdf",
     ]
