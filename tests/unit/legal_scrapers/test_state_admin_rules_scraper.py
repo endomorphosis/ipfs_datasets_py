@@ -486,6 +486,125 @@ async def test_agentic_discovery_uses_seeded_vermont_rule_display_before_search(
     assert agentic_calls == 0
 
 
+@pytest.mark.anyio
+async def test_agentic_discovery_stops_vermont_pending_crawl_after_adopted_seed_rules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rule_url = "https://secure.vermont.gov/SOS/rules/display.php?r=1032"
+    portal_url = "https://secure.vermont.gov/SOS/rules/"
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            url = str(getattr(request, "url", "") or "")
+            if url == portal_url:
+                document = SimpleNamespace(
+                    text="Vermont Secretary of State Rules Service Search Rules Recent Postings.",
+                    title="Vermont Secretary of State Rules Service",
+                    html="<html><body>Recent Postings</body></html>",
+                    extraction_provenance={"method": "requests_only"},
+                )
+            else:
+                document = SimpleNamespace(
+                    text="",
+                    title="",
+                    html="",
+                    extraction_provenance={"method": "requests_only"},
+                )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            if url == rule_url:
+                return SimpleNamespace(
+                    text=(
+                        "Vermont Secretary of State Rules Service Search Rules Rule Details "
+                        "Rule Number:25P039 Title:Vermont Saves Program Rule Type:Standard Status:Adopted "
+                        "Agency:Office of State Treasurer Legal Authority:3 V.S.A. § 533(1)"
+                    ),
+                    title="Vermont Secretary of State Rules Service",
+                    html="<html><body>Rule Details Rule Number:25P039 Status:Adopted</body></html>",
+                    links=[],
+                    method_used="requests_only",
+                    extraction_provenance={"method": "requests_only"},
+                )
+            if url == portal_url:
+                return SimpleNamespace(
+                    text="Vermont Secretary of State Rules Service Search Rules Recent Postings.",
+                    title="Vermont Secretary of State Rules Service",
+                    html="<html><body>Recent Postings</body></html>",
+                    links=[],
+                    method_used="requests_only",
+                    extraction_provenance={"method": "requests_only"},
+                )
+            raise AssertionError(f"unexpected scrape url: {url}")
+
+        async def scrape_domain(self, url: str, max_pages: int = 0):
+            raise AssertionError("scrape_domain should not run when Vermont adopted direct-detail seeds already recovered rules")
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [portal_url, rule_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(
+        scraper_module,
+        "_is_substantive_rule_text",
+        lambda **kwargs: str(kwargs.get("url") or "").strip() == rule_url,
+    )
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["VT"],
+        max_candidates_per_state=4,
+        max_fetch_per_state=2,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=160,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] >= 1
+    assert result["report"]["VT"]["fetched_rules"] >= 1
+    assert portal_url not in result["report"]["VT"]["inspected_url_samples"]
+
+
 def test_new_hampshire_admin_seed_urls_exclude_live_root_pages() -> None:
     nh_urls = scraper_module._extract_seed_urls_for_state("NH", "New Hampshire")
     allowed_hosts = _allowed_discovery_hosts_for_state("NH", "New Hampshire")
@@ -1390,6 +1509,22 @@ def test_tennessee_administrative_register_service_page_is_inventory_not_substan
         url="https://sos.tn.gov/publications/services/administrative-register",
         min_chars=160,
     ) is False
+
+
+def test_accepts_official_tennessee_sharetngov_rule_pdf_as_substantive() -> None:
+    text = (
+        "September, 2015 (Revised) 1\n"
+        "RULES OF TENNESSEE DEPARTMENT OF FINANCE AND ADMINISTRATION BUREAU OF TENNCARE\n"
+        "CHAPTER 1200-13-14 TENNCARE STANDARD EXPENDITURE GROUPS\n"
+        + ("1200-13-14-.01 Definitions and Enrollment Requirements. Authority: T.C.A. Section 71-5-105. " * 120)
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="September, 2015 (Revised) 1",
+        url="https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-14.20150930.pdf",
+        min_chars=220,
+    ) is True
 
 
 def test_kansas_publications_hub_is_inventory_page() -> None:
@@ -3734,6 +3869,101 @@ async def test_extract_text_from_rtf_bytes_rejects_cloudflare_challenge_html() -
 
 
 @pytest.mark.asyncio
+async def test_extract_text_from_rtf_bytes_strips_embedded_binary_artifacts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRTFResult:
+        success = True
+        text = (
+            "TITLE 6. ECONOMIC SECURITY\n"
+            "CHAPTER 11. DEPARTMENT OF ECONOMIC SECURITY\n"
+            "Authority: A.R.S. § 41-1954 et seq.\n"
+            "00d0c9ea79f9bace118c8200aa004ba90b0200000003000000e0c9ea79f9bace118c8200aa004ba90b46000000\n"
+            "504b030414000600080000002100e9de0fbfff0000001c020000130000005b436f6e74656e745f54797065735d2e786d6c\n"
+            "[Content_Types].xml\n"
+            "R6-11-101. Definitions and Location of Definitions."
+        )
+
+    class FakeRTFExtractor:
+        def extract(self, file_path):
+            return FakeRTFResult()
+
+    monkeypatch.setattr(file_converter_module, "RTFExtractor", FakeRTFExtractor)
+
+    extracted = await scraper_module._extract_text_from_rtf_bytes_with_processor(
+        b"{\\rtf1\\ansi TITLE 6. ECONOMIC SECURITY}",
+        source_url="https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
+    )
+
+    assert "TITLE 6. ECONOMIC SECURITY" in extracted
+    assert "R6-11-101. Definitions and Location of Definitions." in extracted
+    assert "[Content_Types].xml" not in extracted
+    assert "504b0304" not in extracted
+    assert "00d0c9ea79f9bace" not in extracted
+
+
+@pytest.mark.asyncio
+async def test_extract_text_from_rtf_bytes_strips_style_catalog_and_rtf_markers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRTFResult:
+        success = True
+        text = (
+            "TITLE 18. ENVIRONMENTAL QUALITY\n"
+            "CHAPTER 4. DEPARTMENT OF ENVIRONMENTAL QUALITY - SAFE DRINKING WATER\n"
+            "RTF41525449434c455f34\n"
+            "Normal; heading 1; heading 2; Default Paragraph Font; Table Grid; Grid Table 1 Light; Smart Hyperlink; Mention;\n"
+            "R18-4-101. Authority and Purpose"
+        )
+
+    class FakeRTFExtractor:
+        def extract(self, file_path):
+            return FakeRTFResult()
+
+    monkeypatch.setattr(file_converter_module, "RTFExtractor", FakeRTFExtractor)
+
+    extracted = await scraper_module._extract_text_from_rtf_bytes_with_processor(
+        b"{\\rtf1\\ansi TITLE 18. ENVIRONMENTAL QUALITY}",
+        source_url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    )
+
+    assert "TITLE 18. ENVIRONMENTAL QUALITY" in extracted
+    assert "R18-4-101. Authority and Purpose" in extracted
+    assert "RTF41525449434c455f34" not in extracted
+    assert "Normal; heading 1;" not in extracted
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_replaces_bad_rtf_title(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRTFResult:
+        success = True
+        text = (
+            "TITLE 18. ENVIRONMENTAL QUALITY\n"
+            "CHAPTER 4. DEPARTMENT OF ENVIRONMENTAL QUALITY - SAFE DRINKING WATER\n"
+            "R18-4-101. Authority and Purpose"
+        )
+
+    class FakeRTFExtractor:
+        def extract(self, file_path):
+            return FakeRTFResult()
+
+    monkeypatch.setattr(file_converter_module, "RTFExtractor", FakeRTFExtractor)
+
+    normalized_title, normalized_text = await scraper_module._normalize_candidate_document_content(
+        url="https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        title=(
+            "Please note that the Chapter you are about to replace may have rules still in effect after the publication date of this supplement. Therefore,"
+        ),
+        text="{\\rtf1\\ansi TITLE 18. ENVIRONMENTAL QUALITY}",
+    )
+
+    assert normalized_title == "TITLE 18. ENVIRONMENTAL QUALITY"
+    assert "R18-4-101. Authority and Purpose" in normalized_text
+
+
+@pytest.mark.asyncio
 async def test_scrape_pdf_candidate_url_uses_playwright_download_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeResponse:
         status_code = 403
@@ -5461,6 +5691,75 @@ async def test_scrape_utah_rule_detail_via_public_download_uses_html_attachment(
     assert scraped.method_used == "utah_public_getfile_html"
     assert "R70-101-1. Authority and Purpose." in scraped.text
     assert scraped.title == "R70-101. Bedding, Upholstered Furniture, and Quilted Clothing"
+
+
+@pytest.mark.asyncio
+async def test_scrape_utah_rule_detail_via_public_download_reuses_bootstrap_metadata_cache(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, *, status_code=200, headers=None, text="", json_data=None, content=b""):
+            self.status_code = status_code
+            self.headers = headers or {}
+            self.text = text
+            self._json_data = json_data
+            self.content = content or text.encode("utf-8")
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise scraper_module.requests.HTTPError(f"status {self.status_code}")
+
+        def json(self):
+            return self._json_data
+
+    payload = [
+        {
+            "programs": [
+                {
+                    "rules": [
+                        {
+                            "referenceNumber": "R70-101",
+                            "name": "Bedding, Upholstered Furniture, and Quilted Clothing",
+                            "htmlDownload": "uac-html/test-rule.html",
+                            "htmlDownloadName": "R70-101.html",
+                            "linkToRule": "R70-101/Current Rules",
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+    observed: list[str] = []
+
+    def fake_get(url, timeout=0, headers=None):
+        observed.append(url)
+        if url.endswith("/R51/Current%20Rules"):
+            return FakeResponse(json_data=payload)
+        if "api/public/getfile/uac-html/test-rule.html/R70-101.html" in url:
+            return FakeResponse(
+                headers={"content-type": "text/html"},
+                text="<html><body><h1>R70-101. Bedding</h1><p>R70-101-1. Authority and Purpose.</p></body></html>",
+            )
+        raise AssertionError(f"Unexpected URL {url}")
+
+    monkeypatch.setattr(scraper_module, "_UTAH_RULE_DETAIL_METADATA_CACHE", {})
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    urls = scraper_module._candidate_utah_rule_urls_from_public_api(
+        url="https://adminrules.utah.gov/public/search//Current%20Rules",
+        limit=1,
+    )
+
+    assert urls == ["https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules"]
+
+    scraped = await scraper_module._scrape_utah_rule_detail_via_public_download(urls[0])
+
+    assert scraped is not None
+    assert scraped.method_used == "utah_public_getfile_html"
+    assert observed == [
+        "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R51/Current%20Rules",
+        "https://adminrules.utah.gov/api/public/getfile/uac-html/test-rule.html/R70-101.html",
+    ]
 
 
 def test_candidate_utah_rule_urls_from_public_api_uses_narrow_prefix_fallback_for_broad_seed(

@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 _BLOCKING_FETCH_EXECUTOR = ThreadPoolExecutor(max_workers=8)
 _STATE_WORKER_EXECUTOR = ThreadPoolExecutor(max_workers=4)
+_UTAH_RULE_DETAIL_METADATA_CACHE: Dict[str, Dict[str, Any]] = {}
 
 
 async def _run_blocking_fetch(fetch_callable: Any, request: Any) -> Any:
@@ -624,6 +625,23 @@ _RTF_CONTENT_START_RE = re.compile(
 _RTF_SPLIT_WORD_RE = re.compile(r"\b([A-Za-z]{1,8})(?: |\n)([A-Za-z]{1,12})\b")
 _RTF_EXTRACTION_NOISE_RE = re.compile(
     r"Times New Roman;|Arial;|Calibri;|Aptos;|Cambria Math;|Default Paragraph Font|Normal Table|panose",
+    re.IGNORECASE,
+)
+_RTF_ARCHIVE_ARTIFACT_RE = re.compile(
+    r"(?:\[Content_Types\]\.xml|_rels/\.rels|theme/theme(?:Manager|1)?\.xml)",
+    re.IGNORECASE,
+)
+_RTF_INLINE_BINARY_BLOB_RE = re.compile(
+    r"(?:\b(?:[0-9A-Fa-f]{2}){24,}\b|\b(?:504b0304|d0cf11e0a1b11ae1)[0-9A-Fa-f]{24,}\b)",
+    re.IGNORECASE,
+)
+_RTF_MARKER_LINE_RE = re.compile(r"^RTF[0-9A-F_]{8,}$", re.IGNORECASE)
+_RTF_STYLE_CATALOG_LINE_RE = re.compile(
+    r"(?:^|;\s*)(?:Normal|Default Paragraph Font|Body Text|List Bullet|List Number|Heading\s+\d+|"
+    r"Table(?:\s+[A-Za-z0-9]+)*|Grid Table|Plain Table|List Table|Colorful Grid|Colorful List|"
+    r"Light (?:Shading|List|Grid)|Medium (?:Shading|List|Grid)|Dark List|TOC Heading|"
+    r"Subtitle|Title|Quote|Intense Quote|Bibliography|Plain Text|Hyperlink|FollowedHyperlink|Mention|"
+    r"Smart Hyperlink|Smart Link|Hashtag|Unresolved Mention)",
     re.IGNORECASE,
 )
 _RTF_COMMON_JOINED_WORDS = {
@@ -3347,6 +3365,7 @@ def _candidate_utah_rule_urls_from_public_api(*, url: str, limit: int = 24) -> L
                             "https://adminrules.utah.gov/public/rule/",
                             link_to_rule.replace(" ", "%20"),
                         )
+                        _cache_utah_rule_detail_metadata(candidate_url, rule)
                         key = _url_key(candidate_url)
                         if key and key not in seen:
                             seen.add(key)
@@ -3693,6 +3712,28 @@ def _utah_rule_type_from_url(url: str) -> str:
         return "Current Rules"
     value = str(match.group(1) or "").replace("%20", " ").replace("+", " ").strip()
     return value or "Current Rules"
+
+
+def _utah_rule_detail_cache_key(url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    return parsed._replace(query="", fragment="").geturl().lower().rstrip("/")
+
+
+def _cache_utah_rule_detail_metadata(url: str, rule: Dict[str, Any]) -> None:
+    cache_key = _utah_rule_detail_cache_key(url)
+    if not cache_key or not isinstance(rule, dict):
+        return
+    _UTAH_RULE_DETAIL_METADATA_CACHE[cache_key] = dict(rule)
+
+
+def _get_cached_utah_rule_detail_metadata(url: str) -> Optional[Dict[str, Any]]:
+    cache_key = _utah_rule_detail_cache_key(url)
+    if not cache_key:
+        return None
+    cached_rule = _UTAH_RULE_DETAIL_METADATA_CACHE.get(cache_key)
+    if not isinstance(cached_rule, dict):
+        return None
+    return dict(cached_rule)
 
 
 def _extract_text_from_downloaded_html_document(document_html: str) -> str:
@@ -6091,31 +6132,43 @@ async def _scrape_utah_rule_detail_via_public_download(url: str) -> Optional[Any
             "(KHTML, like Gecko) Chrome/123.0 Safari/537.36"
         ),
     }
-    search_url = (
-        "https://adminrules.utah.gov/api/public/searchRuleDataTotal/"
-        f"{quote(reference_number, safe='')}/{quote(rule_type, safe='')}"
-    )
 
-    try:
-        search_response = requests.get(search_url, timeout=35, headers=headers)
-        search_response.raise_for_status()
-        payload = search_response.json()
-    except Exception:
-        return None
+    async def _requests_get_response(fetch_url: str, *, timeout: float, request_headers: Dict[str, str]) -> Any:
+        response = await asyncio.to_thread(
+            requests.get,
+            fetch_url,
+            timeout=timeout,
+            headers=request_headers,
+        )
+        response.raise_for_status()
+        return response
 
     decoded_rule_path = unquote(parsed.path or "")
-    matched_rule: Optional[Dict[str, Any]] = None
-    for rule in _iter_utah_public_search_rules(payload):
-        rule_reference = str(rule.get("referenceNumber") or "").strip().upper()
-        link_to_rule = str(rule.get("linkToRule") or "").strip()
-        if rule_reference == reference_number:
-            matched_rule = rule
-            break
-        if link_to_rule and decoded_rule_path.endswith(link_to_rule):
-            matched_rule = rule
-            break
+    matched_rule = _get_cached_utah_rule_detail_metadata(url)
     if matched_rule is None:
-        return None
+        search_url = (
+            "https://adminrules.utah.gov/api/public/searchRuleDataTotal/"
+            f"{quote(reference_number, safe='')}/{quote(rule_type, safe='')}"
+        )
+
+        try:
+            search_response = await _requests_get_response(search_url, timeout=35, request_headers=headers)
+            payload = search_response.json()
+        except Exception:
+            return None
+
+        for rule in _iter_utah_public_search_rules(payload):
+            rule_reference = str(rule.get("referenceNumber") or "").strip().upper()
+            link_to_rule = str(rule.get("linkToRule") or "").strip()
+            if rule_reference == reference_number:
+                matched_rule = rule
+                break
+            if link_to_rule and decoded_rule_path.endswith(link_to_rule):
+                matched_rule = rule
+                break
+        if matched_rule is None:
+            return None
+        _cache_utah_rule_detail_metadata(url, matched_rule)
 
     title = str(matched_rule.get("name") or reference_number).strip()
     if title and not title.startswith(reference_number):
@@ -6129,12 +6182,11 @@ async def _scrape_utah_rule_detail_via_public_download(url: str) -> Optional[Any
             f"{html_download}/{quote(html_download_name, safe='')}"
         )
         try:
-            html_response = requests.get(
+            html_response = await _requests_get_response(
                 html_url,
                 timeout=35,
-                headers={**headers, "Accept": "*/*"},
+                request_headers={**headers, "Accept": "*/*"},
             )
-            html_response.raise_for_status()
             if "text/html" in str(html_response.headers.get("content-type") or "").lower():
                 extracted_text = _extract_text_from_downloaded_html_document(html_response.text)
                 if extracted_text:
@@ -6159,12 +6211,11 @@ async def _scrape_utah_rule_detail_via_public_download(url: str) -> Optional[Any
             f"{pdf_download}/{quote(pdf_download_name, safe='')}"
         )
         try:
-            pdf_response = requests.get(
+            pdf_response = await _requests_get_response(
                 pdf_url,
                 timeout=35,
-                headers={**headers, "Accept": "application/pdf,*/*"},
+                request_headers={**headers, "Accept": "application/pdf,*/*"},
             )
-            pdf_response.raise_for_status()
             extracted_text = await _extract_text_from_pdf_bytes_with_processor(pdf_response.content or b"", source_url=pdf_url)
             extracted_text = str(extracted_text or "").strip()
             if extracted_text:
@@ -6538,6 +6589,23 @@ def _title_from_extracted_pdf_text(*, text: str, url: str) -> str:
 
 def _title_from_extracted_rtf_text(*, text: str, url: str) -> str:
     return _title_from_extracted_pdf_text(text=text, url=url)
+
+
+def _looks_like_bad_rtf_title(title: str) -> bool:
+    value = re.sub(r"\s+", " ", str(title or "")).strip()
+    if not value:
+        return True
+    if _RTF_CONTENT_PREFIX_RE.search(value[:256]):
+        return True
+    if _RTF_MARKER_LINE_RE.fullmatch(value):
+        return True
+    if value.lower().startswith(("please note that the chapter", "this is an unofficial version")):
+        return True
+    if _RTF_STYLE_CATALOG_LINE_RE.search(value) and value.count(";") >= 3:
+        return True
+    if len(value.split()) >= 18 and not re.match(r"^(?:title|chapter|article|section|rule|r\d{1,2}-\d{1,2}-\d{2,4})\b", value, re.IGNORECASE):
+        return True
+    return False
 
 
 def _title_from_california_westlaw_document_text(*, text: str, url: str) -> str:
@@ -6914,8 +6982,11 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
         extracted_text = str(extracted_text or "").strip()
         if extracted_text and not _RTF_CONTENT_PREFIX_RE.search(extracted_text[:1024]):
             normalized_text = extracted_text
-            if not normalized_title or _RTF_CONTENT_PREFIX_RE.search(normalized_title[:1024]):
-                normalized_title = _title_from_extracted_rtf_text(text=normalized_text, url=url)
+            extracted_title = _title_from_extracted_rtf_text(text=normalized_text, url=url)
+            if extracted_title and _looks_like_bad_rtf_title(normalized_title):
+                normalized_title = extracted_title
+            elif not normalized_title or _RTF_CONTENT_PREFIX_RE.search(normalized_title[:1024]):
+                normalized_title = extracted_title
 
     if (
         normalized_title.lower() == "view document - california code of regulations"
@@ -7158,6 +7229,37 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
                 )
         return repaired
 
+    def _strip_embedded_binary_artifacts(value: str) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+
+        cleaned_lines: List[str] = []
+        for raw_line in text.splitlines():
+            line = re.sub(r"\s+", " ", str(raw_line or "")).strip()
+            if not line:
+                continue
+            if _RTF_MARKER_LINE_RE.fullmatch(line):
+                continue
+            if _RTF_ARCHIVE_ARTIFACT_RE.search(line):
+                continue
+            if line.count(";") >= 8 and _RTF_STYLE_CATALOG_LINE_RE.search(line):
+                continue
+
+            line = _RTF_INLINE_BINARY_BLOB_RE.sub(" ", line)
+            line = re.sub(r"\s+", " ", line).strip()
+            if not line:
+                continue
+
+            compact = re.sub(r"[^0-9A-Fa-f]", "", line)
+            compact_ratio = (len(compact) / max(len(line), 1)) if line else 0.0
+            if len(compact) >= 48 and compact_ratio >= 0.7:
+                continue
+
+            cleaned_lines.append(line)
+
+        return "\n".join(cleaned_lines).strip()
+
     def _fallback_extract_text(value: str) -> str:
         if not value:
             return ""
@@ -7195,7 +7297,9 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
             cleaned = re.sub(r"\s+", " ", raw_line).strip()
             if cleaned:
                 lines.append(cleaned)
-        return _repair_split_rtf_words(_trim_leading_rtf_noise("\n".join(lines).strip()))
+        return _repair_split_rtf_words(
+            _strip_embedded_binary_artifacts(_trim_leading_rtf_noise("\n".join(lines).strip()))
+        )
 
     def _fallback_extract() -> str:
         try:
@@ -7206,6 +7310,9 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
 
     def _score_extracted_text(value: str) -> float:
         text = str(value or "").strip()
+        if not text:
+            return float("-inf")
+        text = _strip_embedded_binary_artifacts(text)
         if not text:
             return float("-inf")
         prefix = text[:4000]
@@ -7239,10 +7346,14 @@ async def _extract_text_from_rtf_bytes_with_processor(rtf_bytes: bytes, *, sourc
 
         extractor = RTFExtractor()
         result = await asyncio.to_thread(extractor.extract, temp_path)
-        extracted_text = _trim_leading_rtf_noise(str(getattr(result, "text", "") or "").strip())
+        extracted_text = _strip_embedded_binary_artifacts(
+            _trim_leading_rtf_noise(str(getattr(result, "text", "") or "").strip())
+        )
         fallback_text = _best_fallback_extract()
         if getattr(result, "success", False) and extracted_text:
-            extracted_text = _repair_split_rtf_words(_trim_leading_rtf_noise(extracted_text))
+            extracted_text = _repair_split_rtf_words(
+                _strip_embedded_binary_artifacts(_trim_leading_rtf_noise(extracted_text))
+            )
             if _score_extracted_text(fallback_text) > _score_extracted_text(extracted_text):
                 return fallback_text
             return extracted_text
@@ -7583,9 +7694,23 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     query = parse_qs(parsed.query or "")
     official_index_page = _looks_like_official_rule_index_page(text=body, title=title_value, url=url_value)
     official_index_can_be_substantive = host == "sdlegislature.gov" and path.rstrip("/") == "/Rules/Administrative"
+    tennessee_official_rule_pdf = False
     alaska_official_print_section = False
     alaska_print_section_id = ""
     alaska_print_section_cite = ""
+    if host == "sharetngov.tnsosfiles.com" and path.lower().startswith("/sos/rules/") and path.lower().endswith(".pdf"):
+        filename = path.rsplit("/", 1)[-1]
+        chapter_id = ""
+        if filename.lower().endswith(".pdf"):
+            chapter_id = filename[:-4].split(".", 1)[0].strip()
+        tennessee_hay = " ".join([title_value, body]).lower()
+        tennessee_official_rule_pdf = (
+            len(body) >= max(8000, int(min_chars))
+            and bool(chapter_id)
+            and re.fullmatch(r"\d{4}-\d{2}-\d{2}", chapter_id) is not None
+            and ("tenncare" in tennessee_hay or "chapter" in tennessee_hay)
+            and ("authority:" in tennessee_hay or "rule" in tennessee_hay or "rules" in tennessee_hay)
+        )
     if host == "www.akleg.gov" and path == "/basis/aac.asp":
         media = str((query.get("media") or [""])[0]).strip().lower()
         sec_start = str((query.get("secStart") or [""])[0]).strip()
@@ -7622,9 +7747,9 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         return False
     if _looks_like_forum_page(text=body, title=title_value, url=url_value):
         return False
-    if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value):
+    if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value) and not tennessee_official_rule_pdf:
         return False
-    if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value) and not official_index_can_be_substantive:
+    if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value) and not official_index_can_be_substantive and not tennessee_official_rule_pdf:
         return False
     if _looks_like_shallow_montana_inventory_page(text=body, title=title_value, url=url_value):
         return False
@@ -7684,11 +7809,13 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
             return False
     if title_value and _looks_like_placeholder_text(title_value) and not official_index_can_be_substantive and not arizona_official_rule_document:
         return False
-    if _looks_like_placeholder_text(body) and not official_index_can_be_substantive and not arizona_official_rule_document:
+    if _looks_like_placeholder_text(body) and not official_index_can_be_substantive and not arizona_official_rule_document and not tennessee_official_rule_pdf:
         return False
-    if not _has_admin_signal(text=body, title=title_value, url=url_value):
+    if not _has_admin_signal(text=body, title=title_value, url=url_value) and not tennessee_official_rule_pdf:
         return False
     if short_alaska_official_section:
+        return True
+    if tennessee_official_rule_pdf:
         return True
     if not official_index_can_be_substantive and not _LEGAL_CONTENT_SIGNAL_RE.search(body):
         return False
@@ -8862,7 +8989,10 @@ async def _agentic_discover_admin_state_blocks(
         # without waiting for slower search/index fetches to expand first.
         if state_code == "UT":
             seen_utah_bootstrap_rule_keys: set[str] = set()
-            utah_direct_seed_limit = min(max(1, int(max_fetch_per_state)), 4)
+            utah_bootstrap_limit = min(
+                max(1, int(max_fetch_per_state)),
+                8 if per_state_budget_s >= 90.0 else 4,
+            )
             for seed_url in ordered_seed_urls:
                 if not _is_immediate_direct_detail_candidate_url(seed_url):
                     continue
@@ -8873,11 +9003,10 @@ async def _agentic_discover_admin_state_blocks(
                 candidate_urls.append(seed_url)
                 utah_api_rule_urls.append(seed_url)
                 source_breakdown["utah_direct_seed"] = int(source_breakdown.get("utah_direct_seed", 0)) + 1
-                if len(utah_api_rule_urls) >= utah_direct_seed_limit:
+                if len(utah_api_rule_urls) >= utah_bootstrap_limit:
                     break
 
-            utah_bootstrap_target = min(max(1, int(max_fetch_per_state)), 4)
-            utah_seed_limit = max(0, utah_bootstrap_target - len(utah_api_rule_urls))
+            utah_seed_limit = max(0, utah_bootstrap_limit - len(utah_api_rule_urls))
             utah_bootstrap_seeds = sorted(
                 ordered_seed_urls[:6],
                 key=lambda value: (
@@ -9638,6 +9767,56 @@ async def _agentic_discover_admin_state_blocks(
             *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
         ]
 
+        if state_code == "AZ" and prioritized_seed_document_urls:
+            az_batch_rule_urls = prioritized_seed_document_urls[: min(len(prioritized_seed_document_urls), max_fetch, 6)]
+            az_batch_timeout_s = max(
+                1.0,
+                min(20.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+            )
+            az_batch_tasks = []
+            for rule_url in az_batch_rule_urls:
+                lower_rule_url = str(rule_url or "").lower()
+                if lower_rule_url.endswith(".pdf") or ".pdf?" in lower_rule_url:
+                    az_batch_tasks.append(
+                        asyncio.wait_for(
+                            _scrape_pdf_candidate_url_with_processor(rule_url),
+                            timeout=az_batch_timeout_s,
+                        )
+                    )
+                elif lower_rule_url.endswith(".rtf") or ".rtf?" in lower_rule_url:
+                    az_batch_tasks.append(
+                        asyncio.wait_for(
+                            _scrape_rtf_candidate_url_with_processor(rule_url),
+                            timeout=az_batch_timeout_s,
+                        )
+                    )
+                else:
+                    az_batch_tasks.append(
+                        asyncio.wait_for(
+                            live_scraper.scrape(rule_url),
+                            timeout=az_batch_timeout_s,
+                        )
+                    )
+
+            if az_batch_tasks:
+                inspected_urls += len(az_batch_rule_urls)
+                az_batch_results = await asyncio.gather(*az_batch_tasks, return_exceptions=True)
+                for rule_url, az_scraped in zip(az_batch_rule_urls, az_batch_results):
+                    if isinstance(az_scraped, Exception) or az_scraped is None:
+                        continue
+
+                    az_text = str(getattr(az_scraped, "text", "") or "").strip()
+                    az_title = str(getattr(az_scraped, "title", "") or "").strip()
+                    az_provenance = getattr(az_scraped, "extraction_provenance", None) or {}
+                    az_method_value = None
+                    if isinstance(az_provenance, dict):
+                        az_method_value = az_provenance.get("method")
+                    if az_method_value is None:
+                        az_method_value = getattr(az_scraped, "method_used", None)
+                    await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    if len(statutes) >= max_fetch:
+                        break
+
         prioritized_utah_seed_rule_urls: List[str] = []
         if state_code == "UT" and utah_api_rule_urls:
             seen_utah_rule_keys: set[str] = set()
@@ -9707,7 +9886,7 @@ async def _agentic_discover_admin_state_blocks(
                 continue
 
             inspected_urls += len(batch_rule_urls)
-            batch_timeout_s = max(1.0, min(25.0, per_state_budget_s - (time.monotonic() - state_start)))
+            batch_timeout_s = max(1.0, min(40.0, per_state_budget_s - (time.monotonic() - state_start)))
             batch_results = await asyncio.gather(
                 *[
                     asyncio.wait_for(
@@ -9735,6 +9914,11 @@ async def _agentic_discover_admin_state_blocks(
                 if len(statutes) >= max_fetch:
                     break
 
+        utah_official_bootstrap_recovered_rules = (
+            state_code == "UT"
+            and bool(prioritized_utah_seed_rule_urls)
+            and len(statutes) > 0
+        )
         ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
         if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
@@ -10185,35 +10369,55 @@ async def _agentic_discover_admin_state_blocks(
                 oklahoma_method_value = getattr(oklahoma_scraped, "method_used", None)
             await _append_document_if_rule(rule_url, oklahoma_title, oklahoma_text, oklahoma_method_value)
 
-        for rule_url in prioritized_tennessee_seed_rule_urls:
+        tennessee_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+        for batch_start in range(0, len(prioritized_tennessee_seed_rule_urls), tennessee_batch_size):
             if len(statutes) >= max_fetch:
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
             if time.monotonic() >= preloop_budget_deadline:
                 break
-            if _url_key(rule_url) in direct_doc_urls:
-                continue
-            inspected_urls += 1
-            try:
-                tennessee_scraped = await asyncio.wait_for(
-                    _scrape_pdf_candidate_url_with_processor(rule_url),
-                    timeout=20.0,
-                )
-            except Exception:
-                tennessee_scraped = None
-            if tennessee_scraped is None:
+
+            remaining_slots = max_fetch - len(statutes)
+            batch_rule_urls = [
+                rule_url
+                for rule_url in prioritized_tennessee_seed_rule_urls[batch_start : batch_start + tennessee_batch_size]
+                if _url_key(rule_url) not in direct_doc_urls
+            ][:remaining_slots]
+            if not batch_rule_urls:
                 continue
 
-            tennessee_text = str(getattr(tennessee_scraped, "text", "") or "").strip()
-            tennessee_title = str(getattr(tennessee_scraped, "title", "") or "").strip()
-            tennessee_provenance = getattr(tennessee_scraped, "extraction_provenance", None) or {}
-            tennessee_method_value = None
-            if isinstance(tennessee_provenance, dict):
-                tennessee_method_value = tennessee_provenance.get("method")
-            if tennessee_method_value is None:
-                tennessee_method_value = getattr(tennessee_scraped, "method_used", None)
-            await _append_document_if_rule(rule_url, tennessee_title, tennessee_text, tennessee_method_value)
+            inspected_urls += len(batch_rule_urls)
+            batch_timeout_s = max(
+                1.0,
+                min(12.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+            )
+            batch_results = await asyncio.gather(
+                *[
+                    asyncio.wait_for(
+                        _scrape_pdf_candidate_url_with_processor(rule_url),
+                        timeout=batch_timeout_s,
+                    )
+                    for rule_url in batch_rule_urls
+                ],
+                return_exceptions=True,
+            )
+
+            for rule_url, tennessee_scraped in zip(batch_rule_urls, batch_results):
+                if isinstance(tennessee_scraped, Exception) or tennessee_scraped is None:
+                    continue
+
+                tennessee_text = str(getattr(tennessee_scraped, "text", "") or "").strip()
+                tennessee_title = str(getattr(tennessee_scraped, "title", "") or "").strip()
+                tennessee_provenance = getattr(tennessee_scraped, "extraction_provenance", None) or {}
+                tennessee_method_value = None
+                if isinstance(tennessee_provenance, dict):
+                    tennessee_method_value = tennessee_provenance.get("method")
+                if tennessee_method_value is None:
+                    tennessee_method_value = getattr(tennessee_scraped, "method_used", None)
+                await _append_document_if_rule(rule_url, tennessee_title, tennessee_text, tennessee_method_value)
+                if len(statutes) >= max_fetch:
+                    break
 
         for document_url in prioritized_seed_document_urls:
             if len(statutes) >= max_fetch:
@@ -10603,12 +10807,25 @@ async def _agentic_discover_admin_state_blocks(
             except Exception:
                 pass
 
+        vermont_official_seed_recovered_rules = (
+            state_code == "VT"
+            and len(statutes) > 0
+            and any(_url_key(seed_url) in direct_doc_urls for seed_url in prioritized_seed_document_urls)
+        )
+
         max_candidates = max(1, int(max_candidates_per_state))
-        pending = _build_initial_pending_candidates(
+        pending = [] if utah_official_bootstrap_recovered_rules else _build_initial_pending_candidates(
             ranked_urls=ranked_urls,
             seed_expansion_candidates=seed_expansion_candidates,
             max_candidates=max_candidates,
         )
+        if vermont_official_seed_recovered_rules:
+            pending = [
+                item
+                for item in pending
+                if urlparse(item[0]).netloc.lower() == "secure.vermont.gov"
+                and _is_immediate_direct_detail_candidate_url(item[0])
+            ]
         if state_code == "MT" and montana_bootstrap_document_urls:
             pending = [
                 item
