@@ -76,6 +76,50 @@ def _new_session_id() -> str:
     return f"mediator-{uuid.uuid4().hex[:8]}"
 
 
+class BatchStrategyResults(list):
+    """List-like batch result with summary metadata for backward compatibility."""
+
+    def __init__(self, strategies: List[Dict[str, Any] | None], errors: List[Dict[str, Any]]) -> None:
+        super().__init__(strategies)
+        self._errors = list(errors)
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "strategies": list(self),
+            "success_count": len(self) - len(self._errors),
+            "error_count": len(self._errors),
+            "errors": list(self._errors),
+        }
+
+    def __getitem__(self, item: Any) -> Any:
+        if isinstance(item, str):
+            return self.as_dict()[item]
+        return super().__getitem__(item)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.as_dict().get(key, default)
+
+
+class StrategyComparisonResults(list):
+    """List-like ranked comparison payload with dict-style summary access."""
+
+    def as_dict(self) -> Dict[str, Any]:
+        best_strategy = self[0]["strategy"] if self else None
+        return {
+            "best_strategy": best_strategy,
+            "ranked_strategies": list(self),
+            "summary": {"count": len(self)},
+        }
+
+    def __getitem__(self, item: Any) -> Any:
+        if isinstance(item, str):
+            return self.as_dict()[item]
+        return super().__getitem__(item)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.as_dict().get(key, default)
+
+
 @dataclass
 class MediatorState(BaseSession):
     """Tracks state across refinement rounds.
@@ -1327,7 +1371,7 @@ class OntologyMediator:
         scores: List[Any],  # List[CriticScore]
         context: Any,  # OntologyGenerationContext
         max_workers: int | None = None,
-    ) -> Dict[str, Any]:
+    ) -> BatchStrategyResults:
         """Suggest refinement strategies for a batch of ontologies.
 
         Applies :meth:`suggest_refinement_strategy` to each (ontology, score)
@@ -1345,11 +1389,10 @@ class OntologyMediator:
                 API compatibility.
 
         Returns:
-            Dict containing strategy results and summary counts:
-            - ``"strategies"`` — list of strategy dicts (or None if failed)
-            - ``"success_count"`` — number of successful recommendations
-            - ``"error_count"`` — number of failures
-            - ``"errors"`` — list of error payloads
+            A list-like batch result of strategies in original order. The
+            returned object also supports dict-style access for
+            ``"strategies"``, ``"success_count"``, ``"error_count"``, and
+            ``"errors"`` to preserve the newer helper contract.
 
         Raises:
             ValueError: If length of *scores* does not match *ontologies*.
@@ -1394,15 +1437,15 @@ class OntologyMediator:
                     "error": str(exc),
                 })
 
-        return {
-            "strategies": strategies,
-            "success_count": len(strategies) - len(errors),
-            "error_count": len(errors),
-            "errors": errors,
-        }
+        return BatchStrategyResults(strategies, errors)
 
-    def compare_strategies(self, strategies: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Compare a list of refinement strategies and return the best pick.
+    def compare_strategies(
+        self,
+        strategies_or_ontologies: List[Dict[str, Any]],
+        scores: Optional[List[Any]] = None,
+        context: Any = None,
+    ) -> StrategyComparisonResults:
+        """Compare strategies and return ranked results.
 
         Ranking criteria (in priority order):
         1. Priority label (critical > high > medium > low)
@@ -1410,29 +1453,40 @@ class OntologyMediator:
         3. Original index (stable sort)
 
         Args:
-            strategies: List of strategy dicts with ``priority`` and
-                ``estimated_impact`` fields.
+            strategies_or_ontologies: Either a list of strategy dicts or a list
+                of ontologies when ``scores`` and ``context`` are also passed.
+            scores: Optional score list for ontology comparison.
+            context: Optional ontology generation context for ontology comparison.
 
         Returns:
-            Dict with ``best_strategy``, ``ranked_strategies``, and ``summary``.
+            A list-like ranked result. It also supports dict-style access for
+            ``"best_strategy"``, ``"ranked_strategies"``, and ``"summary"``.
         """
+        if scores is not None or context is not None:
+            batch_result = self.batch_suggest_strategies(
+                strategies_or_ontologies,
+                scores or [],
+                context,
+            )
+            strategies = [strategy for strategy in batch_result if isinstance(strategy, dict)]
+        else:
+            strategies = [strategy for strategy in strategies_or_ontologies if isinstance(strategy, dict)]
+
         if not strategies:
-            return {
-                "best_strategy": None,
-                "ranked_strategies": [],
-                "summary": {"count": 0},
-            }
+            return StrategyComparisonResults([])
 
         priority_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
         ranked = []
         for idx, strategy in enumerate(strategies):
             priority_numeric = priority_map.get(strategy.get("priority", "low"), 1)
             impact = float(strategy.get("estimated_impact", 0.0))
+            priority_score = min(1.0, max(0.0, (priority_numeric / 4.0) * 0.7 + impact * 0.3))
             ranked.append({
                 "index": idx,
                 "strategy": strategy,
                 "priority_numeric": priority_numeric,
                 "estimated_impact": impact,
+                "priority_score": priority_score,
             })
 
         ranked.sort(
@@ -1446,12 +1500,7 @@ class OntologyMediator:
         for rank, item in enumerate(ranked, start=1):
             item["rank"] = rank
 
-        best_strategy = ranked[0]["strategy"]
-        return {
-            "best_strategy": best_strategy,
-            "ranked_strategies": ranked,
-            "summary": {"count": len(ranked)},
-        }
+        return StrategyComparisonResults(ranked)
 
     def render_refinement_strategy_tree(self, format: str = "mermaid") -> str:
         """Render the strategy decision flow used by ``suggest_refinement_strategy``.
