@@ -41,7 +41,7 @@ class OntologyExtractionError(ExtractionError):
     """Raised when ontology extraction fails (rules or LLM)."""
 
 
-class OntologyValidationError(ValidationError):
+class OntologyValidationError(ValidationError, ValueError):
     """Raised when ontology validation detects structural or semantic issues.
     
     Examples:
