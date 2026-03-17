@@ -13,11 +13,15 @@ Usage:
 """
 
 import os
-import yaml
 from dataclasses import dataclass, field, asdict
 from typing import Optional, Dict, Any
 from pathlib import Path
 import logging
+
+try:
+    import yaml
+except ModuleNotFoundError:
+    yaml = None
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +119,8 @@ class LogicConfig:
         """
         if not path.exists():
             raise FileNotFoundError(f"Configuration file not found: {path}")
+        if yaml is None:
+            raise ValueError("PyYAML is required to load logic config files")
         
         try:
             with open(path) as f:
@@ -246,6 +252,8 @@ class LogicConfig:
         Args:
             path: Output file path
         """
+        if yaml is None:
+            raise ValueError("PyYAML is required to save logic config files")
         with open(path, 'w') as f:
             yaml.safe_dump(self.to_dict(), f, default_flow_style=False)
         
@@ -274,7 +282,11 @@ def get_config() -> LogicConfig:
         config_path = Path('config.yaml')
         if config_path.exists():
             logger.info(f"Loading configuration from {config_path}")
-            _config = LogicConfig.from_file(config_path)
+            try:
+                _config = LogicConfig.from_file(config_path)
+            except ValueError as exc:
+                logger.warning("Falling back to environment config: %s", exc)
+                _config = LogicConfig.from_env()
         else:
             # Fall back to environment variables
             logger.info("Loading configuration from environment variables")
