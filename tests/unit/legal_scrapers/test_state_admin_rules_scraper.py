@@ -3757,6 +3757,21 @@ def test_arizona_official_document_group_key_ignores_non_official_documents() ->
     ) == ""
 
 
+def test_should_prefer_arizona_official_document_url_prefers_rtf_over_pdf() -> None:
+    assert scraper_module._should_prefer_arizona_official_document_url(
+        "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-03.pdf",
+    ) is True
+    assert scraper_module._should_prefer_arizona_official_document_url(
+        "https://apps.azsos.gov/public_services/Title_15/15-03.pdf",
+        "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+    ) is False
+    assert scraper_module._should_prefer_arizona_official_document_url(
+        "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-03.pdf",
+    ) is False
+
+
 def test_candidate_links_from_html_extracts_texas_appian_inventory_and_detail_urls() -> None:
     html = """
     <html><body>
@@ -7201,6 +7216,13 @@ def test_candidate_utah_rule_urls_from_public_api_accepts_api_seed(monkeypatch: 
     ]
 
 
+def test_url_key_normalizes_utah_current_rules_path_variants() -> None:
+    plus_url = "https://adminrules.utah.gov/public/rule/R51-2/Current+Rules"
+    escaped_url = "https://adminrules.utah.gov/public/rule/R51-2/Current%20Rules"
+
+    assert scraper_module._url_key(plus_url) == scraper_module._url_key(escaped_url)
+
+
 def test_initial_pending_candidates_prioritize_seed_expansions() -> None:
     ranked_urls = [
         ("https://adminrules.utah.gov/public/search/A/Current%20Rules", 4),
@@ -9546,6 +9568,125 @@ async def test_agentic_discovery_does_not_spend_full_budget_in_utah_prefetch(mon
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] >= 1
     assert result["report"]["UT"]["inspected_urls"] >= 1
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_utah_bootstrap_uses_six_rule_cap_for_standard_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
+    seeded_rule_urls = [
+        "https://adminrules.utah.gov/public/rule/R590-190/Current+Rules",
+        "https://adminrules.utah.gov/public/rule/R51-2/Current+Rules",
+        "https://adminrules.utah.gov/public/rule/R51-3/Current+Rules",
+        "https://adminrules.utah.gov/public/rule/R51-4/Current+Rules",
+    ]
+    api_rule_urls = [
+        "https://adminrules.utah.gov/public/rule/R51-2/Current%20Rules",
+        "https://adminrules.utah.gov/public/rule/R51-3/Current%20Rules",
+        "https://adminrules.utah.gov/public/rule/R51-4/Current%20Rules",
+        "https://adminrules.utah.gov/public/rule/R51-5/Current%20Rules",
+        "https://adminrules.utah.gov/public/rule/R51-7/Current%20Rules",
+        "https://adminrules.utah.gov/public/rule/R52-7/Current%20Rules",
+        "https://adminrules.utah.gov/public/rule/R58-1/Current%20Rules",
+        "https://adminrules.utah.gov/public/rule/R58-2/Current%20Rules",
+    ]
+    accepted_rule_urls = set(seeded_rule_urls + api_rule_urls[3:5])
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="Utah rules search shell.",
+                title="Utah Administrative Rules Search",
+                html="",
+                extraction_provenance={"method": "requests_only"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_scrape_utah_rule_detail_via_public_download(url: str):
+        if url not in accepted_rule_urls:
+            return None
+        rule_ref = url.split("/rule/", 1)[-1].split("/", 1)[0]
+        return SimpleNamespace(
+            url=url,
+            title=f"{rule_ref}. Utah Rule",
+            text=f"{rule_ref}. Utah administrative rule text with authority and implementation sections.",
+            html="",
+            links=[],
+            success=True,
+            method_used="utah_public_getfile_html",
+            extraction_provenance={"method": "utah_public_getfile_html"},
+        )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(
+        scraper_module,
+        "_extract_seed_urls_for_state",
+        lambda state_code, state_name: [seed_url, *seeded_rule_urls],
+    )
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_candidate_utah_rule_urls_from_public_api", lambda url, limit=24: list(api_rule_urls))
+    monkeypatch.setattr(scraper_module, "_scrape_utah_rule_detail_via_public_download", _fake_scrape_utah_rule_detail_via_public_download)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") in accepted_rule_urls)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["UT"],
+        max_candidates_per_state=8,
+        max_fetch_per_state=8,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+        per_state_budget_seconds=75.0,
+    )
+
+    assert result["status"] == "success"
+    assert result["report"]["UT"]["source_breakdown"]["utah_direct_seed"] == 4
+    assert result["report"]["UT"]["source_breakdown"]["utah_public_api"] == 2
+    assert result["report"]["UT"]["fetched_rules"] == 6
+    assert result["state_blocks"][0]["rules_count"] == 6
 
 
 @pytest.mark.anyio

@@ -2135,6 +2135,10 @@ def _score_candidate_url(url: str) -> int:
 
 def _url_key(url: str) -> str:
     normalized_url = urldefrag(str(url or "").strip()).url
+    parsed = urlparse(normalized_url)
+    if parsed.netloc.lower() == "adminrules.utah.gov":
+        normalized_path = re.sub(r"(?i)\+(rules)(?=$|[/?#])", r"%20\1", parsed.path or "")
+        normalized_url = parsed._replace(path=normalized_path).geturl()
     return normalized_url.lower().rstrip("/")
 
 
@@ -2146,6 +2150,14 @@ def _arizona_official_document_group_key(url: str) -> str:
     if not _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         return ""
     return re.sub(r"(?i)\.(?:pdf|rtf)$", "", path).lower()
+
+
+def _should_prefer_arizona_official_document_url(candidate_url: str, existing_url: str) -> bool:
+    candidate_group_key = _arizona_official_document_group_key(candidate_url)
+    existing_group_key = _arizona_official_document_group_key(existing_url)
+    if not candidate_group_key or candidate_group_key != existing_group_key:
+        return False
+    return _is_rtf_candidate_url(candidate_url) and _is_pdf_candidate_url(existing_url)
 
 
 def _gap_summary_host_key(host: str) -> str:
@@ -9497,7 +9509,7 @@ async def _agentic_discover_admin_state_blocks(
             seen_utah_bootstrap_rule_keys: set[str] = set()
             utah_bootstrap_limit = min(
                 max(1, int(max_fetch_per_state)),
-                8 if per_state_budget_s >= 90.0 else 4,
+                8 if per_state_budget_s >= 90.0 else 6 if per_state_budget_s >= 60.0 else 4,
             )
             for seed_url in ordered_seed_urls:
                 if not _is_immediate_direct_detail_candidate_url(seed_url):
@@ -10159,6 +10171,9 @@ async def _agentic_discover_admin_state_blocks(
         statutes: List[Dict[str, Any]] = []
         direct_doc_urls: set[str] = set()
         az_official_document_group_keys: set[str] = set()
+        az_official_document_doc_keys_by_group: Dict[str, str] = {}
+        statute_index_by_doc_key: Dict[str, int] = {}
+        kg_row_index_by_doc_key: Dict[str, int] = {}
         seed_expansion_candidates: List[tuple[str, int]] = []
         rules_by_host: Dict[str, int] = defaultdict(int)
         format_counts: Dict[str, int] = {"html": 0, "pdf": 0, "rtf": 0}
@@ -10218,18 +10233,76 @@ async def _agentic_discover_admin_state_blocks(
                     return False
             doc_key = _url_key(doc_url)
             az_group_key = _arizona_official_document_group_key(doc_url) if state_code == "AZ" else ""
+            doc_format = _document_format_for_url(doc_url)
             if doc_key in direct_doc_urls:
                 return False
             if az_group_key and az_group_key in az_official_document_group_keys:
-                return False
+                existing_doc_key = az_official_document_doc_keys_by_group.get(az_group_key, "")
+                if not _should_prefer_arizona_official_document_url(doc_url, existing_doc_key):
+                    return False
+                statute_index = statute_index_by_doc_key.get(existing_doc_key)
+                kg_row_index = kg_row_index_by_doc_key.get(existing_doc_key)
+                if statute_index is None or kg_row_index is None:
+                    return False
+
+                existing_statute = statutes[statute_index]
+                existing_doc_format = _document_format_for_url(existing_doc_key)
+                existing_section_name = str(existing_statute.get("section_name") or "").strip()
+                stored_section_name = doc_title or f"{state_name} Administrative Rules (agentic source {statute_index + 1})"
+                if _looks_like_bad_rtf_title(stored_section_name) and existing_section_name and not _looks_like_bad_rtf_title(existing_section_name):
+                    stored_section_name = existing_section_name
+                stored_text = doc_text.strip() or f"{stored_section_name}\nAdministrative rules source URL: {doc_url}"
+
+                direct_doc_urls.discard(existing_doc_key)
+                direct_doc_urls.add(doc_key)
+                az_official_document_doc_keys_by_group[az_group_key] = doc_key
+                statute_index_by_doc_key.pop(existing_doc_key, None)
+                statute_index_by_doc_key[doc_key] = statute_index
+                kg_row_index_by_doc_key.pop(existing_doc_key, None)
+                kg_row_index_by_doc_key[doc_key] = kg_row_index
+                if existing_doc_format != doc_format:
+                    format_counts[existing_doc_format] = max(0, int(format_counts.get(existing_doc_format, 0)) - 1)
+                    format_counts[doc_format] = int(format_counts.get(doc_format, 0)) + 1
+
+                existing_statute["section_name"] = stored_section_name
+                existing_statute["short_title"] = stored_section_name
+                existing_statute["full_text"] = stored_text
+                existing_statute["summary"] = stored_text[:500]
+                existing_statute["source_url"] = doc_url
+                structured_data = existing_statute.get("structured_data") or {}
+                if not isinstance(structured_data, dict):
+                    structured_data = {}
+                structured_data.update(
+                    {
+                        "type": "regulation",
+                        "agentic_discovery": True,
+                        "relaxed_recovery": bool(relaxed_recovery),
+                        "method_used": method_value,
+                        "source_domain": urlparse(doc_url).netloc,
+                    }
+                )
+                existing_statute["structured_data"] = structured_data
+
+                kg_rows[kg_row_index] = {
+                    **kg_rows[kg_row_index],
+                    "url": doc_url,
+                    "domain": urlparse(doc_url).netloc,
+                    "title": stored_section_name,
+                    "text": doc_text,
+                    "method_used": method_value,
+                    "query": query,
+                    "source": "agentic_web_archiving",
+                    "fetched_at": datetime.now().isoformat(),
+                }
+                return True
             direct_doc_urls.add(doc_key)
             if az_group_key:
                 az_official_document_group_keys.add(az_group_key)
+                az_official_document_doc_keys_by_group[az_group_key] = doc_key
             host_value = urlparse(doc_url).netloc.lower()
             if host_value:
                 visited_hosts.add(host_value)
                 rules_by_host[host_value] += 1
-            doc_format = _document_format_for_url(doc_url)
             format_counts[doc_format] = int(format_counts.get(doc_format, 0)) + 1
 
             section_number = f"A{len(statutes) + 1}"
@@ -10257,6 +10330,7 @@ async def _agentic_discover_admin_state_blocks(
                 },
             }
             statutes.append(statute)
+            statute_index_by_doc_key[doc_key] = len(statutes) - 1
             kg_rows.append(
                 {
                     "state_code": state_code,
@@ -10271,6 +10345,7 @@ async def _agentic_discover_admin_state_blocks(
                     "fetched_at": datetime.now().isoformat(),
                 }
             )
+            kg_row_index_by_doc_key[doc_key] = len(kg_rows) - 1
             return True
 
         prefetch_candidates: List[str] = []
