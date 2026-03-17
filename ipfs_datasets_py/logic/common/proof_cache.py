@@ -105,6 +105,7 @@ except ImportError:
     get_ipfs_backend = None  # type: ignore
 
 logger = logging.getLogger(__name__)
+_CID_FALLBACK_LOGGED = False
 
 
 @dataclass
@@ -297,7 +298,10 @@ class ProofCache:
             cid = cid_for_obj(query_obj)
             return cid
         except Exception as e:
-            logger.warning(f"CID computation failed, using fallback: {e}")
+            global _CID_FALLBACK_LOGGED
+            if not _CID_FALLBACK_LOGGED:
+                logger.warning(f"CID computation failed, using fallback: {e}")
+                _CID_FALLBACK_LOGGED = True
             # Fallback to simple hash
             import hashlib
             json_str = json.dumps(query_obj, sort_keys=True, default=str)

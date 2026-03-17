@@ -337,8 +337,8 @@ class TDFOLProver:
         # Initialize proof cache if enabled
         if self.enable_cache:
             try:
-                from .tdfol_proof_cache import get_global_proof_cache
-                self.proof_cache = get_global_proof_cache()
+                from ..common.proof_cache import get_global_cache
+                self.proof_cache = get_global_cache()
                 logger.info("TDFOL proof cache enabled")
             except Exception as e:
                 logger.warning(f"Failed to initialize proof cache: {e}")
@@ -502,8 +502,12 @@ class TDFOLProver:
                 strategy = self.selector.select_strategy(goal, self.kb)
                 logger.debug(f"Auto-selected strategy: {strategy.name} (priority: {strategy.get_priority()})")
             
+            # Reserve a small wrapper budget so wall-clock runtime stays within
+            # the caller-visible timeout, not just the delegated strategy budget.
+            strategy_timeout_ms = max(int(timeout_ms) - 5, 1)
+
             # Prove using strategy
-            result = strategy.prove(goal, self.kb, timeout_ms)
+            result = strategy.prove(goal, self.kb, strategy_timeout_ms)
             
             # Cache successful proof
             if result.is_proved() and self.proof_cache is not None:

@@ -45,7 +45,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
@@ -275,7 +275,7 @@ class Neo4jGraphLoader:
             "entity_type": entity_type,
             "confidence": float(entity.get("confidence", 0.0)),
             "ontology_id": ontology_id,
-            "loaded_at": datetime.utcnow().isoformat(),
+            "loaded_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         }
         
         # Add entity properties with prop_ prefix
@@ -341,7 +341,7 @@ class Neo4jGraphLoader:
                     "entity_type": entity_type,
                     "confidence": float(entity.get("confidence", 0.0)),
                     "ontology_id": ontology_id,
-                    "loaded_at": datetime.utcnow().isoformat(),
+                    "loaded_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
                 }
                 
                 # Add entity properties
@@ -412,7 +412,7 @@ class Neo4jGraphLoader:
             "relationship_type": relationship.get("type", "RELATED_TO"),
             "confidence": float(relationship.get("confidence", 0.0)),
             "ontology_id": ontology_id,
-            "loaded_at": datetime.utcnow().isoformat(),
+            "loaded_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         }
         
         # Add relationship properties
@@ -484,7 +484,7 @@ class Neo4jGraphLoader:
                         "relationship_type": rel.get("type", "RELATED_TO"),
                         "confidence": float(rel.get("confidence", 0.0)),
                         "ontology_id": ontology_id,
-                        "loaded_at": datetime.utcnow().isoformat(),
+                        "loaded_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
                     }
                     
                     if "properties" in rel:
