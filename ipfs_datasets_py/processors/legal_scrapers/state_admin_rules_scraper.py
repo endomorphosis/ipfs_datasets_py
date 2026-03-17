@@ -459,6 +459,10 @@ _LOW_VALUE_LINK_URL_RE = re.compile(
 
 _LIVE_FETCH_PREFERRED_HOSTS = {
     "iar.iga.in.gov",
+    "eregulations.ct.gov",
+    "rules.sos.ga.gov",
+    "www.coloradosos.gov",
+    "www.sos.state.co.us",
 }
 
 _TX_TRANSFER_INDEX_PATH_RE = re.compile(r"^/texreg/transfers(?:/|/index\.shtml)?$", re.IGNORECASE)
@@ -2628,7 +2632,7 @@ def _arizona_ranked_fetch_timeout_s(remaining_budget_s: float) -> float:
     remaining_budget = float(remaining_budget_s)
     if remaining_budget <= 6.0:
         return 0.0
-    return max(20.0, min(60.0, remaining_budget - 2.0))
+    return max(20.0, min(120.0, remaining_budget - 2.0))
 
 
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
@@ -4200,6 +4204,71 @@ async def _scrape_wyoming_rule_detail_via_ajax(url: str) -> Optional[Any]:
         success=True,
         method_used=method_name,
         extraction_provenance={"method": method_name},
+    )
+
+
+async def _scrape_georgia_rule_detail_via_ajax(url: str) -> Optional[Any]:
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+    path = parsed.path or ""
+    if host != "rules.sos.ga.gov" or not _GA_GAC_RULE_PATH_RE.fullmatch(path):
+        return None
+
+    session = requests.Session()
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": url,
+        "X-Requested-With": "XMLHttpRequest",
+    }
+
+    try:
+        shell_response = session.get(url, timeout=25, headers=headers)
+        shell_response.raise_for_status()
+    except Exception:
+        return None
+
+    shell_html = str(getattr(shell_response, "text", "") or "")
+    if not shell_html:
+        return None
+
+    try:
+        ajax_response = session.post(
+            "https://rules.sos.ga.gov/loadthedata.aspx",
+            timeout=25,
+            headers=headers,
+        )
+        ajax_response.raise_for_status()
+    except Exception:
+        return None
+
+    ajax_html = str(getattr(ajax_response, "text", "") or "")
+    if not ajax_html:
+        return None
+
+    text = _extract_text_from_downloaded_html_document(ajax_html)
+    if not text:
+        return None
+
+    title = ""
+    heading_match = re.search(r"<h2[^>]*>(.*?)</h2>", ajax_html, re.IGNORECASE | re.DOTALL)
+    if heading_match:
+        title = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", heading_match.group(1))).strip()
+    if not title:
+        title_match = re.search(r"<title[^>]*>([^<]+)</title>", shell_html, re.IGNORECASE)
+        if title_match:
+            title = unescape(title_match.group(1)).strip()
+    if not title:
+        title = f"Georgia Administrative Rule {path.rsplit('/', 1)[-1]}"
+
+    return SimpleNamespace(
+        url=url,
+        title=title,
+        text=text,
+        html=ajax_html,
+        links=[],
+        success=True,
+        method_used="georgia_rules_ajax",
+        extraction_provenance={"method": "georgia_rules_ajax"},
     )
 
 
@@ -9173,6 +9242,120 @@ def _filter_california_westlaw_links_for_depth(
     return ranked_links
 
 
+def _georgia_bootstrap_priority(url: str) -> int:
+    value = str(url or "").strip()
+    parsed = urlparse(value)
+    path = parsed.path or ""
+    score = _score_candidate_url(value)
+    if _GA_GAC_RULE_PATH_RE.fullmatch(path):
+        return score + 100
+    if _GA_GAC_SUBJECT_PATH_RE.fullmatch(path):
+        return score + 80
+    if _GA_GAC_CHAPTER_PATH_RE.fullmatch(path):
+        return score + 60
+    if _GA_GAC_DEPARTMENT_PATH_RE.fullmatch(path):
+        return score + 40
+    if path.rstrip("/").lower() == "/gac":
+        return score + 20
+    return score
+
+
+async def _discover_georgia_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    discovered_urls: List[str] = []
+    seen_document_keys: set[str] = set()
+    allowed_hosts = {"rules.sos.ga.gov"}
+    request_headers = {"User-Agent": "Mozilla/5.0"}
+
+    def _record(url: str) -> bool:
+        key = _url_key(url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(url)
+        return len(discovered_urls) >= max(1, int(limit))
+
+    def _dedupe(values: List[str]) -> List[str]:
+        deduped: List[str] = []
+        seen_keys: set[str] = set()
+        for value in values:
+            key = _url_key(value)
+            if not key or key in seen_keys:
+                continue
+            seen_keys.add(key)
+            deduped.append(value)
+        return deduped
+
+    async def _fetch_links(page_url: str, *, limit_n: int) -> List[str]:
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                page_url,
+                timeout=20,
+                headers=request_headers,
+            )
+            response.raise_for_status()
+            html = str(response.text or "")
+        except Exception:
+            return []
+
+        candidate_links = _candidate_links_from_html(
+            html,
+            base_host="rules.sos.ga.gov",
+            page_url=page_url,
+            limit=limit_n,
+            allowed_hosts=allowed_hosts,
+        )
+        candidate_links.sort(key=_georgia_bootstrap_priority, reverse=True)
+        return _dedupe(candidate_links)
+
+    root_url = "https://rules.sos.ga.gov/gac"
+    for seed_url in seed_urls:
+        seed_value = str(seed_url or "").strip()
+        parsed = urlparse(seed_value)
+        if parsed.netloc.lower() == "rules.sos.ga.gov" and (parsed.path or "").rstrip("/").lower() == "/gac":
+            root_url = seed_value.rstrip("/")
+            break
+
+    department_urls = [
+        link_url
+        for link_url in await _fetch_links(root_url, limit_n=64)
+        if _GA_GAC_DEPARTMENT_PATH_RE.fullmatch(urlparse(link_url).path or "")
+    ][:6]
+
+    chapter_urls: List[str] = []
+    for department_url in department_urls:
+        chapter_urls.extend(
+            link_url
+            for link_url in await _fetch_links(department_url, limit_n=32)
+            if _GA_GAC_CHAPTER_PATH_RE.fullmatch(urlparse(link_url).path or "")
+        )
+        if len(chapter_urls) >= 18:
+            break
+    chapter_urls = _dedupe(chapter_urls)[:18]
+
+    subject_urls: List[str] = []
+    for chapter_url in chapter_urls:
+        for link_url in await _fetch_links(chapter_url, limit_n=32):
+            path = urlparse(link_url).path or ""
+            if _GA_GAC_RULE_PATH_RE.fullmatch(path):
+                if _record(link_url):
+                    return discovered_urls
+                continue
+            if _GA_GAC_SUBJECT_PATH_RE.fullmatch(path):
+                subject_urls.append(link_url)
+        if len(subject_urls) >= 24:
+            break
+    subject_urls = _dedupe(subject_urls)[:24]
+
+    for subject_url in subject_urls:
+        for link_url in await _fetch_links(subject_url, limit_n=24):
+            if _GA_GAC_RULE_PATH_RE.fullmatch(urlparse(link_url).path or ""):
+                if _record(link_url):
+                    return discovered_urls
+
+    return discovered_urls
+
+
 async def _discover_california_westlaw_document_urls(
     *,
     seed_urls: List[str],
@@ -9740,8 +9923,62 @@ async def _agentic_discover_admin_state_blocks(
         candidate_urls: List[str] = []
         source_breakdown: Dict[str, int] = {}
         new_hampshire_bootstrap_diagnostics: Dict[str, Any] = {}
+        az_fetch_diagnostics: Dict[str, Any] = {}
         allowed_hosts = _allowed_discovery_hosts_for_state(state_code, state_name)
         state_rate_limit_metadata: Dict[str, Any] = {}
+
+        def _init_az_phase(name: str) -> Dict[str, Any]:
+            phase = az_fetch_diagnostics.get(name)
+            if isinstance(phase, dict):
+                return phase
+            phase = {
+                "attempted": 0,
+                "success": 0,
+                "timeout": 0,
+                "none": 0,
+                "error": 0,
+                "skipped": 0,
+                "fallback_success": 0,
+                "max_timeout_s": 0.0,
+                "max_elapsed_s": 0.0,
+                "samples": [],
+            }
+            az_fetch_diagnostics[name] = phase
+            return phase
+
+        def _record_az_phase(
+            name: str,
+            *,
+            url: str,
+            outcome: str,
+            timeout_s: float = 0.0,
+            elapsed_s: float = 0.0,
+            detail: str = "",
+        ) -> None:
+            if state_code != "AZ":
+                return
+            phase = _init_az_phase(name)
+            if outcome != "skipped":
+                phase["attempted"] = int(phase.get("attempted", 0)) + 1
+            phase[outcome] = int(phase.get(outcome, 0)) + 1
+            phase["max_timeout_s"] = max(float(phase.get("max_timeout_s", 0.0)), float(timeout_s or 0.0))
+            phase["max_elapsed_s"] = max(float(phase.get("max_elapsed_s", 0.0)), float(elapsed_s or 0.0))
+            samples = phase.get("samples")
+            if not isinstance(samples, list):
+                samples = []
+                phase["samples"] = samples
+            if len(samples) < 8 and (outcome in {"timeout", "error", "none", "fallback_success"} or float(elapsed_s or 0.0) >= 20.0):
+                sample: Dict[str, Any] = {
+                    "url": url,
+                    "outcome": outcome,
+                }
+                if timeout_s:
+                    sample["timeout_s"] = round(float(timeout_s), 2)
+                if elapsed_s:
+                    sample["elapsed_s"] = round(float(elapsed_s), 2)
+                if detail:
+                    sample["detail"] = detail[:160]
+                samples.append(sample)
 
         def _record_rate_limit_metadata(candidate: Any) -> None:
             nonlocal state_rate_limit_metadata
@@ -9958,6 +10195,7 @@ async def _agentic_discover_admin_state_blocks(
         montana_bootstrap_document_urls: List[str] = []
         california_bootstrap_document_urls: List[str] = []
         new_hampshire_bootstrap_document_urls: List[str] = []
+        georgia_bootstrap_document_urls: List[str] = []
         if state_code == "AL" and not seeded_direct_detail_urls:
             try:
                 alabama_bootstrap_document_urls = await asyncio.wait_for(
@@ -10210,6 +10448,22 @@ async def _agentic_discover_admin_state_blocks(
             if new_hampshire_bootstrap_document_urls:
                 source_breakdown["new_hampshire_archive_bootstrap"] = len(new_hampshire_bootstrap_document_urls)
 
+        if state_code == "GA" and not seeded_direct_detail_urls:
+            try:
+                georgia_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_georgia_rule_document_urls(
+                        seed_urls=ordered_seed_urls,
+                        limit=max_fetch_per_state,
+                    ),
+                    timeout=20.0,
+                )
+            except Exception:
+                georgia_bootstrap_document_urls = []
+            for document_url in georgia_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if georgia_bootstrap_document_urls:
+                source_breakdown["georgia_gac_bootstrap"] = len(georgia_bootstrap_document_urls)
+
         direct_detail_ready = bool(
             alabama_bootstrap_document_urls
             or hawaii_bootstrap_document_urls
@@ -10228,6 +10482,7 @@ async def _agentic_discover_admin_state_blocks(
             or montana_bootstrap_document_urls
             or california_bootstrap_document_urls
             or new_hampshire_bootstrap_document_urls
+            or georgia_bootstrap_document_urls
         ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
             max_fetch=max_fetch_per_state,
@@ -11205,6 +11460,11 @@ async def _agentic_discover_admin_state_blocks(
                 elif state_code == "NH":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_new_hampshire_archived_rule_detail(document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif state_code == "GA":
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_georgia_rule_detail_via_ajax(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "MT":
@@ -12207,6 +12467,9 @@ async def _agentic_discover_admin_state_blocks(
             wyoming_scraped = await _scrape_wyoming_rule_detail_via_ajax(url)
             if wyoming_scraped is not None:
                 return wyoming_scraped
+            georgia_scraped = await _scrape_georgia_rule_detail_via_ajax(url)
+            if georgia_scraped is not None:
+                return georgia_scraped
             utah_scraped = await _scrape_utah_rule_detail_via_public_download(url)
             if utah_scraped is not None:
                 return utah_scraped
@@ -12664,6 +12927,7 @@ async def _agentic_discover_admin_state_blocks(
             },
             "source_breakdown": source_breakdown,
             "new_hampshire_bootstrap_diagnostics": new_hampshire_bootstrap_diagnostics if state_code == "NH" else {},
+            "arizona_fetch_diagnostics": az_fetch_diagnostics if state_code == "AZ" else {},
             "timed_out": bool(state_elapsed_s >= per_state_budget_s and not statutes),
         }
         if state_rate_limit_metadata:

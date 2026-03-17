@@ -240,6 +240,31 @@ async def test_requests_only_retries_with_relaxed_ssl(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.anyio
+async def test_requests_only_extracts_links_from_static_html() -> None:
+    scraper = UnifiedWebScraper(ScraperConfig(timeout=5, extract_links=True))
+    scraper.session = SimpleNamespace(
+        get=lambda *_args, **_kwargs: _FakeResponse(
+            content=(
+                b"<html><title>Rules</title><body>"
+                b'<a href="/gac/20">Department 20</a>'
+                b'<a href="https://example.gov/rule/1">Rule 1</a>'
+                b'<a href="javascript:;">Ignore</a>'
+                b"</body></html>"
+            ),
+            headers={"Content-Type": "text/html; charset=utf-8"},
+        )
+    )
+
+    result = await scraper._scrape_requests_only("https://rules.sos.ga.gov/gac")
+
+    assert result.success is True
+    assert result.links == [
+        {"url": "https://rules.sos.ga.gov/gac/20", "text": "Department 20"},
+        {"url": "https://example.gov/rule/1", "text": "Rule 1"},
+    ]
+
+
+@pytest.mark.anyio
 async def test_beautifulsoup_returns_pdf_bytes_and_text(monkeypatch: pytest.MonkeyPatch) -> None:
     pdf_bytes = b"%PDF-1.4 fake"
 

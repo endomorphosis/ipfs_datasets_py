@@ -4063,7 +4063,8 @@ def test_arizona_late_retry_timeout_uses_remaining_state_budget() -> None:
 
 
 def test_arizona_ranked_fetch_timeout_tracks_slow_host_budget() -> None:
-    assert scraper_module._arizona_ranked_fetch_timeout_s(90.0) == 60.0
+    assert scraper_module._arizona_ranked_fetch_timeout_s(90.0) == 88.0
+    assert scraper_module._arizona_ranked_fetch_timeout_s(150.0) == 120.0
     assert scraper_module._arizona_ranked_fetch_timeout_s(48.0) == 46.0
     assert scraper_module._arizona_ranked_fetch_timeout_s(22.0) == 20.0
     assert scraper_module._arizona_ranked_fetch_timeout_s(6.0) == 0.0
@@ -7762,6 +7763,13 @@ def test_prefers_live_fetch_for_vermont_lexis_sources() -> None:
 def test_prefers_live_fetch_for_oklahoma_rules_code_pages() -> None:
     assert scraper_module._prefers_live_fetch("https://rules.ok.gov/code?titleNum=10&sectionNum=10%3A1-1-1") is True
     assert scraper_module._prefers_live_fetch("https://rules.ok.gov/code") is False
+
+
+def test_prefers_live_fetch_for_georgia_colorado_and_connecticut_admin_rules_hosts() -> None:
+    assert scraper_module._prefers_live_fetch("https://rules.sos.ga.gov/gac") is True
+    assert scraper_module._prefers_live_fetch("https://www.sos.state.co.us/CCR/Welcome.do") is True
+    assert scraper_module._prefers_live_fetch("https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58") is True
+    assert scraper_module._prefers_live_fetch("https://eregulations.ct.gov/eRegsPortal/Browse/RCSA") is True
 
 
 def test_candidate_oklahoma_rule_urls_from_text_extracts_title_urls() -> None:

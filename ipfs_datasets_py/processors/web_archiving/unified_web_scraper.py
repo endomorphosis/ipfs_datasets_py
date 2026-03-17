@@ -23,6 +23,7 @@ making it resilient to various failure scenarios.
 import logging
 import anyio
 import glob
+import html
 import os
 import re
 import time
@@ -33,6 +34,7 @@ from typing import Dict, List, Optional, Any, Literal, Union, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from html.parser import HTMLParser
 from urllib.parse import urlparse, urljoin
 import hashlib
 
@@ -79,6 +81,59 @@ class ScraperResult:
 def _looks_like_browser_challenge_text(*, title: str, text: str, html: str) -> bool:
     hay = "\n".join([str(title or ""), str(text or ""), str(html or "")[:2000]])
     return bool(_BROWSER_CHALLENGE_TEXT_RE.search(hay))
+
+
+class _BasicAnchorExtractor(HTMLParser):
+    def __init__(self, *, base_url: str):
+        super().__init__(convert_charrefs=True)
+        self.base_url = base_url
+        self.links: List[Dict[str, str]] = []
+        self._current_href: Optional[str] = None
+        self._current_text: List[str] = []
+
+    def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
+        if tag.lower() != "a":
+            return
+        href = ""
+        for key, value in attrs:
+            if key.lower() == "href" and value:
+                href = value.strip()
+                break
+        if not href:
+            return
+        self._current_href = href
+        self._current_text = []
+
+    def handle_data(self, data: str) -> None:
+        if self._current_href is not None and data:
+            self._current_text.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() != "a" or self._current_href is None:
+            return
+        normalized_href = self._normalize_href(self._current_href)
+        if normalized_href:
+            self.links.append(
+                {
+                    "url": normalized_href,
+                    "text": " ".join("".join(self._current_text).split()),
+                }
+            )
+        self._current_href = None
+        self._current_text = []
+
+    def _normalize_href(self, href: str) -> str:
+        lowered = href.lower()
+        if lowered.startswith(("javascript:", "mailto:", "tel:", "#")):
+            return ""
+        return urljoin(self.base_url, html.unescape(href))
+
+
+def _extract_basic_links(html_text: str, *, base_url: str) -> List[Dict[str, str]]:
+    parser = _BasicAnchorExtractor(base_url=base_url)
+    parser.feed(html_text)
+    parser.close()
+    return parser.links
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -1863,6 +1918,10 @@ class UnifiedWebScraper:
         # Extract title
         title_match = re.search(r'<title[^>]*>([^<]+)</title>', response.text, re.IGNORECASE)
         title = title_match.group(1) if title_match else ""
+
+        links: List[Dict[str, str]] = []
+        if self.config.extract_links:
+            links = _extract_basic_links(response.text, base_url=url)
         
         return ScraperResult(
             url=url,
@@ -1870,6 +1929,7 @@ class UnifiedWebScraper:
             html=response.text,
             text=text,
             content=text,
+            links=links,
             method_used=ScraperMethod.REQUESTS_ONLY,
             success=True,
             metadata={
