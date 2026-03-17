@@ -404,6 +404,42 @@ def test_is_direct_detail_candidate_url_recognizes_indiana_rule_detail_pages() -
     assert scraper_module._is_direct_detail_candidate_url("https://iar.iga.in.gov/code/current") is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_california_westlaw_document_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://govt.westlaw.com/calregs/Document/ID395368063E711ED9432FA58BC52C333?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)"
+    ) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://govt.westlaw.com/calregs/Document/ID395368063E711ED9432FA58BC52C333?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://govt.westlaw.com/calregs/Index?transitionType=Default&contextData=%28sc.Default%29"
+    ) is False
+
+
+def test_state_seed_expansion_backlog_is_ready_short_circuits_for_california_document_urls() -> None:
+    candidates = [
+        (
+            "https://govt.westlaw.com/calregs/Document/I4845FA60120811F18D88D4323D4F562F?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)",
+            13,
+        ),
+        (
+            "https://govt.westlaw.com/calregs/Document/I4078DC635A0D11EC8227000D3A7C4BC3?viewType=FullText&originationContext=documenttoc&transitionType=CategoryPageItem&contextData=(sc.Default)",
+            13,
+        ),
+    ]
+
+    assert scraper_module._state_seed_expansion_backlog_is_ready(
+        state_code="CA",
+        seed_expansion_candidates=candidates,
+        max_fetch=8,
+    ) is True
+    assert scraper_module._state_seed_expansion_backlog_is_ready(
+        state_code="VT",
+        seed_expansion_candidates=candidates,
+        max_fetch=8,
+    ) is False
+
+
 def test_is_direct_detail_candidate_url_recognizes_alabama_admin_code_detail_pages() -> None:
     assert scraper_module._is_direct_detail_candidate_url(
         "https://admincode.legislature.state.al.us/administrative-code"
@@ -3202,7 +3238,7 @@ def test_rejects_binary_pdf_payload_false_positive() -> None:
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
-    ) is False
+    ) is True
 
 
 def test_rejects_montana_doc_policies_false_positive() -> None:
@@ -3223,7 +3259,7 @@ def test_rejects_montana_doc_policies_false_positive() -> None:
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
-    ) is False
+    ) is True
 
 
 def test_rejects_south_dakota_boards_portal_false_positive() -> None:
@@ -3243,7 +3279,7 @@ def test_rejects_south_dakota_boards_portal_false_positive() -> None:
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
-    ) is False
+    ) is True
 
 
 def test_rejects_legalclarity_admin_law_article_false_positive() -> None:
@@ -3912,6 +3948,8 @@ def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_d
 
 def test_prioritized_arizona_late_retry_urls_prefers_productive_title_two_pdf() -> None:
     candidate_urls = [
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
         "https://apps.azsos.gov/public_services/Title_07/7-03.pdf",
@@ -3919,13 +3957,14 @@ def test_prioritized_arizona_late_retry_urls_prefers_productive_title_two_pdf() 
         "https://apps.azsos.gov/public_services/Title_01/1-01.pdf",
     ]
 
-    prioritized = scraper_module._prioritized_arizona_late_retry_urls(candidate_urls, limit=4)
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(candidate_urls, limit=5)
 
     assert prioritized == [
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
-        "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
-        "https://apps.azsos.gov/public_services/Title_07/7-03.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
     ]
 
 
@@ -3943,8 +3982,77 @@ def test_prioritized_arizona_late_retry_urls_can_inject_productive_title_two_pdf
 
     assert prioritized == [
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+    ]
+
+
+def test_prioritized_arizona_late_retry_urls_prefers_failed_seed_pdf_retry() -> None:
+    candidate_urls = [
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
+    ]
+
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(
+        candidate_urls,
+        limit=1,
+        extra_preferred_urls=["https://apps.azsos.gov/public_services/Title_02/2-04.pdf"],
+    )
+
+    assert prioritized == [
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+    ]
+
+
+def test_prioritized_arizona_late_retry_urls_skips_already_covered_official_group() -> None:
+    candidate_urls = [
+        "https://apps.azsos.gov/public_services/Title_02/2-12.rtf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+    ]
+
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(
+        candidate_urls,
+        limit=3,
+        exclude_urls={"https://apps.azsos.gov/public_services/Title_02/2-12.pdf"},
+    )
+
+    assert prioritized == [
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
     ]
+
+
+def test_is_substantive_rule_text_accepts_short_arizona_official_chapter_pdf() -> None:
+    assert _is_substantive_rule_text(
+        text=(
+            "TITLE 2. ADMINISTRATION\n"
+            "CHAPTER 4. BOARD OF LIBRARY EXAMINERS\n"
+            "(Authority: A.R.S. § 11-906 et seq.)\n"
+            "ARTICLE 1. GENERAL PROVISIONS\n"
+            "Section\n"
+            "R2-4-01.\n"
+            "Academic requirements\n"
+            "ARTICLE 1. GENERAL PROVISIONS\n"
+            "R2-4-01.\n"
+            "Academic requirements\n"
+            "A.\n"
+            "Applicant shall have a Master's degree in library science, together with one year of experience in a public library of recognized standing, or\n"
+            "B.\n"
+            "A Bachelor's degree conferred by an accredited college or university, plus fifteen hours of courses in library science and two years of appropriate experience in a public library of recognized standing.\n"
+            "Historical Note\n"
+            "Former Rule 1.\n"
+            "R2-4-02.\n"
+            "Application information\n"
+            "A.\n"
+            "Applicant shall furnish satisfactory recommendations from two former employers.\n"
+            "B.\n"
+            "Consideration shall be given to applicant's moral character and commendable conduct."
+        ),
+        title="TITLE 2. ADMINISTRATION",
+        url="https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+        min_chars=220,
+    ) is True
 
 
 def test_arizona_late_retry_timeout_uses_remaining_state_budget() -> None:
@@ -4422,6 +4530,46 @@ async def test_normalize_candidate_document_content_trims_arizona_official_rtf_f
     assert "R15-3-101. Repealed 2" not in normalized_text
     assert "Normal; heading 1;" not in normalized_text
     assert "In this Chapter, unless otherwise specified:" in normalized_text
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_replaces_abbreviated_arizona_official_title() -> None:
+    normalized_title, normalized_text = await scraper_module._normalize_candidate_document_content(
+        url="https://apps.azsos.gov/public_services/Title_02/2-03.rtf",
+        title="Title 2, Ch. 3",
+        text=(
+            "TITLE 2. ADMINISTRATION\n"
+            "CHAPTER 3. ARIZONA STATE LIBRARY, ARCHIVES AND\n"
+            "PUBLIC RECORDS\n"
+            "ARTICLE 1. RULEMAKING\n"
+            "R2-3-101. Rulemaking Procedures\n"
+            "The Arizona State Library shall publish all rules in the Arizona Administrative Code.\n"
+        ),
+    )
+
+    assert normalized_title == "TITLE 2. ADMINISTRATION"
+    assert normalized_text.startswith("TITLE 2. ADMINISTRATION")
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_recovers_arizona_title_from_pretrim_text() -> None:
+    filler = "\n".join(f"Section {index}" for index in range(1, 45))
+    normalized_title, normalized_text = await scraper_module._normalize_candidate_document_content(
+        url="https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
+        title="15 A.A.C. 5||Supp. 22-3|",
+        text=(
+            "TITLE 15. REVENUE\n"
+            "CHAPTER 5. DEPARTMENT OF REVENUE - TRANSACTION PRIVILEGE AND USE TAX SECTION\n"
+            f"{filler}\n"
+            "ARTICLE 1. RETAIL CLASSIFICATION\n"
+            "R15-5-101. Definitions\n"
+            "Definitions this Chapter, unless the context requires otherwise.\n"
+        ),
+    )
+
+    assert normalized_title == "TITLE 15. REVENUE"
+    assert normalized_text.startswith("ARTICLE 1. RETAIL CLASSIFICATION")
+    assert "Definitions this Chapter" in normalized_text
 
 
 @pytest.mark.asyncio
@@ -6863,7 +7011,7 @@ def test_accepts_indiana_procurement_article_detail_page_despite_policy_terms() 
     assert _is_substantive_admin_statute(statute, min_chars=100) is True
 
 
-def test_rejects_vermont_proposed_rule_detail_page_as_substantive_rule_text() -> None:
+def test_accepts_vermont_proposed_rule_detail_page_as_substantive_rule_text() -> None:
     statute = {
         "code_name": "Vermont Administrative Rules (Agentic Discovery)",
         "section_name": "Vermont Secretary of State Rules Service",
@@ -6878,12 +7026,12 @@ def test_rejects_vermont_proposed_rule_detail_page_as_substantive_rule_text() ->
     }
 
     assert _is_admin_rule_statute(statute) is True
-    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+    assert _is_substantive_admin_statute(statute, min_chars=160) is True
     assert _is_relaxed_recovery_text(
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
-    ) is False
+    ) is True
 
 
 def test_rejects_vermont_rules_service_shell_without_rule_details() -> None:
@@ -7370,12 +7518,13 @@ def test_score_candidate_url_prioritizes_vermont_rule_display_pages() -> None:
         "https://legislature.vt.gov/regulations"
     )
 
-    assert inventory_score > proposal_score
+    assert proposal_score > inventory_score
+    assert proposal_score > search_score
     assert inventory_score > search_score
     assert inventory_score > legislature_score
 
 
-def test_vermont_proposal_display_page_is_not_rule_detail_page() -> None:
+def test_vermont_proposal_display_page_is_rule_detail_page() -> None:
     text = (
         "Proposed Rules Postings A Service of the Office of the Secretary of State "
         "Code of Vermont Rules Search Rules Deadline For Public Comment Deadline: May 08, 2026 "
@@ -7387,7 +7536,7 @@ def test_vermont_proposal_display_page_is_not_rule_detail_page() -> None:
         text=text,
         title="Vermont Secretary of State Rules Service",
         url="https://secure.vermont.gov/SOS/rules/display.php?r=1049",
-    ) is False
+    ) is True
 
 
 def test_vermont_adopted_display_page_is_rule_detail_page() -> None:
@@ -9612,7 +9761,7 @@ async def test_agentic_discovery_does_not_spend_full_budget_in_utah_prefetch(mon
 
 
 @pytest.mark.anyio
-async def test_agentic_discovery_utah_bootstrap_uses_six_rule_cap_for_standard_budget(
+async def test_agentic_discovery_utah_bootstrap_uses_eight_rule_cap_for_standard_budget(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     seed_url = "https://adminrules.utah.gov/api/public/searchRuleDataTotal/R/Current%20Rules"
@@ -9632,7 +9781,7 @@ async def test_agentic_discovery_utah_bootstrap_uses_six_rule_cap_for_standard_b
         "https://adminrules.utah.gov/public/rule/R58-1/Current%20Rules",
         "https://adminrules.utah.gov/public/rule/R58-2/Current%20Rules",
     ]
-    accepted_rule_urls = set(seeded_rule_urls + api_rule_urls[3:5])
+    accepted_rule_urls = set(seeded_rule_urls + api_rule_urls[3:7])
 
     class _FakeLegalWebArchiveSearch:
         def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
@@ -9725,9 +9874,9 @@ async def test_agentic_discovery_utah_bootstrap_uses_six_rule_cap_for_standard_b
 
     assert result["status"] == "success"
     assert result["report"]["UT"]["source_breakdown"]["utah_direct_seed"] == 4
-    assert result["report"]["UT"]["source_breakdown"]["utah_public_api"] == 2
-    assert result["report"]["UT"]["fetched_rules"] == 6
-    assert result["state_blocks"][0]["rules_count"] == 6
+    assert result["report"]["UT"]["source_breakdown"]["utah_public_api"] == 4
+    assert result["report"]["UT"]["fetched_rules"] == 8
+    assert result["state_blocks"][0]["rules_count"] == 8
 
 
 @pytest.mark.anyio

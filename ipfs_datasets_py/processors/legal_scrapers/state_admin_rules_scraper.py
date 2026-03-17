@@ -982,8 +982,10 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
 
 _AZ_LATE_RETRY_DOCUMENT_URLS: tuple[str, ...] = (
     "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
-    "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
+    "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+    "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
     "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
 )
 _AZ_LATE_RETRY_MIN_TIMEOUT_S = 45.0
 _AZ_LATE_RETRY_MAX_TIMEOUT_S = 70.0
@@ -998,7 +1000,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AZ", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AZ", "CA", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -1985,7 +1987,7 @@ def _score_candidate_url(url: str) -> int:
         elif normalized_path.lower() == "/container":
             score += 6
     if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php" and re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
-        score -= 4
+        score += 6
     if host == "texas-sos.appianportalsgov.com" and normalized_path.lower() == "/rules-and-meetings":
         query_params = parse_qs(parsed.query or "")
         interface = str((query_params.get("interface") or [""])[0]).strip().upper()
@@ -2354,6 +2356,28 @@ def _seed_expansion_backlog_is_ready(seed_expansion_candidates: List[tuple[str, 
     return len(unique_keys) >= threshold
 
 
+def _state_seed_expansion_backlog_is_ready(
+    *,
+    state_code: str,
+    seed_expansion_candidates: List[tuple[str, int]],
+    max_fetch: int,
+) -> bool:
+    if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
+        return True
+    if state_code != "CA":
+        return False
+    california_detail_keys = {
+        _url_key(url)
+        for url, score in seed_expansion_candidates
+        if _url_key(url)
+        and int(score) > 0
+        and _is_direct_detail_candidate_url(url)
+        and urlparse(str(url or "").strip()).netloc.lower() == "govt.westlaw.com"
+        and (urlparse(str(url or "").strip()).path or "").lower().startswith("/calregs/document/")
+    }
+    return len(california_detail_keys) >= min(2, max(1, int(max_fetch)))
+
+
 def _is_direct_detail_candidate_url(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
@@ -2440,6 +2464,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "www.ilga.gov" and path.lower() == "/agencies/jcar/entirepart":
         return True
     if host == "www.ilga.gov" and re.search(r"^/commission/jcar/admincode/\d+/[\w.-]+\.html$", path, re.IGNORECASE):
+        return True
+    if host == "govt.westlaw.com" and normalized_path.lower().startswith("/calregs/document/"):
         return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
         return True
@@ -2538,15 +2564,24 @@ def _prioritized_arizona_late_retry_urls(
     candidate_urls: List[str],
     *,
     limit: int,
+    extra_preferred_urls: Optional[List[str]] = None,
     exclude_urls: Optional[set[str]] = None,
 ) -> List[str]:
     prioritized: List[str] = []
     seen: set[str] = set()
     excluded = {_url_key(url) for url in (exclude_urls or set()) if _url_key(url)}
+    excluded_group_keys = {
+        group_key
+        for group_key in (_arizona_official_document_group_key(url) for url in (exclude_urls or set()))
+        if group_key
+    }
 
     def _append(candidate_url: str) -> bool:
         key = _url_key(candidate_url)
+        group_key = _arizona_official_document_group_key(candidate_url)
         if not key or key in excluded or key in seen:
+            return False
+        if group_key and group_key in excluded_group_keys:
             return False
         seen.add(key)
         prioritized.append(candidate_url)
@@ -2558,7 +2593,7 @@ def _prioritized_arizona_late_retry_urls(
         if _url_key(url)
     }
 
-    for preferred_url in _AZ_LATE_RETRY_DOCUMENT_URLS:
+    for preferred_url in [*(extra_preferred_urls or []), *_AZ_LATE_RETRY_DOCUMENT_URLS]:
         candidate_url = discovered_candidate_urls.get(_url_key(preferred_url), preferred_url)
         if _append(candidate_url) and len(prioritized) >= max(1, int(limit)):
             return prioritized
@@ -2733,8 +2768,6 @@ def _is_vermont_rule_detail_page(*, text: str, title: str, url: str) -> bool:
     if not rule_id.isdigit():
         return False
     hay = " ".join([str(title or ""), str(text or "")])
-    if _VT_PROPOSAL_POSTING_TEXT_RE.search(hay) and not re.search(r"\bstatus\s*:\s*adopted\b", hay, re.IGNORECASE):
-        return False
     if not re.search(r"\brule\s+details\b", hay, re.IGNORECASE):
         return False
     if not re.search(r"\brule\s+number\s*:", hay, re.IGNORECASE):
@@ -7147,9 +7180,29 @@ def _looks_like_bad_rtf_title(title: str) -> bool:
         return True
     if value.lower().startswith(("please note that the chapter", "this is an unofficial version")):
         return True
+    if re.match(r"^\d+\s+A\.A\.C\.\s+\d+(?:\|.*)?$", value, re.IGNORECASE):
+        return True
     if _RTF_STYLE_CATALOG_LINE_RE.search(value) and value.count(";") >= 3:
         return True
     if len(value.split()) >= 18 and not re.match(r"^(?:title|chapter|article|section|rule|r\d{1,2}-\d{1,2}-\d{2,4})\b", value, re.IGNORECASE):
+        return True
+    return False
+
+
+def _should_replace_arizona_official_title(*, current_title: str, recovered_title: str) -> bool:
+    current_value = re.sub(r"\s+", " ", str(current_title or "")).strip()
+    recovered_value = re.sub(r"\s+", " ", str(recovered_title or "")).strip()
+    if not recovered_value:
+        return False
+    if not current_value:
+        return True
+    if current_value.lower() == recovered_value.lower():
+        return False
+    if _looks_like_bad_rtf_title(current_value):
+        return True
+    if re.match(r"^title\s+\d+\s*,\s*ch\.?\s*\d+\b", current_value, re.IGNORECASE):
+        return True
+    if recovered_value.lower().startswith("title ") and not re.match(r"^title\s+\d+\.\s+", current_value, re.IGNORECASE):
         return True
     return False
 
@@ -7586,13 +7639,19 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
         )
 
     if _looks_like_arizona_official_rule_document(text=normalized_text, title=normalized_title, url=url):
+        arizona_original_text = normalized_text
         normalized_text = _trim_arizona_official_document_chrome(
             text=normalized_text,
             url=url,
             title=normalized_title,
         )
         arizona_title = _title_from_arizona_official_document_text(text=normalized_text, url=url)
-        if arizona_title and _looks_like_bad_rtf_title(normalized_title):
+        if not arizona_title:
+            arizona_title = _title_from_arizona_official_document_text(text=arizona_original_text, url=url)
+        if _should_replace_arizona_official_title(
+            current_title=normalized_title,
+            recovered_title=arizona_title,
+        ):
             normalized_title = arizona_title
 
     return normalized_title, normalized_text
@@ -8370,7 +8429,11 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     if _looks_like_placeholder_text(body) and not official_index_can_be_substantive and not arizona_official_rule_document and not tennessee_official_rule_pdf:
         return False
     if not _has_admin_signal(text=body, title=title_value, url=url_value) and not tennessee_official_rule_pdf:
-        return False
+        if not (
+            arizona_official_rule_document
+            and _LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body]))
+        ):
+            return False
     if short_alaska_official_section:
         return True
     if tennessee_official_rule_pdf:
@@ -9112,6 +9175,27 @@ async def _discover_california_westlaw_document_urls(
     allowed_hosts: set[str],
     limit: int = 8,
 ) -> List[str]:
+    try:
+        from ..web_archiving.unified_api import UnifiedWebArchivingAPI as _UnifiedWebArchivingAPI
+        from ..web_archiving.unified_web_scraper import (
+            ScraperConfig as _ScraperConfig,
+            ScraperMethod as _ScraperMethod,
+            UnifiedWebScraper as _UnifiedWebScraper,
+        )
+    except Exception:
+        try:
+            from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI as _UnifiedWebArchivingAPI  # type: ignore[no-redef]
+            from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (  # type: ignore[no-redef]
+                ScraperConfig as _ScraperConfig,
+                ScraperMethod as _ScraperMethod,
+                UnifiedWebScraper as _UnifiedWebScraper,
+            )
+        except Exception:
+            _UnifiedWebArchivingAPI = None  # type: ignore[assignment]
+            _ScraperConfig = None  # type: ignore[assignment]
+            _ScraperMethod = None  # type: ignore[assignment]
+            _UnifiedWebScraper = None  # type: ignore[assignment]
+
     frontier: List[str] = [
         url
         for url in seed_urls
@@ -9123,6 +9207,15 @@ async def _discover_california_westlaw_document_urls(
     document_urls: List[str] = []
     seen_pages: set[str] = set()
     seen_documents: set[str] = set()
+
+    def _has_useful_california_westlaw_links(candidate_links: List[str]) -> bool:
+        for candidate_url in candidate_links:
+            candidate_path = (urlparse(candidate_url).path or "").lower()
+            if candidate_path.startswith("/calregs/document/"):
+                return True
+            if candidate_path.startswith("/calregs/browse/home/california/californiacodeofregulations"):
+                return True
+        return False
 
     for _depth in range(5):
         next_frontier: List[str] = []
@@ -9137,32 +9230,55 @@ async def _discover_california_westlaw_document_urls(
 
             html = ""
             scraped = None
+            page_host = urlparse(page_url).netloc
+            fetch_api = live_fetch_api if _prefers_live_fetch(page_url) else direct_fetch_api
             try:
-                scraped = await asyncio.wait_for(live_scraper.scrape(page_url), timeout=12.0)
-                html = str(getattr(scraped, "html", "") or "")
+                fetched = await asyncio.wait_for(
+                    _run_blocking_fetch(
+                        fetch_api.fetch,
+                        UnifiedFetchRequest(
+                            url=page_url,
+                            timeout_seconds=15,
+                            mode=OperationMode.BALANCED,
+                            domain=".gov" if page_host.endswith(".gov") else "legal",
+                        ),
+                    ),
+                    timeout=6.0,
+                )
+                fetched_doc = getattr(fetched, "document", None)
+                html = str(getattr(fetched_doc, "html", "") or "")
             except Exception:
-                scraped = None
+                html = ""
 
             if not html:
-                page_host = urlparse(page_url).netloc
-                fetch_api = live_fetch_api if _prefers_live_fetch(page_url) else direct_fetch_api
                 try:
-                    fetched = await asyncio.wait_for(
-                        _run_blocking_fetch(
-                            fetch_api.fetch,
-                            UnifiedFetchRequest(
-                                url=page_url,
-                                timeout_seconds=25,
-                                mode=OperationMode.BALANCED,
-                                domain=".gov" if page_host.endswith(".gov") else "legal",
-                            ),
-                        ),
-                        timeout=12.0,
-                    )
-                    fetched_doc = getattr(fetched, "document", None)
-                    html = str(getattr(fetched_doc, "html", "") or "")
+                    scraped = await asyncio.wait_for(live_scraper.scrape(page_url), timeout=6.0)
+                    html = str(getattr(scraped, "html", "") or "")
                 except Exception:
-                    html = ""
+                    scraped = None
+
+            if not html and _UnifiedWebScraper is not None and _ScraperConfig is not None and _ScraperMethod is not None:
+                try:
+                    request_only_scraper = _UnifiedWebScraper(
+                        _ScraperConfig(
+                            timeout=20,
+                            max_retries=1,
+                            extract_links=True,
+                            extract_text=True,
+                            fallback_enabled=False,
+                            preferred_methods=[_ScraperMethod.REQUESTS_ONLY],
+                        )
+                    )
+                    request_only_scraped = await asyncio.wait_for(
+                        request_only_scraper.scrape(page_url),
+                        timeout=6.0,
+                    )
+                    request_only_html = str(getattr(request_only_scraped, "html", "") or "")
+                    if request_only_html:
+                        scraped = request_only_scraped
+                        html = request_only_html
+                except Exception:
+                    pass
 
             links = _candidate_links_from_html(
                 html,
@@ -9181,6 +9297,51 @@ async def _discover_california_westlaw_document_urls(
                 ):
                     if link_url not in links:
                         links.append(link_url)
+
+            if (
+                not _has_useful_california_westlaw_links(links)
+                and _UnifiedWebScraper is not None
+                and _ScraperConfig is not None
+                and _ScraperMethod is not None
+            ):
+                try:
+                    request_only_scraper = _UnifiedWebScraper(
+                        _ScraperConfig(
+                            timeout=20,
+                            max_retries=1,
+                            extract_links=True,
+                            extract_text=True,
+                            fallback_enabled=False,
+                            preferred_methods=[_ScraperMethod.REQUESTS_ONLY],
+                        )
+                    )
+                    request_only_scraped = await asyncio.wait_for(
+                        request_only_scraper.scrape(page_url),
+                        timeout=6.0,
+                    )
+                    request_only_html = str(getattr(request_only_scraped, "html", "") or "")
+                    request_only_links = _candidate_links_from_html(
+                        request_only_html,
+                        base_host="govt.westlaw.com",
+                        page_url=page_url,
+                        limit=24,
+                        allowed_hosts=allowed_hosts,
+                    )
+                    for link_url in _candidate_links_from_scrape(
+                        request_only_scraped,
+                        base_host="govt.westlaw.com",
+                        page_url=page_url,
+                        limit=24,
+                        allowed_hosts=allowed_hosts,
+                    ):
+                        if link_url not in request_only_links:
+                            request_only_links.append(link_url)
+                    if _has_useful_california_westlaw_links(request_only_links):
+                        scraped = request_only_scraped
+                        html = request_only_html
+                        links = request_only_links
+                except Exception:
+                    pass
 
             for link_url in links:
                 if urlparse(link_url).path.lower().startswith("/calregs/document/"):
@@ -9617,7 +9778,7 @@ async def _agentic_discover_admin_state_blocks(
             seen_utah_bootstrap_rule_keys: set[str] = set()
             utah_bootstrap_limit = min(
                 max(1, int(max_fetch_per_state)),
-                8 if per_state_budget_s >= 90.0 else 6 if per_state_budget_s >= 60.0 else 4,
+                8 if per_state_budget_s >= 60.0 else 4,
             )
             for seed_url in ordered_seed_urls:
                 if not _is_immediate_direct_detail_candidate_url(seed_url):
@@ -9963,14 +10124,58 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["montana_public_api_bootstrap"] = len(montana_bootstrap_document_urls)
 
         if state_code == "CA" and not seeded_direct_detail_urls:
-            california_bootstrap_document_urls = await _discover_california_westlaw_document_urls(
-                seed_urls=ordered_seed_urls,
-                live_scraper=live_scraper,
-                live_fetch_api=live_fetch_api,
-                direct_fetch_api=direct_fetch_api,
-                allowed_hosts=allowed_hosts,
-                limit=min(max(1, int(max_fetch_per_state)), 2),
-            )
+            try:
+                from ..web_archiving.unified_api import UnifiedWebArchivingAPI as _UnifiedWebArchivingAPI
+                from ..web_archiving.unified_web_scraper import (
+                    ScraperConfig as _ScraperConfig,
+                    ScraperMethod as _ScraperMethod,
+                    UnifiedWebScraper as _UnifiedWebScraper,
+                )
+            except Exception:
+                try:
+                    from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI as _UnifiedWebArchivingAPI  # type: ignore[no-redef]
+                    from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (  # type: ignore[no-redef]
+                        ScraperConfig as _ScraperConfig,
+                        ScraperMethod as _ScraperMethod,
+                        UnifiedWebScraper as _UnifiedWebScraper,
+                    )
+                except Exception:
+                    _UnifiedWebArchivingAPI = None  # type: ignore[assignment]
+                    _ScraperConfig = None  # type: ignore[assignment]
+                    _ScraperMethod = None  # type: ignore[assignment]
+                    _UnifiedWebScraper = None  # type: ignore[assignment]
+
+            if (
+                _UnifiedWebArchivingAPI is not None
+                and _ScraperConfig is not None
+                and _ScraperMethod is not None
+                and _UnifiedWebScraper is not None
+            ):
+                california_bootstrap_cfg = _ScraperConfig(
+                    timeout=20,
+                    max_retries=1,
+                    extract_links=True,
+                    extract_text=True,
+                    fallback_enabled=False,
+                    preferred_methods=[_ScraperMethod.REQUESTS_ONLY],
+                )
+                california_bootstrap_document_urls = await _discover_california_westlaw_document_urls(
+                    seed_urls=ordered_seed_urls,
+                    live_scraper=_UnifiedWebScraper(california_bootstrap_cfg),
+                    live_fetch_api=_UnifiedWebArchivingAPI(scraper=_UnifiedWebScraper(california_bootstrap_cfg)),
+                    direct_fetch_api=direct_fetch_api,
+                    allowed_hosts=allowed_hosts,
+                    limit=min(max(1, int(max_fetch_per_state)), 4),
+                )
+            else:
+                california_bootstrap_document_urls = await _discover_california_westlaw_document_urls(
+                    seed_urls=ordered_seed_urls,
+                    live_scraper=live_scraper,
+                    live_fetch_api=live_fetch_api,
+                    direct_fetch_api=direct_fetch_api,
+                    allowed_hosts=allowed_hosts,
+                    limit=min(max(1, int(max_fetch_per_state)), 4),
+                )
             for document_url in california_bootstrap_document_urls:
                 candidate_urls.append(document_url)
             if california_bootstrap_document_urls:
@@ -10318,6 +10523,11 @@ async def _agentic_discover_admin_state_blocks(
                 preloop_budget_deadline,
                 state_start + max(45.0, min(70.0, per_state_budget_s * 0.6)),
             )
+        if state_code == "CA":
+            preloop_budget_deadline = max(
+                preloop_budget_deadline,
+                state_start + max(45.0, min(70.0, per_state_budget_s - 0.5)),
+            )
 
         async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
             doc_title, doc_text = await _normalize_candidate_document_content(
@@ -10325,6 +10535,7 @@ async def _agentic_discover_admin_state_blocks(
                 title=doc_title,
                 text=doc_text,
             )
+            method_value = getattr(method_value, "value", method_value)
             if not doc_url.startswith(("http://", "https://")):
                 return False
             if not _url_allowed_for_state(doc_url, allowed_hosts):
@@ -10540,13 +10751,12 @@ async def _agentic_discover_admin_state_blocks(
             ]
 
         az_prefetched_seed_url_keys: set[str] = set()
+        az_failed_seed_retry_urls: List[str] = []
+        az_failed_seed_retry_url_keys: set[str] = set()
         if state_code == "AZ" and prioritized_seed_document_urls:
             az_batch_rule_urls = prioritized_seed_document_urls[
                 : min(len(prioritized_seed_document_urls), max_fetch, 4)
             ]
-            az_prefetched_seed_url_keys = {
-                key for key in (_url_key(url) for url in az_batch_rule_urls) if key
-            }
             az_batch_timeout_s = max(
                 1.0,
                 min(8.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
@@ -10580,8 +10790,17 @@ async def _agentic_discover_admin_state_blocks(
                 inspected_urls += len(az_batch_rule_urls)
                 az_batch_results = await asyncio.gather(*az_batch_tasks, return_exceptions=True)
                 for rule_url, az_scraped in zip(az_batch_rule_urls, az_batch_results):
+
                     if isinstance(az_scraped, Exception) or az_scraped is None:
+                        rule_key = _url_key(rule_url)
+                        if _is_pdf_candidate_url(rule_url) and rule_key and rule_key not in az_failed_seed_retry_url_keys:
+                            az_failed_seed_retry_url_keys.add(rule_key)
+                            az_failed_seed_retry_urls.append(rule_url)
                         continue
+
+                    rule_key = _url_key(rule_url)
+                    if rule_key:
+                        az_prefetched_seed_url_keys.add(rule_key)
 
                     az_text = str(getattr(az_scraped, "text", "") or "").strip()
                     az_title = str(getattr(az_scraped, "title", "") or "").strip()
@@ -10856,7 +11075,8 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "AZ" and prioritized_ranked_document_urls:
             az_late_retry_urls = _prioritized_arizona_late_retry_urls(
                 prioritized_ranked_document_urls,
-                limit=min(max_fetch, 3),
+                limit=min(max_fetch, 5),
+                extra_preferred_urls=az_failed_seed_retry_urls,
                 exclude_urls=ranked_direct_exclude_urls,
             )
             az_late_retry_url_keys = {
@@ -11062,7 +11282,8 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "AZ" and len(statutes) < max_fetch:
             az_late_retry_urls = _prioritized_arizona_late_retry_urls(
                 prioritized_ranked_document_urls,
-                limit=1,
+                limit=min(max_fetch - len(statutes), 5),
+                extra_preferred_urls=az_failed_seed_retry_urls,
                 exclude_urls={url for url in direct_doc_urls if url},
             )
             for document_url in az_late_retry_urls:
@@ -11595,7 +11816,11 @@ async def _agentic_discover_admin_state_blocks(
                 break
             if time.monotonic() >= preloop_budget_deadline:
                 break
-            if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
+            if _state_seed_expansion_backlog_is_ready(
+                state_code=state_code,
+                seed_expansion_candidates=seed_expansion_candidates,
+                max_fetch=max_fetch,
+            ):
                 break
             seed_key = _url_key(seed_url)
             if seed_key and seed_key in preseed_substantive_url_keys:
@@ -11698,7 +11923,11 @@ async def _agentic_discover_admin_state_blocks(
                             seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
                     except Exception:
                         pass
-                if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
+                if _state_seed_expansion_backlog_is_ready(
+                    state_code=state_code,
+                    seed_expansion_candidates=seed_expansion_candidates,
+                    max_fetch=max_fetch,
+                ):
                     break
             except Exception:
                 pass
