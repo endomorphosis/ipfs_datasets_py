@@ -38,6 +38,7 @@ References:
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -350,7 +351,8 @@ class ScoreAnalyzer:
         if not scores:
             return 0.0
         overalls = [self._overall_value(s) for s in scores]
-        return sum(overalls) / len(overalls)
+        mean = math.fsum(overalls) / len(overalls)
+        return min(max(mean, min(overalls)), max(overalls))
     
     def dimension_mean(self, scores: List[Any], dimension: str) -> float:
         """Compute mean score for a specific dimension.
