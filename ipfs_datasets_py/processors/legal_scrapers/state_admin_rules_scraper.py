@@ -9698,6 +9698,11 @@ async def _agentic_discover_admin_state_blocks(
                 preloop_budget_deadline,
                 state_start + max(30.0, min(90.0, per_state_budget_s - 0.5)),
             )
+        if state_code == "AZ":
+            preloop_budget_deadline = max(
+                preloop_budget_deadline,
+                state_start + max(45.0, min(70.0, per_state_budget_s * 0.6)),
+            )
 
         async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
             doc_title, doc_text = await _normalize_candidate_document_content(
@@ -9847,7 +9852,7 @@ async def _agentic_discover_admin_state_blocks(
                 break
 
         if state_code == "AZ":
-            prioritized_seed_document_urls = prioritized_seed_document_urls[:4]
+            prioritized_seed_document_urls = prioritized_seed_document_urls[:6]
         else:
             prioritized_seed_document_urls = [
                 *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
@@ -10096,17 +10101,17 @@ async def _agentic_discover_admin_state_blocks(
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
             ranked_urls,
-            limit=min(max_fetch * 3, 12),
+            limit=(min(max_fetch * 5, 24) if state_code == "AZ" else min(max_fetch * 3, 12)),
             exclude_urls=ranked_direct_exclude_urls,
         )
 
         az_prefetched_ranked_url_keys: set[str] = set()
         if state_code == "AZ" and prioritized_ranked_document_urls:
-            az_ranked_rule_urls = prioritized_ranked_document_urls[: min(len(prioritized_ranked_document_urls), max_fetch * 2, 10)]
+            az_ranked_rule_urls = prioritized_ranked_document_urls[: min(len(prioritized_ranked_document_urls), max_fetch * 4, 20)]
             az_prefetched_ranked_url_keys = {
                 key for key in (_url_key(url) for url in az_ranked_rule_urls) if key
             }
-            az_ranked_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            az_ranked_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 6))
             for batch_start in range(0, len(az_ranked_rule_urls), az_ranked_batch_size):
                 if len(statutes) >= max_fetch:
                     break
