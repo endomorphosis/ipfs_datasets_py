@@ -4794,6 +4794,21 @@ class OntologyGenerator:
         extraction_result = self.extract_entities(data, context)
         
         # Build ontology structure
+        flattened_metadata: Dict[str, Any] = {}
+        for key, value in dict(extraction_result.metadata or {}).items():
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                flattened_metadata[key] = value
+                continue
+            if isinstance(value, dict):
+                for nested_key, nested_value in value.items():
+                    flat_key = f"{key}_{nested_key}"
+                    if isinstance(nested_value, (str, int, float, bool)) or nested_value is None:
+                        flattened_metadata[flat_key] = nested_value
+                    else:
+                        flattened_metadata[flat_key] = json.dumps(nested_value, sort_keys=True)
+                continue
+            flattened_metadata[key] = json.dumps(value, sort_keys=True) if isinstance(value, (list, tuple)) else str(value)
+
         ontology = {
             'entities': [self._entity_to_dict(e) for e in extraction_result.entities],
             'relationships': [
@@ -4805,7 +4820,7 @@ class OntologyGenerator:
                 'domain': context.domain,
                 'extraction_strategy': context.extraction_strategy.value,
                 'confidence': extraction_result.confidence,
-                **extraction_result.metadata
+                **flattened_metadata
             },
             'domain': context.domain,
             'version': '1.0'
