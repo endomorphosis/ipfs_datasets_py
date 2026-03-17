@@ -7041,7 +7041,7 @@ def _trim_arizona_official_document_chrome(*, text: str, url: str, title: str = 
     article_line_re = re.compile(r"^ARTICLE\s+(?:\d+|[IVXLCDM]+)\.\s+", re.IGNORECASE)
     rule_line_re = re.compile(r"^R\d{1,2}-[A-Za-z0-9.-]+\.\s*", re.IGNORECASE)
     non_body_line_re = re.compile(
-        r"^(?:Historical Note|Section|Title\s+\d+|CHAPTER\s+\d+\.|SUBCHAPTER\s+[A-Z]\.|ARTICLE\s+(?:\d+|[IVXLCDM]+)\.|R\d{1,2}-[A-Za-z0-9.-]+\.|\d+)$",
+        r"^(?:Historical Note|Section|Title\s+\d+(?:\.|\b).*|CHAPTER\s+\d+\..*|SUBCHAPTER\s+[A-Z]\..*|ARTICLE\s+(?:\d+|[IVXLCDM]+)\..*|R\d{1,2}-[A-Za-z0-9.-]+\..*|\d+)$",
         re.IGNORECASE,
     )
 
@@ -7077,7 +7077,7 @@ def _trim_arizona_official_document_chrome(*, text: str, url: str, title: str = 
         if _RTF_MARKER_LINE_RE.fullmatch(line):
             end_index = index
             break
-        if line.count(";") >= 8 and _RTF_STYLE_CATALOG_LINE_RE.search(line):
+        if line.count(";") >= 3 and _RTF_STYLE_CATALOG_LINE_RE.search(line):
             end_index = index
             break
 
@@ -7092,7 +7092,7 @@ def _title_from_arizona_official_document_text(*, text: str, url: str) -> str:
     title_line_re = re.compile(r"^TITLE\s+\d+\.\s+", re.IGNORECASE)
     rule_line_re = re.compile(r"^R\d{1,2}-[A-Za-z0-9.-]+\.\s*", re.IGNORECASE)
     non_body_line_re = re.compile(
-        r"^(?:Historical Note|Section|Title\s+\d+|CHAPTER\s+\d+\.|SUBCHAPTER\s+[A-Z]\.|ARTICLE\s+(?:\d+|[IVXLCDM]+)\.|R\d{1,2}-[A-Za-z0-9.-]+\.|\d+)$",
+        r"^(?:Historical Note|Section|Title\s+\d+(?:\.|\b).*|CHAPTER\s+\d+\..*|SUBCHAPTER\s+[A-Z]\..*|ARTICLE\s+(?:\d+|[IVXLCDM]+)\..*|R\d{1,2}-[A-Za-z0-9.-]+\..*|\d+)$",
         re.IGNORECASE,
     )
     title_candidates: List[tuple[int, str]] = []
