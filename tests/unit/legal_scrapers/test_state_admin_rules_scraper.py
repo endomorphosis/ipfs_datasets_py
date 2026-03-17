@@ -4384,6 +4384,37 @@ async def test_normalize_candidate_document_content_replaces_bad_arizona_officia
 
 
 @pytest.mark.asyncio
+async def test_normalize_candidate_document_content_trims_arizona_official_rtf_front_matter() -> None:
+    normalized_title, normalized_text = await scraper_module._normalize_candidate_document_content(
+        url="https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+        title="(Authority: A.R.S. § 42-1202 et seq.)",
+        text=(
+            "(Authority: A.R.S. § 42-1202 et seq.)\n"
+            "ARTICLE 1. REPEALED\n"
+            "R15-3-101. Repealed 2\n"
+            "R15-3-102. Repealed 2\n"
+            "ARTICLE 2. GENERAL\n"
+            "R15-3-201. Definitions 2\n"
+            "TITLE 15. REVENUE\n"
+            "15 A.A.C. 3\n"
+            "CHAPTER 3. DEPARTMENT OF REVENUE - LUXURY TAX SECTION\n"
+            "ARTICLE 2. GENERAL\n"
+            "R15-3-201. Definitions\n"
+            "In this Chapter, unless otherwise specified:\n"
+            "1. \"Acquire\" means to receive, to come to own or have, or to come into possession or control of tobacco products.\n"
+            "Normal; heading 1; heading 2; Default Paragraph Font;\n"
+        ),
+    )
+
+    assert normalized_title == "TITLE 15. REVENUE"
+    assert normalized_text.startswith("TITLE 15. REVENUE")
+    assert "(Authority: A.R.S. § 42-1202 et seq.)" not in normalized_text
+    assert "R15-3-101. Repealed 2" not in normalized_text
+    assert "Normal; heading 1;" not in normalized_text
+    assert "In this Chapter, unless otherwise specified:" in normalized_text
+
+
+@pytest.mark.asyncio
 async def test_scrape_pdf_candidate_url_uses_playwright_download_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeResponse:
         status_code = 403

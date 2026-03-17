@@ -7021,14 +7021,105 @@ def _title_from_extracted_rtf_text(*, text: str, url: str) -> str:
     return _title_from_extracted_pdf_text(text=text, url=url)
 
 
+def _trim_arizona_official_document_chrome(*, text: str, url: str, title: str = "") -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "apps.azsos.gov" or not _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or ""):
+        return str(text or "").strip()
+
+    normalized_text = str(text or "").strip()
+    if not normalized_text:
+        return normalized_text
+
+    lines = [re.sub(r"\s+", " ", line).strip() for line in normalized_text.splitlines()]
+    cleaned_lines = [line for line in lines if line]
+    if not cleaned_lines:
+        return normalized_text
+
+    title_line_re = re.compile(r"^TITLE\s+\d+\.\s+", re.IGNORECASE)
+    chapter_line_re = re.compile(r"^CHAPTER\s+\d+\.\s+", re.IGNORECASE)
+    subchapter_line_re = re.compile(r"^SUBCHAPTER\s+[A-Z]\.\s+", re.IGNORECASE)
+    article_line_re = re.compile(r"^ARTICLE\s+(?:\d+|[IVXLCDM]+)\.\s+", re.IGNORECASE)
+    rule_line_re = re.compile(r"^R\d{1,2}-[A-Za-z0-9.-]+\.\s*", re.IGNORECASE)
+    non_body_line_re = re.compile(
+        r"^(?:Historical Note|Section|Title\s+\d+|CHAPTER\s+\d+\.|SUBCHAPTER\s+[A-Z]\.|ARTICLE\s+(?:\d+|[IVXLCDM]+)\.|R\d{1,2}-[A-Za-z0-9.-]+\.|\d+)$",
+        re.IGNORECASE,
+    )
+
+    substantive_rule_index: Optional[int] = None
+    for index, line in enumerate(cleaned_lines):
+        if not rule_line_re.match(line):
+            continue
+        next_nonempty = ""
+        for next_index in range(index + 1, len(cleaned_lines)):
+            candidate = cleaned_lines[next_index]
+            if candidate:
+                next_nonempty = candidate
+                break
+        if next_nonempty and not non_body_line_re.match(next_nonempty):
+            substantive_rule_index = index
+            break
+
+    if substantive_rule_index is None:
+        return normalized_text
+
+    start_index = substantive_rule_index
+    for index in range(substantive_rule_index - 1, max(-1, substantive_rule_index - 41), -1):
+        line = cleaned_lines[index]
+        if title_line_re.match(line):
+            start_index = index
+            break
+        if chapter_line_re.match(line) or subchapter_line_re.match(line) or article_line_re.match(line):
+            start_index = index
+
+    end_index = len(cleaned_lines)
+    for index in range(start_index, len(cleaned_lines)):
+        line = cleaned_lines[index]
+        if _RTF_MARKER_LINE_RE.fullmatch(line):
+            end_index = index
+            break
+        if line.count(";") >= 8 and _RTF_STYLE_CATALOG_LINE_RE.search(line):
+            end_index = index
+            break
+
+    trimmed = "\n".join(cleaned_lines[start_index:end_index]).strip()
+    return trimmed or normalized_text
+
+
 def _title_from_arizona_official_document_text(*, text: str, url: str) -> str:
     parsed = urlparse(str(url or "").strip())
     if parsed.netloc.lower() != "apps.azsos.gov" or not _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or ""):
         return ""
-    for line in str(text or "").splitlines()[:80]:
+    title_line_re = re.compile(r"^TITLE\s+\d+\.\s+", re.IGNORECASE)
+    rule_line_re = re.compile(r"^R\d{1,2}-[A-Za-z0-9.-]+\.\s*", re.IGNORECASE)
+    non_body_line_re = re.compile(
+        r"^(?:Historical Note|Section|Title\s+\d+|CHAPTER\s+\d+\.|SUBCHAPTER\s+[A-Z]\.|ARTICLE\s+(?:\d+|[IVXLCDM]+)\.|R\d{1,2}-[A-Za-z0-9.-]+\.|\d+)$",
+        re.IGNORECASE,
+    )
+    title_candidates: List[tuple[int, str]] = []
+    substantive_rule_index: Optional[int] = None
+
+    for index, line in enumerate(str(text or "").splitlines()):
         cleaned = re.sub(r"\s+", " ", line).strip()
-        if re.match(r"^TITLE\s+\d+\.\s+", cleaned, re.IGNORECASE):
-            return cleaned[:240]
+        if not cleaned:
+            continue
+        if title_line_re.match(cleaned):
+            title_candidates.append((index, cleaned[:240]))
+        if substantive_rule_index is None and rule_line_re.match(cleaned):
+            next_nonempty = ""
+            for next_line in str(text or "").splitlines()[index + 1 :]:
+                next_nonempty = re.sub(r"\s+", " ", next_line).strip()
+                if next_nonempty:
+                    break
+            if next_nonempty and not non_body_line_re.match(next_nonempty):
+                substantive_rule_index = index
+
+    if substantive_rule_index is not None:
+        for index, candidate in reversed(title_candidates):
+            if index <= substantive_rule_index:
+                return candidate
+
+    if title_candidates:
+        return title_candidates[0][1]
     return ""
 
 
@@ -7483,6 +7574,11 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
         )
 
     if _looks_like_arizona_official_rule_document(text=normalized_text, title=normalized_title, url=url):
+        normalized_text = _trim_arizona_official_document_chrome(
+            text=normalized_text,
+            url=url,
+            title=normalized_title,
+        )
         arizona_title = _title_from_arizona_official_document_text(text=normalized_text, url=url)
         if arizona_title and _looks_like_bad_rtf_title(normalized_title):
             normalized_title = arizona_title
