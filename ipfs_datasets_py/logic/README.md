@@ -10,7 +10,7 @@
 **Additional Metrics:**
 [![Rules](https://img.shields.io/badge/inference--rules-128-orange)](../../docs/logic/INFERENCE_RULES_INVENTORY.md)
 [![Provers](https://img.shields.io/badge/modal--provers-5-purple)](./CEC/native/)
-[![Docs](https://img.shields.io/badge/docs-comprehensive-success)](./DOCUMENTATION_INDEX.md)
+[![Docs](https://img.shields.io/badge/docs-comprehensive-success)](../../docs/logic/DOCUMENTATION_INDEX.md)
 
 ## Quick Links
 
@@ -706,11 +706,11 @@ Each major module has detailed documentation with quick start examples:
 
 ### Documentation Hub
 
-- **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** - Complete documentation index
+- **[DOCUMENTATION_INDEX.md](../../docs/logic/DOCUMENTATION_INDEX.md)** - Complete documentation index
 - **[CACHING_ARCHITECTURE.md](../../docs/logic/CACHING_ARCHITECTURE.md)** - Caching strategies and best practices
 - **[UNIFIED_CONVERTER_GUIDE.md](../../docs/logic/UNIFIED_CONVERTER_GUIDE.md)** - Converter architecture guide
 - **[FEATURES.md](../../docs/logic/FEATURES.md)** - Complete feature catalog
-- **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)** - Migration from legacy APIs
+- **[MIGRATION_GUIDE.md](../../docs/logic/MIGRATION_GUIDE.md)** - Migration from legacy APIs
 
 ---
 

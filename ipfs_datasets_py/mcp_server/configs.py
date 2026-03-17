@@ -9,7 +9,10 @@ import os
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-import yaml
+try:
+    import yaml
+except ModuleNotFoundError:
+    yaml = None
 
 _ROOT_DIR = Path(__file__).parent
 
@@ -102,6 +105,10 @@ def load_config_from_yaml(config_path: Optional[str] = None) -> Configs:
     if not config_path:
         return default_config
 
+    if yaml is None:
+        logging.warning("PyYAML is not installed; falling back to default MCP server configuration")
+        return default_config
+
     config_file = Path(config_path)
     if not config_file.exists():
         return default_config
@@ -146,7 +153,7 @@ def load_config_from_yaml(config_path: Optional[str] = None) -> Configs:
 
         return Configs(**config_dict)
 
-    except (yaml.YAMLError, KeyError, AttributeError) as e:
+    except ((yaml.YAMLError,) if yaml is not None else tuple()) + (KeyError, AttributeError) as e:
         logging.error(f"Error loading configuration from {config_path}: {e}")
         return default_config
 
