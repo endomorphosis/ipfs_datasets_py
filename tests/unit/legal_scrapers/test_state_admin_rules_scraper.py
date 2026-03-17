@@ -119,9 +119,14 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
 
     assert "https://azsos.gov/rules/arizona-administrative-code" in az_urls
     assert "https://apps.azsos.gov/public_services/CodeTOC.htm" in az_urls
-    assert "https://apps.azsos.gov/public_services/Title_04/4-08.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_04/4-08.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_06/6-11.rtf" in az_urls
-    assert "https://apps.azsos.gov/public_services/Title_18/18-01.pdf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_07/7-02.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_18/18-01.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_18/18-04.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_04/4-08.rtf" not in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_07/7-02.pdf" not in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_18/18-01.pdf" not in az_urls
     assert "https://apps.azsos.gov/public_services/Title_00.htm" not in az_urls
     assert all("legislature.az.gov" not in url.lower() for url in az_urls)
     assert all("www.azleg.gov" not in url.lower() for url in az_urls)
@@ -8362,10 +8367,7 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
     assert result["state_blocks"][0]["rules_count"] == 2
     assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [rtf_url, pdf_url]
     assert pdf_calls == [pdf_url]
-    assert rtf_calls == [
-        rtf_url,
-        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
-    ]
+    assert rtf_calls == [rtf_url]
     assert agentic_discovery_calls == 0
     assert archive_search_calls == 0
     assert unified_search_calls == 0
@@ -9202,9 +9204,9 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
                 "status": "success",
                 "data": [
                     {
-                        "state_code": "AZ",
-                        "state_name": "Arizona",
-                        "title": "Arizona Administrative Rules",
+                        "state_code": "AL",
+                        "state_name": "Alabama",
+                        "title": "Alabama Administrative Rules",
                         "statutes": [],
                         "rules_count": 0,
                     }
@@ -9215,9 +9217,9 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
             "status": "success",
             "data": [
                 {
-                    "state_code": "AZ",
-                    "state_name": "Arizona",
-                    "title": "Arizona Administrative Rules",
+                    "state_code": "AL",
+                    "state_name": "Alabama",
+                    "title": "Alabama Administrative Rules",
                     "statutes": [],
                     "rules_count": 0,
                 }
@@ -9229,7 +9231,7 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scrape_state_admin_rules(
-        states=["AZ"],
+        states=["AL"],
         output_format="json",
         include_metadata=True,
         write_jsonld=False,
@@ -9253,6 +9255,84 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
     assert result["metadata"]["state_laws_base_per_state_timeout_seconds"] == expected_delegated_timeout
     assert result["metadata"]["state_laws_fallback_per_state_timeout_seconds"] == expected_delegated_timeout
     assert result["metadata"]["agentic_per_state_budget_seconds"] == 60.0
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_skips_arizona_base_scrape_and_goes_direct_agentic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scrape_calls = []
+
+    async def _fake_scrape_state_laws(**kwargs):
+        scrape_calls.append(dict(kwargs))
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        assert kwargs["states"] == ["AZ"]
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "title": "Arizona Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://apps.azsos.gov/public_services/CodeTOC.htm",
+                    "scraped_at": "2026-03-17T00:00:00",
+                    "statutes": [
+                        {
+                            "state_code": "AZ",
+                            "state_name": "Arizona",
+                            "statute_id": "AZ-AGENTIC-1",
+                            "code_name": "Arizona Administrative Code (Agentic Discovery)",
+                            "section_number": "R18-4-101",
+                            "section_name": "Applicability",
+                            "short_title": "Applicability",
+                            "full_text": "R18-4-101. Applicability. Arizona administrative code article text.",
+                            "summary": "R18-4-101. Applicability. Arizona administrative code article text.",
+                            "legal_area": "administrative",
+                            "source_url": "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+                            "official_cite": "AZ Admin Rule R18-4-101",
+                            "structured_data": {"type": "regulation", "agentic_discovery": True},
+                        }
+                    ],
+                    "rules_count": 1,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            ],
+            "kg_rows": [],
+            "report": {"AZ": {"rules_count": 1}},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AZ"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        per_state_timeout_seconds=60.0,
+        require_substantive_rule_text=True,
+    )
+
+    assert scrape_calls == []
+    assert result["status"] == "success"
+    assert result["metadata"]["base_scrape_skipped_states"] == ["AZ"]
+    assert result["metadata"]["fallback_attempted_states"] is None
+    assert result["metadata"]["agentic_attempted_states"] == ["AZ"]
+    assert result["metadata"]["agentic_recovered_states"] == ["AZ"]
+    assert result["metadata"]["agentic_per_state_budget_seconds"] == 60.0
+    assert result["data"][0]["state_code"] == "AZ"
+    assert result["data"][0]["rules_count"] == 1
 
 
 @pytest.mark.anyio

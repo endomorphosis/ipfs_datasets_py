@@ -699,11 +699,11 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://azsos.gov/rules/arizona-administrative-register",
         "https://apps.azsos.gov/public_services/CodeTOC.htm",
         "https://apps.azsos.gov/public_services/Index/",
-        "https://apps.azsos.gov/public_services/Title_04/4-08.rtf",
         "https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
-        "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
-        "https://apps.azsos.gov/public_services/Title_18/18-01.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_04/4-08.pdf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
     ],
     "AK": [
         "https://www.akleg.gov/basis/aac.asp",
@@ -976,7 +976,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AZ", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -8964,9 +8964,16 @@ async def _agentic_discover_admin_state_blocks(
         seed_urls = _extract_seed_urls_for_state(state_code, state_name)
         if not seed_urls:
             seed_urls = [f"https://{state_code.lower()}.gov"]
-        if state_code == "AZ" and any(
-            _is_immediate_direct_detail_candidate_url(seed_url) and _is_pdf_candidate_url(seed_url)
-            for seed_url in seed_urls[:8]
+        if (
+            state_code == "AZ"
+            and any(
+                _is_immediate_direct_detail_candidate_url(seed_url) and _is_pdf_candidate_url(seed_url)
+                for seed_url in seed_urls[:8]
+            )
+            and not any(
+                _is_immediate_direct_detail_candidate_url(seed_url) and _is_rtf_candidate_url(seed_url)
+                for seed_url in seed_urls[:8]
+            )
         ):
             per_state_budget_s = max(per_state_budget_s, 110.0)
         ordered_seed_urls = sorted(seed_urls, key=_seed_prefetch_priority, reverse=True)
@@ -9600,9 +9607,16 @@ async def _agentic_discover_admin_state_blocks(
             min_text_chars = max(220, int(min_full_text_chars))
         effective_fetch_concurrency = max(1, int(fetch_concurrency))
         preloop_budget_deadline = state_start + max(12.0, min(45.0, per_state_budget_s * 0.25))
-        if state_code == "AZ" and any(
-            _is_immediate_direct_detail_candidate_url(seed_url) and _is_pdf_candidate_url(seed_url)
-            for seed_url in ordered_seed_urls[:8]
+        if (
+            state_code == "AZ"
+            and any(
+                _is_immediate_direct_detail_candidate_url(seed_url) and _is_pdf_candidate_url(seed_url)
+                for seed_url in ordered_seed_urls[:8]
+            )
+            and not any(
+                _is_immediate_direct_detail_candidate_url(seed_url) and _is_rtf_candidate_url(seed_url)
+                for seed_url in ordered_seed_urls[:8]
+            )
         ):
             preloop_budget_deadline = max(
                 preloop_budget_deadline,
@@ -9745,12 +9759,6 @@ async def _agentic_discover_admin_state_blocks(
             if not _is_immediate_direct_detail_candidate_url(seed_url):
                 continue
             seed_candidates = [seed_url]
-            if _is_pdf_candidate_url(seed_url):
-                parsed_seed = urlparse(seed_url)
-                if parsed_seed.netloc.lower() == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed_seed.path or ""):
-                    rtf_sibling_url = re.sub(r"(?i)\.pdf(?=$|\?)", ".rtf", seed_url)
-                    if rtf_sibling_url != seed_url:
-                        seed_candidates = [rtf_sibling_url, seed_url]
             for candidate_url in seed_candidates:
                 doc_key = _url_key(candidate_url)
                 if not doc_key or doc_key in seen_seed_document_keys:
@@ -9762,16 +9770,25 @@ async def _agentic_discover_admin_state_blocks(
             if len(prioritized_seed_document_urls) >= seed_document_limit:
                 break
 
-        prioritized_seed_document_urls = [
-            *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
-            *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
-        ]
+        if state_code == "AZ":
+            prioritized_seed_document_urls = prioritized_seed_document_urls[:4]
+        else:
+            prioritized_seed_document_urls = [
+                *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
+                *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
+            ]
 
+        az_prefetched_seed_url_keys: set[str] = set()
         if state_code == "AZ" and prioritized_seed_document_urls:
-            az_batch_rule_urls = prioritized_seed_document_urls[: min(len(prioritized_seed_document_urls), max_fetch, 6)]
+            az_batch_rule_urls = prioritized_seed_document_urls[
+                : min(len(prioritized_seed_document_urls), max_fetch, 4)
+            ]
+            az_prefetched_seed_url_keys = {
+                key for key in (_url_key(url) for url in az_batch_rule_urls) if key
+            }
             az_batch_timeout_s = max(
                 1.0,
-                min(20.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                min(8.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
             )
             az_batch_tasks = []
             for rule_url in az_batch_rule_urls:
@@ -9939,11 +9956,81 @@ async def _agentic_discover_admin_state_blocks(
             exclude_urls=ranked_direct_exclude_urls,
         )
 
+        az_prefetched_ranked_url_keys: set[str] = set()
+        if state_code == "AZ" and prioritized_ranked_document_urls:
+            az_ranked_rule_urls = prioritized_ranked_document_urls[: min(len(prioritized_ranked_document_urls), max_fetch * 2, 10)]
+            az_prefetched_ranked_url_keys = {
+                key for key in (_url_key(url) for url in az_ranked_rule_urls) if key
+            }
+            az_ranked_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(az_ranked_rule_urls), az_ranked_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = [
+                    rule_url
+                    for rule_url in az_ranked_rule_urls[batch_start : batch_start + az_ranked_batch_size]
+                    if _url_key(rule_url) not in direct_doc_urls
+                ][:remaining_slots]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                az_ranked_timeout_s = max(
+                    1.0,
+                    min(8.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                az_ranked_tasks = []
+                for rule_url in batch_rule_urls:
+                    lower_rule_url = str(rule_url or "").lower()
+                    if lower_rule_url.endswith(".pdf") or ".pdf?" in lower_rule_url:
+                        az_ranked_tasks.append(
+                            asyncio.wait_for(
+                                _scrape_pdf_candidate_url_with_processor(rule_url),
+                                timeout=az_ranked_timeout_s,
+                            )
+                        )
+                    elif lower_rule_url.endswith(".rtf") or ".rtf?" in lower_rule_url:
+                        az_ranked_tasks.append(
+                            asyncio.wait_for(
+                                _scrape_rtf_candidate_url_with_processor(rule_url),
+                                timeout=az_ranked_timeout_s,
+                            )
+                        )
+                    else:
+                        az_ranked_tasks.append(
+                            asyncio.wait_for(
+                                live_scraper.scrape(rule_url),
+                                timeout=az_ranked_timeout_s,
+                            )
+                        )
+
+                az_ranked_results = await asyncio.gather(*az_ranked_tasks, return_exceptions=True)
+                for rule_url, az_scraped in zip(batch_rule_urls, az_ranked_results):
+                    if isinstance(az_scraped, Exception) or az_scraped is None:
+                        continue
+
+                    az_text = str(getattr(az_scraped, "text", "") or "").strip()
+                    az_title = str(getattr(az_scraped, "title", "") or "").strip()
+                    az_provenance = getattr(az_scraped, "extraction_provenance", None) or {}
+                    az_method_value = None
+                    if isinstance(az_provenance, dict):
+                        az_method_value = az_provenance.get("method")
+                    if az_method_value is None:
+                        az_method_value = getattr(az_scraped, "method_used", None)
+                    await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    if len(statutes) >= max_fetch:
+                        break
+
         for document_url in prioritized_ranked_document_urls:
             if len(statutes) >= max_fetch:
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
+            if state_code == "AZ" and _url_key(document_url) in az_prefetched_ranked_url_keys:
+                continue
             remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
             if remaining_prefetch_budget_s <= 1.0:
                 break
@@ -10424,6 +10511,8 @@ async def _agentic_discover_admin_state_blocks(
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
+            if state_code == "AZ" and _url_key(document_url) in az_prefetched_seed_url_keys:
+                continue
             if _url_key(document_url) in direct_doc_urls:
                 continue
             if time.monotonic() >= preloop_budget_deadline:
@@ -11438,6 +11527,11 @@ async def scrape_state_admin_rules(
         delegated_base_states = [
             state_code for state_code in selected_states if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
         ]
+        if direct_agentic_states and not delegated_base_states:
+            agentic_per_state_budget_seconds = min(
+                120.0,
+                max(agentic_per_state_budget_seconds, delegated_state_laws_timeout_seconds),
+            )
 
         base_started_at = time.time()
         if delegated_base_states:
