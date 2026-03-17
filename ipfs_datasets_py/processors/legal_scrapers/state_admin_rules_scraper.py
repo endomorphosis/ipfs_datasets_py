@@ -2624,6 +2624,13 @@ def _arizona_late_retry_timeout_s(remaining_state_budget_s: float) -> float:
     )
 
 
+def _arizona_ranked_fetch_timeout_s(remaining_budget_s: float) -> float:
+    remaining_budget = float(remaining_budget_s)
+    if remaining_budget <= 6.0:
+        return 0.0
+    return max(20.0, min(60.0, remaining_budget - 2.0))
+
+
 def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
     hay = " ".join([str(text or ""), str(title or ""), str(url or "")])
     if _ADMIN_RULE_TEXT_RE.search(hay):
@@ -10757,10 +10764,11 @@ async def _agentic_discover_admin_state_blocks(
             az_batch_rule_urls = prioritized_seed_document_urls[
                 : min(len(prioritized_seed_document_urls), max_fetch, 4)
             ]
-            az_batch_timeout_s = max(
-                1.0,
-                min(8.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+            az_batch_remaining_budget_s = min(
+                preloop_budget_deadline - time.monotonic(),
+                per_state_budget_s - (time.monotonic() - state_start),
             )
+            az_batch_timeout_s = _arizona_ranked_fetch_timeout_s(az_batch_remaining_budget_s)
             az_batch_tasks = []
             for rule_url in az_batch_rule_urls:
                 lower_rule_url = str(rule_url or "").lower()
@@ -11111,10 +11119,11 @@ async def _agentic_discover_admin_state_blocks(
                     continue
 
                 inspected_urls += len(batch_rule_urls)
-                az_ranked_timeout_s = max(
-                    1.0,
-                    min(8.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                az_ranked_remaining_budget_s = min(
+                    preloop_budget_deadline - time.monotonic(),
+                    per_state_budget_s - (time.monotonic() - state_start),
                 )
+                az_ranked_timeout_s = _arizona_ranked_fetch_timeout_s(az_ranked_remaining_budget_s)
                 az_ranked_tasks = []
                 for rule_url in batch_rule_urls:
                     lower_rule_url = str(rule_url or "").lower()
@@ -11316,6 +11325,43 @@ async def _agentic_discover_admin_state_blocks(
                             live_scraper.scrape(fetch_document_url),
                             timeout=az_late_timeout_s,
                         )
+                except Exception:
+                    late_scraped = None
+                if late_scraped is None:
+                    continue
+
+                late_text = str(getattr(late_scraped, "text", "") or "").strip()
+                late_title = str(getattr(late_scraped, "title", "") or "").strip()
+                late_provenance = getattr(late_scraped, "extraction_provenance", None) or {}
+                late_method_value = None
+                if isinstance(late_provenance, dict):
+                    late_method_value = late_provenance.get("method")
+                if late_method_value is None:
+                    late_method_value = getattr(late_scraped, "method_used", None)
+                late_method_value = getattr(late_method_value, "value", late_method_value)
+                await _append_document_if_rule(document_url, late_title, late_text, late_method_value)
+
+            az_last_chance_retry_urls = _prioritized_arizona_late_retry_urls(
+                [],
+                limit=1,
+                extra_preferred_urls=["https://apps.azsos.gov/public_services/Title_18/18-01.rtf"],
+                exclude_urls={url for url in direct_doc_urls if url},
+            )
+            for document_url in az_last_chance_retry_urls:
+                if len(statutes) >= max_fetch:
+                    break
+                remaining_state_budget_s = per_state_budget_s - (time.monotonic() - state_start)
+                az_late_timeout_s = min(12.0, _arizona_late_retry_timeout_s(remaining_state_budget_s))
+                if az_late_timeout_s <= 0.0:
+                    break
+
+                late_scraped = None
+                inspected_urls += 1
+                try:
+                    late_scraped = await asyncio.wait_for(
+                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        timeout=az_late_timeout_s,
+                    )
                 except Exception:
                     late_scraped = None
                 if late_scraped is None:

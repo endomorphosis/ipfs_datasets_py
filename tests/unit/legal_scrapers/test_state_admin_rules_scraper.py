@@ -4062,6 +4062,13 @@ def test_arizona_late_retry_timeout_uses_remaining_state_budget() -> None:
     assert scraper_module._arizona_late_retry_timeout_s(45.0) == 0.0
 
 
+def test_arizona_ranked_fetch_timeout_tracks_slow_host_budget() -> None:
+    assert scraper_module._arizona_ranked_fetch_timeout_s(90.0) == 60.0
+    assert scraper_module._arizona_ranked_fetch_timeout_s(48.0) == 46.0
+    assert scraper_module._arizona_ranked_fetch_timeout_s(22.0) == 20.0
+    assert scraper_module._arizona_ranked_fetch_timeout_s(6.0) == 0.0
+
+
 @pytest.mark.asyncio
 async def test_extract_text_from_pdf_bytes_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePDFProcessor:
@@ -9220,6 +9227,114 @@ async def test_agentic_discovery_bootstraps_arizona_rule_documents_before_broad_
     assert rtf_calls == [rtf_url]
     assert pdf_calls == [pdf_url]
     assert result["report"]["AZ"]["source_breakdown"]["arizona_public_services_bootstrap"] == 2
+    assert archive_calls == 0
+    assert unified_search_calls == 0
+    assert agentic_calls == 0
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_retries_arizona_18_01_rtf_one_last_time_when_group_still_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    landing_url = "https://apps.azsos.gov/public_services/CodeTOC.htm"
+    retry_url = "https://apps.azsos.gov/public_services/Title_18/18-01.rtf"
+    archive_calls = 0
+    unified_search_calls = 0
+    agentic_calls = 0
+    rtf_calls: list[str] = []
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_calls
+            archive_calls += 1
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_calls
+            agentic_calls += 1
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(text="", title="", html="", extraction_provenance={"method": "requests_only"})
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_discover_arizona_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+        assert landing_url in seed_urls
+        return [retry_url]
+
+    async def _fake_scrape_rtf_candidate_url_with_processor(url: str):
+        rtf_calls.append(url)
+        if url != retry_url:
+            return None
+        if len(rtf_calls) < 4:
+            return None
+        return SimpleNamespace(
+            text="R18-1-101. Applicability. Arizona administrative code article text with authority and licensing provisions.",
+            title="Title 18 Chapter 1",
+            extraction_provenance={"method": "rtf_processor"},
+        )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [landing_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_arizona_rule_document_urls", _fake_discover_arizona_rule_document_urls)
+    monkeypatch.setattr(scraper_module, "_scrape_rtf_candidate_url_with_processor", _fake_scrape_rtf_candidate_url_with_processor)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == retry_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["AZ"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=40,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == retry_url
+    assert len(rtf_calls) >= 3
+    assert all(call == retry_url for call in rtf_calls)
     assert archive_calls == 0
     assert unified_search_calls == 0
     assert agentic_calls == 0
