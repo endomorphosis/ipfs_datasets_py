@@ -200,6 +200,24 @@ def test_tennessee_curated_seeds_keep_service_pages_but_drop_dead_placeholders()
     assert all("capitol.tn.gov" not in url.lower() for url in tn_urls)
 
 
+def test_mississippi_curated_seeds_use_live_adminsearch_entrypoints() -> None:
+    ms_urls = scraper_module._extract_seed_urls_for_state("MS", "Mississippi")
+
+    assert "https://sos.ms.gov/regulation-enforcement/administrative-code" in ms_urls
+    assert "https://www.sos.ms.gov/adminsearch/default.aspx" in ms_urls
+    assert "https://www.sos.ms.gov/adminsearch/" in ms_urls
+    assert "https://www.sos.ms.gov/adminsearch/Pages/default.aspx" not in ms_urls
+
+
+def test_mississippi_adminsearch_pdf_is_direct_detail_candidate() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://www.sos.ms.gov/adminsearch/ACCode/00000169c.pdf"
+    ) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://www.sos.ms.gov/adminsearch/ACCode/00000169c.pdf"
+    ) is True
+
+
 def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
     ma_urls = scraper_module._extract_seed_urls_for_state("MA", "Massachusetts")
     ma_allowed_hosts = _allowed_discovery_hosts_for_state("MA", "Massachusetts")
@@ -969,6 +987,122 @@ async def test_discover_new_hampshire_archived_rule_document_urls_with_diagnosti
         "links_considered": 4,
         "document_urls_found": 3,
     }
+
+
+@pytest.mark.asyncio
+async def test_discover_mississippi_rule_document_urls_uses_adminsearch_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed_payloads: list[dict[str, str]] = []
+
+    class _FakeGetResponse:
+        text = """
+        <html>
+          <body>
+            <select id="cAgencySearch">
+              <option value="">Choose agency</option>
+              <option value="54 ">Title 1 - SECRETARY OF STATE</option>
+              <option value="15 ">Title 15 - MISSISSIPPI DEPARTMENT OF HEALTH</option>
+            </select>
+          </body>
+        </html>
+        """
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class _FakePostResponse:
+        def __init__(self, payload: dict[str, str]):
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            if self._payload["tmpAgency"] == "54 ":
+                return {
+                    "d": "SECRETARY OF STATE~1~5/31/2016~11/30/2011~Administrative Law~~169~00000169c.pdf^"
+                    "SECRETARY OF STATE~1~5/31/2016~11/30/2011~Title 1~~170~00000170c.pdf|2"
+                }
+            return {
+                "d": "MISSISSIPPI DEPARTMENT OF HEALTH~15~4/1/2024~1/1/2020~Title 15~~200~00000200c.pdf|1"
+            }
+
+    def _fake_get(url: str, *args, **kwargs):
+        assert url == scraper_module._MS_ADMINSEARCH_INDEX_URL
+        return _FakeGetResponse()
+
+    def _fake_post(url: str, *args, **kwargs):
+        assert url == scraper_module._MS_ADMINSEARCH_SERVICE_URL
+        payload = dict(kwargs.get("json") or {})
+        observed_payloads.append(payload)
+        return _FakePostResponse(payload)
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+    monkeypatch.setattr(scraper_module.requests, "post", _fake_post)
+
+    urls = await scraper_module._discover_mississippi_rule_document_urls(limit=2)
+
+    assert urls == [
+        "https://www.sos.ms.gov/adminsearch/ACCode/00000169c.pdf",
+        "https://www.sos.ms.gov/adminsearch/ACCode/00000170c.pdf",
+    ]
+    assert observed_payloads == [
+        {
+            "tmpSubject": "",
+            "tmpAgency": "54 ",
+            "tmpPartRange1": "",
+            "tmpPartRange2": "",
+            "tmpRuleSum": "",
+            "tmpOrder": "PartNo",
+            "tmpOrderDirec": "Ascending",
+            "tmpSearchDate1": "",
+            "tmpSearchDate2": "",
+            "tmpDateType": "0",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discover_hawaii_rule_document_urls_extracts_official_pdfs(monkeypatch: pytest.MonkeyPatch) -> None:
+    cca_url = "https://cca.hawaii.gov/hawaii-administrative-rules/"
+    labor_url = "https://labor.hawaii.gov/administrative-rules/"
+
+    class _FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def _fake_get(url: str, *args, **kwargs):
+        if url == cca_url:
+            return _FakeResponse(
+                """
+                <html><body>
+                  <a href="https://files.hawaii.gov/dcca/ins/har/har_1-c.pdf">HAR Chapter 1</a>
+                  <a href="https://cca.hawaii.gov/wp-content/uploads/2026/02/HAR-16-12-Standard.pdf">HAR Chapter 12</a>
+                </body></html>
+                """
+            )
+        if url == labor_url:
+            return _FakeResponse(
+                """
+                <html><body>
+                  <a href="https://labor.hawaii.gov/wp-content/uploads/2013/02/12-30.pdf">Title 12, Chapter 30</a>
+                  <a href="https://labor.hawaii.gov/other.pdf">Staff memo</a>
+                </body></html>
+                """
+            )
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests.Session, "get", lambda self, url, *args, **kwargs: _fake_get(url, *args, **kwargs))
+
+    urls = await scraper_module._discover_hawaii_rule_document_urls(seed_urls=[cca_url, labor_url], limit=3)
+
+    assert urls == [
+        "https://files.hawaii.gov/dcca/ins/har/har_1-c.pdf",
+        "https://cca.hawaii.gov/wp-content/uploads/2026/02/HAR-16-12-Standard.pdf",
+        "https://labor.hawaii.gov/wp-content/uploads/2013/02/12-30.pdf",
+    ]
 
 
 @pytest.mark.asyncio
@@ -3087,6 +3221,21 @@ def test_should_not_emit_relaxed_recovery_arizona_inventory_page() -> None:
     ) is False
 
 
+def test_should_not_emit_relaxed_recovery_arizona_repealed_chapter_pdf() -> None:
+    text = (
+        "TITLE 7. EDUCATION CHAPTER 3. REPEALED "
+        "This Chapter contains rules that were repealed by the Arizona State Legislature in session law. "
+        "Arizona Administrative Code Publisher Department of State Office of the Secretary of State Administrative Rules Division. "
+        "R7-3-101. Repealed. R7-3-102. Repealed."
+    )
+
+    assert scraper_module._should_emit_relaxed_recovery_statute(
+        text=text,
+        title="TITLE 7. EDUCATION CHAPTER 3. REPEALED",
+        url="https://apps.azsos.gov/public_services/Title_07/7-03.pdf",
+    ) is False
+
+
 def test_rejects_arizona_admin_register_toc_as_non_rule_page() -> None:
     text = (
         "ARIZONA SECRETARY OF STATE Home / Rules / Arizona Administrative Register / 2025, Volume 31. "
@@ -3571,6 +3720,48 @@ def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_d
         "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
         "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
     ]
+
+
+def test_prioritized_arizona_late_retry_urls_prefers_productive_title_two_pdf() -> None:
+    candidate_urls = [
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-03.pdf",
+        "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_01/1-01.pdf",
+    ]
+
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(candidate_urls, limit=3)
+
+    assert prioritized == [
+        "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-03.pdf",
+    ]
+
+
+def test_prioritized_arizona_late_retry_urls_can_inject_productive_title_two_pdf() -> None:
+    candidate_urls = [
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
+    ]
+
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(
+        candidate_urls,
+        limit=2,
+        exclude_urls={"https://apps.azsos.gov/public_services/Title_07/7-02.pdf"},
+    )
+
+    assert prioritized == [
+        "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    ]
+
+
+def test_arizona_late_retry_timeout_uses_remaining_state_budget() -> None:
+    assert scraper_module._arizona_late_retry_timeout_s(48.0) == 46.0
+    assert scraper_module._arizona_late_retry_timeout_s(63.0) == 61.0
+    assert scraper_module._arizona_late_retry_timeout_s(90.0) == 70.0
+    assert scraper_module._arizona_late_retry_timeout_s(45.0) == 0.0
 
 
 @pytest.mark.asyncio
@@ -8749,6 +8940,113 @@ async def test_agentic_discovery_bootstraps_tennessee_pdf_rules_before_broad_dis
 
 
 @pytest.mark.anyio
+async def test_agentic_discovery_bootstraps_hawaii_pdf_rules_before_broad_discovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://cca.hawaii.gov/hawaii-administrative-rules/"
+    rule_url = "https://files.hawaii.gov/dcca/ins/har/har_1-c.pdf"
+    archive_calls = 0
+    unified_search_calls = 0
+    agentic_calls = 0
+    pdf_calls: list[str] = []
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_calls
+            archive_calls += 1
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_calls
+            agentic_calls += 1
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(text="", title="", html="", extraction_provenance={"method": "requests_only"})
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_scrape_pdf_candidate_url_with_processor(url: str):
+        pdf_calls.append(url)
+        if url != rule_url:
+            return None
+        return SimpleNamespace(
+            text="TITLE 16 CHAPTER 1 Hawaii administrative rule text with authority and definitions.",
+            title="DEPARTMENT OF REGULATORY AGENCIES",
+            extraction_provenance={"method": "pdf_processor"},
+        )
+
+    async def _fake_discover_hawaii_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+        assert seed_url in seed_urls
+        return [rule_url]
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_hawaii_rule_document_urls", _fake_discover_hawaii_rule_document_urls)
+    monkeypatch.setattr(scraper_module, "_scrape_pdf_candidate_url_with_processor", _fake_scrape_pdf_candidate_url_with_processor)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == rule_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["HI"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == rule_url
+    assert pdf_calls == [rule_url]
+    assert result["report"]["HI"]["source_breakdown"]["hawaii_official_pdf_bootstrap"] == 1
+    assert result["report"]["HI"]["format_counts"]["pdf"] == 1
+    assert archive_calls == 0
+    assert unified_search_calls == 0
+    assert agentic_calls == 0
+
+
+@pytest.mark.anyio
 async def test_agentic_discovery_archive_prefetch_inventory_expands_without_crashing(monkeypatch: pytest.MonkeyPatch) -> None:
     seed_url = "https://apps.azsos.gov/public_services/CodeTOC.htm"
     inventory_url = seed_url
@@ -9671,6 +9969,82 @@ async def test_scrape_state_admin_rules_skips_wyoming_base_scrape_and_goes_direc
     assert result["metadata"]["agentic_attempted_states"] == ["WY"]
     assert result["metadata"]["agentic_recovered_states"] == ["WY"]
     assert result["data"][0]["state_code"] == "WY"
+    assert result["data"][0]["rules_count"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_skips_mississippi_base_scrape_and_goes_direct_agentic(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scrape_calls = []
+
+    async def _fake_scrape_state_laws(**kwargs):
+        scrape_calls.append(dict(kwargs))
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        assert kwargs["states"] == ["MS"]
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "MS",
+                    "state_name": "Mississippi",
+                    "title": "Mississippi Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://www.sos.ms.gov/adminsearch/default.aspx",
+                    "scraped_at": "2026-03-17T00:00:00",
+                    "statutes": [
+                        {
+                            "state_code": "MS",
+                            "state_name": "Mississippi",
+                            "statute_id": "MS-AGENTIC-1",
+                            "code_name": "Mississippi Administrative Code (Agentic Discovery)",
+                            "section_number": "Title 1 Part 169",
+                            "section_name": "Administrative Procedures Act Rules",
+                            "short_title": "Administrative Procedures Act Rules",
+                            "full_text": "Administrative Procedures Act Rules. Mississippi administrative code part text.",
+                            "summary": "Administrative Procedures Act Rules. Mississippi administrative code part text.",
+                            "legal_area": "administrative",
+                            "source_url": "https://www.sos.ms.gov/adminsearch/ACCode/00000169c.pdf",
+                            "official_cite": "MS Admin Rule Title 1 Part 169",
+                            "structured_data": {"type": "regulation", "agentic_discovery": True},
+                        }
+                    ],
+                    "rules_count": 1,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            ],
+            "kg_rows": [],
+            "report": {"MS": {"rules_count": 1}},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["MS"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        require_substantive_rule_text=True,
+    )
+
+    assert scrape_calls == []
+    assert result["status"] == "success"
+    assert result["metadata"]["base_scrape_skipped_states"] == ["MS"]
+    assert result["metadata"]["fallback_attempted_states"] is None
+    assert result["metadata"]["agentic_attempted_states"] == ["MS"]
+    assert result["metadata"]["agentic_recovered_states"] == ["MS"]
+    assert result["data"][0]["state_code"] == "MS"
     assert result["data"][0]["rules_count"] == 1
 
 
