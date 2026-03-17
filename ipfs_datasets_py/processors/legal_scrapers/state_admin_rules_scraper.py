@@ -986,7 +986,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AZ", "MS", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AZ", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -9545,9 +9545,10 @@ async def _agentic_discover_admin_state_blocks(
                     or parsed_seed.path.startswith("/api/public/searchRuleDataTotal/")
                 ):
                     continue
+                utah_api_scan_limit = max(8, utah_seed_limit * 4)
                 for rule_url in _candidate_utah_rule_urls_from_public_api(
                     url=seed_url,
-                    limit=utah_seed_limit,
+                    limit=utah_api_scan_limit,
                 ):
                     rule_key = _url_key(rule_url)
                     if not rule_key or rule_key in seen_utah_bootstrap_rule_keys:

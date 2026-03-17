@@ -9650,7 +9650,7 @@ async def test_agentic_discovery_utah_bootstrap_uses_six_rule_cap_for_standard_b
         lambda state_code, state_name: [seed_url, *seeded_rule_urls],
     )
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
-    monkeypatch.setattr(scraper_module, "_candidate_utah_rule_urls_from_public_api", lambda url, limit=24: list(api_rule_urls))
+    monkeypatch.setattr(scraper_module, "_candidate_utah_rule_urls_from_public_api", lambda url, limit=24: list(api_rule_urls[:limit]))
     monkeypatch.setattr(scraper_module, "_scrape_utah_rule_detail_via_public_download", _fake_scrape_utah_rule_detail_via_public_download)
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") in accepted_rule_urls)
     monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
