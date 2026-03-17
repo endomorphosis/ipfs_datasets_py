@@ -7976,6 +7976,64 @@ def _candidate_arizona_rule_urls_from_text(*, text: str, page_url: str = "", lim
     return out
 
 
+async def _discover_arizona_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        str(url or "").strip()
+        for url in list(seed_urls or [])
+        if urlparse(str(url or "").strip()).netloc.lower() in {"apps.azsos.gov", "azsos.gov", "www.azsos.gov"}
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        session = requests.Session()
+        discovered_urls: List[str] = []
+        seen_documents: set[str] = set()
+        seen_pages: set[str] = set()
+        frontier: List[str] = [
+            "https://apps.azsos.gov/public_services/CodeTOC.htm",
+            "https://apps.azsos.gov/public_services/Index/",
+        ]
+        for seed_url in relevant_seed_urls:
+            if seed_url not in frontier:
+                frontier.append(seed_url)
+
+        for page_url in frontier[:4]:
+            page_key = _url_key(page_url)
+            if not page_key or page_key in seen_pages:
+                continue
+            seen_pages.add(page_key)
+
+            try:
+                response = session.get(page_url, timeout=15, headers=headers)
+                response.raise_for_status()
+            except Exception:
+                continue
+
+            for candidate_url in _candidate_arizona_rule_urls_from_text(
+                text=response.text,
+                page_url=page_url,
+                limit=max(limit_n * 4, 24),
+            ):
+                document_key = _url_key(candidate_url)
+                if not document_key or document_key in seen_documents:
+                    continue
+                seen_documents.add(document_key)
+                discovered_urls.append(candidate_url)
+                if len(discovered_urls) >= limit_n:
+                    return discovered_urls
+
+        return discovered_urls
+
+    return await asyncio.to_thread(_run)
+
+
 def _candidate_vermont_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
     body = str(html or "")
     if not body:
@@ -8985,6 +9043,7 @@ async def _agentic_discover_admin_state_blocks(
         candidate_urls.extend(_template_admin_urls_for_state(state_code))
 
         utah_api_rule_urls: List[str] = []
+        arizona_bootstrap_document_urls: List[str] = []
         arkansas_bootstrap_document_urls: List[str] = []
         texas_bootstrap_document_urls: List[str] = []
         oklahoma_bootstrap_document_urls: List[str] = []
@@ -9050,6 +9109,22 @@ async def _agentic_discover_admin_state_blocks(
                         break
                 if utah_api_rule_urls:
                     break
+
+        if state_code == "AZ":
+            try:
+                arizona_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_arizona_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                    ),
+                    timeout=20.0,
+                )
+            except Exception:
+                arizona_bootstrap_document_urls = []
+            for document_url in arizona_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if arizona_bootstrap_document_urls:
+                source_breakdown["arizona_public_services_bootstrap"] = len(arizona_bootstrap_document_urls)
 
         if state_code == "AR":
             arkansas_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 8))
@@ -9321,6 +9396,7 @@ async def _agentic_discover_admin_state_blocks(
             or wyoming_bootstrap_document_urls
             or south_dakota_bootstrap_document_urls
             or utah_api_rule_urls
+            or arizona_bootstrap_document_urls
             or arkansas_bootstrap_document_urls
             or texas_bootstrap_document_urls
             or oklahoma_bootstrap_document_urls
@@ -9862,6 +9938,23 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_california_bootstrap_document_urls) >= min(max_fetch, 8):
                     break
 
+        prioritized_arizona_seed_rule_urls: List[str] = []
+        if state_code == "AZ" and arizona_bootstrap_document_urls:
+            seen_arizona_rule_keys: set[str] = set()
+            for rule_url in arizona_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_arizona_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_arizona_rule_keys.add(rule_key)
+                prioritized_arizona_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_arizona_seed_rule_urls) >= min(max_fetch * 2, 12):
+                    break
+
         for rule_url in prioritized_california_bootstrap_document_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -9889,6 +9982,57 @@ async def _agentic_discover_admin_state_blocks(
             if california_method_value is None:
                 california_method_value = getattr(california_scraped, "method_used", None)
             await _append_document_if_rule(rule_url, california_title, california_text, california_method_value)
+
+        if state_code == "AZ" and prioritized_arizona_seed_rule_urls:
+            arizona_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(prioritized_arizona_seed_rule_urls), arizona_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = [
+                    rule_url
+                    for rule_url in prioritized_arizona_seed_rule_urls[batch_start : batch_start + arizona_batch_size]
+                    if _url_key(rule_url) not in direct_doc_urls
+                ][:remaining_slots]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                batch_timeout_s = max(
+                    1.0,
+                    min(8.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                batch_results = await asyncio.gather(
+                    *[
+                        asyncio.wait_for(
+                            _scrape_rtf_candidate_url_with_processor(rule_url)
+                            if _is_rtf_candidate_url(rule_url)
+                            else _scrape_pdf_candidate_url_with_processor(rule_url),
+                            timeout=batch_timeout_s,
+                        )
+                        for rule_url in batch_rule_urls
+                    ],
+                    return_exceptions=True,
+                )
+
+                for rule_url, arizona_scraped in zip(batch_rule_urls, batch_results):
+                    if isinstance(arizona_scraped, Exception) or arizona_scraped is None:
+                        continue
+
+                    arizona_text = str(getattr(arizona_scraped, "text", "") or "").strip()
+                    arizona_title = str(getattr(arizona_scraped, "title", "") or "").strip()
+                    arizona_provenance = getattr(arizona_scraped, "extraction_provenance", None) or {}
+                    arizona_method_value = None
+                    if isinstance(arizona_provenance, dict):
+                        arizona_method_value = arizona_provenance.get("method")
+                    if arizona_method_value is None:
+                        arizona_method_value = getattr(arizona_scraped, "method_used", None)
+                    await _append_document_if_rule(rule_url, arizona_title, arizona_text, arizona_method_value)
+                    if len(statutes) >= max_fetch:
+                        break
 
         utah_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
         for batch_start in range(0, len(prioritized_utah_seed_rule_urls), utah_batch_size):
@@ -11362,6 +11506,7 @@ async def _agentic_discover_admin_state_blocks(
                 direct_detail_candidate_samples.append(url)
                 if len(direct_detail_candidate_samples) >= 16:
                     break
+        state_elapsed_s = max(0.0, time.monotonic() - state_start)
         report[state_code] = {
             "candidate_urls": len(ranked_urls),
             "inspected_urls": int(inspected_urls),
@@ -11423,7 +11568,7 @@ async def _agentic_discover_admin_state_blocks(
             },
             "source_breakdown": source_breakdown,
             "new_hampshire_bootstrap_diagnostics": new_hampshire_bootstrap_diagnostics if state_code == "NH" else {},
-            "timed_out": bool((time.monotonic() - state_start) >= per_state_budget_s),
+            "timed_out": bool(state_elapsed_s >= per_state_budget_s and not statutes),
         }
         if state_rate_limit_metadata:
             report[state_code].update(state_rate_limit_metadata)
