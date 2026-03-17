@@ -184,6 +184,48 @@ def test_vermont_curated_seeds_drop_blocked_lexis_hosts() -> None:
     assert "advance.lexis.com" not in vt_allowed_hosts
 
 
+@pytest.mark.asyncio
+async def test_discover_vermont_rule_document_urls_reads_rss_feed(monkeypatch: pytest.MonkeyPatch) -> None:
+        rss_url = "https://secure.vermont.gov/SOS/rules/rssFeed.php"
+
+        class _FakeResponse:
+                headers = {"Content-Type": "application/rss+xml"}
+                text = """
+                <rss version="2.0">
+                    <channel>
+                        <item>
+                            <title>Rule:25P038</title>
+                            <link>https://secure.vermont.gov/SOS/rules/display.php?r=1031</link>
+                            <guid>https://secure.vermont.gov/SOS/rules/display.php?r=1031</guid>
+                        </item>
+                        <item>
+                            <title>Rule:25P040</title>
+                            <guid>https://secure.vermont.gov/SOS/rules/display.php?r=1033</guid>
+                        </item>
+                    </channel>
+                </rss>
+                """
+
+                def raise_for_status(self) -> None:
+                        return None
+
+        def _fake_get(url: str, *args, **kwargs):
+                assert url == rss_url
+                return _FakeResponse()
+
+        monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+        urls = await scraper_module._discover_vermont_rule_document_urls(
+                seed_urls=["https://secure.vermont.gov/SOS/rules/", rss_url],
+                limit=4,
+        )
+
+        assert urls == [
+                "https://secure.vermont.gov/SOS/rules/display.php?r=1031",
+                "https://secure.vermont.gov/SOS/rules/display.php?r=1033",
+        ]
+
+
 def test_tennessee_curated_seeds_keep_service_pages_but_drop_dead_placeholders() -> None:
     tn_urls = scraper_module._extract_seed_urls_for_state("TN", "Tennessee")
 
@@ -626,6 +668,111 @@ async def test_agentic_discovery_stops_vermont_pending_crawl_after_adopted_seed_
     assert result["state_blocks"][0]["rules_count"] >= 1
     assert result["report"]["VT"]["fetched_rules"] >= 1
     assert portal_url not in result["report"]["VT"]["inspected_url_samples"]
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_bootstraps_vermont_rss_rules_before_broad_discovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    portal_url = "https://secure.vermont.gov/SOS/rules/"
+    rule_url = "https://secure.vermont.gov/SOS/rules/display.php?r=1031"
+    archive_calls = 0
+    unified_search_calls = 0
+    agentic_calls = 0
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_calls
+            archive_calls += 1
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_calls
+            agentic_calls += 1
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(text="", title="", html="", extraction_provenance={"method": "requests_only"})
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            assert url == rule_url
+            return SimpleNamespace(
+                text=(
+                    "Vermont Secretary of State Rules Service Search Rules Rule Details "
+                    "Rule Number:25P038 Title:Vermont Securities Regulations Rule Type:Standard Status:Adopted "
+                    "Agency:Department of Financial Regulation Legal Authority:9 V.S.A. § 5605"
+                ),
+                title="Vermont Secretary of State Rules Service",
+                html="<html><body>Rule Details Rule Number:25P038 Status:Adopted</body></html>",
+                links=[],
+                method_used="requests_only",
+                extraction_provenance={"method": "requests_only"},
+            )
+
+    async def _fake_discover_vermont_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+        assert portal_url in seed_urls
+        return [rule_url]
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [portal_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_vermont_rule_document_urls", _fake_discover_vermont_rule_document_urls)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == rule_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["VT"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == rule_url
+    assert result["report"]["VT"]["source_breakdown"]["vermont_rss_bootstrap"] == 1
+    assert archive_calls == 0
+    assert unified_search_calls == 0
+    assert agentic_calls == 0
 
 
 def test_new_hampshire_admin_seed_urls_exclude_live_root_pages() -> None:
@@ -3592,6 +3739,24 @@ def test_build_initial_pending_candidates_dedupes_canonical_urls_and_keeps_highe
     ]
 
 
+def test_arizona_official_document_group_key_dedupes_pdf_and_rtf_siblings() -> None:
+    assert scraper_module._arizona_official_document_group_key(
+        "https://apps.azsos.gov/public_services/Title_06/6-11.rtf"
+    ) == "/public_services/title_06/6-11"
+    assert scraper_module._arizona_official_document_group_key(
+        "https://apps.azsos.gov/public_services/Title_06/6-11.pdf"
+    ) == "/public_services/title_06/6-11"
+
+
+def test_arizona_official_document_group_key_ignores_non_official_documents() -> None:
+    assert scraper_module._arizona_official_document_group_key(
+        "https://apps.azsos.gov/public_services/CodeTOC.htm"
+    ) == ""
+    assert scraper_module._arizona_official_document_group_key(
+        "https://azsos.gov/rules/arizona-administrative-code"
+    ) == ""
+
+
 def test_candidate_links_from_html_extracts_texas_appian_inventory_and_detail_urls() -> None:
     html = """
     <html><body>
@@ -4183,6 +4348,24 @@ async def test_normalize_candidate_document_content_replaces_bad_rtf_title(
 
     assert normalized_title == "TITLE 18. ENVIRONMENTAL QUALITY"
     assert "R18-4-101. Authority and Purpose" in normalized_text
+
+
+@pytest.mark.asyncio
+async def test_normalize_candidate_document_content_replaces_bad_arizona_official_plaintext_title() -> None:
+    normalized_title, normalized_text = await scraper_module._normalize_candidate_document_content(
+        url="https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+        title="(Authority: A.R.S. § 42-1202 et seq.)",
+        text=(
+            "(Authority: A.R.S. § 42-1202 et seq.)\n"
+            "ARTICLE 1. REPEALED\n"
+            "TITLE 15. REVENUE\n"
+            "CHAPTER 3. DEPARTMENT OF REVENUE - LUXURY TAX\n"
+            "R15-3-201. Definitions\n"
+        ),
+    )
+
+    assert normalized_title == "TITLE 15. REVENUE"
+    assert "R15-3-201. Definitions" in normalized_text
 
 
 @pytest.mark.asyncio

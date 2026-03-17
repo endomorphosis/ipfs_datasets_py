@@ -25,6 +25,7 @@ from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, quote, unquote, urldefrag, urlencode, urljoin, urlparse
+import xml.etree.ElementTree as ET
 
 try:
     from .canonical_legal_corpora import get_canonical_legal_corpus
@@ -2135,6 +2136,16 @@ def _score_candidate_url(url: str) -> int:
 def _url_key(url: str) -> str:
     normalized_url = urldefrag(str(url or "").strip()).url
     return normalized_url.lower().rstrip("/")
+
+
+def _arizona_official_document_group_key(url: str) -> str:
+    parsed = urlparse(urldefrag(str(url or "").strip()).url)
+    if parsed.netloc.lower() != "apps.azsos.gov":
+        return ""
+    path = parsed.path or ""
+    if not _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
+        return ""
+    return re.sub(r"(?i)\.(?:pdf|rtf)$", "", path).lower()
 
 
 def _gap_summary_host_key(host: str) -> str:
@@ -4426,6 +4437,84 @@ async def _discover_vermont_lexis_document_urls(*, seed_urls: List[str], limit: 
                 await context.close()
             elif browser is not None:
                 await browser.close()
+
+
+async def _discover_vermont_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        str(url or "").strip()
+        for url in list(seed_urls or [])
+        if urlparse(str(url or "").strip()).netloc.lower() in {"secure.vermont.gov", "sos.vermont.gov"}
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    def _run() -> List[str]:
+        discovered_urls: List[str] = []
+        seen_keys: set[str] = set()
+        limit_n = max(1, int(limit))
+
+        def _append(candidate_url: str) -> bool:
+            normalized_url = str(candidate_url or "").strip()
+            if not normalized_url:
+                return False
+            if not _is_immediate_direct_detail_candidate_url(normalized_url):
+                return False
+            candidate_key = _url_key(normalized_url)
+            if not candidate_key or candidate_key in seen_keys:
+                return False
+            seen_keys.add(candidate_key)
+            discovered_urls.append(normalized_url)
+            return True
+
+        fetch_urls: List[str] = []
+        rss_url = "https://secure.vermont.gov/SOS/rules/rssFeed.php"
+        fetch_urls.append(rss_url)
+        for seed_url in relevant_seed_urls:
+            parsed_seed = urlparse(seed_url)
+            if parsed_seed.netloc.lower() == "secure.vermont.gov" and seed_url not in fetch_urls:
+                fetch_urls.append(seed_url)
+
+        for fetch_url in fetch_urls:
+            try:
+                response = requests.get(
+                    fetch_url,
+                    timeout=20,
+                    headers=_pdf_request_headers(fetch_url),
+                )
+                response.raise_for_status()
+            except Exception:
+                continue
+
+            body = str(getattr(response, "text", "") or "")
+            if not body:
+                continue
+
+            content_type = str(getattr(response, "headers", {}).get("Content-Type", "") or "")
+            if "xml" in content_type.lower() or body.lstrip().startswith("<rss"):
+                try:
+                    root = ET.fromstring(body)
+                except ET.ParseError:
+                    root = None
+                if root is not None:
+                    for item in root.findall("./channel/item"):
+                        for tag_name in ("link", "guid"):
+                            tag = item.find(tag_name)
+                            if tag is None:
+                                continue
+                            if _append(str(tag.text or "")) and len(discovered_urls) >= limit_n:
+                                return discovered_urls
+
+            for match in re.findall(
+                r"https://secure\.vermont\.gov/SOS/rules/display\.php\?r=\d+",
+                body,
+                re.IGNORECASE,
+            ):
+                if _append(match) and len(discovered_urls) >= limit_n:
+                    return discovered_urls
+
+        return discovered_urls
+
+    return await asyncio.to_thread(_run)
 
 
 def _scrape_vermont_lexis_document_candidate(url: str) -> Optional[Any]:
@@ -6920,6 +7009,17 @@ def _title_from_extracted_rtf_text(*, text: str, url: str) -> str:
     return _title_from_extracted_pdf_text(text=text, url=url)
 
 
+def _title_from_arizona_official_document_text(*, text: str, url: str) -> str:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "apps.azsos.gov" or not _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or ""):
+        return ""
+    for line in str(text or "").splitlines()[:80]:
+        cleaned = re.sub(r"\s+", " ", line).strip()
+        if re.match(r"^TITLE\s+\d+\.\s+", cleaned, re.IGNORECASE):
+            return cleaned[:240]
+    return ""
+
+
 def _looks_like_bad_rtf_title(title: str) -> bool:
     value = re.sub(r"\s+", " ", str(title or "")).strip()
     if not value:
@@ -6927,6 +7027,8 @@ def _looks_like_bad_rtf_title(title: str) -> bool:
     if _RTF_CONTENT_PREFIX_RE.search(value[:256]):
         return True
     if _RTF_MARKER_LINE_RE.fullmatch(value):
+        return True
+    if value.lower().startswith(("(authority:", "authority:")):
         return True
     if value.lower().startswith(("please note that the chapter", "this is an unofficial version")):
         return True
@@ -7367,6 +7469,11 @@ async def _normalize_candidate_document_content(*, url: str, title: str, text: s
             url=url,
             title=normalized_title,
         )
+
+    if _looks_like_arizona_official_rule_document(text=normalized_text, title=normalized_title, url=url):
+        arizona_title = _title_from_arizona_official_document_text(text=normalized_text, url=url)
+        if arizona_title and _looks_like_bad_rtf_title(normalized_title):
+            normalized_title = arizona_title
 
     return normalized_title, normalized_text
 
@@ -9503,6 +9610,23 @@ async def _agentic_discover_admin_state_blocks(
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
 
+        vermont_bootstrap_document_urls: List[str] = []
+        if state_code == "VT" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
+            try:
+                vermont_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_vermont_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:8],
+                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                    ),
+                    timeout=20.0,
+                )
+            except Exception:
+                vermont_bootstrap_document_urls = []
+            for document_url in vermont_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if vermont_bootstrap_document_urls:
+                source_breakdown["vermont_rss_bootstrap"] = len(vermont_bootstrap_document_urls)
+
         if state_code == "TN" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
             try:
                 tennessee_bootstrap_document_urls = await asyncio.wait_for(
@@ -9756,6 +9880,7 @@ async def _agentic_discover_admin_state_blocks(
         direct_detail_ready = bool(
             alabama_bootstrap_document_urls
             or hawaii_bootstrap_document_urls
+            or vermont_bootstrap_document_urls
             or michigan_bootstrap_document_urls
             or alaska_bootstrap_document_urls
             or wyoming_bootstrap_document_urls
@@ -10033,6 +10158,7 @@ async def _agentic_discover_admin_state_blocks(
 
         statutes: List[Dict[str, Any]] = []
         direct_doc_urls: set[str] = set()
+        az_official_document_group_keys: set[str] = set()
         seed_expansion_candidates: List[tuple[str, int]] = []
         rules_by_host: Dict[str, int] = defaultdict(int)
         format_counts: Dict[str, int] = {"html": 0, "pdf": 0, "rtf": 0}
@@ -10091,9 +10217,14 @@ async def _agentic_discover_admin_state_blocks(
                 if not _should_emit_relaxed_recovery_statute(text=doc_text, title=doc_title, url=doc_url):
                     return False
             doc_key = _url_key(doc_url)
+            az_group_key = _arizona_official_document_group_key(doc_url) if state_code == "AZ" else ""
             if doc_key in direct_doc_urls:
                 return False
+            if az_group_key and az_group_key in az_official_document_group_keys:
+                return False
             direct_doc_urls.add(doc_key)
+            if az_group_key:
+                az_official_document_group_keys.add(az_group_key)
             host_value = urlparse(doc_url).netloc.lower()
             if host_value:
                 visited_hosts.add(host_value)
