@@ -1840,6 +1840,15 @@ def _score_candidate_url(url: str) -> int:
             score -= 4
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
         score += 8
+        az_match = re.search(r"/Title_(\d{2})/(\d+)-(\d+)\.(?:pdf|rtf)$", path, re.IGNORECASE)
+        if az_match is not None:
+            az_title_number = int(az_match.group(1))
+            if az_title_number == 1:
+                score -= 8
+            else:
+                score += 3
+            if path.lower().endswith(".pdf"):
+                score += 1
     if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(path):
         score += 10
     if host == "advance.lexis.com" and _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
@@ -2873,6 +2882,13 @@ def _looks_like_arizona_official_rule_document(*, text: str, title: str, url: st
     article_hits = len(re.findall(r"\barticle\s+(?:\d+|[ivxlcdm]+)\b", hay, re.IGNORECASE))
     aac_hits = len(re.findall(r"\b\d+\s+a\.a\.c\.\s+\d+\b", hay, re.IGNORECASE))
     return title_hits >= 1 and (chapter_hits >= 1 or article_hits >= 1 or aac_hits >= 1)
+
+
+def _looks_like_arizona_repealed_or_expired_chapter(*, text: str, title: str, url: str) -> bool:
+    if not _looks_like_arizona_official_rule_document(text=text, title=title, url=url):
+        return False
+    hay = " ".join([str(title or "").strip(), str(text or "").strip()[:4000]])
+    return bool(re.search(r"\bchapter\s+\d+\.\s+(?:repealed|expired)\b", hay, re.IGNORECASE))
 
 
 def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> bool:
@@ -7735,6 +7751,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         title=title_value,
         url=url_value,
     )
+    if _looks_like_arizona_repealed_or_expired_chapter(text=body, title=title_value, url=url_value):
+        return False
     if _has_disallowed_discovery_domain(url_value):
         return False
     if _NON_ADMIN_SOURCE_URL_RE.search(url_value):

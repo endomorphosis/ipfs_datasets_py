@@ -3166,6 +3166,23 @@ def test_accepts_arizona_official_pdf_chapter_with_preface_text() -> None:
     ) is True
 
 
+def test_rejects_arizona_official_repealed_chapter_pdf_as_substantive() -> None:
+    text = (
+        "TITLE 7. EDUCATION CHAPTER 3. REPEALED "
+        "This Chapter contains rules that were repealed by the Arizona State Legislature in session law. "
+        "Arizona Administrative Code Publisher Department of State Office of the Secretary of State Administrative Rules Division. "
+        "R7-3-101. Repealed. R7-3-102. Repealed."
+    )
+    url = "https://apps.azsos.gov/public_services/Title_07/7-03.pdf"
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="TITLE 7. EDUCATION CHAPTER 3. REPEALED",
+        url=url,
+        min_chars=160,
+    ) is False
+
+
 def test_rejects_azsos_rules_portal_navigation_wrapper() -> None:
     text = (
         "Skip to main content State of Arizona Visit OpenBooks Ombudsman Citizens Aide "
@@ -3461,6 +3478,15 @@ def test_scores_arizona_official_chapter_documents_above_inventory_page() -> Non
 
     assert scraper_module._score_candidate_url(chapter_pdf_url) > scraper_module._score_candidate_url(inventory_url)
     assert scraper_module._score_candidate_url(chapter_rtf_url) > scraper_module._score_candidate_url(inventory_url)
+
+
+def test_scores_non_title_one_arizona_official_documents_above_title_one_placeholders() -> None:
+    title_one_pdf_url = "https://apps.azsos.gov/public_services/Title_01/1-01.pdf"
+    title_two_pdf_url = "https://apps.azsos.gov/public_services/Title_02/2-12.pdf"
+    title_seven_pdf_url = "https://apps.azsos.gov/public_services/Title_07/7-03.pdf"
+
+    assert scraper_module._score_candidate_url(title_two_pdf_url) > scraper_module._score_candidate_url(title_one_pdf_url)
+    assert scraper_module._score_candidate_url(title_seven_pdf_url) > scraper_module._score_candidate_url(title_one_pdf_url)
 
 
 def test_score_candidate_url_prioritizes_wyoming_ajax_rule_pages_over_portals() -> None:
