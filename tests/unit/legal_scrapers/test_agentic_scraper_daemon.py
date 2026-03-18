@@ -16,6 +16,18 @@ from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
 )
 
 
+def test_state_laws_agentic_daemon_config_admin_rules_defaults_are_high_cap():
+    config = StateLawsAgenticDaemonConfig(corpus_key="state_admin_rules")
+
+    assert config.per_state_timeout_seconds == 86400.0
+    assert config.admin_parallel_assist_timeout_seconds == 86400.0
+    assert config.admin_agentic_max_candidates_per_state == 1000
+    assert config.admin_agentic_max_fetch_per_state == 1000
+    assert config.admin_agentic_max_results_per_domain == 1000
+    assert config.admin_agentic_max_hops == 4
+    assert config.admin_agentic_max_pages == 1000
+
+
 def test_unified_web_scraper_applies_env_tactic_overrides(monkeypatch):
     monkeypatch.setenv(
         "IPFS_DATASETS_SCRAPER_METHOD_ORDER",

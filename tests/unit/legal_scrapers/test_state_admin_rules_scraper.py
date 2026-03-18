@@ -10534,6 +10534,58 @@ async def test_scrape_state_admin_rules_skips_arizona_base_scrape_and_goes_direc
 
 
 @pytest.mark.anyio
+async def test_scrape_state_admin_rules_direct_agentic_large_timeout_keeps_full_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        assert kwargs["per_state_budget_seconds"] == 86400.0
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "title": "Arizona Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://apps.azsos.gov/public_services/CodeTOC.htm",
+                    "scraped_at": "2026-03-17T00:00:00",
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            ],
+            "kg_rows": [],
+            "report": {"AZ": {"rules_count": 0}},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AZ"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        per_state_timeout_seconds=86400.0,
+        require_substantive_rule_text=True,
+    )
+
+    assert result["metadata"]["base_scrape_skipped_states"] == ["AZ"]
+    assert result["metadata"]["agentic_per_state_budget_seconds"] == 86400.0
+
+
+@pytest.mark.anyio
 async def test_scrape_state_admin_rules_skips_wyoming_base_scrape_and_goes_direct_agentic(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -353,7 +353,7 @@ def main() -> int:
     parser.add_argument(
         "--per-state-timeout-seconds",
         type=float,
-        default=220.0,
+        default=86400.0,
         help="Per-state scrape timeout for deep refresh runs",
     )
     parser.add_argument(
@@ -368,7 +368,9 @@ def main() -> int:
     target_lines = max(1, int(args.target_lines))
     min_full_text_chars = max(0, int(args.min_full_text_chars))
     max_statutes = int(args.max_statutes)
-    per_state_timeout_seconds = max(30.0, float(args.per_state_timeout_seconds))
+    per_state_timeout_seconds = float(args.per_state_timeout_seconds)
+    if per_state_timeout_seconds <= 0:
+        per_state_timeout_seconds = 86400.0
     preserve_prior_size = not bool(args.no_preserve_prior_size)
     no_regression = not args.allow_regression
 

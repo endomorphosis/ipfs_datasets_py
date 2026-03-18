@@ -369,18 +369,18 @@ class StateLawsAgenticDaemonConfig:
     document_artifact_state_limit: int = 4
     document_artifact_urls_per_state: int = 2
     document_artifact_max_total: int = 8
-    per_state_timeout_seconds: float = 480.0
+    per_state_timeout_seconds: float = 86400.0
     scrape_timeout_seconds: float = 0.0
-    admin_agentic_max_candidates_per_state: Optional[int] = None
-    admin_agentic_max_fetch_per_state: Optional[int] = None
-    admin_agentic_max_results_per_domain: Optional[int] = None
-    admin_agentic_max_hops: Optional[int] = None
-    admin_agentic_max_pages: Optional[int] = None
+    admin_agentic_max_candidates_per_state: Optional[int] = 1000
+    admin_agentic_max_fetch_per_state: Optional[int] = 1000
+    admin_agentic_max_results_per_domain: Optional[int] = 1000
+    admin_agentic_max_hops: Optional[int] = 4
+    admin_agentic_max_pages: Optional[int] = 1000
     admin_agentic_fetch_concurrency: Optional[int] = None
     admin_parallel_assist_enabled: bool = True
     admin_parallel_assist_state_limit: int = 6
     admin_parallel_assist_max_urls_per_domain: int = 20
-    admin_parallel_assist_timeout_seconds: float = 180.0
+    admin_parallel_assist_timeout_seconds: float = 86400.0
     router_llm_timeout_seconds: float = 20.0
     router_embeddings_timeout_seconds: float = 10.0
     router_ipfs_timeout_seconds: float = 10.0
@@ -2454,11 +2454,11 @@ class StateLawsAgenticDaemon:
             max_state_workers=max(1, min(len(target_states), int(self.config.admin_parallel_assist_state_limit or 1))),
             max_domain_workers_per_state=max(1, int(self.config.admin_agentic_fetch_concurrency or 4)),
             max_urls_per_domain=max(4, int(self.config.admin_parallel_assist_max_urls_per_domain or 4)),
-            max_fetch_per_state=max(1, int(self.config.admin_agentic_max_fetch_per_state or 4)),
-            max_candidates_per_state=max(4, int(self.config.admin_agentic_max_candidates_per_state or 12)),
-            state_timeout=max(15.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0)),
-            url_fetch_timeout=min(30.0, max(5.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0) / 6.0)),
-            domain_timeout=min(60.0, max(10.0, float(self.config.admin_parallel_assist_timeout_seconds or 15.0) / 3.0)),
+            max_fetch_per_state=max(1, int(self.config.admin_agentic_max_fetch_per_state or 1000)),
+            max_candidates_per_state=max(4, int(self.config.admin_agentic_max_candidates_per_state or 1000)),
+            state_timeout=max(15.0, float(self.config.admin_parallel_assist_timeout_seconds or 86400.0)),
+            url_fetch_timeout=min(300.0, max(5.0, float(self.config.admin_parallel_assist_timeout_seconds or 86400.0) / 6.0)),
+            domain_timeout=min(600.0, max(10.0, float(self.config.admin_parallel_assist_timeout_seconds or 86400.0) / 3.0)),
             min_rule_text_chars=max(120, int(tactic.min_full_text_chars or 120)),
             enable_pdf_processing=True,
             enable_gap_analysis=True,
@@ -3886,7 +3886,7 @@ async def run_state_laws_agentic_daemon(
     max_statutes: int = 0,
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
-    per_state_timeout_seconds: float = 480.0,
+    per_state_timeout_seconds: float = 86400.0,
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
@@ -3946,21 +3946,21 @@ async def run_state_admin_rules_agentic_daemon(
     max_statutes: int = 0,
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
-    per_state_timeout_seconds: float = 480.0,
+    per_state_timeout_seconds: float = 86400.0,
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
     min_document_recovery_ratio: float = 0.0,
-    admin_agentic_max_candidates_per_state: Optional[int] = None,
-    admin_agentic_max_fetch_per_state: Optional[int] = None,
-    admin_agentic_max_results_per_domain: Optional[int] = None,
-    admin_agentic_max_hops: Optional[int] = None,
-    admin_agentic_max_pages: Optional[int] = None,
+    admin_agentic_max_candidates_per_state: Optional[int] = 1000,
+    admin_agentic_max_fetch_per_state: Optional[int] = 1000,
+    admin_agentic_max_results_per_domain: Optional[int] = 1000,
+    admin_agentic_max_hops: Optional[int] = 4,
+    admin_agentic_max_pages: Optional[int] = 1000,
     admin_agentic_fetch_concurrency: Optional[int] = None,
     admin_parallel_assist_enabled: bool = True,
     admin_parallel_assist_state_limit: int = 6,
     admin_parallel_assist_max_urls_per_domain: int = 20,
-    admin_parallel_assist_timeout_seconds: float = 180.0,
+    admin_parallel_assist_timeout_seconds: float = 86400.0,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -4025,7 +4025,7 @@ async def run_state_court_rules_agentic_daemon(
     max_statutes: int = 0,
     explore_probability: float = 0.30,
     archive_warmup_urls: int = 25,
-    per_state_timeout_seconds: float = 480.0,
+    per_state_timeout_seconds: float = 86400.0,
     router_llm_timeout_seconds: float = 20.0,
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
@@ -4090,22 +4090,22 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-statutes", type=int, default=0, help="Optional per-run statute cap for debug cycles.")
     parser.add_argument("--explore-probability", type=float, default=0.30, help="Exploration probability for tactic selection.")
     parser.add_argument("--archive-warmup-urls", type=int, default=25, help="Number of weak-state URLs to archive after each cycle.")
-    parser.add_argument("--per-state-timeout-seconds", type=float, default=480.0, help="Timeout budget for each individual state scrape.")
+    parser.add_argument("--per-state-timeout-seconds", type=float, default=86400.0, help="Timeout budget for each individual state scrape.")
     parser.add_argument("--scrape-timeout-seconds", type=float, default=0.0, help="Optional timeout budget for the full corpus scrape stage. 0 disables the outer scrape timeout.")
     parser.add_argument("--router-llm-timeout-seconds", type=float, default=20.0, help="Timeout budget for router-backed LLM review during each cycle.")
     parser.add_argument("--router-embeddings-timeout-seconds", type=float, default=10.0, help="Timeout budget for router-backed embeddings ranking during each cycle.")
     parser.add_argument("--router-ipfs-timeout-seconds", type=float, default=10.0, help="Timeout budget for persisting router-assist artifacts to IPFS.")
     parser.add_argument("--min-document-recovery-ratio", type=float, default=0.0, help="Optional minimum processed/(candidate PDF+RTF URLs) ratio required for pass criteria when candidate document URLs are present.")
-    parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=None, help="Optional state-admin-rules candidate cap passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=None, help="Optional state-admin-rules fetch cap passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=None, help="Optional state-admin-rules per-domain result cap passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-hops", type=int, default=None, help="Optional state-admin-rules traversal hop limit passed through to the agentic fallback.")
-    parser.add_argument("--admin-agentic-max-pages", type=int, default=None, help="Optional state-admin-rules page limit passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=1000, help="Optional state-admin-rules candidate cap passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=1000, help="Optional state-admin-rules fetch cap passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=1000, help="Optional state-admin-rules per-domain result cap passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-hops", type=int, default=4, help="Optional state-admin-rules traversal hop limit passed through to the agentic fallback.")
+    parser.add_argument("--admin-agentic-max-pages", type=int, default=1000, help="Optional state-admin-rules page limit passed through to the agentic fallback.")
     parser.add_argument("--admin-agentic-fetch-concurrency", type=int, default=None, help="Optional state-admin-rules fetch concurrency passed through to the agentic fallback.")
     parser.add_argument("--admin-parallel-assist-enabled", action=argparse.BooleanOptionalAction, default=True, help="Enable the state-admin parallel supplemental discovery pass for weak states during each daemon cycle.")
     parser.add_argument("--admin-parallel-assist-state-limit", type=int, default=6, help="Maximum number of weak state-admin targets to send through the parallel assist pass each cycle.")
     parser.add_argument("--admin-parallel-assist-max-urls-per-domain", type=int, default=20, help="Maximum URLs per domain evaluated by the parallel state-admin assist pass.")
-    parser.add_argument("--admin-parallel-assist-timeout-seconds", type=float, default=180.0, help="Per-state timeout budget for the parallel state-admin assist pass.")
+    parser.add_argument("--admin-parallel-assist-timeout-seconds", type=float, default=86400.0, help="Per-state timeout budget for the parallel state-admin assist pass.")
     parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold for convergence.")
     parser.add_argument("--stop-on-target-score", action="store_true", help="Stop once the daemon reaches the target critic score.")
     parser.add_argument("--random-seed", type=int, default=None, help="Optional deterministic seed for tactic selection.")

@@ -11051,10 +11051,33 @@ async def _agentic_discover_admin_state_blocks(
 
             if az_batch_tasks:
                 inspected_urls += len(az_batch_rule_urls)
+                az_batch_started_at = time.monotonic()
                 az_batch_results = await asyncio.gather(*az_batch_tasks, return_exceptions=True)
                 for rule_url, az_scraped in zip(az_batch_rule_urls, az_batch_results):
+                    az_elapsed_s = max(0.0, time.monotonic() - az_batch_started_at)
 
-                    if isinstance(az_scraped, Exception) or az_scraped is None:
+                    if isinstance(az_scraped, Exception):
+                        _record_az_phase(
+                            "seed_batch",
+                            url=rule_url,
+                            outcome="timeout" if isinstance(az_scraped, asyncio.TimeoutError) else "error",
+                            timeout_s=az_batch_timeout_s,
+                            elapsed_s=az_elapsed_s,
+                            detail=type(az_scraped).__name__,
+                        )
+                        rule_key = _url_key(rule_url)
+                        if _is_pdf_candidate_url(rule_url) and rule_key and rule_key not in az_failed_seed_retry_url_keys:
+                            az_failed_seed_retry_url_keys.add(rule_key)
+                            az_failed_seed_retry_urls.append(rule_url)
+                        continue
+                    if az_scraped is None:
+                        _record_az_phase(
+                            "seed_batch",
+                            url=rule_url,
+                            outcome="none",
+                            timeout_s=az_batch_timeout_s,
+                            elapsed_s=az_elapsed_s,
+                        )
                         rule_key = _url_key(rule_url)
                         if _is_pdf_candidate_url(rule_url) and rule_key and rule_key not in az_failed_seed_retry_url_keys:
                             az_failed_seed_retry_url_keys.add(rule_key)
@@ -11073,7 +11096,14 @@ async def _agentic_discover_admin_state_blocks(
                         az_method_value = az_provenance.get("method")
                     if az_method_value is None:
                         az_method_value = getattr(az_scraped, "method_used", None)
-                    await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    accepted_seed = await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    _record_az_phase(
+                        "seed_batch",
+                        url=rule_url,
+                        outcome="success" if accepted_seed else "none",
+                        timeout_s=az_batch_timeout_s,
+                        elapsed_s=az_elapsed_s,
+                    )
                     if len(statutes) >= max_fetch:
                         break
 
@@ -11187,6 +11217,7 @@ async def _agentic_discover_admin_state_blocks(
                     1.0,
                     min(8.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
                 )
+                az_bootstrap_started_at = time.monotonic()
                 batch_results = await asyncio.gather(
                     *[
                         asyncio.wait_for(
@@ -11201,7 +11232,25 @@ async def _agentic_discover_admin_state_blocks(
                 )
 
                 for rule_url, arizona_scraped in zip(batch_rule_urls, batch_results):
-                    if isinstance(arizona_scraped, Exception) or arizona_scraped is None:
+                    az_elapsed_s = max(0.0, time.monotonic() - az_bootstrap_started_at)
+                    if isinstance(arizona_scraped, Exception):
+                        _record_az_phase(
+                            "bootstrap_batch",
+                            url=rule_url,
+                            outcome="timeout" if isinstance(arizona_scraped, asyncio.TimeoutError) else "error",
+                            timeout_s=batch_timeout_s,
+                            elapsed_s=az_elapsed_s,
+                            detail=type(arizona_scraped).__name__,
+                        )
+                        continue
+                    if arizona_scraped is None:
+                        _record_az_phase(
+                            "bootstrap_batch",
+                            url=rule_url,
+                            outcome="none",
+                            timeout_s=batch_timeout_s,
+                            elapsed_s=az_elapsed_s,
+                        )
                         continue
 
                     arizona_text = str(getattr(arizona_scraped, "text", "") or "").strip()
@@ -11212,7 +11261,14 @@ async def _agentic_discover_admin_state_blocks(
                         arizona_method_value = arizona_provenance.get("method")
                     if arizona_method_value is None:
                         arizona_method_value = getattr(arizona_scraped, "method_used", None)
-                    await _append_document_if_rule(rule_url, arizona_title, arizona_text, arizona_method_value)
+                    accepted_bootstrap = await _append_document_if_rule(rule_url, arizona_title, arizona_text, arizona_method_value)
+                    _record_az_phase(
+                        "bootstrap_batch",
+                        url=rule_url,
+                        outcome="success" if accepted_bootstrap else "none",
+                        timeout_s=batch_timeout_s,
+                        elapsed_s=az_elapsed_s,
+                    )
                     if len(statutes) >= max_fetch:
                         break
 
@@ -11355,9 +11411,6 @@ async def _agentic_discover_admin_state_blocks(
         az_prefetched_ranked_url_keys: set[str] = set()
         if state_code == "AZ" and prioritized_ranked_document_urls:
             az_ranked_rule_urls = prioritized_ranked_document_urls[: min(len(prioritized_ranked_document_urls), max_fetch * 4, 20)]
-            az_prefetched_ranked_url_keys = {
-                key for key in (_url_key(url) for url in az_ranked_rule_urls) if key
-            }
             az_ranked_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 6))
             for batch_start in range(0, len(az_ranked_rule_urls), az_ranked_batch_size):
                 if len(statutes) >= max_fetch:
@@ -11404,10 +11457,33 @@ async def _agentic_discover_admin_state_blocks(
                             )
                         )
 
+                az_ranked_started_at = time.monotonic()
                 az_ranked_results = await asyncio.gather(*az_ranked_tasks, return_exceptions=True)
                 for rule_url, az_scraped in zip(batch_rule_urls, az_ranked_results):
-                    if isinstance(az_scraped, Exception) or az_scraped is None:
+                    az_elapsed_s = max(0.0, time.monotonic() - az_ranked_started_at)
+                    if isinstance(az_scraped, Exception):
+                        _record_az_phase(
+                            "ranked_batch",
+                            url=rule_url,
+                            outcome="timeout" if isinstance(az_scraped, asyncio.TimeoutError) else "error",
+                            timeout_s=az_ranked_timeout_s,
+                            elapsed_s=az_elapsed_s,
+                            detail=type(az_scraped).__name__,
+                        )
                         continue
+                    if az_scraped is None:
+                        _record_az_phase(
+                            "ranked_batch",
+                            url=rule_url,
+                            outcome="none",
+                            timeout_s=az_ranked_timeout_s,
+                            elapsed_s=az_elapsed_s,
+                        )
+                        continue
+
+                    rule_key = _url_key(rule_url)
+                    if rule_key:
+                        az_prefetched_ranked_url_keys.add(rule_key)
 
                     az_text = str(getattr(az_scraped, "text", "") or "").strip()
                     az_title = str(getattr(az_scraped, "title", "") or "").strip()
@@ -11417,7 +11493,14 @@ async def _agentic_discover_admin_state_blocks(
                         az_method_value = az_provenance.get("method")
                     if az_method_value is None:
                         az_method_value = getattr(az_scraped, "method_used", None)
-                    await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    accepted_ranked = await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    _record_az_phase(
+                        "ranked_batch",
+                        url=rule_url,
+                        outcome="success" if accepted_ranked else "none",
+                        timeout_s=az_ranked_timeout_s,
+                        elapsed_s=az_elapsed_s,
+                    )
                     if len(statutes) >= max_fetch:
                         break
 
@@ -11427,6 +11510,7 @@ async def _agentic_discover_admin_state_blocks(
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
             if state_code == "AZ" and _url_key(document_url) in az_prefetched_ranked_url_keys:
+                _record_az_phase("direct_detail", url=document_url, outcome="skipped")
                 continue
             remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
             if remaining_prefetch_budget_s <= 1.0:
@@ -11435,6 +11519,8 @@ async def _agentic_discover_admin_state_blocks(
             fetch_document_url = str(document_url or "").strip()
             lower_document_url = fetch_document_url.lower()
             direct_timeout_s = max(1.0, min(25.0, remaining_prefetch_budget_s))
+            az_direct_started_at = time.monotonic()
+            az_direct_used_fallback = False
             inspected_urls += 1
             try:
                 if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
@@ -11487,7 +11573,16 @@ async def _agentic_discover_admin_state_blocks(
                         live_scraper.scrape(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
-            except Exception:
+            except Exception as exc:
+                if state_code == "AZ":
+                    _record_az_phase(
+                        "direct_detail",
+                        url=fetch_document_url,
+                        outcome="timeout" if isinstance(exc, asyncio.TimeoutError) else "error",
+                        timeout_s=direct_timeout_s,
+                        elapsed_s=max(0.0, time.monotonic() - az_direct_started_at),
+                        detail=type(exc).__name__,
+                    )
                 direct_scraped = None
             if direct_scraped is None:
                 remaining_prefetch_budget_s = preloop_budget_deadline - time.monotonic()
@@ -11511,6 +11606,7 @@ async def _agentic_discover_admin_state_blocks(
                     _record_rate_limit_metadata(fetched)
                     fetched_doc = getattr(fetched, "document", None)
                     if fetched_doc is not None:
+                        az_direct_used_fallback = True
                         direct_scraped = SimpleNamespace(
                             text=str(getattr(fetched_doc, "text", "") or "").strip(),
                             title=str(getattr(fetched_doc, "title", "") or "").strip(),
@@ -11518,9 +11614,25 @@ async def _agentic_discover_admin_state_blocks(
                             extraction_provenance=getattr(fetched_doc, "extraction_provenance", None),
                             method_used=getattr(fetched_doc, "method_used", None),
                         )
-                except Exception:
+                except Exception as exc:
+                    if state_code == "AZ":
+                        _record_az_phase(
+                            "direct_detail",
+                            url=fetch_document_url,
+                            outcome="timeout" if isinstance(exc, asyncio.TimeoutError) else "error",
+                            timeout_s=max(1.0, min(18.0, remaining_prefetch_budget_s)),
+                            elapsed_s=max(0.0, time.monotonic() - az_direct_started_at),
+                            detail=f"fallback:{type(exc).__name__}",
+                        )
                     direct_scraped = None
             if direct_scraped is None:
+                _record_az_phase(
+                    "direct_detail",
+                    url=fetch_document_url,
+                    outcome="none",
+                    timeout_s=direct_timeout_s,
+                    elapsed_s=max(0.0, time.monotonic() - az_direct_started_at),
+                )
                 continue
 
             direct_text = str(getattr(direct_scraped, "text", "") or "").strip()
@@ -11533,6 +11645,13 @@ async def _agentic_discover_admin_state_blocks(
                 direct_method_value = getattr(direct_scraped, "method_used", None)
             direct_method_value = getattr(direct_method_value, "value", direct_method_value)
             accepted_direct = await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value)
+            _record_az_phase(
+                "direct_detail",
+                url=document_url,
+                outcome="fallback_success" if accepted_direct and az_direct_used_fallback else ("success" if accepted_direct else "none"),
+                timeout_s=direct_timeout_s,
+                elapsed_s=max(0.0, time.monotonic() - az_direct_started_at),
+            )
             direct_html = str(getattr(direct_scraped, "html", "") or "")
             if not accepted_direct and _looks_like_rule_inventory_page(text=direct_text, title=direct_title, url=document_url):
                 document_host = urlparse(document_url).netloc
@@ -11569,6 +11688,7 @@ async def _agentic_discover_admin_state_blocks(
                 fetch_document_url = str(document_url or "").strip()
                 lower_document_url = fetch_document_url.lower()
                 inspected_urls += 1
+                az_late_started_at = time.monotonic()
                 try:
                     if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
                         late_scraped = await asyncio.wait_for(
@@ -11585,9 +11705,24 @@ async def _agentic_discover_admin_state_blocks(
                             live_scraper.scrape(fetch_document_url),
                             timeout=az_late_timeout_s,
                         )
-                except Exception:
+                except Exception as exc:
+                    _record_az_phase(
+                        "late_retry",
+                        url=fetch_document_url,
+                        outcome="timeout" if isinstance(exc, asyncio.TimeoutError) else "error",
+                        timeout_s=az_late_timeout_s,
+                        elapsed_s=max(0.0, time.monotonic() - az_late_started_at),
+                        detail=type(exc).__name__,
+                    )
                     late_scraped = None
                 if late_scraped is None:
+                    _record_az_phase(
+                        "late_retry",
+                        url=fetch_document_url,
+                        outcome="none",
+                        timeout_s=az_late_timeout_s,
+                        elapsed_s=max(0.0, time.monotonic() - az_late_started_at),
+                    )
                     continue
 
                 late_text = str(getattr(late_scraped, "text", "") or "").strip()
@@ -11599,7 +11734,14 @@ async def _agentic_discover_admin_state_blocks(
                 if late_method_value is None:
                     late_method_value = getattr(late_scraped, "method_used", None)
                 late_method_value = getattr(late_method_value, "value", late_method_value)
-                await _append_document_if_rule(document_url, late_title, late_text, late_method_value)
+                accepted_late = await _append_document_if_rule(document_url, late_title, late_text, late_method_value)
+                _record_az_phase(
+                    "late_retry",
+                    url=document_url,
+                    outcome="success" if accepted_late else "none",
+                    timeout_s=az_late_timeout_s,
+                    elapsed_s=max(0.0, time.monotonic() - az_late_started_at),
+                )
 
             az_last_chance_retry_urls = _prioritized_arizona_late_retry_urls(
                 [],
@@ -11617,14 +11759,30 @@ async def _agentic_discover_admin_state_blocks(
 
                 late_scraped = None
                 inspected_urls += 1
+                az_last_chance_started_at = time.monotonic()
                 try:
                     late_scraped = await asyncio.wait_for(
                         _scrape_rtf_candidate_url_with_processor(document_url),
                         timeout=az_late_timeout_s,
                     )
-                except Exception:
+                except Exception as exc:
+                    _record_az_phase(
+                        "last_chance",
+                        url=document_url,
+                        outcome="timeout" if isinstance(exc, asyncio.TimeoutError) else "error",
+                        timeout_s=az_late_timeout_s,
+                        elapsed_s=max(0.0, time.monotonic() - az_last_chance_started_at),
+                        detail=type(exc).__name__,
+                    )
                     late_scraped = None
                 if late_scraped is None:
+                    _record_az_phase(
+                        "last_chance",
+                        url=document_url,
+                        outcome="none",
+                        timeout_s=az_late_timeout_s,
+                        elapsed_s=max(0.0, time.monotonic() - az_last_chance_started_at),
+                    )
                     continue
 
                 late_text = str(getattr(late_scraped, "text", "") or "").strip()
@@ -11636,7 +11794,14 @@ async def _agentic_discover_admin_state_blocks(
                 if late_method_value is None:
                     late_method_value = getattr(late_scraped, "method_used", None)
                 late_method_value = getattr(late_method_value, "value", late_method_value)
-                await _append_document_if_rule(document_url, late_title, late_text, late_method_value)
+                accepted_last_chance = await _append_document_if_rule(document_url, late_title, late_text, late_method_value)
+                _record_az_phase(
+                    "last_chance",
+                    url=document_url,
+                    outcome="success" if accepted_last_chance else "none",
+                    timeout_s=az_late_timeout_s,
+                    elapsed_s=max(0.0, time.monotonic() - az_last_chance_started_at),
+                )
 
         prioritized_alabama_seed_rule_urls: List[str] = []
         prioritized_south_dakota_seed_rule_urls: List[str] = []
@@ -12979,14 +13144,14 @@ async def scrape_state_admin_rules(
     per_state_retry_attempts: int = 1,
     retry_zero_rule_states: bool = True,
     max_base_statutes: Optional[int] = None,
-    per_state_timeout_seconds: float = 480.0,
+    per_state_timeout_seconds: float = 86400.0,
     include_dc: bool = False,
     agentic_fallback_enabled: bool = True,
-    agentic_max_candidates_per_state: int = 12,
-    agentic_max_fetch_per_state: int = 5,
-    agentic_max_results_per_domain: int = 20,
-    agentic_max_hops: int = 1,
-    agentic_max_pages: int = 8,
+    agentic_max_candidates_per_state: int = 1000,
+    agentic_max_fetch_per_state: int = 1000,
+    agentic_max_results_per_domain: int = 1000,
+    agentic_max_hops: int = 4,
+    agentic_max_pages: int = 1000,
     agentic_fetch_concurrency: int = 6,
     write_agentic_kg_corpus: bool = True,
     require_substantive_rule_text: bool = True,
@@ -13021,7 +13186,7 @@ async def scrape_state_admin_rules(
         delegated_state_laws_timeout_seconds = max(1.0, float(per_state_timeout_seconds or 0.0))
         delegated_base_timeout_seconds = delegated_state_laws_timeout_seconds
         delegated_fallback_timeout_seconds = delegated_state_laws_timeout_seconds
-        agentic_per_state_budget_seconds = min(120.0, max(30.0, delegated_state_laws_timeout_seconds * (2.0 / 3.0)))
+        agentic_per_state_budget_seconds = max(30.0, delegated_state_laws_timeout_seconds * (2.0 / 3.0))
         if delegated_state_laws_timeout_seconds > 1.0:
             delegated_base_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
             delegated_fallback_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
@@ -13033,9 +13198,9 @@ async def scrape_state_admin_rules(
             state_code for state_code in selected_states if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
         ]
         if direct_agentic_states and not delegated_base_states:
-            agentic_per_state_budget_seconds = min(
-                120.0,
-                max(agentic_per_state_budget_seconds, delegated_state_laws_timeout_seconds),
+            agentic_per_state_budget_seconds = max(
+                agentic_per_state_budget_seconds,
+                delegated_state_laws_timeout_seconds,
             )
 
         base_started_at = time.time()
