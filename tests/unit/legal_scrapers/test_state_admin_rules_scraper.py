@@ -4070,6 +4070,12 @@ def test_arizona_ranked_fetch_timeout_tracks_slow_host_budget() -> None:
     assert scraper_module._arizona_ranked_fetch_timeout_s(6.0) == 0.0
 
 
+def test_arizona_ranked_fetch_batch_size_serializes_slow_host_requests() -> None:
+    assert scraper_module._arizona_ranked_fetch_batch_size(1, 25) == 1
+    assert scraper_module._arizona_ranked_fetch_batch_size(6, 25) == 1
+    assert scraper_module._arizona_ranked_fetch_batch_size(12, 2) == 1
+
+
 @pytest.mark.asyncio
 async def test_extract_text_from_pdf_bytes_uses_repo_pdf_processor(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakePDFProcessor:
@@ -9343,6 +9349,10 @@ async def test_agentic_discovery_retries_arizona_18_01_rtf_one_last_time_when_gr
     assert result["state_blocks"][0]["statutes"][0]["source_url"] == retry_url
     assert len(rtf_calls) >= 3
     assert all(call == retry_url for call in rtf_calls)
+    url_provenance = result["report"]["AZ"]["arizona_fetch_diagnostics"]["url_provenance"][retry_url]
+    assert any(attempt["phase"] in {"bootstrap_batch", "ranked_batch"} for attempt in url_provenance["attempts"])
+    assert any(attempt["outcome"] in {"success", "fallback_success"} for attempt in url_provenance["attempts"])
+    assert url_provenance["accepted_phase"] in {"direct_detail", "late_retry", "last_chance"}
     assert archive_calls == 0
     assert unified_search_calls == 0
     assert agentic_calls == 0

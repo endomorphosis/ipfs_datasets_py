@@ -9946,6 +9946,22 @@ async def _agentic_discover_admin_state_blocks(
             az_fetch_diagnostics[name] = phase
             return phase
 
+        def _init_az_url_provenance(url: str) -> Dict[str, Any]:
+            if state_code != "AZ" or not url:
+                return {}
+            url_provenance = az_fetch_diagnostics.get("url_provenance")
+            if not isinstance(url_provenance, dict):
+                url_provenance = {}
+                az_fetch_diagnostics["url_provenance"] = url_provenance
+            provenance = url_provenance.get(url)
+            if isinstance(provenance, dict):
+                return provenance
+            provenance = {
+                "attempts": [],
+            }
+            url_provenance[url] = provenance
+            return provenance
+
         def _record_az_phase(
             name: str,
             *,
@@ -9963,6 +9979,26 @@ async def _agentic_discover_admin_state_blocks(
             phase[outcome] = int(phase.get(outcome, 0)) + 1
             phase["max_timeout_s"] = max(float(phase.get("max_timeout_s", 0.0)), float(timeout_s or 0.0))
             phase["max_elapsed_s"] = max(float(phase.get("max_elapsed_s", 0.0)), float(elapsed_s or 0.0))
+            provenance = _init_az_url_provenance(url)
+            attempts = provenance.get("attempts") if isinstance(provenance, dict) else None
+            if not isinstance(attempts, list):
+                attempts = []
+                if isinstance(provenance, dict):
+                    provenance["attempts"] = attempts
+            if isinstance(attempts, list) and len(attempts) < 16:
+                attempt: Dict[str, Any] = {
+                    "phase": name,
+                    "outcome": outcome,
+                }
+                if timeout_s:
+                    attempt["timeout_s"] = round(float(timeout_s), 2)
+                if elapsed_s:
+                    attempt["elapsed_s"] = round(float(elapsed_s), 2)
+                if detail:
+                    attempt["detail"] = detail[:160]
+                attempts.append(attempt)
+                if outcome in {"success", "fallback_success"}:
+                    provenance["accepted_phase"] = name
             samples = phase.get("samples")
             if not isinstance(samples, list):
                 samples = []
