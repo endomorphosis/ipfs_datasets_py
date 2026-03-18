@@ -2003,6 +2003,10 @@ async def test_state_admin_rules_agentic_daemon_forwards_agentic_budget_knobs(mo
 
     async def _fake_scrape_state_admin_rules(**kwargs):
         assert kwargs["states"] == ["AZ"]
+        assert kwargs["rate_limit_delay"] == 0.2
+        assert kwargs["strict_full_text"] is False
+        assert kwargs["min_full_text_chars"] == 200
+        assert kwargs["parallel_workers"] == 1
         assert kwargs["agentic_max_candidates_per_state"] == 24
         assert kwargs["agentic_max_fetch_per_state"] == 8
         assert kwargs["agentic_max_results_per_domain"] == 30
@@ -2053,6 +2057,11 @@ async def test_state_admin_rules_agentic_daemon_forwards_agentic_budget_knobs(mo
 
     summary = await daemon.run()
 
+    tactic = summary["latest_cycle"]["tactic"]
+    assert tactic["rate_limit_delay"] == 0.2
+    assert tactic["strict_full_text"] is False
+    assert tactic["min_full_text_chars"] == 200
+    assert tactic["parallel_workers"] == 1
     assert summary["latest_cycle"]["corpus"] == "state_admin_rules"
     assert summary["latest_cycle"]["diagnostics"]["coverage"]["coverage_gap_states"] == ["AZ"]
 

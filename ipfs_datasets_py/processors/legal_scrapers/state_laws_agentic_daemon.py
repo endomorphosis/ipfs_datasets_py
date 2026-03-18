@@ -422,6 +422,15 @@ class StateLawsAgenticDaemon:
         self._rand = random.Random(self.config.random_seed)
         self._state = self._load_state()
 
+    def _effective_tactic_payload(self, tactic: ScraperTacticProfile) -> Dict[str, Any]:
+        payload = asdict(tactic)
+        if self.corpus.key == "state_admin_rules":
+            payload["rate_limit_delay"] = 0.2
+            payload["strict_full_text"] = False
+            payload["min_full_text_chars"] = 200
+            payload["parallel_workers"] = 1
+        return payload
+
     async def run(self) -> Dict[str, Any]:
         """Run the daemon until it reaches max cycles or target score."""
         executed = 0
@@ -491,7 +500,7 @@ class StateLawsAgenticDaemon:
             "cycle_state_order": cycle_states,
             "status": "running",
             "stage": "scrape",
-            "tactic": asdict(tactic),
+            "tactic": self._effective_tactic_payload(tactic),
             "tactic_selection": tactic_selection["details"],
         }
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
@@ -630,7 +639,7 @@ class StateLawsAgenticDaemon:
             "states": list(self.states),
             "cycle_state_order": cycle_states,
             "status": str(scrape_result.get("status") or "unknown"),
-            "tactic": asdict(tactic),
+            "tactic": self._effective_tactic_payload(tactic),
             "tactic_selection": tactic_selection["details"],
             "critic_score": critic_score,
             "passed": passed,
@@ -850,7 +859,7 @@ class StateLawsAgenticDaemon:
             "corpus": self.corpus.key,
             "states": list(self.states),
             "status": str(scrape_result.get("status") or "unknown"),
-            "tactic": asdict(tactic),
+            "tactic": self._effective_tactic_payload(tactic),
             "critic_score": 0.0,
             "passed": False,
             "diagnostics": diagnostics,
@@ -1131,6 +1140,10 @@ class StateLawsAgenticDaemon:
         if self.corpus.key == "state_laws":
             kwargs["use_state_specific_scrapers"] = True
         elif self.corpus.key == "state_admin_rules":
+            kwargs["rate_limit_delay"] = 0.2
+            kwargs["strict_full_text"] = False
+            kwargs["min_full_text_chars"] = 200
+            kwargs["parallel_workers"] = 1
             admin_budget_kwargs = {
                 "agentic_max_candidates_per_state": self.config.admin_agentic_max_candidates_per_state,
                 "agentic_max_fetch_per_state": self.config.admin_agentic_max_fetch_per_state,
