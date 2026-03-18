@@ -583,9 +583,19 @@ class Neo4jGraphLoader:
         
         with self.driver.session(database=self.config.database) as session:
             result = session.run(query, {"entity_id": entity_id})
-            record = result.single()
-            if record:
-                return dict(record["n"])
+            rows = result.data() if callable(getattr(result, "data", None)) else []
+            if rows:
+                first_row = rows[0] if isinstance(rows[0], dict) else None
+                if isinstance(first_row, dict):
+                    node_payload = first_row.get("n", first_row)
+                    if isinstance(node_payload, dict):
+                        return dict(node_payload)
+
+            record = result.single() if callable(getattr(result, "single", None)) else None
+            if isinstance(record, dict):
+                node_payload = record.get("n", record)
+                if isinstance(node_payload, dict):
+                    return dict(node_payload)
         
         return None
     
