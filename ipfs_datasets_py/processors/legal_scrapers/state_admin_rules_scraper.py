@@ -10369,6 +10369,7 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["montana_public_api_bootstrap"] = len(montana_bootstrap_document_urls)
 
         if state_code == "CA" and not seeded_direct_detail_urls:
+            california_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
             try:
                 from ..web_archiving.unified_api import UnifiedWebArchivingAPI as _UnifiedWebArchivingAPI
                 from ..web_archiving.unified_web_scraper import (
@@ -10410,7 +10411,7 @@ async def _agentic_discover_admin_state_blocks(
                     live_fetch_api=_UnifiedWebArchivingAPI(scraper=_UnifiedWebScraper(california_bootstrap_cfg)),
                     direct_fetch_api=direct_fetch_api,
                     allowed_hosts=allowed_hosts,
-                    limit=min(max(1, int(max_fetch_per_state)), 4),
+                    limit=california_bootstrap_limit,
                 )
             else:
                 california_bootstrap_document_urls = await _discover_california_westlaw_document_urls(
@@ -10419,7 +10420,7 @@ async def _agentic_discover_admin_state_blocks(
                     live_fetch_api=live_fetch_api,
                     direct_fetch_api=direct_fetch_api,
                     allowed_hosts=allowed_hosts,
-                    limit=min(max(1, int(max_fetch_per_state)), 4),
+                    limit=california_bootstrap_limit,
                 )
             for document_url in california_bootstrap_document_urls:
                 candidate_urls.append(document_url)

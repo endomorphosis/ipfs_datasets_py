@@ -11892,6 +11892,108 @@ async def test_agentic_discovery_prioritizes_deeper_california_inventory_links(m
 
 
 @pytest.mark.anyio
+async def test_agentic_discovery_california_bootstrap_uses_full_bounded_fetch_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://govt.westlaw.com/calregs/Index"
+    document_urls = [
+        f"https://govt.westlaw.com/calregs/Document/DOC{i}?viewType=FullText"
+        for i in range(1, 9)
+    ]
+    observed: dict[str, int] = {}
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            raise AssertionError("archive search should not run when California bootstrap yields direct documents")
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            raise AssertionError("broad search should not run when California bootstrap yields direct documents")
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            raise AssertionError("deep discovery should not run when California bootstrap yields direct documents")
+
+        def fetch(self, request):
+            raise AssertionError("fallback fetch should not run when California direct document scraping succeeds")
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            if url not in document_urls:
+                raise AssertionError(f"unexpected scrape URL: {url}")
+            index = document_urls.index(url) + 1
+            return SimpleNamespace(
+                text=(
+                    f"§ {index}. California bootstrap rule {index}. Authority cited: Government Code section 11342. "
+                    "Reference: Sections 11340.2 and 11342.550, Government Code."
+                ),
+                title="View Document - California Code of Regulations",
+                html="",
+                links=[],
+            )
+
+    async def _fake_discover_california_westlaw_document_urls(**kwargs):
+        observed["limit"] = int(kwargs["limit"])
+        return list(document_urls[: kwargs["limit"]])
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(
+        scraper_module,
+        "_discover_california_westlaw_document_urls",
+        _fake_discover_california_westlaw_document_urls,
+    )
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") in document_urls)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["CA"],
+        max_candidates_per_state=8,
+        max_fetch_per_state=8,
+        max_results_per_domain=4,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+        per_state_budget_seconds=75.0,
+    )
+
+    assert observed["limit"] == 8
+    assert result["status"] == "success"
+    assert result["report"]["CA"]["source_breakdown"]["california_westlaw_document_bootstrap"] == 8
+    assert result["report"]["CA"]["fetched_rules"] == 8
+    assert result["state_blocks"][0]["rules_count"] == 8
+    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == document_urls
+
+
+@pytest.mark.anyio
 async def test_agentic_discovery_prefers_indiana_direct_detail_seed_before_broad_discovery(monkeypatch: pytest.MonkeyPatch) -> None:
     seed_url = "https://iar.iga.in.gov/code/current/10/1.5"
     deep_text = (
