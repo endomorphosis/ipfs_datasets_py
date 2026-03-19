@@ -362,6 +362,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         try:
             response = self.llm_router.generate(
                 prompt=prompt,
+                method=self.method,
                 max_tokens=2000,
                 temperature=0.3,
             )
@@ -443,9 +444,11 @@ class TestDrivenOptimizer(AgenticOptimizer):
 
                 response = self.llm_router.generate(
                     prompt=prompt,
+                    method=self.method,
                     max_tokens=4000,
                     temperature=0.2,
                 )
+                self._remember_raw_response(target_file, response)
                 normalized_response = self._normalize_optimized_code_response(
                     response=response,
                     file_path=target_file,
@@ -519,6 +522,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     baseline=baseline,
                     task=task,
                 ),
+                method=self.method,
                 max_tokens=500,
                 temperature=0.1,
             )
@@ -540,6 +544,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     baseline=baseline,
                     task=task,
                 ),
+                method=self.method,
                 max_tokens=700,
                 temperature=0.1,
             )
@@ -561,6 +566,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     baseline=baseline,
                     task=task,
                 ),
+                method=self.method,
                 max_tokens=700,
                 temperature=0.1,
             )
@@ -582,6 +588,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                     baseline=baseline,
                     task=task,
                 ),
+                method=self.method,
                 max_tokens=500,
                 temperature=0.1,
             )
@@ -609,6 +616,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         )
         response = self.llm_router.generate(
             prompt=prompt,
+            method=self.method,
             max_tokens=1200,
             temperature=0.2,
         )

@@ -15193,6 +15193,7 @@ tests/unit/legal_scrapers/test_brave_legal_search.py
 tests/unit/legal_scrapers/test_caselaw_access_vector_tools.py
 tests/unit/legal_scrapers/test_federal_law_scraper.py
 tests/unit/legal_scrapers/test_ipfs_storage_integration.py
+tests/unit/legal_scrapers/test_legal_dataset_api.py
 tests/unit/legal_scrapers/test_oregon_admin_rules_scraper.py
 tests/unit/legal_scrapers/test_oregon_rules_expansion.py
 tests/unit/legal_scrapers/test_parallel_web_archiver.py

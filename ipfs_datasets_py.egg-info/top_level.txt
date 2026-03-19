@@ -13,6 +13,7 @@ ipfs_datasets_cli
 ipfs_datasets_py
 ipfs_kit_py
 outputs
+patches
 scripts
 state
 tests

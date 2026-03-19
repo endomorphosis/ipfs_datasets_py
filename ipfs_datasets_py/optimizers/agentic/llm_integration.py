@@ -131,6 +131,15 @@ PROVIDER_CAPABILITIES = {
     ),
 }
 
+_ROUTER_PROVIDER_NAME_MAP = {
+    LLMProvider.GPT4: "codex",
+    LLMProvider.CLAUDE: "claude",
+    LLMProvider.CODEX: "codex",
+    LLMProvider.COPILOT: "copilot_cli",
+    LLMProvider.GEMINI: "gemini_cli",
+    LLMProvider.LOCAL: "hf",
+}
+
 
 class OptimizerLLMRouter:
     """LLM Router for optimizer operations.
@@ -214,6 +223,34 @@ class OptimizerLLMRouter:
             circuit_failure_threshold=3,
             circuit_recovery_timeout=30.0,
         )
+
+    def _router_provider_name(self, provider: LLMProvider) -> str:
+        """Map optimizer provider enum values to router-supported provider names."""
+        return _ROUTER_PROVIDER_NAME_MAP.get(provider, PROVIDER_CAPABILITIES[provider].name)
+
+    def _prepare_generation_request(
+        self,
+        *,
+        provider: LLMProvider,
+        prompt: str,
+        max_tokens: int,
+    ) -> Tuple[str, int]:
+        """Trim oversized local prompts before they hit small-context fallback models."""
+        if provider != LLMProvider.LOCAL:
+            return prompt, max_tokens
+
+        safe_max_tokens = max(32, min(max_tokens, 128))
+        if len(prompt) <= 3000:
+            return prompt, safe_max_tokens
+
+        head = prompt[:1200].rstrip()
+        tail = prompt[-1400:].lstrip()
+        compacted = (
+            f"{head}\n\n"
+            "[... local optimizer prompt truncated for model context ...]\n\n"
+            f"{tail}"
+        )
+        return compacted, safe_max_tokens
     
     def _detect_provider(self) -> LLMProvider:
         """Auto-detect best available provider.
@@ -342,7 +379,12 @@ class OptimizerLLMRouter:
         for current_provider in providers_to_try:
             try:
                 # Get provider name for router
-                provider_name = PROVIDER_CAPABILITIES[current_provider].name
+                provider_name = self._router_provider_name(current_provider)
+                request_prompt, request_max_tokens = self._prepare_generation_request(
+                    provider=current_provider,
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                )
                 
                 # Track call
                 if self.enable_tracking:
@@ -357,8 +399,9 @@ class OptimizerLLMRouter:
                         lambda: self._breakers[current_provider].call(
                             router_generate,
                             call_kwargs={
-                                "prompt": prompt,
-                                "max_tokens": max_tokens,
+                                "prompt": request_prompt,
+                                "provider": provider_name,
+                                "max_tokens": request_max_tokens,
                                 "temperature": temperature,
                                 **resolved_router_kwargs,
                             },

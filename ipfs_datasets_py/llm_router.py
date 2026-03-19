@@ -2509,6 +2509,49 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
         def __init__(self) -> None:
             self._pipelines: Dict[str, object] = {}
 
+        def _prepare_prompt(
+            self,
+            *,
+            pipe: object,
+            prompt: str,
+            max_new_tokens: int,
+        ) -> tuple[str, int]:
+            tokenizer = getattr(pipe, "tokenizer", None)
+            if tokenizer is None:
+                safe_max_new_tokens = max(1, min(max_new_tokens, 256))
+                if len(prompt) > 8000:
+                    return prompt[-8000:], safe_max_new_tokens
+                return prompt, safe_max_new_tokens
+
+            model_max_length = getattr(tokenizer, "model_max_length", None)
+            if not isinstance(model_max_length, int) or model_max_length <= 0 or model_max_length > 100_000:
+                model_max_length = 1024
+
+            safe_max_new_tokens = max(
+                1,
+                min(
+                    max_new_tokens,
+                    max(8, model_max_length // 4),
+                    max(1, model_max_length // 2),
+                ),
+            )
+            available_prompt_tokens = max(1, model_max_length - safe_max_new_tokens)
+            try:
+                encoded = tokenizer(
+                    prompt,
+                    truncation=True,
+                    max_length=available_prompt_tokens,
+                    return_tensors=None,
+                )
+                input_ids = encoded.get("input_ids") if isinstance(encoded, dict) else None
+                if input_ids:
+                    return tokenizer.decode(input_ids, skip_special_tokens=False), safe_max_new_tokens
+            except Exception:
+                pass
+
+            approx_chars = max(512, available_prompt_tokens * 4)
+            return prompt[-approx_chars:], safe_max_new_tokens
+
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
             model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2")
             pipe = self._pipelines.get(model)
@@ -2517,7 +2560,12 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
                 self._pipelines[model] = pipe
 
             max_new_tokens = int(kwargs.pop("max_new_tokens", kwargs.pop("max_tokens", 128)))
-            out = pipe(prompt, max_new_tokens=max_new_tokens)
+            prepared_prompt, safe_max_new_tokens = self._prepare_prompt(
+                pipe=pipe,
+                prompt=prompt,
+                max_new_tokens=max_new_tokens,
+            )
+            out = pipe(prepared_prompt, max_new_tokens=safe_max_new_tokens)
             if isinstance(out, list) and out:
                 item = out[0]
                 if isinstance(item, dict) and isinstance(item.get("generated_text"), str):

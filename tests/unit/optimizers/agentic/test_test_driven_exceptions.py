@@ -10,6 +10,7 @@ import pytest
 
 from ipfs_datasets_py.optimizers.agentic.base import OptimizationTask
 from ipfs_datasets_py.optimizers.agentic.methods.test_driven import TestDrivenOptimizer
+from ipfs_datasets_py.optimizers.agentic.base import OptimizationMethod
 
 
 @pytest.fixture
@@ -88,6 +89,14 @@ def test_generate_tests_returns_failed_result_on_typed_llm_error(optimizer, task
     assert "llm unavailable" in result["error"]
 
 
+def test_generate_tests_passes_optimization_method(optimizer, task):
+    optimizer.llm_router.generate.return_value = "def test_generated():\n    assert True\n"
+    result = optimizer._generate_tests(task, analysis={})
+
+    assert result["success"] is True
+    assert optimizer.llm_router.generate.call_args.kwargs["method"] == OptimizationMethod.TEST_DRIVEN
+
+
 def test_generate_tests_propagates_base_exception(optimizer, task):
     optimizer.llm_router.generate.side_effect = KeyboardInterrupt("stop")
     with pytest.raises(KeyboardInterrupt):
@@ -109,6 +118,15 @@ def test_generate_optimizations_skips_file_on_typed_llm_error(optimizer, task):
             "raw_response_preview": "",
         }
     ]
+
+
+def test_generate_optimizations_keeps_raw_preview_for_invalid_full_file_response(optimizer, task):
+    optimizer.llm_router.generate.return_value = "not valid python("
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+
+    assert result == {}
+    assert optimizer._last_generation_diagnostics[0]["raw_response_preview"] == "not valid python("
 
 
 def test_generate_optimizations_propagates_base_exception(optimizer, task):
