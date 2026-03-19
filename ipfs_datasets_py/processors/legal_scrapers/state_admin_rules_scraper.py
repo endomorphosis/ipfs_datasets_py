@@ -322,6 +322,19 @@ _CT_EREGS_SUBTITLE_ROW_RE = re.compile(
 )
 _CT_EREGS_SECTION_ROW_RE = re.compile(r"\b(?:Sec\.\s*)?\d+[a-z]?(?:-\d+[a-z]?)+\b", re.IGNORECASE)
 
+_CO_CCR_WELCOME_PATH_RE = re.compile(r"^/CCR/Welcome\.do/?$", re.IGNORECASE)
+_CO_CCR_DEPT_LIST_PATH_RE = re.compile(r"^/CCR/NumericalDeptList\.do/?$", re.IGNORECASE)
+_CO_CCR_AGENCY_LIST_PATH_RE = re.compile(r"^/CCR/NumericalAgencyList\.do/?$", re.IGNORECASE)
+_CO_CCR_DOC_LIST_PATH_RE = re.compile(r"^/CCR/NumericalCCRDocList\.do/?$", re.IGNORECASE)
+_CO_CCR_DISPLAY_RULE_PATH_RE = re.compile(r"^/CCR/DisplayRule\.do/?$", re.IGNORECASE)
+_CO_CCR_GENERATE_RULE_PDF_PATH_RE = re.compile(r"^/CCR/GenerateRulePdf\.do/?$", re.IGNORECASE)
+_CO_CCR_PDF_PATH_RE = re.compile(r"^/CCR/.+\.pdf$", re.IGNORECASE)
+_CO_CCR_RULE_ROW_RE = re.compile(r"\b\d+\s+CCR\s+\d+(?:-\d+)+\b", re.IGNORECASE)
+_CO_CCR_OPEN_RULE_WINDOW_RE = re.compile(
+    r"OpenRuleWindow\('(?P<rule_version_id>\d+)'\s*,\s*'(?P<file_name>[^']+)'\s*\)",
+    re.IGNORECASE,
+)
+
 _AK_AAC_TITLE_PATH_RE = re.compile(r"^/aac/\d+/?$", re.IGNORECASE)
 _AK_AAC_CHAPTER_PATH_RE = re.compile(r"^/aac/\d+\.\d+/?$", re.IGNORECASE)
 _AK_AAC_SECTION_PATH_RE = re.compile(r"^/aac/\d+(?:\.\d+){2,3}/?$", re.IGNORECASE)
@@ -1846,6 +1859,29 @@ def _score_candidate_url(url: str) -> int:
             score += 10
         elif _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
             score += 14
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"}:
+        query_params = parse_qs(parsed.query or "")
+        if _CO_CCR_WELCOME_PATH_RE.fullmatch(path):
+            score += 5
+        elif _CO_CCR_DEPT_LIST_PATH_RE.fullmatch(path):
+            score += 7
+        elif _CO_CCR_AGENCY_LIST_PATH_RE.fullmatch(path):
+            score += 8
+        elif _CO_CCR_DOC_LIST_PATH_RE.fullmatch(path):
+            score += 10
+        elif _CO_CCR_DISPLAY_RULE_PATH_RE.fullmatch(path):
+            action = str((query_params.get("action") or [""])[0]).strip().lower()
+            rule_id = str((query_params.get("ruleId") or [""])[0]).strip()
+            if action == "ruleinfo" and rule_id.isdigit():
+                score += 12
+        elif _CO_CCR_GENERATE_RULE_PDF_PATH_RE.fullmatch(path):
+            rule_version_id = str((query_params.get("ruleVersionId") or [""])[0]).strip()
+            if rule_version_id.isdigit():
+                score += 14
+        elif _CO_CCR_PDF_PATH_RE.fullmatch(path):
+            rule_version_id = str((query_params.get("ruleVersionId") or [""])[0]).strip()
+            if rule_version_id.isdigit():
+                score += 14
     if host == "rules.sos.ga.gov":
         if normalized_path.lower() == "/gac":
             score += 6
@@ -2417,6 +2453,16 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return bool(_AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url)))
     if host == "eregulations.ct.gov" and _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
         return True
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"}:
+        query_params = parse_qs(parsed.query or "")
+        if _CO_CCR_GENERATE_RULE_PDF_PATH_RE.fullmatch(path):
+            rule_version_id = str((query_params.get("ruleVersionId") or [""])[0]).strip()
+            if rule_version_id.isdigit():
+                return True
+        if _CO_CCR_PDF_PATH_RE.fullmatch(path):
+            rule_version_id = str((query_params.get("ruleVersionId") or [""])[0]).strip()
+            if rule_version_id.isdigit():
+                return True
     if _is_new_hampshire_archived_rule_leaf_url(url):
         return True
     if host in {"gencourt.state.nh.us", "www.gencourt.state.nh.us"} and re.search(
@@ -3205,9 +3251,28 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     ct_title_hits = len(_CT_EREGS_TITLE_ROW_RE.findall(hay))
     ct_subtitle_hits = len(_CT_EREGS_SUBTITLE_ROW_RE.findall(hay))
     ct_section_hits = len(_CT_EREGS_SECTION_ROW_RE.findall(hay))
+    co_rule_hits = len(_CO_CCR_RULE_ROW_RE.findall(hay))
 
     if host == "rules.mt.gov" and "/policies/" in path:
         return False
+
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and (_CO_CCR_GENERATE_RULE_PDF_PATH_RE.fullmatch(path) or _CO_CCR_PDF_PATH_RE.fullmatch(path)):
+        return False
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_WELCOME_PATH_RE.fullmatch(path):
+        if "code of colorado regulations" in hay.lower() and "official publication of the state administrative rules" in hay.lower():
+            return True
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_DEPT_LIST_PATH_RE.fullmatch(path):
+        if "browse rules" in hay.lower() and "ccr#" in hay.lower() and hay.lower().count("department of") >= 4:
+            return True
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_AGENCY_LIST_PATH_RE.fullmatch(path):
+        if "browse rules" in hay.lower() and "ccr#" in hay.lower() and hay.lower().count("division") >= 3:
+            return True
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_DOC_LIST_PATH_RE.fullmatch(path):
+        if "browse rules" in hay.lower() and "all versions" not in hay.lower() and co_rule_hits >= 4:
+            return True
+    if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_DISPLAY_RULE_PATH_RE.fullmatch(path):
+        if "current version" in hay.lower() and "all versions" in hay.lower() and "rulemaking details" in hay.lower():
+            return True
 
     if host == "eregulations.ct.gov" and _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
         return False
@@ -9441,6 +9506,154 @@ async def _discover_connecticut_rule_document_urls(
     return discovered_urls
 
 
+async def _discover_colorado_rule_document_urls(
+    *,
+    seed_urls: List[str],
+    live_scraper: Any,
+    allowed_hosts: set[str],
+    limit: int = 8,
+) -> List[str]:
+    discovered_urls: List[str] = []
+    seen_page_keys: set[str] = set()
+    seen_document_keys: set[str] = set()
+
+    def _record(url: str) -> bool:
+        key = _url_key(url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(url)
+        return len(discovered_urls) >= max(1, int(limit))
+
+    def _dedupe(values: List[str]) -> List[str]:
+        deduped: List[str] = []
+        seen_keys: set[str] = set()
+        for value in values:
+            key = _url_key(value)
+            if not key or key in seen_keys:
+                continue
+            seen_keys.add(key)
+            deduped.append(value)
+        return deduped
+
+    def _is_colorado_seed_or_inventory_url(url: str) -> bool:
+        parsed = urlparse(str(url or "").strip())
+        host = parsed.netloc.lower()
+        path = parsed.path or ""
+        return host in {"www.sos.state.co.us", "www.coloradosos.gov"} and any(
+            pattern.fullmatch(path)
+            for pattern in (
+                _CO_CCR_WELCOME_PATH_RE,
+                _CO_CCR_DEPT_LIST_PATH_RE,
+                _CO_CCR_AGENCY_LIST_PATH_RE,
+                _CO_CCR_DOC_LIST_PATH_RE,
+            )
+        )
+
+    def _colorado_pdf_url(base_url: str, rule_version_id: str, file_name: str) -> str:
+        parsed = urlparse(base_url)
+        host = parsed.netloc or "www.coloradosos.gov"
+        encoded_name = quote(file_name, safe="")
+        return (
+            f"https://{host}/CCR/{encoded_name}.pdf?ruleVersionId={rule_version_id}"
+            f"&fileName={encoded_name}"
+        )
+
+    def _colorado_links_from_scraped(scraped: Any, page_url: str) -> List[str]:
+        candidate_links: List[str] = []
+        candidate_links.extend(
+            _candidate_links_from_scrape(
+                scraped,
+                base_host=urlparse(page_url).netloc,
+                page_url=page_url,
+                limit=64,
+                allowed_hosts=allowed_hosts,
+            )
+        )
+        html = str(getattr(scraped, "html", "") or "")
+        if html:
+            candidate_links.extend(
+                _candidate_links_from_html(
+                    html,
+                    base_host=urlparse(page_url).netloc,
+                    page_url=page_url,
+                    limit=64,
+                    allowed_hosts=allowed_hosts,
+                )
+            )
+        return _dedupe(candidate_links)
+
+    async def _scrape(url: str) -> Any:
+        page_key = _url_key(url)
+        if not page_key or page_key in seen_page_keys:
+            return None
+        seen_page_keys.add(page_key)
+        try:
+            return await asyncio.wait_for(live_scraper.scrape(url), timeout=10.0)
+        except Exception:
+            return None
+
+    inventory_urls = [url for url in seed_urls if _is_colorado_seed_or_inventory_url(url)]
+    doc_list_urls = [url for url in inventory_urls if _CO_CCR_DOC_LIST_PATH_RE.fullmatch(urlparse(url).path or "")]
+    agency_urls = [url for url in inventory_urls if _CO_CCR_AGENCY_LIST_PATH_RE.fullmatch(urlparse(url).path or "")]
+    dept_urls = [url for url in inventory_urls if _CO_CCR_DEPT_LIST_PATH_RE.fullmatch(urlparse(url).path or "")]
+
+    if not doc_list_urls:
+        for dept_url in dept_urls[:2]:
+            scraped = await _scrape(dept_url)
+            if scraped is None:
+                continue
+            for link_url in _colorado_links_from_scraped(scraped, dept_url):
+                if _CO_CCR_DOC_LIST_PATH_RE.fullmatch(urlparse(link_url).path or ""):
+                    doc_list_urls.append(link_url)
+                elif _CO_CCR_AGENCY_LIST_PATH_RE.fullmatch(urlparse(link_url).path or ""):
+                    agency_urls.append(link_url)
+            if doc_list_urls:
+                break
+
+    if not doc_list_urls:
+        for agency_url in _dedupe(agency_urls)[:4]:
+            scraped = await _scrape(agency_url)
+            if scraped is None:
+                continue
+            for link_url in _colorado_links_from_scraped(scraped, agency_url):
+                if _CO_CCR_DOC_LIST_PATH_RE.fullmatch(urlparse(link_url).path or ""):
+                    doc_list_urls.append(link_url)
+            if len(doc_list_urls) >= 4:
+                break
+
+    display_rule_urls: List[str] = []
+    for doc_list_url in _dedupe(doc_list_urls)[:4]:
+        scraped = await _scrape(doc_list_url)
+        if scraped is None:
+            continue
+        for link_url in _colorado_links_from_scraped(scraped, doc_list_url):
+            parsed = urlparse(link_url)
+            query_params = parse_qs(parsed.query or "")
+            if _CO_CCR_DISPLAY_RULE_PATH_RE.fullmatch(parsed.path or ""):
+                action = str((query_params.get("action") or [""])[0]).strip().lower()
+                rule_id = str((query_params.get("ruleId") or [""])[0]).strip()
+                if action == "ruleinfo" and rule_id.isdigit():
+                    display_rule_urls.append(link_url)
+        if len(display_rule_urls) >= max(8, int(limit) * 4):
+            break
+
+    for display_rule_url in _dedupe(display_rule_urls)[: max(8, int(limit) * 4)]:
+        scraped = await _scrape(display_rule_url)
+        if scraped is None:
+            continue
+        html = str(getattr(scraped, "html", "") or "")
+        for match in _CO_CCR_OPEN_RULE_WINDOW_RE.finditer(html):
+            rule_version_id = str(match.group("rule_version_id") or "").strip()
+            file_name = str(match.group("file_name") or "").strip()
+            if not rule_version_id.isdigit() or not file_name:
+                continue
+            if _record(_colorado_pdf_url(display_rule_url, rule_version_id, file_name)):
+                return discovered_urls
+
+    return discovered_urls
+
+
 async def _discover_georgia_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
     discovered_urls: List[str] = []
     seen_document_keys: set[str] = set()
@@ -10139,9 +10352,65 @@ async def _agentic_discover_admin_state_blocks(
                 return provenance
             provenance = {
                 "attempts": [],
+                "emitted": False,
             }
             url_provenance[url] = provenance
             return provenance
+
+        def _init_az_emitted_documents() -> Dict[str, Any]:
+            if state_code != "AZ":
+                return {}
+            emitted_documents = az_fetch_diagnostics.get("emitted_documents")
+            if not isinstance(emitted_documents, dict):
+                emitted_documents = {}
+                az_fetch_diagnostics["emitted_documents"] = emitted_documents
+            return emitted_documents
+
+        def _mark_az_emitted_document(
+            url: str,
+            *,
+            source_phase: str,
+            title: str,
+            method_value: Any,
+        ) -> None:
+            provenance = _init_az_url_provenance(url)
+            if not provenance:
+                return
+            method_name = getattr(method_value, "value", method_value)
+            emitted_documents = _init_az_emitted_documents()
+            emitted_entry = emitted_documents.get(url)
+            if not isinstance(emitted_entry, dict):
+                emitted_entry = {}
+                emitted_documents[url] = emitted_entry
+            provenance["emitted"] = True
+            provenance["accepted_phase"] = source_phase
+            provenance["accepted_format"] = _document_format_for_url(url)
+            if method_name:
+                provenance["accepted_method"] = str(method_name)
+            if title:
+                provenance["accepted_title"] = str(title).strip()[:200]
+            provenance.pop("superseded_by", None)
+            emitted_entry["emitted"] = True
+            emitted_entry["accepted_phase"] = source_phase
+            emitted_entry["accepted_format"] = _document_format_for_url(url)
+            emitted_entry["source_domain"] = urlparse(url).netloc
+            if method_name:
+                emitted_entry["accepted_method"] = str(method_name)
+            if title:
+                emitted_entry["accepted_title"] = str(title).strip()[:200]
+            emitted_entry.pop("superseded_by", None)
+
+        def _mark_az_superseded_document(url: str, replacement_url: str) -> None:
+            provenance = _init_az_url_provenance(url)
+            if not provenance:
+                return
+            provenance["emitted"] = False
+            provenance["superseded_by"] = replacement_url
+            emitted_documents = _init_az_emitted_documents()
+            emitted_entry = emitted_documents.get(url)
+            if isinstance(emitted_entry, dict):
+                emitted_entry["emitted"] = False
+                emitted_entry["superseded_by"] = replacement_url
 
         def _record_az_phase(
             name: str,
@@ -10584,6 +10853,51 @@ async def _agentic_discover_admin_state_blocks(
                     break
             if montana_bootstrap_document_urls:
                 source_breakdown["montana_public_api_bootstrap"] = len(montana_bootstrap_document_urls)
+
+        if state_code == "CO" and not seeded_direct_detail_urls:
+            colorado_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
+            try:
+                from ..web_archiving.unified_web_scraper import (
+                    ScraperConfig as _ScraperConfig,
+                    ScraperMethod as _ScraperMethod,
+                    UnifiedWebScraper as _UnifiedWebScraper,
+                )
+            except Exception:
+                try:
+                    from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (  # type: ignore[no-redef]
+                        ScraperConfig as _ScraperConfig,
+                        ScraperMethod as _ScraperMethod,
+                        UnifiedWebScraper as _UnifiedWebScraper,
+                    )
+                except Exception:
+                    _ScraperConfig = None  # type: ignore[assignment]
+                    _ScraperMethod = None  # type: ignore[assignment]
+                    _UnifiedWebScraper = None  # type: ignore[assignment]
+
+            if _UnifiedWebScraper is not None and _ScraperConfig is not None and _ScraperMethod is not None:
+                colorado_bootstrap_scraper = _UnifiedWebScraper(
+                    _ScraperConfig(
+                        timeout=20,
+                        max_retries=1,
+                        extract_links=True,
+                        extract_text=True,
+                        fallback_enabled=False,
+                        preferred_methods=[_ScraperMethod.REQUESTS_ONLY],
+                    )
+                )
+            else:
+                colorado_bootstrap_scraper = live_scraper
+
+            colorado_bootstrap_document_urls = await _discover_colorado_rule_document_urls(
+                seed_urls=ordered_seed_urls,
+                live_scraper=colorado_bootstrap_scraper,
+                allowed_hosts=allowed_hosts,
+                limit=colorado_bootstrap_limit,
+            )
+            for document_url in colorado_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if colorado_bootstrap_document_urls:
+                source_breakdown["colorado_ccr_bootstrap"] = len(colorado_bootstrap_document_urls)
 
         if state_code == "CT" and not seeded_direct_detail_urls:
             connecticut_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
@@ -13308,6 +13622,37 @@ async def _agentic_discover_admin_state_blocks(
                 if len(direct_detail_candidate_samples) >= 16:
                     break
         state_elapsed_s = max(0.0, time.monotonic() - state_start)
+        if state_code == "AZ":
+            url_provenance = az_fetch_diagnostics.get("url_provenance")
+            emitted_documents = az_fetch_diagnostics.get("emitted_documents")
+            if not isinstance(emitted_documents, dict):
+                emitted_documents = {}
+            if isinstance(url_provenance, dict):
+                for emitted_url, provenance in url_provenance.items():
+                    if not isinstance(provenance, dict):
+                        continue
+                    accepted_phase = provenance.get("accepted_phase")
+                    if not provenance.get("emitted") and not accepted_phase:
+                        continue
+                    emitted_entry = emitted_documents.get(emitted_url)
+                    if not isinstance(emitted_entry, dict):
+                        emitted_entry = {}
+                        emitted_documents[emitted_url] = emitted_entry
+                    emitted_entry["emitted"] = True
+                    emitted_entry["source_domain"] = urlparse(emitted_url).netloc
+                    if accepted_phase:
+                        emitted_entry["accepted_phase"] = accepted_phase
+                    accepted_format = provenance.get("accepted_format") or _document_format_for_url(emitted_url)
+                    if accepted_format:
+                        emitted_entry["accepted_format"] = accepted_format
+                    for field_name in (
+                        "accepted_method",
+                        "accepted_title",
+                    ):
+                        field_value = provenance.get(field_name)
+                        if field_value:
+                            emitted_entry[field_name] = field_value
+            az_fetch_diagnostics["emitted_documents"] = emitted_documents
         report[state_code] = {
             "candidate_urls": len(ranked_urls),
             "inspected_urls": int(inspected_urls),

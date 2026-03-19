@@ -429,6 +429,18 @@ def test_is_direct_detail_candidate_url_recognizes_connecticut_eregulations_sect
     ) is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_colorado_ccr_pdf_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://www.coloradosos.gov/CCR/7%20CCR%201103-1.pdf?ruleVersionId=12406&fileName=7%20CCR%201103-1"
+    ) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://www.coloradosos.gov/CCR/7%20CCR%201103-1.pdf?ruleVersionId=12406&fileName=7%20CCR%201103-1"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://www.coloradosos.gov/CCR/DisplayRule.do?action=ruleinfo&ruleId=2509&deptID=0&agencyID=58"
+    ) is False
+
+
 def test_state_seed_expansion_backlog_is_ready_short_circuits_for_california_document_urls() -> None:
     candidates = [
         (
@@ -1763,6 +1775,57 @@ def test_looks_like_rule_inventory_page_recognizes_connecticut_eregulations_brow
         text=section_text,
         title="eRegulations - Browse Regulations of Connecticut State Agencies",
         url="https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-4/",
+    ) is False
+
+
+def test_looks_like_rule_inventory_page_recognizes_colorado_ccr_browse_and_metadata_pages() -> None:
+    welcome_text = (
+        "Code of Colorado Regulations Official Publication of the State Administrative Rules "
+        "The Code of Colorado Regulations is current with administrative rules effective on or before 03/01/2026. "
+        "Search to get a rule PDF. Browse to get to a rule's version history and rulemaking details."
+    )
+    dept_list_text = (
+        "Code of Colorado Regulations Official Publication of the State Administrative Rules Browse Rules "
+        "CCR# Division name Department of Personnel and Administration Department of Revenue Department of Education Department of Natural Resources"
+    )
+    doc_list_text = (
+        "Code of Colorado Regulations Official Publication of the State Administrative Rules Browse Rules "
+        "CCR# Title 7 CCR 1101-1 LABOR PEACE AND INDUSTRIAL RELATIONS RULES 7 CCR 1103-1 COLORADO OVERTIME AND MINIMUM PAY STANDARDS ORDER "
+        "7 CCR 1103-2 COLORADO WORKS PROGRAM ACT GRIEVANCE PROCEDURE RULES 7 CCR 1103-7 WAGE PROTECTION RULES"
+    )
+    display_rule_text = (
+        "Code of Colorado Regulations Official Publication of the State Administrative Rules 7 CCR 1103-1 COLORADO OVERTIME AND MINIMUM PAY STANDARDS ORDER "
+        "Current version 7 CCR 1103-1 effective 02/01/2026 PDF All versions Rulemaking details eDocket"
+    )
+    pdf_text = (
+        "7 CCR 1103-1 Colorado Overtime and Minimum Pay Standards Order COMPS Order #40 "
+        "Authority adopted amended effective section employer overtime minimum pay"
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=welcome_text,
+        title="Colorado Secretary of State",
+        url="https://www.sos.state.co.us/CCR/Welcome.do",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=dept_list_text,
+        title="Colorado CCR Department List",
+        url="https://www.coloradosos.gov/CCR/NumericalDeptList.do",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=doc_list_text,
+        title="Colorado CCR Document List",
+        url="https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=display_rule_text,
+        title="Colorado CCR Document List",
+        url="https://www.coloradosos.gov/CCR/DisplayRule.do?action=ruleinfo&ruleId=2509&deptID=0&agencyID=58",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=pdf_text,
+        title="7 CCR 1103-1",
+        url="https://www.coloradosos.gov/CCR/7%20CCR%201103-1.pdf?ruleVersionId=12406&fileName=7%20CCR%201103-1",
     ) is False
 
 
@@ -7909,6 +7972,57 @@ async def test_discover_connecticut_rule_document_urls_follows_browse_hierarchy(
     assert discovered == section_urls
 
 
+@pytest.mark.anyio
+async def test_discover_colorado_rule_document_urls_extracts_pdf_targets_from_doclist(monkeypatch: pytest.MonkeyPatch) -> None:
+    doc_list_url = "https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58"
+    display_rule_url = (
+        "https://www.coloradosos.gov/CCR/DisplayRule.do?action=ruleinfo&ruleId=2509&deptID=0&agencyID=58"
+    )
+    pdf_url = (
+        "https://www.coloradosos.gov/CCR/7%20CCR%201103-1.pdf?ruleVersionId=12406&fileName=7%20CCR%201103-1"
+    )
+
+    class _FakeUnifiedWebScraper:
+        async def scrape(self, url: str):
+            if url == doc_list_url:
+                html = (
+                    "<a href='/CCR/DisplayRule.do?action=ruleinfo&amp;ruleId=2509&amp;deptID=0&amp;agencyID=58'>"
+                    "7 CCR 1103-1</a>"
+                )
+                return SimpleNamespace(
+                    html=html,
+                    text="CCR# Title 7 CCR 1103-1 COLORADO OVERTIME AND MINIMUM PAY STANDARDS ORDER",
+                    title="Colorado CCR Document List",
+                    links=[
+                        {
+                            "url": "/CCR/DisplayRule.do?action=ruleinfo&ruleId=2509&deptID=0&agencyID=58",
+                            "text": "7 CCR 1103-1",
+                        }
+                    ],
+                )
+            if url == display_rule_url:
+                html = (
+                    "<a href='javascript:void(0)' onclick=\"OpenRuleWindow('12406', '7 CCR 1103-1' )\">"
+                    "7 CCR 1103-1 effective 02/01/2026 (PDF)</a>"
+                )
+                return SimpleNamespace(
+                    html=html,
+                    text="Current version 7 CCR 1103-1 effective 02/01/2026 PDF All versions Rulemaking details",
+                    title="Colorado CCR Document List",
+                    links=[],
+                )
+            raise AssertionError(f"unexpected scrape URL: {url}")
+
+    discovered = await scraper_module._discover_colorado_rule_document_urls(
+        seed_urls=[doc_list_url],
+        live_scraper=_FakeUnifiedWebScraper(),
+        allowed_hosts={"www.coloradosos.gov", "www.sos.state.co.us"},
+        limit=8,
+    )
+
+    assert discovered == [pdf_url]
+
+
 def test_candidate_oklahoma_rule_urls_from_text_extracts_title_urls() -> None:
     text = (
         "Oklahoma Administrative Code Administrative Code Search Title 1. Executive Orders "
@@ -9481,9 +9595,14 @@ async def test_agentic_discovery_retries_arizona_18_01_rtf_one_last_time_when_gr
     assert len(rtf_calls) >= 3
     assert all(call == retry_url for call in rtf_calls)
     url_provenance = result["report"]["AZ"]["arizona_fetch_diagnostics"]["url_provenance"][retry_url]
+    emitted_document = result["report"]["AZ"]["arizona_fetch_diagnostics"]["emitted_documents"][retry_url]
     assert any(attempt["phase"] in {"bootstrap_batch", "ranked_batch"} for attempt in url_provenance["attempts"])
     assert any(attempt["outcome"] in {"success", "fallback_success"} for attempt in url_provenance["attempts"])
     assert url_provenance["accepted_phase"] in {"direct_detail", "late_retry", "last_chance"}
+    assert emitted_document["emitted"] is True
+    assert emitted_document["accepted_phase"] == url_provenance["accepted_phase"]
+    assert emitted_document["accepted_format"] == "rtf"
+    assert emitted_document["source_domain"] == "apps.azsos.gov"
     assert archive_calls == 0
     assert unified_search_calls == 0
     assert agentic_calls == 0
