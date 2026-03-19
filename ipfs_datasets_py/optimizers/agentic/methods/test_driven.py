@@ -470,7 +470,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
                         "changed": normalized_response.strip() != current_code.strip(),
                     }
                 )
-            except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
+            except (AttributeError, OSError, RuntimeError, SyntaxError, TypeError, ValueError) as e:
                 self._log.error("Error generating optimization", extra={
                     'file': str(target_file),
                     'error_type': type(e).__name__,
@@ -1248,6 +1248,8 @@ Do not include explanations, markdown, comments, or extra keys.
             match = re.search(r"```(?:python)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
             if match:
                 text = match.group(1).strip()
+
+        text = textwrap.dedent(text).strip()
 
         lowered = text.lower()
         if any(marker in lowered for marker in self._meta_request_markers):

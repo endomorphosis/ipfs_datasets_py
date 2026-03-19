@@ -159,3 +159,51 @@ def test_local_hf_provider_truncates_prompt_to_model_context(monkeypatch):
     assert sent_tokens <= 8
     assert sent_prompt.startswith("tok")
     assert len(sent_prompt.split()) <= 8
+
+
+def test_local_hf_provider_retries_with_smaller_prompt_after_context_error(monkeypatch):
+    class _FakeTokenizer:
+        model_max_length = 32
+
+        def __call__(self, prompt, *, truncation, max_length, return_tensors=None):
+            _ = (truncation, return_tensors)
+            tokens = list(range(len(prompt.split())))
+            return {"input_ids": tokens[-max_length:]}
+
+        def decode(self, input_ids, skip_special_tokens=False):
+            _ = skip_special_tokens
+            return " ".join(f"tok{i}" for i in input_ids)
+
+    class _FakePipeline:
+        def __init__(self):
+            self.tokenizer = _FakeTokenizer()
+            self.calls = []
+
+        def __call__(self, prompt, *, max_new_tokens):
+            self.calls.append((prompt, max_new_tokens))
+            if len(self.calls) == 1:
+                raise RuntimeError("index out of range in self")
+            return [{"generated_text": "recovered"}]
+
+    fake_pipeline = _FakePipeline()
+
+    class _FakeTransformers:
+        @staticmethod
+        def pipeline(task, model):
+            assert task == "text-generation"
+            assert model == "gpt2"
+            return fake_pipeline
+
+    monkeypatch.setattr(llm_router, "_resolve_transformers_module", lambda deps=None: _FakeTransformers())
+
+    provider = llm_router._get_local_hf_provider()
+    assert provider is not None
+
+    long_prompt = " ".join(f"word{i}" for i in range(80))
+    assert provider.generate(long_prompt, max_new_tokens=64) == "recovered"
+    assert len(fake_pipeline.calls) == 2
+
+    first_prompt, first_tokens = fake_pipeline.calls[0]
+    retry_prompt, retry_tokens = fake_pipeline.calls[1]
+    assert retry_tokens < first_tokens
+    assert len(retry_prompt.split()) < len(first_prompt.split())

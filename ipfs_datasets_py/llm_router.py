@@ -2555,6 +2555,41 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
             approx_chars = max(512, available_prompt_tokens * 4)
             return prompt[-approx_chars:], safe_max_new_tokens
 
+        def _retry_after_context_error(
+            self,
+            *,
+            pipe: object,
+            prompt: str,
+            max_new_tokens: int,
+        ) -> tuple[str, int]:
+            # Some tiny local fallback models still throw indexing errors even
+            # after the normal prompt-length preparation step. Retry once with
+            # a much smaller budget so call sites can keep moving.
+            tokenizer = getattr(pipe, "tokenizer", None)
+            model_max_length = getattr(tokenizer, "model_max_length", None)
+            if not isinstance(model_max_length, int) or model_max_length <= 0 or model_max_length > 100_000:
+                model_max_length = 1024
+
+            retry_max_new_tokens = max(1, min(max_new_tokens, 32, max(1, model_max_length // 8)))
+            retry_prompt_budget = max(1, min(128, max(1, model_max_length // 4)))
+
+            if tokenizer is not None:
+                try:
+                    encoded = tokenizer(
+                        prompt,
+                        truncation=True,
+                        max_length=retry_prompt_budget,
+                        return_tensors=None,
+                    )
+                    input_ids = encoded.get("input_ids") if isinstance(encoded, dict) else None
+                    if input_ids:
+                        return tokenizer.decode(input_ids, skip_special_tokens=False), retry_max_new_tokens
+                except Exception:
+                    pass
+
+            approx_chars = max(256, retry_prompt_budget * 4)
+            return prompt[-approx_chars:], retry_max_new_tokens
+
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
             model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2")
             pipe = self._pipelines.get(model)
@@ -2568,7 +2603,17 @@ def _get_local_hf_provider(*, deps: Optional[RouterDeps] = None) -> Optional[LLM
                 prompt=prompt,
                 max_new_tokens=max_new_tokens,
             )
-            out = pipe(prepared_prompt, max_new_tokens=safe_max_new_tokens)
+            try:
+                out = pipe(prepared_prompt, max_new_tokens=safe_max_new_tokens)
+            except (IndexError, RuntimeError) as exc:
+                if "index out of range" not in str(exc).lower():
+                    raise
+                retry_prompt, retry_max_new_tokens = self._retry_after_context_error(
+                    pipe=pipe,
+                    prompt=prompt,
+                    max_new_tokens=safe_max_new_tokens,
+                )
+                out = pipe(retry_prompt, max_new_tokens=retry_max_new_tokens)
             if isinstance(out, list) and out:
                 item = out[0]
                 if isinstance(item, dict) and isinstance(item.get("generated_text"), str):

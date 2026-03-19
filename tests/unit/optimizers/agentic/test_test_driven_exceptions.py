@@ -129,6 +129,45 @@ def test_generate_optimizations_keeps_raw_preview_for_invalid_full_file_response
     assert optimizer._last_generation_diagnostics[0]["raw_response_preview"] == "not valid python("
 
 
+def test_generate_optimizations_keeps_raw_preview_for_symbol_indentation_error(tmp_path):
+    router = Mock()
+    router.generate.return_value = "    def target_method(self):\nreturn 'patched'\n"
+    optimizer = TestDrivenOptimizer(agent_id="td-symbol-indent-error", llm_router=router)
+
+    target = tmp_path / "generic_module.py"
+    target.write_text(
+        "class Example:\n"
+        "    def target_method(self):\n"
+        "        return 'original'\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-symbol-indent-error",
+        target_files=[target],
+        description="Optimize symbol target",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["target_method"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+
+    assert result == {}
+    assert optimizer._last_generation_diagnostics == [
+        {
+            "file": str(target),
+            "status": "error",
+            "mode": "symbol_level",
+            "target_symbols": ["target_method"],
+            "error_type": "ValueError",
+            "error_message": f"Symbol optimization response for {target} returned invalid code for target_method: expected an indented block after function definition on line 1 (<unknown>, line 2)",
+            "raw_response_preview": "    def target_method(self):\nreturn 'patched'\n",
+        }
+    ]
+
+
 def test_generate_optimizations_propagates_base_exception(optimizer, task):
     optimizer.llm_router.generate.side_effect = KeyboardInterrupt("stop")
     with pytest.raises(KeyboardInterrupt):
@@ -244,6 +283,52 @@ def test_generate_optimizations_normalizes_indented_symbol_response(tmp_path):
     )
     task = OptimizationTask(
         task_id="task-symbols-indented",
+        target_files=[target],
+        description="Optimize symbol targets",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["_is_intake_complete", "_get_intake_action"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "complete_intake" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_extracts_indented_symbol_response_after_preamble(tmp_path):
+    router = Mock()
+    router.generate.return_value = """
+Here are the requested replacements.
+
+    def _is_intake_complete(self) -> bool:
+        data = self.phase_data[ComplaintPhase.INTAKE]
+        return bool(data.get("knowledge_graph"))
+
+    def _get_intake_action(self) -> Dict[str, Any]:
+        return {"action": "complete_intake"}
+"""
+    optimizer = TestDrivenOptimizer(agent_id="td-symbols-preamble", llm_router=router)
+
+    target = tmp_path / "phase_manager.py"
+    target.write_text(
+        "from typing import Dict, Any\n\n"
+        "class ComplaintPhase:\n"
+        "    INTAKE = 'intake'\n\n"
+        "class PhaseManager:\n"
+        "    def __init__(self):\n"
+        "        self.phase_data = {ComplaintPhase.INTAKE: {}}\n\n"
+        "    def _is_intake_complete(self) -> bool:\n"
+        "        return False\n\n"
+        "    def _get_intake_action(self) -> Dict[str, Any]:\n"
+        "        return {'action': 'continue_denoising'}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-symbols-preamble",
         target_files=[target],
         description="Optimize symbol targets",
         constraints={
