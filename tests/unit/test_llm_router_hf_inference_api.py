@@ -119,6 +119,51 @@ def test_hf_inference_api_kwargs_bill_to_overrides_env(monkeypatch) -> None:
     assert captured["bill_to"] == "Publicus"
 
 
+def test_openrouter_sets_hf_bill_to_header_from_adapter_env(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "router-token")
+    monkeypatch.setenv("OPENROUTER_HF_BILL_TO", "Publicus")
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        captured["bill_to"] = req.get_header("X-hf-bill-to")
+        return _FakeHTTPResponse({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    text = llm_router.generate_text("hello", provider="openrouter", model_name="meta-llama/Llama-3.1-8B-Instruct")
+
+    assert text == "ok"
+    assert captured["bill_to"] == "Publicus"
+
+
+def test_openrouter_kwargs_bill_to_overrides_env(monkeypatch) -> None:
+    llm_router.clear_llm_router_caches()
+    monkeypatch.setenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "router-token")
+    monkeypatch.setenv("OPENROUTER_HF_BILL_TO", "Personal")
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        captured["bill_to"] = req.get_header("X-hf-bill-to")
+        return _FakeHTTPResponse({"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(llm_router.urllib.request, "urlopen", fake_urlopen)
+
+    text = llm_router.generate_text(
+        "hello",
+        provider="openrouter",
+        model_name="meta-llama/Llama-3.1-8B-Instruct",
+        hf_bill_to="Publicus",
+    )
+
+    assert text == "ok"
+    assert captured["bill_to"] == "Publicus"
+
+
 def test_hf_inference_api_alias_uses_env_default_model(monkeypatch) -> None:
     llm_router.clear_llm_router_caches()
     monkeypatch.setenv("IPFS_DATASETS_PY_HF_API_TOKEN", "token-2")

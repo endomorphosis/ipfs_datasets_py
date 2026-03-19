@@ -288,6 +288,7 @@ def _resolve_hf_bill_to(*, kwargs: Optional[dict[str, object]] = None) -> str:
             if value is not None and str(value).strip():
                 return str(value).strip()
     return _coalesce_env(
+        "OPENROUTER_HF_BILL_TO",
         "IPFS_DATASETS_PY_HF_BILL_TO",
         "HUGGINGFACE_BILL_TO",
         "HF_BILL_TO",
@@ -441,6 +442,7 @@ def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
             )
             inputs = list(texts)
             payload = {"model": model, "input": inputs}
+            bill_to = _resolve_hf_bill_to(kwargs=dict(kwargs))
 
             req = urllib.request.Request(
                 f"{base_url}/embeddings",
@@ -452,6 +454,7 @@ def _get_openrouter_provider() -> Optional[EmbeddingsProvider]:
                     "Accept": "application/json",
                     **({"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER")} if os.getenv("OPENROUTER_HTTP_REFERER") else {}),
                     **({"X-Title": os.getenv("OPENROUTER_APP_TITLE")} if os.getenv("OPENROUTER_APP_TITLE") else {}),
+                    **({"X-HF-Bill-To": bill_to} if bill_to else {}),
                 },
             )
 

@@ -1054,6 +1054,7 @@ def _resolve_hf_bill_to(*, kwargs: Optional[dict[str, object]] = None) -> str:
             if value is not None and str(value).strip():
                 return str(value).strip()
     return _coalesce_env(
+        "OPENROUTER_HF_BILL_TO",
         "IPFS_DATASETS_PY_HF_BILL_TO",
         "HUGGINGFACE_BILL_TO",
         "HF_BILL_TO",
@@ -1618,7 +1619,7 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
 
     base_url = os.getenv("IPFS_DATASETS_PY_OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
 
-    def _request(payload: dict, *, timeout: float) -> dict:
+    def _request(payload: dict, *, timeout: float, bill_to: str = "") -> dict:
         req = urllib.request.Request(
             f"{base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
@@ -1629,6 +1630,7 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
                 "Accept": "application/json",
                 **({"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER")} if os.getenv("OPENROUTER_HTTP_REFERER") else {}),
                 **({"X-Title": os.getenv("OPENROUTER_APP_TITLE")} if os.getenv("OPENROUTER_APP_TITLE") else {}),
+                **({"X-HF-Bill-To": bill_to} if bill_to else {}),
             },
         )
 
@@ -1666,6 +1668,7 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
 
             max_tokens = kwargs.get("max_tokens", kwargs.get("max_new_tokens", 256))
             temperature = kwargs.get("temperature", 0.2)
+            bill_to = _resolve_hf_bill_to(kwargs=dict(kwargs))
 
             payload: dict = {
                 "model": model,
@@ -1685,7 +1688,7 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
                 payload["seed"] = int(kwargs.get("seed"))
 
             timeout = float(kwargs.get("timeout", 120))
-            return _request(payload, timeout=timeout)
+            return _request(payload, timeout=timeout, bill_to=bill_to)
 
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
             data = self.chat_completions(

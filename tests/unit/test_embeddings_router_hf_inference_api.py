@@ -117,6 +117,51 @@ def test_hf_embeddings_kwargs_bill_to_overrides_env(monkeypatch) -> None:
     assert captured["bill_to"] == "Publicus"
 
 
+def test_openrouter_embeddings_set_hf_bill_to_header_from_adapter_env(monkeypatch) -> None:
+    embeddings_router.clear_embeddings_router_caches()
+    monkeypatch.setenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "router-token")
+    monkeypatch.setenv("OPENROUTER_HF_BILL_TO", "Publicus")
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        captured["bill_to"] = req.get_header("X-hf-bill-to")
+        return _FakeHTTPResponse({"data": [{"embedding": [0.1, 0.2]}]})
+
+    monkeypatch.setattr(embeddings_router.urllib.request, "urlopen", fake_urlopen)
+
+    vector = embeddings_router.embed_text("hello", provider="openrouter", model_name="text-embedding-3-small")
+
+    assert vector == [0.1, 0.2]
+    assert captured["bill_to"] == "Publicus"
+
+
+def test_openrouter_embeddings_kwargs_bill_to_override_env(monkeypatch) -> None:
+    embeddings_router.clear_embeddings_router_caches()
+    monkeypatch.setenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "router-token")
+    monkeypatch.setenv("OPENROUTER_HF_BILL_TO", "Personal")
+
+    captured: dict[str, object] = {}
+
+    def fake_urlopen(req, timeout=0):
+        _ = timeout
+        captured["bill_to"] = req.get_header("X-hf-bill-to")
+        return _FakeHTTPResponse({"data": [{"embedding": [0.1, 0.2]}]})
+
+    monkeypatch.setattr(embeddings_router.urllib.request, "urlopen", fake_urlopen)
+
+    vector = embeddings_router.embed_text(
+        "hello",
+        provider="openrouter",
+        model_name="text-embedding-3-small",
+        hf_bill_to="Publicus",
+    )
+
+    assert vector == [0.1, 0.2]
+    assert captured["bill_to"] == "Publicus"
+
+
 def test_hf_embeddings_uses_hub_cached_token(monkeypatch) -> None:
     embeddings_router.clear_embeddings_router_caches()
     monkeypatch.delenv("IPFS_DATASETS_PY_HF_API_TOKEN", raising=False)
