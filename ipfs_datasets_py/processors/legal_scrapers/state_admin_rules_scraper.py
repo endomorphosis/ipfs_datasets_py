@@ -10820,7 +10820,7 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "AZ":
             preloop_budget_deadline = max(
                 preloop_budget_deadline,
-                state_start + max(45.0, min(70.0, per_state_budget_s * 0.6)),
+                state_start + max(90.0, min(180.0, per_state_budget_s - 0.5)),
             )
         if state_code == "CA":
             preloop_budget_deadline = max(
@@ -11448,7 +11448,7 @@ async def _agentic_discover_admin_state_blocks(
         az_prefetched_ranked_url_keys: set[str] = set()
         if state_code == "AZ" and prioritized_ranked_document_urls:
             az_ranked_rule_urls = prioritized_ranked_document_urls[: min(len(prioritized_ranked_document_urls), max_fetch * 4, 20)]
-            az_ranked_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 6))
+            az_ranked_batch_size = 1
             for batch_start in range(0, len(az_ranked_rule_urls), az_ranked_batch_size):
                 if len(statutes) >= max_fetch:
                     break

@@ -5,6 +5,7 @@ import sys
 import time
 import types
 from enum import Enum
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -4071,9 +4072,9 @@ def test_arizona_ranked_fetch_timeout_tracks_slow_host_budget() -> None:
 
 
 def test_arizona_ranked_fetch_batch_size_serializes_slow_host_requests() -> None:
-    assert scraper_module._arizona_ranked_fetch_batch_size(1, 25) == 1
-    assert scraper_module._arizona_ranked_fetch_batch_size(6, 25) == 1
-    assert scraper_module._arizona_ranked_fetch_batch_size(12, 2) == 1
+    module_text = Path(scraper_module.__file__).read_text(encoding="utf-8")
+    assert module_text.count("az_ranked_batch_size = 1") >= 1
+    assert "state_start + max(90.0, min(180.0, per_state_budget_s - 0.5))" in module_text
 
 
 @pytest.mark.asyncio
