@@ -27,6 +27,7 @@ Example:
 import logging
 from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
+import importlib
 import os
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,50 @@ except ImportError:
     logger.warning("datasets library not available - streaming disabled")
 
 
+def _coalesce_env(*names: str) -> str:
+    for name in names:
+        value = os.getenv(name, "")
+        if value and str(value).strip():
+            return str(value).strip()
+    return ""
+
+
+def _resolve_hf_api_token() -> str:
+    token = _coalesce_env(
+        "IPFS_DATASETS_PY_HF_API_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HUGGINGFACE_API_TOKEN",
+        "HUGGINGFACE_HUB_TOKEN",
+        "HUGGINGFACE_API_KEY",
+        "HF_TOKEN",
+        "HF_API_TOKEN",
+    )
+    if token:
+        return token
+
+    try:
+        hub = importlib.import_module("huggingface_hub")
+        getter = getattr(hub, "get_token", None)
+        resolved = getter() if callable(getter) else ""
+        if resolved is not None and str(resolved).strip():
+            return str(resolved).strip()
+    except Exception:
+        return ""
+    return ""
+
+
+def _resolve_hf_bill_to(value: Optional[str] = None) -> str:
+    if value is not None and str(value).strip():
+        return str(value).strip()
+    return _coalesce_env(
+        "IPFS_DATASETS_PY_HF_BILL_TO",
+        "HUGGINGFACE_BILL_TO",
+        "HF_BILL_TO",
+        "HF_ORGANIZATION",
+        "HUGGINGFACE_ORG",
+    )
+
+
 class HuggingFaceAPISearch:
     """Search HuggingFace Common Crawl indexes via API without full download.
     
@@ -82,7 +127,8 @@ class HuggingFaceAPISearch:
         api_key: Optional[str] = None,
         use_streaming: bool = True,
         cache_dir: Optional[Union[str, Path]] = None,
-        max_results: int = 100
+        max_results: int = 100,
+        bill_to: Optional[str] = None,
     ):
         """Initialize HuggingFace API Search.
         
@@ -92,7 +138,8 @@ class HuggingFaceAPISearch:
             cache_dir: Directory for caching responses
             max_results: Maximum number of results to return per query
         """
-        self.api_key = api_key or os.getenv("HF_TOKEN")
+        self.api_key = api_key or _resolve_hf_api_token()
+        self.bill_to = _resolve_hf_bill_to(bill_to)
         self.use_streaming = use_streaming and HAVE_DATASETS
         self.cache_dir = Path(cache_dir) if cache_dir else Path.home() / ".cache" / "hf_api_search"
         self.max_results = max_results
@@ -104,7 +151,10 @@ class HuggingFaceAPISearch:
         self.inference_client = None
         if HAVE_HF_HUB and self.api_key:
             try:
-                self.inference_client = InferenceClient(token=self.api_key)
+                client_kwargs = {"token": self.api_key}
+                if self.bill_to:
+                    client_kwargs["bill_to"] = self.bill_to
+                self.inference_client = InferenceClient(**client_kwargs)
                 logger.info("HuggingFace Inference API initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize HF Inference API: {e}")
@@ -114,7 +164,8 @@ class HuggingFaceAPISearch:
         query: str,
         jurisdiction: str = "federal",
         state_code: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Search HuggingFace indexes via API.
         
@@ -135,11 +186,11 @@ class HuggingFaceAPISearch:
             >>> results = searcher.search("EPA water", jurisdiction="federal")
         """
         if jurisdiction == "federal":
-            return self.search_federal(query, filters)
+            return self.search_federal(query, filters, max_results=max_results)
         elif jurisdiction == "state":
-            return self.search_state(query, state_code, filters)
+            return self.search_state(query, state_code, filters, max_results=max_results)
         elif jurisdiction == "municipal":
-            return self.search_municipal(query, filters)
+            return self.search_municipal(query, filters, max_results=max_results)
         else:
             logger.error(f"Unknown jurisdiction: {jurisdiction}")
             return []
@@ -147,7 +198,8 @@ class HuggingFaceAPISearch:
     def search_federal(
         self,
         query: str,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Search federal government indexes.
         
@@ -161,14 +213,16 @@ class HuggingFaceAPISearch:
         return self._search_dataset(
             DATASET_REPOS["federal"],
             query,
-            filters
+            filters,
+            max_results=max_results,
         )
     
     def search_state(
         self,
         query: str,
         state_code: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Search state government indexes.
         
@@ -188,13 +242,15 @@ class HuggingFaceAPISearch:
         return self._search_dataset(
             DATASET_REPOS["state"],
             query,
-            filters
+            filters,
+            max_results=max_results,
         )
     
     def search_municipal(
         self,
         query: str,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Search municipal government indexes.
         
@@ -208,14 +264,16 @@ class HuggingFaceAPISearch:
         return self._search_dataset(
             DATASET_REPOS["municipal"],
             query,
-            filters
+            filters,
+            max_results=max_results,
         )
     
     def _search_dataset(
         self,
         dataset_name: str,
         query: str,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Internal method to search a specific HuggingFace dataset.
         
@@ -240,7 +298,7 @@ class HuggingFaceAPISearch:
         # Try streaming API first (most efficient)
         if self.use_streaming and HAVE_DATASETS:
             try:
-                results = self._search_streaming(dataset_name, query, filters)
+                results = self._search_streaming(dataset_name, query, filters, max_results=max_results)
                 if results:
                     logger.info(f"Found {len(results)} results via streaming API")
                     return results
@@ -258,7 +316,8 @@ class HuggingFaceAPISearch:
         self,
         dataset_name: str,
         query: str,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        max_results: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Search using HuggingFace datasets streaming API.
         
@@ -277,6 +336,7 @@ class HuggingFaceAPISearch:
             return []
         
         results = []
+        result_limit = max_results if max_results is not None else self.max_results
         query_terms = set(query.split())
         
         try:
@@ -291,7 +351,7 @@ class HuggingFaceAPISearch:
             
             # Iterate through records
             for record in dataset:
-                if len(results) >= self.max_results:
+                if len(results) >= result_limit:
                     break
                 
                 # Check if record matches query
@@ -348,7 +408,8 @@ class HuggingFaceAPISearch:
             "datasets_available": HAVE_DATASETS,
             "inference_client": self.inference_client is not None,
             "streaming_enabled": self.use_streaming,
-            "api_key_configured": bool(self.api_key)
+            "api_key_configured": bool(self.api_key),
+            "hf_bill_to": self.bill_to,
         }
 
 

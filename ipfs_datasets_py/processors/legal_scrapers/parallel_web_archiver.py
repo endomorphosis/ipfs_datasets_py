@@ -138,7 +138,7 @@ class ParallelWebArchiver:
         
         # Initialize components
         self._hf_search = None
-        if self.use_warc_pointers and HAVE_HF_API and self.hf_api_key:
+        if self.use_warc_pointers and HAVE_HF_API:
             try:
                 self._hf_search = HuggingFaceAPISearch(api_key=self.hf_api_key)
             except Exception as e:

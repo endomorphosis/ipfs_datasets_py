@@ -7,6 +7,7 @@ from ipfs_datasets_py.processors.legal_scrapers.parallel_web_archiver import (
     ParallelWebArchiver,
 )
 from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver as archiver_module
+from ipfs_datasets_py.processors.legal_scrapers import huggingface_api_search as hf_search_module
 
 
 @pytest.mark.anyio
@@ -38,3 +39,72 @@ async def test_archive_urls_parallel_gathers_each_url_result(monkeypatch: pytest
     assert seen_urls == urls
     assert [result.url for result in results] == urls
     assert [result.content for result in results] == [f"content:{url}" for url in urls]
+
+
+def test_parallel_web_archiver_initializes_hf_search_without_explicit_env_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed: dict[str, object] = {}
+
+    class _FakeSearch:
+        def __init__(self, api_key=None, **kwargs):
+            observed["api_key"] = api_key
+            observed["kwargs"] = dict(kwargs)
+
+    monkeypatch.setattr(archiver_module, "HAVE_HF_API", True)
+    monkeypatch.setattr(archiver_module, "HuggingFaceAPISearch", _FakeSearch)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_TOKEN", raising=False)
+
+    archiver = ParallelWebArchiver(use_warc_pointers=True)
+
+    assert archiver.use_warc_pointers is True
+    assert isinstance(archiver._hf_search, _FakeSearch)
+    assert observed["api_key"] is None
+
+
+def test_huggingface_api_search_uses_cli_token_and_org_bill_to(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    class _FakeInferenceClient:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(hf_search_module, "InferenceClient", _FakeInferenceClient)
+    monkeypatch.setattr(hf_search_module, "HAVE_HF_HUB", True)
+    monkeypatch.setenv("HF_ORGANIZATION", "Publicus")
+    monkeypatch.delenv("IPFS_DATASETS_PY_HF_API_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACEHUB_API_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_API_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_HUB_TOKEN", raising=False)
+    monkeypatch.delenv("HUGGINGFACE_API_KEY", raising=False)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.delenv("HF_API_TOKEN", raising=False)
+    monkeypatch.setattr(hf_search_module.importlib, "import_module", lambda name: type("_Hub", (), {"get_token": staticmethod(lambda: "cli-token")})())
+
+    searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=False)
+
+    assert searcher.api_key == "cli-token"
+    assert searcher.bill_to == "Publicus"
+    assert captured["token"] == "cli-token"
+    assert captured["bill_to"] == "Publicus"
+
+
+def test_huggingface_api_search_honors_max_results(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(hf_search_module, "HAVE_DATASETS", True)
+    monkeypatch.setattr(
+        hf_search_module,
+        "load_dataset",
+        lambda *args, **kwargs: iter(
+            [
+                {"url": "https://example.com/1", "text": "epa enforcement action"},
+                {"url": "https://example.com/2", "text": "epa water guidance"},
+            ]
+        ),
+        raising=False,
+    )
+
+    searcher = hf_search_module.HuggingFaceAPISearch(api_key="hf-test-token", use_streaming=True, max_results=10)
+
+    results = searcher.search("epa", max_results=1)
+
+    assert len(results) == 1
+    assert results[0]["url"] == "https://example.com/1"

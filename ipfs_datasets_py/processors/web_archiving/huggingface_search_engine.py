@@ -15,11 +15,47 @@ Usage (package import)::
     )
 """
 import logging
+import importlib
 import os
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _coalesce_env(*names: str) -> str:
+    for name in names:
+        value = os.getenv(name, "")
+        if value and str(value).strip():
+            return str(value).strip()
+    return ""
+
+
+def _resolve_hf_api_token(explicit_token: Optional[str] = None) -> str:
+    if explicit_token is not None and str(explicit_token).strip():
+        return str(explicit_token).strip()
+
+    token = _coalesce_env(
+        "IPFS_DATASETS_PY_HF_API_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HUGGINGFACE_API_TOKEN",
+        "HUGGINGFACE_HUB_TOKEN",
+        "HUGGINGFACE_API_KEY",
+        "HF_TOKEN",
+        "HF_API_TOKEN",
+    )
+    if token:
+        return token
+
+    try:
+        hub = importlib.import_module("huggingface_hub")
+        getter = getattr(hub, "get_token", None)
+        resolved = getter() if callable(getter) else ""
+        if resolved is not None and str(resolved).strip():
+            return str(resolved).strip()
+    except Exception:
+        return ""
+    return ""
 
 
 async def search_huggingface_models(
@@ -34,8 +70,7 @@ async def search_huggingface_models(
 ) -> Dict[str, Any]:
     """Search HuggingFace models via Hub API."""
     try:
-        if api_token is None:
-            api_token = os.environ.get("HF_TOKEN")
+        api_token = _resolve_hf_api_token(api_token)
 
         try:
             import aiohttp
@@ -114,8 +149,7 @@ async def search_huggingface_datasets(
 ) -> Dict[str, Any]:
     """Search HuggingFace datasets via Hub API."""
     try:
-        if api_token is None:
-            api_token = os.environ.get("HF_TOKEN")
+        api_token = _resolve_hf_api_token(api_token)
         try:
             import aiohttp
         except ImportError:
@@ -185,8 +219,7 @@ async def search_huggingface_spaces(
 ) -> Dict[str, Any]:
     """Search HuggingFace Spaces (demo applications)."""
     try:
-        if api_token is None:
-            api_token = os.environ.get("HF_TOKEN")
+        api_token = _resolve_hf_api_token(api_token)
         try:
             import aiohttp
         except ImportError:
@@ -246,8 +279,7 @@ async def get_huggingface_model_info(
 ) -> Dict[str, Any]:
     """Get detailed information about a specific HuggingFace model."""
     try:
-        if api_token is None:
-            api_token = os.environ.get("HF_TOKEN")
+        api_token = _resolve_hf_api_token(api_token)
         try:
             import aiohttp
         except ImportError:
