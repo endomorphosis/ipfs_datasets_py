@@ -24,7 +24,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
-from urllib.parse import parse_qs, quote, unquote, urldefrag, urlencode, urljoin, urlparse
+from urllib.parse import parse_qs, quote, unquote, urldefrag, urlencode, urljoin, urlparse, urlunparse
 import xml.etree.ElementTree as ET
 
 try:
