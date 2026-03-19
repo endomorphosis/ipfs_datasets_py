@@ -8653,14 +8653,6 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
-
-
-async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
-    return await _scrape_pdf_candidate_url(url, native_text_only=False)
-
-
-async def _scrape_pdf_candidate_url_with_native_text(url: str) -> Optional[Any]:
-    return await _scrape_pdf_candidate_url(url, native_text_only=True)
     url_value = str(url or "").strip()
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
