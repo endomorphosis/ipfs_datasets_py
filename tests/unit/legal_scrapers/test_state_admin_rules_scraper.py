@@ -417,6 +417,18 @@ def test_is_direct_detail_candidate_url_recognizes_california_westlaw_document_p
     ) is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_connecticut_eregulations_section_pages() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-4/"
+    ) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-4/"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1h/"
+    ) is False
+
+
 def test_state_seed_expansion_backlog_is_ready_short_circuits_for_california_document_urls() -> None:
     candidates = [
         (
@@ -1709,6 +1721,49 @@ def test_georgia_candidate_url_scoring_prefers_rule_over_subject_and_chapter() -
     assert subject_score > chapter_score
     assert rule_score > subject_score
     assert legislature_score < root_score
+
+
+def test_looks_like_rule_inventory_page_recognizes_connecticut_eregulations_browse_pages() -> None:
+    root_text = (
+        "Connecticut eRegulations System Portal to Connecticut Regulations Browse the Regulations of Connecticut State Agencies "
+        "Select a Title to Browse its Contents Title 1 - Provisions of General Application Title 2 - General Assembly and Legislative Agencies "
+        "Title 3 - State Elective Officers Title 4 - Management of State Agencies"
+    )
+    title_text = (
+        "Browse the Regulations of Connecticut State Agencies Select a Subtitle to Browse its Contents "
+        "Department of Motor Vehicles 1-1h-1 to 1-1h-8 - Identity Card Issued To Persons Who Do Not Possess Motor Vehicle Operator Licenses "
+        "Office of Policy and Management 1-1j-1 - Payment for License Fees by Credit Card"
+    )
+    subtitle_text = (
+        "Browse the Regulations of Connecticut State Agencies Select a Section to Browse its Contents "
+        "Identity Card Issued To Persons Who Do Not Possess Motor Vehicle Operator Licenses "
+        "1-1h-4 Requirements for issuance 1-1h-5 License suspension 1-1h-6 Duplicate identity cards 1-1h-7 Content of identity card"
+    )
+    section_text = (
+        "Regulations of Connecticut State Agencies Sec. 1-1h-4. Requirements for issuance "
+        "The following requirements must be met as a prerequisite to the issuance of an identity card."
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=root_text,
+        title="eRegulations - Browse Regulations of Connecticut State Agencies",
+        url="https://eregulations.ct.gov/eRegsPortal/Browse/RCSA",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=title_text,
+        title="eRegulations - Browse Regulations of Connecticut State Agencies",
+        url="https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1/",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=subtitle_text,
+        title="eRegulations - Browse Regulations of Connecticut State Agencies",
+        url="https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1h/",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=section_text,
+        title="eRegulations - Browse Regulations of Connecticut State Agencies",
+        url="https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-4/",
+    ) is False
 
 
 def test_new_mexico_rule_inventory_detection_distinguishes_explanation_titles_title_and_chapter_pages() -> None:
@@ -4075,6 +4130,24 @@ def test_arizona_ranked_fetch_batch_size_serializes_slow_host_requests() -> None
     module_text = Path(scraper_module.__file__).read_text(encoding="utf-8")
     assert module_text.count("az_ranked_batch_size = 1") >= 1
     assert "state_start + max(90.0, min(180.0, per_state_budget_s - 0.5))" in module_text
+
+
+def test_arizona_code_landing_page_is_late_direct_detail_candidate() -> None:
+    url = "https://azsos.gov/rules/arizona-administrative-code"
+    assert scraper_module._is_direct_detail_candidate_url(url) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(url) is False
+
+
+def test_arizona_code_landing_page_is_prioritized_in_direct_detail_queue() -> None:
+    urls = scraper_module._prioritized_direct_detail_urls_from_candidates(
+        [
+            ("https://apps.azsos.gov/public_services/Title_02/2-04.pdf", 20),
+            ("https://azsos.gov/rules/arizona-administrative-code", 5),
+            ("https://apps.azsos.gov/public_services/Title_06/6-11.rtf", 30),
+        ],
+        limit=3,
+    )
+    assert urls[0] == "https://azsos.gov/rules/arizona-administrative-code"
 
 
 @pytest.mark.asyncio
@@ -7777,6 +7850,63 @@ def test_prefers_live_fetch_for_georgia_colorado_and_connecticut_admin_rules_hos
     assert scraper_module._prefers_live_fetch("https://www.sos.state.co.us/CCR/Welcome.do") is True
     assert scraper_module._prefers_live_fetch("https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58") is True
     assert scraper_module._prefers_live_fetch("https://eregulations.ct.gov/eRegsPortal/Browse/RCSA") is True
+
+
+@pytest.mark.anyio
+async def test_discover_connecticut_rule_document_urls_follows_browse_hierarchy(monkeypatch: pytest.MonkeyPatch) -> None:
+    root_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA"
+    title_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1/"
+    subtitle_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1h/"
+    section_urls = [
+        f"https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-{index}/"
+        for index in range(1, 9)
+    ]
+
+    class _FakeUnifiedWebScraper:
+        async def scrape(self, url: str):
+            if url.rstrip("/") == root_url.rstrip("/"):
+                html = "<a href='/eRegsPortal/Browse/RCSA/Title_1/'>Title 1 - Provisions of General Application</a>"
+                return SimpleNamespace(
+                    html=html,
+                    text="Browse the Regulations of Connecticut State Agencies Select a Title to Browse its Contents Title 1 - Provisions of General Application",
+                    title="eRegulations - Browse Regulations of Connecticut State Agencies",
+                    links=[{"url": "/eRegsPortal/Browse/RCSA/Title_1/", "text": "Title 1 - Provisions of General Application"}],
+                )
+            if url.rstrip("/") == title_url.rstrip("/"):
+                html = "<a href='/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1h/'>1-1h-1 to 1-1h-8 - Identity Card Issued To Persons Who Do Not Possess Motor Vehicle Operator Licenses</a>"
+                return SimpleNamespace(
+                    html=html,
+                    text="Select a Subtitle to Browse its Contents 1-1h-1 to 1-1h-8 - Identity Card Issued To Persons Who Do Not Possess Motor Vehicle Operator Licenses",
+                    title="eRegulations - Browse Regulations of Connecticut State Agencies",
+                    links=[{"url": "/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1h/", "text": "1-1h-1 to 1-1h-8 - Identity Card Issued To Persons Who Do Not Possess Motor Vehicle Operator Licenses"}],
+                )
+            if url.rstrip("/") == subtitle_url.rstrip("/"):
+                html = "".join(
+                    f"<a href='/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-{index}/'>1-1h-{index} Sample Section</a>"
+                    for index in range(1, 9)
+                )
+                return SimpleNamespace(
+                    html=html,
+                    text="Select a Section to Browse its Contents " + " ".join(f"1-1h-{index} Sample Section" for index in range(1, 9)),
+                    title="eRegulations - Browse Regulations of Connecticut State Agencies",
+                    links=[
+                        {
+                            "url": f"/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-{index}/",
+                            "text": f"1-1h-{index} Sample Section",
+                        }
+                        for index in range(1, 9)
+                    ],
+                )
+            raise AssertionError(f"unexpected scrape URL: {url}")
+
+    discovered = await scraper_module._discover_connecticut_rule_document_urls(
+        seed_urls=[root_url],
+        live_scraper=_FakeUnifiedWebScraper(),
+        allowed_hosts={"eregulations.ct.gov"},
+        limit=8,
+    )
+
+    assert discovered == section_urls
 
 
 def test_candidate_oklahoma_rule_urls_from_text_extracts_title_urls() -> None:

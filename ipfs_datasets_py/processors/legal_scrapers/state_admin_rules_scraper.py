@@ -305,6 +305,23 @@ _GA_GAC_DEPARTMENT_ROW_RE = re.compile(r"\bDepartment\s+\d+\.\s", re.IGNORECASE)
 _GA_GAC_SUBJECT_ROW_RE = re.compile(r"\bSubject\s+\d+(?:-\d+){2,}\.\s", re.IGNORECASE)
 _GA_GAC_RULE_ROW_RE = re.compile(r"\bRule\s+\d+(?:-\d+){2,}-\.\d+[A-Za-z0-9-]*\b", re.IGNORECASE)
 
+_CT_EREGS_ROOT_PATH_RE = re.compile(r"^/eRegsPortal/Browse/RCSA/?$", re.IGNORECASE)
+_CT_EREGS_TITLE_PATH_RE = re.compile(r"^/eRegsPortal/Browse/RCSA/Title_[0-9A-Za-z]+/?$", re.IGNORECASE)
+_CT_EREGS_SUBTITLE_PATH_RE = re.compile(
+    r"^/eRegsPortal/Browse/RCSA/Title_[0-9A-Za-z]+Subtitle_[^/]+/?$",
+    re.IGNORECASE,
+)
+_CT_EREGS_SECTION_PATH_RE = re.compile(
+    r"^/eRegsPortal/Browse/RCSA/Title_[0-9A-Za-z]+Subtitle_[^/]+Section_[^/]+/?$",
+    re.IGNORECASE,
+)
+_CT_EREGS_TITLE_ROW_RE = re.compile(r"\bTitle\s+\d+[a-z]?\s+-\s+[A-Z]", re.IGNORECASE)
+_CT_EREGS_SUBTITLE_ROW_RE = re.compile(
+    r"\b\d+[a-z]?(?:-\d+[a-z]?)+(?:\s+to\s+\d+[a-z]?(?:-\d+[a-z]?)+)?\s+-\s+[A-Z]",
+    re.IGNORECASE,
+)
+_CT_EREGS_SECTION_ROW_RE = re.compile(r"\b(?:Sec\.\s*)?\d+[a-z]?(?:-\d+[a-z]?)+\b", re.IGNORECASE)
+
 _AK_AAC_TITLE_PATH_RE = re.compile(r"^/aac/\d+/?$", re.IGNORECASE)
 _AK_AAC_CHAPTER_PATH_RE = re.compile(r"^/aac/\d+\.\d+/?$", re.IGNORECASE)
 _AK_AAC_SECTION_PATH_RE = re.compile(r"^/aac/\d+(?:\.\d+){2,3}/?$", re.IGNORECASE)
@@ -1820,6 +1837,15 @@ def _score_candidate_url(url: str) -> int:
         sec_end = str((parse_qs(query).get("secEnd") or [""])[0]).strip()
         if "media=print" in query_lower and _AK_AAC_SECTION_PATH_RE.fullmatch(f"/aac/{sec_start}") and sec_start == sec_end:
             score += 8
+    if host == "eregulations.ct.gov":
+        if _CT_EREGS_ROOT_PATH_RE.fullmatch(path):
+            score += 6
+        elif _CT_EREGS_TITLE_PATH_RE.fullmatch(path):
+            score += 8
+        elif _CT_EREGS_SUBTITLE_PATH_RE.fullmatch(path):
+            score += 10
+        elif _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
+            score += 14
     if host == "rules.sos.ga.gov":
         if normalized_path.lower() == "/gac":
             score += 6
@@ -2389,6 +2415,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     normalized_path = path.rstrip("/") or "/"
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
         return bool(_AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url)))
+    if host == "eregulations.ct.gov" and _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
+        return True
     if _is_new_hampshire_archived_rule_leaf_url(url):
         return True
     if host in {"gencourt.state.nh.us", "www.gencourt.state.nh.us"} and re.search(
@@ -2435,6 +2463,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
         return True
     if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
+        return True
+    if host in {"azsos.gov", "www.azsos.gov"} and normalized_path.lower() == "/rules/arizona-administrative-code":
         return True
     if host == "www.sos.ms.gov" and re.search(r"^/adminsearch/ACCode/[\w.-]+\.pdf$", path, re.IGNORECASE):
         return True
@@ -2485,6 +2515,8 @@ def _is_immediate_direct_detail_candidate_url(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
     normalized_path = (parsed.path or "").rstrip("/") or "/"
+    if host in {"azsos.gov", "www.azsos.gov"} and normalized_path.lower() == "/rules/arizona-administrative-code":
+        return False
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
         return bool(_AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url)))
     return True
@@ -2536,6 +2568,16 @@ def _prioritized_direct_detail_urls_from_candidates(
         seen.add(key)
         prioritized.append(candidate_url)
         return True
+
+    for candidate_url, score in candidates:
+        if int(score) <= 0:
+            continue
+        parsed = urlparse(str(candidate_url or "").strip())
+        normalized_path = (parsed.path or "").rstrip("/") or "/"
+        if parsed.netloc.lower() in {"azsos.gov", "www.azsos.gov"} and normalized_path.lower() == "/rules/arizona-administrative-code":
+            _append_prioritized_url(candidate_url)
+            if len(prioritized) >= max(1, int(limit)):
+                return prioritized
 
     for url, score in sorted(
         candidates,
@@ -3160,9 +3202,24 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     wy_program_hits = len(re.findall(r'class=["\'][^"\']*\bprogram_id\b[^"\']*["\']', body, re.IGNORECASE))
     wy_result_hits = len(re.findall(r"\bresult(?:\(s\)|s)?\b", hay, re.IGNORECASE))
     wy_reference_hits = len(re.findall(r"\breference\s+number\b", hay, re.IGNORECASE))
+    ct_title_hits = len(_CT_EREGS_TITLE_ROW_RE.findall(hay))
+    ct_subtitle_hits = len(_CT_EREGS_SUBTITLE_ROW_RE.findall(hay))
+    ct_section_hits = len(_CT_EREGS_SECTION_ROW_RE.findall(hay))
 
     if host == "rules.mt.gov" and "/policies/" in path:
         return False
+
+    if host == "eregulations.ct.gov" and _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
+        return False
+    if host == "eregulations.ct.gov" and _CT_EREGS_ROOT_PATH_RE.fullmatch(path):
+        if "browse the regulations of connecticut state agencies" in hay.lower() and "select a title to browse its contents" in hay.lower() and ct_title_hits >= 4:
+            return True
+    if host == "eregulations.ct.gov" and _CT_EREGS_TITLE_PATH_RE.fullmatch(path):
+        if "select a subtitle to browse its contents" in hay.lower() and ct_subtitle_hits >= 2:
+            return True
+    if host == "eregulations.ct.gov" and _CT_EREGS_SUBTITLE_PATH_RE.fullmatch(path):
+        if "select a section to browse its contents" in hay.lower() and ct_section_hits >= 4:
+            return True
 
     if host == "rules.sos.ga.gov" and _GA_GAC_RULE_PATH_RE.fullmatch(path):
         return False
@@ -9260,6 +9317,130 @@ def _georgia_bootstrap_priority(url: str) -> int:
     return score
 
 
+def _normalize_connecticut_eregulations_url(url: str) -> str:
+    value = str(url or "").strip()
+    parsed = urlparse(value)
+    if parsed.netloc.lower() != "eregulations.ct.gov":
+        return value
+    return urlunparse(("https", parsed.netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+
+
+def _connecticut_bootstrap_priority(url: str) -> int:
+    value = _normalize_connecticut_eregulations_url(url)
+    parsed = urlparse(value)
+    path = parsed.path or ""
+    score = _score_candidate_url(value)
+    if _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
+        return score + 100
+    if _CT_EREGS_SUBTITLE_PATH_RE.fullmatch(path):
+        return score + 70
+    if _CT_EREGS_TITLE_PATH_RE.fullmatch(path):
+        return score + 50
+    if _CT_EREGS_ROOT_PATH_RE.fullmatch(path):
+        return score + 20
+    return score
+
+
+async def _discover_connecticut_rule_document_urls(
+    *,
+    seed_urls: List[str],
+    live_scraper: Any,
+    allowed_hosts: set[str],
+    limit: int = 8,
+) -> List[str]:
+    discovered_urls: List[str] = []
+    seen_page_keys: set[str] = set()
+    seen_document_keys: set[str] = set()
+
+    def _record(url: str) -> bool:
+        normalized_url = _normalize_connecticut_eregulations_url(url)
+        key = _url_key(normalized_url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(normalized_url)
+        return len(discovered_urls) >= max(1, int(limit))
+
+    def _dedupe(values: List[str]) -> List[str]:
+        deduped: List[str] = []
+        seen_keys: set[str] = set()
+        for value in values:
+            normalized_value = _normalize_connecticut_eregulations_url(value)
+            key = _url_key(normalized_value)
+            if not key or key in seen_keys:
+                continue
+            seen_keys.add(key)
+            deduped.append(normalized_value)
+        return deduped
+
+    async def _fetch_links(page_url: str, *, limit_n: int) -> List[str]:
+        normalized_page_url = _normalize_connecticut_eregulations_url(page_url)
+        page_key = _url_key(normalized_page_url)
+        if not page_key or page_key in seen_page_keys:
+            return []
+        seen_page_keys.add(page_key)
+
+        try:
+            scraped = await asyncio.wait_for(live_scraper.scrape(normalized_page_url), timeout=10.0)
+        except Exception:
+            return []
+
+        candidate_links = _candidate_links_from_scrape(
+            scraped,
+            base_host="eregulations.ct.gov",
+            page_url=normalized_page_url,
+            limit=max(8, int(limit_n) * 3),
+            allowed_hosts=allowed_hosts,
+        )
+        html = str(getattr(scraped, "html", "") or "")
+        if html:
+            candidate_links.extend(
+                _candidate_links_from_html(
+                    html,
+                    base_host="eregulations.ct.gov",
+                    page_url=normalized_page_url,
+                    limit=max(8, int(limit_n) * 3),
+                    allowed_hosts=allowed_hosts,
+                )
+            )
+        candidate_links = _dedupe(candidate_links)
+        candidate_links.sort(key=_connecticut_bootstrap_priority, reverse=True)
+        return candidate_links[: max(1, int(limit_n))]
+
+    root_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA"
+    for seed_url in seed_urls:
+        seed_value = _normalize_connecticut_eregulations_url(seed_url)
+        parsed = urlparse(seed_value)
+        if parsed.netloc.lower() == "eregulations.ct.gov" and _CT_EREGS_ROOT_PATH_RE.fullmatch(parsed.path or ""):
+            root_url = seed_value.rstrip("/")
+            break
+
+    title_urls = [
+        link_url
+        for link_url in await _fetch_links(root_url, limit_n=max(10, min(max(1, int(limit)) * 3, 18)))
+        if _CT_EREGS_TITLE_PATH_RE.fullmatch(urlparse(link_url).path or "")
+    ][:10]
+
+    subtitle_urls: List[str] = []
+    for title_url in title_urls:
+        subtitle_urls.extend(
+            link_url
+            for link_url in await _fetch_links(title_url, limit_n=max(8, min(max(1, int(limit)) * 3, 24)))
+            if _CT_EREGS_SUBTITLE_PATH_RE.fullmatch(urlparse(link_url).path or "")
+        )
+        if len(subtitle_urls) >= max(12, min(max(1, int(limit)) * 4, 24)):
+            break
+    subtitle_urls = _dedupe(subtitle_urls)[: max(12, min(max(1, int(limit)) * 4, 24))]
+
+    for subtitle_url in subtitle_urls:
+        for link_url in await _fetch_links(subtitle_url, limit_n=max(8, min(max(1, int(limit)) * 4, 24))):
+            if _CT_EREGS_SECTION_PATH_RE.fullmatch(urlparse(link_url).path or ""):
+                if _record(link_url):
+                    return discovered_urls
+
+    return discovered_urls
+
+
 async def _discover_georgia_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
     discovered_urls: List[str] = []
     seen_document_keys: set[str] = set()
@@ -10404,6 +10585,51 @@ async def _agentic_discover_admin_state_blocks(
             if montana_bootstrap_document_urls:
                 source_breakdown["montana_public_api_bootstrap"] = len(montana_bootstrap_document_urls)
 
+        if state_code == "CT" and not seeded_direct_detail_urls:
+            connecticut_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
+            try:
+                from ..web_archiving.unified_web_scraper import (
+                    ScraperConfig as _ScraperConfig,
+                    ScraperMethod as _ScraperMethod,
+                    UnifiedWebScraper as _UnifiedWebScraper,
+                )
+            except Exception:
+                try:
+                    from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (  # type: ignore[no-redef]
+                        ScraperConfig as _ScraperConfig,
+                        ScraperMethod as _ScraperMethod,
+                        UnifiedWebScraper as _UnifiedWebScraper,
+                    )
+                except Exception:
+                    _ScraperConfig = None  # type: ignore[assignment]
+                    _ScraperMethod = None  # type: ignore[assignment]
+                    _UnifiedWebScraper = None  # type: ignore[assignment]
+
+            if _UnifiedWebScraper is not None and _ScraperConfig is not None and _ScraperMethod is not None:
+                connecticut_bootstrap_scraper = _UnifiedWebScraper(
+                    _ScraperConfig(
+                        timeout=20,
+                        max_retries=1,
+                        extract_links=True,
+                        extract_text=True,
+                        fallback_enabled=False,
+                        preferred_methods=[_ScraperMethod.REQUESTS_ONLY],
+                    )
+                )
+            else:
+                connecticut_bootstrap_scraper = live_scraper
+
+            connecticut_bootstrap_document_urls = await _discover_connecticut_rule_document_urls(
+                seed_urls=ordered_seed_urls,
+                live_scraper=connecticut_bootstrap_scraper,
+                allowed_hosts=allowed_hosts,
+                limit=connecticut_bootstrap_limit,
+            )
+            for document_url in connecticut_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if connecticut_bootstrap_document_urls:
+                source_breakdown["connecticut_eregulations_bootstrap"] = len(connecticut_bootstrap_document_urls)
+
         if state_code == "CA" and not seeded_direct_detail_urls:
             california_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
             try:
@@ -11443,6 +11669,20 @@ async def _agentic_discover_admin_state_blocks(
                     url
                     for url in prioritized_ranked_document_urls
                     if _url_key(url) not in az_late_retry_url_keys
+                ]
+            az_code_page_url = next(
+                (
+                    url
+                    for url in prioritized_ranked_document_urls
+                    if _url_key(url) == _url_key("https://azsos.gov/rules/arizona-administrative-code")
+                ),
+                None,
+            )
+            if az_code_page_url:
+                prioritized_ranked_document_urls = [az_code_page_url] + [
+                    url
+                    for url in prioritized_ranked_document_urls
+                    if _url_key(url) != _url_key(az_code_page_url)
                 ]
 
         az_prefetched_ranked_url_keys: set[str] = set()
