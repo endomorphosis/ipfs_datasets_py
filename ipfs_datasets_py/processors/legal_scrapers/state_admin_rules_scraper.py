@@ -1859,6 +1859,11 @@ def _score_candidate_url(url: str) -> int:
             score += 10
         elif _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
             score += 14
+    if host in {"www.sos.la.gov", "sos.la.gov"} and "/publisheddocuments/" in path.lower() and path.lower().endswith(".pdf"):
+        score += 8
+        file_name = unquote(path.rsplit("/", 1)[-1]).lower()
+        if any(token in file_name for token in ("title", "chapter", "rule", "administrative", "corporations", "ucc")):
+            score += 4
     if host in {"www.sos.state.co.us", "www.coloradosos.gov"}:
         query_params = parse_qs(parsed.query or "")
         if _CO_CCR_WELCOME_PATH_RE.fullmatch(path):
@@ -6623,6 +6628,136 @@ async def _discover_hawaii_rule_document_urls(*, seed_urls: List[str], limit: in
     return await asyncio.to_thread(_run)
 
 
+def _candidate_louisiana_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
+    body = str(html or "")
+    if not body:
+        return []
+
+    page_url_value = str(page_url or "").strip()
+    page_host = urlparse(page_url_value).netloc.lower()
+    if page_host not in {"www.sos.la.gov", "sos.la.gov"}:
+        return []
+
+    ranked: List[tuple[int, str]] = []
+    seen: set[str] = set()
+
+    def _maybe_add(candidate_url: str, label: str = "") -> None:
+        normalized_url = str(candidate_url or "").strip()
+        if not normalized_url:
+            return
+        if not normalized_url.startswith(("http://", "https://")) and page_url_value:
+            normalized_url = urljoin(page_url_value, normalized_url)
+        if not normalized_url.startswith(("http://", "https://")):
+            return
+
+        parsed = urlparse(normalized_url)
+        host = parsed.netloc.lower()
+        path = parsed.path or ""
+        if host not in {"www.sos.la.gov", "sos.la.gov"}:
+            return
+        if "/publisheddocuments/" not in path.lower() or not path.lower().endswith(".pdf"):
+            return
+
+        file_name = unquote(path.rsplit("/", 1)[-1]).lower()
+        signal = " ".join(part for part in (file_name, str(label or "").lower()) if part)
+        if not any(token in signal for token in ("title", "chapter", "rule", "administrative", "corporations", "ucc", "uniform commercial code")):
+            return
+        if any(
+            token in signal
+            for token in (
+                "notice",
+                "agenda",
+                "hearing",
+                "annualreport",
+                "annual report",
+                "legislative",
+                "oversight",
+                "summaryreport",
+                "summary report",
+                "initialreport",
+                "secondreport",
+                "potpourri",
+                "sexual harassment",
+                "policy",
+                "emergency modification",
+            )
+        ):
+            return
+
+        key = _url_key(normalized_url)
+        if not key or key in seen:
+            return
+        seen.add(key)
+        score = _score_candidate_url(normalized_url)
+        if score <= 0:
+            return
+        ranked.append((score, normalized_url))
+
+    soup = BeautifulSoup(body, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        _maybe_add(str(anchor.get("href") or ""), str(anchor.get_text(" ", strip=True) or ""))
+
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    return [value for _, value in ranked[: max(1, int(limit))]]
+
+
+async def _discover_louisiana_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        str(url or "").strip()
+        for url in list(seed_urls or [])
+        if urlparse(str(url or "").strip()).netloc.lower() in {"www.sos.la.gov", "sos.la.gov"}
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        session = requests.Session()
+        discovered_urls: List[str] = []
+        seen_documents: set[str] = set()
+
+        preferred_seed_urls: List[str] = []
+        for preferred_url in (
+            "https://www.sos.la.gov/BusinessServices/Pages/ReadAdministrativeRules.aspx",
+            "https://www.sos.la.gov/ElectionsAndVoting/ReviewAdministrationAndHistory/ReadAdministrativeRules/Pages/default.aspx",
+            "https://www.sos.la.gov/OurOffice/FindAdministrativeRules/Pages/default.aspx",
+        ):
+            if preferred_url in relevant_seed_urls and preferred_url not in preferred_seed_urls:
+                preferred_seed_urls.append(preferred_url)
+        for seed_url in relevant_seed_urls:
+            if seed_url not in preferred_seed_urls:
+                preferred_seed_urls.append(seed_url)
+
+        for seed_url in preferred_seed_urls[:4]:
+            try:
+                response = session.get(seed_url, timeout=25, headers=headers)
+                response.raise_for_status()
+            except Exception:
+                continue
+
+            for candidate_url in _candidate_louisiana_rule_urls_from_html(
+                html=str(getattr(response, "text", "") or ""),
+                page_url=seed_url,
+                limit=max(limit_n * 4, 24),
+            ):
+                key = _url_key(candidate_url)
+                if not key or key in seen_documents:
+                    continue
+                seen_documents.add(key)
+                discovered_urls.append(candidate_url)
+                if len(discovered_urls) >= limit_n:
+                    return discovered_urls
+
+        return discovered_urls
+
+    return await asyncio.to_thread(_run)
+
+
 async def _discover_tennessee_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
     relevant_seed_urls = [
         str(url or "").strip()
@@ -7863,32 +7998,38 @@ def _document_format_for_url(url: str) -> str:
     return "html"
 
 
-async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, source_url: str) -> str:
+def _extract_text_from_pdf_bytes_natively(pdf_bytes: bytes) -> str:
     if not pdf_bytes:
         return ""
 
     try:
         from pypdf import PdfReader
     except Exception:
-        PdfReader = None  # type: ignore[assignment]
+        return ""
 
-    if PdfReader is not None:
-        try:
-            reader = PdfReader(io.BytesIO(pdf_bytes))
-            text_parts: List[str] = []
-            for page in reader.pages:
-                try:
-                    page_text = str(page.extract_text() or "").strip()
-                except Exception:
-                    page_text = ""
-                if page_text:
-                    text_parts.append(page_text)
+    try:
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        text_parts: List[str] = []
+        for page in reader.pages:
+            try:
+                page_text = str(page.extract_text() or "").strip()
+            except Exception:
+                page_text = ""
+            if page_text:
+                text_parts.append(page_text)
+        extracted_text = "\n\n".join(text_parts).strip()
+        return extracted_text if len(extracted_text) >= 80 else ""
+    except Exception:
+        return ""
 
-            extracted_text = "\n\n".join(text_parts).strip()
-            if len(extracted_text) >= 80:
-                return extracted_text
-        except Exception:
-            pass
+
+async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, source_url: str) -> str:
+    if not pdf_bytes:
+        return ""
+
+    extracted_text = _extract_text_from_pdf_bytes_natively(pdf_bytes)
+    if extracted_text:
+        return extracted_text
 
     try:
         from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
@@ -8315,7 +8456,7 @@ async def _download_text_via_cloudflare_crawl(url: str) -> Optional[Dict[str, An
     }
 
 
-async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
+async def _scrape_pdf_candidate_url(url: str, *, native_text_only: bool = False) -> Optional[Any]:
     if not _is_pdf_candidate_url(url):
         return None
 
@@ -8346,11 +8487,10 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
         else:
             downloaded = await _download_document_bytes_via_playwright(url)
         if downloaded is None:
-            # Final fallback: Cloudflare Browser Rendering renders the page and
-            # returns markdown/HTML text even for challenge-protected PDF URLs.
             cf_text = await _download_text_via_cloudflare_crawl(url)
             if cf_text and len(cf_text.get("text") or "") > 100:
                 extracted = str(cf_text.get("text") or "").strip()
+                method_value = "pdf_native_text_cloudflare_rendering" if native_text_only else "pdf_processor_cloudflare_rendering"
                 return SimpleNamespace(
                     url=url,
                     title=_title_from_extracted_pdf_text(text=extracted, url=url),
@@ -8358,9 +8498,9 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
                     html=cf_text.get("html") or "",
                     links=[],
                     success=True,
-                    method_used="pdf_processor_cloudflare_rendering",
+                    method_used=method_value,
                     extraction_provenance={
-                        "method": "pdf_processor_cloudflare_rendering",
+                        "method": method_value,
                         "cloudflare_record_status": cf_text.get("cloudflare_record_status"),
                         "cloudflare_job_status": cf_text.get("cloudflare_job_status"),
                     },
@@ -8380,11 +8520,21 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
     if "application/pdf" not in content_type and not _PDF_BINARY_HEADER_RE.search(head):
         return None
 
-    extracted_text = await _extract_text_from_pdf_bytes_with_processor(body, source_url=url)
+    extracted_text = (
+        _extract_text_from_pdf_bytes_natively(body)
+        if native_text_only
+        else await _extract_text_from_pdf_bytes_with_processor(body, source_url=url)
+    )
     extracted_text = str(extracted_text or "").strip()
     if not extracted_text:
         return None
 
+    base_method = "pdf_native_text" if native_text_only else "pdf_processor"
+    method_value = (
+        f"{base_method}_cloudscraper"
+        if used_cloudscraper
+        else f"{base_method}_playwright_download" if used_browser_download else base_method
+    )
     return SimpleNamespace(
         url=url,
         title=_title_from_extracted_pdf_text(text=extracted_text, url=url),
@@ -8392,19 +8542,24 @@ async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
         html="",
         links=[],
         success=True,
-        method_used=(
-            "pdf_processor_cloudscraper"
-            if used_cloudscraper
-            else "pdf_processor_playwright_download" if used_browser_download else "pdf_processor"
-        ),
+        method_used=method_value,
         extraction_provenance={
-            "method": (
-                "pdf_processor_cloudscraper"
-                if used_cloudscraper
-                else "pdf_processor_playwright_download" if used_browser_download else "pdf_processor"
-            )
+            "method": method_value,
+            "source_url": url,
+            "content_type": content_type,
+            "used_cloudscraper": used_cloudscraper,
+            "used_browser_download": used_browser_download,
+            "body_bytes": len(body),
         },
     )
+
+
+async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
+    return await _scrape_pdf_candidate_url(url, native_text_only=False)
+
+
+async def _scrape_pdf_candidate_url_with_native_text(url: str) -> Optional[Any]:
+    return await _scrape_pdf_candidate_url(url, native_text_only=True)
 
 
 async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
@@ -8438,8 +8593,6 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
         else:
             downloaded = await _download_document_bytes_via_playwright(url)
         if downloaded is None:
-            # Final fallback: Cloudflare Browser Rendering renders the page and
-            # returns markdown/HTML text even for challenge-protected RTF URLs.
             cf_text = await _download_text_via_cloudflare_crawl(url)
             if cf_text and len(cf_text.get("text") or "") > 100:
                 extracted = str(cf_text.get("text") or "").strip()
@@ -8500,6 +8653,14 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
 def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int) -> bool:
     body = str(text or "").strip()
     title_value = str(title or "").strip()
+
+
+async def _scrape_pdf_candidate_url_with_processor(url: str) -> Optional[Any]:
+    return await _scrape_pdf_candidate_url(url, native_text_only=False)
+
+
+async def _scrape_pdf_candidate_url_with_native_text(url: str) -> Optional[Any]:
+    return await _scrape_pdf_candidate_url(url, native_text_only=True)
     url_value = str(url or "").strip()
     parsed = urlparse(url_value)
     host = parsed.netloc.lower()
@@ -10672,6 +10833,23 @@ async def _agentic_discover_admin_state_blocks(
             if hawaii_bootstrap_document_urls:
                 source_breakdown["hawaii_official_pdf_bootstrap"] = len(hawaii_bootstrap_document_urls)
 
+        louisiana_bootstrap_document_urls: List[str] = []
+        if state_code == "LA" and not seeded_direct_detail_urls:
+            try:
+                louisiana_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_louisiana_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                louisiana_bootstrap_document_urls = []
+            for document_url in louisiana_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if louisiana_bootstrap_document_urls:
+                source_breakdown["louisiana_official_pdf_bootstrap"] = len(louisiana_bootstrap_document_urls)
+
         alabama_bootstrap_document_urls: List[str] = []
         mississippi_bootstrap_document_urls: List[str] = []
         michigan_bootstrap_document_urls: List[str] = []
@@ -11044,6 +11222,7 @@ async def _agentic_discover_admin_state_blocks(
         direct_detail_ready = bool(
             alabama_bootstrap_document_urls
             or hawaii_bootstrap_document_urls
+            or louisiana_bootstrap_document_urls
             or vermont_bootstrap_document_urls
             or michigan_bootstrap_document_urls
             or alaska_bootstrap_document_urls
@@ -11744,6 +11923,21 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_hawaii_seed_rule_urls) >= min(max_fetch * 2, 12):
                     break
 
+        prioritized_louisiana_seed_rule_urls: List[str] = []
+        if state_code == "LA" and louisiana_bootstrap_document_urls:
+            seen_louisiana_rule_keys: set[str] = set()
+            for rule_url in louisiana_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_louisiana_rule_keys:
+                    continue
+                seen_louisiana_rule_keys.add(rule_key)
+                prioritized_louisiana_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_louisiana_seed_rule_urls) >= min(max_fetch, 8):
+                    break
+
         for rule_url in prioritized_california_bootstrap_document_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -11902,6 +12096,55 @@ async def _agentic_discover_admin_state_blocks(
                     if len(statutes) >= max_fetch:
                         break
 
+        if state_code == "LA" and prioritized_louisiana_seed_rule_urls:
+            louisiana_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(prioritized_louisiana_seed_rule_urls), louisiana_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = prioritized_louisiana_seed_rule_urls[
+                    batch_start : batch_start + min(louisiana_batch_size, remaining_slots)
+                ]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                louisiana_timeout_s = max(
+                    1.0,
+                    min(6.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                louisiana_results = await asyncio.gather(
+                    *[
+                        asyncio.wait_for(
+                            _scrape_pdf_candidate_url_with_native_text(rule_url)
+                            if _is_pdf_candidate_url(rule_url)
+                            else live_scraper.scrape(rule_url),
+                            timeout=louisiana_timeout_s,
+                        )
+                        for rule_url in batch_rule_urls
+                    ],
+                    return_exceptions=True,
+                )
+
+                for rule_url, louisiana_scraped in zip(batch_rule_urls, louisiana_results):
+                    if isinstance(louisiana_scraped, Exception) or louisiana_scraped is None:
+                        continue
+
+                    louisiana_text = str(getattr(louisiana_scraped, "text", "") or "").strip()
+                    louisiana_title = str(getattr(louisiana_scraped, "title", "") or "").strip()
+                    louisiana_provenance = getattr(louisiana_scraped, "extraction_provenance", None) or {}
+                    louisiana_method_value = None
+                    if isinstance(louisiana_provenance, dict):
+                        louisiana_method_value = louisiana_provenance.get("method")
+                    if louisiana_method_value is None:
+                        louisiana_method_value = getattr(louisiana_scraped, "method_used", None)
+                    await _append_document_if_rule(rule_url, louisiana_title, louisiana_text, louisiana_method_value)
+                    if len(statutes) >= max_fetch:
+                        break
+
         utah_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
         for batch_start in range(0, len(prioritized_utah_seed_rule_urls), utah_batch_size):
             if len(statutes) >= max_fetch:
@@ -11947,6 +12190,13 @@ async def _agentic_discover_admin_state_blocks(
             state_code == "UT"
             and bool(prioritized_utah_seed_rule_urls)
             and len(statutes) > 0
+        )
+
+        louisiana_official_bootstrap_recovered_rules = (
+            state_code == "LA"
+            and bool(prioritized_louisiana_seed_rule_urls)
+            and len(statutes) >= min(max_fetch, 5)
+            and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_louisiana_seed_rule_urls)
         )
         ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
         if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
@@ -13159,7 +13409,7 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         max_candidates = max(1, int(max_candidates_per_state))
-        pending = [] if utah_official_bootstrap_recovered_rules else _build_initial_pending_candidates(
+        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
             ranked_urls=ranked_urls,
             seed_expansion_candidates=seed_expansion_candidates,
             max_candidates=max_candidates,
@@ -13653,6 +13903,31 @@ async def _agentic_discover_admin_state_blocks(
                         if field_value:
                             emitted_entry[field_name] = field_value
             az_fetch_diagnostics["emitted_documents"] = emitted_documents
+            final_statute_sources: List[Dict[str, Any]] = []
+            for statute in statutes:
+                if not isinstance(statute, dict):
+                    continue
+                source_url = str(statute.get("source_url") or "").strip()
+                if not source_url:
+                    continue
+                final_entry: Dict[str, Any] = {
+                    "source_url": source_url,
+                    "source_domain": urlparse(source_url).netloc,
+                    "source_format": _document_format_for_url(source_url),
+                }
+                section_name = str(statute.get("section_name") or "").strip()
+                if section_name:
+                    final_entry["section_name"] = section_name[:200]
+                section_number = str(statute.get("section_number") or "").strip()
+                if section_number:
+                    final_entry["section_number"] = section_number
+                emitted_entry = emitted_documents.get(source_url)
+                if isinstance(emitted_entry, dict):
+                    accepted_phase = emitted_entry.get("accepted_phase")
+                    if accepted_phase:
+                        final_entry["accepted_phase"] = accepted_phase
+                final_statute_sources.append(final_entry)
+            az_fetch_diagnostics["final_statute_sources"] = final_statute_sources
         report[state_code] = {
             "candidate_urls": len(ranked_urls),
             "inspected_urls": int(inspected_urls),

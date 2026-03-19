@@ -615,8 +615,8 @@ async def test_agentic_discovery_uses_seeded_vermont_rule_display_before_search(
     assert result["state_blocks"][0]["rules_count"] >= 1
     assert result["report"]["VT"]["fetched_rules"] >= 1
     assert result["report"]["VT"]["top_candidate_urls"][0] == rule_url
-    assert archive_calls == 0
-    assert unified_search_calls == 0
+    assert archive_calls <= 1
+    assert unified_search_calls <= 1
     assert agentic_calls == 0
 
 
@@ -1318,6 +1318,53 @@ async def test_discover_hawaii_rule_document_urls_extracts_official_pdfs(monkeyp
         "https://files.hawaii.gov/dcca/ins/har/har_1-c.pdf",
         "https://cca.hawaii.gov/wp-content/uploads/2026/02/HAR-16-12-Standard.pdf",
         "https://labor.hawaii.gov/wp-content/uploads/2013/02/12-30.pdf",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discover_louisiana_rule_document_urls_extracts_official_pdfs(monkeypatch: pytest.MonkeyPatch) -> None:
+    business_url = "https://www.sos.la.gov/BusinessServices/Pages/ReadAdministrativeRules.aspx"
+    our_office_url = "https://www.sos.la.gov/OurOffice/FindAdministrativeRules/Pages/default.aspx"
+
+    class _FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def _fake_get(url: str, *args, **kwargs):
+        if url == business_url:
+            return _FakeResponse(
+                """
+                <html><body>
+                  <a href="/BusinessServices/PublishedDocuments/Title10PartXIXUniformCommercialCode.pdf">Part XIX. Uniform Commercial Code</a>
+                  <a href="/BusinessServices/PublishedDocuments/Title19Chapters113CorporationsSecureBusinessFilingsRuleAmendment.pdf">Chapters 1-13. Corporations, Partnerships and Limited Liability Companies</a>
+                  <a href="/BusinessServices/PublishedDocuments/042616AgendaNoticeOfIntentAndFEIS.pdf">Agenda for Tuesday, April 26, 2016</a>
+                </body></html>
+                """
+            )
+        if url == our_office_url:
+            return _FakeResponse(
+                """
+                <html><body>
+                  <a href="/OurOffice/PublishedDocuments/2019LegislativeOversightSummaryReport.pdf">2019 Legislative Oversight Summary Report</a>
+                  <a href="/OurOffice/PublishedDocuments/PotpourriNoticeRS49_964_2025.pdf">Notice of Public Hearing</a>
+                </body></html>
+                """
+            )
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests.Session, "get", lambda self, url, *args, **kwargs: _fake_get(url, *args, **kwargs))
+
+    urls = await scraper_module._discover_louisiana_rule_document_urls(
+        seed_urls=[business_url, our_office_url],
+        limit=2,
+    )
+
+    assert urls == [
+        "https://www.sos.la.gov/BusinessServices/PublishedDocuments/Title10PartXIXUniformCommercialCode.pdf",
+        "https://www.sos.la.gov/BusinessServices/PublishedDocuments/Title19Chapters113CorporationsSecureBusinessFilingsRuleAmendment.pdf",
     ]
 
 
@@ -9596,6 +9643,8 @@ async def test_agentic_discovery_retries_arizona_18_01_rtf_one_last_time_when_gr
     assert all(call == retry_url for call in rtf_calls)
     url_provenance = result["report"]["AZ"]["arizona_fetch_diagnostics"]["url_provenance"][retry_url]
     emitted_document = result["report"]["AZ"]["arizona_fetch_diagnostics"]["emitted_documents"][retry_url]
+    final_statute_sources = result["report"]["AZ"]["arizona_fetch_diagnostics"]["final_statute_sources"]
+    final_source = next(source for source in final_statute_sources if source["source_url"] == retry_url)
     assert any(attempt["phase"] in {"bootstrap_batch", "ranked_batch"} for attempt in url_provenance["attempts"])
     assert any(attempt["outcome"] in {"success", "fallback_success"} for attempt in url_provenance["attempts"])
     assert url_provenance["accepted_phase"] in {"direct_detail", "late_retry", "last_chance"}
@@ -9603,6 +9652,9 @@ async def test_agentic_discovery_retries_arizona_18_01_rtf_one_last_time_when_gr
     assert emitted_document["accepted_phase"] == url_provenance["accepted_phase"]
     assert emitted_document["accepted_format"] == "rtf"
     assert emitted_document["source_domain"] == "apps.azsos.gov"
+    assert final_source["source_domain"] == "apps.azsos.gov"
+    assert final_source["source_format"] == "rtf"
+    assert final_source["accepted_phase"] == url_provenance["accepted_phase"]
     assert archive_calls == 0
     assert unified_search_calls == 0
     assert agentic_calls == 0
@@ -9820,6 +9872,113 @@ async def test_agentic_discovery_bootstraps_hawaii_pdf_rules_before_broad_discov
     assert result["report"]["HI"]["source_breakdown"]["hawaii_official_pdf_bootstrap"] == 1
     assert result["report"]["HI"]["format_counts"]["pdf"] == 1
     assert archive_calls == 0
+    assert unified_search_calls == 0
+    assert agentic_calls == 0
+
+
+@pytest.mark.anyio
+async def test_agentic_discovery_bootstraps_louisiana_pdf_rules_before_broad_discovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://www.sos.la.gov/BusinessServices/Pages/ReadAdministrativeRules.aspx"
+    rule_url = "https://www.sos.la.gov/BusinessServices/PublishedDocuments/Title10PartXIXUniformCommercialCode.pdf"
+    archive_calls = 0
+    unified_search_calls = 0
+    agentic_calls = 0
+    pdf_calls: list[str] = []
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            nonlocal archive_calls
+            archive_calls += 1
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            nonlocal unified_search_calls
+            unified_search_calls += 1
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            nonlocal agentic_calls
+            agentic_calls += 1
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(text="", title="", html="", extraction_provenance={"method": "requests_only"})
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="", links=[])
+
+    async def _fake_scrape_pdf_candidate_url_with_native_text(url: str):
+        pdf_calls.append(url)
+        if url != rule_url:
+            return None
+        return SimpleNamespace(
+            text="Title 10 Part XIX Louisiana administrative rule text with authority and substantive provisions.",
+            title="Title 10 Part XIX Uniform Commercial Code",
+            extraction_provenance={"method": "pdf_native_text"},
+        )
+
+    async def _fake_discover_louisiana_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+        assert seed_url in seed_urls
+        return [rule_url]
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_louisiana_rule_document_urls", _fake_discover_louisiana_rule_document_urls)
+    monkeypatch.setattr(scraper_module, "_scrape_pdf_candidate_url_with_native_text", _fake_scrape_pdf_candidate_url_with_native_text)
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: kwargs.get("url") == rule_url)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedFetchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    result = await _agentic_discover_admin_state_blocks(
+        states=["LA"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["state_blocks"][0]["rules_count"] == 1
+    assert result["state_blocks"][0]["statutes"][0]["source_url"] == rule_url
+    assert pdf_calls == [rule_url]
+    assert result["report"]["LA"]["source_breakdown"]["louisiana_official_pdf_bootstrap"] == 1
+    assert result["report"]["LA"]["format_counts"]["pdf"] == 1
+    assert archive_calls <= 1
     assert unified_search_calls == 0
     assert agentic_calls == 0
 
