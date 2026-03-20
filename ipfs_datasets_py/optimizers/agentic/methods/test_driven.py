@@ -356,6 +356,13 @@ class TestDrivenOptimizer(AgenticOptimizer):
         analysis: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate or enhance test suites."""
+        if self._should_skip_llm_test_generation(task):
+            return {
+                'success': False,
+                'skipped': True,
+                'error': 'Skipped LLM test generation for symbol-scoped optimization; relying on targeted validation tests.',
+            }
+
         # Use LLM to generate tests
         prompt = self._build_test_generation_prompt(task, analysis)
         
@@ -363,6 +370,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
             response = self.llm_router.generate(
                 prompt=prompt,
                 method=self.method,
+                timeout=45,
                 max_tokens=2000,
                 temperature=0.3,
             )
@@ -371,11 +379,16 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 'success': True,
                 'tests_generated': response,
             }
-        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as e:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError, subprocess.SubprocessError) as e:
             return {
                 'success': False,
                 'error': str(e),
             }
+
+    def _should_skip_llm_test_generation(self, task: OptimizationTask) -> bool:
+        constraints = task.constraints or {}
+        target_map = constraints.get("target_symbols")
+        return isinstance(target_map, dict) and bool(target_map)
     
     def _run_baseline_tests(self, target_files: List[Path]) -> Dict[str, float]:
         """Run tests to establish baseline performance."""
@@ -1121,6 +1134,8 @@ Behavioral guardrails:
 - Do not replace `"dependency_graph" in data` / `'dependency_graph' not in data` style presence checks with truthiness checks like `not data.get('dependency_graph')`.
 - Preserve the build_knowledge_graph and build_dependency_graph preconditions based on key presence, not container truthiness.
 - Do not tighten the default `_INTAKE_GAPS_THRESHOLD` below its current value.
+- If the denoising iteration cap is hit, do not keep returning `address_gaps` solely because `remaining_gaps` is still above threshold.
+- Preserve the iteration-cap escape hatch so intake can complete when repeated denoising/gap passes stop converging.
 - Preserve the final fallback action as `complete_intake` unless an earlier explicit branch already chose `continue_denoising`.
 
 Do not include explanations, markdown, comments, or extra keys.
@@ -1201,6 +1216,8 @@ Return JSON only with these keys:
 Behavioral guardrails:
 - Preserve the method signatures and return types
 - Keep unanswered inquiries ahead of answered ones
+- Ensure the unanswered list is sorted before returning the selected inquiry.
+- When prioritizing, keep dependency-gap-targeted inquiries ahead of support-gap-targeted inquiries.
 - Preserve support_gap_targeted and dependency_gap_targeted handling
 - Preserve merging of claim_type, element, provenance, and alternative_questions
 - Do not add imports or rely on helpers not already used in inquiries.py

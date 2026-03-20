@@ -97,6 +97,24 @@ def test_generate_tests_passes_optimization_method(optimizer, task):
     assert optimizer.llm_router.generate.call_args.kwargs["method"] == OptimizationMethod.TEST_DRIVEN
 
 
+def test_generate_tests_skips_llm_for_symbol_scoped_task(optimizer, tmp_path):
+    target = tmp_path / "target.py"
+    target.write_text("def f():\n    return 1\n")
+    scoped_task = OptimizationTask(
+        task_id="task-td-skip-tests",
+        target_files=[target],
+        description="Optimize target",
+        priority=50,
+        constraints={"target_symbols": {str(target): ["f"]}},
+    )
+
+    result = optimizer._generate_tests(scoped_task, analysis={})
+
+    assert result["success"] is False
+    assert result["skipped"] is True
+    optimizer.llm_router.generate.assert_not_called()
+
+
 def test_build_test_generation_prompt_prefers_target_symbols(optimizer, tmp_path):
     phase_manager = tmp_path / "phase_manager.py"
     inquiries = tmp_path / "inquiries.py"
