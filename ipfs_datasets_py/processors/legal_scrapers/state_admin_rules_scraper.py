@@ -2573,6 +2573,15 @@ def _is_immediate_direct_detail_candidate_url(url: str) -> bool:
     return True
 
 
+def _is_arizona_official_pdf_url(url: str) -> bool:
+    parsed = urlparse(str(url or "").strip())
+    return (
+        parsed.netloc.lower() == "apps.azsos.gov"
+        and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or "") is not None
+        and _is_pdf_candidate_url(url)
+    )
+
+
 def _direct_detail_candidate_backlog_is_ready(candidate_urls: List[str], max_fetch: int) -> bool:
     detail_candidates = [
         (url, _score_candidate_url(url))
@@ -2592,6 +2601,11 @@ def _seed_prefetch_priority(url: str) -> int:
         score += 12
         if _is_rtf_candidate_url(url):
             score += 4
+        if host == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or ""):
+            if _is_pdf_candidate_url(url):
+                score += 8
+            elif _is_rtf_candidate_url(url):
+                score -= 2
 
     if host == "apps.azsos.gov" and path in {"/public_services/codetoc.htm", "/public_services/index/"}:
         score += 10
@@ -2633,7 +2647,7 @@ def _prioritized_direct_detail_urls_from_candidates(
     for url, score in sorted(
         candidates,
         key=lambda item: (
-            1 if _is_rtf_candidate_url(item[0]) else 0,
+            2 if _is_arizona_official_pdf_url(item[0]) else 1 if _is_rtf_candidate_url(item[0]) else 0,
             int(item[1]),
         ),
         reverse=True,
@@ -2646,10 +2660,14 @@ def _prioritized_direct_detail_urls_from_candidates(
             parsed = urlparse(url)
             if parsed.netloc.lower() == "apps.azsos.gov" and _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(parsed.path or ""):
                 rtf_sibling_url = re.sub(r"(?i)\.pdf(?=$|\?)", ".rtf", url)
+                _append_prioritized_url(url)
+                if len(prioritized) >= max(1, int(limit)):
+                    break
                 if rtf_sibling_url != url:
                     _append_prioritized_url(rtf_sibling_url)
                     if len(prioritized) >= max(1, int(limit)):
                         break
+                continue
         _append_prioritized_url(url)
         if len(prioritized) >= max(1, int(limit)):
             break
@@ -2891,7 +2909,10 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     normalized_path_lower = normalized_path.lower()
     query = parsed.query or ""
     arizona_official_rule_document = _looks_like_arizona_official_rule_document(text=text, title=title, url=url)
+    iowa_official_rule_document = _looks_like_iowa_official_rule_document(text=text, title=title, url=url)
     if _is_vermont_rule_detail_page(text=text, title=title, url=url):
+        return False
+    if iowa_official_rule_document:
         return False
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay) and not arizona_official_rule_document:
         return True
@@ -3122,6 +3143,23 @@ def _looks_like_arizona_official_rule_document(*, text: str, title: str, url: st
     article_hits = len(re.findall(r"\barticle\s+(?:\d+|[ivxlcdm]+)\b", hay, re.IGNORECASE))
     aac_hits = len(re.findall(r"\b\d+\s+a\.a\.c\.\s+\d+\b", hay, re.IGNORECASE))
     return title_hits >= 1 and (chapter_hits >= 1 or article_hits >= 1 or aac_hits >= 1)
+
+
+def _looks_like_iowa_official_rule_document(*, text: str, title: str, url: str) -> bool:
+    body = str(text or "").strip()
+    title_value = str(title or "").strip()
+    url_value = str(url or "").strip()
+    parsed = urlparse(url_value)
+    if parsed.netloc.lower() not in {"www.legis.iowa.gov", "legis.iowa.gov"}:
+        return False
+    if re.fullmatch(r"/docs/iac/agency/\d{2}-\d{2}-\d{4}\.\d+\.pdf", (parsed.path or "").lower()) is None:
+        return False
+
+    hay = " ".join([title_value, body])
+    chapter_hits = len(re.findall(r"\bchapter\s+\d+[A-Za-z0-9.-]*\b", hay, re.IGNORECASE))
+    rule_cite_hits = len(re.findall(r"\b\d+(?:\.\d+)?\(\d+[A-Za-z]?\)", hay))
+    authority_hits = len(re.findall(r"\b(?:authority|definitions|rulemaking|department|division|administrative)\b", hay, re.IGNORECASE))
+    return len(body) >= 4000 and chapter_hits >= 2 and rule_cite_hits >= 3 and authority_hits >= 4
 
 
 def _looks_like_arizona_repealed_or_expired_chapter(*, text: str, title: str, url: str) -> bool:
@@ -6463,8 +6501,17 @@ def _candidate_tennessee_rule_urls_from_html(*, html: str, page_url: str = "", l
         if "sharetngov.tnsosfiles.com/sos/rules" not in body.lower():
             return []
 
-    ranked: List[tuple[int, str]] = []
+    ranked: List[tuple[int, str, str]] = []
     seen: set[str] = set()
+
+    def _family_key(candidate_url: str) -> str:
+        parsed = urlparse(candidate_url)
+        path_parts = [part for part in (parsed.path or "").split("/") if part]
+        if len(path_parts) >= 5 and path_parts[:2] == ["sos", "rules"]:
+            return "/".join(path_parts[:4])
+        if len(path_parts) >= 3 and path_parts[:2] == ["sos", "rules"]:
+            return "/".join(path_parts[:3])
+        return parsed.path or candidate_url
 
     def _maybe_add(candidate_url: str) -> None:
         normalized_url = str(candidate_url or "").strip()
@@ -6500,13 +6547,42 @@ def _candidate_tennessee_rule_urls_from_html(*, html: str, page_url: str = "", l
             score += 1
         if score <= 0:
             return
-        ranked.append((score, normalized_url))
+        ranked.append((score, _family_key(normalized_url), normalized_url))
 
     for href in re.findall(r'<a\b[^>]*href=["\']([^"\']+)["\']', body, re.IGNORECASE):
         _maybe_add(unescape(str(href or "").strip()))
 
     ranked.sort(key=lambda item: item[0], reverse=True)
-    return [value for _, value in ranked[: max(1, int(limit))]]
+
+    per_family_ranked: Dict[str, List[tuple[int, str]]] = {}
+    for score, family_key, candidate_url in ranked:
+        per_family_ranked.setdefault(family_key, []).append((score, candidate_url))
+
+    ordered_family_keys = sorted(
+        per_family_ranked,
+        key=lambda family_key: per_family_ranked[family_key][0][0],
+        reverse=True,
+    )
+
+    limit_n = max(1, int(limit))
+    discovered_urls: List[str] = []
+    family_positions = {family_key: 0 for family_key in ordered_family_keys}
+    while len(discovered_urls) < limit_n:
+        made_progress = False
+        for family_key in ordered_family_keys:
+            family_candidates = per_family_ranked[family_key]
+            position = family_positions[family_key]
+            if position >= len(family_candidates):
+                continue
+            discovered_urls.append(family_candidates[position][1])
+            family_positions[family_key] = position + 1
+            made_progress = True
+            if len(discovered_urls) >= limit_n:
+                return discovered_urls
+        if not made_progress:
+            break
+
+    return discovered_urls
 
 
 def _candidate_hawaii_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
@@ -6718,8 +6794,8 @@ async def _discover_louisiana_rule_document_urls(*, seed_urls: List[str], limit:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         }
         session = requests.Session()
-        discovered_urls: List[str] = []
         seen_documents: set[str] = set()
+        per_seed_candidate_urls: List[List[str]] = []
 
         preferred_seed_urls: List[str] = []
         for preferred_url in (
@@ -6740,11 +6816,162 @@ async def _discover_louisiana_rule_document_urls(*, seed_urls: List[str], limit:
             except Exception:
                 continue
 
-            for candidate_url in _candidate_louisiana_rule_urls_from_html(
+            candidate_urls = _candidate_louisiana_rule_urls_from_html(
                 html=str(getattr(response, "text", "") or ""),
                 page_url=seed_url,
                 limit=max(limit_n * 4, 24),
-            ):
+            )
+            if candidate_urls:
+                per_seed_candidate_urls.append(candidate_urls)
+
+        if not per_seed_candidate_urls:
+            return []
+
+        discovered_urls: List[str] = []
+        seed_positions = [0 for _ in per_seed_candidate_urls]
+        while len(discovered_urls) < limit_n:
+            made_progress = False
+            for seed_index, candidate_urls in enumerate(per_seed_candidate_urls):
+                while seed_positions[seed_index] < len(candidate_urls):
+                    candidate_url = candidate_urls[seed_positions[seed_index]]
+                    seed_positions[seed_index] += 1
+                    key = _url_key(candidate_url)
+                    if not key or key in seen_documents:
+                        continue
+                    seen_documents.add(key)
+                    discovered_urls.append(candidate_url)
+                    made_progress = True
+                    break
+                if len(discovered_urls) >= limit_n:
+                    return discovered_urls
+            if not made_progress:
+                break
+
+        return discovered_urls
+
+    return await asyncio.to_thread(_run)
+
+
+async def _discover_rhode_island_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        str(url or "").strip()
+        for url in list(seed_urls or [])
+        if urlparse(str(url or "").strip()).netloc.lower() in {"www.sos.ri.gov", "sos.ri.gov"}
+        and "/rules-and-regulations" in (urlparse(str(url or "").strip()).path or "").lower()
+    ]
+
+    preferred_seed_urls: List[str] = []
+    for preferred_url in (
+        "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations/building-and-fire-codes",
+        "https://www.sos.ri.gov/divisions/open-government-center/rules-and-regulations",
+    ):
+        if preferred_url not in preferred_seed_urls:
+            preferred_seed_urls.append(preferred_url)
+    for seed_url in relevant_seed_urls:
+        if seed_url not in preferred_seed_urls:
+            preferred_seed_urls.append(seed_url)
+
+    if not preferred_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        discovered_urls: List[str] = []
+        seen: set[str] = set()
+
+        for seed_url in preferred_seed_urls[:4]:
+            try:
+                response = requests.get(seed_url, timeout=25, headers=headers)
+                response.raise_for_status()
+            except Exception:
+                continue
+
+            soup = BeautifulSoup(str(getattr(response, "text", "") or ""), "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                candidate_url = urldefrag(urljoin(seed_url, str(anchor.get("href") or "").strip())).url
+                if not _is_direct_detail_candidate_url(candidate_url):
+                    continue
+                key = _url_key(candidate_url)
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                discovered_urls.append(candidate_url)
+                if len(discovered_urls) >= limit_n:
+                    return discovered_urls
+
+        return discovered_urls
+
+    return await asyncio.to_thread(_run)
+
+
+async def _discover_iowa_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    relevant_seed_urls = [
+        str(url or "").strip()
+        for url in list(seed_urls or [])
+        if urlparse(str(url or "").strip()).netloc.lower() in {"www.legis.iowa.gov", "legis.iowa.gov"}
+    ]
+    if not relevant_seed_urls:
+        return []
+
+    limit_n = max(1, int(limit))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        }
+        session = requests.Session()
+        discovered_urls: List[str] = []
+        seen_documents: set[str] = set()
+
+        preferred_seed_urls: List[str] = []
+        for preferred_url in (
+            "https://www.legis.iowa.gov/law/administrativeRules/agencies",
+            "https://www.legis.iowa.gov/law/administrativeRules",
+        ):
+            if preferred_url in relevant_seed_urls and preferred_url not in preferred_seed_urls:
+                preferred_seed_urls.append(preferred_url)
+        for seed_url in relevant_seed_urls:
+            if seed_url not in preferred_seed_urls:
+                preferred_seed_urls.append(seed_url)
+
+        for seed_url in preferred_seed_urls[:3]:
+            try:
+                response = session.get(seed_url, timeout=25, headers=headers)
+                response.raise_for_status()
+            except Exception:
+                continue
+
+            soup = BeautifulSoup(str(getattr(response, "text", "") or ""), "html.parser")
+            ranked: List[tuple[int, str]] = []
+
+            for anchor in soup.find_all("a", href=True):
+                href = str(anchor.get("href") or "").strip()
+                if not href:
+                    continue
+                candidate_url = urljoin(seed_url, href)
+                parsed = urlparse(candidate_url)
+                if parsed.netloc.lower() not in {"www.legis.iowa.gov", "legis.iowa.gov"}:
+                    continue
+
+                path_lower = (parsed.path or "").lower()
+                if not re.fullmatch(r"/docs/iac/agency/[0-9]{2}-[0-9]{2}-[0-9]{4}\.[0-9]+\.pdf", path_lower):
+                    continue
+
+                key = _url_key(candidate_url)
+                if not key or key in seen_documents:
+                    continue
+
+                score = _score_candidate_url(candidate_url)
+                ranked.append((score if score > 0 else 1, candidate_url))
+
+            ranked.sort(key=lambda item: item[0], reverse=True)
+            for _, candidate_url in ranked:
                 key = _url_key(candidate_url)
                 if not key or key in seen_documents:
                     continue
@@ -6783,10 +7010,12 @@ async def _discover_tennessee_rule_document_urls(*, seed_urls: List[str], limit:
         frontier: List[str] = [
             "https://sharetngov.tnsosfiles.com/sos/rules/index.htm",
             "https://sharetngov.tnsosfiles.com/sos/rules/rules2.htm",
+        ]
+        deferred_frontier: List[str] = [
             "https://sharetngov.tnsosfiles.com/sos/rules/tenncare.htm",
         ]
         for seed_url in relevant_seed_urls:
-            if seed_url not in frontier:
+            if seed_url not in frontier and seed_url not in deferred_frontier:
                 frontier.append(seed_url)
 
         def _record(candidate_url: str) -> bool:
@@ -6829,6 +7058,9 @@ async def _discover_tennessee_rule_document_urls(*, seed_urls: List[str], limit:
                         next_frontier.append(candidate_url)
 
             frontier = next_frontier
+            if not frontier and deferred_frontier:
+                frontier = deferred_frontier
+                deferred_frontier = []
             if not frontier:
                 break
 
@@ -8701,6 +8933,11 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         title=title_value,
         url=url_value,
     )
+    iowa_official_rule_document = _looks_like_iowa_official_rule_document(
+        text=body,
+        title=title_value,
+        url=url_value,
+    )
     if _looks_like_arizona_repealed_or_expired_chapter(text=body, title=title_value, url=url_value):
         return False
     if _has_disallowed_discovery_domain(url_value):
@@ -8715,7 +8952,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         return False
     if _looks_like_forum_page(text=body, title=title_value, url=url_value):
         return False
-    if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value) and not tennessee_official_rule_pdf:
+    if _looks_like_non_rule_admin_page(text=body, title=title_value, url=url_value) and not tennessee_official_rule_pdf and not iowa_official_rule_document:
         return False
     if _looks_like_rule_inventory_page(text=body, title=title_value, url=url_value) and not official_index_can_be_substantive and not tennessee_official_rule_pdf:
         return False
@@ -8775,9 +9012,9 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
             and _LEGAL_CONTENT_SIGNAL_RE.search(" ".join([title_value, body]))
         ) and not short_alaska_official_section:
             return False
-    if title_value and _looks_like_placeholder_text(title_value) and not official_index_can_be_substantive and not arizona_official_rule_document:
+    if title_value and _looks_like_placeholder_text(title_value) and not official_index_can_be_substantive and not arizona_official_rule_document and not iowa_official_rule_document:
         return False
-    if _looks_like_placeholder_text(body) and not official_index_can_be_substantive and not arizona_official_rule_document and not tennessee_official_rule_pdf:
+    if _looks_like_placeholder_text(body) and not official_index_can_be_substantive and not arizona_official_rule_document and not iowa_official_rule_document and not tennessee_official_rule_pdf:
         return False
     if not _has_admin_signal(text=body, title=title_value, url=url_value) and not tennessee_official_rule_pdf:
         if not (
@@ -10842,6 +11079,40 @@ async def _agentic_discover_admin_state_blocks(
             if louisiana_bootstrap_document_urls:
                 source_breakdown["louisiana_official_pdf_bootstrap"] = len(louisiana_bootstrap_document_urls)
 
+        rhode_island_bootstrap_document_urls: List[str] = []
+        if state_code == "RI" and len(seeded_direct_detail_urls) < max(max(1, int(max_fetch_per_state)) * 2, 12):
+            try:
+                rhode_island_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_rhode_island_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max(max_fetch_per_state * 4, 12), 24),
+                    ),
+                    timeout=20.0,
+                )
+            except Exception:
+                rhode_island_bootstrap_document_urls = []
+            for document_url in rhode_island_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if rhode_island_bootstrap_document_urls:
+                source_breakdown["rhode_island_official_html_bootstrap"] = len(rhode_island_bootstrap_document_urls)
+
+        iowa_bootstrap_document_urls: List[str] = []
+        if state_code == "IA" and not seeded_direct_detail_urls:
+            try:
+                iowa_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_iowa_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:6],
+                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                iowa_bootstrap_document_urls = []
+            for document_url in iowa_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if iowa_bootstrap_document_urls:
+                source_breakdown["iowa_legislature_pdf_bootstrap"] = len(iowa_bootstrap_document_urls)
+
         alabama_bootstrap_document_urls: List[str] = []
         mississippi_bootstrap_document_urls: List[str] = []
         michigan_bootstrap_document_urls: List[str] = []
@@ -11214,6 +11485,7 @@ async def _agentic_discover_admin_state_blocks(
         direct_detail_ready = bool(
             alabama_bootstrap_document_urls
             or hawaii_bootstrap_document_urls
+            or iowa_bootstrap_document_urls
             or louisiana_bootstrap_document_urls
             or vermont_bootstrap_document_urls
             or michigan_bootstrap_document_urls
@@ -11539,7 +11811,14 @@ async def _agentic_discover_admin_state_blocks(
                 state_start + max(45.0, min(70.0, per_state_budget_s - 0.5)),
             )
 
-        async def _append_document_if_rule(doc_url: str, doc_title: str, doc_text: str, method_value: Any = None) -> bool:
+        async def _append_document_if_rule(
+            doc_url: str,
+            doc_title: str,
+            doc_text: str,
+            method_value: Any = None,
+            *,
+            source_phase: str = "",
+        ) -> bool:
             doc_title, doc_text = await _normalize_candidate_document_content(
                 url=doc_url,
                 title=doc_title,
@@ -11676,6 +11955,13 @@ async def _agentic_discover_admin_state_blocks(
                 }
             )
             kg_row_index_by_doc_key[doc_key] = len(kg_rows) - 1
+            if state_code == "AZ":
+                _mark_az_emitted_document(
+                    doc_url,
+                    source_phase=source_phase or "append_document",
+                    title=section_name,
+                    method_value=method_value,
+                )
             return True
 
         prefetch_candidates: List[str] = []
@@ -11714,6 +12000,7 @@ async def _agentic_discover_admin_state_blocks(
                     archived_title,
                     archived_content,
                     archived_source,
+                    source_phase="parallel_prefetch",
                 )
                 if accepted_prefetch:
                     parallel_prefetch_rule_hits += 1
@@ -11753,7 +12040,14 @@ async def _agentic_discover_admin_state_blocks(
                 break
 
         if state_code == "AZ":
-            prioritized_seed_document_urls = prioritized_seed_document_urls[:6]
+            prioritized_seed_document_urls = sorted(
+                prioritized_seed_document_urls,
+                key=lambda value: (
+                    2 if _is_arizona_official_pdf_url(value) else 1 if _is_rtf_candidate_url(value) else 0,
+                    _seed_prefetch_priority(value),
+                ),
+                reverse=True,
+            )[:6]
         else:
             prioritized_seed_document_urls = [
                 *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
@@ -11778,7 +12072,9 @@ async def _agentic_discover_admin_state_blocks(
                 if lower_rule_url.endswith(".pdf") or ".pdf?" in lower_rule_url:
                     az_batch_tasks.append(
                         asyncio.wait_for(
-                            _scrape_pdf_candidate_url_with_processor(rule_url),
+                            _scrape_pdf_candidate_url_with_native_text(rule_url)
+                            if _is_arizona_official_pdf_url(rule_url)
+                            else _scrape_pdf_candidate_url_with_processor(rule_url),
                             timeout=az_batch_timeout_s,
                         )
                     )
@@ -11844,7 +12140,13 @@ async def _agentic_discover_admin_state_blocks(
                         az_method_value = az_provenance.get("method")
                     if az_method_value is None:
                         az_method_value = getattr(az_scraped, "method_used", None)
-                    accepted_seed = await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    accepted_seed = await _append_document_if_rule(
+                        rule_url,
+                        az_title,
+                        az_text,
+                        az_method_value,
+                        source_phase="seed_batch",
+                    )
                     _record_az_phase(
                         "seed_batch",
                         url=rule_url,
@@ -11927,7 +12229,22 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_louisiana_seed_rule_urls) >= min(max_fetch, 8):
+                if len(prioritized_louisiana_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                    break
+
+        prioritized_iowa_seed_rule_urls: List[str] = []
+        if state_code == "IA" and iowa_bootstrap_document_urls:
+            seen_iowa_rule_keys: set[str] = set()
+            for rule_url in iowa_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_iowa_rule_keys:
+                    continue
+                seen_iowa_rule_keys.add(rule_key)
+                prioritized_iowa_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_iowa_seed_rule_urls) >= min(max_fetch, 8):
                     break
 
         for rule_url in prioritized_california_bootstrap_document_urls:
@@ -12024,7 +12341,13 @@ async def _agentic_discover_admin_state_blocks(
                         arizona_method_value = arizona_provenance.get("method")
                     if arizona_method_value is None:
                         arizona_method_value = getattr(arizona_scraped, "method_used", None)
-                    accepted_bootstrap = await _append_document_if_rule(rule_url, arizona_title, arizona_text, arizona_method_value)
+                    accepted_bootstrap = await _append_document_if_rule(
+                        rule_url,
+                        arizona_title,
+                        arizona_text,
+                        arizona_method_value,
+                        source_phase="bootstrap_batch",
+                    )
                     _record_az_phase(
                         "bootstrap_batch",
                         url=rule_url,
@@ -12137,6 +12460,55 @@ async def _agentic_discover_admin_state_blocks(
                     if len(statutes) >= max_fetch:
                         break
 
+        if state_code == "IA" and prioritized_iowa_seed_rule_urls:
+            iowa_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(prioritized_iowa_seed_rule_urls), iowa_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = prioritized_iowa_seed_rule_urls[
+                    batch_start : batch_start + min(iowa_batch_size, remaining_slots)
+                ]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                iowa_timeout_s = max(
+                    1.0,
+                    min(6.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                iowa_results = await asyncio.gather(
+                    *[
+                        asyncio.wait_for(
+                            _scrape_pdf_candidate_url_with_native_text(rule_url)
+                            if _is_pdf_candidate_url(rule_url)
+                            else live_scraper.scrape(rule_url),
+                            timeout=iowa_timeout_s,
+                        )
+                        for rule_url in batch_rule_urls
+                    ],
+                    return_exceptions=True,
+                )
+
+                for rule_url, iowa_scraped in zip(batch_rule_urls, iowa_results):
+                    if isinstance(iowa_scraped, Exception) or iowa_scraped is None:
+                        continue
+
+                    iowa_text = str(getattr(iowa_scraped, "text", "") or "").strip()
+                    iowa_title = str(getattr(iowa_scraped, "title", "") or "").strip()
+                    iowa_provenance = getattr(iowa_scraped, "extraction_provenance", None) or {}
+                    iowa_method_value = None
+                    if isinstance(iowa_provenance, dict):
+                        iowa_method_value = iowa_provenance.get("method")
+                    if iowa_method_value is None:
+                        iowa_method_value = getattr(iowa_scraped, "method_used", None)
+                    await _append_document_if_rule(rule_url, iowa_title, iowa_text, iowa_method_value)
+                    if len(statutes) >= max_fetch:
+                        break
+
         utah_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
         for batch_start in range(0, len(prioritized_utah_seed_rule_urls), utah_batch_size):
             if len(statutes) >= max_fetch:
@@ -12187,8 +12559,15 @@ async def _agentic_discover_admin_state_blocks(
         louisiana_official_bootstrap_recovered_rules = (
             state_code == "LA"
             and bool(prioritized_louisiana_seed_rule_urls)
-            and len(statutes) >= min(max_fetch, 5)
+            and len(statutes) >= min(max_fetch, max(1, len(prioritized_louisiana_seed_rule_urls)))
             and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_louisiana_seed_rule_urls)
+        )
+
+        iowa_official_bootstrap_recovered_rules = (
+            state_code == "IA"
+            and bool(prioritized_iowa_seed_rule_urls)
+            and len(statutes) > 0
+            and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_iowa_seed_rule_urls)
         )
         ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
         if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
@@ -12202,6 +12581,10 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "TN" and tennessee_bootstrap_document_urls:
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
                 url for url in prioritized_seed_document_urls if _url_key(url)
+            }
+        if state_code == "IA" and prioritized_iowa_seed_rule_urls:
+            ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
+                url for url in prioritized_iowa_seed_rule_urls if _url_key(url)
             }
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
@@ -12271,7 +12654,9 @@ async def _agentic_discover_admin_state_blocks(
                     if lower_rule_url.endswith(".pdf") or ".pdf?" in lower_rule_url:
                         az_ranked_tasks.append(
                             asyncio.wait_for(
-                                _scrape_pdf_candidate_url_with_processor(rule_url),
+                                _scrape_pdf_candidate_url_with_native_text(rule_url)
+                                if _is_arizona_official_pdf_url(rule_url)
+                                else _scrape_pdf_candidate_url_with_processor(rule_url),
                                 timeout=az_ranked_timeout_s,
                             )
                         )
@@ -12326,7 +12711,13 @@ async def _agentic_discover_admin_state_blocks(
                         az_method_value = az_provenance.get("method")
                     if az_method_value is None:
                         az_method_value = getattr(az_scraped, "method_used", None)
-                    accepted_ranked = await _append_document_if_rule(rule_url, az_title, az_text, az_method_value)
+                    accepted_ranked = await _append_document_if_rule(
+                        rule_url,
+                        az_title,
+                        az_text,
+                        az_method_value,
+                        source_phase="ranked_batch",
+                    )
                     _record_az_phase(
                         "ranked_batch",
                         url=rule_url,
@@ -12477,7 +12868,13 @@ async def _agentic_discover_admin_state_blocks(
             if direct_method_value is None:
                 direct_method_value = getattr(direct_scraped, "method_used", None)
             direct_method_value = getattr(direct_method_value, "value", direct_method_value)
-            accepted_direct = await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value)
+            accepted_direct = await _append_document_if_rule(
+                document_url,
+                direct_title,
+                direct_text,
+                direct_method_value,
+                source_phase="direct_detail",
+            )
             _record_az_phase(
                 "direct_detail",
                 url=document_url,
@@ -12567,7 +12964,13 @@ async def _agentic_discover_admin_state_blocks(
                 if late_method_value is None:
                     late_method_value = getattr(late_scraped, "method_used", None)
                 late_method_value = getattr(late_method_value, "value", late_method_value)
-                accepted_late = await _append_document_if_rule(document_url, late_title, late_text, late_method_value)
+                accepted_late = await _append_document_if_rule(
+                    document_url,
+                    late_title,
+                    late_text,
+                    late_method_value,
+                    source_phase="late_retry",
+                )
                 _record_az_phase(
                     "late_retry",
                     url=document_url,
@@ -12627,7 +13030,13 @@ async def _agentic_discover_admin_state_blocks(
                 if late_method_value is None:
                     late_method_value = getattr(late_scraped, "method_used", None)
                 late_method_value = getattr(late_method_value, "value", late_method_value)
-                accepted_last_chance = await _append_document_if_rule(document_url, late_title, late_text, late_method_value)
+                accepted_last_chance = await _append_document_if_rule(
+                    document_url,
+                    late_title,
+                    late_text,
+                    late_method_value,
+                    source_phase="last_chance",
+                )
                 _record_az_phase(
                     "last_chance",
                     url=document_url,
@@ -13401,7 +13810,7 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         max_candidates = max(1, int(max_candidates_per_state))
-        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
+        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
             ranked_urls=ranked_urls,
             seed_expansion_candidates=seed_expansion_candidates,
             max_candidates=max_candidates,
