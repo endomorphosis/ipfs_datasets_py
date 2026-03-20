@@ -44,6 +44,36 @@ def ir_permission():
 # ---------------------------------------------------------------------------
 
 class TestQueryAPISemantics:
+    def test_check_compliance_preserves_temporal_proof_metadata(self, ir_obligation):
+        # GIVEN chronology-aware theorem metadata in the query envelope
+        payload = {
+            "ir": ir_obligation,
+            "facts": {},
+            "events": [],
+            "theorem_export_metadata": {
+                "contract_version": "claim_support_temporal_handoff_v1",
+                "chronology_blocked": True,
+                "chronology_task_count": 2,
+                "temporal_issue_ids": ["timeline-gap-001"],
+                "temporal_proof_bundle_ids": ["bundle-42"],
+            },
+            "claim_support_temporal_handoff": {
+                "claim_type": "retaliation",
+                "claim_element_id": "element-1",
+                "unresolved_temporal_issue_count": 1,
+                "chronology_task_count": 2,
+                "temporal_issue_ids": ["timeline-gap-001"],
+                "temporal_proof_bundle_ids": ["bundle-42"],
+            },
+        }
+
+        result = check_compliance(payload, {})
+
+        # THEN the compliance result mirrors the same additive chronology contract
+        assert result["theorem_export_metadata"]["chronology_blocked"] is True
+        assert result["theorem_export_metadata"]["temporal_proof_bundle_ids"] == ["bundle-42"]
+        assert result["claim_support_temporal_handoff"]["claim_element_id"] == "element-1"
+
     def test_check_compliance_compliant_case(self, ir_obligation):
         # GIVEN an obligation IR and the target frame is in the events list
         norm = list(ir_obligation.norms.values())[0]
@@ -119,6 +149,32 @@ class TestQueryAPISemantics:
         assert "steps" in expl
         assert isinstance(expl["steps"], list)
 
+    def test_explain_proof_includes_temporal_metadata(self, ir_obligation):
+        # GIVEN chronology-aware metadata on a stored proof
+        result = check_compliance(
+            {
+                "ir": ir_obligation,
+                "facts": {},
+                "events": [],
+                "claim_support_temporal_handoff": {
+                    "claim_type": "retaliation",
+                    "claim_element_id": "element-1",
+                    "unresolved_temporal_issue_count": 1,
+                    "chronology_task_count": 1,
+                    "temporal_issue_ids": ["timeline-gap-001"],
+                    "temporal_proof_bundle_ids": ["bundle-42"],
+                },
+            },
+            {},
+        )
+
+        expl = explain_proof(result["proof_id"], format="json")
+
+        # THEN explanation output exposes the stored chronology metadata
+        assert expl["theorem_export_metadata"]["chronology_blocked"] is True
+        assert expl["theorem_export_metadata"]["temporal_issue_ids"] == ["timeline-gap-001"]
+        assert expl["claim_support_temporal_handoff"]["temporal_proof_bundle_ids"] == ["bundle-42"]
+
     def test_explain_proof_unknown_raises(self):
         # GIVEN an unknown proof_id
         # WHEN explain_proof is called
@@ -184,6 +240,27 @@ class TestConflictSemantics:
         r2 = check_compliance({"ir": ir2, "facts": {}, "events": []}, {})
         # THEN both produce the same proof_id (deterministic)
         assert r1["proof_id"] == r2["proof_id"]
+
+    def test_temporal_metadata_participates_in_proof_identity(self):
+        # GIVEN the same proof steps but different chronology blockers
+        ir = parse_cnl_to_ir("Contractor shall submit the report")
+        baseline = check_compliance({"ir": ir, "facts": {}, "events": []}, {})
+        blocked = check_compliance(
+            {
+                "ir": ir,
+                "facts": {},
+                "events": [],
+                "claim_support_temporal_handoff": {
+                    "claim_element_id": "element-1",
+                    "unresolved_temporal_issue_count": 1,
+                    "temporal_issue_ids": ["timeline-gap-001"],
+                },
+            },
+            {},
+        )
+
+        # THEN chronology metadata yields a distinct proof artifact identity
+        assert baseline["proof_id"] != blocked["proof_id"]
 
 
 # ---------------------------------------------------------------------------

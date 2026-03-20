@@ -11,6 +11,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 import hashlib
+import json
 import re
 from typing import Any, Dict, List, Optional, Protocol, Tuple
 
@@ -165,6 +166,8 @@ class ProofObjectV2:
     proof_id: str
     root_conclusion: str
     steps: List[ProofStepV2] = field(default_factory=list)
+    theorem_export_metadata: Dict[str, Any] = field(default_factory=dict)
+    claim_support_temporal_handoff: Dict[str, Any] = field(default_factory=dict)
 
 
 _PROOF_STORE_V2: Dict[str, ProofObjectV2] = {}
@@ -225,6 +228,182 @@ CONFLICT_REASON_CODES: Dict[str, str] = {
     "exception_precedence_conflict": "PC_CONFLICT_EXCEPTION_PRECEDENCE",
     "unknown_conflict_class": "PC_CONFLICT_UNKNOWN_CLASS",
 }
+
+
+def _normalize_text_list(items: Any) -> List[str]:
+    normalized: List[str] = []
+    for item in items if isinstance(items, list) else []:
+        text = str(item or "").strip()
+        if text and text not in normalized:
+            normalized.append(text)
+    return normalized
+
+
+def _normalize_claim_support_temporal_handoff(value: Any) -> Dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+
+    normalized = {
+        "claim_type": str(value.get("claim_type") or "").strip(),
+        "claim_element_id": str(value.get("claim_element_id") or "").strip(),
+        "unresolved_temporal_issue_count": int(value.get("unresolved_temporal_issue_count", 0) or 0),
+        "chronology_task_count": int(value.get("chronology_task_count", 0) or 0),
+        "unresolved_temporal_issue_ids": _normalize_text_list(value.get("unresolved_temporal_issue_ids")),
+        "event_ids": _normalize_text_list(value.get("event_ids")),
+        "temporal_fact_ids": _normalize_text_list(value.get("temporal_fact_ids")),
+        "temporal_relation_ids": _normalize_text_list(value.get("temporal_relation_ids")),
+        "timeline_issue_ids": _normalize_text_list(value.get("timeline_issue_ids")),
+        "temporal_issue_ids": _normalize_text_list(value.get("temporal_issue_ids")),
+        "temporal_proof_bundle_ids": _normalize_text_list(value.get("temporal_proof_bundle_ids")),
+        "temporal_proof_objectives": _normalize_text_list(value.get("temporal_proof_objectives")),
+    }
+
+    if not normalized["claim_type"]:
+        normalized.pop("claim_type")
+    if not normalized["claim_element_id"]:
+        normalized.pop("claim_element_id")
+    if not normalized.get("unresolved_temporal_issue_count") and not normalized.get("chronology_task_count") and not any(
+        normalized[key]
+        for key in (
+            "unresolved_temporal_issue_ids",
+            "event_ids",
+            "temporal_fact_ids",
+            "temporal_relation_ids",
+            "timeline_issue_ids",
+            "temporal_issue_ids",
+            "temporal_proof_bundle_ids",
+            "temporal_proof_objectives",
+        )
+    ):
+        return {}
+    return normalized
+
+
+def _build_theorem_export_metadata(claim_support_temporal_handoff: Any) -> Dict[str, Any]:
+    handoff = _normalize_claim_support_temporal_handoff(claim_support_temporal_handoff)
+    if not handoff:
+        return {}
+    unresolved_temporal_issue_ids = list(handoff.get("unresolved_temporal_issue_ids", []) or [])
+    temporal_issue_ids = list(handoff.get("temporal_issue_ids", []) or [])
+    return {
+        "contract_version": "claim_support_temporal_handoff_v1",
+        "claim_type": str(handoff.get("claim_type") or "").strip(),
+        "claim_element_id": str(handoff.get("claim_element_id") or "").strip(),
+        "chronology_blocked": bool(
+            int(handoff.get("unresolved_temporal_issue_count", 0) or 0)
+            or unresolved_temporal_issue_ids
+            or temporal_issue_ids
+        ),
+        "chronology_task_count": int(handoff.get("chronology_task_count", 0) or 0),
+        "unresolved_temporal_issue_ids": unresolved_temporal_issue_ids,
+        "event_ids": list(handoff.get("event_ids", []) or []),
+        "temporal_fact_ids": list(handoff.get("temporal_fact_ids", []) or []),
+        "temporal_relation_ids": list(handoff.get("temporal_relation_ids", []) or []),
+        "timeline_issue_ids": list(handoff.get("timeline_issue_ids", []) or []),
+        "temporal_issue_ids": temporal_issue_ids,
+        "temporal_proof_bundle_ids": list(handoff.get("temporal_proof_bundle_ids", []) or []),
+        "temporal_proof_objectives": list(handoff.get("temporal_proof_objectives", []) or []),
+    }
+
+
+def _normalize_theorem_export_metadata(value: Any) -> Dict[str, Any]:
+    if not isinstance(value, dict):
+        return {}
+
+    normalized = {
+        "contract_version": str(value.get("contract_version") or "").strip() or "claim_support_temporal_handoff_v1",
+        "claim_type": str(value.get("claim_type") or "").strip(),
+        "claim_element_id": str(value.get("claim_element_id") or "").strip(),
+        "chronology_blocked": bool(value.get("chronology_blocked", False)),
+        "chronology_task_count": int(value.get("chronology_task_count", 0) or 0),
+        "unresolved_temporal_issue_ids": _normalize_text_list(value.get("unresolved_temporal_issue_ids")),
+        "event_ids": _normalize_text_list(value.get("event_ids")),
+        "temporal_fact_ids": _normalize_text_list(value.get("temporal_fact_ids")),
+        "temporal_relation_ids": _normalize_text_list(value.get("temporal_relation_ids")),
+        "timeline_issue_ids": _normalize_text_list(value.get("timeline_issue_ids")),
+        "temporal_issue_ids": _normalize_text_list(value.get("temporal_issue_ids")),
+        "temporal_proof_bundle_ids": _normalize_text_list(value.get("temporal_proof_bundle_ids")),
+        "temporal_proof_objectives": _normalize_text_list(value.get("temporal_proof_objectives")),
+    }
+
+    if not normalized["claim_type"]:
+        normalized.pop("claim_type")
+    if not normalized["claim_element_id"]:
+        normalized.pop("claim_element_id")
+    if not normalized.get("chronology_blocked") and not normalized.get("chronology_task_count") and not any(
+        normalized[key]
+        for key in (
+            "unresolved_temporal_issue_ids",
+            "event_ids",
+            "temporal_fact_ids",
+            "temporal_relation_ids",
+            "timeline_issue_ids",
+            "temporal_issue_ids",
+            "temporal_proof_bundle_ids",
+            "temporal_proof_objectives",
+        )
+    ):
+        return {}
+    return normalized
+
+
+def _resolve_temporal_proof_metadata(
+    *,
+    query: Optional[Dict[str, Any]] = None,
+    time_context: Optional[Dict[str, Any]] = None,
+    theorem_export_metadata: Any = None,
+    claim_support_temporal_handoff: Any = None,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    query = query if isinstance(query, dict) else {}
+    time_context = time_context if isinstance(time_context, dict) else {}
+
+    handoff = _normalize_claim_support_temporal_handoff(claim_support_temporal_handoff)
+    if not handoff:
+        handoff = _normalize_claim_support_temporal_handoff(query.get("claim_support_temporal_handoff"))
+    if not handoff:
+        handoff = _normalize_claim_support_temporal_handoff(time_context.get("claim_support_temporal_handoff"))
+
+    theorem_metadata = _normalize_theorem_export_metadata(theorem_export_metadata)
+    if not theorem_metadata:
+        theorem_metadata = _normalize_theorem_export_metadata(query.get("theorem_export_metadata"))
+    if not theorem_metadata:
+        theorem_metadata = _normalize_theorem_export_metadata(time_context.get("theorem_export_metadata"))
+    if not theorem_metadata and handoff:
+        theorem_metadata = _build_theorem_export_metadata(handoff)
+
+    return theorem_metadata, handoff
+
+
+def _attach_temporal_proof_metadata_to_envelope(
+    envelope: Dict[str, Any],
+    *,
+    theorem_export_metadata: Dict[str, Any],
+    claim_support_temporal_handoff: Dict[str, Any],
+) -> Dict[str, Any]:
+    env = dict(envelope or {})
+    certificate = dict(env.get("certificate") or {})
+    payload = dict(certificate.get("payload") or {})
+
+    if theorem_export_metadata:
+        payload["theorem_export_metadata"] = theorem_export_metadata
+    if claim_support_temporal_handoff:
+        payload["claim_support_temporal_handoff"] = claim_support_temporal_handoff
+
+    certificate["payload"] = payload
+    stable_payload = {
+        "backend": str(env.get("backend") or ""),
+        "status": str(env.get("status") or ""),
+        "theorem": str(env.get("theorem") or ""),
+        "assumptions": [str(item) for item in (env.get("assumptions") or [])],
+        "certificate": payload,
+    }
+    normalized_hash = hashlib.sha256(
+        json.dumps(stable_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    certificate["normalized_hash"] = normalized_hash
+    certificate["certificate_id"] = "cert_" + normalized_hash[:12]
+    env["certificate"] = certificate
+    return env
 
 
 def classify_conflict_class(conflict_class: str) -> str:
@@ -672,8 +851,14 @@ def _event_match(norm: NormV2, events: List[str]) -> bool:
     return norm.target_frame_ref in set(str(e) for e in events)
 
 
-def _proof_id(root_conclusion: str, steps: List[ProofStepV2]) -> str:
+def _proof_id(
+    root_conclusion: str,
+    steps: List[ProofStepV2],
+    theorem_export_metadata: Optional[Dict[str, Any]] = None,
+) -> str:
     payload = root_conclusion + "|" + "|".join(f"{s.rule_id}:{s.conclusion}" for s in steps)
+    if theorem_export_metadata:
+        payload += "|" + json.dumps(theorem_export_metadata, sort_keys=True, separators=(",", ":"))
     return "pf2_" + hashlib.sha1(payload.encode("utf-8")).hexdigest()[:12]
 
 
@@ -1720,6 +1905,10 @@ def check_compliance(query: dict, time_context: dict) -> dict:
 
     facts = query.get("facts") or {}
     events = [str(e) for e in (query.get("events") or [])]
+    theorem_export_metadata, claim_support_temporal_handoff = _resolve_temporal_proof_metadata(
+        query=query,
+        time_context=time_context,
+    )
 
     steps: List[ProofStepV2] = []
     violations: List[Dict[str, Any]] = []
@@ -1765,8 +1954,16 @@ def check_compliance(query: dict, time_context: dict) -> dict:
 
     status = "non_compliant" if violations else "compliant"
     root = f"compliance={status}"
-    proof_id = _proof_id(root, steps)
-    _store_proof_v2(ProofObjectV2(proof_id=proof_id, root_conclusion=root, steps=steps))
+    proof_id = _proof_id(root, steps, theorem_export_metadata)
+    _store_proof_v2(
+        ProofObjectV2(
+            proof_id=proof_id,
+            root_conclusion=root,
+            steps=steps,
+            theorem_export_metadata=theorem_export_metadata,
+            claim_support_temporal_handoff=claim_support_temporal_handoff,
+        )
+    )
 
     return {
         "api": "check_compliance",
@@ -1777,6 +1974,8 @@ def check_compliance(query: dict, time_context: dict) -> dict:
         "proof_id": proof_id,
         "checked_norms": sorted(ir.norms.keys()),
         "time_context": dict(time_context or {}),
+        "theorem_export_metadata": theorem_export_metadata,
+        "claim_support_temporal_handoff": claim_support_temporal_handoff,
     }
 
 
@@ -1811,6 +2010,12 @@ def explain_proof(proof_id: str, format: str = "nl") -> dict:
 
     if format == "nl":
         lines = [f"Proof {proof.proof_id}: {proof.root_conclusion}"]
+        if proof.theorem_export_metadata:
+            lines.append(
+                "- Chronology metadata: "
+                f"blocked={str(bool(proof.theorem_export_metadata.get('chronology_blocked', False))).lower()}, "
+                f"tasks={int(proof.theorem_export_metadata.get('chronology_task_count', 0) or 0)}"
+            )
         for step in proof.steps:
             lines.append(f"- {step.rule_id}: {step.conclusion}")
         return {
@@ -1820,6 +2025,8 @@ def explain_proof(proof_id: str, format: str = "nl") -> dict:
             "format": "nl",
             "root_conclusion": proof.root_conclusion,
             "text": "\n".join(lines),
+            "theorem_export_metadata": dict(proof.theorem_export_metadata or {}),
+            "claim_support_temporal_handoff": dict(proof.claim_support_temporal_handoff or {}),
             "steps": [s.__dict__ for s in proof.steps],
         }
 
@@ -1829,6 +2036,8 @@ def explain_proof(proof_id: str, format: str = "nl") -> dict:
         "proof_id": proof.proof_id,
         "format": "json",
         "root_conclusion": proof.root_conclusion,
+        "theorem_export_metadata": dict(proof.theorem_export_metadata or {}),
+        "claim_support_temporal_handoff": dict(proof.claim_support_temporal_handoff or {}),
         "steps": [s.__dict__ for s in proof.steps],
     }
 
@@ -1842,6 +2051,8 @@ def run_v2_pipeline(
     prover_hook: Optional[ProverHook] = None,
     drift_threshold: float = 0.05,
     strict_contract: bool = True,
+    theorem_export_metadata: Optional[Dict[str, Any]] = None,
+    claim_support_temporal_handoff: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Run the V2 parse-normalize-compile pipeline with optional hooks.
 
@@ -1963,6 +2174,10 @@ def run_v2_pipeline(
 
     dcec = compile_ir_to_dcec(ir)
     tdfol = compile_ir_to_temporal_deontic_fol(ir)
+    theorem_export_metadata, claim_support_temporal_handoff = _resolve_temporal_proof_metadata(
+        theorem_export_metadata=theorem_export_metadata,
+        claim_support_temporal_handoff=claim_support_temporal_handoff,
+    )
 
     prover_report: Dict[str, Any] = {"applied": False}
     if prover_hook is not None:
@@ -1975,6 +2190,16 @@ def run_v2_pipeline(
             prover_hook.prove(tdfol),
             theorem=" and ".join(tdfol) if tdfol else "true",
             assumptions=[],
+        )
+        dcec_env = _attach_temporal_proof_metadata_to_envelope(
+            dcec_env,
+            theorem_export_metadata=theorem_export_metadata,
+            claim_support_temporal_handoff=claim_support_temporal_handoff,
+        )
+        tdfol_env = _attach_temporal_proof_metadata_to_envelope(
+            tdfol_env,
+            theorem_export_metadata=theorem_export_metadata,
+            claim_support_temporal_handoff=claim_support_temporal_handoff,
         )
         dcec_errors = _validate_normalized_prover_envelope(
             dcec_env,
@@ -1991,6 +2216,8 @@ def run_v2_pipeline(
             "error_codes": errors,
             "dcec": dcec_env,
             "tdfol": tdfol_env,
+            "theorem_export_metadata": theorem_export_metadata,
+            "claim_support_temporal_handoff": claim_support_temporal_handoff,
         }
         if errors:
             raise ValueError("invalid_prover_envelope:" + ",".join(errors))
