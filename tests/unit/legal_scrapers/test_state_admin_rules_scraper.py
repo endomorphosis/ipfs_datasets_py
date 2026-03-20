@@ -126,6 +126,7 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://apps.azsos.gov/public_services/Title_02/2-04.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_02/2-12.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_04/4-08.pdf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_08/8-03.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_06/6-11.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_07/7-02.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_09/9-30.pdf" in az_urls
@@ -1453,6 +1454,46 @@ async def test_discover_louisiana_rule_document_urls_extracts_official_pdfs(monk
 
 
 @pytest.mark.asyncio
+async def test_discover_louisiana_rule_document_urls_prefers_part_two_voter_registration_pdfs(monkeypatch: pytest.MonkeyPatch) -> None:
+    elections_url = "https://www.sos.la.gov/ElectionsAndVoting/ReviewAdministrationAndHistory/ReadAdministrativeRules/Pages/default.aspx"
+
+    class _FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def _fake_get(url: str, *args, **kwargs):
+        if url == elections_url:
+            return _FakeResponse(
+                """
+                <html><body>
+                  <a href="/ElectionsAndVoting/PublishedDocuments/Chapter3OpportunityToCureDeficienciesInAbsenteeByMailBallotsAdopted08202024.pdf">Opportunity to Cure Deficiencies</a>
+                  <a href="/ElectionsAndVoting/PublishedDocuments/Title31PartIChapter5ElectionNightTransmissionOfResults.pdf">Election Night Transmission Of Results</a>
+                  <a href="/ElectionsAndVoting/PublishedDocuments/Title31PartIIChapter1RegistrarsOfVotersRule.pdf">Registrars Of Voters Rule</a>
+                  <a href="/ElectionsAndVoting/PublishedDocuments/Title31PartIIChapter3VoterRegistrationAtDriversLicenseFacilities.pdf">Voter Registration At Drivers License Facilities</a>
+                </body></html>
+                """
+            )
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests.Session, "get", lambda self, url, *args, **kwargs: _fake_get(url, *args, **kwargs))
+
+    urls = await scraper_module._discover_louisiana_rule_document_urls(
+        seed_urls=[elections_url],
+        limit=4,
+    )
+
+    assert urls == [
+        "https://www.sos.la.gov/ElectionsAndVoting/PublishedDocuments/Title31PartIIChapter1RegistrarsOfVotersRule.pdf",
+        "https://www.sos.la.gov/ElectionsAndVoting/PublishedDocuments/Title31PartIIChapter3VoterRegistrationAtDriversLicenseFacilities.pdf",
+        "https://www.sos.la.gov/ElectionsAndVoting/PublishedDocuments/Chapter3OpportunityToCureDeficienciesInAbsenteeByMailBallotsAdopted08202024.pdf",
+        "https://www.sos.la.gov/ElectionsAndVoting/PublishedDocuments/Title31PartIChapter5ElectionNightTransmissionOfResults.pdf",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_discover_iowa_rule_document_urls_extracts_agency_pdfs(monkeypatch: pytest.MonkeyPatch) -> None:
     agencies_url = "https://www.legis.iowa.gov/law/administrativeRules/agencies"
     rules_url = "https://www.legis.iowa.gov/law/administrativeRules"
@@ -1785,6 +1826,26 @@ def test_candidate_tennessee_rule_urls_from_html_interleaves_rule_families() -> 
         "https://sharetngov.tnsosfiles.com/sos/rules/1200/1200-13/1200-13-13.20150930.pdf",
         "https://sharetngov.tnsosfiles.com/sos/rules/0020/0020-02.20170126.pdf",
     ]
+
+
+def test_is_substantive_rule_text_accepts_louisiana_official_voter_registration_pdf() -> None:
+    text = (
+        "Title 31\n"
+        "ELECTIONS\n"
+        "Part II. Voter Registration and Voter Education\n"
+        "Chapter 4. Voter Registration at Mandatory Voter Registration Agencies in the State that Provide Public Assistance\n"
+        "§401. Objective\n"
+        "A. The objective of these rules is to provide procedures to implement voter registration requirements.\n"
+        "AUTHORITY NOTE: Promulgated in accordance with R.S. 18:18 and R.S. 18:116.\n"
+        "HISTORICAL NOTE: Promulgated by the Department of State, Elections Division.\n"
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Part II. Voter Registration and Voter Education",
+        url="https://www.sos.la.gov/ElectionsAndVoting/PublishedDocuments/Title31PartIIChapter4VoterRegistrationAtMandatoryVoterRegistrationAgencies.pdf",
+        min_chars=80,
+    ) is True
 
 
 @pytest.mark.asyncio
@@ -4332,6 +4393,26 @@ def test_prioritized_arizona_late_retry_urls_prefers_productive_title_two_pdf() 
     ]
 
     prioritized = scraper_module._prioritized_arizona_late_retry_urls(candidate_urls, limit=5)
+
+
+    def test_prioritize_arizona_seed_document_urls_interleaves_title_families() -> None:
+        seed_urls = [
+            "https://apps.azsos.gov/public_services/Title_02/2-01.pdf",
+            "https://apps.azsos.gov/public_services/Title_02/2-02.pdf",
+            "https://apps.azsos.gov/public_services/Title_02/2-03.pdf",
+            "https://apps.azsos.gov/public_services/Title_09/9-30.pdf",
+            "https://apps.azsos.gov/public_services/Title_15/15-05.pdf",
+            "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        ]
+
+        prioritized = scraper_module._prioritize_arizona_seed_document_urls(seed_urls, limit=4)
+
+        assert prioritized == [
+            "https://apps.azsos.gov/public_services/Title_02/2-01.pdf",
+            "https://apps.azsos.gov/public_services/Title_09/9-30.pdf",
+            "https://apps.azsos.gov/public_services/Title_15/15-05.pdf",
+            "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        ]
 
     assert prioritized == [
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
@@ -7842,6 +7923,25 @@ def test_initial_pending_candidates_prioritize_seed_expansions() -> None:
     assert pending[1:] == ranked_urls
 
 
+def test_initial_pending_candidates_break_ties_with_seed_prefetch_priority() -> None:
+    pdf_url = "https://apps.azsos.gov/public_services/Title_02/2-01.pdf"
+    codetoc_url = "https://apps.azsos.gov/public_services/CodeTOC.htm"
+
+    pending = scraper_module._build_initial_pending_candidates(
+        ranked_urls=[
+            (codetoc_url, 10),
+            (pdf_url, 10),
+        ],
+        seed_expansion_candidates=[],
+        max_candidates=4,
+    )
+
+    assert pending == [
+        (pdf_url, 10),
+        (codetoc_url, 10),
+    ]
+
+
 def test_score_candidate_url_prioritizes_utah_detail_pages_over_search_indexes() -> None:
     detail_score = scraper_module._score_candidate_url(
         "https://adminrules.utah.gov/public/rule/R70-101/Current%20Rules"
@@ -11317,6 +11417,103 @@ async def test_scrape_state_admin_rules_direct_agentic_large_timeout_keeps_full_
 
     assert result["metadata"]["base_scrape_skipped_states"] == ["AZ"]
     assert result["metadata"]["agentic_per_state_budget_seconds"] == 86400.0
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_zero_timeout_disables_direct_agentic_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        assert kwargs["per_state_budget_seconds"] == 0.0
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "AZ",
+                    "state_name": "Arizona",
+                    "title": "Arizona Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://apps.azsos.gov/public_services/CodeTOC.htm",
+                    "scraped_at": "2026-03-20T00:00:00",
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            ],
+            "kg_rows": [],
+            "report": {"AZ": {"rules_count": 0}},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AZ"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        per_state_timeout_seconds=0.0,
+        require_substantive_rule_text=True,
+    )
+
+    assert result["metadata"]["base_scrape_skipped_states"] == ["AZ"]
+    assert result["metadata"]["state_laws_base_per_state_timeout_seconds"] == 0.0
+    assert result["metadata"]["state_laws_fallback_per_state_timeout_seconds"] == 0.0
+    assert result["metadata"]["agentic_per_state_budget_seconds"] == 0.0
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_zero_timeout_passes_through_delegated_scrape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scrape_calls = []
+
+    async def _fake_scrape_state_laws(**kwargs):
+        scrape_calls.append(dict(kwargs))
+        return {
+            "status": "success",
+            "data": [
+                {
+                    "state_code": "AL",
+                    "state_name": "Alabama",
+                    "title": "Alabama Administrative Rules",
+                    "statutes": [],
+                    "rules_count": 0,
+                }
+            ],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["AL"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=False,
+        agentic_fallback_enabled=False,
+        per_state_timeout_seconds=0.0,
+        require_substantive_rule_text=True,
+    )
+
+    assert len(scrape_calls) == 1
+    assert scrape_calls[0]["per_state_timeout_seconds"] == 0.0
+    assert result["metadata"]["state_laws_base_per_state_timeout_seconds"] == 0.0
+    assert result["metadata"]["state_laws_fallback_per_state_timeout_seconds"] == 0.0
+    assert result["metadata"]["agentic_per_state_budget_seconds"] == 0.0
 
 
 @pytest.mark.anyio

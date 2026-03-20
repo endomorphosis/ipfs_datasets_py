@@ -16,6 +16,7 @@ import re
 from urllib.parse import urlparse, parse_qs, unquote
 
 from .citation_history import extract_trailing_history_citations
+from ...playwright_limiter import acquire_playwright_slot
 
 logger = logging.getLogger(__name__)
 
@@ -1578,86 +1579,89 @@ class BaseStateScraper(ABC):
         statutes = []
         
         try:
-            async with async_playwright() as p:
-                # Launch browser
-                browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page()
+            async with acquire_playwright_slot():
+                async with async_playwright() as p:
+                    # Launch browser
+                    browser = await p.chromium.launch(headless=True)
+                    page = await browser.new_page()
                 
-                try:
-                    # Navigate to page
-                    await page.goto(code_url, wait_until=wait_until, timeout=timeout)
-                    
-                    # Wait for specific content
                     try:
-                        await page.wait_for_selector(wait_for_selector, timeout=timeout)
-                    except:
-                        self.logger.warning(f"Timeout waiting for selector '{wait_for_selector}' on {code_url}")
-                    
-                    # Get page content after JavaScript execution
-                    content = await page.content()
-                    
-                    # Parse with BeautifulSoup
-                    soup = BeautifulSoup(content, 'html.parser')
-                    
-                    # Extract legal area
-                    legal_area = self._identify_legal_area(code_name)
-                    
-                    # Scan all anchors, then stop once enough probable statute links are collected.
-                    section_links = soup.find_all('a', href=True)
-                    
-                    section_count = 0
-                    for link in section_links:
-                        if section_count >= max_sections:
-                            break
-                        
-                        link_text = link.get_text(strip=True)
-                        link_url = link.get('href', '')
-                        
-                        # Skip if link doesn't look useful
-                        if not link_text or len(link_text) < 3:
-                            continue
-                        
-                        # Make URL absolute (handles '/x' and 'x/y').
-                        if not link_url.startswith('http'):
-                            link_url = urljoin(code_url, link_url)
-                        if not link_url.startswith('http'):
-                            continue
+                        # Navigate to page
+                        await page.goto(code_url, wait_until=wait_until, timeout=timeout)
 
-                        link_url = self._canonicalize_statute_url(link_url)
+                        # Wait for specific content
+                        try:
+                            await page.wait_for_selector(wait_for_selector, timeout=timeout)
+                        except Exception:
+                            self.logger.warning(f"Timeout waiting for selector '{wait_for_selector}' on {code_url}")
 
-                        if not self._is_probable_statute_link(link_text, link_url, code_url):
-                            continue
-                        
-                        # Extract section number
-                        section_number = self._extract_section_number(link_text)
-                        if not section_number:
-                            section_number = self._derive_section_number_from_url(link_url)
-                        if not section_number:
-                            section_number = f"Section-{section_count + 1}"
-                        
-                        # Create normalized statute
-                        statute = NormalizedStatute(
-                            state_code=self.state_code,
-                            state_name=self.state_name,
-                            statute_id=f"{code_name} § {section_number}",
-                            code_name=code_name,
-                            section_number=section_number,
-                            section_name=link_text[:200],
-                            full_text=f"Section {section_number}: {link_text}",
-                            legal_area=legal_area,
-                            source_url=link_url,
-                            official_cite=f"{citation_format} § {section_number}",
-                            metadata=StatuteMetadata()
-                        )
-                        
-                        statutes.append(statute)
-                        section_count += 1
-                    
-                    self.logger.info(f"Scraped {len(statutes)} sections using Playwright from {code_name}")
-                    
-                finally:
-                    # Always close browser
-                    await browser.close()
+                        # Get page content after JavaScript execution
+                        content = await page.content()
+
+                        # Parse with BeautifulSoup
+                        soup = BeautifulSoup(content, 'html.parser')
+
+                        # Extract legal area
+                        legal_area = self._identify_legal_area(code_name)
+
+                        # Scan all anchors, then stop once enough probable statute links are collected.
+                        section_links = soup.find_all('a', href=True)
+
+                        section_count = 0
+                        for link in section_links:
+                            if section_count >= max_sections:
+                                break
+
+                            link_text = link.get_text(strip=True)
+                            link_url = link.get('href', '')
+
+                            # Skip if link doesn't look useful
+                            if not link_text or len(link_text) < 3:
+                                continue
+
+                            # Make URL absolute (handles '/x' and 'x/y').
+                            if not link_url.startswith('http'):
+                                link_url = urljoin(code_url, link_url)
+                            if not link_url.startswith('http'):
+                                continue
+
+                            link_url = self._canonicalize_statute_url(link_url)
+
+                            if not self._is_probable_statute_link(link_text, link_url, code_url):
+                                continue
+
+                            # Extract section number
+                            section_number = self._extract_section_number(link_text)
+                            if not section_number:
+                                section_number = self._derive_section_number_from_url(link_url)
+                            if not section_number:
+                                section_number = f"Section-{section_count + 1}"
+
+                            # Create normalized statute
+                            statute = NormalizedStatute(
+                                state_code=self.state_code,
+                                state_name=self.state_name,
+                                statute_id=f"{code_name} § {section_number}",
+                                code_name=code_name,
+                                section_number=section_number,
+                                section_name=link_text[:200],
+                                full_text=f"Section {section_number}: {link_text}",
+                                legal_area=legal_area,
+                                source_url=link_url,
+                                official_cite=f"{citation_format} § {section_number}",
+                                metadata=StatuteMetadata()
+                            )
+
+                            statutes.append(statute)
+                            section_count += 1
+
+                        self.logger.info(f"Scraped {len(statutes)} sections using Playwright from {code_name}")
+
+                    finally:
+                        try:
+                            await page.close()
+                        finally:
+                            await browser.close()
             
         except Exception as e:
             self.logger.error(f"Error in Playwright scrape for {code_name}: {str(e)}")
@@ -1897,13 +1901,19 @@ class BaseStateScraper(ABC):
         if not content:
             try:
                 from playwright.async_api import async_playwright
-                async with async_playwright() as p:
-                    browser = await p.chromium.launch()
-                    page = await browser.new_page()
-                    await page.goto(url, wait_until="networkidle")
-                    content = await page.content()
-                    await browser.close()
-                    method_used = "playwright"
+                async with acquire_playwright_slot():
+                    async with async_playwright() as p:
+                        browser = await p.chromium.launch()
+                        page = await browser.new_page()
+                        try:
+                            await page.goto(url, wait_until="networkidle")
+                            content = await page.content()
+                            method_used = "playwright"
+                        finally:
+                            try:
+                                await page.close()
+                            finally:
+                                await browser.close()
             except Exception as e:
                 self.logger.warning(f"Playwright failed: {e}")
         

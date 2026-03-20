@@ -7,6 +7,7 @@ from typing import List, Dict
 import re
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
+from ...playwright_limiter import acquire_playwright_slot
 
 try:
     from playwright.async_api import async_playwright
@@ -130,67 +131,71 @@ class DelawareScraper(BaseStateScraper):
         
         statutes = []
         
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            
-            try:
-                self.logger.info(f"Delaware: Loading {code_url}")
-                await page.goto(code_url, wait_until='networkidle', timeout=60000)
-                await page.wait_for_selector('a[href*="title"], div.title-links', timeout=10000)
-                
-                content = await page.content()
-                soup = BeautifulSoup(content, 'html.parser')
-                
-                links = soup.find_all('a', href=True)
-                title_links = [
-                    l for l in links
-                    if not l.get('href', '').lower().endswith('.pdf')
-                    and (
-                        self._DE_CHAPTER_URL_RE.search(l.get('href', ''))
-                        or '§' in l.get_text(strip=True)
-                        or re.search(r"\b\d+\.[0-9A-Za-z\-]*", l.get_text(strip=True))
-                    )
-                ][:40]
-                
-                self.logger.info(f"Delaware: Found {len(title_links)} title links")
-                
-                section_count = 0
-                for link in title_links:
-                    if section_count >= max_sections:
-                        break
-                    
-                    link_text = link.get_text(strip=True)
-                    link_href = link.get('href', '')
-                    
-                    if len(link_text) < 3:
-                        continue
-                    
-                    full_url = urljoin(code_url, link_href)
-                    section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
-                    legal_area = self._identify_legal_area(link_text)
-                    
-                    statute = NormalizedStatute(
-                        state_code=self.state_code,
-                        state_name=self.state_name,
-                        statute_id=f"{code_name} § {section_number}",
-                        code_name=code_name,
-                        section_number=section_number,
-                        section_name=link_text[:200],
-                        full_text=f"Title {section_number}: {link_text}",
-                        legal_area=legal_area,
-                        source_url=full_url,
-                        official_cite=f"{citation_format} § {section_number}",
-                        metadata=StatuteMetadata()
-                    )
-                    
-                    statutes.append(statute)
-                    section_count += 1
-                
-                self.logger.info(f"Delaware Playwright: Scraped {len(statutes)} sections")
-                
-            finally:
-                await browser.close()
+        async with acquire_playwright_slot():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+
+                try:
+                    self.logger.info(f"Delaware: Loading {code_url}")
+                    await page.goto(code_url, wait_until='networkidle', timeout=60000)
+                    await page.wait_for_selector('a[href*="title"], div.title-links', timeout=10000)
+
+                    content = await page.content()
+                    soup = BeautifulSoup(content, 'html.parser')
+
+                    links = soup.find_all('a', href=True)
+                    title_links = [
+                        l for l in links
+                        if not l.get('href', '').lower().endswith('.pdf')
+                        and (
+                            self._DE_CHAPTER_URL_RE.search(l.get('href', ''))
+                            or '§' in l.get_text(strip=True)
+                            or re.search(r"\b\d+\.[0-9A-Za-z\-]*", l.get_text(strip=True))
+                        )
+                    ][:40]
+
+                    self.logger.info(f"Delaware: Found {len(title_links)} title links")
+
+                    section_count = 0
+                    for link in title_links:
+                        if section_count >= max_sections:
+                            break
+
+                        link_text = link.get_text(strip=True)
+                        link_href = link.get('href', '')
+
+                        if len(link_text) < 3:
+                            continue
+
+                        full_url = urljoin(code_url, link_href)
+                        section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                        legal_area = self._identify_legal_area(link_text)
+
+                        statute = NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=f"{code_name} § {section_number}",
+                            code_name=code_name,
+                            section_number=section_number,
+                            section_name=link_text[:200],
+                            full_text=f"Title {section_number}: {link_text}",
+                            legal_area=legal_area,
+                            source_url=full_url,
+                            official_cite=f"{citation_format} § {section_number}",
+                            metadata=StatuteMetadata()
+                        )
+
+                        statutes.append(statute)
+                        section_count += 1
+
+                    self.logger.info(f"Delaware Playwright: Scraped {len(statutes)} sections")
+
+                finally:
+                    try:
+                        await page.close()
+                    finally:
+                        await browser.close()
         
         return statutes
     

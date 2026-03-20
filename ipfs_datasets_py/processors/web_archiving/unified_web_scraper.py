@@ -38,6 +38,8 @@ from html.parser import HTMLParser
 from urllib.parse import urlparse, urljoin
 import hashlib
 
+from ..playwright_limiter import acquire_playwright_slot
+
 logger = logging.getLogger(__name__)
 
 _BROWSER_CHALLENGE_TEXT_RE = re.compile(
@@ -1172,87 +1174,88 @@ class UnifiedWebScraper:
                     })
             return body_text, dom_links
         
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=self.config.playwright_headless)
-            context = await browser.new_context(
-                user_agent=browser_user_agent,
-                locale="en-US",
-                viewport={"width": 1440, "height": 900},
-            )
-            page = await context.new_page()
-
-            # For binary document URLs (PDF, RTF, etc.) use playwright's fetch API
-            # to retrieve raw bytes — page.goto() won't render binary content.
-            url_lower_pw = url.lower()
-            _binary_exts = (".pdf", ".rtf", ".doc", ".docx", ".xls", ".xlsx")
-            if any(url_lower_pw.endswith(ext) for ext in _binary_exts):
-                try:
-                    api_resp = await context.request.get(
-                        url,
-                        timeout=self.config.timeout * 1000,
-                    )
-                    if api_resp.ok:
-                        raw_bytes = await api_resp.body()
-                        content_type = api_resp.headers.get("content-type", "")
-                        content_disposition = api_resp.headers.get("content-disposition", "")
-                        filename = self._response_filename(url, content_disposition)
-                        text = ""
-                        if self._content_type_matches(content_type, "application/pdf") or url_lower_pw.endswith(".pdf"):
-                            text = await self._extract_pdf_text(raw_bytes)
-                        elif self._content_type_matches(content_type, "application/rtf", "text/rtf") or url_lower_pw.endswith(".rtf"):
-                            text = await self._extract_rtf_text(raw_bytes)
-                        return ScraperResult(
-                            url=url,
-                            title=filename,
-                            text=text,
-                            content=text,
-                            method_used=ScraperMethod.PLAYWRIGHT,
-                            success=bool(raw_bytes),
-                            metadata={
-                                "method": "playwright_binary_fetch",
-                                "content_type": content_type,
-                                "content_length": len(raw_bytes),
-                                "raw_bytes": raw_bytes,
-                                "binary_document": True,
-                                "ssl_verification_relaxed": False,
-                            },
-                        )
-                except Exception:
-                    pass  # Fall through to normal DOM scraping
-            
-            try:
-                # SPAs on state code hosts often return an initial shell before client-side
-                # hydration fills in the real body text and links.
-                await page.goto(url, wait_until="domcontentloaded", timeout=self.config.timeout * 1000)
-                try:
-                    await page.wait_for_load_state(self.config.playwright_wait_for, timeout=min(5000, self.config.timeout * 1000))
-                except Exception:
-                    pass
-                if self.config.playwright_hydration_wait_ms > 0:
-                    await page.wait_for_timeout(self.config.playwright_hydration_wait_ms)
-
-                text, links = await _read_live_dom(page)
-                shell_like = (
-                    (not text.strip())
-                    or "you need to enable javascript to run this app" in text.lower()
-                    or (self.config.extract_links and not links)
+        async with acquire_playwright_slot():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=self.config.playwright_headless)
+                context = await browser.new_context(
+                    user_agent=browser_user_agent,
+                    locale="en-US",
+                    viewport={"width": 1440, "height": 900},
                 )
-                if shell_like and self.config.playwright_shell_retry_wait_ms > 0:
-                    await page.wait_for_timeout(self.config.playwright_shell_retry_wait_ms)
+                page = await context.new_page()
+
+                try:
+                    # For binary document URLs (PDF, RTF, etc.) use playwright's fetch API
+                    # to retrieve raw bytes; page.goto() will not render binary content.
+                    url_lower_pw = url.lower()
+                    _binary_exts = (".pdf", ".rtf", ".doc", ".docx", ".xls", ".xlsx")
+                    if any(url_lower_pw.endswith(ext) for ext in _binary_exts):
+                        try:
+                            api_resp = await context.request.get(
+                                url,
+                                timeout=self.config.timeout * 1000,
+                            )
+                            if api_resp.ok:
+                                raw_bytes = await api_resp.body()
+                                content_type = api_resp.headers.get("content-type", "")
+                                content_disposition = api_resp.headers.get("content-disposition", "")
+                                filename = self._response_filename(url, content_disposition)
+                                text = ""
+                                if self._content_type_matches(content_type, "application/pdf") or url_lower_pw.endswith(".pdf"):
+                                    text = await self._extract_pdf_text(raw_bytes)
+                                elif self._content_type_matches(content_type, "application/rtf", "text/rtf") or url_lower_pw.endswith(".rtf"):
+                                    text = await self._extract_rtf_text(raw_bytes)
+                                return ScraperResult(
+                                    url=url,
+                                    title=filename,
+                                    text=text,
+                                    content=text,
+                                    method_used=ScraperMethod.PLAYWRIGHT,
+                                    success=bool(raw_bytes),
+                                    metadata={
+                                        "method": "playwright_binary_fetch",
+                                        "content_type": content_type,
+                                        "content_length": len(raw_bytes),
+                                        "raw_bytes": raw_bytes,
+                                        "binary_document": True,
+                                        "ssl_verification_relaxed": False,
+                                    },
+                                )
+                        except Exception:
+                            pass  # Fall through to normal DOM scraping
+
+                    # SPAs on state code hosts often return an initial shell before client-side
+                    # hydration fills in the real body text and links.
+                    await page.goto(url, wait_until="domcontentloaded", timeout=self.config.timeout * 1000)
+                    try:
+                        await page.wait_for_load_state(self.config.playwright_wait_for, timeout=min(5000, self.config.timeout * 1000))
+                    except Exception:
+                        pass
+                    if self.config.playwright_hydration_wait_ms > 0:
+                        await page.wait_for_timeout(self.config.playwright_hydration_wait_ms)
+
                     text, links = await _read_live_dom(page)
-                
-                # Get content
-                html = await page.content()
-                title = await page.title()
-                
-                # Parse with BeautifulSoup
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                # Extract text
-                parsed_text = ""
-                if self.config.extract_text:
-                    for script in soup(["script", "style"]):
-                        script.decompose()
+                    shell_like = (
+                        (not text.strip())
+                        or "you need to enable javascript to run this app" in text.lower()
+                        or (self.config.extract_links and not links)
+                    )
+                    if shell_like and self.config.playwright_shell_retry_wait_ms > 0:
+                        await page.wait_for_timeout(self.config.playwright_shell_retry_wait_ms)
+                        text, links = await _read_live_dom(page)
+
+                    # Get content
+                    html = await page.content()
+                    title = await page.title()
+
+                    # Parse with BeautifulSoup
+                    soup = BeautifulSoup(html, 'html.parser')
+
+                    # Extract text
+                    parsed_text = ""
+                    if self.config.extract_text:
+                        for script in soup(["script", "style"]):
+                            script.decompose()
                     parsed_text = soup.get_text(separator='\n', strip=True)
                 if not text:
                     text = parsed_text
@@ -1275,39 +1278,43 @@ class UnifiedWebScraper:
                     title=title,
                     text=text,
                     content=text,
-                    links=links,
-                    method_used=ScraperMethod.PLAYWRIGHT,
-                    success=True,
-                    metadata={
-                        'method': 'playwright',
-                        'content_length': len(html)
-                    }
-                )
-            
-            finally:
-                await context.close()
-                await browser.close()
-    
-    async def _scrape_beautifulsoup(self, url: str, **kwargs) -> ScraperResult:
-        """Scrape using BeautifulSoup + requests."""
-        from bs4 import BeautifulSoup
-        
-        response, ssl_relaxed = self._request_with_ssl_fallback(
-            url,
-            timeout=self.config.timeout,
-            allow_redirects=self.config.follow_redirects
-        )
-        response.raise_for_status()
+                        # Extract links
+                        extracted_links: List[Dict[str, str]] = []
+                        if self.config.extract_links:
+                            # Prefer live-DOM links already captured post-hydration; fall back to BS4 parsing.
+                            if links:
+                                extracted_links = links
+                            else:
+                                for a in soup.find_all('a', href=True):
+                                    extracted_links.append({
+                                        'url': urljoin(url, a['href']),
+                                        'text': a.get_text(strip=True)
+                                    })
 
-        content_type = response.headers.get('Content-Type', '')
-        content_disposition = response.headers.get('Content-Disposition', '')
-        if self._is_binary_document_response(
-            url=url,
-            content_type=content_type,
-            content_disposition=content_disposition,
-        ):
-            return await self._build_binary_document_result(
-                url=url,
+                        return ScraperResult(
+                            url=url,
+                            title=title,
+                            content=html,
+                            html=html,
+                            text=parsed_text,
+                            links=extracted_links,
+                            method_used=ScraperMethod.PLAYWRIGHT,
+                            success=True,
+                            metadata={
+                                'content_type': 'text/html',
+                                'ssl_verification_relaxed': False,
+                            },
+                            extraction_time=time.time() - start_time,
+                        )
+                    finally:
+                        try:
+                            await page.close()
+                        except Exception:
+                            pass
+                        try:
+                            await context.close()
+                        finally:
+                            await browser.close()
                 response=response,
                 method=ScraperMethod.BEAUTIFULSOUP,
                 ssl_verification_relaxed=ssl_relaxed,

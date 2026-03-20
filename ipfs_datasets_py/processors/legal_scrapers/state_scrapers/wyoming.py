@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List, Dict
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
+from ...playwright_limiter import acquire_playwright_slot
 
 try:
     from playwright.async_api import async_playwright
@@ -70,71 +71,75 @@ class WyomingScraper(BaseStateScraper):
         
         statutes = []
         
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            
-            try:
-                await page.goto(code_url, wait_until='networkidle', timeout=60000)
-                await page.wait_for_selector('a', timeout=10000)
-                
-                content = await page.content()
-                soup = BeautifulSoup(content, 'html.parser')
-                links = soup.find_all('a', href=True)
-                
-                section_count = 0
-                seen_urls = set()
-                for link in links:
-                    if section_count >= max_sections:
-                        break
-                    
-                    link_text = link.get_text(strip=True)
-                    link_href = link.get('href', '')
-                    
-                    if len(link_text) < 5:
-                        continue
-                    full_url = urljoin(code_url, link_href)
-                    full_url_l = full_url.lower()
-                    # Focus on authoritative downloadable title PDFs instead of nav links.
-                    if not (full_url_l.endswith('.pdf') and '/statutes/compress/title' in full_url_l):
-                        continue
-                    if full_url in seen_urls:
-                        continue
-                    seen_urls.add(full_url)
+        async with acquire_playwright_slot():
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
 
-                    section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
-                    m = re.search(r"\btitle\s+(\d+(?:\.\d+)?)", link_text, re.IGNORECASE)
-                    if m:
-                        section_number = m.group(1)
+                try:
+                    await page.goto(code_url, wait_until='networkidle', timeout=60000)
+                    await page.wait_for_selector('a', timeout=10000)
 
-                    full_text = await self._extract_pdf_text_summary(full_url)
-                    if len(full_text.strip()) < 80:
-                        full_text = (
-                            f"Wyoming Statutes Title {section_number}: {link_text}. "
-                            f"Official source PDF: {full_url}."
+                    content = await page.content()
+                    soup = BeautifulSoup(content, 'html.parser')
+                    links = soup.find_all('a', href=True)
+
+                    section_count = 0
+                    seen_urls = set()
+                    for link in links:
+                        if section_count >= max_sections:
+                            break
+
+                        link_text = link.get_text(strip=True)
+                        link_href = link.get('href', '')
+
+                        if len(link_text) < 5:
+                            continue
+                        full_url = urljoin(code_url, link_href)
+                        full_url_l = full_url.lower()
+                        # Focus on authoritative downloadable title PDFs instead of nav links.
+                        if not (full_url_l.endswith('.pdf') and '/statutes/compress/title' in full_url_l):
+                            continue
+                        if full_url in seen_urls:
+                            continue
+                        seen_urls.add(full_url)
+
+                        section_number = self._extract_section_number(link_text) or f"Section-{section_count + 1}"
+                        m = re.search(r"\btitle\s+(\d+(?:\.\d+)?)", link_text, re.IGNORECASE)
+                        if m:
+                            section_number = m.group(1)
+
+                        full_text = await self._extract_pdf_text_summary(full_url)
+                        if len(full_text.strip()) < 80:
+                            full_text = (
+                                f"Wyoming Statutes Title {section_number}: {link_text}. "
+                                f"Official source PDF: {full_url}."
+                            )
+
+                        statute = NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=f"{code_name} § {section_number}",
+                            code_name=code_name,
+                            section_number=section_number,
+                            section_name=link_text[:200],
+                            full_text=full_text,
+                            legal_area=self._identify_legal_area(link_text),
+                            source_url=full_url,
+                            official_cite=f"{citation_format} § {section_number}",
+                            metadata=StatuteMetadata()
                         )
-                    
-                    statute = NormalizedStatute(
-                        state_code=self.state_code,
-                        state_name=self.state_name,
-                        statute_id=f"{code_name} § {section_number}",
-                        code_name=code_name,
-                        section_number=section_number,
-                        section_name=link_text[:200],
-                        full_text=full_text,
-                        legal_area=self._identify_legal_area(link_text),
-                        source_url=full_url,
-                        official_cite=f"{citation_format} § {section_number}",
-                        metadata=StatuteMetadata()
-                    )
-                    
-                    statutes.append(statute)
-                    section_count += 1
-                
-                self.logger.info(f"Wyoming Playwright: Scraped {len(statutes)} sections")
-                
-            finally:
-                await browser.close()
+
+                        statutes.append(statute)
+                        section_count += 1
+
+                    self.logger.info(f"Wyoming Playwright: Scraped {len(statutes)} sections")
+
+                finally:
+                    try:
+                        await page.close()
+                    finally:
+                        await browser.close()
         
         return statutes
 

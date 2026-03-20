@@ -17,25 +17,20 @@
         "url": "https://azsos.gov/rules/arizona-administrative-code"
       },
       {
-        "description": "An agency shall determine which notice to file based on requirements under its exemption to make (new Section), amend, renumber or repeal a rule. Please note: If an agency is exempt from all of the provisions of the Arizona Administrative Procedure Act, it still is required under statute to follow the Division&#x27;s filing, publishing, and Code codification scheme requirements. ... An agency regulated under its exemption to just prepare a notice and file it without any additional rulemaking steps shall use the Notice of Exempt Rulemaking Template provided on this page.",
-        "title": "Rulemaking Templates - Exempt Rulemaking Process",
-        "url": "https://apps.azsos.gov/administrative_rules/templates/Exempt_Rulemaking_Process/"
-      },
-      {
         "description": "Editor\u2019s Note: The Office of ... all Code Chapters on white paper (Supp. 01-4). Editor\u2019s Note: This Chapter contains rules which were adopted, amended, repealed, or renumbered under an exemption from the \u00b7 Arizona Administrative Procedure Act (A.R.S. Title 41, Chapter 6), pursuant to Laws 1998, 5th Special Session, Chapter 1, section 55, as \u00b7 amended by Laws 1999, Chapter 299, section 39. Because this Chapter contains rules which are exempt from the regular ...",
         "title": "i",
         "url": "https://apps.azsos.gov/public_services/Title_07/7-06.pdf"
+      },
+      {
+        "description": "An agency shall determine which notice to file based on requirements under its exemption to make (new Section), amend, renumber or repeal a rule. Please note: If an agency is exempt from all of the provisions of the Arizona Administrative Procedure Act, it still is required under statute to follow the Division&#x27;s filing, publishing, and Code codification scheme requirements. ... An agency regulated under its exemption to just prepare a notice and file it without any additional rulemaking steps shall use the Notice of Exempt Rulemaking Template provided on this page.",
+        "title": "Rulemaking Templates - Exempt Rulemaking Process",
+        "url": "https://apps.azsos.gov/administrative_rules/templates/Exempt_Rulemaking_Process/"
       }
     ],
-    "ts": 1773883092.2698147
+    "ts": 1773972585.108742
   },
   "321a92a67076de30f866c54190512fdc541d8bae181fbbd8cd4835053915c602": {
     "items": [
-      {
-        "description": "Skip to main content \u00b7 Back To Top Top \u00b7 This website publishes administrative rules on their effective dates, as designated by the adopting state agencies, colleges, and universities \u00b7 Ohio Administrative Code \u00b7 Disclaimer Contact About",
-        "title": "Ohio Administrative Code | Ohio Laws",
-        "url": "https://codes.ohio.gov/ohio-administrative-code"
-      },
       {
         "description": "Perhaps the answer isn\u2019t in a series of rigid rules, but a code of practice that the practitioner signs up to? As SEO Consultant Ric Rodriguez suggested, \u201cregulating the industry is going to be really difficult.",
         "title": "Regulation in the SEO industry - Impossible or essential?",
@@ -55,9 +50,14 @@
         "description": "The closest example of an SEO rule from Google is its spam policies and content policies \u2013 these can be considered rules, as they involve clear actions taken against non-compliance (e.g. penalties for keyword stuffing, cloaking, or using deceptive practices). However, the documents and resources provided are more accurately described as guidelines, recommendations, or best practices, rather than strict rules in the sense of SEO regulations.",
         "title": "Google SEO Rules & Guidelines for Link Building | Opace",
         "url": "https://opace.agency/blog/google-seo-rules-link-building/"
+      },
+      {
+        "description": "LibGuides: 50-State Surveys of Laws &amp; Regulations: State Statutory &amp; Administrative Codes on the Internet",
+        "title": "State Statutory & Administrative Codes on the Internet - 50-State Surveys of Laws & Regulations - LibGuides at Franklin County Law Library",
+        "url": "https://fclawlib.libguides.com/50statesurveys/statecodesandregs"
       }
     ],
-    "ts": 1773897740.7174733
+    "ts": 1773989733.7642636
   },
   "492bfeca93fe8f7188bfbca8c8b77d1a45c056472906e7a863167750057fb5e7": {
     "items": [
@@ -122,14 +122,14 @@
         "url": "https://synkwise.com/news/texas-assisted-living-compliance/"
       },
       {
-        "description": "Recent updates to the Washington ... operational stability within adult family homes. These new requirements, encapsulated in <strong>WAC 388-76</strong>, are designed to address various scenarios that could impact the smooth operation of these ...",
-        "title": "Adult Family Homes Compliance - Succession Planning - Synkwise",
-        "url": "https://synkwise.com/expert-guides/adult-family-homes-compliance-succession-planning/"
-      },
-      {
         "description": "Learn what <strong>Title 22</strong> of the California Code of Regulations means for assisted living providers, from licensing to resident rights.",
         "title": "Title 22 California Regulations for Assisted Living | What To Know",
         "url": "https://synkwise.com/news/california-code-of-regulations-title-22/"
+      },
+      {
+        "description": "Recent updates to the Washington ... operational stability within adult family homes. These new requirements, encapsulated in <strong>WAC 388-76</strong>, are designed to address various scenarios that could impact the smooth operation of these ...",
+        "title": "Adult Family Homes Compliance - Succession Planning - Synkwise",
+        "url": "https://synkwise.com/expert-guides/adult-family-homes-compliance-succession-planning/"
       },
       {
         "description": "Recent updates to the Washington ... operational stability within adult family homes. These new requirements, encapsulated in <strong>WAC 388-76</strong>, are designed to address various scenarios that could impact the smooth operation of these ...",
@@ -142,7 +142,7 @@
         "url": "https://www.synkwise.com/tag/compliance/"
       }
     ],
-    "ts": 1773895210.3270872
+    "ts": 1773985316.8626425
   },
   "67d5e2e25cc8a4c4f05c56aec66ca6142fb6318a661c8db5148947578e4ec587": {
     "items": [
@@ -189,6 +189,26 @@
     ],
     "ts": 1773883095.7891116
   },
+  "9d14afa4192329b3bbb20e4e5a568ffee3e97408947b84378833e76012dd67ae": {
+    "items": [
+      {
+        "description": "View Captures - Source Url: <strong>https://apps.azsos.gov/public_services/CodeTOC.htm</strong> | View Beta Presentation. Some content may be under embargo.",
+        "title": "Arizona Secretary Of State | Library of Congress",
+        "url": "https://www.loc.gov/item/lcwaN0000076/"
+      },
+      {
+        "description": "Arizona Revised Statutes (Statues made by Legislature): https://www.azleg.gov/arstitle/ <strong>Arizona Administrative Code</strong> (rules made by agencies): https://apps.azsos.gov/public_services/CodeTOC.htm",
+        "title": "r/azpolitics on Reddit: Prop 315 supporters argue it will save money; opponents say it will cost lives",
+        "url": "https://www.reddit.com/r/azpolitics/comments/1g285li/prop_315_supporters_argue_it_will_save_money/"
+      },
+      {
+        "description": "Licensing : <strong>https://apps.azsos.gov/public_services/CodeTOC.htm</strong>#ID9 \u00b7 \u2022 Article 1 R9-10-101 \u2013 118 \u00b7 \u2022 Definitions R9-10-401 \u00b7 \u2022 Supplemental Applications R9-10-402 \u00b7 \u2022 Administration: R9-10-403 \u00b7 \u2022 Quality Management: R9-10-404 \u00b7 \u2022 Contracted Services: R9-10-405 \u00b7",
+        "title": "Arizona Nursing Care Institution Administrators Exam: Study Resources",
+        "url": "https://nciaboard.az.gov/sites/default/files/2023-09/Administrators%20Exam%20Study%20Resources.pdf"
+      }
+    ],
+    "ts": 1773972588.437026
+  },
   "abc0576499331c770d5044a1ca29fa5493e8b439649223c94b6b7ee2f5577682": {
     "items": [
       {
@@ -217,7 +237,7 @@
         "url": "https://www.law.cornell.edu/regulations/nevada"
       }
     ],
-    "ts": 1773870842.2596686
+    "ts": 1773978488.0894613
   },
   "ae6eb52ad3d2d692ed0b3c71e94a834570eb704eeadd1c2bfcaee65030bb1206": {
     "items": [
@@ -237,9 +257,9 @@
         "url": "https://dssmanuals.mo.gov/child-welfare-manual/section-9-chapter-14-federal-regulations/"
       },
       {
-        "description": "Secure .gov websites use HTTPS A lock ( ) or https:// means you\u2019ve safely connected to the .gov website. Share sensitive information only on official, secure websites. ... The Children&#x27;s Bureau provides guidance to states, tribes, child welfare agencies, and more on the complex and varied federal laws as they relate to child welfare. This page provides resources and information about new federal legislation, regulations, and Children&#x27;s Bureau policies.",
-        "title": "Laws & Policies | The Administration for Children and Families",
-        "url": "https://acf.gov/cb/laws-policies"
+        "description": "To receive funds, states must meet federal program rules (e.g., provide certain protections for children in foster care), and must, usually, contribute nonfederal program funds. Compliance is monitored via federal plan approvals, audits, and reviews. The Children&#x27;s Bureau in the U.S. Department of Health and Human Services (HHS) administers most federal child welfare programs. At the state level, administration ...",
+        "title": "Child Welfare: Purposes, Federal Programs, and Funding | Congress.gov | Library of Congress",
+        "url": "https://www.congress.gov/crs-product/IF10590"
       },
       {
         "description": "Code of Federal Regulations - The ... (CFR) is <strong>the official legal print publication containing the codification of the general and permanent rules published in the Federal Register by the departments and agencies of the Federal Government</strong>...",
@@ -247,7 +267,7 @@
         "url": "https://acf.gov/cb/laws-policies/federal-laws/regulatory-actions"
       }
     ],
-    "ts": 1773881059.2360742
+    "ts": 1773992448.304251
   },
   "c3d7e08d374dff36fa270283f54c44ddd346d4319c14cccc0625e243e624e0ff": {
     "items": [
@@ -367,6 +387,6 @@
         "url": "https://azsos.gov/rules/arizona-administrative-register"
       }
     ],
-    "ts": 1773807027.8693461
+    "ts": 1773989737.5976167
   }
 }

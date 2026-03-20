@@ -14,6 +14,7 @@ from html import unescape
 import io
 import json
 import logging
+import math
 import os
 import re
 import time
@@ -739,6 +740,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://apps.azsos.gov/public_services/Title_02/2-03.pdf",
         "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_08/8-03.pdf",
         "https://apps.azsos.gov/public_services/Title_09/9-30.pdf",
         "https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
         "https://apps.azsos.gov/public_services/Title_13/13-01.rtf",
@@ -1564,7 +1566,7 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
             continue
         seen.add(key)
         deduped.append(value)
-    return deduped[:20]
+    return deduped[:24]
 
 
 def _template_admin_urls_for_state(state_code: str) -> List[str]:
@@ -2237,6 +2239,16 @@ def _arizona_official_document_group_key(url: str) -> str:
     return re.sub(r"(?i)\.(?:pdf|rtf)$", "", path).lower()
 
 
+def _arizona_official_document_title_family_key(url: str) -> str:
+    parsed = urlparse(urldefrag(str(url or "").strip()).url)
+    if parsed.netloc.lower() != "apps.azsos.gov":
+        return ""
+    match = re.match(r"(?i)^/public_services/(title_\d+)/", parsed.path or "")
+    if not match:
+        return ""
+    return match.group(1).lower()
+
+
 def _should_prefer_arizona_official_document_url(candidate_url: str, existing_url: str) -> bool:
     candidate_group_key = _arizona_official_document_group_key(candidate_url)
     existing_group_key = _arizona_official_document_group_key(existing_url)
@@ -2406,8 +2418,18 @@ def _build_initial_pending_candidates(
             pending_by_key[key] = (url, int(score))
 
     pending.extend(pending_by_key.values())
-    pending.sort(key=lambda item: item[1], reverse=True)
+    pending.sort(key=_pending_candidate_sort_key)
     return pending
+
+
+def _pending_candidate_sort_key(item: tuple[str, int]) -> tuple[int, int, int, str]:
+    url, score = item
+    return (
+        -int(score),
+        -int(_is_immediate_direct_detail_candidate_url(url)),
+        -_seed_prefetch_priority(url),
+        _url_key(url) or str(url or "").strip().lower(),
+    )
 
 
 def _seed_expansion_backlog_is_ready(seed_expansion_candidates: List[tuple[str, int]], max_fetch: int) -> bool:
@@ -2729,6 +2751,53 @@ def _prioritized_arizona_late_retry_urls(
     return prioritized
 
 
+def _prioritize_arizona_seed_document_urls(seed_urls: List[str], *, limit: int) -> List[str]:
+    sorted_seed_urls = sorted(
+        seed_urls,
+        key=lambda value: (
+            2 if _is_arizona_official_pdf_url(value) else 1 if _is_rtf_candidate_url(value) else 0,
+            _seed_prefetch_priority(value),
+        ),
+        reverse=True,
+    )
+
+    family_buckets: Dict[str, List[str]] = {}
+    family_order: List[str] = []
+    non_family_urls: List[str] = []
+    for seed_url in sorted_seed_urls:
+        family_key = _arizona_official_document_title_family_key(seed_url)
+        if not family_key:
+            non_family_urls.append(seed_url)
+            continue
+        if family_key not in family_buckets:
+            family_buckets[family_key] = []
+            family_order.append(family_key)
+        family_buckets[family_key].append(seed_url)
+
+    prioritized: List[str] = []
+    limit_n = max(1, int(limit))
+    while family_order and len(prioritized) < limit_n:
+        next_family_order: List[str] = []
+        for family_key in family_order:
+            bucket = family_buckets.get(family_key) or []
+            if not bucket:
+                continue
+            prioritized.append(bucket.pop(0))
+            if len(prioritized) >= limit_n:
+                break
+            if bucket:
+                next_family_order.append(family_key)
+        family_order = next_family_order
+
+    if len(prioritized) < limit_n:
+        for seed_url in non_family_urls:
+            prioritized.append(seed_url)
+            if len(prioritized) >= limit_n:
+                break
+
+    return prioritized[:limit_n]
+
+
 def _arizona_late_retry_timeout_s(remaining_state_budget_s: float) -> float:
     remaining_budget = float(remaining_state_budget_s)
     if remaining_budget <= (_AZ_LATE_RETRY_MIN_TIMEOUT_S + 2.0):
@@ -2741,8 +2810,10 @@ def _arizona_late_retry_timeout_s(remaining_state_budget_s: float) -> float:
 
 def _arizona_ranked_fetch_timeout_s(remaining_budget_s: float) -> float:
     remaining_budget = float(remaining_budget_s)
-    if remaining_budget <= 6.0:
+    if remaining_budget <= 0.0:
         return 0.0
+    if remaining_budget <= 6.0:
+        return max(1.0, min(6.0, remaining_budget - 0.25))
     return max(20.0, min(120.0, remaining_budget - 2.0))
 
 
@@ -2796,6 +2867,21 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
                 _RULE_BODY_SIGNAL_RE.search(ar_hay) or _LEGAL_CONTENT_SIGNAL_RE.search(ar_hay)
             ):
                 return True
+
+    if host in {"www.sos.la.gov", "sos.la.gov"} and "/publisheddocuments/" in path.lower() and path.lower().endswith(".pdf"):
+        la_hay = " ".join([title_value, body, url_value])
+        la_section_hits = len(re.findall(r"§\s*\d+[A-Za-z0-9.-]*", la_hay, re.IGNORECASE))
+        if (
+            re.search(r"\btitle\s+\d+\b", la_hay, re.IGNORECASE)
+            and re.search(r"\bpart\s+[A-Za-z0-9.-]+\b", la_hay, re.IGNORECASE)
+            and re.search(r"\bchapter\s+\d+[A-Za-z0-9.-]*\b", la_hay, re.IGNORECASE)
+            and (
+                la_section_hits >= 1
+                or "authority note:" in la_hay.lower()
+                or "historical note:" in la_hay.lower()
+            )
+        ):
+            return True
 
     if host == "texas-sos.appianportalsgov.com" and path.lower() == "/rules-and-meetings":
         interface = str((parse_qs(parsed.query or "").get("interface") or [""])[0]).strip().upper()
@@ -6765,6 +6851,33 @@ def _candidate_louisiana_rule_urls_from_html(*, html: str, page_url: str = "", l
             return
         seen.add(key)
         score = _score_candidate_url(normalized_url)
+        if any(
+            token in signal
+            for token in (
+                "partiichapter1registrarsofvoters",
+                "partiichapter3voterregistrationatdriverslicensefacilities",
+                "partiichapter5voterregistrationatoptionalvoterregistrationagencies",
+                "registrars of voters",
+                "voter registration",
+            )
+        ):
+            score += 5
+        if any(
+            token in signal
+            for token in (
+                "chapter3opportunitytocuredeficiencies",
+                "chapter5electionnighttransmissionofresults",
+                "chapter8votingtechnologyfund",
+                "chapter9recognitionofpoliticalparties",
+                "chapter11emergencyelectiondaypaperballotprocedures",
+                "opportunity to cure deficiencies",
+                "election night transmission of results",
+                "voting technology fund",
+                "recognition of political parties",
+                "emergency election day paper ballot procedures",
+            )
+        ):
+            score -= 4
         if score <= 0:
             return
         ranked.append((score, normalized_url))
@@ -10698,9 +10811,16 @@ async def _agentic_discover_admin_state_blocks(
 
     for state_code in states:
         state_start = time.monotonic()
-        # Keep agentic fallback bounded per state so staged runs keep moving.
-        per_state_budget_s = max(1.0, float(per_state_budget_seconds or 0.0))
-        presearch_budget_deadline = state_start + max(12.0, min(35.0, per_state_budget_s * 0.25))
+        requested_per_state_budget_s = float(per_state_budget_seconds or 0.0)
+        state_budget_is_unbounded = requested_per_state_budget_s <= 0.0
+        # Keep agentic fallback bounded per state so staged runs keep moving, unless
+        # the caller explicitly disables the time limit.
+        per_state_budget_s = math.inf if state_budget_is_unbounded else max(1.0, requested_per_state_budget_s)
+        presearch_budget_deadline = (
+            math.inf
+            if state_budget_is_unbounded
+            else state_start + max(12.0, min(35.0, per_state_budget_s * 0.25))
+        )
         state_name = US_STATES.get(state_code, state_code)
         relaxed_recovery = str(state_code or "").upper() in _RECOVERY_RELAXED_STATES
         query = _agentic_query_for_state(state_code)
@@ -11784,8 +11904,14 @@ async def _agentic_discover_admin_state_blocks(
         if require_substantive_text:
             min_text_chars = max(220, int(min_full_text_chars))
         effective_fetch_concurrency = max(1, int(fetch_concurrency))
-        preloop_budget_deadline = state_start + max(12.0, min(45.0, per_state_budget_s * 0.25))
+        preloop_budget_deadline = (
+            math.inf
+            if state_budget_is_unbounded
+            else state_start + max(12.0, min(45.0, per_state_budget_s * 0.25))
+        )
         if (
+            not state_budget_is_unbounded
+            and
             state_code == "AZ"
             and any(
                 _is_immediate_direct_detail_candidate_url(seed_url) and _is_pdf_candidate_url(seed_url)
@@ -11800,12 +11926,12 @@ async def _agentic_discover_admin_state_blocks(
                 preloop_budget_deadline,
                 state_start + max(30.0, min(90.0, per_state_budget_s - 0.5)),
             )
-        if state_code == "AZ":
+        if state_code == "AZ" and not state_budget_is_unbounded:
             preloop_budget_deadline = max(
                 preloop_budget_deadline,
                 state_start + max(90.0, min(180.0, per_state_budget_s - 0.5)),
             )
-        if state_code == "CA":
+        if state_code == "CA" and not state_budget_is_unbounded:
             preloop_budget_deadline = max(
                 preloop_budget_deadline,
                 state_start + max(45.0, min(70.0, per_state_budget_s - 0.5)),
@@ -11958,7 +12084,7 @@ async def _agentic_discover_admin_state_blocks(
             if state_code == "AZ":
                 _mark_az_emitted_document(
                     doc_url,
-                    source_phase=source_phase or "append_document",
+                    source_phase=source_phase or "pending_candidate",
                     title=section_name,
                     method_value=method_value,
                 )
@@ -12040,14 +12166,10 @@ async def _agentic_discover_admin_state_blocks(
                 break
 
         if state_code == "AZ":
-            prioritized_seed_document_urls = sorted(
+            prioritized_seed_document_urls = _prioritize_arizona_seed_document_urls(
                 prioritized_seed_document_urls,
-                key=lambda value: (
-                    2 if _is_arizona_official_pdf_url(value) else 1 if _is_rtf_candidate_url(value) else 0,
-                    _seed_prefetch_priority(value),
-                ),
-                reverse=True,
-            )[:6]
+                limit=6,
+            )
         else:
             prioritized_seed_document_urls = [
                 *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
@@ -12188,7 +12310,10 @@ async def _agentic_discover_admin_state_blocks(
         prioritized_arizona_seed_rule_urls: List[str] = []
         if state_code == "AZ" and arizona_bootstrap_document_urls:
             seen_arizona_rule_keys: set[str] = set()
-            for rule_url in arizona_bootstrap_document_urls:
+            for rule_url in _prioritize_arizona_seed_document_urls(
+                arizona_bootstrap_document_urls,
+                limit=min(max_fetch * 2, 12),
+            ):
                 rule_key = _url_key(rule_url)
                 if not rule_key or rule_key in seen_arizona_rule_keys:
                     continue
@@ -13507,7 +13632,7 @@ async def _agentic_discover_admin_state_blocks(
             if direct_method_value is None:
                 direct_method_value = getattr(direct_scraped, "method_used", None)
             direct_method_value = getattr(direct_method_value, "value", direct_method_value)
-            await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value)
+            await _append_document_if_rule(document_url, direct_title, direct_text, direct_method_value, source_phase="preseed_direct_detail")
             direct_html = str(getattr(direct_scraped, "html", "") or "")
             if _looks_like_rule_inventory_page(text=direct_text, title=direct_title, url=document_url):
                 document_host = urlparse(document_url).netloc
@@ -13561,7 +13686,7 @@ async def _agentic_discover_admin_state_blocks(
                 method_value = None
                 if fetched_doc is not None:
                     method_value = (getattr(fetched_doc, "extraction_provenance", {}) or {}).get("method")
-                accepted_seed = await _append_document_if_rule(seed_url, fetched_title, fetched_text, method_value)
+                accepted_seed = await _append_document_if_rule(seed_url, fetched_title, fetched_text, method_value, source_phase="seed_fetch")
                 inventory_seed = _looks_like_rule_inventory_page(text=fetched_text, title=fetched_title, url=seed_url)
                 if inventory_seed:
                     for rule_url in _candidate_montana_rule_urls_from_text(
@@ -13600,7 +13725,7 @@ async def _agentic_discover_admin_state_blocks(
                         seed_scrape_provenance = getattr(seed_scrape, "extraction_provenance", None) or {}
                         if isinstance(seed_scrape_provenance, dict):
                             live_method_value = seed_scrape_provenance.get("method")
-                        await _append_document_if_rule(seed_url, seed_scrape_title, seed_scrape_text, live_method_value)
+                        await _append_document_if_rule(seed_url, seed_scrape_title, seed_scrape_text, live_method_value, source_phase="seed_live_scrape")
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=seed_scrape_html or seed_scrape_text,
                             url=seed_url,
@@ -13709,7 +13834,7 @@ async def _agentic_discover_admin_state_blocks(
             if expanded_method_value is None:
                 expanded_method_value = getattr(expanded_scraped, "method_used", None)
             expanded_method_value = getattr(expanded_method_value, "value", expanded_method_value)
-            await _append_document_if_rule(document_url, expanded_title, expanded_text, expanded_method_value)
+            await _append_document_if_rule(document_url, expanded_title, expanded_text, expanded_method_value, source_phase="seed_expansion")
 
         try:
             if "discovered" in locals() and isinstance(discovered, dict):
@@ -13726,7 +13851,7 @@ async def _agentic_discover_admin_state_blocks(
                     doc_title = str(document.get("title") or "").strip()
                     method_used = document.get("method_used")
                     method_value = getattr(method_used, "value", method_used)
-                    if not await _append_document_if_rule(doc_url, doc_title, doc_text, method_value):
+                    if not await _append_document_if_rule(doc_url, doc_title, doc_text, method_value, source_phase="discovered_result"):
                         continue
                     if len(statutes) >= max(1, int(max_fetch_per_state)):
                         break
@@ -14159,7 +14284,14 @@ async def _agentic_discover_admin_state_blocks(
                             continue
                     method_used = getattr(scraped, "method_used", None)
                     method_value = getattr(method_used, "value", method_used) if method_used else None
-                    if not await _append_document_if_rule(url, title, text, method_value):
+                    accepted_pending = await _append_document_if_rule(url, title, text, method_value, source_phase="pending_candidate")
+                    if state_code == "AZ":
+                        _record_az_phase(
+                            "pending_candidate",
+                            url=url,
+                            outcome="success" if accepted_pending else "none",
+                        )
+                    if not accepted_pending:
                         continue
 
                     # Official rule-index pages are useful corpus rows in their own right,
@@ -14218,14 +14350,14 @@ async def _agentic_discover_admin_state_blocks(
                         ):
                             if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + 5):
                                 expanded_urls += 1
-                        pending.sort(key=lambda item: item[1], reverse=True)
+                        pending.sort(key=_pending_candidate_sort_key)
 
                     if len(statutes) >= max_fetch:
                         break
                 except Exception:
                     continue
 
-            pending = sorted(pending, key=lambda item: item[1], reverse=True)
+            pending = sorted(pending, key=_pending_candidate_sort_key)
 
         state_block = {
             "state_code": state_code,
@@ -14481,10 +14613,18 @@ async def scrape_state_admin_rules(
         if effective_max_base_statutes is None and max_rules and int(max_rules) > 0:
             effective_max_base_statutes = int(max_rules)
 
-        delegated_state_laws_timeout_seconds = max(1.0, float(per_state_timeout_seconds or 0.0))
+        requested_per_state_timeout_seconds = float(per_state_timeout_seconds or 0.0)
+        per_state_timeout_is_unbounded = requested_per_state_timeout_seconds <= 0.0
+        delegated_state_laws_timeout_seconds = (
+            0.0 if per_state_timeout_is_unbounded else max(1.0, requested_per_state_timeout_seconds)
+        )
         delegated_base_timeout_seconds = delegated_state_laws_timeout_seconds
         delegated_fallback_timeout_seconds = delegated_state_laws_timeout_seconds
-        agentic_per_state_budget_seconds = max(30.0, delegated_state_laws_timeout_seconds * (2.0 / 3.0))
+        agentic_per_state_budget_seconds = (
+            0.0
+            if per_state_timeout_is_unbounded
+            else max(30.0, delegated_state_laws_timeout_seconds * (2.0 / 3.0))
+        )
         if delegated_state_laws_timeout_seconds > 1.0:
             delegated_base_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
             delegated_fallback_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
@@ -14495,7 +14635,7 @@ async def scrape_state_admin_rules(
         delegated_base_states = [
             state_code for state_code in selected_states if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
         ]
-        if direct_agentic_states and not delegated_base_states:
+        if direct_agentic_states and not delegated_base_states and not per_state_timeout_is_unbounded:
             agentic_per_state_budget_seconds = max(
                 agentic_per_state_budget_seconds,
                 delegated_state_laws_timeout_seconds,
