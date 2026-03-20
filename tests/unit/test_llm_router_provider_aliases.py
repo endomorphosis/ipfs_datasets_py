@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import subprocess
+
 from ipfs_datasets_py import llm_router
 
 
@@ -51,3 +53,25 @@ def test_resolve_provider_uncached_forced_alias_canonicalized(monkeypatch) -> No
 
     assert isinstance(provider, _DummyProvider)
     assert "anthropic" in calls
+
+
+def test_run_cli_command_preserves_prompt_with_quotes_in_template(monkeypatch) -> None:
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = list(cmd)
+        captured["input"] = kwargs.get("input")
+        return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(llm_router.subprocess, "run", fake_run)
+
+    result = llm_router._run_cli_command(
+        "npx --yes @github/copilot -p {prompt}",
+        'He said "notice denied" and then filed a grievance.',
+        label="Copilot CLI",
+    )
+
+    assert result == "ok"
+    assert captured["input"] is None
+    assert captured["cmd"][-2] == "-p"
+    assert captured["cmd"][-1] == 'He said "notice denied" and then filed a grievance.'

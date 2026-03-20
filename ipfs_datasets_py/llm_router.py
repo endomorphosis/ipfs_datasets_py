@@ -1586,8 +1586,11 @@ def _run_cli_command(
             rendered = rendered.replace("{" + str(key) + "}", str(value))
 
     if "{prompt}" in rendered:
-        rendered = rendered.replace("{prompt}", prompt)
-        cmd = shlex.split(rendered)
+        prompt_token = "__IPFS_DATASETS_PY_PROMPT__"
+        while prompt_token in rendered or prompt_token in prompt:
+            prompt_token = f"_{prompt_token}_"
+        rendered = rendered.replace("{prompt}", prompt_token)
+        cmd = [prompt if part == prompt_token else part for part in shlex.split(rendered)]
         input_text: str | None = None
     else:
         cmd = shlex.split(rendered)

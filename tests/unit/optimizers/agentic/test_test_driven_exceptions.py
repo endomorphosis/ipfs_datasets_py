@@ -97,6 +97,40 @@ def test_generate_tests_passes_optimization_method(optimizer, task):
     assert optimizer.llm_router.generate.call_args.kwargs["method"] == OptimizationMethod.TEST_DRIVEN
 
 
+def test_build_test_generation_prompt_prefers_target_symbols(optimizer, tmp_path):
+    phase_manager = tmp_path / "phase_manager.py"
+    inquiries = tmp_path / "inquiries.py"
+    task = OptimizationTask(
+        task_id="task-td-targeted-tests",
+        target_files=[phase_manager, inquiries],
+        description="Optimize question flow",
+        priority=50,
+        constraints={
+            "target_symbols": {
+                str(phase_manager): ["_get_intake_action"],
+                str(inquiries): ["get_next", "merge_legal_questions"],
+            }
+        },
+    )
+    analysis = {
+        "functions": [
+            {"name": "_get_intake_action", "file": str(phase_manager), "lineno": 10},
+            {"name": "advance_to_phase", "file": str(phase_manager), "lineno": 20},
+            {"name": "get_next", "file": str(inquiries), "lineno": 30},
+            {"name": "merge_legal_questions", "file": str(inquiries), "lineno": 40},
+            {"name": "generate", "file": str(inquiries), "lineno": 50},
+        ]
+    }
+
+    prompt = optimizer._build_test_generation_prompt(task, analysis)
+
+    assert "_get_intake_action" in prompt
+    assert "get_next" in prompt
+    assert "merge_legal_questions" in prompt
+    assert "advance_to_phase" not in prompt
+    assert "generate in" not in prompt
+
+
 def test_generate_tests_propagates_base_exception(optimizer, task):
     optimizer.llm_router.generate.side_effect = KeyboardInterrupt("stop")
     with pytest.raises(KeyboardInterrupt):
@@ -166,6 +200,123 @@ def test_generate_optimizations_keeps_raw_preview_for_symbol_indentation_error(t
             "raw_response_preview": "    def target_method(self):\nreturn 'patched'\n",
         }
     ]
+
+
+def test_generate_optimizations_falls_back_when_action_policy_json_is_invalid(tmp_path):
+    router = Mock()
+    router.generate.return_value = "not valid json"
+    optimizer = TestDrivenOptimizer(agent_id="td-action-fallback", llm_router=router)
+
+    target = tmp_path / "phase_manager.py"
+    target.write_text(
+        "from typing import Dict, Any\n\n"
+        "_INTAKE_GAPS_THRESHOLD = 3\n"
+        "_DENOISING_MAX_ITERATIONS = 20\n\n"
+        "class ComplaintPhase:\n"
+        "    INTAKE = 'intake'\n\n"
+        "class PhaseManager:\n"
+        "    def __init__(self):\n"
+        "        self.phase_data = {ComplaintPhase.INTAKE: {}}\n"
+        "        self.iteration_count = 0\n"
+        "    def get_intake_readiness(self):\n"
+        "        return {'score': 0.5, 'blockers': []}\n"
+        "    def _get_intake_action(self) -> Dict[str, Any]:\n"
+        "        return {'action': 'continue_denoising'}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-action-fallback",
+        target_files=[target],
+        description="Optimize action policy",
+        constraints={"target_symbols": {str(target.resolve()): ["_get_intake_action"]}},
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "build_knowledge_graph" in updated
+    assert "complete_intake" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_falls_back_when_inquiries_policy_json_is_invalid(tmp_path):
+    router = Mock()
+    router.generate.return_value = "not valid json"
+    optimizer = TestDrivenOptimizer(agent_id="td-inquiries-fallback", llm_router=router)
+
+    target = tmp_path / "inquiries.py"
+    target.write_text(
+        "from typing import Any, Dict, List\n\n"
+        "class Inquiries:\n"
+        "    def _state_inquiries(self):\n"
+        "        return []\n"
+        "    def _index_for(self, inquiries):\n"
+        "        return {}\n"
+        "    def _build_gap_context(self):\n"
+        "        return {}\n"
+        "    def _normalize_question(self, text):\n"
+        "        return text.lower()\n"
+        "    def _priority_rank(self, value):\n"
+        "        return 0\n"
+        "    def get_next(self):\n"
+        "        return None\n"
+        "    def merge_legal_questions(self, questions: List[Dict[str, Any]]) -> int:\n"
+        "        return 0\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-inquiries-fallback",
+        target_files=[target],
+        description="Optimize inquiries policy",
+        constraints={"target_symbols": {str(target.resolve()): ["get_next", "merge_legal_questions"]}},
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "dependency_gap_targeted" in updated
+    assert "legal_question" in updated
+    ast.parse(updated)
+
+
+def test_replace_symbols_in_source_preserves_tab_indentation(tmp_path):
+    router = Mock()
+    router.generate.return_value = "not valid json"
+    optimizer = TestDrivenOptimizer(agent_id="td-tabs", llm_router=router)
+
+    target = tmp_path / "inquiries.py"
+    target.write_text(
+        "from typing import Any, Dict, List\n\n"
+        "class Inquiries:\n"
+        "\tdef _state_inquiries(self):\n"
+        "\t\treturn []\n"
+        "\tdef _index_for(self, inquiries):\n"
+        "\t\treturn {}\n"
+        "\tdef _build_gap_context(self):\n"
+        "\t\treturn {}\n"
+        "\tdef _normalize_question(self, text):\n"
+        "\t\treturn text.lower()\n"
+        "\tdef _priority_rank(self, value):\n"
+        "\t\treturn 0\n"
+        "\tdef get_next(self):\n"
+        "\t\treturn None\n"
+        "\tdef merge_legal_questions(self, questions: List[Dict[str, Any]]) -> int:\n"
+        "\t\treturn 0\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-tabs",
+        target_files=[target],
+        description="Optimize inquiries policy",
+        constraints={"target_symbols": {str(target.resolve()): ["get_next", "merge_legal_questions"]}},
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "\tdef get_next(self):" in updated
+    assert "\tdef merge_legal_questions(self, questions: List[Dict[str, Any]]) -> int:" in updated
+    ast.parse(updated)
 
 
 def test_generate_optimizations_propagates_base_exception(optimizer, task):
@@ -447,16 +598,15 @@ def test_action_policy_renderer_uses_plain_default_gap_threshold_when_not_looser
 def test_generate_optimizations_records_raw_symbol_response_on_error(tmp_path):
     router = Mock()
     router.generate.return_value = """
-def _get_intake_action(self) -> Dict[str, Any]:
+def target_method(self):
     return {"action": "broken"
 """
     optimizer = TestDrivenOptimizer(agent_id="td-symbols-error", llm_router=router)
 
-    target = tmp_path / "phase_manager.py"
+    target = tmp_path / "generic_module.py"
     target.write_text(
-        "from typing import Dict, Any\n\n"
-        "class PhaseManager:\n"
-        "    def _get_intake_action(self) -> Dict[str, Any]:\n"
+        "class Example:\n"
+        "    def target_method(self):\n"
         "        return {'action': 'continue_denoising'}\n",
         encoding="utf-8",
     )
@@ -466,7 +616,7 @@ def _get_intake_action(self) -> Dict[str, Any]:
         description="Optimize one symbol",
         constraints={
             "target_symbols": {
-                str(target.resolve()): ["_get_intake_action"],
+                str(target.resolve()): ["target_method"],
             }
         },
     )
@@ -476,7 +626,7 @@ def _get_intake_action(self) -> Dict[str, Any]:
     assert result == {}
     assert optimizer._last_generation_diagnostics[0]["mode"] == "symbol_level"
     assert "raw_response_preview" in optimizer._last_generation_diagnostics[0]
-    assert "_get_intake_action" in optimizer._last_generation_diagnostics[0]["raw_response_preview"]
+    assert "target_method" in optimizer._last_generation_diagnostics[0]["raw_response_preview"]
 
 
 def test_generate_optimizations_can_use_action_policy_mode(tmp_path):

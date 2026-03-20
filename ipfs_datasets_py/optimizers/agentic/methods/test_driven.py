@@ -603,6 +603,26 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
+        if self._use_inquiries_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_inquiries_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=700,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            replacement_sources = self._render_inquiries_methods_from_policy(
+                self._normalize_inquiries_policy_response(response=response, file_path=target_file)
+            )
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
 
         symbol_blocks = self._extract_target_symbol_blocks(current_code, target_symbols)
         prompt = self._build_symbol_optimization_prompt(
@@ -634,6 +654,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
 
     def _use_action_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "phase_manager.py" and target_symbols == ["_get_intake_action"]
+
+    def _use_inquiries_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "inquiries.py" and target_symbols == ["get_next", "merge_legal_questions"]
 
     def _use_answer_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "denoiser.py" and target_symbols == ["process_answer"]
@@ -902,9 +925,10 @@ class TestDrivenOptimizer(AgenticOptimizer):
         analysis: Dict[str, Any]
     ) -> str:
         """Build prompt for test generation."""
+        functions_to_test = self._test_generation_targets(task, analysis)
         functions = '\n'.join([
             f"- {f['name']} in {f['file']}"
-            for f in analysis.get('functions', [])
+            for f in functions_to_test
         ])
         
         return f"""Generate comprehensive pytest tests for the following code:
@@ -922,6 +946,49 @@ Please generate test cases that:
 
 Return only the test code, no explanations.
 """
+
+    def _test_generation_targets(
+        self,
+        task: OptimizationTask,
+        analysis: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        constraints = task.constraints or {}
+        target_map = constraints.get("target_symbols")
+        functions = list(analysis.get("functions", []) or [])
+        if not isinstance(target_map, dict):
+            return functions
+
+        selected: List[Dict[str, Any]] = []
+        allowed: Dict[str, set[str]] = {}
+        for raw_path, raw_symbols in target_map.items():
+            if not isinstance(raw_symbols, list):
+                continue
+            symbols = {str(item).strip() for item in raw_symbols if str(item).strip()}
+            if not symbols:
+                continue
+            path_key = str(raw_path)
+            allowed[path_key] = symbols
+            try:
+                resolved = str(Path(path_key).resolve())
+                allowed[resolved] = symbols
+            except Exception:
+                pass
+
+        if not allowed:
+            return functions
+
+        for item in functions:
+            file_key = str(item.get("file") or "")
+            symbols = allowed.get(file_key)
+            if symbols is None:
+                try:
+                    symbols = allowed.get(str(Path(file_key).resolve()))
+                except Exception:
+                    symbols = None
+            if symbols and str(item.get("name") or "") in symbols:
+                selected.append(item)
+
+        return selected or functions
     
     def _build_optimization_prompt(
         self,
@@ -1097,6 +1164,46 @@ Behavioral guardrails:
 - Do not remove current evidence, impact, remedy, and timeline graph updates
 - Do not add imports or reference helpers that do not already exist on the class
 - Prefer enrichment from the existing answer text over speculative follow-up generation
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
+    def _build_inquiries_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Improve inquiry ordering and legal-question merging without adding duplicate questions."
+
+        return f"""Return a compact JSON object describing how inquiries.get_next and inquiries.merge_legal_questions should behave.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "prioritize_dependency_gaps_first": true or false
+- "preserve_legal_source_on_merge": true or false
+- "dedupe_alternative_questions": true or false
+- "normalize_priority_labels": true or false
+
+Behavioral guardrails:
+- Preserve the method signatures and return types
+- Keep unanswered inquiries ahead of answered ones
+- Preserve support_gap_targeted and dependency_gap_targeted handling
+- Preserve merging of claim_type, element, provenance, and alternative_questions
+- Do not add imports or rely on helpers not already used in inquiries.py
 
 Do not include explanations, markdown, comments, or extra keys.
 """
@@ -1317,8 +1424,8 @@ Do not include explanations, markdown, comments, or extra keys.
 
         try:
             data = json.loads(text)
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"Action policy response for {file_path} is not valid JSON: {exc}") from exc
+        except json.JSONDecodeError:
+            data = {}
 
         allowed_keys = {
             "remaining_gaps_threshold",
@@ -1332,7 +1439,7 @@ Do not include explanations, markdown, comments, or extra keys.
             raise ValueError(f"Action policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}")
 
         try:
-            threshold = int(data["remaining_gaps_threshold"])
+            threshold = int(data.get("remaining_gaps_threshold", 3))
         except Exception as exc:
             raise ValueError(f"Action policy response for {file_path} must include integer remaining_gaps_threshold") from exc
         if threshold < 0 or threshold > 5:
@@ -1346,6 +1453,34 @@ Do not include explanations, markdown, comments, or extra keys.
             "prefer_current_gaps_key": bool(data.get("prefer_current_gaps_key", True)),
         }
         return normalized
+
+    def _normalize_inquiries_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            text = ""
+
+        try:
+            data = json.loads(text) if text else {}
+        except json.JSONDecodeError:
+            data = {}
+
+        return {
+            "prioritize_dependency_gaps_first": bool(data.get("prioritize_dependency_gaps_first", True)),
+            "preserve_legal_source_on_merge": bool(data.get("preserve_legal_source_on_merge", True)),
+            "dedupe_alternative_questions": bool(data.get("dedupe_alternative_questions", True)),
+            "normalize_priority_labels": bool(data.get("normalize_priority_labels", True)),
+        }
 
     def _normalize_answer_policy_response(
         self,
@@ -1621,6 +1756,149 @@ Do not include explanations, markdown, comments, or extra keys.
             "        'intake_blockers': readiness['blockers'],\n"
             "    }\n"
         )
+
+    def _render_inquiries_methods_from_policy(self, policy: Dict[str, Any]) -> Dict[str, str]:
+        dependency_first = bool(policy.get("prioritize_dependency_gaps_first", True))
+        preserve_legal_source = bool(policy.get("preserve_legal_source_on_merge", True))
+        dedupe_alternative_questions = bool(policy.get("dedupe_alternative_questions", True))
+        normalize_priority_labels = bool(policy.get("normalize_priority_labels", True))
+
+        if dependency_first:
+            sort_key = (
+                "        unanswered.sort(\n"
+                "            key=lambda pair: (\n"
+                "                0 if pair[0].get(\"dependency_gap_targeted\") else 1,\n"
+                "                0 if pair[0].get(\"support_gap_targeted\") else 1,\n"
+                "                self._priority_rank(pair[0].get(\"priority\")),\n"
+                "                pair[1],\n"
+                "            )\n"
+                "        )\n"
+            )
+        else:
+            sort_key = (
+                "        unanswered.sort(\n"
+                "            key=lambda pair: (\n"
+                "                0 if pair[0].get(\"support_gap_targeted\") else 1,\n"
+                "                0 if pair[0].get(\"dependency_gap_targeted\") else 1,\n"
+                "                self._priority_rank(pair[0].get(\"priority\")),\n"
+                "                pair[1],\n"
+                "            )\n"
+                "        )\n"
+            )
+
+        source_update = (
+            "            if not existing.get(\"source\") or str(existing.get(\"source\")).strip().lower() == \"legal_question\":\n"
+            "                existing[\"source\"] = \"legal_question\"\n"
+            if preserve_legal_source
+            else "            existing[\"source\"] = \"legal_question\"\n"
+        )
+        alt_question_block = (
+            "            if question_text != existing.get(\"question\"):\n"
+            "                alternatives = existing.setdefault(\"alternative_questions\", [])\n"
+            "                if all(self._normalize_question(candidate) != normalized for candidate in alternatives):\n"
+            "                    alternatives.append(question_text)\n"
+            if dedupe_alternative_questions
+            else
+            "            if question_text != existing.get(\"question\"):\n"
+            "                existing.setdefault(\"alternative_questions\", []).append(question_text)\n"
+        )
+        priority_value = (
+            "        priority_value = str(item.get(\"priority\", \"Medium\") or \"Medium\").strip().title()\n"
+            if normalize_priority_labels
+            else
+            "        priority_value = item.get(\"priority\", \"Medium\")\n"
+        )
+        priority_merge = (
+            "                existing[\"priority\"] = str(item.get(\"priority\") or existing.get(\"priority\") or \"Medium\").strip().title()\n"
+            if normalize_priority_labels
+            else
+            "                existing[\"priority\"] = item.get(\"priority\")\n"
+        )
+
+        return {
+            "get_next": (
+                "def get_next(self):\n"
+                "    inquiries = self._state_inquiries()\n"
+                "    if not inquiries:\n"
+                "        return None\n"
+                "    unanswered = [\n"
+                "        (item, index)\n"
+                "        for index, item in enumerate(inquiries)\n"
+                "        if not item.get(\"answer\")\n"
+                "    ]\n"
+                "    if not unanswered:\n"
+                "        return None\n"
+                f"{sort_key}"
+                "    return unanswered[0][0]\n"
+            ),
+            "merge_legal_questions": (
+                "def merge_legal_questions(self, questions: List[Dict[str, Any]]) -> int:\n"
+                "    inquiries = self._state_inquiries()\n"
+                "    if inquiries is None:\n"
+                "        return 0\n"
+                "\n"
+                "    index = self._index_for(inquiries)\n"
+                "    gap_context = self._build_gap_context()\n"
+                "    priority_terms = [\n"
+                "        str(term).strip().lower()\n"
+                "        for term in (gap_context.get(\"priority_terms\") or [])\n"
+                "        if str(term).strip()\n"
+                "    ]\n"
+                "\n"
+                "    merged = 0\n"
+                "    for item in questions or []:\n"
+                "        if not isinstance(item, dict):\n"
+                "            continue\n"
+                "        question_text = str(item.get(\"question\") or \"\").strip()\n"
+                "        if not question_text:\n"
+                "            continue\n"
+                "\n"
+                "        normalized = self._normalize_question(question_text)\n"
+                "        dependency_gap_targeted = any(term in question_text.lower() for term in priority_terms)\n"
+                "        existing = index.get(normalized)\n"
+                "        if existing is not None:\n"
+                "            existing_priority = self._priority_rank(existing.get(\"priority\"))\n"
+                "            incoming_priority = self._priority_rank(item.get(\"priority\"))\n"
+                "            if incoming_priority < existing_priority:\n"
+                f"{priority_merge}"
+                "            existing[\"support_gap_targeted\"] = bool(\n"
+                "                existing.get(\"support_gap_targeted\") or item.get(\"support_gap_targeted\")\n"
+                "            )\n"
+                "            existing[\"dependency_gap_targeted\"] = bool(\n"
+                "                existing.get(\"dependency_gap_targeted\") or dependency_gap_targeted\n"
+                "            )\n"
+                f"{source_update}"
+                "            if item.get(\"claim_type\"):\n"
+                "                existing[\"claim_type\"] = item.get(\"claim_type\")\n"
+                "            if item.get(\"element\"):\n"
+                "                existing[\"element\"] = item.get(\"element\")\n"
+                "            if item.get(\"provenance\"):\n"
+                "                existing[\"provenance\"] = dict(item.get(\"provenance\") or {})\n"
+                f"{alt_question_block}"
+                "            merged += 1\n"
+                "            continue\n"
+                "\n"
+                f"{priority_value}"
+                "        inquiry = {\n"
+                "            \"question\": question_text,\n"
+                "            \"alternative_questions\": list(item.get(\"alternative_questions\") or []),\n"
+                "            \"answer\": item.get(\"answer\"),\n"
+                "            \"priority\": priority_value,\n"
+                "            \"support_gap_targeted\": bool(item.get(\"support_gap_targeted\", False)),\n"
+                "            \"dependency_gap_targeted\": dependency_gap_targeted,\n"
+                "            \"source\": \"legal_question\",\n"
+                "            \"claim_type\": item.get(\"claim_type\"),\n"
+                "            \"element\": item.get(\"element\"),\n"
+                "            \"provenance\": dict(item.get(\"provenance\") or {}),\n"
+                "        }\n"
+                "        inquiries.append(inquiry)\n"
+                "        index[normalized] = inquiry\n"
+                "        merged += 1\n"
+                "\n"
+                "    self._index_signature = (id(inquiries), len(inquiries))\n"
+                "    return merged\n"
+            ),
+        }
 
     def _render_process_answer_from_policy(self, policy: Dict[str, Any]) -> str:
         timeline_types = sorted(policy["timeline_enrichment_types"])
@@ -2079,13 +2357,29 @@ Do not include explanations, markdown, comments, or extra keys.
         lines = original_code.splitlines(keepends=True)
         replacements: List[tuple[int, int, str]] = []
 
+        def _indent_prefix(start_line: int) -> str:
+            if 0 <= start_line < len(lines):
+                line = lines[start_line]
+                match = re.match(r"[ \t]*", line)
+                if match:
+                    return match.group(0)
+            return ""
+
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in target_symbols:
                 snippet = replacement_sources.get(node.name)
                 if not snippet:
                     continue
-                indent = " " * node.col_offset
-                replacement = textwrap.indent(textwrap.dedent(snippet).rstrip() + "\n", indent)
+                indent = _indent_prefix(node.lineno - 1) or (" " * node.col_offset)
+                dedented = textwrap.dedent(snippet).rstrip() + "\n"
+                body_lines = dedented.splitlines(keepends=True)
+                replacement_parts: List[str] = []
+                for index, body_line in enumerate(body_lines):
+                    if body_line.strip():
+                        replacement_parts.append(indent + body_line)
+                    else:
+                        replacement_parts.append(body_line)
+                replacement = "".join(replacement_parts)
                 replacements.append((node.lineno - 1, node.end_lineno, replacement))
 
         if not replacements:
