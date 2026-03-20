@@ -2241,6 +2241,8 @@ def run_v2_pipeline_with_defaults(
     enable_kg: bool = True,
     enable_prover: bool = True,
     prover_backend_id: str = "mock_smt",
+    theorem_export_metadata: Optional[Dict[str, Any]] = None,
+    claim_support_temporal_handoff: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Run V2 pipeline using concrete adapters from existing reasoner modules."""
     optimizer = DefaultOptimizerHookV2() if enable_optimizer else None
@@ -2252,4 +2254,6 @@ def run_v2_pipeline_with_defaults(
         optimizer_hook=optimizer,
         kg_hook=kg,
         prover_hook=prover,
+        theorem_export_metadata=theorem_export_metadata,
+        claim_support_temporal_handoff=claim_support_temporal_handoff,
     )
