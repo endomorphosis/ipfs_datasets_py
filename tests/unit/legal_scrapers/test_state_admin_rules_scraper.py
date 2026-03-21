@@ -196,6 +196,31 @@ def test_indiana_curated_seeds_focus_on_live_iar_hosts() -> None:
     assert all("legislature.in.gov" not in url.lower() for url in in_urls)
 
 
+def test_url_allowed_for_state_blocks_off_topic_arizona_secretary_pages() -> None:
+    az_allowed_hosts = _allowed_discovery_hosts_for_state("AZ", "Arizona")
+
+    assert _url_allowed_for_state(
+        "https://azsos.gov/rules/arizona-administrative-code",
+        az_allowed_hosts,
+    ) is True
+    assert _url_allowed_for_state(
+        "https://apps.azsos.gov/public_services/Title_17/17-04.pdf",
+        az_allowed_hosts,
+    ) is True
+    assert _url_allowed_for_state(
+        "https://azsos.gov/business/partnerships",
+        az_allowed_hosts,
+    ) is False
+    assert _url_allowed_for_state(
+        "https://azsos.gov/elections/about-elections/information-about-political-parties",
+        az_allowed_hosts,
+    ) is False
+    assert _url_allowed_for_state(
+        "https://apps.azsos.gov/administrative_rules/rules_publication_library/",
+        az_allowed_hosts,
+    ) is False
+
+
 def test_vermont_curated_seeds_drop_blocked_lexis_hosts() -> None:
     vt_urls = scraper_module._extract_seed_urls_for_state("VT", "Vermont")
     vt_allowed_hosts = _allowed_discovery_hosts_for_state("VT", "Vermont")

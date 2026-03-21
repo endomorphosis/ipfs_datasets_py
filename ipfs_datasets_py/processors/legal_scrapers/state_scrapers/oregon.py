@@ -11,6 +11,7 @@ builds section-level records with rich structure, including:
 
 from __future__ import annotations
 
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import json
 import os
 import re
@@ -27,6 +28,11 @@ try:
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
+
+try:
+    import requests
+except ImportError:  # pragma: no cover - requests should normally be available
+    requests = None
 
 ORS_LINK_RE = re.compile(r"ors(\d{3}[a-z]?)\.html$", re.IGNORECASE)
 
@@ -153,11 +159,72 @@ class OregonScraper(BaseStateScraper):
                 "type": "Code",
             },
             {
+                "name": "Oregon Rules of Civil Procedure",
+                "url": ORCP_PRIMARY_URL,
+                "type": "CourtRule",
+            },
+            {
+                "name": "Oregon Rules of Criminal Procedure",
+                "url": f"{self.get_base_url()}/bills_laws/ors/ors131.html",
+                "type": "CourtRule",
+            },
+            {
+                "name": "Oregon Local Court Rules",
+                "url": LOCAL_RULES_INDEX_URL,
+                "type": "CourtRule",
+            },
+            {
                 "name": "Oregon Administrative Rules",
                 "url": OregonAdministrativeRulesScraper.seed_chapter_url(),
                 "type": "Regulation",
             },
         ]
+
+    async def _fetch_rule_page_html_with_direct_fallback(
+        self,
+        url: str,
+        *,
+        expected_terms: Sequence[str],
+        timeout_seconds: int = 90,
+    ) -> str:
+        payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+        html = payload.decode("utf-8", errors="replace") if payload else ""
+        lowered_html = html.lower()
+        normalized_terms = [str(term or "").strip().lower() for term in expected_terms if str(term or "").strip()]
+        if lowered_html and all(term in lowered_html for term in normalized_terms):
+            return html
+
+        if requests is None:
+            return html
+
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                url,
+                timeout=timeout_seconds,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+        except Exception as exc:
+            self._record_fetch_event(provider="direct", success=False, error=str(exc))
+            return html
+
+        if response.status_code != 200 or not response.text:
+            self._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+            return html
+
+        direct_html = response.text
+        direct_lowered = direct_html.lower()
+        if normalized_terms and not all(term in direct_lowered for term in normalized_terms):
+            self._record_fetch_event(provider="direct", success=False, error="missing_expected_terms")
+            return html
+
+        self._record_fetch_event(provider="direct", success=True)
+        await self._store_page_bytes_in_ipfs_cache(
+            url=url,
+            payload=response.content,
+            provider="direct",
+        )
+        return direct_html
 
     async def _discover_other_rules_entries(self, title_terms: Sequence[str]) -> List[Dict[str, str]]:
         if not title_terms:
@@ -377,20 +444,57 @@ class OregonScraper(BaseStateScraper):
         return statutes
 
     async def _scrape_civil_procedure_rules(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
-        candidate_urls = [code_url, ORCP_PRIMARY_URL, ORCP_EXPANDED_URL]
+        statutes: List[NormalizedStatute] = []
+        primary_candidates = _dedupe_keep_order([code_url, ORCP_PRIMARY_URL, ORCP_EXPANDED_URL])
+        for candidate in primary_candidates:
+            html = ""
+            if requests is not None:
+                try:
+                    response = requests.get(
+                        candidate,
+                        timeout=90,
+                        headers={"User-Agent": "Mozilla/5.0"},
+                    )
+                except Exception as exc:
+                    self._record_fetch_event(provider="direct", success=False, error=str(exc))
+                else:
+                    if response.status_code == 200 and response.text:
+                        html = response.text
+                        self._record_fetch_event(provider="direct", success=True)
+                        await self._store_page_bytes_in_ipfs_cache(
+                            url=candidate,
+                            payload=response.content,
+                            provider="direct",
+                        )
+                    else:
+                        self._record_fetch_event(provider="direct", success=False, error=f"http {response.status_code}")
+
+            if not html:
+                html = await self._fetch_rule_page_html_with_direct_fallback(
+                    candidate,
+                    expected_terms=["rules of civil procedure"],
+                    timeout_seconds=90,
+                )
+            if html:
+                extracted = self._extract_orcp_rules_from_html(html, candidate, code_name)
+                if extracted:
+                    statutes.extend(extracted)
+        if statutes:
+            return self._finalize_rule_statutes(
+                statutes,
+                code_name=code_name,
+                citation_prefix="ORCP",
+                legal_area="civil_procedure",
+            )
+
+        candidate_urls = list(primary_candidates)
         discovered = await self._discover_other_rules_entries(["civil procedure", "orcp"])
         candidate_urls.extend(row["url"] for row in discovered)
         candidate_urls = _dedupe_keep_order(candidate_urls)
 
-        statutes: List[NormalizedStatute] = []
         for candidate in candidate_urls:
             parsed = await self._generic_scrape(code_name, candidate, "ORCP", max_sections=700)
             statutes.extend(parsed)
-
-            page_bytes = await self._fetch_page_content_with_archival_fallback(candidate, timeout_seconds=90)
-            if page_bytes:
-                html = page_bytes.decode("utf-8", errors="replace")
-                statutes.extend(self._extract_orcp_rules_from_html(html, candidate, code_name))
 
         if not statutes:
             statutes = await self._playwright_scrape(

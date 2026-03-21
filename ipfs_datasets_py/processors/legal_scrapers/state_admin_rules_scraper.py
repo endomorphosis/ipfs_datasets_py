@@ -1470,7 +1470,34 @@ def _url_allowed_for_state(url: str, allowed_hosts: set[str]) -> bool:
     host = urlparse(value).netloc.lower().strip(".")
     if not host:
         return False
+    if not _is_allowed_arizona_rule_candidate_url(value):
+        return False
     return _host_matches_allowed(host, allowed_hosts)
+
+
+def _is_allowed_arizona_rule_candidate_url(url: str) -> bool:
+    value = str(url or "").strip()
+    if not value:
+        return False
+    parsed = urlparse(value)
+    host = parsed.netloc.lower().strip(".")
+    path = parsed.path or ""
+    normalized_path = path.rstrip("/") or "/"
+
+    if host == "apps.azsos.gov":
+        if _AZ_OFFICIAL_DOCUMENT_PATH_RE.search(path):
+            return True
+        if normalized_path.lower() in {
+            "/public_services/codetoc.htm",
+            "/public_services/index",
+        }:
+            return True
+        return False
+
+    if host in {"azsos.gov", "www.azsos.gov"}:
+        return normalized_path.lower().startswith("/rules")
+
+    return True
 
 
 def _agentic_query_for_state(state_code: str) -> str:
