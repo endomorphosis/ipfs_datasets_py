@@ -790,6 +790,114 @@ def test_extract_north_dakota_rule_links_and_rule_page() -> None:
     assert "district court" in statute.full_text
 
 
+def test_extract_minnesota_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <div class="rule_head"><a href="/court_rules/cp/id/1/">Rule 1.</a><span class="headnote"> Scope of Rules</span></div>
+      <div class="rule_head"><a href="/court_rules/cp/id/5A/">Rule 5A.</a><span class="headnote"> Notice of Constitutional Challenge to a Statute</span></div>
+      <div class="rule_head"><a href="/court_rules/cr/id/1/">Rule 1.</a><span class="headnote"> Scope and Purpose of the Rules</span></div>
+    </body></html>
+    """
+
+    links = procedure_module._extract_minnesota_rule_links(
+        list_html,
+        page_url="https://www.revisor.mn.gov/court_rules/rule/cp-toh",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Minn. R. Civ. P.",
+    )
+
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "",
+            "url": "https://www.revisor.mn.gov/court_rules/cp/id/1/",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Minn. R. Civ. P.",
+        },
+        {
+            "section_number": "5A",
+            "section_name": "",
+            "url": "https://www.revisor.mn.gov/court_rules/cp/id/5A/",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Minn. R. Civ. P.",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <h1>CIVIL PROCEDURE</h1>
+      <h3>Rule 1. Scope of Rules</h3>
+      <p>These rules govern the procedure in the district courts of the State of Minnesota in all suits of a civil nature.</p>
+      <p>(Amended effective January 1, 1997; amended effective July 1, 2013.)</p>
+      <h3>Advisory Committee Comment - 1996 Amendment</h3>
+      <p>This should not be included.</p>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_minnesota_rule_from_html(
+        rule_html,
+        rule_url="https://www.revisor.mn.gov/court_rules/cp/id/1/",
+        title_name="Minnesota Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Minn. R. Civ. P.",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "Scope of Rules"
+    assert statute.official_cite == "Minn. R. Civ. P. 1"
+    assert statute.structured_data["effective_date"] == "July 1, 2013"
+    assert "district courts of the State of Minnesota" in statute.full_text
+    assert "should not be included" not in statute.full_text
+
+
+def test_extract_iowa_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            1,
+            """
+            July 2023 CIVIL PROCEDURE Ch 1, p.i
+            CHAPTER 1 RULES OF CIVIL PROCEDURE
+            Rule 1.101 Applicability; statutes affected
+            Rule 1.201 Real party in interest
+            """,
+        ),
+        (
+            11,
+            """
+            July 2023 CIVIL PROCEDURE Ch 1, p.1
+            CHAPTER 1 RULES OF CIVIL PROCEDURE DIVISION I OPERATION OF RULES
+            Rule 1.101 Applicability; statutes affected. The rules in this chapter shall govern the practice and procedure in all courts of the state.
+            [Report 1943; November 9, 2001, effective February 15, 2002]
+            Rule 1.201 Real party in interest. Every action must be prosecuted in the name of the real party in interest.
+            [Report 1943; October 31, 1997, effective January 24, 1998; November 9, 2001, effective February 15, 2002]
+            """,
+        ),
+    ]
+
+    statutes = procedure_module._extract_iowa_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.legis.iowa.gov/docs/ACO/CR/LINC/02-27-2026.chapter.1.pdf",
+        title_name="Iowa Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Iowa R. Civ. P.",
+        first_rule_number="1.101",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1.101"
+    assert statutes[0].section_name == "Applicability; statutes affected"
+    assert statutes[0].official_cite == "Iowa R. Civ. P. 1.101"
+    assert statutes[0].structured_data["effective_date"] == "February 15, 2002"
+    assert statutes[0].structured_data["page_start"] == 11
+    assert "practice and procedure in all courts of the state" in statutes[0].full_text
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -2988,6 +3096,186 @@ async def test_scrape_state_procedure_rules_adds_north_dakota_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["ND"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["ND"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_minnesota_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "MN",
+                    "state_name": "Minnesota",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "MN": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_mn_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "MN",
+                    "state_name": "Minnesota",
+                    "statute_id": "Minn. R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules",
+                    "full_text": "Rule 1. Scope of Rules. These rules govern the procedure in the district courts of the State of Minnesota." + (" x" * 120),
+                    "source_url": "https://www.revisor.mn.gov/court_rules/cp/id/1/#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "MN-cp-1",
+                            "name": "Scope of Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules",
+                            "text": "Rule 1. Scope of Rules. These rules govern the procedure in the district courts of the State of Minnesota." + (" x" * 120),
+                            "sourceUrl": "https://www.revisor.mn.gov/court_rules/cp/id/1/#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_minnesota_court_rules_supplement",
+        _fake_mn_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["MN"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["MN"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["MN"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_iowa_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "IA",
+                    "state_name": "Iowa",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "IA": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_ia_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "IA",
+                    "state_name": "Iowa",
+                    "statute_id": "Iowa R. Civ. P. 1.101",
+                    "section_number": "1.101",
+                    "section_name": "Applicability; statutes affected",
+                    "full_text": "Rule 1.101 Applicability; statutes affected. The rules in this chapter shall govern the practice and procedure in all courts of the state." + (" x" * 120),
+                    "source_url": "https://www.legis.iowa.gov/docs/ACO/CR/LINC/02-27-2026.chapter.1.pdf#rule-1.101",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "IA-civ-1.101",
+                            "name": "Applicability; statutes affected",
+                            "sectionNumber": "1.101",
+                            "sectionName": "Applicability; statutes affected",
+                            "text": "Rule 1.101 Applicability; statutes affected. The rules in this chapter shall govern the practice and procedure in all courts of the state." + (" x" * 120),
+                            "sourceUrl": "https://www.legis.iowa.gov/docs/ACO/CR/LINC/02-27-2026.chapter.1.pdf#rule-1.101",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_iowa_court_rules_supplement",
+        _fake_ia_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["IA"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["IA"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["IA"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio
