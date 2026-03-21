@@ -10130,7 +10130,30 @@ async def _discover_colorado_rule_document_urls(
             return None
         seen_page_keys.add(page_key)
         try:
-            return await asyncio.wait_for(live_scraper.scrape(url), timeout=10.0)
+            scraped = await asyncio.wait_for(live_scraper.scrape(url), timeout=10.0)
+            scraped_html = str(getattr(scraped, "html", "") or "")
+            if scraped_html.strip():
+                return scraped
+        except Exception:
+            scraped = None
+
+        def _fallback_fetch() -> Any:
+            response = requests.get(
+                url,
+                timeout=15,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            response.raise_for_status()
+            html = response.text or ""
+            soup = BeautifulSoup(html, "html.parser")
+            title = ""
+            if soup.title and soup.title.string:
+                title = str(soup.title.string).strip()
+            text = soup.get_text(" ", strip=True)
+            return SimpleNamespace(html=html, text=text, title=title)
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_fallback_fetch), timeout=20.0)
         except Exception:
             return None
 
