@@ -172,7 +172,7 @@ class BraveSearchEngine(SearchEngineAdapter):
     
     def _normalize_results(
         self,
-        brave_results: Dict[str, Any]
+        brave_results: Any
     ) -> list[SearchEngineResult]:
         """Normalize Brave API results to standard format.
         
@@ -183,11 +183,11 @@ class BraveSearchEngine(SearchEngineAdapter):
             List of normalized SearchEngineResult objects
         """
         results = []
-        
-        # Extract web results
-        web_results = brave_results.get("web", {}).get("results", [])
-        
+        web_results = self._extract_web_results(brave_results)
+
         for idx, result in enumerate(web_results):
+            if not isinstance(result, dict):
+                continue
             # Extract domain from URL
             try:
                 domain = urlparse(result.get("url", "")).netloc
@@ -213,3 +213,32 @@ class BraveSearchEngine(SearchEngineAdapter):
             results.append(normalized)
         
         return results
+
+    @staticmethod
+    def _extract_web_results(brave_results: Any) -> list[dict[str, Any]]:
+        """Extract result objects from the Brave client response.
+
+        The Brave client is not perfectly stable here: depending on code path,
+        it may return either a raw list of result dicts or a dict payload with
+        `web.results`.
+        """
+        if isinstance(brave_results, list):
+            return [item for item in brave_results if isinstance(item, dict)]
+
+        if not isinstance(brave_results, dict):
+            return []
+
+        web_payload = brave_results.get("web", {})
+        if isinstance(web_payload, dict):
+            nested_results = web_payload.get("results", [])
+            if isinstance(nested_results, list):
+                return [item for item in nested_results if isinstance(item, dict)]
+
+        if isinstance(web_payload, list):
+            return [item for item in web_payload if isinstance(item, dict)]
+
+        direct_results = brave_results.get("results", [])
+        if isinstance(direct_results, list):
+            return [item for item in direct_results if isinstance(item, dict)]
+
+        return []

@@ -275,6 +275,125 @@ _ME_CRIMINAL_EDITED_RE = re.compile(r"Last\s+reviewed\s+and\s+edited\s+([A-Za-z]
 _ME_CRIMINAL_AMENDMENTS_RE = re.compile(r"Including amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _ME_RULE_LINK_RE = re.compile(r"^Rule[s]?\s+([0-9]+(?:[A-Z]|\.[0-9A-Z]+| through Rule [0-9A-Z&\s.-]+)?)\s*-\s*(.+)$", re.IGNORECASE)
 _ME_CRIMINAL_RULE_HEADING_RE = re.compile(r"^RULE\s+(\d+(?:[A-Z]|\.[0-9A-Z]+)?)\.\s+(.+)$")
+_MD_RULE_TITLES: List[Dict[str, str]] = [
+    {
+        "title_name": "Title 2. Civil Procedure--Circuit Court",
+        "url": "https://govt.westlaw.com/mdc/Browse/Home/Maryland/MarylandCodeCourtRules"
+        "?guid=ND78623909CCE11DB9BCF9DAC28345A2A&originationContext=documenttoc"
+        "&transitionType=Default&contextData=(sc.Default)",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+    },
+    {
+        "title_name": "Title 3. Civil Procedure--District Court",
+        "url": "https://govt.westlaw.com/mdc/Browse/Home/Maryland/MarylandCodeCourtRules"
+        "?guid=NDFFF2D009CCE11DB9BCF9DAC28345A2A&originationContext=documenttoc"
+        "&transitionType=Default&contextData=(sc.Default)",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+    },
+    {
+        "title_name": "Title 4. Criminal Causes",
+        "url": "https://govt.westlaw.com/mdc/Browse/Home/Maryland/MarylandCodeCourtRules"
+        "?guid=NE57641109CCE11DB9BCF9DAC28345A2A&originationContext=documenttoc"
+        "&transitionType=Default&contextData=(sc.Default)",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+    },
+]
+_MD_CHAPTER_LINK_RE = re.compile(r"^Chapter\s+(\d+)\.\s+(.+)$", re.IGNORECASE)
+_MD_RULE_LINK_RE = re.compile(r"^Rule\s+([234]-\d+[A-Za-z]?(?:\.\d+)?)\.\s+(.+)$", re.IGNORECASE)
+_MD_EFFECTIVE_DATE_RE = re.compile(r"Effective:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_MD_CURRENT_AS_OF_RE = re.compile(
+    r"Current\s+with\s+amendments\s+received\s+through\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})",
+    re.IGNORECASE,
+)
+_SC_RULE_LIST_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "South Carolina Rules of Civil Procedure",
+        "url": "https://www.sccourts.org/resources/judicial-community/court-rules/civil/",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "SCRCP",
+    },
+    {
+        "title_name": "South Carolina Rules of Criminal Procedure",
+        "url": "https://www.sccourts.org/resources/judicial-community/court-rules/criminal/",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "SCRCrimP",
+    },
+]
+_SC_RULE_LINK_RE = re.compile(r"^(\d+(?:\.\d+)?)\s+(.+)$")
+_AK_RULE_DOCUMENTS: List[Dict[str, str]] = [
+    {
+        "title_name": "Alaska Rules of Civil Procedure",
+        "url": "https://courts.alaska.gov/rules/docs/civ.pdf",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Alaska R. Civ. P.",
+        "start_marker": "Rule\n1 Scope of Rules",
+    },
+    {
+        "title_name": "Alaska Rules of Criminal Procedure",
+        "url": "https://courts.alaska.gov/rules/docs/crpro.pdf",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Alaska R. Crim. P.",
+        "start_marker": "Rule\n1 Scope.",
+    },
+]
+_AK_RULE_BLOCK_RE = re.compile(
+    r"^\s*Rule\s+(\d+(?:\.\d+)?)\.?\s+(.+?)(?=^\s*Rule\s+\d+(?:\.\d+)?\.?\s+|\Z)",
+    re.DOTALL | re.IGNORECASE | re.MULTILINE,
+)
+_HI_RULE_SOURCES: List[Dict[str, str]] = [
+    {
+        "title_name": "Hawai‘i Rules of Civil Procedure",
+        "url": "https://www.courts.state.hi.us/wp-content/uploads/2024/09/hrcp_ada.htm",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "HRCP Rule",
+        "effective_date": "January 1, 2026",
+    },
+    {
+        "title_name": "Hawai‘i Rules of Penal Procedure",
+        "url": "https://www.courts.state.hi.us/wp-content/uploads/2024/12/hrpp.htm",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "HRPP Rule",
+        "effective_date": "January 1, 2026",
+    },
+]
+_HI_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)*)\.(.*)$")
+_NE_RULE_ARTICLES: List[Dict[str, str]] = [
+    {
+        "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
+        "url": "https://nebraskajudicial.gov/supreme-court-rules/chapter-6-trial-courts/"
+        "article-11-nebraska-court-rules-pleading-civil-cases-effective-january-1-2025",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Neb. Ct. R. Pldg.",
+    },
+    {
+        "title_name": "Uniform County Court Rules of Practice and Procedure",
+        "url": "https://nebraskajudicial.gov/supreme-court-rules/chapter-6-trial-courts/"
+        "article-14-uniform-county-court-rules-practice-and-procedure",
+        "procedure_family": "civil_and_criminal_procedure",
+        "legal_area": "civil_and_criminal_procedure",
+        "official_cite_prefix": "Neb. Ct. R. §",
+    },
+    {
+        "title_name": "Uniform District Court Rules of Practice and Procedure",
+        "url": "https://nebraskajudicial.gov/supreme-court-rules/chapter-6-trial-courts/"
+        "article-15-uniform-district-court-rules-practice-and-procedure",
+        "procedure_family": "civil_and_criminal_procedure",
+        "legal_area": "civil_and_criminal_procedure",
+        "official_cite_prefix": "Neb. Ct. R. §",
+    },
+]
+_NE_SECTION_LINK_RE = re.compile(r"^§\s*(6-\d+(?:\.\d+)?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
+_NE_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 
 _CIVIL_PATTERNS = [
     re.compile(r"rules?\s+of\s+civil\s+procedure", re.IGNORECASE),
@@ -460,6 +579,61 @@ class _IdahoProcedureRulesSupplementFetcher(BaseStateScraper):
 class _MaineProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.courts.maine.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _MarylandProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://govt.westlaw.com"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _SouthCarolinaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.sccourts.org"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _AlaskaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://courts.alaska.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _NebraskaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://nebraskajudicial.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _HawaiiProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.courts.state.hi.us"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -1865,6 +2039,762 @@ def _extract_ohio_rules_from_text(
     return statutes
 
 
+def _normalize_maryland_text(text: str) -> str:
+    return (
+        str(text or "")
+        .replace("\u2013", "-")
+        .replace("\u2014", "-")
+        .replace("\u2011", "-")
+        .replace("\xa0", " ")
+    )
+
+
+def _extract_maryland_chapter_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        label = " ".join(_normalize_maryland_text(anchor.get_text(" ", strip=True)).split())
+        if not href or not label.startswith("Chapter "):
+            continue
+        match = _MD_CHAPTER_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "chapter_number": match.group(1).strip(),
+                "chapter_name": match.group(2).strip().rstrip("."),
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+            }
+        )
+
+    return discovered
+
+
+def _extract_maryland_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    title_name: str,
+    chapter_name: str,
+    procedure_family: str,
+    legal_area: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        label = " ".join(_normalize_maryland_text(anchor.get_text(" ", strip=True)).split())
+        if not href or not label.startswith("Rule "):
+            continue
+        match = _MD_RULE_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": match.group(1).strip(),
+                "section_name": match.group(2).strip().rstrip("."),
+                "url": absolute_url,
+                "title_name": title_name,
+                "chapter_name": chapter_name,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+            }
+        )
+
+    return discovered
+
+
+def _extract_maryland_rule_from_html(
+    html_text: str,
+    *,
+    rule_url: str,
+    title_name: str,
+    chapter_name: str,
+    procedure_family: str,
+    legal_area: str,
+) -> Optional[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    document = soup.select_one("#co_document") or soup.select_one(".co_document")
+    if document is None:
+        return None
+
+    lines = [
+        " ".join(_normalize_maryland_text(line).split())
+        for line in document.get_text("\n", strip=True).splitlines()
+    ]
+    lines = [line for line in lines if line]
+    if not lines:
+        return None
+
+    heading_index = next((idx for idx, line in enumerate(lines) if line.startswith("RULE ")), None)
+    if heading_index is None:
+        return None
+
+    heading = lines[heading_index]
+    heading_match = re.match(r"^RULE\s+([234]-\d+[A-Za-z]?(?:\.\d+)?)\.\s+(.+)$", heading, re.IGNORECASE)
+    if not heading_match:
+        return None
+
+    section_number = heading_match.group(1).strip()
+    section_name = heading_match.group(2).strip().rstrip(".")
+
+    content_lines: List[str] = [heading]
+    for line in lines[heading_index + 1 :]:
+        if line.startswith("MD Rules, Rule "):
+            break
+        if line.startswith("Current with amendments received through "):
+            break
+        if line == "End of Document":
+            break
+        content_lines.append(line)
+
+    full_text = "\n".join(content_lines).strip()
+    if len(full_text) < 40:
+        return None
+
+    effective_matches = [
+        " ".join(match.group(1).split())
+        for match in _MD_EFFECTIVE_DATE_RE.finditer("\n".join(lines[: heading_index + 5]))
+        if match.group(1)
+    ]
+    current_as_of_matches = [
+        " ".join(match.group(1).split())
+        for match in _MD_CURRENT_AS_OF_RE.finditer("\n".join(lines))
+        if match.group(1)
+    ]
+
+    return NormalizedStatute(
+        state_code="MD",
+        state_name=US_STATES["MD"],
+        statute_id=f"Md. Rule {section_number}",
+        code_name="Maryland Rules",
+        title_name=title_name,
+        chapter_name=chapter_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{rule_url}#rule-{section_number.lower()}",
+        official_cite=f"Md. Rule {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_matches[-1] if effective_matches else None,
+            "current_as_of": current_as_of_matches[-1] if current_as_of_matches else None,
+            "source_kind": "maryland_public_westlaw_rule_page",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
+def _extract_south_carolina_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    page_path = urlparse(page_url).path.rstrip("/")
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for anchor in soup.find_all("a", href=True):
+        href = str(anchor.get("href") or "").strip()
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        if not href or not label:
+            continue
+        absolute_url = urljoin(page_url, href)
+        path = urlparse(absolute_url).path.rstrip("/")
+        if not path.startswith(page_path + "/rule-"):
+            continue
+        match = _SC_RULE_LINK_RE.match(label)
+        if not match:
+            continue
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": match.group(1).strip(),
+                "section_name": match.group(2).strip().rstrip("."),
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+    return discovered
+
+
+def _extract_south_carolina_rule_from_html(
+    html_text: str,
+    *,
+    rule_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> Optional[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    content_section = None
+    for section in soup.select("main#main-content section.content-section"):
+        text = " ".join(section.get_text(" ", strip=True).split())
+        if "Back To Court Rules" in text and ("Prev" in text or "Next" in text):
+            content_section = section
+    if content_section is None:
+        return None
+
+    container = content_section.select_one("div.container")
+    if container is None:
+        return None
+
+    paragraphs = container.find_all("p")
+    if not paragraphs:
+        return None
+
+    heading_text = ""
+    body_lines: List[str] = []
+    for paragraph in paragraphs:
+        text = " ".join(paragraph.get_text(" ", strip=True).split())
+        if not text:
+            continue
+        if text in {"Back To Court Rules", "Prev", "Next"}:
+            continue
+        if text.startswith("RULE "):
+            heading_text = text
+            body_lines.append(text)
+            continue
+        if heading_text:
+            body_lines.append(text)
+
+    if not heading_text or len(body_lines) < 2:
+        return None
+
+    heading_match = re.match(r"^RULE\s+(\d+(?:\.\d+)?)\s+(.+)$", heading_text, re.IGNORECASE)
+    if not heading_match:
+        return None
+
+    section_number = heading_match.group(1).strip()
+    section_name = heading_match.group(2).strip().rstrip(".")
+    full_text = "\n".join(body_lines).strip()
+    if len(full_text) < 40:
+        return None
+
+    return NormalizedStatute(
+        state_code="SC",
+        state_name=US_STATES["SC"],
+        statute_id=f"{official_cite_prefix} Rule {section_number}",
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{rule_url}#rule-{section_number}",
+        official_cite=f"{official_cite_prefix} Rule {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "source_kind": "south_carolina_judicial_branch_rule_page",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
+def _extract_alaska_rules_from_text(
+    text: str,
+    *,
+    source_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    start_marker: str,
+) -> List[NormalizedStatute]:
+    normalized = str(text or "").replace("\xa0", " ")
+    start_index = normalized.rfind(start_marker)
+    if "Table of Contents" in normalized:
+        rule_one_matches = list(re.finditer(r"Rule\s+1(?:\s|\.)", normalized, re.IGNORECASE))
+        if len(rule_one_matches) >= 2:
+            start_index = rule_one_matches[1].start()
+    if start_index >= 0:
+        normalized = normalized[start_index:]
+
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    for match in _AK_RULE_BLOCK_RE.finditer(normalized):
+        section_number = " ".join(match.group(1).split())
+        block = " ".join(match.group(2).split())
+        if not section_number or not block:
+            continue
+        pieces = block.split(". ", 1)
+        section_name = pieces[0].strip().rstrip(".")
+        if not section_name:
+            continue
+        full_text = f"Rule {section_number}. {block}".strip()
+        if len(full_text) < 50:
+            continue
+        key = (section_number.lower(), section_name.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        statutes.append(
+            NormalizedStatute(
+                state_code="AK",
+                state_name=US_STATES["AK"],
+                statute_id=f"{official_cite_prefix} {section_number}",
+                code_name=title_name,
+                title_name=title_name,
+                chapter_name=title_name,
+                section_number=section_number,
+                section_name=section_name,
+                short_title=section_name,
+                full_text=full_text,
+                summary=section_name,
+                source_url=f"{source_url}#rule-{section_number}",
+                official_cite=f"{official_cite_prefix} {section_number}",
+                legal_area=legal_area,
+                structured_data={
+                    "source_kind": "alaska_court_rules_pdf",
+                    "procedure_family": procedure_family,
+                },
+            )
+        )
+    return statutes
+
+
+def _extract_alaska_rules_from_page_texts(
+    page_texts: List[str],
+    *,
+    source_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> List[NormalizedStatute]:
+    body_start = 0
+    for index, page_text in enumerate(page_texts):
+        normalized_page = " ".join(str(page_text or "").split())
+        if "Table of Contents" in normalized_page:
+            continue
+        if "Rule 1." in normalized_page and ("Scope of Rules" in normalized_page or "Scope." in normalized_page):
+            body_start = index
+            break
+
+    heading_re = re.compile(r"^(?:Rule\s+)?(\d+(?:\.\d+)?)\.?\s+(.+)$")
+    skip_exact = {
+        "ALASKA COURT RULES",
+        "RULES OF CIVIL PROCEDURE",
+        "RULES OF CRIMINAL PROCEDURE",
+    }
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    current_number = ""
+    current_name = ""
+    buffer: List[str] = []
+
+    def flush() -> None:
+        nonlocal current_number, current_name, buffer
+        if not current_number or not current_name:
+            current_number = ""
+            current_name = ""
+            buffer = []
+            return
+
+        full_text = "\n".join(buffer).strip()
+        if len(full_text) < 50:
+            current_number = ""
+            current_name = ""
+            buffer = []
+            return
+
+        key = (current_number.lower(), current_name.lower())
+        if key not in seen:
+            seen.add(key)
+            statutes.append(
+                NormalizedStatute(
+                    state_code="AK",
+                    state_name=US_STATES["AK"],
+                    statute_id=f"{official_cite_prefix} {current_number}",
+                    code_name=title_name,
+                    title_name=title_name,
+                    chapter_name=title_name,
+                    section_number=current_number,
+                    section_name=current_name,
+                    short_title=current_name,
+                    full_text=full_text,
+                    summary=current_name,
+                    source_url=f"{source_url}#rule-{current_number}",
+                    official_cite=f"{official_cite_prefix} {current_number}",
+                    legal_area=legal_area,
+                    structured_data={
+                        "source_kind": "alaska_court_rules_pdf",
+                        "procedure_family": procedure_family,
+                    },
+                )
+            )
+
+        current_number = ""
+        current_name = ""
+        buffer = []
+
+    for page_text in page_texts[body_start:]:
+        for raw_line in str(page_text or "").splitlines():
+            line = " ".join(raw_line.split())
+            if not line or line in skip_exact:
+                continue
+            if line.isdigit() or line in {"CR", "CrR"} or line.startswith("PART "):
+                continue
+            if line.startswith("("):
+                if current_number:
+                    buffer.append(line)
+                continue
+
+            match = heading_re.match(line)
+            if match and len(line) <= 140 and not line.startswith("RuleComments@"):
+                heading_number = match.group(1).strip()
+                heading_name = match.group(2).strip().rstrip(".")
+                if (
+                    heading_name
+                    and not heading_name.startswith("(")
+                    and "ALASKA COURT RULES" not in heading_name
+                    and heading_name not in skip_exact
+                    and not heading_name.startswith("SLA ")
+                    and (
+                        line.startswith("Rule ")
+                        or (
+                            heading_name[0].isupper()
+                            and not re.match(r"^\d{4}\b", heading_name)
+                        )
+                    )
+                ):
+                    flush()
+                    current_number = heading_number
+                    current_name = heading_name
+                    buffer = [f"Rule {current_number}. {current_name}"]
+                    continue
+
+            if current_number:
+                buffer.append(line)
+
+    flush()
+    return statutes
+
+
+def _extract_hawaii_rules_from_html(
+    html_text: str,
+    *,
+    source_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    effective_date: Optional[str],
+) -> List[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    lines = [" ".join(line.split()) for line in soup.get_text("\n", strip=True).splitlines()]
+    lines = [line for line in lines if line]
+    if not lines:
+        return []
+
+    heading_indexes = [index for index, line in enumerate(lines) if _HI_RULE_HEADING_RE.match(line)]
+    if not heading_indexes:
+        return []
+
+    body_start = heading_indexes[0]
+    if "Table of Contents" in lines:
+        for heading_index in heading_indexes:
+            context_lines = lines[max(0, heading_index - 3) : heading_index]
+            if any(re.match(r"^[IVXLC]+\.\s", value) for value in context_lines):
+                body_start = heading_index
+                break
+        else:
+            if len(heading_indexes) >= 2:
+                body_start = heading_indexes[1]
+
+    def _is_heading_fragment(value: str) -> bool:
+        if not value or value.startswith("("):
+            return False
+        alpha_chars = [char for char in value if char.isalpha()]
+        if not alpha_chars:
+            return False
+        return "".join(alpha_chars) == "".join(alpha_chars).upper()
+
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    current_number = ""
+    current_name = ""
+    buffer: List[str] = []
+
+    def flush() -> None:
+        nonlocal current_number, current_name, buffer
+        if not current_number or not current_name:
+            current_number = ""
+            current_name = ""
+            buffer = []
+            return
+
+        full_text = "\n".join(buffer).strip()
+        if len(full_text) < 50:
+            current_number = ""
+            current_name = ""
+            buffer = []
+            return
+
+        key = (current_number.lower(), current_name.lower())
+        if key not in seen:
+            seen.add(key)
+            statutes.append(
+                NormalizedStatute(
+                    state_code="HI",
+                    state_name=US_STATES["HI"],
+                    statute_id=f"{official_cite_prefix} {current_number}",
+                    code_name=title_name,
+                    title_name=title_name,
+                    chapter_name=title_name,
+                    section_number=current_number,
+                    section_name=current_name,
+                    short_title=current_name,
+                    full_text=full_text,
+                    summary=current_name,
+                    source_url=f"{source_url}#rule-{current_number}",
+                    official_cite=f"{official_cite_prefix} {current_number}",
+                    legal_area=legal_area,
+                    structured_data={
+                        "effective_date": effective_date,
+                        "source_kind": "hawaii_judiciary_rule_html",
+                        "procedure_family": procedure_family,
+                    },
+                )
+            )
+
+        current_number = ""
+        current_name = ""
+        buffer = []
+
+    index = body_start
+    while index < len(lines):
+        line = lines[index]
+        heading_match = _HI_RULE_HEADING_RE.match(line)
+        if heading_match:
+            flush()
+            current_number = heading_match.group(1).strip()
+            name_parts: List[str] = []
+            inline_name = heading_match.group(2).strip()
+            if inline_name:
+                name_parts.append(inline_name)
+                if inline_name.endswith("."):
+                    current_name = " ".join(part.strip().rstrip(".") for part in name_parts if part.strip()).strip()
+                    if current_name:
+                        buffer = [f"Rule {current_number}. {current_name}"]
+                        index += 1
+                        continue
+
+            lookahead = index + 1
+            while lookahead < len(lines):
+                next_line = lines[lookahead]
+                if _HI_RULE_HEADING_RE.match(next_line) or next_line.startswith("("):
+                    break
+                if not _is_heading_fragment(next_line):
+                    break
+                name_parts.append(next_line)
+                lookahead += 1
+                if next_line.endswith("."):
+                    break
+
+            current_name = " ".join(part.strip().rstrip(".") for part in name_parts if part.strip()).strip()
+            current_name = re.split(r"\s+[IVXLC]+\.\s+", current_name, maxsplit=1)[0].strip()
+            if not current_name:
+                current_number = ""
+                index += 1
+                continue
+
+            buffer = [f"Rule {current_number}. {current_name}"]
+            index = lookahead
+            continue
+
+        if current_number:
+            if re.match(r"^[IVXLC]+\.\s", line):
+                flush()
+                index += 1
+                continue
+            buffer.append(line)
+
+        index += 1
+
+    flush()
+    return statutes
+
+
+def _extract_nebraska_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    content = soup.select_one("article.node .node__content") or soup
+
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for anchor in content.select("a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        if not href or not label.startswith("§ "):
+            continue
+        match = _NE_SECTION_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": match.group(1).strip(),
+                "section_name": match.group(2).strip().rstrip("."),
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+
+    return discovered
+
+
+def _extract_nebraska_rule_from_html(
+    html_text: str,
+    *,
+    rule_url: str,
+    title_name: str,
+    section_number: str,
+    section_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> Optional[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    body = soup.select_one("article.node .node__content .field--name-body.field__item")
+    if body is None:
+        body = soup.select_one("article.node .field--name-body")
+    if body is None:
+        return None
+
+    text_lines = [
+        " ".join(line.split())
+        for line in body.get_text("\n", strip=True).splitlines()
+    ]
+    text_lines = [line for line in text_lines if line and line != "Printer-Friendly Version"]
+    if not text_lines:
+        return None
+
+    full_text = "\n".join([f"§ {section_number}. {section_name}", *text_lines]).strip()
+    if len(full_text) < 40:
+        return None
+
+    effective_dates = [
+        " ".join(match.group(1).split())
+        for match in _NE_EFFECTIVE_DATE_RE.finditer(full_text)
+        if match.group(1)
+    ]
+    effective_date = effective_dates[-1] if effective_dates else None
+    official_cite = (
+        f"{official_cite_prefix} {section_number}"
+        if official_cite_prefix.endswith("§")
+        else f"{official_cite_prefix} § {section_number}"
+    )
+
+    return NormalizedStatute(
+        state_code="NE",
+        state_name=US_STATES["NE"],
+        statute_id=official_cite,
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{rule_url}#section-{section_number}",
+        official_cite=official_cite,
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_date,
+            "source_kind": "nebraska_judicial_branch_rule_page",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
 def _extract_arizona_rules_from_text(
     text: str,
     *,
@@ -3058,6 +3988,440 @@ async def _scrape_maine_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_maryland_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _MarylandProcedureRulesSupplementFetcher("MD", US_STATES["MD"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for title in _MD_RULE_TITLES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        title_url = str(title["url"])
+        title_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            title_url,
+            validator=lambda html: len(
+                _extract_maryland_chapter_links(
+                    html,
+                    page_url=title_url,
+                    procedure_family=str(title["procedure_family"]),
+                    legal_area=str(title["legal_area"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not title_html:
+            continue
+
+        chapter_links = _extract_maryland_chapter_links(
+            title_html,
+            page_url=title_url,
+            procedure_family=str(title["procedure_family"]),
+            legal_area=str(title["legal_area"]),
+        )
+        for chapter in chapter_links:
+            if remaining is not None and remaining <= 0:
+                break
+
+            chapter_url = str(chapter["url"])
+            chapter_html = await _fetch_html_with_direct_fallback(
+                fetcher,
+                chapter_url,
+                validator=lambda html: len(
+                    _extract_maryland_rule_links(
+                        html,
+                        page_url=chapter_url,
+                        title_name=str(title["title_name"]),
+                        chapter_name=str(chapter["chapter_name"]),
+                        procedure_family=str(chapter["procedure_family"]),
+                        legal_area=str(chapter["legal_area"]),
+                    )
+                )
+                > 0,
+                timeout_seconds=120,
+            )
+            if not chapter_html:
+                continue
+
+            rule_links = _extract_maryland_rule_links(
+                chapter_html,
+                page_url=chapter_url,
+                title_name=str(title["title_name"]),
+                chapter_name=str(chapter["chapter_name"]),
+                procedure_family=str(chapter["procedure_family"]),
+                legal_area=str(chapter["legal_area"]),
+            )
+            for rule in rule_links:
+                if remaining is not None and remaining <= 0:
+                    break
+
+                rule_url = str(rule["url"])
+                if rule_url.lower() in existing_urls:
+                    continue
+
+                rule_html = await _fetch_html_with_direct_fallback(
+                    fetcher,
+                    rule_url,
+                    validator=lambda html: _extract_maryland_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(rule["title_name"]),
+                        chapter_name=str(rule["chapter_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                    )
+                    is not None,
+                    timeout_seconds=120,
+                )
+                if not rule_html:
+                    continue
+
+                statute = _extract_maryland_rule_from_html(
+                    rule_html,
+                    rule_url=rule_url,
+                    title_name=str(rule["title_name"]),
+                    chapter_name=str(rule["chapter_name"]),
+                    procedure_family=str(rule["procedure_family"]),
+                    legal_area=str(rule["legal_area"]),
+                )
+                if statute is None:
+                    continue
+
+                enriched = fetcher._enrich_statute_structure(statute).to_dict()
+                family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+                enriched["procedure_family"] = family
+                supplemental_rules.append(enriched)
+                existing_urls.add(rule_url.lower())
+                remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
+async def _scrape_south_carolina_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _SouthCarolinaProcedureRulesSupplementFetcher("SC", US_STATES["SC"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for list_page in _SC_RULE_LIST_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        list_url = str(list_page["url"])
+        list_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            list_url,
+            validator=lambda html: len(
+                _extract_south_carolina_rule_links(
+                    html,
+                    page_url=list_url,
+                    procedure_family=str(list_page["procedure_family"]),
+                    legal_area=str(list_page["legal_area"]),
+                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not list_html:
+            continue
+
+        rule_links = _extract_south_carolina_rule_links(
+            list_html,
+            page_url=list_url,
+            procedure_family=str(list_page["procedure_family"]),
+            legal_area=str(list_page["legal_area"]),
+            official_cite_prefix=str(list_page["official_cite_prefix"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            rule_html = await _fetch_html_with_direct_fallback(
+                fetcher,
+                rule_url,
+                validator=lambda html: _extract_south_carolina_rule_from_html(
+                    html,
+                    rule_url=rule_url,
+                    title_name=str(list_page["title_name"]),
+                    procedure_family=str(rule["procedure_family"]),
+                    legal_area=str(rule["legal_area"]),
+                    official_cite_prefix=str(rule["official_cite_prefix"]),
+                )
+                is not None,
+                timeout_seconds=120,
+            )
+            if not rule_html:
+                continue
+
+            statute = _extract_south_carolina_rule_from_html(
+                rule_html,
+                rule_url=rule_url,
+                title_name=str(list_page["title_name"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+            )
+            if statute is None:
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
+async def _scrape_alaska_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _AlaskaProcedureRulesSupplementFetcher("AK", US_STATES["AK"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for document in _AK_RULE_DOCUMENTS:
+        if remaining is not None and remaining <= 0:
+            break
+
+        raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(
+            fetcher,
+            str(document["url"]),
+            timeout_seconds=180,
+        )
+        if not raw_bytes:
+            continue
+
+        try:
+            from pypdf import PdfReader
+
+            reader = PdfReader(BytesIO(raw_bytes))
+            page_texts = [page.extract_text() or "" for page in reader.pages]
+        except Exception:
+            page_texts = []
+
+        statutes = _extract_alaska_rules_from_page_texts(
+            page_texts,
+            source_url=str(document["url"]),
+            title_name=str(document["title_name"]),
+            procedure_family=str(document["procedure_family"]),
+            legal_area=str(document["legal_area"]),
+            official_cite_prefix=str(document["official_cite_prefix"]),
+        )
+        for statute in statutes:
+            if remaining is not None and remaining <= 0:
+                break
+            source_key = str(statute.source_url or "").strip().lower()
+            if source_key in existing_urls:
+                continue
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(
+                statute.structured_data.get("procedure_family") or ""
+            ).strip()
+            if not family:
+                continue
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(source_key)
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
+async def _scrape_nebraska_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _NebraskaProcedureRulesSupplementFetcher("NE", US_STATES["NE"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for article in _NE_RULE_ARTICLES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        article_url = str(article["url"])
+        article_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            article_url,
+            validator=lambda html: len(
+                _extract_nebraska_rule_links(
+                    html,
+                    page_url=article_url,
+                    procedure_family=str(article["procedure_family"]),
+                    legal_area=str(article["legal_area"]),
+                    official_cite_prefix=str(article["official_cite_prefix"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not article_html:
+            continue
+
+        rule_links = _extract_nebraska_rule_links(
+            article_html,
+            page_url=article_url,
+            procedure_family=str(article["procedure_family"]),
+            legal_area=str(article["legal_area"]),
+            official_cite_prefix=str(article["official_cite_prefix"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            rule_html = await _fetch_html_with_direct_fallback(
+                fetcher,
+                rule_url,
+                validator=lambda html: _extract_nebraska_rule_from_html(
+                    html,
+                    rule_url=rule_url,
+                    title_name=str(article["title_name"]),
+                    section_number=str(rule["section_number"]),
+                    section_name=str(rule["section_name"]),
+                    procedure_family=str(rule["procedure_family"]),
+                    legal_area=str(rule["legal_area"]),
+                    official_cite_prefix=str(rule["official_cite_prefix"]),
+                )
+                is not None,
+                timeout_seconds=120,
+            )
+            if not rule_html:
+                continue
+
+            statute = _extract_nebraska_rule_from_html(
+                rule_html,
+                rule_url=rule_url,
+                title_name=str(article["title_name"]),
+                section_number=str(rule["section_number"]),
+                section_name=str(rule["section_name"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+            )
+            if statute is None:
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
+async def _scrape_hawaii_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _HawaiiProcedureRulesSupplementFetcher("HI", US_STATES["HI"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for source in _HI_RULE_SOURCES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        source_url = str(source["url"])
+        source_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            source_url,
+            validator=lambda html: len(
+                _extract_hawaii_rules_from_html(
+                    html,
+                    source_url=source_url,
+                    title_name=str(source["title_name"]),
+                    procedure_family=str(source["procedure_family"]),
+                    legal_area=str(source["legal_area"]),
+                    official_cite_prefix=str(source["official_cite_prefix"]),
+                    effective_date=str(source["effective_date"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not source_html:
+            continue
+
+        statutes = _extract_hawaii_rules_from_html(
+            source_html,
+            source_url=source_url,
+            title_name=str(source["title_name"]),
+            procedure_family=str(source["procedure_family"]),
+            legal_area=str(source["legal_area"]),
+            official_cite_prefix=str(source["official_cite_prefix"]),
+            effective_date=str(source["effective_date"]),
+        )
+        for statute in statutes:
+            if remaining is not None and remaining <= 0:
+                break
+            source_key = str(statute.source_url or "").strip().lower()
+            if source_key in existing_urls:
+                continue
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(
+                statute.structured_data.get("procedure_family") or ""
+            ).strip()
+            if not family:
+                continue
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(source_key)
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -3392,6 +4756,91 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if me_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = me_fetch_analytics
+
+            if state_code == "MD":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                md_supplement, md_fetch_analytics = await _scrape_maryland_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if md_supplement:
+                    procedure_statutes.extend(md_supplement)
+                    for rule in md_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if md_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = md_fetch_analytics
+
+            if state_code == "SC":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                sc_supplement, sc_fetch_analytics = await _scrape_south_carolina_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if sc_supplement:
+                    procedure_statutes.extend(sc_supplement)
+                    for rule in sc_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if sc_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = sc_fetch_analytics
+
+            if state_code == "AK":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                ak_supplement, ak_fetch_analytics = await _scrape_alaska_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if ak_supplement:
+                    procedure_statutes.extend(ak_supplement)
+                    for rule in ak_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if ak_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = ak_fetch_analytics
+
+            if state_code == "NE":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                ne_supplement, ne_fetch_analytics = await _scrape_nebraska_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if ne_supplement:
+                    procedure_statutes.extend(ne_supplement)
+                    for rule in ne_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if ne_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = ne_fetch_analytics
+
+            if state_code == "HI":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                hi_supplement, hi_fetch_analytics = await _scrape_hawaii_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if hi_supplement:
+                    procedure_statutes.extend(hi_supplement)
+                    for rule in hi_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if hi_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = hi_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]

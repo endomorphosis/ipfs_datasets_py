@@ -205,6 +205,320 @@ def test_extract_arizona_rules_from_text_parses_rule_blocks() -> None:
     assert "civil actions and proceedings" in statutes[0].full_text
 
 
+def test_extract_nebraska_rule_links_and_rule_page() -> None:
+    article_html = """
+    <html><body><article class="node">
+      <div class="node__content">
+        <a href="/supreme-court-rules/chapter-6-trial-courts/article-11/%C2%A7-6-1101-scope-and-purpose-rules">§ 6-1101. Scope and purpose of rules.</a>
+        <a href="/supreme-court-rules/chapter-6-trial-courts/article-11/%C2%A7-6-1105-serving-and-filing-pleadings-and-other-documents">§ 6-1105. Serving and filing pleadings and other documents.</a>
+      </div>
+    </article></body></html>
+    """
+
+    links = procedure_module._extract_nebraska_rule_links(
+        article_html,
+        page_url="https://nebraskajudicial.gov/supreme-court-rules/chapter-6-trial-courts/article-11",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Neb. Ct. R. Pldg.",
+    )
+
+    assert links == [
+        {
+            "section_number": "6-1101",
+            "section_name": "Scope and purpose of rules",
+            "url": "https://nebraskajudicial.gov/supreme-court-rules/chapter-6-trial-courts/article-11/%C2%A7-6-1101-scope-and-purpose-rules",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Neb. Ct. R. Pldg.",
+        },
+        {
+            "section_number": "6-1105",
+            "section_name": "Serving and filing pleadings and other documents",
+            "url": "https://nebraskajudicial.gov/supreme-court-rules/chapter-6-trial-courts/article-11/%C2%A7-6-1105-serving-and-filing-pleadings-and-other-documents",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Neb. Ct. R. Pldg.",
+        },
+    ]
+
+    rule_html = """
+    <html><body><article class="node">
+      <div class="node__content">
+        <div class="field field--name-body field__item">
+          <p>(a) Scope. These Rules govern pleading in civil actions filed on or after January 1, 2003.</p>
+          <p>(b) Purpose. These Rules should be construed and administered to secure the just determination of every action.</p>
+          <p>§ 6-1101 amended December 18, 2024, effective January 1, 2025.</p>
+        </div>
+      </div>
+    </article></body></html>
+    """
+
+    statute = procedure_module._extract_nebraska_rule_from_html(
+        rule_html,
+        rule_url="https://nebraskajudicial.gov/supreme-court-rules/chapter-6-trial-courts/article-11/%C2%A7-6-1101-scope-and-purpose-rules",
+        title_name="Nebraska Court Rules of Pleading in Civil Cases",
+        section_number="6-1101",
+        section_name="Scope and purpose of rules",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Neb. Ct. R. Pldg.",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "6-1101"
+    assert statute.section_name == "Scope and purpose of rules"
+    assert statute.official_cite == "Neb. Ct. R. Pldg. § 6-1101"
+    assert statute.structured_data["effective_date"] == "January 1, 2025"
+    assert "civil actions" in statute.full_text
+
+
+def test_extract_maryland_links_and_rule_page() -> None:
+    title_html = """
+    <html><body>
+      <a href="/mdc/Browse/Home/Maryland/MarylandCodeCourtRules?guid=chapter100">Chapter 100. Commencement of Action and Process</a>
+      <a href="/mdc/Browse/Home/Maryland/MarylandCodeCourtRules?guid=chapter200">Chapter 200. Parties</a>
+    </body></html>
+    """
+
+    chapters = procedure_module._extract_maryland_chapter_links(
+        title_html,
+        page_url="https://govt.westlaw.com/mdc/Browse/Home/Maryland/MarylandCodeCourtRules?guid=title2",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+    )
+
+    assert chapters == [
+        {
+            "chapter_number": "100",
+            "chapter_name": "Commencement of Action and Process",
+            "url": "https://govt.westlaw.com/mdc/Browse/Home/Maryland/MarylandCodeCourtRules?guid=chapter100",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+        },
+        {
+            "chapter_number": "200",
+            "chapter_name": "Parties",
+            "url": "https://govt.westlaw.com/mdc/Browse/Home/Maryland/MarylandCodeCourtRules?guid=chapter200",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+        },
+    ]
+
+    chapter_html = """
+    <html><body>
+      <a href="/mdc/Document/rule2101?viewType=FullText">Rule 2–101. Commencement of Action</a>
+      <a href="/mdc/Document/rule2111?viewType=FullText">Rule 2–111. Process—Requirements Preliminary to Summons</a>
+    </body></html>
+    """
+
+    rules = procedure_module._extract_maryland_rule_links(
+        chapter_html,
+        page_url="https://govt.westlaw.com/mdc/Browse/Home/Maryland/MarylandCodeCourtRules?guid=chapter100",
+        title_name="Title 2. Civil Procedure--Circuit Court",
+        chapter_name="Commencement of Action and Process",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+    )
+
+    assert rules == [
+        {
+            "section_number": "2-101",
+            "section_name": "Commencement of Action",
+            "url": "https://govt.westlaw.com/mdc/Document/rule2101?viewType=FullText",
+            "title_name": "Title 2. Civil Procedure--Circuit Court",
+            "chapter_name": "Commencement of Action and Process",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+        },
+        {
+            "section_number": "2-111",
+            "section_name": "Process-Requirements Preliminary to Summons",
+            "url": "https://govt.westlaw.com/mdc/Document/rule2111?viewType=FullText",
+            "title_name": "Title 2. Civil Procedure--Circuit Court",
+            "chapter_name": "Commencement of Action and Process",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <div id="co_document">
+        <p>West's Annotated Code of Maryland</p>
+        <p>Maryland Rules</p>
+        <p>Title 2. Civil Procedure--Circuit Court</p>
+        <p>Chapter 100. Commencement of Action and Process</p>
+        <p>MD Rules, Rule 2-101</p>
+        <p>RULE 2-101. COMMENCEMENT OF ACTION</p>
+        <p>Currentness</p>
+        <p>(a) Generally. A civil action is commenced by filing a complaint with a court.</p>
+        <p>Credits [Adopted April 6, 1984, eff. July 1, 1984.]</p>
+        <p>Current with amendments received through February 1, 2026.</p>
+        <p>End of Document</p>
+      </div>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_maryland_rule_from_html(
+        rule_html,
+        rule_url="https://govt.westlaw.com/mdc/Document/rule2101?viewType=FullText",
+        title_name="Title 2. Civil Procedure--Circuit Court",
+        chapter_name="Commencement of Action and Process",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "2-101"
+    assert statute.section_name == "COMMENCEMENT OF ACTION"
+    assert statute.official_cite == "Md. Rule 2-101"
+    assert statute.structured_data["current_as_of"] == "February 1, 2026"
+    assert "civil action is commenced" in statute.full_text
+
+
+def test_extract_south_carolina_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <a href="/resources/judicial-community/court-rules/civil/rule-1/">1 SCOPE OF RULES</a>
+      <a href="/resources/judicial-community/court-rules/civil/rule-4-1/">4.1 SERVICE OF PROCESS IN FOREIGN COUNTRIES</a>
+      <a href="/resources/judicial-community/court-rules/criminal/rule-5/">5 DISCLOSURE IN CRIMINAL CASES</a>
+    </body></html>
+    """
+
+    links = procedure_module._extract_south_carolina_rule_links(
+        list_html,
+        page_url="https://www.sccourts.org/resources/judicial-community/court-rules/civil/",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="SCRCP",
+    )
+
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "SCOPE OF RULES",
+            "url": "https://www.sccourts.org/resources/judicial-community/court-rules/civil/rule-1/",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "SCRCP",
+        },
+        {
+            "section_number": "4.1",
+            "section_name": "SERVICE OF PROCESS IN FOREIGN COUNTRIES",
+            "url": "https://www.sccourts.org/resources/judicial-community/court-rules/civil/rule-4-1/",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "SCRCP",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <main id="main-content">
+        <section class="content-section pt-5 pb-5">
+          <div class="container">
+            <div class="row">
+              <a href="/resources/judicial-community/court-rules/civil/">Back To Court Rules</a>
+              <a href="/resources/judicial-community/court-rules/civil/rule-2/">Next</a>
+            </div>
+            <p align="center"><strong>RULE 1<br />SCOPE OF RULES</strong></p>
+            <p>These rules govern the procedure in all South Carolina courts in all suits of a civil nature.</p>
+          </div>
+        </section>
+      </main>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_south_carolina_rule_from_html(
+        rule_html,
+        rule_url="https://www.sccourts.org/resources/judicial-community/court-rules/civil/rule-1/",
+        title_name="South Carolina Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="SCRCP",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "SCOPE OF RULES"
+    assert statute.official_cite == "SCRCP Rule 1"
+    assert "South Carolina courts" in statute.full_text
+
+
+def test_extract_alaska_rules_from_text_parses_rule_blocks() -> None:
+    text = """
+    ALASKA RULES OF COURT
+    RULES OF CIVIL PROCEDURE
+    Table of Contents
+    PART I. SCOPE OF RULES-CONSTRUCTION-ONE FORM OF ACTION
+    Rule
+    1 Scope of Rules-Construction.
+    2 One Form of Action.
+
+    Rule 1 Scope of Rules-Construction.
+    These rules govern the procedure in the superior court in all suits of a civil nature.
+    Rule 2 One Form of Action.
+    There shall be one form of action to be known as \"civil action.\"
+    """
+
+    statutes = procedure_module._extract_alaska_rules_from_text(
+        text,
+        source_url="https://courts.alaska.gov/rules/docs/civ.pdf",
+        title_name="Alaska Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Alaska R. Civ. P.",
+        start_marker="Rule\n1 Scope of Rules",
+    )
+
+    assert len(statutes) >= 2
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name.startswith("Scope of Rules")
+    assert statutes[0].official_cite == "Alaska R. Civ. P. 1"
+    assert "superior court" in statutes[0].full_text
+
+
+def test_extract_hawaii_rules_from_html() -> None:
+    html = """
+    <html><body>
+      <p>HAWAI‘I RULES OF CIVIL PROCEDURE</p>
+      <p>Table of Contents</p>
+      <p>Rule 1.</p>
+      <p>SCOPE OF RULES; INTERPRETATION AND ENFORCEMENT;</p>
+      <p>Rule 2.</p>
+      <p>ONE FORM OF ACTION.</p>
+      <p>I. SCOPE OF RULES -- ONE FORM OF ACTION</p>
+      <p>Rule 1.</p>
+      <p>SCOPE OF RULES; INTERPRETATION AND ENFORCEMENT;</p>
+      <p>EFFECT OF ELECTRONIC FILING.</p>
+      <p>(a)</p>
+      <p>Scope of rules.</p>
+      <p>These Rules govern the procedure in the circuit courts of the State in all suits of a civil nature.</p>
+      <p>Rule 1.1.</p>
+      <p>REGISTRATION REQUIRED.</p>
+      <p>Each attorney shall register as a Judiciary Electronic Filing and Service System user.</p>
+    </body></html>
+    """
+
+    statutes = procedure_module._extract_hawaii_rules_from_html(
+        html,
+        source_url="https://www.courts.state.hi.us/wp-content/uploads/2024/09/hrcp_ada.htm",
+        title_name="Hawai‘i Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="HRCP Rule",
+        effective_date="January 1, 2026",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name == "SCOPE OF RULES; INTERPRETATION AND ENFORCEMENT; EFFECT OF ELECTRONIC FILING"
+    assert statutes[0].official_cite == "HRCP Rule 1"
+    assert statutes[0].structured_data["effective_date"] == "January 1, 2026"
+    assert "circuit courts of the State" in statutes[0].full_text
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -1597,6 +1911,452 @@ async def test_scrape_state_procedure_rules_adds_maine_supplement(monkeypatch: p
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["ME"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["ME"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_nebraska_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "NE",
+                    "state_name": "Nebraska",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "NE": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_ne_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "NE",
+                    "state_name": "Nebraska",
+                    "statute_id": "Neb. Ct. R. Pldg. § 6-1101",
+                    "section_number": "6-1101",
+                    "section_name": "Scope and purpose of rules",
+                    "full_text": "§ 6-1101. Scope and purpose of rules. These Rules govern pleading in civil actions." + (" x" * 120),
+                    "source_url": "https://nebraskajudicial.gov/example/%C2%A7-6-1101#section-6-1101",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "NE-6-1101",
+                            "name": "Scope and purpose of rules",
+                            "sectionNumber": "6-1101",
+                            "sectionName": "Scope and purpose of rules",
+                            "text": "§ 6-1101. Scope and purpose of rules. These Rules govern pleading in civil actions." + (" x" * 120),
+                            "sourceUrl": "https://nebraskajudicial.gov/example/%C2%A7-6-1101#section-6-1101",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_nebraska_court_rules_supplement",
+        _fake_ne_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["NE"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["NE"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["NE"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_maryland_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "MD",
+                    "state_name": "Maryland",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "MD": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_md_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "MD",
+                    "state_name": "Maryland",
+                    "statute_id": "Md. Rule 2-101",
+                    "section_number": "2-101",
+                    "section_name": "COMMENCEMENT OF ACTION",
+                    "full_text": "RULE 2-101. COMMENCEMENT OF ACTION A civil action is commenced by filing a complaint." + (" x" * 120),
+                    "source_url": "https://govt.westlaw.com/mdc/Document/rule2101?viewType=FullText#rule-2-101",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "MD-2-101",
+                            "name": "COMMENCEMENT OF ACTION",
+                            "sectionNumber": "2-101",
+                            "sectionName": "COMMENCEMENT OF ACTION",
+                            "text": "RULE 2-101. COMMENCEMENT OF ACTION A civil action is commenced by filing a complaint." + (" x" * 120),
+                            "sourceUrl": "https://govt.westlaw.com/mdc/Document/rule2101?viewType=FullText#rule-2-101",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_maryland_court_rules_supplement",
+        _fake_md_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["MD"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["MD"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["MD"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_south_carolina_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "SC",
+                    "state_name": "South Carolina",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "SC": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_sc_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "SC",
+                    "state_name": "South Carolina",
+                    "statute_id": "SCRCP Rule 1",
+                    "section_number": "1",
+                    "section_name": "SCOPE OF RULES",
+                    "full_text": "RULE 1 SCOPE OF RULES These rules govern the procedure in all South Carolina courts." + (" x" * 120),
+                    "source_url": "https://www.sccourts.org/resources/judicial-community/court-rules/civil/rule-1/#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "SC-scrcp-1",
+                            "name": "SCOPE OF RULES",
+                            "sectionNumber": "1",
+                            "sectionName": "SCOPE OF RULES",
+                            "text": "RULE 1 SCOPE OF RULES These rules govern the procedure in all South Carolina courts." + (" x" * 120),
+                            "sourceUrl": "https://www.sccourts.org/resources/judicial-community/court-rules/civil/rule-1/#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_south_carolina_court_rules_supplement",
+        _fake_sc_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["SC"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["SC"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["SC"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_alaska_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AK",
+                    "state_name": "Alaska",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "AK": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_ak_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "AK",
+                    "state_name": "Alaska",
+                    "statute_id": "Alaska R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules-Construction",
+                    "full_text": "Rule 1 Scope of Rules-Construction. These rules govern the procedure in civil cases." + (" x" * 120),
+                    "source_url": "https://courts.alaska.gov/rules/docs/civ.pdf#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "AK-civ-1",
+                            "name": "Scope of Rules-Construction",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules-Construction",
+                            "text": "Rule 1 Scope of Rules-Construction. These rules govern the procedure in civil cases." + (" x" * 120),
+                            "sourceUrl": "https://courts.alaska.gov/rules/docs/civ.pdf#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_alaska_court_rules_supplement",
+        _fake_ak_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["AK"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["AK"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["AK"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_hawaii_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "HI",
+                    "state_name": "Hawaii",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "HI": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_hi_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "HI",
+                    "state_name": "Hawaii",
+                    "statute_id": "HRCP Rule 1",
+                    "section_number": "1",
+                    "section_name": "SCOPE OF RULES",
+                    "full_text": "Rule 1. SCOPE OF RULES. These Rules govern the procedure in the circuit courts of the State." + (" x" * 120),
+                    "source_url": "https://www.courts.state.hi.us/wp-content/uploads/2024/09/hrcp_ada.htm#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "HI-hrcp-1",
+                            "name": "SCOPE OF RULES",
+                            "sectionNumber": "1",
+                            "sectionName": "SCOPE OF RULES",
+                            "text": "Rule 1. SCOPE OF RULES. These Rules govern the procedure in the circuit courts of the State." + (" x" * 120),
+                            "sourceUrl": "https://www.courts.state.hi.us/wp-content/uploads/2024/09/hrcp_ada.htm#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_hawaii_court_rules_supplement",
+        _fake_hi_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["HI"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["HI"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["HI"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

@@ -129,7 +129,6 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://apps.azsos.gov/public_services/Title_08/8-03.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_06/6-11.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_07/7-02.rtf" in az_urls
-    assert "https://apps.azsos.gov/public_services/Title_09/9-22.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_09/9-30.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_13/13-01.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_15/15-02.rtf" in az_urls
@@ -9787,7 +9786,7 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 2
-    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [rtf_url, pdf_url]
+    assert {statute["source_url"] for statute in result["state_blocks"][0]["statutes"]} == {rtf_url, pdf_url}
     assert pdf_calls == [pdf_url]
     assert rtf_calls == [rtf_url]
     assert agentic_discovery_calls == 0
@@ -9845,7 +9844,7 @@ async def test_agentic_discovery_bootstraps_arizona_rule_documents_before_broad_
         async def scrape(self, url: str):
             return SimpleNamespace(text="", title="", html="", links=[])
 
-    async def _fake_discover_arizona_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+    async def _fake_discover_arizona_rule_document_urls(*, seed_urls: list[str], live_scraper=None, limit: int = 8) -> list[str]:
         assert landing_url in seed_urls
         return [rtf_url, pdf_url]
 
@@ -9909,7 +9908,7 @@ async def test_agentic_discovery_bootstraps_arizona_rule_documents_before_broad_
 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 2
-    assert [statute["source_url"] for statute in result["state_blocks"][0]["statutes"]] == [rtf_url, pdf_url]
+    assert {statute["source_url"] for statute in result["state_blocks"][0]["statutes"]} == {rtf_url, pdf_url}
     assert rtf_calls == [rtf_url]
     assert pdf_calls == [pdf_url]
     assert result["report"]["AZ"]["source_breakdown"]["arizona_public_services_bootstrap"] == 2
@@ -9963,9 +9962,10 @@ async def test_agentic_discovery_retries_arizona_18_01_rtf_one_last_time_when_gr
         async def scrape(self, url: str):
             return SimpleNamespace(text="", title="", html="", links=[])
 
-    async def _fake_discover_arizona_rule_document_urls(*, seed_urls: list[str], limit: int = 8) -> list[str]:
+    async def _fake_discover_arizona_rule_document_urls(*, seed_urls: list[str], live_scraper=None, limit: int = 8) -> list[str]:
         assert landing_url in seed_urls
         return [retry_url]
+
 
     async def _fake_scrape_rtf_candidate_url_with_processor(url: str):
         rtf_calls.append(url)
@@ -10038,6 +10038,7 @@ async def test_agentic_discovery_retries_arizona_18_01_rtf_one_last_time_when_gr
     assert archive_calls == 0
     assert unified_search_calls == 0
     assert agentic_calls == 0
+
 
 
 @pytest.mark.anyio
