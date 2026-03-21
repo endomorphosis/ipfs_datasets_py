@@ -346,7 +346,7 @@ class TestActorCriticOptimizer:
     def test_optimize_rejection(self, optimizer, sample_task):
         """Test optimization when critic rejects proposal."""
         code = "def test(): pass"
-        
+
         with patch.object(optimizer, 'actor_propose') as mock_actor:
             with patch.object(optimizer, 'critic_evaluate') as mock_critic:
                 mock_actor.return_value = "bad code"
@@ -368,6 +368,9 @@ class TestActorCriticOptimizer:
         assert isinstance(result, OptimizationResult)
         # Either failed or returned original
         assert result.success is False or result.optimized_code == code
+        assert result.metadata["generation_diagnostics"][0]["status"] == "rejected"
+        assert result.metadata["generation_diagnostics"][0]["error_message"] == "Proposal did not meet quality threshold"
+        assert result.metadata["generation_diagnostics"][0]["raw_response_preview"] == "bad code"
 
     def test_optimize_accepts_typed_extra_options(self, optimizer, sample_task):
         """Typed extra optimize options should not affect result contract."""

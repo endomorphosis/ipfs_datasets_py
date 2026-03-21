@@ -799,6 +799,7 @@ class ActorCriticOptimizer(AgenticOptimizer):
         self.extra_init_options = dict(extra_init_options or {})
         self.policies: Dict[str, Policy] = {}
         self._success_counts: Dict[str, int] = {}
+        self._last_generation_diagnostics: List[Dict[str, Any]] = []
         self.load_policies()
 
     def _get_method(self) -> OptimizationMethod:
@@ -981,8 +982,17 @@ class ActorCriticOptimizer(AgenticOptimizer):
         _ = extra_optimize_options  # Reserved for forward-compatible options.
         baseline_metrics = baseline_metrics or {}
         original_code = code or ""
+        self._last_generation_diagnostics = []
 
         proposal = self.actor_propose(task=task, code=original_code, baseline_metrics=baseline_metrics)
+        self._last_generation_diagnostics = [
+            {
+                "file": ",".join(str(path) for path in (task.target_files or [])),
+                "status": "proposal_generated",
+                "mode": "full_file",
+                "raw_response_preview": str(proposal or "")[:4000],
+            }
+        ]
         feedback = self.critic_evaluate(
             original_code=original_code,
             proposed_code=proposal,
@@ -991,6 +1001,11 @@ class ActorCriticOptimizer(AgenticOptimizer):
 
         accepted = feedback.overall_score >= 0.6 and feedback.correctness_score >= 0.6
         self.update_policy("llm_proposal", improvement=0.0, success=accepted)
+        self._last_generation_diagnostics[0]["status"] = "accepted" if accepted else "rejected"
+        self._last_generation_diagnostics[0]["correctness_score"] = feedback.correctness_score
+        self._last_generation_diagnostics[0]["overall_score"] = feedback.overall_score
+        if not accepted:
+            self._last_generation_diagnostics[0]["error_message"] = "Proposal did not meet quality threshold"
 
         return OptimizationResult(
             task_id=task.task_id,
@@ -1007,4 +1022,8 @@ class ActorCriticOptimizer(AgenticOptimizer):
             agent_id=self.agent_id,
             optimized_code=(proposal if accepted else original_code),
             original_code=original_code,
+            metadata={
+                "generation_diagnostics": list(self._last_generation_diagnostics),
+                "target_files": [str(path) for path in task.target_files],
+            },
         )
