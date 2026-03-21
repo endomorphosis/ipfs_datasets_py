@@ -670,6 +670,75 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
+        if self._use_formal_document_render_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_formal_document_render_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            try:
+                policy = self._normalize_formal_document_render_policy_response(
+                    response=response,
+                    file_path=target_file,
+                )
+            except ValueError:
+                policy = {
+                    "chronology_line_limit": 5,
+                    "supporting_fact_limit": 4,
+                    "exhibit_limit": 8,
+                    "affidavit_fact_limit": 6,
+                }
+            current_block = self._extract_target_symbol_blocks(current_code, target_symbols)["render_text"]
+            replacement_sources = {
+                "render_text": self._apply_formal_document_render_policy_to_source(
+                    current_block,
+                    policy,
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+        if self._use_knowledge_graph_build_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_knowledge_graph_build_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            try:
+                policy = self._normalize_knowledge_graph_build_policy_response(
+                    response=response,
+                    file_path=target_file,
+                )
+            except ValueError:
+                policy = {
+                    "normalize_whitespace_input": True,
+                    "record_source_text_char_count": True,
+                    "record_extraction_counts": True,
+                    "mark_empty_input_graph": True,
+                    "preserve_actor_critic_metadata": True,
+                }
+            replacement_sources = {
+                "build_from_text": self._render_knowledge_graph_build_from_text_from_policy(policy)
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
         if self._use_complainant_guidance_policy_mode(target_file=target_file, target_symbols=target_symbols):
             response = self.llm_router.generate(
                 prompt=self._build_complainant_guidance_policy_prompt(
@@ -847,6 +916,12 @@ class TestDrivenOptimizer(AgenticOptimizer):
 
     def _use_merge_seed_with_grounding_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "synthesize_hacc_complaint.py" and target_symbols == ["_merge_seed_with_grounding"]
+
+    def _use_knowledge_graph_build_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "knowledge_graph.py" and target_symbols == ["build_from_text"]
+
+    def _use_formal_document_render_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "formal_document.py" and target_symbols == ["render_text"]
     
     def _apply_optimizations(
         self,
@@ -1678,6 +1753,88 @@ Behavioral guardrails:
 Do not include explanations, markdown, comments, or extra keys.
 """
 
+    def _build_knowledge_graph_build_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Keep knowledge graph building deterministic, preserve actor-critic metadata, and make graph build diagnostics easier to reason about."
+
+        return f"""Return a compact JSON object describing how knowledge_graph.build_from_text should normalize inputs and record safe graph-build metadata.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "normalize_whitespace_input": true or false
+- "record_source_text_char_count": true or false
+- "record_extraction_counts": true or false
+- "mark_empty_input_graph": true or false
+- "preserve_actor_critic_metadata": true or false
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve entity extraction before relationship extraction
+- Preserve KnowledgeGraph return shape and logger.info summary call
+- Preserve tracking through self._built_graphs and self._text_processed_count
+- Preserve actor_critic metadata when self.actor_critic_enabled is true
+- Do not add imports or reference helpers that do not already exist in knowledge_graph.py
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
+    def _build_formal_document_render_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Keep rendered complaint text concise, preserve section order, and avoid bloated chronology, exhibit, and affidavit expansions."
+
+        return f"""Return a compact JSON object describing how formal_document.render_text should bound its section fan-out.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "chronology_line_limit": integer from 3 to 6
+- "supporting_fact_limit": integer from 3 to 6
+- "exhibit_limit": integer from 4 to 8
+- "affidavit_fact_limit": integer from 4 to 8
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve section order and the final SIGNATURE BLOCK
+- Preserve factual allegations, chronology, claims for relief, exhibits, affidavit, verification, and certificate sections when present
+- Preserve use of _clean_sentence, _clean_text, _listify, and self._signature_block_lines
+- Do not add imports or reference helpers that do not already exist in formal_document.py
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
     def _extract_target_symbol_blocks(self, current_code: str, target_symbols: List[str]) -> Dict[str, str]:
         tree = ast.parse(current_code)
         lines = current_code.splitlines(keepends=True)
@@ -2313,6 +2470,102 @@ Do not include explanations, markdown, comments, or extra keys.
             "evidence_item_limit": _clamp_int("evidence_item_limit", 8, 4, 8),
             "blocker_answer_limit": _clamp_int("blocker_answer_limit", 6, 4, 8),
             "unresolved_objective_limit": _clamp_int("unresolved_objective_limit", 3, 2, 5),
+        }
+
+    def _normalize_knowledge_graph_build_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty knowledge-graph build policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Knowledge-graph build policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Knowledge-graph build policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "normalize_whitespace_input",
+            "record_source_text_char_count",
+            "record_extraction_counts",
+            "mark_empty_input_graph",
+            "preserve_actor_critic_metadata",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Knowledge-graph build policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        return {
+            "normalize_whitespace_input": bool(data.get("normalize_whitespace_input", True)),
+            "record_source_text_char_count": bool(data.get("record_source_text_char_count", True)),
+            "record_extraction_counts": bool(data.get("record_extraction_counts", True)),
+            "mark_empty_input_graph": bool(data.get("mark_empty_input_graph", True)),
+            "preserve_actor_critic_metadata": bool(data.get("preserve_actor_critic_metadata", True)),
+        }
+
+    def _normalize_formal_document_render_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty formal-document render policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Formal-document render policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Formal-document render policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "chronology_line_limit",
+            "supporting_fact_limit",
+            "exhibit_limit",
+            "affidavit_fact_limit",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Formal-document render policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        def _clamp_int(name: str, default: int, minimum: int, maximum: int) -> int:
+            value = data.get(name, default)
+            try:
+                value = int(value)
+            except Exception:
+                value = default
+            return max(minimum, min(maximum, value))
+
+        return {
+            "chronology_line_limit": _clamp_int("chronology_line_limit", 5, 3, 6),
+            "supporting_fact_limit": _clamp_int("supporting_fact_limit", 4, 3, 6),
+            "exhibit_limit": _clamp_int("exhibit_limit", 8, 4, 8),
+            "affidavit_fact_limit": _clamp_int("affidavit_fact_limit", 6, 4, 8),
         }
 
     def _render_get_intake_action_from_policy(self, policy: Dict[str, Any]) -> str:
@@ -3702,6 +3955,146 @@ Do not include explanations, markdown, comments, or extra keys.
         except SyntaxError as exc:
             raise ValueError(f"Merge-seed-with-grounding policy produced invalid Python: {exc}") from exc
         return updated
+
+    def _apply_formal_document_render_policy_to_source(self, source: str, policy: Dict[str, Any]) -> str:
+        updated = str(source)
+        replacements = [
+            (
+                r"for index, chronology_line in enumerate\(chronology_lines, 1\):",
+                f"for index, chronology_line in enumerate(chronology_lines[:{int(policy.get('chronology_line_limit', 5))}], 1):",
+            ),
+            (
+                r"for fact in supporting_facts:",
+                f"for fact in supporting_facts[:{int(policy.get('supporting_fact_limit', 4))}]:",
+            ),
+            (
+                r"for exhibit in exhibits:",
+                f"for exhibit in exhibits[:{int(policy.get('exhibit_limit', 8))}]:",
+            ),
+            (
+                r"for index, fact in enumerate\(_listify\(affidavit\.get\(\"facts\"\)\), 1\):",
+                f"for index, fact in enumerate(_listify(affidavit.get(\"facts\"))[:{int(policy.get('affidavit_fact_limit', 6))}], 1):",
+            ),
+        ]
+        for pattern, replacement in replacements:
+            updated, count = re.subn(pattern, replacement, updated, count=1)
+            if count != 1:
+                raise ValueError(f"Could not apply formal-document render policy pattern: {pattern}")
+        try:
+            ast.parse(textwrap.dedent(updated))
+        except SyntaxError as exc:
+            raise ValueError(f"Formal-document render policy produced invalid Python: {exc}") from exc
+        return updated
+
+    def _render_knowledge_graph_build_from_text_from_policy(self, policy: Dict[str, Any]) -> str:
+        normalize_whitespace = bool(policy.get("normalize_whitespace_input", True))
+        record_text_size = bool(policy.get("record_source_text_char_count", True))
+        record_extraction_counts = bool(policy.get("record_extraction_counts", True))
+        mark_empty_input_graph = bool(policy.get("mark_empty_input_graph", True))
+        preserve_actor_critic_metadata = bool(policy.get("preserve_actor_critic_metadata", True))
+
+        input_normalization = (
+            "    source_text = str(text or '')\n"
+            "    normalized_text = ' '.join(source_text.split())\n"
+            if normalize_whitespace
+            else
+            "    source_text = str(text or '')\n"
+            "    normalized_text = source_text\n"
+        )
+        text_size_block = (
+            "    graph.metadata['source_text_char_count'] = len(normalized_text)\n"
+            if record_text_size
+            else ""
+        )
+        empty_input_block = (
+            "    if not normalized_text.strip():\n"
+            "        graph.metadata['build_status'] = 'empty_input'\n"
+            if mark_empty_input_graph
+            else ""
+        )
+        extraction_count_block = (
+            "    graph.metadata['extracted_entity_candidates'] = len(entities)\n"
+            "    graph.metadata['extracted_relationship_candidates'] = len(relationships)\n"
+            if record_extraction_counts
+            else ""
+        )
+        actor_critic_block = (
+            "    if self.actor_critic_enabled:\n"
+            "        entity_scores = [\n"
+            "            float((entity.attributes or {}).get(\"actor_critic_score\", 0.0) or 0.0)\n"
+            "            for entity in graph.entities.values()\n"
+            "        ]\n"
+            "        relationship_scores = [\n"
+            "            float((rel.attributes or {}).get(\"actor_critic_score\", 0.0) or 0.0)\n"
+            "            for rel in graph.relationships.values()\n"
+            "        ]\n"
+            "        graph.metadata[\"actor_critic\"] = {\n"
+            "            \"enabled\": True,\n"
+            "            \"entity_count\": len(entity_scores),\n"
+            "            \"relationship_count\": len(relationship_scores),\n"
+            "            \"avg_entity_score\": (\n"
+            "                round(sum(entity_scores) / len(entity_scores), 4) if entity_scores else 0.0\n"
+            "            ),\n"
+            "            \"avg_relationship_score\": (\n"
+            "                round(sum(relationship_scores) / len(relationship_scores), 4) if relationship_scores else 0.0\n"
+            "            ),\n"
+            "            \"entity_score_floor\": float(self.min_entity_actor_critic_score),\n"
+            "            \"relationship_score_floor\": float(self.min_relationship_actor_critic_score),\n"
+            "        }\n"
+            if preserve_actor_critic_metadata
+            else ""
+        )
+
+        rendered = (
+            "def build_from_text(self, text: str) -> KnowledgeGraph:\n"
+            "    \"\"\"\n"
+            "    Build a knowledge graph from complaint text.\n"
+            "    \n"
+            "    Args:\n"
+            "        text: The complaint text to analyze\n"
+            "        \n"
+            "    Returns:\n"
+            "        A KnowledgeGraph instance\n"
+            "    \"\"\"\n"
+            "    graph = KnowledgeGraph()\n"
+            f"{input_normalization}"
+            f"{text_size_block}"
+            f"{empty_input_block}"
+            "\n"
+            "    entities = self._extract_entities(normalized_text)\n"
+            "    for entity_data in entities:\n"
+            "        entity = Entity(\n"
+            "            id=self._get_entity_id(),\n"
+            "            type=entity_data['type'],\n"
+            "            name=entity_data['name'],\n"
+            "            attributes=entity_data.get('attributes', {}),\n"
+            "            confidence=entity_data.get('confidence', 0.8),\n"
+            "            source='complaint'\n"
+            "        )\n"
+            "        graph.add_entity(entity)\n"
+            "\n"
+            "    relationships = self._extract_relationships(normalized_text, graph)\n"
+            "    for rel_data in relationships:\n"
+            "        rel = Relationship(\n"
+            "            id=self._get_relationship_id(),\n"
+            "            source_id=rel_data['source_id'],\n"
+            "            target_id=rel_data['target_id'],\n"
+            "            relation_type=rel_data['type'],\n"
+            "            attributes=rel_data.get('attributes', {}),\n"
+            "            confidence=rel_data.get('confidence', 0.8),\n"
+            "            source='complaint'\n"
+            "        )\n"
+            "        graph.add_relationship(rel)\n"
+            f"{extraction_count_block}"
+            "\n"
+            f"{actor_critic_block}"
+            "    logger.info(f\"Built knowledge graph: {graph.summary()}\")\n"
+            "    self._built_graphs.append(graph)\n"
+            "    self._text_processed_count += 1\n"
+            "    return graph\n"
+        )
+        ast.parse(rendered)
+        return rendered
 
     def _extract_symbol_replacements_from_text(
         self,

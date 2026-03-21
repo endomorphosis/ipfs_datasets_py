@@ -769,6 +769,29 @@ def test_document_workflow_targeting_policy_renderer_preserves_return_contract()
     ast.parse(rendered)
 
 
+def test_knowledge_graph_build_policy_renderer_preserves_return_contract():
+    optimizer = TestDrivenOptimizer(agent_id="td-knowledge-graph-build", llm_router=Mock())
+
+    rendered = optimizer._render_knowledge_graph_build_from_text_from_policy(
+        {
+            "normalize_whitespace_input": True,
+            "record_source_text_char_count": True,
+            "record_extraction_counts": True,
+            "mark_empty_input_graph": True,
+            "preserve_actor_critic_metadata": True,
+        }
+    )
+
+    assert "def build_from_text(self, text: str) -> KnowledgeGraph:" in rendered
+    assert "normalized_text = ' '.join(source_text.split())" in rendered
+    assert "graph.metadata['source_text_char_count'] = len(normalized_text)" in rendered
+    assert "graph.metadata['build_status'] = 'empty_input'" in rendered
+    assert "graph.metadata['extracted_entity_candidates'] = len(entities)" in rendered
+    assert "graph.metadata[\"actor_critic\"] = {" in rendered
+    assert "self._built_graphs.append(graph)" in rendered
+    ast.parse(rendered)
+
+
 def test_complainant_guidance_policy_renderer_preserves_return_contract():
     optimizer = TestDrivenOptimizer(agent_id="td-complainant-guidance", llm_router=Mock())
 
@@ -823,6 +846,42 @@ def test_merge_seed_with_grounding_policy_transform_preserves_function_shape():
     assert "[:7]:" in rendered
     assert "blocker_handoff_raw_answers[:5]" in rendered
     assert "prioritized[:2]" in rendered
+    ast.parse(rendered)
+
+
+def test_formal_document_render_policy_transform_preserves_function_shape():
+    optimizer = TestDrivenOptimizer(agent_id="td-formal-document-render-policy", llm_router=Mock())
+    source = (
+        "def render_text(self, draft):\n"
+        "    chronology_lines = []\n"
+        "    for index, chronology_line in enumerate(chronology_lines, 1):\n"
+        "        pass\n"
+        "    supporting_facts = []\n"
+        "    for fact in supporting_facts:\n"
+        "        pass\n"
+        "    exhibits = []\n"
+        "    for exhibit in exhibits:\n"
+        "        pass\n"
+        "    affidavit = {}\n"
+        "    for index, fact in enumerate(_listify(affidavit.get(\"facts\")), 1):\n"
+        "        pass\n"
+        "    return ''\n"
+    )
+
+    rendered = optimizer._apply_formal_document_render_policy_to_source(
+        source,
+        {
+            "chronology_line_limit": 4,
+            "supporting_fact_limit": 3,
+            "exhibit_limit": 6,
+            "affidavit_fact_limit": 5,
+        },
+    )
+
+    assert "chronology_lines[:4]" in rendered
+    assert "supporting_facts[:3]" in rendered
+    assert "exhibits[:6]" in rendered
+    assert "affidavit.get(\"facts\"))[:5]" in rendered
     ast.parse(rendered)
 
 
@@ -1142,4 +1201,160 @@ def test_generate_optimizations_can_use_document_workflow_targeting_policy_mode(
     assert "def _build_workflow_phase_targeting(" in updated
     assert "'document_generation': _clamp(" in updated
     assert "self._select_phase_target_section(" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_can_use_knowledge_graph_build_policy_mode(tmp_path):
+    router = Mock()
+    router.generate.return_value = """{
+  "normalize_whitespace_input": true,
+  "record_source_text_char_count": true,
+  "record_extraction_counts": true,
+  "mark_empty_input_graph": true,
+  "preserve_actor_critic_metadata": true
+}"""
+    optimizer = TestDrivenOptimizer(agent_id="td-knowledge-graph-build-generate", llm_router=router)
+
+    target = tmp_path / "knowledge_graph.py"
+    target.write_text(
+        "from typing import Any, Dict\n\n"
+        "class KnowledgeGraph:\n"
+        "    def __init__(self):\n"
+        "        self.entities = {}\n"
+        "        self.relationships = {}\n"
+        "        self.metadata = {}\n\n"
+        "    def add_entity(self, entity):\n"
+        "        self.entities[entity.id] = entity\n\n"
+        "    def add_relationship(self, relationship):\n"
+        "        self.relationships[relationship.id] = relationship\n\n"
+        "    def summary(self):\n"
+        "        return {'total_entities': len(self.entities), 'total_relationships': len(self.relationships)}\n\n"
+        "class Entity:\n"
+        "    def __init__(self, id, type, name, attributes, confidence, source):\n"
+        "        self.id = id\n"
+        "        self.type = type\n"
+        "        self.name = name\n"
+        "        self.attributes = attributes\n"
+        "        self.confidence = confidence\n"
+        "        self.source = source\n\n"
+        "class Relationship:\n"
+        "    def __init__(self, id, source_id, target_id, relation_type, attributes, confidence, source):\n"
+        "        self.id = id\n"
+        "        self.source_id = source_id\n"
+        "        self.target_id = target_id\n"
+        "        self.relation_type = relation_type\n"
+        "        self.attributes = attributes\n"
+        "        self.confidence = confidence\n"
+        "        self.source = source\n\n"
+        "class Logger:\n"
+        "    def info(self, message):\n"
+        "        return None\n\n"
+        "logger = Logger()\n\n"
+        "class KnowledgeGraphBuilder:\n"
+        "    def __init__(self):\n"
+        "        self._built_graphs = []\n"
+        "        self._text_processed_count = 0\n"
+        "        self.actor_critic_enabled = True\n"
+        "        self.min_entity_actor_critic_score = -0.3\n"
+        "        self.min_relationship_actor_critic_score = -0.1\n\n"
+        "    def _get_entity_id(self):\n"
+        "        return 'entity-1'\n\n"
+        "    def _get_relationship_id(self):\n"
+        "        return 'rel-1'\n\n"
+        "    def _extract_entities(self, text):\n"
+        "        return []\n\n"
+        "    def _extract_relationships(self, text, graph):\n"
+        "        return []\n\n"
+        "    def build_from_text(self, text: str) -> KnowledgeGraph:\n"
+        "        graph = KnowledgeGraph()\n"
+        "        return graph\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-knowledge-graph-build",
+        target_files=[target],
+        description="Optimize knowledge graph build_from_text",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["build_from_text"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "def build_from_text(self, text: str) -> KnowledgeGraph:" in updated
+    assert "normalized_text = ' '.join(source_text.split())" in updated
+    assert "graph.metadata['source_text_char_count'] = len(normalized_text)" in updated
+    assert "graph.metadata['extracted_entity_candidates'] = len(entities)" in updated
+    assert "graph.metadata[\"actor_critic\"] = {" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_can_use_formal_document_render_policy_mode(tmp_path):
+    router = Mock()
+    router.generate.return_value = """{
+  "chronology_line_limit": 4,
+  "supporting_fact_limit": 3,
+  "exhibit_limit": 6,
+  "affidavit_fact_limit": 5
+}"""
+    optimizer = TestDrivenOptimizer(agent_id="td-formal-document-render-generate", llm_router=router)
+
+    target = tmp_path / "formal_document.py"
+    target.write_text(
+        "from typing import Any, Dict, List\n\n"
+        "def _clean_sentence(value):\n"
+        "    return str(value or '').strip()\n\n"
+        "def _clean_text(value):\n"
+        "    return str(value or '').strip()\n\n"
+        "def _listify(value):\n"
+        "    if isinstance(value, list):\n"
+        "        return value\n"
+        "    if value is None:\n"
+        "        return []\n"
+        "    return [value]\n\n"
+        "class ComplaintDocumentBuilder:\n"
+        "    def _signature_block_lines(self, signature_block):\n"
+        "        return []\n\n"
+        "    def render_text(self, draft: Dict[str, Any]) -> str:\n"
+        "        lines: List[str] = []\n"
+        "        chronology_lines = [_clean_sentence(item) for item in _listify(draft.get('anchored_chronology_summary')) if _clean_text(item)]\n"
+        "        if chronology_lines:\n"
+        "            for index, chronology_line in enumerate(chronology_lines, 1):\n"
+        "                lines.append(f'{index}. {chronology_line}')\n"
+        "        claims = _listify(draft.get('legal_claims'))\n"
+        "        for claim in claims:\n"
+        "            supporting_facts = _listify(claim.get('supporting_facts'))\n"
+        "            for fact in supporting_facts:\n"
+        "                lines.append(f'- {_clean_sentence(fact)}')\n"
+        "        exhibits = _listify(draft.get('exhibits'))\n"
+        "        for exhibit in exhibits:\n"
+        "            lines.append(str(exhibit))\n"
+        "        affidavit = draft.get('affidavit', {}) if isinstance(draft.get('affidavit'), dict) else {}\n"
+        "        for index, fact in enumerate(_listify(affidavit.get(\"facts\")), 1):\n"
+        "            lines.append(f'{index}. {_clean_sentence(fact)}')\n"
+        "        lines.extend(self._signature_block_lines({}))\n"
+        "        return '\\n'.join(line for line in lines if line is not None)\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-formal-document-render",
+        target_files=[target],
+        description="Optimize formal document render_text",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["render_text"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "enumerate(chronology_lines[:4], 1)" in updated
+    assert "for fact in supporting_facts[:3]:" in updated
+    assert "for exhibit in exhibits[:6]:" in updated
+    assert "_listify(affidavit.get(\"facts\"))[:5]" in updated
     ast.parse(updated)
