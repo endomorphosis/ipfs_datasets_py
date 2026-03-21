@@ -129,6 +129,7 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://apps.azsos.gov/public_services/Title_08/8-03.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_06/6-11.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_07/7-02.rtf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_09/9-22.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_09/9-30.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_13/13-01.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_15/15-02.rtf" in az_urls

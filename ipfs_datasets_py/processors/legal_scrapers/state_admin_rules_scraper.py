@@ -745,6 +745,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
         "https://apps.azsos.gov/public_services/Title_08/8-03.pdf",
+        "https://apps.azsos.gov/public_services/Title_09/9-22.pdf",
         "https://apps.azsos.gov/public_services/Title_09/9-30.pdf",
         "https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
         "https://apps.azsos.gov/public_services/Title_13/13-01.rtf",

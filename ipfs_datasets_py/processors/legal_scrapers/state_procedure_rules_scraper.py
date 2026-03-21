@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import time
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
@@ -217,6 +218,37 @@ _NV_RULE_SOURCES: List[Dict[str, str]] = [
 ]
 _NV_RULE_HEADING_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+)?(?:\([a-z]\))?)\s*\.\s*(.+)$", re.IGNORECASE)
 _NV_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_CT_PRACTICE_BOOK_URL = "https://jud.ct.gov/Publications/PracticeBook/PB.pdf"
+_CT_OFFICIAL_EDITION_RE = re.compile(r"OFFICIAL\s+(\d{4})\s+CONNECTICUT\s+PRACTICE\s+BOOK", re.IGNORECASE)
+_CT_AREA_HEADER_RE = re.compile(r"^SUPERIOR COURT—PROCEDURE IN (CIVIL|CRIMINAL) MATTERS\b", re.IGNORECASE)
+_CT_SECTION_HEADING_RE = re.compile(r"^Sec\.\s((?:1[1-9]|2[0-5]|3[6-9]|4[0-4])-\d+[A-Za-z]?)\.\s*(.*)$")
+_CT_BODY_START_PREFIXES = (
+    "A ",
+    "An ",
+    "Any ",
+    "At ",
+    "After ",
+    "Before ",
+    "Except ",
+    "For ",
+    "If ",
+    "In ",
+    "Matters ",
+    "Motions ",
+    "No ",
+    "On ",
+    "Such ",
+    "The ",
+    "These ",
+    "This ",
+    "To ",
+    "Upon ",
+    "Unless ",
+    "Whenever ",
+    "When ",
+    "Where ",
+    "Within ",
+)
 
 _CIVIL_PATTERNS = [
     re.compile(r"rules?\s+of\s+civil\s+procedure", re.IGNORECASE),
@@ -369,6 +401,17 @@ class _NewHampshireProcedureRulesSupplementFetcher(BaseStateScraper):
 class _NevadaProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.leg.state.nv.us"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _ConnecticutProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://jud.ct.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -748,6 +791,203 @@ def _extract_nevada_rules_from_html(
 
         if "SectBody" in classes:
             buffer.append(text)
+
+    flush()
+    return statutes
+
+
+def _connecticut_procedure_family_for_section(section_number: str) -> Optional[str]:
+    numeric_prefix = int(str(section_number or "0").split("-", 1)[0] or 0)
+    if 11 <= numeric_prefix <= 25:
+        return "civil_procedure"
+    if 36 <= numeric_prefix <= 44:
+        return "criminal_procedure"
+    return None
+
+
+def _join_connecticut_heading_parts(parts: List[str]) -> str:
+    joined = ""
+    for part in parts:
+        cleaned = " ".join(str(part or "").split())
+        if not cleaned:
+            continue
+        if joined.endswith("-"):
+            joined = joined[:-1] + cleaned.lstrip()
+        else:
+            joined = f"{joined} {cleaned}".strip()
+    return joined.strip().rstrip(".")
+
+
+def _looks_like_connecticut_body_start(line: str) -> bool:
+    normalized = " ".join(str(line or "").split())
+    if not normalized:
+        return False
+    if normalized.startswith(("(", "[", '"', "'")):
+        return True
+    if re.match(r"^[A-Za-z0-9]+\)", normalized):
+        return True
+    for prefix in _CT_BODY_START_PREFIXES:
+        if normalized.startswith(prefix):
+            return True
+    return normalized.endswith(".")
+
+
+def _split_connecticut_heading_and_body(text: str) -> tuple[str, List[str]]:
+    normalized = " ".join(str(text or "").split())
+    if not normalized:
+        return "", []
+    starts_like_body = normalized.startswith(("(", "[", '"', "'")) or bool(re.match(r"^[A-Za-z0-9]+\)", normalized))
+    if not starts_like_body:
+        starts_like_body = any(normalized.startswith(prefix) for prefix in _CT_BODY_START_PREFIXES)
+    if starts_like_body:
+        return "", [normalized]
+
+    split_points: List[int] = []
+    for prefix in _CT_BODY_START_PREFIXES:
+        marker = f" {prefix}"
+        index = normalized.find(marker)
+        if index > 0:
+            split_points.append(index)
+    pattern_match = re.search(r"\s(\([a-z0-9]+\))\s", normalized)
+    if pattern_match and pattern_match.start() > 0:
+        split_points.append(pattern_match.start())
+
+    if not split_points:
+        return normalized, []
+
+    split_at = min(split_points)
+    heading = normalized[:split_at].strip()
+    body = normalized[split_at:].strip()
+    return heading, [body] if body else []
+
+
+def _extract_connecticut_rules_from_page_texts(
+    page_texts: List[tuple[int, str]],
+    *,
+    source_url: str,
+) -> List[NormalizedStatute]:
+    edition_year = None
+    for _page_number, text in page_texts[:12]:
+        match = _CT_OFFICIAL_EDITION_RE.search(str(text or ""))
+        if match:
+            edition_year = match.group(1)
+            break
+
+    code_name = "Connecticut Practice Book"
+    title_lookup = {
+        "civil_procedure": f"Connecticut Practice Book {edition_year} - Superior Court Procedure in Civil Matters"
+        if edition_year
+        else "Connecticut Practice Book - Superior Court Procedure in Civil Matters",
+        "criminal_procedure": f"Connecticut Practice Book {edition_year} - Superior Court Procedure in Criminal Matters"
+        if edition_year
+        else "Connecticut Practice Book - Superior Court Procedure in Criminal Matters",
+    }
+
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    current_family: Optional[str] = None
+    current_number = ""
+    current_page = 0
+    heading_parts: List[str] = []
+    content_lines: List[str] = []
+    heading_mode = False
+
+    def flush() -> None:
+        nonlocal current_family, current_number, current_page, heading_parts, content_lines, heading_mode
+        if not current_family or not current_number:
+            current_number = ""
+            current_page = 0
+            heading_parts = []
+            content_lines = []
+            heading_mode = False
+            return
+
+        section_name = _join_connecticut_heading_parts(heading_parts)
+        full_lines = [f"Sec. {current_number}. {section_name}" if section_name else f"Sec. {current_number}."]
+        full_lines.extend(line for line in content_lines if line)
+        full_text = "\n".join(full_lines).strip()
+        if section_name and len(full_text) >= 40:
+            key = (current_number.lower(), section_name.lower())
+            if key not in seen:
+                seen.add(key)
+                title_name = title_lookup[current_family]
+                statutes.append(
+                    NormalizedStatute(
+                        state_code="CT",
+                        state_name=US_STATES["CT"],
+                        statute_id=f"Conn. Practice Book § {current_number}",
+                        code_name=code_name,
+                        title_name=title_name,
+                        chapter_name=title_name,
+                        section_number=current_number,
+                        section_name=section_name,
+                        short_title=section_name,
+                        full_text=full_text,
+                        summary=section_name,
+                        source_url=f"{source_url}#page={current_page}" if current_page else source_url,
+                        official_cite=f"Conn. Practice Book § {current_number}",
+                        legal_area=current_family,
+                        structured_data={
+                            "edition_year": edition_year,
+                            "source_kind": "ct_practice_book_pdf",
+                            "procedure_family": current_family,
+                            "page_start": current_page or None,
+                        },
+                    )
+                )
+
+        current_number = ""
+        current_page = 0
+        heading_parts = []
+        content_lines = []
+        heading_mode = False
+
+    for page_number, page_text in page_texts:
+        for raw_line in str(page_text or "").splitlines():
+            line = " ".join(raw_line.replace("\x00", " ").split())
+            if not line or line.isdigit() or line.startswith("© Copyrighted by the Secretary of the State"):
+                continue
+
+            area_match = _CT_AREA_HEADER_RE.match(line)
+            if area_match:
+                current_family = "civil_procedure" if area_match.group(1).lower() == "civil" else "criminal_procedure"
+                continue
+
+            if line.startswith("CHAPTER ") or line == "Sec. Sec." or line.startswith("For previous Histories"):
+                continue
+
+            section_match = _CT_SECTION_HEADING_RE.match(line)
+            if section_match:
+                flush()
+                current_number = section_match.group(1).strip()
+                current_family = _connecticut_procedure_family_for_section(current_number) or current_family
+                current_page = page_number
+                heading_part, initial_body_lines = _split_connecticut_heading_and_body(section_match.group(2))
+                heading_parts = [heading_part] if heading_part else []
+                content_lines = initial_body_lines
+                heading_mode = not initial_body_lines
+                continue
+
+            if not current_number or not current_family:
+                continue
+
+            if heading_mode:
+                if heading_parts and heading_parts[-1].endswith("-"):
+                    heading_parts.append(line)
+                    continue
+                if _looks_like_connecticut_body_start(line):
+                    heading_mode = False
+                    content_lines.append(line)
+                else:
+                    heading_part, initial_body_lines = _split_connecticut_heading_and_body(line)
+                    if heading_part:
+                        heading_parts.append(heading_part)
+                    if initial_body_lines:
+                        heading_mode = False
+                        content_lines.extend(initial_body_lines)
+                continue
+
+            content_lines.append(line)
 
     flush()
     return statutes
@@ -2222,6 +2462,62 @@ async def _scrape_nevada_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_connecticut_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _ConnecticutProcedureRulesSupplementFetcher("CT", US_STATES["CT"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(
+        fetcher,
+        _CT_PRACTICE_BOOK_URL,
+        timeout_seconds=180,
+    )
+    if not raw_bytes:
+        return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+    reader = PdfReader(BytesIO(raw_bytes))
+    page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+    statutes = _extract_connecticut_rules_from_page_texts(
+        page_texts,
+        source_url=_CT_PRACTICE_BOOK_URL,
+    )
+
+    for statute in statutes:
+        if remaining is not None and remaining <= 0:
+            break
+
+        source_key = str(statute.source_url or "").strip().lower()
+        if source_key in existing_urls:
+            continue
+
+        enriched = fetcher._enrich_statute_structure(statute).to_dict()
+        family = _classify_procedure_family(enriched) or str(
+            statute.structured_data.get("procedure_family") or ""
+        ).strip()
+        if not family:
+            continue
+        enriched["procedure_family"] = family
+        supplemental_rules.append(enriched)
+        existing_urls.add(source_key)
+        remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -2505,6 +2801,23 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if nv_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = nv_fetch_analytics
+
+            if state_code == "CT":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                ct_supplement, ct_fetch_analytics = await _scrape_connecticut_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if ct_supplement:
+                    procedure_statutes.extend(ct_supplement)
+                    for rule in ct_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if ct_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = ct_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]

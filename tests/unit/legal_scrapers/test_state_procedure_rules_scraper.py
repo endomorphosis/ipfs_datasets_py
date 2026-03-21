@@ -341,6 +341,58 @@ def test_extract_nevada_rules_from_html() -> None:
     assert "civil actions" in statutes[0].full_text
 
 
+def test_extract_connecticut_rules_from_page_texts() -> None:
+    page_texts = [
+        (1, "OFFICIAL 2026 CONNECTICUT PRACTICE BOOK"),
+        (
+            221,
+            """
+            SUPERIOR COURT—PROCEDURE IN CIVIL MATTERS Sec. 11-1
+            CHAPTER 11
+            MOTIONS, REQUESTS, ORDERS OF NOTICE AND SHORT CALENDAR
+            Sec. 11-1. Form of Motion and Request
+            (a) Every motion, request, application or objection directed to pleading or procedure shall be in writing.
+            Sec. 11-2. Definition of “Motion” and “Request”
+            A motion is any application to the court for an order.
+            Sec. 11-5. Subsequent Orders of Notice; Continuance Motions made to the court for a second or subsequent order of notice shall be filed with the clerk.
+            """,
+        ),
+        (
+            389,
+            """
+            SUPERIOR COURT—PROCEDURE IN CRIMINAL MATTERS Sec. 36-1
+            CHAPTER 36
+            PROCEDURE PRIOR TO APPEARANCE
+            Sec. 36-1. Arrest by Warrant; Issuance
+            Upon the submission of an application for an arrest warrant by a prosecuting authority, a judicial authority may issue a warrant.
+            Sec. 36-2. —Affidavit in Support of Application, Filing, Dis-
+            closure
+            The affidavit shall be filed with the clerk and shall be subject to disclosure.
+            """,
+        ),
+    ]
+
+    statutes = procedure_module._extract_connecticut_rules_from_page_texts(
+        page_texts,
+        source_url="https://jud.ct.gov/Publications/PracticeBook/PB.pdf",
+    )
+
+    assert len(statutes) == 5
+    assert statutes[0].section_number == "11-1"
+    assert statutes[0].section_name == "Form of Motion and Request"
+    assert statutes[0].official_cite == "Conn. Practice Book § 11-1"
+    assert statutes[0].structured_data["edition_year"] == "2026"
+    assert statutes[0].structured_data["page_start"] == 221
+    assert statutes[0].source_url.endswith("#page=221")
+    assert statutes[2].section_number == "11-5"
+    assert statutes[2].section_name == "Subsequent Orders of Notice; Continuance"
+    assert "second or subsequent order of notice" in statutes[2].full_text
+    assert statutes[3].section_number == "36-1"
+    assert statutes[3].section_name == "Arrest by Warrant; Issuance"
+    assert statutes[3].structured_data["procedure_family"] == "criminal_procedure"
+    assert statutes[4].section_name == "—Affidavit in Support of Application, Filing, Disclosure"
+
+
 @pytest.mark.anyio
 async def test_fetch_html_with_direct_fallback_uses_curl_when_requests_fail(
     monkeypatch: pytest.MonkeyPatch,
@@ -1123,6 +1175,94 @@ async def test_scrape_state_procedure_rules_adds_nevada_supplement(monkeypatch: 
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["NV"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["NV"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_connecticut_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "CT",
+                    "state_name": "Connecticut",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "CT": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_ct_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "CT",
+                    "state_name": "Connecticut",
+                    "statute_id": "Conn. Practice Book § 11-1",
+                    "section_number": "11-1",
+                    "section_name": "Form of Motion and Request",
+                    "full_text": "Sec. 11-1. Form of Motion and Request\n(a) Every motion shall be in writing." + (" x" * 120),
+                    "source_url": "https://jud.ct.gov/Publications/PracticeBook/PB.pdf#page=221",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "CT-pb-11-1",
+                            "name": "Form of Motion and Request",
+                            "sectionNumber": "11-1",
+                            "sectionName": "Form of Motion and Request",
+                            "text": "Sec. 11-1. Form of Motion and Request\n(a) Every motion shall be in writing." + (" x" * 120),
+                            "sourceUrl": "https://jud.ct.gov/Publications/PracticeBook/PB.pdf#page=221",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 1,
+                "success": 1,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 0,
+                "cache_writes": 1,
+                "providers": {"direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_connecticut_court_rules_supplement",
+        _fake_ct_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["CT"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["CT"]["attempted"] == 2
+    assert result["metadata"]["fetch_analytics_by_state"]["CT"]["cache_writes"] == 1
 
 
 @pytest.mark.anyio
