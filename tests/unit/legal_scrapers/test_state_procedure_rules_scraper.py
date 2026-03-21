@@ -621,7 +621,8 @@ def test_extract_new_mexico_rules_from_page_texts() -> None:
             Scope of Rules; One Form of Action
             1-001. Scope of rules; definitions.
             A. Scope. These rules govern the procedure in the district courts of New Mexico in all suits of a civil nature.
-            [As amended, effective February 6, 2012.]
+            [As amended by Supreme Court Order No. 07-8300-041, effective February 25, 2008;
+            by Supreme Court Order No. 11-8300-050, effective for cases filed on or after February 6, 2012.]
             Committee commentary. — This commentary should not be included.
             """,
         ),
@@ -630,6 +631,9 @@ def test_extract_new_mexico_rules_from_page_texts() -> None:
             """
             1-002. One form of action.
             There shall be one form of action to be known as "civil action".
+            1-003. Service and filing of pleadings and other papers by
+            facsimile.
+            A. Facsimile copies permitted to be filed.
             ANNOTATIONS
             These annotations should not be included.
             """,
@@ -646,7 +650,7 @@ def test_extract_new_mexico_rules_from_page_texts() -> None:
         first_rule_number="1-001",
     )
 
-    assert len(statutes) == 2
+    assert len(statutes) == 3
     assert statutes[0].section_number == "1-001"
     assert statutes[0].section_name == "Scope of rules; definitions"
     assert statutes[0].official_cite == "Rule 1-001 NMRA"
@@ -655,6 +659,70 @@ def test_extract_new_mexico_rules_from_page_texts() -> None:
     assert "commentary should not be included" not in statutes[0].full_text.lower()
     assert statutes[1].section_number == "1-002"
     assert "annotations should not be included" not in statutes[1].full_text.lower()
+    assert statutes[2].section_number == "1-003"
+    assert statutes[2].section_name == "Service and filing of pleadings and other papers by facsimile"
+
+
+def test_extract_west_virginia_civil_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            4,
+            """
+            I. Scope of Rules – One Form of Action.
+            Rule 1. Scope and purpose.
+            These rules govern the procedure in all civil actions and proceedings in West Virginia trial courts of record.
+            Rule 2. One form of action.
+            There is one form of action—the civil action.
+            Rule 3. Commencing an action.
+            A civil action is commenced by filing a complaint with the court.
+            """,
+        ),
+    ]
+
+    statutes = procedure_module._extract_west_virginia_civil_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.courtswv.gov/sites/default/pubfilesmnt/2025-04/RCP%20Final%204-28-2025.pdf",
+        title_name="West Virginia Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="W. Va. R. Civ. P.",
+    )
+
+    assert len(statutes) == 3
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name == "Scope and purpose"
+    assert statutes[0].official_cite == "W. Va. R. Civ. P. 1"
+    assert "trial courts of record" in statutes[0].full_text
+
+
+def test_extract_west_virginia_criminal_rules_from_html() -> None:
+    html = """
+    <html><body>
+      <h3>THE WEST VIRGINIA RULES OF CRIMINAL PROCEDURE</h3>
+      <h5 id="rule1">Rule 1. Scope.</h5>
+      <p>These rules govern the procedure in all criminal proceedings in the circuit courts of West Virginia.</p>
+      <p>[Effective October 1, 1981.]</p>
+      <h5 id="rule2">Rule 2. Purpose and constructions.</h5>
+      <p>These rules are intended to provide for the just determination of every criminal proceeding.</p>
+      <p>[Effective October 1, 1981.]</p>
+    </body></html>
+    """
+
+    statutes = procedure_module._extract_west_virginia_criminal_rules_from_html(
+        html,
+        source_url="https://www.courtswv.gov/legal-community/court-rules/rules-criminal-procedure-contents",
+        title_name="West Virginia Rules of Criminal Procedure",
+        procedure_family="criminal_procedure",
+        legal_area="criminal_procedure",
+        official_cite_prefix="W. Va. R. Crim. P.",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name == "Scope"
+    assert statutes[0].official_cite == "W. Va. R. Crim. P. 1"
+    assert statutes[0].structured_data["effective_date"] == "October 1, 1981"
+    assert "circuit courts of West Virginia" in statutes[0].full_text
 
 
 def test_extract_washington_rule_links_and_rule_text() -> None:
@@ -2675,6 +2743,96 @@ async def test_scrape_state_procedure_rules_adds_new_mexico_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["NM"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["NM"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_west_virginia_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "WV",
+                    "state_name": "West Virginia",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "WV": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_wv_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "WV",
+                    "state_name": "West Virginia",
+                    "statute_id": "W. Va. R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope and purpose",
+                    "full_text": "Rule 1. Scope and purpose. These rules govern the procedure in all civil actions and proceedings in West Virginia trial courts of record." + (" x" * 120),
+                    "source_url": "https://www.courtswv.gov/sites/default/pubfilesmnt/2025-04/RCP%20Final%204-28-2025.pdf#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "WV-rcp-1",
+                            "name": "Scope and purpose",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope and purpose",
+                            "text": "Rule 1. Scope and purpose. These rules govern the procedure in all civil actions and proceedings in West Virginia trial courts of record." + (" x" * 120),
+                            "sourceUrl": "https://www.courtswv.gov/sites/default/pubfilesmnt/2025-04/RCP%20Final%204-28-2025.pdf#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_west_virginia_court_rules_supplement",
+        _fake_wv_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["WV"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["WV"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["WV"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

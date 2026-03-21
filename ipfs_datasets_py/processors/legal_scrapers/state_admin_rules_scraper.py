@@ -1466,6 +1466,9 @@ def _allowed_discovery_hosts_for_state(state_code: str, state_name: str) -> set[
         allowed_hosts.add(official_host)
     if str(state_code or "").upper() == "HI":
         allowed_hosts.add("files.hawaii.gov")
+    if str(state_code or "").upper() == "ID":
+        allowed_hosts.add("stagingdfmmainsa.blob.core.windows.net")
+        allowed_hosts.add("proddfmmainsa.blob.core.windows.net")
 
     return {host for host in allowed_hosts if host}
 
@@ -10419,6 +10422,89 @@ async def _discover_georgia_rule_document_urls(*, seed_urls: List[str], limit: i
     return discovered_urls
 
 
+async def _discover_idaho_rule_document_urls(*, seed_urls: List[str], live_scraper: Any, limit: int = 8) -> List[str]:
+    discovered_urls: List[str] = []
+    seen_document_keys: set[str] = set()
+    allowed_hosts = {
+        "adminrules.idaho.gov",
+        "stagingdfmmainsa.blob.core.windows.net",
+        "proddfmmainsa.blob.core.windows.net",
+    }
+    request_headers = {"User-Agent": "Mozilla/5.0"}
+
+    def _record(url: str) -> bool:
+        key = _url_key(url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(url)
+        return len(discovered_urls) >= max(1, int(limit))
+
+    current_rules_url = "https://adminrules.idaho.gov/current-rules/"
+    for seed_url in seed_urls:
+        seed_value = str(seed_url or "").strip()
+        parsed = urlparse(seed_value)
+        if parsed.netloc.lower() == "adminrules.idaho.gov" and (parsed.path or "").rstrip("/").lower() in {
+            "/current-rules",
+            "/rules/current",
+        }:
+            current_rules_url = seed_value.rstrip("/") + "/"
+            break
+
+    def _extract_links(html: str) -> List[str]:
+        candidate_links: List[str] = []
+        soup = BeautifulSoup(html, "html.parser")
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            if not href:
+                continue
+            absolute_url = urljoin(current_rules_url, href)
+            parsed = urlparse(absolute_url)
+            host = parsed.netloc.lower().strip(".")
+            path = (parsed.path or "").lower()
+            if host not in allowed_hosts:
+                continue
+            if not path.endswith(".pdf"):
+                continue
+            if "/rules/current/" not in path:
+                continue
+            candidate_links.append(absolute_url)
+
+        candidate_links.sort(key=_score_candidate_url, reverse=True)
+        return candidate_links
+
+    html = ""
+    try:
+        scraped = await asyncio.wait_for(live_scraper.scrape(current_rules_url), timeout=15.0)
+        html = str(getattr(scraped, "html", "") or "")
+    except Exception:
+        html = ""
+
+    if not html:
+        def _fetch_html() -> str:
+            response = requests.get(
+                current_rules_url,
+                timeout=20,
+                headers=request_headers,
+            )
+            response.raise_for_status()
+            return str(response.text or "")
+
+        try:
+            html = await asyncio.wait_for(asyncio.to_thread(_fetch_html), timeout=25.0)
+        except Exception:
+            html = ""
+
+    if not html:
+        return discovered_urls
+
+    for document_url in _extract_links(html):
+        if _record(document_url):
+            break
+
+    return discovered_urls
+
+
 async def _discover_california_westlaw_document_urls(
     *,
     seed_urls: List[str],
@@ -11425,6 +11511,7 @@ async def _agentic_discover_admin_state_blocks(
         california_bootstrap_document_urls: List[str] = []
         new_hampshire_bootstrap_document_urls: List[str] = []
         georgia_bootstrap_document_urls: List[str] = []
+        idaho_bootstrap_document_urls: List[str] = []
         if state_code == "AL" and not seeded_direct_detail_urls:
             try:
                 alabama_bootstrap_document_urls = await asyncio.wait_for(
@@ -11789,6 +11876,23 @@ async def _agentic_discover_admin_state_blocks(
             if georgia_bootstrap_document_urls:
                 source_breakdown["georgia_gac_bootstrap"] = len(georgia_bootstrap_document_urls)
 
+        if state_code == "ID" and not seeded_direct_detail_urls:
+            try:
+                idaho_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_idaho_rule_document_urls(
+                        seed_urls=ordered_seed_urls,
+                        live_scraper=live_scraper,
+                        limit=min(max(max_fetch_per_state * 4, 8), 24),
+                    ),
+                    timeout=20.0,
+                )
+            except Exception:
+                idaho_bootstrap_document_urls = []
+            for document_url in idaho_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if idaho_bootstrap_document_urls:
+                source_breakdown["idaho_current_rules_pdf_bootstrap"] = len(idaho_bootstrap_document_urls)
+
         direct_detail_ready = bool(
             alabama_bootstrap_document_urls
             or hawaii_bootstrap_document_urls
@@ -11810,6 +11914,7 @@ async def _agentic_discover_admin_state_blocks(
             or california_bootstrap_document_urls
             or new_hampshire_bootstrap_document_urls
             or georgia_bootstrap_document_urls
+            or idaho_bootstrap_document_urls
         ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
             max_fetch=max_fetch_per_state,
