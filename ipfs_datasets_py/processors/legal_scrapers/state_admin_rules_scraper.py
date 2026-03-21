@@ -10892,6 +10892,19 @@ async def _agentic_discover_admin_state_blocks(
         az_fetch_diagnostics: Dict[str, Any] = {}
         allowed_hosts = _allowed_discovery_hosts_for_state(state_code, state_name)
         state_rate_limit_metadata: Dict[str, Any] = {}
+        co_progress_enabled = state_code == "CO"
+
+        def _record_co_progress(phase: str, **details: Any) -> None:
+            if not co_progress_enabled:
+                return
+            detail_parts = []
+            for key, value in details.items():
+                if value is None:
+                    continue
+                detail_parts.append(f"{key}={value}")
+            detail_suffix = f" {' '.join(detail_parts)}" if detail_parts else ""
+            elapsed_s = max(0.0, time.monotonic() - state_start)
+            print(f"co_progress phase={phase} elapsed_s={elapsed_s:.1f}{detail_suffix}", flush=True)
 
         def _init_az_phase(name: str) -> Dict[str, Any]:
             phase = az_fetch_diagnostics.get(name)
@@ -11515,6 +11528,11 @@ async def _agentic_discover_admin_state_blocks(
                 seed_urls=ordered_seed_urls,
                 live_scraper=colorado_bootstrap_scraper,
                 allowed_hosts=allowed_hosts,
+                limit=colorado_bootstrap_limit,
+            )
+            _record_co_progress(
+                "bootstrap_done",
+                discovered=len(colorado_bootstrap_document_urls),
                 limit=colorado_bootstrap_limit,
             )
             for document_url in colorado_bootstrap_document_urls:
@@ -12172,6 +12190,15 @@ async def _agentic_discover_admin_state_blocks(
                     title=section_name,
                     method_value=method_value,
                 )
+            if co_progress_enabled:
+                accepted_count = len(statutes)
+                if accepted_count <= 5 or accepted_count % 25 == 0:
+                    _record_co_progress(
+                        "accepted_rule",
+                        accepted=accepted_count,
+                        source_phase=source_phase or "pending_candidate",
+                        url=doc_url,
+                    )
             return True
 
         prefetch_candidates: List[str] = []
@@ -12807,6 +12834,13 @@ async def _agentic_discover_admin_state_blocks(
             ),
             exclude_urls=ranked_direct_exclude_urls,
         )
+        _record_co_progress(
+            "direct_detail_queue_ready",
+            ranked=len(ranked_urls),
+            queued=len(prioritized_ranked_document_urls),
+            seed_docs=len(prioritized_seed_document_urls),
+            direct_ready=int(bool(direct_detail_ready)),
+        )
 
         if state_code == "AZ" and prioritized_ranked_document_urls:
             az_late_retry_urls = _prioritized_arizona_late_retry_urls(
@@ -13111,6 +13145,13 @@ async def _agentic_discover_admin_state_blocks(
                     if link_score <= 0:
                         continue
                     seed_expansion_candidates.append((link_url, link_score + 3))
+
+        _record_co_progress(
+            "direct_detail_complete",
+            accepted=len(statutes),
+            inspected=inspected_urls,
+            seed_expansions=len(seed_expansion_candidates),
+        )
 
         if state_code == "AZ" and len(statutes) < max_fetch:
             az_late_retry_urls = _prioritized_arizona_late_retry_urls(

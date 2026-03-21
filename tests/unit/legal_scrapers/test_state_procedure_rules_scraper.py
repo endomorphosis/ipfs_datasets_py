@@ -393,6 +393,76 @@ def test_extract_connecticut_rules_from_page_texts() -> None:
     assert statutes[4].section_name == "—Affidavit in Support of Application, Filing, Disclosure"
 
 
+def test_extract_idaho_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <div class="field field-name-body">
+        <div class="field-item" property="content:encoded">
+          <h2>Idaho Criminal Rules (I.C.R.)</h2>
+          <p>Rule 1. <a href="icr1">Scope - Courts - Exceptions</a></p>
+          <p>Rule 2. <a href="icr2">Purpose and Construction; Title; District Court Rules</a></p>
+        </div>
+      </div>
+    </body></html>
+    """
+
+    links = procedure_module._extract_idaho_rule_links(
+        list_html,
+        page_url="https://isc.idaho.gov/icr",
+        procedure_family="criminal_procedure",
+        legal_area="criminal_procedure",
+        official_cite_prefix="I.C.R.",
+    )
+
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "Scope - Courts - Exceptions",
+            "url": "https://isc.idaho.gov/icr1",
+            "procedure_family": "criminal_procedure",
+            "legal_area": "criminal_procedure",
+            "official_cite_prefix": "I.C.R.",
+        },
+        {
+            "section_number": "2",
+            "section_name": "Purpose and Construction; Title; District Court Rules",
+            "url": "https://isc.idaho.gov/icr2",
+            "procedure_family": "criminal_procedure",
+            "legal_area": "criminal_procedure",
+            "official_cite_prefix": "I.C.R.",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <div class="field field-name-body">
+        <div class="field-item" property="content:encoded">
+          <p><strong>Idaho Rules of Civil Procedure Rule 1. Scope of Rules; District Court Rules.</strong></p>
+          <p><strong>(a) Title</strong>. These rules may be known and cited as the Idaho Rules of Civil Procedure.</p>
+          <p><strong>(b) Scope of Rules</strong>. These rules govern the procedure in civil actions.</p>
+          <p style="font-style: italic;">(Adopted March 1, 2016, effective July 1, 2016; amended September 30, 2024, effective October 1, 2024.)</p>
+        </div>
+      </div>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_idaho_rule_from_html(
+        rule_html,
+        rule_url="https://isc.idaho.gov/ircp1-new",
+        title_name="Idaho Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="I.R.C.P.",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "Scope of Rules; District Court Rules"
+    assert statute.official_cite == "I.R.C.P. 1"
+    assert statute.structured_data["effective_date"] == "October 1, 2024"
+    assert "civil actions" in statute.full_text
+
+
 @pytest.mark.anyio
 async def test_fetch_html_with_direct_fallback_uses_curl_when_requests_fail(
     monkeypatch: pytest.MonkeyPatch,
@@ -1263,6 +1333,94 @@ async def test_scrape_state_procedure_rules_adds_connecticut_supplement(monkeypa
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["CT"]["attempted"] == 2
     assert result["metadata"]["fetch_analytics_by_state"]["CT"]["cache_writes"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_idaho_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "ID",
+                    "state_name": "Idaho",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "ID": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_id_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "ID",
+                    "state_name": "Idaho",
+                    "statute_id": "I.R.C.P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules; District Court Rules",
+                    "full_text": "Idaho Rules of Civil Procedure Rule 1. Scope of Rules; District Court Rules." + (" x" * 120),
+                    "source_url": "https://isc.idaho.gov/ircp1-new#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "ID-ircp-1",
+                            "name": "Scope of Rules; District Court Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules; District Court Rules",
+                            "text": "Idaho Rules of Civil Procedure Rule 1. Scope of Rules; District Court Rules." + (" x" * 120),
+                            "sourceUrl": "https://isc.idaho.gov/ircp1-new#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_idaho_court_rules_supplement",
+        _fake_id_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["ID"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["ID"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["ID"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio
