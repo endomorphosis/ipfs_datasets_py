@@ -1,8 +1,26 @@
 from __future__ import annotations
 
+import json
+import subprocess
+
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers import state_procedure_rules_scraper as procedure_module
+
+
+class _DummyFetcher:
+    def __init__(self) -> None:
+        self.events = []
+        self.cached = []
+
+    async def _fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 120):
+        return b""
+
+    def _record_fetch_event(self, provider: str, success: bool, error: str | None = None) -> None:
+        self.events.append({"provider": provider, "success": success, "error": error})
+
+    async def _store_page_bytes_in_ipfs_cache(self, url: str, payload: bytes, provider: str) -> None:
+        self.cached.append({"url": url, "payload": payload, "provider": provider})
 
 
 def test_extract_rhode_island_rule_links_discovers_rule_pages_and_pdfs() -> None:
@@ -242,6 +260,141 @@ def test_extract_washington_rule_links_and_rule_text() -> None:
     assert statute.official_cite == "CR 1"
     assert statute.structured_data["effective_date"] == "July 9, 2024"
     assert "These rules govern the procedure" in statute.full_text
+
+
+def test_extract_new_hampshire_rules_from_online_book_html() -> None:
+    html = """
+    <html><body>
+      <div class="online__book__page" id="page-id-4776">
+        <div class="online__book__page__content">
+          <p>PREAMBLE</p>
+          <p>These rules take effect on January 1, 2024 and apply to all criminal actions filed on or after that date.</p>
+        </div>
+      </div>
+      <div class="online__book__page online__book__section-486" id="page-id-4781">
+        <div class="online__book__page__header">
+          <h4>Rule 1. Scope and Interpretation</h4>
+        </div>
+        <div class="online__book__page__content">
+          <p>(a) Scope. These rules govern the procedure in circuit court-district division and superior courts.</p>
+          <p>Comment. These rules apply to criminal proceedings.</p>
+        </div>
+      </div>
+      <div class="online__book__page online__book__section-486" id="page-id-4786">
+        <div class="online__book__page__header">
+          <h4>Rule 2. Adoption and Effective Date; Applicability</h4>
+        </div>
+        <div class="online__book__page__content">
+          <p>(a) Adoption. The Supreme Court adopts these rules.</p>
+          <p>(b) Effective Date. These rules govern all proceedings filed on or after January 1, 2024.</p>
+        </div>
+      </div>
+    </body></html>
+    """
+
+    statutes = procedure_module._extract_new_hampshire_rules_from_online_book_html(
+        html,
+        source_url="https://www.courts.nh.gov/new-hampshire-rules-criminal-procedure",
+        title_name="New Hampshire Rules of Criminal Procedure",
+        procedure_family="criminal_procedure",
+        legal_area="criminal_procedure",
+        official_cite_prefix="N.H. R. Crim. P.",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name == "Scope and Interpretation"
+    assert statutes[0].official_cite == "N.H. R. Crim. P. 1"
+    assert statutes[0].structured_data["effective_date"] == "January 1, 2024"
+    assert statutes[0].source_url.endswith("#page-id-4781")
+    assert "criminal proceedings" in statutes[0].full_text
+
+
+def test_extract_nevada_rules_from_html() -> None:
+    html = """
+    <html><body>
+      <p>ADOPTED</p>
+      <p>Effective January 1, 1953</p>
+      <p class="SectBody"><a name="NRCPRule1"></a>Rule 1. Scope and Purpose</p>
+      <p class="SectBody">These rules govern the procedure in all civil actions and proceedings in the district courts.</p>
+      <p class="SourceNote">[Amended; effective March 1, 2019.]</p>
+      <p class="SectBody"><a name="NRCPRule2"></a>Rule 2. One Form of Action</p>
+      <p class="SectBody">There is one form of action-the civil action.</p>
+    </body></html>
+    """
+
+    statutes = procedure_module._extract_nevada_rules_from_html(
+        html,
+        source_url="https://www.leg.state.nv.us/Division/Legal/LawLibrary/CourtRules/NRCP.html",
+        title_name="Nevada Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="NRCP",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name == "Scope and Purpose"
+    assert statutes[0].official_cite == "NRCP 1"
+    assert statutes[0].structured_data["effective_date"] == "March 1, 2019"
+    assert statutes[0].source_url.endswith("#NRCPRule1")
+    assert "civil actions" in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_fetch_html_with_direct_fallback_uses_curl_when_requests_fail(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetcher = _DummyFetcher()
+
+    def _fake_requests_get(*_args, **_kwargs):
+        raise RuntimeError("blocked")
+
+    def _fake_run(*_args, **_kwargs):
+        return subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=b"<html><body><main>usable html</main></body></html>",
+            stderr=b"",
+        )
+
+    monkeypatch.setattr(procedure_module.requests, "get", _fake_requests_get)
+    monkeypatch.setattr(procedure_module, "_fetch_url_via_curl", lambda *args, **kwargs: (_fake_run().stdout, None))
+
+    html = await procedure_module._fetch_html_with_direct_fallback(
+        fetcher,
+        "https://example.com/rules",
+        validator=lambda value: "usable html" in value,
+    )
+
+    assert "usable html" in html
+    assert fetcher.events[-1]["provider"] == "curl"
+    assert fetcher.events[-1]["success"] is True
+    assert fetcher.cached[-1]["provider"] == "curl"
+
+
+@pytest.mark.anyio
+async def test_fetch_json_with_direct_fallback_uses_curl_when_requests_fail(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fetcher = _DummyFetcher()
+
+    def _fake_requests_get(*_args, **_kwargs):
+        raise RuntimeError("blocked")
+
+    payload = json.dumps([{"key": "26666", "title": "3:1-1-Scope"}]).encode("utf-8")
+    monkeypatch.setattr(procedure_module.requests, "get", _fake_requests_get)
+    monkeypatch.setattr(procedure_module, "_fetch_url_via_curl", lambda *args, **kwargs: (payload, None))
+
+    parsed = await procedure_module._fetch_json_with_direct_fallback(
+        fetcher,
+        "https://example.com/api",
+    )
+
+    assert parsed == [{"key": "26666", "title": "3:1-1-Scope"}]
+    assert fetcher.events[-1]["provider"] == "curl"
+    assert fetcher.events[-1]["success"] is True
+    assert fetcher.cached[-1]["provider"] == "curl"
 
 
 def test_extract_new_jersey_rule_from_description() -> None:
@@ -794,6 +947,182 @@ async def test_scrape_state_procedure_rules_adds_new_jersey_supplement(monkeypat
     assert result["data"][0]["statutes"][0]["procedure_family"] == "criminal_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["NJ"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["NJ"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_new_hampshire_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "NH",
+                    "state_name": "New Hampshire",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "NH": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_nh_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "NH",
+                    "state_name": "New Hampshire",
+                    "statute_id": "N.H. R. Crim. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope and Interpretation",
+                    "full_text": "Rule 1. Scope and Interpretation. These rules govern criminal procedure in superior court." + (" x" * 120),
+                    "source_url": "https://www.courts.nh.gov/new-hampshire-rules-criminal-procedure#page-id-4781",
+                    "procedure_family": "criminal_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "NH-crim-rule-1",
+                            "name": "Scope and Interpretation",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope and Interpretation",
+                            "text": "Rule 1. Scope and Interpretation. These rules govern criminal procedure in superior court." + (" x" * 120),
+                            "sourceUrl": "https://www.courts.nh.gov/new-hampshire-rules-criminal-procedure#page-id-4781",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_new_hampshire_court_rules_supplement",
+        _fake_nh_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["NH"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "criminal_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["NH"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["NH"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_nevada_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "NV",
+                    "state_name": "Nevada",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "NV": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_nv_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "NV",
+                    "state_name": "Nevada",
+                    "statute_id": "NRCP 1",
+                    "section_number": "1",
+                    "section_name": "Scope and Purpose",
+                    "full_text": "Rule 1. Scope and Purpose. These rules govern civil actions in the district courts." + (" x" * 120),
+                    "source_url": "https://www.leg.state.nv.us/Division/Legal/LawLibrary/CourtRules/NRCP.html#NRCPRule1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "NV-nrcp-1",
+                            "name": "Scope and Purpose",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope and Purpose",
+                            "text": "Rule 1. Scope and Purpose. These rules govern civil actions in the district courts." + (" x" * 120),
+                            "sourceUrl": "https://www.leg.state.nv.us/Division/Legal/LawLibrary/CourtRules/NRCP.html#NRCPRule1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_nevada_court_rules_supplement",
+        _fake_nv_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["NV"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["NV"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["NV"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

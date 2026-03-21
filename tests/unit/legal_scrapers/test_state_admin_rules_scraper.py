@@ -4525,6 +4525,30 @@ def test_prioritized_arizona_late_retry_urls_skips_already_covered_official_grou
     ]
 
 
+def test_prioritized_arizona_late_retry_urls_falls_through_to_recurring_pending_rtfs() -> None:
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(
+        [],
+        limit=2,
+        extra_preferred_urls=[
+            "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+            "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
+            "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
+            "https://apps.azsos.gov/public_services/Title_13/13-01.rtf",
+            "https://apps.azsos.gov/public_services/Title_15/15-02.rtf",
+        ],
+        exclude_urls={
+            "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+            "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
+            "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
+        },
+    )
+
+    assert prioritized == [
+        "https://apps.azsos.gov/public_services/Title_13/13-01.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-02.rtf",
+    ]
+
+
 def test_is_substantive_rule_text_accepts_short_arizona_official_chapter_pdf() -> None:
     assert _is_substantive_rule_text(
         text=(
