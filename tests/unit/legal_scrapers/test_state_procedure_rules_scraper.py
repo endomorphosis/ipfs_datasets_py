@@ -463,6 +463,94 @@ def test_extract_idaho_rule_links_and_rule_page() -> None:
     assert "civil actions" in statute.full_text
 
 
+def test_extract_maine_civil_rule_links_and_criminal_pages() -> None:
+    civil_html = """
+    <html><body>
+      <div id="maincontent2">
+        <h1>Maine Rules of Civil Procedure Complete with Advisory Notes</h1>
+        <p>Last reviewed and edited January 26, 2026 Includes amendments effective September 23, 2024</p>
+        <blockquote>
+          <p><a href="text/MRCivPPlus/RULE%201.pdf">Rule 1 - Scope of Rules</a></p>
+          <p><a href="text/MRCivPPlus/RULE%202.pdf">Rule 2 - One Form of Action</a></p>
+        </blockquote>
+      </div>
+    </body></html>
+    """
+
+    links, reviewed_date, amendments_effective = procedure_module._extract_maine_civil_rule_links(
+        civil_html,
+        index_url="https://www.courts.maine.gov/rules/rules-civil.html",
+    )
+
+    assert reviewed_date == "January 26, 2026"
+    assert amendments_effective == "September 23, 2024"
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "Scope of Rules",
+            "url": "https://www.courts.maine.gov/rules/text/MRCivPPlus/RULE%201.pdf",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Me. R. Civ. P.",
+        },
+        {
+            "section_number": "2",
+            "section_name": "One Form of Action",
+            "url": "https://www.courts.maine.gov/rules/text/MRCivPPlus/RULE%202.pdf",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Me. R. Civ. P.",
+        },
+    ]
+
+    civil_statute = procedure_module._extract_maine_civil_rule_from_text(
+        "MAINE RULES OF CIVIL PROCEDURE RULE 1. SCOPE OF RULES These rules govern the procedure in all suits of a civil nature. Advisory Committee's Notes...",
+        source_url="https://www.courts.maine.gov/rules/text/MRCivPPlus/RULE%201.pdf",
+        section_number="1",
+        section_name="Scope of Rules",
+        reviewed_date="January 26, 2026",
+        amendments_effective="September 23, 2024",
+    )
+
+    assert civil_statute is not None
+    assert civil_statute.official_cite == "Me. R. Civ. P. 1"
+    assert civil_statute.structured_data["effective_date"] == "September 23, 2024"
+
+    criminal_page_texts = [
+        (1, "Last reviewed and edited April 16, 2025 Including amendments effective May 1, 2025"),
+        (
+            17,
+            """
+            MAINE RULES OF UNIFIED CRIMINAL PROCEDURE
+            I. SCOPE, PURPOSE, AND CONSTRUCTION
+            RULE 1. TITLE, SCOPE, AND APPLICATION OF RULES
+            (a) Title. These Rules may be known and cited as the Maine Rules of Unified Criminal Procedure.
+            (b) Scope; Application. These Rules govern criminal proceedings.
+            """,
+        ),
+        (
+            19,
+            """
+            RULE 2. PURPOSE AND CONSTRUCTION
+            These Rules are intended to provide for the just determination of every proceeding.
+            RULE 3. THE COMPLAINT
+            (a) Nature and Contents. The complaint shall be a plain, concise, and definite written statement of the essential facts.
+            """,
+        ),
+    ]
+
+    criminal_statutes = procedure_module._extract_maine_criminal_rules_from_page_texts(
+        criminal_page_texts,
+        source_url="https://www.courts.maine.gov/rules/text/mru_crim_p_only_2025-05-01.pdf",
+    )
+
+    assert len(criminal_statutes) == 3
+    assert criminal_statutes[0].section_number == "1"
+    assert criminal_statutes[0].section_name == "TITLE, SCOPE, AND APPLICATION OF RULES"
+    assert criminal_statutes[0].structured_data["effective_date"] == "May 1, 2025"
+    assert criminal_statutes[2].official_cite == "Me. R. U. Crim. P. 3"
+
+
 @pytest.mark.anyio
 async def test_fetch_html_with_direct_fallback_uses_curl_when_requests_fail(
     monkeypatch: pytest.MonkeyPatch,
@@ -1421,6 +1509,94 @@ async def test_scrape_state_procedure_rules_adds_idaho_supplement(monkeypatch: p
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["ID"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["ID"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_maine_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "ME",
+                    "state_name": "Maine",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "ME": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_me_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "ME",
+                    "state_name": "Maine",
+                    "statute_id": "Me. R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules",
+                    "full_text": "RULE 1. SCOPE OF RULES These rules govern the procedure in civil actions." + (" x" * 120),
+                    "source_url": "https://www.courts.maine.gov/rules/text/MRCivPPlus/RULE%201.pdf#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "ME-mrcivp-1",
+                            "name": "Scope of Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules",
+                            "text": "RULE 1. SCOPE OF RULES These rules govern the procedure in civil actions." + (" x" * 120),
+                            "sourceUrl": "https://www.courts.maine.gov/rules/text/MRCivPPlus/RULE%201.pdf#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_maine_court_rules_supplement",
+        _fake_me_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["ME"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["ME"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["ME"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

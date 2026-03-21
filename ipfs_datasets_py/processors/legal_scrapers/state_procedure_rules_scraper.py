@@ -267,6 +267,14 @@ _ID_RULE_LIST_PAGES: List[Dict[str, str]] = [
 ]
 _ID_RULE_LINK_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)?)\.\s+(.+)$", re.IGNORECASE)
 _ID_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_ME_CIVIL_RULES_INDEX_URL = "https://www.courts.maine.gov/rules/rules-civil.html"
+_ME_CRIMINAL_RULES_ONLY_URL = "https://www.courts.maine.gov/rules/text/mru_crim_p_only_2025-05-01.pdf"
+_ME_CIVIL_REVIEWED_RE = re.compile(r"Last\s+reviewed\s+and\s+edited\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_ME_CIVIL_AMENDMENTS_RE = re.compile(r"Includes amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_ME_CRIMINAL_EDITED_RE = re.compile(r"Last\s+reviewed\s+and\s+edited\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_ME_CRIMINAL_AMENDMENTS_RE = re.compile(r"Including amendments effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_ME_RULE_LINK_RE = re.compile(r"^Rule[s]?\s+([0-9]+(?:[A-Z]|\.[0-9A-Z]+| through Rule [0-9A-Z&\s.-]+)?)\s*-\s*(.+)$", re.IGNORECASE)
+_ME_CRIMINAL_RULE_HEADING_RE = re.compile(r"^RULE\s+(\d+(?:[A-Z]|\.[0-9A-Z]+)?)\.\s+(.+)$")
 
 _CIVIL_PATTERNS = [
     re.compile(r"rules?\s+of\s+civil\s+procedure", re.IGNORECASE),
@@ -441,6 +449,17 @@ class _ConnecticutProcedureRulesSupplementFetcher(BaseStateScraper):
 class _IdahoProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://isc.idaho.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _MaineProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.courts.maine.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -944,6 +963,194 @@ def _extract_idaho_rule_from_html(
             "procedure_family": procedure_family,
         },
     )
+
+
+def _extract_maine_civil_rule_links(
+    html_text: str,
+    *,
+    index_url: str,
+) -> tuple[List[Dict[str, str]], Optional[str], Optional[str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return [], None, None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    content = soup.select_one("#maincontent2")
+    if content is None:
+        return [], None, None
+
+    page_text = " ".join(content.get_text(" ", strip=True).split())
+    reviewed_match = _ME_CIVIL_REVIEWED_RE.search(page_text)
+    amendments_match = _ME_CIVIL_AMENDMENTS_RE.search(page_text)
+    reviewed_date = reviewed_match.group(1) if reviewed_match else None
+    amendments_effective = amendments_match.group(1) if amendments_match else None
+
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for anchor in content.select("a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        if not href or not label.startswith("Rule"):
+            continue
+        match = _ME_RULE_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(index_url, href)
+        if not absolute_url.lower().endswith(".pdf"):
+            continue
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": match.group(1).strip(),
+                "section_name": match.group(2).strip(),
+                "url": absolute_url,
+                "procedure_family": "civil_procedure",
+                "legal_area": "civil_procedure",
+                "official_cite_prefix": "Me. R. Civ. P.",
+            }
+        )
+
+    return discovered, reviewed_date, amendments_effective
+
+
+def _extract_maine_civil_rule_from_text(
+    text: str,
+    *,
+    source_url: str,
+    section_number: str,
+    section_name: str,
+    reviewed_date: Optional[str],
+    amendments_effective: Optional[str],
+) -> Optional[NormalizedStatute]:
+    normalized_text = " ".join(str(text or "").replace("\r", " ").replace("\n", " ").split())
+    if len(normalized_text) < 60:
+        return None
+
+    start_marker = f"RULE {section_number}".upper()
+    start_index = normalized_text.upper().find(start_marker)
+    full_text = normalized_text[start_index:].strip() if start_index != -1 else normalized_text
+    if len(full_text) < 60:
+        return None
+
+    return NormalizedStatute(
+        state_code="ME",
+        state_name=US_STATES["ME"],
+        statute_id=f"Me. R. Civ. P. {section_number}",
+        code_name="Maine Rules of Civil Procedure",
+        title_name="Maine Rules of Civil Procedure",
+        chapter_name="Maine Rules of Civil Procedure",
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{source_url}#rule-{section_number.lower().replace(' ', '-')}",
+        official_cite=f"Me. R. Civ. P. {section_number}",
+        legal_area="civil_procedure",
+        structured_data={
+            "reviewed_date": reviewed_date,
+            "effective_date": amendments_effective,
+            "source_kind": "maine_civil_rule_pdf",
+            "procedure_family": "civil_procedure",
+        },
+    )
+
+
+def _extract_maine_criminal_rules_from_page_texts(
+    page_texts: List[tuple[int, str]],
+    *,
+    source_url: str,
+) -> List[NormalizedStatute]:
+    combined_intro = " ".join(text for page_num, text in page_texts[:4] if page_num <= 4)
+    reviewed_match = _ME_CRIMINAL_EDITED_RE.search(combined_intro)
+    amendments_match = _ME_CRIMINAL_AMENDMENTS_RE.search(combined_intro)
+    reviewed_date = reviewed_match.group(1) if reviewed_match else None
+    amendments_effective = amendments_match.group(1) if amendments_match else None
+
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    current_number = ""
+    current_name_parts: List[str] = []
+    current_lines: List[str] = []
+    current_page = 0
+    collecting = False
+
+    def flush() -> None:
+        nonlocal current_number, current_name_parts, current_lines, current_page
+        if not current_number:
+            current_number = ""
+            current_name_parts = []
+            current_lines = []
+            current_page = 0
+            return
+        section_name = " ".join(part.strip() for part in current_name_parts if part.strip()).strip().rstrip(".")
+        full_text = "\n".join(current_lines).strip()
+        key = (current_number.lower(), section_name.lower())
+        if section_name and len(full_text) >= 60 and key not in seen:
+            seen.add(key)
+            statutes.append(
+                NormalizedStatute(
+                    state_code="ME",
+                    state_name=US_STATES["ME"],
+                    statute_id=f"Me. R. U. Crim. P. {current_number}",
+                    code_name="Maine Rules of Unified Criminal Procedure",
+                    title_name="Maine Rules of Unified Criminal Procedure",
+                    chapter_name="Maine Rules of Unified Criminal Procedure",
+                    section_number=current_number,
+                    section_name=section_name,
+                    short_title=section_name,
+                    full_text=full_text,
+                    summary=section_name,
+                    source_url=f"{source_url}#page={current_page}" if current_page else source_url,
+                    official_cite=f"Me. R. U. Crim. P. {current_number}",
+                    legal_area="criminal_procedure",
+                    structured_data={
+                        "reviewed_date": reviewed_date,
+                        "effective_date": amendments_effective,
+                        "source_kind": "maine_criminal_rules_only_pdf",
+                        "procedure_family": "criminal_procedure",
+                        "page_start": current_page or None,
+                    },
+                )
+            )
+        current_number = ""
+        current_name_parts = []
+        current_lines = []
+        current_page = 0
+
+    for page_number, page_text in page_texts:
+        if page_number < 17:
+            continue
+        for raw_line in str(page_text or "").splitlines():
+            line = " ".join(raw_line.replace("\x00", " ").split())
+            if not line or line.isdigit():
+                continue
+            if line in {"MAINE RULES OF UNIFIED CRIMINAL PROCEDURE", "I. SCOPE, PURPOSE, AND CONSTRUCTION"}:
+                continue
+            if re.match(r"^[IVXLC]+\.\s", line):
+                continue
+            match = _ME_CRIMINAL_RULE_HEADING_RE.match(line)
+            if match:
+                collecting = True
+                flush()
+                current_number = match.group(1).strip()
+                current_name_parts = [match.group(2).strip()]
+                current_lines = [f"RULE {current_number}. {match.group(2).strip()}"]
+                current_page = page_number
+                continue
+            if not collecting or not current_number:
+                continue
+            if current_name_parts and current_name_parts[-1].endswith(("OF", "THE", "TO", "WITH", "AS")):
+                current_name_parts.append(line)
+                current_lines[0] = f"RULE {current_number}. {' '.join(current_name_parts)}"
+                continue
+            current_lines.append(line)
+    flush()
+    return statutes
 
 
 def _connecticut_procedure_family_for_section(section_number: str) -> Optional[str]:
@@ -2758,6 +2965,99 @@ async def _scrape_idaho_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_maine_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _MaineProcedureRulesSupplementFetcher("ME", US_STATES["ME"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    civil_html = await _fetch_html_with_direct_fallback(
+        fetcher,
+        _ME_CIVIL_RULES_INDEX_URL,
+        validator=lambda html: len(_extract_maine_civil_rule_links(html, index_url=_ME_CIVIL_RULES_INDEX_URL)[0]) > 0,
+        timeout_seconds=120,
+    )
+    if civil_html:
+        civil_links, reviewed_date, amendments_effective = _extract_maine_civil_rule_links(
+            civil_html,
+            index_url=_ME_CIVIL_RULES_INDEX_URL,
+        )
+        for rule in civil_links:
+            if remaining is not None and remaining <= 0:
+                break
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+            raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(
+                fetcher,
+                rule_url,
+                timeout_seconds=180,
+            )
+            if not raw_bytes:
+                continue
+            extracted = await fetcher._extract_text_from_document_bytes(
+                source_url=rule_url,
+                raw_bytes=raw_bytes,
+            )
+            if not isinstance(extracted, dict):
+                continue
+            statute = _extract_maine_civil_rule_from_text(
+                str(extracted.get("text") or ""),
+                source_url=rule_url,
+                section_number=str(rule["section_number"]),
+                section_name=str(rule["section_name"]),
+                reviewed_date=reviewed_date,
+                amendments_effective=amendments_effective,
+            )
+            if statute is None:
+                continue
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            enriched["procedure_family"] = "civil_procedure"
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    if remaining is None or remaining > 0:
+        raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(
+            fetcher,
+            _ME_CRIMINAL_RULES_ONLY_URL,
+            timeout_seconds=180,
+        )
+        if raw_bytes:
+            try:
+                from pypdf import PdfReader
+                reader = PdfReader(BytesIO(raw_bytes))
+            except Exception:
+                reader = None
+            if reader is not None:
+                page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+                statutes = _extract_maine_criminal_rules_from_page_texts(
+                    page_texts,
+                    source_url=_ME_CRIMINAL_RULES_ONLY_URL,
+                )
+                for statute in statutes:
+                    if remaining is not None and remaining <= 0:
+                        break
+                    source_key = str(statute.source_url or "").strip().lower()
+                    if source_key in existing_urls:
+                        continue
+                    enriched = fetcher._enrich_statute_structure(statute).to_dict()
+                    enriched["procedure_family"] = "criminal_procedure"
+                    supplemental_rules.append(enriched)
+                    existing_urls.add(source_key)
+                    remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -3075,6 +3375,23 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if id_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = id_fetch_analytics
+
+            if state_code == "ME":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                me_supplement, me_fetch_analytics = await _scrape_maine_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if me_supplement:
+                    procedure_statutes.extend(me_supplement)
+                    for rule in me_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if me_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = me_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]

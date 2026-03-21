@@ -745,7 +745,6 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
         "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
         "https://apps.azsos.gov/public_services/Title_08/8-03.pdf",
-        "https://apps.azsos.gov/public_services/Title_09/9-22.pdf",
         "https://apps.azsos.gov/public_services/Title_09/9-30.pdf",
         "https://apps.azsos.gov/public_services/Title_06/6-11.rtf",
         "https://apps.azsos.gov/public_services/Title_13/13-01.rtf",
@@ -10158,10 +10157,47 @@ async def _discover_colorado_rule_document_urls(
         except Exception:
             return None
 
+    async def _fetch_html_direct(url: str) -> str:
+        def _run() -> str:
+            response = requests.get(
+                url,
+                timeout=20,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            response.raise_for_status()
+            return str(response.text or "")
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_run), timeout=25.0)
+        except Exception:
+            return ""
+
     inventory_urls = [url for url in seed_urls if _is_colorado_seed_or_inventory_url(url)]
     doc_list_urls = [url for url in inventory_urls if _CO_CCR_DOC_LIST_PATH_RE.fullmatch(urlparse(url).path or "")]
     agency_urls = [url for url in inventory_urls if _CO_CCR_AGENCY_LIST_PATH_RE.fullmatch(urlparse(url).path or "")]
     dept_urls = [url for url in inventory_urls if _CO_CCR_DEPT_LIST_PATH_RE.fullmatch(urlparse(url).path or "")]
+
+    for doc_list_url in _dedupe(doc_list_urls)[:4]:
+        doc_list_html = await _fetch_html_direct(doc_list_url)
+        if not doc_list_html:
+            continue
+        display_rule_urls: List[str] = []
+        for rule_id in re.findall(r"DisplayRule\.do\?action=ruleinfo(?:&amp;|&)ruleId=(\d+)", doc_list_html, re.IGNORECASE):
+            display_rule_urls.append(urljoin(doc_list_url, f"DisplayRule.do?action=ruleinfo&ruleId={rule_id}"))
+        for display_rule_url in _dedupe(display_rule_urls)[: max(8, int(limit) * 4)]:
+            html = await _fetch_html_direct(display_rule_url)
+            if not html:
+                continue
+            for match in _CO_CCR_OPEN_RULE_WINDOW_RE.finditer(html):
+                rule_version_id = str(match.group("rule_version_id") or "").strip()
+                file_name = str(match.group("file_name") or "").strip()
+                if not rule_version_id.isdigit() or not file_name:
+                    continue
+                if _record(_colorado_pdf_url(display_rule_url, rule_version_id, file_name)):
+                    return discovered_urls
+
+    if discovered_urls:
+        return discovered_urls
 
     if not doc_list_urls:
         for dept_url in dept_urls[:2]:
@@ -10192,6 +10228,11 @@ async def _discover_colorado_rule_document_urls(
         scraped = await _scrape(doc_list_url)
         if scraped is None:
             continue
+        doc_list_html = str(getattr(scraped, "html", "") or "")
+        for rule_id in re.findall(r"DisplayRule\.do\?action=ruleinfo&amp;ruleId=(\d+)", doc_list_html, re.IGNORECASE):
+            display_rule_urls.append(urljoin(doc_list_url, f"DisplayRule.do?action=ruleinfo&ruleId={rule_id}"))
+        for rule_id in re.findall(r"DisplayRule\.do\?action=ruleinfo&ruleId=(\d+)", doc_list_html, re.IGNORECASE):
+            display_rule_urls.append(urljoin(doc_list_url, f"DisplayRule.do?action=ruleinfo&ruleId={rule_id}"))
         for link_url in _colorado_links_from_scraped(scraped, doc_list_url):
             parsed = urlparse(link_url)
             query_params = parse_qs(parsed.query or "")
