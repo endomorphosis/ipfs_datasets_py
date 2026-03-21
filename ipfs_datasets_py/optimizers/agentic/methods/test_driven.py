@@ -572,6 +572,28 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 target_symbols=target_symbols,
                 replacement_sources=replacement_sources,
             )
+        if self._use_session_injection_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_session_injection_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            replacement_sources = {
+                "_inject_intake_prompt_questions": self._render_session_injection_from_policy(
+                    self._normalize_session_injection_policy_response(response=response, file_path=target_file)
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
         if self._use_answer_policy_mode(target_file=target_file, target_symbols=target_symbols):
             response = self.llm_router.generate(
                 prompt=self._build_answer_policy_prompt(
@@ -587,6 +609,28 @@ class TestDrivenOptimizer(AgenticOptimizer):
             replacement_sources = {
                 "process_answer": self._render_process_answer_from_policy(
                     self._normalize_answer_policy_response(response=response, file_path=target_file)
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+        if self._use_dependency_readiness_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_dependency_readiness_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=700,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            replacement_sources = {
+                "get_claim_readiness": self._render_get_claim_readiness_from_policy(
+                    self._normalize_dependency_readiness_policy_response(response=response, file_path=target_file)
                 )
             }
             return self._replace_symbols_in_source(
@@ -674,11 +718,17 @@ class TestDrivenOptimizer(AgenticOptimizer):
     def _use_answer_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "denoiser.py" and target_symbols == ["process_answer"]
 
+    def _use_dependency_readiness_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "dependency_graph.py" and target_symbols == ["get_claim_readiness"]
+
     def _use_select_candidates_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "denoiser.py" and target_symbols == ["select_question_candidates"]
 
     def _use_standard_intake_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "denoiser.py" and target_symbols == ["_ensure_standard_intake_questions"]
+
+    def _use_session_injection_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "session.py" and target_symbols == ["_inject_intake_prompt_questions"]
     
     def _apply_optimizations(
         self,
@@ -1183,6 +1233,49 @@ Behavioral guardrails:
 Do not include explanations, markdown, comments, or extra keys.
 """
 
+    def _build_dependency_readiness_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Improve graph readiness ranking so missing blocking requirements and deterministic gaps are surfaced earlier."
+
+        return f"""Return a compact JSON object describing how dependency_graph.get_claim_readiness should prioritize missing requirements and readiness recommendations.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "prioritize_blocking_gaps": true or false
+- "prioritize_structured_gaps": true or false
+- "promote_deterministic_gap_targets": true or false
+- "boost_weak_claim_types": true or false
+- "boost_weak_evidence_modalities": true or false
+- "gap_stall_action_threshold": integer from 1 to 4
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve the existing return keys, including actor_critic.graph_analysis metrics
+- Preserve recommended_next_gaps sorting and next_required_gap selection
+- Preserve deterministic_update_key and gap_id handling
+- Preserve gap-stall tracking in metadata['readiness_history']
+- Do not add imports or rely on helpers not already used in dependency_graph.py
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
     def _build_inquiries_policy_prompt(
         self,
         *,
@@ -1300,6 +1393,47 @@ Behavioral guardrails:
 - Preserve the proof-priority then priority fallback ordering
 - Preserve max_questions slicing
 - Do not add imports or rely on helpers that do not already exist on the class
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
+    def _build_session_injection_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Restore a stable intake flow by keeping synthetic intake prompts small, deterministic, and focused on missing objectives."
+
+        return f"""Return a compact JSON object describing how session._inject_intake_prompt_questions should behave during stability-recovery intake.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "stability_injection_budget": integer from 1 to 4
+- "empty_questions_min_budget": integer from 2 to 5
+- "limit_to_missing_objectives_in_stability": true or false
+- "one_probe_per_objective_in_stability": true or false
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve use of _extract_actor_critic_intake_context and stability_recovery_mode
+- Preserve duplicate suppression and substantial-overlap checks
+- Preserve returning existing mediator questions first during stability recovery
+- Preserve synthetic question shape with question/type/question_objective/question_reason/source
+- Do not add imports or rely on helpers not already used in session.py
 
 Do not include explanations, markdown, comments, or extra keys.
 """
@@ -1573,6 +1707,66 @@ Do not include explanations, markdown, comments, or extra keys.
             ),
         }
 
+    def _normalize_dependency_readiness_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty dependency readiness policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(
+                f"Dependency readiness policy response for {file_path} requested external context instead of JSON"
+            )
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Dependency readiness policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "prioritize_blocking_gaps",
+            "prioritize_structured_gaps",
+            "promote_deterministic_gap_targets",
+            "boost_weak_claim_types",
+            "boost_weak_evidence_modalities",
+            "gap_stall_action_threshold",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Dependency readiness policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        try:
+            stall_threshold = int(data.get("gap_stall_action_threshold", 2))
+        except Exception as exc:
+            raise ValueError(
+                f"Dependency readiness policy response for {file_path} must include integer gap_stall_action_threshold"
+            ) from exc
+        if stall_threshold < 1 or stall_threshold > 4:
+            raise ValueError(
+                f"Dependency readiness policy response for {file_path} used out-of-range gap_stall_action_threshold: {stall_threshold}"
+            )
+
+        return {
+            "prioritize_blocking_gaps": bool(data.get("prioritize_blocking_gaps", True)),
+            "prioritize_structured_gaps": bool(data.get("prioritize_structured_gaps", True)),
+            "promote_deterministic_gap_targets": bool(data.get("promote_deterministic_gap_targets", True)),
+            "boost_weak_claim_types": bool(data.get("boost_weak_claim_types", True)),
+            "boost_weak_evidence_modalities": bool(data.get("boost_weak_evidence_modalities", True)),
+            "gap_stall_action_threshold": stall_threshold,
+        }
+
     def _normalize_standard_intake_policy_response(
         self,
         *,
@@ -1672,6 +1866,57 @@ Do not include explanations, markdown, comments, or extra keys.
             "dedupe_selected_candidates": bool(data.get("dedupe_selected_candidates", True)),
             "dedupe_fallback_candidates": bool(data.get("dedupe_fallback_candidates", True)),
             "selector_mode": selector_mode,
+        }
+
+    def _normalize_session_injection_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty session injection policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Session injection policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Session injection policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "stability_injection_budget",
+            "empty_questions_min_budget",
+            "limit_to_missing_objectives_in_stability",
+            "one_probe_per_objective_in_stability",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Session injection policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        def _clamp_int(name: str, default: int, minimum: int, maximum: int) -> int:
+            value = data.get(name, default)
+            try:
+                value = int(value)
+            except Exception:
+                value = default
+            return max(minimum, min(maximum, value))
+
+        return {
+            "stability_injection_budget": _clamp_int("stability_injection_budget", 3, 1, 4),
+            "empty_questions_min_budget": _clamp_int("empty_questions_min_budget", 5, 2, 5),
+            "limit_to_missing_objectives_in_stability": bool(data.get("limit_to_missing_objectives_in_stability", True)),
+            "one_probe_per_objective_in_stability": bool(data.get("one_probe_per_objective_in_stability", True)),
         }
 
     def _render_get_intake_action_from_policy(self, policy: Dict[str, Any]) -> str:
@@ -2157,6 +2402,369 @@ Do not include explanations, markdown, comments, or extra keys.
             "    return updates\n"
         )
 
+    def _render_get_claim_readiness_from_policy(self, policy: Dict[str, Any]) -> str:
+        prioritize_blocking = bool(policy.get("prioritize_blocking_gaps", True))
+        prioritize_structured = bool(policy.get("prioritize_structured_gaps", True))
+        promote_deterministic = bool(policy.get("promote_deterministic_gap_targets", True))
+        boost_weak_claims = bool(policy.get("boost_weak_claim_types", True))
+        boost_weak_modalities = bool(policy.get("boost_weak_evidence_modalities", True))
+        stall_threshold = max(1, min(4, int(policy.get("gap_stall_action_threshold", 2))))
+
+        return (
+            "def get_claim_readiness(self) -> Dict[str, Any]:\n"
+            "    \"\"\"\n"
+            "    Assess overall readiness of all claims.\n"
+            "    \n"
+            "    Returns summary of which claims are ready to file and which need work.\n"
+            "    \"\"\"\n"
+            "    def _normalize_key_fragment(value: Any) -> str:\n"
+            "        normalized = re.sub(r\"[^a-z0-9]+\", \"_\", str(value or \"\").strip().lower())\n"
+            "        normalized = re.sub(r\"_+\", \"_\", normalized).strip(\"_\")\n"
+            "        return normalized\n"
+            "\n"
+            "    def _build_deterministic_update_key(\n"
+            "        claim_id: str,\n"
+            "        claim_type: str,\n"
+            "        source_node: Optional[DependencyNode],\n"
+            "        source_attrs: Dict[str, Any],\n"
+            "    ) -> str:\n"
+            "        explicit_gap_key = str(source_attrs.get('gap_key') or '').strip()\n"
+            "        if explicit_gap_key:\n"
+            "            return explicit_gap_key\n"
+            "        requirement_key = str(source_attrs.get('requirement_key') or '').strip()\n"
+            "        if requirement_key:\n"
+            "            type_fragment = _normalize_key_fragment(claim_type) or 'claim'\n"
+            "            req_fragment = _normalize_key_fragment(requirement_key) or 'requirement'\n"
+            "            return f\"{type_fragment}:{req_fragment}\"\n"
+            "        source_fragment = _normalize_key_fragment(source_node.id if source_node else '') or 'unknown_source'\n"
+            "        claim_fragment = _normalize_key_fragment(claim_type) or _normalize_key_fragment(claim_id) or 'claim'\n"
+            "        return f\"{claim_fragment}:{source_fragment}\"\n"
+            "\n"
+            "    claims = self.get_nodes_by_type(NodeType.CLAIM)\n"
+            "    nodes_by_id = self.nodes\n"
+            "    incoming_required_by_target: Dict[str, List[Dependency]] = {}\n"
+            "    for dep in self.dependencies.values():\n"
+            "        if dep.required:\n"
+            "            incoming_required_by_target.setdefault(dep.target_id, []).append(dep)\n"
+            "\n"
+            "    ready_claims = []\n"
+            "    incomplete_claims = []\n"
+            "    total_missing_dependencies = 0\n"
+            "    total_satisfaction_ratio = 0.0\n"
+            "    recommended_next_gaps = []\n"
+            "    total_required_dependencies = 0\n"
+            "    total_satisfied_required_dependencies = 0\n"
+            "    underspecified_claims = 0\n"
+            "    weak_claim_gap_count = 0\n"
+            "    weak_modality_gap_count = 0\n"
+            "    structured_required_dependencies = 0\n"
+            "    structured_satisfied_dependencies = 0\n"
+            "    deterministic_gap_targets = 0\n"
+            "    deterministic_gap_targets_satisfied = 0\n"
+            "\n"
+            "    for claim in claims:\n"
+            "        required_deps = incoming_required_by_target.get(claim.id, [])\n"
+            "        satisfied_count = 0\n"
+            "        missing_dependencies = []\n"
+            "        for dep in required_deps:\n"
+            "            source_node = nodes_by_id.get(dep.source_id)\n"
+            "            if source_node and source_node.satisfied:\n"
+            "                satisfied_count += 1\n"
+            "            else:\n"
+            "                missing_dependencies.append({\n"
+            "                    'dependency_id': dep.id,\n"
+            "                    'source_node_id': dep.source_id,\n"
+            "                    'source_name': source_node.name if source_node else 'Unknown',\n"
+            "                    'dependency_type': dep.dependency_type.value,\n"
+            "                })\n"
+            "        claim_type = str((claim.attributes or {}).get('claim_type') or '').strip().lower()\n"
+            "        total_required_for_claim = len(required_deps)\n"
+            "        claim_satisfaction_ratio = (\n"
+            "            satisfied_count / total_required_for_claim if total_required_for_claim > 0 else 1.0\n"
+            "        )\n"
+            "        claim_is_satisfied = claim_satisfaction_ratio >= 1.0\n"
+            "        claim_is_underspecified = total_required_for_claim == 0\n"
+            "        if claim_is_underspecified:\n"
+            "            underspecified_claims += 1\n"
+            "\n"
+            "        total_required_dependencies += total_required_for_claim\n"
+            "        total_satisfied_required_dependencies += satisfied_count\n"
+            "\n"
+            "        ranked_missing_dependencies = []\n"
+            "        claim_structured_required_count = 0\n"
+            "        claim_structured_satisfied_count = 0\n"
+            "        claim_deterministic_target_count = 0\n"
+            "        claim_deterministic_target_satisfied_count = 0\n"
+            "        missing_by_source_id = {str(dep.get('source_node_id') or '') for dep in missing_dependencies}\n"
+            "        for dep in required_deps:\n"
+            "            source_node = nodes_by_id.get(dep.source_id)\n"
+            "            source_attrs = source_node.attributes if source_node and isinstance(source_node.attributes, dict) else {}\n"
+            "            source_node_type = source_node.node_type.value if source_node else 'unknown'\n"
+            "            requirement_key = str(source_attrs.get('requirement_key') or '').strip()\n"
+            "            expected_modality = str(source_attrs.get('expected_evidence_modality') or '').strip().lower()\n"
+            "            has_structured_target = bool(\n"
+            "                requirement_key\n"
+            "                or expected_modality\n"
+            "                or source_node_type in {'legal_element', 'requirement', 'fact', 'evidence'}\n"
+            "            )\n"
+            "            if has_structured_target:\n"
+            "                claim_structured_required_count += 1\n"
+            "            deterministic_key = _build_deterministic_update_key(\n"
+            "                claim_id=claim.id,\n"
+            "                claim_type=claim_type,\n"
+            "                source_node=source_node,\n"
+            "                source_attrs=source_attrs,\n"
+            "            )\n"
+            "            has_deterministic_key = bool(deterministic_key)\n"
+            "            if has_deterministic_key:\n"
+            "                claim_deterministic_target_count += 1\n"
+            "            if dep.source_id not in missing_by_source_id:\n"
+            "                if has_structured_target:\n"
+            "                    claim_structured_satisfied_count += 1\n"
+            "                if has_deterministic_key:\n"
+            "                    claim_deterministic_target_satisfied_count += 1\n"
+            "\n"
+            "        structured_required_dependencies += claim_structured_required_count\n"
+            "        structured_satisfied_dependencies += claim_structured_satisfied_count\n"
+            "        deterministic_gap_targets += claim_deterministic_target_count\n"
+            "        deterministic_gap_targets_satisfied += claim_deterministic_target_satisfied_count\n"
+            "\n"
+            "        for dep in missing_dependencies:\n"
+            "            source_node = self.get_node(str(dep.get('source_node_id') or ''))\n"
+            "            source_attrs = source_node.attributes if source_node and isinstance(source_node.attributes, dict) else {}\n"
+            "            blocking = bool(source_attrs.get('blocking', source_node.node_type in {NodeType.REQUIREMENT, NodeType.LEGAL_ELEMENT} if source_node else False))\n"
+            "            source_node_type = source_node.node_type.value if source_node else 'unknown'\n"
+            "            requirement_key = str(source_attrs.get('requirement_key') or '')\n"
+            "            evidence_modality = str(source_attrs.get('expected_evidence_modality') or '').strip().lower()\n"
+            "            deterministic_update_key = _build_deterministic_update_key(\n"
+            "                claim_id=claim.id,\n"
+            "                claim_type=claim_type,\n"
+            "                source_node=source_node,\n"
+            "                source_attrs=source_attrs,\n"
+            "            )\n"
+            "            gap_id = deterministic_update_key or str(source_attrs.get('gap_key') or f\"{claim.id}:{dep.get('source_node_id')}\")\n"
+            "            structured_gap = bool(\n"
+            "                requirement_key\n"
+            "                or evidence_modality\n"
+            "                or source_node_type in {'legal_element', 'requirement', 'fact', 'evidence'}\n"
+            "            )\n"
+            f"            weak_claim_focus = claim_type in _ACTOR_CRITIC_WEAK_CLAIM_TYPES if {boost_weak_claims!r} else False\n"
+            f"            weak_modality_focus = evidence_modality in _ACTOR_CRITIC_WEAK_EVIDENCE_MODALITIES if {boost_weak_modalities!r} else False\n"
+            "            if weak_claim_focus:\n"
+            "                weak_claim_gap_count += 1\n"
+            "            if weak_modality_focus:\n"
+            "                weak_modality_gap_count += 1\n"
+            "            ranked_missing_dependencies.append({\n"
+            "                **dep,\n"
+            "                'gap_id': gap_id,\n"
+            "                'claim_type': claim_type,\n"
+            "                'source_node_type': source_node_type,\n"
+            "                'source_description': source_node.description if source_node else '',\n"
+            "                'requirement_key': requirement_key,\n"
+            "                'evidence_modality': evidence_modality,\n"
+            "                'structured_gap': structured_gap,\n"
+            "                'deterministic_update_key': deterministic_update_key,\n"
+            "                'weak_claim_focus': weak_claim_focus,\n"
+            "                'weak_modality_focus': weak_modality_focus,\n"
+            "                'blocking': blocking,\n"
+            "            })\n"
+            "\n"
+            "        ranked_missing_dependencies.sort(\n"
+            "            key=lambda item: (\n"
+            f"                0 if {prioritize_blocking!r} and item.get('blocking') else 1,\n"
+            "                0 if item.get('weak_claim_focus') else 1,\n"
+            "                0 if item.get('weak_modality_focus') else 1,\n"
+            f"                0 if {prioritize_structured!r} and item.get('structured_gap') else 1,\n"
+            f"                0 if {promote_deterministic!r} and str(item.get('deterministic_update_key') or '').strip() else 1,\n"
+            "                0 if str(item.get('source_node_type') or '') in {'legal_element', 'requirement'} else 1,\n"
+            "                str(item.get('source_name') or '').lower(),\n"
+            "            )\n"
+            "        )\n"
+            "\n"
+            "        total_missing_dependencies += len(ranked_missing_dependencies)\n"
+            "        total_satisfaction_ratio += claim_satisfaction_ratio\n"
+            "        next_gap = ranked_missing_dependencies[0] if ranked_missing_dependencies else None\n"
+            "        if claim_is_satisfied:\n"
+            "            ready_claims.append({\n"
+            "                'claim_id': claim.id,\n"
+            "                'claim_name': claim.name,\n"
+            "                'confidence': claim.confidence,\n"
+            "                'claim_type': claim_type,\n"
+            "                'dependency_satisfaction': 1.0,\n"
+            "                'underspecified': claim_is_underspecified,\n"
+            "                'required_dependency_count': total_required_for_claim,\n"
+            "                'structured_required_count': claim_structured_required_count,\n"
+            "                'structured_satisfied_count': claim_structured_satisfied_count,\n"
+            "                'deterministic_target_count': claim_deterministic_target_count,\n"
+            "                'deterministic_target_satisfied_count': claim_deterministic_target_satisfied_count,\n"
+            "            })\n"
+            "        else:\n"
+            "            incomplete_claims.append({\n"
+            "                'claim_id': claim.id,\n"
+            "                'claim_name': claim.name,\n"
+            "                'claim_type': claim_type,\n"
+            "                'satisfaction_ratio': claim_satisfaction_ratio,\n"
+            "                'dependency_satisfaction': claim_satisfaction_ratio,\n"
+            "                'missing_count': len(ranked_missing_dependencies),\n"
+            "                'missing_dependencies': ranked_missing_dependencies,\n"
+            "                'next_required_gap': next_gap,\n"
+            "                'underspecified': claim_is_underspecified,\n"
+            "                'required_dependency_count': total_required_for_claim,\n"
+            "                'structured_required_count': claim_structured_required_count,\n"
+            "                'structured_satisfied_count': claim_structured_satisfied_count,\n"
+            "                'deterministic_target_count': claim_deterministic_target_count,\n"
+            "                'deterministic_target_satisfied_count': claim_deterministic_target_satisfied_count,\n"
+            "            })\n"
+            "            if next_gap:\n"
+            "                recommended_next_gaps.append({\n"
+            "                    'claim_id': claim.id,\n"
+            "                    'claim_name': claim.name,\n"
+            "                    'claim_type': claim_type,\n"
+            "                    **next_gap,\n"
+            "                })\n"
+            "\n"
+            "    claim_level_satisfaction = (\n"
+            "        total_satisfaction_ratio / len(claims) if claims else 0.0\n"
+            "    )\n"
+            "    dependency_coverage = (\n"
+            "        total_satisfied_required_dependencies / total_required_dependencies\n"
+            "        if total_required_dependencies > 0\n"
+            "        else (1.0 if claims else 0.0)\n"
+            "    )\n"
+            "    overall_dependency_satisfaction = (\n"
+            "        claim_level_satisfaction * 0.45 + dependency_coverage * 0.55\n"
+            "    ) if claims else 0.0\n"
+            "    structured_dependency_coverage = (\n"
+            "        structured_satisfied_dependencies / structured_required_dependencies\n"
+            "        if structured_required_dependencies > 0\n"
+            "        else dependency_coverage\n"
+            "    )\n"
+            "    deterministic_gap_closure = (\n"
+            "        deterministic_gap_targets_satisfied / deterministic_gap_targets\n"
+            "        if deterministic_gap_targets > 0\n"
+            "        else dependency_coverage\n"
+            "    )\n"
+            "    graph_population_score = (\n"
+            "        (\n"
+            "            ((len(claims) - underspecified_claims) / len(claims)) * 0.55\n"
+            "            + structured_dependency_coverage * 0.45\n"
+            "        )\n"
+            "        if claims\n"
+            "        else 0.0\n"
+            "    )\n"
+            "    graph_analysis_confidence = max(\n"
+            "        0.0,\n"
+            "        min(\n"
+            "            1.0,\n"
+            "            dependency_coverage * 0.35\n"
+            "            + structured_dependency_coverage * 0.30\n"
+            "            + deterministic_gap_closure * 0.20\n"
+            "            + graph_population_score * 0.15,\n"
+            "        ),\n"
+            "    )\n"
+            "    avg_gaps = total_missing_dependencies / len(claims) if claims else 0.0\n"
+            "\n"
+            "    readiness_history = self.metadata.setdefault('readiness_history', {})\n"
+            "    previous_avg_gaps = float(readiness_history.get('avg_gaps', avg_gaps))\n"
+            "    gap_delta_per_iter = avg_gaps - previous_avg_gaps\n"
+            "    previous_stall_count = int(readiness_history.get('gap_stall_sessions', 0))\n"
+            "    if avg_gaps > 0.0 and gap_delta_per_iter >= -1e-9:\n"
+            "        gap_stall_sessions = previous_stall_count + 1\n"
+            "    else:\n"
+            "        gap_stall_sessions = 0\n"
+            "    readiness_history.update({\n"
+            "        'avg_gaps': avg_gaps,\n"
+            "        'gap_stall_sessions': gap_stall_sessions,\n"
+            "        'updated_at': _utc_now_isoformat(),\n"
+            "    })\n"
+            "    self.metadata['readiness_history'] = readiness_history\n"
+            "\n"
+            "    recommended_actions = []\n"
+            "    if not claims:\n"
+            "        recommended_actions.append(\n"
+            "            'Restore a stable adversarial session flow before tuning graph extraction and dependency tracking.'\n"
+            "        )\n"
+            "    if total_required_dependencies == 0 and claims:\n"
+            "        recommended_actions.append(\n"
+            "            'No required dependencies are linked to claims; populate requirement/evidence edges before denoising.'\n"
+            "        )\n"
+            f"    if gap_stall_sessions >= {stall_threshold} and avg_gaps > 0.0:\n"
+            "        recommended_actions.append(\n"
+            "            'Gap count is not improving across iterations; prioritize blocker-focused follow-ups in graph_analysis.'\n"
+            "        )\n"
+            "    if weak_claim_gap_count > 0:\n"
+            "        recommended_actions.append(\n"
+            "            'Prioritize deterministic requirement closure for housing_discrimination and hacc_research_engine gaps.'\n"
+            "        )\n"
+            "    if weak_modality_gap_count > 0:\n"
+            "        recommended_actions.append(\n"
+            "            'Request policy_document and file_evidence fields with exact document name, date, and issuing/source actor.'\n"
+            "        )\n"
+            "    if deterministic_gap_closure < 0.6 and total_required_dependencies > 0:\n"
+            "        recommended_actions.append(\n"
+            "            'Map each follow-up question to a deterministic_update_key so each answer closes a concrete graph requirement.'\n"
+            "        )\n"
+            "\n"
+            "    recommended_next_gaps.sort(\n"
+            "        key=lambda item: (\n"
+            f"            0 if {prioritize_blocking!r} and item.get('blocking') else 1,\n"
+            "            0 if item.get('weak_claim_focus') else 1,\n"
+            "            0 if item.get('weak_modality_focus') else 1,\n"
+            f"            0 if {prioritize_structured!r} and item.get('structured_gap') else 1,\n"
+            f"            0 if {promote_deterministic!r} and str(item.get('deterministic_update_key') or '').strip() else 1,\n"
+            "            str(item.get('claim_name') or '').lower(),\n"
+            "            str(item.get('source_name') or '').lower(),\n"
+            "        )\n"
+            "    )\n"
+            "\n"
+            "    return {\n"
+            "        'total_claims': len(claims),\n"
+            "        'ready_claims': len(ready_claims),\n"
+            "        'incomplete_claims': len(incomplete_claims),\n"
+            "        'ready_claim_details': ready_claims,\n"
+            "        'incomplete_claim_details': incomplete_claims,\n"
+            "        'overall_readiness': overall_dependency_satisfaction,\n"
+            "        'overall_dependency_satisfaction': overall_dependency_satisfaction,\n"
+            "        'dependency_satisfaction': overall_dependency_satisfaction,\n"
+            "        'claim_level_dependency_satisfaction': claim_level_satisfaction,\n"
+            "        'dependency_coverage': dependency_coverage,\n"
+            "        'structured_dependency_coverage': structured_dependency_coverage,\n"
+            "        'deterministic_gap_closure': deterministic_gap_closure,\n"
+            "        'graph_population_score': graph_population_score,\n"
+            "        'graph_analysis_confidence': graph_analysis_confidence,\n"
+            "        'total_missing_dependencies': total_missing_dependencies,\n"
+            "        'avg_gaps': avg_gaps,\n"
+            "        'gap_delta_per_iter': gap_delta_per_iter,\n"
+            "        'gap_stall_sessions': gap_stall_sessions,\n"
+            "        'underspecified_claims': underspecified_claims,\n"
+            "        'weak_claim_gap_count': weak_claim_gap_count,\n"
+            "        'weak_modality_gap_count': weak_modality_gap_count,\n"
+            "        'recommended_actions': recommended_actions,\n"
+            "        'recommended_next_gaps': recommended_next_gaps,\n"
+            "        'actor_critic': {\n"
+            "            'optimizer': 'actor_critic',\n"
+            "            'priority': _ACTOR_CRITIC_PRIORITY,\n"
+            "            'phase_focus_order': list(_ACTOR_CRITIC_PHASE_FOCUS_ORDER),\n"
+            "            'focus_metrics': dict(_ACTOR_CRITIC_FOCUS_METRICS),\n"
+            "            'graph_analysis': {\n"
+            "                'dependency_coverage': dependency_coverage,\n"
+            "                'structured_dependency_coverage': structured_dependency_coverage,\n"
+            "                'deterministic_gap_closure': deterministic_gap_closure,\n"
+            "                'graph_population_score': graph_population_score,\n"
+            "                'graph_analysis_confidence': graph_analysis_confidence,\n"
+            "                'avg_gaps': avg_gaps,\n"
+            "                'gap_delta_per_iter': gap_delta_per_iter,\n"
+            "                'gap_stall_sessions': gap_stall_sessions,\n"
+            "                'weak_claim_types': sorted(_ACTOR_CRITIC_WEAK_CLAIM_TYPES),\n"
+            "                'weak_evidence_modalities': sorted(_ACTOR_CRITIC_WEAK_EVIDENCE_MODALITIES),\n"
+            "                'weak_claim_gap_count': weak_claim_gap_count,\n"
+            "                'weak_modality_gap_count': weak_modality_gap_count,\n"
+            "                'recommended_actions': recommended_actions,\n"
+            "            },\n"
+            "        },\n"
+            "    }\n"
+        )
+
     def _render_standard_intake_questions_from_policy(self, policy: Dict[str, Any]) -> str:
         timeline_style = policy["timeline_prompt_style"]
         impact_style = policy["impact_prompt_style"]
@@ -2316,6 +2924,133 @@ Do not include explanations, markdown, comments, or extra keys.
             f"{selector_block}\n"
             "    normalized_candidates.sort(key=self._default_candidate_sort_key)\n"
             f"    return _finalize(normalized_candidates, dedupe={str(dedupe_fallback)})\n"
+        )
+
+    def _render_session_injection_from_policy(self, policy: Dict[str, Any]) -> str:
+        stability_budget = max(1, min(4, int(policy.get("stability_injection_budget", 3))))
+        empty_min_budget = max(2, min(5, int(policy.get("empty_questions_min_budget", 5))))
+        limit_missing = bool(policy.get("limit_to_missing_objectives_in_stability", True))
+        one_probe = bool(policy.get("one_probe_per_objective_in_stability", True))
+
+        return (
+            "@classmethod\n"
+            "def _inject_intake_prompt_questions(\n"
+            "    cls,\n"
+            "    seed_complaint: Dict[str, Any],\n"
+            "    questions: Sequence[Any],\n"
+            ") -> List[Any]:\n"
+            "    existing_questions = list(questions or [])\n"
+            "    optimizer_context = cls._extract_actor_critic_intake_context(seed_complaint)\n"
+            "    weak_evidence_modalities = set(optimizer_context.get('weak_evidence_modalities') or set())\n"
+            "    weak_complaint_types = set(optimizer_context.get('weak_complaint_types') or set())\n"
+            "    signal_values = [\n"
+            "        float(value)\n"
+            "        for value in (\n"
+            "            optimizer_context.get('question_quality'),\n"
+            "            optimizer_context.get('empathy'),\n"
+            "            optimizer_context.get('efficiency'),\n"
+            "        )\n"
+            "        if isinstance(value, (int, float))\n"
+            "    ]\n"
+            "    stability_recovery_mode = (not signal_values) or max(signal_values) <= 0.05\n"
+            "    seed_boosted_probes: List[tuple[str, str]] = []\n"
+            "\n"
+            "    if weak_evidence_modalities.intersection({'policy_document', 'file_evidence'}):\n"
+            "        seed_boosted_probes.extend([\n"
+            "            (\n"
+            "                'Which specific policy or procedure document did staff rely on, what section did they cite, and how was it applied to you?',\n"
+            "                'documents',\n"
+            "            ),\n"
+            "            (\n"
+            "                'Please list each supporting file you have (notice, email, text, letter, screenshot, or upload), including date, sender, and what fact it proves.',\n"
+            "                'documents',\n"
+            "            ),\n"
+            "        ])\n"
+            "    if weak_complaint_types.intersection({'housing_discrimination', 'hacc_research_engine'}):\n"
+            "        seed_boosted_probes.extend([\n"
+            "            (\n"
+            "                'What protected characteristic, accommodation request, or complaint came before the adverse action, and what happened right after it?',\n"
+            "                'causation_sequence',\n"
+            "            ),\n"
+            "            (\n"
+            "                'What exact reason was given for the housing decision, who gave it, and what date was it communicated?',\n"
+            "                'adverse_action_details',\n"
+            "            ),\n"
+            "        ])\n"
+            "\n"
+            "    prioritized_prompts = seed_boosted_probes + cls._extract_intake_prompt_candidates(seed_complaint)\n"
+            "    objective_priority: Dict[str, int] = {}\n"
+            "    for _, objective in prioritized_prompts:\n"
+            "        objective_priority.setdefault(objective, len(objective_priority))\n"
+            "\n"
+            "    covered_objectives: Set[str] = set()\n"
+            "    for question in existing_questions:\n"
+            "        for objective in objective_priority:\n"
+            "            if cls._candidate_matches_intake_objective(question, objective):\n"
+            "                covered_objectives.add(objective)\n"
+            "\n"
+            "    merged: List[Any] = []\n"
+            "    seen = set()\n"
+            "    skipped = set()\n"
+            "    injected_objectives: Set[str] = set()\n"
+            "    missing_objectives = [\n"
+            "        objective\n"
+            "        for objective in objective_priority\n"
+            "        if objective not in covered_objectives\n"
+            "    ]\n"
+            "\n"
+            "    if stability_recovery_mode:\n"
+            "        for question in existing_questions:\n"
+            "            key = cls._question_dedupe_key(cls._extract_question_text(question))\n"
+            "            if key and key in seen:\n"
+            "                continue\n"
+            "            if key:\n"
+            "                seen.add(key)\n"
+            "            merged.append(question)\n"
+            "\n"
+            f"    injection_budget = {stability_budget} if stability_recovery_mode else 10\n"
+            "    if not existing_questions:\n"
+            f"        injection_budget = max(injection_budget, {empty_min_budget})\n"
+            "    injected = 0\n"
+            "    for probe_text, probe_type in prioritized_prompts:\n"
+            "        if injected >= injection_budget:\n"
+            "            break\n"
+            f"        if stability_recovery_mode and {str(limit_missing)} and missing_objectives and probe_type not in missing_objectives:\n"
+            "            continue\n"
+            f"        if stability_recovery_mode and {str(one_probe)} and probe_type in injected_objectives:\n"
+            "            continue\n"
+            "        key = cls._question_dedupe_key(probe_text)\n"
+            "        if key and (key in seen or key in skipped):\n"
+            "            continue\n"
+            "        synthetic_question = {\n"
+            "            'question': probe_text,\n"
+            "            'type': probe_type,\n"
+            "            'question_objective': probe_type,\n"
+            "            'question_reason': 'Structured intake prompt imported from the grounding bundle.',\n"
+            "            'source': 'synthetic_intake_prompt',\n"
+            "        }\n"
+            "        if any(\n"
+            "            cls._questions_substantially_overlap(synthetic_question, existing_question)\n"
+            "            for existing_question in existing_questions\n"
+            "        ):\n"
+            "            if key:\n"
+            "                skipped.add(key)\n"
+            "            continue\n"
+            "        if key and key not in seen:\n"
+            "            seen.add(key)\n"
+            "            injected_objectives.add(probe_type)\n"
+            "            merged.append(synthetic_question)\n"
+            "            injected += 1\n"
+            "\n"
+            "    if not stability_recovery_mode:\n"
+            "        for question in existing_questions:\n"
+            "            key = cls._question_dedupe_key(cls._extract_question_text(question))\n"
+            "            if key and key in seen:\n"
+            "                continue\n"
+            "            if key:\n"
+            "                seen.add(key)\n"
+            "            merged.append(question)\n"
+            "    return merged\n"
         )
 
     def _extract_symbol_replacements_from_text(

@@ -257,6 +257,53 @@ def test_generate_optimizations_falls_back_when_action_policy_json_is_invalid(tm
     ast.parse(updated)
 
 
+def test_generate_optimizations_falls_back_when_session_injection_policy_json_is_invalid(tmp_path):
+    router = Mock()
+    router.generate.return_value = "not valid json"
+    optimizer = TestDrivenOptimizer(agent_id="td-session-fallback", llm_router=router)
+
+    target = tmp_path / "session.py"
+    target.write_text(
+        "from typing import Any, Dict, List, Sequence, Set\n\n"
+        "class AdversarialSession:\n"
+        "    @classmethod\n"
+        "    def _extract_actor_critic_intake_context(cls, seed_complaint):\n"
+        "        return {}\n"
+        "    @classmethod\n"
+        "    def _extract_intake_prompt_candidates(cls, seed_complaint):\n"
+        "        return [('When did it happen?', 'timeline')]\n"
+        "    @classmethod\n"
+        "    def _candidate_matches_intake_objective(cls, question, objective):\n"
+        "        return False\n"
+        "    @classmethod\n"
+        "    def _question_dedupe_key(cls, text):\n"
+        "        return str(text).lower()\n"
+        "    @classmethod\n"
+        "    def _extract_question_text(cls, question):\n"
+        "        return str(question.get('question', '')) if isinstance(question, dict) else str(question)\n"
+        "    @classmethod\n"
+        "    def _questions_substantially_overlap(cls, a, b):\n"
+        "        return False\n"
+        "    @classmethod\n"
+        "    def _inject_intake_prompt_questions(cls, seed_complaint: Dict[str, Any], questions: Sequence[Any]) -> List[Any]:\n"
+        "        return list(questions or [])\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-session-fallback",
+        target_files=[target],
+        description="Optimize session injection policy",
+        constraints={"target_symbols": {str(target.resolve()): ["_inject_intake_prompt_questions"]}},
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "stability_recovery_mode" in updated
+    assert "synthetic_intake_prompt" in updated
+    ast.parse(updated)
+
+
 def test_generate_optimizations_falls_back_when_inquiries_policy_json_is_invalid(tmp_path):
     router = Mock()
     router.generate.return_value = "not valid json"
@@ -563,6 +610,40 @@ def test_answer_policy_response_normalization_rejects_unknown_question_types():
         )
 
 
+def test_dependency_readiness_policy_renderer_preserves_return_contract():
+    optimizer = TestDrivenOptimizer(agent_id="td-dependency-readiness", llm_router=Mock())
+
+    rendered = optimizer._render_get_claim_readiness_from_policy(
+        {
+            "prioritize_blocking_gaps": True,
+            "prioritize_structured_gaps": True,
+            "promote_deterministic_gap_targets": True,
+            "boost_weak_claim_types": True,
+            "boost_weak_evidence_modalities": True,
+            "gap_stall_action_threshold": 2,
+        }
+    )
+
+    assert "def get_claim_readiness(self) -> Dict[str, Any]:" in rendered
+    assert "recommended_next_gaps.sort(" in rendered
+    assert "deterministic_update_key" in rendered
+    assert "gap_stall_sessions" in rendered
+    assert "'recommended_actions': recommended_actions" in rendered
+    assert "'actor_critic': {" in rendered
+    assert "'graph_analysis': {" in rendered
+    ast.parse(rendered)
+
+
+def test_dependency_readiness_policy_response_normalization_rejects_out_of_range_threshold():
+    optimizer = TestDrivenOptimizer(agent_id="td-dependency-readiness-invalid", llm_router=Mock())
+
+    with pytest.raises(ValueError, match="out-of-range gap_stall_action_threshold"):
+        optimizer._normalize_dependency_readiness_policy_response(
+            response='{"prioritize_blocking_gaps":true,"prioritize_structured_gaps":true,"promote_deterministic_gap_targets":true,"boost_weak_claim_types":true,"boost_weak_evidence_modalities":true,"gap_stall_action_threshold":9}',
+            file_path=Path("dependency_graph.py"),
+        )
+
+
 def test_standard_intake_policy_renderer_preserves_method_contract():
     optimizer = TestDrivenOptimizer(agent_id="td-standard-intake", llm_router=Mock())
 
@@ -771,4 +852,66 @@ def test_generate_optimizations_can_use_select_candidates_policy_mode(tmp_path):
     assert "self._normalize_question_text" in updated
     assert "_finalize" in updated
     assert "normalized_candidates.sort(key=self._default_candidate_sort_key)" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_can_use_dependency_readiness_policy_mode(tmp_path):
+    router = Mock()
+    router.generate.return_value = """{
+  "prioritize_blocking_gaps": true,
+  "prioritize_structured_gaps": true,
+  "promote_deterministic_gap_targets": true,
+  "boost_weak_claim_types": true,
+  "boost_weak_evidence_modalities": true,
+  "gap_stall_action_threshold": 2
+}"""
+    optimizer = TestDrivenOptimizer(agent_id="td-dependency-readiness-generate", llm_router=router)
+
+    target = tmp_path / "dependency_graph.py"
+    target.write_text(
+        "import re\n"
+        "from typing import Any, Dict, List, Optional\n\n"
+        "_ACTOR_CRITIC_PHASE_FOCUS_ORDER = ('graph_analysis',)\n"
+        "_ACTOR_CRITIC_PRIORITY = 70\n"
+        "_ACTOR_CRITIC_FOCUS_METRICS = {'information_extraction': 0.72}\n"
+        "_ACTOR_CRITIC_WEAK_CLAIM_TYPES = {'housing_discrimination'}\n"
+        "_ACTOR_CRITIC_WEAK_EVIDENCE_MODALITIES = {'policy_document'}\n\n"
+        "def _utc_now_isoformat():\n"
+        "    return '2026-03-21T00:00:00+00:00'\n\n"
+        "class NodeType:\n"
+        "    CLAIM = 'claim'\n"
+        "    REQUIREMENT = 'requirement'\n"
+        "    LEGAL_ELEMENT = 'legal_element'\n\n"
+        "class DependencyNode:\n"
+        "    pass\n\n"
+        "class Dependency:\n"
+        "    pass\n\n"
+        "class DependencyGraph:\n"
+        "    def get_nodes_by_type(self, node_type):\n"
+        "        return []\n\n"
+        "    def get_node(self, node_id):\n"
+        "        return None\n\n"
+        "    def get_claim_readiness(self) -> Dict[str, Any]:\n"
+        "        return {'overall_readiness': 0.0}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-dependency-readiness",
+        target_files=[target],
+        description="Optimize get_claim_readiness",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["get_claim_readiness"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "def get_claim_readiness(self) -> Dict[str, Any]:" in updated
+    assert "recommended_next_gaps.sort(" in updated
+    assert "deterministic_update_key" in updated
+    assert "'weak_claim_gap_count': weak_claim_gap_count" in updated
+    assert "'weak_evidence_modalities': sorted(_ACTOR_CRITIC_WEAK_EVIDENCE_MODALITIES)" in updated
     ast.parse(updated)
