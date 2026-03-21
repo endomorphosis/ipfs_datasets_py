@@ -9345,7 +9345,14 @@ def _candidate_arizona_rule_urls_from_text(*, text: str, page_url: str = "", lim
     return out
 
 
-async def _discover_arizona_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+async def _discover_arizona_rule_document_urls(
+    *,
+    seed_urls: List[str],
+    live_scraper: Optional[Any] = None,
+    live_fetch_api: Optional[Any] = None,
+    direct_fetch_api: Optional[Any] = None,
+    limit: int = 8,
+) -> List[str]:
     relevant_seed_urls = [
         str(url or "").strip()
         for url in list(seed_urls or [])
@@ -9355,52 +9362,101 @@ async def _discover_arizona_rule_document_urls(*, seed_urls: List[str], limit: i
         return []
 
     limit_n = max(1, int(limit))
+    discovered_candidates: List[tuple[str, int]] = []
+    seen_documents: set[str] = set()
+    seen_pages: set[str] = set()
+    frontier: List[str] = [
+        "https://apps.azsos.gov/public_services/CodeTOC.htm",
+        "https://apps.azsos.gov/public_services/Index/",
+    ]
+    for seed_url in relevant_seed_urls:
+        if seed_url not in frontier:
+            frontier.append(seed_url)
 
-    def _run() -> List[str]:
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        }
-        session = requests.Session()
-        discovered_urls: List[str] = []
-        seen_documents: set[str] = set()
-        seen_pages: set[str] = set()
-        frontier: List[str] = [
-            "https://apps.azsos.gov/public_services/CodeTOC.htm",
-            "https://apps.azsos.gov/public_services/Index/",
-        ]
-        for seed_url in relevant_seed_urls:
-            if seed_url not in frontier:
-                frontier.append(seed_url)
+    async def _extract_from_page(page_url: str) -> None:
+        page_key = _url_key(page_url)
+        if not page_key or page_key in seen_pages:
+            return
+        seen_pages.add(page_key)
 
-        for page_url in frontier[:4]:
-            page_key = _url_key(page_url)
-            if not page_key or page_key in seen_pages:
-                continue
-            seen_pages.add(page_key)
-
+        extracted_sources: List[str] = []
+        if live_scraper is not None:
             try:
-                response = session.get(page_url, timeout=15, headers=headers)
-                response.raise_for_status()
+                scraped = await asyncio.wait_for(live_scraper.scrape(page_url), timeout=20.0)
+                scraped_html = str(getattr(scraped, "html", "") or "")
+                scraped_text = str(getattr(scraped, "text", "") or "")
+                if scraped_html or scraped_text:
+                    extracted_sources.append(scraped_html or scraped_text)
             except Exception:
-                continue
+                pass
 
+        if not extracted_sources:
+            page_host = urlparse(page_url).netloc
+            fetch_api = live_fetch_api if _prefers_live_fetch(page_url) else direct_fetch_api
+            if fetch_api is not None:
+                try:
+                    fetched = await asyncio.wait_for(
+                        _run_blocking_fetch(
+                            fetch_api.fetch,
+                            UnifiedFetchRequest(
+                                url=page_url,
+                                timeout_seconds=25,
+                                mode=OperationMode.BALANCED,
+                                domain=".gov" if page_host.endswith(".gov") else "legal",
+                            ),
+                        ),
+                        timeout=20.0,
+                    )
+                    fetched_doc = getattr(fetched, "document", None)
+                    fetched_html = str(getattr(fetched_doc, "html", "") or "")
+                    fetched_text = str(getattr(fetched_doc, "text", "") or "")
+                    if fetched_html or fetched_text:
+                        extracted_sources.append(fetched_html or fetched_text)
+                except Exception:
+                    pass
+
+        if not extracted_sources:
+            headers = {
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+
+            def _fetch_via_requests() -> str:
+                session = requests.Session()
+                try:
+                    response = session.get(page_url, timeout=15, headers=headers)
+                    response.raise_for_status()
+                    return str(response.text or "")
+                except Exception:
+                    return ""
+                finally:
+                    session.close()
+
+            response_text = await asyncio.to_thread(_fetch_via_requests)
+            if response_text:
+                extracted_sources.append(response_text)
+
+        for source_text in extracted_sources:
             for candidate_url in _candidate_arizona_rule_urls_from_text(
-                text=response.text,
+                text=source_text,
                 page_url=page_url,
-                limit=max(limit_n * 4, 24),
+                limit=max(limit_n * 8, 48),
             ):
                 document_key = _url_key(candidate_url)
                 if not document_key or document_key in seen_documents:
                     continue
                 seen_documents.add(document_key)
-                discovered_urls.append(candidate_url)
-                if len(discovered_urls) >= limit_n:
-                    return discovered_urls
+                discovered_candidates.append((candidate_url, _score_candidate_url(candidate_url)))
 
-        return discovered_urls
+    for page_url in frontier[:4]:
+        await _extract_from_page(page_url)
+        if len(discovered_candidates) >= max(limit_n * 2, 8):
+            break
 
-    return await asyncio.to_thread(_run)
+    return _prioritized_direct_detail_urls_from_candidates(
+        discovered_candidates,
+        limit=limit_n,
+    )
 
 
 def _candidate_vermont_rule_urls_from_html(*, html: str, page_url: str = "", limit: int = 12) -> List[str]:
@@ -11200,6 +11256,9 @@ async def _agentic_discover_admin_state_blocks(
                 arizona_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_arizona_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
+                        live_scraper=live_scraper,
+                        live_fetch_api=live_fetch_api,
+                        direct_fetch_api=direct_fetch_api,
                         limit=min(max(max_fetch_per_state * 4, 8), 16),
                     ),
                     timeout=20.0,

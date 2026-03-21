@@ -611,6 +611,52 @@ def test_extract_utah_rule_links_and_rule_page() -> None:
     )
 
 
+def test_extract_new_mexico_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            1,
+            """
+            Rules of Civil Procedure for the District Courts
+            ARTICLE 1
+            Scope of Rules; One Form of Action
+            1-001. Scope of rules; definitions.
+            A. Scope. These rules govern the procedure in the district courts of New Mexico in all suits of a civil nature.
+            [As amended, effective February 6, 2012.]
+            Committee commentary. — This commentary should not be included.
+            """,
+        ),
+        (
+            2,
+            """
+            1-002. One form of action.
+            There shall be one form of action to be known as "civil action".
+            ANNOTATIONS
+            These annotations should not be included.
+            """,
+        ),
+    ]
+
+    statutes = procedure_module._extract_new_mexico_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.nmonesource.com/nmos/nmra/en/5687/1/document.do",
+        title_name="New Mexico Rules of Civil Procedure for the District Courts",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Rule",
+        first_rule_number="1-001",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1-001"
+    assert statutes[0].section_name == "Scope of rules; definitions"
+    assert statutes[0].official_cite == "Rule 1-001 NMRA"
+    assert statutes[0].structured_data["effective_date"] == "February 6, 2012"
+    assert "district courts of New Mexico" in statutes[0].full_text
+    assert "commentary should not be included" not in statutes[0].full_text.lower()
+    assert statutes[1].section_number == "1-002"
+    assert "annotations should not be included" not in statutes[1].full_text.lower()
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -2539,6 +2585,96 @@ async def test_scrape_state_procedure_rules_adds_utah_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["UT"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["UT"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_new_mexico_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "NM",
+                    "state_name": "New Mexico",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "NM": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_nm_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "NM",
+                    "state_name": "New Mexico",
+                    "statute_id": "Rule 1-001 NMRA",
+                    "section_number": "1-001",
+                    "section_name": "Scope of rules; definitions",
+                    "full_text": "1-001. Scope of rules; definitions. These rules govern the procedure in the district courts of New Mexico." + (" x" * 120),
+                    "source_url": "https://www.nmonesource.com/nmos/nmra/en/5687/1/document.do#rule-1-001",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "NM-1-001",
+                            "name": "Scope of rules; definitions",
+                            "sectionNumber": "1-001",
+                            "sectionName": "Scope of rules; definitions",
+                            "text": "1-001. Scope of rules; definitions. These rules govern the procedure in the district courts of New Mexico." + (" x" * 120),
+                            "sourceUrl": "https://www.nmonesource.com/nmos/nmra/en/5687/1/document.do#rule-1-001",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_new_mexico_court_rules_supplement",
+        _fake_nm_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["NM"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["NM"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["NM"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio
