@@ -519,6 +519,98 @@ def test_extract_hawaii_rules_from_html() -> None:
     assert "circuit courts of the State" in statutes[0].full_text
 
 
+def test_extract_utah_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <a href="view.php?type=urcp&rule=1">Rule 1 General provisions.</a>
+      <a href="view.php?type=urcp&rule=26">Rule 26. General provisions governing disclosure and discovery.</a>
+      <a href="view.php?type=urcrp&rule=1">Rule 1 General provisions.</a>
+      <a href="viewall.php?type=urcp">View all URCP Rules</a>
+    </body></html>
+    """
+
+    links = procedure_module._extract_utah_rule_links(
+        list_html,
+        page_url="https://legacy.utcourts.gov/rules/urcp.php",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Utah R. Civ. P.",
+        type_code="urcp",
+    )
+
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "General provisions",
+            "url": "https://legacy.utcourts.gov/rules/view.php?type=urcp&rule=1",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Utah R. Civ. P.",
+        },
+        {
+            "section_number": "26",
+            "section_name": "General provisions governing disclosure and discovery",
+            "url": "https://legacy.utcourts.gov/rules/view.php?type=urcp&rule=26",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Utah R. Civ. P.",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <p>URCP Rule 1</p>
+      <p>(Rules of Civil Procedure)</p>
+      <p>Rule 1. General provisions.</p>
+      <p>Rule printed on March 21, 2026 at 12:13 pm. Go to</p>
+      <p>https://www.utcourts.gov/rules</p>
+      <p>for current rules.</p>
+      <p>Effective: 2/13/2026</p>
+      <p>(a) Scope of rules.</p>
+      <p>These rules govern the procedure in the courts of the state of Utah in all actions of a civil nature.</p>
+      <p>Advisory Committee Notes</p>
+      <p>These rules apply to court commissioners to the same extent as to judges.</p>
+      <p>Back to Rules of Civil Procedure</p>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_utah_rule_from_html(
+        rule_html,
+        rule_url="https://legacy.utcourts.gov/rules/view.php?type=urcp&rule=1",
+        title_name="Utah Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Utah R. Civ. P.",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "General provisions"
+    assert statute.official_cite == "Utah R. Civ. P. 1"
+    assert statute.structured_data["effective_date"] == "2/13/2026"
+    assert "court commissioners" in statute.full_text
+
+    repealed_html = """
+    <html><body>
+      <p>URCRP Rule 5</p>
+      <p>This Rule has been repealed.</p>
+      <p>(Rule 5 REPEALED.)</p>
+    </body></html>
+    """
+
+    assert (
+        procedure_module._extract_utah_rule_from_html(
+            repealed_html,
+            rule_url="https://legacy.utcourts.gov/rules/view.php?type=urcrp&rule=5",
+            title_name="Utah Rules of Criminal Procedure",
+            procedure_family="criminal_procedure",
+            legal_area="criminal_procedure",
+            official_cite_prefix="Utah R. Crim. P.",
+        )
+        is None
+    )
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -2357,6 +2449,96 @@ async def test_scrape_state_procedure_rules_adds_hawaii_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["HI"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["HI"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_utah_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "UT",
+                    "state_name": "Utah",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "UT": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_ut_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "UT",
+                    "state_name": "Utah",
+                    "statute_id": "Utah R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "General provisions",
+                    "full_text": "Rule 1. General provisions. These rules govern the procedure in the courts of the state of Utah." + (" x" * 120),
+                    "source_url": "https://legacy.utcourts.gov/rules/view.php?type=urcp&rule=1#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "UT-urcp-1",
+                            "name": "General provisions",
+                            "sectionNumber": "1",
+                            "sectionName": "General provisions",
+                            "text": "Rule 1. General provisions. These rules govern the procedure in the courts of the state of Utah." + (" x" * 120),
+                            "sourceUrl": "https://legacy.utcourts.gov/rules/view.php?type=urcp&rule=1#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_utah_court_rules_supplement",
+        _fake_ut_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["UT"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["UT"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["UT"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

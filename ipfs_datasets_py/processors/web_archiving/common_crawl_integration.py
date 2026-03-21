@@ -22,6 +22,21 @@ from typing import Dict, List, Optional, Any, Union, Literal
 
 logger = logging.getLogger(__name__)
 
+
+def _env_path(name: str) -> Optional[Path]:
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return None
+    return Path(raw).expanduser().resolve()
+
+
+def _default_parquet_root() -> Path:
+    return _env_path("CCINDEX_PARQUET_ROOT") or Path("/storage/ccindex_parquet")
+
+
+def _default_master_db_path() -> Path:
+    return _env_path("CCINDEX_MASTER_DB") or Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")
+
 def _discover_common_crawl_import_roots() -> List[Path]:
     """Discover likely sys.path roots that contain `common_crawl_search_engine`."""
     here = Path(__file__).resolve().parent
@@ -167,6 +182,23 @@ class CommonCrawlSearchEngine:
         # Set environment variables for ccindex
         self._configure_environment()
         
+        parquet_root = _default_parquet_root()
+        master_db = self.master_db_path if self.master_db_path else _default_master_db_path()
+
+        # Short-circuit when the local Common Crawl index assets are not present.
+        if not parquet_root.exists() or not master_db.exists():
+            logger.warning(
+                "Common Crawl local mode disabled; missing index assets "
+                "(parquet_root=%s exists=%s, master_db=%s exists=%s)",
+                parquet_root,
+                parquet_root.exists(),
+                master_db,
+                master_db.exists(),
+            )
+            self.api = None
+            self._available = False
+            return
+
         # Import ccindex API (lazy import to avoid issues if submodule isn't initialized)
         try:
             import_root = _ensure_common_crawl_import_path()
@@ -309,8 +341,8 @@ class CommonCrawlSearchEngine:
 
         result = self.api.search_domain_via_meta_indexes(
             domain,
-            parquet_root=Path(parquet_root) if parquet_root else Path("/storage/ccindex_parquet"),
-            master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
+            parquet_root=Path(parquet_root) if parquet_root else _default_parquet_root(),
+            master_db=(self.master_db_path if self.master_db_path else _default_master_db_path()),
             year_db=(Path(year_db) if year_db else None),
             collection_db=(Path(collection_db) if collection_db else None),
             year=(str(year) if year else None),
@@ -560,7 +592,7 @@ class CommonCrawlSearchEngine:
             if self.mode == "local":
                 year = kwargs.get("year")
                 refs = self.api.list_collections(
-                    master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")),
+                    master_db=(self.master_db_path if self.master_db_path else _default_master_db_path()),
                     year=(str(year) if year else None),
                 )
                 return [str(r.collection) for r in refs if getattr(r, "collection", None)]
@@ -633,7 +665,7 @@ class CommonCrawlSearchEngine:
                     pass
 
                 for ref in self.api.list_collections(
-                    master_db=(self.master_db_path if self.master_db_path else Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb"))
+                    master_db=(self.master_db_path if self.master_db_path else _default_master_db_path())
                 ):
                     if str(getattr(ref, "collection", "")).strip() == collection_s:
                         return {

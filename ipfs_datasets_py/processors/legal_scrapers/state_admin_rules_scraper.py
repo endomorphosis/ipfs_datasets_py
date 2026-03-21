@@ -810,6 +810,13 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://ltgov.hawaii.gov/the-office/administrative-rules/",
         "https://labor.hawaii.gov/administrative-rules/",
     ],
+    "ID": [
+        "https://adminrules.idaho.gov/current-rules/",
+        "https://adminrules.idaho.gov/rules/current/",
+        "https://adminrules.idaho.gov/",
+        "https://adminrules.idaho.gov/latest-bulletins/",
+        "https://legislature.idaho.gov/statutesrules/idstat/Title67/T67CH52/",
+    ],
     "IA": [
         "https://rules.iowa.gov/",
         "https://www.legis.iowa.gov/law/administrativeRules",
@@ -1044,7 +1051,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "GA", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "GA", "ID", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:

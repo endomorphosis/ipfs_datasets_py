@@ -365,7 +365,28 @@ _HI_RULE_SOURCES: List[Dict[str, str]] = [
         "effective_date": "January 1, 2026",
     },
 ]
-_HI_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)*)\.(.*)$")
+_HI_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)*)(?:\.\s*(.*)|\s+(.*))?$")
+_UT_RULE_LIST_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "Utah Rules of Civil Procedure",
+        "url": "https://legacy.utcourts.gov/rules/urcp.php",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Utah R. Civ. P.",
+        "type_code": "urcp",
+    },
+    {
+        "title_name": "Utah Rules of Criminal Procedure",
+        "url": "https://legacy.utcourts.gov/rules/urcrp.php",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Utah R. Crim. P.",
+        "type_code": "urcrp",
+    },
+]
+_UT_RULE_LINK_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+|[A-Z])?)\.?\s+(.+?)(?:\.)?$", re.IGNORECASE)
+_UT_RULE_PAGE_HEADING_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+|[A-Z])?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
+_UT_EFFECTIVE_DATE_RE = re.compile(r"^Effective:\s*(.+)$", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -634,6 +655,17 @@ class _NebraskaProcedureRulesSupplementFetcher(BaseStateScraper):
 class _HawaiiProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.courts.state.hi.us"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _UtahProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://legacy.utcourts.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -2557,14 +2589,22 @@ def _extract_hawaii_rules_from_html(
 
     body_start = heading_indexes[0]
     if "Table of Contents" in lines:
-        for heading_index in heading_indexes:
-            context_lines = lines[max(0, heading_index - 3) : heading_index]
-            if any(re.match(r"^[IVXLC]+\.\s", value) for value in context_lines):
-                body_start = heading_index
-                break
+        rule_one_indexes = [
+            index
+            for index in heading_indexes
+            if re.match(r"^Rule\s+1\.\s*$", lines[index])
+        ]
+        if len(rule_one_indexes) >= 2:
+            body_start = rule_one_indexes[1]
         else:
-            if len(heading_indexes) >= 2:
-                body_start = heading_indexes[1]
+            for heading_index in heading_indexes:
+                context_lines = lines[max(0, heading_index - 3) : heading_index]
+                if any(re.match(r"^[IVXLC]+\.\s", value) for value in context_lines):
+                    body_start = heading_index
+                    break
+            else:
+                if len(heading_indexes) >= 2:
+                    body_start = heading_indexes[1]
 
     def _is_heading_fragment(value: str) -> bool:
         if not value or value.startswith("("):
@@ -2634,8 +2674,13 @@ def _extract_hawaii_rules_from_html(
             flush()
             current_number = heading_match.group(1).strip()
             name_parts: List[str] = []
-            inline_name = heading_match.group(2).strip()
+            inline_name = (heading_match.group(2) or heading_match.group(3) or "").strip()
             if inline_name:
+                inline_name_clean = inline_name.rstrip(".").strip()
+                if inline_name_clean and not _is_heading_fragment(inline_name_clean):
+                    current_number = ""
+                    index += 1
+                    continue
                 name_parts.append(inline_name)
                 if inline_name.endswith("."):
                     current_name = " ".join(part.strip().rstrip(".") for part in name_parts if part.strip()).strip()
@@ -2723,6 +2768,152 @@ def _extract_nebraska_rule_links(
         )
 
     return discovered
+
+
+def _extract_utah_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    type_code: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+
+    for anchor in soup.find_all("a", href=True):
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        href = str(anchor.get("href") or "").strip()
+        if not label.startswith("Rule ") or not href:
+            continue
+        match = _UT_RULE_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        parsed = urlparse(absolute_url)
+        if parsed.path.rstrip("/").lower() != "/rules/view.php":
+            continue
+        query = parsed.query.lower()
+        if f"type={type_code.lower()}" not in query or "rule=" not in query:
+            continue
+
+        section_number = match.group(1).strip()
+        section_name = match.group(2).strip().rstrip(".")
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": section_number,
+                "section_name": section_name,
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+
+    return discovered
+
+
+def _extract_utah_rule_from_html(
+    html_text: str,
+    *,
+    rule_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> Optional[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    lines = [" ".join(line.split()) for line in soup.get_text("\n", strip=True).splitlines()]
+    lines = [line for line in lines if line]
+    if not lines:
+        return None
+
+    if any("This Rule has been repealed." in line for line in lines):
+        return None
+
+    heading_index = next(
+        (index for index, line in enumerate(lines) if _UT_RULE_PAGE_HEADING_RE.match(line)),
+        None,
+    )
+    if heading_index is None:
+        return None
+
+    heading_match = _UT_RULE_PAGE_HEADING_RE.match(lines[heading_index])
+    if heading_match is None:
+        return None
+
+    section_number = heading_match.group(1).strip()
+    section_name = heading_match.group(2).strip().rstrip(".")
+    effective_date = None
+    body_lines: List[str] = [lines[heading_index]]
+
+    for line in lines[heading_index + 1 :]:
+        effective_match = _UT_EFFECTIVE_DATE_RE.match(line)
+        if effective_match:
+            effective_date = effective_match.group(1).strip()
+            body_lines.append(line)
+            continue
+        if line.startswith("Rule printed on "):
+            continue
+        if line in {
+            "Back to Rules of Civil Procedure",
+            "Back to Rules of Criminal Procedure",
+            "Next Rule >>",
+            "<< Previous Rule",
+            "Empty Table",
+            "Close",
+            "×",
+        }:
+            continue
+        if line == "Utah Courts":
+            continue
+        if line == "https://www.utcourts.gov/rules" or line == "for current rules.":
+            continue
+        if line.startswith("© "):
+            break
+        body_lines.append(line)
+
+    full_text = "\n".join(body_lines).strip()
+    if len(full_text) < 60:
+        return None
+
+    return NormalizedStatute(
+        state_code="UT",
+        state_name=US_STATES["UT"],
+        statute_id=f"{official_cite_prefix} {section_number}",
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{rule_url}#rule-{section_number.lower()}",
+        official_cite=f"{official_cite_prefix} {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_date,
+            "source_kind": "utah_courts_rule_page",
+            "procedure_family": procedure_family,
+        },
+    )
 
 
 def _extract_nebraska_rule_from_html(
@@ -4422,6 +4613,101 @@ async def _scrape_hawaii_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_utah_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _UtahProcedureRulesSupplementFetcher("UT", US_STATES["UT"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for list_page in _UT_RULE_LIST_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        list_url = str(list_page["url"])
+        list_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            list_url,
+            validator=lambda html: len(
+                _extract_utah_rule_links(
+                    html,
+                    page_url=list_url,
+                    procedure_family=str(list_page["procedure_family"]),
+                    legal_area=str(list_page["legal_area"]),
+                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    type_code=str(list_page["type_code"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not list_html:
+            continue
+
+        rule_links = _extract_utah_rule_links(
+            list_html,
+            page_url=list_url,
+            procedure_family=str(list_page["procedure_family"]),
+            legal_area=str(list_page["legal_area"]),
+            official_cite_prefix=str(list_page["official_cite_prefix"]),
+            type_code=str(list_page["type_code"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            rule_html = await _fetch_html_with_direct_fallback(
+                fetcher,
+                rule_url,
+                validator=lambda html: (
+                    "This Rule has been repealed." in html
+                    or _extract_utah_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(list_page["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                    )
+                    is not None
+                ),
+                timeout_seconds=120,
+            )
+            if not rule_html:
+                continue
+
+            statute = _extract_utah_rule_from_html(
+                rule_html,
+                rule_url=rule_url,
+                title_name=str(list_page["title_name"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+            )
+            if statute is None:
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -4841,6 +5127,23 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if hi_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = hi_fetch_analytics
+
+            if state_code == "UT":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                ut_supplement, ut_fetch_analytics = await _scrape_utah_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if ut_supplement:
+                    procedure_statutes.extend(ut_supplement)
+                    for rule in ut_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if ut_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = ut_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]

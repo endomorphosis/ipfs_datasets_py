@@ -684,6 +684,36 @@
     ],
     "ts": 1774082735.1446872
   },
+  "1dc857bfc28e9f889b35c05941aef706f5368668daaa0c7e2a83051b3e7ad4d3": {
+    "items": [
+      {
+        "description": "Bills General Laws Session Laws Constitution \u00b7 Governor&#x27;s Budget \u00b7 Not completed: House Ways &amp; Means Budget \u00b7 Not completed: House Debate \u00b7 Not completed: House Budget \u00b7 Not completed: Senate Ways &amp; Means Budget \u00b7 Not completed: Senate Debate \u00b7 Not completed: Senate Budget \u00b7",
+        "title": "The 194th General Court of the Commonwealth of Massachusetts",
+        "url": "https://malegislature.gov/"
+      },
+      {
+        "description": "Each of these legislative bodies are governed by the Constitution, General Laws, the various court and sundry rulings, and its own set of rules (the House Rules and the Senate Rules) adopted by each chamber and a second set of rules adopted, in concurrence, known as the Joint Rules of the Senate and House of Representatives.",
+        "title": "Rules",
+        "url": "https://malegislature.gov/Laws/Rules/Joint"
+      },
+      {
+        "description": "Part I ADMINISTRATION OF THE GOVERNMENT Chapters. 1-182 \u00b7 Part II REAL AND PERSONAL PROPERTY AND DOMESTIC RELATIONS Chapters. 183-210 \u00b7 Part III COURTS, JUDICIAL OFFICERS AND PROCEEDINGS IN CIVIL CASES Chapters. 211-262 \u00b7 Part IV CRIMES, PUNISHMENTS AND PROCEEDINGS IN CRIMINAL CASES Chapters. 263-280 \u00b7 Part V THE GENERAL LAWS, AND EXPRESS REPEAL OF CERTAIN ACTS AND RESOLVES Chapters.",
+        "title": "General Laws",
+        "url": "https://malegislature.gov/Laws/GeneralLaws"
+      },
+      {
+        "description": "General Laws Session Laws Browse General Laws The General Laws of the Commonwealth. Browse Session Laws Laws specific to General Court sessions past and present.",
+        "title": "Bills & Laws",
+        "url": "https://malegislature.gov/Bills"
+      },
+      {
+        "description": "Here you will find links to sections the Massachusetts General Laws for current district boundaries as well as pertinent links to state and federal laws that govern redistricting.",
+        "title": "Redistricting Laws",
+        "url": "https://malegislature.gov/Redistricting/Laws"
+      }
+    ],
+    "ts": 1774115783.1853993
+  },
   "20339830fbf57eaf109975b11ed5da0c0d7fecbb3066701de7698f7f42ca1392": {
     "items": [
       {
@@ -693,6 +723,36 @@
       }
     ],
     "ts": 1774082791.085597
+  },
+  "20c971adb2b4a8764dd0bbeb3437c960a243fb8d840b33c8000f2667ef2cbdc9": {
+    "items": [
+      {
+        "description": "For papers, type the prefix and number, e.g. HP455 or IB1; for an LD, just the number without &#x27;LD&#x27; \u00b7 <strong>The Second Regular Session of the 132nd Maine Legislature convened January 7, 2026 at 10:00 AM</strong>. The statutory adjournment date is April 15, 2026",
+        "title": "Maine State Legislature",
+        "url": "https://legislature.maine.gov/"
+      },
+      {
+        "description": "Maine.gov | Judicial Branch | Disclaimer | Site Map | Maine.gov Search | Contact Webmaster \u00a9 Maine State Legislature, Updated",
+        "title": "State of Maine Legislature Bill Status Search",
+        "url": "https://www.mainelegislature.org/LawMakerWeb/search.asp"
+      },
+      {
+        "description": "Maine.gov | Judicial Branch | Disclaimer | Site Map | Maine.gov Search | Contact Webmaster \u00a9 Maine State Legislature, Updated",
+        "title": "State of Maine Legislature Bill Status Advanced Search",
+        "url": "https://legislature.maine.gov/LawMakerWeb/advancedsearch.asp"
+      },
+      {
+        "description": "<strong>The Maine State Legislature is the state legislature of the U.S. state of Maine</strong>. It is a bicameral body composed of the lower house Maine House of Representatives and the upper house Maine Senate.",
+        "title": "Maine Legislature - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Maine_Legislature"
+      },
+      {
+        "description": "LegiScan legislative dashboard for Maine, details on the most recent legislation, popular bills, sponsors and committees. With weekly downloadable snapshots of session data.",
+        "title": "Maine Legislature | 2025-2026 | 132nd Legislature | LegiScan",
+        "url": "https://legiscan.com/ME"
+      }
+    ],
+    "ts": 1774116298.8882158
   },
   "22aa44c1a020f7c6581368c5a46da03d214490563dcefd332012251aa9b89871": {
     "items": [
@@ -963,6 +1023,46 @@
       }
     ],
     "ts": 1774082975.731989
+  },
+  "2d81804c5def11649378238486e3672dbcf387b3bd55b73d414ae7197bae6cb6": {
+    "items": [
+      {
+        "description": "Discrepancies between the book and any statute or regulation shall be governed by the statute or regulation. Errors occasionally appear and news releases are published to clarify these situations. <strong>To research laws</strong>, visit http://www.scstatehouse.gov/coderegs/statmast.php.",
+        "title": "SCDNR - Rules and Regulations",
+        "url": "https://www.dnr.sc.gov/regscode.html"
+      }
+    ],
+    "ts": 1774116834.0696564
+  },
+  "2e2d35d5a488d8bb56a41fb6921524deb58fe8f50fec7d3b6fa11eb286f11166": {
+    "items": [
+      {
+        "description": "<strong>The First Regular Session of the 132nd Legislature adjourned sine die Friday, March 21, 2025; the general effective date is Friday, June 20, 2025</strong>.",
+        "title": "Maine State Legislature",
+        "url": "https://legislature.maine.gov/"
+      },
+      {
+        "description": "Send comments or questions to: Webmaster_legis@legislature.maine.gov",
+        "title": "Site Guide / Maine Legislature",
+        "url": "https://www.maine.gov/legis/siteguide/"
+      },
+      {
+        "description": "LegiScan legislative dashboard for Maine, details on the most recent legislation, popular bills, sponsors and committees. With weekly downloadable snapshots of session data.",
+        "title": "Maine Legislature | 2025-2026 | 132nd Legislature | LegiScan",
+        "url": "https://legiscan.com/ME"
+      },
+      {
+        "description": "As the legislative branch of the Maine state government, <strong>the legislature has the power to make laws, subject to a veto by the governor</strong>. The legislature, however, by a vote of two-thirds in each house, may override the veto.",
+        "title": "Maine Legislature - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Maine_Legislature"
+      },
+      {
+        "description": "Media Player Maine State Legislature Loading...",
+        "title": "Media, Live and Archived - Maine Legislature",
+        "url": "https://mainelegislature.org/Audio/"
+      }
+    ],
+    "ts": 1774116307.2824752
   },
   "31505c0f30fd97102999df89a345f1a7520fa3870a8c0a711f9db78164723a2c": {
     "items": [
@@ -1378,6 +1478,36 @@
       }
     ],
     "ts": 1773268297.9521294
+  },
+  "49b3731a92a041c53dee2dd5b2d7ca34d561fdcde1412b9ac21784bf94450245": {
+    "items": [
+      {
+        "description": "Arizona Administrative Code \u00b7 Arizona Administrative Register \u00b7 Updating Arizona Regulations (Westlaw) Updating Arizona Regulations (Lexis) Arizona Agency Decisions \u00b7 Federal Court Rules \u00b7 Practice Materials &amp; Legal Forms (optional) Practice Aids \u00b7 Legal Forms \u00b7",
+        "title": "introductorylegalresearchcynthia [licensed for non-commercial use only] / West Topic and Key Number System",
+        "url": "http://introductorylegalresearchcynthia.pbworks.com/w/page/83274214/West%20Topic%20and%20Key%20Number%20System"
+      },
+      {
+        "description": "Weekly outline &amp; Recommended Readings \u00b7 Legal Research Manual",
+        "title": "CML 1101: Principles of Legal Research - PBworks",
+        "url": "http://legalresearchprinciples.pbworks.com/CML-1101:--Principles-of-Legal-Research"
+      },
+      {
+        "description": "Semaine du 16 au 20 novembre : \u00b7 N&#x27;oubliez pas de compl\u00e9ter le module sur le Campus virtuel sur les lois et r\u00e8glements de l&#x27;Ontario. Par la suite, vous devrez t\u00e9l\u00e9charger le Travail no. 5 (disponible sur le Campus virtuel ainsi que ci-bas) sur la recherche l\u00e9gislative canadienne et ...",
+        "title": ":: Principles of Legal Research :: / CML1502 Recherche juridique",
+        "url": "http://legalresearchprinciples.pbworks.com/CML1502+Recherche+juridique"
+      },
+      {
+        "description": "<strong>If you are citizen of an European Union member nation, you may not use this service unless you are at least 16 years old</strong> \u00b7 Dokkio Sidebar applies AI to make browsing the web faster and more productive. Whenever you open Sidebar, you&#x27;ll get an AI summary of the web page and can ask any question ...",
+        "title": ":: Principles of Legal Research :: / Exercises and Assignments",
+        "url": "http://legalresearchprinciples.pbworks.com/Exercises+and+Assignments"
+      },
+      {
+        "description": "Insert links to other pages or uploaded files \u00b7 Tip: To turn text into a link, highlight the text, then click on a page or file from the list above",
+        "title": ":: Principles of Legal Research :: / CML 3319: Advanced Legal ...",
+        "url": "http://legalresearchprinciples.pbworks.com/CML-3319:--Advanced-Legal-Research-Methodology"
+      }
+    ],
+    "ts": 1774116987.9934173
   },
   "4bc4ed3940e4d6782111848c988351e2519e0147cebf9fbe4b61f38322bb37e9": {
     "items": [
@@ -2113,6 +2243,36 @@
       }
     ],
     "ts": 1774073939.6190028
+  },
+  "73e7edbdddde41603820ad7880683cf76f06f560e768f87cc6b14177391387c0": {
+    "items": [
+      {
+        "description": "P.O. Box 83720 Boise, ID 83720-0081 P: 208-332-1000 | F: 208-334-2320 Public Records Request: P: 208-334-2475 E: prr@lso.idaho.gov \u00b7 P.O. Box 83720 Boise, ID 83720-0038 P: 208-332-1000 Information Center: P: 208-332-1000 E: idleginfo@lso.idaho.gov",
+        "title": "Idaho Statutes \u2013 Idaho State Legislature",
+        "url": "https://legislature.idaho.gov/statutesrules/idstat/"
+      },
+      {
+        "description": "P.O. Box 83720 Boise, ID 83720-0081 P: 208-332-1000 | F: 208-334-2320 Public Records Request: P: 208-334-2475 E: prr@lso.idaho.gov \u00b7 P.O. Box 83720 Boise, ID 83720-0038 P: 208-332-1000 Information Center: P: 208-332-1000 E: idleginfo@lso.idaho.gov",
+        "title": "Idaho Laws & Rules \u2013 Idaho State Legislature",
+        "url": "https://legislature.idaho.gov/statutesrules/"
+      },
+      {
+        "description": "Information Regarding Legislative Accessibility and Public Testimony can be found at the following link: https://legislature.idaho.gov/resources/leg-accessibility-pub-testimony/",
+        "title": "Idaho Legislature - Idaho.gov",
+        "url": "https://legislature.idaho.gov/"
+      },
+      {
+        "description": "Volume 1 (Chapters 1 \u2013 162) \u00b7 Volume 2 (Chapters 163- 330)",
+        "title": "Idaho Session Laws \u2013 Idaho State Legislature",
+        "url": "https://legislature.idaho.gov/statutesrules/sessionlaws/"
+      },
+      {
+        "description": "In the event of the President Pro Tempore\u2019s death, removal, resignation or permanent incapacity between legislative sessions, the Senate Majority Leader (and in the event of his death, removal, resignation or permanent incapacity to act as interim President Pro Tempore, the Senate Assistant Majority Leader) shall act as interim President Pro Tempore with all of the duties, powers and prerogatives of the office, to serve until the next session of the Legislature, at which time a new President Pro Tempore shall be elected.",
+        "title": "Rules \u2013 Idaho State Legislature",
+        "url": "https://legislature.idaho.gov/statutesrules/rules/"
+      }
+    ],
+    "ts": 1774115523.9167268
   },
   "73e993332ba80d9d1a8eb1a49c6a5ecf7ac6ea386d4804d70c7e11670bb609d7": {
     "items": [
@@ -4353,6 +4513,36 @@
       }
     ],
     "ts": 1774073505.279387
+  },
+  "eda53fe8688303a2ff1e088dc1a02f45c8e55d8fa8b3d93a47ab83e3d896c262": {
+    "items": [
+      {
+        "description": "Click the link above to view the report",
+        "title": "Home Page",
+        "url": "https://mgaleg.maryland.gov/mgawebsite/"
+      },
+      {
+        "description": "1. Go to <strong>http://mgaleg.maryland.gov/mgawebsite/Account/Login</strong> or click the \u201cMy MGA\u201d \u00b7 button in the top right corner of the website home page. 2. Type in your email and the password you made when registering. a. Once you hit \u201cSign in,\u201d it will bring you back to the home page.",
+        "title": "Using the Maryland General Assembly Website",
+        "url": "https://www.md-council.org/wp-content/uploads/2025/01/Using-the-MGA-Website-DD-Coalition.pdf"
+      },
+      {
+        "description": "Create a MyMGA Tracking Account \u00b7 Forgot your password",
+        "title": "Sign In to MyMGA Tracking",
+        "url": "https://www.mgaleg.maryland.gov/mgawebsite/Account/Login"
+      },
+      {
+        "description": "Complete the following form to register for a MyMGA Tracking Account. When you have completed this form and submitted your registration request you will receive a confirmation email. Click the link in that email to complete registration",
+        "title": "Register",
+        "url": "https://mgaleg.maryland.gov/mgawebsite/Account/Register/Tracking"
+      },
+      {
+        "description": "<strong>https://mgaleg.maryland.gov/mgawebsite/</strong> <strong>https://mgaleg.maryland.gov/mgawebsite/</strong> http://dls.maryland.gov/pubs/prod/NoPblTabLibResDocs/Legislative-Process.pdf \u00b7 https://mgaleg.maryland.gov/pubs-current/current-legislative-lingo.pdf \u00b7 <strong>https://mgaleg.maryland.gov/mgawebsite/</strong>Search/Publications \u00b7",
+        "title": "Understanding How Maryland Statutes Are Made",
+        "url": "https://peoples-law.org/node/49136/printable/print"
+      }
+    ],
+    "ts": 1774116230.1856802
   },
   "ee6a68a175e323598cddf2032ba2ed05a8211a9c719385652993d187e6d8fb4e": {
     "items": [

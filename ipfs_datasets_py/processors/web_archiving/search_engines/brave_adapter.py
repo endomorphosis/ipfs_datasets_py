@@ -16,6 +16,8 @@ from .base import (
     SearchEngineResponse,
     SearchEngineResult,
     SearchEngineError,
+    SearchEngineQuotaExceededError,
+    SearchEngineRateLimitError,
     SearchEngineType,
 )
 
@@ -72,6 +74,8 @@ class BraveSearchEngine(SearchEngineAdapter):
         # Initialize Brave client
         api_key = config.api_key or None
         self.client = BraveSearchClient(api_key=api_key)
+        self._disabled_until: float = 0.0
+        self._quota_exhausted: bool = False
         
         logger.info("Brave search engine initialized")
     
@@ -96,6 +100,13 @@ class BraveSearchEngine(SearchEngineAdapter):
         Raises:
             SearchEngineError: On search failure
         """
+        now = time.time()
+        if self._quota_exhausted:
+            raise SearchEngineQuotaExceededError("Brave search quota already exhausted for this process")
+        if self._disabled_until > now:
+            retry_after = max(0.0, self._disabled_until - now)
+            raise SearchEngineRateLimitError(f"Brave search temporarily rate limited; retry after {retry_after:.1f}s")
+
         # Check cache first
         cache_key = self._get_cache_key(
             query,
@@ -153,7 +164,15 @@ class BraveSearchEngine(SearchEngineAdapter):
             return response
             
         except Exception as e:
+            self._update_backoff_state(e)
             logger.error(f"Brave search failed: {e}")
+            if self._quota_exhausted:
+                raise SearchEngineQuotaExceededError(f"Brave search quota exhausted: {e}") from e
+            if self._disabled_until > time.time():
+                retry_after = max(0.0, self._disabled_until - time.time())
+                raise SearchEngineRateLimitError(
+                    f"Brave search rate limited: retry after {retry_after:.1f}s; {e}"
+                ) from e
             raise SearchEngineError(f"Brave search error: {e}") from e
     
     def test_connection(self) -> bool:
@@ -242,3 +261,14 @@ class BraveSearchEngine(SearchEngineAdapter):
             return [item for item in direct_results if isinstance(item, dict)]
 
         return []
+
+    def _update_backoff_state(self, error: Exception) -> None:
+        """Track quota/rate-limit failures so future calls fail fast."""
+        message = str(error)
+        upper_message = message.upper()
+        if "QUOTA_LIMITED" in upper_message or "QUOTA LIMIT" in upper_message:
+            self._quota_exhausted = True
+            self._disabled_until = float("inf")
+            return
+        if "RATE_LIMITED" in upper_message or "RATE LIMIT" in upper_message or "HTTP 429" in upper_message:
+            self._disabled_until = max(self._disabled_until, time.time() + 300.0)
