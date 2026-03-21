@@ -898,6 +898,108 @@ def test_extract_iowa_rules_from_page_texts() -> None:
     assert "practice and procedure in all courts of the state" in statutes[0].full_text
 
 
+def test_extract_arkansas_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            1,
+            """
+            Rules of Civil Procedure
+            Rule 1. Scope of Rules.
+            These rules shall govern the procedure in the circuit courts in all suits or actions of a civil nature.
+            HISTORY
+            Amended November 18, 1996, effective March 1, 1997.
+            Rule 2. One Form of Action.
+            There shall be one form of action to be known as "civil action."
+            Addition to Reporter’s Notes, 2001 Amendment:
+            This should not be included.
+            """,
+        )
+    ]
+
+    statutes = procedure_module._extract_arkansas_rules_from_page_texts(
+        page_texts,
+        source_url="https://opinions.arcourts.gov/ark/cr/en/16712/1/document.do",
+        title_name="Arkansas Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Ark. R. Civ. P.",
+        first_rule_number="1",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name == "Scope of Rules"
+    assert statutes[0].official_cite == "Ark. R. Civ. P. 1"
+    assert statutes[0].structured_data["effective_date"] == "March 1, 1997"
+    assert "circuit courts" in statutes[0].full_text
+    assert "This should not be included" not in statutes[1].full_text
+
+
+def test_extract_alabama_rule_links_and_text() -> None:
+    list_html = """
+    <html><body>
+      <a href="/docs/library/rules/cv1.pdf">Rule 1.</a>
+      <a href="/docs/library/rules/cv4_1.pdf">Rule 4.1.</a>
+      <a href="/docs/library/rules/cr2_1.pdf">Rule 2.1.</a>
+    </body></html>
+    """
+
+    links = procedure_module._extract_alabama_rule_links(
+        list_html,
+        page_url="https://judicial.alabama.gov/library/CivilProcedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Ala. R. Civ. P.",
+        url_prefix="cv",
+    )
+
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "",
+            "url": "https://judicial.alabama.gov/docs/library/rules/cv1.pdf",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Ala. R. Civ. P.",
+        },
+        {
+            "section_number": "4.1",
+            "section_name": "",
+            "url": "https://judicial.alabama.gov/docs/library/rules/cv4_1.pdf",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Ala. R. Civ. P.",
+        },
+    ]
+
+    text = """
+    Alabama Rules of Civil Procedure
+    Rule 1. Scope of Rules.
+    (a) Scope. These rules govern procedure in the circuit courts and in courts of full, like jurisdiction.
+    [Amended 6-17-75; Amended 11-23-76, eff. 1-16-77; Amended 12-6-2012, eff. 1-1-2013.]
+    Committee Comments on 1973 Adoption
+    This should not be included.
+    """
+
+    statute = procedure_module._extract_alabama_rule_from_text(
+        text,
+        source_url="https://judicial.alabama.gov/docs/library/rules/cv1.pdf",
+        title_name="Alabama Rules of Civil Procedure",
+        section_number="1",
+        official_cite_prefix="Ala. R. Civ. P.",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "Scope of Rules"
+    assert statute.official_cite == "Ala. R. Civ. P. 1"
+    assert statute.structured_data["effective_date"] == "1-1-2013"
+    assert "circuit courts" in statute.full_text
+    assert "This should not be included" not in statute.full_text
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -3276,6 +3378,196 @@ async def test_scrape_state_procedure_rules_adds_iowa_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["IA"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["IA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_arkansas_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AR",
+                    "state_name": "Arkansas",
+                    "statutes": [
+                        {
+                            "state_code": "AR",
+                            "state_name": "Arkansas",
+                            "section_number": "16-0-0",
+                            "section_name": "Noise from base laws path",
+                            "full_text": "placeholder" + (" x" * 120),
+                            "source_url": "https://example.com/placeholder",
+                            "procedure_family": "civil_procedure",
+                        }
+                    ],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "AR": {
+                        "attempted": 1,
+                        "success": 1,
+                        "success_ratio": 1.0,
+                        "fallback_count": 0,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": None,
+                    }
+                }
+            },
+        }
+
+    async def _fake_ar_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == {"https://example.com/placeholder"}
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "AR",
+                    "state_name": "Arkansas",
+                    "statute_id": "Ark. R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules",
+                    "full_text": "Rule 1. Scope of Rules. These rules shall govern the procedure in the circuit courts in all suits or actions of a civil nature." + (" x" * 120),
+                    "source_url": "https://opinions.arcourts.gov/ark/cr/en/16712/1/document.do#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "AR-civ-1",
+                            "name": "Scope of Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules",
+                            "text": "Rule 1. Scope of Rules. These rules shall govern the procedure in the circuit courts in all suits or actions of a civil nature." + (" x" * 120),
+                            "sourceUrl": "https://opinions.arcourts.gov/ark/cr/en/16712/1/document.do#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_arkansas_court_rules_supplement",
+        _fake_ar_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["AR"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "1"
+    assert result["metadata"]["fetch_analytics_by_state"]["AR"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["AR"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_alabama_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "AL",
+                    "state_name": "Alabama",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "AL": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_al_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "AL",
+                    "state_name": "Alabama",
+                    "statute_id": "Ala. R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules",
+                    "full_text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit courts and in courts of full, like jurisdiction." + (" x" * 120),
+                    "source_url": "https://judicial.alabama.gov/docs/library/rules/cv1.pdf#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "AL-civ-1",
+                            "name": "Scope of Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules",
+                            "text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit courts and in courts of full, like jurisdiction." + (" x" * 120),
+                            "sourceUrl": "https://judicial.alabama.gov/docs/library/rules/cv1.pdf#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_alabama_court_rules_supplement",
+        _fake_al_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["AL"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "1"
+    assert result["metadata"]["fetch_analytics_by_state"]["AL"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["AL"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

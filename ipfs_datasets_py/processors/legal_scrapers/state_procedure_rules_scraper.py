@@ -491,6 +491,46 @@ _IA_RULE_HEADING_RE = re.compile(
     r"Rules\s+(?:1|2)\.\d(?:[\d ]*\d)?\s+to\s+(?:1|2)\.\d(?:[\d ]*\d)?\s+Reserved|\Z)",
     re.DOTALL,
 )
+_AR_RULE_DOCUMENTS: List[Dict[str, str]] = [
+    {
+        "title_name": "Arkansas Rules of Civil Procedure",
+        "url": "https://opinions.arcourts.gov/ark/cr/en/16712/1/document.do",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Ark. R. Civ. P.",
+        "first_rule_number": "1",
+    },
+    {
+        "title_name": "Arkansas Rules of Criminal Procedure",
+        "url": "https://opinions.arcourts.gov/ark/cr/en/1879/1/document.do",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Ark. R. Crim. P.",
+        "first_rule_number": "1.1",
+    },
+]
+_AR_RULE_HEADING_LINE_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)?)\.\s+(.+)$")
+_AR_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_AL_RULE_LIST_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "Alabama Rules of Civil Procedure",
+        "url": "https://judicial.alabama.gov/library/CivilProcedure",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Ala. R. Civ. P.",
+        "url_prefix": "cv",
+    },
+    {
+        "title_name": "Alabama Rules of Criminal Procedure",
+        "url": "https://judicial.alabama.gov/library/criminalprocedure",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Ala. R. Crim. P.",
+        "url_prefix": "cr",
+    },
+]
+_AL_RULE_LABEL_RE = re.compile(r"^Rules?\s+([0-9]+(?:\.[0-9]+)?[A-Za-z]?)\.\s*$", re.IGNORECASE)
+_AL_EFFECTIVE_DATE_RE = re.compile(r"eff\.\s*([0-9-]+)|effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -825,6 +865,28 @@ class _MinnesotaProcedureRulesSupplementFetcher(BaseStateScraper):
 class _IowaProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.legis.iowa.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _ArkansasProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://opinions.arcourts.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _AlabamaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://judicial.alabama.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -3756,6 +3818,278 @@ def _extract_iowa_rules_from_page_texts(
     return statutes
 
 
+def _extract_arkansas_rules_from_page_texts(
+    page_texts: List[tuple[int, str]],
+    *,
+    source_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    first_rule_number: str,
+    max_rules: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    current_number = ""
+    current_name = ""
+    current_page = 0
+    current_effective_date: Optional[str] = None
+    body_lines: List[str] = []
+    start_found = False
+    capture_body = True
+    stop_markers = (
+        "Reporter’s Notes",
+        "Reporter's Notes",
+        "Addition to Reporter’s Notes",
+        "Addition to Reporter's Notes",
+    )
+
+    def flush() -> None:
+        nonlocal current_number, current_name, current_page, current_effective_date, body_lines, capture_body
+        if not current_number or not current_name:
+            current_number = ""
+            current_name = ""
+            current_page = 0
+            current_effective_date = None
+            body_lines = []
+            capture_body = True
+            return
+
+        full_text = "\n".join(line for line in body_lines if line).strip()
+        if len(full_text) < 40:
+            current_number = ""
+            current_name = ""
+            current_page = 0
+            current_effective_date = None
+            body_lines = []
+            capture_body = True
+            return
+
+        effective_matches = _AR_EFFECTIVE_DATE_RE.findall(full_text)
+        if effective_matches:
+            current_effective_date = effective_matches[-1].strip()
+
+        key = (current_number.lower(), current_name.lower())
+        if key not in seen:
+            seen.add(key)
+            statutes.append(
+                NormalizedStatute(
+                    state_code="AR",
+                    state_name=US_STATES["AR"],
+                    statute_id=f"{official_cite_prefix} {current_number}",
+                    code_name=title_name,
+                    title_name=title_name,
+                    chapter_name=title_name,
+                    section_number=current_number,
+                    section_name=current_name,
+                    short_title=current_name,
+                    full_text=full_text,
+                    summary=current_name,
+                    source_url=f"{source_url}#rule-{current_number}",
+                    official_cite=f"{official_cite_prefix} {current_number}",
+                    legal_area=legal_area,
+                    structured_data={
+                        "effective_date": current_effective_date,
+                        "source_kind": "arkansas_court_rules_pdf",
+                        "procedure_family": procedure_family,
+                        "page_start": current_page or None,
+                    },
+                )
+            )
+
+        current_number = ""
+        current_name = ""
+        current_page = 0
+        current_effective_date = None
+        body_lines = []
+        capture_body = True
+
+    for page_number, page_text in page_texts:
+        for raw_line in str(page_text or "").splitlines():
+            line = " ".join(raw_line.replace("\x00", " ").split())
+            if not line:
+                continue
+            if line in {"Rules of Civil Procedure", "Rules of Criminal Procedure"}:
+                continue
+
+            heading_match = _AR_RULE_HEADING_LINE_RE.match(line)
+            if heading_match:
+                heading_number = heading_match.group(1).strip()
+                if not start_found:
+                    if heading_number != first_rule_number:
+                        continue
+                    start_found = True
+                flush()
+                current_number = heading_number
+                current_name = heading_match.group(2).strip().rstrip(".")
+                current_page = page_number
+                current_effective_date = None
+                body_lines = [f"Rule {current_number}. {current_name}."]
+                capture_body = True
+                continue
+
+            if not start_found or not current_number:
+                continue
+
+            if any(line.startswith(marker) for marker in stop_markers):
+                capture_body = False
+                continue
+
+            if line == "HISTORY":
+                body_lines.append(line)
+                continue
+
+            if capture_body:
+                body_lines.append(line)
+
+        if max_rules is not None and len(statutes) >= max_rules:
+            break
+
+    flush()
+    if max_rules is not None and max_rules > 0:
+        return statutes[:max_rules]
+    return statutes
+
+
+def _extract_alabama_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    url_prefix: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+
+    for anchor in soup.find_all("a", href=True):
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        href = str(anchor.get("href") or "").strip()
+        if not label or not href:
+            continue
+        match = _AL_RULE_LABEL_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        parsed = urlparse(absolute_url)
+        if parsed.netloc.lower() != "judicial.alabama.gov":
+            continue
+        filename = Path(parsed.path).name.lower()
+        if not filename.startswith(url_prefix.lower()):
+            continue
+        section_number = match.group(1).strip()
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": section_number,
+                "section_name": "",
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+
+    return discovered
+
+
+def _extract_alabama_rule_from_text(
+    text: str,
+    *,
+    source_url: str,
+    title_name: str,
+    section_number: str,
+    official_cite_prefix: str,
+    procedure_family: str,
+    legal_area: str,
+) -> Optional[NormalizedStatute]:
+    raw_text = str(text or "")
+    normalized_text = " ".join(raw_text.replace("\r", " ").replace("\n", " ").split())
+    if len(normalized_text) < 60:
+        return None
+
+    section_name = ""
+    lines = [" ".join(raw_line.split()).strip() for raw_line in raw_text.splitlines()]
+    for index, line in enumerate(lines):
+        if not line:
+            continue
+        if re.fullmatch(rf"Rule\s+{re.escape(section_number)}\.", line, re.IGNORECASE):
+            for candidate in lines[index + 1 :]:
+                if candidate:
+                    section_name = candidate.rstrip(".")
+                    break
+            if section_name:
+                break
+        heading_match = re.match(rf"^Rule\s+{re.escape(section_number)}\.\s+(.+)$", line, re.IGNORECASE)
+        if heading_match:
+            section_name = " ".join(heading_match.group(1).split()).strip()
+            if ". " in section_name:
+                section_name = section_name.split(". ", 1)[0].strip()
+            else:
+                repeated_word_match = re.match(r"^(.+?\b([A-Z][A-Za-z]+))\s+\2\s+[a-z].*$", section_name)
+                if repeated_word_match:
+                    section_name = repeated_word_match.group(1).strip()
+            section_name = section_name.rstrip(".")
+            break
+    if not section_name:
+        heading_match = re.search(
+            rf"Rule\s+{re.escape(section_number)}\.\s+(.+?)(?=\s+\([a-z]\)\s+|\s+Committee Comments|\s+\[|$)",
+            normalized_text,
+            re.IGNORECASE,
+        )
+        if heading_match is None:
+            return None
+        section_name = " ".join(heading_match.group(1).split()).strip().rstrip(".")
+    if not section_name:
+        return None
+
+    body_start = normalized_text.lower().find(f"rule {section_number}.".lower())
+    full_text = normalized_text[body_start:].strip()
+    stop_markers = ["Committee Comments", "Committee Notes", "Court Comment", "Appendix to Rule"]
+    stop_positions = [full_text.find(marker) for marker in stop_markers if full_text.find(marker) != -1]
+    if stop_positions:
+        full_text = full_text[: min(stop_positions)].strip()
+    if len(full_text) < 60:
+        return None
+
+    effective_date = None
+    for match in _AL_EFFECTIVE_DATE_RE.finditer(full_text):
+        effective_date = next((group for group in match.groups() if group), effective_date)
+
+    return NormalizedStatute(
+        state_code="AL",
+        state_name=US_STATES["AL"],
+        statute_id=f"{official_cite_prefix} {section_number}",
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{source_url}#rule-{section_number.lower()}",
+        official_cite=f"{official_cite_prefix} {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_date,
+            "source_kind": "pdf_rule_page",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -5967,6 +6301,163 @@ async def _scrape_iowa_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_arkansas_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _ArkansasProcedureRulesSupplementFetcher("AR", US_STATES["AR"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for source in _AR_RULE_DOCUMENTS:
+        if remaining is not None and remaining <= 0:
+            break
+        source_url = str(source["url"])
+        raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(fetcher, source_url)
+        if not raw_bytes:
+            continue
+
+        try:
+            from pypdf import PdfReader
+
+            reader = PdfReader(BytesIO(raw_bytes))
+            page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+        except Exception:
+            extracted = await fetcher._extract_text_from_document_bytes(
+                raw_bytes,
+                source_url=source_url,
+                content_type="application/pdf",
+            )
+            if not extracted:
+                continue
+            page_texts = [(index + 1, page) for index, page in enumerate(extracted.pages)]
+
+        statutes = _extract_arkansas_rules_from_page_texts(
+            page_texts,
+            source_url=source_url,
+            title_name=str(source["title_name"]),
+            procedure_family=str(source["procedure_family"]),
+            legal_area=str(source["legal_area"]),
+            official_cite_prefix=str(source["official_cite_prefix"]),
+            first_rule_number=str(source["first_rule_number"]),
+            max_rules=remaining,
+        )
+        for statute in statutes:
+            if remaining is not None and remaining <= 0:
+                break
+            source_key = str(statute.source_url or "").strip().lower()
+            if source_key in existing_urls:
+                continue
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(
+                statute.structured_data.get("procedure_family") or ""
+            ).strip()
+            if not family:
+                continue
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(source_key)
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
+async def _scrape_alabama_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _AlabamaProcedureRulesSupplementFetcher("AL", US_STATES["AL"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for list_page in _AL_RULE_LIST_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+        list_url = str(list_page["url"])
+        list_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            list_url,
+            validator=lambda html: len(
+                _extract_alabama_rule_links(
+                    html,
+                    page_url=list_url,
+                    procedure_family=str(list_page["procedure_family"]),
+                    legal_area=str(list_page["legal_area"]),
+                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+                    url_prefix=str(list_page["url_prefix"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not list_html:
+            continue
+
+        rule_links = _extract_alabama_rule_links(
+            list_html,
+            page_url=list_url,
+            procedure_family=str(list_page["procedure_family"]),
+            legal_area=str(list_page["legal_area"]),
+            official_cite_prefix=str(list_page["official_cite_prefix"]),
+            url_prefix=str(list_page["url_prefix"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(fetcher, rule_url)
+            if not raw_bytes:
+                continue
+            try:
+                from pypdf import PdfReader
+
+                reader = PdfReader(BytesIO(raw_bytes))
+                text = "\n".join(str(page.extract_text() or "") for page in reader.pages)
+            except Exception:
+                extracted = await fetcher._extract_text_from_document_bytes(
+                    source_url=rule_url,
+                    raw_bytes=raw_bytes,
+                )
+                if not isinstance(extracted, dict):
+                    continue
+                text = str(extracted.get("text") or "")
+            statute = _extract_alabama_rule_from_text(
+                text,
+                source_url=rule_url,
+                title_name=str(list_page["title_name"]),
+                section_number=str(rule["section_number"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+            )
+            if statute is None:
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -6493,6 +6984,50 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if ia_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = ia_fetch_analytics
+
+            if state_code == "AR":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                ar_supplement, ar_fetch_analytics = await _scrape_arkansas_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if ar_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(ar_supplement)
+                    for rule in ar_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if ar_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = ar_fetch_analytics
+
+            if state_code == "AL":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                al_supplement, al_fetch_analytics = await _scrape_alabama_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if al_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(al_supplement)
+                    for rule in al_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if al_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = al_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]
