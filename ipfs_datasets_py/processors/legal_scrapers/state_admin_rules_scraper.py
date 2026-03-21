@@ -10498,6 +10498,75 @@ async def _discover_idaho_rule_document_urls(*, seed_urls: List[str], live_scrap
     if not html:
         return discovered_urls
 
+    if not _extract_links(html):
+        try:
+            from ..web_archiving.unified_web_scraper import (
+                ScraperConfig as _ScraperConfig,
+                ScraperMethod as _ScraperMethod,
+                UnifiedWebScraper as _UnifiedWebScraper,
+            )
+        except Exception:
+            try:
+                from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (  # type: ignore[no-redef]
+                    ScraperConfig as _ScraperConfig,
+                    ScraperMethod as _ScraperMethod,
+                    UnifiedWebScraper as _UnifiedWebScraper,
+                )
+            except Exception:
+                _ScraperConfig = None  # type: ignore[assignment]
+                _ScraperMethod = None  # type: ignore[assignment]
+                _UnifiedWebScraper = None  # type: ignore[assignment]
+
+        if _UnifiedWebScraper is not None and _ScraperConfig is not None and _ScraperMethod is not None:
+            try:
+                playwright_scraper = _UnifiedWebScraper(
+                    _ScraperConfig(
+                        timeout=25,
+                        max_retries=1,
+                        extract_links=True,
+                        extract_text=True,
+                        fallback_enabled=False,
+                        playwright_hydration_wait_ms=2000,
+                        preferred_methods=[_ScraperMethod.PLAYWRIGHT],
+                    )
+                )
+                playwright_scraped = await asyncio.wait_for(playwright_scraper.scrape(current_rules_url), timeout=30.0)
+                playwright_html = str(getattr(playwright_scraped, "html", "") or "")
+                if playwright_html:
+                    html = playwright_html
+            except Exception:
+                pass
+
+    if not _extract_links(html):
+        try:
+            from ..playwright_limiter import acquire_playwright_slot as _acquire_playwright_slot
+        except Exception:
+            try:
+                from ipfs_datasets_py.processors.playwright_limiter import acquire_playwright_slot as _acquire_playwright_slot  # type: ignore[no-redef]
+            except Exception:
+                _acquire_playwright_slot = None  # type: ignore[assignment]
+        try:
+            from playwright.async_api import async_playwright as _async_playwright
+        except Exception:
+            _async_playwright = None  # type: ignore[assignment]
+
+        if _acquire_playwright_slot is not None and _async_playwright is not None:
+            try:
+                async with _acquire_playwright_slot():
+                    async with _async_playwright() as playwright:
+                        browser = await playwright.chromium.launch(headless=True)
+                        try:
+                            page = await browser.new_page()
+                            await page.goto(current_rules_url, wait_until="networkidle", timeout=25000)
+                            await page.wait_for_timeout(2000)
+                            playwright_html = await page.content()
+                            if playwright_html:
+                                html = str(playwright_html)
+                        finally:
+                            await browser.close()
+            except Exception:
+                pass
+
     for document_url in _extract_links(html):
         if _record(document_url):
             break

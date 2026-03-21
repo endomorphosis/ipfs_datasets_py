@@ -725,6 +725,71 @@ def test_extract_west_virginia_criminal_rules_from_html() -> None:
     assert "circuit courts of West Virginia" in statutes[0].full_text
 
 
+def test_extract_north_dakota_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <a href="/legal-resources/rules/ndrcivp/1">Rule 1. Scope and Purpose of Rules.</a>
+      <a href="/legal-resources/rules/ndrcivp/39-1">Rule 39.1. Change in Location of a Hearing, Proceeding, or Trial; Change of Venue.</a>
+      <a href="/legal-resources/rules/ndrcrimp/1">Rule 1. Scope and Exceptions</a>
+    </body></html>
+    """
+
+    links = procedure_module._extract_north_dakota_rule_links(
+        list_html,
+        page_url="https://www.ndcourts.gov/legal-resources/rules/ndrcivp",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="N.D.R.Civ.P.",
+    )
+
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "Scope and Purpose of Rules",
+            "url": "https://www.ndcourts.gov/legal-resources/rules/ndrcivp/1",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "N.D.R.Civ.P.",
+        },
+        {
+            "section_number": "39.1",
+            "section_name": "Change in Location of a Hearing, Proceeding, or Trial; Change of Venue",
+            "url": "https://www.ndcourts.gov/legal-resources/rules/ndrcivp/39-1",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "N.D.R.Civ.P.",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <article class="rule content-item">
+        <h1>RULE 1. SCOPE OF RULES</h1>
+        <h4>Effective Date: 3/1/2017</h4>
+        <p>These rules govern the procedure in all civil actions and proceedings in district court.</p>
+        <h5>Explanatory Note</h5>
+        <p>Rule 1 was amended, effective March 1, 2017.</p>
+      </article>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_north_dakota_rule_from_html(
+        rule_html,
+        rule_url="https://www.ndcourts.gov/legal-resources/rules/ndrcivp/1",
+        title_name="North Dakota Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="N.D.R.Civ.P.",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "SCOPE OF RULES"
+    assert statute.official_cite == "N.D.R.Civ.P. 1"
+    assert statute.structured_data["effective_date"] == "3/1/2017"
+    assert "district court" in statute.full_text
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -2833,6 +2898,96 @@ async def test_scrape_state_procedure_rules_adds_west_virginia_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["WV"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["WV"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_north_dakota_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "ND",
+                    "state_name": "North Dakota",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "ND": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_nd_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "ND",
+                    "state_name": "North Dakota",
+                    "statute_id": "N.D.R.Civ.P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope and Purpose of Rules",
+                    "full_text": "Rule 1. Scope and Purpose of Rules. These rules govern the procedure in all civil actions and proceedings in district court." + (" x" * 120),
+                    "source_url": "https://www.ndcourts.gov/legal-resources/rules/ndrcivp/1#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "ND-rcivp-1",
+                            "name": "Scope and Purpose of Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope and Purpose of Rules",
+                            "text": "Rule 1. Scope and Purpose of Rules. These rules govern the procedure in all civil actions and proceedings in district court." + (" x" * 120),
+                            "sourceUrl": "https://www.ndcourts.gov/legal-resources/rules/ndrcivp/1#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_north_dakota_court_rules_supplement",
+        _fake_nd_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["ND"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["ND"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["ND"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

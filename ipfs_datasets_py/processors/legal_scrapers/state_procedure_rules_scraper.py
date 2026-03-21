@@ -430,6 +430,24 @@ _WV_RULE_SOURCES: List[Dict[str, str]] = [
 ]
 _WV_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)?)\.\s+(.+?)(?:\.)?$", re.IGNORECASE)
 _WV_EFFECTIVE_DATE_RE = re.compile(r"\[.*?effective.*?([A-Za-z]+\s+\d{1,2},\s+\d{4}).*?\]", re.IGNORECASE)
+_ND_RULE_LIST_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "North Dakota Rules of Civil Procedure",
+        "url": "https://www.ndcourts.gov/legal-resources/rules/ndrcivp",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "N.D.R.Civ.P.",
+    },
+    {
+        "title_name": "North Dakota Rules of Criminal Procedure",
+        "url": "https://www.ndcourts.gov/legal-resources/rules/ndrcrimp",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "N.D.R.Crim.P.",
+    },
+]
+_ND_RULE_LINK_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)?)\.?\s+(.+?)(?:\.)?$", re.IGNORECASE)
+_ND_EFFECTIVE_DATE_RE = re.compile(r"^Effective Date:\s*(.+)$", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -731,6 +749,17 @@ class _NewMexicoProcedureRulesSupplementFetcher(BaseStateScraper):
 class _WestVirginiaProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.courtswv.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _NorthDakotaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.ndcourts.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -3317,6 +3346,131 @@ def _extract_west_virginia_criminal_rules_from_html(
     return statutes
 
 
+def _extract_north_dakota_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    base_path = urlparse(page_url).path.rstrip("/").lower()
+
+    for anchor in soup.find_all("a", href=True):
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        href = str(anchor.get("href") or "").strip()
+        if not label.startswith("Rule ") or not href:
+            continue
+        match = _ND_RULE_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        parsed = urlparse(absolute_url)
+        if parsed.netloc.lower() != "www.ndcourts.gov":
+            continue
+        parsed_path = parsed.path.rstrip("/").lower()
+        if not parsed_path.startswith(f"{base_path}/"):
+            continue
+        section_number = match.group(1).strip()
+        section_name = match.group(2).strip().rstrip(".")
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": section_number,
+                "section_name": section_name,
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+
+    return discovered
+
+
+def _extract_north_dakota_rule_from_html(
+    html_text: str,
+    *,
+    rule_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> Optional[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    article = soup.select_one("article.rule")
+    if article is None:
+        return None
+
+    heading = article.find("h1")
+    if heading is None:
+        return None
+    heading_text = " ".join(heading.get_text(" ", strip=True).split())
+    heading_match = re.match(r"^RULE\s+(\d+(?:\.\d+)?)\.\s+(.+)$", heading_text, re.IGNORECASE)
+    if heading_match is None:
+        return None
+
+    section_number = heading_match.group(1).strip()
+    section_name = heading_match.group(2).strip().rstrip(".")
+    effective_date = None
+    body_lines: List[str] = [f"Rule {section_number}. {section_name}."]
+
+    for child in article.find_all(["h4", "p"], recursive=False):
+        text = " ".join(child.get_text(" ", strip=True).split())
+        if not text:
+            continue
+        effective_match = _ND_EFFECTIVE_DATE_RE.match(text)
+        if effective_match:
+            effective_date = effective_match.group(1).strip()
+            body_lines.append(text)
+            continue
+        if text in {"Explanatory Note", "Version History"}:
+            break
+        body_lines.append(text)
+
+    full_text = "\n".join(body_lines).strip()
+    if len(full_text) < 40:
+        return None
+
+    return NormalizedStatute(
+        state_code="ND",
+        state_name=US_STATES["ND"],
+        statute_id=f"{official_cite_prefix} {section_number}",
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{rule_url}#rule-{section_number}",
+        official_cite=f"{official_cite_prefix} {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_date,
+            "source_kind": "north_dakota_rule_page",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -5284,6 +5438,95 @@ async def _scrape_west_virginia_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_north_dakota_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _NorthDakotaProcedureRulesSupplementFetcher("ND", US_STATES["ND"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for list_page in _ND_RULE_LIST_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        list_url = str(list_page["url"])
+        list_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            list_url,
+            validator=lambda html: len(
+                _extract_north_dakota_rule_links(
+                    html,
+                    page_url=list_url,
+                    procedure_family=str(list_page["procedure_family"]),
+                    legal_area=str(list_page["legal_area"]),
+                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not list_html:
+            continue
+
+        rule_links = _extract_north_dakota_rule_links(
+            list_html,
+            page_url=list_url,
+            procedure_family=str(list_page["procedure_family"]),
+            legal_area=str(list_page["legal_area"]),
+            official_cite_prefix=str(list_page["official_cite_prefix"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            rule_html = await _fetch_html_with_direct_fallback(
+                fetcher,
+                rule_url,
+                validator=lambda html: _extract_north_dakota_rule_from_html(
+                    html,
+                    rule_url=rule_url,
+                    title_name=str(list_page["title_name"]),
+                    procedure_family=str(rule["procedure_family"]),
+                    legal_area=str(rule["legal_area"]),
+                    official_cite_prefix=str(rule["official_cite_prefix"]),
+                )
+                is not None,
+                timeout_seconds=120,
+            )
+            if not rule_html:
+                continue
+
+            statute = _extract_north_dakota_rule_from_html(
+                rule_html,
+                rule_url=rule_url,
+                title_name=str(list_page["title_name"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+            )
+            if statute is None:
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -5754,6 +5997,23 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if wv_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = wv_fetch_analytics
+
+            if state_code == "ND":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                nd_supplement, nd_fetch_analytics = await _scrape_north_dakota_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if nd_supplement:
+                    procedure_statutes.extend(nd_supplement)
+                    for rule in nd_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if nd_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = nd_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]

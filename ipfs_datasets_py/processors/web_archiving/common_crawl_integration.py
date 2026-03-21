@@ -22,6 +22,15 @@ from typing import Dict, List, Optional, Any, Union, Literal
 
 logger = logging.getLogger(__name__)
 
+try:
+    from ipfs_datasets_py.processors.legal_scrapers.huggingface_api_search import (
+        HuggingFaceAPISearch,
+    )
+    HAVE_HF_CC_FALLBACK = True
+except Exception:
+    HuggingFaceAPISearch = None
+    HAVE_HF_CC_FALLBACK = False
+
 
 def _env_path(name: str) -> Optional[Path]:
     raw = (os.environ.get(name) or "").strip()
@@ -163,6 +172,8 @@ class CommonCrawlSearchEngine:
         self.mcp_timeout = mcp_timeout
         self.cli_command = cli_command
         self.ssh_host = ssh_host
+        self.hf_search = None
+        self._hf_fallback_enabled = False
         
         # Initialize based on mode
         if mode == "local":
@@ -196,6 +207,15 @@ class CommonCrawlSearchEngine:
                 master_db.exists(),
             )
             self.api = None
+            if HAVE_HF_CC_FALLBACK:
+                try:
+                    self.hf_search = HuggingFaceAPISearch(use_streaming=True)
+                    self._hf_fallback_enabled = True
+                    self._available = True
+                    logger.info("Common Crawl local mode falling back to HuggingFace index search")
+                    return
+                except Exception as exc:
+                    logger.warning("Failed to initialize HuggingFace Common Crawl fallback: %s", exc)
             self._available = False
             return
 
@@ -310,6 +330,8 @@ class CommonCrawlSearchEngine:
         
         try:
             if self.mode == "local":
+                if self._hf_fallback_enabled:
+                    return self._search_domain_hf(domain, max_matches, collection, **kwargs)
                 return self._search_domain_local(domain, max_matches, collection, **kwargs)
             elif self.mode == "remote":
                 return self._search_domain_remote(domain, max_matches, collection, **kwargs)
@@ -450,6 +472,56 @@ class CommonCrawlSearchEngine:
         except Exception as e:
             logger.error(f"CLI search failed: {e}")
             raise
+
+    def _search_domain_hf(
+        self,
+        domain: str,
+        max_matches: int,
+        collection: Optional[str],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """Search via the HuggingFace-backed Common Crawl query fallback."""
+        if not self.hf_search:
+            return []
+
+        jurisdiction = str(kwargs.get("jurisdiction") or "state").strip().lower() or "state"
+        state_code = kwargs.get("state_code")
+        query = str(domain).strip()
+        if not query:
+            return []
+
+        if jurisdiction not in {"federal", "state", "municipal"}:
+            jurisdiction = "state"
+
+        try:
+            records = self.hf_search.search(
+                query=query,
+                jurisdiction=jurisdiction,
+                state_code=state_code,
+                max_results=int(max_matches),
+            )
+        except Exception as exc:
+            logger.error("HuggingFace Common Crawl fallback search failed: %s", exc)
+            return []
+
+        normalized: List[Dict[str, Any]] = []
+        lowered_domain = query.lower().removeprefix("https://").removeprefix("http://").strip("/")
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            candidate_url = str(
+                record.get("url")
+                or record.get("target_uri")
+                or record.get("source_url")
+                or record.get("link")
+                or ""
+            ).strip()
+            haystack = " ".join(str(record.get(k, "")) for k in ("url", "target_uri", "source_url", "domain", "host")).lower()
+            if lowered_domain and lowered_domain not in haystack and lowered_domain not in candidate_url.lower():
+                continue
+            normalized.append(dict(record))
+
+        return self._normalize_records(normalized[: int(max_matches)])
 
     @staticmethod
     def _normalize_records(records: Any) -> List[Dict[str, Any]]:
