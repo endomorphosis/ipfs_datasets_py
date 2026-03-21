@@ -1044,7 +1044,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AZ", "CA", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -11926,6 +11926,21 @@ async def _agentic_discover_admin_state_blocks(
                 if urlparse(url).netloc.lower() == "admincode.legislature.state.al.us"
             ]
 
+        if state_code == "AR" and arkansas_bootstrap_document_urls:
+            arkansas_official_ranked_urls = [
+                (url, score)
+                for url, score in ranked_urls
+                if urlparse(url).netloc.lower()
+                in {
+                    "codeofarrules.arkansas.gov",
+                    "sos-rules-reg.ark.org",
+                    "sos.arkansas.gov",
+                    "www.sos.arkansas.gov",
+                }
+            ]
+            if arkansas_official_ranked_urls:
+                ranked_urls = arkansas_official_ranked_urls
+
         if state_code == "VT" and not direct_detail_ready:
             ranked_urls = []
 
@@ -12759,7 +12774,13 @@ async def _agentic_discover_admin_state_blocks(
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
             ranked_urls,
-            limit=(min(max_fetch * 5, 24) if state_code == "AZ" else min(max_fetch * 3, 12)),
+            limit=(
+                min(max_fetch * 5, 24)
+                if state_code == "AZ"
+                else min(max_fetch * 4, 24)
+                if state_code == "AR"
+                else min(max_fetch * 3, 12)
+            ),
             exclude_urls=ranked_direct_exclude_urls,
         )
 

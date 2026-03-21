@@ -13,6 +13,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 from pathlib import Path
 import hashlib
+from io import BytesIO
 import json
 import logging
 import os
@@ -1150,6 +1151,22 @@ class BaseStateScraper(ABC):
             return None
 
         if pdf_candidate:
+            # Fast path for text-native PDFs so we can avoid expensive OCR/model bootstrap.
+            try:
+                from pypdf import PdfReader  # type: ignore
+
+                reader = PdfReader(BytesIO(raw_bytes))
+                pages = [str(page.extract_text() or "") for page in reader.pages]
+                extracted = self._normalize_legal_text("\n".join(pages))
+            except Exception:
+                extracted = ""
+            if extracted:
+                return {
+                    "text": extracted,
+                    "method": "pypdf_fast_path",
+                    "content_type": "application/pdf",
+                }
+
             try:
                 extracted = await UnifiedWebScraper._extract_pdf_text(raw_bytes)
             except Exception:

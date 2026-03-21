@@ -187,6 +187,87 @@ def test_extract_arizona_rules_from_text_parses_rule_blocks() -> None:
     assert "civil actions and proceedings" in statutes[0].full_text
 
 
+def test_extract_washington_rule_links_and_rule_text() -> None:
+    list_html = """
+    <html><body>
+      <table>
+        <tr><td nowrap valign="top">1</td><td valign="top"><a href="../court_rules/pdf/CR/SUP_CR_01_00_00.pdf">Scope of Rules</a></td></tr>
+        <tr><td nowrap valign="top">4.1</td><td valign="top"><a href="../court_rules/pdf/CR/SUP_CR_04_01_00.pdf">Process--Domestic Relations Actions</a></td></tr>
+        <tr><td nowrap valign="top">3.1 Stds</td><td valign="top"><a href="../court_rules/pdf/CrR/SUP_CrR_03_01_Standards.pdf">Standards for Indigent Defense</a></td></tr>
+      </table>
+    </body></html>
+    """
+
+    links = procedure_module._extract_washington_rule_links(
+        list_html,
+        page_url="https://www.courts.wa.gov/court_rules/?fa=court_rules.list&group=sup&set=CR",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="CR",
+    )
+
+    assert links[:2] == [
+        {
+            "section_number": "1",
+            "section_name": "Scope of Rules",
+            "url": "https://www.courts.wa.gov/court_rules/pdf/CR/SUP_CR_01_00_00.pdf",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "CR",
+        },
+        {
+            "section_number": "4.1",
+            "section_name": "Process--Domestic Relations Actions",
+            "url": "https://www.courts.wa.gov/court_rules/pdf/CR/SUP_CR_04_01_00.pdf",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "CR",
+        },
+    ]
+
+    statute = procedure_module._extract_washington_rule_from_text(
+        "CR 1 SCOPE OF RULES These rules govern the procedure in the superior court in all suits of a civil nature. [Adopted effective July 1, 1967; Amended effective July 9, 2024.]",
+        source_url="https://www.courts.wa.gov/court_rules/pdf/CR/SUP_CR_01_00_00.pdf",
+        title_name="Washington Superior Court Civil Rules",
+        section_number="1",
+        section_name="Scope of Rules",
+        official_cite_prefix="CR",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "Scope of Rules"
+    assert statute.official_cite == "CR 1"
+    assert statute.structured_data["effective_date"] == "July 9, 2024"
+    assert "These rules govern the procedure" in statute.full_text
+
+
+def test_extract_new_jersey_rule_from_description() -> None:
+    statute = procedure_module._extract_new_jersey_rule_from_description(
+        """
+        <div class="field__item">
+          <p>Unless otherwise stated, the rules in Part I are applicable to the Supreme Court and the Superior Court.</p>
+          <p><strong>Note:</strong> Amended November 22, 1978 to be effective December 7, 1978; amended December 20, 1983 to be effective December 31, 1983.</p>
+        </div>
+        """,
+        section_number="1:1-1",
+        section_name="Applicability; Scope",
+        source_url="https://www.njcourts.gov/njcourts_rules_of_court/get-term?tid=24536#rule-1-1-1",
+        title_name="New Jersey Court Rules Part I",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1:1-1"
+    assert statute.section_name == "Applicability; Scope"
+    assert statute.official_cite == "N.J. Ct. R. 1:1-1"
+    assert statute.structured_data["effective_date"] == "December 31, 1983"
+    assert "Supreme Court and the Superior Court" in statute.full_text
+
+
 @pytest.mark.anyio
 async def test_scrape_state_procedure_rules_adds_rhode_island_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
@@ -537,6 +618,182 @@ async def test_scrape_state_procedure_rules_adds_california_supplement(monkeypat
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["CA"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["CA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_washington_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "WA",
+                    "state_name": "Washington",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "WA": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_wa_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "WA",
+                    "state_name": "Washington",
+                    "statute_id": "CR 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules",
+                    "full_text": "CR 1 SCOPE OF RULES These rules govern the procedure in the superior court." + (" x" * 120),
+                    "source_url": "https://www.courts.wa.gov/court_rules/pdf/CR/SUP_CR_01_00_00.pdf#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "WA-cr-1",
+                            "name": "Scope of Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules",
+                            "text": "CR 1 SCOPE OF RULES These rules govern the procedure in the superior court." + (" x" * 120),
+                            "sourceUrl": "https://www.courts.wa.gov/court_rules/pdf/CR/SUP_CR_01_00_00.pdf#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_washington_court_rules_supplement",
+        _fake_wa_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["WA"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["WA"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["WA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_new_jersey_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "NJ",
+                    "state_name": "New Jersey",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "NJ": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_nj_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "NJ",
+                    "state_name": "New Jersey",
+                    "statute_id": "N.J. Ct. R. 3:1-1",
+                    "section_number": "3:1-1",
+                    "section_name": "Scope",
+                    "full_text": "Unless otherwise stated, the rules in Part III govern criminal proceedings." + (" x" * 120),
+                    "source_url": "https://www.njcourts.gov/njcourts_rules_of_court/get-term?tid=26666#rule-3-1-1",
+                    "procedure_family": "criminal_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "NJ-3-1-1",
+                            "name": "Scope",
+                            "sectionNumber": "3:1-1",
+                            "sectionName": "Scope",
+                            "text": "Unless otherwise stated, the rules in Part III govern criminal proceedings." + (" x" * 120),
+                            "sourceUrl": "https://www.njcourts.gov/njcourts_rules_of_court/get-term?tid=26666#rule-3-1-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_new_jersey_court_rules_supplement",
+        _fake_nj_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["NJ"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "criminal_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["NJ"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["NJ"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio
