@@ -15,6 +15,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urljoin, urlparse
 
@@ -24,6 +25,8 @@ except ImportError:
     anyio = None
 
 logger = logging.getLogger(__name__)
+
+from .url_archive_cache import URLArchiveCache
 
 
 @dataclass
@@ -55,6 +58,10 @@ class ParallelStateDiscoveryConfig:
     # Gap analysis
     enable_gap_analysis: bool = True
     gap_analysis_sample_size: int = 10
+    cache_dir: Optional[str] = None
+    cache_read_enabled: bool = True
+    cache_write_enabled: bool = True
+    cache_to_ipfs: bool = True
 
 
 @dataclass
@@ -112,6 +119,11 @@ class ParallelStateAdminOrchestrator:
         self.parallel_archiver = parallel_archiver
         self.pdf_processor = pdf_processor
         self.scrape_optimizer = scrape_optimizer
+        default_cache_dir = Path.home() / ".cache" / "ipfs_datasets_py" / "state_admin_rules_parallel_cache"
+        self.url_cache = URLArchiveCache(
+            metadata_dir=self.config.cache_dir or str(default_cache_dir),
+            persist_to_ipfs=bool(self.config.cache_to_ipfs),
+        )
         
         # Lazy-initialize if not provided
         self._archiver_initialized = False
@@ -310,27 +322,54 @@ class ParallelStateAdminOrchestrator:
         """
         if not urls:
             return []
+
+        ordered_urls = [str(url).strip() for url in list(urls or []) if str(url).strip()]
+        cached_results: List[Tuple[str, Optional[str], str]] = []
+        uncached_urls: List[str] = []
+        seen_urls: Set[str] = set()
+
+        for url in ordered_urls:
+            normalized = self.url_cache.normalize_url(url)
+            if not normalized or normalized in seen_urls:
+                continue
+            seen_urls.add(normalized)
+            if self.config.cache_read_enabled:
+                cached = self.url_cache.get(normalized)
+                if cached and cached.content:
+                    cached_results.append((cached.url, cached.content, f"{cached.source}:cache"))
+                    continue
+            uncached_urls.append(url)
+
+        if not uncached_urls:
+            return cached_results
         
         # Use ParallelWebArchiver if available, otherwise fall back to sequential
         if self.parallel_archiver:
             try:
                 results = await self.parallel_archiver.archive_urls_parallel(
-                    urls=urls,
+                    urls=uncached_urls,
                     max_concurrent=self.config.max_domain_workers_per_state,
                 )
-                
-                return [
-                    (result.url, result.content, result.source)
-                    for result in results
-                    if result.success and result.content
-                ]
+                fetched_results: List[Tuple[str, Optional[str], str]] = []
+                for result in results:
+                    if not result.success or not result.content:
+                        continue
+                    fetched_results.append((result.url, result.content, result.source))
+                    if self.config.cache_write_enabled:
+                        await self.url_cache.put(
+                            url=result.url,
+                            content=result.content,
+                            source=str(result.source or "parallel_web_archiver"),
+                            metadata={"state_code": state_code, "phase": phase},
+                        )
+                return cached_results + fetched_results
             except Exception as exc:
                 logger.warning(f"ParallelArchiver failed for {state_code}: {exc}")
                 # Fall through to sequential fetch
         
         # Sequential fallback with timeout control
         tasks = []
-        for url in urls:
+        for url in uncached_urls:
             if time.monotonic() > deadline:
                 break
             
@@ -344,12 +383,19 @@ class ParallelStateAdminOrchestrator:
                 content, method = await task
                 if content:
                     results.append((url, content, method))
+                    if self.config.cache_write_enabled:
+                        await self.url_cache.put(
+                            url=url,
+                            content=content,
+                            source=str(method or "unified_api"),
+                            metadata={"state_code": state_code, "phase": phase},
+                        )
             except asyncio.TimeoutError:
                 logger.debug(f"Timeout fetching {url}")
             except Exception as exc:
                 logger.debug(f"Error fetching {url}: {exc}")
         
-        return results
+        return cached_results + results
     
     async def _fetch_single_url(
         self, url: str, timeout: float = 25.0

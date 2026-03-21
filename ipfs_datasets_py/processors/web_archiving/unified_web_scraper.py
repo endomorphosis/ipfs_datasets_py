@@ -39,6 +39,7 @@ from urllib.parse import urlparse, urljoin
 import hashlib
 
 from ..playwright_limiter import acquire_playwright_slot
+from ..legal_scrapers.shared_fetch_cache import SharedFetchCache
 
 logger = logging.getLogger(__name__)
 
@@ -252,9 +253,83 @@ class UnifiedWebScraper:
         Initialize the unified scraper.
         """
         self.config = config or ScraperConfig()
+        self._shared_fetch_cache: Optional[SharedFetchCache] = SharedFetchCache.from_env()
         self._apply_env_overrides()
         self._check_dependencies()
         self._init_session()
+
+    @staticmethod
+    def _serialize_scraper_result(result: ScraperResult) -> Dict[str, Any]:
+        return {
+            "url": result.url,
+            "content": result.content,
+            "html": result.html,
+            "title": result.title,
+            "text": result.text,
+            "links": list(result.links or []),
+            "metadata": dict(result.metadata or {}),
+            "method_used": result.method_used.value if result.method_used else None,
+            "success": bool(result.success),
+            "errors": list(result.errors or []),
+            "timestamp": result.timestamp,
+            "extraction_time": float(result.extraction_time or 0.0),
+        }
+
+    @staticmethod
+    def _deserialize_scraper_result(payload: Dict[str, Any]) -> ScraperResult:
+        method_value = str(payload.get("method_used") or "").strip()
+        method_used = None
+        if method_value:
+            try:
+                method_used = ScraperMethod(method_value)
+            except ValueError:
+                method_used = None
+
+        metadata = dict(payload.get("metadata") or {})
+        cache_meta = dict(payload.get("_cache") or {})
+        if cache_meta:
+            metadata["cache"] = cache_meta
+            metadata["cache_hit"] = True
+
+        return ScraperResult(
+            url=str(payload.get("url") or ""),
+            content=str(payload.get("content") or ""),
+            html=str(payload.get("html") or ""),
+            title=str(payload.get("title") or ""),
+            text=str(payload.get("text") or ""),
+            links=list(payload.get("links") or []),
+            metadata=metadata,
+            method_used=method_used,
+            success=bool(payload.get("success", False)),
+            errors=list(payload.get("errors") or []),
+            timestamp=str(payload.get("timestamp") or datetime.now().isoformat()),
+            extraction_time=float(payload.get("extraction_time") or 0.0),
+        )
+
+    def _load_shared_cache_result(self, *, url: str, method: Optional[ScraperMethod]) -> Optional[ScraperResult]:
+        if self._shared_fetch_cache is None or method is not None:
+            return None
+        payload = self._shared_fetch_cache.load(namespace="unified_web_scraper", url=url)
+        if not isinstance(payload, dict):
+            return None
+        try:
+            return self._deserialize_scraper_result(payload)
+        except Exception as exc:
+            logger.warning("Ignoring invalid unified scraper cache entry for %s: %s", url, exc)
+            return None
+
+    def _store_shared_cache_result(self, *, url: str, result: ScraperResult, method: Optional[ScraperMethod]) -> None:
+        if self._shared_fetch_cache is None or method is not None or not result.success:
+            return
+        try:
+            self._shared_fetch_cache.save(
+                namespace="unified_web_scraper",
+                url=url,
+                payload=self._serialize_scraper_result(result),
+                payload_name=f"unified_web_scraper_{hashlib.sha256(url.encode('utf-8')).hexdigest()[:16]}",
+            )
+        except Exception as exc:
+            logger.warning("Failed to write unified scraper cache entry for %s: %s", url, exc)
     
     def _check_dependencies(self):
         """Check which scraping libraries are available."""
@@ -1010,6 +1085,10 @@ class UnifiedWebScraper:
             ScraperResult with scraped content and metadata
         """
         start_time = time.time()
+        cached = self._load_shared_cache_result(url=url, method=method)
+        if cached is not None:
+            cached.extraction_time = time.time() - start_time
+            return cached
         
         if method:
             # Use specific method
@@ -1023,6 +1102,7 @@ class UnifiedWebScraper:
             result = await self._scrape_with_method(url, preferred, **kwargs)
         
         result.extraction_time = time.time() - start_time
+        self._store_shared_cache_result(url=url, result=result, method=method)
         return result
     
     async def _scrape_with_fallback(self, url: str, **kwargs) -> ScraperResult:
@@ -1185,11 +1265,11 @@ class UnifiedWebScraper:
                 page = await context.new_page()
 
                 try:
-                    # For binary document URLs (PDF, RTF, etc.) use playwright's fetch API
+                    # For binary document URLs (PDF, RTF, etc.) use Playwright's fetch API
                     # to retrieve raw bytes; page.goto() will not render binary content.
                     url_lower_pw = url.lower()
-                    _binary_exts = (".pdf", ".rtf", ".doc", ".docx", ".xls", ".xlsx")
-                    if any(url_lower_pw.endswith(ext) for ext in _binary_exts):
+                    binary_exts = (".pdf", ".rtf", ".doc", ".docx", ".xls", ".xlsx")
+                    if any(url_lower_pw.endswith(ext) for ext in binary_exts):
                         try:
                             api_resp = await context.request.get(
                                 url,
@@ -1222,13 +1302,16 @@ class UnifiedWebScraper:
                                     },
                                 )
                         except Exception:
-                            pass  # Fall through to normal DOM scraping
+                            pass
 
                     # SPAs on state code hosts often return an initial shell before client-side
                     # hydration fills in the real body text and links.
                     await page.goto(url, wait_until="domcontentloaded", timeout=self.config.timeout * 1000)
                     try:
-                        await page.wait_for_load_state(self.config.playwright_wait_for, timeout=min(5000, self.config.timeout * 1000))
+                        await page.wait_for_load_state(
+                            self.config.playwright_wait_for,
+                            timeout=min(5000, self.config.timeout * 1000),
+                        )
                     except Exception:
                         pass
                     if self.config.playwright_hydration_wait_ms > 0:
@@ -1244,97 +1327,89 @@ class UnifiedWebScraper:
                         await page.wait_for_timeout(self.config.playwright_shell_retry_wait_ms)
                         text, links = await _read_live_dom(page)
 
-                    # Get content
                     html = await page.content()
                     title = await page.title()
-
-                    # Parse with BeautifulSoup
                     soup = BeautifulSoup(html, 'html.parser')
 
-                    # Extract text
                     parsed_text = ""
                     if self.config.extract_text:
                         for script in soup(["script", "style"]):
                             script.decompose()
-                    parsed_text = soup.get_text(separator='\n', strip=True)
-                if not text:
-                    text = parsed_text
-                
-                # Extract links
-                if self.config.extract_links and not links:
-                    links = []
-                    for link in soup.find_all('a', href=True):
-                        href = link['href']
-                        if href.startswith('/'):
-                            href = urljoin(url, href)
-                        links.append({
-                            'url': href,
-                            'text': link.get_text(strip=True)
-                        })
-                
-                return ScraperResult(
-                    url=url,
-                    html=html,
-                    title=title,
-                    text=text,
-                    content=text,
-                        # Extract links
-                        extracted_links: List[Dict[str, str]] = []
-                        if self.config.extract_links:
-                            # Prefer live-DOM links already captured post-hydration; fall back to BS4 parsing.
-                            if links:
-                                extracted_links = links
-                            else:
-                                for a in soup.find_all('a', href=True):
-                                    extracted_links.append({
-                                        'url': urljoin(url, a['href']),
-                                        'text': a.get_text(strip=True)
-                                    })
+                        parsed_text = soup.get_text(separator='\n', strip=True)
+                    if not text:
+                        text = parsed_text
 
-                        return ScraperResult(
-                            url=url,
-                            title=title,
-                            content=html,
-                            html=html,
-                            text=parsed_text,
-                            links=extracted_links,
-                            method_used=ScraperMethod.PLAYWRIGHT,
-                            success=True,
-                            metadata={
-                                'content_type': 'text/html',
-                                'ssl_verification_relaxed': False,
-                            },
-                            extraction_time=time.time() - start_time,
-                        )
+                    extracted_links: List[Dict[str, str]] = []
+                    if self.config.extract_links:
+                        if links:
+                            extracted_links = links
+                        else:
+                            for link in soup.find_all('a', href=True):
+                                href = link['href']
+                                if href.startswith('/'):
+                                    href = urljoin(url, href)
+                                extracted_links.append({
+                                    'url': href,
+                                    'text': link.get_text(strip=True)
+                                })
+
+                    return ScraperResult(
+                        url=url,
+                        title=title,
+                        content=html,
+                        html=html,
+                        text=text,
+                        links=extracted_links,
+                        method_used=ScraperMethod.PLAYWRIGHT,
+                        success=True,
+                        metadata={
+                            'content_type': 'text/html',
+                            'ssl_verification_relaxed': False,
+                        },
+                    )
+                finally:
+                    try:
+                        await page.close()
+                    except Exception:
+                        pass
+                    try:
+                        await context.close()
                     finally:
-                        try:
-                            await page.close()
-                        except Exception:
-                            pass
-                        try:
-                            await context.close()
-                        finally:
-                            await browser.close()
+                        await browser.close()
+
+    async def _scrape_beautifulsoup(self, url: str, **kwargs) -> ScraperResult:
+        """Scrape using requests plus BeautifulSoup."""
+        from bs4 import BeautifulSoup
+
+        response, ssl_relaxed = self._request_with_ssl_fallback(url, timeout=self.config.timeout)
+        response.raise_for_status()
+
+        content_type = response.headers.get('Content-Type', '')
+        content_disposition = response.headers.get('Content-Disposition', '')
+        if self._is_binary_document_response(
+            url=url,
+            content_type=content_type,
+            content_disposition=content_disposition,
+        ):
+            return await self._build_binary_document_result(
+                url=url,
                 response=response,
                 method=ScraperMethod.BEAUTIFULSOUP,
                 ssl_verification_relaxed=ssl_relaxed,
             )
-        
+
         soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Extract title
+
         title_tag = soup.find('title')
         title = title_tag.get_text() if title_tag else ""
-        
-        # Extract text
+
         text = ""
         if self.config.extract_text:
             for script in soup(["script", "style"]):
                 script.decompose()
             text = soup.get_text(separator='\n', strip=True)
-        
-        # Extract links
-        links = []
+
+        links: List[Dict[str, str]] = []
         if self.config.extract_links:
             for link in soup.find_all('a', href=True):
                 href = link['href']
@@ -1344,7 +1419,7 @@ class UnifiedWebScraper:
                     'url': href,
                     'text': link.get_text(strip=True)
                 })
-        
+
         return ScraperResult(
             url=url,
             html=response.text,
@@ -1357,7 +1432,7 @@ class UnifiedWebScraper:
             metadata={
                 'method': 'beautifulsoup',
                 'status_code': response.status_code,
-                'content_type': response.headers.get('Content-Type', ''),
+                'content_type': content_type,
                 'content_length': len(response.content),
                 'ssl_verification_relaxed': ssl_relaxed,
             }

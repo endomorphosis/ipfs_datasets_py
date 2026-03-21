@@ -11,7 +11,11 @@ from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from abc import ABC, abstractmethod
+from pathlib import Path
+import hashlib
+import json
 import logging
+import os
 import re
 from urllib.parse import urlparse, parse_qs, unquote
 
@@ -85,6 +89,10 @@ _NON_HTML_DOC_RE = re.compile(r"\.(?:pdf|rtf|docx?|xlsx?|pptx?)(?:$|[?#])", re.I
 _PDF_HEADER_RE = re.compile(rb"^\s*%PDF-", re.IGNORECASE)
 _RTF_HEADER_RE = re.compile(rb"^\s*\{\\rtf", re.IGNORECASE)
 _SCAFFOLD_SECTION_TEXT_RE = re.compile(r"^\s*section\s+section-\d+\s*:", re.IGNORECASE)
+_OBJECT_MOVED_HTML_RE = re.compile(
+    r"<title>\s*document moved\s*</title>|<h1>\s*object moved\s*</h1>",
+    re.IGNORECASE,
+)
 _NAV_URL_HINTS = (
     "/calendar",
     "/meeting",
@@ -233,8 +241,141 @@ class BaseStateScraper(ABC):
             "success": 0,
             "providers": {},
             "fallback_count": 0,
+            "cache_hits": 0,
+            "cache_writes": 0,
             "last_error": None,
         }
+        self._ipfs_page_cache_enabled = self._env_bool(
+            "LEGAL_SCRAPER_IPFS_PAGE_CACHE_ENABLED",
+            default=True,
+        )
+        self._ipfs_page_cache_pin = self._env_bool(
+            "LEGAL_SCRAPER_IPFS_PAGE_CACHE_PIN",
+            default=False,
+        )
+        self._ipfs_page_cache_ttl_seconds = self._env_int(
+            "LEGAL_SCRAPER_IPFS_PAGE_CACHE_TTL_SECONDS",
+            default=60 * 60 * 24 * 30,
+        )
+        self._ipfs_page_cache_metadata_dir = Path(
+            os.environ.get("LEGAL_SCRAPER_IPFS_PAGE_CACHE_DIR")
+            or (Path.home() / ".ipfs_datasets" / "legal_page_cache")
+        )
+        self._ipfs_page_cache_metadata_dir.mkdir(parents=True, exist_ok=True)
+        self._ipfs_page_cache_index_path = self._ipfs_page_cache_metadata_dir / "index.json"
+        self._ipfs_page_cache_index = self._load_ipfs_page_cache_index()
+
+    @staticmethod
+    def _env_bool(name: str, *, default: bool) -> bool:
+        raw = str(os.environ.get(name) or "").strip().lower()
+        if not raw:
+            return bool(default)
+        return raw in {"1", "true", "yes", "on"}
+
+    @staticmethod
+    def _env_int(name: str, *, default: int) -> int:
+        raw = str(os.environ.get(name) or "").strip()
+        if not raw:
+            return int(default)
+        try:
+            return int(raw)
+        except Exception:
+            return int(default)
+
+    def _load_ipfs_page_cache_index(self) -> Dict[str, Dict[str, Any]]:
+        if not self._ipfs_page_cache_index_path.exists():
+            return {}
+        try:
+            raw = self._ipfs_page_cache_index_path.read_text(encoding="utf-8").strip()
+            payload = json.loads(raw) if raw else {}
+        except Exception:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def _save_ipfs_page_cache_index(self) -> None:
+        try:
+            self._ipfs_page_cache_index_path.parent.mkdir(parents=True, exist_ok=True)
+            self._ipfs_page_cache_index_path.write_text(
+                json.dumps(self._ipfs_page_cache_index, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        except Exception as exc:
+            self.logger.debug("Failed to save IPFS page cache index: %s", exc)
+
+    @staticmethod
+    def _ipfs_page_cache_key(url: str) -> str:
+        normalized = str(url or "").strip()
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    async def _load_page_bytes_from_ipfs_cache(self, url: str) -> bytes:
+        if not self._ipfs_page_cache_enabled:
+            return b""
+
+        cache_key = self._ipfs_page_cache_key(url)
+        entry = self._ipfs_page_cache_index.get(cache_key) or {}
+        cid = str(entry.get("cid") or "").strip()
+        if not cid:
+            return b""
+
+        cached_at = float(entry.get("cached_at", 0.0) or 0.0)
+        ttl_seconds = max(0, int(self._ipfs_page_cache_ttl_seconds or 0))
+        if ttl_seconds > 0 and cached_at > 0:
+            age_seconds = max(0.0, datetime.now().timestamp() - cached_at)
+            if age_seconds > float(ttl_seconds):
+                return b""
+
+        try:
+            from ipfs_datasets_py import ipfs_backend_router as ipfs_router
+        except Exception:
+            return b""
+
+        try:
+            data = ipfs_router.cat(cid)
+        except Exception as exc:
+            self.logger.debug("IPFS page cache read failed for %s: %s", url, exc)
+            return b""
+
+        if isinstance(data, bytes) and data:
+            self._fetch_analytics["cache_hits"] = int(self._fetch_analytics.get("cache_hits", 0) or 0) + 1
+            return data
+        return b""
+
+    async def _store_page_bytes_in_ipfs_cache(
+        self,
+        *,
+        url: str,
+        payload: bytes,
+        provider: str,
+    ) -> Optional[str]:
+        if not self._ipfs_page_cache_enabled or not payload:
+            return None
+
+        try:
+            from ipfs_datasets_py import ipfs_backend_router as ipfs_router
+        except Exception:
+            return None
+
+        try:
+            cid = ipfs_router.add_bytes(payload, pin=self._ipfs_page_cache_pin)
+        except Exception as exc:
+            self.logger.debug("IPFS page cache write failed for %s: %s", url, exc)
+            return None
+
+        if not cid:
+            return None
+
+        cache_key = self._ipfs_page_cache_key(url)
+        self._ipfs_page_cache_index[cache_key] = {
+            "cid": str(cid),
+            "url": str(url),
+            "provider": str(provider or ""),
+            "size": len(payload),
+            "cached_at": datetime.now().timestamp(),
+            "state_code": self.state_code,
+        }
+        self._save_ipfs_page_cache_index()
+        self._fetch_analytics["cache_writes"] = int(self._fetch_analytics.get("cache_writes", 0) or 0) + 1
+        return str(cid)
     
     @abstractmethod
     def get_base_url(self) -> str:
@@ -307,6 +448,11 @@ class BaseStateScraper(ABC):
             try:
                 self.logger.info(f"Scraping {code_name}...")
                 statutes = await self.scrape_code(code_name, code_url)
+                if max_statutes:
+                    remaining = max_statutes - len(all_statutes)
+                    if remaining <= 0:
+                        break
+                    statutes = statutes[:remaining]
                 enriched_statutes: List[NormalizedStatute] = []
                 for statute in statutes:
                     if isinstance(statute, NormalizedStatute):
@@ -316,10 +462,6 @@ class BaseStateScraper(ABC):
                             continue
                         enriched_statutes.append(self._enrich_statute_structure(statute))
                 statutes = enriched_statutes
-                
-                if max_statutes:
-                    remaining = max_statutes - len(all_statutes)
-                    statutes = statutes[:remaining]
                 
                 all_statutes.extend(statutes)
                 self.logger.info(f"Scraped {len(statutes)} statutes from {code_name}")
@@ -709,12 +851,24 @@ class BaseStateScraper(ABC):
         This keeps Common Crawl/Wayback/Archive.is logic inside state scrapers,
         mirroring Oregon archival workflow for all states.
         """
+        cached_bytes = await self._load_page_bytes_from_ipfs_cache(url)
+        if cached_bytes:
+            self._record_fetch_event(provider="ipfs_page_cache", success=True)
+            return cached_bytes
+
         for candidate_url in self._wayback_replay_candidates(url):
             unified_bytes = await self._fetch_page_content_with_unified_api(
                 url=candidate_url,
                 timeout_seconds=timeout_seconds,
             )
+            if self._is_object_moved_placeholder(unified_bytes):
+                unified_bytes = b""
             if unified_bytes:
+                await self._store_page_bytes_in_ipfs_cache(
+                    url=url,
+                    payload=unified_bytes,
+                    provider="unified_api",
+                )
                 return unified_bytes
 
         try:
@@ -729,7 +883,14 @@ class BaseStateScraper(ABC):
                 provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
                 success=bool(getattr(fetched, "content", b"")),
             )
-            return bytes(fetched.content or b"")
+            content = bytes(fetched.content or b"")
+            if content:
+                await self._store_page_bytes_in_ipfs_cache(
+                    url=url,
+                    payload=content,
+                    provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
+                )
+            return content
         except Exception as exc:
             self._record_fetch_event(provider="archival_fallback", success=False, error=str(exc))
             pass
@@ -750,6 +911,11 @@ class BaseStateScraper(ABC):
                     if status_code != 200 or not content:
                         continue
                     self._record_fetch_event(provider="requests_direct", success=True)
+                    await self._store_page_bytes_in_ipfs_cache(
+                        url=url,
+                        payload=content,
+                        provider="requests_direct",
+                    )
                     return content
                 except Exception:
                     continue
@@ -759,6 +925,16 @@ class BaseStateScraper(ABC):
         except Exception as exc:
             self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
             return b""
+
+    @staticmethod
+    def _is_object_moved_placeholder(payload: bytes) -> bool:
+        if not payload or len(payload) > 2048:
+            return False
+        try:
+            text = payload.decode("utf-8", errors="replace")
+        except Exception:
+            return False
+        return bool(_OBJECT_MOVED_HTML_RE.search(text))
 
     def _wayback_replay_candidates(self, url: str) -> List[str]:
         value = str(url or "").strip()
@@ -879,12 +1055,16 @@ class BaseStateScraper(ABC):
         attempted = int(self._fetch_analytics.get("attempted", 0) or 0)
         success = int(self._fetch_analytics.get("success", 0) or 0)
         fallback_count = int(self._fetch_analytics.get("fallback_count", 0) or 0)
+        cache_hits = int(self._fetch_analytics.get("cache_hits", 0) or 0)
+        cache_writes = int(self._fetch_analytics.get("cache_writes", 0) or 0)
         return {
             "attempted": attempted,
             "success": success,
             "success_ratio": round((success / attempted), 3) if attempted > 0 else 0.0,
             "providers": dict(providers) if isinstance(providers, dict) else {},
             "fallback_count": fallback_count,
+            "cache_hits": cache_hits,
+            "cache_writes": cache_writes,
             "last_error": self._fetch_analytics.get("last_error"),
         }
 

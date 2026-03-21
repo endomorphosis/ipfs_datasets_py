@@ -98,6 +98,7 @@ _NON_ADMIN_CODE_NAME_RE = re.compile(
 
 _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
+    r"(?:^|https?://)(?:[^/]+\.)?justia\.com/|(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/https?://(?:[^/]+\.)?justia\.com/|"
     r"(?:^|https?://)(?:www\.)?uscode\.house\.gov/|(?:^|https?://)(?:www\.)?ecfr\.gov/|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
     r"(?:^|https?://)(?:www\.)?iga\.in\.gov/static-documents/(?:|$)|"
@@ -105,6 +106,9 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?azleg\.gov/viewdocument(?:/viewDocument)?/\?docName=https?://(?:www\.)?azleg\.gov/ars/|"
     r"(?:^|https?://)(?:www\.)?azsos\.gov/business/notary-public(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?alisondb\.legislature\.state\.al\.us/alison/CodeOfAlabama/1975/|"
+    r"(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/https?://(?:www\.)?alisondb\.legislature\.state\.al\.us/alison/CodeOfAlabama/1975/|"
+    r"(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/http:/alisondb\.legislature\.state\.al\.us/alison/CodeOfAlabama/1975/|"
     r"(?:^|https?://)admincode\.legislature\.state\.al\.us/agency(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sdlegislature\.gov/Statutes(?:\?|/|$)|"
     r"(?:^|https?://)(?:www\.)?(?:malegislature\.gov|legislature\.ma\.gov)/Laws/GeneralLaws(?:/|$)|"
@@ -747,6 +751,8 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://apps.azsos.gov/public_services/Title_15/15-02.rtf",
         "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
         "https://apps.azsos.gov/public_services/Title_15/15-05.pdf",
+        "https://apps.azsos.gov/public_services/Title_15/15-07.pdf",
+        "https://apps.azsos.gov/public_services/Title_17/17-04.pdf",
         "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
         "https://apps.azsos.gov/public_services/Title_04/4-08.pdf",
@@ -1021,6 +1027,8 @@ _AZ_LATE_RETRY_DOCUMENT_URLS: tuple[str, ...] = (
     "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
     "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
     "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+    "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+    "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
     "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
 )
 _AZ_LATE_RETRY_MIN_TIMEOUT_S = 45.0
@@ -1036,7 +1044,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AZ", "CA", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AZ", "CA", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -1456,7 +1464,10 @@ def _allowed_discovery_hosts_for_state(state_code: str, state_name: str) -> set[
 
 
 def _url_allowed_for_state(url: str, allowed_hosts: set[str]) -> bool:
-    host = urlparse(str(url or "").strip()).netloc.lower().strip(".")
+    value = str(url or "").strip()
+    if not value or _is_non_admin_seed_url(value):
+        return False
+    host = urlparse(value).netloc.lower().strip(".")
     if not host:
         return False
     return _host_matches_allowed(host, allowed_hosts)
@@ -11246,7 +11257,7 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "AL" and not seeded_direct_detail_urls:
             try:
                 alabama_bootstrap_document_urls = await asyncio.wait_for(
-                    _discover_alabama_rule_document_urls(limit=min(max_fetch_per_state * 3, 12)),
+                    _discover_alabama_rule_document_urls(limit=min(max_fetch_per_state * 3, 32)),
                     timeout=25.0,
                 )
             except Exception:
@@ -11881,6 +11892,13 @@ async def _agentic_discover_admin_state_blocks(
             reverse=True,
         )
 
+        if state_code == "AL" and alabama_bootstrap_document_urls:
+            ranked_urls = [
+                (url, score)
+                for url, score in ranked_urls
+                if urlparse(url).netloc.lower() == "admincode.legislature.state.al.us"
+            ]
+
         if state_code == "VT" and not direct_detail_ready:
             ranked_urls = []
 
@@ -12181,7 +12199,7 @@ async def _agentic_discover_admin_state_blocks(
         az_failed_seed_retry_url_keys: set[str] = set()
         if state_code == "AZ" and prioritized_seed_document_urls:
             az_batch_rule_urls = prioritized_seed_document_urls[
-                : min(len(prioritized_seed_document_urls), max_fetch, 4)
+                : min(len(prioritized_seed_document_urls), max_fetch, 5)
             ]
             az_batch_remaining_budget_s = min(
                 preloop_budget_deadline - time.monotonic(),
@@ -13107,7 +13125,11 @@ async def _agentic_discover_admin_state_blocks(
             az_last_chance_retry_urls = _prioritized_arizona_late_retry_urls(
                 [],
                 limit=1,
-                extra_preferred_urls=["https://apps.azsos.gov/public_services/Title_18/18-01.rtf"],
+                extra_preferred_urls=[
+                    "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+                    "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
+                    "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
+                ],
                 exclude_urls={url for url in direct_doc_urls if url},
             )
             for document_url in az_last_chance_retry_urls:
@@ -13228,7 +13250,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
-                if len(prioritized_alabama_seed_rule_urls) >= min(max_fetch, 8):
+                if len(prioritized_alabama_seed_rule_urls) >= min(max_fetch, 24):
                     break
 
         for rule_url in prioritized_south_dakota_seed_rule_urls:

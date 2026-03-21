@@ -43,6 +43,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import json
 
+from .shared_fetch_cache import SharedFetchCache
+
 logger = logging.getLogger(__name__)
 
 # Optional dependencies
@@ -135,6 +137,7 @@ class ParallelWebArchiver:
         self.retry_attempts = retry_attempts
         self.timeout = timeout
         self.fallback_priority = fallback_priority or ["warc", "wayback", "web_archive"]
+        self._shared_fetch_cache: Optional[SharedFetchCache] = SharedFetchCache.from_env()
         
         # Initialize components
         self._hf_search = None
@@ -165,7 +168,8 @@ class ParallelWebArchiver:
     async def archive_urls_parallel(
         self,
         urls: List[str],
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
+        max_concurrent: Optional[int] = None,
     ) -> List[ArchiveResult]:
         """
         Archive multiple URLs in parallel with fallback sources.
@@ -181,10 +185,36 @@ class ParallelWebArchiver:
             logger.warning("aiohttp not available, using synchronous fallback")
             return self._archive_urls_sync(urls, progress_callback)
         
-        progress = ArchiveProgress(total=len(urls))
+        requested_urls = [str(url).strip() for url in list(urls or []) if str(url).strip()]
+        progress = ArchiveProgress(total=len(requested_urls))
+        concurrency = max(1, int(max_concurrent or self.max_concurrent or 1))
+        if not requested_urls:
+            return []
+
+        cached_results: Dict[str, ArchiveResult] = {}
+        cache_misses: List[str] = []
+        seen_urls: set[str] = set()
+        for url in requested_urls:
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            cached = self._load_cached_result(url)
+            if cached is not None:
+                cached_results[url] = cached
+            else:
+                cache_misses.append(url)
+
+        if cached_results:
+            progress.completed += len(cached_results)
+            progress.successful += len(cached_results)
+            if progress_callback:
+                try:
+                    progress_callback(progress)
+                except Exception as e:
+                    logger.warning(f"Progress callback error: {e}")
         
         # Create semaphore to limit concurrent requests
-        semaphore = anyio.Semaphore(self.max_concurrent)
+        semaphore = anyio.Semaphore(concurrency)
         
         async def archive_with_semaphore(url: str) -> ArchiveResult:
             async with semaphore:
@@ -204,23 +234,74 @@ class ParallelWebArchiver:
                 return result
         
         # Execute all tasks in parallel
-        tasks = [archive_with_semaphore(url) for url in urls]
+        tasks = [archive_with_semaphore(url) for url in cache_misses]
         results = await _anyio_gather(*tasks)
         
         # Handle any exceptions
-        final_results = []
+        fetched_results: Dict[str, ArchiveResult] = {}
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                logger.error(f"Failed to archive {urls[i]}: {result}")
-                final_results.append(ArchiveResult(
-                    url=urls[i],
+                logger.error(f"Failed to archive {cache_misses[i]}: {result}")
+                fetched_results[cache_misses[i]] = ArchiveResult(
+                    url=cache_misses[i],
                     success=False,
                     error=str(result)
-                ))
+                )
             else:
-                final_results.append(result)
+                fetched_results[result.url] = result
+                self._store_cached_result(result)
+
+        final_results = []
+        for url in requested_urls:
+            final_results.append(
+                cached_results.get(url)
+                or fetched_results.get(url)
+                or ArchiveResult(url=url, success=False, error="missing_result")
+            )
         
         return final_results
+
+    def _load_cached_result(self, url: str) -> Optional[ArchiveResult]:
+        if self._shared_fetch_cache is None:
+            return None
+        payload = self._shared_fetch_cache.load(namespace="parallel_web_archiver", url=url)
+        if not isinstance(payload, dict):
+            return None
+        content = str(payload.get("content") or "").strip()
+        if not content:
+            return None
+        return ArchiveResult(
+            url=str(payload.get("url") or url),
+            success=bool(payload.get("success", False)),
+            content=content,
+            source="cache",
+            error=payload.get("error"),
+            warc_pointer=payload.get("warc_pointer") if isinstance(payload.get("warc_pointer"), dict) else None,
+        )
+
+    def _store_cached_result(self, result: ArchiveResult) -> None:
+        if self._shared_fetch_cache is None or not result.success:
+            return
+        content = str(result.content or "").strip()
+        if not content:
+            return
+        try:
+            self._shared_fetch_cache.save(
+                namespace="parallel_web_archiver",
+                url=result.url,
+                payload={
+                    "url": result.url,
+                    "success": bool(result.success),
+                    "content": content,
+                    "source": str(result.source or ""),
+                    "error": result.error,
+                    "warc_pointer": result.warc_pointer if isinstance(result.warc_pointer, dict) else None,
+                    "timestamp": result.timestamp.isoformat(),
+                },
+                payload_name=f"parallel_web_archiver_{abs(hash(result.url))}",
+            )
+        except Exception as exc:
+            logger.warning("Failed to write parallel archiver cache entry for %s: %s", result.url, exc)
     
     async def _archive_single_url(self, url: str) -> ArchiveResult:
         """Archive a single URL with fallback sources."""

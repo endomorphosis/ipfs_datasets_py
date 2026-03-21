@@ -285,23 +285,31 @@ async def test_connecticut_custom_scrape_records_fetch_analytics(monkeypatch: py
 
 @pytest.mark.anyio
 async def test_rhode_island_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
-    async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fetch", success=True)
+        normalized = str(url).lower()
+        if normalized.endswith("/title1/index.htm"):
+            return (
+                "<html><body>"
+                "<a href='/Statutes/TITLE1/1-1/INDEX.htm'>Chapter 1-1 Airports</a>"
+                "</body></html>"
+            ).encode("utf-8")
+        if normalized.endswith("/title1/1-1/index.htm"):
+            return (
+                "<html><body>"
+                "<a href='/Statutes/TITLE1/1-1/1-1-1.htm'>§ 1-1-1. General law.</a>"
+                "</body></html>"
+            ).encode("utf-8")
         return b""
 
-    def _fake_get(url: str, *args, **kwargs):
-        html = (
-            "<html><body>"
-            "<a href='/statutes/title1/chapter1'>Title 1 Chapter 1</a>"
-            "</body></html>"
-        ).encode("utf-8")
-        return _FakeResponse(html)
-
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
 
     scraper = RhodeIslandScraper("RI", "Rhode Island")
     statutes = await scraper._custom_scrape_rhode_island("Rhode Island General Laws", "http://example.ri/statutes", "R.I. Gen. Laws")
 
     assert len(statutes) >= 1
+    assert statutes[0].section_number == "1-1-1"
+    assert statutes[0].chapter_number == "1-1"
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
 

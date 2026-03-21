@@ -11,6 +11,7 @@ import re
 import time
 import uuid
 import os
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
@@ -35,6 +36,9 @@ from .orchestration.planner import SearchPlanner
 from .orchestration.scoring import ProviderScorer
 from .structured_schema_compat import normalize_structured_fields
 from .search_engines.orchestrator import MultiEngineOrchestrator, OrchestratorConfig
+from ..legal_scrapers.shared_fetch_cache import SharedFetchCache
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_SEARCH_ENGINES = ["brave", "duckduckgo", "google_cse"]
@@ -130,6 +134,148 @@ class UnifiedWebArchivingAPI:
         self.search_executor = search_executor or SearchExecutor(orchestrator=self.orchestrator)
         self.scraper = scraper
         self.agentic_optimizer = agentic_optimizer or AgenticScrapeOptimizer()
+        self._shared_fetch_cache: Optional[SharedFetchCache] = SharedFetchCache.from_env()
+
+    @staticmethod
+    def _trace_to_payload(trace: Optional[ExecutionTrace]) -> Optional[Dict[str, Any]]:
+        if trace is None:
+            return None
+        return {
+            "request_id": trace.request_id,
+            "operation": trace.operation,
+            "mode": trace.mode.value,
+            "providers_attempted": list(trace.providers_attempted or []),
+            "provider_selected": trace.provider_selected,
+            "fallback_count": int(trace.fallback_count or 0),
+            "total_latency_ms": float(trace.total_latency_ms or 0.0),
+            "retries": int(trace.retries or 0),
+            "started_at": trace.started_at,
+            "finished_at": trace.finished_at,
+        }
+
+    @staticmethod
+    def _error_to_payload(error: UnifiedError) -> Dict[str, Any]:
+        return {
+            "code": error.code,
+            "message": error.message,
+            "provider": error.provider,
+            "retryable": bool(error.retryable),
+            "severity": error.severity.value,
+            "context": dict(error.context or {}),
+        }
+
+    @classmethod
+    def _response_to_cache_payload(cls, response: UnifiedFetchResponse) -> Dict[str, Any]:
+        document_payload = None
+        if response.document is not None:
+            document_payload = {
+                "url": response.document.url,
+                "title": response.document.title,
+                "text": response.document.text,
+                "html": response.document.html,
+                "content_type": response.document.content_type,
+                "metadata": dict(response.document.metadata or {}),
+                "extraction_provenance": dict(response.document.extraction_provenance or {}),
+            }
+        return {
+            "url": response.url,
+            "document": document_payload,
+            "trace": cls._trace_to_payload(response.trace),
+            "errors": [cls._error_to_payload(item) for item in list(response.errors or [])],
+            "success": bool(response.success),
+            "quality_score": float(response.quality_score or 0.0),
+            "metadata": dict(response.metadata or {}),
+        }
+
+    def _cache_payload_to_response(self, payload: Dict[str, Any]) -> UnifiedFetchResponse:
+        trace_payload = payload.get("trace")
+        trace = None
+        if isinstance(trace_payload, dict):
+            mode_value = trace_payload.get("mode", OperationMode.BALANCED.value)
+            trace = ExecutionTrace(
+                request_id=str(trace_payload.get("request_id") or str(uuid.uuid4())),
+                operation=str(trace_payload.get("operation") or "fetch"),
+                mode=OperationMode(str(mode_value)),
+                providers_attempted=list(trace_payload.get("providers_attempted") or []),
+                provider_selected=trace_payload.get("provider_selected"),
+                fallback_count=int(trace_payload.get("fallback_count") or 0),
+                total_latency_ms=float(trace_payload.get("total_latency_ms") or 0.0),
+                retries=int(trace_payload.get("retries") or 0),
+                started_at=str(trace_payload.get("started_at") or datetime.utcnow().isoformat()),
+                finished_at=trace_payload.get("finished_at"),
+            )
+
+        document_payload = payload.get("document")
+        document = None
+        if isinstance(document_payload, dict):
+            metadata = dict(document_payload.get("metadata") or {})
+            cache_meta = dict(payload.get("_cache") or {})
+            if cache_meta:
+                metadata["cache"] = cache_meta
+                metadata["cache_hit"] = True
+            document = UnifiedDocument(
+                url=str(document_payload.get("url") or payload.get("url") or ""),
+                title=str(document_payload.get("title") or ""),
+                text=str(document_payload.get("text") or ""),
+                html=str(document_payload.get("html") or ""),
+                content_type=str(document_payload.get("content_type") or ""),
+                metadata=metadata,
+                extraction_provenance=dict(document_payload.get("extraction_provenance") or {}),
+            )
+
+        errors = [
+            UnifiedError(
+                code=str(item.get("code") or "cache_error"),
+                message=str(item.get("message") or "cache error"),
+                provider=item.get("provider"),
+                retryable=bool(item.get("retryable", False)),
+                severity=ErrorSeverity(str(item.get("severity") or ErrorSeverity.ERROR.value)),
+                context=dict(item.get("context") or {}),
+            )
+            for item in list(payload.get("errors") or [])
+            if isinstance(item, dict)
+        ]
+
+        metadata = dict(payload.get("metadata") or {})
+        cache_meta = dict(payload.get("_cache") or {})
+        if cache_meta:
+            metadata["cache"] = cache_meta
+            metadata["cache_hit"] = True
+
+        return UnifiedFetchResponse(
+            url=str(payload.get("url") or ""),
+            document=document,
+            trace=trace,
+            errors=errors,
+            success=bool(payload.get("success", False)),
+            quality_score=float(payload.get("quality_score") or 0.0),
+            metadata=metadata,
+        )
+
+    def _load_cached_fetch_response(self, *, url: str) -> Optional[UnifiedFetchResponse]:
+        if self._shared_fetch_cache is None:
+            return None
+        payload = self._shared_fetch_cache.load(namespace="unified_fetch", url=url)
+        if not isinstance(payload, dict):
+            return None
+        try:
+            return self._cache_payload_to_response(payload)
+        except Exception as exc:
+            logger.warning("Ignoring invalid unified fetch cache entry for %s: %s", url, exc)
+            return None
+
+    def _store_cached_fetch_response(self, *, url: str, response: UnifiedFetchResponse) -> None:
+        if self._shared_fetch_cache is None or not response.success:
+            return
+        try:
+            self._shared_fetch_cache.save(
+                namespace="unified_fetch",
+                url=url,
+                payload=self._response_to_cache_payload(response),
+                payload_name=f"unified_fetch_{uuid.uuid5(uuid.NAMESPACE_URL, url).hex[:16]}",
+            )
+        except Exception as exc:
+            logger.warning("Failed to write unified fetch cache entry for %s: %s", url, exc)
 
     @staticmethod
     def _env_bool(*names: str) -> Optional[bool]:
@@ -339,6 +485,10 @@ class UnifiedWebArchivingAPI:
         else:
             fetch_request = request
 
+        cached_response = self._load_cached_fetch_response(url=fetch_request.url)
+        if cached_response is not None:
+            return cached_response
+
         start_time = time.time()
         request_id = str(uuid.uuid4())
         provider = "unified_scraper"
@@ -425,7 +575,7 @@ class UnifiedWebArchivingAPI:
                 items_processed=1,
                 quality_score=quality_score,
             )
-            return UnifiedFetchResponse(
+            response = UnifiedFetchResponse(
                 url=fetch_request.url,
                 document=doc,
                 trace=trace,
@@ -437,6 +587,8 @@ class UnifiedWebArchivingAPI:
                     "requested_domain": fetch_request.domain,
                 },
             )
+            self._store_cached_fetch_response(url=fetch_request.url, response=response)
+            return response
 
         except BaseException as exc:
             elapsed_ms = (time.time() - start_time) * 1000.0

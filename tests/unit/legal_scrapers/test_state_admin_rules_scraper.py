@@ -138,6 +138,8 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://apps.azsos.gov/public_services/Title_18/18-04.rtf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_04/4-08.rtf" not in az_urls
     assert "https://apps.azsos.gov/public_services/Title_07/7-02.pdf" not in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_15/15-07.pdf" in az_urls
+    assert "https://apps.azsos.gov/public_services/Title_17/17-04.pdf" in az_urls
     assert "https://apps.azsos.gov/public_services/Title_18/18-01.pdf" not in az_urls
     assert "https://apps.azsos.gov/public_services/Title_00.htm" not in az_urls
     assert all("legislature.az.gov" not in url.lower() for url in az_urls)
@@ -4419,6 +4421,26 @@ def test_prioritized_arizona_late_retry_urls_prefers_productive_title_two_pdf() 
         "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
         "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+    ]
+
+
+def test_prioritized_arizona_late_retry_urls_promotes_slow_rtf_recoveries() -> None:
+    candidate_urls = [
+        "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
+        "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
+    ]
+
+    prioritized = scraper_module._prioritized_arizona_late_retry_urls(candidate_urls, limit=7)
+
+    assert prioritized[:7] == [
+        "https://apps.azsos.gov/public_services/Title_02/2-12.pdf",
+        "https://apps.azsos.gov/public_services/Title_02/2-04.pdf",
+        "https://apps.azsos.gov/public_services/Title_15/15-05.rtf",
+        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+        "https://apps.azsos.gov/public_services/Title_15/15-03.rtf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
         "https://apps.azsos.gov/public_services/Title_18/18-01.rtf",
     ]
 

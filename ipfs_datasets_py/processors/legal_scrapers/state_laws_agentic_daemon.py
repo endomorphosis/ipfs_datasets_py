@@ -40,6 +40,7 @@ from .state_laws_scraper import (
 )
 from .state_procedure_rules_scraper import scrape_state_procedure_rules
 from .state_laws_verifier import _build_operational_diagnostics
+from .url_archive_cache import URLArchiveCache
 
 logger = logging.getLogger(__name__)
 
@@ -419,6 +420,10 @@ class StateLawsAgenticDaemon:
         self.state_file = self.output_dir / "daemon_state.json"
         self.latest_file = self.output_dir / "latest_summary.json"
         self.pending_retry_file = self.output_dir / "latest_pending_retry.json"
+        self.url_archive_cache = URLArchiveCache(
+            metadata_dir=str(self.output_dir / "url_archive_cache"),
+            persist_to_ipfs=True,
+        )
         self._rand = random.Random(self.config.random_seed)
         self._state = self._load_state()
 
@@ -2475,6 +2480,10 @@ class StateLawsAgenticDaemon:
             min_rule_text_chars=max(120, int(tactic.min_full_text_chars or 120)),
             enable_pdf_processing=True,
             enable_gap_analysis=True,
+            cache_dir=str(self.output_dir / "url_archive_cache" / "parallel_admin_assist"),
+            cache_read_enabled=True,
+            cache_write_enabled=True,
+            cache_to_ipfs=True,
         )
 
         orchestrator = ParallelStateAdminOrchestrator(config=config)
@@ -3322,7 +3331,30 @@ class StateLawsAgenticDaemon:
 
         try:
             archiver = ParallelWebArchiver(max_concurrent=max(1, int(self.config.archive_warmup_concurrency or 1)))
-            results = await archiver.archive_urls_parallel(urls)
+            cached_hits = []
+            uncached_urls = []
+            for url in urls:
+                cached = self.url_archive_cache.get(url)
+                if cached and cached.content:
+                    cached_hits.append(
+                        {
+                            "url": cached.url,
+                            "success": True,
+                            "source": f"{cached.source}:cache",
+                        }
+                    )
+                else:
+                    uncached_urls.append(url)
+            fetched_results = await archiver.archive_urls_parallel(uncached_urls) if uncached_urls else []
+            for result in fetched_results:
+                if bool(getattr(result, "success", False)) and str(getattr(result, "content", "") or "").strip():
+                    await self.url_archive_cache.put(
+                        url=str(getattr(result, "url", "") or ""),
+                        content=str(getattr(result, "content", "") or ""),
+                        source=str(getattr(result, "source", "") or "archive_warmup"),
+                        metadata={"corpus": self.corpus.key, "warmup": True},
+                    )
+            results = cached_hits + fetched_results
         except Exception as exc:
             return {
                 "status": "error",
