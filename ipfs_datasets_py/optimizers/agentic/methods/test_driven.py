@@ -584,10 +584,119 @@ class TestDrivenOptimizer(AgenticOptimizer):
                 temperature=0.1,
             )
             self._remember_raw_response(target_file, response)
+            try:
+                policy = self._normalize_session_injection_policy_response(response=response, file_path=target_file)
+            except ValueError:
+                policy = {
+                    "stability_injection_budget": 3,
+                    "empty_questions_min_budget": 5,
+                    "limit_to_missing_objectives_in_stability": True,
+                    "one_probe_per_objective_in_stability": True,
+                }
             replacement_sources = {
-                "_inject_intake_prompt_questions": self._render_session_injection_from_policy(
-                    self._normalize_session_injection_policy_response(response=response, file_path=target_file)
+                "_inject_intake_prompt_questions": self._render_session_injection_from_policy(policy)
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+        if self._use_document_workflow_targeting_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_document_workflow_targeting_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            try:
+                policy = self._normalize_document_workflow_targeting_policy_response(
+                    response=response,
+                    file_path=target_file,
                 )
+            except ValueError:
+                policy = {
+                    "graph_blocker_weight": 0.08,
+                    "document_blocker_weight": 0.06,
+                    "intake_objective_weight": 0.05,
+                    "boost_document_for_notice_chain": True,
+                    "preserve_graph_priority_when_factual_pressure_high": True,
+                }
+            replacement_sources = {
+                "_build_workflow_phase_targeting": self._render_document_workflow_targeting_from_policy(policy)
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+        if self._use_merge_seed_with_grounding_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_merge_seed_with_grounding_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            try:
+                policy = self._normalize_merge_seed_with_grounding_policy_response(
+                    response=response,
+                    file_path=target_file,
+                )
+            except ValueError:
+                policy = {
+                    "anchor_passage_limit": 5,
+                    "evidence_item_limit": 8,
+                    "blocker_answer_limit": 6,
+                    "unresolved_objective_limit": 3,
+                }
+            current_block = self._extract_target_symbol_blocks(current_code, target_symbols)["_merge_seed_with_grounding"]
+            replacement_sources = {
+                "_merge_seed_with_grounding": self._apply_merge_seed_with_grounding_policy_to_source(
+                    current_block,
+                    policy,
+                )
+            }
+            return self._replace_symbols_in_source(
+                original_code=current_code,
+                target_symbols=target_symbols,
+                replacement_sources=replacement_sources,
+            )
+        if self._use_complainant_guidance_policy_mode(target_file=target_file, target_symbols=target_symbols):
+            response = self.llm_router.generate(
+                prompt=self._build_complainant_guidance_policy_prompt(
+                    file_path=target_file,
+                    baseline=baseline,
+                    task=task,
+                ),
+                method=self.method,
+                max_tokens=500,
+                temperature=0.1,
+            )
+            self._remember_raw_response(target_file, response)
+            try:
+                policy = self._normalize_complainant_guidance_policy_response(
+                    response=response,
+                    file_path=target_file,
+                )
+            except ValueError:
+                policy = {
+                    "unresolved_objective_limit": 3,
+                    "include_follow_up_prompt_examples": True,
+                    "encourage_empathy_opening": True,
+                    "include_document_precision_guidance": True,
+                    "include_phase_focus_line": True,
+                }
+            replacement_sources = {
+                "_build_actor_critic_guidance": self._render_complainant_guidance_from_policy(policy)
             }
             return self._replace_symbols_in_source(
                 original_code=current_code,
@@ -729,6 +838,15 @@ class TestDrivenOptimizer(AgenticOptimizer):
 
     def _use_session_injection_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
         return target_file.name == "session.py" and target_symbols == ["_inject_intake_prompt_questions"]
+
+    def _use_complainant_guidance_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "complainant.py" and target_symbols == ["_build_actor_critic_guidance"]
+
+    def _use_document_workflow_targeting_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "document_optimization.py" and target_symbols == ["_build_workflow_phase_targeting"]
+
+    def _use_merge_seed_with_grounding_policy_mode(self, *, target_file: Path, target_symbols: List[str]) -> bool:
+        return target_file.name == "synthesize_hacc_complaint.py" and target_symbols == ["_merge_seed_with_grounding"]
     
     def _apply_optimizations(
         self,
@@ -1438,6 +1556,128 @@ Behavioral guardrails:
 Do not include explanations, markdown, comments, or extra keys.
 """
 
+    def _build_document_workflow_targeting_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Keep document workflow targeting small, deterministic, and aligned to the strongest drafting blockers."
+
+        return f"""Return a compact JSON object describing how document_optimization._build_workflow_phase_targeting should prioritize graph, document, and intake workflow phases.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "graph_blocker_weight": decimal from 0.04 to 0.12
+- "document_blocker_weight": decimal from 0.03 to 0.1
+- "intake_objective_weight": decimal from 0.03 to 0.08
+- "boost_document_for_notice_chain": true or false
+- "preserve_graph_priority_when_factual_pressure_high": true or false
+
+Behavioral guardrails:
+- Preserve the method signature and return keys
+- Preserve use of _normalize_intake_objective, _clamp, and _select_phase_target_section
+- Preserve one score per phase for graph_analysis, document_generation, and intake_questioning
+- Preserve phase_focus_order sorting using score then WORKFLOW_PHASE_FOCUS_ORDER
+- Preserve chronology_context_active behavior
+- Do not add imports or rely on helpers not already used in document_optimization.py
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
+    def _build_complainant_guidance_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Keep complainant guidance concise, blocker-aware, and easy for the mediator to operationalize."
+
+        return f"""Return a compact JSON object describing how complainant._build_actor_critic_guidance should coach concise, high-yield answers.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "unresolved_objective_limit": integer from 1 to 4
+- "include_follow_up_prompt_examples": true or false
+- "encourage_empathy_opening": true or false
+- "include_document_precision_guidance": true or false
+- "include_phase_focus_line": true or false
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve use of ComplaintContext, _ordered_workflow_phases, _extract_confirmation_placeholders, and _order_objectives_for_actor_critic
+- Preserve chronology, decision-maker, and documentary-artifact guidance when the question text calls for them
+- Preserve unresolved-objective handling and phase focus ordering
+- Do not add imports or rely on helpers not already used in complainant.py
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
+    def _build_merge_seed_with_grounding_policy_prompt(
+        self,
+        *,
+        file_path: Path,
+        baseline: Dict[str, float],
+        task: OptimizationTask,
+    ) -> str:
+        report_summary = (task.metadata or {}).get("report_summary", {})
+        recommendations = "\n".join(f"- {item}" for item in (report_summary.get("recommendations") or [])[:4])
+        if not recommendations:
+            recommendations = "- Keep grounding merge behavior deterministic, preserve stronger evidence snippets, and keep drafting handoff lines compact."
+
+        return f"""Return a compact JSON object describing how synthesize_hacc_complaint._merge_seed_with_grounding should bound its merge fan-out.
+
+File: {file_path}
+Task: {task.description}
+
+Current performance:
+- Execution time: {baseline.get('execution_time', 'unknown')}s
+- Test coverage: {baseline.get('coverage', 'unknown')}%
+
+Recent adversarial findings:
+{recommendations}
+
+Return JSON only with these keys:
+- "anchor_passage_limit": integer from 3 to 6
+- "evidence_item_limit": integer from 4 to 8
+- "blocker_answer_limit": integer from 4 to 8
+- "unresolved_objective_limit": integer from 2 to 5
+
+Behavioral guardrails:
+- Preserve the method signature and return type
+- Preserve snippet promotion, handoff merging, unresolved-objective propagation, and claim-support dedupe behavior
+- Preserve use of existing helper functions and local helper closures already present in the method
+- Do not add imports or reference helpers that do not already exist in synthesize_hacc_complaint.py
+
+Do not include explanations, markdown, comments, or extra keys.
+"""
+
     def _extract_target_symbol_blocks(self, current_code: str, target_symbols: List[str]) -> Dict[str, str]:
         tree = ast.parse(current_code)
         lines = current_code.splitlines(keepends=True)
@@ -1917,6 +2157,162 @@ Do not include explanations, markdown, comments, or extra keys.
             "empty_questions_min_budget": _clamp_int("empty_questions_min_budget", 5, 2, 5),
             "limit_to_missing_objectives_in_stability": bool(data.get("limit_to_missing_objectives_in_stability", True)),
             "one_probe_per_objective_in_stability": bool(data.get("one_probe_per_objective_in_stability", True)),
+        }
+
+    def _normalize_document_workflow_targeting_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty document workflow targeting policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Document workflow targeting policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Document workflow targeting policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "graph_blocker_weight",
+            "document_blocker_weight",
+            "intake_objective_weight",
+            "boost_document_for_notice_chain",
+            "preserve_graph_priority_when_factual_pressure_high",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Document workflow targeting policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        def _clamp_float(name: str, default: float, minimum: float, maximum: float) -> float:
+            value = data.get(name, default)
+            try:
+                numeric = float(value)
+            except Exception:
+                numeric = default
+            return max(minimum, min(maximum, numeric))
+
+        return {
+            "graph_blocker_weight": _clamp_float("graph_blocker_weight", 0.08, 0.04, 0.12),
+            "document_blocker_weight": _clamp_float("document_blocker_weight", 0.06, 0.03, 0.10),
+            "intake_objective_weight": _clamp_float("intake_objective_weight", 0.05, 0.03, 0.08),
+            "boost_document_for_notice_chain": bool(data.get("boost_document_for_notice_chain", True)),
+            "preserve_graph_priority_when_factual_pressure_high": bool(
+                data.get("preserve_graph_priority_when_factual_pressure_high", True)
+            ),
+        }
+
+    def _normalize_complainant_guidance_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty complainant guidance policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Complainant guidance policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Complainant guidance policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "unresolved_objective_limit",
+            "include_follow_up_prompt_examples",
+            "encourage_empathy_opening",
+            "include_document_precision_guidance",
+            "include_phase_focus_line",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Complainant guidance policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        try:
+            unresolved_limit = int(data.get("unresolved_objective_limit", 3))
+        except Exception:
+            unresolved_limit = 3
+
+        return {
+            "unresolved_objective_limit": max(1, min(4, unresolved_limit)),
+            "include_follow_up_prompt_examples": bool(data.get("include_follow_up_prompt_examples", True)),
+            "encourage_empathy_opening": bool(data.get("encourage_empathy_opening", True)),
+            "include_document_precision_guidance": bool(data.get("include_document_precision_guidance", True)),
+            "include_phase_focus_line": bool(data.get("include_phase_focus_line", True)),
+        }
+
+    def _normalize_merge_seed_with_grounding_policy_response(
+        self,
+        *,
+        response: str,
+        file_path: Path,
+    ) -> Dict[str, Any]:
+        text = (response or "").strip()
+        if not text:
+            raise ValueError(f"Empty merge-seed-with-grounding policy response for {file_path}")
+
+        if "```" in text:
+            match = re.search(r"```(?:json)?\n(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+            if match:
+                text = match.group(1).strip()
+
+        lowered = text.lower()
+        if any(marker in lowered for marker in self._meta_request_markers):
+            raise ValueError(f"Merge-seed-with-grounding policy response for {file_path} requested external context instead of JSON")
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Merge-seed-with-grounding policy response for {file_path} is not valid JSON: {exc}") from exc
+
+        allowed_keys = {
+            "anchor_passage_limit",
+            "evidence_item_limit",
+            "blocker_answer_limit",
+            "unresolved_objective_limit",
+        }
+        extra_keys = sorted(set(data.keys()) - allowed_keys)
+        if extra_keys:
+            raise ValueError(
+                f"Merge-seed-with-grounding policy response for {file_path} included unexpected keys: {', '.join(extra_keys)}"
+            )
+
+        def _clamp_int(name: str, default: int, minimum: int, maximum: int) -> int:
+            value = data.get(name, default)
+            try:
+                value = int(value)
+            except Exception:
+                value = default
+            return max(minimum, min(maximum, value))
+
+        return {
+            "anchor_passage_limit": _clamp_int("anchor_passage_limit", 5, 3, 6),
+            "evidence_item_limit": _clamp_int("evidence_item_limit", 8, 4, 8),
+            "blocker_answer_limit": _clamp_int("blocker_answer_limit", 6, 4, 8),
+            "unresolved_objective_limit": _clamp_int("unresolved_objective_limit", 3, 2, 5),
         }
 
     def _render_get_intake_action_from_policy(self, policy: Dict[str, Any]) -> str:
@@ -3052,6 +3448,260 @@ Do not include explanations, markdown, comments, or extra keys.
             "            merged.append(question)\n"
             "    return merged\n"
         )
+
+    def _render_document_workflow_targeting_from_policy(self, policy: Dict[str, Any]) -> str:
+        graph_blocker_weight = float(policy.get("graph_blocker_weight", 0.08))
+        document_blocker_weight = float(policy.get("document_blocker_weight", 0.06))
+        intake_objective_weight = float(policy.get("intake_objective_weight", 0.05))
+        boost_document_notice = bool(policy.get("boost_document_for_notice_chain", True))
+        preserve_graph_priority = bool(policy.get("preserve_graph_priority_when_factual_pressure_high", True))
+
+        notice_chain_block = ""
+        if boost_document_notice:
+            notice_chain_block = (
+                "    if blocker_issue_families.intersection({'notice_chain', 'response_timeline', 'hearing_process'}):\n"
+                "        phase_scores['document_generation'] = _clamp(float(phase_scores.get('document_generation') or 0.0) + 0.04)\n"
+            )
+
+        graph_priority_block = ""
+        if preserve_graph_priority:
+            graph_priority_block = (
+                "    if graph_blockers and factual_pressure >= 0.35:\n"
+                "        phase_scores['graph_analysis'] = _clamp(\n"
+                "            max(\n"
+                "                float(phase_scores.get('graph_analysis') or 0.0),\n"
+                "                float(phase_scores.get('intake_questioning') or 0.0) + 0.05,\n"
+                "            )\n"
+                "        )\n"
+            )
+
+        return (
+            "def _build_workflow_phase_targeting(\n"
+            "    self,\n"
+            "    *,\n"
+            "    section_scores: Dict[str, float],\n"
+            "    support_context: Dict[str, Any],\n"
+            ") -> Dict[str, Any]:\n"
+            "    priorities = support_context.get('intake_priorities') if isinstance(support_context.get('intake_priorities'), dict) else {}\n"
+            "    unresolved_objectives = {\n"
+            "        _normalize_intake_objective(item)\n"
+            "        for item in list(priorities.get('unresolved_objectives') or [])\n"
+            "        if _normalize_intake_objective(item)\n"
+            "    }\n"
+            "    critical_unresolved = {\n"
+            "        _normalize_intake_objective(item)\n"
+            "        for item in list(priorities.get('critical_unresolved_objectives') or [])\n"
+            "        if _normalize_intake_objective(item)\n"
+            "    }\n"
+            "    blocker_extraction_targets = {\n"
+            "        str(item).strip().lower()\n"
+            "        for item in list(priorities.get('blocker_extraction_targets') or [])\n"
+            "        if str(item).strip()\n"
+            "    }\n"
+            "    blocker_workflow_phases = {\n"
+            "        str(item).strip().lower()\n"
+            "        for item in list(priorities.get('blocker_workflow_phases') or [])\n"
+            "        if str(item).strip()\n"
+            "    }\n"
+            "    blocker_issue_families = {\n"
+            "        str(item).strip().lower()\n"
+            "        for item in list(priorities.get('blocker_issue_families') or [])\n"
+            "        if str(item).strip()\n"
+            "    }\n"
+            "    blocker_count = int(priorities.get('blocker_count') or 0)\n"
+            "    chronology_context_active = any((\n"
+            "        bool(priorities.get('anchored_chronology_summary')),\n"
+            "        int(priorities.get('claim_temporal_gap_count') or 0) > 0,\n"
+            "        int(priorities.get('unresolved_temporal_issue_count', priorities.get('temporal_issue_count', 0)) or 0) > 0,\n"
+            "        int(priorities.get('resolved_temporal_issue_count') or 0) > 0,\n"
+            "    ))\n"
+            "    graph_blockers = unresolved_objectives.intersection({\n"
+            "        'exact_dates', 'timeline', 'actors', 'staff_names_titles', 'causation_link', 'causation_sequence',\n"
+            "        'anchor_adverse_action', 'anchor_appeal_rights', 'hearing_request_timing', 'response_dates',\n"
+            "    })\n"
+            "    document_blockers = unresolved_objectives.intersection({\n"
+            "        'documents', 'harm_remedy', 'exact_dates', 'anchor_adverse_action', 'anchor_appeal_rights',\n"
+            "        'staff_names_titles', 'hearing_request_timing', 'response_dates',\n"
+            "    })\n"
+            "    factual_pressure = max(0.0, 1.0 - float(section_scores.get('factual_allegations') or 0.0))\n"
+            "    claims_pressure = max(0.0, 1.0 - float(section_scores.get('claims_for_relief') or 0.0))\n"
+            "    requested_relief_pressure = max(0.0, 1.0 - float(section_scores.get('requested_relief') or 0.0))\n"
+            "    affidavit_pressure = max(0.0, 1.0 - float(section_scores.get('affidavit') or 0.0))\n"
+            "    certificate_pressure = max(0.0, 1.0 - float(section_scores.get('certificate_of_service') or 0.0))\n"
+            "    packet_pressure = max(0.0, 1.0 - float(section_scores.get('packet_projection') or 0.0))\n"
+            "    intake_pressure = max(0.0, 1.0 - float(section_scores.get('intake_questioning') or 0.0))\n"
+            "    phase_scores = {\n"
+            "        'graph_analysis': _clamp(\n"
+            "            factual_pressure * 0.55\n"
+            "            + claims_pressure * 0.15\n"
+            f"            + min(len(graph_blockers) * {graph_blocker_weight:.4f}, 0.28)\n"
+            "            + min(len(critical_unresolved.intersection(graph_blockers)) * 0.05, 0.15)\n"
+            "            + (0.08 if blocker_workflow_phases.intersection({'graph_analysis'}) else 0.0)\n"
+            "            + min(len(blocker_extraction_targets.intersection({'timeline_anchors', 'actor_role_mapping', 'retaliation_sequence', 'hearing_process', 'response_timeline'})) * 0.03, 0.15)\n"
+            "        ),\n"
+            "        'document_generation': _clamp(\n"
+            "            claims_pressure * 0.2\n"
+            "            + requested_relief_pressure * 0.2\n"
+            "            + affidavit_pressure * 0.2\n"
+            "            + certificate_pressure * 0.15\n"
+            "            + packet_pressure * 0.15\n"
+            f"            + min(len(document_blockers) * {document_blocker_weight:.4f}, 0.18)\n"
+            "            + (0.05 if blocker_workflow_phases.intersection({'document_generation'}) else 0.0)\n"
+            "        ),\n"
+            "        'intake_questioning': _clamp(\n"
+            "            (intake_pressure * 0.55)\n"
+            f"            + min(len(unresolved_objectives) * {intake_objective_weight:.4f}, 0.2)\n"
+            "            + min(len(critical_unresolved) * 0.04, 0.12)\n"
+            "            + min(blocker_count * 0.03, 0.12)\n"
+            "            + (0.04 if blocker_workflow_phases.intersection({'intake_questioning'}) else 0.0)\n"
+            "        ),\n"
+            "    }\n"
+            f"{notice_chain_block}"
+            f"{graph_priority_block}"
+            "    phase_focus_order = [\n"
+            "        name\n"
+            "        for name, _score in sorted(\n"
+            "            phase_scores.items(),\n"
+            "            key=lambda item: (-float(item[1]), self.WORKFLOW_PHASE_FOCUS_ORDER.index(item[0])),\n"
+            "        )\n"
+            "    ]\n"
+            "    phase_target_sections = {\n"
+            "        phase_name: self._select_phase_target_section(\n"
+            "            phase_name=phase_name,\n"
+            "            section_scores=section_scores,\n"
+            "            unresolved_objectives=unresolved_objectives,\n"
+            "            chronology_context_active=chronology_context_active,\n"
+            "        )\n"
+            "        for phase_name in phase_focus_order\n"
+            "    }\n"
+            "    return {\n"
+            "        'phase_scores': phase_scores,\n"
+            "        'phase_focus_order': phase_focus_order,\n"
+            "        'phase_target_sections': phase_target_sections,\n"
+            "    }\n"
+        )
+
+    def _render_complainant_guidance_from_policy(self, policy: Dict[str, Any]) -> str:
+        objective_limit = max(1, min(4, int(policy.get("unresolved_objective_limit", 3))))
+        include_follow_up_prompts = bool(policy.get("include_follow_up_prompt_examples", True))
+        encourage_empathy_opening = bool(policy.get("encourage_empathy_opening", True))
+        include_document_precision = bool(policy.get("include_document_precision_guidance", True))
+        include_phase_focus_line = bool(policy.get("include_phase_focus_line", True))
+
+        empathy_block = ""
+        if encourage_empathy_opening:
+            empathy_block = (
+                "    if str(context.emotional_state).lower() in _EMPATHY_HEAVY_STATES:\n"
+                "        guidance.append('Open with one brief impact/emotion sentence, then provide concrete facts.')\n"
+            )
+
+        follow_up_block = ""
+        if include_follow_up_prompts:
+            follow_up_block = (
+                "        follow_up_prompts = [\n"
+                "            prompt\n"
+                "            for prompt in (_objective_follow_up_prompt(item) for item in prioritized)\n"
+                "            if prompt\n"
+                "        ]\n"
+                "        if follow_up_prompts:\n"
+                "            guidance.append('Suggested high-yield follow-up prompts: ' + ' | '.join(follow_up_prompts))\n"
+            )
+
+        document_block = ""
+        if include_document_precision:
+            document_block = (
+                "    if any(token in question_lower for token in _DOCUMENT_ARTIFACT_TERMS):\n"
+                "        guidance.append('Name documentary artifacts precisely (letter/email/notice), including IDs or subject lines when available.')\n"
+            )
+
+        phase_focus_block = ""
+        if include_phase_focus_line:
+            phase_focus_block = (
+                "    guidance.append(\n"
+                "        'Phase focus order: '\n"
+                "        + ' -> '.join(phase_focus[:3] if phase_focus else list(_ACTOR_CRITIC_PHASE_FOCUS_ORDER))\n"
+                "        + '.'\n"
+                "    )\n"
+            )
+
+        return (
+            "def _build_actor_critic_guidance(self, question: str) -> str:\n"
+            "    question_text = str(question or '').strip()\n"
+            "    question_lower = question_text.lower()\n"
+            "    context = self.context or ComplaintContext(complaint_type='unknown', key_facts={})\n"
+            "\n"
+            "    phase_focus = _ordered_workflow_phases(\n"
+            "        list(context.workflow_phase_priorities or _ACTOR_CRITIC_PHASE_FOCUS_ORDER),\n"
+            "        explicit_phase_order=_ACTOR_CRITIC_PHASE_FOCUS_ORDER,\n"
+            "    )\n"
+            "    placeholder_objectives = [\n"
+            "        str(item.get('objective') or '').strip()\n"
+            "        for item in _extract_confirmation_placeholders(context.key_facts)\n"
+            "        if isinstance(item, dict)\n"
+            "    ]\n"
+            "    unresolved_objectives = _order_objectives_for_actor_critic(\n"
+            "        list(context.blocker_objectives or []) + placeholder_objectives,\n"
+            "        phase_focus_order=phase_focus,\n"
+            "    )\n"
+            "\n"
+            "    guidance: List[str] = []\n"
+            "    guidance.append('Keep your answer short, factual, and easy for the mediator to act on in the next question.')\n"
+            f"{empathy_block}"
+            "    if any(token in question_lower for token in ('how did that affect you', 'impact', 'harm', 'stress', 'feeling', 'feel')):\n"
+            "        guidance.append('Name one concrete impact (housing/work/health/financial) and one emotional impact.')\n"
+            "    if any(token in question_lower for token in ('why', 'explain', 'tell me more', 'what happened')) and len(question_text.split()) < 10:\n"
+            "        guidance.append('If the question is vague, provide the best direct answer and add one precise clarification need.')\n"
+            "\n"
+            "    if unresolved_objectives:\n"
+            f"        prioritized = unresolved_objectives[:{objective_limit}]\n"
+            "        guidance.append(\n"
+            "            \"When facts remain unresolved, end with a short 'still needs confirmation' line for: \"\n"
+            "            + ', '.join(prioritized)\n"
+            "            + '.'\n"
+            "        )\n"
+            f"{follow_up_block}"
+            "    else:\n"
+            "        guidance.append('If chronology or decision-maker precision still feels vague, ask one explicit follow-up prompt before ending.')\n"
+            "\n"
+            "    if any(token in question_lower for token in _CHRONOLOGY_TERMS):\n"
+            "        guidance.append('Close chronology gaps by providing event sequence with dates and response timing, even if approximate.')\n"
+            "    if any(token in question_lower for token in _DECISION_MAKER_TERMS):\n"
+            "        guidance.append('Pin down each decision-maker and role; if uncertain, provide the best known role and source context.')\n"
+            f"{document_block}"
+            f"{phase_focus_block}"
+            "    return '\\n'.join(f'- {item}' for item in guidance)\n"
+        )
+
+    def _apply_merge_seed_with_grounding_policy_to_source(self, source: str, policy: Dict[str, Any]) -> str:
+        updated = str(source)
+        replacements = [
+            (
+                r"for passage in anchor_passages\[:\d+\]:",
+                f"for passage in anchor_passages[:{int(policy.get('anchor_passage_limit', 5))}]:",
+            ),
+            (
+                r"for evidence in \[dict\(item\) for item in list\(merged\.get\(\"hacc_evidence\"\) or \[\]\) if isinstance\(item, dict\)\]\[:\d+\]:",
+                "for evidence in [dict(item) for item in list(merged.get(\"hacc_evidence\") or []) if isinstance(item, dict)]"
+                f"[:{int(policy.get('evidence_item_limit', 8))}]:",
+            ),
+            (
+                r"for answer in blocker_handoff_raw_answers\[:\d+\]:",
+                f"for answer in blocker_handoff_raw_answers[:{int(policy.get('blocker_answer_limit', 6))}]:",
+            ),
+            (
+                r"for objective in prioritized\[:\d+\]:",
+                f"for objective in prioritized[:{int(policy.get('unresolved_objective_limit', 3))}]:",
+            ),
+        ]
+        for pattern, replacement in replacements:
+            updated, count = re.subn(pattern, replacement, updated, count=1)
+            if count != 1:
+                raise ValueError(f"Could not apply merge-seed-with-grounding policy pattern: {pattern}")
+        try:
+            ast.parse(updated)
+        except SyntaxError as exc:
+            raise ValueError(f"Merge-seed-with-grounding policy produced invalid Python: {exc}") from exc
+        return updated
 
     def _extract_symbol_replacements_from_text(
         self,

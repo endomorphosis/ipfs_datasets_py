@@ -304,6 +304,109 @@ def test_generate_optimizations_falls_back_when_session_injection_policy_json_is
     ast.parse(updated)
 
 
+def test_generate_optimizations_falls_back_when_complainant_guidance_policy_json_is_invalid(tmp_path):
+    router = Mock()
+    router.generate.return_value = "not valid json"
+    optimizer = TestDrivenOptimizer(agent_id="td-complainant-guidance-fallback", llm_router=router)
+
+    target = tmp_path / "complainant.py"
+    target.write_text(
+        "from typing import Any, Dict, List\n\n"
+        "_ACTOR_CRITIC_PHASE_FOCUS_ORDER = ['graph_analysis', 'document_generation', 'intake_questioning']\n"
+        "_EMPATHY_HEAVY_STATES = {'distressed'}\n"
+        "_CHRONOLOGY_TERMS = ('when', 'date')\n"
+        "_DECISION_MAKER_TERMS = ('who', 'manager')\n"
+        "_DOCUMENT_ARTIFACT_TERMS = ('document', 'notice')\n\n"
+        "class ComplaintContext:\n"
+        "    def __init__(self, complaint_type='unknown', key_facts=None):\n"
+        "        self.complaint_type = complaint_type\n"
+        "        self.key_facts = key_facts or {}\n"
+        "        self.workflow_phase_priorities = []\n"
+        "        self.blocker_objectives = []\n"
+        "        self.emotional_state = 'distressed'\n\n"
+        "def _ordered_workflow_phases(values, explicit_phase_order=None):\n"
+        "    return explicit_phase_order or list(values or [])\n\n"
+        "def _extract_confirmation_placeholders(_payload):\n"
+        "    return []\n\n"
+        "def _order_objectives_for_actor_critic(values, phase_focus_order=None):\n"
+        "    return list(values or [])\n\n"
+        "def _objective_follow_up_prompt(value):\n"
+        "    return f'Follow up on {value}'\n\n"
+        "class Complainant:\n"
+        "    def __init__(self):\n"
+        "        self.context = ComplaintContext()\n"
+        "    def _build_actor_critic_guidance(self, question: str) -> str:\n"
+        "        return question\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-complainant-guidance-fallback",
+        target_files=[target],
+        description="Optimize complainant guidance policy",
+        constraints={"target_symbols": {str(target.resolve()): ["_build_actor_critic_guidance"]}},
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "still needs confirmation" in updated
+    assert "Phase focus order:" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_falls_back_when_merge_seed_with_grounding_policy_json_is_invalid(tmp_path):
+    router = Mock()
+    router.generate.return_value = "not valid json"
+    optimizer = TestDrivenOptimizer(agent_id="td-merge-seed-fallback", llm_router=router)
+
+    target = tmp_path / "synthesize_hacc_complaint.py"
+    target.write_text(
+        "from typing import Any, Dict, List\n"
+        "import ast\n"
+        "import re\n\n"
+        "def _refresh_seed_source_snippets(seed):\n"
+        "    return dict(seed or {})\n"
+        "def _normalize_intake_objective(value):\n"
+        "    return str(value or '').strip().lower()\n"
+        "def _to_sentence(value):\n"
+        "    return str(value or '').strip()\n"
+        "def _safe_float(value, default=0.0):\n"
+        "    return float(value or default)\n"
+        "INTAKE_OBJECTIVE_PRIORITY = {}\n"
+        "def _merge_seed_with_grounding(seed: Dict[str, Any], grounding_bundle: Dict[str, Any]) -> Dict[str, Any]:\n"
+        "    merged = _refresh_seed_source_snippets(dict(seed or {}))\n"
+        "    key_facts = dict(merged.get('key_facts') or {})\n"
+        "    anchor_passages = [dict(item) for item in list(key_facts.get('anchor_passages') or []) if isinstance(item, dict)]\n"
+        "    for passage in anchor_passages[:4]:\n"
+        "        pass\n"
+        "    for evidence in [dict(item) for item in list(merged.get(\"hacc_evidence\") or []) if isinstance(item, dict)][:6]:\n"
+        "        pass\n"
+        "    blocker_handoff_raw_answers = []\n"
+        "    for answer in blocker_handoff_raw_answers[:8]:\n"
+        "        pass\n"
+        "    prioritized = []\n"
+        "    for objective in prioritized[:4]:\n"
+        "        pass\n"
+        "    return merged\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-merge-seed-fallback",
+        target_files=[target],
+        description="Optimize merge_seed_with_grounding policy",
+        constraints={"target_symbols": {str(target.resolve()): ["_merge_seed_with_grounding"]}},
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "anchor_passages[:5]" in updated
+    assert "hacc_evidence\") or []) if isinstance(item, dict)][:8]" in updated
+    assert "blocker_handoff_raw_answers[:6]" in updated
+    assert "prioritized[:3]" in updated
+    ast.parse(updated)
+
+
 def test_generate_optimizations_falls_back_when_inquiries_policy_json_is_invalid(tmp_path):
     router = Mock()
     router.generate.return_value = "not valid json"
@@ -644,6 +747,85 @@ def test_dependency_readiness_policy_response_normalization_rejects_out_of_range
         )
 
 
+def test_document_workflow_targeting_policy_renderer_preserves_return_contract():
+    optimizer = TestDrivenOptimizer(agent_id="td-document-workflow-targeting", llm_router=Mock())
+
+    rendered = optimizer._render_document_workflow_targeting_from_policy(
+        {
+            "graph_blocker_weight": 0.08,
+            "document_blocker_weight": 0.06,
+            "intake_objective_weight": 0.05,
+            "boost_document_for_notice_chain": True,
+            "preserve_graph_priority_when_factual_pressure_high": True,
+        }
+    )
+
+    assert "def _build_workflow_phase_targeting(" in rendered
+    assert "'graph_analysis': _clamp(" in rendered
+    assert "'document_generation': _clamp(" in rendered
+    assert "'intake_questioning': _clamp(" in rendered
+    assert "self._select_phase_target_section(" in rendered
+    assert "'phase_focus_order': phase_focus_order" in rendered
+    ast.parse(rendered)
+
+
+def test_complainant_guidance_policy_renderer_preserves_return_contract():
+    optimizer = TestDrivenOptimizer(agent_id="td-complainant-guidance", llm_router=Mock())
+
+    rendered = optimizer._render_complainant_guidance_from_policy(
+        {
+            "unresolved_objective_limit": 2,
+            "include_follow_up_prompt_examples": True,
+            "encourage_empathy_opening": True,
+            "include_document_precision_guidance": True,
+            "include_phase_focus_line": True,
+        }
+    )
+
+    assert "def _build_actor_critic_guidance(self, question: str) -> str:" in rendered
+    assert "ComplaintContext(complaint_type='unknown', key_facts={})" in rendered
+    assert "still needs confirmation" in rendered
+    assert "Suggested high-yield follow-up prompts" in rendered
+    assert "Phase focus order:" in rendered
+    ast.parse(rendered)
+
+
+def test_merge_seed_with_grounding_policy_transform_preserves_function_shape():
+    optimizer = TestDrivenOptimizer(agent_id="td-merge-seed-policy", llm_router=Mock())
+    source = (
+        "def _merge_seed_with_grounding(seed, grounding_bundle):\n"
+        "    anchor_passages = []\n"
+        "    for passage in anchor_passages[:4]:\n"
+        "        pass\n"
+        "    merged = {}\n"
+        "    for evidence in [dict(item) for item in list(merged.get(\"hacc_evidence\") or []) if isinstance(item, dict)][:6]:\n"
+        "        pass\n"
+        "    blocker_handoff_raw_answers = []\n"
+        "    for answer in blocker_handoff_raw_answers[:8]:\n"
+        "        pass\n"
+        "    prioritized = []\n"
+        "    for objective in prioritized[:4]:\n"
+        "        pass\n"
+        "    return merged\n"
+    )
+
+    rendered = optimizer._apply_merge_seed_with_grounding_policy_to_source(
+        source,
+        {
+            "anchor_passage_limit": 6,
+            "evidence_item_limit": 7,
+            "blocker_answer_limit": 5,
+            "unresolved_objective_limit": 2,
+        },
+    )
+
+    assert "anchor_passages[:6]" in rendered
+    assert "[:7]:" in rendered
+    assert "blocker_handoff_raw_answers[:5]" in rendered
+    assert "prioritized[:2]" in rendered
+    ast.parse(rendered)
+
+
 def test_standard_intake_policy_renderer_preserves_method_contract():
     optimizer = TestDrivenOptimizer(agent_id="td-standard-intake", llm_router=Mock())
 
@@ -914,4 +1096,50 @@ def test_generate_optimizations_can_use_dependency_readiness_policy_mode(tmp_pat
     assert "deterministic_update_key" in updated
     assert "'weak_claim_gap_count': weak_claim_gap_count" in updated
     assert "'weak_evidence_modalities': sorted(_ACTOR_CRITIC_WEAK_EVIDENCE_MODALITIES)" in updated
+    ast.parse(updated)
+
+
+def test_generate_optimizations_can_use_document_workflow_targeting_policy_mode(tmp_path):
+    router = Mock()
+    router.generate.return_value = """{
+  "graph_blocker_weight": 0.08,
+  "document_blocker_weight": 0.06,
+  "intake_objective_weight": 0.05,
+  "boost_document_for_notice_chain": true,
+  "preserve_graph_priority_when_factual_pressure_high": true
+}"""
+    optimizer = TestDrivenOptimizer(agent_id="td-document-workflow-generate", llm_router=router)
+
+    target = tmp_path / "document_optimization.py"
+    target.write_text(
+        "from typing import Any, Dict\n\n"
+        "def _normalize_intake_objective(value):\n"
+        "    return str(value or '').strip().lower()\n\n"
+        "def _clamp(value, minimum=0.0, maximum=1.0):\n"
+        "    return max(minimum, min(maximum, float(value)))\n\n"
+        "class AgenticDocumentOptimizer:\n"
+        "    WORKFLOW_PHASE_FOCUS_ORDER = ('graph_analysis', 'document_generation', 'intake_questioning')\n\n"
+        "    def _select_phase_target_section(self, *, phase_name, section_scores, unresolved_objectives, chronology_context_active=False):\n"
+        "        return 'factual_allegations'\n\n"
+        "    def _build_workflow_phase_targeting(self, *, section_scores: Dict[str, float], support_context: Dict[str, Any]) -> Dict[str, Any]:\n"
+        "        return {'phase_scores': {}, 'phase_focus_order': [], 'phase_target_sections': {}}\n",
+        encoding="utf-8",
+    )
+    task = OptimizationTask(
+        task_id="task-document-workflow-targeting",
+        target_files=[target],
+        description="Optimize document workflow targeting",
+        constraints={
+            "target_symbols": {
+                str(target.resolve()): ["_build_workflow_phase_targeting"],
+            }
+        },
+    )
+
+    result = optimizer._generate_optimizations(task, analysis={}, baseline={})
+    updated = result[str(target)]
+
+    assert "def _build_workflow_phase_targeting(" in updated
+    assert "'document_generation': _clamp(" in updated
+    assert "self._select_phase_target_section(" in updated
     ast.parse(updated)
