@@ -8820,6 +8820,88 @@ async def test_agentic_discovery_ignores_off_domain_search_hits(monkeypatch: pyt
 
 
 @pytest.mark.anyio
+async def test_agentic_discovery_passes_state_constraints_into_unified_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    keep_url = "https://rules.utah.gov/publications/code-updates/"
+    captured_kwargs: dict[str, object] = {}
+
+    class _FakeLegalWebArchiveSearch:
+        def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
+            pass
+
+        async def _search_archives_multi_domain(self, query: str, domains: list[str], max_results_per_domain: int):
+            return {"results": []}
+
+    class _FakeUnifiedWebArchivingAPI:
+        def __init__(self, scraper=None):
+            self.scraper = scraper
+
+        def search(self, request):
+            return SimpleNamespace(results=[])
+
+        def agentic_discover_and_fetch(self, **kwargs):
+            captured_kwargs.update(kwargs)
+            return {"results": []}
+
+        def fetch(self, request):
+            document = SimpleNamespace(
+                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
+                title="Administrative Code Updates | Office of Administrative Rules",
+                html="",
+                extraction_provenance={"method": "playwright"},
+            )
+            return SimpleNamespace(document=document)
+
+    class _FakeUnifiedWebScraper:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+        async def scrape(self, url: str):
+            return SimpleNamespace(
+                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
+                title="Administrative Code Updates | Office of Administrative Rules",
+                html="",
+                links=[],
+            )
+
+    monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
+    monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [keep_url])
+    monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: True)
+    monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
+    monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
+    monkeypatch.setattr(
+        unified_web_scraper_module,
+        "ScraperMethod",
+        SimpleNamespace(
+            COMMON_CRAWL="common_crawl",
+            WAYBACK_MACHINE="wayback_machine",
+            PLAYWRIGHT="playwright",
+            BEAUTIFULSOUP="beautifulsoup",
+            REQUESTS_ONLY="requests_only",
+        ),
+    )
+
+    await _agentic_discover_admin_state_blocks(
+        states=["UT"],
+        max_candidates_per_state=5,
+        max_fetch_per_state=1,
+        max_results_per_domain=5,
+        max_hops=1,
+        max_pages=1,
+        min_full_text_chars=100,
+        require_substantive_text=True,
+        fetch_concurrency=1,
+    )
+
+    assert captured_kwargs["allowed_hosts"] == sorted(_allowed_discovery_hosts_for_state("UT", "Utah"))
+    assert captured_kwargs["blocked_url_patterns"] == [scraper_module._NON_ADMIN_SOURCE_URL_RE.pattern]
+
+
+@pytest.mark.anyio
 async def test_agentic_discovery_seed_fetch_uses_initialized_max_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
     rule_url = "https://admincode.legislature.state.al.us/administrative-code?number=20-X-2-.01"
 

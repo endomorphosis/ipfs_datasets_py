@@ -516,3 +516,24 @@ def test_unified_api_agentic_discover_and_fetch_uses_search_for_relocated_url() 
     assert "https://old.example.com/code" in visited_urls
     assert "https://new.example.org/indiana/code" in visited_urls
     assert any("old.example.com" in query or "indiana" in query for query in orchestrator.queries)
+
+
+def test_unified_api_agentic_discover_and_fetch_honors_constraints() -> None:
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess(), scraper=FakeScraper())
+
+    result = api.agentic_discover_and_fetch(
+        seed_urls=[
+            "https://allowed.example.com/code",
+            "https://web.archive.org/web/20200101000000/https://law.justia.com/codes/example",
+        ],
+        target_terms=["code"],
+        max_hops=0,
+        max_pages=5,
+        allowed_hosts=["allowed.example.com"],
+        blocked_url_patterns=[r"law\.justia\.com/"],
+    )
+
+    visited_urls = [item["url"] for item in result["results"]]
+
+    assert result["status"] == "success"
+    assert visited_urls == ["https://allowed.example.com/code"]

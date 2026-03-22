@@ -22,6 +22,7 @@ import shlex
 import shutil
 import sys
 import threading
+import traceback
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -4178,55 +4179,65 @@ def _parse_states_arg(value: str) -> List[str]:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
-    states = _parse_states_arg(args.states)
-    daemon = StateLawsAgenticDaemon(
-        StateLawsAgenticDaemonConfig(
-            corpus_key=str(args.corpus),
-            states=states,
-            output_dir=args.output_dir,
-            cycle_interval_seconds=float(args.cycle_interval_seconds),
-            max_cycles=int(args.max_cycles),
-            max_statutes=int(args.max_statutes),
-            explore_probability=float(args.explore_probability),
-            archive_warmup_urls=int(args.archive_warmup_urls),
-            per_state_timeout_seconds=float(args.per_state_timeout_seconds),
-            scrape_timeout_seconds=float(args.scrape_timeout_seconds),
-            router_llm_timeout_seconds=float(args.router_llm_timeout_seconds),
-            router_embeddings_timeout_seconds=float(args.router_embeddings_timeout_seconds),
-            router_ipfs_timeout_seconds=float(args.router_ipfs_timeout_seconds),
-            min_document_recovery_ratio=float(args.min_document_recovery_ratio),
-            admin_agentic_max_candidates_per_state=args.admin_agentic_max_candidates_per_state,
-            admin_agentic_max_fetch_per_state=args.admin_agentic_max_fetch_per_state,
-            admin_agentic_max_results_per_domain=args.admin_agentic_max_results_per_domain,
-            admin_agentic_max_hops=args.admin_agentic_max_hops,
-            admin_agentic_max_pages=args.admin_agentic_max_pages,
-            admin_agentic_fetch_concurrency=args.admin_agentic_fetch_concurrency,
-            admin_parallel_assist_enabled=bool(args.admin_parallel_assist_enabled),
-            admin_parallel_assist_state_limit=int(args.admin_parallel_assist_state_limit),
-            admin_parallel_assist_max_urls_per_domain=int(args.admin_parallel_assist_max_urls_per_domain),
-            admin_parallel_assist_timeout_seconds=float(args.admin_parallel_assist_timeout_seconds),
-            target_score=float(args.target_score),
-            stop_on_target_score=bool(args.stop_on_target_score),
-            random_seed=args.random_seed,
-            post_cycle_release=PostCycleReleaseConfig(
-                enabled=bool(args.post_cycle_release),
-                dry_run=bool(args.post_cycle_release_dry_run),
-                min_score=args.post_cycle_release_min_score,
-                require_passed=not bool(args.post_cycle_release_ignore_pass),
-                timeout_seconds=int(args.post_cycle_release_timeout_seconds),
-                workspace_root=args.post_cycle_release_workspace_root,
-                python_bin=args.post_cycle_release_python_bin,
-                publish_command=args.post_cycle_release_publish_command,
-            ),
+    try:
+        states = _parse_states_arg(args.states)
+        daemon = StateLawsAgenticDaemon(
+            StateLawsAgenticDaemonConfig(
+                corpus_key=str(args.corpus),
+                states=states,
+                output_dir=args.output_dir,
+                cycle_interval_seconds=float(args.cycle_interval_seconds),
+                max_cycles=int(args.max_cycles),
+                max_statutes=int(args.max_statutes),
+                explore_probability=float(args.explore_probability),
+                archive_warmup_urls=int(args.archive_warmup_urls),
+                per_state_timeout_seconds=float(args.per_state_timeout_seconds),
+                scrape_timeout_seconds=float(args.scrape_timeout_seconds),
+                router_llm_timeout_seconds=float(args.router_llm_timeout_seconds),
+                router_embeddings_timeout_seconds=float(args.router_embeddings_timeout_seconds),
+                router_ipfs_timeout_seconds=float(args.router_ipfs_timeout_seconds),
+                min_document_recovery_ratio=float(args.min_document_recovery_ratio),
+                admin_agentic_max_candidates_per_state=args.admin_agentic_max_candidates_per_state,
+                admin_agentic_max_fetch_per_state=args.admin_agentic_max_fetch_per_state,
+                admin_agentic_max_results_per_domain=args.admin_agentic_max_results_per_domain,
+                admin_agentic_max_hops=args.admin_agentic_max_hops,
+                admin_agentic_max_pages=args.admin_agentic_max_pages,
+                admin_agentic_fetch_concurrency=args.admin_agentic_fetch_concurrency,
+                admin_parallel_assist_enabled=bool(args.admin_parallel_assist_enabled),
+                admin_parallel_assist_state_limit=int(args.admin_parallel_assist_state_limit),
+                admin_parallel_assist_max_urls_per_domain=int(args.admin_parallel_assist_max_urls_per_domain),
+                admin_parallel_assist_timeout_seconds=float(args.admin_parallel_assist_timeout_seconds),
+                target_score=float(args.target_score),
+                stop_on_target_score=bool(args.stop_on_target_score),
+                random_seed=args.random_seed,
+                post_cycle_release=PostCycleReleaseConfig(
+                    enabled=bool(args.post_cycle_release),
+                    dry_run=bool(args.post_cycle_release_dry_run),
+                    min_score=args.post_cycle_release_min_score,
+                    require_passed=not bool(args.post_cycle_release_ignore_pass),
+                    timeout_seconds=int(args.post_cycle_release_timeout_seconds),
+                    workspace_root=args.post_cycle_release_workspace_root,
+                    python_bin=args.post_cycle_release_python_bin,
+                    publish_command=args.post_cycle_release_publish_command,
+                ),
+            )
         )
-    )
-    if bool(args.print_post_cycle_release_plan):
-        result = daemon.preview_post_cycle_release_plan(
-            cycle_index=max(1, int(args.post_cycle_release_preview_cycle)),
-            critic_score=args.post_cycle_release_preview_score,
-        )
-    else:
-        result = asyncio.run(daemon.run())
+        if bool(args.print_post_cycle_release_plan):
+            result = daemon.preview_post_cycle_release_plan(
+                cycle_index=max(1, int(args.post_cycle_release_preview_cycle)),
+                critic_score=args.post_cycle_release_preview_score,
+            )
+        else:
+            result = asyncio.run(daemon.run())
+    except Exception as exc:
+        result = {
+            "status": "error",
+            "error": str(exc),
+            "exception_type": type(exc).__name__,
+            "traceback": traceback.format_exc(),
+        }
+        print(json.dumps(result, indent=2), file=sys.stderr)
+        return 1
     print(json.dumps(result, indent=2))
     return 0
 

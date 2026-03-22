@@ -12210,6 +12210,8 @@ async def _agentic_discover_admin_state_blocks(
                                 max_hops=max(0, int(max_hops)),
                                 max_pages=max(1, int(max_pages)),
                                 mode=OperationMode.BALANCED,
+                                allowed_hosts=sorted(allowed_hosts),
+                                blocked_url_patterns=[_NON_ADMIN_SOURCE_URL_RE.pattern],
                             ),
                         ),
                         timeout=max(0.01, min(70.0, remaining_budget_s)),
@@ -13163,6 +13165,8 @@ async def _agentic_discover_admin_state_blocks(
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
+                if time.monotonic() >= preloop_budget_deadline:
+                    break
                 remaining_slots = max_fetch - len(statutes)
                 batch_rule_urls = [
                     rule_url
@@ -13178,6 +13182,8 @@ async def _agentic_discover_admin_state_blocks(
                     per_state_budget_s - (time.monotonic() - state_start),
                 )
                 az_ranked_timeout_s = _arizona_ranked_fetch_timeout_s(az_ranked_remaining_budget_s)
+                if az_ranked_timeout_s <= 0.0:
+                    break
                 az_ranked_tasks = []
                 for rule_url in batch_rule_urls:
                     lower_rule_url = str(rule_url or "").lower()

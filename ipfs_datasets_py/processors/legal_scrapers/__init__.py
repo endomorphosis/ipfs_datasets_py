@@ -20,6 +20,8 @@ New Features:
 - Intelligent search term generation from queries
 """
 
+from importlib import import_module
+
 # Import main scraper modules using relative imports.
 # Federal modules were moved under federal_scrapers/ in some layouts, so
 # keep a fallback for compatibility.
@@ -185,17 +187,6 @@ from .state_laws_scheduler_engine import (
     run_schedule_now,
     enable_disable_schedule,
 )
-from .state_laws_agentic_daemon import (
-    PostCycleReleaseConfig,
-    ScraperTacticProfile,
-    StateLawsAgenticDaemonConfig,
-    StateLawsAgenticDaemon,
-    default_tactic_profiles,
-    run_state_laws_agentic_daemon,
-    run_state_admin_rules_agentic_daemon,
-    run_state_court_rules_agentic_daemon,
-)
-
 # Incremental Updates Engine — delta scraping helpers
 from .incremental_updates_engine import (
     IncrementalUpdateTracker,
@@ -240,6 +231,26 @@ from .search_term_generator import (
     SearchTerm,
     SearchStrategy,
 )
+
+_LAZY_AGENTIC_DAEMON_EXPORTS = {
+    "PostCycleReleaseConfig",
+    "ScraperTacticProfile",
+    "StateLawsAgenticDaemonConfig",
+    "StateLawsAgenticDaemon",
+    "default_tactic_profiles",
+    "run_state_laws_agentic_daemon",
+    "run_state_admin_rules_agentic_daemon",
+    "run_state_court_rules_agentic_daemon",
+}
+
+
+def __getattr__(name: str):
+    if name in _LAZY_AGENTIC_DAEMON_EXPORTS:
+        module = import_module(".state_laws_agentic_daemon", __name__)
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Legal Web Archive Search - Unified search with archiving (NEW)
 try:

@@ -14,7 +14,7 @@ import os
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 from urllib.parse import urlparse
 
 from .contracts import (
@@ -889,6 +889,8 @@ class UnifiedWebArchivingAPI:
         max_hops: int = 2,
         max_pages: int = 10,
         mode: OperationMode = OperationMode.BALANCED,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[str]] = None,
     ) -> Dict[str, Any]:
         """Agentically discover and fetch pages when data location is unknown.
 
@@ -900,6 +902,8 @@ class UnifiedWebArchivingAPI:
         collected: List[Dict[str, Any]] = []
         relocation_searches = 0
         relocation_candidates_added = 0
+        normalized_allowed_hosts = self._normalize_allowed_hosts(allowed_hosts)
+        normalized_blocked_patterns = self._normalize_blocked_url_patterns(blocked_url_patterns)
 
         for _hop in range(max(0, int(max_hops)) + 1):
             if not frontier or len(visited) >= max_pages:
@@ -908,6 +912,12 @@ class UnifiedWebArchivingAPI:
             next_frontier: List[str] = []
             for url in frontier:
                 if url in visited or len(visited) >= max_pages:
+                    continue
+                if not self._url_matches_discovery_constraints(
+                    url,
+                    allowed_hosts=normalized_allowed_hosts,
+                    blocked_url_patterns=normalized_blocked_patterns,
+                ):
                     continue
                 visited.add(url)
 
@@ -922,6 +932,8 @@ class UnifiedWebArchivingAPI:
                         target_terms=target_terms,
                         visited=visited,
                         mode=mode,
+                        allowed_hosts=normalized_allowed_hosts,
+                        blocked_url_patterns=normalized_blocked_patterns,
                     )
                     if relocation_added:
                         relocation_searches += 1
@@ -942,6 +954,12 @@ class UnifiedWebArchivingAPI:
 
                 for item in ranked_same_host[:5]:
                     link_url = str(item.get("url") or "")
+                    if not self._url_matches_discovery_constraints(
+                        link_url,
+                        allowed_hosts=normalized_allowed_hosts,
+                        blocked_url_patterns=normalized_blocked_patterns,
+                    ):
+                        continue
                     if link_url not in next_frontier:
                         next_frontier.append(link_url)
 
@@ -957,6 +975,8 @@ class UnifiedWebArchivingAPI:
                         visited=visited,
                         mode=mode,
                         response=response,
+                        allowed_hosts=normalized_allowed_hosts,
+                        blocked_url_patterns=normalized_blocked_patterns,
                     )
                     if relocation_added:
                         relocation_searches += 1
@@ -981,6 +1001,8 @@ class UnifiedWebArchivingAPI:
         visited: set[str],
         mode: OperationMode,
         response: Optional[UnifiedFetchResponse] = None,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
     ) -> int:
         """Search for likely relocated URLs and queue strong candidates."""
         added = 0
@@ -990,6 +1012,8 @@ class UnifiedWebArchivingAPI:
             mode=mode,
             response=response,
             domain="general",
+            allowed_hosts=allowed_hosts,
+            blocked_url_patterns=blocked_url_patterns,
         )
         for candidate in candidates:
             if candidate in visited or candidate in next_frontier:
@@ -1007,6 +1031,8 @@ class UnifiedWebArchivingAPI:
         response: Optional[UnifiedFetchResponse] = None,
         title_hint: str = "",
         domain: str = "general",
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
     ) -> List[str]:
         """Use configured search engines to find pages that likely replaced a dead URL."""
         candidates: List[str] = []
@@ -1049,6 +1075,12 @@ class UnifiedWebArchivingAPI:
                 candidate_text = str(item.get("text") or "")
                 score = float(item.get("score", 0) or 0)
                 if not self._is_http_url(candidate_url):
+                    continue
+                if not self._url_matches_discovery_constraints(
+                    candidate_url,
+                    allowed_hosts=allowed_hosts,
+                    blocked_url_patterns=blocked_url_patterns,
+                ):
                     continue
                 if candidate_url == source_url or candidate_url in seen_urls:
                     continue
@@ -1202,6 +1234,55 @@ class UnifiedWebArchivingAPI:
         generic = {"www", "gov", "com", "org", "net", "edu", "legis", "law", "laws", "rule", "rules"}
         tokens = {token.lower() for token in re.findall(r"[A-Za-z0-9]+", host or "") if token}
         return {token for token in tokens if token not in generic}
+
+    @staticmethod
+    def _normalize_allowed_hosts(allowed_hosts: Optional[Sequence[str]]) -> List[str]:
+        normalized: List[str] = []
+        for host in list(allowed_hosts or []):
+            value = str(host or "").strip().lower().strip(".")
+            if value and value not in normalized:
+                normalized.append(value)
+        return normalized
+
+    @staticmethod
+    def _normalize_blocked_url_patterns(blocked_url_patterns: Optional[Sequence[str]]) -> List[re.Pattern[str]]:
+        compiled: List[re.Pattern[str]] = []
+        for pattern in list(blocked_url_patterns or []):
+            value = str(pattern or "").strip()
+            if not value:
+                continue
+            try:
+                compiled.append(re.compile(value, re.IGNORECASE))
+            except re.error:
+                logger.debug("Ignoring invalid discovery block pattern: %s", value)
+        return compiled
+
+    def _url_matches_discovery_constraints(
+        self,
+        url: str,
+        *,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
+    ) -> bool:
+        if not self._is_http_url(url):
+            return False
+        value = str(url or "").strip()
+        host = urlparse(value).netloc.lower().strip(".")
+        if not host:
+            return False
+
+        normalized_allowed_hosts = self._normalize_allowed_hosts(allowed_hosts)
+        if normalized_allowed_hosts and not any(
+            host == allowed or host.endswith(f".{allowed}")
+            for allowed in normalized_allowed_hosts
+        ):
+            return False
+
+        for pattern in list(blocked_url_patterns or []):
+            if pattern.search(value):
+                return False
+
+        return True
 
     def _get_scraper(self) -> Any:
         if self.scraper is not None:
