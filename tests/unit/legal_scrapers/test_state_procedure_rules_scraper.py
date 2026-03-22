@@ -1211,6 +1211,87 @@ def test_extract_indiana_rule_links_and_rule_page() -> None:
     assert "civil nature" in statute.full_text
 
 
+def test_extract_illinois_rule_links_and_text() -> None:
+    list_html = """
+    <html><body>
+      <table id="ctl04_gvRules">
+        <tr><th>Article</th><th>Rule #</th><th>Rule Title</th></tr>
+        <tr>
+          <td><span>II</span></td>
+          <td><span>Rule 101</span></td>
+          <td>
+            <a href="/resources/abc/file">Summons and Original Process--Form and Issuance</a>
+            <div class="notes"><span>Amended Apr. 20, 2023, eff. immediately</span></div>
+          </td>
+        </tr>
+        <tr>
+          <td><span>IV</span></td>
+          <td><span>Rule 401</span></td>
+          <td><a href="/resources/def/file">Waiver of Counsel</a></td>
+        </tr>
+      </table>
+    </body></html>
+    """
+
+    links = procedure_module._extract_illinois_rule_links(
+        list_html,
+        page_url="https://www.illinoiscourts.gov/rules/supreme-court-rules?a=ii",
+        article_code="II",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Ill. S. Ct. R.",
+    )
+
+    assert links == [
+        {
+            "section_number": "101",
+            "section_name": "Summons and Original Process--Form and Issuance",
+            "url": "https://www.illinoiscourts.gov/resources/abc/file",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Ill. S. Ct. R.",
+        }
+    ]
+
+    text = """
+    Rule 101. Summons and Original Process--Form and Issuance
+    (a) General. The summons shall be issued under the seal of the court.
+    Amended Apr. 20, 2023, eff. immediately.
+    Committee Comments
+    This should not be included.
+    """
+
+    statute = procedure_module._extract_illinois_rule_from_text(
+        text,
+        source_url="https://www.illinoiscourts.gov/resources/abc/file",
+        title_name="Illinois Supreme Court Rules - Civil Proceedings in the Trial Court",
+        section_number="101",
+        official_cite_prefix="Ill. S. Ct. R.",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "101"
+    assert statute.section_name == "Summons and Original Process--Form and Issuance"
+    assert statute.official_cite == "Ill. S. Ct. R. 101"
+    assert statute.structured_data["effective_date"] == "immediately"
+    assert "seal of the court" in statute.full_text
+    assert "This should not be included" not in statute.full_text
+
+
+@pytest.mark.anyio
+async def test_scrape_illinois_court_rules_supplement_preserves_article_family() -> None:
+    rules, _analytics = await procedure_module._scrape_illinois_court_rules_supplement(
+        max_rules=3
+    )
+
+    assert len(rules) == 3
+    assert rules[2]["section_number"] == "102.1"
+    assert rules[2]["procedure_family"] == "civil_procedure"
+    assert rules[2]["structured_data"]["procedure_family"] == "civil_procedure"
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -4049,6 +4130,96 @@ async def test_scrape_state_procedure_rules_adds_indiana_supplement(
     assert result["data"][0]["statutes"][0]["section_number"] == "1"
     assert result["metadata"]["fetch_analytics_by_state"]["IN"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["IN"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_illinois_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "IL",
+                    "state_name": "Illinois",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "IL": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_il_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "IL",
+                    "state_name": "Illinois",
+                    "statute_id": "Ill. S. Ct. R. 101",
+                    "section_number": "101",
+                    "section_name": "Summons and Original Process--Form and Issuance",
+                    "full_text": "Rule 101. Summons and Original Process--Form and Issuance. The summons shall be issued under the seal of the court." + (" x" * 120),
+                    "source_url": "https://www.illinoiscourts.gov/resources/abc/file#rule-101",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "IL-civ-101",
+                            "name": "Summons and Original Process--Form and Issuance",
+                            "sectionNumber": "101",
+                            "sectionName": "Summons and Original Process--Form and Issuance",
+                            "text": "Rule 101. Summons and Original Process--Form and Issuance. The summons shall be issued under the seal of the court." + (" x" * 120),
+                            "sourceUrl": "https://www.illinoiscourts.gov/resources/abc/file#rule-101",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_illinois_court_rules_supplement",
+        _fake_il_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["IL"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "101"
+    assert result["metadata"]["fetch_analytics_by_state"]["IL"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["IL"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

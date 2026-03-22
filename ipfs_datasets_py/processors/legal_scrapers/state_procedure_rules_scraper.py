@@ -593,6 +593,30 @@ _IN_RULE_SET_PAGES: List[Dict[str, str]] = [
 _IN_RULE_LINK_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+)?)\.\s+(.+?)$", re.IGNORECASE)
 _IN_RULE_HEADING_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+)?)\.\s+(.+?)$", re.IGNORECASE)
 _IN_EFFECTIVE_DATE_RE = re.compile(r"Effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_IL_RULE_SET_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "Illinois Supreme Court Rules - Civil Proceedings in the Trial Court",
+        "url": "https://www.illinoiscourts.gov/rules/supreme-court-rules?a=ii",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Ill. S. Ct. R.",
+        "article_code": "II",
+    },
+    {
+        "title_name": "Illinois Supreme Court Rules - Criminal Proceedings in the Trial Court",
+        "url": "https://www.illinoiscourts.gov/rules/supreme-court-rules?a=iv",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Ill. S. Ct. R.",
+        "article_code": "IV",
+    },
+]
+_IL_RULE_NUMBER_RE = re.compile(r"^Rule(?:s)?\s+([0-9]+(?:\.[0-9]+)?[A-Za-z]?)$", re.IGNORECASE)
+_IL_PDF_HEADING_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+)?[A-Za-z]?)\.\s+(.+)$", re.IGNORECASE)
+_IL_EFFECTIVE_DATE_RE = re.compile(
+    r"(?:effective|eff\.)\s+([A-Za-z]+\s+\d{1,2},\s+\d{4}|immediately)",
+    re.IGNORECASE,
+)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -982,6 +1006,17 @@ class _VirginiaProcedureRulesSupplementFetcher(BaseStateScraper):
 class _IndianaProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://rules.incourts.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _IllinoisProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.illinoiscourts.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -4550,6 +4585,122 @@ def _extract_indiana_rule_from_html(
     )
 
 
+def _extract_illinois_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    article_code: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    table = soup.find("table", id="ctl04_gvRules")
+    if table is None:
+        return []
+
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for row in table.find_all("tr")[1:]:
+        cells = row.find_all("td")
+        if len(cells) < 3:
+            continue
+        article = " ".join(cells[0].get_text(" ", strip=True).split())
+        if article.upper() != article_code.upper():
+            continue
+        rule_label = " ".join(cells[1].get_text(" ", strip=True).split())
+        match = _IL_RULE_NUMBER_RE.match(rule_label)
+        if not match:
+            continue
+        section_number = match.group(1).strip()
+        link = cells[2].find("a", href=True)
+        if link is None:
+            continue
+        href = str(link.get("href") or "").strip()
+        title = " ".join(link.get_text(" ", strip=True).split()).rstrip(".")
+        if not href or not title:
+            continue
+        absolute_url = urljoin(page_url, href)
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": section_number,
+                "section_name": title,
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+    return discovered
+
+
+def _extract_illinois_rule_from_text(
+    text: str,
+    *,
+    source_url: str,
+    title_name: str,
+    section_number: str,
+    official_cite_prefix: str,
+    procedure_family: str,
+    legal_area: str,
+) -> Optional[NormalizedStatute]:
+    normalized = "\n".join(" ".join(line.split()) for line in str(text or "").splitlines() if line.strip())
+    heading_match = None
+    for line in normalized.splitlines()[:10]:
+        match = _IL_PDF_HEADING_RE.match(line.strip())
+        if match:
+            heading_match = match
+            break
+    if heading_match is None:
+        return None
+    if heading_match.group(1).strip() != section_number:
+        return None
+
+    section_name = heading_match.group(2).strip().rstrip(".")
+    full_text = normalized
+    stop_markers = ["Committee Comments", "Committee Commentary", "Adopted "]
+    positions = [full_text.find(marker) for marker in stop_markers if full_text.find(marker) > 0]
+    if positions:
+        full_text = full_text[: min(positions)].strip()
+    if len(full_text) < 40:
+        return None
+
+    effective_date = None
+    for match in _IL_EFFECTIVE_DATE_RE.finditer(normalized):
+        effective_date = " ".join(match.group(1).split())
+
+    return NormalizedStatute(
+        state_code="IL",
+        state_name=US_STATES["IL"],
+        statute_id=f"{official_cite_prefix} {section_number}",
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{source_url}#rule-{section_number}",
+        official_cite=f"{official_cite_prefix} {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_date,
+            "source_kind": "illinois_rule_pdf",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -5125,8 +5276,11 @@ async def _scrape_california_court_rules_supplement(
                 continue
 
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            family = str(rule["procedure_family"])
             enriched["procedure_family"] = family
+            structured_data = enriched.get("structured_data")
+            if isinstance(structured_data, dict):
+                structured_data["procedure_family"] = family
             supplemental_rules.append(enriched)
             existing_urls.add(rule_key)
             remaining = None if remaining is None else remaining - 1
@@ -5344,8 +5498,11 @@ async def _scrape_washington_court_rules_supplement(
                 continue
 
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            family = str(rule["procedure_family"])
             enriched["procedure_family"] = family
+            structured_data = enriched.get("structured_data")
+            if isinstance(structured_data, dict):
+                structured_data["procedure_family"] = family
             supplemental_rules.append(enriched)
             existing_urls.add(source_url.lower())
             remaining = None if remaining is None else remaining - 1
@@ -5711,8 +5868,7 @@ async def _scrape_idaho_court_rules_supplement(
                 continue
 
             enriched = fetcher._enrich_statute_structure(statute).to_dict()
-            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
-            enriched["procedure_family"] = family
+            enriched["procedure_family"] = str(rule["procedure_family"])
             supplemental_rules.append(enriched)
             existing_urls.add(rule_url.lower())
             remaining = None if remaining is None else remaining - 1
@@ -7165,6 +7321,100 @@ async def _scrape_indiana_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_illinois_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _IllinoisProcedureRulesSupplementFetcher("IL", US_STATES["IL"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for rule_set in _IL_RULE_SET_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+        list_url = str(rule_set["url"])
+        list_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            list_url,
+            validator=lambda html: len(
+                _extract_illinois_rule_links(
+                    html,
+                    page_url=list_url,
+                    article_code=str(rule_set["article_code"]),
+                    procedure_family=str(rule_set["procedure_family"]),
+                    legal_area=str(rule_set["legal_area"]),
+                    official_cite_prefix=str(rule_set["official_cite_prefix"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not list_html:
+            continue
+
+        rule_links = _extract_illinois_rule_links(
+            list_html,
+            page_url=list_url,
+            article_code=str(rule_set["article_code"]),
+            procedure_family=str(rule_set["procedure_family"]),
+            legal_area=str(rule_set["legal_area"]),
+            official_cite_prefix=str(rule_set["official_cite_prefix"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(fetcher, rule_url)
+            if not raw_bytes:
+                continue
+            try:
+                from pypdf import PdfReader
+
+                reader = PdfReader(BytesIO(raw_bytes))
+                text = "\n".join(str(page.extract_text() or "") for page in reader.pages)
+            except Exception:
+                extracted = await fetcher._extract_text_from_document_bytes(
+                    source_url=rule_url,
+                    raw_bytes=raw_bytes,
+                )
+                if not isinstance(extracted, dict):
+                    continue
+                text = str(extracted.get("text") or "")
+
+            statute = _extract_illinois_rule_from_text(
+                text,
+                source_url=rule_url,
+                title_name=str(rule_set["title_name"]),
+                section_number=str(rule["section_number"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+            )
+            if statute is None:
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            structured_data = enriched.get("structured_data")
+            if isinstance(structured_data, dict):
+                structured_data["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -7801,6 +8051,28 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if in_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = in_fetch_analytics
+
+            if state_code == "IL":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                il_supplement, il_fetch_analytics = await _scrape_illinois_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if il_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(il_supplement)
+                    for rule in il_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if il_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = il_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]
