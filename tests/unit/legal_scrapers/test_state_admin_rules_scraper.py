@@ -8278,6 +8278,15 @@ def test_score_candidate_url_rejects_known_non_admin_sources() -> None:
     assert scraper_module._score_candidate_url(official_url) > 0
 
 
+def test_non_admin_url_regex_rejects_justia_q_and_a_pages() -> None:
+    assert scraper_module._NON_ADMIN_SOURCE_URL_RE.search(
+        "https://law.justia.com/question/2025/10/12/can-legal-action-be-taken-for-harassment-1079244"
+    )
+    assert scraper_module._NON_ADMIN_SOURCE_URL_RE.search(
+        "https://law.justia.com/about-legal-answers#faq-atty"
+    )
+
+
 def test_score_candidate_url_prioritizes_south_dakota_rule_pages_over_index() -> None:
     section_score = scraper_module._score_candidate_url(
         "https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx?Rule=20:48:03:01"
@@ -11443,6 +11452,7 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
     for call in scrape_calls:
         assert call["per_state_retry_attempts"] == 0
         assert call["retry_zero_statute_states"] is False
+        assert call["allow_justia_fallback"] is False
         assert call["per_state_timeout_seconds"] == expected_delegated_timeout
     assert result["metadata"]["per_state_retry_attempts"] == 3
     assert result["metadata"]["state_laws_internal_retry_attempts"] == 0

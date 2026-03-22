@@ -183,6 +183,7 @@ async def scrape_state_laws(
     rate_limit_delay: float = 2.0,
     max_statutes: Optional[int] = None,
     use_state_specific_scrapers: bool = True,
+    allow_justia_fallback: bool = True,
     output_dir: Optional[str] = None,
     write_jsonld: bool = True,
     strict_full_text: bool = False,
@@ -208,6 +209,7 @@ async def scrape_state_laws(
         rate_limit_delay: Delay between requests in seconds (default 2.0, higher for state sites)
         max_statutes: Maximum number of statutes to scrape
         use_state_specific_scrapers: Use state-specific scrapers (True) or fallback to Justia (False)
+        allow_justia_fallback: Whether empty/failed state-specific runs may fall back to Justia
     
     Returns:
         Dict containing:
@@ -357,7 +359,7 @@ async def scrape_state_laws(
                 use_state_specific_scrapers = False
         
         # Fallback to Justia-based scraping if state-specific scrapers are disabled or failed
-        if not use_state_specific_scrapers or not scraped_statutes:
+        if allow_justia_fallback and (not use_state_specific_scrapers or not scraped_statutes):
             logger.info("Using Justia fallback scraper")
             
             # State code sources mapping - using Justia as a reliable aggregator

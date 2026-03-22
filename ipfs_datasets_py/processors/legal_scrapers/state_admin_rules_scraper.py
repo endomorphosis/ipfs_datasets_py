@@ -1051,7 +1051,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "GA", "ID", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -2626,6 +2626,10 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return True
     if host == "www.ilga.gov" and re.search(r"^/commission/jcar/admincode/\d+/[\w.-]+\.html$", path, re.IGNORECASE):
         return True
+    if host == "www.sos.ks.gov" and normalized_path.lower() == "/publications/pubs_kar_regs.aspx":
+        kar_value = str((parse_qs(parsed.query or "").get("KAR") or [""])[0]).strip()
+        if re.fullmatch(r"\d{1,3}-\d{1,3}-\d+[A-Za-z-]*", kar_value):
+            return True
     if host == "govt.westlaw.com" and normalized_path.lower().startswith("/calregs/document/"):
         return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
@@ -10428,6 +10432,76 @@ async def _discover_georgia_rule_document_urls(*, seed_urls: List[str], limit: i
     return discovered_urls
 
 
+async def _discover_kansas_rule_document_urls(*, seed_urls: List[str], live_scraper: Any, limit: int = 8) -> List[str]:
+    discovered_urls: List[str] = []
+    seen_document_keys: set[str] = set()
+    seen_listing_keys: set[str] = set()
+    listing_urls: List[str] = []
+
+    def _record_document(url: str) -> bool:
+        key = _url_key(url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(url)
+        return len(discovered_urls) >= max(1, int(limit))
+
+    def _record_listing(url: str) -> None:
+        key = _url_key(url)
+        if not key or key in seen_listing_keys:
+            return
+        seen_listing_keys.add(key)
+        listing_urls.append(url)
+
+    root_url = "https://www.sos.ks.gov/publications/pubs_kar.aspx"
+    for seed_url in seed_urls:
+        seed_value = str(seed_url or "").strip()
+        parsed = urlparse(seed_value)
+        if parsed.netloc.lower() != "www.sos.ks.gov":
+            continue
+        normalized_path = (parsed.path or "").lower()
+        if normalized_path == "/publications/pubs_kar.aspx":
+            root_url = seed_value
+            continue
+        if normalized_path != "/publications/pubs_kar_regs.aspx":
+            continue
+        kar_value = str((parse_qs(parsed.query or "").get("KAR") or [""])[0]).strip()
+        if re.fullmatch(r"\d{1,3}(?:-\d{1,3})?", kar_value):
+            _record_listing(seed_value)
+
+    try:
+        root_scraped = await asyncio.wait_for(live_scraper.scrape(root_url), timeout=15.0)
+    except Exception:
+        root_scraped = None
+    root_text = str(getattr(root_scraped, "text", "") or "")
+    for agency_number in re.findall(r"(?m)^\s*(\d{1,3})\s*-\s+[^\n]+$", root_text):
+        _record_listing(
+            f"https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR={quote(str(agency_number))}&Srch=Y"
+        )
+        if len(listing_urls) >= min(max(max(1, int(limit)) * 2, 8), 16):
+            break
+
+    max_listing_urls = min(len(listing_urls), max(max(1, int(limit)) * 2, 8))
+    for listing_url in listing_urls[:max_listing_urls]:
+        try:
+            listing_scraped = await asyncio.wait_for(live_scraper.scrape(listing_url), timeout=15.0)
+        except Exception:
+            continue
+        listing_text = str(getattr(listing_scraped, "text", "") or "")
+        for match in re.finditer(r"(\d{1,3}-\d{1,3}-\d+[A-Za-z-]*)\.\s+([^\n]+)", listing_text):
+            rule_number = str(match.group(1) or "").strip()
+            rule_title = str(match.group(2) or "").strip()
+            if not rule_number:
+                continue
+            if rule_title.lower().startswith("revoked"):
+                continue
+            detail_url = f"https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR={quote(rule_number)}&Srch=Y"
+            if _record_document(detail_url):
+                return discovered_urls
+
+    return discovered_urls
+
+
 async def _discover_idaho_rule_document_urls(*, seed_urls: List[str], live_scraper: Any, limit: int = 8) -> List[str]:
     discovered_urls: List[str] = []
     seen_document_keys: set[str] = set()
@@ -11586,6 +11660,7 @@ async def _agentic_discover_admin_state_blocks(
         california_bootstrap_document_urls: List[str] = []
         new_hampshire_bootstrap_document_urls: List[str] = []
         georgia_bootstrap_document_urls: List[str] = []
+        kansas_bootstrap_document_urls: List[str] = []
         idaho_bootstrap_document_urls: List[str] = []
         if state_code == "AL" and not seeded_direct_detail_urls:
             try:
@@ -11951,6 +12026,23 @@ async def _agentic_discover_admin_state_blocks(
             if georgia_bootstrap_document_urls:
                 source_breakdown["georgia_gac_bootstrap"] = len(georgia_bootstrap_document_urls)
 
+        if state_code == "KS" and not seeded_direct_detail_urls:
+            try:
+                kansas_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_kansas_rule_document_urls(
+                        seed_urls=ordered_seed_urls,
+                        live_scraper=live_scraper,
+                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                    ),
+                    timeout=25.0,
+                )
+            except Exception:
+                kansas_bootstrap_document_urls = []
+            for document_url in kansas_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if kansas_bootstrap_document_urls:
+                source_breakdown["kansas_kar_bootstrap"] = len(kansas_bootstrap_document_urls)
+
         if state_code == "ID" and not seeded_direct_detail_urls:
             try:
                 idaho_bootstrap_document_urls = await asyncio.wait_for(
@@ -11989,6 +12081,7 @@ async def _agentic_discover_admin_state_blocks(
             or california_bootstrap_document_urls
             or new_hampshire_bootstrap_document_urls
             or georgia_bootstrap_document_urls
+            or kansas_bootstrap_document_urls
             or idaho_bootstrap_document_urls
         ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
@@ -12170,7 +12263,7 @@ async def _agentic_discover_admin_state_blocks(
                     if not isinstance(row, dict):
                         continue
                     url = str(row.get("url") or "").strip()
-                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                    if not url or _NON_ADMIN_SOURCE_URL_RE.search(url) or not _url_allowed_for_state(url, allowed_hosts):
                         continue
                     candidate_urls.append(url)
                     source_breakdown["archives"] = int(source_breakdown.get("archives", 0)) + 1
@@ -12196,7 +12289,7 @@ async def _agentic_discover_admin_state_blocks(
                     unified_search = SimpleNamespace(results=[])
                 for hit in getattr(unified_search, "results", []) or []:
                     url = str(getattr(hit, "url", "") or "").strip()
-                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                    if not url or _NON_ADMIN_SOURCE_URL_RE.search(url) or not _url_allowed_for_state(url, allowed_hosts):
                         continue
                     candidate_urls.append(url)
                     source_breakdown["search"] = int(source_breakdown.get("search", 0)) + 1
@@ -12232,7 +12325,7 @@ async def _agentic_discover_admin_state_blocks(
                         url = str(document.get("url") or fetch_row.get("url") or "").strip()
                     else:
                         url = str(fetch_row.get("url") or "").strip()
-                    if not url or not _url_allowed_for_state(url, allowed_hosts):
+                    if not url or _NON_ADMIN_SOURCE_URL_RE.search(url) or not _url_allowed_for_state(url, allowed_hosts):
                         continue
                     candidate_urls.append(url)
                     source_breakdown["agentic_discovery"] = int(source_breakdown.get("agentic_discovery", 0)) + 1
@@ -12779,6 +12872,23 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_iowa_seed_rule_urls) >= min(max_fetch, 8):
                     break
 
+        prioritized_kansas_seed_rule_urls: List[str] = []
+        if state_code == "KS" and kansas_bootstrap_document_urls:
+            seen_kansas_rule_keys: set[str] = set()
+            for rule_url in kansas_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_kansas_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_kansas_rule_keys.add(rule_key)
+                prioritized_kansas_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_kansas_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                    break
+
         for rule_url in prioritized_california_bootstrap_document_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -13041,6 +13151,59 @@ async def _agentic_discover_admin_state_blocks(
                     if len(statutes) >= max_fetch:
                         break
 
+        if state_code == "KS" and prioritized_kansas_seed_rule_urls:
+            kansas_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(prioritized_kansas_seed_rule_urls), kansas_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = prioritized_kansas_seed_rule_urls[
+                    batch_start : batch_start + min(kansas_batch_size, remaining_slots)
+                ]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                kansas_timeout_s = max(
+                    1.0,
+                    min(12.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                kansas_results = await asyncio.gather(
+                    *[
+                        asyncio.wait_for(
+                            live_scraper.scrape(rule_url),
+                            timeout=kansas_timeout_s,
+                        )
+                        for rule_url in batch_rule_urls
+                    ],
+                    return_exceptions=True,
+                )
+
+                for rule_url, kansas_scraped in zip(batch_rule_urls, kansas_results):
+                    if isinstance(kansas_scraped, Exception) or kansas_scraped is None:
+                        continue
+
+                    kansas_text = str(getattr(kansas_scraped, "text", "") or "").strip()
+                    kansas_title = str(getattr(kansas_scraped, "title", "") or "").strip()
+                    kansas_provenance = getattr(kansas_scraped, "extraction_provenance", None) or {}
+                    kansas_method_value = None
+                    if isinstance(kansas_provenance, dict):
+                        kansas_method_value = kansas_provenance.get("method")
+                    if kansas_method_value is None:
+                        kansas_method_value = getattr(kansas_scraped, "method_used", None)
+                    await _append_document_if_rule(
+                        rule_url,
+                        kansas_title,
+                        kansas_text,
+                        kansas_method_value,
+                        source_phase="kansas_bootstrap_batch",
+                    )
+                    if len(statutes) >= max_fetch:
+                        break
+
         utah_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
         for batch_start in range(0, len(prioritized_utah_seed_rule_urls), utah_batch_size):
             if len(statutes) >= max_fetch:
@@ -13101,6 +13264,13 @@ async def _agentic_discover_admin_state_blocks(
             and len(statutes) > 0
             and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_iowa_seed_rule_urls)
         )
+
+        kansas_official_bootstrap_recovered_rules = (
+            state_code == "KS"
+            and bool(prioritized_kansas_seed_rule_urls)
+            and len(statutes) > 0
+            and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_kansas_seed_rule_urls)
+        )
         ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
         if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
@@ -13117,6 +13287,10 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "IA" and prioritized_iowa_seed_rule_urls:
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
                 url for url in prioritized_iowa_seed_rule_urls if _url_key(url)
+            }
+        if state_code == "KS" and prioritized_kansas_seed_rule_urls:
+            ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
+                url for url in prioritized_kansas_seed_rule_urls if _url_key(url)
             }
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
@@ -14370,7 +14544,7 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         max_candidates = max(1, int(max_candidates_per_state))
-        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
+        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules or kansas_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
             ranked_urls=ranked_urls,
             seed_expansion_candidates=seed_expansion_candidates,
             max_candidates=max_candidates,
@@ -15085,6 +15259,7 @@ async def scrape_state_admin_rules(
                 include_metadata=include_metadata,
                 rate_limit_delay=rate_limit_delay,
                 max_statutes=effective_max_base_statutes,
+                allow_justia_fallback=False,
                 output_dir=None,  # Keep separate admin-rules output root.
                 write_jsonld=False,
                 strict_full_text=strict_full_text,
@@ -15136,6 +15311,7 @@ async def scrape_state_admin_rules(
                     include_metadata=include_metadata,
                     rate_limit_delay=rate_limit_delay,
                     max_statutes=effective_max_base_statutes,
+                    allow_justia_fallback=False,
                     output_dir=None,
                     write_jsonld=False,
                     strict_full_text=strict_full_text,
