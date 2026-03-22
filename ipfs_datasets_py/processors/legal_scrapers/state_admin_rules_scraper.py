@@ -99,11 +99,13 @@ _NON_ADMIN_CODE_NAME_RE = re.compile(
 
 _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
+    r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/uniform-commercial-code-ucc/(?:|$)|"
     r"(?:^|https?://)(?:[^/]+\.)?justia\.com/|(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/https?://(?:[^/]+\.)?justia\.com/|"
     r"(?:^|https?://)(?:www\.)?uscode\.house\.gov/|(?:^|https?://)(?:www\.)?ecfr\.gov/|"
     r"(?:^|https?://)(?:www\.)?coloradosos\.gov/pubs/elections/Initiatives/titleBoard/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.state\.co\.us/CCR/auth/loginHome\.do(?:\?|$)|"
+    r"(?:^|https?://)(?:www\.)?ark\.org/arec_renewals(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
     r"(?:^|https?://)(?:www\.)?iga\.in\.gov/static-documents/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|"
@@ -124,7 +126,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
 )
 
 _BAD_DISCOVERY_DOMAIN_RE = re.compile(
-    r"(^|\.)(city-data\.com|legalclarity\.org|texashuntingforum\.com|montanaheritagecommission\.mt\.gov|wikipedia\.org|britannica\.com|ballotpedia\.org|zhihu\.com|pemfprofessionals\.com)$",
+    r"(^|\.)(city-data\.com|legalclarity\.org|texashuntingforum\.com|montanaheritagecommission\.mt\.gov|wikipedia\.org|britannica\.com|ballotpedia\.org|zhihu\.com|pemfprofessionals\.com|superuser\.com)$",
     re.IGNORECASE,
 )
 
@@ -11015,10 +11017,15 @@ async def _discover_maryland_rule_document_urls(*, seed_urls: List[str], limit: 
             for link_url in _fetch_links(page_url):
                 path = urlparse(link_url).path or ""
                 dot_count = path.rstrip("/").split("/")[-1].count(".") if path else 0
-                if _MD_COMAR_DETAIL_PATH_RE.search(path) and dot_count >= 3:
-                    if _record(link_url):
-                        return discovered_urls
-                    continue
+                if _MD_COMAR_DETAIL_PATH_RE.search(path):
+                    if dot_count >= 3:
+                        if _record(link_url):
+                            return discovered_urls
+                        continue
+                    if dot_count == 2:
+                        _record_fallback(link_url)
+                        next_frontier.append(link_url)
+                        continue
                 if _MD_COMAR_INVENTORY_PATH_RE.search(path):
                     if dot_count >= 2:
                         _record_fallback(link_url)
@@ -13405,6 +13412,8 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_maryland_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
                     break
 
+        official_bootstrap_rule_hit = False
+
         prioritized_maine_seed_rule_urls: List[str] = []
         if state_code == "ME" and maine_bootstrap_document_urls:
             seen_maine_rule_keys: set[str] = set()
@@ -13610,7 +13619,10 @@ async def _agentic_discover_admin_state_blocks(
                 )
                 maryland_results = await asyncio.gather(
                     *[
-                        asyncio.wait_for(live_scraper.scrape(rule_url), timeout=maryland_timeout_s)
+                        asyncio.wait_for(
+                            _scrape_maryland_comar_detail_url(rule_url) or live_scraper.scrape(rule_url),
+                            timeout=maryland_timeout_s,
+                        )
                         for rule_url in batch_rule_urls
                     ],
                     return_exceptions=True,
@@ -13628,7 +13640,14 @@ async def _agentic_discover_admin_state_blocks(
                         maryland_method_value = maryland_provenance.get("method")
                     if maryland_method_value is None:
                         maryland_method_value = getattr(maryland_scraped, "method_used", None)
-                    await _append_document_if_rule(rule_url, maryland_title, maryland_text, maryland_method_value)
+                    accepted_maryland_bootstrap = await _append_document_if_rule(
+                        rule_url,
+                        maryland_title,
+                        maryland_text,
+                        maryland_method_value,
+                        source_phase="bootstrap_batch",
+                    )
+                    official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_maryland_bootstrap)
                     if len(statutes) >= max_fetch:
                         break
 
@@ -13676,9 +13695,19 @@ async def _agentic_discover_admin_state_blocks(
                         maine_method_value = maine_provenance.get("method")
                     if maine_method_value is None:
                         maine_method_value = getattr(maine_scraped, "method_used", None)
-                    await _append_document_if_rule(rule_url, maine_title, maine_text, maine_method_value)
+                    accepted_maine_bootstrap = await _append_document_if_rule(
+                        rule_url,
+                        maine_title,
+                        maine_text,
+                        maine_method_value,
+                        source_phase="bootstrap_batch",
+                    )
+                    official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_maine_bootstrap)
                     if len(statutes) >= max_fetch:
                         break
+
+        if state_code in {"MD", "ME"} and official_bootstrap_rule_hit and statutes:
+            max_fetch = len(statutes)
 
         if state_code == "LA" and prioritized_louisiana_seed_rule_urls:
             louisiana_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
@@ -15245,9 +15274,18 @@ async def _agentic_discover_admin_state_blocks(
             candidate_key = _url_key(candidate_url)
             if not candidate_key or candidate_key in seen_urls or candidate_key in pending_candidate_keys:
                 return False
+            if _NON_ADMIN_SOURCE_URL_RE.search(candidate_url):
+                return False
+            if not _url_allowed_for_state(candidate_url, allowed_hosts):
+                return False
+            normalized_score = int(candidate_score)
+            if normalized_score <= 0:
+                normalized_score = _score_candidate_url(candidate_url)
+            if normalized_score <= 0:
+                return False
             if state_code == "MT" and montana_bootstrap_document_urls and _is_montana_inventory_candidate_url(candidate_url):
                 return False
-            pending.append((candidate_url, int(candidate_score)))
+            pending.append((candidate_url, int(normalized_score)))
             pending_candidate_keys.add(candidate_key)
             return True
 

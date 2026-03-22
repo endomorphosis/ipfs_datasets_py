@@ -24,6 +24,12 @@ def test_score_candidate_url_rejects_colorado_non_rule_pages() -> None:
     assert _score_candidate_url("https://www.sos.state.co.us/CCR/auth/loginHome.do") < 0
 
 
+def test_score_candidate_url_rejects_superuser_and_arkansas_noise() -> None:
+    assert _score_candidate_url("https://superuser.com/questions/60006/what-is-the-purpose-of-the-www-subdomain") < 0
+    assert _score_candidate_url("https://www.ark.org/arec_renewals/index.php/search/view/SA00099755") < 0
+    assert _score_candidate_url("https://www.sos.arkansas.gov/business-commercial-services-bcs/") < 0
+
+
 def test_colorado_doc_list_is_inventory_not_substantive() -> None:
     text = """
     Code of Colorado Regulations

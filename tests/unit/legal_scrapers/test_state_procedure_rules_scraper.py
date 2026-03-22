@@ -1184,6 +1184,43 @@ def test_extract_georgia_rules_from_page_texts() -> None:
     assert "speedy, efficient and inexpensive resolution" in statutes[0].full_text
 
 
+def test_extract_pennsylvania_rules_from_html() -> None:
+    html = """
+    <html><body>
+      <h1>Chapter 1. Scope of Rules</h1>
+      <p>Rule 100.</p>
+      <p>Scope of Rules.</p>
+      <p>(A) These rules shall govern criminal proceedings in all courts.</p>
+      <p>Comment</p>
+      <p>This should not be included.</p>
+      <p>Rule 101.</p>
+      <p>Purpose, Application, and Construction of Rules.</p>
+      <p>(a) Purpose. These rules are intended to provide for the just determination of every criminal proceeding.</p>
+      <p>Official Note</p>
+      <p>This also should not be included.</p>
+    </body></html>
+    """
+
+    statutes = procedure_module._extract_pennsylvania_rules_from_html(
+        html,
+        source_url="https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/234/chapter1/chap1toc.html&d=reduce",
+        title_name="Pennsylvania Rules of Criminal Procedure",
+        procedure_family="criminal_procedure",
+        legal_area="criminal_procedure",
+        official_cite_prefix="Pa.R.Crim.P.",
+        first_rule_number="100",
+        current_as_of="January 3, 2026",
+    )
+
+    assert len(statutes) == 2
+    assert statutes[0].section_number == "100"
+    assert statutes[0].section_name == "Scope of Rules"
+    assert statutes[0].official_cite == "Pa.R.Crim.P. 100"
+    assert statutes[0].structured_data["current_as_of"] == "January 3, 2026"
+    assert "criminal proceedings in all courts" in statutes[0].full_text
+    assert "This should not be included" not in statutes[0].full_text
+
+
 def test_extract_indiana_rule_links_and_rule_page() -> None:
     list_html = """
     <html><body>
@@ -4356,6 +4393,97 @@ async def test_scrape_state_procedure_rules_adds_georgia_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_and_criminal_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["GA"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["GA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_pennsylvania_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "PA",
+                    "state_name": "Pennsylvania",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "PA": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_pa_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "PA",
+                    "state_name": "Pennsylvania",
+                    "statute_id": "Pa.R.Crim.P. 100",
+                    "section_number": "100",
+                    "section_name": "Scope of Rules",
+                    "full_text": "Rule 100. Scope of Rules. These rules shall govern criminal proceedings in all courts." + (" x" * 120),
+                    "source_url": "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/234/chapter1/chap1toc.html&d=reduce#rule-100",
+                    "procedure_family": "criminal_procedure",
+                    "structured_data": {
+                        "procedure_family": "criminal_procedure",
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "PA-crim-100",
+                            "name": "Scope of Rules",
+                            "sectionNumber": "100",
+                            "text": "Rule 100. Scope of Rules. These rules shall govern criminal proceedings in all courts." + (" x" * 120),
+                            "sourceUrl": "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/234/chapter1/chap1toc.html&d=reduce#rule-100",
+                        },
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_pennsylvania_court_rules_supplement",
+        _fake_pa_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["PA"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "100"
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "criminal_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["PA"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["PA"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

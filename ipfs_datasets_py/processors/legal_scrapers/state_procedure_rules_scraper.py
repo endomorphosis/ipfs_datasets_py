@@ -639,6 +639,28 @@ _GA_RULE_DOCUMENTS: List[Dict[str, str]] = [
 ]
 _GA_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)*)\.\s*(.+?)\s*$", re.IGNORECASE)
 _GA_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_PA_RULE_CHAPTER_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "Pennsylvania Rules of Civil Procedure",
+        "url": "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/231/chapter100/chap100toc.html&d=reduce",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Pa.R.Civ.P.",
+        "first_rule_number": "51",
+        "current_as_of": "January 3, 2026",
+    },
+    {
+        "title_name": "Pennsylvania Rules of Criminal Procedure",
+        "url": "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/234/chapter1/chap1toc.html&d=reduce",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Pa.R.Crim.P.",
+        "first_rule_number": "100",
+        "current_as_of": "January 3, 2026",
+    },
+]
+_PA_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)*)\.\s*(.+?)\s*$", re.IGNORECASE)
+_PA_SOURCE_RE = re.compile(r"^Source\s*$", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -1050,6 +1072,17 @@ class _IllinoisProcedureRulesSupplementFetcher(BaseStateScraper):
 class _GeorgiaProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.gasupreme.us"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _PennsylvaniaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.pacodeandbulletin.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -4845,6 +4878,124 @@ def _extract_georgia_rules_from_page_texts(
     return statutes[: max_rules or None]
 
 
+def _extract_pennsylvania_rules_from_html(
+    html_text: str,
+    *,
+    source_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    first_rule_number: str,
+    current_as_of: Optional[str] = None,
+    max_rules: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    lines = [
+        " ".join(line.split())
+        for line in soup.get_text("\n", strip=True).splitlines()
+    ]
+    lines = [line for line in lines if line]
+
+    statutes: List[NormalizedStatute] = []
+    collecting = False
+    current_number: Optional[str] = None
+    current_name: Optional[str] = None
+    buffer: List[str] = []
+    pending_number: Optional[str] = None
+
+    def flush() -> None:
+        nonlocal current_number, current_name, buffer
+        if not current_number or not current_name:
+            current_number = None
+            current_name = None
+            buffer = []
+            return
+        full_text = "\n".join(buffer).strip()
+        if len(full_text) < 40:
+            current_number = None
+            current_name = None
+            buffer = []
+            return
+        statutes.append(
+            NormalizedStatute(
+                state_code="PA",
+                state_name=US_STATES["PA"],
+                statute_id=f"{official_cite_prefix} {current_number}",
+                code_name=title_name,
+                title_name=title_name,
+                chapter_name=title_name,
+                section_number=current_number,
+                section_name=current_name,
+                short_title=current_name,
+                full_text=full_text,
+                summary=current_name,
+                source_url=f"{source_url}#rule-{current_number}",
+                official_cite=f"{official_cite_prefix} {current_number}",
+                legal_area=legal_area,
+                structured_data={
+                    "current_as_of": current_as_of,
+                    "source_kind": "pennsylvania_rules_html",
+                    "procedure_family": procedure_family,
+                },
+            )
+        )
+        current_number = None
+        current_name = None
+        buffer = []
+
+    for line in lines:
+        if pending_number is not None:
+            flush()
+            current_number = pending_number
+            current_name = line.strip().rstrip(".")
+            buffer = [f"Rule {current_number}. {current_name}"]
+            pending_number = None
+            if max_rules and len(statutes) >= int(max_rules):
+                break
+            continue
+        heading = _PA_RULE_HEADING_RE.match(line)
+        if not collecting:
+            if heading and heading.group(1).strip() == first_rule_number:
+                collecting = True
+            elif re.fullmatch(r"Rule\s+%s\.\s*" % re.escape(first_rule_number), line, re.IGNORECASE):
+                collecting = True
+            else:
+                continue
+        if heading:
+            flush()
+            current_number = heading.group(1).strip()
+            current_name = heading.group(2).strip().rstrip(".")
+            buffer = [f"Rule {current_number}. {current_name}"]
+            if max_rules and len(statutes) >= int(max_rules):
+                break
+            continue
+        split_heading = re.fullmatch(r"Rule\s+(\d+(?:\.\d+)*)\.\s*", line, re.IGNORECASE)
+        if split_heading:
+            pending_number = split_heading.group(1).strip()
+            continue
+        if current_number is None:
+            continue
+        if line in {"Comment", "Official Note"} or _PA_SOURCE_RE.match(line):
+            flush()
+            if max_rules and len(statutes) >= int(max_rules):
+                break
+            continue
+        if line.startswith("Title 231") or line.startswith("Title 234") or line.startswith("Chapter "):
+            continue
+        if line == "Rule":
+            continue
+        buffer.append(line)
+
+    flush()
+    return statutes[: max_rules or None]
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -7625,6 +7776,74 @@ async def _scrape_georgia_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_pennsylvania_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _PennsylvaniaProcedureRulesSupplementFetcher("PA", US_STATES["PA"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for chapter in _PA_RULE_CHAPTER_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+        chapter_url = str(chapter["url"])
+        chapter_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            chapter_url,
+            validator=lambda html: len(
+                _extract_pennsylvania_rules_from_html(
+                    html,
+                    source_url=chapter_url,
+                    title_name=str(chapter["title_name"]),
+                    procedure_family=str(chapter["procedure_family"]),
+                    legal_area=str(chapter["legal_area"]),
+                    official_cite_prefix=str(chapter["official_cite_prefix"]),
+                    first_rule_number=str(chapter["first_rule_number"]),
+                    current_as_of=str(chapter["current_as_of"]),
+                    max_rules=1,
+                )
+            )
+            > 0,
+            timeout_seconds=180,
+        )
+        if not chapter_html:
+            continue
+        statutes = _extract_pennsylvania_rules_from_html(
+            chapter_html,
+            source_url=chapter_url,
+            title_name=str(chapter["title_name"]),
+            procedure_family=str(chapter["procedure_family"]),
+            legal_area=str(chapter["legal_area"]),
+            official_cite_prefix=str(chapter["official_cite_prefix"]),
+            first_rule_number=str(chapter["first_rule_number"]),
+            current_as_of=str(chapter["current_as_of"]),
+            max_rules=remaining,
+        )
+        for statute in statutes:
+            if remaining is not None and remaining <= 0:
+                break
+            source_key = str(statute.source_url or "").strip().lower()
+            if source_key in existing_urls:
+                continue
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = str(statute.structured_data.get("procedure_family") or "").strip()
+            if not family:
+                continue
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(source_key)
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -8305,6 +8524,28 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if ga_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = ga_fetch_analytics
+
+            if state_code == "PA":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                pa_supplement, pa_fetch_analytics = await _scrape_pennsylvania_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if pa_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(pa_supplement)
+                    for rule in pa_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if pa_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = pa_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]
