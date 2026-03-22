@@ -1068,6 +1068,77 @@ def test_extract_tennessee_rule_links_and_rule_page() -> None:
     assert "This should not be included" not in statute.full_text
 
 
+def test_extract_virginia_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            182,
+            """
+            RULES OF SUPREME COURT OF VIRGINIA
+            PART THREE
+            PRACTICE AND PROCEDURE IN CIVIL ACTIONS
+            Rule 3:1.  Scope.
+            There is one form of civil case, known as a civil action.
+            Last amended by Order dated November 23, 2020; effective March 1, 2021.
+            Rule 3:2.  Commencement of Civil Actions.
+            A civil action is commenced by filing a complaint in the clerk's office.
+            """,
+        ),
+        (
+            214,
+            """
+            RULES OF SUPREME COURT OF VIRGINIA
+            PART THREE A
+            CRIMINAL PRACTICE AND PROCEDURE
+            Rule 3A:1.  Scope.
+            These Rules govern criminal proceedings in circuit courts.
+            Last amended by Order dated November 23, 2020; effective March 1, 2021.
+            Rule 3A:2.  Purpose and Interpretation; Definitions.
+            These Rules are intended to provide for the just determination of criminal proceedings.
+            """,
+        ),
+        (
+            282,
+            """
+            RULES OF SUPREME COURT OF VIRGINIA
+            PART THREE B
+            TRAFFIC INFRACTIONS AND UNIFORM FINE SCHEDULE
+            Rule 3B:1. Purpose.
+            """,
+        ),
+    ]
+
+    civil_rules = procedure_module._extract_virginia_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.vacourts.gov/courts/scv/rulesofcourt.pdf",
+        title_name="Rules of Supreme Court of Virginia - Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Va. Sup. Ct. R.",
+        rule_prefix="3:",
+    )
+    criminal_rules = procedure_module._extract_virginia_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.vacourts.gov/courts/scv/rulesofcourt.pdf",
+        title_name="Rules of Supreme Court of Virginia - Criminal Procedure",
+        procedure_family="criminal_procedure",
+        legal_area="criminal_procedure",
+        official_cite_prefix="Va. Sup. Ct. R.",
+        rule_prefix="3A:",
+    )
+
+    assert len(civil_rules) == 2
+    assert civil_rules[0].section_number == "3:1"
+    assert civil_rules[0].section_name == "Scope"
+    assert civil_rules[0].structured_data["effective_date"] == "March 1, 2021"
+    assert "civil action" in civil_rules[0].full_text
+
+    assert len(criminal_rules) == 2
+    assert criminal_rules[0].section_number == "3A:1"
+    assert criminal_rules[0].section_name == "Scope"
+    assert criminal_rules[0].structured_data["effective_date"] == "March 1, 2021"
+    assert "criminal proceedings" in criminal_rules[0].full_text
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>

@@ -556,6 +556,24 @@ _TN_RULE_HEADING_RE = re.compile(
     re.IGNORECASE,
 )
 _TN_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_VA_RULES_PDF_URL = "https://www.vacourts.gov/courts/scv/rulesofcourt.pdf"
+_VA_RULE_SOURCES: List[Dict[str, str]] = [
+    {
+        "title_name": "Rules of Supreme Court of Virginia - Civil Procedure",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Va. Sup. Ct. R.",
+        "rule_prefix": "3:",
+    },
+    {
+        "title_name": "Rules of Supreme Court of Virginia - Criminal Procedure",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Va. Sup. Ct. R.",
+        "rule_prefix": "3A:",
+    },
+]
+_VA_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -923,6 +941,17 @@ class _AlabamaProcedureRulesSupplementFetcher(BaseStateScraper):
 class _TennesseeProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.tncourts.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _VirginiaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.vacourts.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -4239,6 +4268,121 @@ def _extract_tennessee_rule_from_html(
     )
 
 
+def _extract_virginia_rules_from_page_texts(
+    page_texts: List[tuple[int, str]],
+    *,
+    source_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    rule_prefix: str,
+    max_rules: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    prefix_pattern = re.escape(rule_prefix)
+    heading_re = re.compile(
+        rf"^Rule\s+({prefix_pattern}\d+(?:\.\d+)?[A-Za-z]?)\.\s+(.+?)\.?$",
+        re.IGNORECASE,
+    )
+    skip_exact = {
+        "RULES OF SUPREME COURT OF VIRGINIA",
+        "RULES OF THE SUPREME COURT OF VIRGINIA",
+        "PRACTICE AND PROCEDURE IN CIVIL ACTIONS",
+        "CRIMINAL PRACTICE AND PROCEDURE",
+        "PART THREE",
+        "PART THREE A",
+    }
+    stop_markers = ("PART THREE B", "PART FOUR")
+    statutes: List[NormalizedStatute] = []
+    seen = set()
+    current_number = ""
+    current_name = ""
+    current_page = 0
+    buffer: List[str] = []
+
+    def flush() -> None:
+        nonlocal current_number, current_name, current_page, buffer
+        if not current_number or not current_name:
+            current_number = ""
+            current_name = ""
+            current_page = 0
+            buffer = []
+            return
+
+        full_text = "\n".join(buffer).strip()
+        if len(full_text) < 50:
+            current_number = ""
+            current_name = ""
+            current_page = 0
+            buffer = []
+            return
+
+        effective_date = None
+        for match in _VA_EFFECTIVE_DATE_RE.finditer(full_text):
+            effective_date = " ".join(match.group(1).split())
+
+        key = (current_number.lower(), current_name.lower())
+        if key not in seen:
+            seen.add(key)
+            statutes.append(
+                NormalizedStatute(
+                    state_code="VA",
+                    state_name=US_STATES["VA"],
+                    statute_id=f"{official_cite_prefix} {current_number}",
+                    code_name=title_name,
+                    title_name=title_name,
+                    chapter_name=title_name,
+                    section_number=current_number,
+                    section_name=current_name,
+                    short_title=current_name,
+                    full_text=full_text,
+                    summary=current_name,
+                    source_url=f"{source_url}#page={current_page}",
+                    official_cite=f"{official_cite_prefix} {current_number}",
+                    legal_area=legal_area,
+                    structured_data={
+                        "effective_date": effective_date,
+                        "source_kind": "virginia_rules_pdf",
+                        "procedure_family": procedure_family,
+                    },
+                )
+            )
+
+        current_number = ""
+        current_name = ""
+        current_page = 0
+        buffer = []
+
+    for page_number, page_text in page_texts:
+        for raw_line in str(page_text or "").splitlines():
+            line = " ".join(raw_line.replace("\x00", " ").split())
+            if not line:
+                continue
+            if any(marker in line for marker in stop_markers):
+                flush()
+                return statutes[: max_rules or None]
+            heading_match = heading_re.match(line)
+            if heading_match:
+                flush()
+                current_number = heading_match.group(1).strip()
+                current_name = heading_match.group(2).strip().rstrip(".")
+                current_page = page_number
+                buffer = [f"Rule {current_number}. {current_name}."]
+                continue
+            if not current_number:
+                continue
+            if line in skip_exact:
+                continue
+            if line.isdigit():
+                continue
+            buffer.append(line)
+        if max_rules and len(statutes) >= int(max_rules):
+            break
+
+    flush()
+    return statutes[: max_rules or None]
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -6697,6 +6841,65 @@ async def _scrape_tennessee_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_virginia_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _VirginiaProcedureRulesSupplementFetcher("VA", US_STATES["VA"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    supplemental_rules: List[Dict[str, Any]] = []
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+
+    raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(
+        fetcher,
+        _VA_RULES_PDF_URL,
+        timeout_seconds=240,
+    )
+    if not raw_bytes:
+        return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+    reader = PdfReader(BytesIO(raw_bytes))
+    page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+
+    for source in _VA_RULE_SOURCES:
+        if remaining is not None and remaining <= 0:
+            break
+        statutes = _extract_virginia_rules_from_page_texts(
+            page_texts,
+            source_url=_VA_RULES_PDF_URL,
+            title_name=str(source["title_name"]),
+            procedure_family=str(source["procedure_family"]),
+            legal_area=str(source["legal_area"]),
+            official_cite_prefix=str(source["official_cite_prefix"]),
+            rule_prefix=str(source["rule_prefix"]),
+            max_rules=remaining,
+        )
+        for statute in statutes:
+            if remaining is not None and remaining <= 0:
+                break
+            source_key = str(statute.source_url or "").strip().lower()
+            if source_key in existing_urls:
+                continue
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(source["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(source_key)
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -7289,6 +7492,28 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if tn_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = tn_fetch_analytics
+
+            if state_code == "VA":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                va_supplement, va_fetch_analytics = await _scrape_virginia_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if va_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(va_supplement)
+                    for rule in va_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if va_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = va_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]
