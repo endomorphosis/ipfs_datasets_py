@@ -1139,6 +1139,78 @@ def test_extract_virginia_rules_from_page_texts() -> None:
     assert "criminal proceedings" in criminal_rules[0].full_text
 
 
+def test_extract_indiana_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <div id="mc-main-content">
+        <p>The rules published here are current as of February 2, 2026.</p>
+        <a href="rule1/current.htm">Rule 1. Scope of the rules</a>
+        <a href="rule4-1/current.htm">Rule 4.1. Summons: Service on individuals</a>
+      </div>
+    </body></html>
+    """
+
+    links, current_as_of = procedure_module._extract_indiana_rule_links(
+        list_html,
+        page_url="https://rules.incourts.gov/Content/trial/default.htm",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Ind. Trial Rule",
+    )
+
+    assert current_as_of == "February 2, 2026"
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "Scope of the rules",
+            "url": "https://rules.incourts.gov/Content/trial/rule1/current.htm",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Ind. Trial Rule",
+        },
+        {
+            "section_number": "4.1",
+            "section_name": "Summons: Service on individuals",
+            "url": "https://rules.incourts.gov/Content/trial/rule4-1/current.htm",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Ind. Trial Rule",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <div id="mc-main-content">
+        <p class="ruleset">Indiana Rules of Trial Procedure</p>
+        <h1>Rule 1. Scope of the rules</h1>
+        <p class="effective">Effective January 1, 2026</p>
+        <p>Except as otherwise provided, these rules govern the procedure and practice in all courts of the state of Indiana in all suits of a civil nature.</p>
+        <div id="history">
+          <h2>Version History</h2>
+        </div>
+      </div>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_indiana_rule_from_html(
+        rule_html,
+        rule_url="https://rules.incourts.gov/Content/trial/rule1/current.htm",
+        title_name="Indiana Rules of Trial Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Ind. Trial Rule",
+        current_as_of="February 2, 2026",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "Scope of the rules"
+    assert statute.official_cite == "Ind. Trial Rule 1"
+    assert statute.structured_data["effective_date"] == "January 1, 2026"
+    assert statute.structured_data["current_as_of"] == "February 2, 2026"
+    assert "civil nature" in statute.full_text
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -3887,6 +3959,96 @@ async def test_scrape_state_procedure_rules_adds_virginia_supplement(
     assert result["data"][0]["statutes"][0]["section_number"] == "3:1"
     assert result["metadata"]["fetch_analytics_by_state"]["VA"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["VA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_indiana_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "IN",
+                    "state_name": "Indiana",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "IN": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_in_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "IN",
+                    "state_name": "Indiana",
+                    "statute_id": "Ind. Trial Rule 1",
+                    "section_number": "1",
+                    "section_name": "Scope of the rules",
+                    "full_text": "Rule 1. Scope of the rules. These rules govern the procedure and practice in all courts of the state of Indiana in all suits of a civil nature." + (" x" * 120),
+                    "source_url": "https://rules.incourts.gov/Content/trial/rule1/current.htm#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "IN-civ-1",
+                            "name": "Scope of the rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of the rules",
+                            "text": "Rule 1. Scope of the rules. These rules govern the procedure and practice in all courts of the state of Indiana in all suits of a civil nature." + (" x" * 120),
+                            "sourceUrl": "https://rules.incourts.gov/Content/trial/rule1/current.htm#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_indiana_court_rules_supplement",
+        _fake_in_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["IN"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "1"
+    assert result["metadata"]["fetch_analytics_by_state"]["IN"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["IN"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

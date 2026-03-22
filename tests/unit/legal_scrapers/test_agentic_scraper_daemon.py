@@ -2442,11 +2442,11 @@ async def test_state_admin_rules_agentic_daemon_detects_document_gaps_and_recomm
         "timed_out": False,
     }
     assert "document_recovery_stalled" in critic["state_action_plan"]["AZ"]["reasons"]
-    assert "AZ administrative code pdf" in critic["query_hints"]
-    assert "AZ administrative code rtf" in critic["query_hints"]
-    assert "AZ administrative rules site:apps.azsos.gov" in critic["query_hints"]
-    assert "AZ site:apps.azsos.gov filetype:pdf" in critic["query_hints"]
-    assert "AZ site:apps.azsos.gov filetype:rtf" in critic["query_hints"]
+    assert "AZ administrative code pdf" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ administrative code rtf" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ administrative rules site:apps.azsos.gov" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ site:apps.azsos.gov filetype:pdf" in critic["state_action_plan"]["AZ"]["query_hints"]
+    assert "AZ site:apps.azsos.gov filetype:rtf" in critic["state_action_plan"]["AZ"]["query_hints"]
     assert document_gap_report["states_with_candidate_document_gaps"] == ["AZ"]
     assert document_gap_report["states_with_artifact_candidates"] == ["AZ"]
     assert document_gap_report["states"]["AZ"]["candidate_document_format_counts"] == {"pdf": 1, "rtf": 1}
@@ -3165,7 +3165,7 @@ async def test_state_admin_rules_agentic_daemon_router_timeout_does_not_block_cy
 
     assert summary["status"] == "success"
     assert summary["latest_cycle"]["router_assist"]["status"] == "completed"
-    assert summary["latest_cycle"]["router_assist"]["llm_review"]["status"] == "error"
+    assert summary["latest_cycle"]["router_assist"]["llm_review"]["status"] == "unavailable"
     assert "timed out" in summary["latest_cycle"]["router_assist"]["llm_review"]["error"]
     assert (tmp_path / "cycles" / "cycle_0001.json").exists()
 

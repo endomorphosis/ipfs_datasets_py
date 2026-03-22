@@ -574,6 +574,25 @@ _VA_RULE_SOURCES: List[Dict[str, str]] = [
     },
 ]
 _VA_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_IN_RULE_SET_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "Indiana Rules of Trial Procedure",
+        "url": "https://rules.incourts.gov/Content/trial/default.htm",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Ind. Trial Rule",
+    },
+    {
+        "title_name": "Indiana Rules of Criminal Procedure",
+        "url": "https://rules.incourts.gov/Content/criminal/default.htm",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Ind. Crim. Rule",
+    },
+]
+_IN_RULE_LINK_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+)?)\.\s+(.+?)$", re.IGNORECASE)
+_IN_RULE_HEADING_RE = re.compile(r"^Rule\s+([0-9]+(?:\.[0-9]+)?)\.\s+(.+?)$", re.IGNORECASE)
+_IN_EFFECTIVE_DATE_RE = re.compile(r"Effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -952,6 +971,17 @@ class _TennesseeProcedureRulesSupplementFetcher(BaseStateScraper):
 class _VirginiaProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.vacourts.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _IndianaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://rules.incourts.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -4383,6 +4413,143 @@ def _extract_virginia_rules_from_page_texts(
     return statutes[: max_rules or None]
 
 
+def _extract_indiana_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> tuple[List[Dict[str, str]], Optional[str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return [], None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    content = soup.select_one("#mc-main-content") or soup
+    current_as_of = None
+    page_text = " ".join(content.get_text(" ", strip=True).split())
+    match = re.search(r"Updated,\s+Effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", page_text, re.IGNORECASE)
+    if match is None:
+        match = re.search(r"current\s+as\s+of\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", page_text, re.IGNORECASE)
+    if match:
+        current_as_of = " ".join(match.group(1).split())
+
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for anchor in content.select("a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        if not href or "current.htm" not in href.lower() or not label.startswith("Rule "):
+            continue
+        match = _IN_RULE_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": match.group(1).strip(),
+                "section_name": match.group(2).strip().rstrip("."),
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+
+    return discovered, current_as_of
+
+
+def _extract_indiana_rule_from_html(
+    html_text: str,
+    *,
+    rule_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    current_as_of: Optional[str] = None,
+) -> Optional[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    content = soup.select_one("#mc-main-content") or soup
+    heading_node = content.find("h1")
+    heading = " ".join((heading_node.get_text(" ", strip=True) if heading_node else "").split())
+    heading_match = _IN_RULE_HEADING_RE.match(heading)
+    if not heading_match:
+        return None
+
+    section_number = heading_match.group(1).strip()
+    section_name = heading_match.group(2).strip().rstrip(".")
+    effective_date = None
+    body_lines: List[str] = [f"Rule {section_number}. {section_name}"]
+
+    effective_node = content.select_one("p.effective")
+    if effective_node is not None:
+        effective_text = " ".join(effective_node.get_text(" ", strip=True).split())
+        match = _IN_EFFECTIVE_DATE_RE.search(effective_text)
+        if match:
+            effective_date = " ".join(match.group(1).split())
+
+    for node in content.find_all(["p", "ol", "ul", "table"], recursive=False):
+        if node is effective_node:
+            continue
+        if getattr(node, "get", None) and str(node.get("id") or "").strip().lower() == "history":
+            break
+        text = " ".join(node.get_text(" ", strip=True).split())
+        if not text:
+            continue
+        if text == heading:
+            continue
+        if text.startswith("Version History"):
+            break
+        body_lines.append(text)
+
+    history = content.find(id="history")
+    if history is not None and len(body_lines) == 1:
+        for sibling in history.find_previous_siblings():
+            text = " ".join(sibling.get_text(" ", strip=True).split())
+            if not text or text == heading:
+                continue
+            body_lines.insert(1, text)
+
+    full_text = "\n".join(body_lines).strip()
+    if len(full_text) < 40:
+        return None
+
+    return NormalizedStatute(
+        state_code="IN",
+        state_name=US_STATES["IN"],
+        statute_id=f"{official_cite_prefix} {section_number}",
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{rule_url}#rule-{section_number}",
+        official_cite=f"{official_cite_prefix} {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_date,
+            "current_as_of": current_as_of,
+            "source_kind": "indiana_rules_html",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -6900,6 +7067,104 @@ async def _scrape_virginia_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_indiana_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _IndianaProcedureRulesSupplementFetcher("IN", US_STATES["IN"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for rule_set in _IN_RULE_SET_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        list_url = str(rule_set["url"])
+        list_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            list_url,
+            validator=lambda html: len(
+                _extract_indiana_rule_links(
+                    html,
+                    page_url=list_url,
+                    procedure_family=str(rule_set["procedure_family"]),
+                    legal_area=str(rule_set["legal_area"]),
+                    official_cite_prefix=str(rule_set["official_cite_prefix"]),
+                )[0]
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not list_html:
+            continue
+
+        rule_links, current_as_of = _extract_indiana_rule_links(
+            list_html,
+            page_url=list_url,
+            procedure_family=str(rule_set["procedure_family"]),
+            legal_area=str(rule_set["legal_area"]),
+            official_cite_prefix=str(rule_set["official_cite_prefix"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            rule_html = await _fetch_html_with_direct_fallback(
+                fetcher,
+                rule_url,
+                validator=lambda html: (
+                    lambda statute: statute is not None
+                    and str(statute.section_number or "").strip() == str(rule["section_number"])
+                )(
+                    _extract_indiana_rule_from_html(
+                        html,
+                        rule_url=rule_url,
+                        title_name=str(rule_set["title_name"]),
+                        procedure_family=str(rule["procedure_family"]),
+                        legal_area=str(rule["legal_area"]),
+                        official_cite_prefix=str(rule["official_cite_prefix"]),
+                        current_as_of=current_as_of,
+                    )
+                ),
+                timeout_seconds=120,
+            )
+            if not rule_html:
+                continue
+
+            statute = _extract_indiana_rule_from_html(
+                rule_html,
+                rule_url=rule_url,
+                title_name=str(rule_set["title_name"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+                current_as_of=current_as_of,
+            )
+            if statute is None:
+                continue
+            if str(statute.section_number or "").strip() != str(rule["section_number"]):
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -7514,6 +7779,28 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if va_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = va_fetch_analytics
+
+            if state_code == "IN":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                in_supplement, in_fetch_analytics = await _scrape_indiana_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if in_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(in_supplement)
+                    for rule in in_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if in_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = in_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]
