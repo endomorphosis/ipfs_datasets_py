@@ -1025,6 +1025,54 @@ class TestSessionManagement:
         
         assert result == expected_result, f"expected {expected_result}, got {result}"
 
+    def test_proxy_sends_cookie_header_on_subsequent_requests(self, proxy_configuration):
+        """
+        Tests: proxy._prepare_headers(), proxy.get()
+
+        GIVEN a proxy configuration with maintain_session=True
+        WHEN a Set-Cookie header is received on the first response
+        THEN subsequent requests include a Cookie header with the stored value
+        """
+        import anyio
+        proxy_url = "http://proxy1.example.com:8080"
+        cookie_value = "abc123"
+        expected_cookie = f"session_id={cookie_value}"
+        test_urls = ["https://library.municode.com", "https://library.municode.com/wa/seattle"]
+
+        async def run_test():
+            proxy_manager = proxy_configuration(proxy_url=proxy_url, maintain_session=True)
+            proxy_manager._set_cookie = cookie_value
+            await proxy_manager.get(test_urls[0])
+            await proxy_manager.get(test_urls[1])
+            return proxy_manager._request_headers.get("Cookie")
+
+        result = anyio.run(run_test())
+
+        assert result == expected_cookie, f"expected Cookie header '{expected_cookie}', got '{result}'"
+
+    def test_proxy_extracts_cookie_from_set_cookie_response_header(self, proxy_configuration):
+        """
+        Tests: proxy._maybe_set_or_send_cookie()
+
+        GIVEN a proxy configuration with maintain_session=True
+        WHEN the first response includes a Set-Cookie header
+        THEN the cookie is stored internally and available for subsequent requests
+        """
+        import anyio
+        proxy_url = "http://proxy1.example.com:8080"
+        cookie_value = "xyz789"
+        expected_stored = f"session_id={cookie_value}"
+
+        async def run_test():
+            proxy_manager = proxy_configuration(proxy_url=proxy_url, maintain_session=True)
+            proxy_manager._set_cookie = cookie_value
+            await proxy_manager.get("https://library.municode.com")
+            return proxy_manager._cookie
+
+        result = anyio.run(run_test())
+
+        assert result == expected_stored, f"expected stored cookie '{expected_stored}', got '{result}'"
+
 
 
 class TestRateLimiting:
@@ -1285,6 +1333,45 @@ class TestStatisticsAndMonitoring:
         result = anyio.run(run())
         
         assert result["per_proxy_stats"][proxy_to_check]["requests"] == expected_count, f"expected {expected_count}, got {result['per_proxy_stats'][proxy_to_check]['requests']}"
+
+    def test_proxy_tracks_avg_response_time(self, proxy_configuration):
+        """
+        Tests: proxy.get_statistics()
+
+        GIVEN a proxy configuration
+        WHEN I call execute_request 3 times with proxy_url "http://proxy1.example.com:8080" and get_statistics
+        THEN the statistics show a non-negative avg_response_time based on recorded elapsed times
+        """
+        import anyio
+        proxy_url = "http://proxy1.example.com:8080"
+        url = "https://library.municode.com"
+        proxy_instance = proxy_configuration(proxy_url=proxy_url)
+
+        async def run():
+            for _ in range(3):
+                await proxy_instance.get(url)
+            return proxy_instance.get_statistics()
+
+        result = anyio.run(run())
+
+        assert "avg_response_time" in result, "expected avg_response_time key in statistics"
+        assert isinstance(result["avg_response_time"], float), "expected avg_response_time to be a float"
+        assert result["avg_response_time"] >= 0.0, f"expected non-negative avg_response_time, got {result['avg_response_time']}"
+
+    def test_proxy_avg_response_time_zero_with_no_requests(self, proxy_configuration):
+        """
+        Tests: proxy.get_statistics()
+
+        GIVEN a proxy configuration with no requests made
+        WHEN I call get_statistics
+        THEN the statistics show avg_response_time of 0.0
+        """
+        proxy_url = "http://proxy1.example.com:8080"
+        proxy_instance = proxy_configuration(proxy_url=proxy_url)
+
+        result = proxy_instance.get_statistics()
+
+        assert result["avg_response_time"] == 0.0, f"expected 0.0, got {result['avg_response_time']}"
 
 
 class TestContextManagerSupport:
