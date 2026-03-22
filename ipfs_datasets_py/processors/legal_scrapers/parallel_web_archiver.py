@@ -38,7 +38,7 @@ from ipfs_datasets_py.utils.anyio_compat import gather as _anyio_gather
 import logging
 import os
 import time
-from typing import List, Dict, Optional, Any, Tuple
+from typing import List, Dict, Optional, Any, Tuple, Literal
 from dataclasses import dataclass, field
 from datetime import datetime
 import json
@@ -170,6 +170,8 @@ class ParallelWebArchiver:
         urls: List[str],
         progress_callback: Optional[callable] = None,
         max_concurrent: Optional[int] = None,
+        jurisdiction: Optional[Literal["federal", "state", "municipal"]] = None,
+        state_code: Optional[str] = None,
     ) -> List[ArchiveResult]:
         """
         Archive multiple URLs in parallel with fallback sources.
@@ -216,9 +218,16 @@ class ParallelWebArchiver:
         # Create semaphore to limit concurrent requests
         semaphore = anyio.Semaphore(concurrency)
         
+        normalized_jurisdiction = str(jurisdiction or "").strip().lower() or None
+        normalized_state_code = str(state_code or "").strip().upper() or None
+
         async def archive_with_semaphore(url: str) -> ArchiveResult:
             async with semaphore:
-                result = await self._archive_single_url(url)
+                result = await self._archive_single_url(
+                    url,
+                    jurisdiction=normalized_jurisdiction,
+                    state_code=normalized_state_code,
+                )
                 progress.completed += 1
                 if result.success:
                     progress.successful += 1
@@ -303,7 +312,13 @@ class ParallelWebArchiver:
         except Exception as exc:
             logger.warning("Failed to write parallel archiver cache entry for %s: %s", result.url, exc)
     
-    async def _archive_single_url(self, url: str) -> ArchiveResult:
+    async def _archive_single_url(
+        self,
+        url: str,
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> ArchiveResult:
         """Archive a single URL with fallback sources."""
         self._stats["total_requests"] += 1
         
@@ -316,7 +331,11 @@ class ParallelWebArchiver:
                 await self._rate_limit_wait(source)
                 
                 if source == "warc":
-                    result = await self._archive_via_warc(url)
+                    result = await self._archive_via_warc(
+                        url,
+                        jurisdiction=jurisdiction,
+                        state_code=state_code,
+                    )
                 elif source == "wayback":
                     result = await self._archive_via_wayback(url)
                 elif source == "web_archive":
@@ -341,14 +360,24 @@ class ParallelWebArchiver:
             error="All fallback sources failed"
         )
     
-    async def _archive_via_warc(self, url: str) -> Optional[ArchiveResult]:
+    async def _archive_via_warc(
+        self,
+        url: str,
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> Optional[ArchiveResult]:
         """Archive via Common Crawl WARC pointers from HuggingFace."""
         if not self._hf_search:
             return None
         
         try:
             # Query HF for WARC pointers
-            pointer_data = await self.get_warc_pointer(url)
+            pointer_data = await self.get_warc_pointer(
+                url,
+                jurisdiction=jurisdiction,
+                state_code=state_code,
+            )
             if not pointer_data:
                 return None
             
@@ -437,17 +466,32 @@ class ParallelWebArchiver:
             logger.debug(f"web_archiving failed for {url}: {e}")
             return None
     
-    async def get_warc_pointer(self, url: str) -> Optional[Dict[str, Any]]:
+    async def get_warc_pointer(
+        self,
+        url: str,
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
         """Get WARC file pointer for a URL from HuggingFace."""
         if not self._hf_search:
             return None
         
         try:
+            normalized_jurisdiction = str(jurisdiction or "").strip().lower()
+            if normalized_jurisdiction not in {"federal", "state", "municipal"}:
+                normalized_jurisdiction = "state"
+
+            normalized_state_code = str(state_code or "").strip().upper() or None
+            if normalized_jurisdiction != "state":
+                normalized_state_code = None
+
             # Query HF pointer dataset
             results = self._hf_search.search(
                 query=url,
-                jurisdiction="federal",  # Would be determined dynamically
-                max_results=1
+                jurisdiction=normalized_jurisdiction,
+                state_code=normalized_state_code,
+                max_results=1,
             )
             
             if results and len(results) > 0:
@@ -459,9 +503,18 @@ class ParallelWebArchiver:
             logger.debug(f"Failed to get WARC pointer for {url}: {e}")
             return None
     
-    async def get_warc_pointers(self, urls: List[str]) -> List[Optional[Dict[str, Any]]]:
+    async def get_warc_pointers(
+        self,
+        urls: List[str],
+        *,
+        jurisdiction: Optional[str] = None,
+        state_code: Optional[str] = None,
+    ) -> List[Optional[Dict[str, Any]]]:
         """Get WARC pointers for multiple URLs in parallel."""
-        tasks = [self.get_warc_pointer(url) for url in urls]
+        tasks = [
+            self.get_warc_pointer(url, jurisdiction=jurisdiction, state_code=state_code)
+            for url in urls
+        ]
         return await _anyio_gather(tasks)
     
     def _archive_urls_sync(

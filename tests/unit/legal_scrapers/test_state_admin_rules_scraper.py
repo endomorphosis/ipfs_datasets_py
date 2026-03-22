@@ -8270,6 +8270,14 @@ def test_score_candidate_url_prioritizes_tennessee_sharetngov_rule_pages() -> No
     assert tar_index_score > legislature_score
 
 
+def test_score_candidate_url_rejects_known_non_admin_sources() -> None:
+    blocked_url = "https://law.justia.com/codes/connecticut/"
+    official_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_22aSubtitle_22a-174Section_22a-174-1/"
+
+    assert scraper_module._score_candidate_url(blocked_url) < 0
+    assert scraper_module._score_candidate_url(official_url) > 0
+
+
 def test_score_candidate_url_prioritizes_south_dakota_rule_pages_over_index() -> None:
     section_score = scraper_module._score_candidate_url(
         "https://sdlegislature.gov/Rules/Administrative/DisplayRule.aspx?Rule=20:48:03:01"

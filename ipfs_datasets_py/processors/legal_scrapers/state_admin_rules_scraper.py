@@ -1851,9 +1851,15 @@ def _discover_wayback_capture_candidates(url: str, *, limit: int = 5) -> List[st
 
 def _score_candidate_url(url: str) -> int:
     value = str(url or "").lower()
+    if not value:
+        return 0
+    if _NON_ADMIN_SOURCE_URL_RE.search(value):
+        return -25
     score = 0
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
+    if _BAD_DISCOVERY_DOMAIN_RE.search(host):
+        return -20
     path = parsed.path or ""
     normalized_path = path.rstrip("/") or "/"
     query = parsed.query or ""
@@ -12489,14 +12495,21 @@ async def _agentic_discover_admin_state_blocks(
             prefetch_candidates = [
                 url
                 for url, score in ranked_urls
-                if int(score) > 0 and _url_key(url) not in direct_doc_urls and _url_key(url) not in preseed_substantive_url_keys
+                if int(score) > 0
+                and not _NON_ADMIN_SOURCE_URL_RE.search(str(url))
+                and _url_key(url) not in direct_doc_urls
+                and _url_key(url) not in preseed_substantive_url_keys
             ][: max(2, min(max_candidates_per_state, max_fetch * 3, effective_fetch_concurrency * 4))]
 
         if prefetch_candidates and time.monotonic() < preloop_budget_deadline:
             parallel_prefetch_attempted = len(prefetch_candidates)
             try:
                 archived_results = await asyncio.wait_for(
-                    parallel_archiver.archive_urls_parallel(prefetch_candidates),
+                    parallel_archiver.archive_urls_parallel(
+                        prefetch_candidates,
+                        jurisdiction="state",
+                        state_code=state_code,
+                    ),
                     timeout=min(35.0, 8.0 + float(len(prefetch_candidates)) * 2.0),
                 )
             except Exception:

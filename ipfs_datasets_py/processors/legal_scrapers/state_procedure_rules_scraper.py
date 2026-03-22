@@ -531,6 +531,31 @@ _AL_RULE_LIST_PAGES: List[Dict[str, str]] = [
 ]
 _AL_RULE_LABEL_RE = re.compile(r"^Rules?\s+([0-9]+(?:\.[0-9]+)?[A-Za-z]?)\.\s*$", re.IGNORECASE)
 _AL_EFFECTIVE_DATE_RE = re.compile(r"eff\.\s*([0-9-]+)|effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
+_TN_RULE_LIST_PAGES: List[Dict[str, str]] = [
+    {
+        "title_name": "Tennessee Rules of Civil Procedure",
+        "url": "https://www.tncourts.gov/courts/supreme-court/rules/rules-civil-procedure",
+        "procedure_family": "civil_procedure",
+        "legal_area": "civil_procedure",
+        "official_cite_prefix": "Tenn. R. Civ. P.",
+    },
+    {
+        "title_name": "Tennessee Rules of Criminal Procedure",
+        "url": "https://www.tncourts.gov/courts/court-rules/rules-criminal-procedure",
+        "procedure_family": "criminal_procedure",
+        "legal_area": "criminal_procedure",
+        "official_cite_prefix": "Tenn. R. Crim. P.",
+    },
+]
+_TN_RULE_LINK_RE = re.compile(
+    r"^Rule\s+([0-9]+(?:\.[0-9]+)?(?:[A-Za-z](?:\.\d+)?)?(?:\.\d+)?)[:.]?\s*(.+?)?\.?$",
+    re.IGNORECASE,
+)
+_TN_RULE_HEADING_RE = re.compile(
+    r"^Rule\s+([0-9]+(?:\.[0-9]+)?(?:[A-Za-z](?:\.\d+)?)?(?:\.\d+)?)[:.]?\s+(.+?)\.?$",
+    re.IGNORECASE,
+)
+_TN_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -887,6 +912,17 @@ class _ArkansasProcedureRulesSupplementFetcher(BaseStateScraper):
 class _AlabamaProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://judicial.alabama.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _TennesseeProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.tncourts.gov"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -4090,6 +4126,119 @@ def _extract_alabama_rule_from_text(
     )
 
 
+def _extract_tennessee_rule_links(
+    html_text: str,
+    *,
+    page_url: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> List[Dict[str, str]]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return []
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    content = soup.select_one("div.region-content") or soup.select_one("div.view-content")
+    if content is None:
+        return []
+
+    discovered: List[Dict[str, str]] = []
+    seen = set()
+    for anchor in content.select("a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        label = " ".join(anchor.get_text(" ", strip=True).split())
+        if not href or "/rule-" not in href or not label.startswith("Rule "):
+            continue
+        match = _TN_RULE_LINK_RE.match(label)
+        if not match:
+            continue
+        absolute_url = urljoin(page_url, href)
+        key = absolute_url.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        discovered.append(
+            {
+                "section_number": match.group(1).strip(),
+                "section_name": str(match.group(2) or "").strip().rstrip("."),
+                "url": absolute_url,
+                "procedure_family": procedure_family,
+                "legal_area": legal_area,
+                "official_cite_prefix": official_cite_prefix,
+            }
+        )
+
+    return discovered
+
+
+def _extract_tennessee_rule_from_html(
+    html_text: str,
+    *,
+    rule_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+) -> Optional[NormalizedStatute]:
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return None
+
+    soup = BeautifulSoup(html_text or "", "html.parser")
+    heading_node = soup.find("h1")
+    heading = " ".join((heading_node.get_text(" ", strip=True) if heading_node else "").split())
+    heading_match = _TN_RULE_HEADING_RE.match(heading)
+    if not heading_match:
+        return None
+
+    section_number = heading_match.group(1).strip()
+    section_name = heading_match.group(2).strip().rstrip(".")
+    content = soup.select_one("div.field--name-field-rules-rule-content")
+    if content is None:
+        return None
+
+    body_lines: List[str] = [f"Rule {section_number}. {section_name}"]
+    effective_date: Optional[str] = None
+    for paragraph in content.find_all(["p", "li"]):
+        text = " ".join(paragraph.get_text(" ", strip=True).split())
+        if not text:
+            continue
+        if text.lower().startswith("advisory commission comment"):
+            break
+        body_lines.append(text)
+        for match in _TN_EFFECTIVE_DATE_RE.finditer(text):
+            effective_date = " ".join(match.group(1).split())
+
+    full_text = "\n".join(body_lines).strip()
+    if len(full_text) < 60:
+        return None
+
+    return NormalizedStatute(
+        state_code="TN",
+        state_name=US_STATES["TN"],
+        statute_id=f"{official_cite_prefix} {section_number}",
+        code_name=title_name,
+        title_name=title_name,
+        chapter_name=title_name,
+        section_number=section_number,
+        section_name=section_name,
+        short_title=section_name,
+        full_text=full_text,
+        summary=section_name,
+        source_url=f"{rule_url}#rule-{section_number.lower()}",
+        official_cite=f"{official_cite_prefix} {section_number}",
+        legal_area=legal_area,
+        structured_data={
+            "effective_date": effective_date,
+            "source_kind": "tennessee_judiciary_html",
+            "procedure_family": procedure_family,
+        },
+    )
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -6458,6 +6607,96 @@ async def _scrape_alabama_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_tennessee_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _TennesseeProcedureRulesSupplementFetcher("TN", US_STATES["TN"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for list_page in _TN_RULE_LIST_PAGES:
+        if remaining is not None and remaining <= 0:
+            break
+
+        list_url = str(list_page["url"])
+        list_html = await _fetch_html_with_direct_fallback(
+            fetcher,
+            list_url,
+            validator=lambda html: len(
+                _extract_tennessee_rule_links(
+                    html,
+                    page_url=list_url,
+                    procedure_family=str(list_page["procedure_family"]),
+                    legal_area=str(list_page["legal_area"]),
+                    official_cite_prefix=str(list_page["official_cite_prefix"]),
+                )
+            )
+            > 0,
+            timeout_seconds=120,
+        )
+        if not list_html:
+            continue
+
+        rule_links = _extract_tennessee_rule_links(
+            list_html,
+            page_url=list_url,
+            procedure_family=str(list_page["procedure_family"]),
+            legal_area=str(list_page["legal_area"]),
+            official_cite_prefix=str(list_page["official_cite_prefix"]),
+        )
+        for rule in rule_links:
+            if remaining is not None and remaining <= 0:
+                break
+
+            rule_url = str(rule["url"])
+            if rule_url.lower() in existing_urls:
+                continue
+
+            rule_html = await _fetch_html_with_direct_fallback(
+                fetcher,
+                rule_url,
+                validator=lambda html: _extract_tennessee_rule_from_html(
+                    html,
+                    rule_url=rule_url,
+                    title_name=str(list_page["title_name"]),
+                    procedure_family=str(rule["procedure_family"]),
+                    legal_area=str(rule["legal_area"]),
+                    official_cite_prefix=str(rule["official_cite_prefix"]),
+                )
+                is not None,
+                timeout_seconds=120,
+            )
+            if not rule_html:
+                continue
+
+            statute = _extract_tennessee_rule_from_html(
+                rule_html,
+                rule_url=rule_url,
+                title_name=str(list_page["title_name"]),
+                procedure_family=str(rule["procedure_family"]),
+                legal_area=str(rule["legal_area"]),
+                official_cite_prefix=str(rule["official_cite_prefix"]),
+            )
+            if statute is None:
+                continue
+
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = _classify_procedure_family(enriched) or str(rule["procedure_family"])
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(rule_url.lower())
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -7028,6 +7267,28 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if al_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = al_fetch_analytics
+
+            if state_code == "TN":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                tn_supplement, tn_fetch_analytics = await _scrape_tennessee_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if tn_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(tn_supplement)
+                    for rule in tn_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if tn_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = tn_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]

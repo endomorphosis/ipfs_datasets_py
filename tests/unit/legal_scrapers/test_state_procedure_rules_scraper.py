@@ -1000,6 +1000,74 @@ def test_extract_alabama_rule_links_and_text() -> None:
     assert "This should not be included" not in statute.full_text
 
 
+def test_extract_tennessee_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <div class="region-content">
+        <a href="/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-1-scope-rules">Rule 1: Scope of Rules.</a>
+        <a href="/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-3-commencement-action">Rule 3: Commencement of Action.</a>
+        <a href="/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/2025-rules-package-resolutions-rules">2025 Rules package</a>
+      </div>
+    </body></html>
+    """
+
+    links = procedure_module._extract_tennessee_rule_links(
+        list_html,
+        page_url="https://www.tncourts.gov/courts/supreme-court/rules/rules-civil-procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Tenn. R. Civ. P.",
+    )
+
+    assert links == [
+        {
+            "section_number": "1",
+            "section_name": "Scope of Rules",
+            "url": "https://www.tncourts.gov/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-1-scope-rules",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Tenn. R. Civ. P.",
+        },
+        {
+            "section_number": "3",
+            "section_name": "Commencement of Action",
+            "url": "https://www.tncourts.gov/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-3-commencement-action",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Tenn. R. Civ. P.",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <h1>Rule 1: Scope of Rules.</h1>
+      <div class="field field--name-field-rules-rule-content field--item">
+        <p>Subject to exceptions stated in particular rules, the Rules of Civil Procedure shall govern procedure in the circuit or chancery courts in all civil actions.</p>
+        <p>[Amended by order entered January 6, 2005, effective July 1, 2005.]</p>
+        <p><strong>Advisory Commission Comments</strong></p>
+        <p>This should not be included.</p>
+      </div>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_tennessee_rule_from_html(
+        rule_html,
+        rule_url="https://www.tncourts.gov/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-1-scope-rules",
+        title_name="Tennessee Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Tenn. R. Civ. P.",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "Scope of Rules"
+    assert statute.official_cite == "Tenn. R. Civ. P. 1"
+    assert statute.structured_data["effective_date"] == "July 1, 2005"
+    assert "circuit or chancery courts" in statute.full_text
+    assert "This should not be included" not in statute.full_text
+
+
 def test_extract_washington_rule_links_and_rule_text() -> None:
     list_html = """
     <html><body>
@@ -3568,6 +3636,96 @@ async def test_scrape_state_procedure_rules_adds_alabama_supplement(
     assert result["data"][0]["statutes"][0]["section_number"] == "1"
     assert result["metadata"]["fetch_analytics_by_state"]["AL"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["AL"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_tennessee_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "TN",
+                    "state_name": "Tennessee",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "TN": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_tn_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "TN",
+                    "state_name": "Tennessee",
+                    "statute_id": "Tenn. R. Civ. P. 1",
+                    "section_number": "1",
+                    "section_name": "Scope of Rules",
+                    "full_text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit or chancery courts in all civil actions." + (" x" * 120),
+                    "source_url": "https://www.tncourts.gov/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-1-scope-rules#rule-1",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "TN-civ-1",
+                            "name": "Scope of Rules",
+                            "sectionNumber": "1",
+                            "sectionName": "Scope of Rules",
+                            "text": "Rule 1. Scope of Rules. These rules govern procedure in the circuit or chancery courts in all civil actions." + (" x" * 120),
+                            "sourceUrl": "https://www.tncourts.gov/courts/rules-civil-procedure/rules/rules-civil-procedure-rules/rule-1-scope-rules#rule-1",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_tennessee_court_rules_supplement",
+        _fake_tn_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["TN"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "1"
+    assert result["metadata"]["fetch_analytics_by_state"]["TN"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["TN"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

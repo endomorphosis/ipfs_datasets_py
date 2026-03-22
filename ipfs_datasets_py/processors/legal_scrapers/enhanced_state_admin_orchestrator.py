@@ -349,6 +349,8 @@ class ParallelStateAdminOrchestrator:
                 results = await self.parallel_archiver.archive_urls_parallel(
                     urls=uncached_urls,
                     max_concurrent=self.config.max_domain_workers_per_state,
+                    jurisdiction="state",
+                    state_code=state_code,
                 )
                 fetched_results: List[Tuple[str, Optional[str], str]] = []
                 for result in results:

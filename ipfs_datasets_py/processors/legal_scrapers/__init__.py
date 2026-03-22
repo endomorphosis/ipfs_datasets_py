@@ -243,12 +243,37 @@ _LAZY_AGENTIC_DAEMON_EXPORTS = {
     "run_state_court_rules_agentic_daemon",
 }
 
+_LAZY_LEGAL_GRAPHRAG_EXPORTS = {
+    "LegalGraphRAG",
+    "LegalEntity",
+    "LegalRelationship",
+    "LegalKnowledgeGraph",
+    "HAVE_LEGAL_GRAPHRAG",
+}
+
 
 def __getattr__(name: str):
     if name in _LAZY_AGENTIC_DAEMON_EXPORTS:
         module = import_module(".state_laws_agentic_daemon", __name__)
         value = getattr(module, name)
         globals()[name] = value
+        return value
+    if name in _LAZY_LEGAL_GRAPHRAG_EXPORTS:
+        try:
+            module = import_module(".legal_graphrag", __name__)
+        except ImportError:
+            if name == "HAVE_LEGAL_GRAPHRAG":
+                globals()[name] = False
+                return False
+            globals()[name] = None
+            globals()["HAVE_LEGAL_GRAPHRAG"] = False
+            return None
+        if name == "HAVE_LEGAL_GRAPHRAG":
+            globals()[name] = True
+            return True
+        value = getattr(module, name)
+        globals()[name] = value
+        globals()["HAVE_LEGAL_GRAPHRAG"] = True
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
@@ -321,20 +346,7 @@ except ImportError:
     HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = False
 
 # Legal GraphRAG - GraphRAG integration for legal search (Enhancement 12 Phase 5)
-try:
-    from .legal_graphrag import (
-        LegalGraphRAG,
-        LegalEntity,
-        LegalRelationship,
-        LegalKnowledgeGraph
-    )
-    HAVE_LEGAL_GRAPHRAG = True
-except ImportError:
-    LegalGraphRAG = None
-    LegalEntity = None
-    LegalRelationship = None
-    LegalKnowledgeGraph = None
-    HAVE_LEGAL_GRAPHRAG = False
+HAVE_LEGAL_GRAPHRAG = False
 
 # Multi-Language Support - I18n for legal search (Enhancement 12 Phase 6)
 try:
