@@ -1139,6 +1139,51 @@ def test_extract_virginia_rules_from_page_texts() -> None:
     assert "criminal proceedings" in criminal_rules[0].full_text
 
 
+def test_extract_georgia_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            13,
+            """
+            UNIFORM SUPERIOR COURT RULES
+            Effective July 1, 1985
+            Including Amendments Received Through
+            March 19, 2026
+            Rule 1. PREAMBLE
+            These rules are promulgated to provide for the speedy, efficient and inexpensive resolution of disputes and prosecutions.
+            Amended effective October 7, 2010.
+            Rule 1.1. Repeal of Local Rules
+            All local rules shall expire effective December 31, 2010.
+            Amended effective May 23, 2013.
+            """,
+        ),
+        (
+            14,
+            """
+            Rule 1.2. Authority to Enact Rules Which Deviate From the Uniform Superior Court Rules
+            Any deviation from these rules is disallowed.
+            """,
+        ),
+    ]
+
+    statutes = procedure_module._extract_georgia_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf",
+        title_name="Uniform Superior Court Rules of Georgia",
+        procedure_family="civil_and_criminal_procedure",
+        legal_area="civil_and_criminal_procedure",
+        official_cite_prefix="Ga. Unif. Super. Ct. R.",
+        first_rule_number="1",
+        current_as_of="March 19, 2026",
+    )
+
+    assert len(statutes) == 3
+    assert statutes[0].section_number == "1"
+    assert statutes[0].section_name == "PREAMBLE"
+    assert statutes[0].structured_data["effective_date"] == "October 7, 2010"
+    assert statutes[0].structured_data["current_as_of"] == "March 19, 2026"
+    assert "speedy, efficient and inexpensive resolution" in statutes[0].full_text
+
+
 def test_extract_indiana_rule_links_and_rule_page() -> None:
     list_html = """
     <html><body>
@@ -4220,6 +4265,97 @@ async def test_scrape_state_procedure_rules_adds_illinois_supplement(
     assert result["data"][0]["statutes"][0]["section_number"] == "101"
     assert result["metadata"]["fetch_analytics_by_state"]["IL"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["IL"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_georgia_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "GA",
+                    "state_name": "Georgia",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "GA": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_ga_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "GA",
+                    "state_name": "Georgia",
+                    "statute_id": "Ga. Unif. Super. Ct. R. 1",
+                    "section_number": "1",
+                    "section_name": "PREAMBLE",
+                    "full_text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions." + (" x" * 120),
+                    "source_url": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf#page=13&rule=1",
+                    "procedure_family": "civil_and_criminal_procedure",
+                    "structured_data": {
+                        "procedure_family": "civil_and_criminal_procedure",
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "GA-uscr-1",
+                            "name": "PREAMBLE",
+                            "sectionNumber": "1",
+                            "text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions." + (" x" * 120),
+                            "sourceUrl": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf#page=13&rule=1",
+                        },
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_georgia_court_rules_supplement",
+        _fake_ga_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["GA"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "1"
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_and_criminal_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["GA"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["GA"]["cache_hits"] == 1
 
 
 @pytest.mark.anyio

@@ -617,6 +617,28 @@ _IL_EFFECTIVE_DATE_RE = re.compile(
     r"(?:effective|eff\.)\s+([A-Za-z]+\s+\d{1,2},\s+\d{4}|immediately)",
     re.IGNORECASE,
 )
+_GA_RULE_DOCUMENTS: List[Dict[str, str]] = [
+    {
+        "title_name": "Uniform Superior Court Rules of Georgia",
+        "url": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf",
+        "procedure_family": "civil_and_criminal_procedure",
+        "legal_area": "civil_and_criminal_procedure",
+        "official_cite_prefix": "Ga. Unif. Super. Ct. R.",
+        "first_rule_number": "1",
+        "current_as_of": "March 19, 2026",
+    },
+    {
+        "title_name": "Uniform State Court Rules of Georgia",
+        "url": "https://www.gasupreme.us/wp-content/uploads/2024/01/UNIFORM-STATE-COURT-RULES-2024_01_18.pdf",
+        "procedure_family": "civil_and_criminal_procedure",
+        "legal_area": "civil_and_criminal_procedure",
+        "official_cite_prefix": "Ga. Unif. State Ct. R.",
+        "first_rule_number": "6",
+        "current_as_of": "July 28, 2022",
+    },
+]
+_GA_RULE_HEADING_RE = re.compile(r"^Rule\s+(\d+(?:\.\d+)*)\.\s*(.+?)\s*$", re.IGNORECASE)
+_GA_EFFECTIVE_DATE_RE = re.compile(r"effective\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})", re.IGNORECASE)
 _NE_RULE_ARTICLES: List[Dict[str, str]] = [
     {
         "title_name": "Nebraska Court Rules of Pleading in Civil Cases",
@@ -1017,6 +1039,17 @@ class _IndianaProcedureRulesSupplementFetcher(BaseStateScraper):
 class _IllinoisProcedureRulesSupplementFetcher(BaseStateScraper):
     def get_base_url(self) -> str:
         return "https://www.illinoiscourts.gov"
+
+    def get_code_list(self) -> List[Dict[str, str]]:
+        return []
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        return []
+
+
+class _GeorgiaProcedureRulesSupplementFetcher(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://www.gasupreme.us"
 
     def get_code_list(self) -> List[Dict[str, str]]:
         return []
@@ -4701,6 +4734,117 @@ def _extract_illinois_rule_from_text(
     )
 
 
+def _extract_georgia_rules_from_page_texts(
+    page_texts: Sequence[tuple[int, str]],
+    *,
+    source_url: str,
+    title_name: str,
+    procedure_family: str,
+    legal_area: str,
+    official_cite_prefix: str,
+    first_rule_number: str,
+    current_as_of: Optional[str] = None,
+    max_rules: Optional[int] = None,
+) -> List[NormalizedStatute]:
+    statutes: List[NormalizedStatute] = []
+    collecting = False
+    current_number: Optional[str] = None
+    current_name: Optional[str] = None
+    current_page: Optional[int] = None
+    buffer: List[str] = []
+    current_effective_date: Optional[str] = None
+
+    def flush() -> None:
+        nonlocal current_number, current_name, current_page, buffer, current_effective_date
+        if not current_number or not current_name:
+            current_number = None
+            current_name = None
+            current_page = None
+            buffer = []
+            current_effective_date = None
+            return
+        full_text = "\n".join(line for line in buffer if line).strip()
+        if len(full_text) < 40:
+            current_number = None
+            current_name = None
+            current_page = None
+            buffer = []
+            current_effective_date = None
+            return
+        statutes.append(
+            NormalizedStatute(
+                state_code="GA",
+                state_name=US_STATES["GA"],
+                statute_id=f"{official_cite_prefix} {current_number}",
+                code_name=title_name,
+                title_name=title_name,
+                chapter_name=title_name,
+                section_number=current_number,
+                section_name=current_name,
+                short_title=current_name,
+                full_text=full_text,
+                summary=current_name,
+                source_url=f"{source_url}#page={current_page}&rule={current_number}",
+                official_cite=f"{official_cite_prefix} {current_number}",
+                legal_area=legal_area,
+                structured_data={
+                    "effective_date": current_effective_date,
+                    "current_as_of": current_as_of,
+                    "source_kind": "georgia_rules_pdf",
+                    "procedure_family": procedure_family,
+                },
+            )
+        )
+        current_number = None
+        current_name = None
+        current_page = None
+        buffer = []
+        current_effective_date = None
+
+    for page_number, page_text in page_texts:
+        if max_rules and len(statutes) >= int(max_rules):
+            break
+        for raw_line in str(page_text or "").splitlines():
+            line = " ".join(raw_line.split())
+            if not line:
+                continue
+            if re.fullmatch(r"[ivxlcdm]+", line, re.IGNORECASE):
+                continue
+            if re.fullmatch(r"\d+", line):
+                continue
+            if "................................................................" in line:
+                continue
+            if not collecting:
+                heading = _GA_RULE_HEADING_RE.match(line)
+                if heading and heading.group(1).strip() == first_rule_number:
+                    collecting = True
+                else:
+                    continue
+            heading = _GA_RULE_HEADING_RE.match(line)
+            if heading:
+                flush()
+                current_number = heading.group(1).strip()
+                current_name = heading.group(2).strip().rstrip(".")
+                current_page = page_number
+                buffer = [f"Rule {current_number}. {current_name}"]
+                continue
+            if current_number is None:
+                continue
+            effective_dates = [
+                " ".join(match.group(1).split())
+                for match in _GA_EFFECTIVE_DATE_RE.finditer(line)
+                if match.group(1)
+            ]
+            if effective_dates:
+                current_effective_date = effective_dates[-1]
+            buffer.append(line)
+        if max_rules and len(statutes) >= int(max_rules):
+            break
+
+    flush()
+    return statutes[: max_rules or None]
+
+
 def _extract_nebraska_rule_from_html(
     html_text: str,
     *,
@@ -7415,6 +7559,72 @@ async def _scrape_illinois_court_rules_supplement(
     return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
 
 
+async def _scrape_georgia_court_rules_supplement(
+    *,
+    existing_source_urls: Optional[set[str]] = None,
+    max_rules: Optional[int] = None,
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    fetcher = _GeorgiaProcedureRulesSupplementFetcher("GA", US_STATES["GA"])
+    existing_urls = {
+        str(url or "").strip().lower()
+        for url in (existing_source_urls or set())
+        if str(url or "").strip()
+    }
+    remaining = int(max_rules) if max_rules and int(max_rules) > 0 else None
+    supplemental_rules: List[Dict[str, Any]] = []
+
+    for source in _GA_RULE_DOCUMENTS:
+        if remaining is not None and remaining <= 0:
+            break
+        source_url = str(source["url"])
+        raw_bytes = await _fetch_pdf_bytes_with_direct_fallback(fetcher, source_url, timeout_seconds=240)
+        if not raw_bytes:
+            continue
+
+        try:
+            from pypdf import PdfReader
+
+            reader = PdfReader(BytesIO(raw_bytes))
+            page_texts = [(index + 1, page.extract_text() or "") for index, page in enumerate(reader.pages)]
+        except Exception:
+            extracted = await fetcher._extract_text_from_document_bytes(
+                raw_bytes,
+                source_url=source_url,
+                content_type="application/pdf",
+            )
+            if not extracted:
+                continue
+            page_texts = [(index + 1, page) for index, page in enumerate(extracted.pages)]
+
+        statutes = _extract_georgia_rules_from_page_texts(
+            page_texts,
+            source_url=source_url,
+            title_name=str(source["title_name"]),
+            procedure_family=str(source["procedure_family"]),
+            legal_area=str(source["legal_area"]),
+            official_cite_prefix=str(source["official_cite_prefix"]),
+            first_rule_number=str(source["first_rule_number"]),
+            current_as_of=str(source["current_as_of"]),
+            max_rules=remaining,
+        )
+        for statute in statutes:
+            if remaining is not None and remaining <= 0:
+                break
+            source_key = str(statute.source_url or "").strip().lower()
+            if source_key in existing_urls:
+                continue
+            enriched = fetcher._enrich_statute_structure(statute).to_dict()
+            family = str(statute.structured_data.get("procedure_family") or "").strip()
+            if not family:
+                continue
+            enriched["procedure_family"] = family
+            supplemental_rules.append(enriched)
+            existing_urls.add(source_key)
+            remaining = None if remaining is None else remaining - 1
+
+    return supplemental_rules, fetcher.get_fetch_analytics_snapshot()
+
+
 def _resolve_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -8073,6 +8283,28 @@ async def scrape_state_procedure_rules(
                             family_counts[family] = int(family_counts.get(family, 0)) + 1
                 if il_fetch_analytics:
                     supplemental_fetch_analytics_by_state[state_code] = il_fetch_analytics
+
+            if state_code == "GA":
+                remaining_rule_budget = None
+                if max_rules and max_rules > 0:
+                    remaining_rule_budget = max(int(max_rules) - len(procedure_statutes), 0)
+                ga_supplement, ga_fetch_analytics = await _scrape_georgia_court_rules_supplement(
+                    existing_source_urls=seen_source_urls,
+                    max_rules=remaining_rule_budget,
+                )
+                if ga_supplement:
+                    for rule in procedure_statutes:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = max(int(family_counts.get(family, 0)) - 1, 0)
+                    procedure_statutes = []
+                    procedure_statutes.extend(ga_supplement)
+                    for rule in ga_supplement:
+                        family = str(rule.get("procedure_family") or "").strip()
+                        if family:
+                            family_counts[family] = int(family_counts.get(family, 0)) + 1
+                if ga_fetch_analytics:
+                    supplemental_fetch_analytics_by_state[state_code] = ga_fetch_analytics
 
             if max_rules and max_rules > 0:
                 procedure_statutes = procedure_statutes[: int(max_rules)]

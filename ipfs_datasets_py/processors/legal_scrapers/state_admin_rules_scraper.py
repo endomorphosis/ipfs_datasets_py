@@ -18,6 +18,7 @@ import math
 import os
 import re
 import time
+import zipfile
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -101,6 +102,8 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/uniform-commercial-code-ucc/(?:|$)|"
     r"(?:^|https?://)(?:[^/]+\.)?justia\.com/|(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/https?://(?:[^/]+\.)?justia\.com/|"
     r"(?:^|https?://)(?:www\.)?uscode\.house\.gov/|(?:^|https?://)(?:www\.)?ecfr\.gov/|"
+    r"(?:^|https?://)(?:www\.)?coloradosos\.gov/pubs/elections/Initiatives/titleBoard/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?sos\.state\.co\.us/CCR/auth/loginHome\.do(?:\?|$)|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
     r"(?:^|https?://)(?:www\.)?iga\.in\.gov/static-documents/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|"
@@ -549,6 +552,21 @@ _MD_COMAR_DETAIL_PATH_RE = re.compile(
     re.IGNORECASE,
 )
 
+_ME_RULES_INDEX_PATH_RE = re.compile(
+    r"^/sos/rulemaking/agency-rules(?:/[a-z0-9-]+)?/?$",
+    re.IGNORECASE,
+)
+
+_ME_RULE_DOCUMENT_PATH_RE = re.compile(
+    r"^/sos/sites/maine\.gov\.sos/files/(?:inline-files|content/assets)/[^?#]+\.(?:docx|pdf)$",
+    re.IGNORECASE,
+)
+
+_ME_RULE_DEPARTMENT_PATH_RE = re.compile(
+    r"^/sos/rulemaking/agency-rules/[a-z0-9-]+/?$",
+    re.IGNORECASE,
+)
+
 _MT_COLLECTION_PATH_RE = re.compile(
     r"^/browse/collections/(?P<collection>[0-9a-fA-F-]+)/?$",
     re.IGNORECASE,
@@ -905,6 +923,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://regs.maryland.gov/us/md/exec/comar/26",
         "https://regs.maryland.gov/us/md/exec/comar/31",
     ],
+    "ME": [
+        "https://www.maine.gov/sos/rulemaking/agency-rules",
+        "https://www.maine.gov/sos/rulemaking/agency-rules/department-administrative-financial-services-rules",
+        "https://www.maine.gov/sos/rulemaking/agency-rules/department-environmental-protection-rules",
+        "https://www.maine.gov/sos/rulemaking/agency-rules/department-health-and-human-services-rules",
+    ],
     "MS": [
         "https://sos.ms.gov/regulation-enforcement/administrative-code",
         "https://www.sos.ms.gov/regulation-enforcement/administrative-code",
@@ -1072,7 +1096,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MD", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MD", "ME", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -2327,6 +2351,12 @@ def _score_candidate_url(url: str) -> int:
         score += 7
     if host == "regs.maryland.gov" and _MD_COMAR_DETAIL_PATH_RE.search(path):
         score += 12
+        if (path.rstrip("/").split("/")[-1].count(".") if path else 0) >= 3:
+            score += 3
+    if host in {"www.maine.gov", "maine.gov"} and _ME_RULES_INDEX_PATH_RE.search(normalized_path):
+        score += 6
+    if host in {"www.maine.gov", "maine.gov"} and _ME_RULE_DOCUMENT_PATH_RE.search(path):
+        score += 12
     if host == "www.sec.state.ma.us" and normalized_path.lower() == "/divisions/pubs-regs/about-cmr.htm":
         score += 6
     if host in {"malegislature.gov", "www.malegislature.gov", "legislature.ma.gov"} and _MA_GENERAL_LAWS_PATH_RE.search(path):
@@ -2470,6 +2500,14 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
     if host == "regs.maryland.gov" and _MD_COMAR_DETAIL_PATH_RE.search(path):
         score += 10
         if re.search(r"\b(?:comar|title|subtitle|chapter|regulation)\b", hay, re.IGNORECASE):
+            score += 2
+        if (path.rstrip("/").split("/")[-1].count(".") if path else 0) >= 3:
+            score += 3
+    if host in {"www.maine.gov", "maine.gov"} and _ME_RULES_INDEX_PATH_RE.search(path):
+        score += 4
+    if host in {"www.maine.gov", "maine.gov"} and _ME_RULE_DOCUMENT_PATH_RE.search(path):
+        score += 10
+        if re.search(r"\b(?:ch\.?|chapter|section|appendix|manual|rule)\b", hay, re.IGNORECASE):
             score += 2
     if host == "sdlegislature.gov" and _SD_RULE_DETAIL_PATH_RE.fullmatch(path):
         score += 10
@@ -2701,6 +2739,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
         return True
     if host == "regs.maryland.gov" and _MD_COMAR_DETAIL_PATH_RE.search(path):
+        return True
+    if host in {"www.maine.gov", "maine.gov"} and _ME_RULE_DOCUMENT_PATH_RE.search(path):
         return True
     if host == "codeofarrules.arkansas.gov" and path.lower() == "/rules/rule":
         if _arkansas_rule_level_from_url(url) == "section":
@@ -3525,7 +3565,11 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         if "browse rules" in hay.lower() and "ccr#" in hay.lower() and hay.lower().count("division") >= 3:
             return True
     if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_DOC_LIST_PATH_RE.fullmatch(path):
-        if "browse rules" in hay.lower() and "all versions" not in hay.lower() and co_rule_hits >= 4:
+        if (
+            "code of colorado regulations" in hay.lower()
+            or "colorado code of regulations" in hay.lower()
+            or ("browse rules" in hay.lower() and "all versions" not in hay.lower() and co_rule_hits >= 4)
+        ):
             return True
     if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_DISPLAY_RULE_PATH_RE.fullmatch(path):
         if "current version" in hay.lower() and "all versions" in hay.lower() and "rulemaking details" in hay.lower():
@@ -4235,6 +4279,11 @@ def _is_pdf_candidate_url(url: str) -> bool:
 def _is_rtf_candidate_url(url: str) -> bool:
     value = str(url or "").strip().lower()
     return value.endswith(".rtf") or ".rtf?" in value
+
+
+def _is_docx_candidate_url(url: str) -> bool:
+    value = str(url or "").strip().lower()
+    return value.endswith(".docx") or ".docx?" in value
 
 
 def _utah_rule_reference_from_url(url: str) -> str:
@@ -7835,6 +7884,8 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
                 content_type = "application/pdf"
             elif lowered_name.endswith(".rtf"):
                 content_type = "application/rtf"
+            elif lowered_name.endswith(".docx"):
+                content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             return {
                 "body": body,
                 "content_type": content_type,
@@ -7869,6 +7920,10 @@ def _title_from_extracted_pdf_text(*, text: str, url: str) -> str:
 
 
 def _title_from_extracted_rtf_text(*, text: str, url: str) -> str:
+    return _title_from_extracted_pdf_text(text=text, url=url)
+
+
+def _title_from_extracted_docx_text(*, text: str, url: str) -> str:
     return _title_from_extracted_pdf_text(text=text, url=url)
 
 
@@ -8468,6 +8523,8 @@ def _document_format_for_url(url: str) -> str:
         return "pdf"
     if _is_rtf_candidate_url(url):
         return "rtf"
+    if _is_docx_candidate_url(url):
+        return "docx"
     return "html"
 
 
@@ -9119,6 +9176,162 @@ async def _scrape_rtf_candidate_url_with_processor(url: str) -> Optional[Any]:
                 if used_cloudscraper
                 else "rtf_processor_playwright_download" if used_browser_download else "rtf_processor"
             )
+        },
+    )
+
+
+async def _scrape_maryland_comar_detail_url(url: str) -> Optional[Any]:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.netloc.lower() != "regs.maryland.gov":
+        return None
+    if _MD_COMAR_DETAIL_PATH_RE.search(parsed.path or "") is None:
+        return None
+
+    try:
+        response = requests.get(
+            url,
+            timeout=25,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        response.raise_for_status()
+    except Exception:
+        return None
+
+    html = str(response.text or "")
+    if not html:
+        return None
+
+    soup = BeautifulSoup(html, "html.parser")
+    content_node = None
+    for selector in ("main article", "main", "article", ".content"):
+        content_node = soup.select_one(selector)
+        if content_node is not None:
+            break
+    if content_node is None:
+        return None
+
+    for selector in ("nav", "header", "footer", ".breadcrumbs", ".cross-references"):
+        for node in content_node.select(selector):
+            node.decompose()
+
+    extracted_text = re.sub(r"\s+", " ", content_node.get_text(" ", strip=True)).strip()
+    if not extracted_text:
+        return None
+
+    title_node = soup.find("h1")
+    title_text = re.sub(r"\s+", " ", title_node.get_text(" ", strip=True)).strip() if title_node else ""
+
+    return SimpleNamespace(
+        url=url,
+        title=title_text or _title_from_extracted_pdf_text(text=extracted_text, url=url),
+        text=extracted_text,
+        html=str(content_node),
+        links=[],
+        success=True,
+        method_used="maryland_comar_html",
+        extraction_provenance={
+            "method": "maryland_comar_html",
+            "source_url": url,
+            "content_type": str(response.headers.get("content-type") or ""),
+        },
+    )
+
+
+def _extract_text_from_docx_bytes(docx_bytes: bytes) -> str:
+    if not docx_bytes:
+        return ""
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(docx_bytes)) as archive:
+            document_xml = archive.read("word/document.xml")
+    except Exception:
+        return ""
+
+    try:
+        root = ET.fromstring(document_xml)
+    except Exception:
+        return ""
+
+    namespace = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    paragraphs: List[str] = []
+    for paragraph in root.findall(".//w:p", namespace):
+        text_parts = [str(node.text or "") for node in paragraph.findall(".//w:t", namespace)]
+        paragraph_text = "".join(text_parts).strip()
+        if paragraph_text:
+            paragraphs.append(paragraph_text)
+    return "\n\n".join(paragraphs)
+
+
+async def _scrape_docx_candidate_url_with_processor(url: str) -> Optional[Any]:
+    if not _is_docx_candidate_url(url):
+        return None
+
+    response = None
+    try:
+        response = requests.get(
+            url,
+            timeout=35,
+            headers=_pdf_request_headers(url),
+        )
+    except Exception:
+        response = None
+
+    content_type = str(getattr(response, "headers", {}).get("content-type") or "").lower()
+    body = getattr(response, "content", b"") or b""
+    head = body[:1024].decode("latin1", errors="ignore")
+    used_browser_download = False
+    used_cloudscraper = False
+
+    if response is None or _looks_like_browser_challenge(
+        status_code=int(getattr(response, "status_code", 599) or 599),
+        content_type=content_type,
+        head=head,
+    ):
+        downloaded = _download_document_bytes_via_cloudscraper(url)
+        if downloaded is not None:
+            used_cloudscraper = True
+        else:
+            downloaded = await _download_document_bytes_via_playwright(url)
+        if downloaded is None:
+            return None
+        body = downloaded.get("body") or b""
+        content_type = str(downloaded.get("content_type") or "").lower()
+        head = body[:1024].decode("latin1", errors="ignore")
+        used_browser_download = not used_cloudscraper
+    elif int(getattr(response, "status_code", 599) or 599) >= 400:
+        return None
+
+    if not body:
+        return None
+    if content_type.startswith("text/html") and _BAD_DISCOVERY_TEXT_RE.search(head):
+        return None
+    if "wordprocessingml.document" not in content_type and not body.startswith(b"PK"):
+        return None
+
+    extracted_text = _extract_text_from_docx_bytes(body).strip()
+    if not extracted_text:
+        return None
+
+    method_value = (
+        "docx_processor_cloudscraper"
+        if used_cloudscraper
+        else "docx_processor_playwright_download" if used_browser_download else "docx_processor"
+    )
+    return SimpleNamespace(
+        url=url,
+        title=_title_from_extracted_docx_text(text=extracted_text, url=url),
+        text=extracted_text,
+        html="",
+        links=[],
+        success=True,
+        method_used=method_value,
+        extraction_provenance={
+            "method": method_value,
+            "source_url": url,
+            "content_type": content_type,
+            "used_cloudscraper": used_cloudscraper,
+            "used_browser_download": used_browser_download,
+            "body_bytes": len(body),
         },
     )
 
@@ -10724,6 +10937,182 @@ async def _discover_idaho_rule_document_urls(*, seed_urls: List[str], live_scrap
     return discovered_urls
 
 
+async def _discover_maryland_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    discovered_urls: List[str] = []
+    fallback_urls: List[str] = []
+    seen_document_keys: set[str] = set()
+    seen_page_keys: set[str] = set()
+
+    def _dedupe_urls(values: List[str]) -> List[str]:
+        seen_values: set[str] = set()
+        deduped: List[str] = []
+        for value in values:
+            key = _url_key(value)
+            if not key or key in seen_values:
+                continue
+            seen_values.add(key)
+            deduped.append(value)
+        return deduped
+
+    def _record(url: str) -> bool:
+        key = _url_key(url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(url)
+        return len(discovered_urls) >= max(1, int(limit))
+
+    def _record_fallback(url: str) -> None:
+        key = _url_key(url)
+        if not key or key in seen_document_keys:
+            return
+        seen_document_keys.add(key)
+        fallback_urls.append(url)
+
+    def _page_priority(url: str) -> tuple[int, int, str]:
+        path = urlparse(url).path or ""
+        dots = path.rstrip("/").split("/")[-1].count(".") if path else 0
+        if dots >= 2:
+            return (3, dots, url)
+        if dots == 1:
+            return (2, dots, url)
+        return (1, dots, url)
+
+    def _fetch_links(page_url: str) -> List[str]:
+        try:
+            response = requests.get(page_url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+        except Exception:
+            return []
+
+        soup = BeautifulSoup(response.text or "", "html.parser")
+        links: List[str] = []
+        for anchor in soup.find_all("a", href=True):
+            absolute_url = urldefrag(urljoin(page_url, str(anchor.get("href") or "").strip())).url
+            parsed = urlparse(absolute_url)
+            if parsed.netloc.lower() != "regs.maryland.gov":
+                continue
+            if not (parsed.path or "").startswith("/us/md/exec/comar"):
+                continue
+            links.append(absolute_url)
+        return _dedupe_urls(links)
+
+    frontier = [
+        urldefrag(url).url
+        for url in seed_urls
+        if urlparse(str(url or "").strip()).netloc.lower() == "regs.maryland.gov"
+    ]
+    frontier = sorted(_dedupe_urls(frontier), key=_page_priority, reverse=True)
+
+    for _depth in range(3):
+        next_frontier: List[str] = []
+        for page_url in frontier[:6]:
+            page_key = _url_key(page_url)
+            if not page_key or page_key in seen_page_keys:
+                continue
+            seen_page_keys.add(page_key)
+
+            for link_url in _fetch_links(page_url):
+                path = urlparse(link_url).path or ""
+                dot_count = path.rstrip("/").split("/")[-1].count(".") if path else 0
+                if _MD_COMAR_DETAIL_PATH_RE.search(path) and dot_count >= 3:
+                    if _record(link_url):
+                        return discovered_urls
+                    continue
+                if _MD_COMAR_INVENTORY_PATH_RE.search(path):
+                    if dot_count >= 2:
+                        _record_fallback(link_url)
+                    next_frontier.append(link_url)
+        if not next_frontier:
+            break
+        frontier = sorted(_dedupe_urls(next_frontier), key=_page_priority, reverse=True)
+
+    if discovered_urls:
+        return discovered_urls
+    return fallback_urls[: max(1, int(limit))]
+
+
+async def _discover_maine_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    discovered_urls: List[str] = []
+    seen_document_keys: set[str] = set()
+    seen_department_keys: set[str] = set()
+    department_urls: List[str] = []
+    root_url = "https://www.maine.gov/sos/rulemaking/agency-rules"
+
+    def _record_document(url: str) -> bool:
+        key = _url_key(url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(url)
+        return len(discovered_urls) >= max(1, int(limit))
+
+    def _record_department(url: str) -> None:
+        key = _url_key(url)
+        if not key or key in seen_department_keys:
+            return
+        seen_department_keys.add(key)
+        department_urls.append(url)
+
+    def _fetch_html(page_url: str) -> str:
+        try:
+            response = requests.get(page_url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+        except Exception:
+            return ""
+        return str(response.text or "")
+
+    for seed_url in seed_urls:
+        seed_value = urldefrag(str(seed_url or "").strip()).url
+        parsed = urlparse(seed_value)
+        if parsed.netloc.lower() not in {"www.maine.gov", "maine.gov"}:
+            continue
+        if _ME_RULE_DEPARTMENT_PATH_RE.search(parsed.path or ""):
+            _record_department(seed_value)
+        elif _ME_RULES_INDEX_PATH_RE.search(parsed.path or ""):
+            root_url = seed_value
+
+    if len(department_urls) < 3:
+        root_html = _fetch_html(root_url)
+        if root_html:
+            soup = BeautifulSoup(root_html, "html.parser")
+            for anchor in soup.find_all("a", href=True):
+                absolute_url = urldefrag(urljoin(root_url, str(anchor.get("href") or "").strip())).url
+                parsed = urlparse(absolute_url)
+                if parsed.netloc.lower() not in {"www.maine.gov", "maine.gov"}:
+                    continue
+                if _ME_RULE_DEPARTMENT_PATH_RE.search(parsed.path or ""):
+                    _record_department(absolute_url)
+                if len(department_urls) >= 6:
+                    break
+
+    for department_url in department_urls[:6]:
+        department_html = _fetch_html(department_url)
+        if not department_html:
+            continue
+        soup = BeautifulSoup(department_html, "html.parser")
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            if not href:
+                continue
+            absolute_url = urldefrag(urljoin(department_url, href)).url
+            parsed = urlparse(absolute_url)
+            if parsed.netloc.lower() not in {"www.maine.gov", "maine.gov"}:
+                continue
+            path = parsed.path or ""
+            if _is_docx_candidate_url(absolute_url) or _is_pdf_candidate_url(absolute_url):
+                if _record_document(absolute_url):
+                    return discovered_urls
+                continue
+            if path.startswith("/sos/rulemaking/agency-rules/") and path != urlparse(department_url).path:
+                link_text = re.sub(r"\s+", " ", anchor.get_text(" ", strip=True) or "").strip()
+                if re.search(r"\b(?:manual|rule|regulation)\b", link_text, re.IGNORECASE):
+                    if _record_document(absolute_url):
+                        return discovered_urls
+
+    return discovered_urls
+
+
 async def _discover_california_westlaw_document_urls(
     *,
     seed_urls: List[str],
@@ -11497,6 +11886,8 @@ async def _agentic_discover_admin_state_blocks(
         texas_bootstrap_document_urls: List[str] = []
         oklahoma_bootstrap_document_urls: List[str] = []
         tennessee_bootstrap_document_urls: List[str] = []
+        maryland_bootstrap_document_urls: List[str] = []
+        maine_bootstrap_document_urls: List[str] = []
         preseed_substantive_url_keys: set[str] = set()
 
         # Utah's public search API already exposes canonical detail-page URLs.
@@ -11622,6 +12013,40 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["oklahoma_rules_api_bootstrap"] = len(oklahoma_bootstrap_document_urls)
 
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
+
+        if state_code == "MD" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
+            maryland_seed_limit = max(4, min(max(1, int(max_fetch_per_state)) * 3, 16))
+            try:
+                maryland_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_maryland_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:8],
+                        limit=maryland_seed_limit,
+                    ),
+                    timeout=20.0,
+                )
+            except Exception:
+                maryland_bootstrap_document_urls = []
+            for document_url in maryland_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if maryland_bootstrap_document_urls:
+                source_breakdown["maryland_comar_bootstrap"] = len(maryland_bootstrap_document_urls)
+
+        if state_code == "ME" and not seeded_direct_detail_urls:
+            maine_seed_limit = max(4, min(max(1, int(max_fetch_per_state)) * 4, 20))
+            try:
+                maine_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_maine_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:8],
+                        limit=maine_seed_limit,
+                    ),
+                    timeout=20.0,
+                )
+            except Exception:
+                maine_bootstrap_document_urls = []
+            for document_url in maine_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if maine_bootstrap_document_urls:
+                source_breakdown["maine_sos_rules_bootstrap"] = len(maine_bootstrap_document_urls)
 
         vermont_bootstrap_document_urls: List[str] = []
         if state_code == "VT" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
@@ -12963,6 +13388,40 @@ async def _agentic_discover_admin_state_blocks(
                 if len(prioritized_kansas_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
                     break
 
+        prioritized_maryland_seed_rule_urls: List[str] = []
+        if state_code == "MD" and maryland_bootstrap_document_urls:
+            seen_maryland_rule_keys: set[str] = set()
+            for rule_url in maryland_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_maryland_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_maryland_rule_keys.add(rule_key)
+                prioritized_maryland_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_maryland_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                    break
+
+        prioritized_maine_seed_rule_urls: List[str] = []
+        if state_code == "ME" and maine_bootstrap_document_urls:
+            seen_maine_rule_keys: set[str] = set()
+            for rule_url in maine_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_maine_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_maine_rule_keys.add(rule_key)
+                prioritized_maine_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_maine_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                    break
+
         for rule_url in prioritized_california_bootstrap_document_urls:
             if len(statutes) >= max_fetch:
                 break
@@ -13124,6 +13583,100 @@ async def _agentic_discover_admin_state_blocks(
                     if hawaii_method_value is None:
                         hawaii_method_value = getattr(hawaii_scraped, "method_used", None)
                     await _append_document_if_rule(rule_url, hawaii_title, hawaii_text, hawaii_method_value)
+                    if len(statutes) >= max_fetch:
+                        break
+
+        if state_code == "MD" and prioritized_maryland_seed_rule_urls:
+            maryland_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(prioritized_maryland_seed_rule_urls), maryland_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+                if time.monotonic() >= preloop_budget_deadline:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = prioritized_maryland_seed_rule_urls[
+                    batch_start : batch_start + min(maryland_batch_size, remaining_slots)
+                ]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                maryland_timeout_s = max(
+                    1.0,
+                    min(15.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                maryland_results = await asyncio.gather(
+                    *[
+                        asyncio.wait_for(live_scraper.scrape(rule_url), timeout=maryland_timeout_s)
+                        for rule_url in batch_rule_urls
+                    ],
+                    return_exceptions=True,
+                )
+
+                for rule_url, maryland_scraped in zip(batch_rule_urls, maryland_results):
+                    if isinstance(maryland_scraped, Exception) or maryland_scraped is None:
+                        continue
+
+                    maryland_text = str(getattr(maryland_scraped, "text", "") or "").strip()
+                    maryland_title = str(getattr(maryland_scraped, "title", "") or "").strip()
+                    maryland_provenance = getattr(maryland_scraped, "extraction_provenance", None) or {}
+                    maryland_method_value = None
+                    if isinstance(maryland_provenance, dict):
+                        maryland_method_value = maryland_provenance.get("method")
+                    if maryland_method_value is None:
+                        maryland_method_value = getattr(maryland_scraped, "method_used", None)
+                    await _append_document_if_rule(rule_url, maryland_title, maryland_text, maryland_method_value)
+                    if len(statutes) >= max_fetch:
+                        break
+
+        if state_code == "ME" and prioritized_maine_seed_rule_urls:
+            maine_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(prioritized_maine_seed_rule_urls), maine_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+                if time.monotonic() >= preloop_budget_deadline:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = prioritized_maine_seed_rule_urls[
+                    batch_start : batch_start + min(maine_batch_size, remaining_slots)
+                ]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                maine_timeout_s = max(
+                    1.0,
+                    min(15.0, preloop_budget_deadline - time.monotonic(), per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                maine_tasks = []
+                for rule_url in batch_rule_urls:
+                    if _is_docx_candidate_url(rule_url):
+                        maine_tasks.append(asyncio.wait_for(_scrape_docx_candidate_url_with_processor(rule_url), timeout=maine_timeout_s))
+                    elif _is_pdf_candidate_url(rule_url):
+                        maine_tasks.append(asyncio.wait_for(_scrape_pdf_candidate_url_with_processor(rule_url), timeout=maine_timeout_s))
+                    else:
+                        maine_tasks.append(asyncio.wait_for(live_scraper.scrape(rule_url), timeout=maine_timeout_s))
+
+                maine_results = await asyncio.gather(*maine_tasks, return_exceptions=True)
+                for rule_url, maine_scraped in zip(batch_rule_urls, maine_results):
+                    if isinstance(maine_scraped, Exception) or maine_scraped is None:
+                        continue
+
+                    maine_text = str(getattr(maine_scraped, "text", "") or "").strip()
+                    maine_title = str(getattr(maine_scraped, "title", "") or "").strip()
+                    maine_provenance = getattr(maine_scraped, "extraction_provenance", None) or {}
+                    maine_method_value = None
+                    if isinstance(maine_provenance, dict):
+                        maine_method_value = maine_provenance.get("method")
+                    if maine_method_value is None:
+                        maine_method_value = getattr(maine_scraped, "method_used", None)
+                    await _append_document_if_rule(rule_url, maine_title, maine_text, maine_method_value)
                     if len(statutes) >= max_fetch:
                         break
 
@@ -13345,6 +13898,18 @@ async def _agentic_discover_admin_state_blocks(
             and len(statutes) > 0
             and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_kansas_seed_rule_urls)
         )
+        maryland_official_bootstrap_recovered_rules = (
+            state_code == "MD"
+            and bool(prioritized_maryland_seed_rule_urls)
+            and len(statutes) > 0
+            and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_maryland_seed_rule_urls)
+        )
+        maine_official_bootstrap_recovered_rules = (
+            state_code == "ME"
+            and bool(prioritized_maine_seed_rule_urls)
+            and len(statutes) > 0
+            and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_maine_seed_rule_urls)
+        )
         ranked_direct_exclude_urls = direct_doc_urls | preseed_substantive_url_keys
         if direct_detail_ready and len(prioritized_seed_document_urls) > 1:
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
@@ -13365,6 +13930,14 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "KS" and prioritized_kansas_seed_rule_urls:
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
                 url for url in prioritized_kansas_seed_rule_urls if _url_key(url)
+            }
+        if state_code == "MD" and prioritized_maryland_seed_rule_urls:
+            ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
+                url for url in prioritized_maryland_seed_rule_urls if _url_key(url)
+            }
+        if state_code == "ME" and prioritized_maine_seed_rule_urls:
+            ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
+                url for url in prioritized_maine_seed_rule_urls if _url_key(url)
             }
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
@@ -13552,6 +14125,11 @@ async def _agentic_discover_admin_state_blocks(
                 elif lower_document_url.endswith(".rtf") or ".rtf?" in lower_document_url:
                     direct_scraped = await asyncio.wait_for(
                         _scrape_rtf_candidate_url_with_processor(fetch_document_url),
+                        timeout=direct_timeout_s,
+                    )
+                elif _is_docx_candidate_url(fetch_document_url):
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_docx_candidate_url_with_processor(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
                 elif state_code == "AL":
@@ -14245,6 +14823,11 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_rtf_candidate_url_with_processor(document_url),
                         timeout=direct_timeout_s,
                     )
+                elif _is_docx_candidate_url(document_url):
+                    direct_scraped = await asyncio.wait_for(
+                        _scrape_docx_candidate_url_with_processor(document_url),
+                        timeout=direct_timeout_s,
+                    )
                 elif state_code == "AL":
                     direct_scraped = await asyncio.wait_for(
                         _scrape_alabama_rule_detail_via_api(document_url),
@@ -14483,6 +15066,11 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_rtf_candidate_url_with_processor(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
+                elif _is_docx_candidate_url(fetch_document_url):
+                    expanded_scraped = await asyncio.wait_for(
+                        _scrape_docx_candidate_url_with_processor(fetch_document_url),
+                        timeout=direct_timeout_s,
+                    )
                 elif state_code == "AL":
                     expanded_scraped = await asyncio.wait_for(
                         _scrape_alabama_rule_detail_via_api(fetch_document_url),
@@ -14670,6 +15258,9 @@ async def _agentic_discover_admin_state_blocks(
             montana_scraped = await _scrape_montana_rule_detail_via_api(url)
             if montana_scraped is not None:
                 return montana_scraped
+            maryland_scraped = await _scrape_maryland_comar_detail_url(url)
+            if maryland_scraped is not None:
+                return maryland_scraped
             vermont_lexis_scraped = await asyncio.to_thread(_scrape_vermont_lexis_document_candidate, url)
             if vermont_lexis_scraped is not None:
                 return vermont_lexis_scraped
@@ -14700,6 +15291,9 @@ async def _agentic_discover_admin_state_blocks(
             rtf_scraped = await _scrape_rtf_candidate_url_with_processor(url)
             if rtf_scraped is not None:
                 return rtf_scraped
+            docx_scraped = await _scrape_docx_candidate_url_with_processor(url)
+            if docx_scraped is not None:
+                return docx_scraped
             scrape_url = str(url or "").strip()
             host = urlparse(scrape_url).netloc
             active_scraper = live_scraper if (_url_key(url) in prioritized_seed_keys or host in base_hosts) else scraper
