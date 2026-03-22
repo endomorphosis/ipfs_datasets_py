@@ -538,6 +538,16 @@ _MA_CMR_DETAIL_PATH_RE = re.compile(r"^/regulations/[A-Za-z0-9-]+/?$", re.IGNORE
 
 _MA_GENERAL_LAWS_PATH_RE = re.compile(r"^/Laws/GeneralLaws(?:/.*)?$", re.IGNORECASE)
 
+_MD_COMAR_INVENTORY_PATH_RE = re.compile(
+    r"^/us/md/exec/comar(?:/[0-9]{2}[A-Z]?(?:\.[0-9]{2}[A-Z]?)?)?/?$",
+    re.IGNORECASE,
+)
+
+_MD_COMAR_DETAIL_PATH_RE = re.compile(
+    r"^/us/md/exec/comar/[0-9]{2}[A-Z]?(?:\.[0-9A-Z]{2,4}){2,}/?$",
+    re.IGNORECASE,
+)
+
 _MT_COLLECTION_PATH_RE = re.compile(
     r"^/browse/collections/(?P<collection>[0-9a-fA-F-]+)/?$",
     re.IGNORECASE,
@@ -884,6 +894,16 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.mass.gov/regulations/310-CMR-400-timely-action-schedule-and-fee-provisions-0",
         "https://www.mass.gov/regulations/310-CMR-700-air-pollution-control-0",
     ],
+    "MD": [
+        "https://dsd.maryland.gov/Pages/COMARHome.aspx",
+        "https://dsd.maryland.gov/Pages/COMARSearch.aspx",
+        "https://regs.maryland.gov/",
+        "https://regs.maryland.gov/us/md/exec/comar",
+        "https://regs.maryland.gov/us/md/exec/comar/01",
+        "https://regs.maryland.gov/us/md/exec/comar/10",
+        "https://regs.maryland.gov/us/md/exec/comar/26",
+        "https://regs.maryland.gov/us/md/exec/comar/31",
+    ],
     "MS": [
         "https://sos.ms.gov/regulation-enforcement/administrative-code",
         "https://www.sos.ms.gov/regulation-enforcement/administrative-code",
@@ -1051,7 +1071,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MD", "MS", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -1557,6 +1577,39 @@ def _query_target_terms_for_state(state_code: str) -> List[str]:
     return target_terms[:12]
 
 
+def _max_fetch_cap_for_state(state_code: str) -> Optional[int]:
+    state_key = str(state_code or "").strip().upper()
+    if not state_key:
+        return None
+
+    raw_json = str(os.getenv("LEGAL_ADMIN_RULES_MAX_FETCH_PER_STATE_JSON") or "").strip()
+    if raw_json:
+        try:
+            payload = json.loads(raw_json)
+        except Exception:
+            payload = None
+        if isinstance(payload, dict):
+            state_value = payload.get(state_key)
+            try:
+                if state_value is not None:
+                    cap_value = int(state_value)
+                    if cap_value > 0:
+                        return cap_value
+            except Exception:
+                pass
+
+    raw_default = str(os.getenv("LEGAL_ADMIN_RULES_MAX_FETCH_PER_STATE") or "").strip()
+    if not raw_default:
+        return None
+    try:
+        cap_value = int(raw_default)
+    except Exception:
+        return None
+    if cap_value <= 0:
+        return None
+    return cap_value
+
+
 def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
     urls: List[str] = []
     try:
@@ -1572,7 +1625,7 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
             urls.append(base_url)
         code_list = list(scraper.get_code_list() or [])
         admin_priority_urls: List[str] = []
-        generic_urls: List[str] = []
+        identify = getattr(scraper, "_identify_legal_area", None)
         for item in code_list:
             if not isinstance(item, dict):
                 continue
@@ -1586,12 +1639,14 @@ def _extract_seed_urls_for_state(state_code: str, state_name: str) -> List[str]:
             signal = " ".join([code_name, code_type, value])
             if _ADMIN_RULE_TEXT_RE.search(signal):
                 admin_priority_urls.append(value)
-            else:
-                generic_urls.append(value)
+                continue
+            if callable(identify) and str(identify(code_name)).strip().lower() == "administrative":
+                admin_priority_urls.append(value)
 
-        # Prefer admin-specific code entrypoints, then a small generic tail.
+        # For admin discovery, only inherit scraper URLs that already carry
+        # administrative-rule signals. Generic statute index URLs tend to
+        # divert the bounded crawl back into state-laws territory.
         urls.extend(admin_priority_urls)
-        urls.extend(generic_urls[:6])
 
         # Add deterministic admin URL templates as seed entrypoints too.
         urls.extend(
@@ -2267,6 +2322,10 @@ def _score_candidate_url(url: str) -> int:
         score += 7
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
         score += 12
+    if host == "regs.maryland.gov" and _MD_COMAR_INVENTORY_PATH_RE.search(normalized_path):
+        score += 7
+    if host == "regs.maryland.gov" and _MD_COMAR_DETAIL_PATH_RE.search(path):
+        score += 12
     if host == "www.sec.state.ma.us" and normalized_path.lower() == "/divisions/pubs-regs/about-cmr.htm":
         score += 6
     if host in {"malegislature.gov", "www.malegislature.gov", "legislature.ma.gov"} and _MA_GENERAL_LAWS_PATH_RE.search(path):
@@ -2405,6 +2464,12 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score += 10
         if re.search(r"\b\d{3}\s+cmr\b", hay, re.IGNORECASE):
             score += 3
+    if host == "regs.maryland.gov" and _MD_COMAR_INVENTORY_PATH_RE.search(path):
+        score += 5
+    if host == "regs.maryland.gov" and _MD_COMAR_DETAIL_PATH_RE.search(path):
+        score += 10
+        if re.search(r"\b(?:comar|title|subtitle|chapter|regulation)\b", hay, re.IGNORECASE):
+            score += 2
     if host == "sdlegislature.gov" and _SD_RULE_DETAIL_PATH_RE.fullmatch(path):
         score += 10
     if host == "sdlegislature.gov" and _SD_DISPLAY_RULE_PATH_RE.search(path):
@@ -2633,6 +2698,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "govt.westlaw.com" and normalized_path.lower().startswith("/calregs/document/"):
         return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
+        return True
+    if host == "regs.maryland.gov" and _MD_COMAR_DETAIL_PATH_RE.search(path):
         return True
     if host == "codeofarrules.arkansas.gov" and path.lower() == "/rules/rule":
         if _arkansas_rule_level_from_url(url) == "section":
@@ -3171,6 +3238,8 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
         if _WY_NON_RULE_PORTAL_TEXT_RE.search(hay) and not _RULE_BODY_SIGNAL_RE.search(hay):
             return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_INVENTORY_PATH_RE.search(normalized_path):
+        return True
+    if host == "regs.maryland.gov" and _MD_COMAR_INVENTORY_PATH_RE.search(normalized_path):
         return True
     if host == "www.sec.state.ma.us" and normalized_path_lower == "/divisions/pubs-regs/about-cmr.htm":
         return True
@@ -11227,6 +11296,10 @@ async def _agentic_discover_admin_state_blocks(
         query = _agentic_query_for_state(state_code)
         candidate_urls: List[str] = []
         source_breakdown: Dict[str, int] = {}
+        max_fetch = max(1, int(max_fetch_per_state))
+        state_fetch_cap = _max_fetch_cap_for_state(state_code)
+        if state_fetch_cap is not None:
+            max_fetch = min(max_fetch, state_fetch_cap)
         new_hampshire_bootstrap_diagnostics: Dict[str, Any] = {}
         az_fetch_diagnostics: Dict[str, Any] = {}
         allowed_hosts = _allowed_discovery_hosts_for_state(state_code, state_name)
@@ -15134,6 +15207,9 @@ async def _agentic_discover_admin_state_blocks(
             "arizona_fetch_diagnostics": az_fetch_diagnostics if state_code == "AZ" else {},
             "timed_out": bool(state_elapsed_s >= per_state_budget_s and not statutes),
         }
+        if state_fetch_cap is not None:
+            report[state_code]["max_fetch_cap"] = int(state_fetch_cap)
+            report[state_code]["effective_max_fetch"] = int(max_fetch)
         if state_rate_limit_metadata:
             report[state_code].update(state_rate_limit_metadata)
 
@@ -15238,12 +15314,19 @@ async def scrape_state_admin_rules(
             delegated_base_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
             delegated_fallback_timeout_seconds = max(15.0, delegated_state_laws_timeout_seconds * 0.5)
 
-        direct_agentic_states = [
-            state_code for state_code in selected_states if state_code in _DIRECT_AGENTIC_RECOVERY_STATES
-        ]
-        delegated_base_states = [
-            state_code for state_code in selected_states if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
-        ]
+        direct_agentic_all_states = str(
+            os.getenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES") or ""
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        if direct_agentic_all_states:
+            direct_agentic_states = list(selected_states)
+            delegated_base_states = []
+        else:
+            direct_agentic_states = [
+                state_code for state_code in selected_states if state_code in _DIRECT_AGENTIC_RECOVERY_STATES
+            ]
+            delegated_base_states = [
+                state_code for state_code in selected_states if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
+            ]
         if direct_agentic_states and not delegated_base_states and not per_state_timeout_is_unbounded:
             agentic_per_state_budget_seconds = max(
                 agentic_per_state_budget_seconds,
@@ -15298,10 +15381,15 @@ async def scrape_state_admin_rules(
         fallback_recovered_states: List[str] = []
         if retry_zero_rule_states and zero_rule_states:
             fallback_started_at = time.time()
+            direct_agentic_state_set = {
+                str(state_code or "").upper()
+                for state_code in direct_agentic_states
+                if str(state_code or "").strip()
+            }
             fallback_attempted_states = sorted(
                 state_code
                 for state_code in set(zero_rule_states)
-                if state_code not in _DIRECT_AGENTIC_RECOVERY_STATES
+                if state_code not in direct_agentic_state_set
             )
             if fallback_attempted_states:
                 fallback_result = await scrape_state_laws(
@@ -15467,6 +15555,7 @@ async def scrape_state_admin_rules(
             "state_laws_base_per_state_timeout_seconds": float(delegated_base_timeout_seconds),
             "state_laws_fallback_per_state_timeout_seconds": float(delegated_fallback_timeout_seconds),
             "base_scrape_skipped_states": direct_agentic_states or None,
+            "direct_agentic_all_states": bool(direct_agentic_all_states),
             "agentic_per_state_budget_seconds": float(agentic_per_state_budget_seconds),
             "retry_zero_rule_states": bool(retry_zero_rule_states),
             "fallback_attempted_states": fallback_attempted_states or None,

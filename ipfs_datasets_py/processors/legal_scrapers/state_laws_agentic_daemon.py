@@ -20,6 +20,7 @@ import random
 import re
 import shlex
 import shutil
+import signal
 import sys
 import threading
 import traceback
@@ -1118,6 +1119,34 @@ class StateLawsAgenticDaemon:
                 path.unlink(missing_ok=True)
             except Exception:
                 pass
+
+    def promote_latest_checkpoint_to_summary(self, *, reason: str) -> Optional[Path]:
+        latest_checkpoint_path = self.output_dir / "latest_in_progress.json"
+        if not latest_checkpoint_path.exists():
+            return None
+
+        try:
+            payload = json.loads(latest_checkpoint_path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+        if not isinstance(payload, dict) or not payload:
+            return None
+
+        payload = dict(payload)
+        payload["checkpoint_promoted"] = True
+        payload["checkpoint_promotion_reason"] = str(reason or "terminated")
+        payload["checkpoint_promoted_at"] = datetime.now(timezone.utc).isoformat()
+
+        cycle_index = int(payload.get("cycle", 0) or 0)
+        cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.recovered.json" if cycle_index > 0 else None
+        try:
+            self.latest_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            if cycle_path is not None:
+                cycle_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except Exception:
+            return None
+        return self.latest_file
 
     async def _run_scrape_with_tactic(
         self,
@@ -4179,6 +4208,16 @@ def _parse_states_arg(value: str) -> List[str]:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+    daemon: Optional[StateLawsAgenticDaemon] = None
+    previous_handlers: Dict[int, Any] = {}
+
+    def _restore_signal_handlers() -> None:
+        for sig, previous in previous_handlers.items():
+            try:
+                signal.signal(sig, previous)
+            except Exception:
+                pass
+
     try:
         states = _parse_states_arg(args.states)
         daemon = StateLawsAgenticDaemon(
@@ -4222,6 +4261,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 ),
             )
         )
+
+        def _handle_termination(signum: int, _frame: Any) -> None:
+            signal_name = getattr(signal.Signals(signum), "name", str(signum))
+            if daemon is not None:
+                daemon.promote_latest_checkpoint_to_summary(reason=f"signal:{signal_name}")
+            raise SystemExit(128 + int(signum))
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            previous_handlers[sig] = signal.getsignal(sig)
+            signal.signal(sig, _handle_termination)
+
         if bool(args.print_post_cycle_release_plan):
             result = daemon.preview_post_cycle_release_plan(
                 cycle_index=max(1, int(args.post_cycle_release_preview_cycle)),
@@ -4229,7 +4279,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             )
         else:
             result = asyncio.run(daemon.run())
+        _restore_signal_handlers()
+    except KeyboardInterrupt:
+        if daemon is not None:
+            daemon.promote_latest_checkpoint_to_summary(reason="keyboard_interrupt")
+        _restore_signal_handlers()
+        return 130
+    except SystemExit as exc:
+        if daemon is not None:
+            code = exc.code if isinstance(exc.code, int) else 1
+            if code not in (0, None):
+                daemon.promote_latest_checkpoint_to_summary(reason=f"system_exit:{code}")
+        _restore_signal_handlers()
+        raise
     except Exception as exc:
+        _restore_signal_handlers()
         result = {
             "status": "error",
             "error": str(exc),

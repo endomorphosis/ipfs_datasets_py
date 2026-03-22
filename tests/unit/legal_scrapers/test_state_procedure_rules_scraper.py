@@ -3800,6 +3800,96 @@ async def test_scrape_state_procedure_rules_adds_tennessee_supplement(
 
 
 @pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_virginia_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "VA",
+                    "state_name": "Virginia",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "VA": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_va_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "VA",
+                    "state_name": "Virginia",
+                    "statute_id": "Va. Sup. Ct. R. 3:1",
+                    "section_number": "3:1",
+                    "section_name": "Scope",
+                    "full_text": "Rule 3:1. Scope. There is one form of civil case, known as a civil action." + (" x" * 120),
+                    "source_url": "https://www.vacourts.gov/courts/scv/rulesofcourt.pdf#page=182",
+                    "procedure_family": "civil_procedure",
+                    "structured_data": {
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "VA-civ-3-1",
+                            "name": "Scope",
+                            "sectionNumber": "3:1",
+                            "sectionName": "Scope",
+                            "text": "Rule 3:1. Scope. There is one form of civil case, known as a civil action." + (" x" * 120),
+                            "sourceUrl": "https://www.vacourts.gov/courts/scv/rulesofcourt.pdf#page=182",
+                        }
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_virginia_court_rules_supplement",
+        _fake_va_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["VA"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "3:1"
+    assert result["metadata"]["fetch_analytics_by_state"]["VA"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["VA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
 async def test_scrape_state_procedure_rules_adds_ohio_supplement(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _fake_scrape_state_laws(**_kwargs):
         return {

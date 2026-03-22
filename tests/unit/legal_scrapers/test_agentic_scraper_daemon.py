@@ -1387,6 +1387,96 @@ async def test_state_laws_agentic_daemon_checkpoint_advances_to_router_review(mo
     assert summary["latest_cycle"]["router_assist"]["status"] == "skipped"
 
 
+def test_state_laws_agentic_daemon_promotes_latest_checkpoint_to_summary(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=7,
+        )
+    )
+
+    checkpoint_payload = {
+        "cycle": 3,
+        "timestamp": "2026-03-22T04:00:00+00:00",
+        "corpus": "state_laws",
+        "states": ["OR"],
+        "cycle_state_order": ["OR"],
+        "status": "running",
+        "stage": "archive_warmup",
+        "tactic": {"name": "archival_first"},
+    }
+    daemon._write_cycle_checkpoint(cycle_index=3, payload=checkpoint_payload)
+
+    promoted_path = daemon.promote_latest_checkpoint_to_summary(reason="signal:SIGTERM")
+
+    assert promoted_path == tmp_path / "latest_summary.json"
+    assert (tmp_path / "latest_in_progress.json").exists()
+    assert (tmp_path / "cycles" / "cycle_0003.recovered.json").exists()
+
+    latest_summary_payload = json.loads((tmp_path / "latest_summary.json").read_text(encoding="utf-8"))
+    recovered_payload = json.loads((tmp_path / "cycles" / "cycle_0003.recovered.json").read_text(encoding="utf-8"))
+
+    assert latest_summary_payload["status"] == "running"
+    assert latest_summary_payload["stage"] == "archive_warmup"
+    assert latest_summary_payload["checkpoint_promoted"] is True
+    assert latest_summary_payload["checkpoint_promotion_reason"] == "signal:SIGTERM"
+    assert "checkpoint_promoted_at" in latest_summary_payload
+    assert recovered_payload == latest_summary_payload
+
+
+def test_state_laws_agentic_daemon_main_promotes_checkpoint_on_nonzero_system_exit(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    promoted_reasons = []
+    installed_handlers = {}
+
+    class _FakeDaemon:
+        def __init__(self, config):
+            self.config = config
+
+        def run(self):
+            return object()
+
+        def promote_latest_checkpoint_to_summary(self, *, reason):
+            promoted_reasons.append(reason)
+            return tmp_path / "latest_summary.json"
+
+    def _fake_getsignal(sig):
+        return f"prev:{sig}"
+
+    def _fake_signal(sig, handler):
+        installed_handlers[sig] = handler
+        return handler
+
+    def _fake_asyncio_run(_coro):
+        raise SystemExit(143)
+
+    monkeypatch.setattr(daemon_module, "StateLawsAgenticDaemon", _FakeDaemon)
+    monkeypatch.setattr(daemon_module.asyncio, "run", _fake_asyncio_run)
+    monkeypatch.setattr(daemon_module.signal, "getsignal", _fake_getsignal)
+    monkeypatch.setattr(daemon_module.signal, "signal", _fake_signal)
+
+    with pytest.raises(SystemExit) as exc_info:
+        daemon_module.main([
+            "--corpus",
+            "state_laws",
+            "--states",
+            "OR",
+            "--output-dir",
+            str(tmp_path),
+        ])
+
+    assert exc_info.value.code == 143
+    assert promoted_reasons == ["system_exit:143"]
+    assert daemon_module.signal.SIGTERM in installed_handlers
+    assert daemon_module.signal.SIGINT in installed_handlers
+
+
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_applies_outer_scrape_timeout(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
