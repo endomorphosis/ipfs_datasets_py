@@ -952,6 +952,22 @@ class LLMProvider(Protocol):
     def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str: ...
 
 
+@runtime_checkable
+class NativeMultimodalProvider(Protocol):
+    def generate_multimodal(
+        self,
+        prompt: str,
+        *,
+        model_name: Optional[str] = None,
+        image_paths: Sequence[str] | None = None,
+        image_urls: Sequence[str] | None = None,
+        system_prompt: Optional[str] = None,
+        additional_text_blocks: Sequence[str] | None = None,
+        messages: Sequence[dict] | None = None,
+        **kwargs: object,
+    ) -> str: ...
+
+
 class ChatMessage(TypedDict):
     role: str
     content: str
@@ -2141,7 +2157,14 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
         return None
 
     class _CodexCLIProvider:
-        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+        def _run_codex(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str],
+            image_paths: Sequence[str] | None = None,
+            **kwargs: object,
+        ) -> str:
             model = (model_name or _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL") or "gpt-5.1-codex-mini").strip()
             sandbox = (os.getenv("IPFS_DATASETS_PY_CODEX_SANDBOX", "auto") or "auto").strip()
             skip_git_repo_check = os.getenv("IPFS_DATASETS_PY_CODEX_SKIP_GIT_REPO_CHECK", "1") != "0"
@@ -2166,6 +2189,10 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 cmd.extend(["--sandbox", sandbox])
             if model:
                 cmd.extend(["-m", model])
+            for image_path in image_paths or ():
+                candidate = str(image_path or "").strip()
+                if candidate:
+                    cmd.extend(["--image", candidate])
             cmd.extend(["--output-last-message", last_msg_path])
             if json_mode:
                 cmd.append("--json")
@@ -2233,6 +2260,62 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
                 raise LLMRouterError(f"Codex usage limit reached{suffix}")
             raise LLMRouterError(proc.stderr.strip() or "codex exec failed")
+
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            return self._run_codex(prompt, model_name=model_name, **kwargs)
+
+        def generate_multimodal(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str] = None,
+            image_paths: Sequence[str] | None = None,
+            image_urls: Sequence[str] | None = None,
+            system_prompt: Optional[str] = None,
+            additional_text_blocks: Sequence[str] | None = None,
+            messages: Sequence[dict] | None = None,
+            **kwargs: object,
+        ) -> str:
+            if image_urls:
+                raise LLMRouterError("codex_cli multimodal path requires local image_paths; image_urls are not supported")
+
+            prompt_sections: list[str] = []
+            if system_prompt and str(system_prompt).strip():
+                prompt_sections.append(str(system_prompt).strip())
+            if messages:
+                for message in messages:
+                    if not isinstance(message, dict):
+                        continue
+                    role = str(message.get("role") or "user").strip()
+                    content = message.get("content")
+                    if isinstance(content, list):
+                        rendered_parts: list[str] = []
+                        for part in content:
+                            if not isinstance(part, dict):
+                                continue
+                            if str(part.get("type") or "").strip() == "text":
+                                text = str(part.get("text") or "").strip()
+                                if text:
+                                    rendered_parts.append(text)
+                        rendered = "\n".join(rendered_parts).strip()
+                    else:
+                        rendered = str(content or "").strip()
+                    if rendered:
+                        prompt_sections.append(f"{role}: {rendered}")
+            else:
+                prompt_sections.append(str(prompt or "").strip())
+                for block in additional_text_blocks or ():
+                    text = str(block or "").strip()
+                    if text:
+                        prompt_sections.append(text)
+
+            resolved_prompt = "\n\n".join(section for section in prompt_sections if section).strip()
+            return self._run_codex(
+                resolved_prompt,
+                model_name=model_name,
+                image_paths=image_paths,
+                **kwargs,
+            )
 
     return _CodexCLIProvider()
 

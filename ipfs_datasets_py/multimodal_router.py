@@ -160,6 +160,18 @@ def generate_multimodal_text(
         )
         return response.choices[0].message.content
 
+    if isinstance(backend, llm_router.NativeMultimodalProvider):
+        return backend.generate_multimodal(
+            prompt,
+            model_name=model_name,
+            image_paths=[str(path) for path in image_paths or ()],
+            image_urls=[str(url) for url in image_urls or ()],
+            system_prompt=system_prompt,
+            additional_text_blocks=[str(block) for block in additional_text_blocks or ()],
+            messages=resolved_messages,
+            **kwargs,
+        )
+
     fallback_prompt = _flatten_messages_to_prompt(resolved_messages)
     return llm_router.generate_text(
         fallback_prompt,
