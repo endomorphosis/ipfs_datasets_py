@@ -18,9 +18,9 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional
 
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_agentic_daemon import (
-    run_state_admin_rules_agentic_daemon,
-    run_state_court_rules_agentic_daemon,
-    run_state_laws_agentic_daemon,
+    PostCycleReleaseConfig,
+    StateLawsAgenticDaemon,
+    StateLawsAgenticDaemonConfig,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import US_STATES
 
@@ -28,10 +28,10 @@ from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import US_STA
 CorpusRunner = Callable[..., Awaitable[Dict[str, Any]]]
 
 
-CORPUS_RUNNERS: Dict[str, CorpusRunner] = {
-    "state_laws": run_state_laws_agentic_daemon,
-    "state_court_rules": run_state_court_rules_agentic_daemon,
-    "state_admin_rules": run_state_admin_rules_agentic_daemon,
+CORPUS_RUNNERS: Dict[str, str] = {
+    "state_laws": "state_laws",
+    "state_court_rules": "state_court_rules",
+    "state_admin_rules": "state_admin_rules",
 }
 
 CORE_PATCH_TARGETS: Dict[str, List[str]] = {
@@ -219,42 +219,38 @@ async def _run_corpus(
             "output_dir": str(corpus_output_dir),
         }
 
-    runner = CORPUS_RUNNERS[corpus]
-    kwargs: Dict[str, Any] = {
-        "states": states,
-        "output_dir": str(corpus_output_dir),
-        "cycle_interval_seconds": cycle_interval_seconds,
-        "max_cycles": max_cycles,
-        "max_statutes": max_statutes,
-        "explore_probability": explore_probability,
-        "archive_warmup_urls": archive_warmup_urls,
-        "per_state_timeout_seconds": per_state_timeout_seconds,
-        "router_llm_timeout_seconds": 20.0,
-        "router_embeddings_timeout_seconds": 10.0,
-        "router_ipfs_timeout_seconds": 10.0,
-        "min_document_recovery_ratio": min_document_recovery_ratio,
-        "target_score": target_score,
-        "stop_on_target_score": stop_on_target_score,
-    }
-    if scrape_timeout_seconds > 0:
-        kwargs["scrape_timeout_seconds"] = scrape_timeout_seconds
-    if corpus == "state_admin_rules":
-        kwargs.update(
-            {
-                "admin_agentic_max_candidates_per_state": 1000,
-                "admin_agentic_max_fetch_per_state": 1000,
-                "admin_agentic_max_results_per_domain": 1000,
-                "admin_agentic_max_hops": 4,
-                "admin_agentic_max_pages": 1000,
-                "admin_parallel_assist_enabled": True,
-                "admin_parallel_assist_state_limit": 6,
-                "admin_parallel_assist_max_urls_per_domain": 20,
-                "admin_parallel_assist_timeout_seconds": per_state_timeout_seconds,
-            }
-        )
+    config = StateLawsAgenticDaemonConfig(
+        corpus_key=CORPUS_RUNNERS[corpus],
+        states=list(states),
+        output_dir=str(corpus_output_dir),
+        cycle_interval_seconds=cycle_interval_seconds,
+        max_cycles=max_cycles,
+        max_statutes=max_statutes,
+        explore_probability=explore_probability,
+        archive_warmup_urls=archive_warmup_urls,
+        per_state_timeout_seconds=per_state_timeout_seconds,
+        scrape_timeout_seconds=max(0.0, float(scrape_timeout_seconds or 0.0)),
+        router_llm_timeout_seconds=20.0,
+        router_embeddings_timeout_seconds=10.0,
+        router_ipfs_timeout_seconds=10.0,
+        min_document_recovery_ratio=min_document_recovery_ratio,
+        target_score=target_score,
+        stop_on_target_score=stop_on_target_score,
+        admin_agentic_max_candidates_per_state=1000,
+        admin_agentic_max_fetch_per_state=1000,
+        admin_agentic_max_results_per_domain=1000,
+        admin_agentic_max_hops=4,
+        admin_agentic_max_pages=1000,
+        admin_parallel_assist_enabled=True,
+        admin_parallel_assist_state_limit=6,
+        admin_parallel_assist_max_urls_per_domain=20,
+        admin_parallel_assist_timeout_seconds=per_state_timeout_seconds,
+        post_cycle_release=PostCycleReleaseConfig(enabled=False),
+    )
+    daemon = StateLawsAgenticDaemon(config)
 
     started_at = _utc_now()
-    summary = await runner(**kwargs)
+    summary = await daemon.run()
     finished_at = _utc_now()
     return {
         "status": "completed",
