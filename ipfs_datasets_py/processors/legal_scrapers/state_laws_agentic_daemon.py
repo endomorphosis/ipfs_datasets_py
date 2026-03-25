@@ -2091,6 +2091,19 @@ class StateLawsAgenticDaemon:
                 cmd_text = str(command or os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")).strip() or "ipfs"
                 executable = shlex.split(cmd_text)[0] if cmd_text else "ipfs"
                 if shutil.which(executable) is None:
+                    auto_bootstrap = str(
+                        os.getenv("LEGAL_DAEMON_ROUTER_IPFS_AUTO_BOOTSTRAP")
+                        or os.getenv("IPFS_DATASETS_ROUTER_IPFS_AUTO_BOOTSTRAP")
+                        or "0"
+                    ).strip().lower() in {"1", "true", "yes", "on"}
+                    if not auto_bootstrap:
+                        return {
+                            "available": False,
+                            "reason": "ipfs-cli-missing",
+                            "backend": backend_name,
+                            "command": cmd_text,
+                            "install_attempted": False,
+                        }
                     install_attempt = self._attempt_router_ipfs_kit_bootstrap()
                     if bool(install_attempt.get("available", False)):
                         return install_attempt
@@ -2351,6 +2364,17 @@ class StateLawsAgenticDaemon:
         issue_summary = str(critic.get("summary") or "").strip()
         if not issue_summary:
             return None
+        configured_provider = (
+            str(tactic.embeddings_provider or "").strip()
+            or str(os.getenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_PROVIDER") or "").strip()
+            or str(os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_PROVIDER") or "").strip()
+        )
+        allow_unpinned = str(
+            os.getenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_ALLOW_UNPINNED")
+            or "0"
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        if not configured_provider and not allow_unpinned:
+            return None
         tactic_names = list(self.config.tactic_profiles.keys())
         texts = [issue_summary] + [
             f"{name}: {self.config.tactic_profiles[name].description}" for name in tactic_names
@@ -2359,7 +2383,7 @@ class StateLawsAgenticDaemon:
             embeddings = embeddings_router.embed_texts_batched(
                 texts,
                 batch_size=max(2, len(texts)),
-                provider=tactic.embeddings_provider,
+                provider=configured_provider or tactic.embeddings_provider,
             )
         except Exception:
             return None

@@ -3339,6 +3339,38 @@ async def test_state_admin_rules_agentic_daemon_router_ipfs_timeout_does_not_blo
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_skips_unpinned_embeddings_ranking(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py import embeddings_router as embeddings_router_module
+
+    def _should_not_run(*args, **kwargs):
+        raise AssertionError("unconfigured embeddings ranking should be skipped")
+
+    monkeypatch.delenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_PROVIDER", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_EMBEDDINGS_PROVIDER", raising=False)
+    monkeypatch.delenv("LEGAL_DAEMON_ROUTER_EMBEDDINGS_ALLOW_UNPINNED", raising=False)
+    monkeypatch.setattr(embeddings_router_module, "embed_texts_batched", _should_not_run)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+        )
+    )
+
+    result = daemon._rank_tactics_with_embeddings(
+        daemon.config.tactic_profiles["router_assisted"],
+        diagnostics={},
+        critic={"summary": "coverage gaps"},
+    )
+
+    assert result is None
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_router_llm_empty_accelerate_response_is_unavailable(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
     from ipfs_datasets_py import llm_router as llm_router_module
@@ -3632,6 +3664,7 @@ def test_router_ipfs_persist_preflight_bootstraps_ipfs_kit_when_cli_missing(monk
     monkeypatch.setattr(daemon_module.shutil, "which", lambda cmd: None if cmd == "ipfs" else "/usr/bin/true")
     monkeypatch.setattr(ipfs_backend_router, "get_ipfs_backend", lambda *args, **kwargs: KuboCLIBackend())
     monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_attempt_router_ipfs_kit_bootstrap", _fake_bootstrap)
+    monkeypatch.setenv("LEGAL_DAEMON_ROUTER_IPFS_AUTO_BOOTSTRAP", "1")
 
     daemon = daemon_module.StateLawsAgenticDaemon(
         daemon_module.StateLawsAgenticDaemonConfig(
