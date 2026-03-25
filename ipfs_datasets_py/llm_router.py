@@ -63,6 +63,7 @@ import shutil
 import signal
 import subprocess
 import tempfile
+import threading
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -100,6 +101,7 @@ _UNPINNED_OPTIONAL_PROVIDER_ORDER = [
     "gemini_py",
     "copilot_sdk",
 ]
+_LAST_GENERATION_TRACE = threading.local()
 
 
 def _truthy_env(name: str, *, default: bool) -> bool:
@@ -2831,6 +2833,27 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
     return None
 
 
+def _set_last_generation_trace(*, provider_name: str, model_name: Optional[str]) -> None:
+    _LAST_GENERATION_TRACE.payload = {
+        "effective_provider_name": str(provider_name or "").strip(),
+        "effective_model_name": str(model_name or "").strip(),
+    }
+
+
+def _clear_last_generation_trace() -> None:
+    _LAST_GENERATION_TRACE.payload = {
+        "effective_provider_name": "",
+        "effective_model_name": "",
+    }
+
+
+def get_last_generation_trace() -> dict[str, str]:
+    payload = getattr(_LAST_GENERATION_TRACE, "payload", None)
+    if isinstance(payload, dict):
+        return dict(payload)
+    return {}
+
+
 def _iter_unpinned_optional_providers() -> list[tuple[str, LLMProvider]]:
     providers: list[tuple[str, LLMProvider]] = []
     for name in _UNPINNED_OPTIONAL_PROVIDER_ORDER:
@@ -3136,6 +3159,7 @@ def generate_text(
     """Generate text from an LLM."""
 
     resolved_deps = deps or get_default_router_deps()
+    _clear_last_generation_trace()
     if _response_cache_enabled():
         try:
             cache_key = _response_cache_key(provider=provider, model_name=model_name, prompt=prompt, kwargs=dict(kwargs))
@@ -3170,6 +3194,7 @@ def generate_text(
             model_name=model_name,
             kwargs=dict(kwargs),
         )
+        _set_last_generation_trace(provider_name=effective_provider_name, model_name=model_name)
         _cache_result(str(result), used_model_name=model_name)
         return result
     except Exception as initial_exc:
@@ -3188,6 +3213,7 @@ def generate_text(
                         model_name=model_name,
                         kwargs=dict(kwargs),
                     )
+                    _set_last_generation_trace(provider_name=fallback_name, model_name=model_name)
                     _cache_result(str(result), used_model_name=model_name)
                     return result
                 except Exception:
@@ -3199,11 +3225,13 @@ def generate_text(
             if local_hf is not None and backend is not local_hf:
                 try:
                     result = local_hf.generate(prompt, model_name=model_name, **kwargs)
+                    _set_last_generation_trace(provider_name="local_hf", model_name=model_name)
                     _cache_result(str(result), used_model_name=model_name)
                     return result
                 except Exception:
                     if model_name is not None:
                         result = local_hf.generate(prompt, model_name=None, **kwargs)
+                        _set_last_generation_trace(provider_name="local_hf", model_name=None)
                         _cache_result(str(result), used_model_name=None)
                         return result
         raise
