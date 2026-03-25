@@ -8305,6 +8305,7 @@ def test_score_candidate_url_prioritizes_vermont_rule_display_pages() -> None:
         "https://legislature.vt.gov/regulations"
     )
 
+    assert proposal_score > lexis_doc_score
     assert proposal_score > inventory_score
     assert proposal_score > search_score
     assert inventory_score > search_score

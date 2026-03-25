@@ -2161,9 +2161,9 @@ def _score_candidate_url(url: str) -> int:
             if path.lower().endswith(".pdf"):
                 score += 1
     if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(path):
-        score += 10
+        score -= 8
     if host == "advance.lexis.com" and _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
-        score += 13
+        score -= 6
     if host == "govt.westlaw.com" and path.lower().startswith("/calregs/browse/home/california/californiacodeofregulations"):
         score += 6
     if host == "govt.westlaw.com" and normalized_path.lower() == "/calregs/index":
@@ -2265,14 +2265,14 @@ def _score_candidate_url(url: str) -> int:
     if host == "legislature.ok.gov" and _OK_NON_SUBSTANTIVE_LEGISLATURE_PATH_RE.fullmatch(path):
         score -= 8
     if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(path):
-        score += 10
+        score -= 8
     if host == "advance.lexis.com":
         if _VT_LEXIS_DOC_PATH_RE.fullmatch(path):
-            score += 13
+            score -= 6
         elif normalized_path.lower() == "/container":
-            score += 6
+            score -= 4
     if host == "secure.vermont.gov" and normalized_path.lower() == "/sos/rules/display.php" and re.search(r"(?:^|[?&])r=\d+", parsed.query or "", re.IGNORECASE):
-        score += 6
+        score += 18
     if host == "texas-sos.appianportalsgov.com" and normalized_path.lower() == "/rules-and-meetings":
         query_params = parse_qs(parsed.query or "")
         interface = str((query_params.get("interface") or [""])[0]).strip().upper()
