@@ -13,6 +13,7 @@ Tests cover:
 import pytest
 import json
 import asyncio
+import logging
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from dataclasses import asdict
 from typing import Dict, List
@@ -44,7 +45,8 @@ except ImportError:
 try:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
         BaseStateScraper,
-        NormalizedStatute
+        NormalizedStatute,
+        StatuteMetadata,
     )
     BASE_SCRAPER_AVAILABLE = True
 except ImportError:
@@ -103,18 +105,24 @@ def sample_normalized_statute():
         return None
     
     return NormalizedStatute(
+        state_code="US",
+        state_name="United States",
         statute_id="42-USC-1395",
-        title="Medicare Provisions",
-        text="Medicare provides health insurance...",
-        citation="42 U.S.C. § 1395",
-        url="https://www.law.cornell.edu/uscode/text/42/1395",
-        jurisdiction="federal",
-        effective_date="2024-01-01",
-        metadata={
+        code_name="United States Code",
+        section_number="1395",
+        short_title="Medicare Provisions",
+        full_text="Medicare provides health insurance...",
+        source_url="https://www.law.cornell.edu/uscode/text/42/1395",
+        official_cite="42 U.S.C. § 1395",
+        metadata=StatuteMetadata(
+            effective_date="2024-01-01",
+        ),
+        structured_data={
             "source": "Cornell LII",
             "scrape_date": "2024-01-15",
-            "version": "current"
-        }
+            "version": "current",
+            "jurisdiction": "federal",
+        },
     )
 
 
@@ -130,8 +138,8 @@ class TestCommonCrawlLegalScraper:
         """Test scraper initialization."""
         scraper = CommonCrawlLegalScraper()
         assert scraper is not None
-        assert hasattr(scraper, 'sources')
-        assert isinstance(scraper.sources, dict)
+        assert hasattr(scraper, 'sources_by_url')
+        assert isinstance(scraper.sources_by_url, dict)
     
     @patch('builtins.open', create=True)
     async def test_load_jsonl_sources(self, mock_open, sample_jsonl_data):
@@ -151,23 +159,28 @@ class TestCommonCrawlLegalScraper:
     def test_source_metadata_creation(self, sample_jsonl_data):
         """Test LegalSourceMetadata creation."""
         data = sample_jsonl_data[0]
-        metadata = LegalSourceMetadata(**data)
+        metadata = LegalSourceMetadata.from_dict(data)
         
         assert metadata.id == "federal_001"
         assert metadata.kind == "federal"
         assert metadata.website == "https://congress.gov/"
     
-    @patch('ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper.CommonCrawlSearchEngine')
-    async def test_scrape_url_success(self, mock_cc_engine, mock_scraper_content):
+    async def test_scrape_url_success(self, mock_scraper_content):
         """Test successful URL scraping."""
-        # Mock Common Crawl response
-        mock_engine = AsyncMock()
-        mock_engine.search_domain.return_value = [{"warc_url": "s3://...", "offset": 0, "length": 1000}]
-        mock_engine.fetch_warc_content.return_value = mock_scraper_content
-        mock_cc_engine.return_value = mock_engine
-        
         scraper = CommonCrawlLegalScraper()
-        result = await scraper.scrape_url("https://congress.gov/", extract_rules=False)
+        with patch.object(
+            scraper,
+            '_fetch_common_crawl',
+            AsyncMock(
+                return_value={
+                    "content": mock_scraper_content,
+                    "text": "This is a legal statute about public health...",
+                    "html": mock_scraper_content,
+                    "title": "Legal Document",
+                }
+            ),
+        ):
+            result = await scraper.scrape_url("https://congress.gov/", extract_rules=False, feed_to_logic=False)
         
         assert isinstance(result, ScrapedLegalContent)
     
@@ -178,11 +191,14 @@ class TestCommonCrawlLegalScraper:
         # All methods should fail, but not raise exception
         with patch.object(scraper, '_fetch_common_crawl', side_effect=Exception("CC failed")):
             with patch.object(scraper, '_fetch_brave_search', side_effect=Exception("Brave failed")):
-                result = await scraper.scrape_url("https://example.com/")
+                with patch.object(scraper, '_fetch_wayback_machine', side_effect=Exception("Wayback failed")):
+                    with patch.object(scraper, '_fetch_unified_scraper', side_effect=Exception("Unified failed")):
+                        with patch.object(scraper, '_fetch_direct_http', side_effect=Exception("HTTP failed")):
+                            result = await scraper.scrape_url("https://example.com/", extract_rules=False, feed_to_logic=False)
                 
-                # Should return result even if failed
-                assert isinstance(result, ScrapedLegalContent)
-                assert not result.success
+                            # Should return result even if failed
+                            assert isinstance(result, ScrapedLegalContent)
+                            assert not result.success
 
     def test_detect_source_type_treats_state_gov_hosts_as_state(self):
         scraper = CommonCrawlLegalScraper()
@@ -226,23 +242,23 @@ class TestLegalScraperRegistry:
         """Test registry initialization."""
         registry = LegalScraperRegistry()
         assert registry is not None
-        assert hasattr(registry, 'scrapers')
+        assert hasattr(registry, '_scrapers')
     
     def test_manual_registration(self):
         """Test manual scraper registration."""
         registry = LegalScraperRegistry()
         
-        scraper_info = ScraperInfo(
+        registry.register(
             name="TestScraper",
-            scraper_type=ScraperType.FEDERAL,
             scraper_class=Mock,
-            capabilities={ScraperCapability.ASYNC_BATCH},
+            scraper_type=ScraperType.FEDERAL,
+            capabilities=[ScraperCapability.ASYNC_BATCH],
             priority=5,
-            description="Test scraper"
+            description="Test scraper",
+            supports_sources=["example.test"],
         )
-        
-        registry.register(scraper_info)
-        assert "TestScraper" in registry.scrapers
+
+        assert "TestScraper" in registry._scrapers
     
     def test_auto_discovery(self):
         """Test auto-discovery of scrapers."""
@@ -250,7 +266,7 @@ class TestLegalScraperRegistry:
         registry.auto_discover()
         
         # Should find at least some scrapers
-        assert len(registry.scrapers) > 0
+        assert len(registry.list_scrapers()) > 0
     
     def test_filter_by_type(self):
         """Test filtering scrapers by type."""
@@ -315,9 +331,7 @@ class TestBaseScraperCommonCrawl:
         """Create a mock state scraper for testing."""
         class MockStateScraper(BaseStateScraper):
             def __init__(self):
-                self.state_code = "CA"
-                self.state_name = "California"
-                self.logger = logging.getLogger(__name__)
+                super().__init__("CA", "California")
             
             def get_base_url(self) -> str:
                 return "https://legislature.ca.gov/"
@@ -330,12 +344,10 @@ class TestBaseScraperCommonCrawl:
         
         return MockStateScraper()
     
-    @patch('ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper.CommonCrawlSearchEngine')
-    async def test_scrape_from_common_crawl(self, mock_cc, mock_state_scraper):
+    @patch('ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper.CommonCrawlLegalScraper.scrape_url')
+    async def test_scrape_from_common_crawl(self, mock_scrape_url, mock_state_scraper):
         """Test scrape_from_common_crawl method."""
-        mock_engine = AsyncMock()
-        mock_engine.search_domain.return_value = [{"warc_url": "s3://...", "offset": 0}]
-        mock_cc.return_value = mock_engine
+        mock_scrape_url.return_value = MagicMock(success=True, content="CC content")
         
         result = await mock_state_scraper.scrape_from_common_crawl(
             "https://example.com/",
@@ -344,14 +356,10 @@ class TestBaseScraperCommonCrawl:
         
         assert result is not None
     
-    @patch('httpx.AsyncClient')
-    async def test_query_warc_file(self, mock_httpx, mock_state_scraper):
+    @patch('ipfs_datasets_py.processors.web_archiving.common_crawl_integration.CommonCrawlSearchEngine.fetch_warc_record')
+    async def test_query_warc_file(self, mock_fetch_warc_record, mock_state_scraper):
         """Test query_warc_file method."""
-        mock_client = AsyncMock()
-        mock_response = AsyncMock()
-        mock_response.text = "<html>Test content</html>"
-        mock_client.get.return_value = mock_response
-        mock_httpx.return_value.__aenter__.return_value = mock_client
+        mock_fetch_warc_record.return_value = "<html>Test content</html>"
         
         result = await mock_state_scraper.query_warc_file(
             "s3://commoncrawl/test.warc.gz",
@@ -361,12 +369,14 @@ class TestBaseScraperCommonCrawl:
         
         assert result is not None
     
-    @patch('ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper.UnifiedGraphRAGProcessor')
-    async def test_extract_with_graphrag(self, mock_graphrag, mock_state_scraper):
+    @patch('ipfs_datasets_py.processors.specialized.graphrag.UnifiedGraphRAGProcessor.process_website')
+    async def test_extract_with_graphrag(self, mock_process_website, mock_state_scraper):
         """Test extract_with_graphrag method."""
-        mock_processor = AsyncMock()
-        mock_processor.extract_entities.return_value = {"entities": [], "relationships": []}
-        mock_graphrag.return_value = mock_processor
+        mock_process_website.return_value = MagicMock(
+            entities=[],
+            relationships=[],
+            knowledge_graph=None,
+        )
         
         content = "<html><body>Legal text</body></html>"
         result = await mock_state_scraper.extract_with_graphrag(content, extract_rules=True)
@@ -397,7 +407,7 @@ class TestNormalizedStatute:
     def test_creation(self, sample_normalized_statute):
         """Test statute creation."""
         assert sample_normalized_statute.statute_id == "42-USC-1395"
-        assert sample_normalized_statute.title == "Medicare Provisions"
+        assert sample_normalized_statute.short_title == "Medicare Provisions"
     
     def test_to_dict(self, sample_normalized_statute):
         """Test conversion to dict."""
@@ -407,13 +417,14 @@ class TestNormalizedStatute:
     
     def test_dict_like_access(self, sample_normalized_statute):
         """Test dict-like access via metadata."""
-        assert "source" in sample_normalized_statute.metadata
-        assert sample_normalized_statute.metadata["source"] == "Cornell LII"
+        assert sample_normalized_statute["title"] == "Medicare Provisions"
+        assert sample_normalized_statute["url"] == "https://www.law.cornell.edu/uscode/text/42/1395"
+        assert sample_normalized_statute.structured_data["source"] == "Cornell LII"
     
     def test_citation_generation(self, sample_normalized_statute):
         """Test citation is properly formatted."""
-        assert "42 U.S.C." in sample_normalized_statute.citation
-        assert "1395" in sample_normalized_statute.citation
+        assert "42 U.S.C." in sample_normalized_statute.official_cite
+        assert "1395" in sample_normalized_statute.official_cite
 
 
 # ============================================================================
@@ -429,11 +440,12 @@ class TestIntegration:
     def test_registry_auto_discovery(self):
         """Test registry can auto-discover scrapers including CommonCrawl."""
         registry = get_registry()
+        registry.auto_discover()
         scrapers = registry.list_scrapers()
         
         # Should find CommonCrawlLegalScraper
         scraper_names = [s.name for s in scrapers]
-        assert any("CommonCrawl" in name for name in scraper_names)
+        assert "common_crawl" in scraper_names
     
     @pytest.mark.skipif(not (REGISTRY_AVAILABLE and COMMON_CRAWL_AVAILABLE),
                         reason="Components not available")
@@ -481,10 +493,13 @@ class TestPerformance:
         """Benchmark statute creation performance."""
         def create_statute():
             return NormalizedStatute(
+                state_code="TS",
+                state_name="Test State",
                 statute_id="test",
-                title="Test Statute",
-                text="Test text" * 100,
-                citation="Test § 1"
+                short_title="Test Statute",
+                full_text="Test text" * 100,
+                official_cite="Test § 1",
+                source_url="https://example.test/statute/1",
             )
         
         # Should complete in < 10ms

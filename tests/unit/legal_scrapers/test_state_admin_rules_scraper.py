@@ -158,6 +158,29 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
     assert "https://rules.mt.gov/search" not in mt_urls
     assert all("sosmt.gov" not in url.lower() for url in mt_urls)
 
+
+def test_cloudflare_availability_detects_vault_credentials(monkeypatch) -> None:
+    class _Vault:
+        def get(self, name):
+            mapping = {
+                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID": "vault-acct",
+                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN": "vault-token",
+            }
+            return mapping.get(name)
+
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_API_TOKEN", raising=False)
+    fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _Vault())
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+
+    availability = scraper_module._cloudflare_browser_rendering_availability()
+
+    assert availability["available"] is True
+    assert availability["account_id_env"] == "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID"
+    assert availability["api_token_env"] == "IPFS_DATASETS_CLOUDFLARE_API_TOKEN"
+    assert availability["account_id_source_kind"] == "vault"
+    assert availability["api_token_source_kind"] == "vault"
+
     assert "https://akrules.elaws.us/aac" in ak_urls
     assert all("legislature.ak.gov" not in url.lower() for url in ak_urls)
     assert all("legis.state.ak.us" not in url.lower() for url in ak_urls)
@@ -11705,9 +11728,9 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
                 "status": "success",
                 "data": [
                     {
-                        "state_code": "HI",
-                        "state_name": "Hawaii",
-                        "title": "Hawaii Administrative Rules",
+                        "state_code": "OR",
+                        "state_name": "Oregon",
+                        "title": "Oregon Administrative Rules",
                         "statutes": [],
                         "rules_count": 0,
                     }
@@ -11718,9 +11741,9 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
             "status": "success",
             "data": [
                 {
-                    "state_code": "HI",
-                    "state_name": "Hawaii",
-                    "title": "Hawaii Administrative Rules",
+                    "state_code": "OR",
+                    "state_name": "Oregon",
+                    "title": "Oregon Administrative Rules",
                     "statutes": [],
                     "rules_count": 0,
                 }
@@ -11732,7 +11755,7 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scrape_state_admin_rules(
-        states=["HI"],
+        states=["OR"],
         output_format="json",
         include_metadata=True,
         write_jsonld=False,
@@ -11955,9 +11978,9 @@ async def test_scrape_state_admin_rules_zero_timeout_passes_through_delegated_sc
             "status": "success",
             "data": [
                 {
-                    "state_code": "HI",
-                    "state_name": "Hawaii",
-                    "title": "Hawaii Administrative Rules",
+                    "state_code": "OR",
+                    "state_name": "Oregon",
+                    "title": "Oregon Administrative Rules",
                     "statutes": [],
                     "rules_count": 0,
                 }
@@ -11969,7 +11992,7 @@ async def test_scrape_state_admin_rules_zero_timeout_passes_through_delegated_sc
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scrape_state_admin_rules(
-        states=["HI"],
+        states=["OR"],
         output_format="json",
         include_metadata=True,
         write_jsonld=False,

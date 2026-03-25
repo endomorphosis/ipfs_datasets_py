@@ -494,6 +494,133 @@ class StateLawsAgenticDaemon:
             "critic_score": score,
         }
 
+    def preview_runtime_readiness(self) -> Dict[str, Any]:
+        """Summarize whether this host is ready for a real daemon run."""
+        cloudflare = self._cloudflare_browser_rendering_availability()
+        router = self._router_availability_snapshot()
+        tactic_profiles = list(self.config.tactic_profiles.keys())
+        recommended = [
+            name
+            for name in ("cloudflare_explore", "router_assisted", "document_first", "archival_first")
+            if name in self.config.tactic_profiles
+        ]
+        return {
+            "status": "ready" if bool(router.get("llm_router")) and bool(router.get("embeddings_router")) else "partial",
+            "preview": True,
+            "corpus": self.corpus.key,
+            "output_dir": str(self.output_dir),
+            "states": list(self.states),
+            "state_count": len(self.states),
+            "cloudflare_browser_rendering": cloudflare,
+            "router": router,
+            "tactic_profiles": tactic_profiles,
+            "recommended_boot_tactics": recommended,
+        }
+
+    async def probe_cloudflare_browser_rendering(
+        self,
+        *,
+        url: str = "https://example.com",
+        limit: int = 1,
+        depth: int = 0,
+        render: bool = False,
+        timeout_seconds: int = 45,
+    ) -> Dict[str, Any]:
+        """Run a lightweight live Browser Rendering probe without a full daemon cycle."""
+        availability = self._cloudflare_browser_rendering_availability()
+        if not bool(availability.get("available")):
+            return {
+                "status": "missing_credentials",
+                "provider": "cloudflare_browser_rendering",
+                "availability": availability,
+                "submitted_url": url,
+            }
+
+        try:
+            import requests
+            from ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine import (
+                cancel_cloudflare_browser_rendering_crawl,
+                start_cloudflare_browser_rendering_crawl,
+                _resolve_credentials,
+            )
+
+            account_id, api_token = _resolve_credentials()
+            headers = {
+                "Authorization": f"Bearer {api_token}",
+                "Content-Type": "application/json",
+            }
+
+            verify_response = requests.get(
+                "https://api.cloudflare.com/client/v4/user/tokens/verify",
+                headers=headers,
+                timeout=max(5, int(timeout_seconds)),
+            )
+            verify_payload = verify_response.json()
+
+            accounts_response = requests.get(
+                "https://api.cloudflare.com/client/v4/accounts",
+                headers=headers,
+                timeout=max(5, int(timeout_seconds)),
+            )
+            accounts_payload = accounts_response.json()
+
+            markdown_response = requests.post(
+                f"https://api.cloudflare.com/client/v4/accounts/{account_id}/browser-rendering/markdown",
+                headers=headers,
+                json={"url": url},
+                timeout=max(5, int(timeout_seconds)),
+            )
+            markdown_payload = markdown_response.json()
+
+            started = await start_cloudflare_browser_rendering_crawl(
+                url,
+                account_id=account_id,
+                api_token=api_token,
+                limit=max(1, int(limit)),
+                depth=max(0, int(depth)),
+                formats=["markdown"],
+                render=bool(render),
+                request_timeout_seconds=max(5, int(timeout_seconds)),
+                max_rate_limit_wait_seconds=max(5.0, float(timeout_seconds)),
+            )
+            result = {
+                "provider": "cloudflare_browser_rendering",
+                "availability": availability,
+                "submitted_url": url,
+                "probe_mode": "start_only",
+                "token_verify": {
+                    "http_status": int(verify_response.status_code),
+                    "success": bool(verify_payload.get("success")),
+                    "errors": list(verify_payload.get("errors") or []),
+                },
+                "accounts_probe": {
+                    "http_status": int(accounts_response.status_code),
+                    "success": bool(accounts_payload.get("success")),
+                    "errors": list(accounts_payload.get("errors") or []),
+                    "result_count": len(list(accounts_payload.get("result") or [])),
+                },
+                "markdown_probe": {
+                    "http_status": int(markdown_response.status_code),
+                    "success": bool(markdown_payload.get("success")),
+                    "errors": list(markdown_payload.get("errors") or []),
+                },
+            }
+            result.update(started)
+            if started.get("status") == "success" and str(started.get("job_id") or "").strip():
+                result["cancel_after_probe"] = await cancel_cloudflare_browser_rendering_crawl(
+                    str(started.get("job_id")),
+                    request_timeout_seconds=max(5, int(timeout_seconds)),
+                )
+            return result
+        except Exception as exc:
+            return {
+                "status": "error",
+                "provider": "cloudflare_browser_rendering",
+                "availability": availability,
+                "submitted_url": url,
+                "error": str(exc),
+            }
+
     async def run_cycle(self) -> Dict[str, Any]:
         """Run one scrape-review-criticize-optimize cycle."""
         cycle_index = int(self._state.get("cycle_count", 0) or 0) + 1
@@ -625,9 +752,23 @@ class StateLawsAgenticDaemon:
             tactic=tactic,
             document_gap_report=document_gap_report,
         )
+        diagnostics = self._merge_document_artifacts_into_diagnostics(
+            diagnostics=diagnostics,
+            document_artifacts=document_artifacts,
+        )
+        diagnostics = self._annotate_document_recovery_gate(diagnostics)
+        critic_score = self._critic_score(diagnostics)
+        passed = self._is_success(diagnostics, score=critic_score)
+        critic = self._criticize_cycle(diagnostics)
+        critic = self._merge_router_assist_into_critic(critic=critic, router_assist=router_assist)
+        critic = self._merge_parallel_admin_assist_into_critic(critic=critic, parallel_admin_assist=parallel_admin_assist)
         checkpoint_payload.update(
             {
                 "stage": "post_cycle_release",
+                "diagnostics": diagnostics,
+                "critic_score": critic_score,
+                "passed": passed,
+                "critic": critic,
                 "document_artifacts": document_artifacts,
             }
         )
@@ -974,6 +1115,87 @@ class StateLawsAgenticDaemon:
                 )
         return targets
 
+    def _preferred_methods_for_document_target(
+        self,
+        *,
+        base_methods: Sequence[Any],
+        directives: Dict[str, Any],
+    ) -> List[Any]:
+        ordered: List[Any] = []
+        seen: set[Any] = set()
+
+        def _append(method: Any) -> None:
+            if method is None or method in seen:
+                return
+            seen.add(method)
+            ordered.append(method)
+
+        try:
+            from ..web_archiving.unified_web_scraper import ScraperMethod
+        except Exception:
+            return list(base_methods)
+
+        directive_map = {
+            "playwright_download": [ScraperMethod.PLAYWRIGHT],
+            "page_fetch": [ScraperMethod.REQUESTS_ONLY, ScraperMethod.BEAUTIFULSOUP],
+            "direct_fetch": [ScraperMethod.REQUESTS_ONLY, ScraperMethod.BEAUTIFULSOUP],
+            "cloudflare_browser_rendering": [ScraperMethod.CLOUDFLARE_BROWSER_RENDERING, ScraperMethod.PLAYWRIGHT],
+            "archival_replay": [
+                ScraperMethod.COMMON_CRAWL,
+                ScraperMethod.WAYBACK_MACHINE,
+                ScraperMethod.ARCHIVE_IS,
+            ],
+        }
+        for name in list((directives or {}).get("download_methods") or []):
+            for method in directive_map.get(str(name).strip(), []):
+                _append(method)
+
+        for method in list(base_methods or []):
+            _append(method)
+        return ordered
+
+    async def _extract_document_text_from_raw_bytes(
+        self,
+        *,
+        url: str,
+        raw_bytes: bytes,
+        content_type: str,
+    ) -> Dict[str, Any]:
+        lowered_url = str(url or "").strip().lower()
+        normalized_content_type = str(content_type or "").strip().lower()
+        if not raw_bytes:
+            return {"text": "", "method": None}
+
+        try:
+            from ..web_archiving.unified_web_scraper import UnifiedWebScraper
+        except Exception as exc:
+            return {"text": "", "method": None, "error": str(exc)}
+
+        if (
+            lowered_url.endswith(".pdf")
+            or ".pdf?" in lowered_url
+            or "application/pdf" in normalized_content_type
+        ):
+            try:
+                text = str(await UnifiedWebScraper._extract_pdf_text(raw_bytes) or "").strip()
+            except Exception as exc:
+                return {"text": "", "method": "pdf_processor", "error": str(exc)}
+            return {"text": text, "method": "pdf_processor"}
+
+        if (
+            lowered_url.endswith(".rtf")
+            or ".rtf?" in lowered_url
+            or "application/rtf" in normalized_content_type
+            or "text/rtf" in normalized_content_type
+        ):
+            try:
+                text = str(await UnifiedWebScraper._extract_rtf_text(raw_bytes) or "").strip()
+            except Exception as exc:
+                return {"text": "", "method": "rtf_processor", "error": str(exc)}
+            return {"text": text, "method": "rtf_processor"}
+
+        return {"text": "", "method": None}
+
     async def _capture_document_artifacts(
         self,
         *,
@@ -1013,7 +1235,6 @@ class StateLawsAgenticDaemon:
             archive_is_submit_on_miss=bool(tactic.archive_is_submit_on_miss),
             rate_limit_delay=max(0.0, float(tactic.rate_limit_delay or 0.0)),
         )
-        scraper = UnifiedWebScraper(config)
         cycle_dir = self.document_artifacts_dir / f"cycle_{cycle_index:04d}"
         cycle_dir.mkdir(parents=True, exist_ok=True)
         manifest_entries: List[Dict[str, Any]] = []
@@ -1030,6 +1251,19 @@ class StateLawsAgenticDaemon:
             url = str(target.get("url") or "").strip()
             if not url:
                 continue
+            directives = dict(target.get("directives") or {})
+            target_methods = self._preferred_methods_for_document_target(
+                base_methods=preferred_methods,
+                directives=directives,
+            )
+            target_config = ScraperConfig(
+                timeout=config.timeout,
+                preferred_methods=target_methods,
+                fallback_enabled=config.fallback_enabled,
+                archive_is_submit_on_miss=config.archive_is_submit_on_miss,
+                rate_limit_delay=config.rate_limit_delay,
+            )
+            scraper = UnifiedWebScraper(target_config)
             result = await scraper.scrape(url)
             metadata = dict(getattr(result, "metadata", {}) or {})
             raw_bytes = metadata.pop("raw_bytes", None)
@@ -1039,6 +1273,8 @@ class StateLawsAgenticDaemon:
             saved_files: List[str] = []
             sha256 = None
             content_type = str(metadata.get("content_type") or "").strip()
+            document_processor_method = None
+            document_processor_error = None
 
             if isinstance(raw_bytes, (bytes, bytearray)) and raw_bytes:
                 extension = Path(suggested_name).suffix or self._content_type_extension(content_type)
@@ -1048,6 +1284,17 @@ class StateLawsAgenticDaemon:
                 sha256 = hashlib.sha256(bytes(raw_bytes)).hexdigest()
 
             extracted_text = str(getattr(result, "text", "") or "").strip()
+            if isinstance(raw_bytes, (bytes, bytearray)) and raw_bytes:
+                processed_document = await self._extract_document_text_from_raw_bytes(
+                    url=url,
+                    raw_bytes=bytes(raw_bytes),
+                    content_type=content_type,
+                )
+                recovered_text = str(processed_document.get("text") or "").strip()
+                document_processor_method = processed_document.get("method")
+                document_processor_error = processed_document.get("error")
+                if recovered_text and len(recovered_text) > len(extracted_text):
+                    extracted_text = recovered_text
             if extracted_text:
                 text_path = cycle_dir / f"{base_name}.txt"
                 text_path.write_text(extracted_text, encoding="utf-8")
@@ -1070,15 +1317,18 @@ class StateLawsAgenticDaemon:
                     "binary_document": bool(metadata.get("binary_document", False)),
                     "sha256": sha256,
                     "saved_files": saved_files,
+                    "preferred_methods": [method.value for method in target_methods],
                     "title": str(getattr(result, "title", "") or "").strip() or None,
                     "error_count": len(list(getattr(result, "errors", []) or [])),
                     "errors": [str(item) for item in list(getattr(result, "errors", []) or []) if str(item).strip()][:4],
+                    "document_processor_method": document_processor_method,
+                    "document_processor_error": document_processor_error,
                     "metadata": {
                         key: value
                         for key, value in metadata.items()
                         if not isinstance(value, (bytes, bytearray))
                     },
-                    "recovery_directives": dict(target.get("directives") or {}),
+                    "recovery_directives": directives,
                 }
             )
             if bool(getattr(result, "success", False)):
@@ -1107,6 +1357,128 @@ class StateLawsAgenticDaemon:
             "successful_count": int(successful_count or 0),
             "entries": manifest_entries,
         }
+
+    def _document_artifact_summary(self, document_artifacts: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(document_artifacts, dict) or str(document_artifacts.get("status") or "") != "completed":
+            return {
+                "successful_document_urls": 0,
+                "recovered_states": [],
+                "by_state": {},
+                "by_format": {"pdf": 0, "rtf": 0, "html": 0},
+                "by_processor": {},
+            }
+
+        seen_document_urls: set[str] = set()
+        recovered_states: set[str] = set()
+        by_state: Dict[str, Dict[str, int]] = {}
+        by_format: Dict[str, int] = {"pdf": 0, "rtf": 0, "html": 0}
+        by_processor: Dict[str, int] = {}
+
+        for entry in list(document_artifacts.get("entries") or []):
+            if not isinstance(entry, dict) or not bool(entry.get("success")):
+                continue
+            state_code = str(entry.get("state") or "").upper().strip()
+            url = str(entry.get("url") or "").strip()
+            doc_format = self._document_format_from_url(url)
+            if doc_format not in {"pdf", "rtf", "html"}:
+                doc_format = "html"
+            if url and doc_format in {"pdf", "rtf"}:
+                seen_document_urls.add(url)
+                if state_code:
+                    recovered_states.add(state_code)
+            by_format[doc_format] = int(by_format.get(doc_format, 0) or 0) + 1
+            if state_code:
+                state_counts = by_state.setdefault(state_code, {"pdf": 0, "rtf": 0, "html": 0, "successful": 0})
+                state_counts[doc_format] = int(state_counts.get(doc_format, 0) or 0) + 1
+                state_counts["successful"] = int(state_counts.get("successful", 0) or 0) + 1
+            processor_method = str(entry.get("document_processor_method") or "").strip()
+            if processor_method:
+                by_processor[processor_method] = int(by_processor.get(processor_method, 0) or 0) + 1
+
+        return {
+            "successful_document_urls": len(seen_document_urls),
+            "recovered_states": sorted(recovered_states),
+            "by_state": by_state,
+            "by_format": by_format,
+            "by_processor": by_processor,
+        }
+
+    def _merge_document_artifacts_into_diagnostics(
+        self,
+        *,
+        diagnostics: Dict[str, Any],
+        document_artifacts: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        if not isinstance(diagnostics, dict):
+            return diagnostics
+        documents = diagnostics.get("documents") or {}
+        if not isinstance(documents, dict):
+            return diagnostics
+
+        artifact_summary = self._document_artifact_summary(document_artifacts)
+        if int(artifact_summary.get("successful_document_urls", 0) or 0) <= 0:
+            documents = dict(documents)
+            documents["artifact_recovery"] = artifact_summary
+            diagnostics["documents"] = documents
+            return diagnostics
+
+        updated_documents = dict(documents)
+        per_state = {
+            str(state).upper(): dict(counts or {})
+            for state, counts in dict(updated_documents.get("per_state") or {}).items()
+            if str(state).strip()
+        }
+        states_with_document_rules = {
+            str(item).upper().strip()
+            for item in list(updated_documents.get("states_with_document_rules") or [])
+            if str(item).strip()
+        }
+        gap_states = {
+            str(item).upper().strip()
+            for item in list(updated_documents.get("states_with_candidate_document_gaps") or [])
+            if str(item).strip()
+        }
+        per_state_recovery = {
+            str(state).upper(): dict(payload or {})
+            for state, payload in dict(updated_documents.get("per_state_recovery") or {}).items()
+            if str(state).strip()
+        }
+
+        by_state = artifact_summary.get("by_state") or {}
+        for state_code, counts in by_state.items():
+            normalized_state = str(state_code).upper().strip()
+            if not normalized_state:
+                continue
+            state_counts = dict(per_state.get(normalized_state) or {"html": 0, "pdf": 0, "rtf": 0})
+            for name in ("html", "pdf", "rtf"):
+                state_counts[name] = int(state_counts.get(name, 0) or 0) + int(counts.get(name, 0) or 0)
+            per_state[normalized_state] = state_counts
+            if int(state_counts.get("pdf", 0) or 0) + int(state_counts.get("rtf", 0) or 0) > 0:
+                states_with_document_rules.add(normalized_state)
+                gap_states.discard(normalized_state)
+
+            recovery_entry = dict(per_state_recovery.get(normalized_state) or {})
+            recovery_entry["artifact_recovery_successes"] = int(
+                recovery_entry.get("artifact_recovery_successes", 0) or 0
+            ) + int(counts.get("successful", 0) or 0)
+            artifact_formats = {
+                "pdf": int(counts.get("pdf", 0) or 0),
+                "rtf": int(counts.get("rtf", 0) or 0),
+                "html": int(counts.get("html", 0) or 0),
+            }
+            recovery_entry["artifact_recovery_formats"] = artifact_formats
+            per_state_recovery[normalized_state] = recovery_entry
+
+        updated_documents["per_state"] = per_state
+        updated_documents["per_state_recovery"] = per_state_recovery
+        updated_documents["processed_document_urls"] = int(updated_documents.get("processed_document_urls", 0) or 0) + int(
+            artifact_summary.get("successful_document_urls", 0) or 0
+        )
+        updated_documents["states_with_document_rules"] = sorted(states_with_document_rules)
+        updated_documents["states_with_candidate_document_gaps"] = sorted(gap_states)
+        updated_documents["artifact_recovery"] = artifact_summary
+        diagnostics["documents"] = updated_documents
+        return diagnostics
 
     def _write_cycle_checkpoint(self, *, cycle_index: int, payload: Dict[str, Any]) -> Optional[Path]:
         if not isinstance(payload, dict) or not payload:
@@ -1316,8 +1688,51 @@ class StateLawsAgenticDaemon:
             "CLOUDFLARE_API_TOKEN",
         ]
 
-        account_source = next((key for key in account_env_keys if str(os.getenv(key) or "").strip()), None)
-        token_source = next((key for key in token_env_keys if str(os.getenv(key) or "").strip()), None)
+        def _resolve_source(names: List[str], *, provider: str) -> Optional[str]:
+            if provider == "env":
+                return next((key for key in names if str(os.getenv(key) or "").strip()), None)
+            if provider == "vault":
+                try:
+                    from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+                    vault = get_secrets_vault()
+                    return next((key for key in names if str(vault.get(key) or "").strip()), None)
+                except Exception:
+                    return None
+            if provider == "keyring":
+                try:
+                    import keyring  # type: ignore
+
+                    return next(
+                        (
+                            key
+                            for key in names
+                            if str(keyring.get_password("ipfs_datasets_py", key) or "").strip()
+                        ),
+                        None,
+                    )
+                except Exception:
+                    return None
+            return None
+
+        account_source = _resolve_source(account_env_keys, provider="env")
+        account_source_kind = "env" if account_source else None
+        if not account_source:
+            account_source = _resolve_source(account_env_keys, provider="vault")
+            account_source_kind = "vault" if account_source else None
+        if not account_source:
+            account_source = _resolve_source(account_env_keys, provider="keyring")
+            account_source_kind = "keyring" if account_source else None
+
+        token_source = _resolve_source(token_env_keys, provider="env")
+        token_source_kind = "env" if token_source else None
+        if not token_source:
+            token_source = _resolve_source(token_env_keys, provider="vault")
+            token_source_kind = "vault" if token_source else None
+        if not token_source:
+            token_source = _resolve_source(token_env_keys, provider="keyring")
+            token_source_kind = "keyring" if token_source else None
+
         missing_credentials: List[str] = []
         if not account_source:
             missing_credentials.append("account_id")
@@ -1331,7 +1746,53 @@ class StateLawsAgenticDaemon:
             "provider": "cloudflare_browser_rendering",
             "account_id_env": account_source,
             "api_token_env": token_source,
+            "account_id_source_kind": account_source_kind,
+            "api_token_source_kind": token_source_kind,
             "missing_credentials": missing_credentials,
+        }
+
+    @staticmethod
+    def _resolve_cloudflare_credential_values() -> Dict[str, Optional[str]]:
+        account_names = [
+            "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+            "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_ACCOUNT_ID",
+        ]
+        token_names = [
+            "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+            "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_API_TOKEN",
+        ]
+
+        def _resolve_value(names: List[str]) -> Optional[str]:
+            for name in names:
+                value = str(os.getenv(name) or "").strip()
+                if value:
+                    return value
+            try:
+                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+                vault = get_secrets_vault()
+                for name in names:
+                    value = str(vault.get(name) or "").strip()
+                    if value:
+                        return value
+            except Exception:
+                pass
+            try:
+                import keyring  # type: ignore
+
+                for name in names:
+                    value = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+                    if value:
+                        return value
+            except Exception:
+                pass
+            return None
+
+        return {
+            "account_id": _resolve_value(account_names),
+            "api_token": _resolve_value(token_names),
         }
 
     def _build_diagnostics(self, scrape_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -4077,6 +4538,15 @@ class StateLawsAgenticDaemon:
             if serialized_formats:
                 overrides["IPFS_DATASETS_CLOUDFLARE_CRAWL_FORMATS"] = serialized_formats
                 overrides["LEGAL_SCRAPER_CLOUDFLARE_CRAWL_FORMATS"] = serialized_formats
+        cloudflare_credentials = self._resolve_cloudflare_credential_values()
+        if cloudflare_credentials.get("account_id"):
+            overrides["IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID"] = str(cloudflare_credentials["account_id"])
+            overrides["LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID"] = str(cloudflare_credentials["account_id"])
+            overrides["CLOUDFLARE_ACCOUNT_ID"] = str(cloudflare_credentials["account_id"])
+        if cloudflare_credentials.get("api_token"):
+            overrides["IPFS_DATASETS_CLOUDFLARE_API_TOKEN"] = str(cloudflare_credentials["api_token"])
+            overrides["LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN"] = str(cloudflare_credentials["api_token"])
+            overrides["CLOUDFLARE_API_TOKEN"] = str(cloudflare_credentials["api_token"])
         state_query_hints = self._state.get("state_query_hints") or {}
         if isinstance(state_query_hints, dict) and state_query_hints:
             try:
@@ -4345,6 +4815,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--post-cycle-release-publish-command", default=None, help="Optional publish command template appended after merge/parquet/embed.")
     parser.add_argument("--post-cycle-release-preview-score", type=float, default=None, help="Critic score to stamp into a scrape-free release plan preview.")
     parser.add_argument("--post-cycle-release-preview-cycle", type=int, default=1, help="Cycle number to stamp into a scrape-free release plan preview.")
+    parser.add_argument("--print-runtime-readiness", action="store_true", help="Print Cloudflare/router/IPFS readiness without running a scrape cycle.")
+    parser.add_argument("--probe-cloudflare-browser-rendering", action="store_true", help="Run a live Cloudflare Browser Rendering auth probe without starting the daemon.")
+    parser.add_argument("--probe-cloudflare-url", default="https://example.com", help="URL submitted during the live Cloudflare Browser Rendering probe.")
     return parser
 
 
@@ -4422,7 +4895,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             previous_handlers[sig] = signal.getsignal(sig)
             signal.signal(sig, _handle_termination)
 
-        if bool(args.print_post_cycle_release_plan):
+        if bool(args.print_runtime_readiness):
+            result = daemon.preview_runtime_readiness()
+        elif bool(args.probe_cloudflare_browser_rendering):
+            result = asyncio.run(
+                daemon.probe_cloudflare_browser_rendering(
+                    url=str(args.probe_cloudflare_url or "https://example.com").strip() or "https://example.com"
+                )
+            )
+        elif bool(args.print_post_cycle_release_plan):
             result = daemon.preview_post_cycle_release_plan(
                 cycle_index=max(1, int(args.post_cycle_release_preview_cycle)),
                 critic_score=args.post_cycle_release_preview_score,

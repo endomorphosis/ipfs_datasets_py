@@ -1950,16 +1950,32 @@ class BaseStateScraper(ABC):
         """
         try:
             from ...web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+            from urllib.parse import urlparse
             
             # Create engine instance
             engine = CommonCrawlSearchEngine()
             
-            # Fetch WARC segment
-            content = await engine.fetch_warc_segment(
-                warc_url=warc_url,
-                offset=offset,
-                length=length
-            )
+            parsed = urlparse(str(warc_url or ""))
+            warc_filename = parsed.path.lstrip("/") if parsed.scheme else str(warc_url or "")
+
+            # Support the current fetch_warc_record API and older fetch_warc_segment variants.
+            if hasattr(engine, "fetch_warc_record"):
+                raw_content = engine.fetch_warc_record(
+                    warc_filename=warc_filename,
+                    warc_offset=offset,
+                    warc_length=length,
+                )
+                if isinstance(raw_content, (bytes, bytearray)):
+                    content = bytes(raw_content).decode("utf-8", errors="replace")
+                else:
+                    content = str(raw_content or "")
+            else:
+                fetch_warc_segment = getattr(engine, "fetch_warc_segment")
+                content = await fetch_warc_segment(
+                    warc_url=warc_url,
+                    offset=offset,
+                    length=length
+                )
             
             if content:
                 self.logger.info(f"Retrieved WARC content (offset={offset}, length={length})")

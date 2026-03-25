@@ -619,22 +619,58 @@ class UnifiedWebScraper:
             self.config.cloudflare_include_subdomains = cloudflare_include_subdomains
 
     def _resolve_cloudflare_credentials(self) -> tuple[Optional[str], Optional[str]]:
+        account_names = (
+            "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+            "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_ACCOUNT_ID",
+        )
+        token_names = (
+            "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+            "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_API_TOKEN",
+        )
+
+        def _vault_value(*names: str) -> Optional[str]:
+            try:
+                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+                vault = get_secrets_vault()
+                for name in names:
+                    resolved = str(vault.get(name) or "").strip()
+                    if resolved:
+                        return resolved
+            except Exception:
+                return None
+            return None
+
+        def _keyring_value(*names: str) -> Optional[str]:
+            try:
+                import keyring  # type: ignore
+
+                for name in names:
+                    resolved = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+                    if resolved:
+                        return resolved
+            except Exception:
+                return None
+            return None
+
         account_id = (
             self.config.cloudflare_account_id
             or self._env_str(
-                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
-                "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
-                "CLOUDFLARE_ACCOUNT_ID",
+                *account_names
             )
+            or _vault_value(*account_names)
+            or _keyring_value(*account_names)
             or ""
         ).strip() or None
         api_token = (
             self.config.cloudflare_api_token
             or self._env_str(
-                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
-                "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
-                "CLOUDFLARE_API_TOKEN",
+                *token_names
             )
+            or _vault_value(*token_names)
+            or _keyring_value(*token_names)
             or ""
         ).strip() or None
         return account_id, api_token

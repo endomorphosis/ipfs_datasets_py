@@ -1,6 +1,8 @@
 import asyncio
 import json
+import sys
 import time
+import types
 from types import SimpleNamespace
 
 import pytest
@@ -209,6 +211,118 @@ def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
     assert preview["commands"][4]["stage"] == "publish"
     assert "release state_admin_rules" in preview["commands"][4]["command"]
     assert preview["artifacts"]["clean_output_dir"].endswith("_cleaned")
+
+
+def test_preview_runtime_readiness_reports_cloudflare_and_router(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ", "CA"],
+            output_dir=str(tmp_path),
+        )
+    )
+
+    monkeypatch.setattr(
+        daemon,
+        "_cloudflare_browser_rendering_availability",
+        lambda: {"available": False, "status": "missing_credentials"},
+    )
+    monkeypatch.setattr(
+        daemon,
+        "_router_availability_snapshot",
+        lambda: {"llm_router": True, "embeddings_router": True, "ipfs_backend": "KuboCLIBackend"},
+    )
+
+    preview = daemon.preview_runtime_readiness()
+
+    assert preview["preview"] is True
+    assert preview["corpus"] == "state_admin_rules"
+    assert preview["state_count"] == 2
+    assert preview["cloudflare_browser_rendering"]["status"] == "missing_credentials"
+    assert preview["router"]["ipfs_backend"] == "KuboCLIBackend"
+    assert "cloudflare_explore" in preview["recommended_boot_tactics"]
+    assert "router_assisted" in preview["recommended_boot_tactics"]
+
+
+def test_cloudflare_runtime_readiness_detects_vault_credentials(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    class _Vault:
+        def get(self, name):
+            mapping = {
+                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID": "vault-acct",
+                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN": "vault-token",
+            }
+            return mapping.get(name)
+
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_API_TOKEN", raising=False)
+    fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _Vault())
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+
+    readiness = daemon_module.StateLawsAgenticDaemon._cloudflare_browser_rendering_availability()
+
+    assert readiness["available"] is True
+    assert readiness["account_id_env"] == "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID"
+    assert readiness["api_token_env"] == "IPFS_DATASETS_CLOUDFLARE_API_TOKEN"
+    assert readiness["account_id_source_kind"] == "vault"
+    assert readiness["api_token_source_kind"] == "vault"
+
+
+def test_tactic_env_injects_cloudflare_credentials_from_vault(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    class _Vault:
+        def get(self, name):
+            mapping = {
+                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID": "vault-acct",
+                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN": "vault-token",
+            }
+            return mapping.get(name)
+
+    fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _Vault())
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_API_TOKEN", raising=False)
+    monkeypatch.delenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", raising=False)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+        )
+    )
+    tactic = daemon.config.tactic_profiles["cloudflare_explore"]
+
+    with daemon._tactic_env(tactic):
+        assert daemon_module.os.environ["IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID"] == "vault-acct"
+        assert daemon_module.os.environ["IPFS_DATASETS_CLOUDFLARE_API_TOKEN"] == "vault-token"
+
+
+@pytest.mark.anyio
+async def test_probe_cloudflare_browser_rendering_returns_missing_credentials(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+        )
+    )
+    daemon._cloudflare_browser_rendering_availability = lambda: {  # type: ignore[method-assign]
+        "available": False,
+        "status": "missing_credentials",
+    }
+
+    result = await daemon.probe_cloudflare_browser_rendering(url="https://example.com")
+
+    assert result["status"] == "missing_credentials"
+    assert result["submitted_url"] == "https://example.com"
 
 
 def test_state_admin_rules_release_plan_routes_parquet_through_clean_bundle(tmp_path):
@@ -1548,6 +1662,100 @@ def test_state_laws_agentic_daemon_main_promotes_checkpoint_on_nonzero_system_ex
     assert daemon_module.signal.SIGINT in installed_handlers
 
 
+def test_main_print_runtime_readiness_skips_scrape(monkeypatch, tmp_path, capsys):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    run_called = False
+
+    class _FakeDaemon:
+        def __init__(self, config):
+            self.config = config
+
+        def preview_runtime_readiness(self):
+            return {
+                "status": "partial",
+                "preview": True,
+                "corpus": self.config.corpus_key,
+                "state_count": len(self.config.states),
+            }
+
+        async def run(self):
+            nonlocal run_called
+            run_called = True
+            return {"status": "should-not-run"}
+
+        def promote_latest_checkpoint_to_summary(self, *, reason):
+            return tmp_path / "latest_summary.json"
+
+    monkeypatch.setattr(daemon_module, "StateLawsAgenticDaemon", _FakeDaemon)
+
+    exit_code = daemon_module.main([
+        "--corpus",
+        "state_admin_rules",
+        "--states",
+        "AZ,CA",
+        "--output-dir",
+        str(tmp_path),
+        "--print-runtime-readiness",
+    ])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert run_called is False
+    assert payload["preview"] is True
+    assert payload["corpus"] == "state_admin_rules"
+    assert payload["state_count"] == 2
+
+
+def test_main_probe_cloudflare_browser_rendering_skips_scrape(monkeypatch, tmp_path, capsys):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    run_called = False
+
+    class _FakeDaemon:
+        def __init__(self, config):
+            self.config = config
+
+        async def probe_cloudflare_browser_rendering(self, *, url="https://example.com", **kwargs):
+            return {
+                "status": "error",
+                "provider": "cloudflare_browser_rendering",
+                "submitted_url": url,
+            }
+
+        async def run(self):
+            nonlocal run_called
+            run_called = True
+            return {"status": "should-not-run"}
+
+        def promote_latest_checkpoint_to_summary(self, *, reason):
+            return tmp_path / "latest_summary.json"
+
+    monkeypatch.setattr(daemon_module, "StateLawsAgenticDaemon", _FakeDaemon)
+
+    exit_code = daemon_module.main([
+        "--corpus",
+        "state_admin_rules",
+        "--states",
+        "AZ",
+        "--output-dir",
+        str(tmp_path),
+        "--probe-cloudflare-browser-rendering",
+        "--probe-cloudflare-url",
+        "https://example.com",
+    ])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert run_called is False
+    assert payload["status"] == "error"
+    assert payload["submitted_url"] == "https://example.com"
+
+
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_applies_outer_scrape_timeout(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
@@ -2676,6 +2884,7 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     summary = await daemon.run()
 
     artifact_summary = summary["latest_cycle"]["document_artifacts"]
+    documents_summary = summary["latest_cycle"]["diagnostics"]["documents"]
     manifest_path = tmp_path / "cycles" / "cycle_0001_document_artifacts.json"
     artifact_dir = tmp_path / "document_artifacts" / "cycle_0001"
     binary_path = artifact_dir / "AZ_01_18-04.pdf"
@@ -2685,6 +2894,10 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     assert artifact_summary["target_count"] == 1
     assert artifact_summary["successful_count"] == 1
     assert artifact_summary["artifact_path"] == str(manifest_path)
+    assert documents_summary["processed_document_urls"] == 1
+    assert documents_summary["states_with_document_rules"] == ["AZ"]
+    assert documents_summary["states_with_candidate_document_gaps"] == []
+    assert documents_summary["artifact_recovery"]["successful_document_urls"] == 1
     assert binary_path.exists()
     assert text_path.exists()
     assert binary_path.read_bytes() == b"%PDF-fake-content"
@@ -2694,8 +2907,118 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     assert manifest["successful_count"] == 1
     assert manifest["entries"][0]["method_used"] == "playwright"
     assert manifest["entries"][0]["binary_document"] is True
+    assert manifest["entries"][0]["preferred_methods"][0] == "playwright"
     assert str(binary_path) in manifest["entries"][0]["saved_files"]
     assert str(text_path) in manifest["entries"][0]["saved_files"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_recovers_rtf_text_with_processor(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.web_archiving import unified_web_scraper as scraper_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 2,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "AZ": {
+                            "candidate_urls": 1,
+                            "inspected_urls": 1,
+                            "expanded_urls": 0,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["apps.azsos.gov"],
+                            "parallel_prefetch": {"attempted": 1, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {"candidate_document": 1},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["apps.azsos.gov"],
+                                "candidate_hosts_without_rules": ["apps.azsos.gov"],
+                            },
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _fake_scrape(self, url, method=None, **kwargs):
+        return scraper_module.ScraperResult(
+            url=url,
+            title="18-04.rtf",
+            text="",
+            content="",
+            method_used=ScraperMethod.PLAYWRIGHT,
+            success=True,
+            metadata={
+                "method": "playwright_binary_fetch",
+                "content_type": "application/rtf",
+                "content_length": 24,
+                "raw_bytes": b"{\\rtf1\\ansi Arizona rule}",
+                "binary_document": True,
+            },
+        )
+
+    async def _fake_extract_rtf_text(rtf_bytes):
+        assert rtf_bytes.startswith(b"{\\rtf1")
+        return "Arizona RTF recovered text"
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "scrape", _fake_scrape)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "_extract_rtf_text", staticmethod(_fake_extract_rtf_text))
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=44,
+            document_artifact_capture_enabled=True,
+            document_artifact_state_limit=1,
+            document_artifact_urls_per_state=1,
+            document_artifact_max_total=1,
+        )
+    )
+
+    summary = await daemon.run()
+
+    artifact_summary = summary["latest_cycle"]["document_artifacts"]
+    documents_summary = summary["latest_cycle"]["diagnostics"]["documents"]
+    manifest_path = tmp_path / "cycles" / "cycle_0001_document_artifacts.json"
+    artifact_dir = tmp_path / "document_artifacts" / "cycle_0001"
+    binary_path = artifact_dir / "AZ_01_18-04.rtf"
+    text_path = artifact_dir / "AZ_01_18-04.txt"
+
+    assert artifact_summary["successful_count"] == 1
+    assert documents_summary["processed_document_urls"] == 1
+    assert documents_summary["states_with_document_rules"] == ["AZ"]
+    assert documents_summary["artifact_recovery"]["by_processor"]["rtf_processor"] == 1
+    assert binary_path.exists()
+    assert text_path.exists()
+    assert "Arizona RTF recovered text" in text_path.read_text(encoding="utf-8")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["entries"][0]["document_processor_method"] == "rtf_processor"
+    assert manifest["entries"][0]["document_processor_error"] is None
+    assert manifest["entries"][0]["preferred_methods"][0] == "playwright"
 
 
 @pytest.mark.asyncio
@@ -2955,6 +3278,105 @@ async def test_state_admin_rules_agentic_daemon_retries_html_artifacts_past_fail
     assert manifest["entries"][1]["method_used"] == "cloudflare_browser_rendering"
     assert str(text_path) in manifest["entries"][1]["saved_files"]
     assert str(html_path) in manifest["entries"][1]["saved_files"]
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_uses_recovery_directives_to_prioritize_cloudflare(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+    from ipfs_datasets_py.processors.web_archiving import unified_web_scraper as scraper_module
+
+    seen_method_orders = []
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "IN", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "IN": {
+                            "attempted": 2,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 0,
+                            "providers": {"agentic_discovery": 2},
+                        }
+                    }
+                },
+                "agentic_report": {
+                    "status": "success",
+                    "per_state": {
+                        "IN": {
+                            "candidate_urls": 1,
+                            "inspected_urls": 1,
+                            "expanded_urls": 0,
+                            "fetched_rules": 0,
+                            "top_candidate_urls": [
+                                "https://iar.iga.in.gov/code/current",
+                            ],
+                            "format_counts": {"html": 0, "pdf": 0, "rtf": 0},
+                            "domains_seen": ["iar.iga.in.gov"],
+                            "parallel_prefetch": {"attempted": 1, "successful": 0, "rule_hits": 0},
+                            "source_breakdown": {},
+                            "gap_summary": {
+                                "missing_seed_hosts": ["iar.iga.in.gov"],
+                                "candidate_hosts_without_rules": ["iar.iga.in.gov"],
+                            },
+                            "cloudflare_status": "browser_challenge",
+                            "cloudflare_browser_challenge_detected": True,
+                            "cloudflare_http_status": 403,
+                            "cloudflare_record_status": "errored",
+                        }
+                    },
+                },
+            },
+        }
+
+    async def _fake_scrape(self, url, method=None, **kwargs):
+        seen_method_orders.append([item.value for item in self.config.preferred_methods])
+        return scraper_module.ScraperResult(
+            url=url,
+            title="Indiana Administrative Code",
+            text="Indiana administrative code rendered text",
+            html="<html><body>Indiana administrative code rendered text</body></html>",
+            content="Indiana administrative code rendered text",
+            method_used=ScraperMethod.CLOUDFLARE_BROWSER_RENDERING,
+            success=True,
+            metadata={
+                "method": "cloudflare_browser_rendering",
+                "content_type": "text/html",
+                "content_length": 64,
+                "binary_document": False,
+                "cloudflare_status": "success",
+            },
+        )
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(scraper_module.UnifiedWebScraper, "scrape", _fake_scrape)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["IN"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            random_seed=54,
+            document_artifact_capture_enabled=True,
+            document_artifact_state_limit=1,
+            document_artifact_urls_per_state=1,
+            document_artifact_max_total=1,
+        )
+    )
+
+    summary = await daemon.run()
+
+    artifact_summary = summary["latest_cycle"]["document_artifacts"]
+
+    assert artifact_summary["successful_count"] == 1
+    assert seen_method_orders
+    assert seen_method_orders[0][0] == "cloudflare_browser_rendering"
+    assert "playwright" in seen_method_orders[0]
 
 
 @pytest.mark.asyncio

@@ -11762,8 +11762,51 @@ def _cloudflare_browser_rendering_availability() -> Dict[str, Any]:
         "CLOUDFLARE_API_TOKEN",
     ]
 
-    account_source = next((key for key in account_env_keys if str(os.getenv(key) or "").strip()), None)
-    token_source = next((key for key in token_env_keys if str(os.getenv(key) or "").strip()), None)
+    def _resolve_source(names: List[str], *, provider: str) -> Optional[str]:
+        if provider == "env":
+            return next((key for key in names if str(os.getenv(key) or "").strip()), None)
+        if provider == "vault":
+            try:
+                from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+                vault = get_secrets_vault()
+                return next((key for key in names if str(vault.get(key) or "").strip()), None)
+            except Exception:
+                return None
+        if provider == "keyring":
+            try:
+                import keyring  # type: ignore
+
+                return next(
+                    (
+                        key
+                        for key in names
+                        if str(keyring.get_password("ipfs_datasets_py", key) or "").strip()
+                    ),
+                    None,
+                )
+            except Exception:
+                return None
+        return None
+
+    account_source = _resolve_source(account_env_keys, provider="env")
+    account_source_kind = "env" if account_source else None
+    if not account_source:
+        account_source = _resolve_source(account_env_keys, provider="vault")
+        account_source_kind = "vault" if account_source else None
+    if not account_source:
+        account_source = _resolve_source(account_env_keys, provider="keyring")
+        account_source_kind = "keyring" if account_source else None
+
+    token_source = _resolve_source(token_env_keys, provider="env")
+    token_source_kind = "env" if token_source else None
+    if not token_source:
+        token_source = _resolve_source(token_env_keys, provider="vault")
+        token_source_kind = "vault" if token_source else None
+    if not token_source:
+        token_source = _resolve_source(token_env_keys, provider="keyring")
+        token_source_kind = "keyring" if token_source else None
+
     missing_credentials: List[str] = []
     if not account_source:
         missing_credentials.append("account_id")
@@ -11777,6 +11820,8 @@ def _cloudflare_browser_rendering_availability() -> Dict[str, Any]:
         "provider": "cloudflare_browser_rendering",
         "account_id_env": account_source,
         "api_token_env": token_source,
+        "account_id_source_kind": account_source_kind,
+        "api_token_source_kind": token_source_kind,
         "missing_credentials": missing_credentials,
     }
 

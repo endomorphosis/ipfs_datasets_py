@@ -6,6 +6,7 @@ import types
 import pytest
 
 from ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine import (
+    _resolve_credentials,
     _build_payload,
     get_cloudflare_browser_rendering_crawl,
     start_cloudflare_browser_rendering_crawl,
@@ -36,6 +37,44 @@ def test_build_payload_omits_zero_depth() -> None:
     assert payload["limit"] == 1
     assert "depth" not in payload
     assert payload["formats"] == ["markdown", "html"]
+
+
+def test_resolve_credentials_falls_back_to_vault(monkeypatch: pytest.MonkeyPatch) -> None:
+    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+
+    class _Vault:
+        def get(self, name: str) -> str | None:
+            mapping = {
+                "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID": "vault-acct",
+                "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN": "vault-token",
+            }
+            return mapping.get(name)
+
+    monkeypatch.setattr(engine, "_first_env", lambda *names: None)
+    monkeypatch.setattr(engine, "_first_vault", lambda *names: _Vault().get(names[1]) if len(names) > 1 else None)
+    monkeypatch.setattr(engine, "_first_keyring", lambda *names: None)
+
+    account_id, api_token = _resolve_credentials()
+
+    assert account_id == "vault-acct"
+    assert api_token == "vault-token"
+
+
+def test_resolve_credentials_falls_back_to_keyring(monkeypatch: pytest.MonkeyPatch) -> None:
+    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+
+    monkeypatch.setattr(engine, "_first_env", lambda *names: None)
+    monkeypatch.setattr(engine, "_first_vault", lambda *names: None)
+    monkeypatch.setattr(
+        engine,
+        "_first_keyring",
+        lambda *names: "keyring-acct" if "ACCOUNT_ID" in names[0] else "keyring-token",
+    )
+
+    account_id, api_token = _resolve_credentials()
+
+    assert account_id == "keyring-acct"
+    assert api_token == "keyring-token"
 
 
 @pytest.mark.anyio
