@@ -16,6 +16,10 @@ Environment variables:
 - `IPFS_DATASETS_PY_LLM_MODEL`: default HF model name for local fallback
 
 Additional optional providers (opt-in by selecting provider):
+- `openai`: OpenAI chat completions
+    - `OPENAI_API_KEY` / `OPENAI_KEY` / `OPENAI_TOKEN`
+    - `IPFS_DATASETS_PY_OPENAI_MODEL` / `OPENAI_MODEL`
+    - `IPFS_DATASETS_PY_OPENAI_BASE_URL` (default: https://api.openai.com/v1)
 - `openrouter`: OpenRouter chat completions
     - `OPENROUTER_API_KEY` or `IPFS_DATASETS_PY_OPENROUTER_API_KEY`
     - `IPFS_DATASETS_PY_OPENROUTER_MODEL` (default model)
@@ -85,10 +89,11 @@ class LLMRouterError(RuntimeError):
 _P2P_TASK_PREFIX = "p2p://"
 _HF_ARCH_ROUTER_MODEL_ID = "katanemo/Arch-Router-1.5B"
 _UNPINNED_OPTIONAL_PROVIDER_ORDER = [
-    "openrouter",
-    "hf_inference_api",
     "codex_cli",
+    "openai",
     "copilot_cli",
+    "hf_inference_api",
+    "openrouter",
     "gemini_cli",
     "claude_code",
     "claude_py",
@@ -1030,6 +1035,43 @@ def _resolve_hf_api_token() -> str:
         return token
 
     try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+        vault = get_secrets_vault()
+        for name in (
+            "IPFS_DATASETS_PY_HF_API_TOKEN",
+            "HUGGINGFACEHUB_API_TOKEN",
+            "HUGGINGFACE_HUB_TOKEN",
+            "HUGGINGFACE_API_TOKEN",
+            "HUGGINGFACE_API_KEY",
+            "HF_TOKEN",
+            "HF_API_TOKEN",
+        ):
+            resolved = str(vault.get(name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
+        import keyring  # type: ignore
+
+        for name in (
+            "IPFS_DATASETS_PY_HF_API_TOKEN",
+            "HUGGINGFACEHUB_API_TOKEN",
+            "HUGGINGFACE_HUB_TOKEN",
+            "HUGGINGFACE_API_TOKEN",
+            "HUGGINGFACE_API_KEY",
+            "HF_TOKEN",
+            "HF_API_TOKEN",
+        ):
+            resolved = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
         hub = importlib.import_module("huggingface_hub")
         getter = getattr(hub, "get_token", None)
         resolved = getter() if callable(getter) else ""
@@ -1037,6 +1079,44 @@ def _resolve_hf_api_token() -> str:
             return str(resolved).strip()
     except Exception:
         return ""
+    return ""
+
+
+def _resolve_openai_api_key() -> str:
+    token = _coalesce_env("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN")
+    if token:
+        return token
+
+    try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+        vault = get_secrets_vault()
+        for name in ("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN"):
+            resolved = str(vault.get(name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
+        import keyring  # type: ignore
+
+        for name in ("OPENAI_API_KEY", "OPENAI_KEY", "OPENAI_TOKEN"):
+            resolved = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    try:
+        from ipfs_datasets_py.utils.engine_env import _openai_key_from_common_files
+
+        resolved = str(_openai_key_from_common_files() or "").strip()
+        if resolved:
+            return resolved
+    except Exception:
+        pass
+
     return ""
 
 
@@ -1714,6 +1794,100 @@ def _get_openrouter_provider() -> Optional[LLMProvider]:
             raise RuntimeError("OpenRouter response missing choices")
 
     return _OpenRouterProvider()
+
+
+def _get_openai_provider() -> Optional[LLMProvider]:
+    api_key = _resolve_openai_api_key()
+    if not api_key:
+        return None
+
+    base_url = os.getenv("IPFS_DATASETS_PY_OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+
+    def _request(payload: dict, *, timeout: float) -> dict:
+        req = urllib.request.Request(
+            f"{base_url}/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+            raise RuntimeError(f"OpenAI HTTP {exc.code}: {detail or exc.reason}") from exc
+        except Exception as exc:
+            raise RuntimeError(f"OpenAI request failed: {exc}") from exc
+
+        try:
+            data = json.loads(raw)
+        except Exception as exc:
+            raise RuntimeError("OpenAI returned invalid JSON") from exc
+        if not isinstance(data, dict):
+            raise RuntimeError("OpenAI returned invalid JSON")
+        return data
+
+    class _OpenAIProvider:
+        def chat_completions(
+            self,
+            messages: Sequence[ChatMessage],
+            *,
+            model_name: Optional[str] = None,
+            **kwargs: object,
+        ) -> dict:
+            model = (
+                model_name
+                or os.getenv("IPFS_DATASETS_PY_OPENAI_MODEL")
+                or os.getenv("OPENAI_MODEL")
+                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
+                or "gpt-4.1-mini"
+            )
+
+            max_tokens = kwargs.get("max_tokens", kwargs.get("max_new_tokens", 256))
+            temperature = kwargs.get("temperature", 0.2)
+
+            payload: dict = {
+                "model": model,
+                "messages": list(messages),
+                "max_tokens": int(max_tokens),
+                "temperature": float(temperature),
+            }
+
+            if "logprobs" in kwargs:
+                payload["logprobs"] = bool(kwargs.get("logprobs"))
+            if "top_logprobs" in kwargs and kwargs.get("top_logprobs") is not None:
+                payload["top_logprobs"] = int(kwargs.get("top_logprobs"))
+            if "response_format" in kwargs and kwargs.get("response_format") is not None:
+                payload["response_format"] = kwargs.get("response_format")
+            if "seed" in kwargs and kwargs.get("seed") is not None:
+                payload["seed"] = int(kwargs.get("seed"))
+
+            timeout = float(kwargs.get("timeout", 120))
+            return _request(payload, timeout=timeout)
+
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            data = self.chat_completions(
+                [{"role": "user", "content": prompt}],
+                model_name=model_name,
+                **kwargs,
+            )
+
+            choices = data.get("choices")
+            if isinstance(choices, list) and choices:
+                msg = choices[0].get("message") if isinstance(choices[0], dict) else None
+                if isinstance(msg, dict) and isinstance(msg.get("content"), str):
+                    return msg["content"].strip()
+                text = choices[0].get("text") if isinstance(choices[0], dict) else None
+                if isinstance(text, str):
+                    return text.strip()
+            raise RuntimeError("OpenAI response missing choices")
+
+    return _OpenAIProvider()
 
 
 def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
@@ -2632,6 +2806,8 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
         return None
     if key in {"mock", "dry_run", "dry-run"}:
         return _get_mock_provider()
+    if key in {"openai", "openai_api"}:
+        return _get_openai_provider()
     if key == "openrouter":
         return _get_openrouter_provider()
     if key in {"hf_api", "hf_inference", "hf_inference_api", "huggingface_inference"}:
