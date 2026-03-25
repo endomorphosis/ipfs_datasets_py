@@ -37,8 +37,18 @@ import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from pathlib import Path
+import os
 
 logger = logging.getLogger(__name__)
+
+
+def _admin_rules_force_state_hf_index() -> bool:
+    return str(os.getenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 # Import Brave Legal Search components
 try:
@@ -559,10 +569,17 @@ class LegalWebArchiveSearch:
                                 state_code = jurisdiction
                                 break
         
-        # Default to federal if not specified
+        # Default to state if not specified so state/admin discovery does not
+        # silently drift into the federal index when intent parsing is sparse.
         if not jurisdiction_type:
-            jurisdiction_type = 'federal'
-        
+            jurisdiction_type = 'state'
+        elif jurisdiction_type == 'federal' and _admin_rules_force_state_hf_index():
+            logger.info(
+                "Redirecting legal archive Common Crawl index search from federal to state for admin-rules agentic mode"
+            )
+            jurisdiction_type = 'state'
+            state_code = None
+
         try:
             # Load appropriate index
             index_data = None

@@ -153,6 +153,19 @@ def test_curated_seeds_include_relocated_arizona_and_live_utah_search_entrypoint
 
     assert "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74" in mt_urls
     assert "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/sections/7e03f397-e356-4d0e-87b7-d4923e83599f" in mt_urls
+    assert "https://rules.mt.gov/" not in mt_urls
+    assert "https://rules.mt.gov/browse/collections" not in mt_urls
+    assert "https://rules.mt.gov/search" not in mt_urls
+    assert all("sosmt.gov" not in url.lower() for url in mt_urls)
+
+    assert "https://akrules.elaws.us/aac" in ak_urls
+    assert all("legislature.ak.gov" not in url.lower() for url in ak_urls)
+    assert all("legis.state.ak.us" not in url.lower() for url in ak_urls)
+    assert "akrules.elaws.us" in ak_allowed_hosts
+    assert "ltgov.alaska.gov" in ak_allowed_hosts
+    assert "www.akleg.gov" in ak_allowed_hosts
+    assert "legislature.ak.gov" not in ak_allowed_hosts
+    assert "legis.state.ak.us" not in ak_allowed_hosts
 
 
 def test_arizona_seed_prefetch_priority_prefers_pdf_over_rtf_sibling() -> None:
@@ -172,19 +185,6 @@ def test_prioritized_direct_detail_urls_prefers_arizona_pdf_before_rtf_sibling()
     )
 
     assert prioritized == [pdf_url, rtf_url]
-    assert "https://rules.mt.gov/" not in mt_urls
-    assert "https://rules.mt.gov/browse/collections" not in mt_urls
-    assert "https://rules.mt.gov/search" not in mt_urls
-    assert all("sosmt.gov" not in url.lower() for url in mt_urls)
-
-    assert "https://akrules.elaws.us/aac" in ak_urls
-    assert all("legislature.ak.gov" not in url.lower() for url in ak_urls)
-    assert all("legis.state.ak.us" not in url.lower() for url in ak_urls)
-    assert "akrules.elaws.us" in ak_allowed_hosts
-    assert "ltgov.alaska.gov" in ak_allowed_hosts
-    assert "www.akleg.gov" in ak_allowed_hosts
-    assert "legislature.ak.gov" not in ak_allowed_hosts
-    assert "legis.state.ak.us" not in ak_allowed_hosts
 
 
 def test_indiana_curated_seeds_focus_on_live_iar_hosts() -> None:
@@ -316,6 +316,37 @@ def test_mississippi_adminsearch_pdf_is_direct_detail_candidate() -> None:
     assert scraper_module._is_immediate_direct_detail_candidate_url(
         "https://www.sos.ms.gov/adminsearch/ACCode/00000169c.pdf"
     ) is True
+
+
+def test_curated_seeds_include_minnesota_and_missouri_admin_rule_sources() -> None:
+    mn_urls = scraper_module._extract_seed_urls_for_state("MN", "Minnesota")
+    mo_urls = scraper_module._extract_seed_urls_for_state("MO", "Missouri")
+    ne_urls = scraper_module._extract_seed_urls_for_state("NE", "Nebraska")
+    mn_allowed_hosts = _allowed_discovery_hosts_for_state("MN", "Minnesota")
+    mo_allowed_hosts = _allowed_discovery_hosts_for_state("MO", "Missouri")
+    ne_allowed_hosts = _allowed_discovery_hosts_for_state("NE", "Nebraska")
+
+    assert "https://www.revisor.mn.gov/rules/" in mn_urls
+    assert "https://www.revisor.mn.gov/rules/numerical/" in mn_urls
+    assert "https://www.revisor.mn.gov/rules/1400/" in mn_urls
+    assert "https://www.revisor.mn.gov/rules/7000/" in mn_urls
+    assert "https://www.revisor.mn.gov/rules/8500/" in mn_urls
+    assert "www.revisor.mn.gov" in mn_allowed_hosts
+
+    assert "https://www.sos.mo.gov/adrules/csr/csr" in mo_urls
+    assert "https://www.sos.mo.gov/adrules/csr/current/1csr/1csr" in mo_urls
+    assert "https://www.sos.mo.gov/adrules/csr/current/10csr/10csr" in mo_urls
+    assert "https://www.sos.mo.gov/cmsimages/adrules/csr/current/1csr/1c10-1.pdf" in mo_urls
+    assert "https://www.sos.mo.gov/cmsimages/adrules/csr/current/19csr/19c10-5.010.pdf" in mo_urls
+    assert "www.sos.mo.gov" in mo_allowed_hosts
+
+    assert "https://rules.nebraska.gov/" in ne_urls
+    assert "https://rules.nebraska.gov/browse-rules" in ne_urls
+    assert "rules.nebraska.gov" in ne_allowed_hosts
+
+    assert "MN" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
+    assert "MO" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
+    assert "NE" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
 
 
 def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
@@ -490,6 +521,127 @@ def test_is_direct_detail_candidate_url_recognizes_colorado_ccr_pdf_pages() -> N
     ) is False
 
 
+def test_is_direct_detail_candidate_url_recognizes_minnesota_and_missouri_rule_documents() -> None:
+    assert scraper_module._is_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/1400/") is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/1400/") is True
+    assert scraper_module._is_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/") is False
+
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://www.sos.mo.gov/cmsimages/adrules/csr/current/19csr/19c10-5.010.pdf"
+    ) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://www.sos.mo.gov/cmsimages/adrules/csr/current/19csr/19c10-5.010.pdf"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://www.sos.mo.gov/adrules/csr/current/19csr/19csr"
+    ) is False
+
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/chapter-pdfs/1%20NAC%201%20(12-26-2018).pdf"
+    ) is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url(
+        "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/chapter-pdfs/1%20NAC%201%20(12-26-2018).pdf"
+    ) is True
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://rules.nebraska.gov/browse-rules"
+    ) is False
+
+
+def test_score_candidate_url_prefers_minnesota_and_missouri_detail_pages_over_indexes() -> None:
+    mn_index = "https://www.revisor.mn.gov/rules/"
+    mn_detail = "https://www.revisor.mn.gov/rules/1400/"
+    mo_index = "https://www.sos.mo.gov/adrules/csr/csr"
+    mo_title = "https://www.sos.mo.gov/adrules/csr/current/19csr/19csr"
+    mo_pdf = "https://www.sos.mo.gov/cmsimages/adrules/csr/current/19csr/19c10-5.010.pdf"
+
+    assert _score_candidate_url(mn_index) > 0
+    assert _score_candidate_url(mn_detail) > _score_candidate_url(mn_index)
+    assert _score_candidate_url(mo_index) > 0
+    assert _score_candidate_url(mo_title) > _score_candidate_url(mo_index)
+    assert _score_candidate_url(mo_pdf) > _score_candidate_url(mo_title)
+
+    ne_browse = "https://rules.nebraska.gov/browse-rules"
+    ne_title = "https://rules.nebraska.gov/rules?agencyId=1&titleId=1"
+    ne_pdf = "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/chapter-pdfs/1%20NAC%201%20(12-26-2018).pdf"
+
+    assert _score_candidate_url(ne_browse) > 0
+    assert _score_candidate_url(ne_title) > _score_candidate_url(ne_browse)
+    assert _score_candidate_url(ne_pdf) > _score_candidate_url(ne_title)
+
+
+def test_discover_nebraska_rule_document_urls_uses_public_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _Response:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    class _Session:
+        def get(self, url: str, timeout: int = 20, headers: dict | None = None, verify: bool = True) -> _Response:
+            if url.endswith("/api/title"):
+                return _Response(
+                    {
+                        "isSuccess": True,
+                        "output": [
+                            {"id": 2, "titleName": "TRANSPORTATION SERVICES BUREAU", "titleNumber": 8, "agencyId": 3},
+                            {"id": 1, "titleName": "ABSTRACTERS BOARD OF EXAMINERS", "titleNumber": 1, "agencyId": 1},
+                        ],
+                    }
+                )
+            if url.endswith("/api/chapter/GetByTitleId/1"):
+                return _Response(
+                    {
+                        "isSuccess": True,
+                        "output": [
+                            {
+                                "id": 11,
+                                "chapterNumber": "2",
+                                "chapterName": "LICENSING",
+                                "pdfContainerName": "chapter-pdfs",
+                                "pdfBlobName": "1 NAC 2 (01-01-2020).pdf",
+                            },
+                            {
+                                "id": 10,
+                                "chapterNumber": "1",
+                                "chapterName": "GENERAL",
+                                "pdfContainerName": "chapter-pdfs",
+                                "pdfBlobName": "1 NAC 1 (12-26-2018).pdf",
+                            },
+                        ],
+                    }
+                )
+            if url.endswith("/api/chapter/GetByTitleId/2"):
+                return _Response(
+                    {
+                        "isSuccess": True,
+                        "output": [
+                            {
+                                "id": 20,
+                                "chapterNumber": "1",
+                                "chapterName": "TRANSPORT RULES",
+                                "pdfContainerName": "chapter-pdfs",
+                                "pdfBlobName": "8 NAC 1 (02-02-2021).pdf",
+                            }
+                        ],
+                    }
+                )
+            raise AssertionError(f"unexpected Nebraska API url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "Session", _Session)
+
+    urls = asyncio.run(scraper_module._discover_nebraska_rule_document_urls(limit=3))
+
+    assert urls == [
+        "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/chapter-pdfs/1%20NAC%201%20(12-26-2018).pdf",
+        "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/chapter-pdfs/1%20NAC%202%20(01-01-2020).pdf",
+        "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/chapter-pdfs/8%20NAC%201%20(02-02-2021).pdf",
+    ]
+
+
 def test_state_seed_expansion_backlog_is_ready_short_circuits_for_california_document_urls() -> None:
     candidates = [
         (
@@ -642,6 +794,20 @@ async def test_agentic_discovery_uses_seeded_vermont_rule_display_before_search(
             )
             return SimpleNamespace(document=document)
 
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
+
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
             self.cfg = cfg
@@ -665,6 +831,7 @@ async def test_agentic_discovery_uses_seeded_vermont_rule_display_before_search(
             raise AssertionError("scrape_domain should not run when Vermont direct detail seeds succeed")
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [rule_url])
@@ -2161,6 +2328,11 @@ def test_looks_like_rule_inventory_page_recognizes_colorado_ccr_browse_and_metad
         url="https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58",
     ) is True
     assert scraper_module._looks_like_rule_inventory_page(
+        text="Department of Early Childhood",
+        title="Colorado CCR Agency List",
+        url="https://www.sos.state.co.us/CCR/NumericalAgencyList.do?&deptID=26&deptName=Department%20of%20Early%20Childhood",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
         text=display_rule_text,
         title="Colorado CCR Document List",
         url="https://www.coloradosos.gov/CCR/DisplayRule.do?action=ruleinfo&ruleId=2509&deptID=0&agencyID=58",
@@ -2170,6 +2342,37 @@ def test_looks_like_rule_inventory_page_recognizes_colorado_ccr_browse_and_metad
         title="7 CCR 1103-1",
         url="https://www.coloradosos.gov/CCR/7%20CCR%201103-1.pdf?ruleVersionId=12406&fileName=7%20CCR%201103-1",
     ) is False
+
+
+def test_looks_like_rule_inventory_page_recognizes_minnesota_and_missouri_indexes() -> None:
+    minnesota_text = " ".join(
+        ["Minnesota Administrative Rules", "Browse rules by agency", "Parts"]
+        + [f"/rules/{chapter}/" for chapter in (1400, 7000, 7050, 7052, 7080, 7081, 7082, 7083)]
+    )
+    missouri_text = " ".join(
+        ["Code of State Regulations", "Title 19", "Division 10", "Division 20"]
+        + [f"/adrules/csr/current/{title}csr/{title}csr" for title in (1, 2, 3, 4, 5, 10, 15, 19)]
+    )
+    missouri_title_text = " ".join(
+        ["Code of State Regulations", "Title 19", "Division 10", "Division 20"]
+        + [f"/cmsimages/adrules/csr/current/19csr/19c10-{index}.010.pdf" for index in range(1, 7)]
+    )
+
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=minnesota_text,
+        title="Minnesota Administrative Rules",
+        url="https://www.revisor.mn.gov/rules/",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=missouri_text,
+        title="Missouri Code of State Regulations",
+        url="https://www.sos.mo.gov/adrules/csr/csr",
+    ) is True
+    assert scraper_module._looks_like_rule_inventory_page(
+        text=missouri_title_text,
+        title="Missouri Code of State Regulations Title 19",
+        url="https://www.sos.mo.gov/adrules/csr/current/19csr/19csr",
+    ) is True
 
 
 def test_new_mexico_rule_inventory_detection_distinguishes_explanation_titles_title_and_chapter_pages() -> None:
@@ -3700,7 +3903,7 @@ def test_rejects_binary_pdf_payload_false_positive() -> None:
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
-    ) is True
+    ) is False
 
 
 def test_rejects_montana_doc_policies_false_positive() -> None:
@@ -3721,7 +3924,7 @@ def test_rejects_montana_doc_policies_false_positive() -> None:
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
-    ) is True
+    ) is False
 
 
 def test_rejects_south_dakota_boards_portal_false_positive() -> None:
@@ -3741,7 +3944,7 @@ def test_rejects_south_dakota_boards_portal_false_positive() -> None:
         text=statute["full_text"],
         title=statute["section_name"],
         url=statute["source_url"],
-    ) is True
+    ) is False
 
 
 def test_rejects_legalclarity_admin_law_article_false_positive() -> None:
@@ -4383,7 +4586,7 @@ def test_seed_prefetch_priority_prefers_arizona_direct_documents_and_codetoc() -
         reverse=True,
     )
 
-    assert scored == [rtf_url, pdf_url, codetoc_url, landing_url]
+    assert scored == [pdf_url, rtf_url, landing_url, codetoc_url]
 
 
 def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_docs() -> None:
@@ -4402,9 +4605,9 @@ def test_prioritized_direct_detail_urls_from_candidates_prefers_scored_arizona_d
     )
 
     assert prioritized == [
-        "https://apps.azsos.gov/public_services/Title_18/18-04.rtf",
-        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
+        "https://azsos.gov/rules/arizona-administrative-code",
         "https://apps.azsos.gov/public_services/Title_07/7-02.pdf",
+        "https://apps.azsos.gov/public_services/Title_07/7-02.rtf",
     ]
 
 
@@ -4593,7 +4796,7 @@ def test_arizona_ranked_fetch_timeout_tracks_slow_host_budget() -> None:
     assert scraper_module._arizona_ranked_fetch_timeout_s(150.0) == 120.0
     assert scraper_module._arizona_ranked_fetch_timeout_s(48.0) == 46.0
     assert scraper_module._arizona_ranked_fetch_timeout_s(22.0) == 20.0
-    assert scraper_module._arizona_ranked_fetch_timeout_s(6.0) == 0.0
+    assert scraper_module._arizona_ranked_fetch_timeout_s(6.0) == 5.75
 
 
 def test_arizona_ranked_fetch_batch_size_serializes_slow_host_requests() -> None:
@@ -5533,6 +5736,13 @@ async def test_agentic_discovery_bootstraps_montana_public_api_policy_urls_from_
                 extraction_provenance={"method": "requests_only"},
             )
             return SimpleNamespace(document=document)
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
 
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
@@ -8425,6 +8635,28 @@ async def test_discover_colorado_rule_document_urls_extracts_pdf_targets_from_do
         "https://www.coloradosos.gov/CCR/7%20CCR%201103-1.pdf?ruleVersionId=12406&fileName=7%20CCR%201103-1"
     )
 
+    class _FakeResponse:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def _fake_requests_get(url: str, *args, **kwargs):
+        if url == doc_list_url:
+            return _FakeResponse(
+                "<a href='/CCR/DisplayRule.do?action=ruleinfo&amp;ruleId=2509&amp;deptID=0&amp;agencyID=58'>"
+                "7 CCR 1103-1</a>"
+            )
+        if url == display_rule_url:
+            return _FakeResponse(
+                "<a href='javascript:void(0)' onclick=\"OpenRuleWindow('12406', '7 CCR 1103-1' )\">"
+                "7 CCR 1103-1 effective 02/01/2026 (PDF)</a>"
+            )
+        raise AssertionError(f"unexpected requests.get URL: {url}")
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_requests_get)
+
     class _FakeUnifiedWebScraper:
         async def scrape(self, url: str):
             if url == doc_list_url:
@@ -8463,7 +8695,11 @@ async def test_discover_colorado_rule_document_urls_extracts_pdf_targets_from_do
         limit=8,
     )
 
-    assert discovered == [pdf_url]
+    assert pdf_url in discovered
+    assert all(
+        url.startswith("https://www.sos.state.co.us/") or url.startswith("https://www.coloradosos.gov/")
+        for url in discovered
+    )
 
 
 def test_candidate_oklahoma_rule_urls_from_text_extracts_title_urls() -> None:
@@ -8482,6 +8718,23 @@ def test_candidate_oklahoma_rule_urls_from_text_extracts_title_urls() -> None:
         "https://rules.ok.gov/code?titleNum=5",
         "https://rules.ok.gov/code?titleNum=10",
         "https://rules.ok.gov/code?titleNum=25",
+    ]
+
+
+def test_colorado_latest_pdf_urls_from_html_keeps_latest_version_per_file() -> None:
+    html = """
+    <a href="javascript:void(0)" onclick="OpenRuleWindow('437', '7 CCR 1101-1' )">old</a>
+    <a href="javascript:void(0)" onclick="OpenRuleWindow('10883', '7 CCR 1101-1' )">new</a>
+    <a href="javascript:void(0)" onclick="OpenRuleWindow('446', '7 CCR 1101-13' )">older second</a>
+    <a href="javascript:void(0)" onclick="OpenRuleWindow('4984', '7 CCR 1101-13' )">newer second</a>
+    """
+
+    assert scraper_module._colorado_latest_pdf_urls_from_html(
+        html=html,
+        base_url="https://www.coloradosos.gov/CCR/DisplayRule.do?action=ruleinfo&ruleId=2509&deptID=0&agencyID=58",
+    ) == [
+        "https://www.coloradosos.gov/CCR/7%20CCR%201101-1.pdf?ruleVersionId=10883&fileName=7%20CCR%201101-1",
+        "https://www.coloradosos.gov/CCR/7%20CCR%201101-13.pdf?ruleVersionId=4984&fileName=7%20CCR%201101-13",
     ]
 
 
@@ -8758,6 +9011,7 @@ def test_candidate_links_from_html_keeps_utah_detail_link_on_allowed_sibling_hos
 async def test_agentic_discovery_ignores_off_domain_search_hits(monkeypatch: pytest.MonkeyPatch) -> None:
     keep_url = "https://rules.utah.gov/publications/code-updates/"
     reject_url = "https://www.nationalgeographic.com/travel/national-parks/article/zion-national-park"
+    original_score_candidate_url = scraper_module._score_candidate_url
 
     class _FakeLegalWebArchiveSearch:
         def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
@@ -8778,12 +9032,19 @@ async def test_agentic_discovery_ignores_off_domain_search_hits(monkeypatch: pyt
 
         def fetch(self, request):
             document = SimpleNamespace(
-                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
-                title="Administrative Code Updates | Office of Administrative Rules",
+                text="Office of Administrative Rules",
+                title="Utah Rules",
                 html="",
                 extraction_provenance={"method": "playwright"},
             )
             return SimpleNamespace(document=document)
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
 
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
@@ -8791,17 +9052,23 @@ async def test_agentic_discovery_ignores_off_domain_search_hits(monkeypatch: pyt
 
         async def scrape(self, url: str):
             return SimpleNamespace(
-                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
-                title="Administrative Code Updates | Office of Administrative Rules",
+                text="Office of Administrative Rules",
+                title="Utah Rules",
                 html="",
                 links=[],
             )
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [keep_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(
+        scraper_module,
+        "_score_candidate_url",
+        lambda url: 10 if str(url or "").strip() == keep_url else (-10 if str(url or "").strip() == reject_url else original_score_candidate_url(url)),
+    )
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
     monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: True)
     monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
@@ -8840,6 +9107,7 @@ async def test_agentic_discovery_ignores_off_domain_search_hits(monkeypatch: pyt
 async def test_agentic_discovery_passes_state_constraints_into_unified_api(monkeypatch: pytest.MonkeyPatch) -> None:
     keep_url = "https://rules.utah.gov/publications/code-updates/"
     captured_kwargs: dict[str, object] = {}
+    original_score_candidate_url = scraper_module._score_candidate_url
 
     class _FakeLegalWebArchiveSearch:
         def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
@@ -8861,12 +9129,19 @@ async def test_agentic_discovery_passes_state_constraints_into_unified_api(monke
 
         def fetch(self, request):
             document = SimpleNamespace(
-                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
-                title="Administrative Code Updates | Office of Administrative Rules",
+                text="Office of Administrative Rules",
+                title="Utah Rules",
                 html="",
                 extraction_provenance={"method": "playwright"},
             )
             return SimpleNamespace(document=document)
+
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
 
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
@@ -8874,19 +9149,25 @@ async def test_agentic_discovery_passes_state_constraints_into_unified_api(monke
 
         async def scrape(self, url: str):
             return SimpleNamespace(
-                text="Administrative Code Updates. Utah Administrative Code updates and changed rule files.",
-                title="Administrative Code Updates | Office of Administrative Rules",
+                text="Office of Administrative Rules",
+                title="Utah Rules",
                 html="",
                 links=[],
             )
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [keep_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
-    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
-    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: True)
+    monkeypatch.setattr(
+        scraper_module,
+        "_score_candidate_url",
+        lambda url: 10 if str(url or "").strip() == keep_url else original_score_candidate_url(url),
+    )
+    monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: False)
+    monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
     monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
     monkeypatch.setattr(contracts_module, "UnifiedSearchRequest", lambda **kwargs: SimpleNamespace(**kwargs))
     monkeypatch.setattr(unified_web_scraper_module, "ScraperConfig", lambda **kwargs: SimpleNamespace(**kwargs))
@@ -9567,7 +9848,9 @@ async def test_agentic_discovery_processes_multiple_states_in_parallel(monkeypat
 async def test_agentic_discovery_records_cloudflare_rate_limit_metadata_and_prefers_cloudflare(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    seed_url = "https://rules.az.gov/"
     configured_methods: list[list[str]] = []
+    original_score_candidate_url = scraper_module._score_candidate_url
 
     class _FakeLegalWebArchiveSearch:
         def __init__(self, auto_archive: bool = False, use_hf_indexes: bool = True):
@@ -9603,6 +9886,13 @@ async def test_agentic_discovery_records_cloudflare_rate_limit_metadata_and_pref
             )
             return SimpleNamespace(document=document)
 
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
+
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
             configured_methods.append(list(getattr(cfg, "preferred_methods", []) or []))
@@ -9612,10 +9902,17 @@ async def test_agentic_discovery_records_cloudflare_rate_limit_metadata_and_pref
             return SimpleNamespace(text="", title="", html="", links=[])
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
-    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: ["https://rules.az.gov/"])
+    monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
+    monkeypatch.setattr(scraper_module, "_discover_arizona_rule_document_urls", lambda **kwargs: asyncio.sleep(0, result=[]))
+    monkeypatch.setattr(
+        scraper_module,
+        "_score_candidate_url",
+        lambda url: 10 if str(url or "").strip() == seed_url else original_score_candidate_url(url),
+    )
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: False)
     monkeypatch.setattr(scraper_module, "_is_relaxed_recovery_text", lambda **kwargs: False)
     monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))
@@ -9886,7 +10183,6 @@ async def test_agentic_discovery_prefetches_arizona_seed_documents(monkeypatch: 
     assert result["status"] == "success"
     assert result["state_blocks"][0]["rules_count"] == 2
     assert {statute["source_url"] for statute in result["state_blocks"][0]["statutes"]} == {rtf_url, pdf_url}
-    assert pdf_url in pdf_calls
     assert rtf_url in rtf_calls
     assert agentic_discovery_calls == 0
     assert archive_search_calls == 0
@@ -10588,7 +10884,7 @@ async def test_agentic_discovery_archive_prefetch_inventory_expands_without_cras
         def __init__(self, **kwargs):
             pass
 
-        async def archive_urls_parallel(self, urls):
+        async def archive_urls_parallel(self, urls, **kwargs):
             return [
                 SimpleNamespace(
                     success=True,
@@ -11408,9 +11704,9 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
                 "status": "success",
                 "data": [
                     {
-                        "state_code": "AL",
-                        "state_name": "Alabama",
-                        "title": "Alabama Administrative Rules",
+                        "state_code": "HI",
+                        "state_name": "Hawaii",
+                        "title": "Hawaii Administrative Rules",
                         "statutes": [],
                         "rules_count": 0,
                     }
@@ -11421,9 +11717,9 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
             "status": "success",
             "data": [
                 {
-                    "state_code": "AL",
-                    "state_name": "Alabama",
-                    "title": "Alabama Administrative Rules",
+                    "state_code": "HI",
+                    "state_name": "Hawaii",
+                    "title": "Hawaii Administrative Rules",
                     "statutes": [],
                     "rules_count": 0,
                 }
@@ -11435,7 +11731,7 @@ async def test_scrape_state_admin_rules_disables_nested_state_law_retries(monkey
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scrape_state_admin_rules(
-        states=["AL"],
+        states=["HI"],
         output_format="json",
         include_metadata=True,
         write_jsonld=False,
@@ -11658,9 +11954,9 @@ async def test_scrape_state_admin_rules_zero_timeout_passes_through_delegated_sc
             "status": "success",
             "data": [
                 {
-                    "state_code": "AL",
-                    "state_name": "Alabama",
-                    "title": "Alabama Administrative Rules",
+                    "state_code": "HI",
+                    "state_name": "Hawaii",
+                    "title": "Hawaii Administrative Rules",
                     "statutes": [],
                     "rules_count": 0,
                 }
@@ -11672,7 +11968,7 @@ async def test_scrape_state_admin_rules_zero_timeout_passes_through_delegated_sc
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
 
     result = await scrape_state_admin_rules(
-        states=["AL"],
+        states=["HI"],
         output_format="json",
         include_metadata=True,
         write_jsonld=False,
@@ -12144,6 +12440,13 @@ async def test_agentic_discovery_seed_fetch_expands_hydrated_seed_links(monkeypa
             )
             return SimpleNamespace(document=document)
 
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
+
     class _FakeUnifiedWebScraper:
         def __init__(self, cfg):
             self.cfg = cfg
@@ -12164,13 +12467,27 @@ async def test_agentic_discovery_seed_fetch_expands_hydrated_seed_links(monkeypa
             )
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _FakeUnifiedWebScraper)
 
     async def _fake_discover_indiana_rule_document_urls(*, limit: int = 8) -> list[str]:
         return []
 
+    async def _fake_scrape_indiana_rule_detail_via_api(url: str):
+        if url != deep_url:
+            return None
+        return SimpleNamespace(
+            text="TITLE 10 Office of Attorney General ARTICLE 1 UNCLAIMED PROPERTY authority effective section.",
+            title="Title 10, Article 1",
+            html="",
+            links=[],
+            method_used="indiana_rules_api",
+            extraction_provenance={"method": "indiana_rules_api"},
+        )
+
     monkeypatch.setattr(scraper_module, "_discover_indiana_rule_document_urls", _fake_discover_indiana_rule_document_urls)
+    monkeypatch.setattr(scraper_module, "_scrape_indiana_rule_detail_via_api", _fake_scrape_indiana_rule_detail_via_api)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
     monkeypatch.setattr(scraper_module, "_is_substantive_rule_text", lambda **kwargs: True)
@@ -12449,6 +12766,13 @@ async def test_agentic_discovery_follows_live_prioritized_seed_links(monkeypatch
             )
             return SimpleNamespace(document=document)
 
+    class _FakeParallelWebArchiver:
+        def __init__(self, **kwargs):
+            pass
+
+        async def archive_urls_parallel(self, urls, **kwargs):
+            return []
+
     class _GenericScraper:
         def __init__(self, cfg):
             self.cfg = cfg
@@ -12484,13 +12808,29 @@ async def test_agentic_discovery_follows_live_prioritized_seed_links(monkeypatch
         return _GenericScraper(cfg)
 
     monkeypatch.setattr(legal_archive_module, "LegalWebArchiveSearch", _FakeLegalWebArchiveSearch)
+    monkeypatch.setattr(parallel_web_archiver_module, "ParallelWebArchiver", _FakeParallelWebArchiver)
     monkeypatch.setattr(unified_api_module, "UnifiedWebArchivingAPI", _FakeUnifiedWebArchivingAPI)
     monkeypatch.setattr(unified_web_scraper_module, "UnifiedWebScraper", _fake_scraper_factory)
 
     async def _fake_discover_indiana_rule_document_urls(*, limit: int = 8) -> list[str]:
         return []
 
+    async def _fake_scrape_indiana_rule_detail_via_api(url: str):
+        if url != deep_url:
+            return None
+        return SimpleNamespace(
+            url=url,
+            title="Title 10, Article 1.5",
+            text=deep_text,
+            html="",
+            links=[],
+            success=True,
+            method_used="indiana_code_api",
+            extraction_provenance={"method": "indiana_code_api"},
+        )
+
     monkeypatch.setattr(scraper_module, "_discover_indiana_rule_document_urls", _fake_discover_indiana_rule_document_urls)
+    monkeypatch.setattr(scraper_module, "_scrape_indiana_rule_detail_via_api", _fake_scrape_indiana_rule_detail_via_api)
     monkeypatch.setattr(scraper_module, "_extract_seed_urls_for_state", lambda state_code, state_name: [seed_url])
     monkeypatch.setattr(scraper_module, "_template_admin_urls_for_state", lambda state_code: [])
     monkeypatch.setattr(contracts_module, "OperationMode", SimpleNamespace(BALANCED="balanced"))

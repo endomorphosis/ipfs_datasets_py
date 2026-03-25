@@ -1221,6 +1221,340 @@ def test_extract_pennsylvania_rules_from_html() -> None:
     assert "This should not be included" not in statutes[0].full_text
 
 
+def test_extract_louisiana_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <p><em>Current through amendments effective February 11, 2026.</em></p>
+      <a href="/Supreme_Court_Rules?p=RuleI">Rule I</a>
+      <a href="/Supreme_Court_Rules?p=RuleII">Rule II</a>
+      <a href="/Supreme_Court_Rules?p=RuleXIXAppendixA">Appendix A</a>
+    </body></html>
+    """
+
+    links, current_as_of = procedure_module._extract_louisiana_rule_links(
+        list_html,
+        "https://www.lasc.org/Supreme_Court_Rules",
+    )
+
+    assert current_as_of == "February 11, 2026"
+    assert links[:2] == [
+        {
+            "section_number": "I",
+            "url": "https://www.lasc.org/Supreme_Court_Rules?p=RuleI",
+            "procedure_family": "civil_and_criminal_procedure",
+            "legal_area": "civil_and_criminal_procedure",
+            "official_cite_prefix": "La. Sup. Ct. R.",
+        },
+        {
+            "section_number": "II",
+            "url": "https://www.lasc.org/Supreme_Court_Rules?p=RuleII",
+            "procedure_family": "civil_and_criminal_procedure",
+            "legal_area": "civil_and_criminal_procedure",
+            "official_cite_prefix": "La. Sup. Ct. R.",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <h3>RULES OF SUPREME COURT OF LOUISIANA</h3>
+      <h4>PART A. PRACTICE AND PROCEDURE</h4>
+      <h4>RULE X. WRIT APPLICATIONS</h4>
+      <p><strong>Section 1. Writ Grant Considerations</strong></p>
+      <p>A. The grant or denial of an application for writs rests within the sound judicial discretion of this Court.</p>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_louisiana_rule_from_html(
+        rule_html,
+        rule_url="https://www.lasc.org/Supreme_Court_Rules?p=RuleX",
+        title_name="Rules of Supreme Court of Louisiana",
+        procedure_family="civil_and_criminal_procedure",
+        legal_area="civil_and_criminal_procedure",
+        official_cite_prefix="La. Sup. Ct. R.",
+        current_as_of="February 11, 2026",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "X"
+    assert statute.section_name == "WRIT APPLICATIONS"
+    assert statute.official_cite == "La. Sup. Ct. R. X"
+    assert statute.structured_data["current_as_of"] == "February 11, 2026"
+    assert "writs rests within the sound judicial discretion" in statute.full_text
+
+
+def test_extract_louisiana_live_style_escaped_rule_page_and_skip_appendices() -> None:
+    list_html = """
+    <div id="mainbodycontent">
+      &lt;p&gt;&lt;em&gt;Current through amendments effective February 11, 2026.&lt;/em&gt;&lt;/p&gt;
+      &lt;ul&gt;
+        &lt;li&gt;&lt;a href=&quot;/Supreme_Court_Rules?p=RuleI&quot;&gt;Rule I&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;&lt;a href=&quot;/Supreme_Court_Rules?p=RULE_XLII_Appendix_A&quot;&gt;Rule XLII Appendix A&lt;/a&gt;&lt;/li&gt;
+      &lt;/ul&gt;
+    </div>
+    """
+
+    links, current_as_of = procedure_module._extract_louisiana_rule_links(
+        list_html,
+        "https://www.lasc.org/Supreme_Court_Rules",
+    )
+
+    assert current_as_of == "February 11, 2026"
+    assert links == [
+        {
+            "section_number": "I",
+            "url": "https://www.lasc.org/Supreme_Court_Rules?p=RuleI",
+            "procedure_family": "civil_and_criminal_procedure",
+            "legal_area": "civil_and_criminal_procedure",
+            "official_cite_prefix": "La. Sup. Ct. R.",
+        }
+    ]
+
+    rule_html = """
+    <html><body>
+      <div id="mainbodycontent">
+        &lt;h3 style=&quot;text-align:center;&quot;&gt;RULES OF SUPREME COURT OF LOUISIANA&lt;/h3&gt;
+        &lt;h4 style=&quot;text-align:center;&quot;&gt;Part A. Practice and Procedure&lt;/h4&gt;
+        &lt;h4&gt;RULE I. GENERAL FILING AND CONFIDENTIALITY REQUIREMENTS&lt;/h4&gt;
+        &lt;p&gt;&lt;strong&gt;Section 1. General Filing Requirements&lt;/strong&gt;&lt;/p&gt;
+        &lt;p&gt;The requirements set forth below apply to all filings submitted to the Supreme Court of Louisiana.&lt;/p&gt;
+      </div>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_louisiana_rule_from_html(
+        rule_html,
+        rule_url="https://www.lasc.org/Supreme_Court_Rules?p=RuleI",
+        title_name="Rules of Supreme Court of Louisiana",
+        procedure_family="civil_and_criminal_procedure",
+        legal_area="civil_and_criminal_procedure",
+        official_cite_prefix="La. Sup. Ct. R.",
+        current_as_of="February 11, 2026",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "I"
+    assert statute.section_name == "GENERAL FILING AND CONFIDENTIALITY REQUIREMENTS"
+    assert "all filings submitted to the Supreme Court of Louisiana" in statute.full_text
+
+
+def test_extract_wyoming_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            1,
+            "WYOMING RULES OF CIVIL PROCEDURE\n"
+            "Rule\n"
+            "1. Scope and Purpose.\n"
+            "2. One Form of Action.\n"
+            "3. Commencement of Action.\n",
+        ),
+        (
+            3,
+            "I.\n"
+            "SCOPE OF RULES; ONE FORM OF ACTION\n"
+            "Rule 1. Scope and Purpose.\n"
+            "These rules govern the procedure in all civil actions and proceedings in the State of Wyoming courts.\n"
+            "History:\n"
+            "Added February 2, 2017, effective March 1, 2017.\n"
+            "Source. — This rule is similar to Rule 1 of the Federal Rules of Civil Procedure.\n"
+            "Rule 2. One Form of Action.\n"
+            "There is one form of action—the civil action.\n",
+        ),
+    ]
+
+    statutes = procedure_module._extract_wyoming_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.wyocourts.gov/app/uploads/2025/01/WY_Civ_Proc_Rules_Feb26.pdf",
+        title_name="Wyoming Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Wyo. R. Civ. P.",
+    )
+
+    assert [statute.section_number for statute in statutes[:2]] == ["1", "2"]
+    assert statutes[0].section_name == "Scope and Purpose"
+    assert "These rules govern the procedure in all civil actions" in statutes[0].full_text
+    assert "Source." not in statutes[0].full_text
+    assert statutes[0].structured_data["effective_date"] == "March 1, 2017"
+
+
+def test_extract_massachusetts_rule_links_and_rule_page() -> None:
+    list_html = """
+    <html><body>
+      <a href="/rules-of-civil-procedure/civil-procedure-rule-1-scope-of-rules">Rule 1: Scope of rules</a>
+      <a href="/rules-of-civil-procedure/civil-procedure-rule-2-one-form-of-action">Rule 2: One form of action</a>
+    </body></html>
+    """
+
+    links = procedure_module._extract_massachusetts_rule_links(
+        list_html,
+        page_url="https://www.mass.gov/law-library/massachusetts-rules-of-civil-procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Mass. R. Civ. P.",
+    )
+
+    assert links[:2] == [
+        {
+            "section_number": "1",
+            "section_name": "Scope of rules",
+            "url": "https://www.mass.gov/rules-of-civil-procedure/civil-procedure-rule-1-scope-of-rules",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Mass. R. Civ. P.",
+        },
+        {
+            "section_number": "2",
+            "section_name": "One form of action",
+            "url": "https://www.mass.gov/rules-of-civil-procedure/civil-procedure-rule-2-one-form-of-action",
+            "procedure_family": "civil_procedure",
+            "legal_area": "civil_procedure",
+            "official_cite_prefix": "Mass. R. Civ. P.",
+        },
+    ]
+
+    rule_html = """
+    <html><body>
+      <main id="main-content">
+        <h1>Rules of Civil Procedure Civil Procedure Rule 1: Scope of rules</h1>
+        <h2>Rule 1</h2>
+        <p>These rules govern the procedure in the trial court.</p>
+        <h2>Reporter's notes</h2>
+        <p>Commentary should not be included.</p>
+      </main>
+    </body></html>
+    """
+
+    statute = procedure_module._extract_massachusetts_rule_from_html(
+        rule_html,
+        rule_url="https://www.mass.gov/rules-of-civil-procedure/civil-procedure-rule-1-scope-of-rules",
+        title_name="Massachusetts Rules of Civil Procedure",
+        procedure_family="civil_procedure",
+        legal_area="civil_procedure",
+        official_cite_prefix="Mass. R. Civ. P.",
+    )
+
+    assert statute is not None
+    assert statute.section_number == "1"
+    assert statute.section_name == "Scope of rules"
+    assert "These rules govern the procedure in the trial court." in statute.full_text
+    assert "Commentary should not be included." not in statute.full_text
+
+
+def test_extract_north_carolina_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            2,
+            "Table of Contents\n"
+            "Rule 1. Philosophy of General Rules of Practice\n"
+            "Rule 2. Calendaring of Civil Cases\n",
+        ),
+        (
+            6,
+            "General Rules of Practice\n"
+            "Rule 1. Philosophy of General Rules of Practice\n"
+            "These rules are applicable in the Superior and District Court Divisions.\n"
+            "History Note.\n"
+            "Rule 2. Calendaring of Civil Cases\n"
+            "Subject to the provisions of Rule 40(a), Rules of Civil Procedure.\n",
+        ),
+    ]
+
+    statutes = procedure_module._extract_north_carolina_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.nccourts.gov/assets/example.pdf",
+        current_as_of="August 6, 2025",
+    )
+
+    assert [statute.section_number for statute in statutes[:2]] == ["1", "2"]
+    assert statutes[0].section_name == "Philosophy of General Rules of Practice"
+    assert "These rules are applicable in the Superior and District Court Divisions." in statutes[0].full_text
+    assert "History Note." not in statutes[0].full_text
+    assert statutes[0].structured_data["current_as_of"] == "August 6, 2025"
+
+
+def test_extract_texas_civil_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            1,
+            "TEXAS RULES OF CIVIL PROCEDURE\n"
+            "RULE 1. OBJECTIVE OF RULES .................................... 1\n"
+            "RULE 2. SCOPE OF RULES ........................................ 1\n",
+        ),
+        (
+            7,
+            "PART I - GENERAL RULES\n"
+            "RULE 1. OBJECTIVE OF RULES\n"
+            "The proper objective of rules of civil procedure is to obtain a just, fair, equitable and impartial adjudication.\n"
+            "COMMENT TO 1941 RULES\n"
+            "RULE 2. SCOPE OF RULES\n"
+            "These rules shall govern the procedure in the justice, county, and district courts of the State of Texas.\n",
+        ),
+    ]
+
+    statutes = procedure_module._extract_texas_civil_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.txcourts.gov/media/example.pdf",
+    )
+
+    assert [statute.section_number for statute in statutes[:2]] == ["1", "2"]
+    assert statutes[0].section_name == "OBJECTIVE OF RULES"
+    assert "just, fair, equitable and impartial adjudication" in statutes[0].full_text
+    assert "COMMENT TO 1941 RULES" not in statutes[0].full_text
+    assert statutes[0].structured_data["current_as_of"] == "March 1, 2026"
+
+
+def test_extract_mississippi_civil_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            9,
+            "8CHAPTER I. SCOPE OF RULES; ONE FORM OF ACTION\n"
+            "RULE 1. SCOPE OF RULES\n"
+            "These rules govern procedure in the circuit courts, chancery courts, and county courts in all suits of a civil nature.\n"
+            "ADVISORY COMMITTEE HISTORICAL NOTE\n"
+            "RULE 2. ONE FORM OF ACTION\n"
+            "There shall be one form of action to be known as 'civil action.'\n",
+        ),
+    ]
+
+    statutes = procedure_module._extract_mississippi_civil_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.firstcircuitcourt.ms.gov/sites/example/civil.pdf",
+    )
+
+    assert [statute.section_number for statute in statutes[:2]] == ["1", "2"]
+    assert statutes[0].section_name == "SCOPE OF RULES"
+    assert "civil nature" in statutes[0].full_text
+    assert "ADVISORY COMMITTEE" not in statutes[0].full_text
+    assert statutes[0].structured_data["current_as_of"] == "June 26, 2018"
+
+
+def test_extract_mississippi_criminal_rules_from_page_texts() -> None:
+    page_texts = [
+        (
+            3,
+            "2MISSISSIPPI RULES OF CRIMINAL PROCEDURE\n"
+            "Rule 1 General Provisions\n"
+            "Rule 1.1 Scope.\n"
+            "These are the Mississippi Rules of Criminal Procedure and shall govern the procedure in all criminal proceedings.\n"
+            "Comment\n"
+            "Rule 1.1 is derived from prior practice.\n"
+            "Rule 1.2 Purpose and Construction.\n"
+            "These Rules are to be interpreted to provide for the just and speedy determination of criminal proceedings.\n",
+        ),
+    ]
+
+    statutes = procedure_module._extract_mississippi_criminal_rules_from_page_texts(
+        page_texts,
+        source_url="https://www.firstcircuitcourt.ms.gov/sites/example/criminal.pdf",
+    )
+
+    assert [statute.section_number for statute in statutes[:2]] == ["1.1", "1.2"]
+    assert statutes[0].section_name == "Scope"
+    assert "criminal proceedings" in statutes[0].full_text
+    assert "Comment" not in statutes[0].full_text
+    assert statutes[0].structured_data["current_as_of"] == "June 26, 2018"
+
+
 def test_extract_indiana_rule_links_and_rule_page() -> None:
     list_html = """
     <html><body>
@@ -4484,6 +4818,222 @@ async def test_scrape_state_procedure_rules_adds_pennsylvania_supplement(
     assert result["data"][0]["statutes"][0]["procedure_family"] == "criminal_procedure"
     assert result["metadata"]["fetch_analytics_by_state"]["PA"]["attempted"] == 3
     assert result["metadata"]["fetch_analytics_by_state"]["PA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_replacement_supplement_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _unexpected_scrape_state_laws(**_kwargs):
+        raise AssertionError("base scrape_state_laws should be skipped for bounded GA supplement runs")
+
+    async def _fake_ga_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules == 2
+        return (
+            [
+                {
+                    "state_code": "GA",
+                    "state_name": "Georgia",
+                    "statute_id": "Ga. Unif. Super. Ct. R. 1",
+                    "section_number": "1",
+                    "section_name": "PREAMBLE",
+                    "full_text": "Rule 1. PREAMBLE. These rules govern disputes and prosecutions." + (" x" * 120),
+                    "source_url": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf#page=13&rule=1",
+                    "procedure_family": "civil_and_criminal_procedure",
+                    "structured_data": {"procedure_family": "civil_and_criminal_procedure"},
+                },
+                {
+                    "state_code": "GA",
+                    "state_name": "Georgia",
+                    "statute_id": "Ga. Unif. Super. Ct. R. 1.1",
+                    "section_number": "1.1",
+                    "section_name": "Repeal of Local Rules",
+                    "full_text": "Rule 1.1. Repeal of Local Rules." + (" x" * 120),
+                    "source_url": "https://www.gasupreme.us/wp-content/uploads/2026/03/UNIFORM-SUPERIOR-COURT-RULES-2026_03_19.pdf#page=13&rule=1.1",
+                    "procedure_family": "civil_and_criminal_procedure",
+                    "structured_data": {"procedure_family": "civil_and_criminal_procedure"},
+                },
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 0,
+                "cache_writes": 0,
+                "providers": {"direct": 2},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _unexpected_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_georgia_court_rules_supplement",
+        _fake_ga_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["GA"],
+        max_rules=2,
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "success"
+    assert result["metadata"]["rules_count"] == 2
+    assert result["metadata"]["base_status"] == "success"
+    assert result["metadata"]["base_metadata"]["base_laws_skipped_for_replacement_supplements"] is True
+    assert result["metadata"]["fetch_analytics_by_state"]["GA"]["attempted"] == 2
+    assert result["data"][0]["statutes"][0]["section_number"] == "1"
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_adds_louisiana_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**_kwargs):
+        return {
+            "status": "partial_success",
+            "data": [
+                {
+                    "state_code": "LA",
+                    "state_name": "Louisiana",
+                    "statutes": [],
+                }
+            ],
+            "metadata": {
+                "fetch_analytics_by_state": {
+                    "LA": {
+                        "attempted": 1,
+                        "success": 0,
+                        "success_ratio": 0.0,
+                        "fallback_count": 1,
+                        "cache_hits": 0,
+                        "cache_writes": 0,
+                        "providers": {"unified_scraper": 1},
+                        "last_error": "no procedure rules matched",
+                    }
+                }
+            },
+        }
+
+    async def _fake_la_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules is None
+        return (
+            [
+                {
+                    "state_code": "LA",
+                    "state_name": "Louisiana",
+                    "statute_id": "La. Sup. Ct. R. X",
+                    "section_number": "X",
+                    "section_name": "WRIT APPLICATIONS",
+                    "full_text": "Rule X. WRIT APPLICATIONS. The grant or denial of an application for writs rests within the sound judicial discretion of this Court." + (" x" * 120),
+                    "source_url": "https://www.lasc.org/Supreme_Court_Rules?p=RuleX#rule-X",
+                    "procedure_family": "civil_and_criminal_procedure",
+                    "structured_data": {
+                        "procedure_family": "civil_and_criminal_procedure",
+                        "jsonld": {
+                            "@type": "Legislation",
+                            "identifier": "LA-sc-x",
+                            "name": "WRIT APPLICATIONS",
+                            "sectionNumber": "X",
+                            "text": "Rule X. WRIT APPLICATIONS. The grant or denial of an application for writs rests within the sound judicial discretion of this Court." + (" x" * 120),
+                            "sourceUrl": "https://www.lasc.org/Supreme_Court_Rules?p=RuleX#rule-X",
+                        },
+                    },
+                }
+            ],
+            {
+                "attempted": 2,
+                "success": 2,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 1,
+                "cache_writes": 1,
+                "providers": {"ipfs_page_cache": 1, "direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_louisiana_court_rules_supplement",
+        _fake_la_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["LA"],
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "partial_success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["zero_rule_states"] is None
+    assert result["data"][0]["rules_count"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "X"
+    assert result["data"][0]["statutes"][0]["procedure_family"] == "civil_and_criminal_procedure"
+    assert result["metadata"]["fetch_analytics_by_state"]["LA"]["attempted"] == 3
+    assert result["metadata"]["fetch_analytics_by_state"]["LA"]["cache_hits"] == 1
+
+
+@pytest.mark.anyio
+async def test_scrape_state_procedure_rules_skips_base_laws_for_bounded_louisiana_supplement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _unexpected_scrape_state_laws(**_kwargs):
+        raise AssertionError("base scrape_state_laws should be skipped for bounded LA supplement runs")
+
+    async def _fake_la_supplement(*, existing_source_urls=None, max_rules=None):
+        assert existing_source_urls == set()
+        assert max_rules == 1
+        return (
+            [
+                {
+                    "state_code": "LA",
+                    "state_name": "Louisiana",
+                    "statute_id": "La. Sup. Ct. R. I",
+                    "section_number": "I",
+                    "section_name": "GENERAL FILING AND CONFIDENTIALITY REQUIREMENTS",
+                    "full_text": "Rule I. GENERAL FILING AND CONFIDENTIALITY REQUIREMENTS." + (" x" * 120),
+                    "source_url": "https://www.lasc.org/Supreme_Court_Rules?p=RuleI",
+                    "procedure_family": "civil_and_criminal_procedure",
+                    "structured_data": {"procedure_family": "civil_and_criminal_procedure"},
+                }
+            ],
+            {
+                "attempted": 1,
+                "success": 1,
+                "success_ratio": 1.0,
+                "fallback_count": 0,
+                "cache_hits": 0,
+                "cache_writes": 0,
+                "providers": {"direct": 1},
+                "last_error": None,
+            },
+        )
+
+    monkeypatch.setattr(procedure_module, "scrape_state_laws", _unexpected_scrape_state_laws)
+    monkeypatch.setattr(
+        procedure_module,
+        "_scrape_louisiana_court_rules_supplement",
+        _fake_la_supplement,
+    )
+
+    result = await procedure_module.scrape_state_procedure_rules(
+        states=["LA"],
+        max_rules=1,
+        write_jsonld=False,
+    )
+
+    assert result["status"] == "success"
+    assert result["metadata"]["rules_count"] == 1
+    assert result["metadata"]["base_status"] == "success"
+    assert result["metadata"]["base_metadata"]["base_laws_skipped_for_replacement_supplements"] is True
+    assert result["metadata"]["fetch_analytics_by_state"]["LA"]["attempted"] == 1
+    assert result["data"][0]["statutes"][0]["section_number"] == "I"
 
 
 @pytest.mark.anyio

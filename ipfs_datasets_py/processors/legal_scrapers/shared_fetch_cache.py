@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -89,6 +90,31 @@ class SharedFetchCache:
     def _payload_path(self, *, namespace: str, key: str) -> Path:
         return self.cache_dir / namespace / "payload" / f"{key}.json"
 
+    @staticmethod
+    def _write_json_atomic(path: Path, payload: Dict[str, Any]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path: Optional[Path] = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=str(path.parent),
+                prefix=f".{path.stem}.",
+                suffix=".tmp",
+                delete=False,
+            ) as handle:
+                temp_path = Path(handle.name)
+                json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temp_path, path)
+        finally:
+            if temp_path is not None and temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except OSError:
+                    pass
+
     def load(self, *, namespace: str, url: str) -> Optional[Dict[str, Any]]:
         key = self._cache_key(namespace=namespace, url=url)
         index_path = self._index_path(namespace=namespace, key=key)
@@ -137,8 +163,7 @@ class SharedFetchCache:
         serializable_payload = dict(payload)
         serializable_payload.pop("_cache", None)
 
-        with payload_path.open("w", encoding="utf-8") as handle:
-            json.dump(serializable_payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
+        self._write_json_atomic(payload_path, serializable_payload)
 
         ipfs_cid = None
         if self.enable_ipfs_mirroring:
@@ -158,8 +183,7 @@ class SharedFetchCache:
             "payload_path": str(payload_path),
             "ipfs_cid": ipfs_cid,
         }
-        with index_path.open("w", encoding="utf-8") as handle:
-            json.dump(index_payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
+        self._write_json_atomic(index_path, index_payload)
 
         return index_payload
 

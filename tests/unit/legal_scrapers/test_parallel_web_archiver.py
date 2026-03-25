@@ -117,6 +117,80 @@ def test_huggingface_api_search_honors_max_results(monkeypatch: pytest.MonkeyPat
     assert results[0]["url"] == "https://example.com/1"
 
 
+def test_huggingface_api_search_defaults_to_state_jurisdiction(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed: dict[str, object] = {}
+
+    def _fake_search_state(query, state_code=None, filters=None, max_results=None):
+        observed["query"] = query
+        observed["state_code"] = state_code
+        observed["filters"] = filters
+        observed["max_results"] = max_results
+        return [{"url": "https://example.com/state"}]
+
+    def _fail_search_federal(*args, **kwargs):
+        raise AssertionError("federal search should not be the default")
+
+    searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=False)
+    monkeypatch.setattr(searcher, "search_state", _fake_search_state)
+    monkeypatch.setattr(searcher, "search_federal", _fail_search_federal)
+
+    results = searcher.search("administrative rules")
+
+    assert results == [{"url": "https://example.com/state"}]
+    assert observed["query"] == "administrative rules"
+    assert observed["state_code"] is None
+
+
+def test_huggingface_api_search_redirects_federal_to_state_in_admin_rules_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed: dict[str, object] = {}
+
+    def _fake_search_state(query, state_code=None, filters=None, max_results=None):
+        observed["query"] = query
+        observed["state_code"] = state_code
+        return [{"url": "https://example.com/state"}]
+
+    def _fail_search_federal(*args, **kwargs):
+        raise AssertionError("federal search should be redirected in admin-rules mode")
+
+    monkeypatch.setenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES", "1")
+
+    searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=False)
+    monkeypatch.setattr(searcher, "search_state", _fake_search_state)
+    monkeypatch.setattr(searcher, "search_federal", _fail_search_federal)
+
+    results = searcher.search("administrative rules", jurisdiction="federal")
+
+    assert results == [{"url": "https://example.com/state"}]
+    assert observed["query"] == "administrative rules"
+
+
+def test_huggingface_api_search_search_federal_redirects_in_admin_rules_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed: dict[str, object] = {}
+
+    def _fake_search_state(query, state_code=None, filters=None, max_results=None):
+        observed["query"] = query
+        observed["state_code"] = state_code
+        observed["filters"] = filters
+        observed["max_results"] = max_results
+        return [{"url": "https://example.com/state"}]
+
+    monkeypatch.setenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES", "1")
+
+    searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=False)
+    monkeypatch.setattr(searcher, "search_state", _fake_search_state)
+
+    results = searcher.search_federal("administrative rules", filters={"kind": "rule"}, max_results=3)
+
+    assert results == [{"url": "https://example.com/state"}]
+    assert observed["query"] == "administrative rules"
+    assert observed["filters"] == {"kind": "rule"}
+    assert observed["max_results"] == 3
+
+
 @pytest.mark.anyio
 async def test_get_warc_pointer_uses_passed_state_context(monkeypatch: pytest.MonkeyPatch) -> None:
     observed: dict[str, object] = {}

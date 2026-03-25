@@ -51,6 +51,46 @@ if str(PARENT_DIR) not in sys.path:
 
 logger = logging.getLogger(__name__)
 
+STATE_HOST_CODES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "DC", "PR",
+}
+
+EXPLICIT_FEDERAL_GOV_HOSTS = (
+    "congress.gov",
+    "gpo.gov",
+    "federalregister.gov",
+    "supremecourt.gov",
+    "uscourts.gov",
+    "whitehouse.gov",
+    "va.gov",
+    "state.gov",
+    "justice.gov",
+    "treasury.gov",
+    "commerce.gov",
+    "energy.gov",
+    "transportation.gov",
+    "usda.gov",
+    "hhs.gov",
+    "hud.gov",
+    "doi.gov",
+    "dol.gov",
+    "dhs.gov",
+    "defense.gov",
+    "fbi.gov",
+    "cia.gov",
+    "census.gov",
+    "gsa.gov",
+    "ssa.gov",
+    "epa.gov",
+    "irs.gov",
+    "usa.gov",
+)
+
 # Try to import monitoring decorator
 try:
     from ..infrastructure.monitoring import monitor
@@ -582,16 +622,17 @@ class CommonCrawlLegalScraper:
             return SourceType.STATE
 
         # Federal indicators
-        if any(domain in host for domain in [
-            "congress.gov", "gpo.gov", "federalregister.gov",
-            "supremecourt.gov", "uscourts.gov", "whitehouse.gov",
-        ]):
+        if any(host == domain or host.endswith(f".{domain}") for domain in EXPLICIT_FEDERAL_GOV_HOSTS):
             return SourceType.FEDERAL
         if any(domain in url_lower for domain in [
             "congress.", "gpo.", "federalregister",
             "supremecourt", "uscourts", "whitehouse"
         ]):
             return SourceType.FEDERAL
+
+        inferred_state_code = self._infer_state_code_from_url(url)
+        if host.endswith(".gov") and inferred_state_code in STATE_HOST_CODES:
+            return SourceType.STATE
         if host.endswith(".gov") or host.endswith(".mil"):
             return SourceType.FEDERAL
 
@@ -607,9 +648,11 @@ class CommonCrawlLegalScraper:
         if state_us_match:
             return state_us_match.group(1).upper()
 
-        gov_match = re.search(r"(?:^|\.)([a-z]{2})\.gov$", host)
+        gov_match = re.search(r"(?:^|\.)([a-z]{2})[a-z0-9-]*\.gov$", host)
         if gov_match:
-            return gov_match.group(1).upper()
+            code = gov_match.group(1).upper()
+            if code in STATE_HOST_CODES:
+                return code
 
         return None
 

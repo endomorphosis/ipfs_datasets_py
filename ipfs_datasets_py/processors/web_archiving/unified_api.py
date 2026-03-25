@@ -34,7 +34,7 @@ from .metrics.registry import MetricsRegistry
 from .orchestration.executor import SearchExecutor
 from .orchestration.planner import SearchPlanner
 from .orchestration.scoring import ProviderScorer
-from .structured_schema_compat import normalize_structured_fields
+from .structured_schema_compat import normalize_domain, normalize_structured_fields
 from .search_engines.orchestrator import MultiEngineOrchestrator, OrchestratorConfig
 from ..legal_scrapers.shared_fetch_cache import SharedFetchCache
 
@@ -252,30 +252,80 @@ class UnifiedWebArchivingAPI:
             metadata=metadata,
         )
 
-    def _load_cached_fetch_response(self, *, url: str) -> Optional[UnifiedFetchResponse]:
+    def _load_cached_fetch_response(self, *, url: str, domain: str) -> Optional[UnifiedFetchResponse]:
         if self._shared_fetch_cache is None:
             return None
-        payload = self._shared_fetch_cache.load(namespace="unified_fetch", url=url)
+        cache_lookup_url = self._fetch_cache_lookup_url(url=url, domain=domain)
+        payload = self._shared_fetch_cache.load(namespace="unified_fetch", url=cache_lookup_url)
         if not isinstance(payload, dict):
+            return None
+        expected_domain = normalize_domain(domain or "general")
+        payload_metadata = dict(payload.get("metadata") or {})
+        document_payload = payload.get("document") or {}
+        document_metadata = dict(document_payload.get("metadata") or {}) if isinstance(document_payload, dict) else {}
+        cached_domain = normalize_domain(
+            str(
+                payload_metadata.get("requested_domain")
+                or document_metadata.get("domain")
+                or "general"
+            )
+        )
+        if cached_domain != expected_domain:
+            logger.info(
+                "Ignoring unified fetch cache entry for %s because cached domain %s does not match requested %s",
+                url,
+                cached_domain,
+                expected_domain,
+            )
+            return None
+        document_url = str(document_payload.get("url") or payload.get("url") or "") if isinstance(document_payload, dict) else ""
+        quality_score = float(payload.get("quality_score") or 0.0)
+        title = str(document_payload.get("title") or "") if isinstance(document_payload, dict) else ""
+        text = str(document_payload.get("text") or "") if isinstance(document_payload, dict) else ""
+        html = str(document_payload.get("html") or "") if isinstance(document_payload, dict) else ""
+        if (
+            bool(payload.get("success", False))
+            and document_url == url
+            and not bool(document_metadata.get("relocated_via_search"))
+            and quality_score < 0.5
+            and len(title.strip()) < 8
+            and len(text.strip()) < 80
+            and len(html.strip()) < 400
+        ):
+            logger.info(
+                "Ignoring thin unified fetch cache entry for %s so relocation search can rebuild it",
+                url,
+            )
             return None
         try:
             return self._cache_payload_to_response(payload)
         except Exception as exc:
-            logger.warning("Ignoring invalid unified fetch cache entry for %s: %s", url, exc)
+            logger.warning("Ignoring invalid unified fetch cache entry for %s [%s]: %s", url, domain, exc)
             return None
 
-    def _store_cached_fetch_response(self, *, url: str, response: UnifiedFetchResponse) -> None:
+    @staticmethod
+    def _fetch_cache_lookup_url(*, url: str, domain: str) -> str:
+        normalized_domain = normalize_domain(domain or "general")
+        return f"{url}#__unified_fetch_v2_domain={normalized_domain}"
+
+    @staticmethod
+    def _fetch_request_uses_discovery_constraints(fetch_request: UnifiedFetchRequest) -> bool:
+        metadata = dict(fetch_request.metadata or {})
+        return bool(metadata.get("allowed_hosts") or metadata.get("blocked_url_patterns"))
+
+    def _store_cached_fetch_response(self, *, url: str, domain: str, response: UnifiedFetchResponse) -> None:
         if self._shared_fetch_cache is None or not response.success:
             return
         try:
+            cache_lookup_url = self._fetch_cache_lookup_url(url=url, domain=domain)
             self._shared_fetch_cache.save(
                 namespace="unified_fetch",
-                url=url,
+                url=cache_lookup_url,
                 payload=self._response_to_cache_payload(response),
-                payload_name=f"unified_fetch_{uuid.uuid5(uuid.NAMESPACE_URL, url).hex[:16]}",
+                payload_name=f"unified_fetch_{uuid.uuid5(uuid.NAMESPACE_URL, cache_lookup_url).hex[:16]}",
             )
         except Exception as exc:
-            logger.warning("Failed to write unified fetch cache entry for %s: %s", url, exc)
+            logger.warning("Failed to write unified fetch cache entry for %s [%s]: %s", url, domain, exc)
 
     @staticmethod
     def _env_bool(*names: str) -> Optional[bool]:
@@ -485,9 +535,14 @@ class UnifiedWebArchivingAPI:
         else:
             fetch_request = request
 
-        cached_response = self._load_cached_fetch_response(url=fetch_request.url)
-        if cached_response is not None:
-            return cached_response
+        cache_allowed = not self._fetch_request_uses_discovery_constraints(fetch_request)
+        if cache_allowed:
+            cached_response = self._load_cached_fetch_response(
+                url=fetch_request.url,
+                domain=fetch_request.domain,
+            )
+            if cached_response is not None:
+                return cached_response
 
         start_time = time.time()
         request_id = str(uuid.uuid4())
@@ -544,6 +599,12 @@ class UnifiedWebArchivingAPI:
                             items_processed=0,
                             error_type="relocation_fetch_failed",
                         )
+                    if cache_allowed and relocated_response.success:
+                        self._store_cached_fetch_response(
+                            url=fetch_request.url,
+                            domain=fetch_request.domain,
+                            response=relocated_response,
+                        )
                     return relocated_response
 
             trace.total_latency_ms = (time.time() - start_time) * 1000.0
@@ -587,7 +648,12 @@ class UnifiedWebArchivingAPI:
                     "requested_domain": fetch_request.domain,
                 },
             )
-            self._store_cached_fetch_response(url=fetch_request.url, response=response)
+            if cache_allowed:
+                self._store_cached_fetch_response(
+                    url=fetch_request.url,
+                    domain=fetch_request.domain,
+                    response=response,
+                )
             return response
 
         except BaseException as exc:
@@ -788,6 +854,12 @@ class UnifiedWebArchivingAPI:
             trace.fallback_count += 1
 
         title_hint = str((fetch_request.metadata or {}).get("title_hint") or "")
+        relocation_allowed_hosts = self._normalize_allowed_hosts(
+            (fetch_request.metadata or {}).get("allowed_hosts")
+        )
+        relocation_blocked_patterns = self._normalize_blocked_url_patterns(
+            (fetch_request.metadata or {}).get("blocked_url_patterns")
+        )
         target_terms = self._relocation_target_terms(
             source_url=fetch_request.url,
             target_terms=[],
@@ -799,6 +871,8 @@ class UnifiedWebArchivingAPI:
             mode=fetch_request.mode,
             title_hint=title_hint,
             domain=fetch_request.domain,
+            allowed_hosts=relocation_allowed_hosts,
+            blocked_url_patterns=relocation_blocked_patterns,
         )
         if not candidates:
             return None
@@ -921,7 +995,16 @@ class UnifiedWebArchivingAPI:
                     continue
                 visited.add(url)
 
-                response = self.fetch(UnifiedFetchRequest(url=url, mode=mode))
+                response = self.fetch(
+                    UnifiedFetchRequest(
+                        url=url,
+                        mode=mode,
+                        metadata=self._build_discovery_fetch_metadata(
+                            allowed_hosts=normalized_allowed_hosts,
+                            blocked_url_patterns=normalized_blocked_patterns,
+                        ),
+                    )
+                )
                 collected.append(response.to_dict())
 
                 ranked_same_host: List[Dict[str, Any]] = []
@@ -1256,6 +1339,21 @@ class UnifiedWebArchivingAPI:
             except re.error:
                 logger.debug("Ignoring invalid discovery block pattern: %s", value)
         return compiled
+
+    @staticmethod
+    def _build_discovery_fetch_metadata(
+        *,
+        allowed_hosts: Optional[Sequence[str]] = None,
+        blocked_url_patterns: Optional[Sequence[re.Pattern[str]]] = None,
+    ) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = {}
+        normalized_allowed_hosts = UnifiedWebArchivingAPI._normalize_allowed_hosts(allowed_hosts)
+        normalized_blocked_patterns = list(blocked_url_patterns or [])
+        if normalized_allowed_hosts:
+            metadata["allowed_hosts"] = normalized_allowed_hosts
+        if normalized_blocked_patterns:
+            metadata["blocked_url_patterns"] = [pattern.pattern for pattern in normalized_blocked_patterns]
+        return metadata
 
     def _url_matches_discovery_constraints(
         self,

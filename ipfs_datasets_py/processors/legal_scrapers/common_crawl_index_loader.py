@@ -35,6 +35,15 @@ import json
 
 logger = logging.getLogger(__name__)
 
+
+def _admin_rules_force_state_hf_index() -> bool:
+    return str(os.getenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
 # HuggingFace dataset names
 DATASET_REPOS = {
     "federal": "endomorphosis/common_crawl_federal_index",
@@ -247,6 +256,12 @@ class CommonCrawlIndexLoader:
             >>> if federal_index:
             ...     print(f"Loaded {len(federal_index)} federal records")
         """
+        if _admin_rules_force_state_hf_index():
+            logger.info(
+                "Redirecting Common Crawl federal index load to state index for admin-rules agentic mode"
+            )
+            return self.load_state_index(force_refresh=force_refresh)
+
         if "federal" in self._loaded_indexes and not force_refresh:
             return self._loaded_indexes["federal"]
         

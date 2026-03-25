@@ -15,6 +15,8 @@ def test_detect_source_type_treats_state_gov_hosts_as_state() -> None:
         scraper._detect_source_type("https://texreg.sos.state.tx.us/public/readtac$ext.ViewTAC")
         == SourceType.STATE
     )
+    assert scraper._detect_source_type("https://apps.azsos.gov/rules") == SourceType.STATE
+    assert scraper._detect_source_type("https://www.va.gov/") == SourceType.FEDERAL
     assert scraper._detect_source_type("https://www.congress.gov/") == SourceType.FEDERAL
 
 

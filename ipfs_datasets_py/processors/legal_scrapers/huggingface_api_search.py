@@ -101,6 +101,15 @@ def _resolve_hf_bill_to(value: Optional[str] = None) -> str:
     )
 
 
+def _admin_rules_force_state_hf_index() -> bool:
+    return str(os.getenv("LEGAL_ADMIN_RULES_DIRECT_AGENTIC_ALL_STATES", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 class HuggingFaceAPISearch:
     """Search HuggingFace Common Crawl indexes via API without full download.
     
@@ -162,7 +171,7 @@ class HuggingFaceAPISearch:
     def search(
         self,
         query: str,
-        jurisdiction: str = "federal",
+        jurisdiction: str = "state",
         state_code: Optional[str] = None,
         filters: Optional[Dict[str, Any]] = None,
         max_results: Optional[int] = None,
@@ -174,7 +183,9 @@ class HuggingFaceAPISearch:
         
         Args:
             query: Search query string
-            jurisdiction: Type of jurisdiction ("federal", "state", "municipal")
+            jurisdiction: Type of jurisdiction ("federal", "state", "municipal").
+                Defaults to "state" so state/admin discovery does not silently
+                fall into the federal index when callers omit jurisdiction.
             state_code: State code for state-specific searches (e.g., "CA")
             filters: Additional filters to apply
             
@@ -185,6 +196,12 @@ class HuggingFaceAPISearch:
             >>> searcher = HuggingFaceAPISearch()
             >>> results = searcher.search("EPA water", jurisdiction="federal")
         """
+        if jurisdiction == "federal" and _admin_rules_force_state_hf_index():
+            logger.info(
+                "Redirecting HuggingFace Common Crawl search from federal to state for admin-rules agentic mode"
+            )
+            jurisdiction = "state"
+
         if jurisdiction == "federal":
             return self.search_federal(query, filters, max_results=max_results)
         elif jurisdiction == "state":
@@ -210,6 +227,12 @@ class HuggingFaceAPISearch:
         Returns:
             List of matching federal records
         """
+        if _admin_rules_force_state_hf_index():
+            logger.info(
+                "Redirecting direct HuggingFace federal index search to state for admin-rules agentic mode"
+            )
+            return self.search_state(query, filters=filters, max_results=max_results)
+
         return self._search_dataset(
             DATASET_REPOS["federal"],
             query,

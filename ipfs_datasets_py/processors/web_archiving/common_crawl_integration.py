@@ -19,8 +19,49 @@ import base64
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Literal
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
+
+STATE_HOST_CODES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+    "DC", "PR",
+}
+
+EXPLICIT_FEDERAL_GOV_HOSTS = (
+    "congress.gov",
+    "gpo.gov",
+    "federalregister.gov",
+    "supremecourt.gov",
+    "uscourts.gov",
+    "whitehouse.gov",
+    "va.gov",
+    "state.gov",
+    "justice.gov",
+    "treasury.gov",
+    "commerce.gov",
+    "energy.gov",
+    "transportation.gov",
+    "usda.gov",
+    "hhs.gov",
+    "hud.gov",
+    "doi.gov",
+    "dol.gov",
+    "dhs.gov",
+    "defense.gov",
+    "fbi.gov",
+    "cia.gov",
+    "census.gov",
+    "gsa.gov",
+    "ssa.gov",
+    "epa.gov",
+    "irs.gov",
+    "usa.gov",
+)
 
 try:
     from ipfs_datasets_py.processors.legal_scrapers.huggingface_api_search import (
@@ -87,6 +128,43 @@ def _ensure_common_crawl_import_path() -> Optional[Path]:
         except Exception:
             continue
     return None
+
+
+def _infer_state_code_from_domain(domain: str) -> Optional[str]:
+    host = str(urlparse(str(domain or "")).netloc or domain or "").lower().strip(".")
+    if not host:
+        return None
+
+    state_us_match = re.search(r"\.state\.([a-z]{2})\.us$", host)
+    if state_us_match:
+        code = state_us_match.group(1).upper()
+        return code if code in STATE_HOST_CODES else None
+
+    gov_match = re.search(r"(?:^|\.)([a-z]{2})[a-z0-9-]*\.gov$", host)
+    if gov_match:
+        code = gov_match.group(1).upper()
+        return code if code in STATE_HOST_CODES else None
+
+    return None
+
+
+def _is_explicit_federal_host(domain: str) -> bool:
+    host = str(urlparse(str(domain or "")).netloc or domain or "").lower().strip(".")
+    return any(host == federal_host or host.endswith(f".{federal_host}") for federal_host in EXPLICIT_FEDERAL_GOV_HOSTS)
+
+
+def _normalize_cc_jurisdiction(domain: str, jurisdiction: str, state_code: Optional[str]) -> tuple[str, Optional[str]]:
+    normalized = str(jurisdiction or "state").strip().lower() or "state"
+    normalized_state_code = str(state_code).strip().upper() if state_code else None
+
+    inferred_state_code = _infer_state_code_from_domain(domain)
+    if inferred_state_code and not normalized_state_code:
+        normalized_state_code = inferred_state_code
+
+    if inferred_state_code and normalized != "municipal" and not _is_explicit_federal_host(domain):
+        normalized = "state"
+
+    return normalized, normalized_state_code
 
 
 class CommonCrawlSearchEngine:
@@ -492,6 +570,7 @@ class CommonCrawlSearchEngine:
 
         if jurisdiction not in {"federal", "state", "municipal"}:
             jurisdiction = "state"
+        jurisdiction, state_code = _normalize_cc_jurisdiction(query, jurisdiction, state_code)
 
         try:
             records = self.hf_search.search(

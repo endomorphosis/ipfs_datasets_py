@@ -18,6 +18,7 @@ import math
 import os
 import re
 import time
+import warnings
 import zipfile
 import requests
 from bs4 import BeautifulSoup
@@ -101,11 +102,22 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"/statutes?(?:/|$)|/api/statutes?(?:/|$)|/rsa/html/|/constitution(?:/|$)|/ucc/(?:|index\.shtml)$|statutes\.capitol\.texas\.gov/|law\.justia\.com/codes/|"
     r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/uniform-commercial-code-ucc/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/notary-e-notary(?:/|$)|"
+    r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/academics/(?:|$)|"
     r"(?:^|https?://)(?:[^/]+\.)?justia\.com/|(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/https?://(?:[^/]+\.)?justia\.com/|"
     r"(?:^|https?://)(?:www\.)?uscode\.house\.gov/|(?:^|https?://)(?:www\.)?ecfr\.gov/|"
     r"(?:^|https?://)(?:www\.)?coloradosos\.gov/pubs/elections/Initiatives/titleBoard/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?coloradosos\.gov/pubs/newsRoom/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?coloradosos\.gov/pubs/rule_making/written_comments/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.state\.co\.us/CCR/auth/loginHome\.do(?:\?|$)|"
     r"(?:^|https?://)(?:www\.)?ark\.org/arec_renewals(?:/|$)|"
+    r"(?:^|https?://)(?:www\.)?ark\.org/sos/corpfilings(?:/|$)|"
+    r"(?:^|https?://)(?:www\.)?azdirect\.az\.gov/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?apps\.azlibrary\.gov/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?extension\.arizona\.edu/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?azed\.gov/sites/default/files/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/elections(?:/|$)|"
+    r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/\+ELECTIONS(?:|$)|"
     r"(?:^|https?://)(?:www\.)?le\.utah\.gov/|(?:^|https?://)(?:www\.)?legislature\.vermont\.gov/|(?:^|https?://)(?:www\.)?leg\.mt\.gov/|"
     r"(?:^|https?://)(?:www\.)?iga\.in\.gov/static-documents/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|"
@@ -126,7 +138,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
 )
 
 _BAD_DISCOVERY_DOMAIN_RE = re.compile(
-    r"(^|\.)(city-data\.com|legalclarity\.org|texashuntingforum\.com|montanaheritagecommission\.mt\.gov|wikipedia\.org|britannica\.com|ballotpedia\.org|zhihu\.com|pemfprofessionals\.com|superuser\.com)$",
+    r"(^|\.)(city-data\.com|legalclarity\.org|texashuntingforum\.com|montanaheritagecommission\.mt\.gov|wikipedia\.org|britannica\.com|ballotpedia\.org|zhihu\.com|pemfprofessionals\.com|superuser\.com|sportsbookreview\.com|sur\.ly|workspace\.google\.com|support\.google\.com|azcu\.edu|arkvalleyvoice\.com|faithiu\.edu)$",
     re.IGNORECASE,
 )
 
@@ -569,6 +581,48 @@ _ME_RULE_DEPARTMENT_PATH_RE = re.compile(
     re.IGNORECASE,
 )
 
+_MN_RULE_INDEX_PATH_RE = re.compile(
+    r"^/rules(?:/numerical)?/?$",
+    re.IGNORECASE,
+)
+
+_MN_RULE_AGENCY_PATH_RE = re.compile(
+    r"^/rules/agency/\d+/?$",
+    re.IGNORECASE,
+)
+
+_MN_RULE_DETAIL_PATH_RE = re.compile(
+    r"^/rules/\d{4}/?$",
+    re.IGNORECASE,
+)
+
+_MO_CSR_INDEX_PATH_RE = re.compile(
+    r"^/adrules/csr/csr/?$",
+    re.IGNORECASE,
+)
+
+_MO_CSR_TITLE_PATH_RE = re.compile(
+    r"^/adrules/csr/current/\d+csr/\d+csr/?$",
+    re.IGNORECASE,
+)
+
+_MO_CSR_PDF_PATH_RE = re.compile(
+    r"^/cmsimages/adrules/csr/current/\d+csr/[^?#]+\.pdf$",
+    re.IGNORECASE,
+)
+
+_NE_RULE_BROWSE_PATH_RE = re.compile(
+    r"^/(?:browse-rules|rules)/?$",
+    re.IGNORECASE,
+)
+
+_NE_RULE_FILESTORAGE_PDF_PATH_RE = re.compile(
+    r"^/api/fileStorage/GetAsByteArray/(?:chapter-pdfs|title-pdfs)/[^?#]+\.pdf$",
+    re.IGNORECASE,
+)
+
+_NE_RULES_API_BASE_URL = "https://rules.nebraska.gov/api"
+
 _MT_COLLECTION_PATH_RE = re.compile(
     r"^/browse/collections/(?P<collection>[0-9a-fA-F-]+)/?$",
     re.IGNORECASE,
@@ -634,6 +688,8 @@ def _prefers_live_fetch(url: str) -> bool:
         path.startswith("/public/search") or bool(_UT_RULE_DETAIL_PATH_RE.search(parsed.path or ""))
     ):
         return True
+    if host == "rules.nebraska.gov" and (path == "/" or bool(_NE_RULE_BROWSE_PATH_RE.fullmatch(parsed.path or ""))):
+        return True
     return False
 
 _NH_ARCHIVED_RULE_CHAPTER_URL_RE = re.compile(
@@ -670,6 +726,7 @@ _RULE_BODY_SIGNAL_RE = re.compile(
 
 _OFFICIAL_RULE_INDEX_URL_RE = re.compile(
     r"(?:^|https?://)(?:rules\.mt\.gov/browse/collections(?:/|$)|sdlegislature\.gov/Rules/Administrative(?:/|$)|"
+    r"rules\.nebraska\.gov(?:/(?:browse-rules|rules)?)?(?:\?|/|$)|"
     r"rules\.utah\.gov(?:/(?:utah-administrative-code|publications/(?:administrative-rules-register|code-updates))?)?(?:/|$)|"
     r"adminrules\.utah\.gov(?:/(?:public/(?:home|search)(?:/.*)?|api/public/searchRuleDataTotal/[^/]+/Current%20Rules))?(?:/|$)|"
     r"govt\.westlaw\.com/calregs/(?:Index|Browse/Home/California/CaliforniaCodeofRegulations)(?:\?|/|$)|"
@@ -931,6 +988,26 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.maine.gov/sos/rulemaking/agency-rules/department-environmental-protection-rules",
         "https://www.maine.gov/sos/rulemaking/agency-rules/department-health-and-human-services-rules",
     ],
+    "MN": [
+        "https://www.revisor.mn.gov/rules/",
+        "https://www.revisor.mn.gov/rules/numerical/",
+        "https://www.revisor.mn.gov/rules/1400/",
+        "https://www.revisor.mn.gov/rules/7000/",
+        "https://www.revisor.mn.gov/rules/8500/",
+    ],
+    "MO": [
+        "https://www.sos.mo.gov/adrules/csr/csr",
+        "https://www.sos.mo.gov/adrules/csr/current/1csr/1csr",
+        "https://www.sos.mo.gov/adrules/csr/current/10csr/10csr",
+        "https://www.sos.mo.gov/adrules/csr/current/19csr/19csr",
+        "https://www.sos.mo.gov/cmsimages/adrules/csr/current/1csr/1c10-1.pdf",
+        "https://www.sos.mo.gov/cmsimages/adrules/csr/current/1csr/1c15-3.pdf",
+        "https://www.sos.mo.gov/cmsimages/adrules/csr/current/19csr/19c10-5.010.pdf",
+    ],
+    "NE": [
+        "https://rules.nebraska.gov/",
+        "https://rules.nebraska.gov/browse-rules",
+    ],
     "MS": [
         "https://sos.ms.gov/regulation-enforcement/administrative-code",
         "https://www.sos.ms.gov/regulation-enforcement/administrative-code",
@@ -1098,7 +1175,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MD", "ME", "MS", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -1471,13 +1548,12 @@ def _ensure_target_state_blocks(
 def _agentic_domains_for_state(state_code: str) -> List[str]:
     low = str(state_code or "").lower()
     if not low:
-        return [".gov"]
+        return []
     return [
         f"{low}.gov",
         f"state.{low}.us",
         f"admincode.{low}.gov",
         "rules.state.us",
-        ".gov",
     ]
 
 
@@ -2359,6 +2435,33 @@ def _score_candidate_url(url: str) -> int:
         score += 6
     if host in {"www.maine.gov", "maine.gov"} and _ME_RULE_DOCUMENT_PATH_RE.search(path):
         score += 12
+    if host == "www.revisor.mn.gov" and _MN_RULE_INDEX_PATH_RE.search(normalized_path):
+        score += 8
+    if host == "www.revisor.mn.gov" and _MN_RULE_AGENCY_PATH_RE.search(normalized_path):
+        score += 9
+    if host == "www.revisor.mn.gov" and _MN_RULE_DETAIL_PATH_RE.search(path):
+        score += 13
+    if host == "www.sos.mo.gov" and _MO_CSR_INDEX_PATH_RE.search(normalized_path):
+        score += 8
+    if host == "www.sos.mo.gov" and _MO_CSR_TITLE_PATH_RE.search(normalized_path):
+        score += 10
+    if host == "www.sos.mo.gov" and _MO_CSR_PDF_PATH_RE.search(path):
+        score += 13
+    if host == "rules.nebraska.gov":
+        if normalized_path.lower() == "/":
+            score += 5
+        elif normalized_path.lower() == "/browse-rules":
+            score += 9
+        elif normalized_path.lower() == "/rules":
+            query_params = parse_qs(parsed.query or "")
+            agency_id = str((query_params.get("agencyId") or [""])[0]).strip()
+            title_id = str((query_params.get("titleId") or [""])[0]).strip()
+            if agency_id.isdigit() and title_id.isdigit():
+                score += 11
+            else:
+                score += 7
+        elif _NE_RULE_FILESTORAGE_PDF_PATH_RE.search(path):
+            score += 14
     if host == "www.sec.state.ma.us" and normalized_path.lower() == "/divisions/pubs-regs/about-cmr.htm":
         score += 6
     if host in {"malegislature.gov", "www.malegislature.gov", "legislature.ma.gov"} and _MA_GENERAL_LAWS_PATH_RE.search(path):
@@ -2511,6 +2614,37 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
         score += 10
         if re.search(r"\b(?:ch\.?|chapter|section|appendix|manual|rule)\b", hay, re.IGNORECASE):
             score += 2
+    if host == "www.revisor.mn.gov" and _MN_RULE_INDEX_PATH_RE.search(path):
+        score += 6
+    if host == "www.revisor.mn.gov" and _MN_RULE_AGENCY_PATH_RE.search(path):
+        score += 8
+    if host == "www.revisor.mn.gov" and _MN_RULE_DETAIL_PATH_RE.search(path):
+        score += 12
+        if re.search(r"\b(?:chapter|part|rule|administrative)\b", hay, re.IGNORECASE):
+            score += 2
+    if host == "www.sos.mo.gov" and _MO_CSR_INDEX_PATH_RE.search(path):
+        score += 6
+    if host == "www.sos.mo.gov" and _MO_CSR_TITLE_PATH_RE.search(path):
+        score += 9
+        if re.search(r"\b(?:title|division|chapter|code of state regulations)\b", hay, re.IGNORECASE):
+            score += 2
+    if host == "www.sos.mo.gov" and _MO_CSR_PDF_PATH_RE.search(path):
+        score += 12
+        if re.search(r"\b(?:chapter|rule|authority|code of state regulations)\b", hay, re.IGNORECASE):
+            score += 2
+    if host == "rules.nebraska.gov":
+        if normalized_path.lower() == "/browse-rules":
+            score += 8
+        elif normalized_path.lower() == "/rules":
+            query_params = parse_qs(parsed.query or "")
+            agency_id = str((query_params.get("agencyId") or [""])[0]).strip()
+            title_id = str((query_params.get("titleId") or [""])[0]).strip()
+            if agency_id.isdigit() and title_id.isdigit():
+                score += 10
+        elif _NE_RULE_FILESTORAGE_PDF_PATH_RE.search(path):
+            score += 12
+            if re.search(r"\b(?:chapter|rule|effective date|title)\b", hay, re.IGNORECASE):
+                score += 2
     if host == "sdlegislature.gov" and _SD_RULE_DETAIL_PATH_RE.fullmatch(path):
         score += 10
     if host == "sdlegislature.gov" and _SD_DISPLAY_RULE_PATH_RE.search(path):
@@ -2743,6 +2877,12 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "regs.maryland.gov" and _MD_COMAR_DETAIL_PATH_RE.search(path):
         return True
     if host in {"www.maine.gov", "maine.gov"} and _ME_RULE_DOCUMENT_PATH_RE.search(path):
+        return True
+    if host == "www.revisor.mn.gov" and _MN_RULE_DETAIL_PATH_RE.search(path):
+        return True
+    if host == "www.sos.mo.gov" and _MO_CSR_PDF_PATH_RE.search(path):
+        return True
+    if host == "rules.nebraska.gov" and _NE_RULE_FILESTORAGE_PDF_PATH_RE.search(path):
         return True
     if host == "codeofarrules.arkansas.gov" and path.lower() == "/rules/rule":
         if _arkansas_rule_level_from_url(url) == "section":
@@ -3438,13 +3578,19 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
     ak_title_hits = len(_AK_AAC_TITLE_ROW_RE.findall(body))
     ga_department_hits = len(_GA_GAC_DEPARTMENT_ROW_RE.findall(body))
     nm_title_hits = len(_NM_NMAC_TITLE_ROW_RE.findall(body))
+    mn_chapter_link_hits = len(re.findall(r"/rules/\d{4}/", body, re.IGNORECASE))
+    mn_agency_link_hits = len(re.findall(r"/rules/agency/\d+", body, re.IGNORECASE))
+    mo_title_link_hits = len(re.findall(r"/adrules/csr/current/\d+csr/\d+csr", body, re.IGNORECASE))
     wyoming_index_like = host == "rules.wyo.gov" and path in {"/search.aspx", "/agencies.aspx"}
     kansas_index_like = host == "www.sos.ks.gov" and path == "/publications/kansas-administrative-regulations.html"
     sd_index_like = host == "sdlegislature.gov" and _SD_RULE_INDEX_PATH_RE.fullmatch(parsed.path or "") is not None
     alaska_index_like = (host == "akrules.elaws.us" and path == "/aac") or (host == "www.akleg.gov" and path == "/basis/aac.asp")
     georgia_index_like = host == "rules.sos.ga.gov" and path == "/gac"
     new_mexico_index_like = host == "www.srca.nm.gov" and _NM_NMAC_TITLES_PATH_RE.fullmatch(parsed.path or "") is not None
-    if not wyoming_index_like and not kansas_index_like and not sd_index_like and not alaska_index_like and not georgia_index_like and not new_mexico_index_like and not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
+    minnesota_index_like = host == "www.revisor.mn.gov" and _MN_RULE_INDEX_PATH_RE.fullmatch(parsed.path or "") is not None
+    missouri_index_like = host == "www.sos.mo.gov" and _MO_CSR_INDEX_PATH_RE.fullmatch(parsed.path or "") is not None
+    nebraska_index_like = host == "rules.nebraska.gov" and (path == "/" or _NE_RULE_BROWSE_PATH_RE.fullmatch(parsed.path or "") is not None)
+    if not wyoming_index_like and not kansas_index_like and not sd_index_like and not alaska_index_like and not georgia_index_like and not new_mexico_index_like and not minnesota_index_like and not missouri_index_like and not nebraska_index_like and not _OFFICIAL_RULE_INDEX_URL_RE.search(url_value):
         return False
 
     hay = " ".join([title_value, body])
@@ -3465,6 +3611,15 @@ def _looks_like_official_rule_index_page(*, text: str, title: str, url: str) -> 
     if georgia_index_like and "ga r&r" in hay.lower() and ga_department_hits >= 8:
         return True
     if new_mexico_index_like and "new mexico administrative code" in hay.lower() and nm_title_hits >= 8:
+        return True
+    if minnesota_index_like and "minnesota administrative rules" in hay.lower() and (mn_chapter_link_hits >= 8 or mn_agency_link_hits >= 4):
+        return True
+    if missouri_index_like and "code of state regulations" in hay.lower() and mo_title_link_hits >= 8:
+        return True
+    if nebraska_index_like and "rules and regulations" in hay.lower() and (
+        "browse rules by agency" in hay.lower()
+        or ("select agency" in hay.lower() and "select title" in hay.lower())
+    ):
         return True
     if "alabama administrative code" in hay.lower() and len(re.findall(r"\b(?:agency|chapter|rule|title)\b", hay, re.IGNORECASE)) >= 4:
         return True
@@ -3551,6 +3706,13 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
     ct_subtitle_hits = len(_CT_EREGS_SUBTITLE_ROW_RE.findall(hay))
     ct_section_hits = len(_CT_EREGS_SECTION_ROW_RE.findall(hay))
     co_rule_hits = len(_CO_CCR_RULE_ROW_RE.findall(hay))
+    mn_chapter_link_hits = len(re.findall(r"/rules/\d{4}/", body, re.IGNORECASE))
+    mn_agency_link_hits = len(re.findall(r"/rules/agency/\d+", body, re.IGNORECASE))
+    mn_part_hits = len(re.findall(r"\bpart(?:s)?\b", hay, re.IGNORECASE))
+    mo_title_link_hits = len(re.findall(r"/adrules/csr/current/\d+csr/\d+csr", body, re.IGNORECASE))
+    mo_pdf_link_hits = len(re.findall(r'/cmsimages/adrules/csr/current/\d+csr/[^"\'\s>]+\.pdf', body, re.IGNORECASE))
+    mo_division_hits = len(re.findall(r"\bdivision\s+\d+\b", hay, re.IGNORECASE))
+    ne_download_hits = len(re.findall(r"\bdownload\s+chapter\b", hay, re.IGNORECASE))
 
     if host == "rules.mt.gov" and "/policies/" in path:
         return False
@@ -3564,6 +3726,8 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
         if "browse rules" in hay.lower() and "ccr#" in hay.lower() and hay.lower().count("department of") >= 4:
             return True
     if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_AGENCY_LIST_PATH_RE.fullmatch(path):
+        if "deptid=" in (urlparse(url_value).query or "").lower():
+            return True
         if "browse rules" in hay.lower() and "ccr#" in hay.lower() and hay.lower().count("division") >= 3:
             return True
     if host in {"www.sos.state.co.us", "www.coloradosos.gov"} and _CO_CCR_DOC_LIST_PATH_RE.fullmatch(path):
@@ -3587,6 +3751,28 @@ def _looks_like_rule_inventory_page(*, text: str, title: str, url: str) -> bool:
             return True
     if host == "eregulations.ct.gov" and _CT_EREGS_SUBTITLE_PATH_RE.fullmatch(path):
         if "select a section to browse its contents" in hay.lower() and ct_section_hits >= 4:
+            return True
+
+    if host == "www.revisor.mn.gov" and _MN_RULE_INDEX_PATH_RE.fullmatch(path):
+        if "minnesota administrative rules" in hay.lower() and (mn_chapter_link_hits >= 8 or mn_agency_link_hits >= 4):
+            return True
+    if host == "www.revisor.mn.gov" and _MN_RULE_AGENCY_PATH_RE.fullmatch(path):
+        if "minnesota administrative rules" in hay.lower() and mn_chapter_link_hits >= 4 and mn_part_hits >= 2:
+            return True
+    if host == "www.sos.mo.gov" and _MO_CSR_INDEX_PATH_RE.fullmatch(path):
+        if "code of state regulations" in hay.lower() and mo_title_link_hits >= 8:
+            return True
+    if host == "www.sos.mo.gov" and _MO_CSR_TITLE_PATH_RE.fullmatch(path):
+        if "code of state regulations" in hay.lower() and mo_pdf_link_hits >= 6 and mo_division_hits >= 2:
+            return True
+    if host == "rules.nebraska.gov" and path in {"/", "/browse-rules"}:
+        if "rules and regulations" in hay.lower() and (
+            "browse rules by agency" in hay.lower()
+            or ("select agency" in hay.lower() and "select title" in hay.lower())
+        ):
+            return True
+    if host == "rules.nebraska.gov" and path == "/rules":
+        if ("rules and regulations" in hay.lower() and "select title" in hay.lower()) or ne_download_hits >= 2:
             return True
 
     if host == "rules.sos.ga.gov" and _GA_GAC_RULE_PATH_RE.fullmatch(path):
@@ -10308,6 +10494,34 @@ def _connecticut_bootstrap_priority(url: str) -> int:
     return score
 
 
+def _colorado_pdf_url(base_url: str, rule_version_id: str, file_name: str) -> str:
+    parsed = urlparse(base_url)
+    host = parsed.netloc or "www.coloradosos.gov"
+    encoded_name = quote(file_name, safe="")
+    return (
+        f"https://{host}/CCR/{encoded_name}.pdf?ruleVersionId={rule_version_id}"
+        f"&fileName={encoded_name}"
+    )
+
+
+def _colorado_latest_pdf_urls_from_html(*, html: str, base_url: str) -> List[str]:
+    latest_by_name: Dict[str, tuple[int, str]] = {}
+    for match in _CO_CCR_OPEN_RULE_WINDOW_RE.finditer(str(html or "")):
+        rule_version_id = str(match.group("rule_version_id") or "").strip()
+        file_name = str(match.group("file_name") or "").strip()
+        if not rule_version_id.isdigit() or not file_name:
+            continue
+        version_num = int(rule_version_id)
+        current = latest_by_name.get(file_name)
+        if current is not None and current[0] >= version_num:
+            continue
+        latest_by_name[file_name] = (
+            version_num,
+            _colorado_pdf_url(base_url, rule_version_id, file_name),
+        )
+    return [url for _, url in sorted(latest_by_name.values(), key=lambda item: item[0], reverse=True)]
+
+
 async def _discover_connecticut_rule_document_urls(
     *,
     seed_urls: List[str],
@@ -10452,15 +10666,6 @@ async def _discover_colorado_rule_document_urls(
             )
         )
 
-    def _colorado_pdf_url(base_url: str, rule_version_id: str, file_name: str) -> str:
-        parsed = urlparse(base_url)
-        host = parsed.netloc or "www.coloradosos.gov"
-        encoded_name = quote(file_name, safe="")
-        return (
-            f"https://{host}/CCR/{encoded_name}.pdf?ruleVersionId={rule_version_id}"
-            f"&fileName={encoded_name}"
-        )
-
     def _colorado_links_from_scraped(scraped: Any, page_url: str) -> List[str]:
         candidate_links: List[str] = []
         candidate_links.extend(
@@ -10549,12 +10754,8 @@ async def _discover_colorado_rule_document_urls(
             html = await _fetch_html_direct(display_rule_url)
             if not html:
                 continue
-            for match in _CO_CCR_OPEN_RULE_WINDOW_RE.finditer(html):
-                rule_version_id = str(match.group("rule_version_id") or "").strip()
-                file_name = str(match.group("file_name") or "").strip()
-                if not rule_version_id.isdigit() or not file_name:
-                    continue
-                if _record(_colorado_pdf_url(display_rule_url, rule_version_id, file_name)):
+            for pdf_url in _colorado_latest_pdf_urls_from_html(html=html, base_url=display_rule_url):
+                if _record(pdf_url):
                     return discovered_urls
 
     if discovered_urls:
@@ -10610,12 +10811,8 @@ async def _discover_colorado_rule_document_urls(
         if scraped is None:
             continue
         html = str(getattr(scraped, "html", "") or "")
-        for match in _CO_CCR_OPEN_RULE_WINDOW_RE.finditer(html):
-            rule_version_id = str(match.group("rule_version_id") or "").strip()
-            file_name = str(match.group("file_name") or "").strip()
-            if not rule_version_id.isdigit() or not file_name:
-                continue
-            if _record(_colorado_pdf_url(display_rule_url, rule_version_id, file_name)):
+        for pdf_url in _colorado_latest_pdf_urls_from_html(html=html, base_url=display_rule_url):
+            if _record(pdf_url):
                 return discovered_urls
 
     return discovered_urls
@@ -11118,6 +11315,118 @@ async def _discover_maine_rule_document_urls(*, seed_urls: List[str], limit: int
                         return discovered_urls
 
     return discovered_urls
+
+
+def _nebraska_sort_key(value: Any) -> tuple[int | str, ...]:
+    parts = re.findall(r"\d+|[A-Za-z]+", str(value or ""))
+    if not parts:
+        return (999999, "")
+    key: List[int | str] = []
+    for part in parts:
+        if part.isdigit():
+            key.extend((0, int(part)))
+        else:
+            key.extend((1, part.lower()))
+    return tuple(key)
+
+
+def _nebraska_file_storage_download_url(container_name: str, blob_name: str) -> str:
+    container = quote(str(container_name or "").strip().strip("/"), safe="-._~")
+    blob = quote(str(blob_name or "").strip(), safe="()!$&'*,;=:@-._~")
+    return f"{_NE_RULES_API_BASE_URL}/fileStorage/GetAsByteArray/{container}/{blob}"
+
+
+def _nebraska_output_list(payload: Any) -> List[Dict[str, Any]]:
+    if isinstance(payload, dict):
+        payload = payload.get("output")
+    if not isinstance(payload, list):
+        return []
+    return [item for item in payload if isinstance(item, dict)]
+
+
+async def _discover_nebraska_rule_document_urls(*, limit: int = 8) -> List[str]:
+    limit_n = max(1, int(limit))
+
+    def _run() -> List[str]:
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json,text/plain,*/*",
+        }
+        session = requests.Session()
+        discovered_urls: List[str] = []
+        inventory_urls: List[str] = []
+        seen_document_keys: set[str] = set()
+        seen_inventory_keys: set[str] = set()
+
+        def _get_json(url: str) -> Any:
+            try:
+                response = session.get(url, timeout=20, headers=headers)
+            except requests.exceptions.SSLError:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    response = session.get(url, timeout=20, headers=headers, verify=False)
+            response.raise_for_status()
+            return response.json()
+
+        try:
+            titles_payload = _get_json(f"{_NE_RULES_API_BASE_URL}/title")
+        except Exception:
+            return []
+
+        titles = sorted(
+            _nebraska_output_list(titles_payload),
+            key=lambda item: (
+                _nebraska_sort_key(item.get("titleNumber")),
+                _nebraska_sort_key(item.get("titleName")),
+                int(item.get("id") or 0),
+            ),
+        )
+
+        for title in titles:
+            title_id = str(title.get("id") or "").strip()
+            agency_id = str(title.get("agencyId") or "").strip()
+            if not title_id.isdigit():
+                continue
+            if agency_id.isdigit():
+                inventory_url = f"https://rules.nebraska.gov/rules?agencyId={agency_id}&titleId={title_id}"
+                inventory_key = _url_key(inventory_url)
+                if inventory_key and inventory_key not in seen_inventory_keys:
+                    seen_inventory_keys.add(inventory_key)
+                    inventory_urls.append(inventory_url)
+
+            try:
+                chapters_payload = _get_json(f"{_NE_RULES_API_BASE_URL}/chapter/GetByTitleId/{title_id}")
+            except Exception:
+                continue
+
+            chapters = sorted(
+                _nebraska_output_list(chapters_payload),
+                key=lambda item: (
+                    _nebraska_sort_key(item.get("chapterNumber")),
+                    _nebraska_sort_key(item.get("chapterName")),
+                    int(item.get("id") or 0),
+                ),
+            )
+            for chapter in chapters:
+                container_name = str(chapter.get("pdfContainerName") or "chapter-pdfs").strip() or "chapter-pdfs"
+                blob_name = str(chapter.get("officialPdfBlobName") or chapter.get("pdfBlobName") or "").strip()
+                if not blob_name:
+                    continue
+                document_url = _nebraska_file_storage_download_url(container_name, blob_name)
+                document_key = _url_key(document_url)
+                if not document_key or document_key in seen_document_keys:
+                    continue
+                seen_document_keys.add(document_key)
+                discovered_urls.append(document_url)
+                if len(discovered_urls) >= limit_n:
+                    return discovered_urls
+
+        return discovered_urls or inventory_urls[:limit_n]
+
+    try:
+        return await _run_state_worker(_run)
+    except Exception:
+        return []
 
 
 async def _discover_california_westlaw_document_urls(
@@ -12165,6 +12474,7 @@ async def _agentic_discover_admin_state_blocks(
         montana_bootstrap_document_urls: List[str] = []
         california_bootstrap_document_urls: List[str] = []
         new_hampshire_bootstrap_document_urls: List[str] = []
+        nebraska_bootstrap_document_urls: List[str] = []
         georgia_bootstrap_document_urls: List[str] = []
         kansas_bootstrap_document_urls: List[str] = []
         idaho_bootstrap_document_urls: List[str] = []
@@ -12193,6 +12503,19 @@ async def _agentic_discover_admin_state_blocks(
                 candidate_urls.append(document_url)
             if mississippi_bootstrap_document_urls:
                 source_breakdown["mississippi_adminsearch_bootstrap"] = len(mississippi_bootstrap_document_urls)
+
+        if state_code == "NE" and not seeded_direct_detail_urls:
+            try:
+                nebraska_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_nebraska_rule_document_urls(limit=min(max(max_fetch_per_state * 4, 8), 20)),
+                    timeout=25.0,
+                )
+            except Exception:
+                nebraska_bootstrap_document_urls = []
+            for document_url in nebraska_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if nebraska_bootstrap_document_urls:
+                source_breakdown["nebraska_rules_api_bootstrap"] = len(nebraska_bootstrap_document_urls)
 
         if state_code == "MI" and not seeded_direct_detail_urls:
             try:
@@ -15572,6 +15895,8 @@ async def _agentic_discover_admin_state_blocks(
                                                 max_hops=max(0, int(max_hops)),
                                                 max_pages=max(2, min(8, int(max_pages))),
                                                 mode=OperationMode.BALANCED,
+                                                allowed_hosts=sorted(allowed_hosts),
+                                                blocked_url_patterns=[_NON_ADMIN_SOURCE_URL_RE.pattern],
                                             ),
                                         ),
                                         timeout=35.0,
