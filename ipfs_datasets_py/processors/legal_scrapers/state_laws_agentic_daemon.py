@@ -1201,13 +1201,12 @@ class StateLawsAgenticDaemon:
                 kwargs[key] = max(0, int(value)) if key != "agentic_fetch_concurrency" else max(1, int(value))
 
         with self._tactic_env(tactic):
-            scrape_coro = self.corpus.scrape_func(**kwargs)
             scrape_timeout_seconds = max(0.0, float(self.config.scrape_timeout_seconds or 0.0))
             heartbeat_seconds = max(0.0, float(self.config.scrape_heartbeat_seconds or 0.0))
 
             try:
                 return await self._await_scrape_with_checkpoint_heartbeat(
-                    scrape_coro,
+                    lambda: self.corpus.scrape_func(**kwargs),
                     cycle_index=cycle_index,
                     checkpoint_payload=checkpoint_payload,
                     heartbeat_seconds=heartbeat_seconds,
@@ -1229,15 +1228,45 @@ class StateLawsAgenticDaemon:
 
     async def _await_scrape_with_checkpoint_heartbeat(
         self,
-        scrape_coro: Awaitable[Dict[str, Any]],
+        scrape_factory: Callable[[], Awaitable[Dict[str, Any]]],
         *,
         cycle_index: Optional[int],
         checkpoint_payload: Optional[Dict[str, Any]],
         heartbeat_seconds: float,
         scrape_timeout_seconds: float,
     ) -> Dict[str, Any]:
-        task = asyncio.create_task(scrape_coro)
         heartbeat_task: Optional[asyncio.Task[None]] = None
+        loop = asyncio.get_running_loop()
+        result_future: asyncio.Future[Dict[str, Any]] = loop.create_future()
+
+        def _publish_result(result: Dict[str, Any]) -> None:
+            if not result_future.done():
+                result_future.set_result(result)
+
+        def _publish_exception(exc: BaseException) -> None:
+            if not result_future.done():
+                result_future.set_exception(exc)
+
+        def _worker() -> None:
+            try:
+                result = asyncio.run(scrape_factory())
+            except BaseException as exc:
+                try:
+                    loop.call_soon_threadsafe(_publish_exception, exc)
+                except RuntimeError:
+                    pass
+                return
+            try:
+                loop.call_soon_threadsafe(_publish_result, result)
+            except RuntimeError:
+                pass
+
+        worker = threading.Thread(
+            target=_worker,
+            name="agentic-daemon-scrape-worker",
+            daemon=True,
+        )
+        worker.start()
 
         if (
             cycle_index is not None
@@ -1248,9 +1277,9 @@ class StateLawsAgenticDaemon:
 
             async def _heartbeat_loop() -> None:
                 heartbeat_count = 0
-                while not task.done():
+                while not result_future.done():
                     await asyncio.sleep(heartbeat_seconds)
-                    if task.done():
+                    if result_future.done():
                         break
                     heartbeat_count += 1
                     heartbeat_payload = dict(checkpoint_payload)
@@ -1266,8 +1295,8 @@ class StateLawsAgenticDaemon:
 
         try:
             if scrape_timeout_seconds > 0:
-                return await asyncio.wait_for(task, timeout=scrape_timeout_seconds)
-            return await task
+                return await asyncio.wait_for(asyncio.shield(result_future), timeout=scrape_timeout_seconds)
+            return await result_future
         finally:
             if heartbeat_task is not None:
                 heartbeat_task.cancel()
@@ -2441,15 +2470,52 @@ class StateLawsAgenticDaemon:
         corpus_key: str,
     ) -> Optional[Dict[str, Any]]:
         timeout_seconds = max(0.0, float(self.config.router_ipfs_timeout_seconds or 0.0))
-        persist_task = self._persist_router_assist_to_ipfs(
-            cycle_index=cycle_index,
-            report=report,
-            corpus_key=corpus_key,
-        )
         if timeout_seconds <= 0.0:
-            return await persist_task
+            return await self._persist_router_assist_to_ipfs(
+                cycle_index=cycle_index,
+                report=report,
+                corpus_key=corpus_key,
+            )
+
+        loop = asyncio.get_running_loop()
+        result_future: asyncio.Future[Optional[Dict[str, Any]]] = loop.create_future()
+
+        def _publish_result(result: Optional[Dict[str, Any]]) -> None:
+            if not result_future.done():
+                result_future.set_result(result)
+
+        def _publish_exception(exc: BaseException) -> None:
+            if not result_future.done():
+                result_future.set_exception(exc)
+
+        def _worker() -> None:
+            try:
+                result = asyncio.run(
+                    self._persist_router_assist_to_ipfs(
+                        cycle_index=cycle_index,
+                        report=report,
+                        corpus_key=corpus_key,
+                    )
+                )
+            except BaseException as exc:
+                try:
+                    loop.call_soon_threadsafe(_publish_exception, exc)
+                except RuntimeError:
+                    pass
+                return
+            try:
+                loop.call_soon_threadsafe(_publish_result, result)
+            except RuntimeError:
+                pass
+
+        threading.Thread(
+            target=_worker,
+            name="agentic-daemon-router-ipfs-worker",
+            daemon=True,
+        ).start()
+
         try:
-            return await asyncio.wait_for(persist_task, timeout=timeout_seconds)
+            return await asyncio.wait_for(asyncio.shield(result_future), timeout=timeout_seconds)
         except asyncio.TimeoutError:
             return {"status": "error", "error": f"timed out after {timeout_seconds:.1f} seconds"}
 

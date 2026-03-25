@@ -1581,6 +1581,42 @@ async def test_state_laws_agentic_daemon_applies_outer_scrape_timeout(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_hard_timeout_survives_cancellation_swallow(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _stubborn_scrape_state_laws(**kwargs):
+        try:
+            await asyncio.sleep(1.0)
+        except asyncio.CancelledError:
+            await asyncio.sleep(0.2)
+            return {"status": "success", "data": [{"state_code": "OR", "statutes": []}], "metadata": {}}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _stubborn_scrape_state_laws)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            scrape_timeout_seconds=0.05,
+            scrape_heartbeat_seconds=0.01,
+            random_seed=11,
+        )
+    )
+    tactic = daemon._select_tactic()
+
+    started_at = time.perf_counter()
+    scrape_result = await daemon._run_scrape_with_tactic(tactic)
+    elapsed = time.perf_counter() - started_at
+
+    assert elapsed < 0.25
+    assert scrape_result["status"] == "error"
+    assert scrape_result["metadata"]["scrape_timed_out"] is True
+    await asyncio.sleep(0.25)
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_availability(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -3239,6 +3275,67 @@ async def test_state_admin_rules_agentic_daemon_router_timeout_does_not_block_cy
     assert summary["latest_cycle"]["router_assist"]["llm_review"]["status"] == "unavailable"
     assert "timed out" in summary["latest_cycle"]["router_assist"]["llm_review"]["error"]
     assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_router_ipfs_timeout_does_not_block_cycle(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "partial_success",
+            "data": [{"state_code": "AZ", "statutes": [], "rules_count": 0}],
+            "metadata": {
+                "base_metadata": {
+                    "fetch_analytics_by_state": {
+                        "AZ": {
+                            "attempted": 1,
+                            "success": 0,
+                            "success_ratio": 0.0,
+                            "fallback_count": 1,
+                            "providers": {"playwright": 1},
+                        }
+                    }
+                }
+            },
+        }
+
+    async def _slow_ipfs_persist(self, *, cycle_index, report, corpus_key):
+        _ = (self, cycle_index, report, corpus_key)
+        try:
+            await asyncio.sleep(1.0)
+        except asyncio.CancelledError:
+            await asyncio.sleep(0.2)
+            return {"status": "success", "cid": "late-router-review"}
+        return {"status": "success", "cid": "late-router-review"}
+
+    def _preflight(self):
+        return {"available": True, "backend": "KuboCLIBackend", "command": "ipfs"}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_persist_router_assist_to_ipfs", _slow_ipfs_persist)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_router_ipfs_persist_preflight", _preflight)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["AZ"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            router_ipfs_timeout_seconds=0.01,
+            random_seed=43,
+        )
+    )
+
+    summary = await daemon.run()
+
+    assert summary["status"] == "success"
+    assert summary["latest_cycle"]["router_assist"]["status"] == "completed"
+    assert summary["latest_cycle"]["router_assist"]["ipfs_persist"]["status"] == "error"
+    assert "timed out" in summary["latest_cycle"]["router_assist"]["ipfs_persist"]["error"]
+    assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+    await asyncio.sleep(0.25)
 
 
 @pytest.mark.asyncio
