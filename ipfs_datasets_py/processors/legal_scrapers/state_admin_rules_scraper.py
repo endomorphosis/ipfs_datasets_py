@@ -104,6 +104,8 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/uniform-commercial-code-ucc/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/business-commercial-services-bcs/notary-e-notary(?:/|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/academics/(?:|$)|"
+    r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/search/results(?:/|$)|"
+    r"(?:^|https?://)(?:www\.)?sos\.arkansas\.gov/uploads/Proposed_Rule_Cover_Sheet\.pdf(?:[#?]|$)|"
     r"(?:^|https?://)(?:[^/]+\.)?justia\.com/|(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/https?://(?:[^/]+\.)?justia\.com/|"
     r"(?:^|https?://)(?:www\.)?uscode\.house\.gov/|(?:^|https?://)(?:www\.)?ecfr\.gov/|"
     r"(?:^|https?://)(?:www\.)?coloradosos\.gov/pubs/elections/Initiatives/titleBoard/(?:|$)|"
@@ -123,6 +125,7 @@ _NON_ADMIN_SOURCE_URL_RE = re.compile(
     r"(?:^|https?://)(?:www\.)?azleg\.gov/arsDetail(?:\?|/|$)|"
     r"(?:^|https?://)(?:www\.)?azleg\.gov/viewdocument(?:/viewDocument)?/\?docName=https?://(?:www\.)?azleg\.gov/ars/|"
     r"(?:^|https?://)(?:www\.)?azsos\.gov/business/notary-public(?:/|$)|"
+    r"(?:^|https?://)(?:www\.)?azsos\.gov/block/rules-faq(?:[#?]|/|$)|"
     r"(?:^|https?://)(?:www\.)?sos\.alabama\.gov/administrative-services/(?:|$)|"
     r"(?:^|https?://)(?:www\.)?alisondb\.legislature\.state\.al\.us/alison/CodeOfAlabama/1975/|"
     r"(?:^|https?://)(?:www\.)?web\.archive\.org/web/\d+/https?://(?:www\.)?alisondb\.legislature\.state\.al\.us/alison/CodeOfAlabama/1975/|"
@@ -1175,7 +1178,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "ID", "KS", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "TN", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:

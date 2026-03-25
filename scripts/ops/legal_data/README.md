@@ -29,6 +29,15 @@ Copied from workspace-level `scripts/ops/`:
 - `create_ws11_github_issues.sh`
 
 Notes:
+- Run `run_all_state_legal_corpora_agentic.py` to drive the agentic daemon across
+	state laws, state court rules, and state administrative rules with shared fetch
+	caching and IPFS-backed page reuse enabled by default.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_all_state_legal_corpora_agentic.py --states all --max-cycles 1`
+	`.venv/bin/python scripts/ops/legal_data/run_all_state_legal_corpora_agentic.py --states RI,OR --corpora laws,court --max-cycles 2 --stop-on-target-score`
+	`.venv/bin/python scripts/ops/legal_data/run_all_state_legal_corpora_agentic.py --states all --skip-passed --output-root /tmp/all_state_legal_corpora_agentic`
+	The runner writes `aggregated_summary.json` under the output root and emits a
+	`patch_backlog` section when any corpus still fails after its cycle.
 - Run `run_state_laws_agentic_full.sh` for end-to-end autonomous state-law
 	collection via the actor/critic loop.
 	Examples:

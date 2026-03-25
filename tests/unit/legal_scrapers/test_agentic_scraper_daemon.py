@@ -1296,6 +1296,77 @@ async def test_state_laws_agentic_daemon_writes_and_clears_in_progress_checkpoin
     assert not (tmp_path / "latest_in_progress.json").exists()
     assert (tmp_path / "cycles" / "cycle_0001.json").exists()
 
+
+@pytest.mark.asyncio
+async def test_state_laws_agentic_daemon_updates_scrape_heartbeat_checkpoint(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_laws(**kwargs):
+        await asyncio.sleep(0.03)
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {
+                "coverage_summary": {
+                    "states_targeted": 1,
+                    "states_returned": 1,
+                    "states_with_nonzero_statutes": 0,
+                    "coverage_gap_states": ["OR"],
+                },
+                "fetch_analytics": {
+                    "attempted": 0,
+                    "success": 0,
+                    "success_ratio": 0.0,
+                    "fallback_count": 0,
+                    "providers": {},
+                },
+                "fetch_analytics_by_state": {"OR": {"attempted": 0, "success": 0, "fallback_count": 0, "providers": {}}},
+                "etl_readiness": {
+                    "ready_for_kg_etl": False,
+                    "total_statutes": 0,
+                    "full_text_ratio": 0.0,
+                    "jsonld_ratio": 0.0,
+                    "jsonld_legislation_ratio": 0.0,
+                    "kg_payload_ratio": 0.0,
+                    "citation_ratio": 0.0,
+                    "statute_signal_ratio": 0.0,
+                    "non_scaffold_ratio": 0.0,
+                    "states_with_zero_statutes": 1,
+                },
+                "quality_by_state": {"OR": {"total": 0}},
+            },
+        }
+
+    monkeypatch.setattr(daemon_module, "scrape_state_laws", _fake_scrape_state_laws)
+
+    heartbeat_payloads = []
+    original_write = daemon_module.StateLawsAgenticDaemon._write_cycle_checkpoint
+
+    def _recording_write(self, *, cycle_index, payload):
+        heartbeat_payloads.append(dict(payload))
+        return original_write(self, cycle_index=cycle_index, payload=payload)
+
+    monkeypatch.setattr(
+        daemon_module.StateLawsAgenticDaemon,
+        "_write_cycle_checkpoint",
+        _recording_write,
+    )
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            states=["OR"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            scrape_heartbeat_seconds=0.01,
+            random_seed=7,
+        )
+    )
+
+    await daemon.run()
+
+    assert any("scrape_heartbeat" in payload for payload in heartbeat_payloads)
+
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_checkpoint_advances_to_router_review(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module

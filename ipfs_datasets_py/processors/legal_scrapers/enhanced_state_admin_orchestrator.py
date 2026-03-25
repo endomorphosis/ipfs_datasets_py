@@ -346,12 +346,23 @@ class ParallelStateAdminOrchestrator:
         # Use ParallelWebArchiver if available, otherwise fall back to sequential
         if self.parallel_archiver:
             try:
-                results = await self.parallel_archiver.archive_urls_parallel(
-                    urls=uncached_urls,
-                    max_concurrent=self.config.max_domain_workers_per_state,
-                    jurisdiction="state",
-                    state_code=state_code,
-                )
+                archive_kwargs: Dict[str, Any] = {
+                    "urls": uncached_urls,
+                    "max_concurrent": self.config.max_domain_workers_per_state,
+                    "jurisdiction": "state",
+                    "state_code": state_code,
+                }
+                try:
+                    results = await self.parallel_archiver.archive_urls_parallel(**archive_kwargs)
+                except TypeError as exc:
+                    # Preserve compatibility with older/simple archiver shims that
+                    # only accept urls/progress/max_concurrent.
+                    if "unexpected keyword argument" not in str(exc):
+                        raise
+                    results = await self.parallel_archiver.archive_urls_parallel(
+                        urls=uncached_urls,
+                        max_concurrent=self.config.max_domain_workers_per_state,
+                    )
                 fetched_results: List[Tuple[str, Optional[str], str]] = []
                 for result in results:
                     if not result.success or not result.content:

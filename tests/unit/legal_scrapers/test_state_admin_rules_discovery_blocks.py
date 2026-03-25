@@ -32,6 +32,9 @@ def test_score_candidate_url_rejects_superuser_and_arkansas_noise() -> None:
     assert _score_candidate_url("https://www.sos.arkansas.gov/business-commercial-services-bcs/") < 0
     assert _score_candidate_url("https://www.sos.arkansas.gov/business-commercial-services-bcs/notary-e-notary") < 0
     assert _score_candidate_url("https://www.sos.arkansas.gov/academics/chinese-department") < 0
+    assert _score_candidate_url("https://www.sos.arkansas.gov/search/results/P950") < 0
+    assert _score_candidate_url("https://www.sos.arkansas.gov/search/results/eyJrZXl3b3JkcyI6ImJ1c2luZXNzIHNlYXJjaCJ9") < 0
+    assert _score_candidate_url("https://www.sos.arkansas.gov/uploads/Proposed_Rule_Cover_Sheet.pdf") < 0
     assert _score_candidate_url("https://sur.ly/i/apps.azlibrary.gov/") < 0
     assert _score_candidate_url("https://www.sportsbookreview.com/picks/ncaa-basketball/test") < 0
     assert _score_candidate_url("https://knowledge.workspace.google.com/") < 0
@@ -39,6 +42,7 @@ def test_score_candidate_url_rejects_superuser_and_arkansas_noise() -> None:
     assert _score_candidate_url("https://www.ark.org/sos/corpfilings/index.php") < 0
     assert _score_candidate_url("https://azdirect.az.gov/library-archives-public-records") < 0
     assert _score_candidate_url("https://apps.azlibrary.gov/files/docs/test.pdf") < 0
+    assert _score_candidate_url("https://azsos.gov/block/rules-faq") < 0
     assert _score_candidate_url("https://extension.arizona.edu/") < 0
     assert _score_candidate_url("https://azcu.edu/student-consumer-information/") < 0
     assert _score_candidate_url("https://www.faithiu.edu/academics/counseling-licensure/") < 0

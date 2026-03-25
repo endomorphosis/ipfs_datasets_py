@@ -24,7 +24,7 @@ import signal
 import sys
 import threading
 import traceback
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -374,6 +374,7 @@ class StateLawsAgenticDaemonConfig:
     document_artifact_max_total: int = 8
     per_state_timeout_seconds: float = 86400.0
     scrape_timeout_seconds: float = 0.0
+    scrape_heartbeat_seconds: float = 60.0
     admin_agentic_max_candidates_per_state: Optional[int] = 1000
     admin_agentic_max_fetch_per_state: Optional[int] = 1000
     admin_agentic_max_results_per_domain: Optional[int] = 1000
@@ -511,7 +512,12 @@ class StateLawsAgenticDaemon:
             "tactic_selection": tactic_selection["details"],
         }
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
-        scrape_result = await self._run_scrape_with_tactic(tactic, states=cycle_states)
+        scrape_result = await self._run_scrape_with_tactic(
+            tactic,
+            states=cycle_states,
+            cycle_index=cycle_index,
+            checkpoint_payload=checkpoint_payload,
+        )
 
         metadata = scrape_result.get("metadata") or {}
         deferred_retry = self._build_deferred_retry_plan(scrape_result)
@@ -1153,6 +1159,8 @@ class StateLawsAgenticDaemon:
         tactic: ScraperTacticProfile,
         *,
         states: Optional[Sequence[str]] = None,
+        cycle_index: Optional[int] = None,
+        checkpoint_payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         cycle_states = self._normalize_cycle_states(states)
         kwargs: Dict[str, Any] = {
@@ -1195,11 +1203,16 @@ class StateLawsAgenticDaemon:
         with self._tactic_env(tactic):
             scrape_coro = self.corpus.scrape_func(**kwargs)
             scrape_timeout_seconds = max(0.0, float(self.config.scrape_timeout_seconds or 0.0))
-            if scrape_timeout_seconds <= 0:
-                return await scrape_coro
+            heartbeat_seconds = max(0.0, float(self.config.scrape_heartbeat_seconds or 0.0))
 
             try:
-                return await asyncio.wait_for(scrape_coro, timeout=scrape_timeout_seconds)
+                return await self._await_scrape_with_checkpoint_heartbeat(
+                    scrape_coro,
+                    cycle_index=cycle_index,
+                    checkpoint_payload=checkpoint_payload,
+                    heartbeat_seconds=heartbeat_seconds,
+                    scrape_timeout_seconds=scrape_timeout_seconds,
+                )
             except asyncio.TimeoutError:
                 timeout_metadata: Dict[str, Any] = {
                     "scrape_timeout_seconds": scrape_timeout_seconds,
@@ -1213,6 +1226,53 @@ class StateLawsAgenticDaemon:
                     "data": [],
                     "metadata": timeout_metadata,
                 }
+
+    async def _await_scrape_with_checkpoint_heartbeat(
+        self,
+        scrape_coro: Awaitable[Dict[str, Any]],
+        *,
+        cycle_index: Optional[int],
+        checkpoint_payload: Optional[Dict[str, Any]],
+        heartbeat_seconds: float,
+        scrape_timeout_seconds: float,
+    ) -> Dict[str, Any]:
+        task = asyncio.create_task(scrape_coro)
+        heartbeat_task: Optional[asyncio.Task[None]] = None
+
+        if (
+            cycle_index is not None
+            and checkpoint_payload is not None
+            and heartbeat_seconds > 0
+        ):
+            started_at = asyncio.get_running_loop().time()
+
+            async def _heartbeat_loop() -> None:
+                heartbeat_count = 0
+                while not task.done():
+                    await asyncio.sleep(heartbeat_seconds)
+                    if task.done():
+                        break
+                    heartbeat_count += 1
+                    heartbeat_payload = dict(checkpoint_payload)
+                    heartbeat_payload["timestamp"] = datetime.now().isoformat()
+                    heartbeat_payload["stage"] = "scrape"
+                    heartbeat_payload["scrape_heartbeat"] = {
+                        "heartbeat_count": heartbeat_count,
+                        "elapsed_seconds": round(asyncio.get_running_loop().time() - started_at, 3),
+                    }
+                    self._write_cycle_checkpoint(cycle_index=cycle_index, payload=heartbeat_payload)
+
+            heartbeat_task = asyncio.create_task(_heartbeat_loop())
+
+        try:
+            if scrape_timeout_seconds > 0:
+                return await asyncio.wait_for(task, timeout=scrape_timeout_seconds)
+            return await task
+        finally:
+            if heartbeat_task is not None:
+                heartbeat_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await heartbeat_task
 
     @staticmethod
     def _cloudflare_browser_rendering_availability() -> Dict[str, Any]:
