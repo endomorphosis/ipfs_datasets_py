@@ -11838,6 +11838,8 @@ async def _agentic_discover_admin_state_blocks(
     require_substantive_text: bool,
     fetch_concurrency: int,
     per_state_budget_seconds: float = 120.0,
+    output_dir: Optional[str] = None,
+    checkpoint_interval: int = 100,
     _force_asyncio_backend: bool = False,
 ) -> Dict[str, Any]:
     if not _force_asyncio_backend:
@@ -11859,6 +11861,8 @@ async def _agentic_discover_admin_state_blocks(
                             require_substantive_text=require_substantive_text,
                             fetch_concurrency=fetch_concurrency,
                             per_state_budget_seconds=per_state_budget_seconds,
+                            output_dir=output_dir,
+                            checkpoint_interval=checkpoint_interval,
                             _force_asyncio_backend=True,
                         )
                     )
@@ -11887,6 +11891,8 @@ async def _agentic_discover_admin_state_blocks(
                             require_substantive_text=require_substantive_text,
                             fetch_concurrency=fetch_concurrency,
                             per_state_budget_seconds=per_state_budget_seconds,
+                            output_dir=output_dir,
+                            checkpoint_interval=checkpoint_interval,
                         )
                     )
                 )
@@ -13442,6 +13448,17 @@ async def _agentic_discover_admin_state_blocks(
                 }
             )
             kg_row_index_by_doc_key[doc_key] = len(kg_rows) - 1
+            # Periodic incremental checkpoint so progress is not lost if killed mid-scrape
+            if output_dir and checkpoint_interval > 0 and len(statutes) % checkpoint_interval == 0:
+                try:
+                    _checkpoint_dir = _resolve_admin_output_dir(output_dir) / "agentic_checkpoints"
+                    _checkpoint_dir.mkdir(parents=True, exist_ok=True)
+                    _checkpoint_path = _checkpoint_dir / f"STATE-{state_code}_partial.jsonl"
+                    with _checkpoint_path.open("w", encoding="utf-8") as _chk_fh:
+                        for _row in kg_rows:
+                            _chk_fh.write(json.dumps(_row, ensure_ascii=False) + "\n")
+                except Exception:
+                    pass
             if state_code == "AZ":
                 _mark_az_emitted_document(
                     doc_url,
@@ -16061,6 +16078,21 @@ async def _agentic_discover_admin_state_blocks(
         }
         if state_rate_limit_metadata:
             state_block.update(state_rate_limit_metadata)
+        # Write final checkpoint for this state so results survive a kill after scrape
+        if output_dir and kg_rows:
+            try:
+                _checkpoint_dir = _resolve_admin_output_dir(output_dir) / "agentic_checkpoints"
+                _checkpoint_dir.mkdir(parents=True, exist_ok=True)
+                _checkpoint_path = _checkpoint_dir / f"STATE-{state_code}_final.jsonl"
+                with _checkpoint_path.open("w", encoding="utf-8") as _chk_fh:
+                    for _row in kg_rows:
+                        _chk_fh.write(json.dumps(_row, ensure_ascii=False) + "\n")
+                _statutes_path = _checkpoint_dir / f"STATE-{state_code}_statutes.jsonl"
+                with _statutes_path.open("w", encoding="utf-8") as _stat_fh:
+                    for _s in statutes:
+                        _stat_fh.write(json.dumps(_s, ensure_ascii=False) + "\n")
+            except Exception:
+                pass
         blocks.append(state_block)
         candidate_url_samples: List[str] = []
         for url, _score in ranked_urls:
@@ -16469,6 +16501,7 @@ async def scrape_state_admin_rules(
                 require_substantive_text=bool(require_substantive_rule_text),
                 fetch_concurrency=int(agentic_fetch_concurrency),
                 per_state_budget_seconds=agentic_per_state_budget_seconds,
+                output_dir=output_dir,
             )
             _record_phase("agentic_discovery_seconds", agentic_started_at)
             agentic_report = {
