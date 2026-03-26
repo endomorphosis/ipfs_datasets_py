@@ -1656,6 +1656,71 @@ def _clean_gemini_output(text: str) -> str:
     return _clean_codex_output(text)
 
 
+def _trace_sidecar_path(primary_path: str, suffix: str) -> str:
+    text = str(primary_path or "").strip()
+    if not text:
+        return ""
+    if text.endswith(".jsonl"):
+        return text[: -len(".jsonl")] + suffix
+    return text + suffix
+
+
+def _codex_image_diagnostics(image_paths: Sequence[str] | None) -> list[dict[str, object]]:
+    diagnostics: list[dict[str, object]] = []
+    for raw_path in image_paths or ():
+        candidate = str(raw_path or "").strip()
+        if not candidate:
+            continue
+        entry: dict[str, object] = {"path": candidate}
+        try:
+            stat_result = os.stat(candidate)
+            entry["exists"] = True
+            entry["size_bytes"] = int(stat_result.st_size)
+        except OSError:
+            entry["exists"] = False
+        diagnostics.append(entry)
+    return diagnostics
+
+
+def _persist_codex_cli_diagnostics(
+    *,
+    trace_jsonl_path: str,
+    trace_stderr_path: str,
+    trace_metadata_path: str,
+    stdout_text: str,
+    stderr_text: str,
+    metadata: dict[str, object],
+) -> None:
+    if isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
+        try:
+            os.makedirs(os.path.dirname(trace_jsonl_path.strip()) or ".", exist_ok=True)
+            with open(trace_jsonl_path.strip(), "w", encoding="utf-8") as handle:
+                handle.write(stdout_text or "")
+                if stdout_text and not stdout_text.endswith("\n"):
+                    handle.write("\n")
+        except OSError:
+            pass
+
+    if isinstance(trace_stderr_path, str) and trace_stderr_path.strip():
+        try:
+            os.makedirs(os.path.dirname(trace_stderr_path.strip()) or ".", exist_ok=True)
+            with open(trace_stderr_path.strip(), "w", encoding="utf-8") as handle:
+                handle.write(stderr_text or "")
+                if stderr_text and not stderr_text.endswith("\n"):
+                    handle.write("\n")
+        except OSError:
+            pass
+
+    if isinstance(trace_metadata_path, str) and trace_metadata_path.strip():
+        try:
+            os.makedirs(os.path.dirname(trace_metadata_path.strip()) or ".", exist_ok=True)
+            with open(trace_metadata_path.strip(), "w", encoding="utf-8") as handle:
+                json.dump(metadata, handle, indent=2, sort_keys=True, ensure_ascii=False)
+                handle.write("\n")
+        except OSError:
+            pass
+
+
 def _cli_available(command: str) -> bool:
     if not command:
         return False
@@ -1665,6 +1730,31 @@ def _cli_available(command: str) -> bool:
     if parts[0] == "npx":
         return True
     return shutil.which(parts[0]) is not None
+
+
+@lru_cache(maxsize=8)
+def _cli_help_text(command: str) -> str:
+    if not command:
+        return ""
+    try:
+        proc = subprocess.run(
+            shlex.split(command) + ["--help"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=20,
+            env=os.environ.copy(),
+        )
+    except Exception:
+        return ""
+    return f"{proc.stdout or ''}\n{proc.stderr or ''}".strip()
+
+
+def _copilot_cli_supports_image_inputs(command: str) -> bool:
+    help_text = _cli_help_text(command).lower()
+    if not help_text:
+        return False
+    return "--image" in help_text or "image input" in help_text or "attach image" in help_text
 
 
 def _run_cli_command(
@@ -2172,9 +2262,23 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
 
             trace_jsonl_path = kwargs.pop("trace_jsonl_path", None)
             trace_dir = kwargs.pop("trace_dir", None)
+            trace_stderr_path = kwargs.pop("trace_stderr_path", None)
+            trace_metadata_path = kwargs.pop("trace_metadata_path", None)
             trace_enabled = bool(kwargs.pop("trace", False) or trace_jsonl_path or trace_dir)
 
             json_mode = bool(trace_enabled or kwargs.pop("json", False))
+
+            if trace_enabled and not trace_jsonl_path and isinstance(trace_dir, str) and trace_dir.strip():
+                os.makedirs(trace_dir.strip(), exist_ok=True)
+                trace_jsonl_path = os.path.join(
+                    trace_dir.strip(),
+                    f"codex_exec_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{os.getpid()}.jsonl",
+                )
+            if trace_enabled and isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
+                if not (isinstance(trace_stderr_path, str) and trace_stderr_path.strip()):
+                    trace_stderr_path = _trace_sidecar_path(trace_jsonl_path, ".stderr.log")
+                if not (isinstance(trace_metadata_path, str) and trace_metadata_path.strip()):
+                    trace_metadata_path = _trace_sidecar_path(trace_jsonl_path, ".metadata.json")
 
             with tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False) as last_msg:
                 last_msg_path = last_msg.name
@@ -2210,6 +2314,8 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 try:
                     stdout, stderr = proc.communicate(input=str(prompt), timeout=timeout)
                 except subprocess.TimeoutExpired as exc:
+                    partial_stdout = str(exc.stdout or "")
+                    partial_stderr = str(exc.stderr or "")
                     try:
                         os.killpg(proc.pid, signal.SIGKILL)
                     except Exception:
@@ -2218,6 +2324,37 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                         proc.wait(timeout=5)
                     except Exception:
                         pass
+                    if trace_enabled:
+                        _persist_codex_cli_diagnostics(
+                            trace_jsonl_path=str(trace_jsonl_path or ""),
+                            trace_stderr_path=str(trace_stderr_path or ""),
+                            trace_metadata_path=str(trace_metadata_path or ""),
+                            stdout_text=partial_stdout,
+                            stderr_text=partial_stderr,
+                            metadata={
+                                "ts": datetime.now(timezone.utc).isoformat(),
+                                "provider": "codex_cli",
+                                "model": model,
+                                "cmd": cmd,
+                                "timeout_seconds": timeout,
+                                "timed_out": True,
+                                "returncode": None,
+                                "prompt_chars": len(str(prompt or "")),
+                                "image_count": len(list(image_paths or ())),
+                                "images": _codex_image_diagnostics(image_paths),
+                                "stdout_chars": len(partial_stdout),
+                                "stderr_chars": len(partial_stderr),
+                                "state_db_warning_count": partial_stderr.count("state_5.sqlite"),
+                                "file_watch_limit_warning_count": partial_stderr.count("OS file watch limit reached"),
+                                "thread_started": '"type":"thread.started"' in partial_stdout,
+                                "turn_started": '"type":"turn.started"' in partial_stdout,
+                                "turn_completed": '"type":"turn.completed"' in partial_stdout,
+                                "item_completed": '"type":"item.completed"' in partial_stdout,
+                                "last_agent_message_chars": len(
+                                    _extract_last_agent_message_from_codex_jsonl(partial_stdout) or ""
+                                ),
+                            },
+                        )
                     raise LLMRouterError(
                         f"codex exec timed out after {timeout:.0f}s for model {model or 'default'}"
                     ) from exc
@@ -2235,25 +2372,48 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 except Exception:
                     pass
 
+            extracted_message = _extract_last_agent_message_from_codex_jsonl(stdout or "") if json_mode and stdout else ""
+            diagnostics_metadata = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "provider": "codex_cli",
+                "model": model,
+                "cmd": cmd,
+                "timeout_seconds": timeout,
+                "timed_out": False,
+                "returncode": proc.returncode,
+                "prompt_chars": len(str(prompt or "")),
+                "image_count": len(list(image_paths or ())),
+                "images": _codex_image_diagnostics(image_paths),
+                "stdout_chars": len(stdout or ""),
+                "stderr_chars": len(stderr or ""),
+                "state_db_warning_count": (stderr or "").count("state_5.sqlite"),
+                "file_watch_limit_warning_count": (stderr or "").count("OS file watch limit reached"),
+                "thread_started": '"type":"thread.started"' in (stdout or ""),
+                "turn_started": '"type":"turn.started"' in (stdout or ""),
+                "turn_completed": '"type":"turn.completed"' in (stdout or ""),
+                "item_completed": '"type":"item.completed"' in (stdout or ""),
+                "last_message_chars": len(text_out or ""),
+                "last_agent_message_chars": len(extracted_message or ""),
+            }
+            if trace_enabled:
+                _persist_codex_cli_diagnostics(
+                    trace_jsonl_path=str(trace_jsonl_path or ""),
+                    trace_stderr_path=str(trace_stderr_path or ""),
+                    trace_metadata_path=str(trace_metadata_path or ""),
+                    stdout_text=str(stdout or ""),
+                    stderr_text=str(stderr or ""),
+                    metadata=diagnostics_metadata,
+                )
+
             if proc.returncode == 0 or text_out:
-                if json_mode and stdout:
-                    extracted = _extract_last_agent_message_from_codex_jsonl(stdout)
-                    if extracted:
+                if extracted_message:
+                    if json_mode and stdout:
+                        extracted = extracted_message
                         return _clean_codex_output(extracted)
                 return _clean_codex_output(text_out)
 
-            if trace_enabled and stdout and isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
-                try:
-                    os.makedirs(os.path.dirname(trace_jsonl_path.strip()) or ".", exist_ok=True)
-                    with open(trace_jsonl_path.strip(), "a", encoding="utf-8") as handle:
-                        handle.write(stdout)
-                        if not stdout.endswith("\n"):
-                            handle.write("\n")
-                except OSError:
-                    pass
-
             kind = _classify_codex_error_kind(stdout=stdout or "", stderr=stderr or "")
-            resets = _extract_resets_in_seconds_from_codex_jsonl(proc.stdout or "")
+            resets = _extract_resets_in_seconds_from_codex_jsonl(stdout or "")
             if kind == "quota_exceeded":
                 raise LLMRouterError("Codex quota exceeded (billing/plan hard limit)")
             if kind == "usage_limit":
@@ -2325,6 +2485,7 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
     command = os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", default_command)
     if not _cli_available(command):
         return None
+    supports_image_inputs = _copilot_cli_supports_image_inputs(command)
 
     class _CopilotCLIProvider:
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
@@ -2471,6 +2632,87 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     pass
 
             return cleaned
+
+        def generate_multimodal(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str] = None,
+            image_paths: Sequence[str] | None = None,
+            image_urls: Sequence[str] | None = None,
+            system_prompt: Optional[str] = None,
+            additional_text_blocks: Sequence[str] | None = None,
+            messages: Sequence[dict] | None = None,
+            **kwargs: object,
+        ) -> str:
+            if not supports_image_inputs:
+                raise LLMRouterError(
+                    "copilot_cli multimodal path unavailable: installed Copilot CLI does not advertise image input support"
+                )
+            if image_urls:
+                raise LLMRouterError("copilot_cli multimodal path requires local image_paths; image_urls are not supported")
+
+            model = (
+                (model_name or "").strip()
+                or os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_MODEL", "").strip()
+                or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "").strip()
+                or "gpt-5-mini"
+            )
+            timeout = float(kwargs.get("timeout", 180))
+
+            prompt_sections: list[str] = []
+            if system_prompt and str(system_prompt).strip():
+                prompt_sections.append(str(system_prompt).strip())
+            if messages:
+                for message in messages:
+                    if not isinstance(message, dict):
+                        continue
+                    role = str(message.get("role") or "user").strip()
+                    content = message.get("content")
+                    if isinstance(content, list):
+                        rendered_parts: list[str] = []
+                        for part in content:
+                            if not isinstance(part, dict):
+                                continue
+                            if str(part.get("type") or "").strip() == "text":
+                                text = str(part.get("text") or "").strip()
+                                if text:
+                                    rendered_parts.append(text)
+                        rendered = "\n".join(rendered_parts).strip()
+                    else:
+                        rendered = str(content or "").strip()
+                    if rendered:
+                        prompt_sections.append(f"{role}: {rendered}")
+            else:
+                prompt_sections.append(str(prompt or "").strip())
+                for block in additional_text_blocks or ():
+                    text = str(block or "").strip()
+                    if text:
+                        prompt_sections.append(text)
+
+            cmd: list[str] = ["npx", "--yes", "@github/copilot", "--model", model, "-p"]
+            for image_path in image_paths or ():
+                candidate = str(image_path or "").strip()
+                if candidate:
+                    cmd.extend(["--image", candidate])
+            cmd.append("\n\n".join(section for section in prompt_sections if section).strip())
+
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                    timeout=timeout,
+                    env=os.environ.copy(),
+                )
+            except FileNotFoundError as exc:
+                raise LLMRouterError("Copilot CLI not found on PATH") from exc
+
+            if proc.returncode != 0:
+                raise LLMRouterError((proc.stderr or "").strip() or "copilot CLI failed")
+
+            return _clean_copilot_output(proc.stdout or "")
 
     return _CopilotCLIProvider()
 
