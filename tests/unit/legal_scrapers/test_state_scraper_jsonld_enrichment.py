@@ -260,7 +260,11 @@ def test_fetch_page_content_skips_object_moved_placeholder(monkeypatch):
         async def fetch_with_fallback(self, url):
             return type("_Fetched", (), {"content": b"", "source": "archival_fallback"})()
 
+    async def _fake_store_page_bytes_in_ipfs_cache(*_args, **_kwargs):
+        return None
+
     monkeypatch.setattr(scraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
+    monkeypatch.setattr(scraper, "_store_page_bytes_in_ipfs_cache", _fake_store_page_bytes_in_ipfs_cache)
     monkeypatch.setattr(
         "ipfs_datasets_py.processors.legal_scrapers.state_scrapers.state_archival_fetch.ArchivalFetchClient",
         _FakeArchivalFetchClient,

@@ -891,7 +891,7 @@ class BaseStateScraper(ABC):
                     payload=content,
                     provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
                 )
-            return content
+                return content
         except Exception as exc:
             self._record_fetch_event(provider="archival_fallback", success=False, error=str(exc))
             pass
