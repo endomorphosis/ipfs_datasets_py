@@ -253,7 +253,18 @@ def test_fetch_page_content_skips_object_moved_placeholder(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
+    class _FakeArchivalFetchClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def fetch_with_fallback(self, url):
+            return type("_Fetched", (), {"content": b"", "source": "archival_fallback"})()
+
     monkeypatch.setattr(scraper, "_fetch_page_content_with_unified_api", _fake_unified_fetch)
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_scrapers.state_scrapers.state_archival_fetch.ArchivalFetchClient",
+        _FakeArchivalFetchClient,
+    )
     monkeypatch.setattr(
         "urllib.request.urlopen",
         lambda *_args, **_kwargs: _FakeResponse(),
