@@ -202,7 +202,7 @@ class ParallelStateAdminOrchestrator:
         candidate_urls: Optional[List[str]] = None,
     ) -> StateDiscoveryResult:
         """Discover rules for a single state with parallel fetching."""
-        result = StateDiscoveryResult(state_code=state_code, state_name=state_code)
+        result = StateDiscoveryResult(state_code=state_code, state_name=state_code, status="partial")
         state_deadline = time.monotonic() + self.config.state_timeout
         
         try:

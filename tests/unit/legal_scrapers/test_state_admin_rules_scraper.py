@@ -12192,6 +12192,20 @@ async def test_scrape_state_admin_rules_reports_cloudflare_availability_when_cre
 
     monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
     monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+    monkeypatch.setattr(
+        scraper_module,
+        "_cloudflare_browser_rendering_availability",
+        lambda: {
+            "available": False,
+            "status": "missing_credentials",
+            "provider": "cloudflare_browser_rendering",
+            "account_id_env": None,
+            "api_token_env": None,
+            "account_id_source_kind": None,
+            "api_token_source_kind": None,
+            "missing_credentials": ["account_id", "api_token"],
+        },
+    )
 
     result = await scrape_state_admin_rules(
         states=["AZ"],

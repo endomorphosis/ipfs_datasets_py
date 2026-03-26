@@ -1833,6 +1833,15 @@ async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_ava
         return {"status": "success", "data": [], "metadata": {}}
 
     monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _slow_scrape_state_admin_rules)
+    for env_name in (
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+    ):
+        monkeypatch.delenv(env_name, raising=False)
     monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "acct-test")
     monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "token-test")
 
