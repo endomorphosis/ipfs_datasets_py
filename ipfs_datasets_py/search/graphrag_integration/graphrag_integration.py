@@ -74,7 +74,7 @@ try:
     )
     HAVE_LLM_GRAPHRAG = True
 except Exception as e:  # pragma: no cover
-    logging.getLogger(__name__).warning("LLM GraphRAG modules unavailable: %s", e)
+    logging.getLogger(__name__).debug("LLM GraphRAG modules unavailable: %s", e)
 
     HAVE_LLM_GRAPHRAG = False
 
@@ -96,7 +96,7 @@ try:
     )
     HAVE_LLM_SEMANTIC_VALIDATION = True
 except Exception as e:  # pragma: no cover
-    logging.getLogger(__name__).warning("LLM semantic validation modules unavailable: %s", e)
+    logging.getLogger(__name__).debug("LLM semantic validation modules unavailable: %s", e)
 
     HAVE_LLM_SEMANTIC_VALIDATION = False
 

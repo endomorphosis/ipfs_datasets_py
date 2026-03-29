@@ -139,8 +139,8 @@ try:
     import datasets
     from datasets import Dataset, load_dataset, concatenate_datasets, load_from_disk
     DATASETS_AVAILABLE = True
-except ImportError:
-    logger.warning("datasets not available. Using mock implementation.")
+except (ImportError, AttributeError):
+    logger.debug("datasets package APIs unavailable; using mock implementation.")
     datasets = None
     Dataset = None
     load_dataset = None

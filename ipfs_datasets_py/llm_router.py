@@ -2266,8 +2266,6 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             trace_metadata_path = kwargs.pop("trace_metadata_path", None)
             trace_enabled = bool(kwargs.pop("trace", False) or trace_jsonl_path or trace_dir)
 
-            json_mode = bool(trace_enabled or kwargs.pop("json", False))
-
             if trace_enabled and not trace_jsonl_path and isinstance(trace_dir, str) and trace_dir.strip():
                 os.makedirs(trace_dir.strip(), exist_ok=True)
                 trace_jsonl_path = os.path.join(
@@ -2280,8 +2278,11 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 if not (isinstance(trace_metadata_path, str) and trace_metadata_path.strip()):
                     trace_metadata_path = _trace_sidecar_path(trace_jsonl_path, ".metadata.json")
 
-            with tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False) as last_msg:
-                last_msg_path = last_msg.name
+            # Always prefer JSONL stdout extraction instead of allocating a fresh
+            # output file for each request. This keeps the router usable on
+            # inode-constrained systems where NamedTemporaryFile can fail even
+            # when plenty of bytes remain free.
+            json_mode = True
 
             cmd: list[str] = ["codex", "exec"]
             if skip_git_repo_check:
@@ -2297,7 +2298,7 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 candidate = str(image_path or "").strip()
                 if candidate:
                     cmd.extend(["--image", candidate])
-            cmd.extend(["--output-last-message", last_msg_path])
+            cmd.append("--ephemeral")
             if json_mode:
                 cmd.append("--json")
             cmd.append("-")
@@ -2361,16 +2362,11 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             except FileNotFoundError as exc:
                 raise LLMRouterError("codex CLI not found on PATH") from exc
 
-            try:
-                with open(last_msg_path, "r", encoding="utf-8", errors="replace") as handle:
-                    text_out = handle.read().strip()
-            except Exception:
-                text_out = ""
-            finally:
-                try:
-                    os.unlink(last_msg_path)
-                except Exception:
-                    pass
+            text_out = ""
+            if json_mode and stdout:
+                extracted = _extract_last_agent_message_from_codex_jsonl(stdout)
+                if extracted:
+                    text_out = extracted
 
             extracted_message = _extract_last_agent_message_from_codex_jsonl(stdout or "") if json_mode and stdout else ""
             diagnostics_metadata = {
@@ -2405,12 +2401,10 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                     metadata=diagnostics_metadata,
                 )
 
-            if proc.returncode == 0 or text_out:
-                if extracted_message:
-                    if json_mode and stdout:
-                        extracted = extracted_message
-                        return _clean_codex_output(extracted)
-                return _clean_codex_output(text_out)
+            if proc.returncode == 0 or text_out or (stdout and stdout.strip()):
+                if text_out:
+                    return _clean_codex_output(text_out)
+                return _clean_codex_output(stdout)
 
             kind = _classify_codex_error_kind(stdout=stdout or "", stderr=stderr or "")
             resets = _extract_resets_in_seconds_from_codex_jsonl(stdout or "")

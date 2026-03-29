@@ -38,11 +38,11 @@ HAVE_PDFPLUMBER = pdfplumber is not None
 
 # All dependencies should now be available (or installation attempted)
 USE_MOCK_PDF = not all([HAVE_PYDANTIC, HAVE_PYMUPDF, HAVE_PDFPLUMBER])
+logger = logging.getLogger(__name__)
 if USE_MOCK_PDF:
-    logger = logging.getLogger(__name__)
     logger.warning("Some PDF processing dependencies could not be installed, using limited functionality")
 else:
-    print("✅ PDF processing dependencies successfully installed and available")
+    logger.info("PDF processing dependencies available")
 
 
 from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
@@ -2446,5 +2446,4 @@ class PDFProcessor:
         except Exception as e:
             self.logger.exception(f"Quality score calculation failed: {e}")
             raise RuntimeError("Quality score calculation failed") from e
-
 

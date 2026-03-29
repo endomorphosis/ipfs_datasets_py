@@ -37,7 +37,7 @@ try:
     HAVE_SHARED_COMPONENTS = True
 except ImportError:
     HAVE_SHARED_COMPONENTS = False
-    logger.warning("common/ shared components not available for query processing")
+    logger.debug("common/ shared components not available for query processing; using fallback import path")
 
 # Backward compatibility: try complaint_analysis if common/ not found
 if not HAVE_SHARED_COMPONENTS:
@@ -49,7 +49,7 @@ if not HAVE_SHARED_COMPONENTS:
         )
         HAVE_SHARED_COMPONENTS = True
     except ImportError:
-        logger.error("Neither common/ nor complaint_analysis available")
+        logger.debug("Neither common/ nor complaint_analysis available; legal query processing will use local defaults")
 
 # Backward-compatible alias used throughout this module.
 HAVE_COMPLAINT_ANALYSIS = HAVE_SHARED_COMPONENTS

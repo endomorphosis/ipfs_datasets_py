@@ -52,9 +52,9 @@ except ImportError:
 try:
     from datasets import load_dataset
     HAVE_DATASETS = True
-except ImportError:
+except (ImportError, AttributeError):
     HAVE_DATASETS = False
-    logger.warning("datasets library not available - streaming disabled")
+    logger.debug("datasets library APIs unavailable - streaming disabled")
 
 
 def _coalesce_env(*names: str) -> str:
