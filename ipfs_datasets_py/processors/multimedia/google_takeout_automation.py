@@ -13,6 +13,7 @@ import json
 import re
 import tempfile
 import time
+from html import unescape
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,174 @@ SUPPORTED_DESTINATIONS = {"box", "dropbox", "drive", "email", "onedrive"}
 SUPPORTED_FREQUENCIES = {"one_time", "2_months"}
 _DATA_ID_RE = re.compile(r'data-id="([^"]+)"')
 DRIVE_API_FILES_URL = "https://www.googleapis.com/drive/v3/files"
+URL_RE = re.compile(r"https?://[^\s<>\"]+")
+
+
+def extract_urls_from_text(text: str) -> list[str]:
+    seen: set[str] = set()
+    urls: list[str] = []
+    for match in URL_RE.findall(unescape(str(text or ""))):
+        value = match.rstrip(").,;>'\"")
+        if value and value not in seen:
+            seen.add(value)
+            urls.append(value)
+    return urls
+
+
+def _score_takeout_url(url: str) -> int:
+    lowered = str(url or "").lower()
+    score = 0
+    if "takeout.google.com" in lowered:
+        score += 10
+    if "download" in lowered:
+        score += 5
+    if "takeout" in lowered:
+        score += 4
+    if "googleusercontent.com" in lowered or "storage.googleapis.com" in lowered:
+        score += 3
+    if "accounts.google.com" in lowered:
+        score += 2
+    return score
+
+
+def extract_takeout_download_candidates_from_email(email_payload: dict[str, Any]) -> list[str]:
+    candidate_text = "\n".join(
+        [
+            str(email_payload.get("subject") or ""),
+            str(email_payload.get("body_text") or ""),
+            str(email_payload.get("body_html") or ""),
+        ]
+    )
+    urls = extract_urls_from_text(candidate_text)
+    scored = sorted(urls, key=lambda value: (-_score_takeout_url(value), value))
+    return [item for item in scored if _score_takeout_url(item) > 0]
+
+
+def classify_takeout_email_stage(email_payload: dict[str, Any]) -> str:
+    haystack = "\n".join(
+        [
+            str(email_payload.get("subject") or ""),
+            str(email_payload.get("body_text") or ""),
+            str(email_payload.get("body_html") or ""),
+        ]
+    ).lower()
+    if "ready to download" in haystack or "download your files" in haystack or "your archive is ready" in haystack:
+        return "archive_ready"
+    if "archive of google data requested" in haystack or "request to create an archive" in haystack:
+        return "archive_requested"
+    if "takeout" in haystack or "archive of google data" in haystack:
+        return "takeout_related"
+    return "unknown"
+
+
+async def poll_email_for_takeout_link(
+    *,
+    server: str,
+    username: str,
+    password: str,
+    folder: str = "INBOX",
+    port: int | None = None,
+    use_ssl: bool = True,
+    timeout: int = 30,
+    limit: int = 25,
+    search_criteria: str | None = None,
+    from_contains: str = "google",
+    subject_contains: str = "takeout",
+    account_hint: str | None = None,
+) -> dict[str, Any]:
+    from .email_processor import EmailProcessor
+
+    effective_search = str(search_criteria or "").strip()
+    if not effective_search or effective_search.upper() == "ALL":
+        search_parts: list[str] = []
+        if subject_contains:
+            escaped = str(subject_contains).replace('"', "")
+            if escaped:
+                search_parts.append(f'SUBJECT "{escaped}"')
+        if from_contains:
+            escaped = str(from_contains).replace('"', "")
+            if escaped:
+                search_parts.append(f'FROM "{escaped}"')
+        effective_search = " ".join(search_parts) if search_parts else "ALL"
+
+    processor = EmailProcessor(
+        protocol="imap",
+        server=server,
+        port=port,
+        username=username,
+        password=password,
+        use_ssl=use_ssl,
+        timeout=timeout,
+    )
+    try:
+        await processor.connect()
+        result = await processor.fetch_emails(
+            folder=folder,
+            limit=limit,
+            search_criteria=effective_search,
+            include_attachments=False,
+        )
+    finally:
+        try:
+            await processor.disconnect()
+        except Exception:
+            pass
+
+    if result.get("status") != "success":
+        return result
+
+    matching_messages: list[dict[str, Any]] = []
+    from_filter = str(from_contains or "").lower().strip()
+    subject_filter = str(subject_contains or "").lower().strip()
+    account_filter = str(account_hint or "").lower().strip()
+
+    for item in list(result.get("emails") or []):
+        from_value = str(item.get("from") or "")
+        to_value = str(item.get("to") or "")
+        subject_value = str(item.get("subject") or "")
+        body_text = str(item.get("body_text") or "")
+        body_html = str(item.get("body_html") or "")
+        haystack = "\n".join([subject_value, body_text, body_html]).lower()
+
+        if from_filter and from_filter not in from_value.lower():
+            continue
+        if subject_filter and subject_filter not in haystack:
+            continue
+        if account_filter and account_filter not in to_value.lower() and account_filter not in haystack:
+            continue
+
+        links = extract_takeout_download_candidates_from_email(item)
+        stage = classify_takeout_email_stage(item)
+        matching_messages.append(
+            {
+                "subject": subject_value,
+                "from": from_value,
+                "to": to_value,
+                "date": item.get("date"),
+                "message_id": item.get("message_id"),
+                "message_id_header": item.get("message_id_header"),
+                "stage": stage,
+                "download_links": links,
+                "best_download_link": links[0] if links else None,
+            }
+        )
+
+    matching_messages.sort(key=lambda entry: str(entry.get("date") or ""), reverse=True)
+    latest = matching_messages[0] if matching_messages else None
+    stage_counts: dict[str, int] = {}
+    for item in matching_messages:
+        stage = str(item.get("stage") or "unknown")
+        stage_counts[stage] = stage_counts.get(stage, 0) + 1
+    return {
+        "status": "success",
+        "folder": folder,
+        "search_criteria": effective_search,
+        "email_count": len(list(result.get("emails") or [])),
+        "matched_email_count": len(matching_messages),
+        "stage_counts": stage_counts,
+        "latest_match": latest,
+        "matches": matching_messages,
+    }
 
 
 def extract_data_ids_from_html(html_text: str) -> list[str]:

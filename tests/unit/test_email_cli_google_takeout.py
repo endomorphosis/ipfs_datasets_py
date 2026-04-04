@@ -150,6 +150,99 @@ def test_google_voice_takeout_poll_finds_archive(tmp_path: Path) -> None:
     assert payload["download_path"] == str(archive_path)
 
 
+def test_google_voice_takeout_email_command_with_mock(tmp_path: Path, monkeypatch) -> None:
+    module = _load_email_cli_module()
+    output_path = tmp_path / "takeout-email.json"
+    captured = {}
+
+    async def _fake_email(**kwargs):
+        captured.update(kwargs)
+        return {
+            "status": "success",
+            "matched_email_count": 1,
+            "latest_match": {
+                "subject": "Your Google data is ready to download",
+                "best_download_link": "https://takeout.google.com/downloads/example",
+            },
+        }
+
+    import sys
+
+    helper_module = sys.modules.get("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    if helper_module is None:
+        import importlib
+
+        helper_module = importlib.import_module("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    monkeypatch.setattr(helper_module, "poll_email_for_takeout_link", _fake_email)
+
+    try:
+        module.main(
+            [
+                "google-voice-takeout-email",
+                "--username",
+                "user@gmail.com",
+                "--password",
+                "app-pass",
+                "--account-hint",
+                "user@gmail.com",
+                "--output",
+                str(output_path),
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code == 0
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["matched_email_count"] == 1
+    assert payload["latest_match"]["best_download_link"].startswith("https://takeout.google.com/")
+    assert captured["account_hint"] == "user@gmail.com"
+
+
+def test_google_voice_takeout_email_command_reports_requested_stage(tmp_path: Path, monkeypatch) -> None:
+    module = _load_email_cli_module()
+    output_path = tmp_path / "takeout-requested.json"
+
+    async def _fake_email(**_kwargs):
+        return {
+            "status": "success",
+            "matched_email_count": 1,
+            "stage_counts": {"archive_requested": 1},
+            "latest_match": {
+                "subject": "Archive of Google data requested",
+                "stage": "archive_requested",
+                "best_download_link": None,
+            },
+        }
+
+    import sys
+
+    helper_module = sys.modules.get("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    if helper_module is None:
+        import importlib
+
+        helper_module = importlib.import_module("ipfs_datasets_py.processors.multimedia.google_takeout_automation")
+    monkeypatch.setattr(helper_module, "poll_email_for_takeout_link", _fake_email)
+
+    try:
+        module.main(
+            [
+                "google-voice-takeout-email",
+                "--username",
+                "user@gmail.com",
+                "--password",
+                "app-pass",
+                "--output",
+                str(output_path),
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code == 0
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["stage_counts"]["archive_requested"] == 1
+    assert payload["latest_match"]["stage"] == "archive_requested"
+
+
 def test_google_voice_takeout_drive_command_with_mock(tmp_path: Path, monkeypatch) -> None:
     module = _load_email_cli_module()
     output_path = tmp_path / "drive.json"

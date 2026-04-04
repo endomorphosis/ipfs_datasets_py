@@ -238,6 +238,24 @@ def create_parser() -> argparse.ArgumentParser:
     takeout_poll_parser.add_argument('--poll-interval-ms', type=int, default=2000, help='How often to scan the directory')
     takeout_poll_parser.add_argument('--output', '-o', help='Write the poll result to JSON')
 
+    takeout_email_parser = subparsers.add_parser(
+        'google-voice-takeout-email',
+        help='Poll IMAP for Google Takeout notification emails and extract candidate download links',
+    )
+    takeout_email_parser.add_argument('--server', default='imap.gmail.com', help='IMAP server hostname')
+    takeout_email_parser.add_argument('--port', type=int, help='IMAP server port (default: 993)')
+    takeout_email_parser.add_argument('--username', help='IMAP username (or EMAIL_USER env var)')
+    takeout_email_parser.add_argument('--password', help='IMAP password/app password (or EMAIL_PASS env var)')
+    takeout_email_parser.add_argument('--folder', default='INBOX', help='Mailbox folder to scan')
+    takeout_email_parser.add_argument('--search', default='ALL', help='IMAP search criteria')
+    takeout_email_parser.add_argument('--limit', type=int, default=25, help='Maximum number of recent emails to inspect')
+    takeout_email_parser.add_argument('--from-contains', default='google', help='Sender substring filter')
+    takeout_email_parser.add_argument('--subject-contains', default='takeout', help='Subject/body substring filter')
+    takeout_email_parser.add_argument('--account-hint', help='Optional recipient/account hint to prioritize matching emails')
+    takeout_email_parser.add_argument('--no-ssl', action='store_true', help='Disable SSL/TLS')
+    takeout_email_parser.add_argument('--timeout', type=int, default=30, help='Connection timeout')
+    takeout_email_parser.add_argument('--output', '-o', help='Write the email poll result to JSON')
+
     takeout_drive_parser = subparsers.add_parser(
         'google-voice-takeout-drive',
         help='Poll Google Drive for a Takeout artifact and optionally download it locally',
@@ -1027,6 +1045,44 @@ async def cmd_google_voice_takeout_poll(args):
     return 0 if payload.get("status") in {"success", "pending"} else 1
 
 
+async def cmd_google_voice_takeout_email(args):
+    """Poll IMAP for Google Takeout notification emails."""
+    from ipfs_datasets_py.processors.multimedia.google_takeout_automation import (
+        poll_email_for_takeout_link,
+        save_takeout_plan,
+    )
+
+    try:
+        payload = await poll_email_for_takeout_link(
+            server=args.server,
+            port=args.port,
+            username=args.username,
+            password=args.password,
+            folder=args.folder,
+            use_ssl=not args.no_ssl,
+            timeout=args.timeout,
+            limit=args.limit,
+            search_criteria=args.search,
+            from_contains=args.from_contains,
+            subject_contains=args.subject_contains,
+            account_hint=args.account_hint,
+        )
+    except Exception as e:
+        payload = {
+            'status': 'error',
+            'error': str(e),
+        }
+        print(json.dumps(payload, indent=2))
+        return 1
+
+    if args.output:
+        save_takeout_plan(payload, args.output)
+        print(f"Google Voice Takeout email poll result saved to {args.output}")
+    else:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0 if payload.get("status") == "success" else 1
+
+
 async def cmd_google_voice_takeout_drive(args):
     """Poll Google Drive for a Takeout artifact and optionally download it."""
     from ipfs_datasets_py.processors.multimedia.google_takeout_automation import (
@@ -1125,6 +1181,14 @@ def _doctor_takeout_manifest(payload: dict, manifest_path: Path) -> dict:
     if status == 'hydrated' and final_archive_path:
         diagnosis = "complete"
         next_step = "No action needed. The Takeout archive was already hydrated."
+    elif status == 'manual_browser_required':
+        diagnosis = "manual_browser_required"
+        if manifest_path:
+            next_step = (
+                f"Open a desktop session with a browser/display, then rerun ./run-consumer-google-voice-takeout.sh --resume-from-manifest {manifest_path}"
+            )
+        else:
+            next_step = "Resume the Takeout flow on a machine with a desktop browser session."
     elif final_archive_path:
         diagnosis = "ready_to_hydrate"
         next_step = (
@@ -1736,6 +1800,7 @@ async def main_async(args):
         'google-voice-takeout-capture': cmd_google_voice_takeout_capture,
         'google-voice-takeout-source': cmd_google_voice_takeout_source,
         'google-voice-takeout-poll': cmd_google_voice_takeout_poll,
+        'google-voice-takeout-email': cmd_google_voice_takeout_email,
         'google-voice-takeout-drive': cmd_google_voice_takeout_drive,
         'google-voice-takeout-status': cmd_google_voice_takeout_status,
         'google-voice-takeout-doctor': cmd_google_voice_takeout_doctor,
