@@ -371,6 +371,29 @@ Commands:
       fetch      Fetch emails (no export)
       analyze    Analyze an email export file
       search     Search emails in an export file
+      google-voice Parse Google Voice Takeout exports
+      google-voice-vault Parse Google Workspace Vault Voice exports
+      google-voice-data-export Parse Google Workspace Data Export Voice bundles and gs:// sources
+      google-voice-watch Watch a local folder and auto-hydrate Voice exports
+      google-voice-takeout-url Build a custom consumer Google Takeout URL for Voice exports
+      google-voice-takeout-open Open the custom Takeout URL in Playwright
+      google-voice-takeout-capture Open the custom Takeout URL and wait for an archive download
+      google-voice-takeout-source Save Takeout page source HTML for data-id inference
+      google-voice-takeout-poll Poll a local download directory for a completed Takeout archive
+      google-voice-takeout-drive Poll Google Drive for a Takeout artifact and optionally download it
+      google-voice-takeout-status Summarize a saved Takeout acquisition manifest
+      google-voice-takeout-doctor Diagnose a saved Takeout acquisition manifest and suggest the next step
+      google-voice-takeout-history List archived snapshot history for a Takeout acquisition manifest
+      google-voice-takeout-prune Prune old archived snapshot history for a Takeout acquisition manifest
+      google-voice-takeout-case-summary Show a concise summary for a Takeout case/download directory or manifest
+      google-voice-takeout-case-report Export a markdown or HTML report for a Takeout case/download directory or manifest
+      google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
+
+    history-index Search persisted DuckDB history/GraphRAG index
+      chunks      Search chunk text and metadata
+      documents   Search indexed documents
+      entities    Search extracted entities
+      relationships Search extracted relationships
     
     detect-type  File type detection for GraphRAG
       detect     Detect single file type
@@ -2935,6 +2958,23 @@ Subcommands:
   fetch      Fetch emails (no export)
   analyze    Analyze an email export file
   search     Search emails in an export file
+  google-voice Parse Google Voice Takeout exports
+  google-voice-vault Parse Google Workspace Vault Voice exports
+  google-voice-data-export Parse Google Workspace Data Export Voice bundles / gs:// URIs
+  google-voice-watch Watch a local folder and auto-hydrate new Voice exports
+  google-voice-takeout-url Build a custom consumer Google Takeout URL for Voice exports
+  google-voice-takeout-open Open the custom Takeout URL in Playwright
+  google-voice-takeout-capture Open the custom Takeout URL and wait for an archive download
+  google-voice-takeout-source Save Takeout page source HTML for data-id inference
+  google-voice-takeout-poll Poll a local download directory for a completed Takeout archive
+  google-voice-takeout-drive Poll Google Drive for a Takeout artifact and optionally download it
+  google-voice-takeout-status Summarize a saved Takeout acquisition manifest
+  google-voice-takeout-doctor Diagnose a saved Takeout acquisition manifest and suggest the next step
+  google-voice-takeout-history List archived snapshot history for a Takeout acquisition manifest
+  google-voice-takeout-prune Prune old archived snapshot history for a Takeout acquisition manifest
+  google-voice-takeout-case-summary Show a concise summary for a Takeout case/download directory or manifest
+  google-voice-takeout-case-report Export a markdown or HTML report for a Takeout case/download directory or manifest
+  google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
 
 Environment:
   EMAIL_USER   Email account username (recommended)
@@ -2948,14 +2988,40 @@ Examples:
   ipfs-datasets email fetch --server imap.gmail.com --limit 10
   ipfs-datasets email analyze inbox_export.json
   ipfs-datasets email search inbox_export.json "meeting" --field subject
+  ipfs-datasets email google-voice ./Takeout/Voice --summary-only
+  ipfs-datasets email google-voice ./Takeout/Voice --materialize --output-dir ./voice-bundles
+  ipfs-datasets email google-voice-takeout-url --product-id voice --dest drive
+  ipfs-datasets email google-voice-takeout-open --page-source ./takeout_page.html --dest drive
+  ipfs-datasets email google-voice-takeout-capture --page-source ./takeout_page.html --dest drive --downloads-dir ./takeout-downloads
+  ipfs-datasets email google-voice-takeout-source --output ./takeout_page.html
+  ipfs-datasets email google-voice-takeout-poll --downloads-dir ./takeout-downloads
+  ipfs-datasets email google-voice-takeout-drive --client-secrets ./google-client-secret.json --account-hint user@gmail.com --download-dir ./takeout-downloads
+  ipfs-datasets email google-voice-takeout-status ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-doctor ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-history ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-prune ./takeout_acquisition_manifest.json --keep 20
+  ipfs-datasets email google-voice-takeout-case-summary ./takeout_acquisition_manifest.json
+  ipfs-datasets email google-voice-takeout-case-report ./takeout_acquisition_manifest.json --format markdown --output ./takeout-report.md
+  ipfs-datasets email google-voice-takeout-case-bundle ./takeout_acquisition_manifest.json --output-dir ./takeout-bundles
+  ipfs-datasets email google-voice-vault ./vault-voice-export.zip --summary-only
+  ipfs-datasets email google-voice-data-export gs://workspace-export/voice --materialize --output-dir ./voice-bundles --staging-dir ./gcs-stage
+  ipfs-datasets email google-voice-watch ./dropbox --output-dir ./hydrated-voice --source-kind takeout --once
 
 For detailed help: ipfs-datasets email <subcommand> --help
 """)
                 return
             
             try:
-                # Import and delegate to email_cli module
-                from ipfs_datasets_py.email_cli import main as email_main
+                import importlib.util
+                from pathlib import Path
+
+                email_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "email_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_email_cli", email_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load email CLI from {email_cli_path}")
+                email_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(email_cli_module)
+                email_main = email_cli_module.main
                 
                 # Pass remaining args to email CLI
                 email_args = args[1:]
@@ -2968,6 +3034,59 @@ For detailed help: ipfs-datasets email <subcommand> --help
                 return
             except Exception as e:
                 print(f"Error executing email command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
+        if command == "history-index":
+            """Handle DuckDB history index search commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets history-index - Search the persisted DuckDB history index
+
+Usage: ipfs-datasets history-index <query> [options]
+       ipfs-datasets history-index --table entities <query> [options]
+
+Options:
+  --table {chunks,documents,entities,relationships}
+  --index-path PATH
+  --top-k N
+  --source-like TEXT
+  --json
+
+Examples:
+  ipfs-datasets history-index "inspection notice"
+  ipfs-datasets history-index --table entities tenant
+  ipfs-datasets history-index --table documents --source-like google_voice voice
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                history_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "history_index_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_history_index_cli", history_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load history index CLI from {history_cli_path}")
+                history_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(history_cli_module)
+                history_index_main = history_cli_module.main
+
+                history_args = list(args[1:])
+                if json_output and '--json' not in history_args:
+                    history_args = ['--json', *history_args]
+                exit_code = history_index_main(history_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: history-index CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing history-index command: {e}")
                 import traceback
                 traceback.print_exc()
                 return
@@ -3729,7 +3848,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]

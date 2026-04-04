@@ -43,6 +43,7 @@ import os
 import shlex
 import shutil
 import subprocess
+import concurrent.futures
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -781,8 +782,7 @@ def _get_local_adapter_provider(*, deps: Optional[RouterDeps] = None) -> Embeddi
             device: Optional[str] = None,
             **kwargs: object,
         ) -> List[List[float]]:
-            _ = kwargs
-            return _embed_texts(texts, model_name=model_name, device=device, deps=deps)
+            return _embed_texts(texts, model_name=model_name, device=device, deps=deps, **kwargs)
 
     return _LocalAdapterProvider()
 
@@ -995,11 +995,25 @@ def embed_texts_batched(
     resolved_deps = deps or get_default_router_deps()
     backend = provider_instance or get_embeddings_provider(provider, deps=resolved_deps)
 
+    parallel_batches_raw = kwargs.pop(
+        "parallel_batches",
+        kwargs.pop("batch_workers", os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_BATCH_WORKERS", "1")),
+    )
+    try:
+        parallel_batches = max(1, int(parallel_batches_raw))
+    except Exception:
+        parallel_batches = 1
+
+    device_key = str(device or "").strip().lower()
+    allow_parallel_batches = parallel_batches > 1 and not device_key.startswith("cuda")
+
     out: List[List[float]] = []
-    for start in range(0, len(items), int(batch_size)):
-        batch = items[start : start + int(batch_size)]
-        out.extend(
-            embed_texts(
+    if allow_parallel_batches:
+        ranges = list(range(0, len(items), int(batch_size)))
+
+        def _embed_batch(start: int) -> List[List[float]]:
+            batch = items[start : start + int(batch_size)]
+            return embed_texts(
                 batch,
                 model_name=model_name,
                 device=device,
@@ -1008,7 +1022,29 @@ def embed_texts_batched(
                 deps=resolved_deps,
                 **kwargs,
             )
-        )
+
+        batch_results: Dict[int, List[List[float]]] = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_batches) as executor:
+            future_map = {executor.submit(_embed_batch, start): start for start in ranges}
+            for future in concurrent.futures.as_completed(future_map):
+                batch_results[future_map[future]] = future.result()
+
+        for start in ranges:
+            out.extend(batch_results.get(start, []))
+    else:
+        for start in range(0, len(items), int(batch_size)):
+            batch = items[start : start + int(batch_size)]
+            out.extend(
+                embed_texts(
+                    batch,
+                    model_name=model_name,
+                    device=device,
+                    provider=provider,
+                    provider_instance=backend,
+                    deps=resolved_deps,
+                    **kwargs,
+                )
+            )
     return out
 
 

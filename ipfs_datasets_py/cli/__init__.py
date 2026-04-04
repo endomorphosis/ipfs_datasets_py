@@ -36,6 +36,7 @@ __all__ = [
     "discord_cli",
     "email_cli",
     "finance_cli",
+    "history_index_cli",
     "github_cli_init",
     "scraper_cli",
     "execute_workflow",

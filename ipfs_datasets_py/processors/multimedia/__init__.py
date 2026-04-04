@@ -90,6 +90,15 @@ except ImportError:
     EmailProcessor = None
     create_email_processor = None
 
+# Import Google Voice processor
+try:
+    from .google_voice_processor import GoogleVoiceProcessor, create_google_voice_processor
+    HAVE_GOOGLE_VOICE = True
+except ImportError:
+    HAVE_GOOGLE_VOICE = False
+    GoogleVoiceProcessor = None
+    create_google_voice_processor = None
+
 # Feature availability flags
 try:
     import yt_dlp
@@ -133,6 +142,8 @@ __all__ = [
     "create_discord_wrapper",
     "EmailProcessor",
     "create_email_processor",
+    "GoogleVoiceProcessor",
+    "create_google_voice_processor",
     # Canonical FFmpeg engines
     "ffmpeg_cut",
     "ffmpeg_splice",
@@ -155,6 +166,7 @@ __all__ = [
     "HAVE_FFMPEG",
     "HAVE_DISCORD",
     "HAVE_EMAIL",
+    "HAVE_GOOGLE_VOICE",
     "HAVE_MEDIA_PROCESSOR",
     "HAVE_CONVERTERS"
 ]

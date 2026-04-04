@@ -103,6 +103,8 @@ def _hf_embed(
     model_name: str,
     device: str,
     *,
+    embedding_batch_size: int = 32,
+    embedding_num_workers: int = 0,
     deps: object | None = None,
     torch_module: Any | None = None,
     transformers_module: Any | None = None,
@@ -125,6 +127,16 @@ def _hf_embed(
         transformers=transformers,
     )
 
+    if str(device).startswith("cuda"):
+        try:
+            if not torch.cuda.is_available():
+                raise RuntimeError("CUDA requested but torch.cuda.is_available() is False")
+        except Exception as exc:
+            raise RuntimeError(str(exc)) from exc
+
+    batch_size = max(1, int(embedding_batch_size))
+    num_workers = max(0, int(embedding_num_workers))
+
     embeddings: List[List[float]] = []
     with torch.no_grad():
         tokenizer_limit = getattr(tokenizer, "model_max_length", None)
@@ -140,15 +152,17 @@ def _hf_embed(
                 candidate_limits.append(v)
         max_len = min(candidate_limits) if candidate_limits else 512
 
-        for text in texts:
+        for start in range(0, len(texts), batch_size):
+            text_batch = texts[start : start + batch_size]
             inputs = tokenizer(
-                text,
+                text_batch,
                 padding=True,
                 truncation=True,
                 max_length=max_len,
                 return_tensors="pt",
+                **({"num_workers": num_workers} if num_workers > 0 else {}),
             )
-            inputs = {k: v.to(device) for k, v in inputs.items()}
+            inputs = {k: v.to(device, non_blocking=True) for k, v in inputs.items()}
             outputs = model(**inputs)
             last_hidden = outputs.last_hidden_state
             mask = inputs.get("attention_mask")
@@ -158,7 +172,9 @@ def _hf_embed(
                 mask = mask.unsqueeze(-1).expand(last_hidden.size())
                 masked = last_hidden * mask
                 pooled = masked.sum(dim=1) / mask.sum(dim=1).clamp(min=1)
-            embeddings.append(pooled[0].detach().cpu().tolist())
+            pooled_cpu = pooled.detach().cpu()
+            for row in pooled_cpu:
+                embeddings.append(row.tolist())
 
     return embeddings
 
@@ -168,9 +184,12 @@ def embed_texts(
     *,
     model_name: Optional[str] = None,
     device: Optional[str] = None,
+    embedding_batch_size: int = 32,
+    embedding_num_workers: int = 0,
     deps: object | None = None,
     torch_module: Any | None = None,
     transformers_module: Any | None = None,
+    **kwargs: Any,
 ) -> List[List[float]]:
     """Embed texts using the selected backend."""
     text_list = [t for t in texts]
@@ -188,6 +207,15 @@ def embed_texts(
             "IPFS_DATASETS_PY_EMBEDDINGS_MODEL",
             "sentence-transformers/all-MiniLM-L6-v2",
         )
+        env_batch_size = os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_BATCH_SIZE")
+        env_num_workers = os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_NUM_WORKERS")
+        runtime_batch_size = kwargs.get("batch_size") or kwargs.get("embedding_batch_size") or embedding_batch_size
+        runtime_num_workers = kwargs.get("embedding_num_workers") or embedding_num_workers
+        if env_batch_size and str(runtime_batch_size).strip() in {"", "0"}:
+            runtime_batch_size = env_batch_size
+        if env_num_workers and str(runtime_num_workers).strip() in {"", "0"}:
+            runtime_num_workers = env_num_workers
+
         device_name = device or os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_DEVICE")
         if not device_name:
             torch = resolve_module("torch", deps=deps, module_override=torch_module, cache_key="pip::torch")
@@ -199,6 +227,8 @@ def embed_texts(
             text_list,
             model,
             device_name,
+            embedding_batch_size=max(1, int(runtime_batch_size)),
+            embedding_num_workers=max(0, int(runtime_num_workers)),
             deps=deps,
             torch_module=torch_module,
             transformers_module=transformers_module,
