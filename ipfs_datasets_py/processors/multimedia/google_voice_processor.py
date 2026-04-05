@@ -54,8 +54,22 @@ class _TextHTMLParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.parts: list[str] = []
+        self._ignored_tag_stack: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        del attrs
+        tag_name = str(tag or "").lower()
+        if tag_name in {"style", "script"}:
+            self._ignored_tag_stack.append(tag_name)
+
+    def handle_endtag(self, tag: str) -> None:
+        tag_name = str(tag or "").lower()
+        if self._ignored_tag_stack and self._ignored_tag_stack[-1] == tag_name:
+            self._ignored_tag_stack.pop()
 
     def handle_data(self, data: str) -> None:
+        if self._ignored_tag_stack:
+            return
         text = str(data or "").strip()
         if text:
             self.parts.append(text)
@@ -449,6 +463,34 @@ def _extract_plain_text(html_text: str) -> str:
     return _normalize_whitespace("\n".join(parser.parts))
 
 
+def _takeout_event_prefix(path: Path) -> str:
+    stem = re.sub(r"-\d+-\d+$", "", path.stem)
+    match = re.match(
+        r"^(?P<contact>.*) - (?P<kind>[^-]+) - (?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}Z)$",
+        stem,
+    )
+    if match:
+        contact = _normalize_whitespace(match.group("contact"))
+        timestamp = match.group("timestamp")
+        return f"{contact}::{timestamp}"
+    return stem
+
+
+def _takeout_sidecars_for_html(html_path: Path) -> list[Path]:
+    prefix = _takeout_event_prefix(html_path)
+    matched: list[Path] = []
+    for candidate in sorted(html_path.parent.iterdir()):
+        if not candidate.is_file() or candidate == html_path:
+            continue
+        if candidate.suffix.lower() not in _SIDECAR_SUFFIXES:
+            continue
+        candidate_prefix = _takeout_event_prefix(candidate)
+        if candidate_prefix != prefix:
+            continue
+        matched.append(candidate)
+    return matched
+
+
 def _extract_phone_numbers(*values: str) -> list[str]:
     seen: set[str] = set()
     results: list[str] = []
@@ -803,13 +845,7 @@ class GoogleVoiceProcessor:
 
             title = _extract_title(html_text, html_path)
             text_content = _extract_plain_text(html_text)
-            sidecar_paths = [
-                candidate
-                for candidate in sorted(html_path.parent.iterdir())
-                if candidate.is_file()
-                and candidate != html_path
-                and candidate.suffix.lower() in _SIDECAR_SUFFIXES
-            ]
+            sidecar_paths = _takeout_sidecars_for_html(html_path)
             sidecar_payloads = {
                 sidecar.name: payload
                 for sidecar in sidecar_paths
