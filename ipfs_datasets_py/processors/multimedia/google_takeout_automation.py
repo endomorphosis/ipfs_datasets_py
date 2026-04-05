@@ -45,9 +45,15 @@ def extract_urls_from_text(text: str) -> list[str]:
 
 def _score_takeout_url(url: str) -> int:
     lowered = str(url or "").lower()
+    if "lh3.googleusercontent.com" in lowered:
+        return -5
     score = 0
     if "takeout.google.com" in lowered:
         score += 10
+    if "drive.google.com/file/d/" in lowered:
+        score += 9
+    if "view in drive" in lowered:
+        score += 4
     if "download" in lowered:
         score += 5
     if "takeout" in lowered:
@@ -80,7 +86,14 @@ def classify_takeout_email_stage(email_payload: dict[str, Any]) -> str:
             str(email_payload.get("body_html") or ""),
         ]
     ).lower()
-    if "ready to download" in haystack or "download your files" in haystack or "your archive is ready" in haystack:
+    if (
+        "ready to download" in haystack
+        or "download your files" in haystack
+        or "your archive is ready" in haystack
+        or "your google data has been exported" in haystack
+        or "view 1 of" in haystack and "drive" in haystack
+        or "you can download a copy of your files in drive" in haystack
+    ):
         return "archive_ready"
     if "archive of google data requested" in haystack or "request to create an archive" in haystack:
         return "archive_requested"
