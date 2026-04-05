@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import html
+import importlib.util
 import json
 import logging
 import mimetypes
@@ -35,14 +36,11 @@ logger = logging.getLogger(__name__)
 _HTML_SUFFIXES = {".html", ".htm"}
 _TEXT_SUFFIXES = {".txt", ".csv", ".vcf"}
 _AUDIO_SUFFIXES = {".mp3", ".wav", ".ogg", ".m4a", ".aac", ".amr", ".opus"}
+_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tif", ".tiff"}
 _SIDECAR_SUFFIXES = {
     ".json",
     *_TEXT_SUFFIXES,
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
+    *_IMAGE_SUFFIXES,
     *_AUDIO_SUFFIXES,
     ".pdf",
 }
@@ -86,6 +84,131 @@ def _sha256_path(path: Path) -> str:
 
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _command_exists(name: str) -> bool:
+    return shutil.which(str(name or "")) is not None
+
+
+def _normalize_generated_text(text: str) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def _ocr_image_path(path: Path) -> tuple[str, dict[str, Any]]:
+    if not _command_exists("tesseract"):
+        return "", {"status": "unavailable", "backend": "tesseract_cli", "reason": "tesseract_not_installed"}
+    try:
+        result = subprocess.run(
+            ["tesseract", str(path), "stdout"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except Exception as exc:
+        return "", {"status": "error", "backend": "tesseract_cli", "error": str(exc)}
+
+    if result.returncode != 0:
+        return "", {
+            "status": "error",
+            "backend": "tesseract_cli",
+            "returncode": result.returncode,
+            "stderr": (result.stderr or "").strip()[:1000],
+        }
+    text = _normalize_generated_text(result.stdout)
+    if not text:
+        return "", {"status": "empty", "backend": "tesseract_cli"}
+    return text, {"status": "success", "backend": "tesseract_cli", "text_length": len(text)}
+
+
+def _transcribe_audio_path(path: Path) -> tuple[str, dict[str, Any]]:
+    openai_api_key = str(os.environ.get("OPENAI_API_KEY") or "").strip()
+    if openai_api_key:
+        try:
+            import requests
+
+            model = str(os.environ.get("OPENAI_AUDIO_TRANSCRIPTION_MODEL") or "gpt-4o-mini-transcribe").strip()
+            with path.open("rb") as audio_fp:
+                response = requests.post(
+                    "https://api.openai.com/v1/audio/transcriptions",
+                    headers={"Authorization": f"Bearer {openai_api_key}"},
+                    data={"model": model},
+                    files={"file": (path.name, audio_fp, mimetypes.guess_type(path.name)[0] or "application/octet-stream")},
+                    timeout=900,
+                )
+            response.raise_for_status()
+            payload = dict(response.json())
+            text = _normalize_generated_text(str(payload.get("text") or ""))
+            if text:
+                return text, {
+                    "status": "success",
+                    "backend": "openai_audio_transcriptions",
+                    "model": model,
+                    "text_length": len(text),
+                }
+            return "", {
+                "status": "empty",
+                "backend": "openai_audio_transcriptions",
+                "model": model,
+            }
+        except Exception as exc:
+            logger.warning("OpenAI audio transcription failed for %s: %s", path, exc)
+            return "", {
+                "status": "error",
+                "backend": "openai_audio_transcriptions",
+                "error": str(exc),
+            }
+
+    if _command_exists("whisper"):
+        model = str(os.environ.get("WHISPER_MODEL") or "base").strip()
+        temp_dir = Path(tempfile.mkdtemp(prefix="gv_whisper_"))
+        try:
+            result = subprocess.run(
+                [
+                    "whisper",
+                    str(path),
+                    "--model",
+                    model,
+                    "--output_dir",
+                    str(temp_dir),
+                    "--output_format",
+                    "txt",
+                    "--fp16",
+                    "False",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=3600,
+            )
+            if result.returncode != 0:
+                return "", {
+                    "status": "error",
+                    "backend": "whisper_cli",
+                    "model": model,
+                    "returncode": result.returncode,
+                    "stderr": (result.stderr or "").strip()[:1000],
+                }
+            transcript_path = temp_dir / f"{path.stem}.txt"
+            text = _normalize_generated_text(transcript_path.read_text(encoding="utf-8", errors="replace")) if transcript_path.exists() else ""
+            if text:
+                return text, {
+                    "status": "success",
+                    "backend": "whisper_cli",
+                    "model": model,
+                    "text_length": len(text),
+                }
+            return "", {"status": "empty", "backend": "whisper_cli", "model": model}
+        except Exception as exc:
+            return "", {"status": "error", "backend": "whisper_cli", "model": model, "error": str(exc)}
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    return "", {
+        "status": "unavailable",
+        "backend": "audio_transcription",
+        "reason": "no_openai_api_key_or_whisper_cli",
+    }
 
 
 def _mediator_evidence_record(bundle: dict[str, Any]) -> dict[str, Any]:
@@ -141,11 +264,11 @@ def materialize_google_voice_events(
         prefix = f"{filename_prefix}-" if filename_prefix else ""
         bundle_dir = output_root / f"{prefix}{offset:04d}-{title_part}-{id_part}"
         attachments_dir = bundle_dir / "attachments"
+        enrichment_dir = bundle_dir / "enrichments"
         attachments_dir.mkdir(parents=True, exist_ok=True)
+        enrichment_dir.mkdir(parents=True, exist_ok=True)
 
         transcript_text = str(event.get("text_content") or "")
-        transcript_path = bundle_dir / "transcript.txt"
-        transcript_path.write_text(transcript_text, encoding="utf-8")
 
         source_html_path = Path(str(event.get("source_html") or "")).expanduser()
         exported_html_path = bundle_dir / "source.html"
@@ -155,6 +278,7 @@ def materialize_google_voice_events(
             exported_html_path.write_text("", encoding="utf-8")
 
         attachment_records: list[dict[str, Any]] = []
+        enrichment_records: list[dict[str, Any]] = []
         for raw_path in list(event.get("sidecar_paths") or []):
             source_path = Path(str(raw_path or "")).expanduser()
             if not source_path.is_file():
@@ -172,6 +296,59 @@ def materialize_google_voice_events(
                 }
             )
 
+            suffix = destination.suffix.lower()
+            generated_text = ""
+            enrichment_meta: dict[str, Any] = {}
+            enrichment_kind = ""
+            if suffix in _IMAGE_SUFFIXES:
+                generated_text, enrichment_meta = _ocr_image_path(destination)
+                enrichment_kind = "image_ocr"
+            elif suffix in _AUDIO_SUFFIXES:
+                generated_text, enrichment_meta = _transcribe_audio_path(destination)
+                enrichment_kind = "audio_transcription"
+
+            if generated_text:
+                enrichment_filename = f"{destination.stem}.{enrichment_kind}.txt"
+                enrichment_path = enrichment_dir / enrichment_filename
+                enrichment_path.write_text(generated_text + "\n", encoding="utf-8")
+                enrichment_records.append(
+                    {
+                        "kind": enrichment_kind,
+                        "source_attachment": str(destination),
+                        "path": str(enrichment_path),
+                        "text_length": len(generated_text),
+                        "metadata": enrichment_meta,
+                    }
+                )
+            elif enrichment_kind:
+                enrichment_records.append(
+                    {
+                        "kind": enrichment_kind,
+                        "source_attachment": str(destination),
+                        "path": None,
+                        "text_length": 0,
+                        "metadata": enrichment_meta,
+                    }
+                )
+
+        transcript_sections = [transcript_text.strip()] if transcript_text.strip() else []
+        for enrichment in enrichment_records:
+            enrichment_path = str(enrichment.get("path") or "")
+            if not enrichment_path:
+                continue
+            try:
+                generated = Path(enrichment_path).read_text(encoding="utf-8", errors="replace").strip()
+            except Exception:
+                continue
+            if not generated:
+                continue
+            label = str(enrichment.get("kind") or "enrichment").replace("_", " ").title()
+            source_name = Path(str(enrichment.get("source_attachment") or "")).name
+            transcript_sections.append(f"{label}: {source_name}\n{generated}")
+
+        transcript_path = bundle_dir / "transcript.txt"
+        transcript_path.write_text("\n\n".join(section for section in transcript_sections if section).strip() + "\n", encoding="utf-8")
+
         event_payload = {
             **event,
             "bundle_dir": str(bundle_dir),
@@ -179,6 +356,8 @@ def materialize_google_voice_events(
             "source_html_path": str(exported_html_path),
             "attachments": attachment_records,
             "attachment_count": len(attachment_records),
+            "enrichments": enrichment_records,
+            "enrichment_count": len(enrichment_records),
         }
         event_json_path = bundle_dir / "event.json"
         event_json_path.write_text(json.dumps(event_payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -200,7 +379,9 @@ def materialize_google_voice_events(
                 "source_html_path": str(exported_html_path),
                 "attachment_paths": [item["path"] for item in attachment_records],
                 "attachments": attachment_records,
-                "text_content": transcript_text,
+                "enrichment_paths": [str(item.get("path") or "") for item in enrichment_records if item.get("path")],
+                "enrichments": enrichment_records,
+                "text_content": transcript_path.read_text(encoding="utf-8", errors="replace"),
                 "deduped_gmail_message_ids": list(event.get("deduped_gmail_message_ids") or []),
                 "evidence_title": str(event.get("title") or event.get("event_type") or "Google Voice event"),
                 "source_kind": str(event.get("source_kind") or source_kind),
