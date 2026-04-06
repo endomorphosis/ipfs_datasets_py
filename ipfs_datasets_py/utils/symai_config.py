@@ -85,11 +85,13 @@ def ensure_symai_config(
                 config[key] = value
 
         set_if_empty("SYMBOLIC_ENGINE", "ipfs")
-        set_if_empty(
-            "NEUROSYMBOLIC_ENGINE_MODEL",
-            os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL", "ipfs:default"),
-        )
-        set_if_empty("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs")
+        if not neurosymbolic_model:
+            set_if_empty(
+                "NEUROSYMBOLIC_ENGINE_MODEL",
+                os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL", "ipfs:default"),
+            )
+        if not neurosymbolic_api_key:
+            set_if_empty("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs")
         set_if_empty("EMBEDDING_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_EMBEDDING_MODEL", "ipfs:default"))
         set_if_empty("SEARCH_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_SEARCH_MODEL", "ipfs:default"))
         set_if_empty("OCR_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_OCR_MODEL", "ipfs:default"))
@@ -112,13 +114,26 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
     """Best-effort choice of a `symai` neurosymbolic engine.
 
     Preference order:
-    1) Real OpenAI API key present -> use OpenAI Responses engine.
-    2) If enabled and `codex` is available -> route via `codex exec`.
+    1) Explicit SyMAI model/api-key environment configuration.
+    2) Real OpenAI API key present -> use OpenAI Responses engine.
+    3) Codex-backed llm_router when Codex CLI is available.
 
     This returns a dict with keys: model, api_key.
     """
 
-    # 1) Real API key.
+    explicit_model = os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL", "").strip()
+    explicit_api_key = os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY", "").strip()
+    if explicit_model:
+        resolved_api_key = explicit_api_key
+        if explicit_model.startswith("codex:") and not resolved_api_key:
+            resolved_api_key = "codex"
+        if explicit_model.startswith(("llama", "huggingface")) or resolved_api_key:
+            return {
+                "model": explicit_model,
+                "api_key": resolved_api_key,
+            }
+
+    # 2) Real API key.
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if openai_api_key:
         return {
@@ -127,14 +142,16 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
             "api_key": openai_api_key,
         }
 
-    # 2) Codex CLI routing (explicit opt-in).
-    use_codex = os.environ.get("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
+    # 3) Codex CLI routing via llm_router. This is the practical default in this
+    # workspace when Codex is available, but callers can disable it explicitly.
+    disable_codex = os.environ.get("IPFS_DATASETS_PY_DISABLE_CODEX_FOR_SYMAI", "").strip().lower() in {
         "1",
         "true",
         "yes",
         "on",
     }
-    if not use_codex:
+    explicit_codex_pref = os.environ.get("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower()
+    if disable_codex or explicit_codex_pref in {"0", "false", "no", "off"}:
         return None
 
     try:

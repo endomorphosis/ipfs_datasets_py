@@ -214,7 +214,7 @@ class ProofExecutionEngine:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=int(timeout_s))
             return result.returncode == 0
-        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError, OSError):
             return False
     
     def prove_deontic_formula(

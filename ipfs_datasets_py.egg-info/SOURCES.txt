@@ -699,7 +699,6 @@ ipfs_accelerate_py/examples/sdk_demo.py
 ipfs_accelerate_py/examples/transformers_example.py
 ipfs_accelerate_py/examples/ultimate_enterprise_demo.py
 ipfs_accelerate_py/examples/ultimate_production_readiness_demo.py
-ipfs_accelerate_py/ipfs_accelerate_js/test/performance/webgpu_optimizer/run_benchmarks.py
 ipfs_accelerate_py/ipfs_accelerate_py/__init__.py
 ipfs_accelerate_py/ipfs_accelerate_py/ai_inference_cli.py
 ipfs_accelerate_py/ipfs_accelerate_py/anyio_helpers.py
@@ -2198,7 +2197,6 @@ ipfs_accelerate_py/test/run_core_ts_compiler.py
 ipfs_accelerate_py/test/run_cross_browser_model_sharding_test_suite.py
 ipfs_accelerate_py/test/run_cross_browser_model_sharding_tests.py
 ipfs_accelerate_py/test/run_customizable_dashboard.py
-ipfs_accelerate_py/test/run_dashboard_tests.py
 ipfs_accelerate_py/test/run_drm_external_monitoring.py
 ipfs_accelerate_py/test/run_drm_real_time_dashboard.py
 ipfs_accelerate_py/test/run_end_to_end_api_distributed_test.py
@@ -5023,9 +5021,6 @@ ipfs_accelerate_py/test/skills/test_hf_cpmant.py
 ipfs_accelerate_py/test/skills/test_hf_ctrl.py
 ipfs_accelerate_py/test/skills/test_hf_cvt.py
 ipfs_accelerate_py/test/skills/test_hf_dac.py
-ipfs_accelerate_py/test/skills/test_hf_data2vec-audio.py
-ipfs_accelerate_py/test/skills/test_hf_data2vec-text.py
-ipfs_accelerate_py/test/skills/test_hf_data2vec-vision.py
 ipfs_accelerate_py/test/skills/test_hf_data2vec_audio.py
 ipfs_accelerate_py/test/skills/test_hf_data2vec_text.py
 ipfs_accelerate_py/test/skills/test_hf_data2vec_vision.py
@@ -5065,7 +5060,6 @@ ipfs_accelerate_py/test/skills/test_hf_esm.py
 ipfs_accelerate_py/test/skills/test_hf_falcon.py
 ipfs_accelerate_py/test/skills/test_hf_falcon_mamba.py
 ipfs_accelerate_py/test/skills/test_hf_fastspeech2_conformer.py
-ipfs_accelerate_py/test/skills/test_hf_flan-t5.py
 ipfs_accelerate_py/test/skills/test_hf_flan.py
 ipfs_accelerate_py/test/skills/test_hf_flan_t5.py
 ipfs_accelerate_py/test/skills/test_hf_flaubert.py
@@ -5081,9 +5075,6 @@ ipfs_accelerate_py/test/skills/test_hf_gemma3.py
 ipfs_accelerate_py/test/skills/test_hf_git.py
 ipfs_accelerate_py/test/skills/test_hf_glm.py
 ipfs_accelerate_py/test/skills/test_hf_glpn.py
-ipfs_accelerate_py/test/skills/test_hf_gpt-j.py
-ipfs_accelerate_py/test/skills/test_hf_gpt-neo.py
-ipfs_accelerate_py/test/skills/test_hf_gpt-neox.py
 ipfs_accelerate_py/test/skills/test_hf_gpt2.py
 ipfs_accelerate_py/test/skills/test_hf_gpt2_minimal.py
 ipfs_accelerate_py/test/skills/test_hf_gpt_bigcode.py
@@ -5151,7 +5142,6 @@ ipfs_accelerate_py/test/skills/test_hf_mistral_nemo.py
 ipfs_accelerate_py/test/skills/test_hf_mistral_next.py
 ipfs_accelerate_py/test/skills/test_hf_mixtral.py
 ipfs_accelerate_py/test/skills/test_hf_mllama.py
-ipfs_accelerate_py/test/skills/test_hf_mlp-mixer.py
 ipfs_accelerate_py/test/skills/test_hf_mlp_mixer.py
 ipfs_accelerate_py/test/skills/test_hf_mobilebert.py
 ipfs_accelerate_py/test/skills/test_hf_mobilenet-v2.py
@@ -5238,8 +5228,6 @@ ipfs_accelerate_py/test/skills/test_hf_sew.py
 ipfs_accelerate_py/test/skills/test_hf_sew_d.py
 ipfs_accelerate_py/test/skills/test_hf_siglip.py
 ipfs_accelerate_py/test/skills/test_hf_siglip_vision_model.py
-ipfs_accelerate_py/test/skills/test_hf_speech-to-text-2.py
-ipfs_accelerate_py/test/skills/test_hf_speech-to-text.py
 ipfs_accelerate_py/test/skills/test_hf_speech_encoder_decoder.py
 ipfs_accelerate_py/test/skills/test_hf_speech_to_text.py
 ipfs_accelerate_py/test/skills/test_hf_speech_to_text_2.py
@@ -5264,7 +5252,6 @@ ipfs_accelerate_py/test/skills/test_hf_timesformer.py
 ipfs_accelerate_py/test/skills/test_hf_timm_backbone.py
 ipfs_accelerate_py/test/skills/test_hf_tinyllama.py
 ipfs_accelerate_py/test/skills/test_hf_trajectory_transformer.py
-ipfs_accelerate_py/test/skills/test_hf_transfo-xl.py
 ipfs_accelerate_py/test/skills/test_hf_transfo_xl.py
 ipfs_accelerate_py/test/skills/test_hf_trocr.py
 ipfs_accelerate_py/test/skills/test_hf_tvlt.py
@@ -5282,7 +5269,6 @@ ipfs_accelerate_py/test/skills/test_hf_video_llava.py
 ipfs_accelerate_py/test/skills/test_hf_videomae.py
 ipfs_accelerate_py/test/skills/test_hf_vilt.py
 ipfs_accelerate_py/test/skills/test_hf_vipllava.py
-ipfs_accelerate_py/test/skills/test_hf_vision-text-dual-encoder.py
 ipfs_accelerate_py/test/skills/test_hf_vision_encoder_decoder.py
 ipfs_accelerate_py/test/skills/test_hf_vision_t5.py
 ipfs_accelerate_py/test/skills/test_hf_vision_text_dual_encoder.py
@@ -5297,7 +5283,6 @@ ipfs_accelerate_py/test/skills/test_hf_vitmatte.py
 ipfs_accelerate_py/test/skills/test_hf_vits.py
 ipfs_accelerate_py/test/skills/test_hf_vivit.py
 ipfs_accelerate_py/test/skills/test_hf_vqgan.py
-ipfs_accelerate_py/test/skills/test_hf_wav2vec2-conformer.py
 ipfs_accelerate_py/test/skills/test_hf_wav2vec2.py
 ipfs_accelerate_py/test/skills/test_hf_wav2vec2_bert.py
 ipfs_accelerate_py/test/skills/test_hf_wav2vec2_conformer.py
@@ -5305,7 +5290,6 @@ ipfs_accelerate_py/test/skills/test_hf_wavlm.py
 ipfs_accelerate_py/test/skills/test_hf_whisper.py
 ipfs_accelerate_py/test/skills/test_hf_xclip.py
 ipfs_accelerate_py/test/skills/test_hf_xglm.py
-ipfs_accelerate_py/test/skills/test_hf_xlm-roberta.py
 ipfs_accelerate_py/test/skills/test_hf_xlm.py
 ipfs_accelerate_py/test/skills/test_hf_xlm_prophetnet.py
 ipfs_accelerate_py/test/skills/test_hf_xlm_roberta.py
@@ -6409,6 +6393,7 @@ ipfs_datasets_py/ipfs_datasets.py
 ipfs_datasets_py/llm_router.py
 ipfs_datasets_py/monitoring.py
 ipfs_datasets_py/monitoring_engine.py
+ipfs_datasets_py/multimodal_router.py
 ipfs_datasets_py/py.typed
 ipfs_datasets_py/router_deps.py
 ipfs_datasets_py/security.py
@@ -6466,6 +6451,7 @@ ipfs_datasets_py/cli/discord_cli.py
 ipfs_datasets_py/cli/email_cli.py
 ipfs_datasets_py/cli/finance_cli.py
 ipfs_datasets_py/cli/github_cli_init.py
+ipfs_datasets_py/cli/history_index_cli.py
 ipfs_datasets_py/cli/scraper_cli.py
 ipfs_datasets_py/cli/workflow_api.py
 ipfs_datasets_py/config/__init__.py
@@ -8152,6 +8138,7 @@ ipfs_datasets_py/processors/patent_dataset_api.py
 ipfs_datasets_py/processors/patent_scraper.py
 ipfs_datasets_py/processors/pdf_processing.py
 ipfs_datasets_py/processors/pdf_processor.py
+ipfs_datasets_py/processors/playwright_limiter.py
 ipfs_datasets_py/processors/profiling.py
 ipfs_datasets_py/processors/protocol.py
 ipfs_datasets_py/processors/query_engine.py
@@ -8326,12 +8313,14 @@ ipfs_datasets_py/processors/legal_scrapers/result_filter.py
 ipfs_datasets_py/processors/legal_scrapers/scraping_state.py
 ipfs_datasets_py/processors/legal_scrapers/search_result_citation_extractor.py
 ipfs_datasets_py/processors/legal_scrapers/search_term_generator.py
+ipfs_datasets_py/processors/legal_scrapers/shared_fetch_cache.py
 ipfs_datasets_py/processors/legal_scrapers/state_admin_rules_scraper.py
 ipfs_datasets_py/processors/legal_scrapers/state_laws_agentic_daemon.py
 ipfs_datasets_py/processors/legal_scrapers/state_laws_scheduler_engine.py
 ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py
 ipfs_datasets_py/processors/legal_scrapers/state_laws_verifier.py
 ipfs_datasets_py/processors/legal_scrapers/state_procedure_rules_scraper.py
+ipfs_datasets_py/processors/legal_scrapers/url_archive_cache.py
 ipfs_datasets_py/processors/legal_scrapers/bluebook_citation_validator/__init__.py
 ipfs_datasets_py/processors/legal_scrapers/bluebook_citation_validator/analysis.py
 ipfs_datasets_py/processors/legal_scrapers/bluebook_citation_validator/cli.py
@@ -8460,9 +8449,11 @@ ipfs_datasets_py/processors/medical_scrapers/clinical_trials_engine.py
 ipfs_datasets_py/processors/medical_scrapers/pubmed_engine.py
 ipfs_datasets_py/processors/medical_scrapers/research_scraper_core.py
 ipfs_datasets_py/processors/multimedia/__init__.py
+ipfs_datasets_py/processors/multimedia/attachment_text_extractor.py
 ipfs_datasets_py/processors/multimedia/converters.py
 ipfs_datasets_py/processors/multimedia/discord_wrapper.py
 ipfs_datasets_py/processors/multimedia/email_analyze_engine.py
+ipfs_datasets_py/processors/multimedia/email_duckdb_index.py
 ipfs_datasets_py/processors/multimedia/email_processor.py
 ipfs_datasets_py/processors/multimedia/ffmpeg_batch_engine.py
 ipfs_datasets_py/processors/multimedia/ffmpeg_convert_engine.py
@@ -8472,6 +8463,9 @@ ipfs_datasets_py/processors/multimedia/ffmpeg_info_engine.py
 ipfs_datasets_py/processors/multimedia/ffmpeg_mux_demux_engine.py
 ipfs_datasets_py/processors/multimedia/ffmpeg_stream_engine.py
 ipfs_datasets_py/processors/multimedia/ffmpeg_wrapper.py
+ipfs_datasets_py/processors/multimedia/google_drive_oauth.py
+ipfs_datasets_py/processors/multimedia/google_takeout_automation.py
+ipfs_datasets_py/processors/multimedia/google_voice_processor.py
 ipfs_datasets_py/processors/multimedia/media_processor.py
 ipfs_datasets_py/processors/multimedia/media_utils.py
 ipfs_datasets_py/processors/multimedia/ytdlp_download_engine.py
@@ -14243,6 +14237,7 @@ scripts/ops/legal_data/report_state_admin_webarch_gaps.py
 scripts/ops/legal_data/report_state_admin_webarch_page_gaps.py
 scripts/ops/legal_data/report_state_law_corpus_gaps.py
 scripts/ops/legal_data/report_state_law_page_gaps.py
+scripts/ops/legal_data/run_all_state_legal_corpora_agentic.py
 scripts/ops/legal_data/run_formal_logic_corpus_batches.py
 scripts/ops/legal_data/run_hybrid_v2_pipeline.py
 scripts/ops/legal_data/run_state_procedure_rules_all_states.py
@@ -14992,6 +14987,8 @@ tests/unit/test_data_format_converter.py
 tests/unit/test_data_transformation_migration.py
 tests/unit/test_discord_edge_cases.py
 tests/unit/test_dynamic_tool_runner_dispatch.py
+tests/unit/test_email_cli_google_takeout.py
+tests/unit/test_email_cli_google_voice.py
 tests/unit/test_embedding_adapter_runtime_cache.py
 tests/unit/test_embeddings_router_hf_inference_api.py
 tests/unit/test_error_handling.py
@@ -15001,6 +14998,7 @@ tests/unit/test_format_detector.py
 tests/unit/test_graphrag_edge_cases_implemented.py
 tests/unit/test_graphrag_integrator_unit.py
 tests/unit/test_graphrag_query_engine_budget.py
+tests/unit/test_history_index_cli.py
 tests/unit/test_hybrid_vector_graph_search.py
 tests/unit/test_ipfs_accelerate_converter.py
 tests/unit/test_ipfs_backend_router.py
@@ -15021,6 +15019,7 @@ tests/unit/test_mcp_pdf_tools.py
 tests/unit/test_metadata_extractor.py
 tests/unit/test_model_manager_hf_inference_models.py
 tests/unit/test_monitoring.py
+tests/unit/test_multimodal_router.py
 tests/unit/test_ocr_engine_unit.py
 tests/unit/test_p2p_connectivity.py
 tests/unit/test_pdf_processor_unit.py
@@ -15191,16 +15190,25 @@ tests/unit/legal_scrapers/__init__.py
 tests/unit/legal_scrapers/test_agentic_scraper_daemon.py
 tests/unit/legal_scrapers/test_brave_legal_search.py
 tests/unit/legal_scrapers/test_caselaw_access_vector_tools.py
+tests/unit/legal_scrapers/test_common_crawl_index_loader.py
+tests/unit/legal_scrapers/test_common_crawl_scraper_source_type.py
 tests/unit/legal_scrapers/test_federal_law_scraper.py
 tests/unit/legal_scrapers/test_ipfs_storage_integration.py
 tests/unit/legal_scrapers/test_legal_dataset_api.py
+tests/unit/legal_scrapers/test_legal_web_archive_search.py
 tests/unit/legal_scrapers/test_oregon_admin_rules_scraper.py
 tests/unit/legal_scrapers/test_oregon_rules_expansion.py
 tests/unit/legal_scrapers/test_parallel_web_archiver.py
 tests/unit/legal_scrapers/test_phase11_legal_scrapers.py
+tests/unit/legal_scrapers/test_state_admin_rules_direct_agentic_all_states.py
+tests/unit/legal_scrapers/test_state_admin_rules_direct_agentic_states.py
+tests/unit/legal_scrapers/test_state_admin_rules_discovery_blocks.py
+tests/unit/legal_scrapers/test_state_admin_rules_fetch_caps.py
+tests/unit/legal_scrapers/test_state_admin_rules_no_justia_fallback.py
 tests/unit/legal_scrapers/test_state_admin_rules_scraper.py
 tests/unit/legal_scrapers/test_state_laws_scraper.py
 tests/unit/legal_scrapers/test_state_laws_verifier_operational.py
+tests/unit/legal_scrapers/test_state_procedure_rules_scraper.py
 tests/unit/legal_scrapers/test_state_scraper_jsonld_enrichment.py
 tests/unit/legal_scrapers/test_state_scrapers_archival_fetch_path.py
 tests/unit/logic/test_conversion_result_aliases.py
@@ -16467,6 +16475,7 @@ tests/unit_tests/search/logic_integration/test_logic_enhanced_rag.py
 tests/unit_tests/web_archive/__init__.py
 tests/unit_tests/web_archive/conftest.py
 tests/unit_tests/web_archive/test_agentic_scrape_optimizer.py
+tests/unit_tests/web_archive/test_common_crawl_integration.py
 tests/unit_tests/web_archive/test_legacy_wrappers.py
 tests/unit_tests/web_archive/test_mcp_unified_api_tools.py
 tests/unit_tests/web_archive/test_metrics_registry.py
