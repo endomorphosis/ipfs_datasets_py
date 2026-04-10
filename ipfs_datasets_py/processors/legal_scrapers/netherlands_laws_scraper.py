@@ -18,6 +18,7 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
+from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set
 from urllib.parse import urljoin, urlparse
 
@@ -39,15 +40,64 @@ USER_AGENT = "ipfs-datasets-netherlands-law-scraper/1.0"
 _WS_RE = re.compile(r"\s+")
 _WETTEN_HOST_RE = re.compile(r"(^|\.)wetten\.overheid\.nl$", re.IGNORECASE)
 _BWB_ID_RE = re.compile(r"/(BWBR[0-9A-Z]+)(?:/|$)", re.IGNORECASE)
+_ARTICLE_HEADING_RE = re.compile(
+    r"^artikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b(?:\s*[:.\-]\s*(.*))?$",
+    re.IGNORECASE,
+)
+_STRUCTURE_KIND_PATTERNS: List[tuple[str, re.Pattern[str]]] = [
+    ("boek", re.compile(r"^boek\s+([0-9ivxlcdm]+)\b", re.IGNORECASE)),
+    ("titel", re.compile(r"^titel\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
+    ("hoofdstuk", re.compile(r"^hoofdstuk\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
+    ("afdeling", re.compile(r"^afdeling\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
+    ("paragraaf", re.compile(r"^paragraaf\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
+    ("artikel", _ARTICLE_HEADING_RE),
+]
+_STRUCTURE_LEVELS = ["boek", "titel", "hoofdstuk", "afdeling", "paragraaf", "artikel"]
+_AUTHORITATIVE_HOST_PATTERNS = [
+    re.compile(r"(^|\.)wetten\.overheid\.nl$", re.IGNORECASE),
+    re.compile(r"(^|\.)overheid\.nl$", re.IGNORECASE),
+    re.compile(r"(^|\.)koopoverheid\.nl$", re.IGNORECASE),
+    re.compile(r"(^|\.)officielebekendmakingen\.nl$", re.IGNORECASE),
+]
+_INFO_LABEL_PATTERNS = {
+    "regulation_type": [
+        re.compile(r"soort regeling\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+    "identifier": [
+        re.compile(r"identificatienummer\s+(BWBR[0-9A-Z]+)", re.IGNORECASE),
+    ],
+    "cite_title": [
+        re.compile(r"citeertitel\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+    "official_title": [
+        re.compile(r"(?:offici[eë]le titel|opschrift)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+    "effective_date": [
+        re.compile(r"(?:datum inwerkingtreding|inwerkingtreding|geldig van)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+    "publication_date": [
+        re.compile(r"(?:datum van uitgifte|publicatiedatum|datum publicatie)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+    "last_modified_date": [
+        re.compile(r"(?:laatste wijziging|laatst gewijzigd)\s+(.+?)(?:\s{2,}|$)", re.IGNORECASE),
+    ],
+}
+_DUTCH_MONTHS = {
+    "januari": 1,
+    "februari": 2,
+    "maart": 3,
+    "april": 4,
+    "mei": 5,
+    "juni": 6,
+    "juli": 7,
+    "augustus": 8,
+    "september": 9,
+    "oktober": 10,
+    "november": 11,
+    "december": 12,
+}
 
 _DEFAULT_SOURCE_CONFIGS: List[Dict[str, Any]] = [
-    {
-        "name": "wetten_overheid_search",
-        "label": "Wetten.overheid.nl Search",
-        "type": "index",
-        "url": "https://wetten.overheid.nl/zoeken",
-        "jurisdiction": "NL",
-    },
     {
         "name": "wetten_overheid_burgerlijk_wetboek_boek_1",
         "label": "Burgerlijk Wetboek Boek 1",
@@ -128,7 +178,286 @@ def _extract_document_links(index_html: str, index_url: str) -> List[str]:
     return links
 
 
-def _extract_title_and_text(html: str) -> Dict[str, str]:
+def _classify_structure_heading(text: str) -> tuple[Optional[str], Optional[str]]:
+    label = _normalize_space(text)
+    for kind, pattern in _STRUCTURE_KIND_PATTERNS:
+        match = pattern.match(label)
+        if match:
+            return kind, _normalize_space(match.group(1))
+    return None, None
+
+
+def _clear_lower_hierarchy_levels(hierarchy: Dict[str, str], kind: str) -> None:
+    if kind not in _STRUCTURE_LEVELS:
+        return
+    current_index = _STRUCTURE_LEVELS.index(kind)
+    for lower_kind in _STRUCTURE_LEVELS[current_index + 1 :]:
+        hierarchy.pop(lower_kind, None)
+
+
+def _parse_dutch_date(value: Any) -> str:
+    text = _normalize_space(value)
+    if not text:
+        return ""
+
+    iso_match = re.search(r"\b(\d{4}-\d{2}-\d{2})\b", text)
+    if iso_match:
+        return iso_match.group(1)
+
+    numeric_match = re.search(r"\b(\d{1,2})-(\d{1,2})-(\d{4})\b", text)
+    if numeric_match:
+        day, month, year = numeric_match.groups()
+        return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
+
+    month_name_match = re.search(
+        r"\b(\d{1,2})\s+([a-z\u00e4\u00eb\u00ef\u00f6\u00fc]+)\s+(\d{4})\b",
+        text,
+        re.IGNORECASE,
+    )
+    if month_name_match:
+        day, month_name, year = month_name_match.groups()
+        month = _DUTCH_MONTHS.get(month_name.lower())
+        if month:
+            return f"{int(year):04d}-{month:02d}-{int(day):02d}"
+
+    return ""
+
+
+def _append_text(target: Dict[str, Any], text: str) -> None:
+    normalized = _normalize_space(text)
+    if not normalized:
+        return
+    parts = target.setdefault("_text_parts", [])
+    if not isinstance(parts, list):
+        parts = []
+        target["_text_parts"] = parts
+    parts.append(normalized)
+
+
+def _finalize_parts(parts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    finalized: List[Dict[str, Any]] = []
+    for part in parts:
+        row = dict(part)
+        text = _normalize_space(" ".join(str(item) for item in row.pop("_text_parts", [])))
+        row["text"] = text
+        if row.get("heading"):
+            row["heading"] = _normalize_space(row["heading"])
+        finalized.append(row)
+    return finalized
+
+
+def _extract_document_structure(content_root: Any) -> Dict[str, Any]:
+    parts: List[Dict[str, Any]] = []
+    current_part: Optional[Dict[str, Any]] = None
+    hierarchy: Dict[str, str] = {}
+
+    for node in content_root.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "li"], recursive=True):
+        text = _normalize_space(node.get_text(" ", strip=True))
+        if not text:
+            continue
+
+        kind, number = _classify_structure_heading(text)
+        if kind is not None and (node.name.startswith("h") or kind == "artikel"):
+            _clear_lower_hierarchy_levels(hierarchy, kind)
+            if kind != "artikel":
+                hierarchy[kind] = text
+                current_part = {
+                    "kind": kind,
+                    "label": text,
+                    "number": number,
+                    "hierarchy": dict(hierarchy),
+                }
+                parts.append(current_part)
+            else:
+                article_match = _ARTICLE_HEADING_RE.match(text)
+                current_part = {
+                    "kind": kind,
+                    "label": text,
+                    "number": number,
+                    "citation": f"Artikel {number}" if number else "Artikel",
+                    "heading": _normalize_space(article_match.group(2)) if article_match and article_match.group(2) else "",
+                    "hierarchy": dict(hierarchy),
+                }
+                parts.append(current_part)
+            continue
+
+        if current_part is not None:
+            _append_text(current_part, text)
+
+    finalized_parts = _finalize_parts(parts)
+    articles = [part for part in finalized_parts if str(part.get("kind")) == "artikel"]
+    chapters = [
+        part
+        for part in finalized_parts
+        if str(part.get("kind")) in {"boek", "titel", "hoofdstuk", "afdeling", "paragraaf"}
+    ]
+    return {"parts": finalized_parts, "articles": articles, "chapters": chapters}
+
+
+def _is_authoritative_url(url: str) -> bool:
+    parsed = urlparse(str(url or "").strip())
+    return any(pattern.search(parsed.netloc or "") for pattern in _AUTHORITATIVE_HOST_PATTERNS)
+
+
+def _collect_labeled_values(soup: Any) -> Dict[str, List[str]]:
+    values: Dict[str, List[str]] = defaultdict(list)
+
+    for term in soup.select("dt"):
+        definition = term.find_next_sibling("dd")
+        if definition is None:
+            continue
+        key = _normalize_space(term.get_text(" ", strip=True)).lower()
+        value = _normalize_space(definition.get_text(" ", strip=True))
+        if key and value:
+            values[key].append(value)
+
+    for row in soup.select("tr"):
+        header = row.find(["th", "td"])
+        if header is None:
+            continue
+        cells = row.find_all(["th", "td"])
+        if len(cells) < 2:
+            continue
+        key = _normalize_space(cells[0].get_text(" ", strip=True)).lower()
+        value = _normalize_space(" ".join(cell.get_text(" ", strip=True) for cell in cells[1:]))
+        if key and value:
+            values[key].append(value)
+
+    return dict(values)
+
+
+def _match_info_label(text: str, key: str) -> str:
+    for pattern in _INFO_LABEL_PATTERNS.get(key, []):
+        match = pattern.search(text)
+        if match:
+            return _normalize_space(match.group(1))
+    return ""
+
+
+def _discover_authoritative_source_urls(soup: Any, info_url: str) -> List[str]:
+    discovered: List[str] = []
+    seen: Set[str] = set()
+
+    for url in [info_url]:
+        normalized = str(url or "").strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            discovered.append(normalized)
+
+    for anchor in soup.select("a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        if not href:
+            continue
+        absolute = urljoin(info_url or "https://wetten.overheid.nl/", href)
+        absolute = absolute.split("#", 1)[0]
+        if not _is_authoritative_url(absolute):
+            continue
+        if absolute in seen:
+            continue
+        seen.add(absolute)
+        discovered.append(absolute)
+
+    return discovered
+
+
+def _extract_version_history(soup: Any, *, identifier: str, base_url: str) -> List[Dict[str, str]]:
+    versions: List[Dict[str, str]] = []
+    seen: Set[str] = set()
+
+    for anchor in soup.select("a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        if not href:
+            continue
+        absolute = urljoin(base_url or "https://wetten.overheid.nl/", href)
+        if identifier and identifier.upper() not in absolute.upper():
+            continue
+        date_match = re.search(r"/(\d{4}-\d{2}-\d{2})(?:/|$)", absolute)
+        if not date_match:
+            continue
+        normalized = absolute.split("#", 1)[0]
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        label = _normalize_space(anchor.get_text(" ", strip=True))
+        versions.append(
+            {
+                "effective_date": date_match.group(1),
+                "label": label,
+                "source_url": normalized,
+            }
+        )
+
+    versions.sort(key=lambda item: item.get("effective_date", ""))
+    return versions
+
+
+def _extract_info_metadata(html: str, *, info_url: str = "") -> Dict[str, Any]:
+    soup = BeautifulSoup(html, "html.parser")
+    text = _normalize_space(soup.get_text(" ", strip=True))
+    labeled_values = _collect_labeled_values(soup)
+
+    title = ""
+    title_node = soup.select_one("h1") or soup.select_one("title")
+    if title_node is not None:
+        title = _normalize_space(title_node.get_text(" ", strip=True))
+
+    regulation_type = (
+        next(iter(labeled_values.get("soort regeling", [])), "")
+        or _match_info_label(text, "regulation_type")
+    )
+    identifier = (
+        next(iter(labeled_values.get("identificatienummer", [])), "")
+        or _match_info_label(text, "identifier")
+    ).upper()
+    official_title = (
+        next(iter(labeled_values.get("officiële titel", [])), "")
+        or next(iter(labeled_values.get("officiele titel", [])), "")
+        or next(iter(labeled_values.get("opschrift", [])), "")
+        or _match_info_label(text, "official_title")
+        or title
+    )
+    cite_title = (
+        next(iter(labeled_values.get("citeertitel", [])), "")
+        or _match_info_label(text, "cite_title")
+    )
+    aliases = [_normalize_space(value) for value in [cite_title, title] if _normalize_space(value)]
+    aliases = list(dict.fromkeys(alias for alias in aliases if alias and alias != official_title))
+
+    effective_date = _parse_dutch_date(
+        next(iter(labeled_values.get("datum inwerkingtreding", [])), "")
+        or next(iter(labeled_values.get("inwerkingtreding", [])), "")
+        or next(iter(labeled_values.get("geldig van", [])), "")
+        or _match_info_label(text, "effective_date")
+    )
+    publication_date = _parse_dutch_date(
+        next(iter(labeled_values.get("datum van uitgifte", [])), "")
+        or next(iter(labeled_values.get("publicatiedatum", [])), "")
+        or next(iter(labeled_values.get("datum publicatie", [])), "")
+        or _match_info_label(text, "publication_date")
+    )
+    last_modified_date = _parse_dutch_date(
+        next(iter(labeled_values.get("laatste wijziging", [])), "")
+        or next(iter(labeled_values.get("laatst gewijzigd", [])), "")
+        or _match_info_label(text, "last_modified_date")
+    )
+    authority_sources = _discover_authoritative_source_urls(soup, info_url)
+    historical_versions = _extract_version_history(soup, identifier=identifier, base_url=info_url)
+
+    return {
+        "title": title,
+        "canonical_title": official_title,
+        "regulation_type": regulation_type,
+        "identifier": identifier,
+        "aliases": aliases,
+        "effective_date": effective_date,
+        "publication_date": publication_date,
+        "last_modified_date": last_modified_date,
+        "historical_versions": historical_versions,
+        "authority_sources": authority_sources,
+    }
+
+
+def _extract_title_and_text(html: str) -> Dict[str, Any]:
     soup = BeautifulSoup(html, "html.parser")
 
     heading = ""
@@ -144,8 +473,55 @@ def _extract_title_and_text(html: str) -> Dict[str, str]:
         or soup
     )
     text = _normalize_space(content_root.get_text(" ", strip=True))
+    structure = _extract_document_structure(content_root)
 
-    return {"title": heading, "text": text}
+    return {
+        "title": heading,
+        "text": text,
+        "structure": structure,
+    }
+
+
+def _verify_cross_sources(
+    session: "requests.Session",
+    *,
+    law_url: str,
+    identifier: str,
+    title: str,
+    info_metadata: Dict[str, Any],
+) -> Dict[str, Any]:
+    source_urls = [law_url]
+    source_urls.extend(info_metadata.get("authority_sources") or [])
+    deduped_urls = list(dict.fromkeys(url for url in source_urls if str(url).strip()))
+    verified_sources: List[Dict[str, Any]] = []
+
+    for url in deduped_urls[:3]:
+        try:
+            response = session.get(url, timeout=40)
+            if int(response.status_code) != 200:
+                verified_sources.append({"url": url, "status": int(response.status_code), "matched_identifier": False})
+                continue
+            page_text = _normalize_space(BeautifulSoup(response.text or "", "html.parser").get_text(" ", strip=True))
+            title_match = bool(title) and title.lower() in page_text.lower()
+            identifier_match = bool(identifier) and identifier.upper() in page_text.upper()
+            verified_sources.append(
+                {
+                    "url": url,
+                    "status": int(response.status_code),
+                    "matched_identifier": identifier_match,
+                    "matched_title": title_match,
+                }
+            )
+        except Exception as exc:
+            verified_sources.append({"url": url, "status": "error", "error": str(exc)})
+
+    identifier_matches = [item for item in verified_sources if item.get("matched_identifier") is True]
+    return {
+        "authoritative_sources_checked": len(verified_sources),
+        "authoritative_sources": verified_sources,
+        "identifier_consistent": bool(identifier_matches) or not identifier,
+        "title_consistent": any(item.get("matched_title") is True for item in verified_sources) or not title,
+    }
 
 
 def _jsonld_record(record: Dict[str, Any]) -> Dict[str, Any]:
@@ -169,7 +545,7 @@ def _jsonld_record(record: Dict[str, Any]) -> Dict[str, Any]:
         "legislationType": str(record.get("document_type") or "statute"),
         "jurisdiction": "NL",
         "inLanguage": str(record.get("language") or "nl"),
-        "dateModified": datetime.now().date().isoformat(),
+        "dateModified": str(record.get("last_modified_date") or datetime.now().date().isoformat()),
         "sourceUrl": source_url,
         "text": str(record.get("text") or ""),
     }
@@ -198,6 +574,18 @@ async def list_netherlands_law_sources() -> Dict[str, Any]:
         "status": "success",
         "count": len(_DEFAULT_SOURCE_CONFIGS),
         "sources": list(_DEFAULT_SOURCE_CONFIGS),
+        "verification_sources": [
+            {
+                "name": "koop_overheid_rijksoverheid_page",
+                "url": "https://www.koopoverheid.nl/voor-overheden/rijksoverheid",
+                "note": "KOOP describes Overheid.nl as the publication channel for laws and regulations.",
+            },
+            {
+                "name": "wetten_overheid_information_pages",
+                "url_template": "https://wetten.overheid.nl/<BWBR-ID>/informatie",
+                "note": "Per-document metadata and identifier verification page.",
+            },
+        ],
     }
 
 
@@ -304,21 +692,76 @@ async def scrape_netherlands_laws(
                 raise RuntimeError("No law text extracted")
 
             identifier = _extract_bwb_id(law_url)
+            structure = parsed.get("structure") or {}
+            info_metadata: Dict[str, Any] = {}
+            info_url = ""
+            if identifier:
+                info_url = f"https://wetten.overheid.nl/{identifier}/informatie"
+                try:
+                    info_response = session.get(info_url, timeout=40)
+                    if int(info_response.status_code) == 200:
+                        info_metadata = _extract_info_metadata(info_response.text or "", info_url=info_url)
+                except Exception as exc:
+                    errors.append(f"{law_url} [informatie]: {exc}")
+
+            canonical_title = str(info_metadata.get("canonical_title") or info_metadata.get("title") or title or identifier)
+            resolved_identifier = str(info_metadata.get("identifier") or identifier)
+            source_verification = _verify_cross_sources(
+                session,
+                law_url=law_url,
+                identifier=resolved_identifier,
+                title=canonical_title,
+                info_metadata=info_metadata,
+            )
+            structure_parts = structure.get("parts") or []
+            structure_articles = structure.get("articles") or []
+            structure_chapters = structure.get("chapters") or []
+
             row: Dict[str, Any] = {
                 "jurisdiction": "NL",
+                "jurisdiction_name": "Netherlands",
                 "country": "Netherlands",
                 "language": "nl",
-                "identifier": identifier,
-                "title": title or identifier or "Netherlands Law",
+                "identifier": resolved_identifier,
+                "official_identifier": resolved_identifier,
+                "title": canonical_title or "Netherlands Law",
+                "canonical_title": canonical_title or "Netherlands Law",
+                "aliases": list(info_metadata.get("aliases") or []),
                 "text": text,
                 "source_url": law_url,
-                "document_type": "statute",
+                "information_url": info_url or None,
+                "document_type": str(info_metadata.get("regulation_type") or "statute").lower().replace(" ", "_"),
+                "official_metadata": {
+                    "effective_date": info_metadata.get("effective_date") or "",
+                    "publication_date": info_metadata.get("publication_date") or "",
+                    "last_modified_date": info_metadata.get("last_modified_date") or "",
+                },
+                "effective_date": str(info_metadata.get("effective_date") or ""),
+                "publication_date": str(info_metadata.get("publication_date") or ""),
+                "last_modified_date": str(info_metadata.get("last_modified_date") or ""),
+                "historical_versions": list(info_metadata.get("historical_versions") or []),
+                "article_count": len(structure_articles),
+                "chapter_count": len(structure_chapters),
+                "articles": structure_articles,
+                "chapters": structure_chapters,
+                "parts": structure_parts,
+                "headings": [part.get("label") for part in structure_parts if str(part.get("kind")) != "artikel"],
+                "citations": [part.get("citation") for part in structure_articles if part.get("citation")],
                 "scraped_at": datetime.now().isoformat(),
             }
             if include_metadata:
                 row["metadata"] = {
                     "host": urlparse(law_url).netloc,
                     "source_system": "wetten.overheid.nl",
+                    "info_url": info_url or None,
+                    "authority_sources": list(info_metadata.get("authority_sources") or []),
+                    "verification": dict(
+                        {
+                            "document_page_verified": True,
+                            "information_page_verified": bool(info_metadata),
+                        },
+                        **source_verification,
+                    ),
                 }
             records.append(row)
         except Exception as exc:

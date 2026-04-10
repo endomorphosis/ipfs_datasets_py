@@ -83,6 +83,16 @@ _CORPORA: Dict[str, CanonicalLegalCorpus] = {
         combined_parquet_filename="state_court_rules_all_states.parquet",
         combined_embeddings_filename="state_court_rules_all_states_embeddings.parquet",
     ),
+    "netherlands_laws": CanonicalLegalCorpus(
+        key="netherlands_laws",
+        display_name="Netherlands Laws",
+        hf_dataset_id="justicedao/ipfs_netherlands_laws",
+        local_root_name="netherlands_laws",
+        jsonld_dir_name="netherlands_laws_jsonld",
+        parquet_dir_name="netherlands_laws_parquet_cid",
+        combined_parquet_filename="netherlands_laws.parquet",
+        combined_embeddings_filename="netherlands_laws_embeddings.parquet",
+    ),
 }
 
 

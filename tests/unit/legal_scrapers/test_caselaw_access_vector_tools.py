@@ -109,6 +109,7 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
         "search_us_code_corpus",
         "search_state_law_corpus",
         "search_federal_register_corpus",
+        "search_netherlands_law_corpus",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert required_name in by_name
@@ -145,6 +146,10 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert federal_register_params["cid_metadata_field"]["default"] == "ipfs_cid"
     assert federal_register_params["cid_column"]["default"] == "ipfs_cid"
 
+    netherlands_params = by_name["search_netherlands_law_corpus"]["parameters"]
+    assert netherlands_params["hf_dataset_id"]["default"] == "justicedao/ipfs_netherlands_laws"
+    assert netherlands_params["hf_parquet_file"]["default"] == "netherlands_laws.parquet"
+
 
 def test_tool_registration_mapping_includes_cap_entries() -> None:
     """Central migrated tool mapping should expose CAP entries for auto registration."""
@@ -159,6 +164,7 @@ def test_tool_registration_mapping_includes_cap_entries() -> None:
         "search_caselaw_access_cases",
         "search_us_code_corpus",
         "search_state_law_corpus",
+        "search_netherlands_law_corpus",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert func_name in legal_mapping
@@ -484,6 +490,46 @@ async def test_federal_register_search_uses_canonical_cid_defaults(
     preferred_names = captured["payload"]["preferred_case_parquet_names"]
     assert "laws.parquet" in preferred_names
     assert "federal_register.parquet" in preferred_names
+    assert captured["payload"]["chunk_lookup_enabled"] is False
+
+
+@pytest.mark.anyio
+async def test_netherlands_law_search_uses_canonical_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Netherlands-law wrapper should target the canonical CID-keyed published parquet."""
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["venv_dir"] = venv_dir
+        return {
+            "status": "success",
+            "operation": operation,
+            "results": [],
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "netherlands_laws",
+            "query_vector": [0.7, 0.1, 0.2],
+            "auto_setup_venv": False,
+        },
+        tool_version="3.4.0",
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_cases"
+    assert result["tool_version"] == "3.4.0"
+    assert result["jurisdiction"] == "NL"
+    assert captured["payload"]["hf_dataset_id"] == "justicedao/ipfs_netherlands_laws"
+    assert captured["payload"]["hf_parquet_file"] == "netherlands_laws.parquet"
+    assert captured["payload"]["cid_metadata_field"] == "ipfs_cid"
+    assert captured["payload"]["cid_column"] == "ipfs_cid"
+    assert "netherlands_laws.parquet" in captured["payload"]["preferred_case_parquet_names"]
     assert captured["payload"]["chunk_lookup_enabled"] is False
 
 

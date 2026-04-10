@@ -473,6 +473,12 @@ TOOL_MAPPINGS = {
                 "description": "Scrape Netherlands laws from official Dutch government law pages",
                 "tags": ["legal", "netherlands", "eu", "international", "scraping"]
             },
+            "search_netherlands_law_corpus": {
+                "name": "search_netherlands_law_corpus",
+                "category": "legal_datasets",
+                "description": "Search Netherlands law vector corpus with metadata enrichment",
+                "tags": ["legal", "netherlands", "eu", "international", "search", "vectors"]
+            },
             "get_us_code_titles": {
                 "name": "get_us_code_titles",
                 "category": "legal_datasets",

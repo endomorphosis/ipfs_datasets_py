@@ -156,6 +156,14 @@ async def search_federal_register_corpus(parameters: Dict[str, Any]) -> Dict[str
     return await search_federal_register_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def search_netherlands_law_corpus(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search Netherlands law corpus vectors with metadata enrichment."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        search_netherlands_law_corpus_from_parameters,
+    )
+    return await search_netherlands_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def search_federal_register_hf_index(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Search Federal Register directly from HF-hosted FAISS + metadata files."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -383,6 +391,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     search_state_law_corpus,
     search_court_rules_corpus,
     search_federal_register_corpus,
+    search_netherlands_law_corpus,
     search_federal_register_hf_index,
     legal_search_brave,
     legal_search_brave_terms,
@@ -613,6 +622,30 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "search_netherlands_law_corpus",
+        "description": "Search Netherlands law vector corpus and enrich matches with metadata/snippets.",
+        "function": search_netherlands_law_corpus,
+        "parameters": {
+            "collection_name": {"type": "string", "required": True},
+            "query_vector": {"type": "array", "required": True},
+            "store_type": {"type": "string", "default": "faiss"},
+            "top_k": {"type": "integer", "default": 10},
+            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_netherlands_laws"},
+            "hf_parquet_file": {"type": "string", "default": "netherlands_laws.parquet"},
+            "hf_parquet_prefix": {"type": "string", "required": False},
+            "cid_metadata_field": {"type": "string", "default": "ipfs_cid"},
+            "cid_column": {"type": "string", "default": "ipfs_cid"},
+            "text_field_candidates": {"type": "array", "required": False},
+            "snippet_chars": {"type": "integer", "default": 320},
+            "local_case_parquet_file": {"type": "string", "required": False},
+            "preferred_case_parquet_names": {"type": "array", "required": False},
+            "max_case_parquet_files": {"type": "integer", "default": 0},
+            "chunk_lookup_enabled": {"type": "boolean", "default": False},
+            "auto_setup_venv": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "search_federal_register_hf_index",
         "description": "Search Federal Register directly from HF-hosted FAISS index + metadata using query text.",
         "function": search_federal_register_hf_index,
@@ -783,6 +816,7 @@ __all__ = [
     "search_state_law_corpus",
     "search_court_rules_corpus",
     "search_federal_register_corpus",
+    "search_netherlands_law_corpus",
     "search_federal_register_hf_index",
     "legal_search_brave",
     "legal_search_brave_terms",

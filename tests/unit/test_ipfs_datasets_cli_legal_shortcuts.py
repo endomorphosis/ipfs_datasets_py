@@ -92,3 +92,59 @@ def test_legal_search_federal_register_requires_collection_name(capsys) -> None:
 
     out = capsys.readouterr().out
     assert "Usage: ipfs-datasets legal search-federal-register" in out
+
+
+def test_legal_scrape_netherlands_laws_dispatches(monkeypatch, capsys) -> None:
+    cli_module = _load_cli_module()
+    captured: dict[str, object] = {}
+
+    async def _fake_scrape_netherlands_laws_from_parameters(parameters, tool_version: str = "1.0.0"):
+        captured["parameters"] = dict(parameters)
+        captured["tool_version"] = tool_version
+        return {
+            "status": "success",
+            "data": [{"identifier": "BWBR0001854"}],
+        }
+
+    fake_legal_dataset_api = ModuleType(
+        "ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api"
+    )
+    fake_legal_dataset_api.scrape_netherlands_laws_from_parameters = (
+        _fake_scrape_netherlands_laws_from_parameters
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api",
+        fake_legal_dataset_api,
+    )
+
+    cli_module.execute_heavy_command(
+        [
+            "legal",
+            "scrape-netherlands-laws",
+            "--document_urls",
+            '["https://wetten.overheid.nl/BWBR0001854/"]',
+            "--max_documents",
+            "2",
+        ]
+    )
+
+    out = capsys.readouterr().out
+    assert '"status": "success"' in out
+    params = captured["parameters"]
+    assert params["document_urls"] == ["https://wetten.overheid.nl/BWBR0001854/"]
+    assert params["max_documents"] == 2
+
+
+def test_legal_scrape_netherlands_laws_requires_source_args(capsys) -> None:
+    cli_module = _load_cli_module()
+
+    cli_module.execute_heavy_command(
+        [
+            "legal",
+            "scrape-netherlands-laws",
+        ]
+    )
+
+    out = capsys.readouterr().out
+    assert "Usage: ipfs-datasets legal scrape-netherlands-laws" in out

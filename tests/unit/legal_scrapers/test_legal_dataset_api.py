@@ -54,3 +54,35 @@ async def test_netherlands_laws_api_delegates_parameters(monkeypatch):
     assert captured["max_documents"] == 3
     assert captured["include_metadata"] is False
     assert captured["rate_limit_delay"] == 1.25
+
+
+@pytest.mark.asyncio
+async def test_search_netherlands_law_corpus_applies_canonical_defaults(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    captured = {}
+
+    def _fake_runner(*, operation, payload, venv_dir=".venv"):
+        captured["operation"] = operation
+        captured["payload"] = payload
+        captured["venv_dir"] = venv_dir
+        return {"status": "success", "operation": operation, "results": []}
+
+    monkeypatch.setattr(legal_dataset_api, "_run_cap_vector_operation_in_venv", _fake_runner)
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2, 0.3],
+            "auto_setup_venv": False,
+        },
+        tool_version="4.0.0",
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_cases"
+    assert result["tool_version"] == "4.0.0"
+    assert result["jurisdiction"] == "NL"
+    assert captured["payload"]["hf_dataset_id"] == "justicedao/ipfs_netherlands_laws"
+    assert captured["payload"]["hf_parquet_file"] == "netherlands_laws.parquet"
+    assert captured["payload"]["chunk_lookup_enabled"] is False

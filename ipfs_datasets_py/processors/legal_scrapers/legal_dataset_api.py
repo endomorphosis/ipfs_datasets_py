@@ -48,6 +48,7 @@ DEFAULT_STATE_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("state_laws").hf_d
 DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_admin_rules").hf_dataset_id
 DEFAULT_COURT_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_court_rules").hf_dataset_id
 DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID = get_canonical_legal_corpus("federal_register").hf_dataset_id
+DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("netherlands_laws").hf_dataset_id
 
 
 def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
@@ -1530,6 +1531,55 @@ async def search_federal_register_corpus_from_parameters(
         fr_params,
         tool_version=tool_version,
     )
+
+
+async def search_netherlands_law_corpus_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search Netherlands law corpus vectors and enrich matches with law metadata/snippets."""
+    nl_params = dict(parameters)
+    netherlands_corpus = get_canonical_legal_corpus("netherlands_laws")
+
+    nl_params.setdefault("hf_dataset_id", netherlands_corpus.hf_dataset_id)
+    nl_params.setdefault("hf_parquet_file", netherlands_corpus.combined_parquet_filename)
+    nl_params.setdefault("hf_parquet_prefix", None)
+    nl_params.setdefault("cid_metadata_field", netherlands_corpus.cid_field)
+    nl_params.setdefault("cid_column", netherlands_corpus.cid_field)
+    nl_params.setdefault(
+        "text_field_candidates",
+        [
+            "canonical_title",
+            "title",
+            "aliases",
+            "text",
+            "document_type",
+            "citations",
+            "headings",
+            "jsonld",
+        ],
+    )
+    nl_params.setdefault("chunk_lookup_enabled", False)
+    nl_params.setdefault("chunk_hf_parquet_file", None)
+    nl_params.setdefault("chunk_hf_parquet_prefix", None)
+    nl_params.setdefault(
+        "preferred_case_parquet_names",
+        [
+            netherlands_corpus.combined_parquet_filename,
+            "netherlands_laws.parquet",
+            "nl_laws.parquet",
+            "wetten_overheid.parquet",
+        ],
+    )
+
+    result = await search_caselaw_access_cases_from_parameters(
+        nl_params,
+        tool_version=tool_version,
+    )
+    if isinstance(result, dict):
+        result.setdefault("jurisdiction", "NL")
+    return result
 
 
 async def search_court_rules_corpus_from_parameters(
