@@ -34,6 +34,12 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_NETHERLANDS_LAWS_DIR = Path.home() / ".ipfs_datasets" / "netherlands_laws"
 DEFAULT_NETHERLANDS_LAWS_INDEX_PATH = DEFAULT_NETHERLANDS_LAWS_DIR / "netherlands_laws_index_latest.jsonl"
+DEFAULT_NETHERLANDS_LAWS_ARTICLE_INDEX_PATH = (
+    DEFAULT_NETHERLANDS_LAWS_DIR / "netherlands_laws_articles_index_latest.jsonl"
+)
+DEFAULT_NETHERLANDS_LAWS_SEARCH_INDEX_PATH = (
+    DEFAULT_NETHERLANDS_LAWS_DIR / "netherlands_laws_search_index_latest.jsonl"
+)
 DEFAULT_NETHERLANDS_LAWS_JSONLD_DIRNAME = "netherlands_laws_jsonld"
 USER_AGENT = "ipfs-datasets-netherlands-law-scraper/1.0"
 
@@ -96,6 +102,16 @@ _DUTCH_MONTHS = {
     "november": 11,
     "december": 12,
 }
+_CONTENT_ROOT_SELECTORS = [
+    "article",
+    "main",
+    "#content",
+    ".wetgeving",
+    ".regeling-tekst",
+    ".regeling-onderdelen",
+    ".wet-tekst",
+    ".intitule",
+]
 
 _DEFAULT_SOURCE_CONFIGS: List[Dict[str, Any]] = [
     {
@@ -246,6 +262,131 @@ def _finalize_parts(parts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return finalized
 
 
+def _hierarchy_path_items(hierarchy: Dict[str, Any], *, article_number: str = "", article_label: str = "") -> List[Dict[str, str]]:
+    path: List[Dict[str, str]] = []
+    for kind in _STRUCTURE_LEVELS:
+        if kind == "artikel":
+            if article_number or article_label:
+                path.append(
+                    {
+                        "kind": "artikel",
+                        "label": article_label or f"Artikel {article_number}".strip(),
+                        "number": article_number,
+                    }
+                )
+            continue
+        label = _normalize_space(hierarchy.get(kind) or "")
+        if label:
+            _, number = _classify_structure_heading(label)
+            path.append({"kind": kind, "label": label, "number": number or ""})
+    return path
+
+
+def _hierarchy_path_string(path_items: List[Dict[str, str]]) -> str:
+    return " > ".join(_normalize_space(item.get("label") or "") for item in path_items if item.get("label"))
+
+
+def _hierarchy_field_map(path_items: List[Dict[str, str]]) -> Dict[str, str]:
+    out: Dict[str, str] = {
+        "book_label": "",
+        "title_label": "",
+        "chapter_label": "",
+        "division_label": "",
+        "paragraph_label": "",
+        "article_label": "",
+        "book_number": "",
+        "title_number": "",
+        "chapter_number": "",
+        "division_number": "",
+        "paragraph_number": "",
+        "article_number": "",
+    }
+    mapping = {
+        "boek": ("book_label", "book_number"),
+        "titel": ("title_label", "title_number"),
+        "hoofdstuk": ("chapter_label", "chapter_number"),
+        "afdeling": ("division_label", "division_number"),
+        "paragraaf": ("paragraph_label", "paragraph_number"),
+        "artikel": ("article_label", "article_number"),
+    }
+    for item in path_items:
+        fields = mapping.get(str(item.get("kind") or ""))
+        if not fields:
+            continue
+        out[fields[0]] = _normalize_space(item.get("label") or "")
+        out[fields[1]] = _normalize_space(item.get("number") or "")
+    return out
+
+
+def _build_document_citation(title: str, identifier: str, aliases: List[str]) -> str:
+    short_title = _normalize_space(aliases[0]) if aliases else ""
+    if short_title:
+        return short_title
+    if title:
+        return _normalize_space(title)
+    return _normalize_space(identifier)
+
+
+def _build_article_citation(document_citation: str, path_items: List[Dict[str, str]]) -> str:
+    segments = [document_citation] if document_citation else []
+    for item in path_items:
+        label = _normalize_space(item.get("label") or "")
+        if not label:
+            continue
+        if item.get("kind") == "artikel":
+            segments.append(label)
+        elif item.get("kind") in {"boek", "titel", "hoofdstuk", "afdeling", "paragraaf"}:
+            segments.append(label)
+    return ", ".join(dict.fromkeys(segment for segment in segments if segment))
+
+
+def _normalize_historical_versions(
+    identifier: str,
+    versions: List[Dict[str, str]],
+    *,
+    current_document_url: str,
+    current_info_url: str,
+    current_effective_date: str,
+) -> List[Dict[str, str]]:
+    normalized: List[Dict[str, str]] = []
+    seen: Set[str] = set()
+
+    for version in versions:
+        effective_date = _normalize_space(version.get("effective_date") or "")
+        document_url = _normalize_space(version.get("source_url") or "")
+        info_url = document_url if document_url.endswith("/informatie") else f"{document_url.rstrip('/')}/informatie" if document_url else ""
+        key = f"{effective_date}|{document_url}|{info_url}"
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(
+            {
+                "identifier": identifier,
+                "effective_date": effective_date,
+                "label": _normalize_space(version.get("label") or ""),
+                "document_url": document_url[:-11] if document_url.endswith("/informatie") else document_url,
+                "information_url": info_url,
+                "is_current": effective_date == current_effective_date,
+            }
+        )
+
+    current_key = f"{current_effective_date}|{current_document_url}|{current_info_url}"
+    if current_effective_date and current_key not in seen:
+        normalized.append(
+            {
+                "identifier": identifier,
+                "effective_date": current_effective_date,
+                "label": "Huidige versie",
+                "document_url": current_document_url,
+                "information_url": current_info_url,
+                "is_current": True,
+            }
+        )
+
+    normalized.sort(key=lambda item: item.get("effective_date", ""))
+    return normalized
+
+
 def _extract_document_structure(content_root: Any) -> Dict[str, Any]:
     parts: List[Dict[str, Any]] = []
     current_part: Optional[Dict[str, Any]] = None
@@ -261,15 +402,19 @@ def _extract_document_structure(content_root: Any) -> Dict[str, Any]:
             _clear_lower_hierarchy_levels(hierarchy, kind)
             if kind != "artikel":
                 hierarchy[kind] = text
+                path_items = _hierarchy_path_items(hierarchy)
                 current_part = {
                     "kind": kind,
                     "label": text,
                     "number": number,
                     "hierarchy": dict(hierarchy),
+                    "hierarchy_path": path_items,
+                    "hierarchy_path_text": _hierarchy_path_string(path_items),
                 }
                 parts.append(current_part)
             else:
                 article_match = _ARTICLE_HEADING_RE.match(text)
+                path_items = _hierarchy_path_items(dict(hierarchy), article_number=number or "", article_label=text)
                 current_part = {
                     "kind": kind,
                     "label": text,
@@ -277,6 +422,8 @@ def _extract_document_structure(content_root: Any) -> Dict[str, Any]:
                     "citation": f"Artikel {number}" if number else "Artikel",
                     "heading": _normalize_space(article_match.group(2)) if article_match and article_match.group(2) else "",
                     "hierarchy": dict(hierarchy),
+                    "hierarchy_path": path_items,
+                    "hierarchy_path_text": _hierarchy_path_string(path_items),
                 }
                 parts.append(current_part)
             continue
@@ -457,6 +604,14 @@ def _extract_info_metadata(html: str, *, info_url: str = "") -> Dict[str, Any]:
     }
 
 
+def _select_content_root(soup: Any) -> Any:
+    for selector in _CONTENT_ROOT_SELECTORS:
+        node = soup.select_one(selector)
+        if node is not None:
+            return node
+    return soup.body or soup
+
+
 def _extract_title_and_text(html: str) -> Dict[str, Any]:
     soup = BeautifulSoup(html, "html.parser")
 
@@ -465,13 +620,7 @@ def _extract_title_and_text(html: str) -> Dict[str, Any]:
     if heading_node is not None:
         heading = _normalize_space(heading_node.get_text(" ", strip=True))
 
-    content_root = (
-        soup.select_one("article")
-        or soup.select_one("main")
-        or soup.select_one("#content")
-        or soup.body
-        or soup
-    )
+    content_root = _select_content_root(soup)
     text = _normalize_space(content_root.get_text(" ", strip=True))
     structure = _extract_document_structure(content_root)
 
@@ -480,6 +629,60 @@ def _extract_title_and_text(html: str) -> Dict[str, Any]:
         "text": text,
         "structure": structure,
     }
+
+
+def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]:
+    article_records: List[Dict[str, Any]] = []
+    canonical_title = str(document_row.get("canonical_title") or document_row.get("title") or "")
+    identifier = str(document_row.get("identifier") or "")
+    aliases = list(document_row.get("aliases") or [])
+    document_citation = _build_document_citation(canonical_title, identifier, aliases)
+
+    for article in document_row.get("articles") or []:
+        article_text = _normalize_space(article.get("text") or "")
+        article_number = _normalize_space(article.get("number") or "")
+        hierarchy_path = list(article.get("hierarchy_path") or [])
+        hierarchy_path_text = _hierarchy_path_string(hierarchy_path)
+        hierarchy_fields = _hierarchy_field_map(hierarchy_path)
+        article_citation = _build_article_citation(document_citation, hierarchy_path)
+        if not article_text:
+            continue
+
+        article_records.append(
+            {
+                "record_type": "article",
+                "jurisdiction": document_row.get("jurisdiction", "NL"),
+                "jurisdiction_name": document_row.get("jurisdiction_name", "Netherlands"),
+                "country": document_row.get("country", "Netherlands"),
+                "language": document_row.get("language", "nl"),
+                "identifier": identifier,
+                "official_identifier": document_row.get("official_identifier", identifier),
+                "document_identifier": identifier,
+                "article_identifier": f"{identifier}:artikel:{article_number or _safe_id_fragment(article.get('label') or '')}",
+                "title": canonical_title,
+                "canonical_title": canonical_title,
+                "aliases": aliases,
+                "document_type": document_row.get("document_type", "statute"),
+                "text": article_text,
+                "source_url": document_row.get("source_url"),
+                "information_url": document_row.get("information_url"),
+                "effective_date": document_row.get("effective_date", ""),
+                "publication_date": document_row.get("publication_date", ""),
+                "last_modified_date": document_row.get("last_modified_date", ""),
+                "historical_versions": list(document_row.get("historical_versions") or []),
+                "article_number": article_number,
+                "article_heading": article.get("heading") or "",
+                "citation": article_citation,
+                "document_citation": document_citation,
+                "hierarchy_path": hierarchy_path,
+                "hierarchy_path_text": hierarchy_path_text,
+                "hierarchy_labels": [item.get("label") for item in hierarchy_path if item.get("label")],
+                **hierarchy_fields,
+                "scraped_at": document_row.get("scraped_at"),
+            }
+        )
+
+    return article_records
 
 
 def _verify_cross_sources(
@@ -568,6 +771,10 @@ def _write_jsonld(records: List[Dict[str, Any]], *, output_root: Path) -> Path:
     return out_path
 
 
+def _write_optional_index(rows: Iterable[Dict[str, Any]], *, index_path: Path) -> None:
+    _write_index_jsonl(rows, index_path=index_path)
+
+
 async def list_netherlands_law_sources() -> Dict[str, Any]:
     """List built-in Netherlands law source configs."""
     return {
@@ -652,6 +859,7 @@ async def scrape_netherlands_laws(
         }
 
     records: List[Dict[str, Any]] = []
+    article_records: List[Dict[str, Any]] = []
     errors: List[str] = []
     crawled_index_pages: List[str] = []
     discovered_document_urls: Set[str] = set()
@@ -706,6 +914,8 @@ async def scrape_netherlands_laws(
 
             canonical_title = str(info_metadata.get("canonical_title") or info_metadata.get("title") or title or identifier)
             resolved_identifier = str(info_metadata.get("identifier") or identifier)
+            aliases = list(info_metadata.get("aliases") or [])
+            document_citation = _build_document_citation(canonical_title, resolved_identifier, aliases)
             source_verification = _verify_cross_sources(
                 session,
                 law_url=law_url,
@@ -716,8 +926,16 @@ async def scrape_netherlands_laws(
             structure_parts = structure.get("parts") or []
             structure_articles = structure.get("articles") or []
             structure_chapters = structure.get("chapters") or []
+            normalized_versions = _normalize_historical_versions(
+                resolved_identifier,
+                list(info_metadata.get("historical_versions") or []),
+                current_document_url=law_url,
+                current_info_url=info_url,
+                current_effective_date=str(info_metadata.get("effective_date") or ""),
+            )
 
             row: Dict[str, Any] = {
+                "record_type": "document",
                 "jurisdiction": "NL",
                 "jurisdiction_name": "Netherlands",
                 "country": "Netherlands",
@@ -726,11 +944,12 @@ async def scrape_netherlands_laws(
                 "official_identifier": resolved_identifier,
                 "title": canonical_title or "Netherlands Law",
                 "canonical_title": canonical_title or "Netherlands Law",
-                "aliases": list(info_metadata.get("aliases") or []),
+                "aliases": aliases,
                 "text": text,
                 "source_url": law_url,
                 "information_url": info_url or None,
                 "document_type": str(info_metadata.get("regulation_type") or "statute").lower().replace(" ", "_"),
+                "citation": document_citation,
                 "official_metadata": {
                     "effective_date": info_metadata.get("effective_date") or "",
                     "publication_date": info_metadata.get("publication_date") or "",
@@ -739,7 +958,7 @@ async def scrape_netherlands_laws(
                 "effective_date": str(info_metadata.get("effective_date") or ""),
                 "publication_date": str(info_metadata.get("publication_date") or ""),
                 "last_modified_date": str(info_metadata.get("last_modified_date") or ""),
-                "historical_versions": list(info_metadata.get("historical_versions") or []),
+                "historical_versions": normalized_versions,
                 "article_count": len(structure_articles),
                 "chapter_count": len(structure_chapters),
                 "articles": structure_articles,
@@ -763,12 +982,22 @@ async def scrape_netherlands_laws(
                         **source_verification,
                     ),
                 }
+            row["article_records"] = _build_article_records(row)
+            article_records.extend(row["article_records"])
             records.append(row)
         except Exception as exc:
             errors.append(f"{law_url}: {exc}")
         time.sleep(max(0.0, float(rate_limit_delay)))
 
     _write_index_jsonl(records, index_path=output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
+    _write_optional_index(
+        article_records,
+        index_path=output_root / DEFAULT_NETHERLANDS_LAWS_ARTICLE_INDEX_PATH.name,
+    )
+    _write_optional_index(
+        [*records, *article_records],
+        index_path=output_root / DEFAULT_NETHERLANDS_LAWS_SEARCH_INDEX_PATH.name,
+    )
     jsonld_path = _write_jsonld(records, output_root=output_root)
 
     elapsed = time.time() - start
@@ -779,12 +1008,16 @@ async def scrape_netherlands_laws(
         "explicit_document_urls": selected_document_urls,
         "discovered_document_count": len(ordered_document_urls),
         "records_count": len(records),
+        "article_records_count": len(article_records),
+        "search_records_count": len(records) + len(article_records),
         "errors": errors,
         "error_count": len(errors),
         "elapsed_time_seconds": elapsed,
         "scraped_at": datetime.now().isoformat(),
         "output_dir": str(output_root),
         "index_path": str(output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name),
+        "article_index_path": str(output_root / DEFAULT_NETHERLANDS_LAWS_ARTICLE_INDEX_PATH.name),
+        "search_index_path": str(output_root / DEFAULT_NETHERLANDS_LAWS_SEARCH_INDEX_PATH.name),
         "jsonld_dir": str(output_root / DEFAULT_NETHERLANDS_LAWS_JSONLD_DIRNAME),
         "jsonld_files": [str(jsonld_path)],
         "max_documents": max_documents,
@@ -796,6 +1029,8 @@ async def scrape_netherlands_laws(
             "status": "error",
             "error": "No Netherlands law records were scraped",
             "data": [],
+            "article_data": [],
+            "search_data": [],
             "metadata": metadata,
             "output_format": output_format,
         }
@@ -803,6 +1038,8 @@ async def scrape_netherlands_laws(
     return {
         "status": "success",
         "data": records,
+        "article_data": article_records,
+        "search_data": [*records, *article_records],
         "metadata": metadata,
         "output_format": output_format,
         "note": "Netherlands laws scraper targets official Dutch government law pages on wetten.overheid.nl.",

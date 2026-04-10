@@ -1,6 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+
+
+FIXTURE_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "legal_scrapers"
+
+
+def _fixture_text(name: str) -> str:
+    return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
 def test_extract_document_links_filters_for_wetten_bwb_documents():
@@ -55,6 +64,8 @@ def test_extract_title_and_text_captures_articles_and_chapters():
     assert parsed["structure"]["articles"][0]["number"] == "1"
     assert parsed["structure"]["chapters"][0]["kind"] == "boek"
     assert parsed["structure"]["articles"][0]["citation"] == "Artikel 1"
+    assert parsed["structure"]["articles"][0]["hierarchy_path_text"].startswith("Boek 1")
+    assert parsed["structure"]["articles"][0]["hierarchy_path"][-1]["label"] == "Artikel 1"
 
 
 def test_extract_info_metadata_captures_dates_aliases_and_versions():
@@ -93,6 +104,52 @@ def test_extract_info_metadata_captures_dates_aliases_and_versions():
     assert any("overheid.nl" in url for url in metadata["authority_sources"])
 
 
+def test_fixture_document_parsing_builds_full_hierarchy_and_citations():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _build_article_records,
+        _extract_title_and_text,
+    )
+
+    parsed = _extract_title_and_text(_fixture_text("netherlands_wetten_document.html"))
+    document_row = {
+        "jurisdiction": "NL",
+        "jurisdiction_name": "Netherlands",
+        "country": "Netherlands",
+        "language": "nl",
+        "identifier": "BWBR0001854",
+        "official_identifier": "BWBR0001854",
+        "title": parsed["title"],
+        "canonical_title": parsed["title"],
+        "aliases": ["Sr"],
+        "document_type": "wet",
+        "text": parsed["text"],
+        "source_url": "https://wetten.overheid.nl/BWBR0001854/",
+        "information_url": "https://wetten.overheid.nl/BWBR0001854/informatie",
+        "effective_date": "1994-02-01",
+        "publication_date": "1993-01-12",
+        "last_modified_date": "2024-10-01",
+        "historical_versions": [],
+        "articles": parsed["structure"]["articles"],
+        "chapters": parsed["structure"]["chapters"],
+        "parts": parsed["structure"]["parts"],
+        "scraped_at": "2026-04-10T00:00:00",
+    }
+
+    article_records = _build_article_records(document_row)
+
+    assert len(parsed["structure"]["articles"]) == 3
+    assert article_records[0]["book_label"] == "Boek 1 Algemene bepalingen"
+    assert article_records[0]["title_label"] == "Titel I Reikwijdte van de strafwet"
+    assert article_records[0]["division_label"] == "Afdeling 1 Strafbaarheid"
+    assert article_records[0]["article_number"] == "1"
+    assert article_records[1]["article_heading"] == "Strafwet toepasselijkheid"
+    assert article_records[0]["citation"] == (
+        "Sr, Boek 1 Algemene bepalingen, Titel I Reikwijdte van de strafwet, "
+        "Afdeling 1 Strafbaarheid, Artikel 1"
+    )
+    assert article_records[2]["citation"].endswith("Artikel 92")
+
+
 def test_extract_title_and_text_handles_partial_html():
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
         _extract_title_and_text,
@@ -119,6 +176,9 @@ def test_extract_title_and_text_handles_partial_html():
 async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
 
+    document_fixture = _fixture_text("netherlands_wetten_document.html")
+    info_fixture = _fixture_text("netherlands_wetten_informatie.html")
+
     class _Response:
         def __init__(self, text: str, status_code: int = 200):
             self.text = text
@@ -140,40 +200,9 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
                     """
                 )
             if "informatie" in url:
-                return _Response(
-                    """
-                    <html>
-                      <body>
-                        <h1>Wetboek van Strafrecht</h1>
-                        <dl>
-                          <dt>Soort regeling</dt><dd>Wet</dd>
-                          <dt>Identificatienummer</dt><dd>BWBR0001854</dd>
-                          <dt>Citeertitel</dt><dd>Sr</dd>
-                          <dt>Datum inwerkingtreding</dt><dd>01-02-1994</dd>
-                          <dt>Laatste wijziging</dt><dd>2024-10-01</dd>
-                        </dl>
-                        <a href="/BWBR0001854/2024-01-01/0/informatie">Versie 2024</a>
-                        <a href="https://www.overheid.nl/documenten/BWBR0001854">Overheid</a>
-                      </body>
-                    </html>
-                    """
-                )
+                return _Response(info_fixture)
             if "BWBR0001854" in url:
-                return _Response(
-                    """
-                    <html>
-                      <head><title>Wetboek van Strafrecht</title></head>
-                      <body>
-                        <main>
-                          <h1>Wetboek van Strafrecht</h1>
-                          <h2>Boek 1 Algemene bepalingen</h2>
-                          <h3>Artikel 1</h3>
-                          <p>Artikel 1 Strafrecht tekst.</p>
-                        </main>
-                      </body>
-                    </html>
-                    """
-                )
+                return _Response(document_fixture)
             raise AssertionError(f"Unexpected URL fetched: {url}")
 
     monkeypatch.setattr(scraper, "_make_session", lambda: _Session())
@@ -187,15 +216,21 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
 
     assert result["status"] == "success"
     assert result["metadata"]["records_count"] == 1
+    assert result["metadata"]["article_records_count"] == 3
+    assert result["metadata"]["search_records_count"] == 4
     assert result["data"][0]["identifier"] == "BWBR0001854"
     assert "Strafrecht" in result["data"][0]["title"]
-    assert result["data"][0]["article_count"] == 1
+    assert result["data"][0]["article_count"] == 3
     assert result["data"][0]["canonical_title"] == "Wetboek van Strafrecht"
     assert result["data"][0]["aliases"] == ["Sr"]
     assert result["data"][0]["effective_date"] == "1994-02-01"
     assert result["data"][0]["last_modified_date"] == "2024-10-01"
-    assert result["data"][0]["historical_versions"][0]["effective_date"] == "2024-01-01"
-    assert result["data"][0]["citations"] == ["Artikel 1"]
+    assert any(version["effective_date"] == "2012-01-01" for version in result["data"][0]["historical_versions"])
+    assert any(version["is_current"] is True for version in result["data"][0]["historical_versions"])
+    assert result["data"][0]["citations"] == ["Artikel 1", "Artikel 2", "Artikel 92"]
+    assert result["article_data"][0]["citation"].startswith("Sr, Boek 1 Algemene bepalingen")
+    assert result["article_data"][0]["hierarchy_path_text"].endswith("Artikel 1")
+    assert result["article_data"][1]["article_heading"] == "Strafwet toepasselijkheid"
     assert result["data"][0]["metadata"]["verification"]["information_page_verified"] is True
     assert result["data"][0]["metadata"]["verification"]["authoritative_sources_checked"] >= 2
     assert result["data"][0]["metadata"]["verification"]["identifier_consistent"] is True

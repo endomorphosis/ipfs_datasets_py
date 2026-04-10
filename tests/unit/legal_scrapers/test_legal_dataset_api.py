@@ -1,4 +1,12 @@
 import pytest
+from pathlib import Path
+
+
+FIXTURE_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "legal_scrapers"
+
+
+def _fixture_text(name: str) -> str:
+    return (FIXTURE_DIR / name).read_text(encoding="utf-8")
 
 
 @pytest.mark.asyncio
@@ -86,3 +94,81 @@ async def test_search_netherlands_law_corpus_applies_canonical_defaults(monkeypa
     assert captured["payload"]["hf_dataset_id"] == "justicedao/ipfs_netherlands_laws"
     assert captured["payload"]["hf_parquet_file"] == "netherlands_laws.parquet"
     assert captured["payload"]["chunk_lookup_enabled"] is False
+    assert "citation" in captured["payload"]["text_field_candidates"]
+    assert "hierarchy_path_text" in captured["payload"]["text_field_candidates"]
+
+
+@pytest.mark.asyncio
+async def test_fixture_to_searchable_corpus_result_preserves_article_citation(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _build_article_records,
+        _extract_title_and_text,
+        _extract_info_metadata,
+    )
+
+    parsed = _extract_title_and_text(_fixture_text("netherlands_wetten_document.html"))
+    info_metadata = _extract_info_metadata(
+        _fixture_text("netherlands_wetten_informatie.html"),
+        info_url="https://wetten.overheid.nl/BWBR0001854/informatie",
+    )
+    document_row = {
+        "jurisdiction": "NL",
+        "jurisdiction_name": "Netherlands",
+        "country": "Netherlands",
+        "language": "nl",
+        "identifier": "BWBR0001854",
+        "official_identifier": "BWBR0001854",
+        "title": info_metadata["canonical_title"],
+        "canonical_title": info_metadata["canonical_title"],
+        "aliases": info_metadata["aliases"],
+        "document_type": "wet",
+        "text": parsed["text"],
+        "source_url": "https://wetten.overheid.nl/BWBR0001854/",
+        "information_url": "https://wetten.overheid.nl/BWBR0001854/informatie",
+        "effective_date": info_metadata["effective_date"],
+        "publication_date": info_metadata["publication_date"],
+        "last_modified_date": info_metadata["last_modified_date"],
+        "historical_versions": info_metadata["historical_versions"],
+        "articles": parsed["structure"]["articles"],
+        "chapters": parsed["structure"]["chapters"],
+        "parts": parsed["structure"]["parts"],
+        "scraped_at": "2026-04-10T00:00:00",
+    }
+    article_records = _build_article_records(document_row)
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.95,
+                    "cid": "cid-1",
+                    "case": article_records[0],
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.8, 0.1, 0.1],
+            "auto_setup_venv": False,
+        },
+        tool_version="4.1.0",
+    )
+
+    assert result["status"] == "success"
+    assert result["results"][0]["case"]["record_type"] == "article"
+    assert result["results"][0]["case"]["citation"] == (
+        "Sr, Boek 1 Algemene bepalingen, Titel I Reikwijdte van de strafwet, "
+        "Afdeling 1 Strafbaarheid, Artikel 1"
+    )

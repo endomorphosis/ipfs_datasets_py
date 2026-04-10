@@ -1550,9 +1550,13 @@ async def search_netherlands_law_corpus_from_parameters(
     nl_params.setdefault(
         "text_field_candidates",
         [
+            "citation",
+            "document_citation",
             "canonical_title",
             "title",
             "aliases",
+            "hierarchy_path_text",
+            "hierarchy_labels",
             "text",
             "document_type",
             "citations",
