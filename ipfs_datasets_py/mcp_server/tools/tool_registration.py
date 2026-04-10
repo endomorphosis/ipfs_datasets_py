@@ -467,6 +467,12 @@ TOOL_MAPPINGS = {
                 "description": "Scrape federal procedural rules and local court rules",
                 "tags": ["legal", "federal_rules", "civil_procedure", "criminal_procedure", "local_rules"]
             },
+            "scrape_netherlands_laws": {
+                "name": "scrape_netherlands_laws",
+                "category": "legal_datasets",
+                "description": "Scrape Netherlands laws from official Dutch government law pages",
+                "tags": ["legal", "netherlands", "eu", "international", "scraping"]
+            },
             "get_us_code_titles": {
                 "name": "get_us_code_titles",
                 "category": "legal_datasets",

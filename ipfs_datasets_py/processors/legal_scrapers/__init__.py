@@ -57,6 +57,7 @@ from .legal_dataset_api import (
     list_scraping_jobs_from_parameters,
     scrape_us_code_from_parameters,
     scrape_federal_laws_from_parameters,
+    scrape_netherlands_laws_from_parameters,
     scrape_municipal_codes_from_parameters,
     setup_legal_tools_venv_from_parameters,
     ingest_caselaw_access_vectors_from_parameters,
@@ -120,6 +121,11 @@ from .state_laws_scraper import (
 from .state_admin_rules_scraper import (
     list_state_admin_rule_jurisdictions,
     scrape_state_admin_rules,
+)
+
+from .netherlands_laws_scraper import (
+    list_netherlands_law_sources,
+    scrape_netherlands_laws,
 )
 
 from .state_laws_verifier import (
@@ -462,6 +468,8 @@ __all__ = [
     "FederalLawScraper",
     "list_federal_law_sources",
     "scrape_federal_laws",
+    "list_netherlands_law_sources",
+    "scrape_netherlands_laws",
     # State Laws functions
     "list_state_jurisdictions",
     "scrape_state_laws",
@@ -507,6 +515,7 @@ __all__ = [
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_federal_laws_from_parameters",
+    "scrape_netherlands_laws_from_parameters",
     "scrape_municipal_codes_from_parameters",
     "setup_legal_tools_venv_from_parameters",
     "ingest_caselaw_access_vectors_from_parameters",

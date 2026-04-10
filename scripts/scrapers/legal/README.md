@@ -69,6 +69,19 @@ Scraper for the Federal Register.
 python scripts/scrapers/legal/federal_register_scraper.py [options]
 ```
 
+### netherlands_laws_scraper.py
+Scraper for Netherlands laws from official Dutch government law pages.
+
+**Features:**
+- Crawls `wetten.overheid.nl` seed pages
+- Supports explicit law-document URLs
+- Normalized JSON/JSON-LD output
+
+**Usage:**
+```bash
+python scripts/scrapers/legal/netherlands_laws_scraper.py [options]
+```
+
 ## Integration
 
 These scrapers can be used with the Legal Dataset Tools in the MCP server:

@@ -1071,6 +1071,35 @@ async def scrape_federal_laws_from_parameters(
         }
 
 
+async def scrape_netherlands_laws_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    try:
+        from .netherlands_laws_scraper import scrape_netherlands_laws
+
+        return await scrape_netherlands_laws(
+            document_urls=parameters.get("document_urls"),
+            seed_urls=parameters.get("seed_urls"),
+            output_format=parameters.get("output_format", "json"),
+            output_dir=parameters.get("output_dir"),
+            rate_limit_delay=parameters.get("rate_limit_delay", 0.4),
+            max_documents=parameters.get("max_documents"),
+            include_metadata=parameters.get("include_metadata", True),
+            custom_sources=parameters.get("custom_sources"),
+        )
+
+    except Exception as e:
+        logger.error("Netherlands laws scraping failed: %s", e)
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": [],
+            "metadata": {},
+        }
+
+
 async def scrape_municipal_codes_from_parameters(
     parameters: Dict[str, Any],
     *,

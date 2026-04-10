@@ -19,7 +19,7 @@ Also includes:
 """
 
 from .us_code_scraper import scrape_us_code, get_us_code_titles, search_us_code
-from .mcp_tools import scrape_federal_laws
+from .mcp_tools import scrape_federal_laws, scrape_netherlands_laws
 from .federal_register_scraper import scrape_federal_register, search_federal_register
 from .state_laws_scraper import scrape_state_laws, list_state_jurisdictions
 from .state_admin_rules_scraper import scrape_state_admin_rules, list_state_admin_rule_jurisdictions
@@ -108,6 +108,7 @@ __all__ = [
 
     # Federal rules + local rules tools
     "scrape_federal_laws",
+    "scrape_netherlands_laws",
     
     # State Laws tools
     "scrape_state_laws",

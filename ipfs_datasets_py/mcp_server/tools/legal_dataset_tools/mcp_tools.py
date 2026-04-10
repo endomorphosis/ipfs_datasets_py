@@ -71,6 +71,14 @@ async def scrape_federal_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
     return await scrape_federal_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def scrape_netherlands_laws(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Scrape Netherlands laws from official Dutch government law sources."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        scrape_netherlands_laws_from_parameters,
+    )
+    return await scrape_netherlands_laws_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def scrape_municipal_codes(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Scrape US municipal codes using scrape_the_law_mk3."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -365,6 +373,7 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     list_scraping_jobs,
     scrape_us_code,
     scrape_federal_laws,
+    scrape_netherlands_laws,
     scrape_municipal_codes,
     setup_legal_tools_venv,
     ingest_caselaw_access_vectors,
@@ -390,6 +399,22 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
 
 
 CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
+    {
+        "name": "scrape_netherlands_laws",
+        "description": "Scrape Netherlands laws from official Dutch government law pages.",
+        "function": scrape_netherlands_laws,
+        "parameters": {
+            "document_urls": {"type": "array", "required": False},
+            "seed_urls": {"type": "array", "required": False},
+            "output_format": {"type": "string", "default": "json"},
+            "output_dir": {"type": "string", "required": False},
+            "rate_limit_delay": {"type": "number", "default": 0.4},
+            "max_documents": {"type": "integer", "required": False},
+            "include_metadata": {"type": "boolean", "default": True},
+            "custom_sources": {"type": "array", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
     {
         "name": "setup_legal_tools_venv",
         "description": "Create/update .venv and install legal vector dependencies.",
@@ -748,6 +773,7 @@ __all__ = [
     "list_scraping_jobs",
     "scrape_us_code",
     "scrape_federal_laws",
+    "scrape_netherlands_laws",
     "scrape_municipal_codes",
     "setup_legal_tools_venv",
     "ingest_caselaw_access_vectors",
