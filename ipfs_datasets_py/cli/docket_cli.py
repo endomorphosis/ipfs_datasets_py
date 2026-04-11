@@ -119,6 +119,97 @@ def _build_packaged_read_only_summary(packager: DocketDatasetPackager, manifest_
     }
 
 
+def _latest_routing_explanation_from_dataset_dict(dataset_payload: dict[str, object]) -> dict[str, object]:
+    metadata = dict(dataset_payload.get("metadata") or {})
+    proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
+    proof_metadata = dict(proof_assistant.get("metadata") or {})
+    attached_packet = dict(dataset_payload.get("attached_proof_assistant_packet") or {})
+    return dict(
+        metadata.get("latest_proof_packet_routing_explanation")
+        or proof_metadata.get("latest_proof_packet_routing_explanation")
+        or attached_packet.get("routing_explanation")
+        or {}
+    )
+
+
+def _build_packaged_summary_from_dataset_dict(dataset_payload: dict[str, object]) -> dict[str, object]:
+    summary = summarize_docket_dataset(dataset_payload)
+    return {
+        "dataset_id": str(dataset_payload.get("dataset_id") or summary.get("dataset_id") or ""),
+        "docket_id": str(dataset_payload.get("docket_id") or summary.get("docket_id") or ""),
+        "case_name": str(dataset_payload.get("case_name") or ""),
+        "court": str(dataset_payload.get("court") or ""),
+        "document_count": int(summary.get("document_count") or len(list(dataset_payload.get("documents") or []))),
+        "attachment_count": int(summary.get("attachment_count") or 0),
+        "knowledge_graph_entity_count": int(summary.get("knowledge_graph_entity_count") or 0),
+        "knowledge_graph_relationship_count": int(summary.get("knowledge_graph_relationship_count") or 0),
+        "proof_tactician_plan_count": int(summary.get("proof_tactician_plan_count") or 0),
+        "proof_packet_count": int(summary.get("proof_packet_count") or 0),
+        "proof_store_count": int(summary.get("proof_store_count") or 0),
+        "has_latest_proof_packet_routing_explanation": bool(
+            summary.get("has_latest_proof_packet_routing_explanation")
+        ),
+        "latest_proof_packet_routing_reason": str(
+            summary.get("latest_proof_packet_routing_reason") or ""
+        ),
+    }
+
+
+def _build_packaged_inspection_from_dataset_dict(dataset_payload: dict[str, object]) -> dict[str, object]:
+    summary = summarize_docket_dataset(dataset_payload)
+    latest_routing = _latest_routing_explanation_from_dataset_dict(dataset_payload)
+    routing_evidence = list(latest_routing.get("routing_evidence") or [])
+    top_routing = dict((routing_evidence or [{}])[0])
+    return {
+        "dataset_id": str(dataset_payload.get("dataset_id") or summary.get("dataset_id") or ""),
+        "docket_id": str(dataset_payload.get("docket_id") or summary.get("docket_id") or ""),
+        "case_name": str(dataset_payload.get("case_name") or ""),
+        "court": str(dataset_payload.get("court") or ""),
+        "document_count": int(summary.get("document_count") or len(list(dataset_payload.get("documents") or []))),
+        "attachment_count": int(summary.get("attachment_count") or 0),
+        "latest_proof_packet_id": str(
+            dict(dataset_payload.get("metadata") or {}).get("latest_proof_packet_id")
+            or dict(dataset_payload.get("proof_assistant") or {}).get("metadata", {}).get("latest_proof_packet_id")
+            or ""
+        ),
+        "latest_proof_packet_version": int(
+            dict(dataset_payload.get("metadata") or {}).get("latest_proof_packet_version")
+            or dict(dataset_payload.get("proof_assistant") or {}).get("metadata", {}).get("latest_proof_packet_version")
+            or 0
+        ),
+        "latest_routing_reason": str(latest_routing.get("routing_reason") or ""),
+        "preferred_corpus_priority": list(latest_routing.get("preferred_corpus_priority") or []),
+        "preferred_state_codes": list(latest_routing.get("preferred_state_codes") or []),
+        "routing_evidence_count": len(routing_evidence),
+        "top_routing_citation": str(top_routing.get("citation_text") or ""),
+        "top_routing_source_url": str(top_routing.get("source_url") or ""),
+        "routing_provenance_piece_present": False,
+        "routing_provenance": {},
+    }
+
+
+def _build_loaded_report_from_dataset_dict(
+    packager: DocketDatasetPackager,
+    dataset_payload: dict[str, object],
+    report_format: str,
+) -> object:
+    inspection = _build_packaged_inspection_from_dataset_dict(dataset_payload)
+    normalized_format = str(report_format or "parsed").strip().lower()
+    if normalized_format in {"parsed", "dict", "inspection"}:
+        return inspection
+    if normalized_format == "row":
+        return {
+            "report_json": json.dumps(inspection, indent=2, ensure_ascii=False),
+            "report_text": packager.render_packaged_inspection_report_from_inspection(inspection, report_format="text"),
+            "report_markdown": packager.render_packaged_inspection_report_from_inspection(inspection, report_format="markdown"),
+            "inspection": inspection,
+        }
+    return packager.render_packaged_inspection_report_from_inspection(
+        inspection,
+        report_format=report_format,
+    )
+
+
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ipfs-datasets docket",
@@ -299,22 +390,43 @@ def main(args: list[str] | None = None) -> int:
         if parsed.input_type != "packaged":
             parser.error("--inspect-packaged, --summary-only, --load-packaged-report, and --export-packaged-report are only valid with --input-type packaged.")
         packager = packaged_read_packager or DocketDatasetPackager()
+        enriched_packaged_read = (
+            parsed.input_type == "packaged"
+            and bool(parsed.enrich_query)
+            and isinstance(dataset, dict)
+        )
         if parsed.summary_only:
-            payload["packaged_summary_view"] = _filter_mapping_fields(
-                load_packaged_docket_summary_view(parsed.input_path),
-                active_summary_fields,
-            )
+            if enriched_packaged_read:
+                payload["packaged_summary_view"] = _filter_mapping_fields(
+                    _build_packaged_summary_from_dataset_dict(dataset),
+                    active_summary_fields,
+                )
+            else:
+                payload["packaged_summary_view"] = _filter_mapping_fields(
+                    load_packaged_docket_summary_view(parsed.input_path),
+                    active_summary_fields,
+                )
         if parsed.inspect_packaged:
-            inspection_payload = packager.inspect_packaged_bundle(parsed.input_path)
+            if enriched_packaged_read:
+                inspection_payload = _build_packaged_inspection_from_dataset_dict(dataset)
+            else:
+                inspection_payload = packager.inspect_packaged_bundle(parsed.input_path)
             payload["inspection"] = _filter_mapping_fields(
                 dict(inspection_payload),
                 active_inspection_fields,
             )
         if parsed.load_packaged_report:
-            loaded_report = packager.load_inspection_report(
-                parsed.input_path,
-                report_format=parsed.report_format,
-            )
+            if enriched_packaged_read:
+                loaded_report = _build_loaded_report_from_dataset_dict(
+                    packager,
+                    dataset,
+                    parsed.report_format,
+                )
+            else:
+                loaded_report = packager.load_inspection_report(
+                    parsed.input_path,
+                    report_format=parsed.report_format,
+                )
             if active_report_fields and isinstance(loaded_report, dict):
                 loaded_report = _filter_mapping_fields(dict(loaded_report), active_report_fields)
             payload["loaded_packaged_report"] = loaded_report
@@ -324,11 +436,30 @@ def main(args: list[str] | None = None) -> int:
                     payload["loaded_packaged_report"],
                     parsed.report_format,
                 )
-            else:
-                report_content = packager.render_packaged_inspection_report(
-                    parsed.input_path,
-                    report_format=parsed.report_format,
+            elif str(parsed.report_format or "").strip().lower() in {"parsed", "row"}:
+                report_content = _stringify_packaged_report(
+                    (
+                        _build_loaded_report_from_dataset_dict(packager, dataset, parsed.report_format)
+                        if enriched_packaged_read
+                        else packager.load_inspection_report(
+                            parsed.input_path,
+                            report_format=parsed.report_format,
+                        )
+                    ),
+                    parsed.report_format,
                 )
+            else:
+                if enriched_packaged_read:
+                    report_content = _build_loaded_report_from_dataset_dict(
+                        packager,
+                        dataset,
+                        parsed.report_format,
+                    )
+                else:
+                    report_content = packager.render_packaged_inspection_report(
+                        parsed.input_path,
+                        report_format=parsed.report_format,
+                    )
             payload["inspection_report"] = {
                 "report_path": _write_text_output(parsed.export_packaged_report, report_content),
                 "report_format": str(parsed.report_format),

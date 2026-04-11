@@ -13,6 +13,11 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+
+
+_STATE_ADMIN_RULES_CORPUS = get_canonical_legal_corpus("state_admin_rules")
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[3]
@@ -77,7 +82,7 @@ def _publish(args: argparse.Namespace) -> Dict[str, Any]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Publish Oregon administrative rules dataset to Hugging Face")
     parser.add_argument("--local-dir", default=str(_default_local_dir()))
-    parser.add_argument("--repo-id", default="justicedao/ipfs_state_admin_rules")
+    parser.add_argument("--repo-id", default=_STATE_ADMIN_RULES_CORPUS.hf_dataset_id)
     parser.add_argument("--path-in-repo", default="OR/parsed")
     parser.add_argument("--token", default=None, help="HF token (optional if already authenticated)")
     parser.add_argument("--create-repo", action="store_true")

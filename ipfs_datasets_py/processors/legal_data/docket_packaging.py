@@ -199,6 +199,187 @@ def _normalize_packaged_inspection_report_row(row: Mapping[str, Any] | None) -> 
     }
 
 
+def _parse_packaged_revalidation_report_row(row: Mapping[str, Any] | None) -> Dict[str, Any]:
+    report_row = dict(row or {})
+    if not report_row or "_empty" in report_row:
+        return {}
+    report_json = str(report_row.get("report_json") or "").strip()
+    if not report_json:
+        return {}
+    try:
+        parsed = json.loads(report_json)
+    except Exception:
+        return {}
+    return dict(parsed) if isinstance(parsed, Mapping) else {}
+
+
+def _normalize_packaged_revalidation_report_row(row: Mapping[str, Any] | None) -> Dict[str, Any]:
+    report_row = dict(row or {})
+    if not report_row or "_empty" in report_row:
+        return {}
+    return {
+        "report_json": str(report_row.get("report_json") or ""),
+        "report_text": str(report_row.get("report_text") or ""),
+        "report_markdown": str(report_row.get("report_markdown") or ""),
+        "snapshot": _parse_packaged_revalidation_report_row(report_row),
+    }
+
+
+def _parse_packaged_operator_dashboard_row(row: Mapping[str, Any] | None) -> Dict[str, Any]:
+    report_row = dict(row or {})
+    if not report_row or "_empty" in report_row:
+        return {}
+    report_json = str(report_row.get("report_json") or "").strip()
+    if not report_json:
+        return {}
+    try:
+        parsed = json.loads(report_json)
+    except Exception:
+        return {}
+    return dict(parsed) if isinstance(parsed, Mapping) else {}
+
+
+def _normalize_packaged_operator_dashboard_row(row: Mapping[str, Any] | None) -> Dict[str, Any]:
+    report_row = dict(row or {})
+    if not report_row or "_empty" in report_row:
+        return {}
+    return {
+        "report_json": str(report_row.get("report_json") or ""),
+        "report_text": str(report_row.get("report_text") or ""),
+        "report_markdown": str(report_row.get("report_markdown") or ""),
+        "dashboard": _parse_packaged_operator_dashboard_row(report_row),
+    }
+
+
+def _build_revalidation_snapshot_from_dataset_payload(
+    dataset_payload: Mapping[str, Any],
+    *,
+    queue_top_k: int,
+    run_top_k: int,
+    min_priority: str,
+) -> Dict[str, Any]:
+    proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
+    agenda = _sort_proof_agenda_items(proof_assistant.get("agenda") or [])
+    runs = [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, Mapping)]
+    queue_items: List[Dict[str, Any]] = []
+    minimum_rank = _proof_revalidation_priority_rank(min_priority)
+    for item in agenda:
+        if not bool(item.get("current_proof_packet_review_required")):
+            continue
+        if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) < minimum_rank:
+            continue
+        queue_items.append(
+            {
+                "work_item_id": str(item.get("work_item_id") or ""),
+                "proof_revalidation_priority": str(item.get("proof_revalidation_priority") or ""),
+                "proof_revalidation_status": str(item.get("proof_revalidation_status") or ""),
+                "recommended_revalidation_action": {},
+            }
+        )
+    queue_items = queue_items[: max(0, int(queue_top_k))]
+    runs_sorted = sorted(
+        runs,
+        key=lambda row: (
+            int(row.get("attached_packet_count") or 0),
+            int(row.get("executed_count") or 0),
+            int(row.get("queue_limit") or 0),
+            str(row.get("run_id") or ""),
+        ),
+        reverse=True,
+    )[: max(0, int(run_top_k))]
+    latest_run = dict(runs_sorted[0] if runs_sorted else {})
+    next_queue_item = dict(queue_items[0] if queue_items else {})
+    total_review_required = sum(1 for item in agenda if bool(item.get("current_proof_packet_review_required")))
+    high_priority_count = sum(
+        1
+        for item in agenda
+        if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) >= 3
+        and bool(item.get("current_proof_packet_review_required"))
+    )
+    return {
+        "queue": {
+            "results": queue_items,
+            "result_count": len(queue_items),
+            "summary": {
+                "queue_count": len(queue_items),
+                "total_review_required_work_item_count": total_review_required,
+                "high_priority_revalidation_count": high_priority_count,
+                "min_priority": str(min_priority or ""),
+                "execution_hints_included": False,
+            },
+        },
+        "runs": {
+            "results": runs_sorted,
+            "result_count": len(runs_sorted),
+            "summary": {
+                "run_count": len(runs_sorted),
+                "total_run_count": len(runs),
+                "latest_run_id": str(latest_run.get("run_id") or ""),
+            },
+        },
+        "current_status": {
+            "review_required_work_item_count": total_review_required,
+            "high_priority_revalidation_count": high_priority_count,
+            "queue_count": len(queue_items),
+            "has_pending_revalidation": bool(queue_items),
+            "latest_run_available": bool(latest_run),
+        },
+        "latest_run_summary": {
+            "run_id": str(latest_run.get("run_id") or ""),
+            "best_work_item_id": str(latest_run.get("best_work_item_id") or ""),
+            "best_terminal_source_type": str(latest_run.get("best_terminal_source_type") or ""),
+            "best_terminal_support_strength": str(latest_run.get("best_terminal_support_strength") or ""),
+            "attached_packet_count": int(latest_run.get("attached_packet_count") or 0),
+        },
+        "next_queue_item_summary": {
+            "work_item_id": str(next_queue_item.get("work_item_id") or ""),
+            "proof_revalidation_priority": str(next_queue_item.get("proof_revalidation_priority") or ""),
+            "proof_revalidation_status": str(next_queue_item.get("proof_revalidation_status") or ""),
+            "recommended_source_type": "",
+        },
+        "source": "packaged_proof_revalidation_snapshot",
+    }
+
+
+def _render_proof_revalidation_report_from_snapshot(
+    snapshot: Mapping[str, Any],
+    *,
+    report_format: str,
+) -> str:
+    normalized_format = str(report_format or "markdown").strip().lower()
+    if normalized_format == "json":
+        return json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n"
+    current_status = dict(snapshot.get("current_status") or {})
+    latest_run = dict(snapshot.get("latest_run_summary") or {})
+    next_queue_item = dict(snapshot.get("next_queue_item_summary") or {})
+    lines = [
+        "Packaged Docket Proof Revalidation Report",
+        f"Pending Review Count: {int(current_status.get('review_required_work_item_count') or 0)}",
+        f"High Priority Revalidation Count: {int(current_status.get('high_priority_revalidation_count') or 0)}",
+        f"Visible Queue Count: {int(current_status.get('queue_count') or 0)}",
+        f"Latest Run Available: {bool(current_status.get('latest_run_available'))}",
+        f"Latest Run ID: {str(latest_run.get('run_id') or '')}",
+        f"Latest Run Best Work Item: {str(latest_run.get('best_work_item_id') or '')}",
+        f"Latest Run Terminal Source: {str(latest_run.get('best_terminal_source_type') or '')}",
+        f"Latest Run Terminal Support: {str(latest_run.get('best_terminal_support_strength') or '')}",
+        f"Latest Run Attached Packets: {int(latest_run.get('attached_packet_count') or 0)}",
+        f"Next Queue Work Item: {str(next_queue_item.get('work_item_id') or '')}",
+        f"Next Queue Priority: {str(next_queue_item.get('proof_revalidation_priority') or '')}",
+        f"Next Queue Status: {str(next_queue_item.get('proof_revalidation_status') or '')}",
+        f"Next Queue Recommended Source: {str(next_queue_item.get('recommended_source_type') or '')}",
+    ]
+    if normalized_format == "text":
+        return "\n".join(lines) + "\n"
+    if normalized_format == "markdown":
+        markdown_lines = [
+            "# Packaged Docket Proof Revalidation Report",
+            "",
+            *[f"- {line}" for line in lines[1:]],
+        ]
+        return "\n".join(markdown_lines) + "\n"
+    raise ValueError(f"Unsupported proof revalidation report format: {report_format}")
+
+
 @dataclass
 class DocketPackagePiece:
     piece_id: str
@@ -375,6 +556,57 @@ class DocketDatasetPackager:
             inspection_payload,
             report_format="markdown",
         )
+        revalidation_snapshot = _build_revalidation_snapshot_from_dataset_payload(
+            dataset_payload,
+            queue_top_k=5,
+            run_top_k=5,
+            min_priority="low",
+        )
+        revalidation_report_json = _render_proof_revalidation_report_from_snapshot(
+            revalidation_snapshot,
+            report_format="json",
+        )
+        revalidation_report_text = _render_proof_revalidation_report_from_snapshot(
+            revalidation_snapshot,
+            report_format="text",
+        )
+        revalidation_report_markdown = _render_proof_revalidation_report_from_snapshot(
+            revalidation_snapshot,
+            report_format="markdown",
+        )
+        operator_dashboard = {
+            "dataset_id": str(dataset_payload.get("dataset_id") or ""),
+            "docket_id": str(dataset_payload.get("docket_id") or ""),
+            "case_name": str(dataset_payload.get("case_name") or ""),
+            "court": str(dataset_payload.get("court") or ""),
+            "inspection": inspection_payload,
+            "proof_revalidation_report": {
+                "report_json": revalidation_report_json,
+                "report_text": revalidation_report_text,
+                "report_markdown": revalidation_report_markdown,
+                "snapshot": revalidation_snapshot,
+            },
+            "proof_revalidation_snapshot": revalidation_snapshot,
+            "summary": {
+                "document_count": len(documents),
+                "attachment_count": len(attachments),
+                "proof_packet_count": len(list(proof_assistant.get("evidence_packets") or [])),
+                "proof_store_count": len(list((proof_store.get("proofs") or {}).keys())),
+                "review_required_work_item_count": int(proof_assistant_summary.get("review_required_work_item_count") or 0),
+                "high_priority_revalidation_count": int(proof_assistant_summary.get("high_priority_revalidation_count") or 0),
+                "revalidation_run_count": len(list(proof_assistant.get("revalidation_runs") or [])),
+            },
+            "source": "packaged_operator_dashboard",
+        }
+        operator_dashboard_json = json.dumps(operator_dashboard, indent=2, ensure_ascii=False)
+        operator_dashboard_text = render_packaged_docket_operator_dashboard(
+            operator_dashboard,
+            report_format="text",
+        )
+        operator_dashboard_markdown = render_packaged_docket_operator_dashboard(
+            operator_dashboard,
+            report_format="markdown",
+        )
 
         section_rows: List[tuple[str, str, List[Dict[str, Any]], List[str]]] = [
             (
@@ -475,10 +707,16 @@ class DocketDatasetPackager:
                 ["proof_store_certificates"],
             ),
             (
+                "proof_revalidation_runs",
+                "proof_assistant",
+                [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, dict)],
+                ["proof_assistant_metadata"],
+            ),
+            (
                 "routing_provenance",
                 "provenance",
                 [routing_provenance_row] if routing_provenance_row else [],
-                ["proof_assistant_metadata"],
+                ["proof_revalidation_runs"],
             ),
             (
                 "inspection_report",
@@ -493,10 +731,34 @@ class DocketDatasetPackager:
                 ["routing_provenance"],
             ),
             (
+                "proof_revalidation_report",
+                "provenance",
+                [
+                    {
+                        "report_json": revalidation_report_json,
+                        "report_text": revalidation_report_text,
+                        "report_markdown": revalidation_report_markdown,
+                    }
+                ] if revalidation_report_json or revalidation_report_text or revalidation_report_markdown else [],
+                ["inspection_report"],
+            ),
+            (
+                "operator_dashboard_report",
+                "provenance",
+                [
+                    {
+                        "report_json": operator_dashboard_json,
+                        "report_text": operator_dashboard_text,
+                        "report_markdown": operator_dashboard_markdown,
+                    }
+                ],
+                ["proof_revalidation_report"],
+            ),
+            (
                 "temporal_formulas",
                 "proof_assistant",
                 temporal_formula_rows,
-                ["inspection_report"],
+                ["operator_dashboard_report"],
             ),
             (
                 "dcec_formulas",
@@ -605,6 +867,9 @@ class DocketDatasetPackager:
                 "tactician_plan_count": len(list(tactician.get("plans") or [])),
                 "proof_packet_count": len(list(proof_assistant.get("evidence_packets") or [])),
                 "proof_store_count": len(list((proof_store.get("proofs") or {}).keys())),
+                "review_required_work_item_count": int((proof_assistant_summary.get("review_required_work_item_count") or 0)),
+                "high_priority_revalidation_count": int((proof_assistant_summary.get("high_priority_revalidation_count") or 0)),
+                "revalidation_run_count": len(list(proof_assistant.get("revalidation_runs") or [])),
             },
             "provenance": {
                 "latest_proof_packet_routing_explanation": _jsonable(latest_routing_explanation),
@@ -710,12 +975,14 @@ class DocketDatasetPackager:
         bundle_dir, manifest = self._resolve_manifest(manifest_path)
         rows_by_piece = self.load_package_components(
             bundle_dir,
-            piece_ids=["dataset_core", "documents", "attachments", "routing_provenance", "inspection_report"],
+            piece_ids=["dataset_core", "documents", "attachments", "routing_provenance", "inspection_report", "proof_revalidation_report", "operator_dashboard_report"],
             manifest=manifest,
         )
         dataset_core = dict((rows_by_piece.get("dataset_core") or [{}])[0])
         routing_provenance = dict((rows_by_piece.get("routing_provenance") or [{}])[0])
         inspection_report = dict((rows_by_piece.get("inspection_report") or [{}])[0])
+        revalidation_report = dict((rows_by_piece.get("proof_revalidation_report") or [{}])[0])
+        operator_dashboard_report = dict((rows_by_piece.get("operator_dashboard_report") or [{}])[0])
         return {
             "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
             "docket_id": str(dataset_core.get("docket_id") or manifest.get("docket_id") or ""),
@@ -725,6 +992,8 @@ class DocketDatasetPackager:
             "attachments": self._restore_rows(rows_by_piece.get("attachments")),
             "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
             "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
+            "proof_revalidation_report": _normalize_packaged_revalidation_report_row(revalidation_report),
+            "operator_dashboard_report": _normalize_packaged_operator_dashboard_row(operator_dashboard_report),
             "package_manifest": dict(manifest),
         }
 
@@ -732,12 +1001,14 @@ class DocketDatasetPackager:
         bundle_dir, manifest = self._resolve_manifest(manifest_path)
         rows_by_piece = self.load_package_components(
             bundle_dir,
-            piece_ids=["dataset_core", "routing_provenance", "inspection_report"],
+            piece_ids=["dataset_core", "routing_provenance", "inspection_report", "proof_revalidation_report", "operator_dashboard_report"],
             manifest=manifest,
         )
         dataset_core = dict((rows_by_piece.get("dataset_core") or [{}])[0])
         routing_provenance = dict((rows_by_piece.get("routing_provenance") or [{}])[0])
         inspection_report = dict((rows_by_piece.get("inspection_report") or [{}])[0])
+        revalidation_report = dict((rows_by_piece.get("proof_revalidation_report") or [{}])[0])
+        operator_dashboard_report = dict((rows_by_piece.get("operator_dashboard_report") or [{}])[0])
         manifest_summary = dict(manifest.get("summary") or {})
         return {
             "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
@@ -753,8 +1024,13 @@ class DocketDatasetPackager:
             "proof_tactician_plan_count": int(manifest_summary.get("tactician_plan_count") or 0),
             "proof_packet_count": int(manifest_summary.get("proof_packet_count") or 0),
             "proof_store_count": int(manifest_summary.get("proof_store_count") or 0),
+            "review_required_work_item_count": int(manifest_summary.get("review_required_work_item_count") or 0),
+            "high_priority_revalidation_count": int(manifest_summary.get("high_priority_revalidation_count") or 0),
+            "revalidation_run_count": int(manifest_summary.get("revalidation_run_count") or 0),
             "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
             "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
+            "proof_revalidation_report": _normalize_packaged_revalidation_report_row(revalidation_report),
+            "operator_dashboard_report": _normalize_packaged_operator_dashboard_row(operator_dashboard_report),
             "package_manifest": dict(manifest),
         }
 
@@ -764,8 +1040,8 @@ class DocketDatasetPackager:
         *,
         report_format: str = "parsed",
     ) -> Any:
-        minimal_view = self.load_minimal_dataset_view(manifest_path)
-        inspection_report = dict(minimal_view.get("inspection_report") or {})
+        summary_view = self.load_summary_view(manifest_path)
+        inspection_report = dict(summary_view.get("inspection_report") or {})
         normalized_format = str(report_format or "parsed").strip().lower()
         if normalized_format in {"parsed", "dict", "inspection"}:
             return dict(inspection_report.get("inspection") or {})
@@ -786,6 +1062,10 @@ class DocketDatasetPackager:
             archived_report["routing_provenance_piece_present"] = bool(summary_view.get("routing_provenance"))
             if "routing_provenance" not in archived_report:
                 archived_report["routing_provenance"] = dict(summary_view.get("routing_provenance") or {})
+            archived_report["proof_revalidation_report"] = dict(summary_view.get("proof_revalidation_report") or {})
+            archived_report["review_required_work_item_count"] = int(summary_view.get("review_required_work_item_count") or 0)
+            archived_report["high_priority_revalidation_count"] = int(summary_view.get("high_priority_revalidation_count") or 0)
+            archived_report["revalidation_run_count"] = int(summary_view.get("revalidation_run_count") or 0)
             return archived_report
         manifest = dict(summary_view.get("package_manifest") or {})
         routing_provenance = dict(summary_view.get("routing_provenance") or {})
@@ -931,6 +1211,13 @@ class DocketDatasetPackager:
         proof_assistant_meta_row = dict((rows_by_piece.get("proof_assistant_metadata") or [{}])[0])
         proof_assistant_metadata = self._parse_possible_json(proof_assistant_meta_row.get("metadata_json")) or {}
         proof_assistant_summary = self._parse_possible_json(proof_assistant_meta_row.get("summary_json")) or {}
+        proof_revalidation_runs = self._restore_rows(rows_by_piece.get("proof_revalidation_runs"))
+        proof_revalidation_report = _normalize_packaged_revalidation_report_row(
+            dict((rows_by_piece.get("proof_revalidation_report") or [{}])[0])
+        )
+        operator_dashboard_report = _normalize_packaged_operator_dashboard_row(
+            dict((rows_by_piece.get("operator_dashboard_report") or [{}])[0])
+        )
         metadata = json.loads(str(dataset_core.get("metadata_json") or "{}"))
         artifact_provenance = dict((metadata or {}).get("artifact_provenance") or {})
         current_packet_count = sum(1 for item in proof_evidence_packets if bool(item.get("is_current", True)))
@@ -967,6 +1254,8 @@ class DocketDatasetPackager:
                 "items": vector_items,
                 "document_count": len(vector_items),
             },
+            "proof_revalidation_report": proof_revalidation_report,
+            "operator_dashboard_report": operator_dashboard_report,
             "proof_assistant": {
                 "agenda": sorted_proof_agenda,
                 "summary": {
@@ -1028,6 +1317,7 @@ class DocketDatasetPackager:
                         "zkp_status": "not_implemented",
                     },
                 },
+                "revalidation_runs": proof_revalidation_runs,
                 "metadata": dict(proof_assistant_metadata),
             },
             "metadata": metadata,
@@ -2802,6 +3092,136 @@ def load_packaged_docket_inspection_report(
     )
 
 
+def load_packaged_docket_proof_revalidation_report(
+    manifest_path: str | Path,
+    *,
+    report_format: str = "parsed",
+) -> Any:
+    """Load the archived packaged proof revalidation report artifact."""
+
+    minimal_view = DocketDatasetPackager().load_minimal_dataset_view(manifest_path)
+    revalidation_report = dict(minimal_view.get("proof_revalidation_report") or {})
+    normalized_format = str(report_format or "parsed").strip().lower()
+    if normalized_format in {"parsed", "dict", "snapshot"}:
+        return dict(revalidation_report.get("snapshot") or {})
+    if normalized_format == "json":
+        return str(revalidation_report.get("report_json") or "")
+    if normalized_format == "text":
+        return str(revalidation_report.get("report_text") or "")
+    if normalized_format == "markdown":
+        return str(revalidation_report.get("report_markdown") or "")
+    if normalized_format == "row":
+        return revalidation_report
+    raise ValueError(f"Unsupported proof revalidation report format: {report_format}")
+
+
+def load_packaged_docket_operator_dashboard_report(
+    manifest_path: str | Path,
+    *,
+    report_format: str = "parsed",
+) -> Any:
+    """Load the archived packaged operator dashboard report artifact."""
+
+    minimal_view = DocketDatasetPackager().load_minimal_dataset_view(manifest_path)
+    dashboard_report = dict(minimal_view.get("operator_dashboard_report") or {})
+    normalized_format = str(report_format or "parsed").strip().lower()
+    if normalized_format in {"parsed", "dict", "dashboard"}:
+        return dict(dashboard_report.get("dashboard") or {})
+    if normalized_format == "json":
+        return str(dashboard_report.get("report_json") or "")
+    if normalized_format == "text":
+        return str(dashboard_report.get("report_text") or "")
+    if normalized_format == "markdown":
+        return str(dashboard_report.get("report_markdown") or "")
+    if normalized_format == "row":
+        return dashboard_report
+    raise ValueError(f"Unsupported operator dashboard report format: {report_format}")
+
+
+def get_packaged_docket_operator_dashboard(
+    manifest_path: str | Path,
+) -> Dict[str, Any]:
+    """Return a combined provenance and proof-revalidation dashboard view."""
+
+    packager = DocketDatasetPackager()
+    summary_view = packager.load_summary_view(manifest_path)
+    inspection = packager.inspect_packaged_bundle(manifest_path)
+    revalidation_snapshot = get_packaged_docket_proof_revalidation_snapshot(
+        manifest_path,
+        queue_top_k=5,
+        run_top_k=5,
+        min_priority="low",
+        include_execution_hints=False,
+    )
+    return {
+        "dataset_id": str(summary_view.get("dataset_id") or ""),
+        "docket_id": str(summary_view.get("docket_id") or ""),
+        "case_name": str(summary_view.get("case_name") or ""),
+        "court": str(summary_view.get("court") or ""),
+        "inspection": inspection,
+        "proof_revalidation_report": dict(summary_view.get("proof_revalidation_report") or {}),
+        "proof_revalidation_snapshot": revalidation_snapshot,
+        "summary": {
+            "document_count": int(summary_view.get("document_count") or 0),
+            "attachment_count": int(summary_view.get("attachment_count") or 0),
+            "proof_packet_count": int(summary_view.get("proof_packet_count") or 0),
+            "proof_store_count": int(summary_view.get("proof_store_count") or 0),
+            "review_required_work_item_count": int(summary_view.get("review_required_work_item_count") or 0),
+            "high_priority_revalidation_count": int(summary_view.get("high_priority_revalidation_count") or 0),
+            "revalidation_run_count": int(summary_view.get("revalidation_run_count") or 0),
+        },
+        "source": "packaged_operator_dashboard",
+    }
+
+
+def render_packaged_docket_operator_dashboard(
+    manifest_path: str | Path | Mapping[str, Any],
+    *,
+    report_format: str = "markdown",
+) -> str:
+    """Render a combined packaged operator dashboard."""
+
+    dashboard = (
+        dict(manifest_path)
+        if isinstance(manifest_path, Mapping)
+        else get_packaged_docket_operator_dashboard(manifest_path)
+    )
+    normalized_format = str(report_format or "markdown").strip().lower()
+    if normalized_format == "json":
+        return json.dumps(dashboard, indent=2, ensure_ascii=False) + "\n"
+
+    summary = dict(dashboard.get("summary") or {})
+    inspection = dict(dashboard.get("inspection") or {})
+    latest_run = dict((dict(dashboard.get("proof_revalidation_snapshot") or {})).get("latest_run_summary") or {})
+    lines = [
+        "Packaged Docket Operator Dashboard",
+        f"Dataset ID: {str(dashboard.get('dataset_id') or '')}",
+        f"Docket ID: {str(dashboard.get('docket_id') or '')}",
+        f"Case Name: {str(dashboard.get('case_name') or '')}",
+        f"Court: {str(dashboard.get('court') or '')}",
+        f"Document Count: {int(summary.get('document_count') or 0)}",
+        f"Attachment Count: {int(summary.get('attachment_count') or 0)}",
+        f"Latest Proof Packet ID: {str(inspection.get('latest_proof_packet_id') or '')}",
+        f"Latest Routing Reason: {str(inspection.get('latest_routing_reason') or '')}",
+        f"Pending Review Count: {int(summary.get('review_required_work_item_count') or 0)}",
+        f"High Priority Revalidation Count: {int(summary.get('high_priority_revalidation_count') or 0)}",
+        f"Revalidation Run Count: {int(summary.get('revalidation_run_count') or 0)}",
+        f"Latest Revalidation Run ID: {str(latest_run.get('run_id') or '')}",
+        f"Latest Revalidation Terminal Source: {str(latest_run.get('best_terminal_source_type') or '')}",
+        f"Latest Revalidation Terminal Support: {str(latest_run.get('best_terminal_support_strength') or '')}",
+    ]
+    if normalized_format == "text":
+        return "\n".join(lines) + "\n"
+    if normalized_format == "markdown":
+        markdown_lines = [
+            "# Packaged Docket Operator Dashboard",
+            "",
+            *[f"- {line}" for line in lines[1:]],
+        ]
+        return "\n".join(markdown_lines) + "\n"
+    raise ValueError(f"Unsupported operator dashboard report format: {report_format}")
+
+
 def inspect_packaged_docket_bundle(manifest_path: str | Path) -> Dict[str, Any]:
     """Return a lightweight inspection view for a packaged docket bundle."""
 
@@ -3025,6 +3445,128 @@ def get_packaged_docket_proof_revalidation_queue(
     }
 
 
+def get_packaged_docket_proof_revalidation_runs(
+    manifest_path: str | Path,
+    *,
+    top_k: int = 10,
+    work_item_id: str = "",
+    latest_first: bool = True,
+) -> Dict[str, Any]:
+    """Return persisted proof revalidation run history without loading the full package view."""
+
+    rows = DocketDatasetPackager().load_package_piece(manifest_path, "proof_revalidation_runs")
+    normalized_rows = [dict(item) for item in list(rows or []) if isinstance(item, Mapping)]
+    filtered_rows = normalized_rows
+    if str(work_item_id or "").strip():
+        target = str(work_item_id or "").strip()
+        filtered_rows = [
+            row
+            for row in filtered_rows
+            if target in {
+                str(row.get("best_work_item_id") or ""),
+                *[str(item) for item in list(row.get("refreshed_work_item_ids") or []) if str(item).strip()],
+            }
+        ]
+    filtered_rows.sort(
+        key=lambda row: (
+            int(row.get("attached_packet_count") or 0),
+            int(row.get("executed_count") or 0),
+            int(row.get("queue_limit") or 0),
+            str(row.get("run_id") or ""),
+        ),
+        reverse=bool(latest_first),
+    )
+    limited_rows = filtered_rows[: max(0, int(top_k))]
+    return {
+        "top_k": int(top_k),
+        "latest_first": bool(latest_first),
+        "work_item_id": str(work_item_id or ""),
+        "results": limited_rows,
+        "result_count": len(limited_rows),
+        "summary": {
+            "run_count": len(limited_rows),
+            "total_run_count": len(filtered_rows),
+            "latest_run_id": str(limited_rows[0].get("run_id") or "") if limited_rows else "",
+        },
+        "source": "packaged_proof_revalidation_runs",
+    }
+
+
+def get_packaged_docket_proof_revalidation_snapshot(
+    manifest_path: str | Path,
+    *,
+    queue_top_k: int = 5,
+    run_top_k: int = 5,
+    min_priority: str = "low",
+    include_execution_hints: bool = False,
+    action_top_k: int = 10,
+) -> Dict[str, Any]:
+    """Return current revalidation queue state plus recent persisted run history."""
+
+    queue = get_packaged_docket_proof_revalidation_queue(
+        manifest_path,
+        top_k=queue_top_k,
+        min_priority=min_priority,
+        include_execution_hints=include_execution_hints,
+        action_top_k=action_top_k,
+    )
+    runs = get_packaged_docket_proof_revalidation_runs(
+        manifest_path,
+        top_k=run_top_k,
+        latest_first=True,
+    )
+    latest_run = dict((runs.get("results") or [{}])[0] or {})
+    latest_queue_item = dict((queue.get("results") or [{}])[0] or {})
+    return {
+        "queue": queue,
+        "runs": runs,
+        "current_status": {
+            "review_required_work_item_count": int((dict(queue.get("summary") or {})).get("total_review_required_work_item_count") or 0),
+            "high_priority_revalidation_count": int((dict(queue.get("summary") or {})).get("high_priority_revalidation_count") or 0),
+            "queue_count": int(queue.get("result_count") or 0),
+            "has_pending_revalidation": bool(queue.get("result_count")),
+            "latest_run_available": bool(latest_run),
+        },
+        "latest_run_summary": {
+            "run_id": str(latest_run.get("run_id") or ""),
+            "best_work_item_id": str(latest_run.get("best_work_item_id") or ""),
+            "best_terminal_source_type": str(latest_run.get("best_terminal_source_type") or ""),
+            "best_terminal_support_strength": str(latest_run.get("best_terminal_support_strength") or ""),
+            "attached_packet_count": int(latest_run.get("attached_packet_count") or 0),
+        },
+        "next_queue_item_summary": {
+            "work_item_id": str(latest_queue_item.get("work_item_id") or ""),
+            "proof_revalidation_priority": str(latest_queue_item.get("proof_revalidation_priority") or ""),
+            "proof_revalidation_status": str(latest_queue_item.get("proof_revalidation_status") or ""),
+            "recommended_source_type": str((dict(latest_queue_item.get("recommended_revalidation_action") or {})).get("source_type") or ""),
+        },
+        "source": "packaged_proof_revalidation_snapshot",
+    }
+
+
+def render_packaged_docket_proof_revalidation_report(
+    manifest_path: str | Path,
+    *,
+    report_format: str = "markdown",
+    queue_top_k: int = 5,
+    run_top_k: int = 5,
+    min_priority: str = "low",
+) -> str:
+    """Render a human-readable proof revalidation snapshot report."""
+
+    snapshot = get_packaged_docket_proof_revalidation_snapshot(
+        manifest_path,
+        queue_top_k=queue_top_k,
+        run_top_k=run_top_k,
+        min_priority=min_priority,
+        include_execution_hints=False,
+    )
+    return _render_proof_revalidation_report_from_snapshot(
+        snapshot,
+        report_format=report_format,
+    )
+
+
 def execute_packaged_docket_proof_revalidation_queue(
     manifest_path: str | Path,
     *,
@@ -3181,6 +3723,22 @@ def persist_packaged_docket_proof_revalidation_queue(
             "package": {},
             "source": "persist_packaged_proof_revalidation_queue",
         }
+    proof_assistant = dict(attached_view.get("proof_assistant") or {})
+    run_record = _build_proof_revalidation_run_record(execution)
+    existing_runs = [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, Mapping)]
+    existing_runs.append(run_record)
+    proof_assistant["revalidation_runs"] = existing_runs
+    proof_summary = dict(proof_assistant.get("summary") or {})
+    proof_summary["revalidation_run_count"] = len(existing_runs)
+    proof_summary["latest_revalidation_run_id"] = str(run_record.get("run_id") or "")
+    proof_summary["latest_revalidation_attached_packet_count"] = int(run_record.get("attached_packet_count") or 0)
+    proof_summary["latest_revalidation_refreshed_work_item_count"] = len(list(run_record.get("refreshed_work_item_ids") or []))
+    proof_assistant["summary"] = proof_summary
+    proof_metadata = dict(proof_assistant.get("metadata") or {})
+    proof_metadata["latest_revalidation_run"] = run_record
+    proof_metadata["revalidation_run_count"] = len(existing_runs)
+    proof_assistant["metadata"] = proof_metadata
+    attached_view["proof_assistant"] = proof_assistant
     package = package_docket_dataset(
         attached_view,
         output_dir,
@@ -3190,6 +3748,7 @@ def persist_packaged_docket_proof_revalidation_queue(
     return {
         "persisted": True,
         "execution": execution,
+        "revalidation_run": run_record,
         "package": package,
         "manifest_json_path": str(package.get("manifest_json_path") or ""),
         "car_manifest_path": str(package.get("car_manifest_path") or ""),
@@ -4052,6 +4611,45 @@ def _count_agenda_revalidation_items(
             for item in rows
             if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) >= 3
         ),
+    }
+
+
+def _build_proof_revalidation_run_record(
+    execution: Mapping[str, Any],
+) -> Dict[str, Any]:
+    attached_packets = [dict(item) for item in list(execution.get("attached_packets") or [])]
+    attachment_summaries = [dict(item) for item in list(execution.get("attachment_summaries") or [])]
+    execution_summaries = [dict(item) for item in list(execution.get("execution_summaries") or [])]
+    refreshed_work_item_ids = [
+        str(item.get("work_item_id") or "")
+        for item in attachment_summaries
+        if str(item.get("work_item_id") or "")
+    ]
+    superseded_proof_ids = sorted(
+        {
+            str(proof_id)
+            for packet in attached_packets
+            for proof_id in list(packet.get("supersedes_proof_ids") or [])
+            if str(proof_id).strip()
+        }
+    )
+    best_execution_summary = dict(execution.get("best_execution_summary") or {})
+    return {
+        "run_id": (
+            f"proof_revalidation_run:{_safe_identifier(str(best_execution_summary.get('work_item_id') or 'batch'))}:"
+            f"{len(execution_summaries)}:{len(attached_packets)}"
+        ),
+        "executed_count": int(execution.get("executed_count") or 0),
+        "queue_limit": int(execution.get("queue_limit") or 0),
+        "attached_packet_count": len(attached_packets),
+        "chain_until_satisfied": bool(execution.get("chain_until_satisfied")),
+        "refreshed_work_item_ids": refreshed_work_item_ids,
+        "superseded_proof_ids": superseded_proof_ids,
+        "best_terminal_source_type": str(best_execution_summary.get("terminal_source_type") or ""),
+        "best_terminal_support_strength": str(best_execution_summary.get("terminal_support_strength") or ""),
+        "best_work_item_id": str(best_execution_summary.get("work_item_id") or ""),
+        "attachment_summaries": attachment_summaries,
+        "execution_summaries": execution_summaries,
     }
 
 
@@ -6082,15 +6680,22 @@ __all__ = [
     "execute_packaged_docket_follow_up_plan",
     "iter_packaged_docket_chain",
     "inspect_packaged_docket_bundle",
+    "get_packaged_docket_proof_revalidation_runs",
+    "get_packaged_docket_proof_revalidation_snapshot",
     "load_packaged_docket_dataset",
     "load_packaged_docket_dataset_components",
+    "get_packaged_docket_operator_dashboard",
+    "load_packaged_docket_proof_revalidation_report",
+    "load_packaged_docket_operator_dashboard_report",
     "load_packaged_docket_summary_view",
     "load_packaged_docket_inspection_report",
     "plan_packaged_docket_query",
     "persist_packaged_docket_proof_revalidation_queue",
     "prepare_packaged_docket_follow_up_job",
     "package_docket_dataset",
+    "render_packaged_docket_proof_revalidation_report",
     "render_packaged_docket_inspection_report",
+    "render_packaged_docket_operator_dashboard",
     "search_packaged_docket_dataset_bm25",
     "search_packaged_docket_dataset_vector",
     "execute_packaged_docket_proof_revalidation_queue",

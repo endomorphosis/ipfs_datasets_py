@@ -110,6 +110,7 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
         "search_state_law_corpus",
         "search_federal_register_corpus",
         "search_netherlands_law_corpus",
+        "recover_missing_legal_citation_source",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert required_name in by_name
@@ -150,6 +151,12 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert netherlands_params["hf_dataset_id"]["default"] == "justicedao/ipfs_netherlands_laws"
     assert netherlands_params["hf_parquet_file"]["default"] == "netherlands_laws.parquet"
 
+    recovery_params = by_name["recover_missing_legal_citation_source"]["parameters"]
+    assert recovery_params["citation_text"].get("required") is True
+    assert recovery_params["max_candidates"]["default"] == 8
+    assert recovery_params["archive_top_k"]["default"] == 3
+    assert recovery_params["publish_to_hf"]["default"] is False
+
 
 def test_tool_registration_mapping_includes_cap_entries() -> None:
     """Central migrated tool mapping should expose CAP entries for auto registration."""
@@ -165,6 +172,7 @@ def test_tool_registration_mapping_includes_cap_entries() -> None:
         "search_us_code_corpus",
         "search_state_law_corpus",
         "search_netherlands_law_corpus",
+        "recover_missing_legal_citation_source",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert func_name in legal_mapping
@@ -531,6 +539,36 @@ async def test_netherlands_law_search_uses_canonical_defaults(
     assert captured["payload"]["cid_column"] == "ipfs_cid"
     assert "netherlands_laws.parquet" in captured["payload"]["preferred_case_parquet_names"]
     assert captured["payload"]["chunk_lookup_enabled"] is False
+
+
+@pytest.mark.anyio
+async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    import ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api as real_api
+
+    captured = {}
+
+    async def _fake_recover_missing_legal_citation_source_from_parameters(parameters, *, tool_version="1.0.0"):
+        captured["parameters"] = dict(parameters)
+        captured["tool_version"] = tool_version
+        return {"status": "tracked", "operation": "recover_missing_legal_citation_source"}
+
+    monkeypatch.setattr(
+        real_api,
+        "recover_missing_legal_citation_source_from_parameters",
+        _fake_recover_missing_legal_citation_source_from_parameters,
+    )
+
+    result = await mcp_tools.recover_missing_legal_citation_source(
+        {
+            "citation_text": "42 U.S.C. § 1983",
+            "corpus_key": "us_code",
+        }
+    )
+
+    assert result["status"] == "tracked"
+    assert captured["parameters"]["citation_text"] == "42 U.S.C. § 1983"
+    assert captured["parameters"]["corpus_key"] == "us_code"
+    assert captured["tool_version"] == "1.0.0"
 
 
 @pytest.mark.anyio

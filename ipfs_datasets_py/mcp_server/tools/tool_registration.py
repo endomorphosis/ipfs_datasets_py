@@ -602,8 +602,14 @@ TOOL_MAPPINGS = {
             "search_court_rules_corpus": {
                 "name": "search_court_rules_corpus",
                 "category": "legal_datasets",
-                "description": "Search federal and state court-rules corpus with jurisdiction filtering from justicedao/ipfs_court_rules",
+                "description": "Search federal and state court-rules corpus with jurisdiction filtering from the canonical JusticeDAO court-rules dataset",
                 "tags": ["legal", "court_rules", "federal_rules", "state_rules", "vector-search", "cid", "retrieval"]
+            },
+            "recover_missing_legal_citation_source": {
+                "name": "recover_missing_legal_citation_source",
+                "category": "legal_datasets",
+                "description": "Recover missing legal citation sources via search, archive, and optional JusticeDAO HF publish planning",
+                "tags": ["legal", "citations", "recovery", "archive", "hf", "retrieval"]
             },
             "search_caselaw_access_vectors_with_centroids": {
                 "name": "search_caselaw_access_vectors_with_centroids",

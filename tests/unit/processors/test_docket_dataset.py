@@ -22,16 +22,23 @@ from ipfs_datasets_py.processors.legal_data import (
     execute_packaged_docket_query,
     execute_packaged_docket_follow_up_job,
     execute_packaged_docket_follow_up_plan,
+    get_packaged_docket_operator_dashboard,
     get_packaged_docket_proof_revalidation_queue,
+    get_packaged_docket_proof_revalidation_runs,
+    get_packaged_docket_proof_revalidation_snapshot,
     iter_packaged_docket_chain,
     load_packaged_docket_dataset,
     load_packaged_docket_dataset_components,
+    load_packaged_docket_operator_dashboard_report,
+    load_packaged_docket_proof_revalidation_report,
     load_packaged_docket_summary_view,
     load_packaged_docket_inspection_report,
     package_docket_dataset,
     persist_packaged_docket_proof_revalidation_queue,
     plan_packaged_docket_query,
     prepare_packaged_docket_follow_up_job,
+    render_packaged_docket_proof_revalidation_report,
+    render_packaged_docket_operator_dashboard,
     search_packaged_docket_dataset_bm25,
     search_packaged_docket_dataset_vector,
     search_packaged_docket_logic_artifacts,
@@ -40,6 +47,7 @@ from ipfs_datasets_py.processors.legal_data import (
     search_docket_dataset_vector,
     summarize_docket_dataset,
 )
+import ipfs_datasets_py.processors as processors_module
 
 
 @pytest.fixture(autouse=True)
@@ -796,6 +804,47 @@ def test_load_packaged_docket_summary_view_uses_manifest_counts(tmp_path):
     public_summary_view = load_packaged_docket_summary_view(package["manifest_json_path"])
     assert public_summary_view["document_count"] == 1
     assert public_summary_view["case_name"] == "Doe v. Summary View"
+
+
+def test_load_packaged_docket_inspection_report_skips_minimal_document_view(tmp_path):
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "1:24-cv-1018",
+            "case_name": "Doe v. Lightweight Report",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Lightweight report routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "lightweight_report_bundle",
+        package_name="lightweight_report_bundle",
+        include_car=False,
+    )
+
+    packager = DocketDatasetPackager()
+
+    def fail_load_minimal_dataset_view(manifest_path):
+        raise AssertionError("load_minimal_dataset_view should not be used for archived report loading")
+
+    packager.load_minimal_dataset_view = fail_load_minimal_dataset_view  # type: ignore[method-assign]
+    report = packager.load_inspection_report(package["manifest_json_path"], report_format="parsed")
+    assert report["latest_routing_reason"] == "Lightweight report routing reason."
+
+
+def test_top_level_processors_re_exports_packaged_read_helpers():
+    assert hasattr(processors_module, "load_packaged_docket_summary_view")
+    assert hasattr(processors_module, "load_packaged_docket_inspection_report")
+    assert hasattr(processors_module, "inspect_packaged_docket_bundle")
+    assert hasattr(processors_module, "render_packaged_docket_inspection_report")
 
 
 def test_parser_selector_routes_state_court_rules_to_court_rules_adapter():
@@ -2579,6 +2628,8 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     )
     assert persisted_revalidation_package["persisted"] is True
     assert persisted_revalidation_package["manifest_json_path"]
+    assert persisted_revalidation_package["revalidation_run"]["attached_packet_count"] == 1
+    assert persisted_revalidation_package["revalidation_run"]["best_terminal_source_type"] == "legal_dataset_parser"
     reloaded_revalidated_view = load_packaged_docket_dataset(
         persisted_revalidation_package["manifest_json_path"]
     )
@@ -2591,6 +2642,79 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert reloaded_revalidated_agenda_item["current_proof_packet_review_required"] is False
     assert reloaded_revalidated_agenda_item["proof_revalidation_status"] == "current_support_stable"
     assert reloaded_revalidated_view["proof_assistant"]["summary"]["review_required_work_item_count"] == 0
+    assert reloaded_revalidated_view["proof_assistant"]["summary"]["revalidation_run_count"] == 1
+    assert reloaded_revalidated_view["proof_assistant"]["summary"]["latest_revalidation_attached_packet_count"] == 1
+    assert len(reloaded_revalidated_view["proof_assistant"]["revalidation_runs"]) == 1
+    assert reloaded_revalidated_view["proof_assistant"]["revalidation_runs"][0]["attached_packet_count"] == 1
+    assert reloaded_revalidated_view["proof_assistant"]["revalidation_runs"][0]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert reloaded_revalidated_view["proof_assistant"]["metadata"]["latest_revalidation_run"]["attached_packet_count"] == 1
+    assert "Pending Review Count: 0" in reloaded_revalidated_view["proof_revalidation_report"]["report_text"]
+    assert "Packaged Docket Operator Dashboard" in reloaded_revalidated_view["operator_dashboard_report"]["report_text"]
+    persisted_revalidation_runs = get_packaged_docket_proof_revalidation_runs(
+        persisted_revalidation_package["manifest_json_path"],
+        top_k=5,
+    )
+    assert persisted_revalidation_runs["source"] == "packaged_proof_revalidation_runs"
+    assert persisted_revalidation_runs["result_count"] == 1
+    assert persisted_revalidation_runs["summary"]["latest_run_id"] == persisted_revalidation_runs["results"][0]["run_id"]
+    assert persisted_revalidation_runs["results"][0]["attached_packet_count"] == 1
+    assert persisted_revalidation_runs["results"][0]["best_terminal_source_type"] == "legal_dataset_parser"
+    filtered_revalidation_runs = get_packaged_docket_proof_revalidation_runs(
+        persisted_revalidation_package["manifest_json_path"],
+        top_k=5,
+        work_item_id=changed_preference_agenda_item["work_item_id"],
+    )
+    assert filtered_revalidation_runs["result_count"] == 1
+    assert filtered_revalidation_runs["results"][0]["best_work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    revalidation_snapshot = get_packaged_docket_proof_revalidation_snapshot(
+        persisted_revalidation_package["manifest_json_path"],
+        queue_top_k=5,
+        run_top_k=5,
+        min_priority="low",
+    )
+    assert revalidation_snapshot["source"] == "packaged_proof_revalidation_snapshot"
+    assert revalidation_snapshot["current_status"]["review_required_work_item_count"] == 0
+    assert revalidation_snapshot["current_status"]["queue_count"] == 0
+    assert revalidation_snapshot["current_status"]["latest_run_available"] is True
+    assert revalidation_snapshot["latest_run_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
+    assert revalidation_snapshot["latest_run_summary"]["attached_packet_count"] == 1
+    assert revalidation_snapshot["next_queue_item_summary"]["work_item_id"] == ""
+    revalidation_report_markdown = render_packaged_docket_proof_revalidation_report(
+        persisted_revalidation_package["manifest_json_path"],
+        report_format="markdown",
+    )
+    revalidation_report_text = render_packaged_docket_proof_revalidation_report(
+        persisted_revalidation_package["manifest_json_path"],
+        report_format="text",
+    )
+    assert "Packaged Docket Proof Revalidation Report" in revalidation_report_markdown
+    assert "Pending Review Count: 0" in revalidation_report_text
+    assert "Latest Run Terminal Source: legal_dataset_parser" in revalidation_report_text
+    archived_revalidation_report = load_packaged_docket_proof_revalidation_report(
+        persisted_revalidation_package["manifest_json_path"],
+        report_format="text",
+    )
+    assert "Pending Review Count: 0" in archived_revalidation_report
+    operator_dashboard = get_packaged_docket_operator_dashboard(
+        persisted_revalidation_package["manifest_json_path"]
+    )
+    assert operator_dashboard["source"] == "packaged_operator_dashboard"
+    assert operator_dashboard["summary"]["review_required_work_item_count"] == 0
+    assert operator_dashboard["summary"]["revalidation_run_count"] == 1
+    assert operator_dashboard["inspection"]["proof_revalidation_report"]["report_text"]
+    assert operator_dashboard["proof_revalidation_snapshot"]["latest_run_summary"]["best_terminal_source_type"] == "legal_dataset_parser"
+    operator_dashboard_report = render_packaged_docket_operator_dashboard(
+        persisted_revalidation_package["manifest_json_path"],
+        report_format="text",
+    )
+    assert "Packaged Docket Operator Dashboard" in operator_dashboard_report
+    assert "Pending Review Count: 0" in operator_dashboard_report
+    assert "Latest Revalidation Terminal Source: legal_dataset_parser" in operator_dashboard_report
+    archived_operator_dashboard_report = load_packaged_docket_operator_dashboard_report(
+        persisted_revalidation_package["manifest_json_path"],
+        report_format="text",
+    )
+    assert "Packaged Docket Operator Dashboard" in archived_operator_dashboard_report
     restored_changed_preference_agenda_item = next(
         item
         for item in restored_changed_preference_attached_view["proof_assistant"]["agenda"]

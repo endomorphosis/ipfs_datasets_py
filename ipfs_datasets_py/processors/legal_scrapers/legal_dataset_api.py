@@ -1700,6 +1700,64 @@ async def search_court_rules_corpus_from_parameters(
     return result
 
 
+async def recover_missing_legal_citation_source_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    """Search, archive, and optionally publish candidate sources for an unresolved legal citation."""
+    from .legal_source_recovery import recover_missing_legal_citation_source
+
+    citation_text = str(parameters.get("citation_text") or "").strip()
+    normalized_citation = str(parameters.get("normalized_citation") or citation_text).strip()
+    if not citation_text:
+        return {
+            "status": "error",
+            "error": "citation_text is required",
+            "operation": "recover_missing_legal_citation_source",
+            "tool_version": tool_version,
+        }
+
+    corpus_key = str(parameters.get("corpus_key") or "").strip() or None
+    state_code_raw = str(parameters.get("state_code") or parameters.get("state") or "").strip()
+    state_code = None
+    if state_code_raw:
+        try:
+            state_code = _normalize_state_code(state_code_raw)
+        except ValueError as exc:
+            return {
+                "status": "error",
+                "error": str(exc),
+                "operation": "recover_missing_legal_citation_source",
+                "tool_version": tool_version,
+            }
+
+    metadata = dict(parameters.get("metadata") or {})
+    candidate_corpora = [
+        str(item).strip()
+        for item in list(parameters.get("candidate_corpora") or metadata.get("candidate_corpora") or [])
+        if str(item).strip()
+    ]
+    if candidate_corpora:
+        metadata["candidate_corpora"] = candidate_corpora
+
+    result = await recover_missing_legal_citation_source(
+        citation_text=citation_text,
+        normalized_citation=normalized_citation or None,
+        corpus_key=corpus_key,
+        state_code=state_code,
+        metadata=metadata,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+    )
+    result["status"] = str(result.get("status") or "tracked")
+    result["operation"] = "recover_missing_legal_citation_source"
+    result["tool_version"] = tool_version
+    return result
+
+
 async def search_federal_register_hf_index_from_parameters(
     parameters: Dict[str, Any],
     *,

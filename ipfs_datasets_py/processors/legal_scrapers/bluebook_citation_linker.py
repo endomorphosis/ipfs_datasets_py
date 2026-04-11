@@ -16,6 +16,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
 from .citation_extraction import Citation, CitationExtractor
+from .legal_source_recovery import build_missing_citation_recovery_query
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,9 @@ _TITLE_NUMBER_FIELDS = ["title", "title_number", "title_no", "usc_title", "title
 _CODE_NAME_FIELDS = ["code_name", "code", "code_title", "title_name"]
 _VOLUME_FIELDS = ["volume", "volume_number", "fr_volume"]
 _PAGE_FIELDS = ["page", "page_number", "start_page", "page_start", "fr_page"]
+_REPORTER_FIELDS = ["reporter", "reporter_abbrev", "reporter_abbreviation", "publication", "series"]
+_CONGRESS_FIELDS = ["congress", "congress_number", "session", "volume"]
+_LAW_NUMBER_FIELDS = ["law_number", "public_law", "public_law_number", "pl_number", "page"]
 
 
 @dataclass(frozen=True)
@@ -107,6 +111,42 @@ def _normalize_section(value: Any) -> str:
     return text.lower()
 
 
+def _compact_alnum(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
+
+
+def _citation_match_terms(citation: Citation) -> List[str]:
+    terms: List[str] = []
+
+    def _add(value: Any) -> None:
+        text = str(value or "").strip()
+        if not text:
+            return
+        if text not in terms:
+            terms.append(text)
+
+    _add(citation.text)
+    if citation.type == "usc" and citation.title and citation.section:
+        _add(f"{citation.title} U.S.C. § {citation.section}")
+        _add(f"{citation.title} USC {citation.section}")
+        _add(f"{citation.title} U.S.C. {citation.section}")
+    elif citation.type == "cfr" and citation.title and citation.section:
+        _add(f"{citation.title} C.F.R. § {citation.section}")
+        _add(f"{citation.title} CFR {citation.section}")
+        _add(f"{citation.title} C.F.R. {citation.section}")
+    elif citation.type == "federal_register" and citation.volume and citation.page:
+        _add(f"{citation.volume} FR {citation.page}")
+        _add(f"{citation.volume} Fed. Reg. {citation.page}")
+    elif citation.type == "public_law" and citation.volume and citation.page:
+        _add(f"Pub. L. {citation.volume}-{citation.page}")
+        _add(f"P.L. {citation.volume}-{citation.page}")
+        _add(f"Public Law {citation.volume}-{citation.page}")
+    elif citation.type == "case" and citation.volume and citation.reporter and citation.page:
+        _add(f"{citation.volume} {citation.reporter} {citation.page}")
+        _add(f"{citation.volume} {citation.reporter.replace('.', '').strip()} {citation.page}")
+    return terms
+
+
 def _first_present(row: Dict[str, Any], fields: Iterable[str]) -> Optional[Any]:
     for field in fields:
         if field in row and row.get(field) not in (None, ""):
@@ -135,6 +175,18 @@ def _build_uscode_source_config() -> CorpusSourceConfig:
 
 
 _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
+    "caselaw_access_project": CorpusSourceConfig(
+        key="caselaw_access_project",
+        dataset_id=get_canonical_legal_corpus("caselaw_access_project").hf_dataset_id,
+        local_roots=(get_canonical_legal_corpus("caselaw_access_project").parquet_dir(),),
+        preferred_parquet_names=(
+            get_canonical_legal_corpus("caselaw_access_project").combined_parquet_filename,
+            "caselaw",
+            "cap",
+        ),
+        parquet_prefix=get_canonical_legal_corpus("caselaw_access_project").parquet_dir_name,
+        cid_field=get_canonical_legal_corpus("caselaw_access_project").cid_field,
+    ),
     "us_code": _build_uscode_source_config(),
     "federal_register": CorpusSourceConfig(
         key="federal_register",
@@ -208,6 +260,12 @@ class BluebookCitationResolver:
         corpora = self._candidate_corpora(citation)
         effective_state = (state_code or citation.jurisdiction or "").strip().upper() or None
         preferred_metadata = self._preferred_resolution_metadata(corpora, effective_state)
+        recovery_corpus_key = corpora[0] if corpora else None
+        recovery_query = build_missing_citation_recovery_query(
+            normalized_citation,
+            corpus_key=recovery_corpus_key,
+            state_code=effective_state,
+        )
 
         for corpus_key in corpora:
             for source_ref in self._iter_corpus_sources(corpus_key, state_code=effective_state):
@@ -249,6 +307,9 @@ class BluebookCitationResolver:
             source_url=citation.url,
             metadata={
                 "state_code": effective_state,
+                "recovery_supported": bool(recovery_corpus_key),
+                "recovery_corpus_key": recovery_corpus_key,
+                "recovery_query": recovery_query,
                 **preferred_metadata,
             },
         )
@@ -276,6 +337,7 @@ class BluebookCitationResolver:
                     preferred_parquet_files.append(parquet_name)
         return {
             "candidate_corpora": candidate_corpora,
+            "preferred_corpus_key": candidate_corpora[0] if candidate_corpora else None,
             "preferred_dataset_ids": preferred_dataset_ids,
             "preferred_parquet_files": preferred_parquet_files,
         }
@@ -290,10 +352,16 @@ class BluebookCitationResolver:
         return citation.text
 
     def _candidate_corpora(self, citation: Citation) -> List[str]:
+        if citation.type == "case":
+            return ["caselaw_access_project"]
         if citation.type == "usc":
             return ["us_code"]
+        if citation.type == "cfr":
+            return ["federal_register", "us_code"]
         if citation.type == "federal_register":
             return ["federal_register"]
+        if citation.type == "public_law":
+            return ["us_code", "federal_register", "caselaw_access_project"]
         if citation.type == "state_statute":
             code_name = _normalize_text(citation.metadata.get("code_name"))
             if "rule" in code_name:
@@ -529,6 +597,55 @@ class BluebookCitationResolver:
                 clauses.append(f"({' OR '.join(subclauses)})")
             return clauses, params
 
+        if corpus_key in {"caselaw_access_project", "us_code", "federal_register"}:
+            search_fields = [
+                field
+                for field in (
+                    _OFFICIAL_CITE_FIELDS
+                    + _IDENTIFIER_FIELDS
+                    + _TITLE_FIELDS
+                    + _REPORTER_FIELDS
+                    + _TEXT_FIELDS
+                )
+                if field in schema
+            ]
+            terms = _citation_match_terms(citation)
+            subclauses: List[str] = []
+            for field in search_fields:
+                for term in terms[:8]:
+                    if not term:
+                        continue
+                    subclauses.append(f"lower(CAST({field} AS VARCHAR)) = lower(?)")
+                    params.append(term)
+                    if len(term) >= 6:
+                        subclauses.append(f"lower(CAST({field} AS VARCHAR)) LIKE lower(?)")
+                        params.append(f"%{term}%")
+
+            if citation.type == "case":
+                volume_field = next((field for field in _VOLUME_FIELDS if field in schema), None)
+                page_field = next((field for field in _PAGE_FIELDS if field in schema), None)
+                if volume_field and page_field and citation.volume and citation.page:
+                    subclauses.append(f"(CAST({volume_field} AS VARCHAR) = ? AND CAST({page_field} AS VARCHAR) = ?)")
+                    params.extend([str(citation.volume), str(citation.page)])
+
+            if citation.type == "public_law":
+                congress_field = next((field for field in _CONGRESS_FIELDS if field in schema), None)
+                law_field = next((field for field in _LAW_NUMBER_FIELDS if field in schema), None)
+                if congress_field and law_field and citation.volume and citation.page:
+                    subclauses.append(f"(CAST({congress_field} AS VARCHAR) = ? AND CAST({law_field} AS VARCHAR) = ?)")
+                    params.extend([str(citation.volume), str(citation.page)])
+
+            if citation.type == "cfr":
+                title_field = next((field for field in _TITLE_NUMBER_FIELDS if field in schema), None)
+                section_field = next((field for field in _SECTION_FIELDS if field in schema), None)
+                if title_field and section_field and citation.title and citation.section:
+                    subclauses.append(f"(CAST({title_field} AS VARCHAR) = ? AND CAST({section_field} AS VARCHAR) = ?)")
+                    params.extend([str(citation.title), str(citation.section)])
+
+            if subclauses:
+                clauses.append(f"({' OR '.join(subclauses)})")
+            return clauses, params
+
         return clauses, params
 
     def _rank_rows(
@@ -562,12 +679,32 @@ class BluebookCitationResolver:
     ) -> Any:
         score = 0.0
         matched_field = ""
-        normalized_citation = _normalize_text(citation.text)
+        normalized_terms = {_normalize_text(term) for term in _citation_match_terms(citation) if term}
+        compact_terms = {_compact_alnum(term) for term in _citation_match_terms(citation) if term}
 
         for field in _OFFICIAL_CITE_FIELDS:
-            if field in row and _normalize_text(row.get(field)) == normalized_citation:
+            if field in row and _normalize_text(row.get(field)) in normalized_terms:
                 score += 10.0
                 matched_field = field
+                break
+
+        if score <= 0:
+            for field in _IDENTIFIER_FIELDS + _TITLE_FIELDS:
+                if field not in row:
+                    continue
+                normalized_value = _normalize_text(row.get(field))
+                if normalized_value and normalized_value in normalized_terms:
+                    score += 8.0
+                    matched_field = matched_field or field
+                    break
+
+        for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS:
+            if field not in row:
+                continue
+            compact_value = _compact_alnum(row.get(field))
+            if compact_value and compact_value in compact_terms:
+                score += 4.0
+                matched_field = matched_field or field
                 break
 
         if citation.type == "usc":
@@ -583,6 +720,31 @@ class BluebookCitationResolver:
             if str(row_volume or "") == str(citation.volume or "") and str(row_page or "") == str(citation.page or ""):
                 score += 8.0
                 matched_field = matched_field or "volume+page"
+
+        if citation.type == "cfr":
+            row_title = _first_present(row, _TITLE_NUMBER_FIELDS)
+            row_section = _first_present(row, _SECTION_FIELDS)
+            if str(row_title or "") == str(citation.title or "") and _normalize_section(row_section) == _normalize_section(citation.section):
+                score += 8.0
+                matched_field = matched_field or "title+section"
+
+        if citation.type == "public_law":
+            row_congress = _first_present(row, _CONGRESS_FIELDS)
+            row_law_number = _first_present(row, _LAW_NUMBER_FIELDS)
+            if str(row_congress or "") == str(citation.volume or "") and str(row_law_number or "") == str(citation.page or ""):
+                score += 8.0
+                matched_field = matched_field or "congress+law_number"
+
+        if citation.type == "case":
+            row_volume = _first_present(row, _VOLUME_FIELDS)
+            row_page = _first_present(row, _PAGE_FIELDS)
+            row_reporter = _first_present(row, _REPORTER_FIELDS)
+            if str(row_volume or "") == str(citation.volume or "") and str(row_page or "") == str(citation.page or ""):
+                score += 6.0
+                matched_field = matched_field or "volume+page"
+            if row_reporter and _compact_alnum(row_reporter) == _compact_alnum(citation.reporter):
+                score += 4.0
+                matched_field = matched_field or "reporter"
 
         if citation.type == "state_statute":
             row_state = str(_first_present(row, _STATE_FIELDS) or "").upper()

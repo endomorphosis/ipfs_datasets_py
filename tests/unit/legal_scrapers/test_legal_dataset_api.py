@@ -175,3 +175,55 @@ async def test_fixture_to_searchable_corpus_result_preserves_article_citation(mo
         "Sr, Boek 1 Algemene bepalingen, Titel I Reikwijdte van de strafwet, "
         "Afdeling 1 Strafbaarheid, Artikel 1"
     )
+
+
+@pytest.mark.asyncio
+async def test_recover_missing_legal_citation_source_api_delegates_parameters(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+    from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery as recovery_module
+
+    captured = {}
+
+    async def _fake_recover_missing_legal_citation_source(**kwargs):
+        captured.update(kwargs)
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "corpus_key": kwargs["corpus_key"],
+        }
+
+    monkeypatch.setattr(
+        recovery_module,
+        "recover_missing_legal_citation_source",
+        _fake_recover_missing_legal_citation_source,
+    )
+
+    result = await legal_dataset_api.recover_missing_legal_citation_source_from_parameters(
+        {
+            "citation_text": "Minn. Stat. § 518.17",
+            "normalized_citation": "Minn. Stat. § 518.17",
+            "corpus_key": "state_laws",
+            "state": "mn",
+            "candidate_corpora": ["state_laws", "state_admin_rules"],
+            "metadata": {"source": "bluebook"},
+            "max_candidates": 5,
+            "archive_top_k": 2,
+            "publish_to_hf": True,
+            "hf_token": "token-123",
+        },
+        tool_version="5.0.0",
+    )
+
+    assert result["status"] == "tracked"
+    assert result["operation"] == "recover_missing_legal_citation_source"
+    assert result["tool_version"] == "5.0.0"
+    assert captured["citation_text"] == "Minn. Stat. § 518.17"
+    assert captured["normalized_citation"] == "Minn. Stat. § 518.17"
+    assert captured["corpus_key"] == "state_laws"
+    assert captured["state_code"] == "MN"
+    assert captured["metadata"]["source"] == "bluebook"
+    assert captured["metadata"]["candidate_corpora"] == ["state_laws", "state_admin_rules"]
+    assert captured["max_candidates"] == 5
+    assert captured["archive_top_k"] == 2
+    assert captured["publish_to_hf"] is True
+    assert captured["hf_token"] == "token-123"

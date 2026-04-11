@@ -418,6 +418,28 @@ def test_bluebook_citation_resolver_links_usc_and_state_law_from_local_parquet(t
     assert "STATE-MN.parquet" in by_type["state_statute"].metadata["preferred_parquet_files"]
 
 
+def test_bluebook_citation_resolver_surfaces_recovery_metadata_for_unmatched_state_law(tmp_path):
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={
+            "state_laws": [str(tmp_path / "missing_state_laws.parquet")],
+        },
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "The motion relies on Minn. Stat. § 999.999.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    link = links[0]
+    assert link.matched is False
+    assert link.metadata["recovery_supported"] is True
+    assert link.metadata["recovery_corpus_key"] == "state_laws"
+    assert "Minn. Stat. § 999.999" in link.metadata["recovery_query"]
+    assert "site:.gov" in link.metadata["recovery_query"]
+
+
 def test_bluebook_citation_resolver_links_federal_register_from_local_parquet(tmp_path):
     fr_path = tmp_path / "federal_register.parquet"
     pq.write_table(
@@ -515,6 +537,84 @@ def test_bluebook_citation_resolver_links_admin_and_court_rules_from_local_parqu
     assert by_text["Or. Court Rules § 5.010"].matched is True
     assert by_text["Or. Court Rules § 5.010"].corpus_key == "state_court_rules"
     assert by_text["Or. Court Rules § 5.010"].source_cid == "bafyorcourtrule5010"
+
+
+def test_bluebook_citation_resolver_links_case_cfr_and_public_law_from_local_parquet(tmp_path):
+    cap_path = tmp_path / "cap_cases.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "id": "cap_brown_v_board",
+                    "title": "Brown v. Board of Education",
+                    "citation": "347 U.S. 483",
+                    "reporter": "U.S.",
+                    "volume": "347",
+                    "page": "483",
+                    "source_url": "https://cite.case.law/us/347/483/",
+                }
+            ]
+        ),
+        cap_path,
+    )
+
+    federal_register_path = tmp_path / "fr_cfr.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "title": "40",
+                    "section": "122.41",
+                    "citation": "40 C.F.R. § 122.41",
+                    "semantic_text": "Conditions applicable to all NPDES permits.",
+                    "cid": "bafycfr12241",
+                    "fr_page_url": "https://www.ecfr.gov/current/title-40/section-122.41",
+                }
+            ]
+        ),
+        federal_register_path,
+    )
+
+    uscode_public_law_path = tmp_path / "uscode_public_law.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "identifier": "Pub. L. 117-2",
+                    "congress": "117",
+                    "law_number": "2",
+                    "heading": "Infrastructure Investment and Jobs Act",
+                    "cid": "bafypl1172",
+                    "source_url": "https://www.congress.gov/public-laws/117th-congress",
+                }
+            ]
+        ),
+        uscode_public_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={
+            "caselaw_access_project": [str(cap_path)],
+            "federal_register": [str(federal_register_path)],
+            "us_code": [str(uscode_public_law_path)],
+        },
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "See Brown v. precedent at 347 U.S. 483, 40 C.F.R. § 122.41, and Pub. L. 117-2.",
+        resolver=resolver,
+    )
+
+    by_type = {link.citation_type: link for link in links}
+    assert by_type["case"].matched is True
+    assert by_type["case"].corpus_key == "caselaw_access_project"
+
+    assert by_type["cfr"].matched is True
+    assert by_type["cfr"].corpus_key in {"federal_register", "us_code"}
+
+    assert by_type["public_law"].matched is True
+    assert by_type["public_law"].source_cid == "bafypl1172"
 
 
 def test_bluebook_citation_resolver_randomized_supported_citation_coverage(tmp_path):

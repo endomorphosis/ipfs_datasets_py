@@ -30,6 +30,7 @@ from ..retrieval import (
     vector_dot,
 )
 from ..legal_scrapers.bluebook_citation_linker import resolve_bluebook_citations_in_text
+from ..legal_scrapers.legal_source_recovery import recover_missing_legal_citation_source
 
 
 def _utc_now_isoformat() -> str:
@@ -57,6 +58,130 @@ def _normalize_authority_text(value: Any) -> str:
     return " ".join(str(value or "").strip().split())
 
 
+def _citation_recovery_candidate_from_link(document: "DocketDocument", link: Any) -> Optional[Dict[str, Any]]:
+    matched = bool(getattr(link, "matched", False)) if not isinstance(link, dict) else bool(link.get("matched"))
+    metadata = dict(getattr(link, "metadata", {}) or {}) if not isinstance(link, dict) else dict(link.get("metadata") or {})
+    if matched or not bool(metadata.get("recovery_supported")):
+        return None
+
+    citation_text = str(getattr(link, "citation_text", "") or "") if not isinstance(link, dict) else str(link.get("citation_text") or "")
+    normalized_citation = str(getattr(link, "normalized_citation", "") or citation_text) if not isinstance(link, dict) else str(link.get("normalized_citation") or citation_text)
+    citation_type = str(getattr(link, "citation_type", "") or "") if not isinstance(link, dict) else str(link.get("citation_type") or "")
+    corpus_key = str(getattr(link, "corpus_key", "") or metadata.get("recovery_corpus_key") or "") if not isinstance(link, dict) else str(link.get("corpus_key") or metadata.get("recovery_corpus_key") or "")
+    state_code = str(metadata.get("state_code") or "")
+
+    return {
+        "citation_text": citation_text,
+        "normalized_citation": normalized_citation,
+        "citation_type": citation_type,
+        "corpus_key": corpus_key,
+        "state_code": state_code,
+        "recovery_query": str(metadata.get("recovery_query") or ""),
+        "preferred_dataset_ids": [str(item) for item in list(metadata.get("preferred_dataset_ids") or []) if str(item).strip()],
+        "preferred_parquet_files": [str(item) for item in list(metadata.get("preferred_parquet_files") or []) if str(item).strip()],
+        "candidate_corpora": [str(item) for item in list(metadata.get("candidate_corpora") or []) if str(item).strip()],
+        "document_id": document.document_id,
+        "document_title": document.title,
+        "document_source_url": document.source_url,
+    }
+
+
+def _collect_document_citation_recovery_candidates(document: "DocketDocument") -> List[Dict[str, Any]]:
+    link_payloads = list(document.metadata.get("citation_links") or [])
+    if not link_payloads and str(document.text or "").strip():
+        link_payloads = [
+            {
+                "citation_text": link.citation_text,
+                "citation_type": link.citation_type,
+                "normalized_citation": link.normalized_citation,
+                "matched": bool(link.matched),
+                "corpus_key": link.corpus_key,
+                "metadata": dict(link.metadata),
+            }
+            for link in resolve_bluebook_citations_in_text(document.text)
+        ]
+
+    candidates: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for payload in link_payloads:
+        candidate = _citation_recovery_candidate_from_link(document, payload)
+        if candidate is None:
+            continue
+        key = (
+            str(candidate.get("normalized_citation") or ""),
+            str(candidate.get("corpus_key") or ""),
+            str(candidate.get("state_code") or ""),
+            str(candidate.get("document_id") or ""),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(candidate)
+    return candidates
+
+
+def collect_docket_dataset_citation_recovery_candidates(dataset: "DocketDatasetObject") -> Dict[str, Any]:
+    results: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for document in list(dataset.documents or []):
+        for candidate in _collect_document_citation_recovery_candidates(document):
+            dedupe_key = (
+                str(candidate.get("normalized_citation") or ""),
+                str(candidate.get("corpus_key") or ""),
+                str(candidate.get("state_code") or ""),
+            )
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            results.append(candidate)
+
+    return {
+        "dataset_id": dataset.dataset_id,
+        "docket_id": dataset.docket_id,
+        "result_count": len(results),
+        "results": results,
+        "source": "docket_dataset_citation_recovery_candidates",
+    }
+
+
+async def recover_docket_dataset_missing_authorities(
+    dataset: "DocketDatasetObject",
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+) -> Dict[str, Any]:
+    candidate_report = collect_docket_dataset_citation_recovery_candidates(dataset)
+    recoveries: List[Dict[str, Any]] = []
+    for candidate in list(candidate_report.get("results") or []):
+        recoveries.append(
+            await recover_missing_legal_citation_source(
+                citation_text=str(candidate.get("citation_text") or ""),
+                normalized_citation=str(candidate.get("normalized_citation") or ""),
+                corpus_key=str(candidate.get("corpus_key") or "") or None,
+                state_code=str(candidate.get("state_code") or "") or None,
+                metadata={
+                    "candidate_corpora": list(candidate.get("candidate_corpora") or []),
+                },
+                max_candidates=max_candidates,
+                archive_top_k=archive_top_k,
+                publish_to_hf=publish_to_hf,
+                hf_token=hf_token,
+            )
+        )
+
+    return {
+        "dataset_id": dataset.dataset_id,
+        "docket_id": dataset.docket_id,
+        "candidate_count": int(candidate_report.get("result_count") or 0),
+        "recovery_count": len(recoveries),
+        "recoveries": recoveries,
+        "publish_to_hf": bool(publish_to_hf),
+        "source": "docket_dataset_missing_authority_recovery",
+    }
+
+
 def _merge_linked_authorities(
     existing_authorities: Sequence[Dict[str, Any]],
     documents: Sequence["DocketDocument"],
@@ -74,6 +199,8 @@ def _merge_linked_authorities(
     linked_count = 0
     matched_count = 0
     document_count = 0
+    unresolved_count = 0
+    recovery_candidates: List[Dict[str, Any]] = []
 
     for document in documents:
         text = str(document.text or "").strip()
@@ -103,10 +230,19 @@ def _merge_linked_authorities(
             }
             for link in links
         ]
+        document_recovery_candidates = [
+            candidate
+            for candidate in (_citation_recovery_candidate_from_link(document, link) for link in links)
+            if candidate is not None
+        ]
+        document.metadata["citation_recovery_candidates"] = document_recovery_candidates
+        recovery_candidates.extend(document_recovery_candidates)
         for index, link in enumerate(links, start=1):
             linked_count += 1
             if link.matched:
                 matched_count += 1
+            else:
+                unresolved_count += 1
             authority_title = str(link.source_title or link.normalized_citation or link.citation_text).strip()
             authority_text = str(link.snippet or link.citation_text or authority_title).strip()
             key = (
@@ -145,6 +281,9 @@ def _merge_linked_authorities(
     return merged, {
         "linked_authority_count": linked_count,
         "matched_linked_authority_count": matched_count,
+        "unmatched_linked_authority_count": unresolved_count,
+        "citation_recovery_candidate_count": len(recovery_candidates),
+        "citation_recovery_candidates": recovery_candidates,
         "documents_with_linked_citations": document_count,
     }
 
@@ -287,6 +426,25 @@ class DocketDatasetObject:
             "vector_document_count": int((self.vector_index or {}).get("document_count") or 0),
             "metadata": dict(self.metadata),
         }
+
+    def collect_citation_recovery_candidates(self) -> Dict[str, Any]:
+        return collect_docket_dataset_citation_recovery_candidates(self)
+
+    async def recover_missing_authorities(
+        self,
+        *,
+        publish_to_hf: bool = False,
+        hf_token: Optional[str] = None,
+        max_candidates: int = 8,
+        archive_top_k: int = 3,
+    ) -> Dict[str, Any]:
+        return await recover_docket_dataset_missing_authorities(
+            self,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+        )
 
     def append_party_docket_item(self, party: str, item: Dict[str, Any]) -> None:
         normalized_party = str(party or "").strip().lower()
@@ -1487,6 +1645,8 @@ __all__ = [
     "DocketDatasetObject",
     "DocketDocument",
     "build_docket_deontic_artifacts",
+    "collect_docket_dataset_citation_recovery_candidates",
+    "recover_docket_dataset_missing_authorities",
     "build_docket_proof_assistant",
     "search_docket_dataset_bm25",
     "search_docket_dataset_vector",

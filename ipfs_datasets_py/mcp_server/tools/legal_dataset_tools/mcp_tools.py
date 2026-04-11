@@ -182,6 +182,14 @@ async def search_netherlands_law_corpus(parameters: Dict[str, Any]) -> Dict[str,
     return await search_netherlands_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def recover_missing_legal_citation_source(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Recover candidate official sources for an unresolved legal citation and optionally publish the manifest."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        recover_missing_legal_citation_source_from_parameters,
+    )
+    return await recover_missing_legal_citation_source_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def search_federal_register_hf_index(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Search Federal Register directly from HF-hosted FAISS + metadata files."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -664,6 +672,25 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "recover_missing_legal_citation_source",
+        "description": "Recover candidate official sources for an unresolved legal citation using search, archive, and optional HF publish steps.",
+        "function": recover_missing_legal_citation_source,
+        "parameters": {
+            "citation_text": {"type": "string", "required": True},
+            "normalized_citation": {"type": "string", "required": False},
+            "corpus_key": {"type": "string", "required": False},
+            "state": {"type": "string", "required": False},
+            "state_code": {"type": "string", "required": False},
+            "candidate_corpora": {"type": "array", "required": False},
+            "metadata": {"type": "object", "required": False},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "search_federal_register_hf_index",
         "description": "Search Federal Register directly from HF-hosted FAISS index + metadata using query text.",
         "function": search_federal_register_hf_index,
@@ -835,6 +862,7 @@ __all__ = [
     "search_court_rules_corpus",
     "search_federal_register_corpus",
     "search_netherlands_law_corpus",
+    "recover_missing_legal_citation_source",
     "search_federal_register_hf_index",
     "legal_search_brave",
     "legal_search_brave_terms",

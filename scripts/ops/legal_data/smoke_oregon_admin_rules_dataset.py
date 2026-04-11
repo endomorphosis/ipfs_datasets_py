@@ -15,8 +15,11 @@ from typing import Any, Dict, List
 from datasets import load_dataset
 from huggingface_hub import hf_hub_url, list_repo_files
 
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+
 
 OAR_RULE_RE = re.compile(r"\b\d{3}-\d{3}-\d{4}\b")
+_STATE_ADMIN_RULES_CORPUS = get_canonical_legal_corpus("state_admin_rules")
 
 
 def _default_local_dir() -> Path:
@@ -144,7 +147,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Smoke-check Oregon Administrative Rules dataset")
     parser.add_argument("--mode", choices=["local", "hf"], default="local")
     parser.add_argument("--local-dir", default=str(_default_local_dir()))
-    parser.add_argument("--repo-id", default="justicedao/ipfs_state_admin_rules")
+    parser.add_argument("--repo-id", default=_STATE_ADMIN_RULES_CORPUS.hf_dataset_id)
     parser.add_argument("--path-prefix", default="OR/parsed")
     parser.add_argument("--max-rows", type=int, default=256)
     return parser.parse_args()

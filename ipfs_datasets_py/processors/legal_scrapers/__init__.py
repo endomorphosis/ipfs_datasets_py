@@ -68,6 +68,7 @@ from .legal_dataset_api import (
     search_court_rules_corpus_from_parameters,
     search_federal_register_corpus_from_parameters,
     search_netherlands_law_corpus_from_parameters,
+    recover_missing_legal_citation_source_from_parameters,
     search_federal_register_hf_index_from_parameters,
     list_caselaw_access_vector_files_from_parameters,
     search_caselaw_access_vectors_with_centroids_from_parameters,
@@ -164,6 +165,12 @@ from .bluebook_citation_linker import (
     BluebookCitationResolver,
     CitationLink,
     resolve_bluebook_citations_in_text,
+)
+from .legal_source_recovery import (
+    LegalSourceRecoveryWorkflow,
+    LegalSourceRecoveryResult,
+    build_missing_citation_recovery_query,
+    recover_missing_legal_citation_source,
 )
 
 from .ipfs_storage_integration import (
@@ -535,6 +542,7 @@ __all__ = [
     "search_court_rules_corpus_from_parameters",
     "search_federal_register_corpus_from_parameters",
     "search_netherlands_law_corpus_from_parameters",
+    "recover_missing_legal_citation_source_from_parameters",
     "search_federal_register_hf_index_from_parameters",
     "list_caselaw_access_vector_files_from_parameters",
     "search_caselaw_access_vectors_with_centroids_from_parameters",

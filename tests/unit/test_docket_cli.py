@@ -1416,6 +1416,107 @@ def test_docket_cli_can_filter_loaded_packaged_report_fields_in_text(tmp_path: P
     assert "preferred_corpus_priority" not in text
 
 
+def test_docket_cli_enrich_query_inspection_uses_enriched_dataset_not_stale_bundle(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1020",
+            "case_name": "CLI Enriched Inspection",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Original bundle text."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "enrich_inspect_bundle",
+        package_name="enrich_inspect_bundle",
+        include_car=False,
+    )
+    enriched_payload = dataset.to_dict()
+    enriched_payload["metadata"]["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Enriched routing reason from in-memory result.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    monkeypatch.setattr(
+        module,
+        "enrich_packaged_docket_with_tactician",
+        lambda *args, **kwargs: enriched_payload,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--output",
+                str(tmp_path / "enriched.json"),
+                "--enrich-query",
+                "proof gap constitutional claim",
+                "--inspect-packaged",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["inspection"]["latest_routing_reason"] == "Enriched routing reason from in-memory result."
+
+
+def test_docket_cli_can_export_packaged_parsed_report_without_load_flag(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1021",
+            "case_name": "CLI Parsed Export",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Parsed export routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "parsed_export_bundle",
+        package_name="parsed_export_bundle",
+        include_car=False,
+    )
+    report_path = tmp_path / "parsed_report.txt"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--export-packaged-report",
+                str(report_path),
+                "--report-format",
+                "parsed",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    text = report_path.read_text(encoding="utf-8")
+    assert "latest_routing_reason: Parsed export routing reason." in text
+    assert "Packaged Docket Provenance Report" not in text
+
+
 def test_docket_cli_generic_fields_alias_applies_to_active_packaged_mode(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
