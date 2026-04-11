@@ -177,6 +177,13 @@ async def test_fixture_to_searchable_corpus_result_preserves_article_citation(mo
         "Sr, Boek 1 Algemene bepalingen, Titel I Reikwijdte van de strafwet, "
         "Afdeling 1 Strafbaarheid, Artikel 1"
     )
+    assert result["answers"][0]["canonical_citation"] == (
+        "Sr, Boek 1 Algemene bepalingen, Titel I Reikwijdte van de strafwet, "
+        "Afdeling 1 Strafbaarheid, Artikel 1"
+    )
+    assert result["answers"][0]["article_number"] == "1"
+    assert result["answers"][0]["match_reason"] == "vector_match"
+    assert result["answers"][0]["retrieval_reason"] == "vector_search_fallback"
 
 
 @pytest.mark.asyncio
@@ -452,6 +459,9 @@ async def test_netherlands_citation_query_identifier_lookup_prioritizes_exact_ar
     assert len(result["results"]) == 1
     assert result["results"][0]["case"]["law_identifier"] == "BWBR0001854"
     assert result["results"][0]["case"]["article_number"] == "1"
+    assert result["answers"][0]["law_identifier"] == "BWBR0001854"
+    assert result["answers"][0]["match_reason"] == "identifier_article_match"
+    assert result["answers"][0]["retrieval_reason"] == "citation_grounded_retrieval"
 
 
 async def test_netherlands_citation_query_title_lookup_prioritizes_exact_article(monkeypatch):
@@ -508,6 +518,8 @@ async def test_netherlands_citation_query_title_lookup_prioritizes_exact_article
     assert len(result["results"]) == 1
     assert result["results"][0]["case"]["article_number"] == "1"
     assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"
+    assert result["answers"][0]["canonical_citation"] == "Sr, Artikel 1"
+    assert result["answers"][0]["match_reason"] == "title_article_match"
 
 
 async def test_netherlands_citation_query_falls_back_to_vector_results_when_unparsed(monkeypatch):
@@ -541,6 +553,8 @@ async def test_netherlands_citation_query_falls_back_to_vector_results_when_unpa
 
     assert len(result["results"]) == 2
     assert result["results"][0]["score"] == 0.91
+    assert len(result["answers"]) == 2
+    assert result["answers"][0]["retrieval_reason"] == "vector_search_fallback"
 
 
 async def test_netherlands_citation_query_respects_temporal_filtering(monkeypatch):
@@ -602,3 +616,137 @@ async def test_netherlands_citation_query_respects_temporal_filtering(monkeypatc
     assert len(result["results"]) == 1
     assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2012-01-01"
     assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"
+    assert result["answers"][0]["law_version_identifier"] == "BWBR0001854@2012-01-01"
+    assert result["answers"][0]["version_end_date"] == "2023-12-31"
+
+
+async def test_netherlands_citation_query_formats_alias_based_answer(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.91,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 1", "number": "1"}],
+                        "hierarchy_labels": ["Artikel 1"],
+                        "effective_date": "2024-01-01",
+                        "version_start_date": "2024-01-01",
+                        "version_end_date": "",
+                        "source_url": "https://wetten.overheid.nl/BWBR0001854/2024-01-01/0/",
+                        "information_url": "https://wetten.overheid.nl/BWBR0001854/2024-01-01/0/informatie",
+                        "text": "Geen feit is strafbaar dan uit kracht van wet.",
+                        "is_current": True,
+                    },
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "Sr artikel 1",
+            "auto_setup_venv": False,
+        },
+    )
+
+    answer = result["answers"][0]
+    assert answer["canonical_citation"] == "Sr, Artikel 1"
+    assert answer["aliases"] == ["Sr"]
+    assert answer["article_number"] == "1"
+    assert answer["match_reason"] == "alias_article_match"
+    assert answer["article_text"] == "Geen feit is strafbaar dan uit kracht van wet."
+
+
+async def test_netherlands_citation_query_range_returns_multiple_article_answers(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.93,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "2",
+                        "citation": "Sr, Artikel 2",
+                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 2", "number": "2"}],
+                        "hierarchy_labels": ["Artikel 2"],
+                        "text": "De Nederlandse strafwet is toepasselijk.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.94,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 1", "number": "1"}],
+                        "hierarchy_labels": ["Artikel 1"],
+                        "text": "Geen feit is strafbaar dan uit kracht van wet.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.80,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "4",
+                        "citation": "Sr, Artikel 4",
+                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 4", "number": "4"}],
+                        "hierarchy_labels": ["Artikel 4"],
+                        "text": "Buiten bereik.",
+                        "is_current": True,
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "Sr artikelen 1-2",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert [answer["article_number"] for answer in result["answers"]] == ["1", "2"]
+    assert result["answers"][0]["canonical_citation"] == "Sr, Artikel 1"
+    assert result["answers"][1]["canonical_citation"] == "Sr, Artikel 2"

@@ -134,8 +134,31 @@ def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
         return {}
 
     lowered = query.lower()
-    article_match = re.search(r"\bartikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", lowered, re.IGNORECASE)
     identifier_match = re.search(r"\b(BWBR[0-9A-Z]+)\b", query, re.IGNORECASE)
+    article_numbers: List[str] = []
+
+    range_match = re.search(
+        r"\bartik(?:el|elen)\s+([0-9]+)\s*(?:-|t/m|tot)\s*([0-9]+)\b",
+        lowered,
+        re.IGNORECASE,
+    )
+    if range_match:
+        start = int(range_match.group(1))
+        end = int(range_match.group(2))
+        if start <= end and (end - start) <= 20:
+            article_numbers.extend(str(number) for number in range(start, end + 1))
+
+    if not article_numbers:
+        articles_match = re.search(
+            r"\bartik(?:el|elen)\s+([0-9a-z:.\s,enetm/-]+)$",
+            lowered,
+            re.IGNORECASE,
+        )
+        if articles_match:
+            for token in re.findall(r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", articles_match.group(1), re.IGNORECASE):
+                normalized_token = token.strip()
+                if normalized_token and normalized_token not in article_numbers:
+                    article_numbers.append(normalized_token)
 
     hierarchy_segments: List[str] = []
     for kind in ("boek", "titel", "hoofdstuk", "afdeling", "paragraaf"):
@@ -145,7 +168,7 @@ def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
     law_reference = query
     for pattern in [
         r"\bBWBR[0-9A-Z]+\b",
-        r"\bartikel\s+[0-9]+(?:[.:][0-9]+)*(?:[a-z])?\b",
+        r"\bartik(?:el|elen)\s+[0-9]+(?:[.:][0-9]+)*(?:[a-z])?(?:\s*(?:-|t/m|tot|,|en)\s*[0-9]+(?:[.:][0-9]+)*(?:[a-z])?)*\b",
         r"\b(?:boek|titel|hoofdstuk|afdeling|paragraaf)\s+[0-9a-zivxlcdm.\-]+\b",
     ]:
         law_reference = re.sub(pattern, " ", law_reference, flags=re.IGNORECASE)
@@ -155,7 +178,8 @@ def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
         "raw_query": query,
         "law_identifier": identifier_match.group(1).upper() if identifier_match else "",
         "law_reference": law_reference.strip(),
-        "article_number": article_match.group(1) if article_match else "",
+        "article_number": article_numbers[0] if article_numbers else "",
+        "article_numbers": article_numbers,
         "hierarchy_segments": hierarchy_segments,
     }
     if not parsed["law_identifier"] and not parsed["law_reference"] and not parsed["article_number"]:
@@ -165,6 +189,10 @@ def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
 
 def _normalize_match_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "").strip()).lower()
+
+
+def _clean_answer_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip())
 
 
 def _score_netherlands_citation_match(
@@ -177,6 +205,11 @@ def _score_netherlands_citation_match(
     query_identifier = str(parsed_citation.get("law_identifier") or "")
     query_reference = _normalize_match_text(parsed_citation.get("law_reference") or "")
     query_article = _normalize_match_text(parsed_citation.get("article_number") or "")
+    query_articles = {
+        _normalize_match_text(article)
+        for article in (parsed_citation.get("article_numbers") or [])
+        if _normalize_match_text(article)
+    }
 
     case_identifier = str(case.get("law_identifier") or case.get("identifier") or "").upper()
     case_article = _normalize_match_text(case.get("article_number") or "")
@@ -203,8 +236,8 @@ def _score_netherlands_citation_match(
         elif not query_identifier:
             return 0
 
-    if query_article:
-        if query_article == case_article:
+    if query_articles or query_article:
+        if (query_articles and case_article in query_articles) or (query_article and query_article == case_article):
             score += 10
         else:
             return 0
@@ -217,6 +250,107 @@ def _score_netherlands_citation_match(
     if prefer_current_versions and bool(case.get("is_current")):
         score += 1
     return score
+
+
+def _determine_netherlands_match_reason(case: Dict[str, Any], parsed_citation: Dict[str, Any]) -> str:
+    query_identifier = str(parsed_citation.get("law_identifier") or "").upper()
+    query_reference = _normalize_match_text(parsed_citation.get("law_reference") or "")
+    case_identifier = str(case.get("law_identifier") or case.get("identifier") or "").upper()
+    aliases = [_normalize_match_text(item) for item in (case.get("aliases") or [])]
+    titles = [
+        _normalize_match_text(case.get("canonical_title")),
+        _normalize_match_text(case.get("title")),
+    ]
+
+    if query_identifier and query_identifier == case_identifier:
+        return "identifier_article_match"
+    if query_reference and query_reference in aliases:
+        return "alias_article_match"
+    if query_reference and query_reference in titles:
+        return "title_article_match"
+    if query_reference:
+        return "citation_article_match"
+    return "vector_match"
+
+
+def _format_netherlands_article_answer(
+    case: Dict[str, Any],
+    *,
+    match_reason: str,
+    retrieval_reason: str,
+) -> Dict[str, Any]:
+    return {
+        "canonical_citation": str(case.get("citation") or case.get("document_citation") or ""),
+        "law_identifier": str(case.get("law_identifier") or case.get("identifier") or ""),
+        "law_version_identifier": str(case.get("law_version_identifier") or case.get("version_specific_identifier") or ""),
+        "canonical_title": str(case.get("canonical_title") or case.get("title") or ""),
+        "aliases": list(case.get("aliases") or []),
+        "article_number": str(case.get("article_number") or ""),
+        "hierarchy_path": list(case.get("hierarchy_path") or []),
+        "hierarchy_labels": list(case.get("hierarchy_labels") or []),
+        "effective_date": str(case.get("effective_date") or ""),
+        "version_start_date": str(case.get("version_start_date") or case.get("effective_date") or ""),
+        "version_end_date": str(case.get("version_end_date") or ""),
+        "source_url": str(case.get("source_url") or case.get("versioned_law_url") or case.get("canonical_law_url") or ""),
+        "information_url": str(case.get("information_url") or ""),
+        "article_text": _clean_answer_text(case.get("text") or ""),
+        "match_reason": match_reason,
+        "retrieval_reason": retrieval_reason,
+    }
+
+
+def _assemble_netherlands_answers(
+    results: List[Dict[str, Any]],
+    *,
+    citation_query: str,
+    prefer_current_versions: bool,
+) -> List[Dict[str, Any]]:
+    parsed = _parse_netherlands_citation_query(citation_query)
+    answers: List[Dict[str, Any]] = []
+
+    if parsed:
+        for row in results:
+            case = _extract_temporal_case(row)
+            score = _score_netherlands_citation_match(
+                case,
+                parsed,
+                prefer_current_versions=prefer_current_versions,
+            )
+            if score <= 0:
+                continue
+            answers.append(
+                _format_netherlands_article_answer(
+                    case,
+                    match_reason=_determine_netherlands_match_reason(case, parsed),
+                    retrieval_reason="citation_grounded_retrieval",
+                )
+            )
+
+        if parsed.get("article_numbers"):
+            desired_order = {
+                str(article): index
+                for index, article in enumerate(parsed.get("article_numbers") or [])
+            }
+            answers.sort(
+                key=lambda item: (
+                    desired_order.get(str(item.get("article_number") or ""), 999),
+                    0 if item.get("version_end_date") == "" else 1,
+                    item.get("canonical_citation") or "",
+                )
+            )
+        if answers:
+            return answers
+
+    for row in results[:3]:
+        case = _extract_temporal_case(row)
+        answers.append(
+            _format_netherlands_article_answer(
+                case,
+                match_reason="vector_match",
+                retrieval_reason="vector_search_fallback",
+            )
+        )
+    return answers
 
 
 def _apply_netherlands_citation_query(
@@ -1786,6 +1920,11 @@ async def search_netherlands_law_corpus_from_parameters(
                 effective_date=str(nl_params.get("effective_date") or ""),
             )
             result["results"] = _apply_netherlands_citation_query(
+                list(result.get("results") or []),
+                citation_query=str(nl_params.get("citation_query") or ""),
+                prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
+            )
+            result["answers"] = _assemble_netherlands_answers(
                 list(result.get("results") or []),
                 citation_query=str(nl_params.get("citation_query") or ""),
                 prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
