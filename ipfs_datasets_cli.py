@@ -391,6 +391,7 @@ Commands:
       google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
 
     history-index Search persisted DuckDB history/GraphRAG index
+    docket       Import a docket into a reusable dataset artifact
       chunks      Search chunk text and metadata
       documents   Search indexed documents
       entities    Search extracted entities
@@ -3126,6 +3127,64 @@ Examples:
                 import traceback
                 traceback.print_exc()
                 return
+
+        if command == "docket":
+            """Handle docket dataset import commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets docket - Import a docket into a reusable dataset artifact
+
+Usage: ipfs-datasets docket --input-type {json,directory} --input-path PATH --output PATH [options]
+
+Options:
+  --input-type {json,directory}
+  --input-path PATH
+  --output PATH
+  --docket-id TEXT
+  --case-name TEXT
+  --court TEXT
+  --glob PATTERN
+  --skip-knowledge-graph
+  --skip-bm25
+  --skip-vector-index
+  --vector-dimension N
+  --json
+
+Examples:
+  ipfs-datasets docket --input-type json --input-path ./docket.json --output ./docket_dataset.json
+  ipfs-datasets docket --input-type directory --input-path ./docket_docs --output ./docket_dataset.json --case-name "Doe v. Acme"
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                docket_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "docket_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_docket_cli", docket_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load docket CLI from {docket_cli_path}")
+                docket_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(docket_cli_module)
+                docket_main = docket_cli_module.main
+
+                docket_args = list(args[1:])
+                if json_output and '--json' not in docket_args:
+                    docket_args = ['--json', *docket_args]
+                exit_code = docket_main(docket_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: docket CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing docket command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
         
         if command == "detect-type":
             # File type detection commands
@@ -3884,7 +3943,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]

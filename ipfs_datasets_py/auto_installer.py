@@ -1199,6 +1199,43 @@ exec "$BIN" "$@"
 # Global installer instance
 _installer = None
 
+
+def _load_setup_install_module():
+    """Best-effort load of scripts/setup/install.py as a module."""
+    try:
+        import importlib.util
+
+        repo_root = Path(__file__).resolve().parents[1]
+        install_path = repo_root / "scripts" / "setup" / "install.py"
+        if not install_path.exists():
+            return None
+        spec = importlib.util.spec_from_file_location("ipfs_datasets_setup_install", install_path)
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception:
+        return None
+
+
+def ensure_main_ipfs_kit_py() -> bool:
+    """Best-effort install/bootstrap of ``ipfs_kit_py`` from the repo setup helper."""
+    module = _load_setup_install_module()
+    if module is None:
+        return False
+    helper = getattr(module, "ensure_main_ipfs_kit_py", None)
+    if not callable(helper):
+        return False
+    try:
+        os.environ.setdefault("IPFS_KIT_PY_USE_GIT", "true")
+        os.environ["IPFS_DATASETS_PY_ENABLE_IPFS_KIT"] = "1"
+        helper()
+        importlib.import_module("ipfs_kit_py.ipfs_kit")
+        return True
+    except Exception:
+        return False
+
 def get_installer() -> DependencyInstaller:
     """Get global installer instance"""
     global _installer
@@ -1277,6 +1314,8 @@ def install_for_component(component: str) -> bool:
             ('qdrant_client', 'qdrant-client'),
             ('elasticsearch', 'elasticsearch'),
         ]
+    elif component == 'ipfs':
+        return ensure_main_ipfs_kit_py()
     elif component == 'theorem_provers':
         # Install theorem provers and SAT/SMT solvers
         return installer.install_theorem_provers()

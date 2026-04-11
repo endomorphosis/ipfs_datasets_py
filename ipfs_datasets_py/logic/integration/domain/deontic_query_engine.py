@@ -11,12 +11,14 @@ from typing import Dict, List, Optional, Any, Union, Set
 from dataclasses import dataclass, field
 from enum import Enum
 import re
+from collections import Counter
 
 from ..converters.deontic_logic_core import (
     DeonticFormula, DeonticOperator, LegalAgent, DeonticRuleSet,
     TemporalCondition, TemporalOperator
 )
 from .legal_domain_knowledge import LegalDomain
+from ...deontic import DeonticGraph, DeonticGraphBuilder, SupportMapBuilder
 from ...security.rate_limiting import RateLimiter
 from ...security.input_validation import InputValidator
 
@@ -410,6 +412,63 @@ class DeonticQueryEngine:
         conflicts.extend(temporal_conflicts)
         
         return conflicts
+
+    def build_deontic_graph(self, formulas: Optional[List[DeonticFormula]] = None) -> DeonticGraph:
+        """Project formulas into the shared deontic-graph representation."""
+        formulas = formulas if formulas is not None else (self.rule_set.formulas if self.rule_set else [])
+        rows: List[Dict[str, Any]] = []
+        for index, formula in enumerate(formulas, start=1):
+            rows.append(
+                {
+                    "rule_id": getattr(formula, "formula_id", None) or f"formula_rule_{index}",
+                    "modality": self._operator_to_graph_modality(formula.operator),
+                    "predicate": formula.proposition,
+                    "target_id": f"action:{self._slugify(formula.proposition)}",
+                    "target_label": formula.proposition,
+                    "target_type": "action",
+                    "sources": self._formula_sources(formula, index),
+                    "authorities": self._formula_authorities(formula),
+                    "evidence_ids": [formula.source_text] if formula.source_text else [],
+                    "confidence": float(formula.confidence or 0.0),
+                    "active": True,
+                    "attributes": {
+                        "conditions": list(formula.conditions or []),
+                        "temporal_condition_count": len(formula.temporal_conditions or []),
+                    },
+                }
+            )
+        return DeonticGraphBuilder().build_from_matrix(rows)
+
+    def summarize_graph_conflicts(self, formulas: Optional[List[DeonticFormula]] = None) -> Dict[str, Any]:
+        """Summarize conflicts and support gaps using the shared graph layer."""
+        graph = self.build_deontic_graph(formulas)
+        graph_conflicts = graph.detect_conflicts()
+        formula_conflicts = self.find_conflicts(formulas)
+        return {
+            "graph_summary": graph.summary(),
+            "graph_conflicts": [conflict.to_dict() for conflict in graph_conflicts],
+            "graph_conflict_count": len(graph_conflicts),
+            "formula_conflict_count": len(formula_conflicts),
+            "formula_conflict_types": dict(Counter(conflict.conflict_type for conflict in formula_conflicts)),
+            "source_gap_summary": graph.source_gap_summary(),
+        }
+
+    def build_support_map(
+        self,
+        *,
+        fact_catalog: Optional[Dict[str, Dict[str, Any]]] = None,
+        filing_map: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+        formulas: Optional[List[DeonticFormula]] = None,
+        only_active: bool = True,
+    ) -> Dict[str, Any]:
+        """Build a source -> fact -> rule -> filing support map from formulas."""
+        graph = self.build_deontic_graph(formulas)
+        return SupportMapBuilder().build_from_deontic_graph(
+            graph,
+            fact_catalog=fact_catalog or {},
+            filing_map=filing_map or {},
+            only_active=only_active,
+        ).to_dict()
     
     def query_by_natural_language(self, query: str) -> QueryResult:
         """
@@ -663,6 +722,63 @@ class DeonticQueryEngine:
         """Check if formula conditions are met."""
         # Simplified condition checking
         return True
+
+    def _operator_to_graph_modality(self, operator: DeonticOperator) -> str:
+        mapping = {
+            DeonticOperator.OBLIGATION: "obligation",
+            DeonticOperator.PROHIBITION: "prohibition",
+            DeonticOperator.PERMISSION: "permission",
+            DeonticOperator.RIGHT: "entitlement",
+        }
+        return mapping.get(operator, "obligation")
+
+    def _formula_sources(self, formula: DeonticFormula, index: int) -> List[Dict[str, Any]]:
+        sources: List[Dict[str, Any]] = []
+        if formula.agent:
+            sources.append(
+                {
+                    "id": f"actor:{self._slugify(formula.agent.identifier)}",
+                    "label": formula.agent.name or formula.agent.identifier,
+                    "node_type": "actor",
+                    "active": True,
+                    "confidence": float(formula.confidence or 0.0),
+                }
+            )
+        for condition_index, condition in enumerate(formula.conditions or [], start=1):
+            sources.append(
+                {
+                    "id": f"fact:{self._slugify(condition)}:{index}:{condition_index}",
+                    "label": condition,
+                    "node_type": "fact",
+                    "active": True,
+                    "confidence": float(formula.confidence or 0.0),
+                }
+            )
+        if not sources:
+            sources.append(
+                {
+                    "id": f"fact:formula:{index}",
+                    "label": formula.proposition,
+                    "node_type": "fact",
+                    "active": True,
+                    "confidence": float(formula.confidence or 0.0),
+                }
+            )
+        return sources
+
+    def _formula_authorities(self, formula: DeonticFormula) -> List[Dict[str, Any]]:
+        context = formula.legal_context
+        authorities: List[Dict[str, Any]] = []
+        if context and context.applicable_law:
+            applicable_law = str(context.applicable_law)
+            authorities.append({"id": f"authority:{self._slugify(applicable_law)}", "label": applicable_law})
+        if context:
+            for precedent in list(context.precedents or []):
+                authorities.append({"id": f"authority:{self._slugify(precedent)}", "label": str(precedent)})
+        return authorities
+
+    def _slugify(self, value: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "-", str(value).lower()).strip("-") or "item"
 
 
 # Convenience functions

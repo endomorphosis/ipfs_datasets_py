@@ -22,6 +22,7 @@ import os
 import importlib
 import subprocess
 import tempfile
+from shutil import which
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Callable, Dict, Optional, Protocol, runtime_checkable
@@ -35,6 +36,33 @@ def _truthy(value: Optional[str]) -> bool:
 
 def _cache_enabled() -> bool:
     return os.environ.get("IPFS_DATASETS_PY_ROUTER_CACHE", "1").strip() != "0"
+
+
+def _auto_install_enabled() -> bool:
+    return _truthy(os.getenv("IPFS_DATASETS_AUTO_INSTALL")) or _truthy(os.getenv("IPFS_AUTO_INSTALL"))
+
+
+def _kubo_cli_available(cmd: Optional[str] = None) -> bool:
+    resolved = (cmd or os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")).strip() or "ipfs"
+    if os.path.sep in resolved or (os.path.altsep and os.path.altsep in resolved):
+        return os.path.exists(resolved) and os.access(resolved, os.X_OK)
+    return which(resolved) is not None
+
+
+def _bootstrap_ipfs_kit_if_needed() -> bool:
+    if not _auto_install_enabled():
+        return False
+    if _truthy(os.getenv("IPFS_KIT_DISABLE")):
+        return False
+    try:
+        from .auto_installer import ensure_main_ipfs_kit_py
+
+        ok = bool(ensure_main_ipfs_kit_py())
+        if ok:
+            os.environ["IPFS_DATASETS_PY_ENABLE_IPFS_KIT"] = "1"
+        return ok
+    except Exception:
+        return False
 
 
 _DEFAULT_BACKEND_OVERRIDE: IPFSBackend | None = None
@@ -672,6 +700,12 @@ def _resolve_backend(preferred: Optional[str] = None) -> IPFSBackend:
     accel = _get_accelerate_backend()
     if accel is not None:
         return accel
+
+    if not _kubo_cli_available():
+        if _bootstrap_ipfs_kit_if_needed():
+            kit = _get_ipfs_kit_backend()
+            if kit is not None:
+                return kit
 
     return KuboCLIBackend()
 

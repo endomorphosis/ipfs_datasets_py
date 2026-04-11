@@ -21,6 +21,16 @@ from .protocol import (
 )
 from .core.registry import ProcessorRegistry, get_global_registry
 from .input_detection import InputDetector, detect_input_type, classify_input
+from .retrieval import (
+    bm25_search_documents,
+    build_bm25_index,
+    embed_query_for_backend,
+    embed_texts_with_router_or_local,
+    hashed_term_projection,
+    search_bm25_index,
+    tokenize_lexical_text,
+    vector_dot,
+)
 from .universal_processor import UniversalProcessor, ProcessorConfig
 
 __all__ = [
@@ -43,6 +53,14 @@ __all__ = [
     'detect_input_type',
     'classify_input',
     'get_global_registry',
+    'tokenize_lexical_text',
+    'hashed_term_projection',
+    'vector_dot',
+    'build_bm25_index',
+    'search_bm25_index',
+    'bm25_search_documents',
+    'embed_texts_with_router_or_local',
+    'embed_query_for_backend',
     
     # Developer tools (Phase 7)
     'debug_tools',   # Debugging utilities module
@@ -83,6 +101,65 @@ __all__ = [
     'BatchProcessor',
     'ProcessingJob',
     'BatchStatus',
+    'parse_legal_document',
+    'parse_legal_document_to_graph',
+    'build_document_knowledge_graph',
+    'analyze_document_with_routers',
+    'enrich_docket_documents_with_formal_logic',
+    'build_pleading_caption',
+    'render_pleading_caption_block',
+    'paginate_pleading_lines',
+    'validate_formal_document',
+    'summarize_formal_document',
+    'LegalRequirementsGraph',
+    'LegalRequirementsGraphBuilder',
+    'SupportMapBuilder',
+    'Frame',
+    'FrameKnowledgeBase',
+    'FrameSlotEvidence',
+    'build_case_knowledge_graph',
+    'analyze_case_graph_gaps',
+    'summarize_case_graph',
+    'DependencyGraph',
+    'DependencyGraphBuilder',
+    'normalize_claim_type',
+    'refresh_required_elements',
+    'build_claim_element_question_text',
+    'build_proof_lead_question_text',
+    'build_legal_analysis_bundle',
+    'COURTLISTENER_API_ROOT',
+    'CourtListenerIngestionError',
+    'fetch_courtlistener_docket',
+    'find_rich_courtlistener_docket',
+    'fetch_random_courtlistener_docket',
+    'NeurosymbolicMatcher',
+    'DocketDatasetBuilder',
+    'DocketDatasetPackager',
+    'PackagedDocketQueryAdapter',
+    'PackagedQueryExecutionPlan',
+    'build_docket_deontic_artifacts',
+    'execute_packaged_docket_query',
+    'iter_packaged_docket_chain',
+    'load_packaged_docket_dataset',
+    'load_packaged_docket_dataset_components',
+    'plan_packaged_docket_query',
+    'package_docket_dataset',
+    'search_packaged_docket_dataset_bm25',
+    'search_packaged_docket_dataset_vector',
+    'search_packaged_docket_proof_tasks',
+    'build_docket_proof_assistant',
+    'build_proof_tactician_manifest',
+    'DocketProofAssistant',
+    'DocketProofAssistantBuilder',
+    'ProofAssistantWorkItem',
+    'ProofSearchPlan',
+    'ProofSearchSource',
+    'ProofTactician',
+    'resolve_courtlistener_api_token',
+    'enrich_docket_documents_with_routers',
+    'search_docket_dataset_bm25',
+    'search_docket_dataset_vector',
+    'summarize_docket_dataset',
 ]
 
 
@@ -108,6 +185,68 @@ _PDF_EXPORTS = {
     'BatchStatus',
 }
 
+_LEGAL_DATA_EXPORTS = {
+    'parse_legal_document',
+    'parse_legal_document_to_graph',
+    'build_document_knowledge_graph',
+    'analyze_document_with_routers',
+    'enrich_docket_documents_with_formal_logic',
+    'build_pleading_caption',
+    'render_pleading_caption_block',
+    'paginate_pleading_lines',
+    'validate_formal_document',
+    'summarize_formal_document',
+    'LegalRequirementsGraph',
+    'LegalRequirementsGraphBuilder',
+    'SupportMapBuilder',
+    'Frame',
+    'FrameKnowledgeBase',
+    'FrameSlotEvidence',
+    'build_case_knowledge_graph',
+    'analyze_case_graph_gaps',
+    'summarize_case_graph',
+    'DependencyGraph',
+    'DependencyGraphBuilder',
+    'normalize_claim_type',
+    'refresh_required_elements',
+    'build_claim_element_question_text',
+    'build_proof_lead_question_text',
+    'build_legal_analysis_bundle',
+    'COURTLISTENER_API_ROOT',
+    'CourtListenerIngestionError',
+    'fetch_courtlistener_docket',
+    'find_rich_courtlistener_docket',
+    'fetch_random_courtlistener_docket',
+    'NeurosymbolicMatcher',
+    'DocketDatasetBuilder',
+    'DocketDatasetPackager',
+    'PackagedDocketQueryAdapter',
+    'PackagedQueryExecutionPlan',
+    'build_docket_deontic_artifacts',
+    'execute_packaged_docket_query',
+    'iter_packaged_docket_chain',
+    'load_packaged_docket_dataset',
+    'load_packaged_docket_dataset_components',
+    'plan_packaged_docket_query',
+    'package_docket_dataset',
+    'search_packaged_docket_dataset_bm25',
+    'search_packaged_docket_dataset_vector',
+    'search_packaged_docket_proof_tasks',
+    'build_docket_proof_assistant',
+    'build_proof_tactician_manifest',
+    'DocketProofAssistant',
+    'DocketProofAssistantBuilder',
+    'ProofAssistantWorkItem',
+    'ProofSearchPlan',
+    'ProofSearchSource',
+    'ProofTactician',
+    'resolve_courtlistener_api_token',
+    'enrich_docket_documents_with_routers',
+    'search_docket_dataset_bm25',
+    'search_docket_dataset_vector',
+    'summarize_docket_dataset',
+}
+
 
 def __getattr__(name: str):
     if name in _PDF_EXPORTS:
@@ -115,8 +254,13 @@ def __getattr__(name: str):
 
         pdf_processing = import_module('ipfs_datasets_py.processors.pdf_processing')
         return getattr(pdf_processing, name)
+    if name in _LEGAL_DATA_EXPORTS:
+        from importlib import import_module
+
+        legal_data = import_module('ipfs_datasets_py.processors.legal_data')
+        return getattr(legal_data, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__():
-    return sorted(set(globals().keys()) | _PDF_EXPORTS)
+    return sorted(set(globals().keys()) | _PDF_EXPORTS | _LEGAL_DATA_EXPORTS)
