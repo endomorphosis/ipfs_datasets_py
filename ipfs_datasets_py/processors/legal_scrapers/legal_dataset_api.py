@@ -195,6 +195,42 @@ def _clean_answer_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "").strip())
 
 
+def _extract_netherlands_article_references(text: Any) -> List[str]:
+    normalized = _normalize_match_text(text)
+    if not normalized:
+        return []
+
+    references: List[str] = []
+    range_match = re.search(
+        r"\bartik(?:el|elen)\s+([0-9]+)\s*(?:-|t/m|tot)\s*([0-9]+)\b",
+        normalized,
+        re.IGNORECASE,
+    )
+    if range_match:
+        start = int(range_match.group(1))
+        end = int(range_match.group(2))
+        if start <= end and (end - start) <= 20:
+            references.extend(str(number) for number in range(start, end + 1))
+
+    for match in re.finditer(
+        r"\bartik(?:el|elen)\s+([0-9a-z:.\s,enetm/-]+)",
+        normalized,
+        re.IGNORECASE,
+    ):
+        for token in re.findall(r"\b([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", match.group(1), re.IGNORECASE):
+            if token not in references:
+                references.append(token)
+    return references
+
+
+def _article_sort_key(value: Any) -> tuple[int, str]:
+    text = str(value or "").strip()
+    match = re.match(r"^([0-9]+)", text)
+    if match:
+        return (int(match.group(1)), text)
+    return (10**9, text)
+
+
 def _score_netherlands_citation_match(
     case: Dict[str, Any],
     parsed_citation: Dict[str, Any],
@@ -294,9 +330,85 @@ def _format_netherlands_article_answer(
         "source_url": str(case.get("source_url") or case.get("versioned_law_url") or case.get("canonical_law_url") or ""),
         "information_url": str(case.get("information_url") or ""),
         "article_text": _clean_answer_text(case.get("text") or ""),
+        "referenced_articles": _extract_netherlands_article_references(case.get("text") or ""),
+        "previous_article": None,
+        "next_article": None,
+        "sibling_articles": [],
         "match_reason": match_reason,
         "retrieval_reason": retrieval_reason,
     }
+
+
+def _compact_netherlands_context_article(case: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "canonical_citation": str(case.get("citation") or case.get("document_citation") or ""),
+        "law_identifier": str(case.get("law_identifier") or case.get("identifier") or ""),
+        "law_version_identifier": str(case.get("law_version_identifier") or case.get("version_specific_identifier") or ""),
+        "article_number": str(case.get("article_number") or ""),
+        "hierarchy_labels": list(case.get("hierarchy_labels") or []),
+        "source_url": str(case.get("source_url") or case.get("versioned_law_url") or case.get("canonical_law_url") or ""),
+    }
+
+
+def _same_netherlands_hierarchy_scope(left: Dict[str, Any], right: Dict[str, Any]) -> bool:
+    left_path = list(left.get("hierarchy_path") or [])
+    right_path = list(right.get("hierarchy_path") or [])
+    if not left_path or not right_path:
+        return False
+    left_scope = [item.get("label") for item in left_path[:-1]]
+    right_scope = [item.get("label") for item in right_path[:-1]]
+    return left_scope == right_scope
+
+
+def _enrich_netherlands_answers_with_context(
+    answers: List[Dict[str, Any]],
+    *,
+    results: List[Dict[str, Any]],
+    context_mode: str,
+) -> List[Dict[str, Any]]:
+    normalized_mode = str(context_mode or "exact").strip().lower()
+    if normalized_mode not in {"exact", "neighbors", "hierarchy"}:
+        normalized_mode = "exact"
+
+    cases = [_extract_temporal_case(row) for row in results]
+    by_version: Dict[str, List[Dict[str, Any]]] = {}
+    for case in cases:
+        version_id = str(case.get("law_version_identifier") or case.get("version_specific_identifier") or "")
+        by_version.setdefault(version_id, []).append(case)
+
+    for version_id, version_cases in by_version.items():
+        version_cases.sort(key=lambda case: _article_sort_key(case.get("article_number")))
+        by_version[version_id] = version_cases
+
+    for answer in answers:
+        version_cases = by_version.get(str(answer.get("law_version_identifier") or ""), [])
+        current_index = next(
+            (
+                index
+                for index, case in enumerate(version_cases)
+                if str(case.get("article_number") or "") == str(answer.get("article_number") or "")
+            ),
+            -1,
+        )
+        if current_index < 0:
+            continue
+
+        current_case = version_cases[current_index]
+        if normalized_mode in {"neighbors", "hierarchy"}:
+            if current_index > 0:
+                answer["previous_article"] = _compact_netherlands_context_article(version_cases[current_index - 1])
+            if current_index + 1 < len(version_cases):
+                answer["next_article"] = _compact_netherlands_context_article(version_cases[current_index + 1])
+
+        if normalized_mode == "hierarchy":
+            siblings = [
+                _compact_netherlands_context_article(case)
+                for case in version_cases
+                if case is not current_case and _same_netherlands_hierarchy_scope(current_case, case)
+            ]
+            answer["sibling_articles"] = siblings
+
+    return answers
 
 
 def _assemble_netherlands_answers(
@@ -304,6 +416,7 @@ def _assemble_netherlands_answers(
     *,
     citation_query: str,
     prefer_current_versions: bool,
+    context_mode: str,
 ) -> List[Dict[str, Any]]:
     parsed = _parse_netherlands_citation_query(citation_query)
     answers: List[Dict[str, Any]] = []
@@ -339,7 +452,11 @@ def _assemble_netherlands_answers(
                 )
             )
         if answers:
-            return answers
+            return _enrich_netherlands_answers_with_context(
+                answers,
+                results=results,
+                context_mode=context_mode,
+            )
 
     for row in results[:3]:
         case = _extract_temporal_case(row)
@@ -350,7 +467,11 @@ def _assemble_netherlands_answers(
                 retrieval_reason="vector_search_fallback",
             )
         )
-    return answers
+    return _enrich_netherlands_answers_with_context(
+        answers,
+        results=results,
+        context_mode=context_mode,
+    )
 
 
 def _apply_netherlands_citation_query(
@@ -1896,6 +2017,7 @@ async def search_netherlands_law_corpus_from_parameters(
     nl_params.setdefault("prefer_current_versions", True)
     nl_params.setdefault("include_historical_versions", True)
     nl_params.setdefault("citation_query", str(nl_params.get("query_text") or ""))
+    nl_params.setdefault("context_mode", "exact")
     nl_params.setdefault(
         "preferred_case_parquet_names",
         [
@@ -1928,6 +2050,7 @@ async def search_netherlands_law_corpus_from_parameters(
                 list(result.get("results") or []),
                 citation_query=str(nl_params.get("citation_query") or ""),
                 prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
+                context_mode=str(nl_params.get("context_mode") or "exact"),
             )
         result.setdefault(
             "temporal_parameters",
@@ -1939,6 +2062,7 @@ async def search_netherlands_law_corpus_from_parameters(
             },
         )
         result.setdefault("citation_query", str(nl_params.get("citation_query") or ""))
+        result.setdefault("context_mode", str(nl_params.get("context_mode") or "exact"))
         result.setdefault("jurisdiction", "NL")
     return result
 

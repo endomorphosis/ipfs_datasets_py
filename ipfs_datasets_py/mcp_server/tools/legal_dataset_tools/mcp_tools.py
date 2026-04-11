@@ -656,6 +656,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "query_text": {"type": "string", "required": False},
             "citation_query": {"type": "string", "required": False},
+            "context_mode": {"type": "string", "default": "exact"},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
             "hf_dataset_id": {"type": "string", "default": DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID},

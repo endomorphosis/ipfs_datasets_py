@@ -750,3 +750,266 @@ async def test_netherlands_citation_query_range_returns_multiple_article_answers
     assert [answer["article_number"] for answer in result["answers"]] == ["1", "2"]
     assert result["answers"][0]["canonical_citation"] == "Sr, Artikel 1"
     assert result["answers"][1]["canonical_citation"] == "Sr, Artikel 2"
+
+
+async def test_netherlands_answer_context_neighbors_includes_previous_and_next(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.97,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "2",
+                        "citation": "Sr, Artikel 2",
+                        "hierarchy_path": [
+                            {"kind": "boek", "label": "Boek 1", "number": "1"},
+                            {"kind": "artikel", "label": "Artikel 2", "number": "2"},
+                        ],
+                        "hierarchy_labels": ["Boek 1", "Artikel 2"],
+                        "text": "Zie artikel 1 en artikel 3.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.90,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "hierarchy_path": [
+                            {"kind": "boek", "label": "Boek 1", "number": "1"},
+                            {"kind": "artikel", "label": "Artikel 1", "number": "1"},
+                        ],
+                        "hierarchy_labels": ["Boek 1", "Artikel 1"],
+                        "text": "Eerste bepaling.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.89,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "3",
+                        "citation": "Sr, Artikel 3",
+                        "hierarchy_path": [
+                            {"kind": "boek", "label": "Boek 1", "number": "1"},
+                            {"kind": "artikel", "label": "Artikel 3", "number": "3"},
+                        ],
+                        "hierarchy_labels": ["Boek 1", "Artikel 3"],
+                        "text": "Derde bepaling.",
+                        "is_current": True,
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "Sr artikel 2",
+            "context_mode": "neighbors",
+            "auto_setup_venv": False,
+        },
+    )
+
+    answer = result["answers"][0]
+    assert answer["previous_article"]["article_number"] == "1"
+    assert answer["next_article"]["article_number"] == "3"
+    assert answer["referenced_articles"] == ["1", "3"]
+
+
+async def test_netherlands_answer_context_hierarchy_includes_siblings(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.97,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "2",
+                        "citation": "Sr, Titel I, Artikel 2",
+                        "hierarchy_path": [
+                            {"kind": "boek", "label": "Boek 1", "number": "1"},
+                            {"kind": "titel", "label": "Titel I", "number": "I"},
+                            {"kind": "artikel", "label": "Artikel 2", "number": "2"},
+                        ],
+                        "hierarchy_labels": ["Boek 1", "Titel I", "Artikel 2"],
+                        "text": "Zie artikelen 1 en 3.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.95,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Titel I, Artikel 1",
+                        "hierarchy_path": [
+                            {"kind": "boek", "label": "Boek 1", "number": "1"},
+                            {"kind": "titel", "label": "Titel I", "number": "I"},
+                            {"kind": "artikel", "label": "Artikel 1", "number": "1"},
+                        ],
+                        "hierarchy_labels": ["Boek 1", "Titel I", "Artikel 1"],
+                        "text": "Eerste bepaling.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.92,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "4",
+                        "citation": "Sr, Titel II, Artikel 4",
+                        "hierarchy_path": [
+                            {"kind": "boek", "label": "Boek 1", "number": "1"},
+                            {"kind": "titel", "label": "Titel II", "number": "II"},
+                            {"kind": "artikel", "label": "Artikel 4", "number": "4"},
+                        ],
+                        "hierarchy_labels": ["Boek 1", "Titel II", "Artikel 4"],
+                        "text": "Andere titel.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.94,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "3",
+                        "citation": "Sr, Titel I, Artikel 3",
+                        "hierarchy_path": [
+                            {"kind": "boek", "label": "Boek 1", "number": "1"},
+                            {"kind": "titel", "label": "Titel I", "number": "I"},
+                            {"kind": "artikel", "label": "Artikel 3", "number": "3"},
+                        ],
+                        "hierarchy_labels": ["Boek 1", "Titel I", "Artikel 3"],
+                        "text": "Derde bepaling.",
+                        "is_current": True,
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "Sr artikel 2",
+            "context_mode": "hierarchy",
+            "auto_setup_venv": False,
+        },
+    )
+
+    answer = result["answers"][0]
+    assert answer["previous_article"]["article_number"] == "1"
+    assert answer["next_article"]["article_number"] == "3"
+    assert [item["article_number"] for item in answer["sibling_articles"]] == ["1", "3"]
+    assert answer["referenced_articles"] == ["1", "3"]
+
+
+async def test_netherlands_answer_exact_mode_keeps_context_empty(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.91,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 1", "number": "1"}],
+                        "hierarchy_labels": ["Artikel 1"],
+                        "text": "Zie artikel 2.",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.90,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "2",
+                        "citation": "Sr, Artikel 2",
+                        "hierarchy_path": [{"kind": "artikel", "label": "Artikel 2", "number": "2"}],
+                        "hierarchy_labels": ["Artikel 2"],
+                        "text": "Tweede bepaling.",
+                        "is_current": True,
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "Sr artikel 1",
+            "auto_setup_venv": False,
+        },
+    )
+
+    answer = result["answers"][0]
+    assert answer["previous_article"] is None
+    assert answer["next_article"] is None
+    assert answer["sibling_articles"] == []
+    assert answer["referenced_articles"] == ["2"]
