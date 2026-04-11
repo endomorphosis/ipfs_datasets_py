@@ -106,3 +106,12 @@ unified_deontic_logic_system/
 ipfs_datasets_py/web_archiving/common_crawl_search_engine.worktrees/
 ipfs_datasets_py/web_archiving/common_crawl_search_engine
 ipfs_datasets_py/logic/CEC/Eng-DCEC
+nl_test_output
+nl_test_output_docs
+nl_test_output/
+nl_test_output_docs/
+*.tar.gz
+*.jsonl
+*.jsonld
+ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/
+ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets
