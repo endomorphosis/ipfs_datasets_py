@@ -66,7 +66,11 @@ def _first_present(mapping: Dict[str, Any], fields: Iterable[str]) -> Optional[A
 
 
 def _connect_duckdb():
-    duckdb = pytest.importorskip("duckdb")
+    try:
+        import duckdb
+    except Exception:
+        return None
+
     connection = duckdb.connect()
     for statement in ("INSTALL httpfs", "LOAD httpfs"):
         try:
@@ -77,6 +81,14 @@ def _connect_duckdb():
 
 
 def _read_rows(connection: Any, source_ref: str, where_clause: str, limit: int) -> List[Dict[str, Any]]:
+    if not source_ref.startswith(("http://", "https://")):
+        table = pytest.importorskip("pyarrow.parquet").read_table(source_ref)
+        rows = table.to_pylist()
+        return rows[: int(limit)]
+
+    if connection is None:
+        pytest.skip("duckdb is required to sample remote parquet sources over HTTP(S).")
+
     query = f"SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}')"
     if where_clause:
         query += f" WHERE {where_clause}"
@@ -247,7 +259,8 @@ def test_bluebook_citation_resolver_real_justicedao_sampling(pytestconfig: pytes
     except Exception as exc:
         pytest.skip(f"Unable to sample real Justicedao parquet sources: {exc}")
     finally:
-        connection.close()
+        if connection is not None:
+            connection.close()
 
     if not cases:
         pytest.skip("No real Justicedao citation samples were available.")

@@ -72,6 +72,21 @@ def _stringify_packaged_report(report_payload: object, report_format: str) -> st
     return json.dumps(report_payload, indent=2, ensure_ascii=False)
 
 
+def _parse_summary_fields_arg(value: str | None) -> list[str]:
+    fields: list[str] = []
+    for item in str(value or "").split(","):
+        field = str(item).strip()
+        if field and field not in fields:
+            fields.append(field)
+    return fields
+
+
+def _filter_mapping_fields(payload: dict[str, object], fields: list[str]) -> dict[str, object]:
+    if not fields:
+        return dict(payload)
+    return {field: payload[field] for field in fields if field in payload}
+
+
 def _build_packaged_read_only_summary(packager: DocketDatasetPackager, manifest_path: str | Path) -> dict[str, object]:
     summary_view = packager.load_summary_view(manifest_path)
     manifest = dict(summary_view.get("package_manifest") or {})
@@ -133,6 +148,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-car", action="store_true", help="Do not emit CAR files when writing a docket package.")
     parser.add_argument("--inspect-packaged", action="store_true", help="For packaged inputs, include a lightweight inspection payload with latest routing/proof provenance.")
     parser.add_argument("--summary-only", action="store_true", help="For packaged inputs, include only the lightweight manifest-driven summary view.")
+    parser.add_argument("--summary-fields", default=None, help="Comma-separated field subset for --summary-only packaged output.")
     parser.add_argument("--load-packaged-report", action="store_true", help="For packaged inputs, load the archived inspection_report artifact directly.")
     parser.add_argument("--export-packaged-report", default=None, help="For packaged inputs, write a provenance/inspection report to this path.")
     parser.add_argument("--report-format", choices=["json", "markdown", "text", "parsed", "row"], default="markdown", help="Format used with packaged report load/export.")
@@ -143,6 +159,7 @@ def create_parser() -> argparse.ArgumentParser:
 def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
+    summary_fields = _parse_summary_fields_arg(parsed.summary_fields)
 
     packaged_read_only = (
         parsed.input_type == "packaged"
@@ -154,6 +171,8 @@ def main(args: list[str] | None = None) -> int:
     )
     if not parsed.output and not packaged_read_only:
         parser.error("--output is required unless you are only inspecting or loading a packaged report.")
+    if summary_fields and not parsed.summary_only:
+        parser.error("--summary-fields is only valid with --summary-only.")
 
     builder = DocketDatasetBuilder(vector_dimension=int(parsed.vector_dimension or 32))
     common_kwargs = {
@@ -250,7 +269,10 @@ def main(args: list[str] | None = None) -> int:
             parser.error("--inspect-packaged, --summary-only, --load-packaged-report, and --export-packaged-report are only valid with --input-type packaged.")
         packager = packaged_read_packager or DocketDatasetPackager()
         if parsed.summary_only:
-            payload["packaged_summary_view"] = load_packaged_docket_summary_view(parsed.input_path)
+            payload["packaged_summary_view"] = _filter_mapping_fields(
+                load_packaged_docket_summary_view(parsed.input_path),
+                summary_fields,
+            )
         inspection_payload = packager.inspect_packaged_bundle(parsed.input_path)
         if parsed.inspect_packaged:
             payload["inspection"] = inspection_payload

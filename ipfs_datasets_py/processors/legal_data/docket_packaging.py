@@ -2882,7 +2882,11 @@ def get_packaged_docket_proof_revalidation_queue(
         ]
         return " ".join(part for part in parts if part).strip()
 
-    def _select_revalidation_action(query_result: Mapping[str, Any], queue_query: str) -> Dict[str, Any]:
+    def _select_revalidation_action(
+        query_result: Mapping[str, Any],
+        queue_query: str,
+        proof_payload: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
         escalation = dict(query_result.get("escalation") or {})
         for candidate in list(escalation.get("action_candidates") or []):
             candidate_dict = dict(candidate or {})
@@ -2903,6 +2907,42 @@ def get_packaged_docket_proof_revalidation_queue(
                 "execution_hint": dict(next_action.get("execution_hint") or {}),
                 "support_strength": str(next_action.get("support_strength") or ""),
             }
+        history = dict((proof_payload or {}).get("action_candidate_history") or {})
+        ranked_history_candidates: List[Tuple[Tuple[int, int, int], Dict[str, Any]]] = []
+        for execution in list(history.get("candidate_executions") or []):
+            action_candidate = dict((dict(execution or {}).get("action_candidate") or {}))
+            if not action_candidate:
+                continue
+            if str(action_candidate.get("action_type") or "") == "reuse_current_packet":
+                continue
+            if str(action_candidate.get("source_type") or "") == "proof_packet":
+                continue
+            candidate_summary = dict((dict(execution or {}).get("candidate_execution_summary") or {}))
+            successful_summary = dict((dict(execution or {}).get("successful_action_summary") or {}))
+            terminal_source_type = str(
+                successful_summary.get("source_type")
+                or candidate_summary.get("terminal_source_type")
+                or ""
+            )
+            terminal_support_strength = str(
+                successful_summary.get("support_strength")
+                or candidate_summary.get("terminal_support_strength")
+                or ""
+            )
+            action_candidate.setdefault("query", queue_query)
+            ranked_history_candidates.append(
+                (
+                    (
+                        _support_strength_priority(terminal_support_strength),
+                        1 if terminal_source_type == "legal_dataset_parser" else 0,
+                        1 if str(action_candidate.get("source_type") or "") == "legal_dataset_parser" else 0,
+                    ),
+                    action_candidate,
+                )
+            )
+        if ranked_history_candidates:
+            ranked_history_candidates.sort(key=lambda pair: pair[0], reverse=True)
+            return dict(ranked_history_candidates[0][1])
         return {}
 
     for item in agenda:
@@ -2936,12 +2976,13 @@ def get_packaged_docket_proof_revalidation_queue(
             "revalidation_query": queue_query,
         }
         if include_execution_hints and queue_query:
+            proof_payload = dict(proof_store.get(str(item.get("current_proof_packet_id") or "")) or {})
             query_result = execute_packaged_docket_query(
                 manifest_path,
                 queue_query,
                 top_k=action_top_k,
             )
-            recommended_action = _select_revalidation_action(query_result, queue_query)
+            recommended_action = _select_revalidation_action(query_result, queue_query, proof_payload)
             queue_entry["recommended_revalidation_action"] = recommended_action
             queue_entry["recommended_revalidation_execution_hint"] = dict(
                 recommended_action.get("execution_hint") or {}
