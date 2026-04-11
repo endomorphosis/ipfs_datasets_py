@@ -12,6 +12,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -125,6 +126,125 @@ def _apply_netherlands_temporal_filters(
             )
         )
     return filtered
+
+
+def _parse_netherlands_citation_query(value: Any) -> Dict[str, Any]:
+    query = str(value or "").strip()
+    if not query:
+        return {}
+
+    lowered = query.lower()
+    article_match = re.search(r"\bartikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b", lowered, re.IGNORECASE)
+    identifier_match = re.search(r"\b(BWBR[0-9A-Z]+)\b", query, re.IGNORECASE)
+
+    hierarchy_segments: List[str] = []
+    for kind in ("boek", "titel", "hoofdstuk", "afdeling", "paragraaf"):
+        for match in re.finditer(rf"\b{kind}\s+[0-9a-zivxlcdm.\-]+\b", lowered, re.IGNORECASE):
+            hierarchy_segments.append(match.group(0).strip())
+
+    law_reference = query
+    for pattern in [
+        r"\bBWBR[0-9A-Z]+\b",
+        r"\bartikel\s+[0-9]+(?:[.:][0-9]+)*(?:[a-z])?\b",
+        r"\b(?:boek|titel|hoofdstuk|afdeling|paragraaf)\s+[0-9a-zivxlcdm.\-]+\b",
+    ]:
+        law_reference = re.sub(pattern, " ", law_reference, flags=re.IGNORECASE)
+    law_reference = re.sub(r"\s+", " ", law_reference).strip(" ,;:-")
+
+    parsed = {
+        "raw_query": query,
+        "law_identifier": identifier_match.group(1).upper() if identifier_match else "",
+        "law_reference": law_reference.strip(),
+        "article_number": article_match.group(1) if article_match else "",
+        "hierarchy_segments": hierarchy_segments,
+    }
+    if not parsed["law_identifier"] and not parsed["law_reference"] and not parsed["article_number"]:
+        return {}
+    return parsed
+
+
+def _normalize_match_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip()).lower()
+
+
+def _score_netherlands_citation_match(
+    case: Dict[str, Any],
+    parsed_citation: Dict[str, Any],
+    *,
+    prefer_current_versions: bool,
+) -> int:
+    score = 0
+    query_identifier = str(parsed_citation.get("law_identifier") or "")
+    query_reference = _normalize_match_text(parsed_citation.get("law_reference") or "")
+    query_article = _normalize_match_text(parsed_citation.get("article_number") or "")
+
+    case_identifier = str(case.get("law_identifier") or case.get("identifier") or "").upper()
+    case_article = _normalize_match_text(case.get("article_number") or "")
+
+    alias_candidates = [
+        _normalize_match_text(case.get("canonical_title")),
+        _normalize_match_text(case.get("title")),
+        _normalize_match_text(case.get("citation")),
+        _normalize_match_text(case.get("document_citation")),
+    ]
+    alias_candidates.extend(_normalize_match_text(item) for item in (case.get("aliases") or []))
+
+    if query_identifier:
+        if query_identifier == case_identifier:
+            score += 10
+        else:
+            return 0
+
+    if query_reference:
+        if any(query_reference == candidate for candidate in alias_candidates if candidate):
+            score += 8
+        elif any(query_reference in candidate for candidate in alias_candidates if candidate):
+            score += 5
+        elif not query_identifier:
+            return 0
+
+    if query_article:
+        if query_article == case_article:
+            score += 10
+        else:
+            return 0
+
+    hierarchy_labels = [_normalize_match_text(item) for item in (case.get("hierarchy_labels") or [])]
+    for segment in parsed_citation.get("hierarchy_segments") or []:
+        if _normalize_match_text(segment) in hierarchy_labels:
+            score += 2
+
+    if prefer_current_versions and bool(case.get("is_current")):
+        score += 1
+    return score
+
+
+def _apply_netherlands_citation_query(
+    results: List[Dict[str, Any]],
+    *,
+    citation_query: str,
+    prefer_current_versions: bool,
+) -> List[Dict[str, Any]]:
+    parsed = _parse_netherlands_citation_query(citation_query)
+    if not parsed:
+        return results
+
+    scored: List[tuple[int, Dict[str, Any]]] = []
+    for row in results:
+        case = _extract_temporal_case(row)
+        score = _score_netherlands_citation_match(
+            case,
+            parsed,
+            prefer_current_versions=prefer_current_versions,
+        )
+        scored.append((score, row))
+
+    matches = [(score, row) for score, row in scored if score > 0]
+    if not matches:
+        return results
+
+    matches.sort(key=lambda item: (-item[0], -float(item[1].get("score", 0.0))))
+    return [row for _, row in matches]
 
 
 def _get_repo_root() -> Path:
@@ -1641,6 +1761,7 @@ async def search_netherlands_law_corpus_from_parameters(
     nl_params.setdefault("chunk_hf_parquet_prefix", None)
     nl_params.setdefault("prefer_current_versions", True)
     nl_params.setdefault("include_historical_versions", True)
+    nl_params.setdefault("citation_query", str(nl_params.get("query_text") or ""))
     nl_params.setdefault(
         "preferred_case_parquet_names",
         [
@@ -1664,6 +1785,11 @@ async def search_netherlands_law_corpus_from_parameters(
                 as_of_date=str(nl_params.get("as_of_date") or ""),
                 effective_date=str(nl_params.get("effective_date") or ""),
             )
+            result["results"] = _apply_netherlands_citation_query(
+                list(result.get("results") or []),
+                citation_query=str(nl_params.get("citation_query") or ""),
+                prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
+            )
         result.setdefault(
             "temporal_parameters",
             {
@@ -1673,6 +1799,7 @@ async def search_netherlands_law_corpus_from_parameters(
                 "effective_date": str(nl_params.get("effective_date") or ""),
             },
         )
+        result.setdefault("citation_query", str(nl_params.get("citation_query") or ""))
         result.setdefault("jurisdiction", "NL")
     return result
 

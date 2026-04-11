@@ -398,3 +398,207 @@ async def test_netherlands_search_effective_date_can_select_specific_version(mon
     assert len(result["results"]) == 1
     assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2024-01-01"
     assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"
+
+
+async def test_netherlands_citation_query_identifier_lookup_prioritizes_exact_article(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.70,
+                    "case": {
+                        "law_identifier": "BWBR0009999",
+                        "law_version_identifier": "BWBR0009999@2024-01-01",
+                        "article_number": "1",
+                        "citation": "Other, Artikel 1",
+                        "aliases": ["Other"],
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.65,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "aliases": ["Sr"],
+                        "is_current": True,
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "BWBR0001854 artikel 1",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["case"]["law_identifier"] == "BWBR0001854"
+    assert result["results"][0]["case"]["article_number"] == "1"
+
+
+async def test_netherlands_citation_query_title_lookup_prioritizes_exact_article(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.88,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "2",
+                        "citation": "Sr, Artikel 2",
+                        "is_current": True,
+                    },
+                },
+                {
+                    "score": 0.84,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "is_current": True,
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "Wetboek van Strafrecht artikel 1",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["case"]["article_number"] == "1"
+    assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"
+
+
+async def test_netherlands_citation_query_falls_back_to_vector_results_when_unparsed(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {"score": 0.91, "case": {"citation": "Sr, Artikel 1", "is_current": True}},
+                {"score": 0.83, "case": {"citation": "Sr, Artikel 2", "is_current": True}},
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "something broad without dutch citation structure",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert len(result["results"]) == 2
+    assert result["results"][0]["score"] == 0.91
+
+
+async def test_netherlands_citation_query_respects_temporal_filtering(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.95,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2012-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "version_start_date": "2012-01-01",
+                        "version_end_date": "2023-12-31",
+                        "is_current": False,
+                    },
+                },
+                {
+                    "score": 0.94,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "canonical_title": "Wetboek van Strafrecht",
+                        "aliases": ["Sr"],
+                        "article_number": "1",
+                        "citation": "Sr, Artikel 1",
+                        "version_start_date": "2024-01-01",
+                        "version_end_date": "",
+                        "is_current": True,
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "citation_query": "Sr artikel 1",
+            "as_of_date": "2018-01-01",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2012-01-01"
+    assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"

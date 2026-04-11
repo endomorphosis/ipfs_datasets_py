@@ -150,6 +150,8 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     netherlands_params = by_name["search_netherlands_law_corpus"]["parameters"]
     assert netherlands_params["hf_dataset_id"]["default"] == "justicedao/ipfs_netherlands_laws"
     assert netherlands_params["hf_parquet_file"]["default"] == "netherlands_laws.parquet"
+    assert "citation_query" in netherlands_params
+    assert "query_text" in netherlands_params
     assert netherlands_params["prefer_current_versions"]["default"] is True
     assert netherlands_params["include_historical_versions"]["default"] is True
     assert "as_of_date" in netherlands_params
