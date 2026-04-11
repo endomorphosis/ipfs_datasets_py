@@ -147,6 +147,71 @@ def _first_non_empty_string(value: Any) -> str:
     return str(value or "").strip()
 
 
+def _citation_text_from_value(value: Any) -> str:
+    if value in (None, ""):
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, (int, float)):
+        return str(value).strip()
+    if isinstance(value, dict):
+        # CAP and some state corpora store citation text under nested keys.
+        for key in (
+            "cite",
+            "citation",
+            "official_cite",
+            "bluebook_citation",
+            "identifier",
+            "text",
+            "value",
+        ):
+            nested = _citation_text_from_value(value.get(key))
+            if nested:
+                return nested
+        return ""
+    if isinstance(value, (list, tuple)):
+        for item in value:
+            nested = _citation_text_from_value(item)
+            if nested:
+                return nested
+        return ""
+    return str(value).strip()
+
+
+def _citation_text_from_row(row: Dict[str, Any], fields: Iterable[str]) -> str:
+    for field in fields:
+        if field not in row:
+            continue
+        citation_text = _citation_text_from_value(row.get(field))
+        if citation_text:
+            return citation_text
+    return ""
+
+
+def _citation_text_from_row_text(
+    row: Dict[str, Any],
+    citation_type: str,
+    state_code: Optional[str],
+) -> str:
+    extractor = CitationExtractor()
+    for field in ("text", "head_matter", "name", "name_abbreviation"):
+        value = row.get(field)
+        source_text = _first_non_empty_string(value)
+        if not source_text:
+            continue
+        for citation in extractor.extract_citations(source_text):
+            if citation.type != citation_type:
+                continue
+            if state_code:
+                parsed_state = str(citation.jurisdiction or "").strip().upper()
+                if parsed_state not in ("", state_code):
+                    continue
+            text_value = str(citation.text or "").strip()
+            if text_value:
+                return text_value
+    return ""
+
+
 def _find_source(resolver: BluebookCitationResolver, corpus_key: str, state_code: Optional[str]) -> str:
     for source_ref in resolver._iter_corpus_sources(corpus_key, state_code=state_code):
         return source_ref
@@ -169,7 +234,7 @@ def _build_us_code_cases(connection: Any, resolver: BluebookCitationResolver, sa
         section = _first_present(row, _SECTION_FIELDS)
         if title in (None, "") or section in (None, ""):
             continue
-        citation_text = _first_non_empty_string(_first_present(row, _OFFICIAL_CITE_FIELDS))
+        citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS)
         if not citation_text:
             citation_text = f"{title} U.S.C. § {section}"
         if not _parser_accepts(citation_text, "usc", None):
@@ -185,7 +250,7 @@ def _build_us_code_cases(connection: Any, resolver: BluebookCitationResolver, sa
         )
         if len(cases) >= sample_size:
             break
-        return cases
+    return cases
 
 
 def _build_federal_register_cases(
@@ -198,7 +263,7 @@ def _build_federal_register_cases(
 
     cases = []
     for row in rows:
-        citation_text = _first_non_empty_string(_first_present(row, _OFFICIAL_CITE_FIELDS))
+        citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS)
         if citation_text in (None, ""):
             volume = _first_present(row, _VOLUME_FIELDS)
             page = _first_present(row, _PAGE_FIELDS)
@@ -216,7 +281,7 @@ def _build_federal_register_cases(
         )
         if len(cases) >= sample_size:
             break
-        return cases
+    return cases
 
 
 def _build_state_law_cases(
@@ -230,12 +295,16 @@ def _build_state_law_cases(
 
     cases = []
     for row in rows:
-        citation_text = _first_non_empty_string(_first_present(row, _OFFICIAL_CITE_FIELDS))
+        resolved_state_code = str(_first_present(row, _STATE_FIELDS) or state_code).strip().upper() or state_code
+        citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS + ("citations", "name", "source_id"))
+        if citation_text in (None, "") or not _parser_accepts(citation_text, "state_statute", resolved_state_code):
+            citation_text = _citation_text_from_row_text(row, "state_statute", resolved_state_code)
         if citation_text in (None, ""):
             continue
-        if not _parser_accepts(citation_text, "state_statute", None):
-            continue
-        resolved_state_code = str(_first_present(row, _STATE_FIELDS) or state_code).strip().upper() or state_code
+        if not _parser_accepts(citation_text, "state_statute", resolved_state_code):
+            # Some citations parse without explicit jurisdiction metadata.
+            if not _parser_accepts(citation_text, "state_statute", None):
+                continue
         cases.append(
             {
                 "citation_text": citation_text,
@@ -247,7 +316,7 @@ def _build_state_law_cases(
         )
         if len(cases) >= sample_size:
             break
-        return cases
+    return cases
 
 
 def _build_state_corpus_cases(
@@ -262,10 +331,12 @@ def _build_state_corpus_cases(
 
     cases = []
     for row in rows:
-        citation_text = _first_non_empty_string(_first_present(row, _OFFICIAL_CITE_FIELDS))
+        citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS + ("citations", "name", "source_id"))
+        resolved_state_code = str(_first_present(row, _STATE_FIELDS) or state_code).strip().upper() or state_code
+        if citation_text in (None, "") or not _parser_accepts(str(citation_text), "state_statute", resolved_state_code):
+            citation_text = _citation_text_from_row_text(row, "state_statute", resolved_state_code)
         if citation_text in (None, ""):
             continue
-        resolved_state_code = str(_first_present(row, _STATE_FIELDS) or state_code).strip().upper() or state_code
         if not _parser_accepts(str(citation_text), "state_statute", resolved_state_code):
             continue
         cases.append(
@@ -292,7 +363,12 @@ def _build_caselaw_cases(
 
     cases: List[Dict[str, Any]] = []
     for row in rows:
-        citation_text = _first_non_empty_string(_first_present(row, _OFFICIAL_CITE_FIELDS + ("citations",)))
+        citation_text = _citation_text_from_row(
+            row,
+            _OFFICIAL_CITE_FIELDS + ("citations", "citation", "name_abbreviation", "name"),
+        )
+        if citation_text in (None, "") or not _parser_accepts(citation_text, "case", None):
+            citation_text = _citation_text_from_row_text(row, "case", None)
         if citation_text in (None, ""):
             continue
         if not _parser_accepts(citation_text, "case", None):

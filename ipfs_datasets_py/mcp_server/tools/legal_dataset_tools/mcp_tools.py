@@ -190,6 +190,62 @@ async def recover_missing_legal_citation_source(parameters: Dict[str, Any]) -> D
     return await recover_missing_legal_citation_source_from_parameters(parameters, tool_version=_TOOL_VERSION)
 
 
+async def promote_recovery_manifest_to_canonical_bundle(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Promote a saved recovery manifest into a structured canonical row bundle."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        promote_recovery_manifest_to_canonical_bundle_from_parameters,
+    )
+    return await promote_recovery_manifest_to_canonical_bundle_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def preview_recovery_manifest_release_plan(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Preview the promote-and-merge release plan for a saved recovery manifest."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        preview_recovery_manifest_release_plan_from_parameters,
+    )
+    return await preview_recovery_manifest_release_plan_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def merge_recovery_manifest_into_canonical_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge promoted recovery rows into the target canonical parquet dataset."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        merge_recovery_manifest_into_canonical_dataset_from_parameters,
+    )
+    return await merge_recovery_manifest_into_canonical_dataset_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def collect_packaged_docket_citation_recovery_candidates(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Collect unresolved citation recovery candidates from a packaged docket manifest without executing recovery."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        collect_packaged_docket_citation_recovery_candidates_from_parameters,
+    )
+    return await collect_packaged_docket_citation_recovery_candidates_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def recover_packaged_docket_missing_authorities(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Run missing-authority recovery across unresolved citations in a packaged docket manifest."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        recover_packaged_docket_missing_authorities_from_parameters,
+    )
+    return await recover_packaged_docket_missing_authorities_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def plan_packaged_docket_missing_authority_follow_up(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Recover unresolved packaged-docket citations and emit downstream follow-up work items."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        plan_packaged_docket_missing_authority_follow_up_from_parameters,
+    )
+    return await plan_packaged_docket_missing_authority_follow_up_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def execute_packaged_docket_missing_authority_follow_up(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Recover unresolved packaged-docket citations and execute promote/merge follow-up work items."""
+    from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+        execute_packaged_docket_missing_authority_follow_up_from_parameters,
+    )
+    return await execute_packaged_docket_missing_authority_follow_up_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
 async def search_federal_register_hf_index(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Search Federal Register directly from HF-hosted FAISS + metadata files."""
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
@@ -418,6 +474,9 @@ LEGAL_DATASET_MCP_TOOLS: List[Any] = [
     search_court_rules_corpus,
     search_federal_register_corpus,
     search_netherlands_law_corpus,
+    recover_missing_legal_citation_source,
+    collect_packaged_docket_citation_recovery_candidates,
+    recover_packaged_docket_missing_authorities,
     search_federal_register_hf_index,
     legal_search_brave,
     legal_search_brave_terms,
@@ -703,6 +762,90 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "promote_recovery_manifest_to_canonical_bundle",
+        "description": "Build a structured JSON/parquet promotion bundle from a saved recovery manifest.",
+        "function": promote_recovery_manifest_to_canonical_bundle,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "output_dir": {"type": "string", "required": False},
+            "write_parquet": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "preview_recovery_manifest_release_plan",
+        "description": "Preview the promotion release plan for a saved recovery manifest.",
+        "function": preview_recovery_manifest_release_plan,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "output_dir": {"type": "string", "required": False},
+            "workspace_root": {"type": "string", "required": False},
+            "python_bin": {"type": "string", "default": "python3"},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "merge_recovery_manifest_into_canonical_dataset",
+        "description": "Merge promoted recovery rows into the target canonical parquet dataset.",
+        "function": merge_recovery_manifest_into_canonical_dataset,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "output_dir": {"type": "string", "required": False},
+            "target_local_parquet_path": {"type": "string", "required": False},
+            "write_promotion_parquet": {"type": "boolean", "default": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "collect_packaged_docket_citation_recovery_candidates",
+        "description": "Collect unresolved citation recovery candidates from a packaged docket manifest.",
+        "function": collect_packaged_docket_citation_recovery_candidates,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "recover_packaged_docket_missing_authorities",
+        "description": "Run unresolved citation recovery across a packaged docket manifest and optionally publish saved manifests.",
+        "function": recover_packaged_docket_missing_authorities,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "plan_packaged_docket_missing_authority_follow_up",
+        "description": "Recover unresolved packaged-docket citations and build corpus-aware downstream follow-up work items.",
+        "function": plan_packaged_docket_missing_authority_follow_up,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "execute_packaged_docket_missing_authority_follow_up",
+        "description": "Recover unresolved packaged-docket citations and execute promote and merge follow-up work items.",
+        "function": execute_packaged_docket_missing_authority_follow_up,
+        "parameters": {
+            "manifest_path": {"type": "string", "required": True},
+            "max_candidates": {"type": "integer", "default": 8},
+            "archive_top_k": {"type": "integer", "default": 3},
+            "publish_to_hf": {"type": "boolean", "default": False},
+            "hf_token": {"type": "string", "required": False},
+            "execute_publish": {"type": "boolean", "default": False},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "search_federal_register_hf_index",
         "description": "Search Federal Register directly from HF-hosted FAISS index + metadata using query text.",
         "function": search_federal_register_hf_index,
@@ -875,6 +1018,13 @@ __all__ = [
     "search_federal_register_corpus",
     "search_netherlands_law_corpus",
     "recover_missing_legal_citation_source",
+    "promote_recovery_manifest_to_canonical_bundle",
+    "preview_recovery_manifest_release_plan",
+    "merge_recovery_manifest_into_canonical_dataset",
+    "collect_packaged_docket_citation_recovery_candidates",
+    "recover_packaged_docket_missing_authorities",
+    "plan_packaged_docket_missing_authority_follow_up",
+    "execute_packaged_docket_missing_authority_follow_up",
     "search_federal_register_hf_index",
     "legal_search_brave",
     "legal_search_brave_terms",

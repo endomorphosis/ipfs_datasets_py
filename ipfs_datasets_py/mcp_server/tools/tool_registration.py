@@ -611,6 +611,48 @@ TOOL_MAPPINGS = {
                 "description": "Recover missing legal citation sources via search, archive, and optional JusticeDAO HF publish planning",
                 "tags": ["legal", "citations", "recovery", "archive", "hf", "retrieval"]
             },
+            "promote_recovery_manifest_to_canonical_bundle": {
+                "name": "promote_recovery_manifest_to_canonical_bundle",
+                "category": "legal_datasets",
+                "description": "Promote a saved recovery manifest into a structured canonical row bundle",
+                "tags": ["legal", "citations", "recovery", "promotion", "parquet", "hf"]
+            },
+            "preview_recovery_manifest_release_plan": {
+                "name": "preview_recovery_manifest_release_plan",
+                "category": "legal_datasets",
+                "description": "Preview the promotion release plan for a saved recovery manifest",
+                "tags": ["legal", "citations", "recovery", "promotion", "planning", "hf"]
+            },
+            "merge_recovery_manifest_into_canonical_dataset": {
+                "name": "merge_recovery_manifest_into_canonical_dataset",
+                "category": "legal_datasets",
+                "description": "Merge promoted recovery rows into the target canonical parquet dataset",
+                "tags": ["legal", "citations", "recovery", "promotion", "merge", "parquet"]
+            },
+            "collect_packaged_docket_citation_recovery_candidates": {
+                "name": "collect_packaged_docket_citation_recovery_candidates",
+                "category": "legal_datasets",
+                "description": "Collect unresolved citation recovery candidates from a packaged docket manifest",
+                "tags": ["legal", "docket", "citations", "recovery", "manifest"]
+            },
+            "recover_packaged_docket_missing_authorities": {
+                "name": "recover_packaged_docket_missing_authorities",
+                "category": "legal_datasets",
+                "description": "Run missing-authority recovery across unresolved citations in a packaged docket manifest",
+                "tags": ["legal", "docket", "citations", "recovery", "archive", "hf"]
+            },
+                "execute_packaged_docket_missing_authority_follow_up": {
+                    "name": "execute_packaged_docket_missing_authority_follow_up",
+                    "category": "legal_datasets",
+                    "description": "Recover unresolved packaged-docket citations and execute promote and merge follow-up work items",
+                    "tags": ["legal", "docket", "citations", "recovery", "execution", "parquet"]
+                },
+            "plan_packaged_docket_missing_authority_follow_up": {
+                "name": "plan_packaged_docket_missing_authority_follow_up",
+                "category": "legal_datasets",
+                "description": "Recover unresolved citations in a packaged docket manifest and emit downstream follow-up work items",
+                "tags": ["legal", "docket", "citations", "recovery", "planning", "hf"]
+            },
             "search_caselaw_access_vectors_with_centroids": {
                 "name": "search_caselaw_access_vectors_with_centroids",
                 "category": "legal_datasets",

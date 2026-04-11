@@ -15,6 +15,7 @@ import tempfile
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 import zipfile
 
+import anyio
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -3965,6 +3966,35 @@ def execute_packaged_docket_follow_up_job(
             "results": [],
             "result_count": 0,
             "job": job,
+        }
+
+    job_kind = str(job.get("job_kind") or "").strip().lower()
+    if job_kind == "legal_citation_recovery_follow_up":
+        from .docket_dataset import execute_packaged_docket_missing_authority_follow_up
+
+        with anyio.from_thread.start_blocking_portal(backend="asyncio") as portal:
+            follow_up_execution = portal.call(
+                lambda: execute_packaged_docket_missing_authority_follow_up(
+                    manifest_path,
+                    publish_to_hf=bool(job.get("publish_to_hf", False)),
+                    hf_token=str(job.get("hf_token") or "") or None,
+                    max_candidates=int(job.get("max_candidates") or 8),
+                    archive_top_k=int(job.get("archive_top_k") or 3),
+                    execute_publish=bool(job.get("execute_publish", False)),
+                )
+            )
+
+        work_items = [dict(item) for item in list(follow_up_execution.get("work_items") or [])]
+        return {
+            "job_ready": True,
+            "executed": True,
+            "source_type": str(job.get("source_type") or "citation_recovery_follow_up"),
+            "action_type": str(job.get("action_type") or "execute_citation_recovery_follow_up"),
+            "job": job,
+            "results": work_items,
+            "result_count": len(work_items),
+            "source": "packaged_citation_recovery_follow_up_execution",
+            "follow_up_execution": follow_up_execution,
         }
 
     source_type = str(job.get("source_type") or "")

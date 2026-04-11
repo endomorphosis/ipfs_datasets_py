@@ -8,7 +8,10 @@ import hashlib
 import math
 import json
 from pathlib import Path
+import subprocess
 from typing import Any, Dict, Iterable, List, Optional, Sequence
+
+import anyio
 
 from ...logic.deontic import DeonticGraph, DeonticGraphBuilder
 from ..protocol import Entity, KnowledgeGraph, Relationship
@@ -29,7 +32,19 @@ from ..retrieval import (
     hashed_term_projection,
     vector_dot,
 )
-from ..legal_scrapers.bluebook_citation_linker import resolve_bluebook_citations_in_text
+from ..legal_scrapers.bluebook_citation_linker import (
+    BluebookCitationResolver,
+    audit_bluebook_citation_resolution_for_documents,
+    citation_link_to_dict,
+    resolve_bluebook_citations_in_text,
+)
+from ..legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from ..legal_scrapers.legal_source_recovery_promotion import (
+    build_recovery_manifest_promotion_row,
+    build_recovery_manifest_release_plan,
+    merge_recovery_manifest_into_canonical_dataset,
+    promote_recovery_manifest_to_canonical_bundle,
+)
 from ..legal_scrapers.legal_source_recovery import recover_missing_legal_citation_source
 
 
@@ -144,6 +159,458 @@ def collect_docket_dataset_citation_recovery_candidates(dataset: "DocketDatasetO
     }
 
 
+def collect_packaged_docket_citation_recovery_candidates(manifest_path: str | Path) -> Dict[str, Any]:
+    dataset = DocketDatasetObject.from_package(manifest_path)
+    result = collect_docket_dataset_citation_recovery_candidates(dataset)
+    result["manifest_path"] = str(Path(manifest_path))
+    result["source"] = "packaged_docket_citation_recovery_candidates"
+    return result
+
+
+def audit_docket_dataset_citation_sources(
+    dataset: "DocketDatasetObject",
+    *,
+    resolver: Optional[BluebookCitationResolver] = None,
+) -> Dict[str, Any]:
+    report = audit_bluebook_citation_resolution_for_documents(
+        [
+            {
+                "document_id": document.document_id,
+                "title": document.title,
+                "text": document.text,
+            }
+            for document in list(dataset.documents or [])
+        ],
+        resolver=resolver,
+    )
+    report["dataset_id"] = dataset.dataset_id
+    report["docket_id"] = dataset.docket_id
+    report["source"] = "docket_dataset_citation_source_audit"
+    return report
+
+
+def audit_packaged_docket_citation_sources(manifest_path: str | Path) -> Dict[str, Any]:
+    dataset = DocketDatasetObject.from_package(manifest_path)
+    result = audit_docket_dataset_citation_sources(dataset)
+    result["manifest_path"] = str(Path(manifest_path))
+    result["source"] = "packaged_docket_citation_source_audit"
+    return result
+
+
+def _build_missing_authority_follow_up_work_item(
+    recovery: Dict[str, Any],
+    *,
+    index: int,
+) -> Dict[str, Any]:
+    corpus_key = str(recovery.get("corpus_key") or "").strip().lower()
+    state_code = str(recovery.get("state_code") or "").strip().upper()
+    corpus = None
+    if corpus_key:
+        try:
+            corpus = get_canonical_legal_corpus(corpus_key)
+        except KeyError:
+            corpus = None
+
+    preferred_state_code = state_code if corpus_key in {"state_laws", "state_admin_rules", "state_court_rules"} else None
+    preferred_parquet_names = corpus.preferred_parquet_names(preferred_state_code) if corpus is not None else []
+    target_parquet_path = None
+    target_local_parquet_path = None
+    if corpus is not None:
+        target_filename = (
+            corpus.state_parquet_filename(preferred_state_code)
+            if preferred_state_code
+            else corpus.combined_parquet_filename
+        )
+        target_parquet_path = f"{corpus.parquet_dir_name.strip('/')}/{target_filename}" if corpus.parquet_dir_name.strip("/") else target_filename
+        target_local_parquet_path = str(corpus.parquet_dir() / target_filename)
+
+    publish_plan = dict(recovery.get("publish_plan") or {})
+    publish_report = dict(recovery.get("publish_report") or {})
+    manifest_path = str(recovery.get("manifest_path") or "")
+    normalized_citation = str(recovery.get("normalized_citation") or recovery.get("citation_text") or "")
+    work_item_id = _safe_identifier(f"recovery_{index}_{corpus_key}_{state_code}_{normalized_citation}")
+    promotion_preview = {}
+    if manifest_path:
+        try:
+            promotion_preview = build_recovery_manifest_promotion_row(
+                {
+                    "citation_text": str(recovery.get("citation_text") or ""),
+                    "normalized_citation": normalized_citation,
+                    "corpus_key": corpus_key,
+                    "hf_dataset_id": str(recovery.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+                    "state_code": state_code,
+                    "search_query": str(recovery.get("search_query") or ""),
+                    "generated_at": "",
+                    "candidates": list(recovery.get("candidates") or []),
+                    "archived_sources": list(recovery.get("archived_sources") or []),
+                    "manifest_path": manifest_path,
+                    "manifest_directory": str(recovery.get("manifest_directory") or ""),
+                }
+            )
+        except Exception:
+            promotion_preview = {}
+    release_plan_preview = {}
+    if manifest_path:
+        try:
+            release_plan_preview = build_recovery_manifest_release_plan(
+                {
+                    "citation_text": str(recovery.get("citation_text") or ""),
+                    "normalized_citation": normalized_citation,
+                    "corpus_key": corpus_key,
+                    "hf_dataset_id": str(recovery.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+                    "state_code": state_code,
+                    "search_query": str(recovery.get("search_query") or ""),
+                    "generated_at": "",
+                    "candidates": list(recovery.get("candidates") or []),
+                    "archived_sources": list(recovery.get("archived_sources") or []),
+                    "manifest_path": manifest_path,
+                    "manifest_directory": str(recovery.get("manifest_directory") or ""),
+                },
+                output_dir=promotion_preview.get("promotion_output_dir") or None,
+            )
+        except Exception:
+            release_plan_preview = {}
+
+    stages = [
+        {
+            "stage": "review_recovery_manifest",
+            "status": "ready" if manifest_path else "blocked",
+            "manifest_path": manifest_path,
+        },
+        {
+            "stage": "promote_canonical_rows",
+            "status": "ready" if corpus is not None and manifest_path else "blocked",
+            "target_hf_dataset_id": corpus.hf_dataset_id if corpus is not None else str(recovery.get("hf_dataset_id") or ""),
+            "target_parquet_path": target_parquet_path,
+            "target_local_parquet_path": target_local_parquet_path,
+            "preferred_parquet_names": preferred_parquet_names,
+            "cid_field": corpus.cid_field if corpus is not None else "",
+        },
+        {
+            "stage": "merge_canonical_dataset",
+            "status": "ready" if corpus is not None and manifest_path and target_local_parquet_path else "blocked",
+            "target_hf_dataset_id": corpus.hf_dataset_id if corpus is not None else str(recovery.get("hf_dataset_id") or ""),
+            "target_parquet_path": target_parquet_path,
+            "target_local_parquet_path": target_local_parquet_path,
+        },
+        {
+            "stage": "publish_recovery_manifest",
+            "status": "completed" if publish_report else ("ready" if publish_plan else "blocked"),
+            "repo_id": str(publish_plan.get("repo_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+            "path_in_repo": str(publish_plan.get("path_in_repo") or ""),
+            "publish_command": str(publish_plan.get("publish_command") or ""),
+        },
+    ]
+
+    return {
+        "work_item_id": work_item_id,
+        "job_kind": "legal_citation_recovery_follow_up",
+        "citation_text": str(recovery.get("citation_text") or ""),
+        "normalized_citation": normalized_citation,
+        "corpus_key": corpus_key,
+        "state_code": state_code,
+        "hf_dataset_id": str(recovery.get("hf_dataset_id") or (corpus.hf_dataset_id if corpus is not None else "")),
+        "manifest_path": manifest_path,
+        "manifest_directory": str(recovery.get("manifest_directory") or ""),
+        "search_query": str(recovery.get("search_query") or ""),
+        "candidate_count": int(recovery.get("candidate_count") or 0),
+        "archived_count": int(recovery.get("archived_count") or 0),
+        "target_parquet_path": target_parquet_path,
+        "target_local_parquet_path": target_local_parquet_path,
+        "preferred_parquet_names": preferred_parquet_names,
+        "preferred_state_code": preferred_state_code or "",
+        "cid_field": corpus.cid_field if corpus is not None else "",
+        "publish_plan": publish_plan,
+        "publish_report": publish_report,
+        "promotion_preview": promotion_preview,
+        "release_plan_preview": release_plan_preview,
+        "stages": stages,
+    }
+
+
+async def _execute_missing_authority_follow_up_work_item(
+    work_item: Dict[str, Any],
+    *,
+    execute_publish: bool = False,
+) -> Dict[str, Any]:
+    manifest_value = str(work_item.get("manifest_path") or "").strip()
+    manifest_path = Path(manifest_value).expanduser().resolve() if manifest_value else None
+    promotion_output_dir = str((work_item.get("promotion_preview") or {}).get("promotion_output_dir") or "").strip() or None
+    target_local_parquet_path = str(work_item.get("target_local_parquet_path") or "").strip() or None
+    publish_plan = dict(work_item.get("publish_plan") or {})
+    publish_report = dict(work_item.get("publish_report") or {})
+
+    stage_results: List[Dict[str, Any]] = []
+    promotion_result: Dict[str, Any] = {}
+    merge_result: Dict[str, Any] = {}
+    errors: List[str] = []
+
+    manifest_exists = bool(manifest_path is not None and manifest_path.exists())
+    stage_results.append(
+        {
+            "stage": "review_recovery_manifest",
+            "status": "completed" if manifest_exists else "blocked",
+            "manifest_path": str(manifest_path) if manifest_path is not None else "",
+            "manifest_exists": manifest_exists,
+            "reason": None if manifest_exists else "Recovery manifest is missing on disk.",
+        }
+    )
+
+    if manifest_exists:
+        try:
+            promotion_result = await anyio.to_thread.run_sync(
+                lambda: promote_recovery_manifest_to_canonical_bundle(
+                    str(manifest_path),
+                    output_dir=promotion_output_dir,
+                )
+            )
+            stage_results.append(
+                {
+                    "stage": "promote_canonical_rows",
+                    "status": "completed",
+                    "result": promotion_result,
+                }
+            )
+        except Exception as exc:
+            errors.append(str(exc))
+            stage_results.append(
+                {
+                    "stage": "promote_canonical_rows",
+                    "status": "error",
+                    "error": str(exc),
+                }
+            )
+    else:
+        stage_results.append(
+            {
+                "stage": "promote_canonical_rows",
+                "status": "blocked",
+                "reason": "Recovery manifest is missing on disk.",
+            }
+        )
+
+    if manifest_exists and not errors and target_local_parquet_path:
+        try:
+            merge_result = await anyio.to_thread.run_sync(
+                lambda: merge_recovery_manifest_into_canonical_dataset(
+                    str(manifest_path),
+                    output_dir=promotion_output_dir,
+                    target_local_parquet_path=target_local_parquet_path,
+                    write_promotion_parquet=False,
+                )
+            )
+            stage_results.append(
+                {
+                    "stage": "merge_canonical_dataset",
+                    "status": "completed",
+                    "result": merge_result,
+                }
+            )
+        except Exception as exc:
+            errors.append(str(exc))
+            stage_results.append(
+                {
+                    "stage": "merge_canonical_dataset",
+                    "status": "error",
+                    "error": str(exc),
+                }
+            )
+    else:
+        stage_results.append(
+            {
+                "stage": "merge_canonical_dataset",
+                "status": "blocked" if not errors else "skipped",
+                "target_local_parquet_path": target_local_parquet_path or "",
+                "reason": "Target canonical parquet path is not available." if not target_local_parquet_path else ("Promotion stage did not complete successfully." if errors else "Recovery manifest is missing on disk."),
+            }
+        )
+
+    if publish_report:
+        stage_results.append(
+            {
+                "stage": "publish_recovery_manifest",
+                "status": "completed",
+                "result": publish_report,
+            }
+        )
+    elif publish_plan and execute_publish and not errors:
+        publish_command = str(publish_plan.get("publish_command") or "").strip()
+        if publish_command:
+            completed = await anyio.to_thread.run_sync(
+                lambda: subprocess.run(
+                    publish_command,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            )
+            stage_results.append(
+                {
+                    "stage": "publish_recovery_manifest",
+                    "status": "completed" if int(completed.returncode or 1) == 0 else "error",
+                    "command": publish_command,
+                    "exit_code": int(completed.returncode or 0),
+                    "stdout": str(completed.stdout or ""),
+                    "stderr": str(completed.stderr or ""),
+                }
+            )
+            if int(completed.returncode or 1) != 0:
+                errors.append(str(completed.stderr or publish_command))
+        else:
+            stage_results.append(
+                {
+                    "stage": "publish_recovery_manifest",
+                    "status": "blocked",
+                    "reason": "Publish plan is missing a publish command.",
+                }
+            )
+    elif publish_plan:
+        stage_results.append(
+            {
+                "stage": "publish_recovery_manifest",
+                "status": "skipped",
+                "command": str(publish_plan.get("publish_command") or ""),
+                "reason": "Publish execution is disabled.",
+            }
+        )
+    else:
+        stage_results.append(
+            {
+                "stage": "publish_recovery_manifest",
+                "status": "blocked",
+                "reason": "No publish plan is available.",
+            }
+        )
+
+    completed_stage_count = sum(1 for stage in stage_results if str(stage.get("status") or "") == "completed")
+    return {
+        **work_item,
+        "execution": {
+            "status": "success" if not errors else "error",
+            "completed_stage_count": completed_stage_count,
+            "stage_count": len(stage_results),
+            "stages": stage_results,
+            "promotion_result": promotion_result,
+            "merge_result": merge_result,
+            "errors": errors,
+            "execute_publish": bool(execute_publish),
+        },
+    }
+
+
+async def plan_docket_dataset_missing_authority_follow_up(
+    dataset: "DocketDatasetObject",
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+) -> Dict[str, Any]:
+    recovery_report = await recover_docket_dataset_missing_authorities(
+        dataset,
+        publish_to_hf=publish_to_hf,
+        hf_token=hf_token,
+        max_candidates=max_candidates,
+        archive_top_k=archive_top_k,
+    )
+    work_items = [
+        _build_missing_authority_follow_up_work_item(dict(recovery), index=index)
+        for index, recovery in enumerate(list(recovery_report.get("recoveries") or []), start=1)
+    ]
+    return {
+        "dataset_id": dataset.dataset_id,
+        "docket_id": dataset.docket_id,
+        "candidate_count": int(recovery_report.get("candidate_count") or 0),
+        "recovery_count": int(recovery_report.get("recovery_count") or 0),
+        "work_item_count": len(work_items),
+        "recoveries": list(recovery_report.get("recoveries") or []),
+        "work_items": work_items,
+        "publish_to_hf": bool(publish_to_hf),
+        "source": "docket_dataset_missing_authority_follow_up_plan",
+    }
+
+
+async def plan_packaged_docket_missing_authority_follow_up(
+    manifest_path: str | Path,
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+) -> Dict[str, Any]:
+    dataset = DocketDatasetObject.from_package(manifest_path)
+    result = await plan_docket_dataset_missing_authority_follow_up(
+        dataset,
+        publish_to_hf=publish_to_hf,
+        hf_token=hf_token,
+        max_candidates=max_candidates,
+        archive_top_k=archive_top_k,
+    )
+    result["manifest_path"] = str(Path(manifest_path))
+    result["source"] = "packaged_docket_missing_authority_follow_up_plan"
+    return result
+
+
+async def execute_docket_dataset_missing_authority_follow_up(
+    dataset: "DocketDatasetObject",
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+    execute_publish: bool = False,
+) -> Dict[str, Any]:
+    plan = await plan_docket_dataset_missing_authority_follow_up(
+        dataset,
+        publish_to_hf=publish_to_hf,
+        hf_token=hf_token,
+        max_candidates=max_candidates,
+        archive_top_k=archive_top_k,
+    )
+    executed_items = [
+        await _execute_missing_authority_follow_up_work_item(dict(work_item), execute_publish=execute_publish)
+        for work_item in list(plan.get("work_items") or [])
+    ]
+    error_count = sum(
+        1
+        for item in executed_items
+        if str(((item.get("execution") or {}).get("status") or "")) == "error"
+    )
+    return {
+        **plan,
+        "status": "success" if error_count == 0 else "error",
+        "work_items": executed_items,
+        "executed_work_item_count": len(executed_items),
+        "error_count": error_count,
+        "execute_publish": bool(execute_publish),
+        "source": "docket_dataset_missing_authority_follow_up_execution",
+    }
+
+
+async def execute_packaged_docket_missing_authority_follow_up(
+    manifest_path: str | Path,
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+    execute_publish: bool = False,
+) -> Dict[str, Any]:
+    dataset = DocketDatasetObject.from_package(manifest_path)
+    result = await execute_docket_dataset_missing_authority_follow_up(
+        dataset,
+        publish_to_hf=publish_to_hf,
+        hf_token=hf_token,
+        max_candidates=max_candidates,
+        archive_top_k=archive_top_k,
+        execute_publish=execute_publish,
+    )
+    result["manifest_path"] = str(Path(manifest_path))
+    result["source"] = "packaged_docket_missing_authority_follow_up_execution"
+    return result
+
+
 async def recover_docket_dataset_missing_authorities(
     dataset: "DocketDatasetObject",
     *,
@@ -182,9 +649,33 @@ async def recover_docket_dataset_missing_authorities(
     }
 
 
+async def recover_packaged_docket_missing_authorities(
+    manifest_path: str | Path,
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+) -> Dict[str, Any]:
+    dataset = DocketDatasetObject.from_package(manifest_path)
+    result = await recover_docket_dataset_missing_authorities(
+        dataset,
+        publish_to_hf=publish_to_hf,
+        hf_token=hf_token,
+        max_candidates=max_candidates,
+        archive_top_k=archive_top_k,
+    )
+    result["manifest_path"] = str(Path(manifest_path))
+    result["source"] = "packaged_docket_missing_authority_recovery"
+    return result
+
+
 def _merge_linked_authorities(
     existing_authorities: Sequence[Dict[str, Any]],
     documents: Sequence["DocketDocument"],
+    *,
+    resolver: Optional[BluebookCitationResolver] = None,
+    state_code: Optional[str] = None,
 ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
     merged: List[Dict[str, Any]] = [dict(item) for item in existing_authorities if isinstance(item, dict)]
     seen_keys: set[tuple[str, str, str]] = set()
@@ -201,35 +692,45 @@ def _merge_linked_authorities(
     document_count = 0
     unresolved_count = 0
     recovery_candidates: List[Dict[str, Any]] = []
+    citation_audit = audit_bluebook_citation_resolution_for_documents(
+        [
+            {
+                "document_id": document.document_id,
+                "title": document.title,
+                "text": document.text,
+            }
+            for document in documents
+        ],
+        state_code=state_code,
+        resolver=resolver,
+    )
+    audit_by_document_id = {
+        str(item.get("document_id") or ""): item
+        for item in list(citation_audit.get("documents") or [])
+        if isinstance(item, dict)
+    }
 
     for document in documents:
         text = str(document.text or "").strip()
+        audit_summary = dict(audit_by_document_id.get(document.document_id) or {})
+        if audit_summary:
+            document.metadata["citation_resolution_summary"] = {
+                "citation_count": int(audit_summary.get("citation_count") or 0),
+                "matched_citation_count": int(audit_summary.get("matched_citation_count") or 0),
+                "unmatched_citation_count": int(audit_summary.get("unmatched_citation_count") or 0),
+                "all_citations_resolved": bool(audit_summary.get("all_citations_resolved")),
+            }
         if not text:
             continue
-        links = resolve_bluebook_citations_in_text(text)
+        links = (
+            resolver.resolve_text(text, state_code=state_code)
+            if resolver is not None
+            else resolve_bluebook_citations_in_text(text, state_code=state_code)
+        )
         if not links:
             continue
         document_count += 1
-        document.metadata["citation_links"] = [
-            {
-                "citation_text": link.citation_text,
-                "citation_type": link.citation_type,
-                "normalized_citation": link.normalized_citation,
-                "matched": bool(link.matched),
-                "corpus_key": link.corpus_key,
-                "dataset_id": link.dataset_id,
-                "matched_field": link.matched_field,
-                "confidence": float(link.confidence),
-                "source_document_id": link.source_document_id,
-                "source_title": link.source_title,
-                "source_url": link.source_url,
-                "source_cid": link.source_cid,
-                "source_ref": link.source_ref,
-                "snippet": link.snippet,
-                "metadata": dict(link.metadata),
-            }
-            for link in links
-        ]
+        document.metadata["citation_links"] = [citation_link_to_dict(link) for link in links]
         document_recovery_candidates = [
             candidate
             for candidate in (_citation_recovery_candidate_from_link(document, link) for link in links)
@@ -285,6 +786,10 @@ def _merge_linked_authorities(
         "citation_recovery_candidate_count": len(recovery_candidates),
         "citation_recovery_candidates": recovery_candidates,
         "documents_with_linked_citations": document_count,
+        "citation_resolution_ratio": float(citation_audit.get("citation_resolution_ratio") or 0.0),
+        "document_resolution_ratio": float(citation_audit.get("document_resolution_ratio") or 0.0),
+        "fully_resolved_document_count": int(citation_audit.get("fully_resolved_document_count") or 0),
+        "citation_source_audit": citation_audit,
     }
 
 
@@ -430,6 +935,17 @@ class DocketDatasetObject:
     def collect_citation_recovery_candidates(self) -> Dict[str, Any]:
         return collect_docket_dataset_citation_recovery_candidates(self)
 
+    @classmethod
+    def collect_packaged_citation_recovery_candidates(cls, manifest_path: str | Path) -> Dict[str, Any]:
+        return collect_packaged_docket_citation_recovery_candidates(manifest_path)
+
+    def audit_citation_sources(self) -> Dict[str, Any]:
+        return audit_docket_dataset_citation_sources(self)
+
+    @classmethod
+    def audit_packaged_citation_sources(cls, manifest_path: str | Path) -> Dict[str, Any]:
+        return audit_packaged_docket_citation_sources(manifest_path)
+
     async def recover_missing_authorities(
         self,
         *,
@@ -444,6 +960,96 @@ class DocketDatasetObject:
             hf_token=hf_token,
             max_candidates=max_candidates,
             archive_top_k=archive_top_k,
+        )
+
+    async def plan_missing_authority_follow_up(
+        self,
+        *,
+        publish_to_hf: bool = False,
+        hf_token: Optional[str] = None,
+        max_candidates: int = 8,
+        archive_top_k: int = 3,
+    ) -> Dict[str, Any]:
+        return await plan_docket_dataset_missing_authority_follow_up(
+            self,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+        )
+
+    async def execute_missing_authority_follow_up(
+        self,
+        *,
+        publish_to_hf: bool = False,
+        hf_token: Optional[str] = None,
+        max_candidates: int = 8,
+        archive_top_k: int = 3,
+        execute_publish: bool = False,
+    ) -> Dict[str, Any]:
+        return await execute_docket_dataset_missing_authority_follow_up(
+            self,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+            execute_publish=execute_publish,
+        )
+
+    @classmethod
+    async def recover_packaged_missing_authorities(
+        cls,
+        manifest_path: str | Path,
+        *,
+        publish_to_hf: bool = False,
+        hf_token: Optional[str] = None,
+        max_candidates: int = 8,
+        archive_top_k: int = 3,
+    ) -> Dict[str, Any]:
+        return await recover_packaged_docket_missing_authorities(
+            manifest_path,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+        )
+
+    @classmethod
+    async def plan_packaged_missing_authority_follow_up(
+        cls,
+        manifest_path: str | Path,
+        *,
+        publish_to_hf: bool = False,
+        hf_token: Optional[str] = None,
+        max_candidates: int = 8,
+        archive_top_k: int = 3,
+    ) -> Dict[str, Any]:
+        return await plan_packaged_docket_missing_authority_follow_up(
+            manifest_path,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+        )
+
+    @classmethod
+    async def execute_packaged_missing_authority_follow_up(
+        cls,
+        manifest_path: str | Path,
+        *,
+        publish_to_hf: bool = False,
+        hf_token: Optional[str] = None,
+        max_candidates: int = 8,
+        archive_top_k: int = 3,
+        execute_publish: bool = False,
+    ) -> Dict[str, Any]:
+        return await execute_packaged_docket_missing_authority_follow_up(
+            manifest_path,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+            execute_publish=execute_publish,
         )
 
     def append_party_docket_item(self, party: str, item: Dict[str, Any]) -> None:
@@ -566,9 +1172,16 @@ class DocketDatasetObject:
 class DocketDatasetBuilder:
     """Import an entire docket and build deferred retrieval artifacts."""
 
-    def __init__(self, *, vector_dimension: int = 32, router_max_documents: int | None = 3) -> None:
+    def __init__(
+        self,
+        *,
+        vector_dimension: int = 32,
+        router_max_documents: int | None = 3,
+        citation_resolver: Optional[BluebookCitationResolver] = None,
+    ) -> None:
         self.vector_dimension = max(8, int(vector_dimension))
         self.router_max_documents = None if router_max_documents is None else max(1, int(router_max_documents))
+        self.citation_resolver = citation_resolver
 
     def build_from_docket(
         self,
@@ -586,7 +1199,12 @@ class DocketDatasetBuilder:
         plaintiff_docket = self._normalize_auxiliary_items(docket.get("plaintiff_docket") or docket.get("plaintiffs_docket") or [])
         defendant_docket = self._normalize_auxiliary_items(docket.get("defendant_docket") or docket.get("defendants_docket") or [])
         authorities = self._normalize_auxiliary_items(docket.get("authorities") or docket.get("authorities_list") or [])
-        authorities, linked_authority_summary = _merge_linked_authorities(authorities, normalized_documents)
+        authorities, linked_authority_summary = _merge_linked_authorities(
+            authorities,
+            normalized_documents,
+            resolver=self.citation_resolver,
+            state_code=str(docket.get("state_code") or docket.get("jurisdiction") or "").strip().upper() or None,
+        )
 
         knowledge_graph = self._build_knowledge_graph(dataset_id, docket_id, case_name, court, normalized_documents) if include_knowledge_graph else {}
         deontic_graph_object, deontic_triggers = build_docket_deontic_artifacts(
@@ -1646,7 +2264,13 @@ __all__ = [
     "DocketDocument",
     "build_docket_deontic_artifacts",
     "collect_docket_dataset_citation_recovery_candidates",
+    "collect_packaged_docket_citation_recovery_candidates",
+    "execute_docket_dataset_missing_authority_follow_up",
+    "execute_packaged_docket_missing_authority_follow_up",
+    "plan_docket_dataset_missing_authority_follow_up",
+    "plan_packaged_docket_missing_authority_follow_up",
     "recover_docket_dataset_missing_authorities",
+    "recover_packaged_docket_missing_authorities",
     "build_docket_proof_assistant",
     "search_docket_dataset_bm25",
     "search_docket_dataset_vector",

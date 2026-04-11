@@ -2,15 +2,22 @@
 """Docket dataset import CLI.
 
 Packaged bundle read helpers:
+- `--packaged-action summary|inspect|dashboard|report|dashboard-report` is the preferred scripted entrypoint.
 - `--summary-only` reads the lightweight manifest-driven packaged summary view.
 - `--inspect-packaged` reads the packaged inspection payload.
 - `--load-packaged-report` reads the archived `inspection_report` artifact.
+- `--operator-dashboard` reads the combined packaged operator dashboard payload.
+- `--load-operator-dashboard-report` reads the archived `operator_dashboard_report` artifact.
+- `--citation-source-audit` reports which citations resolved to legal source records.
 - `--fields` applies to the active packaged read mode.
 
 Examples:
-- `... --input-type packaged --input-path /path/to/bundle_manifest.json --summary-only --json`
-- `... --input-type packaged --input-path /path/to/bundle_manifest.json --inspect-packaged --fields latest_routing_reason,top_routing_citation --json`
-- `... --input-type packaged --input-path /path/to/bundle_manifest.json --load-packaged-report --report-format parsed --fields latest_routing_reason`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action summary --json`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action inspect --fields latest_routing_reason,top_routing_citation --json`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action report --report-format parsed --fields latest_routing_reason`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action dashboard --fields dataset_id,source --json`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action dashboard-report --report-format text`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --citation-source-audit --json`
 """
 
 from __future__ import annotations
@@ -21,19 +28,49 @@ from pathlib import Path
 import zipfile
 
 from ipfs_datasets_py.processors.legal_data import (
+    audit_docket_dataset_citation_sources,
+    audit_packaged_docket_citation_sources,
     DocketDatasetBuilder,
+    DocketDatasetObject,
     DocketDatasetPackager,
     enrich_packaged_docket_with_tactician,
     fetch_courtlistener_docket,
+    get_packaged_docket_operator_dashboard,
     load_packaged_docket_dataset,
+    load_packaged_docket_operator_dashboard_report,
     load_packaged_docket_summary_view,
     package_docket_dataset,
     package_courtlistener_fetch_cache,
+    render_packaged_docket_operator_dashboard,
     summarize_docket_dataset,
 )
 
 __all__ = ["create_parser", "main"]
 
+
+_PACKAGED_READ_FLAG_TO_MODE = {
+    "summary_only": "summary",
+    "inspect_packaged": "inspection",
+    "operator_dashboard": "dashboard",
+    "load_packaged_report": "report",
+    "load_operator_dashboard_report": "dashboard_report",
+}
+
+_PACKAGED_ACTION_TO_MODE = {
+    "summary": "summary",
+    "inspect": "inspection",
+    "dashboard": "dashboard",
+    "report": "report",
+    "dashboard-report": "dashboard_report",
+}
+
+_PACKAGED_MODE_TO_FIELD_FLAG = {
+    "summary": "summary-fields",
+    "inspection": "inspection-fields",
+    "dashboard": "dashboard-fields",
+    "report": "report-fields",
+    "dashboard_report": "report-fields",
+}
 
 def _create_bundle_zip(bundle_dir: str | Path) -> str:
     bundle_path = Path(bundle_dir)
@@ -92,6 +129,105 @@ def _filter_mapping_fields(payload: dict[str, object], fields: list[str]) -> dic
     if not fields:
         return dict(payload)
     return {field: payload[field] for field in fields if field in payload}
+
+
+def _build_citation_source_audit_from_dataset(dataset: object) -> dict[str, object]:
+    if isinstance(dataset, DocketDatasetObject):
+        return audit_docket_dataset_citation_sources(dataset)
+    if isinstance(dataset, dict):
+        return audit_docket_dataset_citation_sources(DocketDatasetObject.from_dict(dataset))
+    raise TypeError("citation source audit requires a docket dataset object or dictionary payload")
+
+
+def _packaged_read_modes(parsed: argparse.Namespace) -> set[str]:
+    modes: set[str] = set()
+    action_mode = _PACKAGED_ACTION_TO_MODE.get(str(getattr(parsed, "packaged_action", "") or "").strip().lower())
+    if action_mode:
+        modes.add(action_mode)
+    for flag_name, mode_name in _PACKAGED_READ_FLAG_TO_MODE.items():
+        if bool(getattr(parsed, flag_name, False)):
+            modes.add(mode_name)
+    return modes
+
+
+def _is_packaged_read_only(parsed: argparse.Namespace, packaged_modes: set[str]) -> bool:
+    return (
+        parsed.input_type == "packaged"
+        and not parsed.enrich_query
+        and not parsed.package_dir
+        and not parsed.parquet_dir
+        and not parsed.courtlistener_cache_package_dir
+        and (
+            packaged_modes
+            or bool(parsed.export_packaged_report)
+            or bool(parsed.export_operator_dashboard_report)
+        )
+    )
+
+
+def _resolve_packaged_field_selections(
+    parsed: argparse.Namespace,
+    *,
+    summary_fields: list[str],
+    inspection_fields: list[str],
+    dashboard_fields: list[str],
+    report_fields: list[str],
+    generic_fields: list[str],
+    packaged_modes: set[str],
+    parser: argparse.ArgumentParser,
+) -> dict[str, list[str]]:
+    if summary_fields and "summary" not in packaged_modes:
+        parser.error("--summary-fields is only valid with --summary-only.")
+    if inspection_fields and "inspection" not in packaged_modes:
+        parser.error("--inspection-fields is only valid with --inspect-packaged.")
+    if dashboard_fields and "dashboard" not in packaged_modes:
+        parser.error("--dashboard-fields is only valid with --operator-dashboard.")
+    if report_fields and not ({"report", "dashboard_report"} & packaged_modes):
+        parser.error("--report-fields is only valid with --load-packaged-report or --load-operator-dashboard-report.")
+    if generic_fields and not packaged_modes and not bool(getattr(parsed, "citation_source_audit", False)):
+        parser.error("--fields is only valid with --summary-only, --inspect-packaged, --operator-dashboard, --load-packaged-report, or --load-operator-dashboard-report.")
+
+    specific_fields_by_mode = {
+        "summary": summary_fields,
+        "inspection": inspection_fields,
+        "dashboard": dashboard_fields,
+        "report": report_fields,
+        "dashboard_report": report_fields,
+    }
+    for mode_name, field_values in specific_fields_by_mode.items():
+        if generic_fields and field_values and mode_name in packaged_modes:
+            parser.error(f"Use either --fields or --{_PACKAGED_MODE_TO_FIELD_FLAG[mode_name]}, not both.")
+
+    resolved = {
+        "summary": generic_fields if ("summary" in packaged_modes and generic_fields) else summary_fields,
+        "inspection": generic_fields if ("inspection" in packaged_modes and generic_fields) else inspection_fields,
+        "dashboard": generic_fields if ("dashboard" in packaged_modes and generic_fields) else dashboard_fields,
+        "report": generic_fields if ("report" in packaged_modes and generic_fields) else report_fields,
+        "dashboard_report": generic_fields if ("dashboard_report" in packaged_modes and generic_fields) else report_fields,
+    }
+    if (resolved["report"] or resolved["dashboard_report"]) and str(parsed.report_format or "").strip().lower() not in {"parsed", "row"}:
+        parser.error("--report-fields/--fields for packaged reports requires --report-format parsed or row.")
+    return resolved
+
+
+def _apply_packaged_action_alias(parsed: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    action = str(getattr(parsed, "packaged_action", "") or "").strip().lower()
+    if not action:
+        return
+    mode_name = _PACKAGED_ACTION_TO_MODE[action]
+    for flag_name, candidate_mode in _PACKAGED_READ_FLAG_TO_MODE.items():
+        if candidate_mode != mode_name and bool(getattr(parsed, flag_name, False)):
+            parser.error("--packaged-action cannot be combined with a different packaged read mode flag.")
+    if action == "summary":
+        parsed.summary_only = True
+    elif action == "inspect":
+        parsed.inspect_packaged = True
+    elif action == "dashboard":
+        parsed.operator_dashboard = True
+    elif action == "report":
+        parsed.load_packaged_report = True
+    elif action == "dashboard-report":
+        parsed.load_operator_dashboard_report = True
 
 
 def _build_packaged_read_only_summary(packager: DocketDatasetPackager, manifest_path: str | Path) -> dict[str, object]:
@@ -210,6 +346,280 @@ def _build_loaded_report_from_dataset_dict(
     )
 
 
+def _build_operator_dashboard_from_dataset_dict(
+    packager: DocketDatasetPackager,
+    dataset_payload: dict[str, object],
+) -> dict[str, object]:
+    summary_view = _build_packaged_summary_from_dataset_dict(dataset_payload)
+    inspection = _build_packaged_inspection_from_dataset_dict(dataset_payload)
+    proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
+    proof_metadata = dict(proof_assistant.get("metadata") or {})
+    revalidation_runs = list(proof_assistant.get("revalidation_runs") or [])
+    latest_run = dict((revalidation_runs or [{}])[-1])
+    report_text = str(dataset_payload.get("proof_revalidation_report") or "")
+    if not report_text:
+        report_text = "No proof revalidation report available."
+    return {
+        "dataset_id": summary_view.get("dataset_id") or inspection.get("dataset_id") or "",
+        "docket_id": summary_view.get("docket_id") or inspection.get("docket_id") or "",
+        "case_name": summary_view.get("case_name") or inspection.get("case_name") or "",
+        "court": summary_view.get("court") or inspection.get("court") or "",
+        "inspection": inspection,
+        "proof_revalidation_report": {
+            "report_text": report_text,
+        },
+        "proof_revalidation_snapshot": {
+            "source": "enriched_dataset_operator_dashboard_snapshot",
+            "current_status": {
+                "review_required_work_item_count": int(proof_metadata.get("review_required_work_item_count") or 0),
+                "high_priority_revalidation_count": int(proof_metadata.get("high_priority_revalidation_count") or 0),
+                "queue_count": int(proof_metadata.get("review_required_work_item_count") or 0),
+                "latest_run_available": bool(revalidation_runs),
+            },
+            "latest_run_summary": {
+                "run_id": str(latest_run.get("run_id") or ""),
+                "best_terminal_source_type": str(latest_run.get("best_terminal_source_type") or ""),
+                "best_terminal_support_strength": str(latest_run.get("best_terminal_support_strength") or ""),
+                "attached_packet_count": int(latest_run.get("attached_packet_count") or 0),
+            },
+            "next_queue_item_summary": {},
+            "queue": [],
+            "runs": {
+                "run_count": len(revalidation_runs),
+                "total_run_count": len(revalidation_runs),
+                "latest_run_id": str(latest_run.get("run_id") or ""),
+                "runs": revalidation_runs,
+            },
+        },
+        "summary": {
+            **summary_view,
+            "review_required_work_item_count": int(proof_metadata.get("review_required_work_item_count") or 0),
+            "high_priority_revalidation_count": int(proof_metadata.get("high_priority_revalidation_count") or 0),
+            "revalidation_run_count": len(revalidation_runs),
+        },
+        "source": "enriched_dataset_operator_dashboard",
+    }
+
+
+def _build_loaded_operator_dashboard_report_from_dataset_dict(
+    packager: DocketDatasetPackager,
+    dataset_payload: dict[str, object],
+    report_format: str,
+) -> object:
+    dashboard = _build_operator_dashboard_from_dataset_dict(packager, dataset_payload)
+    normalized_format = str(report_format or "parsed").strip().lower()
+    if normalized_format in {"parsed", "dict", "dashboard"}:
+        return dashboard
+    if normalized_format == "row":
+        return {
+            "report_json": json.dumps(dashboard, indent=2, ensure_ascii=False),
+            "report_text": render_packaged_docket_operator_dashboard(dashboard, report_format="text"),
+            "report_markdown": render_packaged_docket_operator_dashboard(dashboard, report_format="markdown"),
+            "dashboard": dashboard,
+        }
+    return render_packaged_docket_operator_dashboard(
+        dashboard,
+        report_format=report_format,
+    )
+
+
+def _resolve_packaged_summary_view(
+    parsed: argparse.Namespace,
+    dataset: object,
+    *,
+    enriched_packaged_read: bool,
+) -> dict[str, object]:
+    if enriched_packaged_read and isinstance(dataset, dict):
+        return _build_packaged_summary_from_dataset_dict(dataset)
+    return load_packaged_docket_summary_view(parsed.input_path)
+
+
+def _resolve_packaged_inspection_payload(
+    parsed: argparse.Namespace,
+    packager: DocketDatasetPackager,
+    dataset: object,
+    *,
+    enriched_packaged_read: bool,
+) -> dict[str, object]:
+    if enriched_packaged_read and isinstance(dataset, dict):
+        return _build_packaged_inspection_from_dataset_dict(dataset)
+    return dict(packager.inspect_packaged_bundle(parsed.input_path))
+
+
+def _resolve_operator_dashboard_payload(
+    parsed: argparse.Namespace,
+    packager: DocketDatasetPackager,
+    dataset: object,
+    *,
+    enriched_packaged_read: bool,
+) -> dict[str, object]:
+    if enriched_packaged_read and isinstance(dataset, dict):
+        return _build_operator_dashboard_from_dataset_dict(packager, dataset)
+    return dict(get_packaged_docket_operator_dashboard(parsed.input_path))
+
+
+def _resolve_loaded_packaged_report(
+    parsed: argparse.Namespace,
+    packager: DocketDatasetPackager,
+    dataset: object,
+    *,
+    enriched_packaged_read: bool,
+) -> object:
+    if enriched_packaged_read and isinstance(dataset, dict):
+        return _build_loaded_report_from_dataset_dict(
+            packager,
+            dataset,
+            parsed.report_format,
+        )
+    return packager.load_inspection_report(
+        parsed.input_path,
+        report_format=parsed.report_format,
+    )
+
+
+def _resolve_loaded_operator_dashboard_report(
+    parsed: argparse.Namespace,
+    packager: DocketDatasetPackager,
+    dataset: object,
+    *,
+    enriched_packaged_read: bool,
+) -> object:
+    if enriched_packaged_read and isinstance(dataset, dict):
+        return _build_loaded_operator_dashboard_report_from_dataset_dict(
+            packager,
+            dataset,
+            parsed.report_format,
+        )
+    return load_packaged_docket_operator_dashboard_report(
+        parsed.input_path,
+        report_format=parsed.report_format,
+    )
+
+
+def _handle_packaged_read_outputs(
+    parsed: argparse.Namespace,
+    *,
+    payload: dict[str, object],
+    dataset: object,
+    packager: DocketDatasetPackager,
+    active_summary_fields: list[str],
+    active_inspection_fields: list[str],
+    active_dashboard_fields: list[str],
+    active_report_fields: list[str],
+) -> None:
+    enriched_packaged_read = (
+        parsed.input_type == "packaged"
+        and bool(parsed.enrich_query)
+        and isinstance(dataset, dict)
+    )
+
+    if parsed.summary_only:
+        payload["packaged_summary_view"] = _filter_mapping_fields(
+            _resolve_packaged_summary_view(
+                parsed,
+                dataset,
+                enriched_packaged_read=enriched_packaged_read,
+            ),
+            active_summary_fields,
+        )
+
+    if parsed.inspect_packaged:
+        payload["inspection"] = _filter_mapping_fields(
+            _resolve_packaged_inspection_payload(
+                parsed,
+                packager,
+                dataset,
+                enriched_packaged_read=enriched_packaged_read,
+            ),
+            active_inspection_fields,
+        )
+
+    if parsed.operator_dashboard:
+        payload["operator_dashboard"] = _filter_mapping_fields(
+            _resolve_operator_dashboard_payload(
+                parsed,
+                packager,
+                dataset,
+                enriched_packaged_read=enriched_packaged_read,
+            ),
+            active_dashboard_fields,
+        )
+
+    if parsed.load_packaged_report:
+        loaded_report = _resolve_loaded_packaged_report(
+            parsed,
+            packager,
+            dataset,
+            enriched_packaged_read=enriched_packaged_read,
+        )
+        if active_report_fields and isinstance(loaded_report, dict):
+            loaded_report = _filter_mapping_fields(dict(loaded_report), active_report_fields)
+        payload["loaded_packaged_report"] = loaded_report
+
+    if parsed.load_operator_dashboard_report:
+        loaded_dashboard_report = _resolve_loaded_operator_dashboard_report(
+            parsed,
+            packager,
+            dataset,
+            enriched_packaged_read=enriched_packaged_read,
+        )
+        if active_report_fields and isinstance(loaded_dashboard_report, dict):
+            loaded_dashboard_report = _filter_mapping_fields(dict(loaded_dashboard_report), active_report_fields)
+        payload["loaded_operator_dashboard_report"] = loaded_dashboard_report
+
+    if parsed.export_packaged_report:
+        if parsed.load_packaged_report:
+            report_content = _stringify_packaged_report(
+                payload["loaded_packaged_report"],
+                parsed.report_format,
+            )
+        else:
+            report_content = _stringify_packaged_report(
+                _resolve_loaded_packaged_report(
+                    parsed,
+                    packager,
+                    dataset,
+                    enriched_packaged_read=enriched_packaged_read,
+                ),
+                parsed.report_format,
+            ) if str(parsed.report_format or "").strip().lower() in {"parsed", "row"} else _resolve_loaded_packaged_report(
+                parsed,
+                packager,
+                dataset,
+                enriched_packaged_read=enriched_packaged_read,
+            )
+        payload["inspection_report"] = {
+            "report_path": _write_text_output(parsed.export_packaged_report, report_content),
+            "report_format": str(parsed.report_format),
+        }
+
+    if parsed.export_operator_dashboard_report:
+        if parsed.load_operator_dashboard_report:
+            dashboard_report_content = _stringify_packaged_report(
+                payload["loaded_operator_dashboard_report"],
+                parsed.report_format,
+            )
+        else:
+            dashboard_report_content = _stringify_packaged_report(
+                _resolve_loaded_operator_dashboard_report(
+                    parsed,
+                    packager,
+                    dataset,
+                    enriched_packaged_read=enriched_packaged_read,
+                ),
+                parsed.report_format,
+            ) if str(parsed.report_format or "").strip().lower() in {"parsed", "row"} else _resolve_loaded_operator_dashboard_report(
+                parsed,
+                packager,
+                dataset,
+                enriched_packaged_read=enriched_packaged_read,
+            )
+        payload["operator_dashboard_report"] = {
+            "report_path": _write_text_output(parsed.export_operator_dashboard_report, dashboard_report_content),
+            "report_format": str(parsed.report_format),
+        }
+
+
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ipfs-datasets docket",
@@ -244,14 +654,26 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--courtlistener-cache-dir", default=None, help="Optional explicit CourtListener shared fetch cache directory to package.")
     parser.add_argument("--zip-package", action="store_true", help="Also write a .zip archive for any docket/cache bundle that gets generated.")
     parser.add_argument("--no-car", action="store_true", help="Do not emit CAR files when writing a docket package.")
+    parser.add_argument(
+        "--packaged-action",
+        choices=["summary", "inspect", "dashboard", "report", "dashboard-report"],
+        default=None,
+        help="Preferred packaged read selector for scripts: summary, inspect, dashboard, report, or dashboard-report.",
+    )
     parser.add_argument("--inspect-packaged", action="store_true", help="For packaged inputs, include a lightweight inspection payload with latest routing/proof provenance.")
     parser.add_argument("--inspection-fields", default=None, help="Comma-separated field subset for --inspect-packaged.")
+    parser.add_argument("--operator-dashboard", action="store_true", help="For packaged inputs, include the combined operator dashboard payload.")
+    parser.add_argument("--dashboard-fields", default=None, help="Comma-separated field subset for --operator-dashboard.")
     parser.add_argument("--summary-only", action="store_true", help="For packaged inputs, include only the lightweight manifest-driven summary view.")
     parser.add_argument("--summary-fields", default=None, help="Comma-separated field subset for --summary-only packaged output.")
+    parser.add_argument("--citation-source-audit", action="store_true", help="Include a citation source resolution audit for the docket dataset or packaged bundle.")
+    parser.add_argument("--citation-audit-fields", default=None, help="Comma-separated field subset for --citation-source-audit output.")
     parser.add_argument("--load-packaged-report", action="store_true", help="For packaged inputs, load the archived inspection_report artifact directly.")
+    parser.add_argument("--load-operator-dashboard-report", action="store_true", help="For packaged inputs, load the archived operator_dashboard_report artifact directly.")
     parser.add_argument("--report-fields", default=None, help="Comma-separated field subset for --load-packaged-report when using parsed/row output.")
     parser.add_argument("--fields", default=None, help="Comma-separated field subset for the active packaged read mode.")
     parser.add_argument("--export-packaged-report", default=None, help="For packaged inputs, write a provenance/inspection report to this path.")
+    parser.add_argument("--export-operator-dashboard-report", default=None, help="For packaged inputs, write the archived operator dashboard report to this path.")
     parser.add_argument("--report-format", choices=["json", "markdown", "text", "parsed", "row"], default="markdown", help="Format used with packaged report load/export.")
     parser.add_argument("--json", action="store_true", help="Print a JSON summary instead of text.")
     return parser
@@ -260,41 +682,45 @@ def create_parser() -> argparse.ArgumentParser:
 def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
+    _apply_packaged_action_alias(parsed, parser)
     summary_fields = _parse_summary_fields_arg(parsed.summary_fields)
     inspection_fields = _parse_summary_fields_arg(parsed.inspection_fields)
+    dashboard_fields = _parse_summary_fields_arg(parsed.dashboard_fields)
+    citation_audit_fields = _parse_summary_fields_arg(parsed.citation_audit_fields)
     report_fields = _parse_summary_fields_arg(parsed.report_fields)
     generic_fields = _parse_summary_fields_arg(parsed.fields)
-
-    packaged_read_only = (
-        parsed.input_type == "packaged"
-        and not parsed.enrich_query
+    packaged_modes = _packaged_read_modes(parsed)
+    packaged_read_only = _is_packaged_read_only(parsed, packaged_modes)
+    citation_audit_only = bool(
+        parsed.citation_source_audit
         and not parsed.package_dir
         and not parsed.parquet_dir
         and not parsed.courtlistener_cache_package_dir
-        and (parsed.inspect_packaged or parsed.summary_only or parsed.load_packaged_report or parsed.export_packaged_report)
+        and not packaged_modes
+        and not parsed.export_packaged_report
+        and not parsed.export_operator_dashboard_report
     )
-    if not parsed.output and not packaged_read_only:
+    if not parsed.output and not packaged_read_only and not citation_audit_only:
         parser.error("--output is required unless you are only inspecting or loading a packaged report.")
-    if summary_fields and not parsed.summary_only:
-        parser.error("--summary-fields is only valid with --summary-only.")
-    if inspection_fields and not parsed.inspect_packaged:
-        parser.error("--inspection-fields is only valid with --inspect-packaged.")
-    if report_fields and not parsed.load_packaged_report:
-        parser.error("--report-fields is only valid with --load-packaged-report.")
-    if generic_fields and not (parsed.summary_only or parsed.inspect_packaged or parsed.load_packaged_report):
-        parser.error("--fields is only valid with --summary-only, --inspect-packaged, or --load-packaged-report.")
-    if generic_fields and summary_fields:
-        parser.error("Use either --fields or --summary-fields, not both.")
-    if generic_fields and inspection_fields:
-        parser.error("Use either --fields or --inspection-fields, not both.")
-    if generic_fields and report_fields:
-        parser.error("Use either --fields or --report-fields, not both.")
-
-    active_summary_fields = generic_fields if (parsed.summary_only and generic_fields) else summary_fields
-    active_inspection_fields = generic_fields if (parsed.inspect_packaged and generic_fields) else inspection_fields
-    active_report_fields = generic_fields if (parsed.load_packaged_report and generic_fields) else report_fields
-    if active_report_fields and str(parsed.report_format or "").strip().lower() not in {"parsed", "row"}:
-        parser.error("--report-fields/--fields for packaged reports requires --report-format parsed or row.")
+    if citation_audit_fields and not parsed.citation_source_audit:
+        parser.error("--citation-audit-fields is only valid with --citation-source-audit.")
+    if generic_fields and citation_audit_fields:
+        parser.error("Use either --fields or --citation-audit-fields, not both.")
+    active_packaged_fields = _resolve_packaged_field_selections(
+        parsed,
+        summary_fields=summary_fields,
+        inspection_fields=inspection_fields,
+        dashboard_fields=dashboard_fields,
+        report_fields=report_fields,
+        generic_fields=generic_fields,
+        packaged_modes=packaged_modes,
+        parser=parser,
+    )
+    active_summary_fields = active_packaged_fields["summary"]
+    active_inspection_fields = active_packaged_fields["inspection"]
+    active_dashboard_fields = active_packaged_fields["dashboard"]
+    active_report_fields = active_packaged_fields["report"] or active_packaged_fields["dashboard_report"]
+    active_citation_audit_fields = generic_fields if (parsed.citation_source_audit and generic_fields) else citation_audit_fields
 
     builder = DocketDatasetBuilder(vector_dimension=int(parsed.vector_dimension or 32))
     common_kwargs = {
@@ -385,85 +811,34 @@ def main(args: list[str] | None = None) -> int:
     }
     if output_path is not None:
         payload["output_path"] = str(output_path)
-    inspection_requested = bool(parsed.inspect_packaged or parsed.summary_only or parsed.export_packaged_report or parsed.load_packaged_report)
+    if parsed.citation_source_audit:
+        if dataset is not None:
+            citation_audit = _build_citation_source_audit_from_dataset(dataset)
+        else:
+            citation_audit = audit_packaged_docket_citation_sources(parsed.input_path)
+        payload["citation_source_audit"] = _filter_mapping_fields(
+            citation_audit,
+            active_citation_audit_fields,
+        )
+    inspection_requested = bool(
+        packaged_modes
+        or parsed.export_packaged_report
+        or parsed.export_operator_dashboard_report
+    )
     if inspection_requested:
         if parsed.input_type != "packaged":
-            parser.error("--inspect-packaged, --summary-only, --load-packaged-report, and --export-packaged-report are only valid with --input-type packaged.")
+            parser.error("--inspect-packaged, --operator-dashboard, --summary-only, --load-packaged-report, --load-operator-dashboard-report, --export-packaged-report, and --export-operator-dashboard-report are only valid with --input-type packaged.")
         packager = packaged_read_packager or DocketDatasetPackager()
-        enriched_packaged_read = (
-            parsed.input_type == "packaged"
-            and bool(parsed.enrich_query)
-            and isinstance(dataset, dict)
+        _handle_packaged_read_outputs(
+            parsed,
+            payload=payload,
+            dataset=dataset,
+            packager=packager,
+            active_summary_fields=active_summary_fields,
+            active_inspection_fields=active_inspection_fields,
+            active_dashboard_fields=active_dashboard_fields,
+            active_report_fields=active_report_fields,
         )
-        if parsed.summary_only:
-            if enriched_packaged_read:
-                payload["packaged_summary_view"] = _filter_mapping_fields(
-                    _build_packaged_summary_from_dataset_dict(dataset),
-                    active_summary_fields,
-                )
-            else:
-                payload["packaged_summary_view"] = _filter_mapping_fields(
-                    load_packaged_docket_summary_view(parsed.input_path),
-                    active_summary_fields,
-                )
-        if parsed.inspect_packaged:
-            if enriched_packaged_read:
-                inspection_payload = _build_packaged_inspection_from_dataset_dict(dataset)
-            else:
-                inspection_payload = packager.inspect_packaged_bundle(parsed.input_path)
-            payload["inspection"] = _filter_mapping_fields(
-                dict(inspection_payload),
-                active_inspection_fields,
-            )
-        if parsed.load_packaged_report:
-            if enriched_packaged_read:
-                loaded_report = _build_loaded_report_from_dataset_dict(
-                    packager,
-                    dataset,
-                    parsed.report_format,
-                )
-            else:
-                loaded_report = packager.load_inspection_report(
-                    parsed.input_path,
-                    report_format=parsed.report_format,
-                )
-            if active_report_fields and isinstance(loaded_report, dict):
-                loaded_report = _filter_mapping_fields(dict(loaded_report), active_report_fields)
-            payload["loaded_packaged_report"] = loaded_report
-        if parsed.export_packaged_report:
-            if parsed.load_packaged_report:
-                report_content = _stringify_packaged_report(
-                    payload["loaded_packaged_report"],
-                    parsed.report_format,
-                )
-            elif str(parsed.report_format or "").strip().lower() in {"parsed", "row"}:
-                report_content = _stringify_packaged_report(
-                    (
-                        _build_loaded_report_from_dataset_dict(packager, dataset, parsed.report_format)
-                        if enriched_packaged_read
-                        else packager.load_inspection_report(
-                            parsed.input_path,
-                            report_format=parsed.report_format,
-                        )
-                    ),
-                    parsed.report_format,
-                )
-            else:
-                if enriched_packaged_read:
-                    report_content = _build_loaded_report_from_dataset_dict(
-                        packager,
-                        dataset,
-                        parsed.report_format,
-                    )
-                else:
-                    report_content = packager.render_packaged_inspection_report(
-                        parsed.input_path,
-                        report_format=parsed.report_format,
-                    )
-            payload["inspection_report"] = {
-                "report_path": _write_text_output(parsed.export_packaged_report, report_content),
-                "report_format": str(parsed.report_format),
-            }
     if package_payload is not None:
         if parsed.zip_package:
             package_payload["zip_path"] = _create_bundle_zip(package_payload["bundle_dir"])
@@ -503,11 +878,24 @@ def main(args: list[str] | None = None) -> int:
                 print(f"{key}: {value}")
         if parsed.inspect_packaged and "inspection" in payload:
             _print_packaged_inspection(dict(payload["inspection"]))
+        if parsed.operator_dashboard and "operator_dashboard" in payload:
+            print(render_packaged_docket_operator_dashboard(payload["operator_dashboard"], report_format="text"))
         if parsed.load_packaged_report and "loaded_packaged_report" in payload:
             print(_stringify_packaged_report(payload["loaded_packaged_report"], parsed.report_format))
+        if parsed.load_operator_dashboard_report and "loaded_operator_dashboard_report" in payload:
+            print(_stringify_packaged_report(payload["loaded_operator_dashboard_report"], parsed.report_format))
+        if parsed.citation_source_audit and "citation_source_audit" in payload:
+            print("Citation Source Audit")
+            for key, value in dict(payload["citation_source_audit"]).items():
+                if key in {"documents", "unresolved_documents"}:
+                    continue
+                print(f"{key}: {value}")
         if "inspection_report" in payload:
             print(f"inspection_report_path: {payload['inspection_report']['report_path']}")
             print(f"inspection_report_format: {payload['inspection_report']['report_format']}")
+        if "operator_dashboard_report" in payload:
+            print(f"operator_dashboard_report_path: {payload['operator_dashboard_report']['report_path']}")
+            print(f"operator_dashboard_report_format: {payload['operator_dashboard_report']['report_format']}")
     return 0
 
 

@@ -40,6 +40,8 @@ CASE_CITATION_PATTERNS = [
     r'(\d+)\s+(S\.?\s?Ct\.)\s+(\d+)',
     # Federal Supplement: e.g., "123 F.Supp.2d 456"
     r'(\d+)\s+(F\.?\s?Supp\.?\s?(?:2d|3d)?)\s+(\d+)',
+    # Michigan reporters: e.g., "329 Mich. 683", "68 Mich. App. 272"
+    r'(\d+)\s+(Mich\.?\s?(?:App\.?)?)\s+(\d+)',
 ]
 
 USC_CITATION_PATTERNS = [
@@ -60,6 +62,8 @@ FEDERAL_REGISTER_PATTERNS = [
 PUBLIC_LAW_PATTERNS = [
     # Public Law: e.g., "Pub. L. 111-148", "P.L. 117-2"
     r'(?:Pub\.?\s+L\.?|P\.L\.)\s+(\d+)-(\d+)',
+    # Public Law with "No.": e.g., "Pub. L. No. 117-58", "P.L. No. 117-58"
+    r'(?:Pub\.?\s+L\.?|P\.L\.?)\s+(?:No\.?\s*)?(\d+)-(\d+)',
 ]
 
 BLUEBOOK_STATE_TO_CODE = {
@@ -359,6 +363,8 @@ class CitationExtractor:
             'fsupp': 'U.S. District Court',
             'fsupp2d': 'U.S. District Court',
             'fsupp3d': 'U.S. District Court',
+            'mich': 'Michigan Supreme Court',
+            'michapp': 'Michigan Court of Appeals',
         }
         
         return court_mapping.get(reporter_lower)

@@ -7,6 +7,7 @@ from ipfs_datasets_py.processors.legal_data import docket_dataset as docket_data
 from ipfs_datasets_py.processors.legal_data import docket_packaging as docket_packaging_module
 
 from ipfs_datasets_py.processors.legal_data import (
+    audit_docket_dataset_citation_sources,
     DocketDatasetBuilder,
     DocketDatasetPackager,
     DocketDatasetObject,
@@ -47,6 +48,10 @@ from ipfs_datasets_py.processors.legal_data import (
     search_docket_dataset_vector,
     summarize_docket_dataset,
 )
+from ipfs_datasets_py.processors.legal_scrapers import BluebookCitationResolver
+
+import pyarrow as pa
+import pyarrow.parquet as pq
 import ipfs_datasets_py.processors as processors_module
 
 
@@ -259,6 +264,88 @@ def test_docket_dataset_links_bluebook_citations_into_authorities():
     assert payload["documents"][0]["metadata"]["citation_links"]
 
 
+def test_docket_dataset_citation_audit_reports_retrieval_coverage_from_local_resolver(tmp_path):
+    uscode_path = tmp_path / "uscode.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "title": "42",
+                    "section": "1983",
+                    "heading": "Civil action for deprivation of rights",
+                    "text": "Every person who, under color of state law, subjects any citizen...",
+                    "cid": "bafyuscode1983",
+                    "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983",
+                    "identifier": "42 U.S.C. § 1983",
+                }
+            ]
+        ),
+        uscode_path,
+    )
+    state_law_path = tmp_path / "state_laws.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "MN",
+                    "official_cite": "Minn. Stat. § 518.17",
+                    "code_name": "Stat.",
+                    "section_number": "518.17",
+                    "section_name": "Best interests of the child",
+                    "full_text": "The best interests of the child means all relevant factors...",
+                    "ipfs_cid": "bafymn51817",
+                    "source_url": "https://www.revisor.mn.gov/statutes/cite/518.17",
+                    "statute_id": "Minn. Stat. § 518.17",
+                }
+            ]
+        ),
+        state_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={
+            "us_code": [str(uscode_path)],
+            "state_laws": [str(state_law_path)],
+        },
+    )
+    docket = {
+        "docket_id": "1:24-cv-1010-audit",
+        "case_name": "Doe v. Citation Coverage",
+        "documents": [
+            {
+                "id": "doc_1",
+                "title": "Complaint",
+                "text": (
+                    "Plaintiff brings this action under 42 U.S.C. § 1983. "
+                    "The court should also consider Minn. Stat. § 518.17."
+                ),
+            },
+            {
+                "id": "doc_2",
+                "title": "Supplement",
+                "text": "The supplemental brief cites Minn. Stat. § 999.999.",
+            },
+        ],
+    }
+
+    dataset = DocketDatasetBuilder(citation_resolver=resolver).build_from_docket(docket)
+    payload = dataset.to_dict()
+    audit = audit_docket_dataset_citation_sources(dataset, resolver=resolver)
+
+    assert payload["metadata"]["linked_authorities"]["linked_authority_count"] == 3
+    assert payload["metadata"]["linked_authorities"]["matched_linked_authority_count"] == 2
+    assert payload["metadata"]["linked_authorities"]["unmatched_linked_authority_count"] == 1
+    assert payload["metadata"]["linked_authorities"]["fully_resolved_document_count"] == 1
+    assert payload["metadata"]["linked_authorities"]["citation_resolution_ratio"] == audit["citation_resolution_ratio"]
+    assert payload["documents"][0]["metadata"]["citation_resolution_summary"]["all_citations_resolved"] is True
+    assert payload["documents"][1]["metadata"]["citation_resolution_summary"]["all_citations_resolved"] is False
+    assert audit["matched_citation_count"] == 2
+    assert audit["unmatched_citation_count"] == 1
+    assert audit["unresolved_documents"][0]["document_id"] == "doc_2"
+    assert audit["unresolved_documents"][0]["unmatched_citations"][0]["metadata"]["recovery_supported"] is True
+
+
 def test_tactician_uses_linked_authority_corpus_metadata():
     docket = {
         "docket_id": "1:24-cv-1011",
@@ -390,6 +477,66 @@ def test_packaged_parser_follow_up_job_preserves_state_corpus_and_state_code(tmp
     assert parser_execution["dispatch"]["adapter"]["parameters"]["state"] == "MN"
     assert parser_execution["dispatch"]["adapter"]["parameters"]["hf_parquet_file"] == "STATE-MN.parquet"
     assert "Minn. Stat. § 518.17" in parser_execution["dispatch"]["routing_reason"]
+
+
+def test_packaged_follow_up_job_can_dispatch_citation_recovery_execution(tmp_path, monkeypatch):
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "1:24-cv-7777",
+            "case_name": "Doe v. Citation Recovery",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Motion",
+                    "text": "The motion relies on Minn. Stat. § 999.999.",
+                }
+            ],
+        }
+    )
+    package_info = dataset.write_package(tmp_path / "citation_recovery_bundle", include_car=False)
+    captured = {}
+
+    async def _fake_execute(manifest_path, **kwargs):
+        captured["manifest_path"] = manifest_path
+        captured.update(kwargs)
+        return {
+            "status": "success",
+            "work_items": [{"work_item_id": "recovery_1", "execution": {"status": "success"}}],
+            "executed_work_item_count": 1,
+        }
+
+    monkeypatch.setattr(
+        docket_dataset_module,
+        "execute_packaged_docket_missing_authority_follow_up",
+        _fake_execute,
+    )
+
+    execution = execute_packaged_docket_follow_up_job(
+        package_info["manifest_json_path"],
+        {
+            "job_ready": True,
+            "job": {
+                "job_kind": "legal_citation_recovery_follow_up",
+                "source_type": "citation_recovery_follow_up",
+                "action_type": "execute_citation_recovery_follow_up",
+                "source_id": "manual:citation-recovery",
+                "label": "Manual citation recovery",
+                "max_candidates": 5,
+                "archive_top_k": 2,
+                "execute_publish": False,
+            },
+        },
+    )
+
+    assert execution["executed"] is True
+    assert execution["source"] == "packaged_citation_recovery_follow_up_execution"
+    assert execution["job"]["job_kind"] == "legal_citation_recovery_follow_up"
+    assert execution["result_count"] == 1
+    assert execution["results"][0]["work_item_id"] == "recovery_1"
+    assert captured["manifest_path"] == package_info["manifest_json_path"]
+    assert captured["max_candidates"] == 5
+    assert captured["archive_top_k"] == 2
+    assert captured["execute_publish"] is False
 
 
 def test_resolved_linked_authority_surfaces_source_reference_in_routing_reason(tmp_path):
@@ -2044,7 +2191,6 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
         },
         top_k=2,
     )
-
     assert lexical_plan["target"] == "bm25_search"
     assert lexical_plan["piece_ids"] == ["bm25_documents", "documents"]
     assert lexical_plan["estimated_cost"] >= 1

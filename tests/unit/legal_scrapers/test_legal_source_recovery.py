@@ -10,7 +10,9 @@ import pytest
 from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import CanonicalLegalCorpus
 from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
     LegalSourceRecoveryWorkflow,
+    build_recovery_feedback_entries_from_citation_audit,
     build_missing_citation_recovery_query,
+    recover_citation_audit_feedback,
 )
 
 
@@ -114,6 +116,9 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
     assert manifest["hf_dataset_id"] == "justicedao/ipfs_state_laws"
     assert manifest["search_query"].startswith("Minn. Stat. § 518.17 MN statute")
     assert manifest["candidates"][0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
+    assert result.promotion_preview["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert result.promotion_preview["target_parquet_file"] == "STATE-MN.parquet"
+    assert result.release_plan_preview["artifacts"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
 
     assert published["repo_id"] == "justicedao/ipfs_state_laws"
     assert published["path_in_repo"] == "source_recovery/20240102_030405_minn-stat-518-17"
@@ -129,3 +134,90 @@ def test_build_missing_citation_recovery_query_prefers_official_domains():
     assert "42 U.S.C. § 1983" in query
     assert "site:uscode.house.gov" in query
     assert "site:govinfo.gov" in query
+
+
+def test_build_recovery_feedback_entries_from_citation_audit_flattens_unresolved_documents():
+    entries = build_recovery_feedback_entries_from_citation_audit(
+        {
+            "document_count": 2,
+            "unresolved_documents": [
+                {
+                    "document_id": "doc_1",
+                    "document_title": "Motion",
+                    "unmatched_citations": [
+                        {
+                            "citation_text": "Minn. Stat. § 999.999",
+                            "normalized_citation": "Minn. Stat. § 999.999",
+                            "citation_type": "state_statute",
+                            "metadata": {
+                                "state_code": "MN",
+                                "recovery_corpus_key": "state_laws",
+                                "candidate_corpora": ["state_laws"],
+                                "preferred_dataset_ids": ["justicedao/ipfs_state_laws"],
+                                "preferred_parquet_files": ["STATE-MN.parquet"],
+                                "recovery_query": "Minn. Stat. § 999.999 MN statute site:.gov OR site:.us",
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert len(entries) == 1
+    assert entries[0]["document_id"] == "doc_1"
+    assert entries[0]["corpus_key"] == "state_laws"
+    assert entries[0]["preferred_dataset_ids"] == ["justicedao/ipfs_state_laws"]
+    assert entries[0]["preferred_parquet_files"] == ["STATE-MN.parquet"]
+
+
+@pytest.mark.anyio
+async def test_recover_citation_audit_feedback_emits_promotion_metadata(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_FakeLiveSearcher(),
+        archive_searcher=_FakeArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await recover_citation_audit_feedback(
+        {
+            "document_count": 1,
+            "unmatched_citation_count": 1,
+            "unresolved_documents": [
+                {
+                    "document_id": "doc_1",
+                    "document_title": "Motion",
+                    "unmatched_citations": [
+                        {
+                            "citation_text": "Minn. Stat. § 518.17",
+                            "normalized_citation": "Minn. Stat. § 518.17",
+                            "citation_type": "state_statute",
+                            "metadata": {
+                                "state_code": "MN",
+                                "recovery_corpus_key": "state_laws",
+                                "candidate_corpora": ["state_laws"],
+                                "preferred_dataset_ids": ["justicedao/ipfs_state_laws"],
+                                "preferred_parquet_files": ["STATE-MN.parquet"],
+                            },
+                        }
+                    ],
+                }
+            ],
+        },
+        workflow=workflow,
+    )
+
+    assert result["feedback_entry_count"] == 1
+    assert result["recovery_count"] == 1
+    recovery = result["recoveries"][0]
+    assert recovery["feedback_entry"]["document_id"] == "doc_1"
+    assert recovery["promotion_preview"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert recovery["promotion_preview"]["target_parquet_file"] == "STATE-MN.parquet"
+    assert recovery["release_plan_preview"]["artifacts"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"

@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
     CitationExtractor,
+    audit_bluebook_citation_resolution_for_documents,
     resolve_bluebook_citations_in_text,
 )
 
@@ -151,6 +152,35 @@ def _build_fuzz_resolver(tmp_path):
         state_court_rules_path,
     )
 
+    cap_cases_path = tmp_path / "cap_cases_fuzz.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "id": "cap_brown_v_board",
+                    "title": "Brown v. Board of Education",
+                    "citation": "347 U.S. 483",
+                    "reporter": "U.S.",
+                    "volume": "347",
+                    "page": "483",
+                    "cid": "bafycase347483",
+                    "source_url": "https://cite.case.law/us/347/483/",
+                },
+                {
+                    "id": "cap_roe_v_wade",
+                    "title": "Roe v. Wade",
+                    "citation": "410 U.S. 113",
+                    "reporter": "U.S.",
+                    "volume": "410",
+                    "page": "113",
+                    "cid": "bafycase410113",
+                    "source_url": "https://cite.case.law/us/410/113/",
+                },
+            ]
+        ),
+        cap_cases_path,
+    )
+
     resolver = BluebookCitationResolver(
         allow_hf_fallback=False,
         parquet_file_overrides={
@@ -159,6 +189,7 @@ def _build_fuzz_resolver(tmp_path):
             "state_laws": [str(state_law_path)],
             "state_admin_rules": [str(state_admin_rules_path)],
             "state_court_rules": [str(state_court_rules_path)],
+            "caselaw_access_project": [str(cap_cases_path)],
         },
     )
 
@@ -172,6 +203,8 @@ def _build_fuzz_resolver(tmp_path):
                 "42 U.S.C. 1983",
             ],
             "expected_state": None,
+            "expected_source_cid": "bafyuscode1983",
+            "expected_source_title": "Civil action for deprivation of rights",
         },
         {
             "corpus_key": "us_code",
@@ -182,6 +215,8 @@ def _build_fuzz_resolver(tmp_path):
                 "18 U.S.C. 2251(a)",
             ],
             "expected_state": None,
+            "expected_source_cid": "bafyuscode2251a",
+            "expected_source_title": "Sexual exploitation of children",
         },
         {
             "corpus_key": "federal_register",
@@ -191,6 +226,8 @@ def _build_fuzz_resolver(tmp_path):
                 "90 Fed. Reg. 12345",
             ],
             "expected_state": None,
+            "expected_source_cid": "bafyfr9012345",
+            "expected_source_title": "Sample Final Rule",
         },
         {
             "corpus_key": "federal_register",
@@ -200,6 +237,8 @@ def _build_fuzz_resolver(tmp_path):
                 "88 Fed. Reg. 54321",
             ],
             "expected_state": None,
+            "expected_source_cid": "bafyfr8854321",
+            "expected_source_title": "Sample Proposed Rule",
         },
         {
             "corpus_key": "state_laws",
@@ -209,6 +248,8 @@ def _build_fuzz_resolver(tmp_path):
                 "Minn. Stat. 518.17",
             ],
             "expected_state": "MN",
+            "expected_source_cid": "bafymn51817",
+            "expected_source_title": "Best interests of the child",
         },
         {
             "corpus_key": "state_laws",
@@ -218,6 +259,8 @@ def _build_fuzz_resolver(tmp_path):
                 "Or. Rev. Stat. 90.155",
             ],
             "expected_state": "OR",
+            "expected_source_cid": "bafyor90155",
+            "expected_source_title": "Termination notice periods",
         },
         {
             "corpus_key": "state_laws",
@@ -227,6 +270,8 @@ def _build_fuzz_resolver(tmp_path):
                 "N.Y. Penal Code 125.25",
             ],
             "expected_state": "NY",
+            "expected_source_cid": "bafyny12525",
+            "expected_source_title": "Murder in the second degree",
         },
         {
             "corpus_key": "state_admin_rules",
@@ -236,6 +281,8 @@ def _build_fuzz_resolver(tmp_path):
                 "Minn. Admin. Code 1400.5010",
             ],
             "expected_state": "MN",
+            "expected_source_cid": "bafymnadmin14005010",
+            "expected_source_title": "General contested case procedure",
         },
         {
             "corpus_key": "state_court_rules",
@@ -245,6 +292,30 @@ def _build_fuzz_resolver(tmp_path):
                 "Or. Court Rules 5.010",
             ],
             "expected_state": "OR",
+            "expected_source_cid": "bafyorcourtrule5010",
+            "expected_source_title": "Service and filing",
+        },
+        {
+            "corpus_key": "caselaw_access_project",
+            "citation_type": "case",
+            "variants": [
+                "347 U.S. 483",
+                "Brown v. Board of Education, 347 U.S. 483",
+            ],
+            "expected_state": None,
+            "expected_source_cid": "bafycase347483",
+            "expected_source_title": "Brown v. Board of Education",
+        },
+        {
+            "corpus_key": "caselaw_access_project",
+            "citation_type": "case",
+            "variants": [
+                "410 U.S. 113",
+                "Roe v. Wade, 410 U.S. 113 (1973)",
+            ],
+            "expected_state": None,
+            "expected_source_cid": "bafycase410113",
+            "expected_source_title": "Roe v. Wade",
         },
     ]
     return resolver, cases
@@ -353,6 +424,26 @@ def test_citation_extractor_extracts_bluebook_admin_and_court_rules():
     assert state_citations[1].section == "5.010"
 
 
+def test_citation_extractor_extracts_michigan_case_reporters_and_public_law_no():
+    extractor = CitationExtractor()
+    citations = extractor.extract_citations(
+        "Authorities include People v. Smith, 329 Mich. 683, 68 Mich. App. 272, and Pub. L. No. 117-58."
+    )
+
+    case_citations = [citation for citation in citations if citation.type == "case"]
+    case_texts = {citation.text for citation in case_citations}
+    assert "329 Mich. 683" in case_texts
+    assert "68 Mich. App. 272" in case_texts
+
+    by_text = {citation.text: citation for citation in case_citations}
+    assert by_text["329 Mich. 683"].court == "Michigan Supreme Court"
+    assert by_text["68 Mich. App. 272"].court == "Michigan Court of Appeals"
+
+    public_law_citations = [citation for citation in citations if citation.type == "public_law"]
+    assert len(public_law_citations) == 1
+    assert public_law_citations[0].text == "Pub. L. No. 117-58"
+
+
 def test_bluebook_citation_resolver_links_usc_and_state_law_from_local_parquet(tmp_path):
     uscode_path = tmp_path / "uscode.parquet"
     pq.write_table(
@@ -438,6 +529,46 @@ def test_bluebook_citation_resolver_surfaces_recovery_metadata_for_unmatched_sta
     assert link.metadata["recovery_corpus_key"] == "state_laws"
     assert "Minn. Stat. § 999.999" in link.metadata["recovery_query"]
     assert "site:.gov" in link.metadata["recovery_query"]
+
+
+def test_bluebook_citation_resolver_does_not_falsely_match_state_law_on_metadata_only(tmp_path):
+    state_law_path = tmp_path / "state_laws.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "MN",
+                    "official_cite": "Minn. Stat. § 518.17",
+                    "code_name": "Stat.",
+                    "section_number": "518.17",
+                    "section_name": "Best interests of the child",
+                    "full_text": "The best interests of the child means all relevant factors...",
+                    "ipfs_cid": "bafymn51817",
+                    "source_url": "https://www.revisor.mn.gov/statutes/cite/518.17",
+                    "statute_id": "Minn. Stat. § 518.17",
+                }
+            ]
+        ),
+        state_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"state_laws": [str(state_law_path)]},
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "The supplemental brief cites Minn. Stat. § 999.999.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    link = links[0]
+    assert link.matched is False
+    assert link.matched_field in {None, ""}
+    assert link.source_url in {None, ""}
+    assert link.source_cid in {None, ""}
+    assert link.metadata["recovery_supported"] is True
 
 
 def test_bluebook_citation_resolver_links_federal_register_from_local_parquet(tmp_path):
@@ -617,6 +748,43 @@ def test_bluebook_citation_resolver_links_case_cfr_and_public_law_from_local_par
     assert by_type["public_law"].source_cid == "bafypl1172"
 
 
+def test_bluebook_citation_resolver_links_public_law_no_variant_from_local_parquet(tmp_path):
+    uscode_public_law_path = tmp_path / "uscode_public_law.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "identifier": "Pub. L. 117-58",
+                    "congress": "117",
+                    "law_number": "58",
+                    "heading": "Infrastructure Investment and Jobs Act",
+                    "cid": "bafypl11758",
+                    "source_url": "https://www.congress.gov/public-laws/117th-congress",
+                }
+            ]
+        ),
+        uscode_public_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"us_code": [str(uscode_public_law_path)]},
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "Congress enacted Pub. L. No. 117-58 to fund infrastructure.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    assert links[0].citation_type == "public_law"
+    assert links[0].normalized_citation == "Pub. L. No. 117-58"
+    assert links[0].matched is True
+    assert links[0].corpus_key == "us_code"
+    assert links[0].source_cid == "bafypl11758"
+    assert links[0].source_title == "Infrastructure Investment and Jobs Act"
+
+
 def test_bluebook_citation_resolver_randomized_supported_citation_coverage(tmp_path):
     resolver, cases = _build_fuzz_resolver(tmp_path)
     random_gen = random.Random(20260411)
@@ -662,6 +830,66 @@ def test_bluebook_citation_resolver_randomized_supported_citation_coverage(tmp_p
             )
 
     coverage = matched_count / trial_count
+    assert coverage >= 0.95, failures
+
+
+def test_bluebook_citation_resolver_randomized_specific_source_retrieval_contract(tmp_path):
+    resolver, cases = _build_fuzz_resolver(tmp_path)
+    random_gen = random.Random(20260413)
+    trial_count = 180
+    exact_retrieval_count = 0
+    failures = []
+
+    for _ in range(trial_count):
+        case = random_gen.choice(cases)
+        citation_text = random_gen.choice(case["variants"])
+        text = _wrap_citation_text(citation_text, random_gen)
+        links = resolve_bluebook_citations_in_text(text, resolver=resolver)
+
+        success = False
+        if len(links) == 1:
+            link = links[0]
+            success = (
+                link.matched is True
+                and link.corpus_key == case["corpus_key"]
+                and link.citation_type == case["citation_type"]
+                and link.source_cid == case["expected_source_cid"]
+                and link.source_title == case["expected_source_title"]
+                and (
+                    case["expected_state"] is None
+                    or str(link.metadata.get("state_code") or "") == case["expected_state"]
+                )
+            )
+
+        if success:
+            exact_retrieval_count += 1
+        elif len(failures) < 12:
+            failures.append(
+                {
+                    "citation_text": citation_text,
+                    "text": text,
+                    "expected": {
+                        "corpus_key": case["corpus_key"],
+                        "citation_type": case["citation_type"],
+                        "state_code": case["expected_state"],
+                        "source_cid": case["expected_source_cid"],
+                        "source_title": case["expected_source_title"],
+                    },
+                    "links": [
+                        {
+                            "citation_type": link.citation_type,
+                            "matched": link.matched,
+                            "corpus_key": link.corpus_key,
+                            "state_code": link.metadata.get("state_code"),
+                            "source_cid": link.source_cid,
+                            "source_title": link.source_title,
+                        }
+                        for link in links
+                    ],
+                }
+            )
+
+    coverage = exact_retrieval_count / trial_count
     assert coverage >= 0.95, failures
 
 
@@ -743,3 +971,45 @@ def test_bluebook_citation_resolver_adversarial_negative_strings_do_not_match(tm
             )
 
     assert not failures, failures
+
+
+def test_bluebook_citation_resolution_audit_reports_document_level_coverage(tmp_path):
+    resolver, _ = _build_fuzz_resolver(tmp_path)
+
+    report = audit_bluebook_citation_resolution_for_documents(
+        [
+            {
+                "document_id": "doc_1",
+                "title": "Motion",
+                "text": "The motion relies on 42 U.S.C. § 1983 and 90 FR 12345.",
+            },
+            {
+                "document_id": "doc_2",
+                "title": "Memorandum",
+                "text": "See Minn. Stat. § 518.17 and Or. Court Rules § 5.010.",
+            },
+            {
+                "document_id": "doc_3",
+                "title": "Supplement",
+                "text": "The brief cites Minn. Stat. § 999.999 and 18 U.S.C. § 2251(a).",
+            },
+        ],
+        resolver=resolver,
+    )
+
+    assert report["document_count"] == 3
+    assert report["citation_count"] == 6
+    assert report["matched_citation_count"] == 5
+    assert report["unmatched_citation_count"] == 1
+    assert report["fully_resolved_document_count"] == 2
+    assert report["documents_with_citations"] == 3
+
+    by_id = {item["document_id"]: item for item in report["documents"]}
+    assert by_id["doc_1"]["all_citations_resolved"] is True
+    assert by_id["doc_2"]["all_citations_resolved"] is True
+    assert by_id["doc_3"]["all_citations_resolved"] is False
+    assert by_id["doc_3"]["unmatched_citation_count"] == 1
+    unresolved = report["unresolved_documents"][0]["unmatched_citations"][0]
+    assert unresolved["citation_text"] == "Minn. Stat. § 999.999"
+    assert unresolved["metadata"]["source_row_present"] is False
+    assert unresolved["metadata"]["recovery_supported"] is True

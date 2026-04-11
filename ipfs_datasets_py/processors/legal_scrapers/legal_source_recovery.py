@@ -16,6 +16,10 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol
 from urllib.parse import urlparse
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
+from .legal_source_recovery_promotion import (
+    build_recovery_manifest_promotion_row,
+    build_recovery_manifest_release_plan,
+)
 
 
 def build_missing_citation_recovery_query(
@@ -146,6 +150,9 @@ class LegalSourceRecoveryResult:
     manifest_directory: Optional[str] = None
     publish_report: Optional[Dict[str, Any]] = None
     publish_plan: Optional[Dict[str, Any]] = None
+    promotion_preview: Optional[Dict[str, Any]] = None
+    release_plan_preview: Optional[Dict[str, Any]] = None
+    feedback_entry: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -292,6 +299,8 @@ class LegalSourceRecoveryWorkflow:
 
         publish_plan = None
         publish_report = None
+        promotion_preview = None
+        release_plan_preview = None
         if corpus is not None:
             publish_plan = {
                 "repo_id": corpus.hf_dataset_id,
@@ -316,6 +325,14 @@ class LegalSourceRecoveryWorkflow:
                     do_verify=False,
                     cid_column=corpus.cid_field,
                 )
+        try:
+            promotion_preview = build_recovery_manifest_promotion_row(str(manifest_path))
+        except Exception:
+            promotion_preview = None
+        try:
+            release_plan_preview = build_recovery_manifest_release_plan(str(manifest_path))
+        except Exception:
+            release_plan_preview = None
 
         return LegalSourceRecoveryResult(
             status="tracked_and_published" if publish_report else "tracked",
@@ -333,6 +350,15 @@ class LegalSourceRecoveryWorkflow:
             manifest_directory=str(manifest_dir),
             publish_report=publish_report,
             publish_plan=publish_plan,
+            promotion_preview=promotion_preview,
+            release_plan_preview=release_plan_preview,
+            feedback_entry={
+                "citation_text": citation_text,
+                "normalized_citation": normalized_citation or citation_text,
+                "corpus_key": recovery_corpus_key,
+                "state_code": state_code,
+                "candidate_corpora": list((metadata or {}).get("candidate_corpora") or []),
+            },
         )
 
     def _write_manifest(
@@ -395,3 +421,111 @@ async def recover_missing_legal_citation_source(
         hf_token=hf_token,
     )
     return result.to_dict()
+
+
+def build_recovery_feedback_entries_from_citation_audit(
+    audit_payload: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    entries: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for document in list(audit_payload.get("unresolved_documents") or []):
+        document_id = str(document.get("document_id") or "")
+        document_title = str(document.get("document_title") or "")
+        for citation in list(document.get("unmatched_citations") or []):
+            if not isinstance(citation, dict):
+                continue
+            metadata = dict(citation.get("metadata") or {})
+            entry = {
+                "citation_text": str(citation.get("citation_text") or ""),
+                "normalized_citation": str(citation.get("normalized_citation") or citation.get("citation_text") or ""),
+                "citation_type": str(citation.get("citation_type") or ""),
+                "corpus_key": str(citation.get("corpus_key") or metadata.get("recovery_corpus_key") or ""),
+                "state_code": str(metadata.get("state_code") or ""),
+                "candidate_corpora": [str(item) for item in list(metadata.get("candidate_corpora") or []) if str(item).strip()],
+                "preferred_dataset_ids": [str(item) for item in list(metadata.get("preferred_dataset_ids") or []) if str(item).strip()],
+                "preferred_parquet_files": [str(item) for item in list(metadata.get("preferred_parquet_files") or []) if str(item).strip()],
+                "recovery_query": str(metadata.get("recovery_query") or ""),
+                "document_id": document_id,
+                "document_title": document_title,
+            }
+            dedupe_key = (
+                entry["normalized_citation"],
+                entry["corpus_key"],
+                entry["state_code"],
+            )
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            entries.append(entry)
+    return entries
+
+
+async def recover_citation_feedback_entries(
+    feedback_entries: Iterable[Dict[str, Any]],
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+    workflow: Optional[LegalSourceRecoveryWorkflow] = None,
+) -> Dict[str, Any]:
+    active_workflow = workflow or LegalSourceRecoveryWorkflow()
+    entries = [dict(item) for item in feedback_entries if isinstance(item, dict)]
+    recoveries: List[Dict[str, Any]] = []
+    for entry in entries:
+        result = await active_workflow.recover_unresolved_citation(
+            citation_text=str(entry.get("citation_text") or ""),
+            normalized_citation=str(entry.get("normalized_citation") or entry.get("citation_text") or ""),
+            corpus_key=str(entry.get("corpus_key") or "") or None,
+            state_code=str(entry.get("state_code") or "") or None,
+            metadata={
+                "candidate_corpora": list(entry.get("candidate_corpora") or []),
+            },
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+        )
+        result_dict = result.to_dict()
+        result_dict["feedback_entry"] = {
+            **dict(result_dict.get("feedback_entry") or {}),
+            "document_id": str(entry.get("document_id") or ""),
+            "document_title": str(entry.get("document_title") or ""),
+            "preferred_dataset_ids": list(entry.get("preferred_dataset_ids") or []),
+            "preferred_parquet_files": list(entry.get("preferred_parquet_files") or []),
+            "recovery_query": str(entry.get("recovery_query") or ""),
+        }
+        recoveries.append(result_dict)
+
+    return {
+        "status": "success",
+        "feedback_entry_count": len(entries),
+        "recovery_count": len(recoveries),
+        "recoveries": recoveries,
+        "publish_to_hf": bool(publish_to_hf),
+        "source": "citation_feedback_recovery",
+    }
+
+
+async def recover_citation_audit_feedback(
+    audit_payload: Dict[str, Any],
+    *,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
+    max_candidates: int = 8,
+    archive_top_k: int = 3,
+    workflow: Optional[LegalSourceRecoveryWorkflow] = None,
+) -> Dict[str, Any]:
+    entries = build_recovery_feedback_entries_from_citation_audit(audit_payload)
+    result = await recover_citation_feedback_entries(
+        entries,
+        publish_to_hf=publish_to_hf,
+        hf_token=hf_token,
+        max_candidates=max_candidates,
+        archive_top_k=archive_top_k,
+        workflow=workflow,
+    )
+    result["audit_document_count"] = int(audit_payload.get("document_count") or 0)
+    result["audit_unmatched_citation_count"] = int(audit_payload.get("unmatched_citation_count") or 0)
+    result["source"] = "citation_audit_feedback_recovery"
+    return result

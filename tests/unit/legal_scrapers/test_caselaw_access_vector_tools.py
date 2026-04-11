@@ -111,6 +111,13 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
         "search_federal_register_corpus",
         "search_netherlands_law_corpus",
         "recover_missing_legal_citation_source",
+        "promote_recovery_manifest_to_canonical_bundle",
+        "preview_recovery_manifest_release_plan",
+        "merge_recovery_manifest_into_canonical_dataset",
+        "collect_packaged_docket_citation_recovery_candidates",
+        "recover_packaged_docket_missing_authorities",
+        "plan_packaged_docket_missing_authority_follow_up",
+        "execute_packaged_docket_missing_authority_follow_up",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert required_name in by_name
@@ -164,6 +171,35 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert recovery_params["archive_top_k"]["default"] == 3
     assert recovery_params["publish_to_hf"]["default"] is False
 
+    promotion_params = by_name["promote_recovery_manifest_to_canonical_bundle"]["parameters"]
+    assert promotion_params["manifest_path"].get("required") is True
+    assert promotion_params["write_parquet"]["default"] is True
+
+    release_plan_params = by_name["preview_recovery_manifest_release_plan"]["parameters"]
+    assert release_plan_params["manifest_path"].get("required") is True
+    assert release_plan_params["python_bin"]["default"] == "python3"
+
+    merge_params = by_name["merge_recovery_manifest_into_canonical_dataset"]["parameters"]
+    assert merge_params["manifest_path"].get("required") is True
+    assert merge_params["write_promotion_parquet"]["default"] is True
+
+    packaged_collect_params = by_name["collect_packaged_docket_citation_recovery_candidates"]["parameters"]
+    assert packaged_collect_params["manifest_path"].get("required") is True
+
+    packaged_recovery_params = by_name["recover_packaged_docket_missing_authorities"]["parameters"]
+    assert packaged_recovery_params["manifest_path"].get("required") is True
+    assert packaged_recovery_params["max_candidates"]["default"] == 8
+    assert packaged_recovery_params["archive_top_k"]["default"] == 3
+
+    packaged_plan_params = by_name["plan_packaged_docket_missing_authority_follow_up"]["parameters"]
+    assert packaged_plan_params["manifest_path"].get("required") is True
+    assert packaged_plan_params["max_candidates"]["default"] == 8
+    assert packaged_plan_params["archive_top_k"]["default"] == 3
+
+    packaged_execute_params = by_name["execute_packaged_docket_missing_authority_follow_up"]["parameters"]
+    assert packaged_execute_params["manifest_path"].get("required") is True
+    assert packaged_execute_params["execute_publish"]["default"] is False
+
 
 def test_tool_registration_mapping_includes_cap_entries() -> None:
     """Central migrated tool mapping should expose CAP entries for auto registration."""
@@ -180,6 +216,13 @@ def test_tool_registration_mapping_includes_cap_entries() -> None:
         "search_state_law_corpus",
         "search_netherlands_law_corpus",
         "recover_missing_legal_citation_source",
+        "promote_recovery_manifest_to_canonical_bundle",
+        "preview_recovery_manifest_release_plan",
+        "merge_recovery_manifest_into_canonical_dataset",
+        "collect_packaged_docket_citation_recovery_candidates",
+        "recover_packaged_docket_missing_authorities",
+        "plan_packaged_docket_missing_authority_follow_up",
+        "execute_packaged_docket_missing_authority_follow_up",
         "search_caselaw_access_vectors_with_centroids",
     ):
         assert func_name in legal_mapping
@@ -559,10 +602,40 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
         captured["tool_version"] = tool_version
         return {"status": "tracked", "operation": "recover_missing_legal_citation_source"}
 
+    async def _fake_promote_recovery_manifest_to_canonical_bundle_from_parameters(parameters, *, tool_version="1.0.0"):
+        captured["promote_parameters"] = dict(parameters)
+        captured["promote_tool_version"] = tool_version
+        return {"status": "success", "operation": "promote_recovery_manifest_to_canonical_bundle"}
+
+    async def _fake_preview_recovery_manifest_release_plan_from_parameters(parameters, *, tool_version="1.0.0"):
+        captured["release_plan_parameters"] = dict(parameters)
+        captured["release_plan_tool_version"] = tool_version
+        return {"status": "planned", "operation": "preview_recovery_manifest_release_plan"}
+
+    async def _fake_merge_recovery_manifest_into_canonical_dataset_from_parameters(parameters, *, tool_version="1.0.0"):
+        captured["merge_parameters"] = dict(parameters)
+        captured["merge_tool_version"] = tool_version
+        return {"status": "success", "operation": "merge_recovery_manifest_into_canonical_dataset"}
+
     monkeypatch.setattr(
         real_api,
         "recover_missing_legal_citation_source_from_parameters",
         _fake_recover_missing_legal_citation_source_from_parameters,
+    )
+    monkeypatch.setattr(
+        real_api,
+        "promote_recovery_manifest_to_canonical_bundle_from_parameters",
+        _fake_promote_recovery_manifest_to_canonical_bundle_from_parameters,
+    )
+    monkeypatch.setattr(
+        real_api,
+        "preview_recovery_manifest_release_plan_from_parameters",
+        _fake_preview_recovery_manifest_release_plan_from_parameters,
+    )
+    monkeypatch.setattr(
+        real_api,
+        "merge_recovery_manifest_into_canonical_dataset_from_parameters",
+        _fake_merge_recovery_manifest_into_canonical_dataset_from_parameters,
     )
 
     result = await mcp_tools.recover_missing_legal_citation_source(
@@ -571,11 +644,109 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
             "corpus_key": "us_code",
         }
     )
+    promote_result = await mcp_tools.promote_recovery_manifest_to_canonical_bundle(
+        {"manifest_path": "/tmp/recovery_manifest.json", "write_parquet": False}
+    )
+    release_plan_result = await mcp_tools.preview_recovery_manifest_release_plan(
+        {"manifest_path": "/tmp/recovery_manifest.json", "python_bin": "/usr/bin/python3"}
+    )
+    merge_result = await mcp_tools.merge_recovery_manifest_into_canonical_dataset(
+        {"manifest_path": "/tmp/recovery_manifest.json", "target_local_parquet_path": "/tmp/target.parquet"}
+    )
 
     assert result["status"] == "tracked"
+    assert promote_result["status"] == "success"
+    assert release_plan_result["status"] == "planned"
+    assert merge_result["status"] == "success"
     assert captured["parameters"]["citation_text"] == "42 U.S.C. § 1983"
     assert captured["parameters"]["corpus_key"] == "us_code"
     assert captured["tool_version"] == "1.0.0"
+    assert captured["promote_parameters"]["manifest_path"] == "/tmp/recovery_manifest.json"
+    assert captured["promote_parameters"]["write_parquet"] is False
+    assert captured["promote_tool_version"] == "1.0.0"
+    assert captured["release_plan_parameters"]["manifest_path"] == "/tmp/recovery_manifest.json"
+    assert captured["release_plan_parameters"]["python_bin"] == "/usr/bin/python3"
+    assert captured["release_plan_tool_version"] == "1.0.0"
+    assert captured["merge_parameters"]["manifest_path"] == "/tmp/recovery_manifest.json"
+    assert captured["merge_parameters"]["target_local_parquet_path"] == "/tmp/target.parquet"
+    assert captured["merge_tool_version"] == "1.0.0"
+
+
+@pytest.mark.anyio
+async def test_mcp_packaged_docket_recovery_tools_delegate_to_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    import ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api as real_api
+
+    captured = {}
+
+    async def _fake_collect(parameters, *, tool_version="1.0.0"):
+        captured["collect_parameters"] = dict(parameters)
+        captured["collect_tool_version"] = tool_version
+        return {"status": "success", "operation": "collect_packaged_docket_citation_recovery_candidates"}
+
+    async def _fake_recover(parameters, *, tool_version="1.0.0"):
+        captured["recover_parameters"] = dict(parameters)
+        captured["recover_tool_version"] = tool_version
+        return {"status": "success", "operation": "recover_packaged_docket_missing_authorities"}
+
+    async def _fake_plan(parameters, *, tool_version="1.0.0"):
+        captured["plan_parameters"] = dict(parameters)
+        captured["plan_tool_version"] = tool_version
+        return {"status": "success", "operation": "plan_packaged_docket_missing_authority_follow_up"}
+
+    async def _fake_execute(parameters, *, tool_version="1.0.0"):
+        captured["execute_parameters"] = dict(parameters)
+        captured["execute_tool_version"] = tool_version
+        return {"status": "success", "operation": "execute_packaged_docket_missing_authority_follow_up"}
+
+    monkeypatch.setattr(
+        real_api,
+        "collect_packaged_docket_citation_recovery_candidates_from_parameters",
+        _fake_collect,
+    )
+    monkeypatch.setattr(
+        real_api,
+        "recover_packaged_docket_missing_authorities_from_parameters",
+        _fake_recover,
+    )
+    monkeypatch.setattr(
+        real_api,
+        "plan_packaged_docket_missing_authority_follow_up_from_parameters",
+        _fake_plan,
+    )
+    monkeypatch.setattr(
+        real_api,
+        "execute_packaged_docket_missing_authority_follow_up_from_parameters",
+        _fake_execute,
+    )
+
+    collect_result = await mcp_tools.collect_packaged_docket_citation_recovery_candidates(
+        {"manifest_path": "/tmp/manifest.json"}
+    )
+    recover_result = await mcp_tools.recover_packaged_docket_missing_authorities(
+        {"manifest_path": "/tmp/manifest.json", "publish_to_hf": True}
+    )
+    plan_result = await mcp_tools.plan_packaged_docket_missing_authority_follow_up(
+        {"manifest_path": "/tmp/manifest.json", "publish_to_hf": True}
+    )
+    execute_result = await mcp_tools.execute_packaged_docket_missing_authority_follow_up(
+        {"manifest_path": "/tmp/manifest.json", "execute_publish": True}
+    )
+
+    assert collect_result["status"] == "success"
+    assert recover_result["status"] == "success"
+    assert plan_result["status"] == "success"
+    assert execute_result["status"] == "success"
+    assert captured["collect_parameters"]["manifest_path"] == "/tmp/manifest.json"
+    assert captured["recover_parameters"]["manifest_path"] == "/tmp/manifest.json"
+    assert captured["recover_parameters"]["publish_to_hf"] is True
+    assert captured["plan_parameters"]["manifest_path"] == "/tmp/manifest.json"
+    assert captured["plan_parameters"]["publish_to_hf"] is True
+    assert captured["execute_parameters"]["manifest_path"] == "/tmp/manifest.json"
+    assert captured["execute_parameters"]["execute_publish"] is True
+    assert captured["collect_tool_version"] == "1.0.0"
+    assert captured["recover_tool_version"] == "1.0.0"
+    assert captured["plan_tool_version"] == "1.0.0"
+    assert captured["execute_tool_version"] == "1.0.0"
 
 
 @pytest.mark.anyio

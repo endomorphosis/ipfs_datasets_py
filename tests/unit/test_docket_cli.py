@@ -863,6 +863,95 @@ def test_docket_cli_can_load_archived_packaged_report_in_json_mode(tmp_path: Pat
     assert payload["loaded_packaged_report"]["preferred_corpus_priority"] == ["us_code"]
 
 
+def test_docket_cli_can_load_operator_dashboard_in_json_mode(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1005-dashboard",
+            "case_name": "CLI Operator Dashboard Test",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Operator dashboard routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "operator_dashboard_bundle",
+        package_name="operator_dashboard_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--operator-dashboard",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["operator_dashboard"]["source"] == "packaged_operator_dashboard"
+    assert payload["operator_dashboard"]["summary"]["document_count"] == 1
+    assert payload["operator_dashboard"]["inspection"]["latest_routing_reason"] == "Operator dashboard routing reason."
+
+
+def test_docket_cli_prints_operator_dashboard_text(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1006-dashboard",
+            "case_name": "CLI Operator Dashboard Text",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Operator dashboard text routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "operator_dashboard_text_bundle",
+        package_name="operator_dashboard_text_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--operator-dashboard",
+            ]
+        )
+
+    assert result == 0
+    text = output.getvalue()
+    assert "Packaged Docket Operator Dashboard" in text
+    assert "Operator dashboard text routing reason." in text
+    assert "Pending Review Count:" in text
+
+
 def test_docket_cli_prints_loaded_archived_markdown_report(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
@@ -907,6 +996,52 @@ def test_docket_cli_prints_loaded_archived_markdown_report(tmp_path: Path) -> No
     assert "Archived markdown routing reason." in text
 
 
+def test_docket_cli_can_load_archived_operator_dashboard_report_in_json_mode(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1006-dashboard-report",
+            "case_name": "CLI Operator Dashboard Report Test",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Archived operator dashboard routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "operator_dashboard_report_bundle",
+        package_name="operator_dashboard_report_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--load-operator-dashboard-report",
+                "--report-format",
+                "parsed",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["loaded_operator_dashboard_report"]["source"] == "packaged_operator_dashboard"
+    assert payload["loaded_operator_dashboard_report"]["inspection"]["latest_routing_reason"] == "Archived operator dashboard routing reason."
+
+
 def test_docket_cli_can_load_packaged_report_without_output(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
@@ -947,6 +1082,227 @@ def test_docket_cli_can_load_packaged_report_without_output(tmp_path: Path) -> N
     payload = json.loads(output.getvalue())
     assert "output_path" not in payload
     assert payload["loaded_packaged_report"]["latest_routing_reason"] == "No-output packaged report routing reason."
+
+
+def test_docket_cli_can_emit_citation_source_audit_for_source_docket_without_output(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "citation_audit_source.json"
+    docket_path.write_text(
+        json.dumps(
+            {
+                "docket_id": "cl-citation-audit-source",
+                "case_name": "CLI Citation Audit Source",
+                "documents": [
+                    {
+                        "id": "doc_1",
+                        "title": "Complaint",
+                        "text": "Plaintiff seeks relief under 42 U.S.C. § 1983 and Minn. Stat. § 518.17.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "json",
+                "--input-path",
+                str(docket_path),
+                "--citation-source-audit",
+                "--citation-audit-fields",
+                "citation_count,matched_citation_count,unmatched_citation_count",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert "output_path" not in payload
+    assert payload["citation_source_audit"]["citation_count"] == 2
+    assert payload["citation_source_audit"]["matched_citation_count"] >= 0
+    assert "document_count" not in payload["citation_source_audit"]
+
+
+def test_docket_cli_can_emit_packaged_citation_source_audit_without_output(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-citation-audit-packaged",
+            "case_name": "CLI Citation Audit Packaged",
+            "court": "D. Example",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Plaintiff seeks relief under 42 U.S.C. § 1983 and Minn. Stat. § 518.17.",
+                },
+                {
+                    "id": "doc_2",
+                    "title": "Supplement",
+                    "text": "The supplemental brief cites Minn. Stat. § 999.999.",
+                },
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "citation_audit_packaged_bundle",
+        package_name="citation_audit_packaged_bundle",
+        include_car=False,
+    )
+    module._build_citation_source_audit_from_dataset = lambda dataset_payload: {
+        "citation_count": 3,
+        "matched_citation_count": 2,
+        "unmatched_citation_count": 1,
+        "source": "packaged_docket_citation_source_audit",
+    }
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--citation-source-audit",
+                "--fields",
+                "citation_count,matched_citation_count,unmatched_citation_count",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert "output_path" not in payload
+    assert payload["citation_source_audit"]["citation_count"] == 3
+    assert payload["citation_source_audit"]["matched_citation_count"] == 2
+    assert payload["citation_source_audit"]["unmatched_citation_count"] == 1
+
+
+def test_docket_cli_packaged_action_alias_can_emit_summary_without_output(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1007-action-summary",
+            "case_name": "CLI Packaged Action Summary",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "packaged_action_summary_bundle",
+        package_name="packaged_action_summary_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--packaged-action",
+                "summary",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["packaged_summary_view"]["dataset_id"] == dataset.dataset_id
+    assert payload["packaged_summary_view"]["document_count"] == 1
+
+
+def test_docket_cli_rejects_conflicting_packaged_action_and_mode_flag(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1007-action-conflict",
+            "case_name": "CLI Packaged Action Conflict",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "packaged_action_conflict_bundle",
+        package_name="packaged_action_conflict_bundle",
+        include_car=False,
+    )
+
+    with pytest.raises(SystemExit):
+        module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--packaged-action",
+                "summary",
+                "--inspect-packaged",
+                "--json",
+            ]
+        )
+
+
+def test_docket_cli_can_export_archived_operator_dashboard_report(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1007-dashboard-export",
+            "case_name": "CLI Operator Dashboard Export Test",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Operator dashboard export routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "operator_dashboard_export_bundle",
+        package_name="operator_dashboard_export_bundle",
+        include_car=False,
+    )
+    report_path = tmp_path / "operator_dashboard_report.md"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--export-operator-dashboard-report",
+                str(report_path),
+                "--report-format",
+                "markdown",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["operator_dashboard_report"]["report_format"] == "markdown"
+    assert Path(payload["operator_dashboard_report"]["report_path"]).exists()
+    report_text = report_path.read_text(encoding="utf-8")
+    assert "Packaged Docket Operator Dashboard" in report_text
+    assert "Operator dashboard export routing reason." in report_text
 
 
 def test_docket_cli_packaged_read_only_path_skips_full_dataset_load(tmp_path: Path, monkeypatch) -> None:

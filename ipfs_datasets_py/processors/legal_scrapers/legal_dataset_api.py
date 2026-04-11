@@ -2246,6 +2246,221 @@ async def recover_missing_legal_citation_source_from_parameters(
     return result
 
 
+async def promote_recovery_manifest_to_canonical_bundle_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from .legal_source_recovery_promotion import promote_recovery_manifest_to_canonical_bundle
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "promote_recovery_manifest_to_canonical_bundle",
+            "tool_version": tool_version,
+        }
+
+    output_dir = str(parameters.get("output_dir") or "").strip() or None
+    result = await anyio.to_thread.run_sync(
+        lambda: promote_recovery_manifest_to_canonical_bundle(
+            manifest_path,
+            output_dir=output_dir,
+            write_parquet=bool(parameters.get("write_parquet", True)),
+        )
+    )
+    result["status"] = str(result.get("status") or "success")
+    result["operation"] = "promote_recovery_manifest_to_canonical_bundle"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def preview_recovery_manifest_release_plan_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from .legal_source_recovery_promotion import build_recovery_manifest_release_plan
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "preview_recovery_manifest_release_plan",
+            "tool_version": tool_version,
+        }
+
+    output_dir = str(parameters.get("output_dir") or "").strip() or None
+    workspace_root = str(parameters.get("workspace_root") or "").strip() or None
+    python_bin = str(parameters.get("python_bin") or "python3").strip() or "python3"
+    result = await anyio.to_thread.run_sync(
+        lambda: build_recovery_manifest_release_plan(
+            manifest_path,
+            output_dir=output_dir,
+            workspace_root=workspace_root,
+            python_bin=python_bin,
+        )
+    )
+    result["operation"] = "preview_recovery_manifest_release_plan"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def merge_recovery_manifest_into_canonical_dataset_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from .legal_source_recovery_promotion import merge_recovery_manifest_into_canonical_dataset
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "merge_recovery_manifest_into_canonical_dataset",
+            "tool_version": tool_version,
+        }
+
+    output_dir = str(parameters.get("output_dir") or "").strip() or None
+    target_local_parquet_path = str(parameters.get("target_local_parquet_path") or "").strip() or None
+    result = await anyio.to_thread.run_sync(
+        lambda: merge_recovery_manifest_into_canonical_dataset(
+            manifest_path,
+            output_dir=output_dir,
+            target_local_parquet_path=target_local_parquet_path,
+            write_promotion_parquet=bool(parameters.get("write_promotion_parquet", True)),
+        )
+    )
+    result["status"] = str(result.get("status") or "success")
+    result["operation"] = "merge_recovery_manifest_into_canonical_dataset"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def collect_packaged_docket_citation_recovery_candidates_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        collect_packaged_docket_citation_recovery_candidates,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "collect_packaged_docket_citation_recovery_candidates",
+            "tool_version": tool_version,
+        }
+
+    result = await anyio.to_thread.run_sync(
+        lambda: collect_packaged_docket_citation_recovery_candidates(manifest_path)
+    )
+    result["status"] = "success"
+    result["operation"] = "collect_packaged_docket_citation_recovery_candidates"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def recover_packaged_docket_missing_authorities_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        recover_packaged_docket_missing_authorities,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "recover_packaged_docket_missing_authorities",
+            "tool_version": tool_version,
+        }
+
+    result = await recover_packaged_docket_missing_authorities(
+        manifest_path,
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+    )
+    result["status"] = "success"
+    result["operation"] = "recover_packaged_docket_missing_authorities"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def plan_packaged_docket_missing_authority_follow_up_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        plan_packaged_docket_missing_authority_follow_up,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "plan_packaged_docket_missing_authority_follow_up",
+            "tool_version": tool_version,
+        }
+
+    result = await plan_packaged_docket_missing_authority_follow_up(
+        manifest_path,
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+    )
+    result["status"] = "success"
+    result["operation"] = "plan_packaged_docket_missing_authority_follow_up"
+    result["tool_version"] = tool_version
+    return result
+
+
+async def execute_packaged_docket_missing_authority_follow_up_from_parameters(
+    parameters: Dict[str, Any],
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Any]:
+    from ipfs_datasets_py.processors.legal_data.docket_dataset import (
+        execute_packaged_docket_missing_authority_follow_up,
+    )
+
+    manifest_path = str(parameters.get("manifest_path") or "").strip()
+    if not manifest_path:
+        return {
+            "status": "error",
+            "error": "manifest_path is required",
+            "operation": "execute_packaged_docket_missing_authority_follow_up",
+            "tool_version": tool_version,
+        }
+
+    result = await execute_packaged_docket_missing_authority_follow_up(
+        manifest_path,
+        publish_to_hf=bool(parameters.get("publish_to_hf", False)),
+        hf_token=str(parameters.get("hf_token") or "") or None,
+        max_candidates=int(parameters.get("max_candidates", 8)),
+        archive_top_k=int(parameters.get("archive_top_k", 3)),
+        execute_publish=bool(parameters.get("execute_publish", False)),
+    )
+    result["status"] = str(result.get("status") or "success")
+    result["operation"] = "execute_packaged_docket_missing_authority_follow_up"
+    result["tool_version"] = tool_version
+    return result
+
+
 async def search_federal_register_hf_index_from_parameters(
     parameters: Dict[str, Any],
     *,
