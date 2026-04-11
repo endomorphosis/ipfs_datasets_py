@@ -6,11 +6,53 @@ import json
 from contextlib import redirect_stdout
 from pathlib import Path
 
+import pytest
+
 from ipfs_datasets_py.processors.legal_data import (
     DocketDatasetBuilder,
     load_packaged_courtlistener_fetch_cache,
     load_packaged_docket_dataset,
 )
+import ipfs_datasets_py.processors.legal_data.docket_dataset as _docket_dataset_module
+
+_ROUTER_STUB = {
+    "document_analyses": {},
+    "knowledge_graph": {"entities": [], "relationships": []},
+    "temporal_fol": {"backend": "disabled_for_tests", "formulas": []},
+    "deontic_cognitive_event_calculus": {"backend": "disabled_for_tests", "formulas": []},
+    "frame_logic": {},
+    "proof_store": {
+        "proofs": {},
+        "summary": {
+            "proof_count": 0,
+            "processed_document_count": 0,
+            "skipped_document_count": 0,
+            "mock_provider_count": 0,
+        },
+        "metadata": {"backend": "disabled_for_tests", "zkp_status": "not_implemented"},
+    },
+    "summary": {
+        "processed_document_count": 0,
+        "skipped_document_count": 0,
+        "mock_provider_count": 0,
+        "entity_count": 0,
+        "relationship_count": 0,
+        "temporal_formula_count": 0,
+        "dcec_formula_count": 0,
+        "frame_count": 0,
+        "proof_count": 0,
+    },
+}
+
+
+@pytest.fixture(autouse=True)
+def _disable_router_for_cli_tests(monkeypatch):
+    monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_EMBEDDINGS_ROUTER", "1")
+    monkeypatch.setattr(
+        _docket_dataset_module,
+        "enrich_docket_documents_with_routers",
+        lambda *args, **kwargs: _ROUTER_STUB,
+    )
 
 
 def _load_docket_cli_module():
@@ -1091,6 +1133,452 @@ def test_docket_cli_prints_packaged_summary_only_text(tmp_path: Path) -> None:
     assert "Packaged Summary" in text
     assert "document_count: 1" in text
     assert "case_name: CLI Summary Only Text" in text
+
+
+def test_docket_cli_can_filter_packaged_summary_fields_in_json(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1012",
+            "case_name": "CLI Summary Fields JSON",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "summary_fields_json_bundle",
+        package_name="summary_fields_json_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--summary-only",
+                "--summary-fields",
+                "dataset_id,document_count,proof_store_count",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["packaged_summary_view"] == {
+        "dataset_id": dataset.dataset_id,
+        "document_count": 1,
+        "proof_store_count": payload["packaged_summary_view"]["proof_store_count"],
+    }
+    assert "case_name" not in payload["packaged_summary_view"]
+
+
+def test_docket_cli_can_filter_packaged_summary_fields_in_text(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1013",
+            "case_name": "CLI Summary Fields Text",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "summary_fields_text_bundle",
+        package_name="summary_fields_text_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--summary-only",
+                "--summary-fields",
+                "dataset_id,document_count",
+            ]
+        )
+
+    assert result == 0
+    text = output.getvalue()
+    assert "dataset_id:" in text
+    assert "document_count: 1" in text
+    assert "case_name:" not in text
+
+
+def test_docket_cli_can_filter_packaged_inspection_fields_in_json(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1014",
+            "case_name": "CLI Inspection Fields JSON",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Inspection-field routing reason.",
+        "routing_evidence": [
+            {
+                "citation_text": "42 U.S.C. § 1983",
+                "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983",
+            }
+        ],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "inspection_fields_json_bundle",
+        package_name="inspection_fields_json_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--inspect-packaged",
+                "--inspection-fields",
+                "dataset_id,latest_routing_reason,top_routing_citation",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["inspection"] == {
+        "dataset_id": dataset.dataset_id,
+        "latest_routing_reason": "Inspection-field routing reason.",
+        "top_routing_citation": "42 U.S.C. § 1983",
+    }
+    assert "case_name" not in payload["inspection"]
+
+
+def test_docket_cli_can_filter_packaged_inspection_fields_in_text(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1015",
+            "case_name": "CLI Inspection Fields Text",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Inspection text routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "inspection_fields_text_bundle",
+        package_name="inspection_fields_text_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--inspect-packaged",
+                "--inspection-fields",
+                "latest_routing_reason,top_routing_citation",
+            ]
+        )
+
+    assert result == 0
+    text = output.getvalue()
+    assert "latest_routing_reason: Inspection text routing reason." in text
+    assert "top_routing_citation: 42 U.S.C. § 1983" in text
+    assert "case_name:" not in text
+
+
+def test_docket_cli_can_filter_loaded_packaged_report_fields_in_json(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1016",
+            "case_name": "CLI Report Fields JSON",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Report-field routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "report_fields_json_bundle",
+        package_name="report_fields_json_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--load-packaged-report",
+                "--report-format",
+                "parsed",
+                "--report-fields",
+                "latest_routing_reason,top_routing_citation",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["loaded_packaged_report"] == {
+        "latest_routing_reason": "Report-field routing reason.",
+        "top_routing_citation": "42 U.S.C. § 1983",
+    }
+
+
+def test_docket_cli_can_filter_loaded_packaged_report_fields_in_text(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1017",
+            "case_name": "CLI Report Fields Text",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Report-field text routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "report_fields_text_bundle",
+        package_name="report_fields_text_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--load-packaged-report",
+                "--report-format",
+                "parsed",
+                "--report-fields",
+                "latest_routing_reason,top_routing_citation",
+            ]
+        )
+
+    assert result == 0
+    text = output.getvalue()
+    assert "latest_routing_reason: Report-field text routing reason." in text
+    assert "top_routing_citation: 42 U.S.C. § 1983" in text
+    assert "preferred_corpus_priority" not in text
+
+
+def test_docket_cli_generic_fields_alias_applies_to_active_packaged_mode(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1018",
+            "case_name": "CLI Generic Fields",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    dataset.metadata["latest_proof_packet_routing_explanation"] = {
+        "routing_reason": "Generic field alias routing reason.",
+        "routing_evidence": [{"citation_text": "42 U.S.C. § 1983"}],
+        "preferred_corpus_priority": ["us_code"],
+        "preferred_state_codes": [],
+        "authority_backed": True,
+    }
+    package = dataset.write_package(
+        tmp_path / "generic_fields_bundle",
+        package_name="generic_fields_bundle",
+        include_car=False,
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--inspect-packaged",
+                "--fields",
+                "latest_routing_reason,top_routing_citation",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["inspection"] == {
+        "latest_routing_reason": "Generic field alias routing reason.",
+        "top_routing_citation": "42 U.S.C. § 1983",
+    }
+
+
+def test_docket_cli_rejects_mixing_generic_and_mode_specific_fields(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1019",
+            "case_name": "CLI Mixed Fields Error",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "mixed_fields_bundle",
+        package_name="mixed_fields_bundle",
+        include_car=False,
+    )
+
+    try:
+        module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--inspect-packaged",
+                "--fields",
+                "latest_routing_reason",
+                "--inspection-fields",
+                "top_routing_citation",
+                "--json",
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code == 2
+    else:
+        raise AssertionError("Expected parser error when mixing --fields with mode-specific field flags")
+
+
+def test_docket_cli_rejects_report_fields_for_markdown_report_format(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1020",
+            "case_name": "CLI Report Fields Format Error",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "report_fields_format_error_bundle",
+        package_name="report_fields_format_error_bundle",
+        include_car=False,
+    )
+
+    try:
+        module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--load-packaged-report",
+                "--report-format",
+                "markdown",
+                "--report-fields",
+                "latest_routing_reason",
+                "--json",
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code == 2
+    else:
+        raise AssertionError("Expected parser error when using --report-fields with markdown report format")
+
+
+def test_docket_cli_rejects_generic_fields_for_markdown_report_format(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1021",
+            "case_name": "CLI Generic Fields Format Error",
+            "court": "D. Example",
+            "documents": [
+                {"id": "doc_1", "title": "Complaint", "text": "Plaintiff seeks relief under 42 U.S.C. § 1983."},
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "generic_fields_format_error_bundle",
+        package_name="generic_fields_format_error_bundle",
+        include_car=False,
+    )
+
+    try:
+        module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--load-packaged-report",
+                "--report-format",
+                "markdown",
+                "--fields",
+                "latest_routing_reason",
+                "--json",
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code == 2
+    else:
+        raise AssertionError("Expected parser error when using --fields with markdown report format")
 
 
 def test_docket_cli_requires_output_for_non_read_only_paths(tmp_path: Path) -> None:

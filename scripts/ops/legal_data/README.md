@@ -29,6 +29,16 @@ Copied from workspace-level `scripts/ops/`:
 - `create_ws11_github_issues.sh`
 
 Notes:
+- Packaged docket bundle inspection/read workflow:
+	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
+	to inspect bundle metadata without rebuilding the full packaged dataset object.
+	Examples:
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --summary-only --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --summary-only --fields dataset_id,document_count,proof_store_count --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --inspect-packaged --fields latest_routing_reason,top_routing_citation --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --load-packaged-report --report-format parsed --fields latest_routing_reason,top_routing_citation`
+	These packaged read-only modes do not require `--output` and use the lightweight
+	manifest/provenance/report loaders instead of a full packaged docket rebuild.
 - Run `run_all_state_legal_corpora_agentic.py` to drive the agentic daemon across
 	state laws, state court rules, and state administrative rules with shared fetch
 	caching and IPFS-backed page reuse enabled by default.

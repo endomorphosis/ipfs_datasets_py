@@ -10,9 +10,27 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+    DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
+    DEFAULT_CAP_HF_DATASET_ID,
+    DEFAULT_CAP_HF_PARQUET_FILE,
+    DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID,
+    DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID,
+    DEFAULT_STATE_LAWS_HF_DATASET_ID,
+    DEFAULT_COURT_RULES_HF_DATASET_ID,
+    DEFAULT_USCODE_HF_DATASET_ID,
+    DEFAULT_USCODE_HF_PARQUET_PREFIX,
+)
+
 logger = logging.getLogger(__name__)
 
 _TOOL_VERSION = "1.0.0"
+_STATE_LAWS_CORPUS = get_canonical_legal_corpus("state_laws")
+_STATE_ADMIN_RULES_CORPUS = get_canonical_legal_corpus("state_admin_rules")
+_STATE_COURT_RULES_CORPUS = get_canonical_legal_corpus("state_court_rules")
+_FEDERAL_REGISTER_CORPUS = get_canonical_legal_corpus("federal_register")
+_NETHERLANDS_CORPUS = get_canonical_legal_corpus("netherlands_laws")
 
 
 async def scrape_recap_archive(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -502,16 +520,16 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_caselaw_access_project"},
-            "hf_parquet_file": {"type": "string", "default": "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_CAP_HF_DATASET_ID},
+            "hf_parquet_file": {"type": "string", "default": DEFAULT_CAP_HF_PARQUET_FILE},
             "cid_metadata_field": {"type": "string", "default": "cid"},
             "cid_column": {"type": "string", "default": "cid"},
             "text_field_candidates": {"type": "array", "required": False},
             "snippet_chars": {"type": "integer", "default": 320},
             "local_case_parquet_file": {"type": "string", "required": False},
             "chunk_lookup_enabled": {"type": "boolean", "default": True},
-            "chunk_hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_caselaw_access_project"},
-            "chunk_hf_parquet_file": {"type": "string", "default": "embeddings/sparse_chunks.parquet"},
+            "chunk_hf_dataset_id": {"type": "string", "default": DEFAULT_CAP_HF_DATASET_ID},
+            "chunk_hf_parquet_file": {"type": "string", "default": DEFAULT_CAP_CHUNK_HF_PARQUET_FILE},
             "local_chunk_parquet_file": {"type": "string", "required": False},
             "chunk_snippet_chars": {"type": "integer", "default": 1000},
             "auto_setup_venv": {"type": "boolean", "default": True},
@@ -527,8 +545,8 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_uscode"},
-            "hf_parquet_prefix": {"type": "string", "default": "uscode_parquet"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_USCODE_HF_DATASET_ID},
+            "hf_parquet_prefix": {"type": "string", "default": DEFAULT_USCODE_HF_PARQUET_PREFIX},
             "hf_parquet_file": {"type": "string", "required": False},
             "cid_metadata_field": {"type": "string", "default": "cid"},
             "cid_column": {"type": "string", "default": "cid"},
@@ -542,7 +560,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {
         "name": "search_state_law_corpus",
-        "description": "Search state-law vector corpus (vector-first) with optional metadata enrichment; defaults combine justicedao/ipfs_state_laws and justicedao/ipfs_state_admin_rules under <STATE>/parsed/parquet.",
+        "description": f"Search state-law vector corpus (vector-first) with optional metadata enrichment; defaults combine {_STATE_LAWS_CORPUS.hf_dataset_id} and {_STATE_ADMIN_RULES_CORPUS.hf_dataset_id} under <STATE>/parsed/parquet.",
         "function": search_state_law_corpus,
         "parameters": {
             "collection_name": {"type": "string", "required": True},
@@ -551,7 +569,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
             "enrich_with_cases": {"type": "boolean", "default": False},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_state_laws"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_STATE_LAWS_HF_DATASET_ID},
             "hf_dataset_ids": {"type": "array", "required": False},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "hf_parquet_file": {"type": "string", "required": False},
@@ -570,7 +588,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
     },
     {
         "name": "search_court_rules_corpus",
-        "description": "Search court-rules vector corpus with federal/state jurisdiction filtering from justicedao/ipfs_court_rules.",
+        "description": f"Search court-rules vector corpus with federal/state jurisdiction filtering from {_STATE_COURT_RULES_CORPUS.hf_dataset_id}.",
         "function": search_court_rules_corpus,
         "parameters": {
             "collection_name": {"type": "string", "required": True},
@@ -580,7 +598,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
             "enrich_with_cases": {"type": "boolean", "default": True},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_court_rules"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_COURT_RULES_HF_DATASET_ID},
             "hf_dataset_ids": {"type": "array", "required": False},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "hf_parquet_file": {"type": "string", "required": False},
@@ -606,8 +624,8 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_federal_register"},
-            "hf_parquet_file": {"type": "string", "default": "laws.parquet"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID},
+            "hf_parquet_file": {"type": "string", "default": _FEDERAL_REGISTER_CORPUS.combined_parquet_filename},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "cid_metadata_field": {"type": "string", "default": "ipfs_cid"},
             "cid_column": {"type": "string", "default": "ipfs_cid"},
@@ -630,8 +648,8 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "query_vector": {"type": "array", "required": True},
             "store_type": {"type": "string", "default": "faiss"},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_netherlands_laws"},
-            "hf_parquet_file": {"type": "string", "default": "netherlands_laws.parquet"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_NETHERLANDS_LAWS_HF_DATASET_ID},
+            "hf_parquet_file": {"type": "string", "default": _NETHERLANDS_CORPUS.combined_parquet_filename},
             "hf_parquet_prefix": {"type": "string", "required": False},
             "cid_metadata_field": {"type": "string", "default": "ipfs_cid"},
             "cid_column": {"type": "string", "default": "ipfs_cid"},
@@ -652,7 +670,7 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "parameters": {
             "query_text": {"type": "string", "required": True},
             "top_k": {"type": "integer", "default": 10},
-            "hf_dataset_id": {"type": "string", "default": "justicedao/ipfs_federal_register"},
+            "hf_dataset_id": {"type": "string", "default": DEFAULT_FEDERAL_REGISTER_HF_DATASET_ID},
             "hf_index_file": {"type": "string", "default": "federal_register_gte_small.faiss"},
             "hf_metadata_file": {"type": "string", "default": "federal_register_gte_small_metadata.parquet"},
             "model_name": {"type": "string", "default": "thenlper/gte-small"},

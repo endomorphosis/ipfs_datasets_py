@@ -5,11 +5,28 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import (
+    build_canonical_corpus_local_root_overrides,
+)
 from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
     CitationExtractor,
     resolve_bluebook_citations_in_text,
 )
+
+
+"""Opt-in real-corpus Bluebook coverage against local or HF-backed Justicedao parquet sources.
+
+Environment overrides:
+- BLUEBOOK_REAL_SAMPLE_SIZE
+- BLUEBOOK_REAL_STATE_CODE
+- BLUEBOOK_REAL_DATA_ROOT
+- BLUEBOOK_REAL_US_CODE_ROOT
+- BLUEBOOK_REAL_FEDERAL_REGISTER_ROOT
+- BLUEBOOK_REAL_STATE_LAWS_ROOT
+- BLUEBOOK_REAL_STATE_ADMIN_RULES_ROOT
+- BLUEBOOK_REAL_STATE_COURT_RULES_ROOT
+"""
 
 
 pytestmark = [
@@ -26,6 +43,13 @@ _VOLUME_FIELDS = ("volume", "volume_number", "fr_volume")
 _PAGE_FIELDS = ("page", "page_number", "start_page", "page_start", "fr_page")
 _OFFICIAL_CITE_FIELDS = ("official_cite", "citation", "bluebook_citation", "identifier")
 _STATE_FIELDS = ("state_code", "state")
+_LOCAL_ROOT_ENV_BY_CORPUS = {
+    "us_code": "BLUEBOOK_REAL_US_CODE_ROOT",
+    "federal_register": "BLUEBOOK_REAL_FEDERAL_REGISTER_ROOT",
+    "state_laws": "BLUEBOOK_REAL_STATE_LAWS_ROOT",
+    "state_admin_rules": "BLUEBOOK_REAL_STATE_ADMIN_RULES_ROOT",
+    "state_court_rules": "BLUEBOOK_REAL_STATE_COURT_RULES_ROOT",
+}
 
 
 def _parser_accepts(citation_text: str, citation_type: str, state_code: Optional[str]) -> bool:
@@ -42,6 +66,14 @@ def _parser_accepts(citation_text: str, citation_type: str, state_code: Optional
 def _truthy_env(name: str) -> bool:
     value = os.environ.get(name, "").strip().lower()
     return value in {"1", "true", "yes", "y", "on"}
+
+
+def _build_local_root_overrides() -> Dict[str, str]:
+    return build_canonical_corpus_local_root_overrides(
+        env=os.environ,
+        env_var_by_corpus_key=_LOCAL_ROOT_ENV_BY_CORPUS,
+        data_root_env_name="BLUEBOOK_REAL_DATA_ROOT",
+    )
 
 
 def _require_opt_in(pytestconfig: pytest.Config) -> None:
@@ -103,6 +135,12 @@ def _read_rows(connection: Any, source_ref: str, where_clause: str, limit: int) 
 def _find_source(resolver: BluebookCitationResolver, corpus_key: str, state_code: Optional[str]) -> str:
     for source_ref in resolver._iter_corpus_sources(corpus_key, state_code=state_code):
         return source_ref
+    env_name = _LOCAL_ROOT_ENV_BY_CORPUS.get(corpus_key)
+    if env_name:
+        pytest.skip(
+            f"No local or Hugging Face parquet source was available for {corpus_key}. "
+            f"Set {env_name} to a parquet directory or install huggingface_hub and duckdb for remote sampling."
+        )
     pytest.skip(f"No local or Hugging Face parquet source was available for {corpus_key}.")
 
 
@@ -244,7 +282,10 @@ def _wrap_citation_text(citation_text: str) -> str:
 def test_bluebook_citation_resolver_real_justicedao_sampling(pytestconfig: pytest.Config):
     _require_opt_in(pytestconfig)
 
-    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=True,
+        local_root_overrides=_build_local_root_overrides(),
+    )
     sample_size = int(os.environ.get("BLUEBOOK_REAL_SAMPLE_SIZE", "6"))
     state_code = os.environ.get(_STATE_CODE_ENV, "MN").strip().upper() or "MN"
 

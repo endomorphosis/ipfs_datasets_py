@@ -746,6 +746,13 @@ class DocketDatasetPackager:
             "court": str(dataset_core.get("court") or manifest.get("court") or ""),
             "document_count": int(manifest_summary.get("document_count") or 0),
             "attachment_count": int(manifest_summary.get("attachment_count") or 0),
+            "knowledge_graph_entity_count": int(manifest_summary.get("knowledge_graph_entity_count") or 0),
+            "knowledge_graph_relationship_count": int(manifest_summary.get("knowledge_graph_relationship_count") or 0),
+            "deontic_rule_count": int(manifest_summary.get("deontic_rule_count") or 0),
+            "proof_agenda_count": int(manifest_summary.get("proof_agenda_count") or 0),
+            "proof_tactician_plan_count": int(manifest_summary.get("tactician_plan_count") or 0),
+            "proof_packet_count": int(manifest_summary.get("proof_packet_count") or 0),
+            "proof_store_count": int(manifest_summary.get("proof_store_count") or 0),
             "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
             "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
             "package_manifest": dict(manifest),
@@ -3018,6 +3025,179 @@ def get_packaged_docket_proof_revalidation_queue(
     }
 
 
+def execute_packaged_docket_proof_revalidation_queue(
+    manifest_path: str | Path,
+    *,
+    top_k: int = 10,
+    min_priority: str = "low",
+    queue_limit: Optional[int] = None,
+    execution_top_k: int = 10,
+    chain_until_satisfied: bool = True,
+    attach_refreshed_packets: bool = False,
+) -> Dict[str, Any]:
+    """Execute the top proof revalidation queue items in priority order."""
+
+    queue = get_packaged_docket_proof_revalidation_queue(
+        manifest_path,
+        top_k=top_k,
+        min_priority=min_priority,
+        include_execution_hints=True,
+        action_top_k=execution_top_k,
+    )
+    queue_items = [dict(item) for item in list(queue.get("results") or [])]
+    if queue_limit is not None:
+        queue_items = queue_items[: max(0, int(queue_limit))]
+    attached_package_view = load_packaged_docket_dataset(manifest_path) if attach_refreshed_packets else {}
+    attached_packets: List[Dict[str, Any]] = []
+    attachment_summaries: List[Dict[str, Any]] = []
+    executions: List[Dict[str, Any]] = []
+    execution_summaries: List[Dict[str, Any]] = []
+    for item in queue_items:
+        candidate = dict(item.get("recommended_revalidation_action") or {})
+        if not candidate:
+            execution = {
+                "executed": False,
+                "job_ready": False,
+                "reason": "This queue item does not include a recommended revalidation action.",
+                "queue_item": item,
+                "results": [],
+                "result_count": 0,
+                "successful_action_summary": {},
+            }
+        else:
+            execution = execute_packaged_docket_action_candidate(
+                manifest_path,
+                candidate,
+                query=str(item.get("revalidation_query") or ""),
+                top_k=execution_top_k,
+                chain_until_satisfied=chain_until_satisfied,
+            )
+            execution["queue_item"] = item
+        if attach_refreshed_packets and bool(execution.get("executed")) and candidate:
+            refreshed_packet_view = _attach_packet_to_package_view(
+                attached_package_view,
+                build_packaged_docket_proof_assistant_packet(
+                    manifest_path,
+                    str(item.get("revalidation_query") or ""),
+                    top_k=execution_top_k,
+                    follow_up_execution=execution,
+                ),
+                query=str(item.get("revalidation_query") or ""),
+                force_new_packet=bool(item.get("current_proof_packet_review_required")),
+            )
+            attached_package_view = refreshed_packet_view
+            attached_packet = dict(refreshed_packet_view.get("attached_proof_assistant_packet") or {})
+            refresh_summary = dict(refreshed_packet_view.get("proof_packet_refresh") or {})
+            attached_packets.append(attached_packet)
+            attachment_summaries.append(
+                {
+                    "work_item_id": str(item.get("work_item_id") or ""),
+                    "proof_id": str(attached_packet.get("proof_id") or ""),
+                    "packet_version": int(attached_packet.get("packet_version") or 0),
+                    "support_strength": str(attached_packet.get("support_strength") or ""),
+                    "refresh_decision": str(refresh_summary.get("decision") or ""),
+                    "material_change_detected": bool(refresh_summary.get("material_change_detected")),
+                }
+            )
+        executions.append(execution)
+        successful_summary = dict(execution.get("successful_action_summary") or {})
+        execution_summaries.append(
+            {
+                "work_item_id": str(item.get("work_item_id") or ""),
+                "proof_revalidation_priority": str(item.get("proof_revalidation_priority") or ""),
+                "executed": bool(execution.get("executed")),
+                "resolution_status": str(
+                    (dict(execution.get("candidate_execution_summary") or {})).get("resolution_status")
+                    or ("not_executed" if not bool(execution.get("executed")) else "direct")
+                ),
+                "terminal_source_type": str(successful_summary.get("source_type") or ""),
+                "terminal_support_strength": str(successful_summary.get("support_strength") or ""),
+                "result_count": int(execution.get("result_count") or 0),
+                "successful_action_summary": successful_summary,
+            }
+        )
+    best_execution = {}
+    best_summary = {}
+    ranked_pairs = sorted(
+        list(zip(executions, execution_summaries)),
+        key=lambda pair: (
+            0 if bool(pair[0].get("executed")) else 1,
+            -_support_strength_priority(pair[1].get("terminal_support_strength")),
+            0 if str(pair[1].get("terminal_source_type") or "") == "legal_dataset_parser" else 1,
+            -int(pair[1].get("result_count") or 0),
+        ),
+    )
+    if ranked_pairs and bool(ranked_pairs[0][0].get("executed")):
+        best_execution = dict(ranked_pairs[0][0])
+        best_summary = dict(ranked_pairs[0][1])
+    return {
+        "queue": queue,
+        "queue_limit": len(queue_items),
+        "chain_until_satisfied": bool(chain_until_satisfied),
+        "execution_top_k": int(execution_top_k),
+        "executions": executions,
+        "execution_summaries": execution_summaries,
+        "executed_count": sum(1 for item in executions if bool(item.get("executed"))),
+        "best_execution": best_execution,
+        "best_execution_summary": best_summary,
+        "attach_refreshed_packets": bool(attach_refreshed_packets),
+        "attached_packets": attached_packets,
+        "attached_packet_count": len(attached_packets),
+        "attachment_summaries": attachment_summaries,
+        "attached_package_view": attached_package_view,
+        "source": "packaged_proof_revalidation_queue_execution",
+    }
+
+
+def persist_packaged_docket_proof_revalidation_queue(
+    manifest_path: str | Path,
+    output_dir: str | Path,
+    *,
+    package_name: Optional[str] = None,
+    include_car: bool = True,
+    top_k: int = 10,
+    min_priority: str = "low",
+    queue_limit: Optional[int] = None,
+    execution_top_k: int = 10,
+    chain_until_satisfied: bool = True,
+) -> Dict[str, Any]:
+    """Execute proof revalidation queue items and write a refreshed packaged bundle."""
+
+    execution = execute_packaged_docket_proof_revalidation_queue(
+        manifest_path,
+        top_k=top_k,
+        min_priority=min_priority,
+        queue_limit=queue_limit,
+        execution_top_k=execution_top_k,
+        chain_until_satisfied=chain_until_satisfied,
+        attach_refreshed_packets=True,
+    )
+    attached_view = dict(execution.get("attached_package_view") or {})
+    if not attached_view:
+        return {
+            "persisted": False,
+            "reason": "Revalidation did not produce an attached package view to persist.",
+            "execution": execution,
+            "package": {},
+            "source": "persist_packaged_proof_revalidation_queue",
+        }
+    package = package_docket_dataset(
+        attached_view,
+        output_dir,
+        package_name=package_name,
+        include_car=include_car,
+    )
+    return {
+        "persisted": True,
+        "execution": execution,
+        "package": package,
+        "manifest_json_path": str(package.get("manifest_json_path") or ""),
+        "car_manifest_path": str(package.get("car_manifest_path") or ""),
+        "package_root": str(package.get("package_root") or ""),
+        "source": "persist_packaged_proof_revalidation_queue",
+    }
+
+
 def search_packaged_docket_logic_artifacts(
     manifest_path: str | Path,
     query: str,
@@ -3885,6 +4065,31 @@ def _build_persisted_action_candidate_history(
     direct = dict(execution.get("executed_action_candidates") or {})
     if direct:
         return direct
+    direct_candidate_execution = dict(execution.get("candidate_execution_summary") or {})
+    direct_successful_action = dict(execution.get("successful_action_summary") or {})
+    direct_action_candidate = dict(execution.get("action_candidate") or {})
+    if direct_candidate_execution and direct_successful_action:
+        summary = _build_action_candidate_execution_row(
+            {
+                "executed": bool(execution.get("executed")),
+                "action_candidate": direct_action_candidate,
+                "candidate_execution_summary": direct_candidate_execution,
+                "successful_action_summary": direct_successful_action,
+                "reason": str(execution.get("reason") or ""),
+            }
+        )
+        return {
+            "query": str(query or ""),
+            "candidate_count": 1,
+            "executed_candidate_count": 1 if bool(execution.get("executed")) else 0,
+            "chain_until_satisfied": bool(execution.get("auto_chained")),
+            "comparison_mode": "chain_until_satisfied" if bool(execution.get("auto_chained")) else "single_step",
+            "candidate_executions": [dict(execution)],
+            "candidate_comparison": [summary],
+            "best_candidate_execution": dict(execution),
+            "best_candidate_summary": summary,
+            "best_terminal_candidate_summary": summary,
+        }
     nested_execution = dict(execution.get("execution") or {})
     nested_escalation = dict(nested_execution.get("escalation") or {})
     nested = dict(nested_escalation.get("executed_action_candidates") or {})
@@ -4746,6 +4951,7 @@ def attach_packaged_docket_proof_assistant_packet(
     *,
     top_k: int = 10,
     follow_up_execution: Optional[Mapping[str, Any]] = None,
+    force_new_packet: bool = False,
 ) -> Dict[str, Any]:
     """Load a packaged docket dataset view and attach a proof-assistant packet to it."""
 
@@ -4756,7 +4962,12 @@ def attach_packaged_docket_proof_assistant_packet(
         top_k=top_k,
         follow_up_execution=follow_up_execution,
     )
-    return _attach_packet_to_package_view(package_view, packet, query=query)
+    return _attach_packet_to_package_view(
+        package_view,
+        packet,
+        query=query,
+        force_new_packet=force_new_packet,
+    )
 
 
 def enrich_packaged_docket_with_tactician(
@@ -4813,12 +5024,14 @@ def _attach_packet_to_package_view(
     packet: Mapping[str, Any],
     *,
     query: str,
+    force_new_packet: bool = False,
 ) -> Dict[str, Any]:
     package_view = dict(package_view)
     packet = _rebase_packet_version_against_view(
         dict(packet),
         dict(package_view.get("proof_assistant") or {}),
         query=query,
+        force_new_packet=force_new_packet,
     )
     proof_assistant = dict(package_view.get("proof_assistant") or {})
     matched_work_item = dict(packet.get("matched_work_item") or {})
@@ -4863,7 +5076,7 @@ def _attach_packet_to_package_view(
             updated_count += 1
         return updated_agenda, updated_count
 
-    if current_packet_summary and current_proof_payload and not _proof_packet_material_change(
+    if (not force_new_packet) and current_packet_summary and current_proof_payload and not _proof_packet_material_change(
         current_proof_payload,
         packet,
     ):
@@ -5216,6 +5429,7 @@ def _rebase_packet_version_against_view(
     proof_assistant: Mapping[str, Any],
     *,
     query: str,
+    force_new_packet: bool = False,
 ) -> Dict[str, Any]:
     matched_work_item = dict(packet.get("matched_work_item") or {})
     work_item_id = str(packet.get("work_item_id") or matched_work_item.get("work_item_id") or "")
@@ -5234,7 +5448,7 @@ def _rebase_packet_version_against_view(
         proof_assistant,
         proof_id=str(current_packet_summary.get("proof_id") or ""),
     )
-    if current_packet_summary and current_proof_payload and not _proof_packet_material_change(current_proof_payload, packet):
+    if (not force_new_packet) and current_packet_summary and current_proof_payload and not _proof_packet_material_change(current_proof_payload, packet):
         return _build_existing_proof_assistant_packet(current_proof_payload, current_packet_summary, packet)
 
     highest_version = max(int(item.get("packet_version") or 0) for item in existing_packets)
@@ -5873,11 +6087,13 @@ __all__ = [
     "load_packaged_docket_summary_view",
     "load_packaged_docket_inspection_report",
     "plan_packaged_docket_query",
+    "persist_packaged_docket_proof_revalidation_queue",
     "prepare_packaged_docket_follow_up_job",
     "package_docket_dataset",
     "render_packaged_docket_inspection_report",
     "search_packaged_docket_dataset_bm25",
     "search_packaged_docket_dataset_vector",
+    "execute_packaged_docket_proof_revalidation_queue",
     "get_packaged_docket_proof_revalidation_queue",
     "search_packaged_docket_proof_tasks",
     "search_packaged_docket_logic_artifacts",

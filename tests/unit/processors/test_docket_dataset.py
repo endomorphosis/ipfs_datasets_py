@@ -18,6 +18,7 @@ from ipfs_datasets_py.processors.legal_data import (
     execute_packaged_docket_action_candidate,
     execute_packaged_docket_action_candidates,
     execute_packaged_docket_next_action,
+    execute_packaged_docket_proof_revalidation_queue,
     execute_packaged_docket_query,
     execute_packaged_docket_follow_up_job,
     execute_packaged_docket_follow_up_plan,
@@ -28,6 +29,7 @@ from ipfs_datasets_py.processors.legal_data import (
     load_packaged_docket_summary_view,
     load_packaged_docket_inspection_report,
     package_docket_dataset,
+    persist_packaged_docket_proof_revalidation_queue,
     plan_packaged_docket_query,
     prepare_packaged_docket_follow_up_job,
     search_packaged_docket_dataset_bm25,
@@ -1471,6 +1473,19 @@ def test_packaged_docket_proof_revalidation_queue_surfaces_review_needed_work_it
     assert queue["results"][0]["revalidation_query"]
     assert queue["results"][0]["recommended_revalidation_action"]["source_type"] != "proof_packet"
     assert queue["results"][0]["recommended_revalidation_execution_hint"]["source_type"] != "proof_packet"
+    queue_execution = execute_packaged_docket_proof_revalidation_queue(
+        repackaged["manifest_json_path"],
+        top_k=5,
+        min_priority="low",
+        queue_limit=1,
+        execution_top_k=5,
+        chain_until_satisfied=False,
+    )
+    assert queue_execution["source"] == "packaged_proof_revalidation_queue_execution"
+    assert queue_execution["executed_count"] == 1
+    assert queue_execution["queue_limit"] == 1
+    assert queue_execution["execution_summaries"][0]["work_item_id"] == "work_1"
+    assert queue_execution["execution_summaries"][0]["terminal_source_type"] in {"authority_list", "legal_dataset_parser"}
 
 
 def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_path, monkeypatch):
@@ -2515,6 +2530,67 @@ def test_packaged_docket_query_planner_selects_relevant_pieces_and_executes(tmp_
     assert changed_preference_queue_execution["candidate_execution_summary"]["candidate_source_type"] != "proof_packet"
     assert changed_preference_queue_execution["successful_action_summary"]["source_type"] == "legal_dataset_parser"
     assert changed_preference_queue_execution["successful_action_summary"]["support_strength"] == "strong"
+    changed_preference_queue_batch_execution = execute_packaged_docket_proof_revalidation_queue(
+        repackaged_changed_preference_attached_view["manifest_json_path"],
+        top_k=5,
+        min_priority="low",
+        queue_limit=1,
+        execution_top_k=5,
+        chain_until_satisfied=True,
+    )
+    assert changed_preference_queue_batch_execution["executed_count"] == 1
+    assert changed_preference_queue_batch_execution["execution_summaries"][0]["work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    assert changed_preference_queue_batch_execution["execution_summaries"][0]["terminal_source_type"] == "legal_dataset_parser"
+    assert changed_preference_queue_batch_execution["execution_summaries"][0]["terminal_support_strength"] == "strong"
+    assert changed_preference_queue_batch_execution["best_execution_summary"]["work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    assert changed_preference_queue_batch_execution["best_execution_summary"]["terminal_source_type"] == "legal_dataset_parser"
+    changed_preference_queue_attached_execution = execute_packaged_docket_proof_revalidation_queue(
+        repackaged_changed_preference_attached_view["manifest_json_path"],
+        top_k=5,
+        min_priority="low",
+        queue_limit=1,
+        execution_top_k=5,
+        chain_until_satisfied=True,
+        attach_refreshed_packets=True,
+    )
+    assert changed_preference_queue_attached_execution["attach_refreshed_packets"] is True
+    assert changed_preference_queue_attached_execution["attached_packet_count"] == 1
+    assert changed_preference_queue_attached_execution["attached_packets"][0]["packet_version"] == 3
+    assert changed_preference_queue_attached_execution["attachment_summaries"][0]["refresh_decision"] == "created_new_packet"
+    assert changed_preference_queue_attached_execution["attached_packets"][0]["preference_review_trigger"]["review_required"] is False
+    attached_revalidated_agenda_item = next(
+        item
+        for item in changed_preference_queue_attached_execution["attached_package_view"]["proof_assistant"]["agenda"]
+        if item["work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    )
+    assert attached_revalidated_agenda_item["current_proof_packet_version"] == 3
+    assert attached_revalidated_agenda_item["current_proof_packet_review_required"] is False
+    assert attached_revalidated_agenda_item["proof_revalidation_status"] == "current_support_stable"
+    assert changed_preference_queue_attached_execution["attached_package_view"]["proof_assistant"]["summary"]["review_required_work_item_count"] == 0
+    persisted_revalidation_package = persist_packaged_docket_proof_revalidation_queue(
+        repackaged_changed_preference_attached_view["manifest_json_path"],
+        tmp_path / "planned_bundle_with_packets_revalidated",
+        include_car=True,
+        top_k=5,
+        min_priority="low",
+        queue_limit=1,
+        execution_top_k=5,
+        chain_until_satisfied=True,
+    )
+    assert persisted_revalidation_package["persisted"] is True
+    assert persisted_revalidation_package["manifest_json_path"]
+    reloaded_revalidated_view = load_packaged_docket_dataset(
+        persisted_revalidation_package["manifest_json_path"]
+    )
+    reloaded_revalidated_agenda_item = next(
+        item
+        for item in reloaded_revalidated_view["proof_assistant"]["agenda"]
+        if item["work_item_id"] == changed_preference_agenda_item["work_item_id"]
+    )
+    assert reloaded_revalidated_agenda_item["current_proof_packet_version"] == 3
+    assert reloaded_revalidated_agenda_item["current_proof_packet_review_required"] is False
+    assert reloaded_revalidated_agenda_item["proof_revalidation_status"] == "current_support_stable"
+    assert reloaded_revalidated_view["proof_assistant"]["summary"]["review_required_work_item_count"] == 0
     restored_changed_preference_agenda_item = next(
         item
         for item in restored_changed_preference_attached_view["proof_assistant"]["agenda"]

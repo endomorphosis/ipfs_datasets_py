@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
-"""Docket dataset import CLI."""
+"""Docket dataset import CLI.
+
+Packaged bundle read helpers:
+- `--summary-only` reads the lightweight manifest-driven packaged summary view.
+- `--inspect-packaged` reads the packaged inspection payload.
+- `--load-packaged-report` reads the archived `inspection_report` artifact.
+- `--fields` applies to the active packaged read mode.
+
+Examples:
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --summary-only --json`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --inspect-packaged --fields latest_routing_reason,top_routing_citation --json`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --load-packaged-report --report-format parsed --fields latest_routing_reason`
+"""
 
 from __future__ import annotations
 
@@ -36,26 +48,12 @@ def _create_bundle_zip(bundle_dir: str | Path) -> str:
 
 def _print_packaged_inspection(inspection: dict[str, object]) -> None:
     print("Packaged Inspection")
-    print(f"dataset_id: {inspection.get('dataset_id') or ''}")
-    print(f"docket_id: {inspection.get('docket_id') or ''}")
-    print(f"case_name: {inspection.get('case_name') or ''}")
-    print(f"court: {inspection.get('court') or ''}")
-    print(f"document_count: {inspection.get('document_count') or 0}")
-    print(f"attachment_count: {inspection.get('attachment_count') or 0}")
-    print(f"latest_proof_packet_id: {inspection.get('latest_proof_packet_id') or ''}")
-    print(f"latest_proof_packet_version: {inspection.get('latest_proof_packet_version') or 0}")
-    print(f"latest_routing_reason: {inspection.get('latest_routing_reason') or ''}")
-    corpus_priority = ", ".join(str(item) for item in list(inspection.get("preferred_corpus_priority") or []))
-    state_codes = ", ".join(str(item) for item in list(inspection.get("preferred_state_codes") or []))
-    print(f"preferred_corpus_priority: {corpus_priority}")
-    print(f"preferred_state_codes: {state_codes}")
-    print(f"routing_evidence_count: {inspection.get('routing_evidence_count') or 0}")
-    print(f"top_routing_citation: {inspection.get('top_routing_citation') or ''}")
-    print(f"top_routing_source_url: {inspection.get('top_routing_source_url') or ''}")
-    print(
-        "routing_provenance_piece_present: "
-        f"{bool(inspection.get('routing_provenance_piece_present'))}"
-    )
+    for key, value in inspection.items():
+        if isinstance(value, list):
+            rendered = ", ".join(str(item) for item in value)
+        else:
+            rendered = value
+        print(f"{key}: {rendered}")
 
 
 def _write_text_output(path: str | Path, content: str) -> str:
@@ -69,6 +67,15 @@ def _stringify_packaged_report(report_payload: object, report_format: str) -> st
     normalized_format = str(report_format or "").strip().lower()
     if normalized_format in {"json", "markdown", "text"}:
         return str(report_payload or "")
+    if isinstance(report_payload, dict):
+        lines: list[str] = []
+        for key, value in report_payload.items():
+            if isinstance(value, list):
+                rendered = ", ".join(str(item) for item in value)
+            else:
+                rendered = value
+            lines.append(f"{key}: {rendered}")
+        return "\n".join(lines)
     return json.dumps(report_payload, indent=2, ensure_ascii=False)
 
 
@@ -147,9 +154,12 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--zip-package", action="store_true", help="Also write a .zip archive for any docket/cache bundle that gets generated.")
     parser.add_argument("--no-car", action="store_true", help="Do not emit CAR files when writing a docket package.")
     parser.add_argument("--inspect-packaged", action="store_true", help="For packaged inputs, include a lightweight inspection payload with latest routing/proof provenance.")
+    parser.add_argument("--inspection-fields", default=None, help="Comma-separated field subset for --inspect-packaged.")
     parser.add_argument("--summary-only", action="store_true", help="For packaged inputs, include only the lightweight manifest-driven summary view.")
     parser.add_argument("--summary-fields", default=None, help="Comma-separated field subset for --summary-only packaged output.")
     parser.add_argument("--load-packaged-report", action="store_true", help="For packaged inputs, load the archived inspection_report artifact directly.")
+    parser.add_argument("--report-fields", default=None, help="Comma-separated field subset for --load-packaged-report when using parsed/row output.")
+    parser.add_argument("--fields", default=None, help="Comma-separated field subset for the active packaged read mode.")
     parser.add_argument("--export-packaged-report", default=None, help="For packaged inputs, write a provenance/inspection report to this path.")
     parser.add_argument("--report-format", choices=["json", "markdown", "text", "parsed", "row"], default="markdown", help="Format used with packaged report load/export.")
     parser.add_argument("--json", action="store_true", help="Print a JSON summary instead of text.")
@@ -160,6 +170,9 @@ def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
     summary_fields = _parse_summary_fields_arg(parsed.summary_fields)
+    inspection_fields = _parse_summary_fields_arg(parsed.inspection_fields)
+    report_fields = _parse_summary_fields_arg(parsed.report_fields)
+    generic_fields = _parse_summary_fields_arg(parsed.fields)
 
     packaged_read_only = (
         parsed.input_type == "packaged"
@@ -173,6 +186,24 @@ def main(args: list[str] | None = None) -> int:
         parser.error("--output is required unless you are only inspecting or loading a packaged report.")
     if summary_fields and not parsed.summary_only:
         parser.error("--summary-fields is only valid with --summary-only.")
+    if inspection_fields and not parsed.inspect_packaged:
+        parser.error("--inspection-fields is only valid with --inspect-packaged.")
+    if report_fields and not parsed.load_packaged_report:
+        parser.error("--report-fields is only valid with --load-packaged-report.")
+    if generic_fields and not (parsed.summary_only or parsed.inspect_packaged or parsed.load_packaged_report):
+        parser.error("--fields is only valid with --summary-only, --inspect-packaged, or --load-packaged-report.")
+    if generic_fields and summary_fields:
+        parser.error("Use either --fields or --summary-fields, not both.")
+    if generic_fields and inspection_fields:
+        parser.error("Use either --fields or --inspection-fields, not both.")
+    if generic_fields and report_fields:
+        parser.error("Use either --fields or --report-fields, not both.")
+
+    active_summary_fields = generic_fields if (parsed.summary_only and generic_fields) else summary_fields
+    active_inspection_fields = generic_fields if (parsed.inspect_packaged and generic_fields) else inspection_fields
+    active_report_fields = generic_fields if (parsed.load_packaged_report and generic_fields) else report_fields
+    if active_report_fields and str(parsed.report_format or "").strip().lower() not in {"parsed", "row"}:
+        parser.error("--report-fields/--fields for packaged reports requires --report-format parsed or row.")
 
     builder = DocketDatasetBuilder(vector_dimension=int(parsed.vector_dimension or 32))
     common_kwargs = {
@@ -271,16 +302,22 @@ def main(args: list[str] | None = None) -> int:
         if parsed.summary_only:
             payload["packaged_summary_view"] = _filter_mapping_fields(
                 load_packaged_docket_summary_view(parsed.input_path),
-                summary_fields,
+                active_summary_fields,
             )
-        inspection_payload = packager.inspect_packaged_bundle(parsed.input_path)
         if parsed.inspect_packaged:
-            payload["inspection"] = inspection_payload
+            inspection_payload = packager.inspect_packaged_bundle(parsed.input_path)
+            payload["inspection"] = _filter_mapping_fields(
+                dict(inspection_payload),
+                active_inspection_fields,
+            )
         if parsed.load_packaged_report:
-            payload["loaded_packaged_report"] = packager.load_inspection_report(
+            loaded_report = packager.load_inspection_report(
                 parsed.input_path,
                 report_format=parsed.report_format,
             )
+            if active_report_fields and isinstance(loaded_report, dict):
+                loaded_report = _filter_mapping_fields(dict(loaded_report), active_report_fields)
+            payload["loaded_packaged_report"] = loaded_report
         if parsed.export_packaged_report:
             if parsed.load_packaged_report:
                 report_content = _stringify_packaged_report(
@@ -324,16 +361,17 @@ def main(args: list[str] | None = None) -> int:
     else:
         if output_path is not None:
             print(f"Wrote docket dataset: {output_path}")
-        for key, value in payload["summary"].items():
-            print(f"{key}: {value}")
-        if parsed.inspect_packaged and "inspection" in payload:
-            _print_packaged_inspection(dict(payload["inspection"]))
-        if parsed.summary_only and "packaged_summary_view" in payload:
+        if packaged_read_only and parsed.summary_only and "packaged_summary_view" in payload:
             print("Packaged Summary")
             for key, value in dict(payload["packaged_summary_view"]).items():
                 if key in {"package_manifest", "routing_provenance", "inspection_report"}:
                     continue
                 print(f"{key}: {value}")
+        elif not packaged_read_only:
+            for key, value in payload["summary"].items():
+                print(f"{key}: {value}")
+        if parsed.inspect_packaged and "inspection" in payload:
+            _print_packaged_inspection(dict(payload["inspection"]))
         if parsed.load_packaged_report and "loaded_packaged_report" in payload:
             print(_stringify_packaged_report(payload["loaded_packaged_report"], parsed.report_format))
         if "inspection_report" in payload:

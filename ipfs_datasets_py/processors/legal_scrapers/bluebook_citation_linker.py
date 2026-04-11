@@ -16,7 +16,6 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
 from .citation_extraction import Citation, CitationExtractor
-from .legal_dataset_api import DEFAULT_USCODE_HF_DATASET_ID, DEFAULT_USCODE_HF_PARQUET_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -120,17 +119,18 @@ def _sql_literal_path(value: str) -> str:
 
 
 def _build_uscode_source_config() -> CorpusSourceConfig:
+    us_code_corpus = get_canonical_legal_corpus("us_code")
     roots = [
-        (Path.home() / ".ipfs_datasets" / "uscode").resolve(),
+        us_code_corpus.parquet_dir(),
         (Path.home() / ".ipfs_datasets" / "us_code").resolve(),
     ]
     return CorpusSourceConfig(
         key="us_code",
-        dataset_id=DEFAULT_USCODE_HF_DATASET_ID,
+        dataset_id=us_code_corpus.hf_dataset_id,
         local_roots=roots,
         preferred_parquet_names=("uscode", "sections", "title"),
-        parquet_prefix=DEFAULT_USCODE_HF_PARQUET_PREFIX,
-        cid_field="cid",
+        parquet_prefix=us_code_corpus.parquet_dir_name,
+        cid_field=us_code_corpus.cid_field,
     )
 
 

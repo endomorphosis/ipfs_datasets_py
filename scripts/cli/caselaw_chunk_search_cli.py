@@ -28,6 +28,9 @@ from huggingface_hub import hf_hub_url
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
+    DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
+    DEFAULT_CAP_HF_DATASET_ID,
+    DEFAULT_CAP_HF_PARQUET_FILE,
     search_caselaw_access_cases_from_parameters,
 )
 
@@ -123,12 +126,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--hf-dataset-id",
-        default="justicedao/ipfs_caselaw_access_project",
+        default=DEFAULT_CAP_HF_DATASET_ID,
         help="Dataset id for case-level parquet",
     )
     parser.add_argument(
         "--hf-parquet-file",
-        default="embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+        default=DEFAULT_CAP_HF_PARQUET_FILE,
         help="Case-level parquet file path in dataset",
     )
     parser.add_argument(
@@ -143,12 +146,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--chunk-hf-dataset-id",
-        default="justicedao/ipfs_caselaw_access_project",
+        default=DEFAULT_CAP_HF_DATASET_ID,
         help="Dataset id for chunk-level parquet",
     )
     parser.add_argument(
         "--chunk-hf-parquet-file",
-        default="embeddings/sparse_chunks.parquet",
+        default=DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
         help="Chunk parquet file path in dataset",
     )
     parser.add_argument(

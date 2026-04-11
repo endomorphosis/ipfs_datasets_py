@@ -2,7 +2,7 @@
 """Smoke-test state-law embedding search against Hugging Face parquet datasets.
 
 Default target layout:
-  justicedao/ipfs_state_laws/<STATE>/parsed/parquet
+    canonical state-law dataset/<STATE>/parsed/parquet
 
 Example:
   python scripts/ops/legal_data/smoke_state_law_vector_search.py --states OR,CA,WA
@@ -25,6 +25,10 @@ from datasets import load_dataset
 from huggingface_hub import hf_hub_url, list_repo_files
 
 from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+
+
+_STATE_LAWS_CORPUS = get_canonical_legal_corpus("state_laws")
 
 
 def _normalize_states(raw: str) -> List[str]:
@@ -222,7 +226,7 @@ def parse_args() -> argparse.Namespace:
         default="OR",
         help="Comma-separated two-letter states (default: OR) or ALL for auto-discovery",
     )
-    parser.add_argument("--dataset-id", default="justicedao/ipfs_state_laws")
+    parser.add_argument("--dataset-id", default=_STATE_LAWS_CORPUS.hf_dataset_id)
     parser.add_argument("--store-type", default="faiss")
     parser.add_argument("--max-rows", type=int, default=512)
     parser.add_argument("--top-k", type=int, default=5)

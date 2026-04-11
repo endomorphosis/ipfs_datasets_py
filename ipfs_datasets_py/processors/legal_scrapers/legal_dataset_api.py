@@ -38,12 +38,12 @@ except ImportError:  # pragma: no cover - file-based test imports
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_CAP_HF_DATASET_ID = "justicedao/ipfs_caselaw_access_project"
-DEFAULT_CAP_HF_PARQUET_FILE = "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet"
-DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = "embeddings/sparse_chunks.parquet"
+DEFAULT_CAP_HF_DATASET_ID = get_canonical_legal_corpus("caselaw_access_project").hf_dataset_id
+DEFAULT_CAP_HF_PARQUET_FILE = get_canonical_legal_corpus("caselaw_access_project").combined_parquet_path()
+DEFAULT_CAP_CHUNK_HF_PARQUET_FILE = get_canonical_legal_corpus("caselaw_access_project").combined_embeddings_path()
 
-DEFAULT_USCODE_HF_DATASET_ID = "justicedao/ipfs_uscode"
-DEFAULT_USCODE_HF_PARQUET_PREFIX = "uscode_parquet"
+DEFAULT_USCODE_HF_DATASET_ID = get_canonical_legal_corpus("us_code").hf_dataset_id
+DEFAULT_USCODE_HF_PARQUET_PREFIX = get_canonical_legal_corpus("us_code").parquet_dir_name
 DEFAULT_STATE_LAWS_HF_DATASET_ID = get_canonical_legal_corpus("state_laws").hf_dataset_id
 DEFAULT_STATE_ADMIN_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_admin_rules").hf_dataset_id
 DEFAULT_COURT_RULES_HF_DATASET_ID = get_canonical_legal_corpus("state_court_rules").hf_dataset_id

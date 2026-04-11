@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Mapping, MutableMapping, Optional
 
 
 @dataclass(frozen=True)
@@ -41,8 +41,44 @@ class CanonicalLegalCorpus:
         names.append(self.combined_parquet_filename)
         return names
 
+    def combined_parquet_path(self) -> str:
+        prefix = self.parquet_dir_name.strip("/")
+        if not prefix:
+            return self.combined_parquet_filename
+        return f"{prefix}/{self.combined_parquet_filename}"
+
+    def combined_embeddings_path(self) -> str:
+        prefix = self.parquet_dir_name.strip("/")
+        if not prefix:
+            return self.combined_embeddings_filename
+        return f"{prefix}/{self.combined_embeddings_filename}"
+
 
 _CORPORA: Dict[str, CanonicalLegalCorpus] = {
+    "caselaw_access_project": CanonicalLegalCorpus(
+        key="caselaw_access_project",
+        display_name="Caselaw Access Project",
+        hf_dataset_id="justicedao/ipfs_caselaw_access_project",
+        local_root_name="caselaw_access_project",
+        jsonld_dir_name="caselaw_access_project_jsonld",
+        parquet_dir_name="embeddings",
+        combined_parquet_filename="ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+        combined_embeddings_filename="sparse_chunks.parquet",
+        cid_field="id",
+        state_field="jurisdiction",
+    ),
+    "us_code": CanonicalLegalCorpus(
+        key="us_code",
+        display_name="United States Code",
+        hf_dataset_id="justicedao/ipfs_uscode",
+        local_root_name="uscode",
+        jsonld_dir_name="uscode_jsonld",
+        parquet_dir_name="uscode_parquet",
+        combined_parquet_filename="uscode.parquet",
+        combined_embeddings_filename="uscode_embeddings.parquet",
+        cid_field="cid",
+        state_field="jurisdiction",
+    ),
     "federal_register": CanonicalLegalCorpus(
         key="federal_register",
         display_name="Federal Register",
@@ -103,5 +139,42 @@ def get_canonical_legal_corpus(key: str) -> CanonicalLegalCorpus:
     return _CORPORA[normalized]
 
 
+def get_canonical_legal_corpus_for_dataset_id(dataset_id: str) -> CanonicalLegalCorpus:
+    normalized = str(dataset_id or "").strip().lower()
+    for corpus in _CORPORA.values():
+        if corpus.hf_dataset_id.lower() == normalized:
+            return corpus
+    raise KeyError(f"Unknown canonical legal corpus dataset id: {dataset_id}")
+
+
 def list_canonical_legal_corpora() -> List[CanonicalLegalCorpus]:
     return [value for _, value in sorted(_CORPORA.items())]
+
+
+def build_canonical_corpus_local_root_overrides(
+    *,
+    env: Optional[Mapping[str, str]] = None,
+    env_var_by_corpus_key: Optional[Mapping[str, str]] = None,
+    prefix: str = "IPFS_DATASETS_",
+    suffix: str = "_ROOT",
+    data_root_env_name: Optional[str] = None,
+) -> Dict[str, str]:
+    source = env or {}
+    overrides: MutableMapping[str, str] = {}
+    shared_data_root = str(source.get(data_root_env_name or "", "")).strip() if data_root_env_name else ""
+    shared_data_root_path = Path(shared_data_root).expanduser().resolve() if shared_data_root else None
+
+    for corpus in list_canonical_legal_corpora():
+        env_name = None
+        if env_var_by_corpus_key is not None:
+            env_name = env_var_by_corpus_key.get(corpus.key)
+        if not env_name:
+            env_name = f"{prefix}{corpus.key.upper()}{suffix}"
+        value = str(source.get(env_name, "")).strip()
+        if value:
+            overrides[corpus.key] = value
+            continue
+        if shared_data_root_path is not None:
+            overrides[corpus.key] = str((shared_data_root_path / corpus.local_root_name / corpus.parquet_dir_name).resolve())
+
+    return dict(overrides)
