@@ -704,9 +704,13 @@ def execute_heavy_command(args):
                 parameters = parse_tool_args(tool_args)
                 parameters = {str(k).replace("-", "_"): v for k, v in parameters.items()}
 
-                if not parameters.get("document_urls") and not parameters.get("seed_urls"):
+                if (
+                    not parameters.get("document_urls")
+                    and not parameters.get("seed_urls")
+                    and not parameters.get("use_default_seeds")
+                ):
                     print(
-                        "Usage: ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/...\" ]') [--output_dir PATH] [--max_documents N]"
+                        "Usage: ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/zoeken/zoekresultaat/...\" ]' | --use_default_seeds true) [--output_dir PATH] [--max_documents N] [--max_seed_pages N] [--crawl_depth N] [--rate_limit_delay SECONDS] [--skip_existing true]"
                     )
                     return
 
@@ -730,7 +734,7 @@ def execute_heavy_command(args):
 
             print("Usage: ipfs-datasets legal search-court-rules --collection_name NAME (--query_vector '[...]' | --query_text '...') [--jurisdiction federal|state|both] [--state OR]")
             print("       ipfs-datasets legal search-federal-register --collection_name NAME (--query_vector '[...]' | --query_text '...')")
-            print("       ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/...\" ]')")
+            print("       ipfs-datasets legal scrape-netherlands-laws (--document_urls '[\"https://wetten.overheid.nl/BWBR...\"]' | --seed_urls '[\"https://wetten.overheid.nl/zoeken/zoekresultaat/...\" ]' | --use_default_seeds true)")
             return
         
         if command == "tools":

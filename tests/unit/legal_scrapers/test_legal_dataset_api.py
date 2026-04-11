@@ -56,6 +56,11 @@ async def test_netherlands_laws_api_delegates_parameters(monkeypatch):
             "max_documents": 3,
             "include_metadata": False,
             "rate_limit_delay": 1.25,
+            "max_seed_pages": 8,
+            "crawl_depth": 1,
+            "use_default_seeds": True,
+            "skip_existing": True,
+            "resume": True,
         }
     )
 
@@ -65,6 +70,11 @@ async def test_netherlands_laws_api_delegates_parameters(monkeypatch):
     assert captured["max_documents"] == 3
     assert captured["include_metadata"] is False
     assert captured["rate_limit_delay"] == 1.25
+    assert captured["max_seed_pages"] == 8
+    assert captured["crawl_depth"] == 1
+    assert captured["use_default_seeds"] is True
+    assert captured["skip_existing"] is True
+    assert captured["resume"] is True
 
 
 @pytest.mark.asyncio

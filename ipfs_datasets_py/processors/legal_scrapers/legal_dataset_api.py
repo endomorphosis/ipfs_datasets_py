@@ -417,6 +417,7 @@ def _assemble_netherlands_answers(
     citation_query: str,
     prefer_current_versions: bool,
     context_mode: str,
+    context_results: List[Dict[str, Any]] | None = None,
 ) -> List[Dict[str, Any]]:
     parsed = _parse_netherlands_citation_query(citation_query)
     answers: List[Dict[str, Any]] = []
@@ -454,7 +455,7 @@ def _assemble_netherlands_answers(
         if answers:
             return _enrich_netherlands_answers_with_context(
                 answers,
-                results=results,
+                results=list(context_results or results),
                 context_mode=context_mode,
             )
 
@@ -469,7 +470,7 @@ def _assemble_netherlands_answers(
         )
     return _enrich_netherlands_answers_with_context(
         answers,
-        results=results,
+        results=list(context_results or results),
         context_mode=context_mode,
     )
 
@@ -1532,6 +1533,11 @@ async def scrape_netherlands_laws_from_parameters(
             max_documents=parameters.get("max_documents"),
             include_metadata=parameters.get("include_metadata", True),
             custom_sources=parameters.get("custom_sources"),
+            max_seed_pages=parameters.get("max_seed_pages", 25),
+            crawl_depth=parameters.get("crawl_depth", 2),
+            use_default_seeds=parameters.get("use_default_seeds", False),
+            skip_existing=parameters.get("skip_existing", False),
+            resume=parameters.get("resume", False),
         )
 
     except Exception as e:
@@ -2034,7 +2040,7 @@ async def search_netherlands_law_corpus_from_parameters(
     )
     if isinstance(result, dict):
         if isinstance(result.get("results"), list):
-            result["results"] = _apply_netherlands_temporal_filters(
+            temporally_filtered_results = _apply_netherlands_temporal_filters(
                 list(result.get("results") or []),
                 prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
                 include_historical_versions=bool(nl_params.get("include_historical_versions", True)),
@@ -2042,7 +2048,7 @@ async def search_netherlands_law_corpus_from_parameters(
                 effective_date=str(nl_params.get("effective_date") or ""),
             )
             result["results"] = _apply_netherlands_citation_query(
-                list(result.get("results") or []),
+                list(temporally_filtered_results),
                 citation_query=str(nl_params.get("citation_query") or ""),
                 prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
             )
@@ -2051,6 +2057,7 @@ async def search_netherlands_law_corpus_from_parameters(
                 citation_query=str(nl_params.get("citation_query") or ""),
                 prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
                 context_mode=str(nl_params.get("context_mode") or "exact"),
+                context_results=list(temporally_filtered_results),
             )
         result.setdefault(
             "temporal_parameters",

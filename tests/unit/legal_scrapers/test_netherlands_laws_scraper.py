@@ -36,6 +36,30 @@ def test_extract_document_links_filters_for_wetten_bwb_documents():
     ]
 
 
+def test_extract_discovery_links_keeps_official_seed_pages():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _extract_discovery_links,
+    )
+
+    html = """
+    <html>
+      <body>
+        <a href="/zoeken/zoekresultaat/titel/test/page/2/count/100">Next</a>
+        <a href="https://wetten.overheid.nl/uitgebreid_zoeken/">Advanced search</a>
+        <a href="/BWBR0001854/">Document page</a>
+        <a href="https://example.com/not-official">Ignore me</a>
+      </body>
+    </html>
+    """
+
+    links = _extract_discovery_links(html, "https://wetten.overheid.nl/zoeken/")
+
+    assert links == [
+        "https://wetten.overheid.nl/zoeken/zoekresultaat/titel/test/page/2/count/100/",
+        "https://wetten.overheid.nl/uitgebreid_zoeken/",
+    ]
+
+
 def test_extract_title_and_text_captures_articles_and_chapters():
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
         _extract_title_and_text,
@@ -243,6 +267,89 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
     assert result["data"][0]["metadata"]["verification"]["information_page_verified"] is True
     assert result["data"][0]["metadata"]["verification"]["authoritative_sources_checked"] >= 2
     assert result["data"][0]["metadata"]["verification"]["identifier_consistent"] is True
+
+
+@pytest.mark.anyio
+async def test_scrape_netherlands_laws_crawls_seed_pages_and_writes_run_metadata(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
+
+    document_fixture = _fixture_text("netherlands_wetten_document.html")
+    info_fixture = _fixture_text("netherlands_wetten_informatie.html")
+    bw_fixture = document_fixture.replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
+    bw_info_fixture = (
+        info_fixture
+        .replace("BWBR0001854", "BWBR0002656")
+        .replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
+        .replace(">Sr<", ">BW Boek 1<")
+    )
+    seed_one = """
+    <html>
+      <body>
+        <a href="/BWBR0001854/">Wetboek van Strafrecht</a>
+        <a href="/zoeken/zoekresultaat/titel/verloten/titelf/0/tekstf/1/d/10-5-2025/dx/0/page/2/count/100/s/2">Volgende pagina</a>
+      </body>
+    </html>
+    """
+    seed_two = """
+    <html>
+      <body>
+        <a href="/BWBR0002656/">Burgerlijk Wetboek Boek 1</a>
+      </body>
+    </html>
+    """
+
+    class _Response:
+        def __init__(self, text: str, status_code: int = 200):
+            self.text = text
+            self.status_code = status_code
+
+    class _Session:
+        headers = {}
+
+        def get(self, url, timeout=40):  # noqa: ARG002
+            if url == "https://wetten.overheid.nl/zoeken/":
+                return _Response(seed_one)
+            if url == "https://wetten.overheid.nl/zoeken/zoekresultaat/titel/verloten/titelf/0/tekstf/1/d/10-5-2025/dx/0/page/2/count/100/s/2/":
+                return _Response(seed_two)
+            if url == "https://wetten.overheid.nl/BWBR0001854/informatie":
+                return _Response(info_fixture)
+            if url == "https://wetten.overheid.nl/BWBR0002656/informatie":
+                return _Response(bw_info_fixture)
+            if url == "https://wetten.overheid.nl/BWBR0001854/":
+                return _Response(document_fixture)
+            if url == "https://wetten.overheid.nl/BWBR0002656/":
+                return _Response(bw_fixture)
+            if "overheid.nl/documenten/BWBR0001854" in url:
+                return _Response("<html><body>BWBR0001854 Wetboek van Strafrecht</body></html>")
+            if "overheid.nl/documenten/BWBR0002656" in url:
+                return _Response("<html><body>BWBR0002656 Burgerlijk Wetboek Boek 1</body></html>")
+            raise AssertionError(f"Unexpected URL fetched: {url}")
+
+    monkeypatch.setattr(scraper, "_make_session", lambda: _Session())
+    monkeypatch.setattr(scraper.time, "sleep", lambda _seconds: None)
+
+    result = await scraper.scrape_netherlands_laws(
+        seed_urls=["https://wetten.overheid.nl/zoeken"],
+        output_dir=str(tmp_path),
+        crawl_depth=1,
+        max_seed_pages=5,
+        max_documents=5,
+    )
+
+    assert result["status"] == "success"
+    assert len(result["data"]) == 2
+    assert result["metadata"]["seed_pages_visited"] == 2
+    assert result["metadata"]["candidate_links_found"] == 2
+    assert result["metadata"]["official_law_documents_accepted"] == 2
+    assert result["metadata"]["documents_fetched"] == 2
+    assert result["metadata"]["documents_parsed"] == 2
+    assert result["metadata"]["documents_skipped"] == 0
+    assert result["metadata"]["documents_failed"] == 0
+    assert Path(result["metadata"]["index_path"]).exists()
+    assert Path(result["metadata"]["article_index_path"]).exists()
+    assert Path(result["metadata"]["search_index_path"]).exists()
+    assert Path(result["metadata"]["jsonld_files"][0]).exists()
+    assert Path(result["metadata"]["run_metadata_path"]).exists()
 
 
 @pytest.mark.anyio

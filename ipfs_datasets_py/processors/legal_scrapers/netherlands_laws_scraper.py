@@ -18,7 +18,7 @@ import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Any, Dict, Iterable, List, Optional, Set
 from urllib.parse import urljoin, urlparse
 
@@ -41,6 +41,9 @@ DEFAULT_NETHERLANDS_LAWS_SEARCH_INDEX_PATH = (
     DEFAULT_NETHERLANDS_LAWS_DIR / "netherlands_laws_search_index_latest.jsonl"
 )
 DEFAULT_NETHERLANDS_LAWS_JSONLD_DIRNAME = "netherlands_laws_jsonld"
+DEFAULT_NETHERLANDS_LAWS_RUN_METADATA_PATH = (
+    DEFAULT_NETHERLANDS_LAWS_DIR / "netherlands_laws_run_metadata_latest.json"
+)
 USER_AGENT = "ipfs-datasets-netherlands-law-scraper/1.0"
 
 _WS_RE = re.compile(r"\s+")
@@ -129,6 +132,10 @@ _DEFAULT_SOURCE_CONFIGS: List[Dict[str, Any]] = [
         "jurisdiction": "NL",
     },
 ]
+_DEFAULT_DISCOVERY_SEED_URLS: List[str] = [
+    "https://wetten.overheid.nl/zoeken",
+    "https://wetten.overheid.nl/uitgebreid_zoeken",
+]
 
 
 def _normalize_space(value: Any) -> str:
@@ -164,6 +171,21 @@ def _extract_bwb_id(url: str) -> str:
     return ""
 
 
+def _normalize_official_url(url: str) -> str:
+    normalized = str(url or "").strip().split("#", 1)[0]
+    if not normalized:
+        return ""
+    parsed = urlparse(normalized)
+    if parsed.scheme not in {"http", "https"}:
+        return ""
+    path = parsed.path or "/"
+    if path != "/" and normalized.endswith("/"):
+        return normalized
+    if "." not in path.rsplit("/", 1)[-1] and not parsed.query and not normalized.endswith("/"):
+        return f"{normalized}/"
+    return normalized
+
+
 def _is_supported_law_url(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
     if parsed.scheme not in {"http", "https"}:
@@ -171,6 +193,17 @@ def _is_supported_law_url(url: str) -> bool:
     if not _WETTEN_HOST_RE.search(parsed.netloc or ""):
         return False
     return bool(_extract_bwb_id(url))
+
+
+def _is_supported_seed_url(url: str) -> bool:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    if not _WETTEN_HOST_RE.search(parsed.netloc or ""):
+        return False
+    if _extract_bwb_id(url):
+        return False
+    return True
 
 
 def _extract_document_links(index_html: str, index_url: str) -> List[str]:
@@ -185,11 +218,31 @@ def _extract_document_links(index_html: str, index_url: str) -> List[str]:
         absolute = urljoin(index_url, href)
         if not _is_supported_law_url(absolute):
             continue
-        normalized = absolute.split("#", 1)[0]
+        normalized = _normalize_official_url(absolute)
         if normalized in seen:
             continue
         seen.add(normalized)
         links.append(normalized)
+
+    return links
+
+
+def _extract_discovery_links(index_html: str, index_url: str) -> List[str]:
+    soup = BeautifulSoup(index_html, "html.parser")
+    links: List[str] = []
+    seen: Set[str] = set()
+
+    for anchor in soup.select("a[href]"):
+        href = str(anchor.get("href") or "").strip()
+        if not href:
+            continue
+        absolute = _normalize_official_url(urljoin(index_url, href))
+        if not absolute or not _is_supported_seed_url(absolute):
+            continue
+        if absolute in seen:
+            continue
+        seen.add(absolute)
+        links.append(absolute)
 
     return links
 
@@ -873,6 +926,42 @@ def _write_optional_index(rows: Iterable[Dict[str, Any]], *, index_path: Path) -
     _write_index_jsonl(rows, index_path=index_path)
 
 
+def _write_run_metadata(metadata: Dict[str, Any], *, output_root: Path) -> Path:
+    out_path = output_root / DEFAULT_NETHERLANDS_LAWS_RUN_METADATA_PATH.name
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open("w", encoding="utf-8") as handle:
+        json.dump(metadata, handle, ensure_ascii=False, indent=2)
+    return out_path
+
+
+def _load_existing_record_map(index_path: Path) -> Dict[str, Dict[str, Any]]:
+    existing: Dict[str, Dict[str, Any]] = {}
+    if not index_path.exists():
+        return existing
+
+    try:
+        with index_path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                text = line.strip()
+                if not text:
+                    continue
+                try:
+                    row = json.loads(text)
+                except json.JSONDecodeError:
+                    continue
+                identifier = _normalize_space(row.get("identifier") or "")
+                if identifier:
+                    existing[identifier] = row
+                    continue
+                source_url = _normalize_space(row.get("source_url") or "")
+                if source_url:
+                    existing[source_url] = row
+    except OSError:
+        return {}
+
+    return existing
+
+
 async def list_netherlands_law_sources() -> Dict[str, Any]:
     """List built-in Netherlands law source configs."""
     return {
@@ -903,6 +992,11 @@ async def scrape_netherlands_laws(
     max_documents: Optional[int] = None,
     include_metadata: bool = True,
     custom_sources: Optional[List[Dict[str, Any]]] = None,
+    max_seed_pages: int = 25,
+    crawl_depth: int = 2,
+    use_default_seeds: bool = False,
+    skip_existing: bool = False,
+    resume: bool = False,
 ) -> Dict[str, Any]:
     """Scrape Netherlands laws from official Dutch government sources.
 
@@ -915,6 +1009,11 @@ async def scrape_netherlands_laws(
         max_documents: Optional cap on scraped law documents.
         include_metadata: Include source metadata fields in result rows.
         custom_sources: Optional additional ``{"type": "index"|"document", "url": ...}`` configs.
+        max_seed_pages: Bounded count of official discovery pages to visit.
+        crawl_depth: Maximum discovery-link depth from the provided seed pages.
+        use_default_seeds: Add built-in official discovery pages when explicit seeds are not provided.
+        skip_existing: Skip laws already present in the on-disk document index.
+        resume: Alias for ``skip_existing`` with run metadata preserved across reruns.
     """
     if not REQUESTS_AVAILABLE:
         return {
@@ -927,11 +1026,12 @@ async def scrape_netherlands_laws(
     start = time.time()
     output_root = _resolve_output_dir(output_dir)
     output_root.mkdir(parents=True, exist_ok=True)
+    skip_existing = bool(skip_existing or resume)
 
     selected_seed_urls: List[str] = []
     selected_document_urls: List[str] = []
 
-    for item in _DEFAULT_SOURCE_CONFIGS + list(custom_sources or []):
+    for item in list(custom_sources or []):
         if not isinstance(item, dict):
             continue
         source_type = str(item.get("type") or "").strip().lower()
@@ -947,6 +1047,8 @@ async def scrape_netherlands_laws(
         selected_seed_urls.extend(str(url).strip() for url in seed_urls if str(url).strip())
     if document_urls:
         selected_document_urls.extend(str(url).strip() for url in document_urls if str(url).strip())
+    if use_default_seeds or (not selected_seed_urls and not selected_document_urls):
+        selected_seed_urls.extend(_DEFAULT_DISCOVERY_SEED_URLS)
 
     if not selected_seed_urls and not selected_document_urls:
         return {
@@ -960,24 +1062,56 @@ async def scrape_netherlands_laws(
     article_records: List[Dict[str, Any]] = []
     errors: List[str] = []
     crawled_index_pages: List[str] = []
+    skipped_documents: List[str] = []
     discovered_document_urls: Set[str] = set()
+    candidate_document_links: Set[str] = set()
     session = _make_session()
+    seed_visit_count = 0
+    successful_document_fetches = 0
+    successful_parses = 0
+    failed_documents = 0
+    failed_seed_pages = 0
+    existing_record_map = _load_existing_record_map(output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
 
-    for index_url in selected_seed_urls:
+    normalized_seed_urls = list(
+        dict.fromkeys(
+            _normalize_official_url(url)
+            for url in selected_seed_urls
+            if _normalize_official_url(url) and _is_supported_seed_url(_normalize_official_url(url))
+        )
+    )
+    seed_queue: deque[tuple[str, int]] = deque((url, 0) for url in normalized_seed_urls)
+    seen_seed_urls: Set[str] = set()
+
+    while seed_queue and seed_visit_count < max(0, int(max_seed_pages or 0)):
+        index_url, depth = seed_queue.popleft()
+        if index_url in seen_seed_urls:
+            continue
+        seen_seed_urls.add(index_url)
         try:
             response = session.get(index_url, timeout=40)
             if int(response.status_code) != 200:
                 raise RuntimeError(f"HTTP {response.status_code} for {index_url}")
             crawled_index_pages.append(index_url)
-            for discovered in _extract_document_links(response.text or "", index_url):
+            seed_visit_count += 1
+            document_links = _extract_document_links(response.text or "", index_url)
+            for discovered in document_links:
+                candidate_document_links.add(discovered)
                 discovered_document_urls.add(discovered)
+            if depth < max(0, int(crawl_depth or 0)):
+                for linked_seed_url in _extract_discovery_links(response.text or "", index_url):
+                    if linked_seed_url not in seen_seed_urls:
+                        seed_queue.append((linked_seed_url, depth + 1))
         except Exception as exc:
+            failed_seed_pages += 1
             errors.append(f"{index_url}: {exc}")
         time.sleep(max(0.0, float(rate_limit_delay)))
 
     for url in selected_document_urls:
         if _is_supported_law_url(url):
-            discovered_document_urls.add(url)
+            normalized_url = _normalize_official_url(url)
+            candidate_document_links.add(normalized_url)
+            discovered_document_urls.add(normalized_url)
         else:
             errors.append(f"{url}: unsupported Netherlands law URL")
 
@@ -986,10 +1120,18 @@ async def scrape_netherlands_laws(
         ordered_document_urls = ordered_document_urls[: int(max_documents)]
 
     for law_url in ordered_document_urls:
+        identifier = _extract_bwb_id(law_url)
+        if skip_existing and (
+            identifier in existing_record_map
+            or law_url in existing_record_map
+        ):
+            skipped_documents.append(law_url)
+            continue
         try:
             response = session.get(law_url, timeout=40)
             if int(response.status_code) != 200:
                 raise RuntimeError(f"HTTP {response.status_code} for {law_url}")
+            successful_document_fetches += 1
 
             parsed = _extract_title_and_text(response.text or "")
             title = str(parsed.get("title") or "").strip()
@@ -997,7 +1139,6 @@ async def scrape_netherlands_laws(
             if not text:
                 raise RuntimeError("No law text extracted")
 
-            identifier = _extract_bwb_id(law_url)
             structure = parsed.get("structure") or {}
             info_metadata: Dict[str, Any] = {}
             info_url = ""
@@ -1096,28 +1237,59 @@ async def scrape_netherlands_laws(
             row["article_records"] = _build_article_records(row)
             article_records.extend(row["article_records"])
             records.append(row)
+            successful_parses += 1
         except Exception as exc:
+            failed_documents += 1
             errors.append(f"{law_url}: {exc}")
         time.sleep(max(0.0, float(rate_limit_delay)))
 
-    _write_index_jsonl(records, index_path=output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
+    persisted_records = list(existing_record_map.values()) if skip_existing else []
+    if records:
+        replacement_keys = {
+            _normalize_space(row.get("identifier") or row.get("source_url") or "")
+            for row in records
+            if _normalize_space(row.get("identifier") or row.get("source_url") or "")
+        }
+        if persisted_records and replacement_keys:
+            persisted_records = [
+                row
+                for row in persisted_records
+                if _normalize_space(row.get("identifier") or row.get("source_url") or "") not in replacement_keys
+            ]
+    persisted_records.extend(records)
+    persisted_article_records: List[Dict[str, Any]] = []
+    for row in persisted_records:
+        if str(row.get("record_type") or "") != "document":
+            continue
+        persisted_article_records.extend(list(row.get("article_records") or _build_article_records(row)))
+
+    _write_index_jsonl(persisted_records, index_path=output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
     _write_optional_index(
-        article_records,
+        persisted_article_records,
         index_path=output_root / DEFAULT_NETHERLANDS_LAWS_ARTICLE_INDEX_PATH.name,
     )
     _write_optional_index(
-        [*records, *article_records],
+        [*persisted_records, *persisted_article_records],
         index_path=output_root / DEFAULT_NETHERLANDS_LAWS_SEARCH_INDEX_PATH.name,
     )
-    jsonld_path = _write_jsonld(records, output_root=output_root)
+    jsonld_path = _write_jsonld(persisted_records, output_root=output_root)
 
     elapsed = time.time() - start
     metadata = {
-        "seed_urls": selected_seed_urls,
-        "seed_url_count": len(selected_seed_urls),
+        "seed_urls": normalized_seed_urls,
+        "seed_url_count": len(normalized_seed_urls),
         "crawled_index_pages": crawled_index_pages,
+        "seed_pages_visited": seed_visit_count,
+        "seed_pages_failed": failed_seed_pages,
         "explicit_document_urls": selected_document_urls,
+        "candidate_links_found": len(candidate_document_links),
+        "official_law_documents_accepted": len(ordered_document_urls),
         "discovered_document_count": len(ordered_document_urls),
+        "documents_fetched": successful_document_fetches,
+        "documents_parsed": successful_parses,
+        "documents_skipped": len(skipped_documents),
+        "documents_failed": failed_documents,
+        "skipped_document_urls": skipped_documents,
         "records_count": len(records),
         "article_records_count": len(article_records),
         "search_records_count": len(records) + len(article_records),
@@ -1133,9 +1305,18 @@ async def scrape_netherlands_laws(
         "jsonld_files": [str(jsonld_path)],
         "max_documents": max_documents,
         "include_metadata": bool(include_metadata),
+        "max_seed_pages": max_seed_pages,
+        "crawl_depth": crawl_depth,
+        "rate_limit_delay": rate_limit_delay,
+        "skip_existing": skip_existing,
+        "resume": bool(resume),
+        "persisted_records_count": len(persisted_records),
+        "persisted_article_records_count": len(persisted_article_records),
     }
+    metadata_path = _write_run_metadata(metadata, output_root=output_root)
+    metadata["run_metadata_path"] = str(metadata_path)
 
-    if not records:
+    if not records and not persisted_records:
         return {
             "status": "error",
             "error": "No Netherlands law records were scraped",
@@ -1144,6 +1325,17 @@ async def scrape_netherlands_laws(
             "search_data": [],
             "metadata": metadata,
             "output_format": output_format,
+        }
+
+    if not records and persisted_records:
+        return {
+            "status": "success",
+            "data": [],
+            "article_data": [],
+            "search_data": [],
+            "metadata": metadata,
+            "output_format": output_format,
+            "note": "No new Netherlands laws were scraped; existing on-disk corpus was preserved.",
         }
 
     return {
