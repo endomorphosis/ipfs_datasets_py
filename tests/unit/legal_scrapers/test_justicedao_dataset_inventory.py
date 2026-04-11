@@ -7,6 +7,7 @@ import pyarrow.parquet as pq
 from ipfs_datasets_py.processors.legal_data.rich_docket_enrichment import RichDocumentAnalysis
 from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory import (
     BluebookDatasetQueryPlan,
+    JusticeDAORebuildRecommendation,
     JusticeDAORebuildTarget,
     build_justicedao_rebuild_plan,
     canonical_corpus_artifact_build_result_to_dict,
@@ -26,10 +27,12 @@ from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory imp
     execute_justicedao_bluebook_query_plan,
     filter_dataset_profiles,
     justicedao_library_rebuild_result_to_dict,
+    justicedao_rebuild_plan_to_dict,
     query_canonical_legal_corpus,
     rebuild_justicedao_dataset_library,
     render_bluebook_dataset_query_plan_markdown,
     render_dataset_profiles_markdown,
+    render_justicedao_rebuild_plan_markdown,
     summarize_dataset_profile_coverage_by_branch,
     summarize_dataset_profiles_by_branch,
     summarize_dataset_profiles_by_country,
@@ -160,6 +163,132 @@ def _profiles() -> list[DatasetProfile]:
     ]
 
 
+def _profiles_with_germany_family() -> list[DatasetProfile]:
+    return [
+        *_profiles(),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_germany_laws",
+            parquet_files=["parquet/laws/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="laws",
+                    split="train",
+                    features=["citation", "identifier", "law_identifier", "official_identifier", "text", "metadata"],
+                )
+            ],
+        ),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_germany_laws_bm25_index",
+            parquet_files=["parquet/documents/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="documents",
+                    split="train",
+                    features=["citation", "law_identifier", "article_identifier", "source_cid", "text_preview"],
+                )
+            ],
+        ),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_germany_laws_knowledge_graph",
+            parquet_files=["parquet/nodes/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="nodes",
+                    split="train",
+                    features=["law_identifier", "article_identifier", "jsonld_id", "label", "source_cid"],
+                )
+            ],
+        ),
+    ]
+
+
+def _profiles_with_france_family() -> list[DatasetProfile]:
+    return [
+        *_profiles(),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_france_laws",
+            parquet_files=["parquet/laws/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="laws",
+                    split="train",
+                    features=["citation", "identifier", "law_identifier", "official_identifier", "text", "metadata"],
+                )
+            ],
+        ),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_france_laws_bm25_index",
+            parquet_files=["parquet/documents/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="documents",
+                    split="train",
+                    features=["citation", "law_identifier", "article_identifier", "source_cid", "text_preview"],
+                )
+            ],
+        ),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_france_laws_knowledge_graph",
+            parquet_files=["parquet/nodes/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="nodes",
+                    split="train",
+                    features=["law_identifier", "article_identifier", "jsonld_id", "label", "source_cid"],
+                )
+            ],
+        ),
+    ]
+
+
+def _profiles_with_spain_family() -> list[DatasetProfile]:
+    return [
+        *_profiles(),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_spain_laws",
+            parquet_files=["parquet/laws/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="laws",
+                    split="train",
+                    features=["citation", "identifier", "law_identifier", "official_identifier", "text", "metadata"],
+                )
+            ],
+        ),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_spain_laws_bm25_index",
+            parquet_files=["parquet/documents/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="documents",
+                    split="train",
+                    features=["citation", "law_identifier", "article_identifier", "source_cid", "text_preview"],
+                )
+            ],
+        ),
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_spain_laws_knowledge_graph",
+            parquet_files=["parquet/nodes/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[
+                DatasetConfigProfile(
+                    config="nodes",
+                    split="train",
+                    features=["law_identifier", "article_identifier", "jsonld_id", "label", "source_cid"],
+                )
+            ],
+        ),
+    ]
+
+
 def test_derive_justicedao_bluebook_strategies_covers_municipal_and_uscode_paths():
     strategies = derive_justicedao_bluebook_strategies(_profiles())
 
@@ -259,21 +388,25 @@ def test_build_eu_country_corpus_onboarding_plan_proposes_missing_supported_coun
     assert plan["DE"]["status"] == "registered"
     assert plan["DE"]["canonical_corpus_keys"] == ["germany_laws"]
     assert plan["DE"]["proposed_corpus_key"] is None
-    assert plan["FR"]["proposed_dataset_id"] == "justicedao/ipfs_france_laws"
-    assert plan["ES"]["proposed_dataset_id"] == "justicedao/ipfs_spain_laws"
+    assert plan["FR"]["status"] == "registered"
+    assert plan["FR"]["canonical_corpus_keys"] == ["france_laws"]
+    assert plan["FR"]["proposed_corpus_key"] is None
+    assert plan["ES"]["status"] == "registered"
+    assert plan["ES"]["canonical_corpus_keys"] == ["spain_laws"]
+    assert plan["ES"]["proposed_corpus_key"] is None
 
 
 def test_build_eu_country_corpus_onboarding_plan_marks_observed_proposed_dataset_as_in_progress():
     plan = build_eu_country_corpus_onboarding_plan(
         [
             *_profiles(),
-            DatasetProfile(dataset_id="justicedao/ipfs_france_laws_bm25_index"),
+            DatasetProfile(dataset_id="justicedao/ipfs_italy_laws_bm25_index"),
         ]
     )
 
-    assert plan["FR"]["status"] == "in_progress"
-    assert plan["FR"]["existing_dataset_ids"] == ["justicedao/ipfs_france_laws_bm25_index"]
-    assert plan["FR"]["proposed_corpus_key"] == "france_laws"
+    assert plan["IT"]["status"] == "in_progress"
+    assert plan["IT"]["existing_dataset_ids"] == ["justicedao/ipfs_italy_laws_bm25_index"]
+    assert plan["IT"]["proposed_corpus_key"] == "italy_laws"
 
 
 def test_render_dataset_profiles_markdown_includes_branch_summary():
@@ -287,19 +420,21 @@ def test_render_dataset_profiles_markdown_includes_branch_summary():
     assert "NL: 3 datasets (EU)" in markdown
     assert "EU: covered NL; missing DE, ES, FR" in markdown
     assert "DE: canonical registry includes germany_laws; awaiting observed datasets" in markdown
+    assert "FR: canonical registry includes france_laws; awaiting observed datasets" in markdown
+    assert "ES: canonical registry includes spain_laws; awaiting observed datasets" in markdown
     assert "US:" in markdown
 
 
 def test_render_dataset_profiles_markdown_shows_proposed_corpus_for_observed_future_eu_dataset():
     markdown = render_dataset_profiles_markdown(
         [
-            DatasetProfile(dataset_id="justicedao/ipfs_france_laws_bm25_index"),
+            DatasetProfile(dataset_id="justicedao/ipfs_italy_laws_bm25_index"),
         ]
     )
 
     assert "## EU Country Onboarding" in markdown
-    assert "FR: observed justicedao/ipfs_france_laws_bm25_index; awaiting canonical registration as france_laws" in markdown
-    assert "Proposed corpus: france_laws" in markdown
+    assert "IT: observed justicedao/ipfs_italy_laws_bm25_index; awaiting canonical registration as italy_laws" in markdown
+    assert "Proposed corpus: italy_laws" in markdown
 
 
 def test_build_justicedao_bluebook_query_plan_routes_state_and_usc_citations():
@@ -320,10 +455,91 @@ def test_build_justicedao_bluebook_query_plan_routes_state_and_usc_citations():
 
 
 def test_build_justicedao_bluebook_query_plan_marks_sidecars_as_secondary():
-    strategies = derive_justicedao_bluebook_strategies(_profiles())
+    strategies = derive_justicedao_bluebook_strategies(
+        [
+            *_profiles_with_france_family(),
+            *_profiles_with_spain_family()[len(_profiles()):],
+            *_profiles_with_germany_family()[len(_profiles()):],
+        ]
+    )
     assert strategies["justicedao/ipfs_netherlands_laws_bm25_index"].support_level == "sidecar"
     assert strategies["justicedao/ipfs_netherlands_laws_knowledge_graph"].support_level == "sidecar"
+    assert strategies["justicedao/ipfs_france_laws_bm25_index"].support_level == "sidecar"
+    assert strategies["justicedao/ipfs_france_laws_knowledge_graph"].support_level == "sidecar"
+    assert strategies["justicedao/ipfs_spain_laws_bm25_index"].support_level == "sidecar"
+    assert strategies["justicedao/ipfs_spain_laws_knowledge_graph"].support_level == "sidecar"
+    assert strategies["justicedao/ipfs_germany_laws_bm25_index"].support_level == "sidecar"
+    assert strategies["justicedao/ipfs_germany_laws_knowledge_graph"].support_level == "sidecar"
     assert strategies["justicedao/ipfs_netherlands_laws"].support_level == "metadata_only"
+    assert strategies["justicedao/ipfs_france_laws"].support_level == "metadata_only"
+    assert strategies["justicedao/ipfs_spain_laws"].support_level == "metadata_only"
+    assert strategies["justicedao/ipfs_germany_laws"].support_level == "metadata_only"
+
+
+def test_derive_justicedao_bluebook_strategies_can_classify_france_laws_when_observed():
+    strategies = derive_justicedao_bluebook_strategies(_profiles_with_france_family())
+
+    france = strategies["justicedao/ipfs_france_laws"]
+    assert france.support_level == "metadata_only"
+    assert france.canonical_corpus_key == "france_laws"
+    assert france.legal_branch == "eu"
+    assert france.country_codes == ["FR"]
+
+    france_bm25 = strategies["justicedao/ipfs_france_laws_bm25_index"]
+    assert france_bm25.support_level == "sidecar"
+    assert france_bm25.canonical_corpus_key == "france_laws"
+    assert france_bm25.legal_branch == "eu"
+    assert france_bm25.country_codes == ["FR"]
+
+    france_graph = strategies["justicedao/ipfs_france_laws_knowledge_graph"]
+    assert france_graph.support_level == "sidecar"
+    assert france_graph.canonical_corpus_key == "france_laws"
+    assert france_graph.legal_branch == "eu"
+    assert france_graph.country_codes == ["FR"]
+
+
+def test_derive_justicedao_bluebook_strategies_can_classify_spain_laws_when_observed():
+    strategies = derive_justicedao_bluebook_strategies(_profiles_with_spain_family())
+
+    spain = strategies["justicedao/ipfs_spain_laws"]
+    assert spain.support_level == "metadata_only"
+    assert spain.canonical_corpus_key == "spain_laws"
+    assert spain.legal_branch == "eu"
+    assert spain.country_codes == ["ES"]
+
+    spain_bm25 = strategies["justicedao/ipfs_spain_laws_bm25_index"]
+    assert spain_bm25.support_level == "sidecar"
+    assert spain_bm25.canonical_corpus_key == "spain_laws"
+    assert spain_bm25.legal_branch == "eu"
+    assert spain_bm25.country_codes == ["ES"]
+
+    spain_graph = strategies["justicedao/ipfs_spain_laws_knowledge_graph"]
+    assert spain_graph.support_level == "sidecar"
+    assert spain_graph.canonical_corpus_key == "spain_laws"
+    assert spain_graph.legal_branch == "eu"
+    assert spain_graph.country_codes == ["ES"]
+
+
+def test_derive_justicedao_bluebook_strategies_can_classify_germany_laws_when_observed():
+    strategies = derive_justicedao_bluebook_strategies(_profiles_with_germany_family())
+
+    germany = strategies["justicedao/ipfs_germany_laws"]
+    assert germany.support_level == "metadata_only"
+    assert germany.canonical_corpus_key == "germany_laws"
+    assert germany.legal_branch == "eu"
+    assert germany.country_codes == ["DE"]
+
+    germany_bm25 = strategies["justicedao/ipfs_germany_laws_bm25_index"]
+    assert germany_bm25.support_level == "sidecar"
+    assert germany_bm25.canonical_corpus_key == "germany_laws"
+    assert germany_bm25.legal_branch == "eu"
+    assert germany_bm25.country_codes == ["DE"]
+
+    germany_graph = strategies["justicedao/ipfs_germany_laws_knowledge_graph"]
+    assert germany_graph.support_level == "sidecar"
+    assert germany_graph.canonical_corpus_key == "germany_laws"
+    assert germany_graph.legal_branch == "eu"
+    assert germany_graph.country_codes == ["DE"]
 
 
 def test_bluebook_query_plan_renderers_include_dataset_guidance():
@@ -755,6 +971,76 @@ def test_query_canonical_legal_corpus_can_query_netherlands_as_eu_branch(tmp_pat
     assert payload["results"][0]["row"]["law_identifier"] == "BWBR0002656"
 
 
+def test_query_canonical_legal_corpus_can_query_france_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "france_laws.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafyfrcodecivil",
+                    "law_identifier": "CC-Art-16",
+                    "official_identifier": "Code civil art. 16",
+                    "citation": "Art. 16 Code civil",
+                    "title": "Code civil art. 16",
+                    "text": "La loi assure la primaute de la personne.",
+                    "summary": "Disposition du Code civil relative a la primaute de la personne.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "france_laws",
+        query_text="Art. 16 Code civil",
+        mode="lexical",
+        parquet_file_overrides={"france_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["FR"]
+    assert payload["mode"] == "lexical"
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "CC-Art-16"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1",
+                    "law_identifier": "GG-Art-1",
+                    "official_identifier": "Grundgesetz Art. 1",
+                    "citation": "Art. 1 GG",
+                    "title": "Grundgesetz Art. 1",
+                    "text": "Die Würde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 des Grundgesetzes schützt die Menschenwürde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Art. 1 GG",
+        mode="lexical",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "lexical"
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1"
+
+
 def test_query_canonical_legal_corpus_can_use_inventory_profile_when_remote_path_misses_templates(tmp_path, monkeypatch):
     state_path = tmp_path / "STATE-MN-live.parquet"
     remote_path = "exports/live/legal/STATE-MN-live.parquet"
@@ -1184,6 +1470,65 @@ def test_build_canonical_corpus_artifacts_reports_degraded_state_laws_quality(tm
     assert quality["status"] == "degraded"
     assert "navigation_like_content_dominates" in quality["issues"]
     assert quality["navigation_like_row_count"] == 2
+    recommendation = result["recovery_recommendation"]
+    assert recommendation["recommended_action"] == "recover_source_rows"
+    assert recommendation["dataset_id"] == "justicedao/ipfs_state_laws"
+    assert recommendation["state_code"] == "AK"
+    assert "statutes" in recommendation["recovery_query"].lower()
+    draft = result["recovery_manifest_draft"]
+    assert draft["manifest_path"].endswith("recovery_manifest.json")
+    assert draft["promotion_preview"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert draft["promotion_preview"]["state_code"] == "AK"
+
+
+def test_build_canonical_corpus_artifacts_can_execute_degraded_recovery(tmp_path, monkeypatch):
+    state_path = tmp_path / "STATE-AK.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "ipfs_cid": "nav1",
+                    "identifier": "",
+                    "source_id": "urn:state:ak:statute:Alaska Statutes § Section-31",
+                    "name": "Statutes",
+                    "text": "home senate house bills & laws media center publications get started This page is no longer used please use www.akleg.gov Search 34th Legislature(2025-2026)",
+                }
+            ]
+        ),
+        state_path,
+    )
+
+    async def _fake_recover_missing_legal_citation_source(**kwargs):
+        return {
+            "status": "tracked",
+            "citation_text": kwargs.get("citation_text"),
+            "corpus_key": kwargs.get("corpus_key"),
+            "state_code": kwargs.get("state_code"),
+            "candidate_count": 0,
+            "archived_count": 0,
+        }
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory.recover_missing_legal_citation_source",
+        _fake_recover_missing_legal_citation_source,
+    )
+
+    result = canonical_corpus_artifact_build_result_to_dict(
+        build_canonical_corpus_artifacts(
+            "state_laws",
+            canonical_parquet_path=str(state_path),
+            state_code="AK",
+            build_faiss=False,
+            execute_recovery_for_degraded_corpora=True,
+            recovery_max_candidates=2,
+            recovery_archive_top_k=0,
+        )
+    )
+
+    recovery_execution = result["recovery_execution"]
+    assert recovery_execution["status"] == "tracked"
+    assert recovery_execution["corpus_key"] == "state_laws"
+    assert recovery_execution["state_code"] == "AK"
 
 
 def test_build_justicedao_rebuild_plan_batches_targets_from_profiles():
@@ -1232,3 +1577,94 @@ def test_build_justicedao_rebuild_plan_batches_targets_from_profiles():
     assert any(item.corpus_key == "state_laws" and item.state_code == "OR" for item in targets)
     assert len(plan.batches) >= 1
     assert sum(len(batch) for batch in plan.batches) == len(plan.targets)
+    assert plan.recommendations == []
+
+
+def test_build_justicedao_rebuild_plan_can_include_observed_germany_laws_targets():
+    profiles = [
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_germany_laws",
+            canonical_corpus_key="germany_laws",
+            legal_branch="eu",
+            country_codes=["DE"],
+            parquet_files=["parquet/laws/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[],
+        )
+    ]
+
+    plan = build_justicedao_rebuild_plan(
+        profiles=profiles,
+        corpus_keys=["germany_laws"],
+        batch_size=1,
+    )
+
+    assert len(plan.targets) == 1
+    assert plan.targets[0].corpus_key == "germany_laws"
+    assert plan.targets[0].dataset_id == "justicedao/ipfs_germany_laws"
+    assert plan.targets[0].parquet_path == "parquet/laws/train-00000-of-00001.parquet"
+    assert plan.recommendations == []
+
+
+def test_build_justicedao_rebuild_plan_can_include_observed_france_laws_targets():
+    profiles = [
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_france_laws",
+            canonical_corpus_key="france_laws",
+            legal_branch="eu",
+            country_codes=["FR"],
+            parquet_files=["parquet/laws/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[],
+        )
+    ]
+
+    plan = build_justicedao_rebuild_plan(
+        profiles=profiles,
+        corpus_keys=["france_laws"],
+        batch_size=1,
+    )
+
+    assert len(plan.targets) == 1
+    assert plan.targets[0].corpus_key == "france_laws"
+    assert plan.targets[0].dataset_id == "justicedao/ipfs_france_laws"
+    assert plan.targets[0].parquet_path == "parquet/laws/train-00000-of-00001.parquet"
+    assert plan.recommendations == []
+
+
+def test_build_justicedao_rebuild_plan_includes_eu_onboarding_recommendations_when_not_corpus_scoped():
+    plan = build_justicedao_rebuild_plan(
+        profiles=_profiles(),
+        batch_size=2,
+    )
+
+    assert any(isinstance(item, JusticeDAORebuildRecommendation) for item in plan.recommendations)
+    reasons = {item.country_code: item.reason for item in plan.recommendations}
+    statuses = {item.country_code: item.status for item in plan.recommendations}
+    assert reasons["DE"] == "canonical_registered_but_unobserved"
+    assert statuses["DE"] == "registered"
+    assert reasons["FR"] == "canonical_registered_but_unobserved"
+    assert statuses["FR"] == "registered"
+    assert reasons["ES"] == "missing_supported_country_dataset"
+
+    payload = justicedao_rebuild_plan_to_dict(plan)
+    assert payload["recommendation_count"] == len(plan.recommendations)
+    assert any(item["country_code"] == "DE" for item in payload["recommendations"])
+    assert any(item["country_code"] == "FR" for item in payload["recommendations"])
+
+
+def test_render_justicedao_rebuild_plan_markdown_includes_targets_batches_and_recommendations():
+    plan = build_justicedao_rebuild_plan(
+        profiles=_profiles(),
+        batch_size=2,
+    )
+
+    markdown = render_justicedao_rebuild_plan_markdown(plan)
+
+    assert "# JusticeDAO Rebuild Plan" in markdown
+    assert "## Rebuild Targets" in markdown
+    assert "## Batches" in markdown
+    assert "## Recommendations" in markdown
+    assert "DE: canonical registry includes germany_laws; awaiting observed datasets" in markdown
+    assert "FR: canonical registry includes france_laws; awaiting observed datasets" in markdown
+    assert "ES: missing dataset; propose spain_laws -> justicedao/ipfs_spain_laws" in markdown

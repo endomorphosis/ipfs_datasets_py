@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import anyio
+
 from ipfs_datasets_py.processors.legal_scrapers import (
+    build_default_eu_lookup_handlers,
     build_eu_legal_reasoning_bundle,
+    build_eu_legal_citation_lookup_plan,
+    eu_legal_citation_lookup_plan_to_dict,
+    execute_eu_legal_citation_lookup_plan,
+    eu_legal_citation_lookup_result_to_dict,
     eu_legal_reasoning_bundle_to_dict,
     extract_eu_legal_citations,
     get_eu_jurisdiction_profiles,
@@ -87,3 +94,69 @@ def test_build_eu_legal_reasoning_bundle_surfaces_active_jurisdiction_profiles_a
     assert payload["multilingual_normalization"]["muss"] == "required"
     assert payload["multilingual_normalization"]["peut"] == "allowed"
     assert payload["multilingual_normalization"]["puede"] == "allowed"
+
+
+def test_build_eu_legal_citation_lookup_plan_includes_member_state_handlers():
+    text = "Artikel 6:162 BW and CELEX 32016R0679."
+    plan = build_eu_legal_citation_lookup_plan(text, language="nl")
+    payload = eu_legal_citation_lookup_plan_to_dict(plan)
+
+    handler_keys = {action["handler_key"] for action in payload["actions"]}
+    dataset_ids = {action["dataset_id"] for action in payload["actions"]}
+
+    assert "netherlands_laws" in handler_keys
+    assert "eurlex_registry" in handler_keys
+    assert "netherlands_laws" in dataset_ids
+    assert "eurlex" in dataset_ids
+
+
+def test_execute_eu_legal_citation_lookup_plan_uses_registered_handlers():
+    text = "ECLI:NL:HR:2024:123 and BWBR0001854."
+    plan = build_eu_legal_citation_lookup_plan(text, language="nl")
+
+    def handler(action):
+        return {"hits": [{"query": action.query_text, "dataset": action.dataset_id}]}
+
+    async def _run():
+        return await execute_eu_legal_citation_lookup_plan(
+            plan,
+            lookup_handlers={
+                "netherlands_laws": handler,
+                "ecli_registry": handler,
+            },
+        )
+
+    result = anyio.run(_run)
+    payload = eu_legal_citation_lookup_result_to_dict(result)
+
+    assert payload["executed_actions"]
+    assert all(action["executed"] is True for action in payload["executed_actions"])
+    assert any(hit["dataset"] == "netherlands_laws" for action in payload["executed_actions"] for hit in action["results"]["hits"])
+
+
+def test_default_lookup_handlers_call_netherlands_backend(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search(parameters, *, tool_version="1.0.0"):
+        return {
+            "results": [{"id": "nl_doc", "query": parameters.get("query_text")}],
+            "query": parameters.get("query_text"),
+        }
+
+    monkeypatch.setattr(legal_dataset_api, "search_netherlands_law_corpus_from_parameters", _fake_search)
+
+    plan = build_eu_legal_citation_lookup_plan("BWBR0001854", language="nl")
+    handlers = build_default_eu_lookup_handlers()
+
+    async def _run():
+        return await execute_eu_legal_citation_lookup_plan(plan, lookup_handlers=handlers)
+
+    result = anyio.run(_run)
+    payload = eu_legal_citation_lookup_result_to_dict(result)
+
+    assert payload["executed_actions"]
+    assert any(
+        action["dataset_id"] == "netherlands_laws"
+        and action["results"]["results"][0]["id"] == "nl_doc"
+        for action in payload["executed_actions"]
+    )

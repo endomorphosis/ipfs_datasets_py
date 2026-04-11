@@ -49,6 +49,10 @@ def main() -> int:
     parser.add_argument("--llm-model-name", default=None)
     parser.add_argument("--llm-max-rows", type=int, default=0)
     parser.add_argument("--llm-max-chars", type=int, default=700)
+    parser.add_argument("--execute-recovery-for-degraded-corpora", action="store_true")
+    parser.add_argument("--recovery-max-candidates", type=int, default=8)
+    parser.add_argument("--recovery-archive-top-k", type=int, default=3)
+    parser.add_argument("--recovery-publish-to-hf", action="store_true")
     parser.add_argument("--no-faiss", action="store_true")
     parser.add_argument("--publish-to-hf", action="store_true")
     parser.add_argument("--hf-token", default=None)
@@ -87,6 +91,10 @@ def main() -> int:
         llm_model_name=(str(args.llm_model_name).strip() or None) if args.llm_model_name is not None else None,
         llm_max_rows=int(args.llm_max_rows or 0),
         llm_max_chars=int(args.llm_max_chars or 700),
+        execute_recovery_for_degraded_corpora=bool(args.execute_recovery_for_degraded_corpora),
+        recovery_max_candidates=int(args.recovery_max_candidates or 8),
+        recovery_archive_top_k=int(args.recovery_archive_top_k or 3),
+        recovery_publish_to_hf=bool(args.recovery_publish_to_hf),
         publish_to_hf=bool(args.publish_to_hf),
         hf_token=(str(args.hf_token).strip() or None) if args.hf_token is not None else None,
         include_canonical_parquet=bool(args.include_canonical_parquet),

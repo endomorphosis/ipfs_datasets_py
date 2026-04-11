@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from pathlib import Path
+import asyncio
 import hashlib
 import re
 import json
@@ -20,6 +22,11 @@ from .canonical_legal_corpora import (
     list_canonical_legal_corpora_by_country,
 )
 from .eu_legal_citation_bridge import get_eu_jurisdiction_profiles
+from .legal_source_recovery_promotion import (
+    build_recovery_manifest_promotion_row,
+    build_recovery_manifest_release_plan,
+)
+from .legal_source_recovery import recover_missing_legal_citation_source
 from ..legal_data.document_structure import build_document_knowledge_graph, parse_legal_document
 from ..retrieval import (
     bm25_search_documents,
@@ -150,6 +157,9 @@ class CanonicalCorpusArtifactBuildResult:
     knowledge_graph_relationships_path: Optional[str] = None
     knowledge_graph_summary_path: Optional[str] = None
     corpus_quality_summary: Optional[Dict[str, Any]] = None
+    recovery_recommendation: Optional[Dict[str, Any]] = None
+    recovery_manifest_draft: Optional[Dict[str, Any]] = None
+    recovery_execution: Optional[Dict[str, Any]] = None
     llm_knowledge_graph_summary: Optional[Dict[str, Any]] = None
     semantic_index: Optional[Dict[str, Any]] = None
     publish_result: Optional[Dict[str, Any]] = None
@@ -178,9 +188,22 @@ class JusticeDAORebuildTarget:
 
 
 @dataclass(frozen=True)
+class JusticeDAORebuildRecommendation:
+    country_code: str
+    label: str
+    status: str
+    reason: str
+    canonical_corpus_keys: List[str] = field(default_factory=list)
+    existing_dataset_ids: List[str] = field(default_factory=list)
+    proposed_corpus_key: Optional[str] = None
+    proposed_dataset_id: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class JusticeDAORebuildPlan:
     targets: List[JusticeDAORebuildTarget] = field(default_factory=list)
     batches: List[List[JusticeDAORebuildTarget]] = field(default_factory=list)
+    recommendations: List[JusticeDAORebuildRecommendation] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -949,6 +972,123 @@ def derive_justicedao_bluebook_strategies(
             ],
         )
 
+    if "justicedao/ipfs_france_laws" in profile_map:
+        strategies["justicedao/ipfs_france_laws"] = _strategy(
+            "justicedao/ipfs_france_laws",
+            "metadata_only",
+            "non_bluebook_identifier_or_citation_lookup",
+            citation_lookup_fields=["citation", "identifier", "law_identifier", "official_identifier"],
+            text_fields=["title", "text", "metadata"],
+            join_fields=["cid", "content_address", "source_cid"],
+            notes=[
+                "This corpus is queryable, but not with the current Bluebook extractor alone.",
+                "Use it after extending citation extraction to French official citation formats, or after external identifier normalization.",
+            ],
+        )
+
+    if "justicedao/ipfs_france_laws_bm25_index" in profile_map:
+        strategies["justicedao/ipfs_france_laws_bm25_index"] = _strategy(
+            "justicedao/ipfs_france_laws_bm25_index",
+            "sidecar",
+            "secondary_sparse_retrieval_after_primary_citation_match",
+            citation_lookup_fields=["citation", "law_identifier", "article_identifier", "source_cid"],
+            text_fields=["title", "text_preview"],
+            join_fields=["source_cid", "law_cid", "cid"],
+            notes=[
+                "Use only after a primary citation or identifier match to expand supporting context.",
+            ],
+        )
+
+    if "justicedao/ipfs_france_laws_knowledge_graph" in profile_map:
+        strategies["justicedao/ipfs_france_laws_knowledge_graph"] = _strategy(
+            "justicedao/ipfs_france_laws_knowledge_graph",
+            "sidecar",
+            "secondary_graph_expansion_after_primary_citation_match",
+            citation_lookup_fields=["law_identifier", "article_identifier", "jsonld_id", "label"],
+            join_fields=["source_cid", "node_cid", "cid"],
+            notes=[
+                "Use only after a primary law/article match to walk related entities and references.",
+            ],
+        )
+
+    if "justicedao/ipfs_spain_laws" in profile_map:
+        strategies["justicedao/ipfs_spain_laws"] = _strategy(
+            "justicedao/ipfs_spain_laws",
+            "metadata_only",
+            "non_bluebook_identifier_or_citation_lookup",
+            citation_lookup_fields=["citation", "identifier", "law_identifier", "official_identifier"],
+            text_fields=["title", "text", "metadata"],
+            join_fields=["cid", "content_address", "source_cid"],
+            notes=[
+                "This corpus is queryable, but not with the current Bluebook extractor alone.",
+                "Use it after extending citation extraction to Spanish official citation formats, or after external identifier normalization.",
+            ],
+        )
+
+    if "justicedao/ipfs_spain_laws_bm25_index" in profile_map:
+        strategies["justicedao/ipfs_spain_laws_bm25_index"] = _strategy(
+            "justicedao/ipfs_spain_laws_bm25_index",
+            "sidecar",
+            "secondary_sparse_retrieval_after_primary_citation_match",
+            citation_lookup_fields=["citation", "law_identifier", "article_identifier", "source_cid"],
+            text_fields=["title", "text_preview"],
+            join_fields=["source_cid", "law_cid", "cid"],
+            notes=[
+                "Use only after a primary citation or identifier match to expand supporting context.",
+            ],
+        )
+
+    if "justicedao/ipfs_spain_laws_knowledge_graph" in profile_map:
+        strategies["justicedao/ipfs_spain_laws_knowledge_graph"] = _strategy(
+            "justicedao/ipfs_spain_laws_knowledge_graph",
+            "sidecar",
+            "secondary_graph_expansion_after_primary_citation_match",
+            citation_lookup_fields=["law_identifier", "article_identifier", "jsonld_id", "label"],
+            join_fields=["source_cid", "node_cid", "cid"],
+            notes=[
+                "Use only after a primary law/article match to walk related entities and references.",
+            ],
+        )
+
+    if "justicedao/ipfs_germany_laws" in profile_map:
+        strategies["justicedao/ipfs_germany_laws"] = _strategy(
+            "justicedao/ipfs_germany_laws",
+            "metadata_only",
+            "non_bluebook_identifier_or_citation_lookup",
+            citation_lookup_fields=["citation", "identifier", "law_identifier", "official_identifier"],
+            text_fields=["title", "text", "metadata"],
+            join_fields=["cid", "content_address", "source_cid"],
+            notes=[
+                "This corpus is queryable, but not with the current Bluebook extractor alone.",
+                "Use it after extending citation extraction to German official citation formats, or after external identifier normalization.",
+            ],
+        )
+
+    if "justicedao/ipfs_germany_laws_bm25_index" in profile_map:
+        strategies["justicedao/ipfs_germany_laws_bm25_index"] = _strategy(
+            "justicedao/ipfs_germany_laws_bm25_index",
+            "sidecar",
+            "secondary_sparse_retrieval_after_primary_citation_match",
+            citation_lookup_fields=["citation", "law_identifier", "article_identifier", "source_cid"],
+            text_fields=["title", "text_preview"],
+            join_fields=["source_cid", "law_cid", "cid"],
+            notes=[
+                "Use only after a primary citation or identifier match to expand supporting context.",
+            ],
+        )
+
+    if "justicedao/ipfs_germany_laws_knowledge_graph" in profile_map:
+        strategies["justicedao/ipfs_germany_laws_knowledge_graph"] = _strategy(
+            "justicedao/ipfs_germany_laws_knowledge_graph",
+            "sidecar",
+            "secondary_graph_expansion_after_primary_citation_match",
+            citation_lookup_fields=["law_identifier", "article_identifier", "jsonld_id", "label"],
+            join_fields=["source_cid", "node_cid", "cid"],
+            notes=[
+                "Use only after a primary law/article match to walk related entities and references.",
+            ],
+        )
+
     if "justicedao/ipfs_netherlands_laws_bm25_index" in profile_map:
         strategies["justicedao/ipfs_netherlands_laws_bm25_index"] = _strategy(
             "justicedao/ipfs_netherlands_laws_bm25_index",
@@ -1248,6 +1388,54 @@ _CANONICAL_QUERY_DATASETS: Dict[str, Dict[str, Any]] = {
         "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
         "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
     },
+    "france_laws": {
+        "dataset_id": "justicedao/ipfs_france_laws",
+        "parquet_files": ["parquet/laws/train-00000-of-00001.parquet", "parquet/articles/train-00000-of-00001.parquet"],
+        "embedding_files": [],
+        "publish_cid_index_files": ["artifacts/cid_index.parquet"],
+        "publish_bm25_files": ["artifacts/bm25_documents.parquet"],
+        "publish_kg_entities_files": ["artifacts/knowledge_graph_entities.parquet"],
+        "publish_kg_relationships_files": ["artifacts/knowledge_graph_relationships.parquet"],
+        "publish_kg_summary_files": ["artifacts/knowledge_graph_summary.json"],
+        "publish_embeddings_files": ["france_laws_embeddings.parquet"],
+        "publish_faiss_index_files": ["artifacts/faiss.index"],
+        "publish_faiss_metadata_files": ["artifacts/faiss_metadata.parquet"],
+        "join_field": "source_cid",
+        "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
+        "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
+    },
+    "spain_laws": {
+        "dataset_id": "justicedao/ipfs_spain_laws",
+        "parquet_files": ["parquet/laws/train-00000-of-00001.parquet", "parquet/articles/train-00000-of-00001.parquet"],
+        "embedding_files": [],
+        "publish_cid_index_files": ["artifacts/cid_index.parquet"],
+        "publish_bm25_files": ["artifacts/bm25_documents.parquet"],
+        "publish_kg_entities_files": ["artifacts/knowledge_graph_entities.parquet"],
+        "publish_kg_relationships_files": ["artifacts/knowledge_graph_relationships.parquet"],
+        "publish_kg_summary_files": ["artifacts/knowledge_graph_summary.json"],
+        "publish_embeddings_files": ["spain_laws_embeddings.parquet"],
+        "publish_faiss_index_files": ["artifacts/faiss.index"],
+        "publish_faiss_metadata_files": ["artifacts/faiss_metadata.parquet"],
+        "join_field": "source_cid",
+        "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
+        "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
+    },
+    "germany_laws": {
+        "dataset_id": "justicedao/ipfs_germany_laws",
+        "parquet_files": ["parquet/laws/train-00000-of-00001.parquet", "parquet/articles/train-00000-of-00001.parquet"],
+        "embedding_files": [],
+        "publish_cid_index_files": ["artifacts/cid_index.parquet"],
+        "publish_bm25_files": ["artifacts/bm25_documents.parquet"],
+        "publish_kg_entities_files": ["artifacts/knowledge_graph_entities.parquet"],
+        "publish_kg_relationships_files": ["artifacts/knowledge_graph_relationships.parquet"],
+        "publish_kg_summary_files": ["artifacts/knowledge_graph_summary.json"],
+        "publish_embeddings_files": ["germany_laws_embeddings.parquet"],
+        "publish_faiss_index_files": ["artifacts/faiss.index"],
+        "publish_faiss_metadata_files": ["artifacts/faiss_metadata.parquet"],
+        "join_field": "source_cid",
+        "title_fields": ["title", "identifier", "law_identifier", "official_identifier", "citation"],
+        "text_fields": ["text", "title", "summary", "citation", "law_identifier", "article_identifier"],
+    },
 }
 
 
@@ -1361,9 +1549,9 @@ def _inventory_score_repo_file(
             score += 80
         if corpus_key.startswith("state_") and filename.startswith("state-"):
             score += 90
-        if corpus_key == "netherlands_laws" and "/laws/" in lowered:
+        if corpus_key in {"netherlands_laws", "france_laws", "spain_laws", "germany_laws"} and "/laws/" in lowered:
             score += 80
-        if corpus_key == "netherlands_laws" and "/articles/" in lowered:
+        if corpus_key in {"netherlands_laws", "france_laws", "spain_laws", "germany_laws"} and "/articles/" in lowered:
             score += 40
         if any(mode in query_modes for mode in ("identifier_lookup", "section_lookup", "state_section_lookup", "citation_lookup")):
             score += 25
@@ -2052,6 +2240,134 @@ def _audit_canonical_corpus_quality(
         "section_like_identifier_ratio": section_like_ratio,
         "sample_rows": samples,
     }
+
+
+def _build_corpus_quality_recovery_recommendation(
+    *,
+    corpus_key: str,
+    dataset_id: str,
+    state_code: Optional[str],
+    quality_summary: Mapping[str, Any],
+) -> Optional[Dict[str, Any]]:
+    issues = [str(item) for item in list(quality_summary.get("issues") or []) if str(item).strip()]
+    if not issues:
+        return None
+    normalized_corpus = str(corpus_key or "").strip().lower()
+    normalized_state = _normalize_state_code(state_code)
+    query_parts: List[str] = []
+    if normalized_corpus == "state_laws":
+        state_hint = f" {normalized_state}" if normalized_state else ""
+        query_parts.append(f"{state_hint.strip()} statutes site:.gov OR site:.us".strip())
+        query_parts.append("official code")
+        query_parts.append("legislature")
+    else:
+        query_parts.append(str(normalized_corpus or dataset_id))
+
+    return {
+        "recommended_action": "recover_source_rows",
+        "corpus_key": normalized_corpus,
+        "dataset_id": dataset_id,
+        "state_code": normalized_state,
+        "reason": f"Corpus quality degraded: {', '.join(issues)}",
+        "recovery_query": " ".join(part for part in query_parts if part).strip(),
+        "publish_target": {
+            "dataset_id": dataset_id,
+            "state_code": normalized_state,
+        },
+        "sample_problem_rows": list(quality_summary.get("sample_rows") or [])[:5],
+    }
+
+
+def _write_corpus_quality_recovery_manifest_draft(
+    *,
+    recommendation: Mapping[str, Any],
+    artifact_base_dir: Path,
+) -> Optional[Dict[str, Any]]:
+    if not recommendation:
+        return None
+    corpus_key = str(recommendation.get("corpus_key") or "").strip().lower()
+    dataset_id = str(recommendation.get("dataset_id") or "").strip()
+    state_code = _normalize_state_code(recommendation.get("state_code"))
+    query = str(recommendation.get("recovery_query") or "").strip()
+    if not (corpus_key and dataset_id and query):
+        return None
+
+    if corpus_key == "state_laws" and state_code:
+        citation_text = f"{state_code} official statutes"
+    else:
+        citation_text = f"{corpus_key} recovery"
+
+    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    manifest_dir = (artifact_base_dir / "source_recovery" / f"{stamp}_{corpus_key}_{(state_code or 'corpus').lower()}").resolve()
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = manifest_dir / "recovery_manifest.json"
+    payload = {
+        "citation_text": citation_text,
+        "normalized_citation": citation_text,
+        "corpus_key": corpus_key,
+        "hf_dataset_id": dataset_id,
+        "state_code": state_code,
+        "search_query": query,
+        "generated_at": datetime.utcnow().isoformat(),
+        "candidates": [],
+        "archived_sources": [],
+        "draft_source": "canonical_corpus_quality_recovery",
+        "reason": str(recommendation.get("reason") or ""),
+        "sample_problem_rows": list(recommendation.get("sample_problem_rows") or []),
+    }
+    manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    promotion_preview = None
+    release_plan_preview = None
+    try:
+        promotion_preview = build_recovery_manifest_promotion_row(str(manifest_path))
+    except Exception:
+        promotion_preview = None
+    try:
+        release_plan_preview = build_recovery_manifest_release_plan(str(manifest_path))
+    except Exception:
+        release_plan_preview = None
+
+    return {
+        "manifest_path": str(manifest_path),
+        "manifest_directory": str(manifest_dir),
+        "promotion_preview": promotion_preview,
+        "release_plan_preview": release_plan_preview,
+    }
+
+
+def _execute_corpus_quality_recovery(
+    *,
+    recommendation: Mapping[str, Any],
+    hf_token: Optional[str],
+    max_candidates: int,
+    archive_top_k: int,
+    publish_to_hf: bool,
+) -> Optional[Dict[str, Any]]:
+    if not recommendation:
+        return None
+    citation_text = (
+        f"{str(recommendation.get('state_code') or '').strip()} official statutes".strip()
+        if str(recommendation.get("corpus_key") or "").strip().lower() == "state_laws"
+        else str(recommendation.get("corpus_key") or "corpus recovery")
+    )
+    if not citation_text.strip():
+        return None
+    return asyncio.run(
+        recover_missing_legal_citation_source(
+            citation_text=citation_text,
+            normalized_citation=citation_text,
+            corpus_key=str(recommendation.get("corpus_key") or "") or None,
+            state_code=str(recommendation.get("state_code") or "") or None,
+            metadata={
+                "candidate_corpora": [str(recommendation.get("corpus_key") or "")],
+            },
+            max_candidates=max(1, int(max_candidates or 8)),
+            archive_top_k=max(0, int(archive_top_k or 3)),
+            publish_to_hf=bool(publish_to_hf),
+            hf_token=hf_token,
+        )
+    )
 
 
 def _score_row_for_llm_knowledge_graph(
@@ -2861,9 +3177,93 @@ def justicedao_rebuild_plan_to_dict(plan: JusticeDAORebuildPlan) -> Dict[str, An
     return {
         "target_count": len(plan.targets),
         "batch_count": len(plan.batches),
+        "recommendation_count": len(plan.recommendations),
         "targets": [asdict(item) for item in plan.targets],
         "batches": [[asdict(item) for item in batch] for batch in plan.batches],
+        "recommendations": [asdict(item) for item in plan.recommendations],
     }
+
+
+def render_justicedao_rebuild_plan_markdown(plan: JusticeDAORebuildPlan) -> str:
+    lines: List[str] = ["# JusticeDAO Rebuild Plan", ""]
+    lines.append(f"Targets: {len(plan.targets)}")
+    lines.append(f"Batches: {len(plan.batches)}")
+    lines.append(f"Recommendations: {len(plan.recommendations)}")
+    lines.append("")
+
+    if plan.targets:
+        lines.append("## Rebuild Targets")
+        lines.append("")
+        for target in plan.targets:
+            detail = f"- {target.corpus_key}: {target.dataset_id} -> {target.parquet_path}"
+            if target.state_code:
+                detail += f" (state={target.state_code})"
+            lines.append(detail)
+        lines.append("")
+
+    if plan.batches:
+        lines.append("## Batches")
+        lines.append("")
+        for index, batch in enumerate(plan.batches, start=1):
+            labels = ", ".join(
+                f"{item.corpus_key}{f'[{item.state_code}]' if item.state_code else ''}"
+                for item in batch
+            )
+            lines.append(f"- Batch {index}: {labels}")
+        lines.append("")
+
+    if plan.recommendations:
+        lines.append("## Recommendations")
+        lines.append("")
+        for item in plan.recommendations:
+            if item.status == "registered":
+                lines.append(
+                    f"- {item.country_code}: canonical registry includes {', '.join(item.canonical_corpus_keys)};"
+                    f" awaiting observed datasets"
+                )
+            elif item.status == "in_progress":
+                lines.append(
+                    f"- {item.country_code}: observed {', '.join(item.existing_dataset_ids)};"
+                    f" awaiting canonical registration as {item.proposed_corpus_key}"
+                )
+            else:
+                lines.append(
+                    f"- {item.country_code}: missing dataset; propose {item.proposed_corpus_key}"
+                    f" -> {item.proposed_dataset_id}"
+                )
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _build_eu_rebuild_recommendations(
+    profiles: Sequence[DatasetProfile],
+) -> List[JusticeDAORebuildRecommendation]:
+    recommendations: List[JusticeDAORebuildRecommendation] = []
+    onboarding = build_eu_country_corpus_onboarding_plan(profiles)
+    for country_code, payload in onboarding.items():
+        status = str(payload.get("status") or "").strip().lower()
+        if status == "covered":
+            continue
+        if status == "registered":
+            reason = "canonical_registered_but_unobserved"
+        elif status == "in_progress":
+            reason = "observed_dataset_awaits_canonical_registration"
+        else:
+            reason = "missing_supported_country_dataset"
+        recommendations.append(
+            JusticeDAORebuildRecommendation(
+                country_code=country_code,
+                label=str(payload.get("label") or country_code),
+                status=status,
+                reason=reason,
+                canonical_corpus_keys=[str(item) for item in list(payload.get("canonical_corpus_keys") or [])],
+                existing_dataset_ids=[str(item) for item in list(payload.get("existing_dataset_ids") or [])],
+                proposed_corpus_key=str(payload.get("proposed_corpus_key") or "").strip() or None,
+                proposed_dataset_id=str(payload.get("proposed_dataset_id") or "").strip() or None,
+            )
+        )
+    return recommendations
 
 
 def _state_code_from_path(value: str) -> Optional[str]:
@@ -2892,6 +3292,7 @@ def build_justicedao_rebuild_plan(
     batch_size: int = 0,
     max_files_per_corpus: int = 0,
 ) -> JusticeDAORebuildPlan:
+    active_profiles = list(profiles or [])
     selected_corpora = {
         str(item).strip().lower()
         for item in (corpus_keys or list(_CANONICAL_QUERY_DATASETS.keys()))
@@ -2905,7 +3306,7 @@ def build_justicedao_rebuild_plan(
 
     targets: List[JusticeDAORebuildTarget] = []
     seen: set[tuple[str, str, Optional[str]]] = set()
-    profile_map = {str(profile.dataset_id): profile for profile in list(profiles or [])}
+    profile_map = {str(profile.dataset_id): profile for profile in active_profiles}
     for corpus_key in sorted(selected_corpora):
         config = _CANONICAL_QUERY_DATASETS.get(corpus_key)
         if not config:
@@ -2981,7 +3382,13 @@ def build_justicedao_rebuild_plan(
                         )
                     )
     targets.sort(key=lambda item: (item.corpus_key, item.state_code or "", item.parquet_path))
-    return JusticeDAORebuildPlan(targets=targets, batches=_build_rebuild_batches(targets, batch_size=batch_size))
+    include_eu_recommendations = corpus_keys is None
+    recommendations = _build_eu_rebuild_recommendations(active_profiles) if include_eu_recommendations else []
+    return JusticeDAORebuildPlan(
+        targets=targets,
+        batches=_build_rebuild_batches(targets, batch_size=batch_size),
+        recommendations=recommendations,
+    )
 
 
 def build_canonical_corpus_artifacts(
@@ -3007,6 +3414,10 @@ def build_canonical_corpus_artifacts(
     llm_model_name: Optional[str] = None,
     llm_max_rows: int = 0,
     llm_max_chars: int = 700,
+    execute_recovery_for_degraded_corpora: bool = False,
+    recovery_max_candidates: int = 8,
+    recovery_archive_top_k: int = 3,
+    recovery_publish_to_hf: bool = False,
     build_faiss: bool = True,
     publish_to_hf: bool = False,
     hf_token: Optional[str] = None,
@@ -3084,6 +3495,32 @@ def build_canonical_corpus_artifacts(
         title_fields=title_fields,
         text_fields=text_fields,
     )
+    recovery_recommendation = _build_corpus_quality_recovery_recommendation(
+        corpus_key=normalized_corpus,
+        dataset_id=dataset_id,
+        state_code=normalized_state,
+        quality_summary=corpus_quality_summary,
+    )
+    recovery_manifest_draft = _write_corpus_quality_recovery_manifest_draft(
+        recommendation=recovery_recommendation or {},
+        artifact_base_dir=artifact_base_dir,
+    )
+    recovery_execution: Optional[Dict[str, Any]] = None
+    if execute_recovery_for_degraded_corpora and recovery_recommendation:
+        try:
+            recovery_execution = _execute_corpus_quality_recovery(
+                recommendation=recovery_recommendation,
+                hf_token=hf_token,
+                max_candidates=recovery_max_candidates,
+                archive_top_k=recovery_archive_top_k,
+                publish_to_hf=recovery_publish_to_hf,
+            )
+        except Exception as exc:
+            recovery_execution = {
+                "status": "error",
+                "error": str(exc),
+                "source": "canonical_corpus_quality_recovery",
+            }
     llm_kg_summary: Optional[Dict[str, Any]] = None
     if enable_llm_kg_enrichment:
         kg_entities, kg_relationships, llm_kg_summary = _merge_router_knowledge_graph_rows(
@@ -3189,6 +3626,9 @@ def build_canonical_corpus_artifacts(
         knowledge_graph_relationships_path=str(kg_relationships_path),
         knowledge_graph_summary_path=str(kg_summary_path),
         corpus_quality_summary=corpus_quality_summary,
+        recovery_recommendation=recovery_recommendation,
+        recovery_manifest_draft=recovery_manifest_draft,
+        recovery_execution=recovery_execution,
         llm_knowledge_graph_summary=llm_kg_summary,
         semantic_index=canonical_corpus_index_build_result_to_dict(semantic_index),
         publish_result=publish_payload,
@@ -3210,6 +3650,10 @@ def rebuild_justicedao_dataset_library(
     llm_model_name: Optional[str] = None,
     llm_max_rows: int = 0,
     llm_max_chars: int = 700,
+    execute_recovery_for_degraded_corpora: bool = False,
+    recovery_max_candidates: int = 8,
+    recovery_archive_top_k: int = 3,
+    recovery_publish_to_hf: bool = False,
     publish_to_hf: bool = False,
     hf_token: Optional[str] = None,
     include_canonical_parquet: bool = False,
@@ -3283,6 +3727,10 @@ def rebuild_justicedao_dataset_library(
                         llm_model_name=llm_model_name,
                         llm_max_rows=llm_max_rows,
                         llm_max_chars=llm_max_chars,
+                        execute_recovery_for_degraded_corpora=execute_recovery_for_degraded_corpora,
+                        recovery_max_candidates=recovery_max_candidates,
+                        recovery_archive_top_k=recovery_archive_top_k,
+                        recovery_publish_to_hf=recovery_publish_to_hf,
                         build_faiss=build_faiss,
                         publish_to_hf=publish_to_hf,
                         hf_token=hf_token,

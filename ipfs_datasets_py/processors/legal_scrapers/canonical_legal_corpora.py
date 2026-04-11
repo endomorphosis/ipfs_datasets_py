@@ -158,6 +158,30 @@ _CORPORA: Dict[str, CanonicalLegalCorpus] = {
         combined_parquet_filename="netherlands_laws.parquet",
         combined_embeddings_filename="netherlands_laws_embeddings.parquet",
     ),
+    "france_laws": CanonicalLegalCorpus(
+        key="france_laws",
+        display_name="France Laws",
+        hf_dataset_id="justicedao/ipfs_france_laws",
+        legal_branch="eu",
+        country_codes=("FR",),
+        local_root_name="france_laws",
+        jsonld_dir_name="france_laws_jsonld",
+        parquet_dir_name="france_laws_parquet_cid",
+        combined_parquet_filename="france_laws.parquet",
+        combined_embeddings_filename="france_laws_embeddings.parquet",
+    ),
+    "spain_laws": CanonicalLegalCorpus(
+        key="spain_laws",
+        display_name="Spain Laws",
+        hf_dataset_id="justicedao/ipfs_spain_laws",
+        legal_branch="eu",
+        country_codes=("ES",),
+        local_root_name="spain_laws",
+        jsonld_dir_name="spain_laws_jsonld",
+        parquet_dir_name="spain_laws_parquet_cid",
+        combined_parquet_filename="spain_laws.parquet",
+        combined_embeddings_filename="spain_laws_embeddings.parquet",
+    ),
     "germany_laws": CanonicalLegalCorpus(
         key="germany_laws",
         display_name="Germany Laws",
@@ -206,6 +230,10 @@ def infer_canonical_legal_corpus_for_dataset_id(dataset_id: str) -> CanonicalLeg
         return get_canonical_legal_corpus("caselaw_access_project")
     if normalized == "justicedao/american_municipal_law":
         return get_canonical_legal_corpus("state_laws")
+    if normalized.startswith("justicedao/ipfs_france_laws"):
+        return get_canonical_legal_corpus("france_laws")
+    if normalized.startswith("justicedao/ipfs_spain_laws"):
+        return get_canonical_legal_corpus("spain_laws")
     if normalized.startswith("justicedao/ipfs_germany_laws"):
         return get_canonical_legal_corpus("germany_laws")
     if normalized.startswith("justicedao/ipfs_netherlands_laws"):

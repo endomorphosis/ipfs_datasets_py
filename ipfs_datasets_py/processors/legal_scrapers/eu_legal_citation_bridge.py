@@ -25,7 +25,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 import re
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+import inspect
 
 from ipfs_datasets_py.logic.deontic.graph import (
     DeonticGraph,
@@ -178,6 +179,32 @@ class EULegalReasoningBundle:
     notes: List[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class EULegalCitationLookupAction:
+    citation: EULegalCitation
+    dataset_id: str
+    handler_key: str
+    query_text: str
+    action_type: str
+    parameters: Dict[str, Any] = field(default_factory=dict)
+    notes: List[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class EULegalCitationLookupPlan:
+    input_text: str
+    actions: List[EULegalCitationLookupAction] = field(default_factory=list)
+    notes: List[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class EULegalCitationLookupResult:
+    input_text: str
+    actions: List[EULegalCitationLookupAction] = field(default_factory=list)
+    executed_actions: List[Dict[str, Any]] = field(default_factory=list)
+    notes: List[str] = field(default_factory=list)
+
+
 EU_JURISDICTION_PROFILES: Dict[str, EUJurisdictionProfile] = {
     "EU": EUJurisdictionProfile(
         code="EU",
@@ -289,6 +316,190 @@ def _profiles_for_citations(citations: Sequence[EULegalCitation]) -> List[EUJuri
         elif citation.jurisdiction in EU_JURISDICTION_PROFILES:
             codes.add(citation.jurisdiction)
     return [EU_JURISDICTION_PROFILES[code] for code in sorted(codes) if code in EU_JURISDICTION_PROFILES]
+
+
+def build_eu_legal_citation_lookup_plan(
+    text: str,
+    *,
+    language: Optional[str] = None,
+) -> EULegalCitationLookupPlan:
+    citations = extract_eu_legal_citations(text, language=language)
+    actions: List[EULegalCitationLookupAction] = []
+    notes: List[str] = []
+    for citation in citations:
+        handler_key = "eu_registry"
+        dataset_id = "eu_legal_registry"
+        action_type = "registry_lookup"
+        query_text = citation.canonical_uri
+        action_notes: List[str] = []
+
+        if citation.scheme in {"CELEX", "ELI"}:
+            handler_key = "eurlex_registry"
+            dataset_id = "eurlex"
+            action_type = "eu_legislation_lookup"
+            query_text = citation.canonical_uri
+            action_notes.append("Prefer EUR-Lex/Eli resolvers for CELEX/ELI anchors.")
+        elif citation.scheme == "ECLI":
+            handler_key = "ecli_registry"
+            dataset_id = "ecli"
+            action_type = "case_law_lookup"
+            query_text = citation.normalized_text
+            action_notes.append("Prefer ECLI resolvers for case law anchors.")
+        elif citation.member_state == "NL":
+            handler_key = "netherlands_laws"
+            dataset_id = "netherlands_laws"
+            action_type = "member_state_law_lookup"
+            query_text = citation.normalized_text
+            action_notes.append("Use Netherlands law corpus search for BWBR/BW references.")
+        elif citation.member_state in {"DE", "FR", "ES"}:
+            handler_key = f"{citation.member_state.lower()}_law_registry"
+            dataset_id = f"{citation.member_state.lower()}_law_registry"
+            action_type = "member_state_law_lookup"
+            query_text = citation.normalized_text
+            action_notes.append("Provide a member-state handler to execute this lookup.")
+        else:
+            action_notes.append("Provide a custom handler to resolve this citation.")
+
+        actions.append(
+            EULegalCitationLookupAction(
+                citation=citation,
+                dataset_id=dataset_id,
+                handler_key=handler_key,
+                query_text=query_text,
+                action_type=action_type,
+                parameters={"language": language, "member_state": citation.member_state},
+                notes=action_notes,
+            )
+        )
+
+    if not actions:
+        notes.append("No EU/member-state identifiers detected in input.")
+    return EULegalCitationLookupPlan(
+        input_text=str(text or ""),
+        actions=actions,
+        notes=notes,
+    )
+
+
+async def execute_eu_legal_citation_lookup_plan(
+    plan: EULegalCitationLookupPlan,
+    *,
+    lookup_handlers: Optional[Dict[str, Callable[[EULegalCitationLookupAction], Any]]] = None,
+) -> EULegalCitationLookupResult:
+    handlers = dict(lookup_handlers or {})
+    executed_actions: List[Dict[str, Any]] = []
+
+    for action in plan.actions:
+        handler = handlers.get(action.handler_key)
+        if handler is None:
+            executed_actions.append(
+                {
+                    "handler_key": action.handler_key,
+                    "dataset_id": action.dataset_id,
+                    "query_text": action.query_text,
+                    "executed": False,
+                    "results": [],
+                    "notes": ["No handler registered for this lookup key."],
+                }
+            )
+            continue
+        result = handler(action)
+        if inspect.isawaitable(result):
+            result = await result
+        executed_actions.append(
+            {
+                "handler_key": action.handler_key,
+                "dataset_id": action.dataset_id,
+                "query_text": action.query_text,
+                "executed": True,
+                "results": result,
+                "notes": list(action.notes),
+            }
+        )
+
+    return EULegalCitationLookupResult(
+        input_text=plan.input_text,
+        actions=list(plan.actions),
+        executed_actions=executed_actions,
+        notes=list(plan.notes),
+    )
+
+
+def eu_legal_citation_lookup_plan_to_dict(plan: EULegalCitationLookupPlan) -> Dict[str, Any]:
+    return {
+        "input_text": plan.input_text,
+        "actions": [
+            {
+                "citation": asdict(action.citation),
+                "dataset_id": action.dataset_id,
+                "handler_key": action.handler_key,
+                "query_text": action.query_text,
+                "action_type": action.action_type,
+                "parameters": dict(action.parameters),
+                "notes": list(action.notes),
+            }
+            for action in plan.actions
+        ],
+        "notes": list(plan.notes),
+    }
+
+
+def eu_legal_citation_lookup_result_to_dict(result: EULegalCitationLookupResult) -> Dict[str, Any]:
+    return {
+        "input_text": result.input_text,
+        "actions": [
+            {
+                "citation": asdict(action.citation),
+                "dataset_id": action.dataset_id,
+                "handler_key": action.handler_key,
+                "query_text": action.query_text,
+                "action_type": action.action_type,
+                "parameters": dict(action.parameters),
+                "notes": list(action.notes),
+            }
+            for action in result.actions
+        ],
+        "executed_actions": list(result.executed_actions),
+        "notes": list(result.notes),
+    }
+
+
+def build_default_eu_lookup_handlers(
+    *,
+    tool_version: str = "1.0.0",
+) -> Dict[str, Callable[[EULegalCitationLookupAction], Any]]:
+    def _noop_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
+        return {
+            "resolved": False,
+            "query": action.query_text,
+            "results": [],
+            "notes": ["No built-in resolver is registered for this handler key."],
+        }
+
+    async def _netherlands_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
+        try:
+            from .legal_dataset_api import search_netherlands_law_corpus_from_parameters
+        except Exception:
+            return {
+                "resolved": False,
+                "query": action.query_text,
+                "results": [],
+                "notes": ["Netherlands law search backend not available."],
+            }
+        params = {
+            "query_text": action.query_text,
+            "citation_query": action.query_text,
+            "language": action.parameters.get("language"),
+            "member_state": action.parameters.get("member_state"),
+        }
+        return await search_netherlands_law_corpus_from_parameters(params, tool_version=tool_version)
+
+    return {
+        "eurlex_registry": _noop_handler,
+        "ecli_registry": _noop_handler,
+        "eu_registry": _noop_handler,
+        "netherlands_laws": _netherlands_handler,
+    }
 
 
 def _normalize_space(value: Any) -> str:

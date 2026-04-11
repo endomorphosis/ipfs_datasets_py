@@ -1046,9 +1046,17 @@ def test_bluebook_citation_resolver_ignores_embeddings_sidecars_in_override_sour
     assert sources == [str(state_laws_path)]
 
 
-def test_corpus_configs_include_germany_laws_scaffold():
+def test_corpus_configs_include_france_spain_and_germany_laws_scaffolds():
+    france = _CORPUS_CONFIGS["france_laws"]
+    spain = _CORPUS_CONFIGS["spain_laws"]
     config = _CORPUS_CONFIGS["germany_laws"]
 
+    assert france.dataset_id == "justicedao/ipfs_france_laws"
+    assert "france_laws.parquet" in france.preferred_parquet_names
+    assert "parquet/laws/" in france.preferred_path_substrings
+    assert spain.dataset_id == "justicedao/ipfs_spain_laws"
+    assert "spain_laws.parquet" in spain.preferred_parquet_names
+    assert "parquet/laws/" in spain.preferred_path_substrings
     assert config.dataset_id == "justicedao/ipfs_germany_laws"
     assert "germany_laws.parquet" in config.preferred_parquet_names
     assert "parquet/laws/" in config.preferred_path_substrings

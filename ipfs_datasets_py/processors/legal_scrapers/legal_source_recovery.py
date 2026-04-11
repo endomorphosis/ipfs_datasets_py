@@ -10,10 +10,12 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import re
 from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol
 from urllib.parse import urlparse
+import importlib
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
 from .legal_source_recovery_promotion import (
@@ -153,6 +155,7 @@ class LegalSourceRecoveryResult:
     promotion_preview: Optional[Dict[str, Any]] = None
     release_plan_preview: Optional[Dict[str, Any]] = None
     feedback_entry: Optional[Dict[str, Any]] = None
+    search_backend_status: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -199,6 +202,51 @@ class LegalSourceRecoveryWorkflow:
 
         return publish
 
+    def _search_backend_status(self) -> Dict[str, Any]:
+        brave_api_key = str(
+            os.getenv("BRAVE_API_KEY")
+            or os.getenv("BRAVE_SEARCH_API_KEY")
+            or ""
+        ).strip()
+        duckduckgo_available = False
+        try:
+            from ..web_archiving.search_engines.duckduckgo_adapter import HAVE_DDGS
+
+            duckduckgo_available = bool(HAVE_DDGS)
+        except Exception:
+            duckduckgo_available = False
+
+        datasets_available = False
+        try:
+            datasets_module = importlib.import_module("datasets")
+            datasets_available = bool(getattr(datasets_module, "load_dataset", None))
+        except Exception:
+            datasets_available = False
+        return {
+            "brave_configured": bool(brave_api_key),
+            "duckduckgo_configured": duckduckgo_available,
+            "archive_search_available": bool(self._archive_searcher is not None),
+            "live_search_available": bool(self._live_searcher is not None),
+            "brave_api_key_env": "BRAVE_API_KEY" if os.getenv("BRAVE_API_KEY") else ("BRAVE_SEARCH_API_KEY" if os.getenv("BRAVE_SEARCH_API_KEY") else ""),
+            "datasets_available": datasets_available,
+        }
+
+    async def _multi_engine_search(
+        self,
+        *,
+        query: str,
+        engines: List[str],
+        max_results: int,
+    ) -> Dict[str, Any]:
+        from .multi_engine_legal_search import multi_engine_legal_search
+
+        return await multi_engine_legal_search(
+            query=query,
+            engines=engines,
+            max_results=max_results,
+            brave_api_key=(os.getenv("BRAVE_API_KEY") or os.getenv("BRAVE_SEARCH_API_KEY") or None),
+        )
+
     async def recover_unresolved_citation(
         self,
         *,
@@ -224,6 +272,12 @@ class LegalSourceRecoveryWorkflow:
         searcher = self._searcher()
         live_results: List[Dict[str, Any]] = []
         archived_results: List[Dict[str, Any]] = []
+        backend_status = self._search_backend_status()
+        backend_status["archive_search_error"] = ""
+        backend_status["live_search_error"] = ""
+        backend_status["multi_engine_error"] = ""
+        backend_status["multi_engine_used"] = False
+        backend_status["engines_attempted"] = []
 
         effective_live_searcher = self._live_searcher or getattr(searcher, "legal_searcher", None)
         if effective_live_searcher is not None:
@@ -232,6 +286,7 @@ class LegalSourceRecoveryWorkflow:
                 live_results = list((live_payload or {}).get("results", []) or [])
             except Exception:
                 live_results = []
+                backend_status["live_search_error"] = "live_search_failed"
 
         effective_archive_searcher = self._archive_searcher or searcher
         if effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
@@ -243,8 +298,42 @@ class LegalSourceRecoveryWorkflow:
                     max_results=max_candidates,
                 )
                 archived_results = list((archive_payload or {}).get("results", []) or [])
-            except Exception:
+            except Exception as exc:
                 archived_results = []
+                backend_status["archive_search_error"] = str(exc)
+
+        if not live_results and not archived_results:
+            try:
+                engines: List[str] = []
+                if backend_status["brave_configured"]:
+                    engines.append("brave")
+                if backend_status["duckduckgo_configured"]:
+                    engines.append("duckduckgo")
+                backend_status["engines_attempted"] = list(engines)
+                if engines:
+                    multi_engine_payload = await self._multi_engine_search(
+                        query=query,
+                        engines=engines,
+                        max_results=max_candidates,
+                    )
+                    backend_status["multi_engine_used"] = True
+                    if str(multi_engine_payload.get("status") or "").lower() == "success":
+                        live_results = [
+                            {
+                                "title": str(item.get("title") or ""),
+                                "url": str(item.get("url") or ""),
+                                "source": str(item.get("source") or item.get("engine") or "multi_engine"),
+                                "source_type": "current",
+                            }
+                            for item in list(multi_engine_payload.get("results") or [])
+                            if str(item.get("url") or "").strip()
+                        ]
+                    else:
+                        backend_status["multi_engine_error"] = str(multi_engine_payload.get("message") or "multi_engine_search_failed")
+                else:
+                    backend_status["multi_engine_error"] = "no_search_engines_available"
+            except Exception as exc:
+                backend_status["multi_engine_error"] = str(exc)
 
         merged_results: List[Dict[str, Any]] = []
         seen_urls: set[str] = set()
@@ -359,6 +448,7 @@ class LegalSourceRecoveryWorkflow:
                 "state_code": state_code,
                 "candidate_corpora": list((metadata or {}).get("candidate_corpora") or []),
             },
+            search_backend_status=backend_status,
         )
 
     def _write_manifest(

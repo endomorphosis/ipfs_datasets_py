@@ -221,3 +221,70 @@ async def test_recover_citation_audit_feedback_emits_promotion_metadata(monkeypa
     assert recovery["promotion_preview"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
     assert recovery["promotion_preview"]["target_parquet_file"] == "STATE-MN.parquet"
     assert recovery["release_plan_preview"]["artifacts"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_uses_multi_engine_fallback_and_reports_backend_status(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    async def _fake_multi_engine_search(self, *, query: str, engines, max_results: int):
+        return {
+            "status": "success",
+            "results": [
+                {
+                    "title": "Alaska Statutes",
+                    "url": "https://www.akleg.gov/basis/statutes.asp",
+                    "engine": "duckduckgo",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_multi_engine_search",
+        _fake_multi_engine_search,
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_search_backend_status",
+        lambda self: {
+            "brave_configured": False,
+            "duckduckgo_configured": True,
+            "archive_search_available": bool(self._archive_searcher is not None),
+            "live_search_available": bool(self._live_searcher is not None),
+            "brave_api_key_env": "",
+            "datasets_available": False,
+        },
+    )
+
+    class _EmptyLiveSearcher:
+        def search(self, query: str, max_results: int = 20, **kwargs):
+            return {"results": []}
+
+    class _EmptyArchiveSearcher:
+        def search_with_indexes(self, query: str, jurisdiction_type: str | None = None, state_code: str | None = None, max_results: int = 50):
+            return {"results": []}
+
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_EmptyLiveSearcher(),
+        archive_searcher=_EmptyArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="AK official statutes",
+        normalized_citation="AK official statutes",
+        corpus_key="state_laws",
+        state_code="AK",
+        metadata={"candidate_corpora": ["state_laws"]},
+    )
+
+    assert result.candidate_count == 1
+    assert result.candidates[0].url == "https://www.akleg.gov/basis/statutes.asp"
+    assert result.search_backend_status["multi_engine_used"] is True
+    assert "duckduckgo" in result.search_backend_status["engines_attempted"]
