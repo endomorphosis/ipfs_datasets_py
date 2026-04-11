@@ -16,6 +16,8 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add project to path
 sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
@@ -25,6 +27,9 @@ from ipfs_datasets_py.processors.legal_scrapers.recap_archive_scraper import (
     scrape_recap_archive,
     get_recap_document
 )
+
+
+pytestmark = pytest.mark.anyio
 
 
 def _courtlistener_token_configured() -> bool:

@@ -78,6 +78,7 @@ class ProofTactician:
         title = str(work_item.get("title") or work_item.get("action") or "proof task")
         objective = f"Find sources to prove or refute: {title}"
         candidate_sources: List[ProofSearchSource] = []
+        authority_summary = self._summarize_authorities(authorities)
 
         local_query_hints = self._query_hints(work_item)
         if documents:
@@ -117,15 +118,18 @@ class ProofTactician:
                 )
             )
         if authorities:
+            authority_rationale = "Authorities on the docket often define the controlling duty, prohibition, or deadline."
+            if authority_summary["linked_citation_count"]:
+                authority_rationale += " Linked citations already tie some authorities to parser-backed legal corpora and official source records."
             candidate_sources.append(
                 ProofSearchSource(
                     source_id=f"{dataset_id}:local:authorities",
                     source_type="authority_list",
                     label="Authorities attached to docket dataset",
                     priority=4,
-                    rationale="Authorities on the docket often define the controlling duty, prohibition, or deadline.",
+                    rationale=authority_rationale,
                     query_hints=local_query_hints,
-                    metadata={"authority_count": len(authorities)},
+                    metadata=authority_summary,
                 )
             )
 
@@ -164,6 +168,38 @@ class ProofTactician:
             ),
         ]
         for source_id, label, rationale, priority, modules in parser_sources:
+            parser_metadata = {"modules": modules}
+            if authority_summary["linked_citation_count"]:
+                routing_evidence = list(authority_summary.get("routing_evidence") or [])
+                routing_reason = ""
+                if routing_evidence:
+                    primary = routing_evidence[0]
+                    primary_citation = str(primary.get("citation_text") or "a linked citation")
+                    primary_corpora = [str(item) for item in list(primary.get("corpus_priority") or []) if str(item).strip()]
+                    primary_source_url = str(primary.get("source_url") or "").strip()
+                    primary_source_cid = str(primary.get("source_cid") or "").strip()
+                    source_fragment = ""
+                    if primary_source_url:
+                        source_fragment = f" Official source: {primary_source_url}."
+                    elif primary_source_cid:
+                        source_fragment = f" Source CID: {primary_source_cid}."
+                    if primary_corpora:
+                        routing_reason = (
+                            f"Preferred parser corpora were ranked from linked citation '{primary_citation}', "
+                            f"which points first to '{primary_corpora[0]}'.{source_fragment}"
+                        )
+                parser_metadata.update(
+                    {
+                        "preferred_corpus_keys": list(authority_summary["linked_corpus_keys"]),
+                        "preferred_corpus_priority": list(authority_summary["linked_corpus_priority"]),
+                        "preferred_dataset_ids": list(authority_summary["linked_dataset_ids"]),
+                        "preferred_dataset_priority": list(authority_summary["linked_dataset_priority"]),
+                        "preferred_state_codes": list(authority_summary["preferred_state_codes"]),
+                        "routing_evidence": routing_evidence,
+                        "routing_reason": routing_reason,
+                        "authority_backed": True,
+                    }
+                )
             candidate_sources.append(
                 ProofSearchSource(
                     source_id=f"{dataset_id}:parser:{source_id}",
@@ -172,7 +208,7 @@ class ProofTactician:
                     priority=priority,
                     rationale=rationale,
                     query_hints=local_query_hints,
-                    metadata={"modules": modules},
+                    metadata=parser_metadata,
                 )
             )
 
@@ -302,7 +338,16 @@ class ProofTactician:
 
         preferred_types: List[str] = []
         if source_type == "authority":
-            preferred_types = ["authority_list", "local_docket_documents", "local_bm25_index"]
+            parser_backed_authorities = any(
+                source.source_type == "authority_list"
+                and bool(source.metadata.get("linked_citation_count"))
+                for source in candidate_sources
+            )
+            preferred_types = (
+                ["authority_list", "legal_dataset_parser", "local_docket_documents", "local_bm25_index"]
+                if parser_backed_authorities
+                else ["authority_list", "local_docket_documents", "local_bm25_index"]
+            )
         elif source_type == "party_analysis":
             preferred_types = ["local_bm25_index", "local_vector_index", "authority_list"]
         elif modality in {"prohibition", "obligation"} or "order" in title or "deadline" in title:
@@ -367,6 +412,118 @@ class ProofTactician:
         if not focus:
             focus.append("general_proof_support")
         return focus
+
+    def _summarize_authorities(self, authorities: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+        linked_citation_count = 0
+        linked_corpus_keys: List[str] = []
+        linked_corpus_priority: List[str] = []
+        linked_dataset_ids: List[str] = []
+        linked_dataset_priority: List[str] = []
+        linked_source_urls: List[str] = []
+        preferred_state_codes: List[str] = []
+        routing_evidence: List[Dict[str, Any]] = []
+
+        for authority in authorities:
+            if not isinstance(authority, dict):
+                continue
+            if str(authority.get("authority_type") or "") != "linked_citation":
+                continue
+            linked_citation_count += 1
+            corpus_key = str(authority.get("corpus_key") or "").strip()
+            dataset_id = str(authority.get("dataset_id") or "").strip()
+            source_url = str(authority.get("source_url") or "").strip()
+            metadata = authority.get("metadata") if isinstance(authority.get("metadata"), dict) else {}
+            corpus_priority_candidates: List[str] = []
+            if corpus_key:
+                corpus_priority_candidates.append(corpus_key)
+            for candidate_corpus in list(metadata.get("candidate_corpora") or []):
+                candidate_text = str(candidate_corpus or "").strip()
+                if candidate_text:
+                    corpus_priority_candidates.append(candidate_text)
+            normalized_corpus_priority: List[str] = []
+            for candidate_text in corpus_priority_candidates:
+                if candidate_text and candidate_text not in normalized_corpus_priority:
+                    normalized_corpus_priority.append(candidate_text)
+            for candidate_text in normalized_corpus_priority:
+                if candidate_text not in linked_corpus_priority:
+                    linked_corpus_priority.append(candidate_text)
+            preferred_dataset_candidates: List[str] = []
+            if dataset_id:
+                preferred_dataset_candidates.append(dataset_id)
+            for preferred_dataset_id in list(metadata.get("preferred_dataset_ids") or []):
+                preferred_text = str(preferred_dataset_id or "").strip()
+                if preferred_text:
+                    preferred_dataset_candidates.append(preferred_text)
+            normalized_dataset_priority: List[str] = []
+            for preferred_text in preferred_dataset_candidates:
+                if preferred_text and preferred_text not in normalized_dataset_priority:
+                    normalized_dataset_priority.append(preferred_text)
+            if not corpus_key:
+                for candidate_corpus in list(metadata.get("candidate_corpora") or []):
+                    candidate_text = str(candidate_corpus or "").strip()
+                    if candidate_text and candidate_text not in linked_corpus_keys:
+                        linked_corpus_keys.append(candidate_text)
+            if corpus_key and corpus_key not in linked_corpus_keys:
+                linked_corpus_keys.append(corpus_key)
+            if dataset_id and dataset_id not in linked_dataset_ids:
+                linked_dataset_ids.append(dataset_id)
+            if dataset_id and dataset_id not in linked_dataset_priority:
+                linked_dataset_priority.append(dataset_id)
+            if not dataset_id:
+                for preferred_text in normalized_dataset_priority:
+                    if preferred_text and preferred_text not in linked_dataset_ids:
+                        linked_dataset_ids.append(preferred_text)
+                    if preferred_text and preferred_text not in linked_dataset_priority:
+                        linked_dataset_priority.append(preferred_text)
+            if source_url and source_url not in linked_source_urls:
+                linked_source_urls.append(source_url)
+            source_cid = str(authority.get("source_cid") or "").strip()
+            source_ref = str(authority.get("source_ref") or "").strip()
+            source_title = str(authority.get("title") or authority.get("label") or "").strip()
+            matched = bool(authority.get("matched"))
+            state_code = str(
+                authority.get("state_code")
+                or metadata.get("state_code")
+                or ""
+            ).strip().upper()
+            if state_code and state_code not in preferred_state_codes:
+                preferred_state_codes.append(state_code)
+            if normalized_corpus_priority:
+                routing_evidence.append(
+                    {
+                        "authority_id": str(authority.get("id") or ""),
+                        "citation_text": str(
+                            authority.get("citation_text")
+                            or authority.get("normalized_citation")
+                            or authority.get("title")
+                            or authority.get("label")
+                            or ""
+                        ).strip(),
+                        "document_id": str(authority.get("document_id") or ""),
+                        "document_title": str(authority.get("document_title") or ""),
+                        "state_code": state_code,
+                        "corpus_priority": list(normalized_corpus_priority),
+                        "dataset_priority": list(normalized_dataset_priority),
+                        "matched": matched,
+                        "source_title": source_title,
+                        "source_url": source_url,
+                        "source_cid": source_cid,
+                        "source_ref": source_ref,
+                    }
+                )
+
+        return {
+            "authority_count": len(authorities),
+            "linked_citation_count": linked_citation_count,
+            "linked_corpus_keys": linked_corpus_keys,
+            "linked_corpus_priority": linked_corpus_priority,
+            "linked_dataset_ids": linked_dataset_ids,
+            "linked_dataset_priority": linked_dataset_priority,
+            "linked_source_urls": linked_source_urls[:10],
+            "preferred_state_codes": preferred_state_codes,
+            "routing_evidence": routing_evidence[:20],
+            "parser_backed": bool(linked_citation_count),
+        }
 
 
 def build_proof_tactician_manifest(

@@ -29,6 +29,7 @@ from ..retrieval import (
     hashed_term_projection,
     vector_dot,
 )
+from ..legal_scrapers.bluebook_citation_linker import resolve_bluebook_citations_in_text
 
 
 def _utc_now_isoformat() -> str:
@@ -50,6 +51,102 @@ def _dedupe_string_sequence(values: Iterable[Any]) -> List[str]:
         seen.add(text)
         output.append(text)
     return output
+
+
+def _normalize_authority_text(value: Any) -> str:
+    return " ".join(str(value or "").strip().split())
+
+
+def _merge_linked_authorities(
+    existing_authorities: Sequence[Dict[str, Any]],
+    documents: Sequence["DocketDocument"],
+) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    merged: List[Dict[str, Any]] = [dict(item) for item in existing_authorities if isinstance(item, dict)]
+    seen_keys: set[tuple[str, str, str]] = set()
+    for item in merged:
+        key = (
+            str(item.get("authority_type") or item.get("citation_type") or ""),
+            _normalize_authority_text(item.get("citation_text") or item.get("title") or item.get("label") or ""),
+            str(item.get("source_url") or ""),
+        )
+        seen_keys.add(key)
+
+    linked_count = 0
+    matched_count = 0
+    document_count = 0
+
+    for document in documents:
+        text = str(document.text or "").strip()
+        if not text:
+            continue
+        links = resolve_bluebook_citations_in_text(text)
+        if not links:
+            continue
+        document_count += 1
+        document.metadata["citation_links"] = [
+            {
+                "citation_text": link.citation_text,
+                "citation_type": link.citation_type,
+                "normalized_citation": link.normalized_citation,
+                "matched": bool(link.matched),
+                "corpus_key": link.corpus_key,
+                "dataset_id": link.dataset_id,
+                "matched_field": link.matched_field,
+                "confidence": float(link.confidence),
+                "source_document_id": link.source_document_id,
+                "source_title": link.source_title,
+                "source_url": link.source_url,
+                "source_cid": link.source_cid,
+                "source_ref": link.source_ref,
+                "snippet": link.snippet,
+                "metadata": dict(link.metadata),
+            }
+            for link in links
+        ]
+        for index, link in enumerate(links, start=1):
+            linked_count += 1
+            if link.matched:
+                matched_count += 1
+            authority_title = str(link.source_title or link.normalized_citation or link.citation_text).strip()
+            authority_text = str(link.snippet or link.citation_text or authority_title).strip()
+            key = (
+                str(link.citation_type or ""),
+                _normalize_authority_text(link.citation_text or authority_title),
+                str(link.source_url or ""),
+            )
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            merged.append(
+                {
+                    "id": f"linked_authority_{_safe_identifier(link.source_document_id or link.citation_text or f'{document.document_id}_{index}')}",
+                    "title": authority_title,
+                    "label": authority_title,
+                    "text": authority_text,
+                    "authority_type": "linked_citation",
+                    "citation_type": link.citation_type,
+                    "citation_text": link.citation_text,
+                    "normalized_citation": link.normalized_citation,
+                    "matched": bool(link.matched),
+                    "corpus_key": link.corpus_key,
+                    "dataset_id": link.dataset_id,
+                    "matched_field": link.matched_field,
+                    "confidence": float(link.confidence),
+                    "state_code": str((link.metadata or {}).get("state_code") or ""),
+                    "source_url": str(link.source_url or ""),
+                    "source_cid": str(link.source_cid or ""),
+                    "source_ref": str(link.source_ref or ""),
+                    "document_id": document.document_id,
+                    "document_title": document.title,
+                    "metadata": dict(link.metadata),
+                }
+            )
+
+    return merged, {
+        "linked_authority_count": linked_count,
+        "matched_linked_authority_count": matched_count,
+        "documents_with_linked_citations": document_count,
+    }
 
 
 def _is_generic_dcec_formula(formula: Any) -> bool:
@@ -331,6 +428,7 @@ class DocketDatasetBuilder:
         plaintiff_docket = self._normalize_auxiliary_items(docket.get("plaintiff_docket") or docket.get("plaintiffs_docket") or [])
         defendant_docket = self._normalize_auxiliary_items(docket.get("defendant_docket") or docket.get("defendants_docket") or [])
         authorities = self._normalize_auxiliary_items(docket.get("authorities") or docket.get("authorities_list") or [])
+        authorities, linked_authority_summary = _merge_linked_authorities(authorities, normalized_documents)
 
         knowledge_graph = self._build_knowledge_graph(dataset_id, docket_id, case_name, court, normalized_documents) if include_knowledge_graph else {}
         deontic_graph_object, deontic_triggers = build_docket_deontic_artifacts(
@@ -395,6 +493,11 @@ class DocketDatasetBuilder:
             },
             "formal_logic": dict((formal_enrichment.get("summary") or {})),
             "router_enrichment": dict((router_enrichment.get("summary") or {})),
+            "linked_authorities": {
+                "backend": "bluebook_citation_linker",
+                "is_mock": False,
+                **linked_authority_summary,
+            },
         }
         artifact_status = {
             "knowledge_graph": bool(knowledge_graph),
@@ -405,6 +508,7 @@ class DocketDatasetBuilder:
             "vector_index": bool(vector_index),
             "formal_logic": bool((formal_enrichment.get("summary") or {}).get("processed_document_count")),
             "router_enrichment": bool((router_enrichment.get("summary") or {}).get("processed_document_count")),
+            "linked_authorities": bool(linked_authority_summary.get("linked_authority_count")),
         }
 
         return DocketDatasetObject(
@@ -428,6 +532,7 @@ class DocketDatasetBuilder:
                 "artifact_provenance": artifact_provenance,
                 "artifact_status": artifact_status,
                 "source_type": str(docket.get("source_type") or "docket"),
+                "linked_authorities": linked_authority_summary,
             },
         )
 
@@ -1341,9 +1446,15 @@ def _governed_actions_for_modality(graph: DeonticGraph, party: str, modality: st
 def summarize_docket_dataset(dataset: DocketDatasetObject | Dict[str, Any]) -> Dict[str, Any]:
     """Return a compact manifest-style summary for a docket dataset."""
 
-    dataset_object = dataset if isinstance(dataset, DocketDatasetObject) else DocketDatasetObject.from_dict(dict(dataset))
+    dataset_dict = dataset.to_dict() if isinstance(dataset, DocketDatasetObject) else dict(dataset)
+    dataset_object = dataset if isinstance(dataset, DocketDatasetObject) else DocketDatasetObject.from_dict(dataset_dict)
     document_dates = [document.date_filed for document in dataset_object.documents if document.date_filed]
     document_numbers = [document.document_number for document in dataset_object.documents if document.document_number]
+    latest_routing = dict(
+        (dataset_object.metadata or {}).get("latest_proof_packet_routing_explanation")
+        or (((dataset_object.proof_assistant or {}).get("metadata") or {}).get("latest_proof_packet_routing_explanation") or {})
+        or (dict(dataset_dict.get("attached_proof_assistant_packet") or {}).get("routing_explanation") or {})
+    )
     return {
         **dataset_object.summary(),
         "date_range": {
@@ -1366,6 +1477,8 @@ def summarize_docket_dataset(dataset: DocketDatasetObject | Dict[str, Any]) -> D
         "parties_requiring_deontic_analysis": list(
             (((dataset_object.deontic_triggers or {}).get("summary") or {}).get("parties_requiring_analysis") or [])
         ),
+        "has_latest_proof_packet_routing_explanation": bool(latest_routing),
+        "latest_proof_packet_routing_reason": str(latest_routing.get("routing_reason") or ""),
     }
 
 

@@ -61,8 +61,11 @@ try:
 except ImportError:
     SimpleIPFSDatasetsMCPServer = None
 
-# MCP++ integration is always importable (with graceful fallback)
-from . import mcplusplus
+# MCP++ integration is optional; keep import side effects from taking down the package.
+try:
+    from . import mcplusplus
+except Exception:
+    mcplusplus = None
 
 __version__ = "0.1.0"
 __all__ = [

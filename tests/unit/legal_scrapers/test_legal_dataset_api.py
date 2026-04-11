@@ -2,6 +2,9 @@ import pytest
 from pathlib import Path
 
 
+pytestmark = pytest.mark.anyio
+
+
 FIXTURE_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "legal_scrapers"
 
 

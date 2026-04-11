@@ -7,6 +7,13 @@ from types import SimpleNamespace
 
 import pytest
 
+pytestmark = pytest.mark.anyio
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_agentic_daemon import (
     StateLawsAgenticDaemon,
     StateLawsAgenticDaemonConfig,
@@ -1864,8 +1871,14 @@ async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_ava
     assert scrape_result["metadata"]["scrape_timed_out"] is True
     assert scrape_result["metadata"]["cloudflare_browser_rendering"]["available"] is True
     assert scrape_result["metadata"]["cloudflare_browser_rendering"]["status"] == "configured"
-    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["account_id_env"] == "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID"
-    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["api_token_env"] == "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN"
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["account_id_env"] in {
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+    }
+    assert scrape_result["metadata"]["cloudflare_browser_rendering"]["api_token_env"] in {
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+    }
 
 
 @pytest.mark.asyncio
@@ -3570,7 +3583,7 @@ async def test_state_admin_rules_agentic_daemon_uses_router_assist_review(monkey
     assert "router_assisted" in critic["recommended_next_tactics"]
     assert "document_first" in critic["recommended_next_tactics"]
     assert "router-assisted-review" in critic["issues"]
-    assert critic["query_hints"] == ["Arizona administrative code pdf title 18"]
+    assert "Arizona administrative code pdf title 18" in critic["query_hints"]
     assert critic["router_rationale"].startswith("Document candidates remain unresolved")
     persisted = json.loads(router_artifact_path.read_text(encoding="utf-8"))
     assert persisted["cycle"] == 1

@@ -6,7 +6,7 @@ including case law, statutes, regulations, and cross-references.
 import re
 import logging
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +24,10 @@ class Citation:
     section: Optional[str] = None
     court: Optional[str] = None
     url: Optional[str] = None  # Link to source if available
+    jurisdiction: Optional[str] = None  # e.g. "MN", "US"
     start_pos: int = 0  # Character position in source text
     end_pos: int = 0
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 # Citation patterns
@@ -60,6 +62,74 @@ PUBLIC_LAW_PATTERNS = [
     r'(?:Pub\.?\s+L\.?|P\.L\.)\s+(\d+)-(\d+)',
 ]
 
+BLUEBOOK_STATE_TO_CODE = {
+    "Ala.": "AL",
+    "Alaska": "AK",
+    "Ariz.": "AZ",
+    "Ark.": "AR",
+    "Cal.": "CA",
+    "Colo.": "CO",
+    "Conn.": "CT",
+    "Del.": "DE",
+    "D.C.": "DC",
+    "Fla.": "FL",
+    "Ga.": "GA",
+    "Haw.": "HI",
+    "Idaho": "ID",
+    "Ill.": "IL",
+    "Ind.": "IN",
+    "Iowa": "IA",
+    "Kan.": "KS",
+    "Ky.": "KY",
+    "La.": "LA",
+    "Mass.": "MA",
+    "Md.": "MD",
+    "Me.": "ME",
+    "Mich.": "MI",
+    "Minn.": "MN",
+    "Miss.": "MS",
+    "Mo.": "MO",
+    "Mont.": "MT",
+    "N.C.": "NC",
+    "N.D.": "ND",
+    "Neb.": "NE",
+    "N.H.": "NH",
+    "N.J.": "NJ",
+    "N.M.": "NM",
+    "Nev.": "NV",
+    "N.Y.": "NY",
+    "Ohio": "OH",
+    "Okla.": "OK",
+    "Or.": "OR",
+    "Pa.": "PA",
+    "R.I.": "RI",
+    "S.C.": "SC",
+    "S.D.": "SD",
+    "Tenn.": "TN",
+    "Tex.": "TX",
+    "Utah": "UT",
+    "Va.": "VA",
+    "Vt.": "VT",
+    "Wash.": "WA",
+    "W. Va.": "WV",
+    "Wis.": "WI",
+    "Wyo.": "WY",
+}
+
+_STATE_ABBREV_PATTERN = "|".join(
+    sorted((re.escape(value) for value in BLUEBOOK_STATE_TO_CODE), key=len, reverse=True)
+)
+STATE_STATUTE_PATTERNS = [
+    rf'(?P<text>(?P<state>{_STATE_ABBREV_PATTERN})\s+'
+    r'(?P<code_name>'
+    r'(?:[A-Z][A-Za-z&.\'/-]*\s+){0,5}'
+    r'(?:Code(?:\s+Ann\.)?|Stat(?:\.|utes)?(?:\s+Ann\.)?|'
+    r'Rev\.\s+Stat\.?|Gen\.\s+Stat\.?|Comp\.\s+Laws|Cent\.\s+Code|'
+    r'Codified\s+Laws|Fam\.\s+Code|Civ\.\s+Code|Penal\s+Code|'
+    r'Admin\.\s+Code|Court\s+Rules?|R\.\s+[A-Za-z.\s]+)'
+    r')\s+§?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
+]
+
 
 class CitationExtractor:
     """Extract and analyze citations from legal documents."""
@@ -71,6 +141,7 @@ class CitationExtractor:
         self.cfr_patterns = [re.compile(p, re.IGNORECASE) for p in CFR_CITATION_PATTERNS]
         self.fr_patterns = [re.compile(p, re.IGNORECASE) for p in FEDERAL_REGISTER_PATTERNS]
         self.pl_patterns = [re.compile(p, re.IGNORECASE) for p in PUBLIC_LAW_PATTERNS]
+        self.state_statute_patterns = [re.compile(p, re.IGNORECASE) for p in STATE_STATUTE_PATTERNS]
     
     def extract_citations(self, text: str) -> List[Citation]:
         """Extract all citations from a text.
@@ -97,6 +168,9 @@ class CitationExtractor:
         
         # Extract Public Law citations
         citations.extend(self._extract_pl_citations(text))
+
+        # Extract state statute citations
+        citations.extend(self._extract_state_statute_citations(text))
         
         # Sort by position in text
         citations.sort(key=lambda c: c.start_pos)
@@ -236,6 +310,39 @@ class CitationExtractor:
                 
                 citations.append(citation)
         
+        return citations
+
+    def _extract_state_statute_citations(self, text: str) -> List[Citation]:
+        """Extract Bluebook-style state statute citations."""
+        citations = []
+
+        for pattern in self.state_statute_patterns:
+            for match in pattern.finditer(text):
+                citation_text = match.group("text")
+                state_abbrev = match.group("state")
+                code_name = " ".join(match.group("code_name").split())
+                section = match.group("section")
+                cleaned_section = section.rstrip(".,;:")
+                if cleaned_section != section:
+                    citation_text = citation_text[: len(citation_text) - (len(section) - len(cleaned_section))]
+                    section = cleaned_section
+                state_code = BLUEBOOK_STATE_TO_CODE.get(state_abbrev)
+
+                citation = Citation(
+                    type="state_statute",
+                    text=citation_text,
+                    title=code_name,
+                    section=section,
+                    jurisdiction=state_code,
+                    start_pos=match.start(),
+                    end_pos=match.end(),
+                    metadata={
+                        "bluebook_state_abbrev": state_abbrev,
+                        "code_name": code_name,
+                    },
+                )
+                citations.append(citation)
+
         return citations
     
     def _determine_court(self, reporter: str) -> Optional[str]:

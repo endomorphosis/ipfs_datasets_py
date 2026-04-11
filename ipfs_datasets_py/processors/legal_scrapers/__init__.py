@@ -160,6 +160,11 @@ from .citation_extraction import (
     analyze_document_citations,
     create_citation_network,
 )
+from .bluebook_citation_linker import (
+    BluebookCitationResolver,
+    CitationLink,
+    resolve_bluebook_citations_in_text,
+)
 
 from .ipfs_storage_integration import (
     IPFSStorageManager,
@@ -288,7 +293,7 @@ def __getattr__(name: str):
 try:
     from .legal_web_archive_search import LegalWebArchiveSearch
     HAVE_WEB_ARCHIVE_SEARCH = True
-except ImportError:
+except Exception:
     LegalWebArchiveSearch = None
     HAVE_WEB_ARCHIVE_SEARCH = False
 
@@ -296,7 +301,7 @@ except ImportError:
 try:
     from .common_crawl_index_loader import CommonCrawlIndexLoader
     HAVE_CC_INDEX_LOADER = True
-except ImportError:
+except Exception:
     CommonCrawlIndexLoader = None
     HAVE_CC_INDEX_LOADER = False
 
@@ -305,7 +310,7 @@ except ImportError:
 try:
     from . import common
     HAVE_COMMON_MODULE = True
-except ImportError:
+except Exception:
     common = None
     HAVE_COMMON_MODULE = False
 
@@ -313,7 +318,7 @@ except ImportError:
 try:
     from .query_expander import QueryExpander, ExpandedQuery, expand_query
     HAVE_QUERY_EXPANDER = True
-except ImportError:
+except Exception:
     QueryExpander = None
     ExpandedQuery = None
     expand_query = None
@@ -323,7 +328,7 @@ except ImportError:
 try:
     from .enhanced_query_expander import EnhancedQueryExpander, EnhancedExpandedQuery
     HAVE_ENHANCED_QUERY_EXPANDER = True
-except ImportError:
+except Exception:
     EnhancedQueryExpander = None
     EnhancedExpandedQuery = None
     HAVE_ENHANCED_QUERY_EXPANDER = False
@@ -332,7 +337,7 @@ except ImportError:
 try:
     from .result_filter import ResultFilter, FilterConfig, FilteredResult
     HAVE_RESULT_FILTER = True
-except ImportError:
+except Exception:
     ResultFilter = None
     FilterConfig = None
     FilteredResult = None
@@ -346,7 +351,7 @@ try:
         CitationNetwork
     )
     HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = True
-except ImportError:
+except Exception:
     SearchResultCitationExtractor = None
     SearchResultWithCitations = None
     CitationNetwork = None
@@ -363,7 +368,7 @@ try:
         TranslationResult
     )
     HAVE_MULTILANGUAGE_SUPPORT = True
-except ImportError:
+except Exception:
     MultiLanguageSupport = None
     LanguageConfig = None
     TranslationResult = None
@@ -377,7 +382,7 @@ try:
         RegulationChange
     )
     HAVE_REGULATION_VERSION_TRACKER = True
-except ImportError:
+except Exception:
     RegulationVersionTracker = None
     RegulationVersion = None
     RegulationChange = None
@@ -392,7 +397,7 @@ try:
         ReportSection
     )
     HAVE_LEGAL_REPORT_GENERATOR = True
-except ImportError:
+except Exception:
     LegalSearchReportGenerator = None
     LegalSearchReport = None
     ReportConfig = None
@@ -403,7 +408,7 @@ except ImportError:
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
     HAVE_HF_API_SEARCH = True
-except ImportError:
+except Exception:
     HuggingFaceAPISearch = None
     HAVE_HF_API_SEARCH = False
 
@@ -491,9 +496,12 @@ __all__ = [
     # Citation extraction
     "Citation",
     "CitationExtractor",
+    "CitationLink",
     "extract_citations_from_text",
     "analyze_document_citations",
     "create_citation_network",
+    "BluebookCitationResolver",
+    "resolve_bluebook_citations_in_text",
     # IPFS storage
     "IPFSStorageManager",
     "store_dataset_to_ipfs",

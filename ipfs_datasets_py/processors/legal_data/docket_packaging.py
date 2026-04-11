@@ -21,6 +21,7 @@ import pyarrow.parquet as pq
 from ..serialization.car_conversion import DataInterchangeUtils
 from ..storage.ipld.storage import IPLDStorage
 from ..retrieval import bm25_search_documents, embed_query_for_backend, hashed_term_projection, vector_dot
+from ..legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
 
 
 def _safe_identifier(value: Any) -> str:
@@ -124,6 +125,80 @@ def _normalize_parquet_row(row: Mapping[str, Any]) -> Dict[str, Any]:
     return normalized
 
 
+def _parse_json_list_field(value: Any) -> List[Any]:
+    if isinstance(value, list):
+        return list(value)
+    text = str(value or "").strip()
+    if not text:
+        return []
+    try:
+        parsed = json.loads(text)
+    except Exception:
+        return []
+    return list(parsed) if isinstance(parsed, list) else []
+
+
+def _build_packaged_inspection_payload(
+    *,
+    dataset_id: Any,
+    docket_id: Any,
+    case_name: Any,
+    court: Any,
+    document_count: int,
+    attachment_count: int,
+    latest_proof_packet_id: Any,
+    latest_proof_packet_version: Any,
+    latest_routing_explanation: Mapping[str, Any] | None,
+    routing_provenance: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    latest_routing = dict(latest_routing_explanation or {})
+    routing_provenance_dict = dict(routing_provenance or {})
+    routing_evidence = list(latest_routing.get("routing_evidence") or [])
+    top_routing_evidence = dict((routing_evidence or [{}])[0])
+    return {
+        "dataset_id": str(dataset_id or ""),
+        "docket_id": str(docket_id or ""),
+        "case_name": str(case_name or ""),
+        "court": str(court or ""),
+        "document_count": int(document_count or 0),
+        "attachment_count": int(attachment_count or 0),
+        "latest_proof_packet_id": str(latest_proof_packet_id or ""),
+        "latest_proof_packet_version": int(latest_proof_packet_version or 0),
+        "latest_routing_reason": str(latest_routing.get("routing_reason") or ""),
+        "preferred_corpus_priority": list(latest_routing.get("preferred_corpus_priority") or []),
+        "preferred_state_codes": list(latest_routing.get("preferred_state_codes") or []),
+        "routing_evidence_count": len(routing_evidence),
+        "top_routing_citation": str(top_routing_evidence.get("citation_text") or ""),
+        "top_routing_source_url": str(top_routing_evidence.get("source_url") or ""),
+        "routing_provenance_piece_present": bool(routing_provenance_dict),
+        "routing_provenance": routing_provenance_dict,
+    }
+
+
+def _parse_packaged_inspection_report_row(row: Mapping[str, Any] | None) -> Dict[str, Any]:
+    report_row = dict(row or {})
+    report_json = str(report_row.get("report_json") or "").strip()
+    if not report_json:
+        return {}
+    try:
+        parsed = json.loads(report_json)
+    except Exception:
+        return {}
+    return dict(parsed) if isinstance(parsed, Mapping) else {}
+
+
+def _normalize_packaged_inspection_report_row(row: Mapping[str, Any] | None) -> Dict[str, Any]:
+    report_row = dict(row or {})
+    if not report_row or "_empty" in report_row:
+        return {}
+    return {
+        "report_json": str(report_row.get("report_json") or ""),
+        "report_text": str(report_row.get("report_text") or ""),
+        "report_markdown": str(report_row.get("report_markdown") or ""),
+        "inspection": _parse_packaged_inspection_report_row(report_row),
+    }
+
+
 @dataclass
 class DocketPackagePiece:
     piece_id: str
@@ -215,6 +290,12 @@ class DocketDatasetPackager:
         proof_store = dict(proof_assistant.get("proof_store") or {})
         proof_assistant_metadata = dict(proof_assistant.get("metadata") or {})
         proof_assistant_summary = dict(proof_assistant.get("summary") or {})
+        dataset_metadata = dict(dataset_payload.get("metadata") or {})
+        latest_routing_explanation = dict(
+            dataset_metadata.get("latest_proof_packet_routing_explanation")
+            or proof_assistant_metadata.get("latest_proof_packet_routing_explanation")
+            or {}
+        )
         temporal_fol = dict(
             proof_assistant.get("temporal_fol")
             or proof_assistant.get("deontic_temporal_first_order_logic")
@@ -239,6 +320,61 @@ class DocketDatasetPackager:
             for frame in list(frame_logic.values() if isinstance(frame_logic, Mapping) else frame_logic)
             if isinstance(frame, Mapping)
         ]
+        routing_provenance_row = (
+            {
+                "routing_reason": str(latest_routing_explanation.get("routing_reason") or ""),
+                "routing_evidence_json": json.dumps(
+                    _jsonable(latest_routing_explanation.get("routing_evidence") or []),
+                    sort_keys=True,
+                ),
+                "preferred_corpus_keys_json": json.dumps(
+                    _jsonable(latest_routing_explanation.get("preferred_corpus_keys") or []),
+                    sort_keys=True,
+                ),
+                "preferred_corpus_priority_json": json.dumps(
+                    _jsonable(latest_routing_explanation.get("preferred_corpus_priority") or []),
+                    sort_keys=True,
+                ),
+                "preferred_dataset_ids_json": json.dumps(
+                    _jsonable(latest_routing_explanation.get("preferred_dataset_ids") or []),
+                    sort_keys=True,
+                ),
+                "preferred_dataset_priority_json": json.dumps(
+                    _jsonable(latest_routing_explanation.get("preferred_dataset_priority") or []),
+                    sort_keys=True,
+                ),
+                "preferred_state_codes_json": json.dumps(
+                    _jsonable(latest_routing_explanation.get("preferred_state_codes") or []),
+                    sort_keys=True,
+                ),
+                "authority_backed": bool(latest_routing_explanation.get("authority_backed")),
+            }
+            if latest_routing_explanation
+            else {}
+        )
+        inspection_payload = _build_packaged_inspection_payload(
+            dataset_id=dataset_payload.get("dataset_id"),
+            docket_id=dataset_payload.get("docket_id"),
+            case_name=dataset_payload.get("case_name"),
+            court=dataset_payload.get("court"),
+            document_count=len(documents),
+            attachment_count=len(attachments),
+            latest_proof_packet_id=dataset_metadata.get("latest_proof_packet_id")
+            or proof_assistant_metadata.get("latest_proof_packet_id"),
+            latest_proof_packet_version=dataset_metadata.get("latest_proof_packet_version")
+            or proof_assistant_metadata.get("latest_proof_packet_version"),
+            latest_routing_explanation=latest_routing_explanation,
+            routing_provenance=routing_provenance_row,
+        )
+        inspection_report_json = json.dumps(inspection_payload, indent=2, ensure_ascii=False)
+        inspection_report_text = self.render_packaged_inspection_report_from_inspection(
+            inspection_payload,
+            report_format="text",
+        )
+        inspection_report_markdown = self.render_packaged_inspection_report_from_inspection(
+            inspection_payload,
+            report_format="markdown",
+        )
 
         section_rows: List[tuple[str, str, List[Dict[str, Any]], List[str]]] = [
             (
@@ -339,10 +475,28 @@ class DocketDatasetPackager:
                 ["proof_store_certificates"],
             ),
             (
+                "routing_provenance",
+                "provenance",
+                [routing_provenance_row] if routing_provenance_row else [],
+                ["proof_assistant_metadata"],
+            ),
+            (
+                "inspection_report",
+                "provenance",
+                [
+                    {
+                        "report_json": inspection_report_json,
+                        "report_text": inspection_report_text,
+                        "report_markdown": inspection_report_markdown,
+                    }
+                ],
+                ["routing_provenance"],
+            ),
+            (
                 "temporal_formulas",
                 "proof_assistant",
                 temporal_formula_rows,
-                ["proof_store_certificates"],
+                ["inspection_report"],
             ),
             (
                 "dcec_formulas",
@@ -452,6 +606,10 @@ class DocketDatasetPackager:
                 "proof_packet_count": len(list(proof_assistant.get("evidence_packets") or [])),
                 "proof_store_count": len(list((proof_store.get("proofs") or {}).keys())),
             },
+            "provenance": {
+                "latest_proof_packet_routing_explanation": _jsonable(latest_routing_explanation),
+                "has_latest_proof_packet_routing_explanation": bool(latest_routing_explanation),
+            },
         }
 
         manifest_json_path = bundle_dir / ("manifest.json" if legacy_layout else "bundle_manifest.json")
@@ -552,10 +710,12 @@ class DocketDatasetPackager:
         bundle_dir, manifest = self._resolve_manifest(manifest_path)
         rows_by_piece = self.load_package_components(
             bundle_dir,
-            piece_ids=["dataset_core", "documents", "attachments"],
+            piece_ids=["dataset_core", "documents", "attachments", "routing_provenance", "inspection_report"],
             manifest=manifest,
         )
         dataset_core = dict((rows_by_piece.get("dataset_core") or [{}])[0])
+        routing_provenance = dict((rows_by_piece.get("routing_provenance") or [{}])[0])
+        inspection_report = dict((rows_by_piece.get("inspection_report") or [{}])[0])
         return {
             "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
             "docket_id": str(dataset_core.get("docket_id") or manifest.get("docket_id") or ""),
@@ -563,8 +723,169 @@ class DocketDatasetPackager:
             "court": str(dataset_core.get("court") or manifest.get("court") or ""),
             "documents": self._restore_rows(rows_by_piece.get("documents")),
             "attachments": self._restore_rows(rows_by_piece.get("attachments")),
+            "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
+            "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
             "package_manifest": dict(manifest),
         }
+
+    def load_summary_view(self, manifest_path: str | Path) -> Dict[str, Any]:
+        bundle_dir, manifest = self._resolve_manifest(manifest_path)
+        rows_by_piece = self.load_package_components(
+            bundle_dir,
+            piece_ids=["dataset_core", "routing_provenance", "inspection_report"],
+            manifest=manifest,
+        )
+        dataset_core = dict((rows_by_piece.get("dataset_core") or [{}])[0])
+        routing_provenance = dict((rows_by_piece.get("routing_provenance") or [{}])[0])
+        inspection_report = dict((rows_by_piece.get("inspection_report") or [{}])[0])
+        manifest_summary = dict(manifest.get("summary") or {})
+        return {
+            "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
+            "docket_id": str(dataset_core.get("docket_id") or manifest.get("docket_id") or ""),
+            "case_name": str(dataset_core.get("case_name") or manifest.get("case_name") or ""),
+            "court": str(dataset_core.get("court") or manifest.get("court") or ""),
+            "document_count": int(manifest_summary.get("document_count") or 0),
+            "attachment_count": int(manifest_summary.get("attachment_count") or 0),
+            "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
+            "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
+            "package_manifest": dict(manifest),
+        }
+
+    def load_inspection_report(
+        self,
+        manifest_path: str | Path,
+        *,
+        report_format: str = "parsed",
+    ) -> Any:
+        minimal_view = self.load_minimal_dataset_view(manifest_path)
+        inspection_report = dict(minimal_view.get("inspection_report") or {})
+        normalized_format = str(report_format or "parsed").strip().lower()
+        if normalized_format in {"parsed", "dict", "inspection"}:
+            return dict(inspection_report.get("inspection") or {})
+        if normalized_format == "json":
+            return str(inspection_report.get("report_json") or "")
+        if normalized_format == "text":
+            return str(inspection_report.get("report_text") or "")
+        if normalized_format == "markdown":
+            return str(inspection_report.get("report_markdown") or "")
+        if normalized_format == "row":
+            return inspection_report
+        raise ValueError(f"Unsupported inspection report format: {report_format}")
+
+    def inspect_packaged_bundle(self, manifest_path: str | Path) -> Dict[str, Any]:
+        summary_view = self.load_summary_view(manifest_path)
+        archived_report = _parse_packaged_inspection_report_row(summary_view.get("inspection_report"))
+        if archived_report:
+            archived_report["routing_provenance_piece_present"] = bool(summary_view.get("routing_provenance"))
+            if "routing_provenance" not in archived_report:
+                archived_report["routing_provenance"] = dict(summary_view.get("routing_provenance") or {})
+            return archived_report
+        manifest = dict(summary_view.get("package_manifest") or {})
+        routing_provenance = dict(summary_view.get("routing_provenance") or {})
+        latest_routing = dict(
+            manifest.get("provenance", {}).get("latest_proof_packet_routing_explanation")
+            or {}
+        )
+        return _build_packaged_inspection_payload(
+            dataset_id=summary_view.get("dataset_id"),
+            docket_id=summary_view.get("docket_id"),
+            case_name=summary_view.get("case_name"),
+            court=summary_view.get("court"),
+            document_count=int(summary_view.get("document_count") or 0),
+            attachment_count=int(summary_view.get("attachment_count") or 0),
+            latest_proof_packet_id=(manifest.get("metadata") or {}).get("latest_proof_packet_id"),
+            latest_proof_packet_version=(manifest.get("metadata") or {}).get("latest_proof_packet_version"),
+            latest_routing_explanation=latest_routing,
+            routing_provenance=routing_provenance,
+        )
+
+    def render_packaged_inspection_report_from_inspection(
+        self,
+        inspection: Mapping[str, Any],
+        *,
+        report_format: str = "markdown",
+    ) -> str:
+        inspection_dict = dict(inspection or {})
+        normalized_format = str(report_format or "markdown").strip().lower()
+        if normalized_format == "json":
+            return json.dumps(inspection_dict, indent=2, ensure_ascii=False) + "\n"
+
+        routing_provenance = dict(inspection_dict.get("routing_provenance") or {})
+        preferred_corpus_priority = list(inspection_dict.get("preferred_corpus_priority") or [])
+        preferred_state_codes = list(inspection_dict.get("preferred_state_codes") or [])
+        routing_evidence = _parse_json_list_field(routing_provenance.get("routing_evidence_json"))
+        top_routing = dict((routing_evidence or [{}])[0])
+
+        lines = [
+            "Packaged Docket Provenance Report",
+            f"Dataset ID: {inspection_dict.get('dataset_id') or ''}",
+            f"Docket ID: {inspection_dict.get('docket_id') or ''}",
+            f"Case Name: {inspection_dict.get('case_name') or ''}",
+            f"Court: {inspection_dict.get('court') or ''}",
+            f"Document Count: {inspection_dict.get('document_count') or 0}",
+            f"Attachment Count: {inspection_dict.get('attachment_count') or 0}",
+            f"Latest Proof Packet ID: {inspection_dict.get('latest_proof_packet_id') or ''}",
+            f"Latest Proof Packet Version: {inspection_dict.get('latest_proof_packet_version') or 0}",
+            f"Latest Routing Reason: {inspection_dict.get('latest_routing_reason') or ''}",
+            f"Preferred Corpus Priority: {', '.join(str(item) for item in preferred_corpus_priority)}",
+            f"Preferred State Codes: {', '.join(str(item) for item in preferred_state_codes)}",
+            f"Routing Evidence Count: {inspection_dict.get('routing_evidence_count') or 0}",
+            f"Top Routing Citation: {inspection_dict.get('top_routing_citation') or ''}",
+            f"Top Routing Source URL: {inspection_dict.get('top_routing_source_url') or ''}",
+            f"Authority Backed: {bool(routing_provenance.get('authority_backed'))}",
+        ]
+        if top_routing:
+            lines.extend(
+                [
+                    f"Top Routing Source Title: {top_routing.get('source_title') or ''}",
+                    f"Top Routing Source CID: {top_routing.get('source_cid') or ''}",
+                    f"Top Routing Source Ref: {top_routing.get('source_ref') or ''}",
+                ]
+            )
+
+        if normalized_format == "text":
+            return "\n".join(lines) + "\n"
+
+        markdown_lines = [
+            "# Packaged Docket Provenance Report",
+            "",
+            f"- Dataset ID: {inspection_dict.get('dataset_id') or ''}",
+            f"- Docket ID: {inspection_dict.get('docket_id') or ''}",
+            f"- Case Name: {inspection_dict.get('case_name') or ''}",
+            f"- Court: {inspection_dict.get('court') or ''}",
+            f"- Document Count: {inspection_dict.get('document_count') or 0}",
+            f"- Attachment Count: {inspection_dict.get('attachment_count') or 0}",
+            f"- Latest Proof Packet ID: {inspection_dict.get('latest_proof_packet_id') or ''}",
+            f"- Latest Proof Packet Version: {inspection_dict.get('latest_proof_packet_version') or 0}",
+            f"- Latest Routing Reason: {inspection_dict.get('latest_routing_reason') or ''}",
+            f"- Preferred Corpus Priority: {', '.join(str(item) for item in preferred_corpus_priority)}",
+            f"- Preferred State Codes: {', '.join(str(item) for item in preferred_state_codes)}",
+            f"- Routing Evidence Count: {inspection_dict.get('routing_evidence_count') or 0}",
+            f"- Top Routing Citation: {inspection_dict.get('top_routing_citation') or ''}",
+            f"- Top Routing Source URL: {inspection_dict.get('top_routing_source_url') or ''}",
+            f"- Authority Backed: {bool(routing_provenance.get('authority_backed'))}",
+        ]
+        if top_routing:
+            markdown_lines.extend(
+                [
+                    f"- Top Routing Source Title: {top_routing.get('source_title') or ''}",
+                    f"- Top Routing Source CID: {top_routing.get('source_cid') or ''}",
+                    f"- Top Routing Source Ref: {top_routing.get('source_ref') or ''}",
+                ]
+            )
+        return "\n".join(markdown_lines) + "\n"
+
+    def render_packaged_inspection_report(
+        self,
+        manifest_path: str | Path,
+        *,
+        report_format: str = "markdown",
+    ) -> str:
+        inspection = self.inspect_packaged_bundle(manifest_path)
+        return self.render_packaged_inspection_report_from_inspection(
+            inspection,
+            report_format=report_format,
+        )
 
     def _rebuild_dataset(
         self,
@@ -607,6 +928,8 @@ class DocketDatasetPackager:
         artifact_provenance = dict((metadata or {}).get("artifact_provenance") or {})
         current_packet_count = sum(1 for item in proof_evidence_packets if bool(item.get("is_current", True)))
         superseded_packet_count = sum(1 for item in proof_evidence_packets if bool(item.get("superseded")))
+        sorted_proof_agenda = _sort_proof_agenda_items(proof_agenda)
+        revalidation_counts = _count_agenda_revalidation_items(sorted_proof_agenda)
         return {
             "dataset_id": str(dataset_core.get("dataset_id") or manifest.get("dataset_id") or ""),
             "docket_id": str(dataset_core.get("docket_id") or manifest.get("docket_id") or ""),
@@ -638,9 +961,9 @@ class DocketDatasetPackager:
                 "document_count": len(vector_items),
             },
             "proof_assistant": {
-                "agenda": proof_agenda,
+                "agenda": sorted_proof_agenda,
                 "summary": {
-                    "work_item_count": len(proof_agenda),
+                    "work_item_count": len(sorted_proof_agenda),
                     "tactician_plan_count": len(proof_plans),
                     "proof_packet_count": len(proof_evidence_packets),
                     "current_proof_packet_count": current_packet_count,
@@ -649,6 +972,7 @@ class DocketDatasetPackager:
                     "temporal_formula_count": len(temporal_formula_rows),
                     "dcec_formula_count": len(dcec_formula_rows),
                     "frame_count": len(frame_logic_rows),
+                    **revalidation_counts,
                     **dict(proof_assistant_summary),
                 },
                 "tactician": {
@@ -1397,13 +1721,30 @@ class PackagedDocketQueryAdapter:
                     "party": item.get("party"),
                     "action": item.get("action"),
                     "modality": item.get("modality"),
-                    "score": overlap / max(1, len(query_terms)),
+                    "score": (
+                        overlap / max(1, len(query_terms))
+                    ) + (
+                        0.2 * _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or ""))
+                    ),
                     "plan": plan_map.get(work_item_id, {}),
                     "source_type": item.get("source_type"),
                     "authority_ids": list(item.get("authority_ids") or []),
                     "authority_backed": authority_backed,
                     "authority_count": int(trigger.get("authority_count") or 0),
                     "trigger": trigger,
+                    "current_proof_packet_review_required": bool(item.get("current_proof_packet_review_required")),
+                    "current_proof_packet_review_trigger": (
+                        self._parse_possible_json(item.get("current_proof_packet_review_trigger"))
+                        if not isinstance(item.get("current_proof_packet_review_trigger"), Mapping)
+                        else dict(item.get("current_proof_packet_review_trigger") or {})
+                    ) or {},
+                    "proof_revalidation_status": str(item.get("proof_revalidation_status") or ""),
+                    "proof_revalidation_priority": str(item.get("proof_revalidation_priority") or ""),
+                    "selection_rationale": (
+                        "Work item matches the proof query and is flagged for proof revalidation."
+                        if bool(item.get("current_proof_packet_review_required"))
+                        else "Work item matches the proof query and has stable packaged support."
+                    ),
                 }
             )
         packet_map = {
@@ -1446,6 +1787,22 @@ class PackagedDocketQueryAdapter:
                 or packet_map.get(proof_id, {}).get("support_strength")
                 or ""
             )
+            history_summary = _proof_packet_history_summary(proof_payload)
+            history_rank = _proof_packet_history_rank(proof_payload)
+            preference_summary = _build_proof_packet_preference_summary(
+                {
+                    "proof_id": proof_id,
+                    "is_current": is_current,
+                    "support_strength": support_strength,
+                    "packet_version": int(
+                        proof_payload.get("packet_version")
+                        or packet_map.get(proof_id, {}).get("packet_version")
+                        or 0
+                    ),
+                    "action_candidate_history": proof_payload.get("action_candidate_history"),
+                    "metadata": proof_payload.get("metadata"),
+                }
+            )
             scored.append(
                 {
                     "work_item_id": str(proof_payload.get("work_item_id") or ""),
@@ -1457,7 +1814,7 @@ class PackagedDocketQueryAdapter:
                     "score": max(
                         overlap / max(1, len(query_terms)),
                         0.5 + (0.05 * int(dict(evidence_bundle.get("summary") or {}).get("evidence_item_count") or 0)),
-                    ) + (0.15 if is_current else 0.0),
+                    ) + (0.15 if is_current else 0.0) + (0.01 * history_rank),
                     "plan": matched_plan,
                     "source_type": "proof_packet",
                     "packet_version": int(
@@ -1466,6 +1823,10 @@ class PackagedDocketQueryAdapter:
                         or 0
                     ),
                     "support_strength": support_strength,
+                    "history_quality": history_rank,
+                    "action_candidate_history_summary": history_summary,
+                    "packet_preference_summary": preference_summary,
+                    "preference_history": list(proof_payload.get("preference_history") or []),
                     "is_current": is_current,
                     "superseded": bool(
                         proof_payload.get("superseded", packet_map.get(proof_id, {}).get("superseded", False))
@@ -1488,12 +1849,15 @@ class PackagedDocketQueryAdapter:
                             or packet_map.get(proof_id, {}).get("packet_version")
                             or 0
                         ),
+                        action_candidate_history_summary=history_summary,
                     ),
                 }
             )
         scored.sort(
             key=lambda item: (
+                _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")),
                 float(item.get("score") or 0.0),
+                int(item.get("history_quality") or 0),
                 _support_strength_rank(str(item.get("support_strength") or "")),
                 1 if bool(item.get("is_current")) else 0,
                 int(item.get("packet_version") or 0),
@@ -1828,6 +2192,7 @@ class PackagedDocketQueryAdapter:
             return (
                 1 if bool(policy.get("prefer_authority_sources")) and bool(row.get("authority_backed")) else 0,
                 1 if bool(policy.get("prefer_plans")) and bool(row.get("plan")) else 0,
+                int(row.get("history_quality") or 0),
                 _support_strength_rank(str(row.get("support_strength") or "")),
                 source_rank,
                 int(row.get("authority_count") or 0),
@@ -1924,8 +2289,23 @@ class PackagedDocketQueryAdapter:
         )
         packet_candidates = self._build_packet_candidates(rows)
         action_candidates = self._build_action_candidates(
+            query=plan.query,
             follow_up_plan=follow_up_plan,
             packet_candidates=packet_candidates,
+        )
+        proof_preference_summary = _build_query_proof_preference_summary(
+            query=plan.query,
+            result_rows=rows,
+            next_action_summary=next_action_summary,
+            should_escalate=bool(should_escalate),
+        )
+        proof_preference_history_summary = _build_query_proof_preference_history_summary(
+            query=plan.query,
+            result_rows=rows,
+            proof_preference_summary=proof_preference_summary,
+        )
+        proof_preference_review_trigger = _build_proof_preference_review_trigger(
+            proof_preference_history_summary,
         )
         return {
             "should_escalate": bool(should_escalate),
@@ -1936,6 +2316,9 @@ class PackagedDocketQueryAdapter:
             "next_action_summary": next_action_summary,
             "packet_candidates": packet_candidates,
             "action_candidates": action_candidates,
+            "proof_preference_summary": proof_preference_summary,
+            "proof_preference_history_summary": proof_preference_history_summary,
+            "proof_preference_review_trigger": proof_preference_review_trigger,
             "observations": {
                 "result_count": len(rows),
                 "authority_backed_result_count": sum(1 for row in rows if bool(row.get("authority_backed"))),
@@ -1971,19 +2354,30 @@ class PackagedDocketQueryAdapter:
             packet_query = str(packet.get("query") or query or "").strip()
             is_current = bool(packet.get("is_current", True))
             support_strength = str(packet.get("support_strength") or "")
+            history_summary = _proof_packet_history_summary(packet)
+            history_rank = _proof_packet_history_rank(packet)
+            preference_summary = _build_proof_packet_preference_summary(packet)
             catalog.append(
                 {
                     "source_id": proof_id,
                     "source_type": "proof_packet",
                     "label": str(packet.get("query") or packet.get("bundle_kind") or proof_id),
-                    "priority": (0 if is_current else 10) - _support_strength_rank(support_strength),
-                    "rationale": "Reuse packaged proof evidence that was already collected for a nearby proof query before escalating to new sources.",
+                    "priority": (0 if is_current else 10) - _support_strength_rank(support_strength) - history_rank,
+                    "rationale": _build_proof_packet_selection_rationale(
+                        is_current=is_current,
+                        support_strength=support_strength,
+                        packet_version=int(packet.get("packet_version") or 0),
+                        action_candidate_history_summary=history_summary,
+                    ),
                     "query_hints": [packet_query] if packet_query else [],
                     "metadata": {
                         "proof_id": proof_id,
                         "bundle_kind": str(packet.get("bundle_kind") or ""),
                         "packet_version": int(packet.get("packet_version") or 0),
                         "support_strength": support_strength,
+                        "history_quality": history_rank,
+                        "action_candidate_history_summary": history_summary,
+                        "packet_preference_summary": preference_summary,
                         "is_current": is_current,
                         "superseded": bool(packet.get("superseded")),
                     },
@@ -2056,6 +2450,14 @@ class PackagedDocketQueryAdapter:
                     "retrieval_query": retrieval_query,
                     "rationale": str(source.get("rationale") or ""),
                     "modules": list((source.get("metadata") or {}).get("modules") or []),
+                    "preferred_corpus_keys": list((source.get("metadata") or {}).get("preferred_corpus_keys") or []),
+                    "preferred_corpus_priority": list((source.get("metadata") or {}).get("preferred_corpus_priority") or []),
+                    "preferred_dataset_ids": list((source.get("metadata") or {}).get("preferred_dataset_ids") or []),
+                    "preferred_dataset_priority": list((source.get("metadata") or {}).get("preferred_dataset_priority") or []),
+                    "preferred_state_codes": list((source.get("metadata") or {}).get("preferred_state_codes") or []),
+                    "routing_evidence": list((source.get("metadata") or {}).get("routing_evidence") or []),
+                    "routing_reason": str((source.get("metadata") or {}).get("routing_reason") or ""),
+                    "authority_backed": bool((source.get("metadata") or {}).get("authority_backed")),
                 }
             )
         return {
@@ -2108,6 +2510,14 @@ class PackagedDocketQueryAdapter:
                 "label": str(next_step.get("label") or ""),
                 "retrieval_query": str(next_step.get("retrieval_query") or query),
                 "modules": list(next_step.get("modules") or []),
+                "preferred_corpus_keys": list(next_step.get("preferred_corpus_keys") or []),
+                "preferred_corpus_priority": list(next_step.get("preferred_corpus_priority") or []),
+                "preferred_dataset_ids": list(next_step.get("preferred_dataset_ids") or []),
+                "preferred_dataset_priority": list(next_step.get("preferred_dataset_priority") or []),
+                "preferred_state_codes": list(next_step.get("preferred_state_codes") or []),
+                "routing_evidence": list(next_step.get("routing_evidence") or []),
+                "routing_reason": str(next_step.get("routing_reason") or ""),
+                "authority_backed": bool(next_step.get("authority_backed")),
                 "rationale": str(next_step.get("rationale") or ""),
                 "priority": int(next_step.get("priority") or 1),
             }
@@ -2157,6 +2567,7 @@ class PackagedDocketQueryAdapter:
                 "reason": selection_rationale,
                 "retrieval_query": query,
                 "selection_rationale": selection_rationale,
+                "packet_preference_summary": dict(row.get("packet_preference_summary") or {}),
                 "execution_hint": execution_hint,
             }
         return {
@@ -2189,6 +2600,9 @@ class PackagedDocketQueryAdapter:
                     "score": float(row.get("score") or 0.0),
                     "packet_version": int(row.get("packet_version") or 0),
                     "support_strength": str(row.get("support_strength") or ""),
+                    "history_quality": int(row.get("history_quality") or 0),
+                    "action_candidate_history_summary": dict(row.get("action_candidate_history_summary") or {}),
+                    "packet_preference_summary": dict(row.get("packet_preference_summary") or {}),
                     "is_current": bool(row.get("is_current")),
                     "selection_rationale": str(row.get("selection_rationale") or ""),
                 }
@@ -2198,6 +2612,7 @@ class PackagedDocketQueryAdapter:
     def _build_action_candidates(
         self,
         *,
+        query: str,
         follow_up_plan: Mapping[str, Any],
         packet_candidates: Sequence[Mapping[str, Any]],
         limit: int = 6,
@@ -2218,9 +2633,23 @@ class PackagedDocketQueryAdapter:
                     "source_type": "proof_packet",
                     "source_id": proof_id,
                     "label": str(packet.get("title") or proof_id),
+                    "query": query,
                     "support_strength": str(packet.get("support_strength") or ""),
                     "priority": 0 if bool(packet.get("is_current")) else 1,
                     "selection_rationale": str(packet.get("selection_rationale") or ""),
+                    "packet_preference_summary": dict(packet.get("packet_preference_summary") or {}),
+                    "execution_hint": {
+                        "job_kind": "proof_retrieval_follow_up",
+                        "step_index": 1,
+                        "source_id": proof_id,
+                        "source_type": "proof_packet",
+                        "action_type": "reuse_current_packet" if bool(packet.get("is_current")) else "refresh_local_support",
+                        "label": str(packet.get("title") or proof_id),
+                        "retrieval_query": query,
+                        "modules": [],
+                        "rationale": str(packet.get("selection_rationale") or ""),
+                        "priority": 0 if bool(packet.get("is_current")) else 1,
+                    },
                 }
             )
             seen.add(key)
@@ -2237,9 +2666,30 @@ class PackagedDocketQueryAdapter:
                     "source_type": source_type,
                     "source_id": source_id,
                     "label": str(step.get("label") or ""),
+                    "query": query,
                     "support_strength": "",
                     "priority": int(step.get("priority") or 999),
                     "selection_rationale": str(step.get("rationale") or ""),
+                    "execution_hint": {
+                        "job_kind": "proof_retrieval_follow_up",
+                        "step_index": int(step.get("step_index") or 1),
+                        "source_id": source_id,
+                        "source_type": source_type,
+                        "action_type": str(step.get("action_type") or ""),
+                        "label": str(step.get("label") or ""),
+                        "retrieval_query": str(step.get("retrieval_query") or ""),
+                        "modules": list(step.get("modules") or []),
+                        "preferred_corpus_keys": list(step.get("preferred_corpus_keys") or []),
+                        "preferred_corpus_priority": list(step.get("preferred_corpus_priority") or []),
+                        "preferred_dataset_ids": list(step.get("preferred_dataset_ids") or []),
+                        "preferred_dataset_priority": list(step.get("preferred_dataset_priority") or []),
+                        "preferred_state_codes": list(step.get("preferred_state_codes") or []),
+                        "routing_evidence": list(step.get("routing_evidence") or []),
+                        "routing_reason": str(step.get("routing_reason") or ""),
+                        "authority_backed": bool(step.get("authority_backed")),
+                        "rationale": str(step.get("rationale") or ""),
+                        "priority": int(step.get("priority") or 999),
+                    },
                 }
             )
             seen.add(key)
@@ -2326,6 +2776,44 @@ def load_packaged_docket_dataset_components(
     return DocketDatasetPackager().load_package_components(manifest_path, piece_ids=piece_ids)
 
 
+def load_packaged_docket_summary_view(manifest_path: str | Path) -> Dict[str, Any]:
+    """Load a lightweight packaged docket summary view without document rows."""
+
+    return DocketDatasetPackager().load_summary_view(manifest_path)
+
+
+def load_packaged_docket_inspection_report(
+    manifest_path: str | Path,
+    *,
+    report_format: str = "parsed",
+) -> Any:
+    """Load the archived packaged inspection report artifact."""
+
+    return DocketDatasetPackager().load_inspection_report(
+        manifest_path,
+        report_format=report_format,
+    )
+
+
+def inspect_packaged_docket_bundle(manifest_path: str | Path) -> Dict[str, Any]:
+    """Return a lightweight inspection view for a packaged docket bundle."""
+
+    return DocketDatasetPackager().inspect_packaged_bundle(manifest_path)
+
+
+def render_packaged_docket_inspection_report(
+    manifest_path: str | Path,
+    *,
+    report_format: str = "markdown",
+) -> str:
+    """Render a bundled docket inspection/provenance report."""
+
+    return DocketDatasetPackager().render_packaged_inspection_report(
+        manifest_path,
+        report_format=report_format,
+    )
+
+
 def iter_packaged_docket_chain(manifest_path: str | Path) -> List[Dict[str, Any]]:
     """Return package pieces in chain-load order."""
 
@@ -2365,6 +2853,130 @@ def search_packaged_docket_proof_tasks(
     return PackagedDocketQueryAdapter(manifest_path).search_proof_tasks(query, top_k=top_k)
 
 
+def get_packaged_docket_proof_revalidation_queue(
+    manifest_path: str | Path,
+    *,
+    top_k: int = 10,
+    min_priority: str = "low",
+    include_execution_hints: bool = True,
+    action_top_k: int = 10,
+) -> Dict[str, Any]:
+    """Return proof-assistant work items that currently need revalidation."""
+
+    package_view = load_packaged_docket_dataset(manifest_path)
+    agenda = _sort_proof_agenda_items((package_view.get("proof_assistant") or {}).get("agenda") or [])
+    proof_store = dict(((package_view.get("proof_assistant") or {}).get("proof_store") or {}).get("proofs") or {})
+    minimum_rank = _proof_revalidation_priority_rank(min_priority)
+    queue_items: List[Dict[str, Any]] = []
+
+    def _build_queue_query(item: Mapping[str, Any]) -> str:
+        proof_payload = dict(proof_store.get(str(item.get("current_proof_packet_id") or "")) or {})
+        stored_query = str(proof_payload.get("query") or "").strip()
+        if stored_query:
+            return stored_query
+        parts = [
+            str(item.get("title") or "").strip(),
+            str(item.get("action") or "").strip(),
+            str(item.get("party") or "").strip(),
+            str(item.get("modality") or "").strip(),
+        ]
+        return " ".join(part for part in parts if part).strip()
+
+    def _select_revalidation_action(query_result: Mapping[str, Any], queue_query: str) -> Dict[str, Any]:
+        escalation = dict(query_result.get("escalation") or {})
+        for candidate in list(escalation.get("action_candidates") or []):
+            candidate_dict = dict(candidate or {})
+            if str(candidate_dict.get("action_type") or "") == "reuse_current_packet":
+                continue
+            if str(candidate_dict.get("source_type") or "") == "proof_packet":
+                continue
+            candidate_dict.setdefault("query", queue_query)
+            return candidate_dict
+        next_action = dict(escalation.get("next_action_summary") or {})
+        if next_action and str(next_action.get("source_type") or "") != "proof_packet":
+            return {
+                "query": queue_query,
+                "action_type": str(next_action.get("action_type") or ""),
+                "source_type": str(next_action.get("source_type") or ""),
+                "source_id": str(next_action.get("source_id") or ""),
+                "selection_rationale": str(next_action.get("selection_rationale") or next_action.get("reason") or ""),
+                "execution_hint": dict(next_action.get("execution_hint") or {}),
+                "support_strength": str(next_action.get("support_strength") or ""),
+            }
+        return {}
+
+    for item in agenda:
+        priority = str(item.get("proof_revalidation_priority") or "")
+        if not bool(item.get("current_proof_packet_review_required")):
+            continue
+        if _proof_revalidation_priority_rank(priority) < minimum_rank:
+            continue
+        queue_query = _build_queue_query(item)
+        queue_entry = {
+            "work_item_id": str(item.get("work_item_id") or ""),
+            "title": str(item.get("title") or ""),
+            "party": str(item.get("party") or ""),
+            "action": str(item.get("action") or ""),
+            "modality": str(item.get("modality") or ""),
+            "current_proof_packet_id": str(item.get("current_proof_packet_id") or ""),
+            "current_proof_packet_version": int(item.get("current_proof_packet_version") or 0),
+            "current_proof_packet_support_strength": str(item.get("current_proof_packet_support_strength") or ""),
+            "proof_revalidation_status": str(item.get("proof_revalidation_status") or ""),
+            "proof_revalidation_priority": priority,
+            "current_proof_packet_review_required": True,
+            "current_proof_packet_review_trigger": (
+                dict(item.get("current_proof_packet_review_trigger") or {})
+                if isinstance(item.get("current_proof_packet_review_trigger"), Mapping)
+                else {}
+            ),
+            "attached_evidence_count": int(item.get("attached_evidence_count") or 0),
+            "selection_rationale": (
+                "Queued because the current proof packet changed preferred support and needs revalidation."
+            ),
+            "revalidation_query": queue_query,
+        }
+        if include_execution_hints and queue_query:
+            query_result = execute_packaged_docket_query(
+                manifest_path,
+                queue_query,
+                top_k=action_top_k,
+            )
+            recommended_action = _select_revalidation_action(query_result, queue_query)
+            queue_entry["recommended_revalidation_action"] = recommended_action
+            queue_entry["recommended_revalidation_execution_hint"] = dict(
+                recommended_action.get("execution_hint") or {}
+            )
+            queue_entry["recommended_revalidation_action_count"] = len(
+                list((dict(query_result.get("escalation") or {})).get("action_candidates") or [])
+            )
+        else:
+            queue_entry["recommended_revalidation_action"] = {}
+            queue_entry["recommended_revalidation_execution_hint"] = {}
+            queue_entry["recommended_revalidation_action_count"] = 0
+        queue_items.append(queue_entry)
+    limited_items = queue_items[:top_k]
+    summary = {
+        "queue_count": len(limited_items),
+        "total_review_required_work_item_count": len(queue_items),
+        "high_priority_revalidation_count": sum(
+            1
+            for item in queue_items
+            if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) >= 3
+        ),
+        "min_priority": str(min_priority or ""),
+        "execution_hints_included": bool(include_execution_hints),
+    }
+    return {
+        "top_k": top_k,
+        "min_priority": str(min_priority or ""),
+        "include_execution_hints": bool(include_execution_hints),
+        "results": limited_items,
+        "result_count": len(limited_items),
+        "summary": summary,
+        "source": "packaged_proof_revalidation_queue",
+    }
+
+
 def search_packaged_docket_logic_artifacts(
     manifest_path: str | Path,
     query: str,
@@ -2390,6 +3002,9 @@ def execute_packaged_docket_query(
     query: str,
     *,
     top_k: int = 10,
+    include_action_candidate_comparison: bool = False,
+    action_candidate_limit: Optional[int] = None,
+    action_candidates_chain_until_satisfied: bool = False,
 ) -> Dict[str, Any]:
     """Plan and execute a packaged docket query against the narrowest relevant pieces."""
 
@@ -2417,8 +3032,31 @@ def execute_packaged_docket_query(
             execution_stages=result["execution_stages"],
             top_k=top_k,
         )
+        result["proof_preference_summary"] = dict((result.get("escalation") or {}).get("proof_preference_summary") or {})
+        result["proof_preference_history_summary"] = dict((result.get("escalation") or {}).get("proof_preference_history_summary") or {})
+        result["proof_preference_review_trigger"] = dict((result.get("escalation") or {}).get("proof_preference_review_trigger") or {})
+        if include_action_candidate_comparison:
+            result = _attach_action_candidate_comparison(
+                manifest_path,
+                result,
+                top_k=top_k,
+                limit=action_candidate_limit,
+                chain_until_satisfied=action_candidates_chain_until_satisfied,
+            )
         return result
-    return adapter.execute_plan(plan, top_k=top_k)
+    result = adapter.execute_plan(plan, top_k=top_k)
+    result["proof_preference_summary"] = dict((result.get("escalation") or {}).get("proof_preference_summary") or {})
+    result["proof_preference_history_summary"] = dict((result.get("escalation") or {}).get("proof_preference_history_summary") or {})
+    result["proof_preference_review_trigger"] = dict((result.get("escalation") or {}).get("proof_preference_review_trigger") or {})
+    if include_action_candidate_comparison:
+        result = _attach_action_candidate_comparison(
+            manifest_path,
+            result,
+            top_k=top_k,
+            limit=action_candidate_limit,
+            chain_until_satisfied=action_candidates_chain_until_satisfied,
+        )
+    return result
 
 
 def prepare_packaged_docket_follow_up_job(
@@ -2452,6 +3090,14 @@ def prepare_packaged_docket_follow_up_job(
                     "label": str(reuse_step.get("label") or ""),
                     "retrieval_query": str(reuse_step.get("retrieval_query") or query),
                     "modules": list(reuse_step.get("modules") or []),
+                    "preferred_corpus_keys": list(reuse_step.get("preferred_corpus_keys") or []),
+                    "preferred_corpus_priority": list(reuse_step.get("preferred_corpus_priority") or []),
+                    "preferred_dataset_ids": list(reuse_step.get("preferred_dataset_ids") or []),
+                    "preferred_dataset_priority": list(reuse_step.get("preferred_dataset_priority") or []),
+                    "preferred_state_codes": list(reuse_step.get("preferred_state_codes") or []),
+                    "routing_evidence": list(reuse_step.get("routing_evidence") or []),
+                    "routing_reason": str(reuse_step.get("routing_reason") or ""),
+                    "authority_backed": bool(reuse_step.get("authority_backed")),
                     "rationale": str(reuse_step.get("rationale") or ""),
                     "priority": int(reuse_step.get("priority") or 1),
                 },
@@ -2487,6 +3133,14 @@ def prepare_packaged_docket_follow_up_job(
             "label": str(selected_step.get("label") or ""),
             "retrieval_query": str(selected_step.get("retrieval_query") or query),
             "modules": list(selected_step.get("modules") or []),
+            "preferred_corpus_keys": list(selected_step.get("preferred_corpus_keys") or []),
+            "preferred_corpus_priority": list(selected_step.get("preferred_corpus_priority") or []),
+            "preferred_dataset_ids": list(selected_step.get("preferred_dataset_ids") or []),
+            "preferred_dataset_priority": list(selected_step.get("preferred_dataset_priority") or []),
+            "preferred_state_codes": list(selected_step.get("preferred_state_codes") or []),
+            "routing_evidence": list(selected_step.get("routing_evidence") or []),
+            "routing_reason": str(selected_step.get("routing_reason") or ""),
+            "authority_backed": bool(selected_step.get("authority_backed")),
             "rationale": str(selected_step.get("rationale") or ""),
             "priority": int(selected_step.get("priority") or (normalized_index + 1)),
         },
@@ -2672,6 +3326,14 @@ def execute_packaged_docket_follow_up_job(
                 "source_type": source_type,
                 "retrieval_query": retrieval_query,
                 "modules": list(job.get("modules") or []),
+                "preferred_corpus_keys": list(job.get("preferred_corpus_keys") or []),
+                "preferred_corpus_priority": list(job.get("preferred_corpus_priority") or []),
+                "preferred_dataset_ids": list(job.get("preferred_dataset_ids") or []),
+                "preferred_dataset_priority": list(job.get("preferred_dataset_priority") or []),
+                "preferred_state_codes": list(job.get("preferred_state_codes") or []),
+                "routing_evidence": list(job.get("routing_evidence") or []),
+                "routing_reason": str(job.get("routing_reason") or ""),
+                "authority_backed": bool(job.get("authority_backed")),
                 "priority": int(job.get("priority") or 0),
                 "adapter": adapter,
             }
@@ -2722,6 +3384,14 @@ def execute_packaged_docket_follow_up_job(
                 "source_type": source_type,
                 "retrieval_query": retrieval_query,
                 "modules": list(job.get("modules") or []),
+                "preferred_corpus_keys": list(job.get("preferred_corpus_keys") or []),
+                "preferred_corpus_priority": list(job.get("preferred_corpus_priority") or []),
+                "preferred_dataset_ids": list(job.get("preferred_dataset_ids") or []),
+                "preferred_dataset_priority": list(job.get("preferred_dataset_priority") or []),
+                "preferred_state_codes": list(job.get("preferred_state_codes") or []),
+                "routing_evidence": list(job.get("routing_evidence") or []),
+                "routing_reason": str(job.get("routing_reason") or ""),
+                "authority_backed": bool(job.get("authority_backed")),
                 "priority": int(job.get("priority") or 0),
             },
             "reason": "This follow-up step is ready for parser-backed execution but is not executed inside the packaged bundle.",
@@ -2780,6 +3450,14 @@ def execute_packaged_docket_next_action(
             "label": str(execution_hint.get("label") or ""),
             "retrieval_query": str(execution_hint.get("retrieval_query") or summary.get("retrieval_query") or query or ""),
             "modules": list(execution_hint.get("modules") or []),
+            "preferred_corpus_keys": list(execution_hint.get("preferred_corpus_keys") or []),
+            "preferred_corpus_priority": list(execution_hint.get("preferred_corpus_priority") or []),
+            "preferred_dataset_ids": list(execution_hint.get("preferred_dataset_ids") or []),
+            "preferred_dataset_priority": list(execution_hint.get("preferred_dataset_priority") or []),
+            "preferred_state_codes": list(execution_hint.get("preferred_state_codes") or []),
+            "routing_evidence": list(execution_hint.get("routing_evidence") or []),
+            "routing_reason": str(execution_hint.get("routing_reason") or ""),
+            "authority_backed": bool(execution_hint.get("authority_backed")),
             "rationale": str(execution_hint.get("rationale") or summary.get("reason") or ""),
             "priority": int(execution_hint.get("priority") or 1),
         },
@@ -2822,6 +3500,408 @@ def execute_packaged_docket_next_action(
     return execution
 
 
+def execute_packaged_docket_action_candidate(
+    manifest_path: str | Path,
+    action_candidate: Mapping[str, Any],
+    *,
+    query: Optional[str] = None,
+    top_k: int = 10,
+    chain_until_satisfied: bool = False,
+) -> Dict[str, Any]:
+    """Execute a ranked escalation action candidate via its embedded execution hint."""
+
+    candidate = dict(action_candidate or {})
+    execution_hint = dict(candidate.get("execution_hint") or {})
+    if not execution_hint:
+        return {
+            "job_ready": False,
+            "executed": False,
+            "reason": "This action candidate does not include an execution hint.",
+            "action_candidate": candidate,
+            "results": [],
+            "result_count": 0,
+        }
+    execution = execute_packaged_docket_next_action(
+        manifest_path,
+        next_action={
+            "query": str(candidate.get("query") or query or execution_hint.get("retrieval_query") or ""),
+            "action_type": str(candidate.get("action_type") or execution_hint.get("action_type") or ""),
+            "source_type": str(candidate.get("source_type") or execution_hint.get("source_type") or ""),
+            "source_id": str(candidate.get("source_id") or execution_hint.get("source_id") or ""),
+            "reason": str(candidate.get("selection_rationale") or execution_hint.get("rationale") or ""),
+            "retrieval_query": str(execution_hint.get("retrieval_query") or query or ""),
+            "execution_hint": execution_hint,
+        },
+        query=query,
+        top_k=top_k,
+        chain_until_satisfied=chain_until_satisfied,
+    )
+    execution["action_candidate"] = candidate
+    execution["candidate_execution_summary"] = _build_candidate_execution_summary(
+        candidate,
+        execution,
+    )
+    return execution
+
+
+def execute_packaged_docket_action_candidates(
+    manifest_path: str | Path,
+    action_candidates: Optional[Sequence[Mapping[str, Any]]] = None,
+    *,
+    query_result: Optional[Mapping[str, Any]] = None,
+    query: Optional[str] = None,
+    top_k: int = 10,
+    limit: Optional[int] = None,
+    chain_until_satisfied: bool = False,
+) -> Dict[str, Any]:
+    """Execute ranked action candidates and return an enriched comparison view."""
+
+    candidates = [dict(item) for item in list(action_candidates or [])]
+    if not candidates and query_result:
+        escalation = dict((dict(query_result).get("escalation") or {}))
+        candidates = [dict(item) for item in list(escalation.get("action_candidates") or [])]
+    if limit is not None:
+        candidates = candidates[: max(0, int(limit))]
+    query_text = str(query or "")
+    if not query_text and query_result:
+        query_text = str(dict(query_result).get("query") or "")
+
+    executions: List[Dict[str, Any]] = []
+    for candidate in candidates:
+        execution = execute_packaged_docket_action_candidate(
+            manifest_path,
+            candidate,
+            query=query_text,
+            top_k=top_k,
+            chain_until_satisfied=chain_until_satisfied,
+        )
+        executions.append(execution)
+
+    comparison_rows = [
+        _build_action_candidate_execution_row(execution)
+        for execution in executions
+    ]
+    ranked_pairs = sorted(
+        list(zip(executions, comparison_rows)),
+        key=lambda pair: (
+            0 if bool(pair[0].get("executed")) else 1,
+            -_support_strength_priority(pair[1].get("terminal_support_strength")),
+            0 if bool(pair[1].get("resolved_directly")) else 1,
+            int(pair[1].get("terminal_result_count") or 0) * -1,
+        ),
+    )
+    best_execution = dict(ranked_pairs[0][0]) if ranked_pairs and bool(ranked_pairs[0][0].get("executed")) else {}
+    best_summary = dict(ranked_pairs[0][1]) if ranked_pairs and bool(ranked_pairs[0][0].get("executed")) else {}
+    return {
+        "query": query_text,
+        "candidate_count": len(candidates),
+        "executed_candidate_count": sum(1 for execution in executions if bool(execution.get("executed"))),
+        "chain_until_satisfied": bool(chain_until_satisfied),
+        "comparison_mode": "chain_until_satisfied" if bool(chain_until_satisfied) else "single_step",
+        "candidate_executions": executions,
+        "candidate_comparison": comparison_rows,
+        "best_candidate_execution": best_execution,
+        "best_candidate_summary": best_summary,
+        "best_terminal_candidate_summary": best_summary,
+    }
+
+
+def _attach_action_candidate_comparison(
+    manifest_path: str | Path,
+    result: Mapping[str, Any],
+    *,
+    top_k: int,
+    limit: Optional[int],
+    chain_until_satisfied: bool,
+) -> Dict[str, Any]:
+    enriched = dict(result)
+    escalation = dict(enriched.get("escalation") or {})
+    if not list(escalation.get("action_candidates") or []):
+        escalation["executed_action_candidates"] = {
+            "query": str(enriched.get("query") or ""),
+            "candidate_count": 0,
+            "executed_candidate_count": 0,
+            "chain_until_satisfied": bool(chain_until_satisfied),
+            "comparison_mode": "chain_until_satisfied" if bool(chain_until_satisfied) else "single_step",
+            "candidate_executions": [],
+            "candidate_comparison": [],
+            "best_candidate_execution": {},
+            "best_candidate_summary": {},
+            "best_terminal_candidate_summary": {},
+        }
+        enriched["escalation"] = escalation
+        return enriched
+
+    escalation["executed_action_candidates"] = execute_packaged_docket_action_candidates(
+        manifest_path,
+        query_result=enriched,
+        top_k=top_k,
+        limit=limit,
+        chain_until_satisfied=chain_until_satisfied,
+    )
+    enriched["escalation"] = escalation
+    return enriched
+
+
+def _build_query_proof_preference_summary(
+    *,
+    query: str,
+    result_rows: Sequence[Mapping[str, Any]],
+    next_action_summary: Mapping[str, Any],
+    should_escalate: bool,
+) -> Dict[str, Any]:
+    rows = [dict(item) for item in list(result_rows or [])]
+    packet_rows = [row for row in rows if str(row.get("source_type") or "") == "proof_packet"]
+    if packet_rows:
+        chosen = dict(packet_rows[0])
+        preference_summary = dict(chosen.get("packet_preference_summary") or {})
+        return {
+            "query": str(query or ""),
+            "preferred_source_type": "proof_packet",
+            "preferred_source_id": str(chosen.get("proof_id") or ""),
+            "preferred_action_type": "reuse_current_packet" if bool(chosen.get("is_current", True)) else "refresh_local_support",
+            "should_escalate": bool(should_escalate),
+            "selection_rationale": str(chosen.get("selection_rationale") or ""),
+            "packet_preference_summary": preference_summary,
+        }
+    next_summary = dict(next_action_summary or {})
+    return {
+        "query": str(query or ""),
+        "preferred_source_type": str(next_summary.get("source_type") or ""),
+        "preferred_source_id": str(next_summary.get("source_id") or ""),
+        "preferred_action_type": str(next_summary.get("action_type") or ""),
+        "should_escalate": bool(should_escalate),
+        "selection_rationale": str(next_summary.get("selection_rationale") or next_summary.get("reason") or ""),
+        "packet_preference_summary": dict(next_summary.get("packet_preference_summary") or {}),
+    }
+
+
+def _build_query_proof_preference_history_summary(
+    *,
+    query: str,
+    result_rows: Sequence[Mapping[str, Any]],
+    proof_preference_summary: Mapping[str, Any],
+) -> Dict[str, Any]:
+    rows = [dict(item) for item in list(result_rows or [])]
+    packet_rows = [row for row in rows if str(row.get("source_type") or "") == "proof_packet"]
+    preferred_source_type = str(proof_preference_summary.get("preferred_source_type") or "")
+    if packet_rows and preferred_source_type == "proof_packet":
+        chosen = dict(packet_rows[0])
+        history = [dict(item) for item in list(chosen.get("preference_history") or [])]
+        latest = dict(history[-1] if history else {})
+        previous = dict(history[-2] if len(history) >= 2 else {})
+        latest_terminal = str(latest.get("best_terminal_source_type") or "")
+        previous_terminal = str(previous.get("best_terminal_source_type") or "")
+        latest_strength = str(latest.get("best_terminal_support_strength") or "")
+        previous_strength = str(previous.get("best_terminal_support_strength") or "")
+        changed = bool(previous) and (
+            latest_terminal != previous_terminal or latest_strength != previous_strength
+        )
+        return {
+            "query": str(query or ""),
+            "preferred_source_type": "proof_packet",
+            "preferred_source_id": str(chosen.get("proof_id") or ""),
+            "history_count": len(history),
+            "latest_packet_version": int(latest.get("packet_version") or chosen.get("packet_version") or 0),
+            "has_previous_preference": bool(previous),
+            "stable_preference": bool(
+                previous
+                and latest_terminal == previous_terminal
+                and latest_strength == previous_strength
+            ) if previous else True,
+            "changed_since_previous": changed,
+            "change_summary": {
+                "changed": changed,
+                "previous_terminal_source_type": previous_terminal,
+                "latest_terminal_source_type": latest_terminal,
+                "previous_terminal_support_strength": previous_strength,
+                "latest_terminal_support_strength": latest_strength,
+            },
+            "latest_preference": latest,
+            "previous_preference": previous,
+        }
+    return {
+        "query": str(query or ""),
+        "preferred_source_type": preferred_source_type,
+        "preferred_source_id": str(proof_preference_summary.get("preferred_source_id") or ""),
+        "history_count": 0,
+        "latest_packet_version": 0,
+        "has_previous_preference": False,
+        "stable_preference": False,
+        "changed_since_previous": False,
+        "change_summary": {
+            "changed": False,
+            "previous_terminal_source_type": "",
+            "latest_terminal_source_type": "",
+            "previous_terminal_support_strength": "",
+            "latest_terminal_support_strength": "",
+        },
+        "latest_preference": {},
+        "previous_preference": {},
+    }
+
+
+def _build_proof_preference_review_trigger(
+    history_summary: Mapping[str, Any],
+) -> Dict[str, Any]:
+    summary = dict(history_summary or {})
+    change_summary = dict(summary.get("change_summary") or {})
+    changed = bool(summary.get("changed_since_previous")) or bool(change_summary.get("changed"))
+    latest_source = str(change_summary.get("latest_terminal_source_type") or "")
+    previous_source = str(change_summary.get("previous_terminal_source_type") or "")
+    latest_strength = str(change_summary.get("latest_terminal_support_strength") or "")
+    previous_strength = str(change_summary.get("previous_terminal_support_strength") or "")
+    source_changed = bool(previous_source and latest_source and previous_source != latest_source)
+    strength_changed = bool(previous_strength and latest_strength and previous_strength != latest_strength)
+    if source_changed:
+        severity = "high"
+    elif strength_changed:
+        severity = "medium"
+    else:
+        severity = "low" if changed else "none"
+    return {
+        "review_required": changed,
+        "trigger_type": "preference_shift_review" if changed else "",
+        "severity": severity,
+        "reason": (
+            f"Preferred proof support changed from {previous_source or 'unknown'} / {previous_strength or 'unknown'} "
+            f"to {latest_source or 'unknown'} / {latest_strength or 'unknown'}."
+            if changed
+            else "No proof preference change detected."
+        ),
+        "source_changed": source_changed,
+        "support_strength_changed": strength_changed,
+        "previous_terminal_source_type": previous_source,
+        "latest_terminal_source_type": latest_source,
+        "previous_terminal_support_strength": previous_strength,
+        "latest_terminal_support_strength": latest_strength,
+    }
+
+
+def _build_agenda_revalidation_metadata(
+    review_trigger: Mapping[str, Any],
+) -> Dict[str, Any]:
+    trigger = dict(review_trigger or {})
+    review_required = bool(trigger.get("review_required"))
+    severity = str(trigger.get("severity") or "none")
+    return {
+        "current_proof_packet_review_required": review_required,
+        "current_proof_packet_review_trigger": trigger,
+        "proof_revalidation_status": "needs_revalidation" if review_required else "current_support_stable",
+        "proof_revalidation_priority": severity if review_required else "none",
+    }
+
+
+def _proof_revalidation_priority_rank(priority: str) -> int:
+    return {
+        "high": 3,
+        "medium": 2,
+        "low": 1,
+        "none": 0,
+    }.get(str(priority or "").lower(), 0)
+
+
+def _sort_proof_agenda_items(
+    agenda_rows: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    normalized = [dict(item) for item in list(agenda_rows or [])]
+    normalized.sort(
+        key=lambda item: (
+            _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")),
+            1 if bool(item.get("current_proof_packet_review_required")) else 0,
+            int(item.get("current_proof_packet_version") or 0),
+            int(item.get("attached_evidence_count") or 0),
+            str(item.get("title") or ""),
+        ),
+        reverse=True,
+    )
+    return normalized
+
+
+def _count_agenda_revalidation_items(
+    agenda_rows: Sequence[Mapping[str, Any]],
+) -> Dict[str, int]:
+    rows = list(agenda_rows or [])
+    return {
+        "review_required_work_item_count": sum(
+            1 for item in rows if bool(item.get("current_proof_packet_review_required"))
+        ),
+        "high_priority_revalidation_count": sum(
+            1
+            for item in rows
+            if _proof_revalidation_priority_rank(str(item.get("proof_revalidation_priority") or "")) >= 3
+        ),
+    }
+
+
+def _build_persisted_action_candidate_history(
+    manifest_path: str | Path,
+    query: str,
+    *,
+    execution: Mapping[str, Any],
+    top_k: int,
+) -> Dict[str, Any]:
+    direct = dict(execution.get("executed_action_candidates") or {})
+    if direct:
+        return direct
+    nested_execution = dict(execution.get("execution") or {})
+    nested_escalation = dict(nested_execution.get("escalation") or {})
+    nested = dict(nested_escalation.get("executed_action_candidates") or {})
+    if nested:
+        return nested
+    if list(nested_escalation.get("action_candidates") or []):
+        return execute_packaged_docket_action_candidates(
+            manifest_path,
+            query_result=nested_execution,
+            query=query,
+            top_k=top_k,
+            chain_until_satisfied=True,
+        )
+    return {
+        "query": str(query or ""),
+        "candidate_count": 0,
+        "executed_candidate_count": 0,
+        "chain_until_satisfied": False,
+        "comparison_mode": "not_available",
+        "candidate_executions": [],
+        "candidate_comparison": [],
+        "best_candidate_execution": {},
+        "best_candidate_summary": {},
+        "best_terminal_candidate_summary": {},
+    }
+
+
+def _normalize_action_candidate_summary(
+    history: Mapping[str, Any],
+    fallback: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
+    summary = dict(history.get("best_terminal_candidate_summary") or history.get("best_candidate_summary") or {})
+    if summary:
+        return summary
+    fallback_summary = dict(fallback or {})
+    if not fallback_summary:
+        return {}
+    return {
+        "candidate_type": str(fallback_summary.get("candidate_type") or ""),
+        "candidate_action_type": str(fallback_summary.get("candidate_action_type") or ""),
+        "candidate_source_type": str(fallback_summary.get("best_candidate_source_type") or ""),
+        "candidate_source_id": str(fallback_summary.get("candidate_source_id") or ""),
+        "candidate_support_strength": str(fallback_summary.get("candidate_support_strength") or ""),
+        "executed": False,
+        "auto_chained": False,
+        "resolution_status": "",
+        "resolved_directly": False,
+        "terminal_action_type": str(fallback_summary.get("terminal_action_type") or ""),
+        "terminal_source_type": str(fallback_summary.get("best_terminal_source_type") or ""),
+        "terminal_source_id": str(fallback_summary.get("terminal_source_id") or ""),
+        "terminal_support_strength": str(fallback_summary.get("best_terminal_support_strength") or ""),
+        "terminal_result_count": int(fallback_summary.get("terminal_result_count") or 0),
+        "terminal_reason": str(fallback_summary.get("terminal_reason") or ""),
+        "selection_rationale": str(fallback_summary.get("selection_rationale") or ""),
+        "successful_action_summary": {},
+    }
+
+
 def _build_successful_action_summary(
     execution: Mapping[str, Any],
     *,
@@ -2846,6 +3926,74 @@ def _build_successful_action_summary(
         "reason": str(execution.get("reason") or ""),
         "support_strength": _classify_execution_support_strength(execution),
         "evidence_preview": _build_execution_evidence_preview(execution),
+    }
+
+
+def _build_candidate_execution_summary(
+    candidate: Mapping[str, Any],
+    execution: Mapping[str, Any],
+) -> Dict[str, Any]:
+    successful_action = dict(execution.get("successful_action_summary") or {})
+    candidate_action_type = str(candidate.get("action_type") or "")
+    candidate_source_type = str(candidate.get("source_type") or "")
+    candidate_source_id = str(candidate.get("source_id") or "")
+    terminal_action_type = str(successful_action.get("action_type") or "")
+    terminal_source_type = str(successful_action.get("source_type") or "")
+    terminal_source_id = str(successful_action.get("source_id") or "")
+    source_matches = (
+        candidate_source_type == terminal_source_type
+        and (not candidate_source_id or not terminal_source_id or candidate_source_id == terminal_source_id)
+    )
+    action_matches = candidate_action_type == terminal_action_type
+    resolves_directly = bool(source_matches and action_matches)
+    auto_chained = bool(execution.get("auto_chained"))
+    if not bool(execution.get("executed")):
+        resolution_status = "not_executed"
+    elif resolves_directly and auto_chained:
+        resolution_status = "chained_direct"
+    elif resolves_directly:
+        resolution_status = "direct"
+    else:
+        resolution_status = "redirected"
+    return {
+        "candidate_type": str(candidate.get("candidate_type") or ""),
+        "candidate_action_type": candidate_action_type,
+        "candidate_source_type": candidate_source_type,
+        "candidate_source_id": candidate_source_id,
+        "candidate_support_strength": str(candidate.get("support_strength") or ""),
+        "auto_chained": auto_chained,
+        "resolution_status": resolution_status,
+        "resolved_directly": resolves_directly,
+        "terminal_action_type": terminal_action_type,
+        "terminal_source_type": terminal_source_type,
+        "terminal_source_id": terminal_source_id,
+        "terminal_support_strength": str(successful_action.get("support_strength") or ""),
+        "successful_action_summary": successful_action,
+    }
+
+
+def _build_action_candidate_execution_row(execution: Mapping[str, Any]) -> Dict[str, Any]:
+    candidate = dict(execution.get("action_candidate") or {})
+    summary = dict(execution.get("candidate_execution_summary") or {})
+    successful_action = dict(summary.get("successful_action_summary") or {})
+    return {
+        "candidate_type": str(summary.get("candidate_type") or candidate.get("candidate_type") or ""),
+        "candidate_action_type": str(summary.get("candidate_action_type") or candidate.get("action_type") or ""),
+        "candidate_source_type": str(summary.get("candidate_source_type") or candidate.get("source_type") or ""),
+        "candidate_source_id": str(summary.get("candidate_source_id") or candidate.get("source_id") or ""),
+        "candidate_support_strength": str(summary.get("candidate_support_strength") or candidate.get("support_strength") or ""),
+        "executed": bool(execution.get("executed")),
+        "auto_chained": bool(summary.get("auto_chained")),
+        "resolution_status": str(summary.get("resolution_status") or ""),
+        "resolved_directly": bool(summary.get("resolved_directly")),
+        "terminal_action_type": str(summary.get("terminal_action_type") or ""),
+        "terminal_source_type": str(summary.get("terminal_source_type") or ""),
+        "terminal_source_id": str(summary.get("terminal_source_id") or ""),
+        "terminal_support_strength": str(summary.get("terminal_support_strength") or ""),
+        "terminal_result_count": int(successful_action.get("result_count") or 0),
+        "terminal_reason": str(successful_action.get("reason") or execution.get("reason") or ""),
+        "selection_rationale": str(candidate.get("selection_rationale") or ""),
+        "successful_action_summary": successful_action,
     }
 
 
@@ -2875,6 +4023,17 @@ def _build_execution_evidence_preview(execution: Mapping[str, Any]) -> Dict[str,
     return {}
 
 
+def _support_strength_priority(value: Any) -> int:
+    strength = str(value or "").lower()
+    priorities = {
+        "strong": 3,
+        "moderate": 2,
+        "weak": 1,
+        "none": 0,
+    }
+    return priorities.get(strength, -1)
+
+
 def _classify_execution_support_strength(execution: Mapping[str, Any]) -> str:
     if not bool(execution.get("executed")):
         return "none"
@@ -2900,11 +4059,137 @@ def _support_strength_rank(support_strength: str) -> int:
     return 0
 
 
+def _proof_packet_history_summary(packet_like: Mapping[str, Any]) -> Dict[str, Any]:
+    history = dict(packet_like.get("action_candidate_history") or {})
+    metadata = dict(packet_like.get("metadata") or {})
+    metadata_summary = dict(metadata.get("action_candidate_history_summary") or {})
+    if history:
+        summary = dict(
+            history.get("best_terminal_candidate_summary")
+            or history.get("best_candidate_summary")
+            or {}
+        )
+        return {
+            "comparison_mode": str(history.get("comparison_mode") or ""),
+            "candidate_count": int(history.get("candidate_count") or 0),
+            "executed_candidate_count": int(history.get("executed_candidate_count") or 0),
+            "best_candidate_source_type": str(summary.get("candidate_source_type") or ""),
+            "best_terminal_source_type": str(summary.get("terminal_source_type") or ""),
+            "best_terminal_support_strength": str(summary.get("terminal_support_strength") or ""),
+        }
+    return {
+        "comparison_mode": str(
+            packet_like.get("comparison_mode")
+            or metadata_summary.get("comparison_mode")
+            or ""
+        ),
+        "candidate_count": int(metadata_summary.get("candidate_count") or 0),
+        "executed_candidate_count": int(metadata_summary.get("executed_candidate_count") or 0),
+        "best_candidate_source_type": str(
+            packet_like.get("best_candidate_source_type")
+            or metadata_summary.get("best_candidate_source_type")
+            or ""
+        ),
+        "best_terminal_source_type": str(
+            packet_like.get("best_terminal_source_type")
+            or metadata_summary.get("best_terminal_source_type")
+            or ""
+        ),
+        "best_terminal_support_strength": str(
+            packet_like.get("best_terminal_support_strength")
+            or metadata_summary.get("best_terminal_support_strength")
+            or ""
+        ),
+    }
+
+
+def _proof_packet_history_rank(packet_like: Mapping[str, Any]) -> int:
+    summary = _proof_packet_history_summary(packet_like)
+    rank = _support_strength_rank(str(summary.get("best_terminal_support_strength") or "")) * 10
+    if str(summary.get("comparison_mode") or "") == "chain_until_satisfied":
+        rank += 3
+    if str(summary.get("best_terminal_source_type") or "") in {"legal_dataset_parser", "proof_packet"}:
+        rank += 2
+    if int(summary.get("executed_candidate_count") or 0) > 0:
+        rank += 1
+    return rank
+
+
+def _build_proof_packet_preference_summary(packet_like: Mapping[str, Any]) -> Dict[str, Any]:
+    history_summary = _proof_packet_history_summary(packet_like)
+    support_strength = str(packet_like.get("support_strength") or "")
+    packet_version = int(packet_like.get("packet_version") or 0)
+    is_current = bool(packet_like.get("is_current", True))
+    return {
+        "proof_id": str(packet_like.get("proof_id") or ""),
+        "is_current": is_current,
+        "support_strength": support_strength,
+        "packet_version": packet_version,
+        "history_quality": _proof_packet_history_rank(packet_like),
+        "comparison_mode": str(history_summary.get("comparison_mode") or ""),
+        "best_candidate_source_type": str(history_summary.get("best_candidate_source_type") or ""),
+        "best_terminal_source_type": str(history_summary.get("best_terminal_source_type") or ""),
+        "best_terminal_support_strength": str(history_summary.get("best_terminal_support_strength") or ""),
+        "selection_rationale": _build_proof_packet_selection_rationale(
+            is_current=is_current,
+            support_strength=support_strength,
+            packet_version=packet_version,
+            action_candidate_history_summary=history_summary,
+        ),
+    }
+
+
+def _build_proof_packet_preference_history(
+    *,
+    proof_id: str,
+    packet_version: int,
+    current_summary: Mapping[str, Any],
+    prior_packets: Sequence[Mapping[str, Any]] | None = None,
+) -> List[Dict[str, Any]]:
+    history: List[Dict[str, Any]] = []
+    seen: set[tuple[str, int]] = set()
+    for packet in list(prior_packets or []):
+        packet_dict = dict(packet)
+        existing_history = list(packet_dict.get("preference_history") or [])
+        for item in existing_history:
+            row = dict(item)
+            key = (str(row.get("proof_id") or ""), int(row.get("packet_version") or 0))
+            if not key[0] or key in seen:
+                continue
+            history.append(row)
+            seen.add(key)
+        packet_summary = dict(packet_dict.get("packet_preference_summary") or {})
+        packet_proof_id = str(packet_dict.get("proof_id") or "")
+        packet_packet_version = int(packet_dict.get("packet_version") or 0)
+        key = (packet_proof_id, packet_packet_version)
+        if packet_summary and packet_proof_id and key not in seen:
+            history.append(
+                {
+                    "proof_id": packet_proof_id,
+                    "packet_version": packet_packet_version,
+                    **packet_summary,
+                }
+            )
+            seen.add(key)
+    current_row = {
+        "proof_id": str(proof_id or ""),
+        "packet_version": int(packet_version or 0),
+        **dict(current_summary or {}),
+    }
+    current_key = (str(current_row.get("proof_id") or ""), int(current_row.get("packet_version") or 0))
+    if current_key[0]:
+        history = [item for item in history if (str(item.get("proof_id") or ""), int(item.get("packet_version") or 0)) != current_key]
+        history.append(current_row)
+    history.sort(key=lambda item: int(item.get("packet_version") or 0))
+    return history
+
+
 def _build_proof_packet_selection_rationale(
     *,
     is_current: bool,
     support_strength: str,
     packet_version: int,
+    action_candidate_history_summary: Optional[Mapping[str, Any]] = None,
 ) -> str:
     reasons: List[str] = []
     if is_current:
@@ -2912,11 +4197,36 @@ def _build_proof_packet_selection_rationale(
     normalized_strength = str(support_strength or "").lower()
     if normalized_strength:
         reasons.append(f"it has {normalized_strength} support")
+    history_summary = dict(action_candidate_history_summary or {})
+    best_terminal_support_strength = str(history_summary.get("best_terminal_support_strength") or "").lower()
+    comparison_mode = str(history_summary.get("comparison_mode") or "")
+    best_terminal_source_type = str(history_summary.get("best_terminal_source_type") or "")
+    if best_terminal_support_strength:
+        history_reason = f"it has a {best_terminal_support_strength} retrieval history"
+        if comparison_mode == "chain_until_satisfied":
+            history_reason = f"it has a {best_terminal_support_strength} chained retrieval history"
+        if best_terminal_source_type:
+            history_reason += f" ending in {best_terminal_source_type}"
+        reasons.append(history_reason)
     if packet_version > 0:
         reasons.append(f"it is packet version {packet_version}")
     if not reasons:
         return "Selected this proof packet because it best matched the packaged proof evidence."
     return "Selected this proof packet because " + ", ".join(reasons) + "."
+
+
+def _routing_explanation_summary(packet_like: Mapping[str, Any]) -> Dict[str, Any]:
+    routing = dict(packet_like.get("routing_explanation") or {})
+    return {
+        "routing_reason": str(routing.get("routing_reason") or ""),
+        "routing_evidence": [dict(item) for item in list(routing.get("routing_evidence") or []) if isinstance(item, Mapping)],
+        "preferred_corpus_keys": list(routing.get("preferred_corpus_keys") or []),
+        "preferred_corpus_priority": list(routing.get("preferred_corpus_priority") or []),
+        "preferred_dataset_ids": list(routing.get("preferred_dataset_ids") or []),
+        "preferred_dataset_priority": list(routing.get("preferred_dataset_priority") or []),
+        "preferred_state_codes": list(routing.get("preferred_state_codes") or []),
+        "authority_backed": bool(routing.get("authority_backed")),
+    }
 
 
 def execute_packaged_docket_follow_up_plan(
@@ -2975,6 +4285,14 @@ def execute_packaged_docket_follow_up_plan(
                 "label": str(step.get("label") or ""),
                 "retrieval_query": str(step.get("retrieval_query") or query),
                 "modules": list(step.get("modules") or []),
+                "preferred_corpus_keys": list(step.get("preferred_corpus_keys") or []),
+                "preferred_corpus_priority": list(step.get("preferred_corpus_priority") or []),
+                "preferred_dataset_ids": list(step.get("preferred_dataset_ids") or []),
+                "preferred_dataset_priority": list(step.get("preferred_dataset_priority") or []),
+                "preferred_state_codes": list(step.get("preferred_state_codes") or []),
+                "routing_evidence": list(step.get("routing_evidence") or []),
+                "routing_reason": str(step.get("routing_reason") or ""),
+                "authority_backed": bool(step.get("authority_backed")),
                 "rationale": str(step.get("rationale") or ""),
                 "priority": int(step.get("priority") or 0),
             },
@@ -3115,6 +4433,18 @@ def build_packaged_docket_proof_evidence_bundle(
     packager = DocketDatasetPackager()
     minimal_view = packager.load_minimal_dataset_view(manifest_path)
     result_rows = [dict(item) for item in list(execution.get("results") or [])]
+    final_execution = dict(execution.get("final_execution") or {})
+    final_job = dict(final_execution.get("job") or {})
+    routing_explanation = {
+        "routing_reason": str(final_job.get("routing_reason") or ""),
+        "routing_evidence": [dict(item) for item in list(final_job.get("routing_evidence") or []) if isinstance(item, Mapping)],
+        "preferred_corpus_keys": list(final_job.get("preferred_corpus_keys") or []),
+        "preferred_corpus_priority": list(final_job.get("preferred_corpus_priority") or []),
+        "preferred_dataset_ids": list(final_job.get("preferred_dataset_ids") or []),
+        "preferred_dataset_priority": list(final_job.get("preferred_dataset_priority") or []),
+        "preferred_state_codes": list(final_job.get("preferred_state_codes") or []),
+        "authority_backed": bool(final_job.get("authority_backed")),
+    }
     evidence_items = [
         _build_proof_evidence_item(row, query=query, ordinal=index)
         for index, row in enumerate(result_rows, start=1)
@@ -3155,11 +4485,12 @@ def build_packaged_docket_proof_evidence_bundle(
         },
         "evidence_items": evidence_items,
         "retrieval_trace": retrieval_trace,
-        "final_execution": dict(execution.get("final_execution") or {}),
+        "final_execution": final_execution,
         "metadata": {
             "source": "execute_packaged_docket_follow_up_plan",
             "result_count": int(execution.get("result_count") or 0),
             "final_result_count": int(execution.get("final_result_count") or 0),
+            "routing_explanation": routing_explanation,
         },
     }
 
@@ -3231,6 +4562,47 @@ def build_packaged_docket_proof_assistant_packet(
         support_summary.get("support_strength")
         or _classify_execution_support_strength(dict(execution.get("final_execution") or execution))
     )
+    action_candidate_history = _build_persisted_action_candidate_history(
+        manifest_path,
+        query,
+        execution=execution,
+        top_k=top_k,
+    )
+    best_action_candidate_summary = _normalize_action_candidate_summary(action_candidate_history)
+    packet_preference_summary = _build_proof_packet_preference_summary(
+        {
+            "proof_id": proof_id,
+            "is_current": True,
+            "support_strength": support_strength,
+            "packet_version": packet_version,
+            "action_candidate_history": action_candidate_history,
+        }
+    )
+    preference_history = _build_proof_packet_preference_history(
+        proof_id=proof_id,
+        packet_version=packet_version,
+        current_summary=packet_preference_summary,
+        prior_packets=work_item_packets,
+    )
+    preference_history_summary = _build_query_proof_preference_history_summary(
+        query=query,
+        result_rows=[
+            {
+                "source_type": "proof_packet",
+                "proof_id": proof_id,
+                "packet_version": packet_version,
+                "preference_history": preference_history,
+            }
+        ],
+        proof_preference_summary={
+            "preferred_source_type": "proof_packet",
+            "preferred_source_id": proof_id,
+            "preferred_action_type": "reuse_current_packet",
+        },
+    )
+    preference_review_trigger = _build_proof_preference_review_trigger(
+        preference_history_summary,
+    )
     proof_record = {
         "proof_id": proof_id,
         "work_item_id": work_item_id,
@@ -3252,6 +4624,12 @@ def build_packaged_docket_proof_assistant_packet(
         "support_strength": support_strength,
         "matched_plan": matched_plan,
         "retrieval_trace": list(evidence_bundle.get("retrieval_trace") or []),
+        "action_candidate_history": action_candidate_history,
+        "packet_preference_summary": packet_preference_summary,
+        "preference_history": preference_history,
+        "preference_history_summary": preference_history_summary,
+        "preference_review_trigger": preference_review_trigger,
+        "routing_explanation": dict((evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}),
         "certificates": [],
         "metadata": {
             "backend": "packaged_docket_follow_up_proof_packet",
@@ -3261,6 +4639,17 @@ def build_packaged_docket_proof_assistant_packet(
             "dataset_id": str(minimal_view.get("dataset_id") or ""),
             "docket_id": str(minimal_view.get("docket_id") or ""),
             "support_strength": support_strength,
+            "action_candidate_history_summary": {
+                "comparison_mode": str(action_candidate_history.get("comparison_mode") or ""),
+                "candidate_count": int(action_candidate_history.get("candidate_count") or 0),
+                "executed_candidate_count": int(action_candidate_history.get("executed_candidate_count") or 0),
+                "best_candidate_source_type": str(best_action_candidate_summary.get("candidate_source_type") or ""),
+                "best_terminal_source_type": str(best_action_candidate_summary.get("terminal_source_type") or ""),
+                "best_terminal_support_strength": str(best_action_candidate_summary.get("terminal_support_strength") or ""),
+            },
+            "packet_preference_summary": packet_preference_summary,
+            "preference_history_count": len(preference_history),
+            "preference_review_trigger": preference_review_trigger,
             "proof_lineage": {
                 "packet_version": packet_version,
                 "is_current": True,
@@ -3268,6 +4657,7 @@ def build_packaged_docket_proof_assistant_packet(
                 "supersedes_proof_ids": supersedes_proof_ids,
                 "superseded_by_proof_id": "",
             },
+            "routing_explanation": dict((evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}),
         },
     }
     proof_store = {
@@ -3295,9 +4685,16 @@ def build_packaged_docket_proof_assistant_packet(
         "supersedes_proof_ids": supersedes_proof_ids,
         "superseded_by_proof_id": "",
         "support_strength": support_strength,
+        "action_candidate_history": action_candidate_history,
+        "best_action_candidate_summary": best_action_candidate_summary,
+        "packet_preference_summary": packet_preference_summary,
+        "preference_history": preference_history,
+        "preference_history_summary": preference_history_summary,
+        "preference_review_trigger": preference_review_trigger,
         "matched_work_item": matched_work_item,
         "matched_plan": matched_plan,
         "evidence_bundle": evidence_bundle,
+        "routing_explanation": dict((evidence_bundle.get("metadata") or {}).get("routing_explanation") or {}),
         "proof_store": proof_store,
     }
 
@@ -3318,6 +4715,70 @@ def attach_packaged_docket_proof_assistant_packet(
         top_k=top_k,
         follow_up_execution=follow_up_execution,
     )
+    return _attach_packet_to_package_view(package_view, packet, query=query)
+
+
+def enrich_packaged_docket_with_tactician(
+    manifest_path: str | Path,
+    queries: Sequence[str],
+    *,
+    top_k: int = 10,
+) -> Dict[str, Any]:
+    """Apply one or more tactician-guided proof-packet enrichments to a packaged docket view."""
+
+    package_view = load_packaged_docket_dataset(manifest_path)
+    normalized_queries = [str(query).strip() for query in list(queries or []) if str(query).strip()]
+    enrichments: List[Dict[str, Any]] = []
+    for query in normalized_queries:
+        execution = execute_packaged_docket_follow_up_plan(
+            manifest_path,
+            query,
+            top_k=top_k,
+        )
+        packet = build_packaged_docket_proof_assistant_packet(
+            manifest_path,
+            query,
+            top_k=top_k,
+            follow_up_execution=execution,
+        )
+        package_view = _attach_packet_to_package_view(
+            package_view,
+            packet,
+            query=query,
+        )
+        refresh = dict(package_view.get("proof_packet_refresh") or {})
+        enrichments.append(
+            {
+                "query": query,
+                "proof_id": str((package_view.get("attached_proof_assistant_packet") or {}).get("proof_id") or ""),
+                "packet_version": int((package_view.get("attached_proof_assistant_packet") or {}).get("packet_version") or 0),
+                "support_strength": str((package_view.get("attached_proof_assistant_packet") or {}).get("support_strength") or ""),
+                "decision": str(refresh.get("decision") or ""),
+                "material_change_detected": bool(refresh.get("material_change_detected")),
+                "result_count": int((dict(execution.get("proof_evidence_bundle") or {}).get("summary") or {}).get("evidence_item_count") or 0),
+            }
+        )
+    metadata = dict(package_view.get("metadata") or {})
+    metadata["tactician_enriched"] = bool(enrichments)
+    metadata["tactician_enrichment_query_count"] = len(enrichments)
+    metadata["tactician_enrichment_queries"] = normalized_queries
+    package_view["metadata"] = metadata
+    package_view["tactician_enrichments"] = enrichments
+    return package_view
+
+
+def _attach_packet_to_package_view(
+    package_view: Mapping[str, Any],
+    packet: Mapping[str, Any],
+    *,
+    query: str,
+) -> Dict[str, Any]:
+    package_view = dict(package_view)
+    packet = _rebase_packet_version_against_view(
+        dict(packet),
+        dict(package_view.get("proof_assistant") or {}),
+        query=query,
+    )
     proof_assistant = dict(package_view.get("proof_assistant") or {})
     matched_work_item = dict(packet.get("matched_work_item") or {})
     matched_work_item_id = str(matched_work_item.get("work_item_id") or "")
@@ -3329,6 +4790,38 @@ def attach_packaged_docket_proof_assistant_packet(
         proof_assistant,
         proof_id=str(current_packet_summary.get("proof_id") or ""),
     )
+    def _apply_agenda_packet_metadata(
+        agenda_rows: Sequence[Mapping[str, Any]],
+        packet_like: Mapping[str, Any],
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        review_metadata = _build_agenda_revalidation_metadata(
+            packet_like.get("preference_review_trigger") or {},
+        )
+        updated_agenda = [dict(item) for item in list(agenda_rows or [])]
+        updated_count = 0
+        for item in updated_agenda:
+            if str(item.get("work_item_id") or "") != matched_work_item_id:
+                continue
+            evidence_packet_ids = [
+                str(value)
+                for value in list(item.get("evidence_packet_ids") or [])
+                if str(value).strip()
+            ]
+            if str(packet_like.get("proof_id") or "") and str(packet_like.get("proof_id") or "") not in evidence_packet_ids:
+                evidence_packet_ids.append(str(packet_like.get("proof_id") or ""))
+            item["evidence_packet_ids"] = evidence_packet_ids
+            item["attached_evidence_count"] = len(
+                list((packet_like.get("evidence_bundle") or {}).get("evidence_items") or [])
+            )
+            item["latest_proof_packet_id"] = str(packet_like.get("proof_id") or "")
+            item["current_proof_packet_id"] = str(packet_like.get("proof_id") or "")
+            item["current_proof_packet_version"] = int(packet_like.get("packet_version") or 0)
+            item["current_proof_packet_support_strength"] = str(packet_like.get("support_strength") or "")
+            item.update(review_metadata)
+            item["evidence_status"] = "collected_evidence"
+            updated_count += 1
+        return updated_agenda, updated_count
+
     if current_packet_summary and current_proof_payload and not _proof_packet_material_change(
         current_proof_payload,
         packet,
@@ -3338,17 +4831,39 @@ def attach_packaged_docket_proof_assistant_packet(
             current_packet_summary,
             packet,
         )
+        routing_summary = _routing_explanation_summary(reused_packet)
+        agenda, attached_work_item_count = _apply_agenda_packet_metadata(
+            proof_assistant.get("agenda") or [],
+            reused_packet,
+        )
         package_metadata = dict(package_view.get("metadata") or {})
         package_metadata["proof_packet_attached"] = True
         package_metadata["latest_proof_packet_id"] = str(reused_packet.get("proof_id") or "")
         package_metadata["latest_proof_packet_version"] = int(reused_packet.get("packet_version") or 0)
         package_metadata["proof_packet_reused"] = True
+        package_metadata["latest_proof_packet_routing_explanation"] = routing_summary
         package_view["metadata"] = package_metadata
+        agenda = _sort_proof_agenda_items(agenda)
+        revalidation_counts = _count_agenda_revalidation_items(agenda)
         proof_metadata = dict(proof_assistant.get("metadata") or {})
         proof_metadata["latest_proof_packet_id"] = str(reused_packet.get("proof_id") or "")
         proof_metadata["latest_proof_packet_version"] = int(reused_packet.get("packet_version") or 0)
         proof_metadata["latest_proof_packet_query"] = query
         proof_metadata["proof_packet_reused"] = True
+        proof_metadata["latest_proof_packet_routing_explanation"] = routing_summary
+        proof_metadata["latest_proof_packet_support_strength"] = str(reused_packet.get("support_strength") or "")
+        proof_metadata["latest_proof_packet_preference_history_count"] = len(list(reused_packet.get("preference_history") or []))
+        proof_metadata["latest_proof_packet_review_trigger"] = dict(reused_packet.get("preference_review_trigger") or {})
+        summary = dict(proof_assistant.get("summary") or {})
+        summary["attached_work_item_count"] = attached_work_item_count
+        summary["latest_proof_packet_support_strength"] = str(reused_packet.get("support_strength") or "")
+        summary["latest_proof_packet_preference_history_count"] = len(list(reused_packet.get("preference_history") or []))
+        summary["latest_proof_packet_review_required"] = bool(
+            (reused_packet.get("preference_review_trigger") or {}).get("review_required")
+        )
+        summary.update(revalidation_counts)
+        proof_assistant["summary"] = summary
+        proof_assistant["agenda"] = agenda
         proof_assistant["metadata"] = proof_metadata
         package_view["proof_assistant"] = proof_assistant
         package_view["attached_proof_assistant_packet"] = reused_packet
@@ -3357,26 +4872,17 @@ def attach_packaged_docket_proof_assistant_packet(
             "material_change_detected": False,
             "proof_id": str(reused_packet.get("proof_id") or ""),
             "packet_version": int(reused_packet.get("packet_version") or 0),
+            "routing_explanation": routing_summary,
         }
         return package_view
 
-    agenda = [dict(item) for item in list(proof_assistant.get("agenda") or [])]
-    attached_work_item_count = 0
-    for item in agenda:
-        if str(item.get("work_item_id") or "") != matched_work_item_id:
-            continue
-        evidence_packet_ids = [str(value) for value in list(item.get("evidence_packet_ids") or []) if str(value).strip()]
-        if str(packet.get("proof_id") or "") and str(packet.get("proof_id") or "") not in evidence_packet_ids:
-            evidence_packet_ids.append(str(packet.get("proof_id") or ""))
-        item["evidence_packet_ids"] = evidence_packet_ids
-        item["attached_evidence_count"] = len(list((packet.get("evidence_bundle") or {}).get("evidence_items") or []))
-        item["latest_proof_packet_id"] = str(packet.get("proof_id") or "")
-        item["current_proof_packet_id"] = str(packet.get("proof_id") or "")
-        item["current_proof_packet_version"] = int(packet.get("packet_version") or 0)
-        item["current_proof_packet_support_strength"] = str(packet.get("support_strength") or "")
-        item["evidence_status"] = "collected_evidence"
-        attached_work_item_count += 1
+    agenda, attached_work_item_count = _apply_agenda_packet_metadata(
+        proof_assistant.get("agenda") or [],
+        packet,
+    )
 
+    agenda = _sort_proof_agenda_items(agenda)
+    revalidation_counts = _count_agenda_revalidation_items(agenda)
     existing_packets = [dict(item) for item in list(proof_assistant.get("evidence_packets") or [])]
     existing_packet_ids = {str(item.get("proof_id") or "") for item in existing_packets if str(item.get("proof_id") or "")}
     superseded_packet_ids: List[str] = []
@@ -3405,6 +4911,13 @@ def attach_packaged_docket_proof_assistant_packet(
         "supersedes_proof_ids": superseded_packet_ids,
         "superseded_by_proof_id": "",
         "support_strength": str(packet.get("support_strength") or ""),
+        "comparison_mode": str(((packet.get("action_candidate_history") or {}).get("comparison_mode")) or ""),
+        "best_candidate_source_type": str(((packet.get("best_action_candidate_summary") or {}).get("candidate_source_type")) or ""),
+        "best_terminal_source_type": str(((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or ""),
+        "best_terminal_support_strength": str(((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or ""),
+        "packet_preference_summary": dict(packet.get("packet_preference_summary") or {}),
+        "preference_history": list(packet.get("preference_history") or []),
+        "preference_review_trigger": dict(packet.get("preference_review_trigger") or {}),
     }
     if str(packet_summary.get("proof_id") or "") and str(packet_summary.get("proof_id") or "") not in existing_packet_ids:
         existing_packets.append(packet_summary)
@@ -3458,6 +4971,12 @@ def attach_packaged_docket_proof_assistant_packet(
     summary["current_proof_packet_count"] = current_packet_count
     summary["superseded_proof_packet_count"] = superseded_packet_count
     summary["latest_proof_packet_support_strength"] = str(packet.get("support_strength") or "")
+    summary["latest_proof_packet_comparison_mode"] = str(((packet.get("action_candidate_history") or {}).get("comparison_mode")) or "")
+    summary["latest_proof_packet_best_terminal_source_type"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or "")
+    summary["latest_proof_packet_best_terminal_support_strength"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or "")
+    summary["latest_proof_packet_preference_history_count"] = len(list(packet.get("preference_history") or []))
+    summary["latest_proof_packet_review_required"] = bool((packet.get("preference_review_trigger") or {}).get("review_required"))
+    summary.update(revalidation_counts)
     proof_assistant["summary"] = summary
     proof_assistant["agenda"] = agenda
     proof_assistant["evidence_packets"] = existing_packets
@@ -3466,16 +4985,23 @@ def attach_packaged_docket_proof_assistant_packet(
     metadata["latest_proof_packet_query"] = query
     metadata["latest_proof_packet_version"] = int(packet.get("packet_version") or 0)
     metadata["latest_proof_packet_support_strength"] = str(packet.get("support_strength") or "")
+    metadata["latest_proof_packet_comparison_mode"] = str(((packet.get("action_candidate_history") or {}).get("comparison_mode")) or "")
+    metadata["latest_proof_packet_best_terminal_source_type"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_source_type")) or "")
+    metadata["latest_proof_packet_best_terminal_support_strength"] = str(((packet.get("best_action_candidate_summary") or {}).get("terminal_support_strength")) or "")
+    metadata["latest_proof_packet_preference_history_count"] = len(list(packet.get("preference_history") or []))
+    metadata["latest_proof_packet_review_trigger"] = dict(packet.get("preference_review_trigger") or {})
     metadata["current_proof_packet_count"] = current_packet_count
     metadata["superseded_proof_packet_count"] = superseded_packet_count
     proof_assistant["metadata"] = metadata
 
     package_view["proof_assistant"] = proof_assistant
+    routing_summary = _routing_explanation_summary(packet)
     package_metadata = dict(package_view.get("metadata") or {})
     package_metadata["proof_packet_attached"] = True
     package_metadata["latest_proof_packet_id"] = str(packet.get("proof_id") or "")
     package_metadata["latest_proof_packet_version"] = int(packet.get("packet_version") or 0)
     package_metadata["proof_packet_reused"] = False
+    package_metadata["latest_proof_packet_routing_explanation"] = routing_summary
     package_view["metadata"] = package_metadata
     package_view["attached_proof_assistant_packet"] = packet
     package_view["proof_packet_refresh"] = {
@@ -3483,6 +5009,7 @@ def attach_packaged_docket_proof_assistant_packet(
         "material_change_detected": True,
         "proof_id": str(packet.get("proof_id") or ""),
         "packet_version": int(packet.get("packet_version") or 0),
+        "routing_explanation": routing_summary,
     }
     return package_view
 
@@ -3584,6 +5111,16 @@ def _build_existing_proof_assistant_packet(
         "superseded_by_proof_id": str(
             existing_proof_payload.get("superseded_by_proof_id") or current_packet_summary.get("superseded_by_proof_id") or ""
         ),
+        "support_strength": str(existing_proof_payload.get("support_strength") or current_packet_summary.get("support_strength") or ""),
+        "action_candidate_history": dict(
+            existing_proof_payload.get("action_candidate_history")
+            or new_packet.get("action_candidate_history")
+            or {}
+        ),
+        "best_action_candidate_summary": _normalize_action_candidate_summary(
+            dict(existing_proof_payload.get("action_candidate_history") or new_packet.get("action_candidate_history") or {}),
+            fallback=(dict(existing_proof_payload.get("metadata") or {})).get("action_candidate_history_summary"),
+        ),
         "matched_work_item": dict(new_packet.get("matched_work_item") or {}),
         "matched_plan": dict(existing_proof_payload.get("matched_plan") or new_packet.get("matched_plan") or {}),
         "evidence_bundle": dict(existing_proof_payload.get("evidence_bundle") or {}),
@@ -3591,7 +5128,114 @@ def _build_existing_proof_assistant_packet(
         "refresh_decision": "reused_current_packet",
         "material_change_detected": False,
     }
+    reused_packet["packet_preference_summary"] = _build_proof_packet_preference_summary(
+        {
+            "proof_id": proof_id,
+            "is_current": bool(reused_packet.get("is_current", True)),
+            "support_strength": str(reused_packet.get("support_strength") or ""),
+            "packet_version": int(reused_packet.get("packet_version") or 0),
+            "action_candidate_history": reused_packet.get("action_candidate_history"),
+            "metadata": existing_proof_payload.get("metadata"),
+        }
+    )
+    reused_packet["preference_history"] = list(
+        existing_proof_payload.get("preference_history")
+        or current_packet_summary.get("preference_history")
+        or _build_proof_packet_preference_history(
+            proof_id=proof_id,
+            packet_version=int(reused_packet.get("packet_version") or 0),
+            current_summary=dict(reused_packet.get("packet_preference_summary") or {}),
+            prior_packets=[],
+        )
+    )
+    reused_packet["preference_history_summary"] = _build_query_proof_preference_history_summary(
+        query=str(reused_packet.get("query") or ""),
+        result_rows=[
+            {
+                "source_type": "proof_packet",
+                "proof_id": proof_id,
+                "packet_version": int(reused_packet.get("packet_version") or 0),
+                "preference_history": list(reused_packet.get("preference_history") or []),
+            }
+        ],
+        proof_preference_summary={
+            "preferred_source_type": "proof_packet",
+            "preferred_source_id": proof_id,
+            "preferred_action_type": "reuse_current_packet",
+        },
+    )
+    reused_packet["preference_review_trigger"] = _build_proof_preference_review_trigger(
+        reused_packet["preference_history_summary"],
+    )
     return reused_packet
+
+
+def _rebase_packet_version_against_view(
+    packet: Dict[str, Any],
+    proof_assistant: Mapping[str, Any],
+    *,
+    query: str,
+) -> Dict[str, Any]:
+    matched_work_item = dict(packet.get("matched_work_item") or {})
+    work_item_id = str(packet.get("work_item_id") or matched_work_item.get("work_item_id") or "")
+    if not work_item_id:
+        return packet
+    existing_packets = [
+        dict(item)
+        for item in list(proof_assistant.get("evidence_packets") or [])
+        if isinstance(item, Mapping) and str(item.get("work_item_id") or "") == work_item_id
+    ]
+    if not existing_packets:
+        return packet
+
+    current_packet_summary = _find_current_proof_packet_summary(proof_assistant, work_item_id=work_item_id)
+    current_proof_payload = _find_proof_store_entry(
+        proof_assistant,
+        proof_id=str(current_packet_summary.get("proof_id") or ""),
+    )
+    if current_packet_summary and current_proof_payload and not _proof_packet_material_change(current_proof_payload, packet):
+        return _build_existing_proof_assistant_packet(current_proof_payload, current_packet_summary, packet)
+
+    highest_version = max(int(item.get("packet_version") or 0) for item in existing_packets)
+    packet_version = max(int(packet.get("packet_version") or 0), highest_version + 1)
+    dataset_id = str(packet.get("dataset_id") or "")
+    proof_id = f"{dataset_id}:retrieval_proof:{_safe_identifier(work_item_id)}:v{packet_version}"
+    supersedes = [
+        str(item.get("proof_id") or "")
+        for item in existing_packets
+        if bool(item.get("is_current", True)) and str(item.get("proof_id") or "")
+    ]
+    packet["query"] = str(query or packet.get("query") or "")
+    packet["proof_id"] = proof_id
+    packet["packet_version"] = packet_version
+    packet["is_current"] = True
+    packet["superseded"] = False
+    packet["supersedes_proof_ids"] = supersedes
+    packet["superseded_by_proof_id"] = ""
+
+    proof_store = dict(packet.get("proof_store") or {})
+    proofs = dict(proof_store.get("proofs") or {})
+    old_keys = list(proofs.keys())
+    if old_keys:
+        payload = dict(proofs.get(old_keys[0]) or {})
+        payload["proof_id"] = proof_id
+        payload["packet_version"] = packet_version
+        payload["is_current"] = True
+        payload["superseded"] = False
+        payload["supersedes_proof_ids"] = supersedes
+        payload["superseded_by_proof_id"] = ""
+        payload["query"] = str(query or payload.get("query") or "")
+        payload["metadata"] = dict(payload.get("metadata") or {})
+        lineage = dict(payload["metadata"].get("proof_lineage") or {})
+        lineage["packet_version"] = packet_version
+        lineage["is_current"] = True
+        lineage["superseded"] = False
+        lineage["supersedes_proof_ids"] = supersedes
+        lineage["superseded_by_proof_id"] = ""
+        payload["metadata"]["proof_lineage"] = lineage
+        proof_store["proofs"] = {proof_id: payload}
+    packet["proof_store"] = proof_store
+    return packet
 
 
 def _search_packaged_follow_up_rows(
@@ -3824,6 +5468,7 @@ def _prepare_legal_dataset_parser_adapter(
         adapter = _build_legal_dataset_parser_adapter(
             module_name,
             retrieval_query,
+            job=job,
             source_id=source_id,
             top_k=top_k,
         )
@@ -3841,12 +5486,14 @@ def _build_legal_dataset_parser_adapter(
     module_name: str,
     retrieval_query: str,
     *,
+    job: Mapping[str, Any],
     source_id: str,
     top_k: int,
 ) -> Dict[str, Any]:
     selected = _select_legal_dataset_parser_callable(
         module_name,
         retrieval_query,
+        job=job,
         source_id=source_id,
         top_k=top_k,
     )
@@ -3893,10 +5540,102 @@ def _select_legal_dataset_parser_callable(
     module_name: str,
     retrieval_query: str,
     *,
+    job: Mapping[str, Any],
     source_id: str,
     top_k: int,
 ) -> Dict[str, Any]:
     lowered_query = str(retrieval_query or "").lower()
+    preferred_corpus_priority = [str(item).strip() for item in list(job.get("preferred_corpus_priority") or []) if str(item).strip()]
+    preferred_corpus_keys = preferred_corpus_priority or [str(item).strip() for item in list(job.get("preferred_corpus_keys") or []) if str(item).strip()]
+    preferred_dataset_priority = [str(item).strip() for item in list(job.get("preferred_dataset_priority") or []) if str(item).strip()]
+    preferred_dataset_ids = preferred_dataset_priority or [str(item).strip() for item in list(job.get("preferred_dataset_ids") or []) if str(item).strip()]
+    preferred_state_codes = [str(item).strip().upper() for item in list(job.get("preferred_state_codes") or []) if str(item).strip()]
+    routing_reason = str(job.get("routing_reason") or "").strip()
+    state_code = preferred_state_codes[0] if preferred_state_codes else "OR"
+
+    def _with_routing_reason(reason: str) -> str:
+        if routing_reason:
+            return f"{reason} {routing_reason}"
+        return reason
+
+    def _preferred_state_parameters(corpus_key: str) -> Dict[str, Any]:
+        canonical = get_canonical_legal_corpus(corpus_key)
+        dataset_ids = preferred_dataset_ids or [canonical.hf_dataset_id]
+        return {
+            "state": state_code,
+            "hf_dataset_id": dataset_ids[0],
+            "hf_dataset_ids": dataset_ids,
+            "hf_parquet_file": canonical.state_parquet_filename(state_code),
+            "enrich_with_cases": False,
+        }
+
+    if "us_code" in preferred_corpus_keys:
+        return {
+            "module_name": module_name,
+            "callable_name": "search_us_code_corpus_from_parameters",
+            "capability": "us_code_corpus_search",
+            "parameters": {
+                "query_text": retrieval_query,
+                "top_k": int(top_k),
+                "hf_dataset_id": preferred_dataset_ids[0] if preferred_dataset_ids else None,
+            },
+            "reason": _with_routing_reason("Linked authority citations identify the US Code corpus as the preferred parser target."),
+        }
+    if "federal_register" in preferred_corpus_keys:
+        return {
+            "module_name": module_name,
+            "callable_name": "search_federal_register_corpus_from_parameters",
+            "capability": "federal_register_corpus_search",
+            "parameters": {
+                "query_text": retrieval_query,
+                "top_k": int(top_k),
+                "hf_dataset_id": preferred_dataset_ids[0] if preferred_dataset_ids else None,
+            },
+            "reason": _with_routing_reason("Linked authority citations identify the Federal Register corpus as the preferred parser target."),
+        }
+    if "state_court_rules" in preferred_corpus_keys:
+        params = _preferred_state_parameters("state_court_rules")
+        return {
+            "module_name": module_name,
+            "callable_name": "search_court_rules_corpus_from_parameters",
+            "capability": "court_rules_corpus_search",
+            "parameters": {
+                "query_text": retrieval_query,
+                "top_k": int(top_k),
+                "jurisdiction": "state",
+                **params,
+            },
+            "reason": _with_routing_reason("Linked authority citations identify state court rules as the preferred parser target."),
+        }
+    if "state_admin_rules" in preferred_corpus_keys and "state_laws" not in preferred_corpus_keys:
+        params = _preferred_state_parameters("state_admin_rules")
+        return {
+            "module_name": module_name,
+            "callable_name": "search_state_law_corpus_from_parameters",
+            "capability": "state_admin_rule_corpus_search",
+            "parameters": {
+                "query_text": retrieval_query,
+                "top_k": int(top_k),
+                **params,
+            },
+            "reason": _with_routing_reason("Linked authority citations identify state administrative rules as the preferred parser target."),
+        }
+    if "state_laws" in preferred_corpus_keys or "state_admin_rules" in preferred_corpus_keys:
+        params = _preferred_state_parameters("state_laws")
+        if "state_admin_rules" in preferred_corpus_keys:
+            admin_corpus = get_canonical_legal_corpus("state_admin_rules")
+            params["hf_dataset_ids"] = list(dict.fromkeys([*params["hf_dataset_ids"], admin_corpus.hf_dataset_id]))
+        return {
+            "module_name": module_name,
+            "callable_name": "search_state_law_corpus_from_parameters",
+            "capability": "state_law_corpus_search",
+            "parameters": {
+                "query_text": retrieval_query,
+                "top_k": int(top_k),
+                **params,
+            },
+            "reason": _with_routing_reason("Linked authority citations identify state-law corpora as the preferred parser target."),
+        }
     if module_name.endswith("legal_dataset_api"):
         if any(token in lowered_query for token in ("rule", "rules", "frcp", "civil procedure", "local rule", "court rule")):
             return {
@@ -4087,13 +5826,18 @@ __all__ = [
     "execute_packaged_docket_follow_up_job",
     "execute_packaged_docket_follow_up_plan",
     "iter_packaged_docket_chain",
+    "inspect_packaged_docket_bundle",
     "load_packaged_docket_dataset",
     "load_packaged_docket_dataset_components",
+    "load_packaged_docket_summary_view",
+    "load_packaged_docket_inspection_report",
     "plan_packaged_docket_query",
     "prepare_packaged_docket_follow_up_job",
     "package_docket_dataset",
+    "render_packaged_docket_inspection_report",
     "search_packaged_docket_dataset_bm25",
     "search_packaged_docket_dataset_vector",
+    "get_packaged_docket_proof_revalidation_queue",
     "search_packaged_docket_proof_tasks",
     "search_packaged_docket_logic_artifacts",
 ]
