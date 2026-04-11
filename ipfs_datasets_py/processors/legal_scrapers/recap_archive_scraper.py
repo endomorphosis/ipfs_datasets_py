@@ -16,7 +16,8 @@ IMPORTANT NOTES:
 
 For API documentation and rate limits, see:
 https://www.courtlistener.com/api/rest-info/
-https://www.courtlistener.com/help/api/rest/
+https://www.courtli
+stener.com/help/api/rest/
 
 To get an API token (recommended for production use):
 1. Create account at https://www.courtlistener.com/sign-in/register/
