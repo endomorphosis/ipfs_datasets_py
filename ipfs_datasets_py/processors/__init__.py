@@ -132,6 +132,7 @@ __all__ = [
     'fetch_courtlistener_docket',
     'find_rich_courtlistener_docket',
     'fetch_random_courtlistener_docket',
+    'sample_random_courtlistener_dockets_batch',
     'NeurosymbolicMatcher',
     'DocketDatasetBuilder',
     'DocketDatasetPackager',
@@ -166,6 +167,10 @@ __all__ = [
     'search_docket_dataset_bm25',
     'search_docket_dataset_vector',
     'summarize_docket_dataset',
+    'build_canonical_corpus_artifacts',
+    'rebuild_justicedao_dataset_library',
+    'canonical_corpus_artifact_build_result_to_dict',
+    'justicedao_library_rebuild_result_to_dict',
 ]
 
 
@@ -223,6 +228,7 @@ _LEGAL_DATA_EXPORTS = {
     'fetch_courtlistener_docket',
     'find_rich_courtlistener_docket',
     'fetch_random_courtlistener_docket',
+    'sample_random_courtlistener_dockets_batch',
     'NeurosymbolicMatcher',
     'DocketDatasetBuilder',
     'DocketDatasetPackager',
@@ -257,6 +263,10 @@ _LEGAL_DATA_EXPORTS = {
     'search_docket_dataset_bm25',
     'search_docket_dataset_vector',
     'summarize_docket_dataset',
+    'build_canonical_corpus_artifacts',
+    'rebuild_justicedao_dataset_library',
+    'canonical_corpus_artifact_build_result_to_dict',
+    'justicedao_library_rebuild_result_to_dict',
 }
 
 

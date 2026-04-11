@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import random
+import sys
+import types
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory as inventory_module
 
 from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
@@ -11,6 +14,7 @@ from ipfs_datasets_py.processors.legal_scrapers import (
     audit_bluebook_citation_resolution_for_documents,
     resolve_bluebook_citations_in_text,
 )
+from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker import _CORPUS_CONFIGS
 
 
 def _build_fuzz_resolver(tmp_path):
@@ -571,6 +575,43 @@ def test_bluebook_citation_resolver_does_not_falsely_match_state_law_on_metadata
     assert link.metadata["recovery_supported"] is True
 
 
+def test_bluebook_citation_resolver_matches_state_law_via_source_id_section_alias(tmp_path):
+    state_law_path = tmp_path / "state_laws_source_id_only.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "MN",
+                    "source_id": "urn:state:mn:statute:Minnesota Statutes § Section-15",
+                    "name": "Chief Clerk",
+                    "text": "Section Section-15: Chief Clerk",
+                    "ipfs_cid": "bafymnsection15",
+                    "source_url": "https://www.revisor.mn.gov/statutes/cite/15",
+                }
+            ]
+        ),
+        state_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"state_laws": [str(state_law_path)]},
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "The filing relies on Minn. Stat. § 15.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    link = links[0]
+    assert link.matched is True
+    assert link.corpus_key == "state_laws"
+    assert link.source_cid == "bafymnsection15"
+    assert link.source_title == "Chief Clerk"
+    assert link.matched_field in {"source_id", "text", "state_code"}
+
+
 def test_bluebook_citation_resolver_links_federal_register_from_local_parquet(tmp_path):
     fr_path = tmp_path / "federal_register.parquet"
     pq.write_table(
@@ -783,6 +824,234 @@ def test_bluebook_citation_resolver_links_public_law_no_variant_from_local_parqu
     assert links[0].corpus_key == "us_code"
     assert links[0].source_cid == "bafypl11758"
     assert links[0].source_title == "Infrastructure Investment and Jobs Act"
+
+
+def test_bluebook_citation_resolver_prefers_primary_federal_register_hf_parquet(monkeypatch):
+    listed_repo_ids = []
+
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        listed_repo_ids.append(repo_id)
+        return [
+            "federal_register_gte_small_metadata.parquet",
+            "federal_register.parquet",
+            "semantic.index",
+        ]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["federal_register"], state_code=None)
+
+    assert listed_repo_ids == ["justicedao/ipfs_federal_register"]
+    assert sources == [
+        "hf://justicedao/ipfs_federal_register/federal_register.parquet",
+        "hf://justicedao/ipfs_federal_register/federal_register_gte_small_metadata.parquet",
+    ]
+
+
+def test_bluebook_citation_resolver_uses_inventory_to_rank_opaque_hf_parquet_names(monkeypatch):
+    listed_repo_ids = []
+
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        listed_repo_ids.append(repo_id)
+        return [
+            "live/archive/A.parquet",
+            "live/archive/B.parquet",
+        ]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+    monkeypatch.setattr(
+        inventory_module,
+        "inspect_justicedao_datasets",
+        lambda **kwargs: [
+            inventory_module.DatasetProfile(
+                dataset_id="justicedao/ipfs_federal_register",
+                canonical_corpus_key="federal_register",
+                legal_branch="us",
+                country_codes=["US"],
+                parquet_files=["live/archive/B.parquet"],
+                top_level_paths=["live"],
+                configs=[
+                    inventory_module.DatasetConfigProfile(
+                        config="default",
+                        split="train",
+                        query_modes=["identifier_lookup", "jsonld_lookup"],
+                    )
+                ],
+            )
+        ],
+    )
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["federal_register"], state_code=None)
+
+    assert listed_repo_ids == ["justicedao/ipfs_federal_register"]
+    assert sources == [
+        "hf://justicedao/ipfs_federal_register/live/archive/B.parquet",
+        "hf://justicedao/ipfs_federal_register/live/archive/A.parquet",
+    ]
+
+
+def test_bluebook_citation_resolver_uses_datasets_server_parquet_fallback_on_hf_429(monkeypatch):
+    listed_repo_ids = []
+
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        listed_repo_ids.append(repo_id)
+        raise RuntimeError("429 Too Many Requests")
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+
+    class _Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "parquet_files": [
+                    {
+                        "dataset": "justicedao/ipfs_state_laws",
+                        "config": "state_laws_embeddings",
+                        "split": "train",
+                        "filename": "0000.parquet",
+                        "url": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/resolve/refs%2Fconvert%2Fparquet/state_laws_embeddings/train/0000.parquet",
+                    },
+                    {
+                        "dataset": "justicedao/ipfs_state_laws",
+                        "config": "state_laws_canonical",
+                        "split": "train",
+                        "filename": "0000.parquet",
+                        "url": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/resolve/refs%2Fconvert%2Fparquet/state_laws_canonical/train/0000.parquet",
+                    },
+                ]
+            }
+
+    monkeypatch.setattr(
+        "requests.get",
+        lambda url, timeout=30: _Response(),
+    )
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["state_laws"], state_code="MN")
+
+    assert listed_repo_ids == ["justicedao/ipfs_state_laws"]
+    assert sources == [
+        "https://huggingface.co/datasets/justicedao/ipfs_state_laws/resolve/refs%2Fconvert%2Fparquet/state_laws_canonical/train/0000.parquet",
+        "https://huggingface.co/datasets/justicedao/ipfs_state_laws/resolve/refs%2Fconvert%2Fparquet/state_laws_embeddings/train/0000.parquet",
+    ]
+
+
+def test_bluebook_citation_resolver_uses_caselaw_hf_alias_when_primary_repo_has_no_parquet(monkeypatch):
+    listed_repo_ids = []
+
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        listed_repo_ids.append(repo_id)
+        if repo_id == "justicedao/ipfs_caselaw_access_project":
+            return ["embeddings/readme.md", "embeddings/index.faiss"]
+        if repo_id == "justicedao/dedup_ipfs_caselaw_access_project":
+            return [
+                "repaired_parquet_batch_20260228/cases.parquet",
+                "repaired_parquet_batch_20260228/metadata.parquet",
+            ]
+        raise AssertionError(f"unexpected repo id {repo_id}")
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["caselaw_access_project"], state_code=None)
+
+    assert listed_repo_ids == [
+        "justicedao/ipfs_caselaw_access_project",
+        "justicedao/dedup_ipfs_caselaw_access_project",
+    ]
+    assert sources == [
+        "hf://justicedao/dedup_ipfs_caselaw_access_project/repaired_parquet_batch_20260228/cases.parquet",
+        "hf://justicedao/dedup_ipfs_caselaw_access_project/repaired_parquet_batch_20260228/metadata.parquet",
+    ]
+
+
+def test_bluebook_citation_resolver_ignores_embeddings_sidecars_in_override_sources(tmp_path):
+    state_laws_path = tmp_path / "STATE-MN.parquet"
+    embeddings_path = tmp_path / "STATE-MN_embeddings.parquet"
+    metadata_path = tmp_path / "STATE-MN_metadata.parquet"
+
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "MN",
+                    "official_cite": "Minn. Stat. § 518.17",
+                    "section_name": "Best interests of the child",
+                    "ipfs_cid": "bafymn51817",
+                }
+            ]
+        ),
+        state_laws_path,
+    )
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "ipfs_cid": "bafymn51817",
+                    "semantic_text": "Minn. Stat. § 518.17 best interests of the child custody factors",
+                }
+            ]
+        ),
+        embeddings_path,
+    )
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "ipfs_cid": "bafymn51817",
+                    "source_url": "https://example.test/metadata",
+                }
+            ]
+        ),
+        metadata_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={
+            "state_laws": [str(state_laws_path), str(embeddings_path), str(metadata_path), str(tmp_path / "index.faiss")],
+        },
+    )
+
+    sources = resolver._iter_corpus_sources("state_laws", state_code="MN")
+
+    assert sources == [str(state_laws_path)]
+
+
+def test_corpus_configs_include_germany_laws_scaffold():
+    config = _CORPUS_CONFIGS["germany_laws"]
+
+    assert config.dataset_id == "justicedao/ipfs_germany_laws"
+    assert "germany_laws.parquet" in config.preferred_parquet_names
+    assert "parquet/laws/" in config.preferred_path_substrings
 
 
 def test_bluebook_citation_resolver_randomized_supported_citation_coverage(tmp_path):

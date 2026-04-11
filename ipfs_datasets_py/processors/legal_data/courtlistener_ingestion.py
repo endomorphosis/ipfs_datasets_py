@@ -9,6 +9,7 @@ from io import BytesIO
 import json
 import os
 import random
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urljoin, urlparse
 
@@ -25,6 +26,7 @@ __all__ = [
     "fetch_courtlistener_docket",
     "find_rich_courtlistener_docket",
     "fetch_random_courtlistener_docket",
+    "sample_random_courtlistener_dockets_batch",
     "resolve_courtlistener_api_token",
 ]
 
@@ -288,11 +290,7 @@ def fetch_random_courtlistener_docket(
             continue
         documents = list(payload.get("documents") or [])
         document_count = len(documents)
-        text_document_count = sum(
-            1
-            for item in documents
-            if str(item.get("text") or item.get("plain_text") or item.get("description") or "").strip()
-        )
+        text_document_count = sum(1 for item in documents if _document_has_substantive_text(item))
         score = (document_count, text_document_count, entry_count + recap_count)
         if score > best_score:
             best_score = score
@@ -331,6 +329,8 @@ def find_rich_courtlistener_docket(
     minimum_recap_document_count: int = 3,
     minimum_downloaded_document_count: int = 6,
     minimum_text_document_count: int = 4,
+    minimum_substantive_text_document_count: int = 1,
+    minimum_citation_count: int = 0,
     minimum_temporal_formula_count: int = 5,
     minimum_proof_count: int = 5,
     requests_module: Any | None = None,
@@ -339,7 +339,7 @@ def find_rich_courtlistener_docket(
 
     base_seed = 0 if seed is None else int(seed)
     best_candidate: Dict[str, Any] | None = None
-    best_score = (-1, -1, -1, -1)
+    best_score = (-1, -1, -1, -1, -1)
     failures: List[str] = []
 
     for attempt_index in range(max(1, int(attempts or 1))):
@@ -365,6 +365,8 @@ def find_rich_courtlistener_docket(
 
         formal_diagnostics = _evaluate_docket_formal_richness(docket_payload)
         score = (
+            int(formal_diagnostics.get("citation_count") or 0),
+            int(formal_diagnostics.get("substantive_text_document_count") or 0),
             int(
                 formal_diagnostics.get("substantive_temporal_formula_count")
                 or formal_diagnostics.get("temporal_formula_count")
@@ -372,7 +374,6 @@ def find_rich_courtlistener_docket(
             ),
             int(formal_diagnostics.get("substantive_proof_count") or formal_diagnostics.get("proof_count") or 0),
             int(formal_diagnostics.get("deontic_statement_count") or 0),
-            int(formal_diagnostics.get("text_document_count") or 0),
         )
         if score > best_score:
             best_score = score
@@ -381,6 +382,11 @@ def find_rich_courtlistener_docket(
                 "diagnostics": formal_diagnostics,
             }
         if (
+            int(formal_diagnostics.get("citation_count") or 0)
+            >= max(0, int(minimum_citation_count or 0))
+            and int(formal_diagnostics.get("substantive_text_document_count") or 0)
+            >= max(0, int(minimum_substantive_text_document_count or 0))
+            and
             int(
                 formal_diagnostics.get("substantive_temporal_formula_count")
                 or formal_diagnostics.get("temporal_formula_count")
@@ -409,19 +415,132 @@ def find_rich_courtlistener_docket(
     )
 
 
+def sample_random_courtlistener_dockets_batch(
+    *,
+    api_token: str | None = None,
+    base_seed: int | None = None,
+    batch_size: int = 8,
+    max_workers: int = 4,
+    sample_pages: int = 5,
+    page_size: int = 20,
+    include_recap_documents: bool = True,
+    include_document_text: bool = True,
+    minimum_entry_count: int = 1,
+    minimum_recap_document_count: int = 0,
+    minimum_downloaded_document_count: int = 3,
+    minimum_text_document_count: int = 2,
+    requests_module: Any | None = None,
+) -> Dict[str, Any]:
+    """Sample a batch of pseudo-random CourtListener dockets in parallel and collect diagnostics."""
+
+    seeds = [int(base_seed or 0) + offset for offset in range(max(1, int(batch_size or 1)))]
+    worker_count = max(1, min(int(max_workers or 1), len(seeds)))
+
+    def _sample(seed_value: int) -> Dict[str, Any]:
+        try:
+            docket_payload = fetch_random_courtlistener_docket(
+                api_token=api_token,
+                seed=seed_value,
+                sample_pages=sample_pages,
+                page_size=page_size,
+                requests_module=requests_module,
+                include_recap_documents=include_recap_documents,
+                include_document_text=include_document_text,
+                minimum_entry_count=minimum_entry_count,
+                minimum_recap_document_count=minimum_recap_document_count,
+                minimum_downloaded_document_count=minimum_downloaded_document_count,
+                minimum_text_document_count=minimum_text_document_count,
+                strict_content_requirements=True,
+            )
+            diagnostics = _evaluate_docket_formal_richness(docket_payload)
+            return {
+                "seed": seed_value,
+                "status": "success",
+                "docket": {
+                    "docket_id": str(docket_payload.get("docket_id") or ""),
+                    "case_name": str(docket_payload.get("case_name") or ""),
+                    "court": str(docket_payload.get("court") or ""),
+                },
+                "diagnostics": diagnostics,
+            }
+        except Exception as exc:
+            return {
+                "seed": seed_value,
+                "status": "failed",
+                "error": str(exc),
+            }
+
+    samples: List[Dict[str, Any]] = []
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        futures = {executor.submit(_sample, seed): seed for seed in seeds}
+        for future in as_completed(futures):
+            samples.append(future.result())
+
+    samples.sort(key=lambda item: int(item.get("seed") or 0))
+    successful = [item for item in samples if item.get("status") == "success"]
+    failed = [item for item in samples if item.get("status") != "success"]
+    citation_bearing = [
+        item for item in successful if int(dict(item.get("diagnostics") or {}).get("citation_count") or 0) > 0
+    ]
+    substantive_text = [
+        item
+        for item in successful
+        if int(dict(item.get("diagnostics") or {}).get("substantive_text_document_count") or 0) > 0
+    ]
+    best_sample = None
+    if successful:
+        best_sample = max(
+            successful,
+            key=lambda item: (
+                int(dict(item.get("diagnostics") or {}).get("citation_count") or 0),
+                int(dict(item.get("diagnostics") or {}).get("substantive_text_document_count") or 0),
+                int(dict(item.get("diagnostics") or {}).get("document_count") or 0),
+            ),
+        )
+
+    return {
+        "status": "success",
+        "batch_size": len(seeds),
+        "success_count": len(successful),
+        "failure_count": len(failed),
+        "citation_bearing_count": len(citation_bearing),
+        "substantive_text_count": len(substantive_text),
+        "selected": best_sample,
+        "samples": samples,
+        "source": "courtlistener_random_batch_sampling",
+    }
+
+
 def _evaluate_docket_formal_richness(docket_payload: Dict[str, Any]) -> Dict[str, Any]:
     from .docket_dataset import DocketDatasetBuilder
+    from .docket_dataset import audit_docket_dataset_citation_sources
 
     dataset = DocketDatasetBuilder(router_max_documents=1).build_from_docket(docket_payload)
     proof_assistant = dict(dataset.proof_assistant or {})
     formal_summary = dict((dataset.metadata.get("artifact_provenance") or {}).get("formal_logic") or {})
     documents = list(dataset.documents or [])
+    citation_audit = audit_docket_dataset_citation_sources(dataset)
     return {
         "dataset_id": dataset.dataset_id,
         "docket_id": dataset.docket_id,
         "case_name": dataset.case_name,
         "document_count": len(documents),
         "text_document_count": sum(1 for item in documents if str(item.text or "").strip()),
+        "substantive_text_document_count": sum(
+            1
+            for item in documents
+            if _document_has_substantive_text(
+                {
+                    "text": item.text,
+                    "title": item.title,
+                    "metadata": item.metadata,
+                }
+            )
+        ),
+        "citation_count": int(citation_audit.get("citation_count") or 0),
+        "matched_citation_count": int(citation_audit.get("matched_citation_count") or 0),
+        "unmatched_citation_count": int(citation_audit.get("unmatched_citation_count") or 0),
+        "documents_with_citations": int(citation_audit.get("documents_with_citations") or 0),
         "temporal_formula_count": int(formal_summary.get("temporal_formula_count") or 0),
         "substantive_temporal_formula_count": int(formal_summary.get("temporal_formula_count") or 0),
         "document_temporal_formula_count": int(formal_summary.get("document_temporal_formula_count") or 0),
@@ -680,7 +799,7 @@ def _build_docket_summary_document(docket_id: str, docket_data: Dict[str, Any]) 
         "document_number": str(docket_data.get("docket_number") or docket_data.get("docketNumber") or ""),
         "source_url": absolute_url,
         "document_type": "courtlistener_docket_summary",
-        "metadata": {"raw": dict(docket_data)},
+        "metadata": {"raw": dict(docket_data), "text_extraction": {"source": "courtlistener_summary_metadata"}},
     }
 
 
@@ -709,7 +828,7 @@ def _build_docket_entry_documents(docket_id: str, entries: List[Dict[str, Any]])
                 "document_number": str(entry.get("entry_number") or entry.get("document_number") or index),
                 "source_url": _absolute_courtlistener_url(entry.get("absolute_url") or entry.get("url") or ""),
                 "document_type": "courtlistener_docket_entry",
-                "metadata": {"raw": dict(entry)},
+                "metadata": {"raw": dict(entry), "text_extraction": {"source": "courtlistener_entry_metadata"}},
             }
         )
     return normalized
@@ -730,14 +849,13 @@ def _normalize_recap_document(docket_id: str, item: Dict[str, Any]) -> Dict[str,
         or item.get("url")
         or ""
     )
-    text = str(
-        item.get("plain_text")
-        or item.get("text")
-        or item.get("description")
-        or item.get("snippet")
-        or ""
-    ).strip()
+    plain_text = str(item.get("plain_text") or item.get("text") or "").strip()
+    metadata_text = str(item.get("description") or item.get("snippet") or "").strip()
+    text = plain_text if _looks_like_substantive_courtlistener_text(plain_text, title=title) else ""
     extraction_source = "courtlistener_plain_text" if text else "courtlistener_metadata_only"
+    extraction_meta: Dict[str, Any] = {"source": extraction_source}
+    if not text and metadata_text:
+        extraction_meta["metadata_text_preview"] = metadata_text[:240]
     return {
         "id": document_id or f"{docket_id}_recap",
         "title": title,
@@ -746,7 +864,7 @@ def _normalize_recap_document(docket_id: str, item: Dict[str, Any]) -> Dict[str,
         "document_number": str(item.get("document_number") or item.get("entry_number") or ""),
         "source_url": source_url,
         "document_type": str(item.get("document_type") or "recap_document"),
-        "metadata": {"raw": dict(item), "text_extraction": {"source": extraction_source}},
+        "metadata": {"raw": dict(item), "text_extraction": extraction_meta},
     }
 
 
@@ -814,6 +932,35 @@ def _extract_text_from_pdf_bytes(pdf_bytes: bytes) -> tuple[str, str]:
     if _looks_like_useful_text(ocr_text):
         return ocr_text, "pdf_ocr"
     return "", ""
+
+
+def _looks_like_substantive_courtlistener_text(text: str, *, title: str = "") -> bool:
+    candidate = str(text or "").strip()
+    if not candidate:
+        return False
+    normalized = " ".join(candidate.split())
+    normalized_title = " ".join(str(title or "").split()).strip()
+    if normalized_title and normalized.lower() == normalized_title.lower():
+        return False
+    if len(normalized) < 80 and normalized.count(" ") < 8:
+        return False
+    return True
+
+
+def _document_has_substantive_text(document: Dict[str, Any]) -> bool:
+    metadata = dict(document.get("metadata") or {})
+    extraction_meta = dict(metadata.get("text_extraction") or {})
+    source = str(extraction_meta.get("source") or "").strip().lower()
+    if source in {
+        "courtlistener_metadata_only",
+        "courtlistener_entry_metadata",
+        "courtlistener_summary_metadata",
+    }:
+        return False
+    text = str(document.get("text") or "").strip()
+    if not text:
+        return False
+    return _looks_like_substantive_courtlistener_text(text, title=str(document.get("title") or ""))
 
 
 def _extract_text_from_pdf_bytes_direct(pdf_bytes: bytes) -> str:

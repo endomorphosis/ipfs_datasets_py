@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Dict, Iterable, List, Optional
 
 import pytest
@@ -13,6 +14,7 @@ from ipfs_datasets_py.processors.legal_scrapers import (
     CitationExtractor,
     resolve_bluebook_citations_in_text,
 )
+from ipfs_datasets_py.processors.legal_scrapers.citation_extraction import BLUEBOOK_STATE_TO_CODE
 
 
 """Opt-in real-corpus Bluebook coverage against local or HF-backed Justicedao parquet sources.
@@ -51,6 +53,7 @@ _LOCAL_ROOT_ENV_BY_CORPUS = {
     "state_court_rules": "BLUEBOOK_REAL_STATE_COURT_RULES_ROOT",
     "caselaw_access_project": "BLUEBOOK_REAL_CASELAW_ACCESS_PROJECT_ROOT",
 }
+_STATE_CODE_TO_BLUEBOOK = {value: key for key, value in BLUEBOOK_STATE_TO_CODE.items()}
 
 
 def _parser_accepts(citation_text: str, citation_type: str, state_code: Optional[str]) -> bool:
@@ -212,6 +215,40 @@ def _citation_text_from_row_text(
     return ""
 
 
+def _synthesize_state_statute_citation_from_row(
+    row: Dict[str, Any],
+    state_code: str,
+) -> str:
+    source_id = str(row.get("source_id") or "").strip()
+    text = _first_non_empty_string(row.get("text"))
+    bluebook_abbrev = _STATE_CODE_TO_BLUEBOOK.get(state_code)
+    if not bluebook_abbrev:
+        return ""
+
+    section_match = None
+    for candidate in (source_id, text):
+        section_match = re.search(r"(?:Section|Rule|Part)[\s:-]+(?P<section>[A-Za-z0-9.:-]+)", candidate, re.IGNORECASE)
+        if section_match:
+            break
+    if not section_match:
+        return ""
+
+    section = str(section_match.group("section") or "").strip().rstrip(".,;:")
+    if not section:
+        return ""
+
+    lowered_source = source_id.lower()
+    if "statute" in lowered_source:
+        code_name = "Stat."
+    elif "court-rule" in lowered_source or "court rule" in lowered_source:
+        code_name = "Court Rules"
+    elif "state-admin" in lowered_source or "administrative" in lowered_source:
+        code_name = "Admin. Code"
+    else:
+        return ""
+    return f"{bluebook_abbrev} {code_name} § {section}"
+
+
 def _find_source(resolver: BluebookCitationResolver, corpus_key: str, state_code: Optional[str]) -> str:
     for source_ref in resolver._iter_corpus_sources(corpus_key, state_code=state_code):
         return source_ref
@@ -299,6 +336,8 @@ def _build_state_law_cases(
         citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS + ("citations", "name", "source_id"))
         if citation_text in (None, "") or not _parser_accepts(citation_text, "state_statute", resolved_state_code):
             citation_text = _citation_text_from_row_text(row, "state_statute", resolved_state_code)
+        if citation_text in (None, "") or not _parser_accepts(citation_text, "state_statute", resolved_state_code):
+            citation_text = _synthesize_state_statute_citation_from_row(row, resolved_state_code)
         if citation_text in (None, ""):
             continue
         if not _parser_accepts(citation_text, "state_statute", resolved_state_code):
@@ -351,6 +390,119 @@ def _build_state_corpus_cases(
         if len(cases) >= sample_size:
             break
     return cases
+
+
+def _sample_cases_for_corpus(
+    connection: Any,
+    resolver: BluebookCitationResolver,
+    corpus_key: str,
+    sample_size: int,
+    state_code: Optional[str],
+) -> Dict[str, Any]:
+    builder_map = {
+        "us_code": lambda: _build_us_code_cases(connection, resolver, sample_size),
+        "federal_register": lambda: _build_federal_register_cases(connection, resolver, sample_size),
+        "state_laws": lambda: _build_state_law_cases(connection, resolver, sample_size, str(state_code or "")),
+        "state_admin_rules": lambda: _build_state_corpus_cases(
+            connection,
+            resolver,
+            "state_admin_rules",
+            sample_size,
+            str(state_code or ""),
+        ),
+        "state_court_rules": lambda: _build_state_corpus_cases(
+            connection,
+            resolver,
+            "state_court_rules",
+            sample_size,
+            str(state_code or ""),
+        ),
+        "caselaw_access_project": lambda: _build_caselaw_cases(connection, resolver, sample_size),
+    }
+    if corpus_key not in builder_map:
+        raise ValueError(f"Unsupported corpus key for real-corpora sampling: {corpus_key}")
+
+    source_ref: Optional[str] = None
+    try:
+        source_ref = _find_source(resolver, corpus_key, state_code=state_code)
+        rows = _read_rows(connection, source_ref, "", sample_size * 8)
+        cases = builder_map[corpus_key]()
+    except BaseException as exc:
+        message = str(exc).strip() or exc.__class__.__name__
+        return {
+            "corpus_key": corpus_key,
+            "state_code": state_code,
+            "source_ref": source_ref,
+            "sampled_rows": None,
+            "sampled_cases": 0,
+            "status": "error",
+            "reason": message,
+            "cases": [],
+        }
+
+    status = "ok" if cases else "empty"
+    reason = None
+    if not cases:
+        if not rows:
+            reason = "source was available but yielded no sample rows"
+        else:
+            reason = (
+                f"source yielded {len(rows)} rows but none produced parseable "
+                f"{corpus_key} citation samples"
+            )
+    return {
+        "corpus_key": corpus_key,
+        "state_code": state_code,
+        "source_ref": source_ref,
+        "sampled_rows": len(rows),
+        "sampled_cases": len(cases),
+        "status": status,
+        "reason": reason,
+        "cases": cases,
+    }
+
+
+def _collect_real_corpus_cases(
+    connection: Any,
+    resolver: BluebookCitationResolver,
+    sample_size: int,
+    state_code: str,
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    diagnostics: List[Dict[str, Any]] = []
+    all_cases: List[Dict[str, Any]] = []
+    for corpus_key in (
+        "us_code",
+        "federal_register",
+        "state_laws",
+        "state_admin_rules",
+        "state_court_rules",
+        "caselaw_access_project",
+    ):
+        diagnostic = _sample_cases_for_corpus(
+            connection,
+            resolver,
+            corpus_key,
+            sample_size,
+            state_code if corpus_key.startswith("state_") else None,
+        )
+        diagnostics.append(diagnostic)
+        all_cases.extend(list(diagnostic.get("cases") or []))
+    return all_cases, diagnostics
+
+
+def _format_sampling_diagnostics(diagnostics: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return [
+        {
+            "corpus_key": item.get("corpus_key"),
+            "status": item.get("status"),
+            "sampled_rows": item.get("sampled_rows"),
+            "sampled_cases": item.get("sampled_cases"),
+            "state_code": item.get("state_code"),
+            "reason": item.get("reason"),
+            "source_ref": item.get("source_ref"),
+        }
+        for item in diagnostics
+    ]
 
 
 def _build_caselaw_cases(
@@ -451,13 +603,7 @@ def test_bluebook_citation_resolver_real_justicedao_sampling(pytestconfig: pytes
 
     connection = _connect_duckdb()
     try:
-        cases = []
-        cases.extend(_build_us_code_cases(connection, resolver, sample_size))
-        cases.extend(_build_federal_register_cases(connection, resolver, sample_size))
-        cases.extend(_build_state_law_cases(connection, resolver, sample_size, state_code))
-        cases.extend(_build_state_corpus_cases(connection, resolver, "state_admin_rules", sample_size, state_code))
-        cases.extend(_build_state_corpus_cases(connection, resolver, "state_court_rules", sample_size, state_code))
-        cases.extend(_build_caselaw_cases(connection, resolver, sample_size))
+        cases, diagnostics = _collect_real_corpus_cases(connection, resolver, sample_size, state_code)
     except Exception as exc:
         pytest.skip(f"Unable to sample real Justicedao parquet sources: {exc}")
     finally:
@@ -465,13 +611,21 @@ def test_bluebook_citation_resolver_real_justicedao_sampling(pytestconfig: pytes
             connection.close()
 
     if not cases:
-        pytest.skip("No real Justicedao citation samples were available.")
+        pytest.skip(
+            f"No real Justicedao citation samples were available. Diagnostics: {_format_sampling_diagnostics(diagnostics)}"
+        )
 
     matched_count, failures = _run_resolution_cases(cases, resolver)
 
     coverage = matched_count / len(cases)
-    assert len(cases) >= 6, cases
-    assert coverage >= 0.8, failures
+    assert len(cases) >= 6, {
+        "cases": cases,
+        "sampling_diagnostics": _format_sampling_diagnostics(diagnostics),
+    }
+    assert coverage >= 0.8, {
+        "failures": failures,
+        "sampling_diagnostics": _format_sampling_diagnostics(diagnostics),
+    }
 
 
 def test_bluebook_citation_resolver_real_justicedao_per_type_coverage_contract(pytestconfig: pytest.Config):
@@ -488,13 +642,7 @@ def test_bluebook_citation_resolver_real_justicedao_per_type_coverage_contract(p
 
     connection = _connect_duckdb()
     try:
-        all_cases = []
-        all_cases.extend(_build_us_code_cases(connection, resolver, sample_size))
-        all_cases.extend(_build_federal_register_cases(connection, resolver, sample_size))
-        all_cases.extend(_build_state_law_cases(connection, resolver, sample_size, state_code))
-        all_cases.extend(_build_state_corpus_cases(connection, resolver, "state_admin_rules", sample_size, state_code))
-        all_cases.extend(_build_state_corpus_cases(connection, resolver, "state_court_rules", sample_size, state_code))
-        all_cases.extend(_build_caselaw_cases(connection, resolver, sample_size))
+        all_cases, diagnostics = _collect_real_corpus_cases(connection, resolver, sample_size, state_code)
     except Exception as exc:
         pytest.skip(f"Unable to sample real Justicedao parquet sources: {exc}")
     finally:
@@ -502,7 +650,9 @@ def test_bluebook_citation_resolver_real_justicedao_per_type_coverage_contract(p
             connection.close()
 
     if not all_cases:
-        pytest.skip("No real Justicedao citation samples were available.")
+        pytest.skip(
+            f"No real Justicedao citation samples were available. Diagnostics: {_format_sampling_diagnostics(diagnostics)}"
+        )
 
     by_type: Dict[str, List[Dict[str, Any]]] = {}
     for case in all_cases:
@@ -528,7 +678,11 @@ def test_bluebook_citation_resolver_real_justicedao_per_type_coverage_contract(p
     if evaluated_types == 0:
         pytest.skip(
             "No citation family met the minimum sample threshold; "
-            "lower BLUEBOOK_REAL_MIN_SAMPLES_PER_TYPE or increase BLUEBOOK_REAL_SAMPLE_SIZE."
+            "lower BLUEBOOK_REAL_MIN_SAMPLES_PER_TYPE or increase BLUEBOOK_REAL_SAMPLE_SIZE. "
+            f"Diagnostics: {_format_sampling_diagnostics(diagnostics)}"
         )
 
-    assert not failures, failures
+    assert not failures, {
+        "failures": failures,
+        "sampling_diagnostics": _format_sampling_diagnostics(diagnostics),
+    }

@@ -12,6 +12,7 @@ from .courtlistener_ingestion import (
     fetch_courtlistener_docket,
     find_rich_courtlistener_docket,
     fetch_random_courtlistener_docket,
+    sample_random_courtlistener_dockets_batch,
     resolve_courtlistener_api_token,
 )
 from .courtlistener_cache_packaging import (
@@ -286,6 +287,7 @@ __all__ = [
     "fetch_courtlistener_docket",
     "find_rich_courtlistener_docket",
     "fetch_random_courtlistener_docket",
+    "sample_random_courtlistener_dockets_batch",
     "load_packaged_courtlistener_fetch_cache",
     "load_packaged_courtlistener_fetch_cache_components",
     "package_courtlistener_fetch_cache",

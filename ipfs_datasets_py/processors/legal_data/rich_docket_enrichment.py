@@ -13,6 +13,12 @@ from .reasoner.prover_backends import FirstOrderProverAdapter, SMTStyleProverAda
 
 
 _JSON_BLOCK_RE = re.compile(r"\{.*\}", re.DOTALL)
+_PROMPT_ECHO_MARKERS = (
+    "Return a JSON object only.",
+    "Analyze this legal docket document and extract rich structured legal semantics.",
+    "Required keys: classification, entities, relationships",
+    "Document text follows:",
+)
 
 
 @dataclass
@@ -165,7 +171,10 @@ def analyze_document_with_routers(
     title: str,
     text: str,
     source_url: str,
-) -> RichDocumentAnalysis | None:
+    provider: str | None = None,
+    model_name: str | None = None,
+    return_diagnostics: bool = False,
+) -> RichDocumentAnalysis | None | tuple[RichDocumentAnalysis | None, Dict[str, Any]]:
     prompt = _build_analysis_prompt(
         docket_id=docket_id,
         case_name=case_name,
@@ -174,30 +183,56 @@ def analyze_document_with_routers(
         title=title,
         text=text,
     )
+    diagnostics: Dict[str, Any] = {
+        "document_id": document_id,
+        "provider_requested": provider,
+        "model_name_requested": model_name,
+        "status": "unknown",
+    }
     try:
         response = llm_router.generate_text(
             prompt,
+            provider=provider,
+            model_name=model_name,
             temperature=0.0,
-            max_new_tokens=256,
+            max_new_tokens=160,
             allow_local_fallback=False,
             disable_model_retry=True,
         )
         trace = llm_router.get_last_generation_trace()
         provider = str(trace.get("provider_name") or "").strip().lower()
         model_name = str(trace.get("model_name") or "").strip()
+        response_text = str(response or "").strip()
+        diagnostics["provider_name"] = provider
+        diagnostics["model_name"] = model_name
+        diagnostics["raw_response_preview"] = response_text[:240]
         if provider == "mock":
-            return None
+            diagnostics["status"] = "mock_provider"
+            result = None
+            return (result, diagnostics) if return_diagnostics else result
+        if response_text and any(marker in response_text for marker in _PROMPT_ECHO_MARKERS):
+            diagnostics["status"] = "prompt_echo"
+            result = None
+            return (result, diagnostics) if return_diagnostics else result
         payload = _parse_json_response(response)
         if not _payload_has_semantic_content(payload):
-            return None
+            diagnostics["status"] = "no_semantic_payload"
+            diagnostics["payload_keys"] = sorted(str(key) for key in dict(payload).keys())
+            result = None
+            return (result, diagnostics) if return_diagnostics else result
         if source_url.lower().endswith(".pdf"):
             multimodal_summary = _try_multimodal_summary(title=title, text=text, source_url=source_url)
             if multimodal_summary:
                 payload.setdefault("summary", multimodal_summary)
                 payload.setdefault("provenance", {})["multimodal_summary"] = True
-        return _coerce_analysis_payload(payload, provider=provider or "unknown", model_name=model_name)
-    except Exception:
-        return None
+        diagnostics["status"] = "ok"
+        result = _coerce_analysis_payload(payload, provider=provider or "unknown", model_name=model_name)
+        return (result, diagnostics) if return_diagnostics else result
+    except Exception as exc:
+        diagnostics["status"] = "exception"
+        diagnostics["error"] = str(exc)
+        result = None
+        return (result, diagnostics) if return_diagnostics else result
 
 
 def _build_analysis_prompt(

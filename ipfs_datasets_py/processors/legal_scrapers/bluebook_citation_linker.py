@@ -14,10 +14,10 @@ from .legal_source_recovery import build_missing_citation_recovery_query
 
 logger = logging.getLogger(__name__)
 
-_IDENTIFIER_FIELDS = ["statute_id", "identifier", "id", "document_number", "citation", "name", "rule_id"]
+_IDENTIFIER_FIELDS = ["statute_id", "identifier", "id", "document_number", "citation", "name", "rule_id", "source_id"]
 _TITLE_FIELDS = ["section_name", "short_title", "heading", "title", "name", "title_name", "code_name"]
 _URL_FIELDS = ["source_url", "url", "html_url", "pdf_url", "fr_page_url", "fr_json_url"]
-_TEXT_FIELDS = ["full_text", "text", "section_text", "content", "body", "semantic_text", "summary"]
+_TEXT_FIELDS = ["full_text", "text", "section_text", "content", "body", "semantic_text", "summary", "head_matter"]
 _CID_FIELDS = ["ipfs_cid", "cid", "source_cid"]
 _OFFICIAL_CITE_FIELDS = ["official_cite", "citation", "bluebook_citation", "identifier"]
 _STATE_FIELDS = ["state_code", "state"]
@@ -40,6 +40,8 @@ class CorpusSourceConfig:
     parquet_prefix: Optional[str] = None
     state_field: Optional[str] = None
     cid_field: str = "cid"
+    dataset_id_aliases: Sequence[str] = field(default_factory=tuple)
+    preferred_path_substrings: Sequence[str] = field(default_factory=tuple)
 
 
 @dataclass
@@ -98,6 +100,33 @@ def _compact_alnum(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
 
 
+def _state_section_aliases(section: Any) -> List[str]:
+    raw = str(section or "").strip()
+    if not raw:
+        return []
+    lowered = raw.lower()
+    normalized = re.sub(r"^(section|rule|part)[\s:-]+", "", lowered).strip()
+    candidates = [lowered]
+    if normalized and normalized != lowered:
+        candidates.append(normalized)
+    if normalized:
+        candidates.extend([
+            f"section-{normalized}",
+            f"section {normalized}",
+            f"rule-{normalized}",
+            f"rule {normalized}",
+            f"part-{normalized}",
+            f"part {normalized}",
+        ])
+
+    aliases: List[str] = []
+    for candidate in candidates:
+        candidate = candidate.strip()
+        if candidate and candidate not in aliases:
+            aliases.append(candidate)
+    return aliases
+
+
 def _first_present(row: Dict[str, Any], fields: Iterable[str]) -> Optional[Any]:
     for field in fields:
         if field in row and row.get(field) not in (None, ""):
@@ -107,6 +136,183 @@ def _first_present(row: Dict[str, Any], fields: Iterable[str]) -> Optional[Any]:
 
 def _sql_literal_path(value: str) -> str:
     return str(value).replace("'", "''")
+
+
+def _dataset_server_parquet_records(dataset_id: str) -> List[Dict[str, Any]]:
+    try:
+        import requests
+    except Exception:
+        return []
+
+    dataset = str(dataset_id or "").strip()
+    if not dataset:
+        return []
+    url = f"https://datasets-server.huggingface.co/parquet?dataset={dataset}"
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        logger.warning("Failed to fetch datasets-server parquet listing for %s: %s", dataset, exc)
+        return []
+
+    records = payload.get("parquet_files") if isinstance(payload, dict) else None
+    if not isinstance(records, list):
+        return []
+    normalized: List[Dict[str, Any]] = []
+    for item in records:
+        if not isinstance(item, dict):
+            continue
+        record_url = str(item.get("url") or "").strip()
+        if not record_url:
+            continue
+        normalized.append(
+            {
+                "dataset": str(item.get("dataset") or dataset),
+                "config": str(item.get("config") or ""),
+                "split": str(item.get("split") or ""),
+                "filename": str(item.get("filename") or ""),
+                "url": record_url,
+            }
+        )
+    return normalized
+
+
+def _is_direct_citation_source(path: str) -> bool:
+    normalized = str(path or "").strip().lower()
+    if not normalized:
+        return False
+    return not (
+        normalized.endswith("_embeddings.parquet")
+        or normalized.endswith("_metadata.parquet")
+        or normalized.endswith(".faiss")
+        or normalized.endswith(".index")
+    )
+
+
+def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> List[Any]:
+    try:
+        from .justicedao_dataset_inventory import inspect_justicedao_datasets
+
+        profiles = inspect_justicedao_datasets(dataset_prefix="")
+    except Exception:
+        return []
+
+    matches: List[Any] = []
+    normalized_repo = str(repo_id or "").strip()
+    normalized_corpus = str(corpus_key or "").strip().lower()
+    for profile in profiles:
+        dataset_id = str(getattr(profile, "dataset_id", "") or "").strip()
+        canonical_corpus_key = str(getattr(profile, "canonical_corpus_key", "") or "").strip().lower()
+        if dataset_id == normalized_repo or canonical_corpus_key == normalized_corpus:
+            matches.append(profile)
+    return matches
+
+
+def _inventory_bonus_for_candidate(
+    repo_id: str,
+    corpus_key: str,
+    candidate: str,
+    *,
+    state_code: Optional[str],
+) -> int:
+    profiles = _inventory_profiles_for_repo(repo_id, corpus_key)
+    if not profiles:
+        return 0
+
+    candidate_text = str(candidate or "").strip()
+    candidate_lower = candidate_text.lower()
+    bonus = 0
+    for profile in profiles:
+        parquet_files = [str(item) for item in list(getattr(profile, "parquet_files", []) or [])]
+        if candidate_text in parquet_files:
+            bonus += 200
+
+        query_modes: set[str] = set()
+        for config in list(getattr(profile, "configs", []) or []):
+            for mode in list(getattr(config, "query_modes", []) or []):
+                text = str(mode or "").strip().lower()
+                if text:
+                    query_modes.add(text)
+
+        if _is_direct_citation_source(candidate_text):
+            bonus += 60
+            if query_modes.intersection({"identifier_lookup", "citation_lookup", "section_lookup", "state_section_lookup", "jsonld_lookup"}):
+                bonus += 40
+        else:
+            bonus -= 120
+
+        if state_code and f"state-{str(state_code).strip().lower()}" in candidate_lower:
+            bonus += 80
+
+    return bonus
+
+
+def _order_dataset_server_parquet_records(
+    config: CorpusSourceConfig,
+    parquet_records: Sequence[Dict[str, Any]],
+    *,
+    state_code: Optional[str],
+) -> List[str]:
+    preferred_names = list(config.preferred_parquet_names)
+    if state_code and config.state_field and config.key in {"state_laws", "state_admin_rules", "state_court_rules"}:
+        preferred_names.insert(0, get_canonical_legal_corpus(config.key).state_parquet_filename(state_code))
+
+    prefix = str(config.parquet_prefix or "").strip("/").lower()
+    path_hints = [str(item).strip("/").lower() for item in list(config.preferred_path_substrings or []) if str(item).strip()]
+    if prefix:
+        path_hints.insert(0, prefix)
+
+    def _score(record: Dict[str, Any]) -> tuple[int, int, str]:
+        record_url = str(record.get("url") or "")
+        config_name = str(record.get("config") or "")
+        filename = str(record.get("filename") or "")
+        haystack = " ".join([record_url, config_name, filename]).lower()
+        score = 0
+
+        for index, preferred_name in enumerate(preferred_names):
+            preferred_lower = str(preferred_name).lower()
+            if not preferred_lower:
+                continue
+            weight = max(1, 100 - index)
+            if preferred_lower in haystack:
+                score += 180 + weight
+
+        for hint in path_hints:
+            if hint and hint in haystack:
+                score += 70
+
+        if "canonical" in haystack:
+            score += 220
+        if "default" in haystack:
+            score += 140
+        if config.key == "federal_register" and "federal_register" in haystack:
+            score += 100
+        if config.key == "us_code" and "uscode" in haystack:
+            score += 100
+
+        if state_code:
+            state_token = f"state-{str(state_code).strip().lower()}"
+            if state_token in haystack:
+                score += 160
+
+        if "embedding" in haystack or "embeddings" in haystack or "vector" in haystack:
+            score -= 260
+        if "metadata" in haystack:
+            score -= 180
+        if "faiss" in haystack or haystack.endswith(".index"):
+            score -= 400
+
+        return (-score, len(record_url), record_url)
+
+    ordered = [str(item.get("url") or "") for item in sorted(parquet_records, key=_score) if str(item.get("url") or "")]
+    deduped: List[str] = []
+    seen: set[str] = set()
+    for item in ordered:
+        if item not in seen:
+            seen.add(item)
+            deduped.append(item)
+    return deduped[:8]
 
 
 def _citation_match_terms(citation: Citation) -> List[str]:
@@ -143,6 +349,8 @@ def _citation_match_terms(citation: Citation) -> List[str]:
         if code_name:
             _add(f"{code_name} § {citation.section}")
             _add(f"{code_name} {citation.section}")
+        for alias in _state_section_aliases(citation.section):
+            _add(alias)
     elif citation.type == "case" and citation.volume and citation.reporter and citation.page:
         _add(f"{citation.volume} {citation.reporter} {citation.page}")
         _add(f"{citation.volume} {citation.reporter.replace('.', '').strip()} {citation.page}")
@@ -155,9 +363,10 @@ def _build_uscode_source_config() -> CorpusSourceConfig:
         key="us_code",
         dataset_id=corpus.hf_dataset_id,
         local_roots=(corpus.parquet_dir(), (Path.home() / ".ipfs_datasets" / "us_code").resolve()),
-        preferred_parquet_names=("uscode", "sections", "title"),
+        preferred_parquet_names=("uscode.parquet", "uscode", "sections", "title"),
         parquet_prefix=corpus.parquet_dir_name,
         cid_field=corpus.cid_field,
+        preferred_path_substrings=("uscode_parquet/",),
     )
 
 
@@ -168,18 +377,24 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         local_roots=(get_canonical_legal_corpus("caselaw_access_project").parquet_dir(),),
         preferred_parquet_names=(
             get_canonical_legal_corpus("caselaw_access_project").combined_parquet_filename,
+            "ipfs_caselaw_access_project.parquet",
             "caselaw",
             "cap",
         ),
         parquet_prefix=get_canonical_legal_corpus("caselaw_access_project").parquet_dir_name,
         cid_field=get_canonical_legal_corpus("caselaw_access_project").cid_field,
+        dataset_id_aliases=(
+            "justicedao/dedup_ipfs_caselaw_access_project",
+            "justicedao/caselaw_access_project",
+        ),
+        preferred_path_substrings=("repaired_parquet_batch", "repaired_parquet_shards", "caselaw"),
     ),
     "us_code": _build_uscode_source_config(),
     "federal_register": CorpusSourceConfig(
         key="federal_register",
         dataset_id=get_canonical_legal_corpus("federal_register").hf_dataset_id,
         local_roots=(get_canonical_legal_corpus("federal_register").parquet_dir(),),
-        preferred_parquet_names=("laws.parquet", "federal_register"),
+        preferred_parquet_names=("federal_register.parquet", "laws.parquet", "federal_register"),
         parquet_prefix=get_canonical_legal_corpus("federal_register").parquet_dir_name,
         cid_field=get_canonical_legal_corpus("federal_register").cid_field,
     ),
@@ -191,6 +406,7 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         parquet_prefix=get_canonical_legal_corpus("state_laws").parquet_dir_name,
         state_field=get_canonical_legal_corpus("state_laws").state_field,
         cid_field=get_canonical_legal_corpus("state_laws").cid_field,
+        preferred_path_substrings=("state_laws_parquet_cid/",),
     ),
     "state_admin_rules": CorpusSourceConfig(
         key="state_admin_rules",
@@ -200,6 +416,7 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         parquet_prefix=get_canonical_legal_corpus("state_admin_rules").parquet_dir_name,
         state_field=get_canonical_legal_corpus("state_admin_rules").state_field,
         cid_field=get_canonical_legal_corpus("state_admin_rules").cid_field,
+        preferred_path_substrings=("state_admin_rules_cid/",),
     ),
     "state_court_rules": CorpusSourceConfig(
         key="state_court_rules",
@@ -209,6 +426,25 @@ _CORPUS_CONFIGS: Dict[str, CorpusSourceConfig] = {
         parquet_prefix=get_canonical_legal_corpus("state_court_rules").parquet_dir_name,
         state_field=get_canonical_legal_corpus("state_court_rules").state_field,
         cid_field=get_canonical_legal_corpus("state_court_rules").cid_field,
+        preferred_path_substrings=("state_court_rules_parquet_cid/",),
+    ),
+    "netherlands_laws": CorpusSourceConfig(
+        key="netherlands_laws",
+        dataset_id=get_canonical_legal_corpus("netherlands_laws").hf_dataset_id,
+        local_roots=(get_canonical_legal_corpus("netherlands_laws").parquet_dir(),),
+        preferred_parquet_names=("netherlands_laws.parquet", "laws.parquet", "articles.parquet", "cid_index.parquet"),
+        parquet_prefix="parquet",
+        cid_field=get_canonical_legal_corpus("netherlands_laws").cid_field,
+        preferred_path_substrings=("parquet/laws/", "parquet/articles/", "parquet/cid_index/"),
+    ),
+    "germany_laws": CorpusSourceConfig(
+        key="germany_laws",
+        dataset_id=get_canonical_legal_corpus("germany_laws").hf_dataset_id,
+        local_roots=(get_canonical_legal_corpus("germany_laws").parquet_dir(),),
+        preferred_parquet_names=("germany_laws.parquet", "laws.parquet", "articles.parquet", "cid_index.parquet"),
+        parquet_prefix="parquet",
+        cid_field=get_canonical_legal_corpus("germany_laws").cid_field,
+        preferred_path_substrings=("parquet/laws/", "parquet/articles/", "parquet/cid_index/"),
     ),
 }
 
@@ -367,7 +603,9 @@ class BluebookCitationResolver:
         config = _CORPUS_CONFIGS[corpus_key]
         override_value = self.parquet_file_overrides.get(corpus_key)
         if override_value:
-            return [str(override_value)] if isinstance(override_value, str) else [str(item) for item in override_value]
+            override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in override_value]
+            filtered_items = [item for item in override_items if _is_direct_citation_source(item)]
+            return filtered_items
         local_sources = self._find_local_sources(config, state_code=state_code)
         if local_sources:
             return local_sources
@@ -407,28 +645,97 @@ class BluebookCitationResolver:
         try:
             from huggingface_hub import hf_hub_url, list_repo_files
         except Exception:
-            return []
-        assert config.dataset_id is not None
-        try:
-            repo_files = list_repo_files(repo_id=config.dataset_id, repo_type="dataset")
-        except Exception as exc:
-            logger.warning("Failed to list HF files for %s: %s", config.dataset_id, exc)
-            return []
-        parquet_files = [path for path in repo_files if path.endswith(".parquet")]
-        if config.parquet_prefix:
-            prefix = config.parquet_prefix.strip("/")
-            parquet_files = [path for path in parquet_files if path == prefix or path.startswith(f"{prefix}/")]
+            hf_hub_url = None
+            list_repo_files = None
+        repo_ids = [repo_id for repo_id in (config.dataset_id, *list(config.dataset_id_aliases or [])) if repo_id]
+        for repo_id in repo_ids:
+            had_listing_error = False
+            if list_repo_files is not None and hf_hub_url is not None:
+                try:
+                    repo_files = list_repo_files(repo_id=repo_id, repo_type="dataset")
+                except Exception as exc:
+                    logger.warning("Failed to list HF files for %s: %s", repo_id, exc)
+                    had_listing_error = True
+                else:
+                    parquet_files = [path for path in repo_files if str(path).endswith(".parquet")]
+                    if parquet_files:
+                        ordered = self._order_hf_parquet_files(config, repo_id, parquet_files, state_code=state_code)
+                        if ordered:
+                            return [hf_hub_url(repo_id=repo_id, repo_type="dataset", filename=filename) for filename in ordered]
+
+            if had_listing_error or list_repo_files is None or hf_hub_url is None:
+                parquet_records = _dataset_server_parquet_records(repo_id)
+                if parquet_records:
+                    ordered_urls = _order_dataset_server_parquet_records(config, parquet_records, state_code=state_code)
+                    if ordered_urls:
+                        return ordered_urls
+        return []
+
+    def _order_hf_parquet_files(
+        self,
+        config: CorpusSourceConfig,
+        repo_id: str,
+        parquet_files: Sequence[str],
+        *,
+        state_code: Optional[str],
+    ) -> List[str]:
         preferred_names = list(config.preferred_parquet_names)
         if state_code and config.state_field and config.key in {"state_laws", "state_admin_rules", "state_court_rules"}:
             preferred_names.insert(0, get_canonical_legal_corpus(config.key).state_parquet_filename(state_code))
-        ordered: List[str] = []
-        for preferred_name in preferred_names:
-            for candidate in parquet_files:
-                if candidate.endswith(preferred_name):
-                    ordered.append(candidate)
-        if not ordered and parquet_files:
-            ordered.append(sorted(parquet_files)[0])
-        return [hf_hub_url(repo_id=config.dataset_id, repo_type="dataset", filename=filename) for filename in ordered]
+
+        prefix = str(config.parquet_prefix or "").strip("/").lower()
+        path_hints = [str(item).strip("/").lower() for item in list(config.preferred_path_substrings or []) if str(item).strip()]
+        if prefix:
+            path_hints.insert(0, prefix)
+
+        def _score(candidate: str) -> tuple[int, int, str]:
+            candidate_lower = str(candidate).lower()
+            filename = candidate_lower.rsplit("/", 1)[-1]
+            score = 0
+
+            for index, preferred_name in enumerate(preferred_names):
+                preferred_lower = str(preferred_name).lower()
+                if not preferred_lower:
+                    continue
+                weight = max(1, 100 - index)
+                if filename == preferred_lower:
+                    score += 500 + weight
+                elif candidate_lower.endswith(f"/{preferred_lower}") or candidate_lower.endswith(preferred_lower):
+                    score += 450 + weight
+                elif preferred_lower in filename:
+                    score += 250 + weight
+                elif preferred_lower in candidate_lower:
+                    score += 150 + weight
+
+            for hint in path_hints:
+                if hint and hint in candidate_lower:
+                    score += 75
+
+            if state_code:
+                state_filename = f"state-{str(state_code).strip().lower()}.parquet"
+                if candidate_lower.endswith(state_filename):
+                    score += 600
+
+            score += _inventory_bonus_for_candidate(
+                repo_id,
+                config.key,
+                candidate,
+                state_code=state_code,
+            )
+
+            if "metadata" in filename:
+                score -= 200
+            if "embedding" in filename or "embeddings" in filename:
+                score -= 250
+            if filename.endswith(".faiss") or filename.endswith(".index"):
+                score -= 500
+
+            return (-score, len(candidate), candidate)
+
+        ordered = [item for item in sorted({str(path) for path in parquet_files}, key=_score)]
+        if not ordered:
+            return []
+        return ordered[:8]
 
     def _query_source(self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]) -> List[Dict[str, Any]]:
         try:
@@ -479,8 +786,14 @@ class BluebookCitationResolver:
         cached = self._schema_cache.get(source_ref)
         if cached is not None:
             return cached
-        cursor = con.execute(f"DESCRIBE SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}')")
-        schema = {row[0] for row in cursor.fetchall()}
+        try:
+            cursor = con.execute(f"DESCRIBE SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}')")
+            schema = {row[0] for row in cursor.fetchall()}
+        except Exception:
+            cursor = con.execute(
+                f"SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}') LIMIT 1"
+            )
+            schema = {description[0] for description in cursor.description}
         self._schema_cache[source_ref] = schema
         return schema
 
@@ -525,16 +838,26 @@ class BluebookCitationResolver:
             state_field = next((field for field in _STATE_FIELDS if field in schema), None)
             official_field = next((field for field in _OFFICIAL_CITE_FIELDS if field in schema), None)
             section_field = next((field for field in _SECTION_FIELDS if field in schema), None)
+            identifier_fields = [field for field in _IDENTIFIER_FIELDS if field in schema]
+            text_fields = [field for field in _TEXT_FIELDS if field in schema]
             if state_code and state_field:
                 clauses.append(f"upper(CAST({state_field} AS VARCHAR)) = ?")
                 params.append(state_code)
             subclauses: List[str] = []
             if official_field:
-                subclauses.append(f"lower(CAST({official_field} AS VARCHAR)) = lower(?)")
-                params.append(citation.text)
+                for term in _citation_match_terms(citation)[:8]:
+                    if not term:
+                        continue
+                    subclauses.append(f"lower(CAST({official_field} AS VARCHAR)) = lower(?)")
+                    params.append(term)
             if section_field and citation.section:
                 subclauses.append(f"CAST({section_field} AS VARCHAR) = ?")
                 params.append(str(citation.section))
+            if citation.type == "state_statute" and citation.section:
+                for field in identifier_fields + text_fields:
+                    for alias in _state_section_aliases(citation.section):
+                        subclauses.append(f"lower(CAST({field} AS VARCHAR)) LIKE lower(?)")
+                        params.append(f"%{alias}%")
             if subclauses:
                 clauses.append(f"({' OR '.join(subclauses)})")
             return clauses, params
@@ -656,10 +979,29 @@ class BluebookCitationResolver:
             row_state = str(_first_present(row, _STATE_FIELDS) or "").upper()
             row_section = _normalize_section(_first_present(row, _SECTION_FIELDS))
             section_exact = bool(row_section and row_section == _normalize_section(citation.section))
+            source_section_exact = False
+            if not section_exact and citation.section:
+                state_aliases = _state_section_aliases(citation.section)
+                normalized_aliases = {_normalize_text(alias) for alias in state_aliases}
+                compact_aliases = {_compact_alnum(alias) for alias in state_aliases}
+                for field in _IDENTIFIER_FIELDS + _TEXT_FIELDS:
+                    if field not in row:
+                        continue
+                    normalized_value = _normalize_text(row.get(field))
+                    compact_value = _compact_alnum(row.get(field))
+                    if (
+                        normalized_value and any(alias and alias in normalized_value for alias in normalized_aliases)
+                    ) or (
+                        compact_value and any(alias and alias in compact_value for alias in compact_aliases)
+                    ):
+                        source_section_exact = True
+                        score += 6.0
+                        matched_field = matched_field or field
+                        break
             if section_exact:
                 score += 6.0
                 matched_field = matched_field or "section_number"
-            if official_exact or section_exact:
+            if official_exact or section_exact or source_section_exact:
                 if state_code and row_state == state_code:
                     score += 2.0
                     matched_field = matched_field or "state_code"

@@ -45,6 +45,7 @@ def embed_texts_with_router_or_local(
     fallback_dimension: int,
     provider: str | None = None,
     model_name: str | None = None,
+    device: str | None = None,
 ) -> tuple[List[List[float]], Dict[str, Any]]:
     """Embed texts with `embeddings_router`, falling back to local projection."""
 
@@ -64,6 +65,7 @@ def embed_texts_with_router_or_local(
             items,
             provider=provider,
             model_name=model_name,
+            device=device,
         )
         normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
         if len(normalized) == len(items) and all(vector for vector in normalized):
@@ -71,6 +73,7 @@ def embed_texts_with_router_or_local(
                 "backend": "embeddings_router",
                 "provider": provider or "auto",
                 "model_name": model_name or "",
+                "device": device or "",
                 "is_mock": False,
             }
     except Exception:
@@ -82,6 +85,7 @@ def embed_texts_with_router_or_local(
             "backend": "local_hashed_term_projection",
             "provider": "local",
             "model_name": "",
+            "device": device or "",
             "is_mock": False,
         },
     )
@@ -94,6 +98,7 @@ def embed_query_for_backend(
     dimension: int,
     provider: str | None = None,
     model_name: str | None = None,
+    device: str | None = None,
 ) -> List[float]:
     """Embed a query using the declared backend, falling back safely."""
 
@@ -103,6 +108,7 @@ def embed_query_for_backend(
             fallback_dimension=dimension,
             provider=provider,
             model_name=model_name,
+            device=device,
         )
         if vectors and metadata.get("backend") == "embeddings_router":
             return vectors[0]

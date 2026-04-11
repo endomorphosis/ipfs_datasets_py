@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
 import importlib.util
 import io
 import json
 from contextlib import redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -14,6 +16,11 @@ from ipfs_datasets_py.processors.legal_data import (
     load_packaged_docket_dataset,
 )
 import ipfs_datasets_py.processors.legal_data.docket_dataset as _docket_dataset_module
+from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import CanonicalLegalCorpus
+from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
+    LegalSourceRecoveryWorkflow,
+    recover_citation_audit_feedback,
+)
 
 _ROUTER_STUB = {
     "document_analyses": {},
@@ -1181,6 +1188,275 @@ def test_docket_cli_can_emit_packaged_citation_source_audit_without_output(tmp_p
     assert payload["citation_source_audit"]["citation_count"] == 3
     assert payload["citation_source_audit"]["matched_citation_count"] == 2
     assert payload["citation_source_audit"]["unmatched_citation_count"] == 1
+
+
+def test_docket_cli_can_recover_citation_sources_for_source_docket_without_output(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "citation_recovery_source.json"
+    docket_path.write_text(
+        json.dumps(
+            {
+                "docket_id": "cl-citation-recovery-source",
+                "case_name": "CLI Citation Recovery Source",
+                "documents": [
+                    {
+                        "id": "doc_1",
+                        "title": "Motion",
+                        "text": "The motion cites Minn. Stat. § 999.999.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    captured: dict[str, object] = {}
+
+    async def _fake_recover(audit_payload, **kwargs):
+        captured["audit_payload"] = audit_payload
+        captured["kwargs"] = kwargs
+        return {
+            "status": "success",
+            "feedback_entry_count": 1,
+            "recovery_count": 1,
+            "publish_to_hf": kwargs.get("publish_to_hf", False),
+            "source": "citation_audit_feedback_recovery",
+        }
+
+    module.recover_citation_audit_feedback = _fake_recover
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "json",
+                "--input-path",
+                str(docket_path),
+                "--recover-citation-sources",
+                "--citation-recovery-fields",
+                "feedback_entry_count,recovery_count,publish_to_hf",
+                "--publish-recovered-citations-to-hf",
+                "--hf-token",
+                "hf_test_token",
+                "--recovery-max-candidates",
+                "5",
+                "--recovery-archive-top-k",
+                "2",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert "output_path" not in payload
+    assert payload["citation_source_recovery"] == {
+        "feedback_entry_count": 1,
+        "recovery_count": 1,
+        "publish_to_hf": True,
+    }
+    assert captured["audit_payload"]["source"] == "docket_dataset_citation_source_audit"
+    assert captured["kwargs"] == {
+        "publish_to_hf": True,
+        "hf_token": "hf_test_token",
+        "max_candidates": 5,
+        "archive_top_k": 2,
+    }
+
+
+def test_docket_cli_can_recover_packaged_citation_sources_without_output(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-citation-recovery-packaged",
+            "case_name": "CLI Citation Recovery Packaged",
+            "court": "D. Example",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Motion",
+                    "text": "The motion cites Minn. Stat. § 999.999.",
+                },
+            ],
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "citation_recovery_packaged_bundle",
+        package_name="citation_recovery_packaged_bundle",
+        include_car=False,
+    )
+
+    module.audit_packaged_docket_citation_sources = lambda manifest_path: {
+        "document_count": 1,
+        "unmatched_citation_count": 1,
+        "unresolved_documents": [
+            {
+                "document_id": "doc_1",
+                "document_title": "Motion",
+                "unmatched_citations": [
+                    {
+                        "citation_text": "Minn. Stat. § 999.999",
+                        "normalized_citation": "Minn. Stat. § 999.999",
+                        "metadata": {
+                            "state_code": "MN",
+                            "recovery_corpus_key": "state_laws",
+                            "candidate_corpora": ["state_laws"],
+                        },
+                    }
+                ],
+            }
+        ],
+        "source": "packaged_docket_citation_source_audit",
+    }
+
+    async def _fake_recover(audit_payload, **kwargs):
+        return {
+            "status": "success",
+            "feedback_entry_count": 1,
+            "recovery_count": 1,
+            "recoveries": [{"manifest_path": "/tmp/recovery_manifest.json"}],
+            "source": "citation_audit_feedback_recovery",
+        }
+
+    module.recover_citation_audit_feedback = _fake_recover
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--recover-citation-sources",
+                "--fields",
+                "feedback_entry_count,recovery_count",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert "output_path" not in payload
+    assert payload["citation_source_recovery"] == {
+        "feedback_entry_count": 1,
+        "recovery_count": 1,
+    }
+
+
+def test_docket_cli_can_recover_citation_sources_end_to_end(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "citation_recovery_end_to_end.json"
+    docket_path.write_text(
+        json.dumps(
+            {
+                "docket_id": "cl-citation-recovery-e2e",
+                "case_name": "CLI Citation Recovery End To End",
+                "documents": [
+                    {
+                        "id": "doc_1",
+                        "title": "Motion",
+                        "text": "The motion cites Minn. Stat. § 518.17 and seeks relief.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    class _FakeLiveSearcher:
+        def search(self, query: str, max_results: int = 20, **kwargs):
+            return {
+                "results": [
+                    {
+                        "title": "Minnesota Statutes 518.17",
+                        "url": "https://www.revisor.mn.gov/statutes/cite/518.17",
+                        "source": "brave",
+                    }
+                ]
+            }
+
+    class _FakeArchiveSearcher:
+        def search_with_indexes(
+            self,
+            query: str,
+            jurisdiction_type: str | None = None,
+            state_code: str | None = None,
+            max_results: int = 50,
+        ):
+            return {
+                "results": [
+                    {
+                        "title": "Archived Minnesota Statutes 518.17",
+                        "url": "https://archive.org/details/mn-stat-518-17",
+                        "source": "common_crawl_indexes",
+                    }
+                ]
+            }
+
+    class _FakeArchiver:
+        async def archive_urls_parallel(self, urls, jurisdiction=None, state_code=None):
+            return [
+                SimpleNamespace(
+                    url=url,
+                    success=True,
+                    source="wayback",
+                    error=None,
+                    timestamp=datetime(2024, 1, 2, 3, 4, 5),
+                )
+                for url in urls
+            ]
+
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_FakeLiveSearcher(),
+        archive_searcher=_FakeArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    async def _recover_with_workflow(audit_payload, **kwargs):
+        return await recover_citation_audit_feedback(
+            audit_payload,
+            workflow=workflow,
+            **kwargs,
+        )
+
+    module.recover_citation_audit_feedback = _recover_with_workflow
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "json",
+                "--input-path",
+                str(docket_path),
+                "--recover-citation-sources",
+                "--citation-recovery-fields",
+                "feedback_entry_count,recovery_count,recoveries",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    recovery_payload = payload["citation_source_recovery"]
+    assert recovery_payload["feedback_entry_count"] == 1
+    assert recovery_payload["recovery_count"] == 1
+    recovery = recovery_payload["recoveries"][0]
+    assert recovery["citation_text"] == "Minn. Stat. § 518.17"
+    assert recovery["corpus_key"] == "state_laws"
+    assert recovery["candidate_count"] >= 2
+    assert recovery["archived_count"] >= 1
+    assert recovery["promotion_preview"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert recovery["promotion_preview"]["target_parquet_file"] == "STATE-MN.parquet"
+    assert Path(recovery["manifest_path"]).exists()
 
 
 def test_docket_cli_packaged_action_alias_can_emit_summary_without_output(tmp_path: Path) -> None:

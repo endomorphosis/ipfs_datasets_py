@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import (
+    build_missing_eu_corpus_proposals,
+    build_canonical_corpus_branch_map,
     build_canonical_corpus_local_root_overrides,
     get_canonical_legal_corpus,
     get_canonical_legal_corpus_for_dataset_id,
+    infer_canonical_legal_corpus_for_dataset_id,
+    infer_proposed_eu_corpus_for_dataset_id,
+    list_canonical_legal_corpora_by_branch,
+    list_canonical_legal_corpora_by_country,
 )
 
 
@@ -25,6 +31,14 @@ def test_canonical_registry_can_resolve_by_hf_dataset_id_case_insensitively():
     assert corpus.key == "state_laws"
 
 
+def test_canonical_registry_can_infer_alias_and_sidecar_dataset_ids():
+    assert infer_canonical_legal_corpus_for_dataset_id("justicedao/caselaw_access_project").key == "caselaw_access_project"
+    assert infer_canonical_legal_corpus_for_dataset_id("justicedao/dedup_ipfs_caselaw_access_project").key == "caselaw_access_project"
+    assert infer_canonical_legal_corpus_for_dataset_id("justicedao/american_municipal_law").key == "state_laws"
+    assert infer_canonical_legal_corpus_for_dataset_id("justicedao/ipfs_germany_laws_bm25_index").key == "germany_laws"
+    assert infer_canonical_legal_corpus_for_dataset_id("justicedao/ipfs_netherlands_laws_bm25_index").key == "netherlands_laws"
+
+
 def test_build_canonical_corpus_local_root_overrides_supports_custom_env_names():
     env = {
         "BLUEBOOK_REAL_US_CODE_ROOT": "/datasets/uscode",
@@ -43,6 +57,53 @@ def test_build_canonical_corpus_local_root_overrides_supports_custom_env_names()
         "us_code": "/datasets/uscode",
         "state_laws": "/datasets/state-laws",
     }
+
+
+def test_canonical_legal_corpora_are_partitioned_by_us_and_eu_branch():
+    us_corpora = list_canonical_legal_corpora_by_branch("us")
+    eu_corpora = list_canonical_legal_corpora_by_branch("eu")
+
+    assert any(corpus.key == "us_code" for corpus in us_corpora)
+    assert any(corpus.key == "state_laws" for corpus in us_corpora)
+    assert [corpus.key for corpus in eu_corpora] == ["germany_laws", "netherlands_laws"]
+
+
+def test_canonical_legal_corpora_can_be_listed_by_country_code():
+    us_keys = {corpus.key for corpus in list_canonical_legal_corpora_by_country("US")}
+    de_keys = [corpus.key for corpus in list_canonical_legal_corpora_by_country("DE")]
+    nl_keys = [corpus.key for corpus in list_canonical_legal_corpora_by_country("NL")]
+
+    assert "caselaw_access_project" in us_keys
+    assert "federal_register" in us_keys
+    assert de_keys == ["germany_laws"]
+    assert nl_keys == ["netherlands_laws"]
+
+
+def test_canonical_corpus_branch_map_summarizes_registry():
+    branch_map = build_canonical_corpus_branch_map()
+    germany = get_canonical_legal_corpus("germany_laws")
+    netherlands = get_canonical_legal_corpus("netherlands_laws")
+
+    assert branch_map["us"]
+    assert branch_map["eu"] == ["germany_laws", "netherlands_laws"]
+    assert germany.legal_branch == "eu"
+    assert germany.country_codes == ("DE",)
+    assert netherlands.legal_branch == "eu"
+    assert netherlands.country_codes == ("NL",)
+
+
+def test_build_missing_eu_corpus_proposals_covers_supported_unregistered_member_states():
+    proposals = build_missing_eu_corpus_proposals()
+
+    assert set(proposals) == {"ES", "FR"}
+    assert proposals["FR"].display_name == "France Laws"
+    assert proposals["ES"].combined_parquet_filename == "spain_laws.parquet"
+
+
+def test_infer_proposed_eu_corpus_for_dataset_id_matches_base_and_sidecar_datasets():
+    france_sidecar = infer_proposed_eu_corpus_for_dataset_id("justicedao/ipfs_france_laws_bm25_index")
+
+    assert france_sidecar.key == "france_laws"
 
 
 def test_build_canonical_corpus_local_root_overrides_supports_shared_data_root():

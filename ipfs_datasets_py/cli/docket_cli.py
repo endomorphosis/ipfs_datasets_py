@@ -22,6 +22,7 @@ Examples:
 
 from __future__ import annotations
 
+import asyncio
 import argparse
 import json
 from pathlib import Path
@@ -44,6 +45,7 @@ from ipfs_datasets_py.processors.legal_data import (
     render_packaged_docket_operator_dashboard,
     summarize_docket_dataset,
 )
+from ipfs_datasets_py.processors.legal_scrapers import recover_citation_audit_feedback
 
 __all__ = ["create_parser", "main"]
 
@@ -137,6 +139,25 @@ def _build_citation_source_audit_from_dataset(dataset: object) -> dict[str, obje
     if isinstance(dataset, dict):
         return audit_docket_dataset_citation_sources(DocketDatasetObject.from_dict(dataset))
     raise TypeError("citation source audit requires a docket dataset object or dictionary payload")
+
+
+def _recover_citation_sources_from_audit(
+    audit_payload: dict[str, object],
+    *,
+    publish_to_hf: bool,
+    hf_token: str | None,
+    max_candidates: int,
+    archive_top_k: int,
+) -> dict[str, object]:
+    return asyncio.run(
+        recover_citation_audit_feedback(
+            audit_payload,
+            publish_to_hf=publish_to_hf,
+            hf_token=hf_token,
+            max_candidates=max_candidates,
+            archive_top_k=archive_top_k,
+        )
+    )
 
 
 def _packaged_read_modes(parsed: argparse.Namespace) -> set[str]:
@@ -668,6 +689,12 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--summary-fields", default=None, help="Comma-separated field subset for --summary-only packaged output.")
     parser.add_argument("--citation-source-audit", action="store_true", help="Include a citation source resolution audit for the docket dataset or packaged bundle.")
     parser.add_argument("--citation-audit-fields", default=None, help="Comma-separated field subset for --citation-source-audit output.")
+    parser.add_argument("--recover-citation-sources", action="store_true", help="Run unresolved citation audit misses through the legal source recovery workflow.")
+    parser.add_argument("--citation-recovery-fields", default=None, help="Comma-separated field subset for --recover-citation-sources output.")
+    parser.add_argument("--recovery-max-candidates", type=int, default=8, help="Maximum recovery candidates to keep per unresolved citation.")
+    parser.add_argument("--recovery-archive-top-k", type=int, default=3, help="How many top recovery candidates to archive per unresolved citation.")
+    parser.add_argument("--publish-recovered-citations-to-hf", action="store_true", help="Publish recovered citation manifests to the target Hugging Face dataset.")
+    parser.add_argument("--hf-token", default=None, help="Optional Hugging Face token used with --publish-recovered-citations-to-hf.")
     parser.add_argument("--load-packaged-report", action="store_true", help="For packaged inputs, load the archived inspection_report artifact directly.")
     parser.add_argument("--load-operator-dashboard-report", action="store_true", help="For packaged inputs, load the archived operator_dashboard_report artifact directly.")
     parser.add_argument("--report-fields", default=None, help="Comma-separated field subset for --load-packaged-report when using parsed/row output.")
@@ -687,12 +714,14 @@ def main(args: list[str] | None = None) -> int:
     inspection_fields = _parse_summary_fields_arg(parsed.inspection_fields)
     dashboard_fields = _parse_summary_fields_arg(parsed.dashboard_fields)
     citation_audit_fields = _parse_summary_fields_arg(parsed.citation_audit_fields)
+    citation_recovery_fields = _parse_summary_fields_arg(parsed.citation_recovery_fields)
     report_fields = _parse_summary_fields_arg(parsed.report_fields)
     generic_fields = _parse_summary_fields_arg(parsed.fields)
     packaged_modes = _packaged_read_modes(parsed)
     packaged_read_only = _is_packaged_read_only(parsed, packaged_modes)
     citation_audit_only = bool(
         parsed.citation_source_audit
+        and not parsed.recover_citation_sources
         and not parsed.package_dir
         and not parsed.parquet_dir
         and not parsed.courtlistener_cache_package_dir
@@ -700,12 +729,25 @@ def main(args: list[str] | None = None) -> int:
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
     )
-    if not parsed.output and not packaged_read_only and not citation_audit_only:
+    citation_recovery_only = bool(
+        parsed.recover_citation_sources
+        and not parsed.package_dir
+        and not parsed.parquet_dir
+        and not parsed.courtlistener_cache_package_dir
+        and not packaged_modes
+        and not parsed.export_packaged_report
+        and not parsed.export_operator_dashboard_report
+    )
+    if not parsed.output and not packaged_read_only and not citation_audit_only and not citation_recovery_only:
         parser.error("--output is required unless you are only inspecting or loading a packaged report.")
     if citation_audit_fields and not parsed.citation_source_audit:
         parser.error("--citation-audit-fields is only valid with --citation-source-audit.")
+    if citation_recovery_fields and not parsed.recover_citation_sources:
+        parser.error("--citation-recovery-fields is only valid with --recover-citation-sources.")
     if generic_fields and citation_audit_fields:
         parser.error("Use either --fields or --citation-audit-fields, not both.")
+    if generic_fields and citation_recovery_fields:
+        parser.error("Use either --fields or --citation-recovery-fields, not both.")
     active_packaged_fields = _resolve_packaged_field_selections(
         parsed,
         summary_fields=summary_fields,
@@ -721,6 +763,7 @@ def main(args: list[str] | None = None) -> int:
     active_dashboard_fields = active_packaged_fields["dashboard"]
     active_report_fields = active_packaged_fields["report"] or active_packaged_fields["dashboard_report"]
     active_citation_audit_fields = generic_fields if (parsed.citation_source_audit and generic_fields) else citation_audit_fields
+    active_citation_recovery_fields = generic_fields if (parsed.recover_citation_sources and generic_fields) else citation_recovery_fields
 
     builder = DocketDatasetBuilder(vector_dimension=int(parsed.vector_dimension or 32))
     common_kwargs = {
@@ -820,6 +863,30 @@ def main(args: list[str] | None = None) -> int:
             citation_audit,
             active_citation_audit_fields,
         )
+    if parsed.recover_citation_sources:
+        if "citation_source_audit" in payload:
+            citation_audit = dict(payload["citation_source_audit"])
+            if active_citation_audit_fields:
+                if dataset is not None:
+                    citation_audit = _build_citation_source_audit_from_dataset(dataset)
+                else:
+                    citation_audit = audit_packaged_docket_citation_sources(parsed.input_path)
+        else:
+            if dataset is not None:
+                citation_audit = _build_citation_source_audit_from_dataset(dataset)
+            else:
+                citation_audit = audit_packaged_docket_citation_sources(parsed.input_path)
+        citation_recovery = _recover_citation_sources_from_audit(
+            citation_audit,
+            publish_to_hf=bool(parsed.publish_recovered_citations_to_hf),
+            hf_token=parsed.hf_token,
+            max_candidates=int(parsed.recovery_max_candidates or 8),
+            archive_top_k=int(parsed.recovery_archive_top_k or 3),
+        )
+        payload["citation_source_recovery"] = _filter_mapping_fields(
+            citation_recovery,
+            active_citation_recovery_fields,
+        )
     inspection_requested = bool(
         packaged_modes
         or parsed.export_packaged_report
@@ -888,6 +955,12 @@ def main(args: list[str] | None = None) -> int:
             print("Citation Source Audit")
             for key, value in dict(payload["citation_source_audit"]).items():
                 if key in {"documents", "unresolved_documents"}:
+                    continue
+                print(f"{key}: {value}")
+        if parsed.recover_citation_sources and "citation_source_recovery" in payload:
+            print("Citation Source Recovery")
+            for key, value in dict(payload["citation_source_recovery"]).items():
+                if key == "recoveries":
                     continue
                 print(f"{key}: {value}")
         if "inspection_report" in payload:

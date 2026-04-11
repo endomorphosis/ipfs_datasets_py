@@ -29,6 +29,18 @@ Copied from workspace-level `scripts/ops/`:
 - `create_ws11_github_issues.sh`
 
 Notes:
+- Run `build_canonical_corpus_semantic_index.py` to generate a semantic sidecar
+	for a canonical parquet slice when a corpus is missing an embeddings/FAISS
+	index or when you want to rebuild one locally.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/build_canonical_corpus_semantic_index.py --corpus-key state_laws --canonical-parquet ~/.ipfs_datasets/state_laws/state_laws_parquet_cid/STATE-MN.parquet --state MN --json`
+	`.venv/bin/python scripts/ops/legal_data/build_canonical_corpus_semantic_index.py --corpus-key federal_register --canonical-parquet ~/.ipfs_datasets/federal_register/federal_register.parquet --no-faiss`
+	`.venv/bin/python scripts/ops/legal_data/build_canonical_corpus_semantic_index.py --corpus-key state_laws --canonical-parquet ~/.ipfs_datasets/state_laws/state_laws_parquet_cid/STATE-MN.parquet --state MN --publish-to-hf --hf-token $HF_TOKEN --include-canonical-parquet`
+	This writes an `_embeddings.parquet` companion automatically and, when the
+	local `faiss` build supports it, also writes a FAISS index plus metadata
+	parquet for direct semantic retrieval. When `--publish-to-hf` is used, the
+	generated sidecars, and optionally the canonical parquet itself, are uploaded
+	back to the target JusticeDAO dataset repo.
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

@@ -7,6 +7,7 @@ from ipfs_datasets_py.processors.legal_data import (
     fetch_courtlistener_docket,
     fetch_random_courtlistener_docket,
     find_rich_courtlistener_docket,
+    sample_random_courtlistener_dockets_batch,
 )
 from ipfs_datasets_py.processors.legal_scrapers.shared_fetch_cache import SharedFetchCache
 
@@ -199,6 +200,7 @@ def test_fetch_courtlistener_docket_normalizes_docket_and_recap_documents() -> N
     assert payload["documents"][2]["title"] == "Declaration of Jane Doe"
     assert "penalty of perjury" in payload["documents"][2]["text"]
     assert payload["documents"][2]["metadata"]["text_extraction"]["source"] == "courtlistener_plain_text"
+    assert payload["documents"][1]["metadata"]["text_extraction"]["source"] == "courtlistener_entry_metadata"
     assert payload["plaintiff_docket"][0]["title"] == "Jane Doe"
     assert payload["defendant_docket"][0]["title"] == "Acme Housing"
 
@@ -272,12 +274,26 @@ def test_fetch_random_courtlistener_docket_selects_from_sampled_candidates() -> 
         include_document_text=False,
         minimum_entry_count=1,
         minimum_downloaded_document_count=2,
-        minimum_text_document_count=1,
+        minimum_text_document_count=0,
     )
 
     assert payload["docket_id"] == "99999"
     assert payload["source_type"] == "courtlistener"
     assert len(payload["documents"]) >= 2
+
+
+def test_normalize_recap_document_marks_description_only_text_as_metadata_only() -> None:
+    payload = fetch_courtlistener_docket(
+        "99999",
+        requests_module=_MockRandomRequests(),
+        include_document_text=False,
+    )
+
+    recap_document = next(item for item in payload["documents"] if str(item.get("id")) == "9001")
+    assert recap_document["title"] == "Complaint attachment"
+    assert recap_document["text"] == ""
+    assert recap_document["metadata"]["text_extraction"]["source"] == "courtlistener_metadata_only"
+    assert "metadata_text_preview" in recap_document["metadata"]["text_extraction"]
 
 
 def test_find_rich_courtlistener_docket_returns_success(monkeypatch) -> None:
@@ -294,8 +310,22 @@ def test_find_rich_courtlistener_docket_returns_success(monkeypatch) -> None:
     def _fake_eval(payload):  # noqa: ANN001
         docket_id = str(payload.get("docket_id"))
         if docket_id.endswith("0"):
-            return {"temporal_formula_count": 1, "proof_count": 0, "document_count": 1, "text_document_count": 1}
-        return {"temporal_formula_count": 7, "proof_count": 9, "document_count": 8, "text_document_count": 6}
+            return {
+                "temporal_formula_count": 1,
+                "proof_count": 0,
+                "document_count": 1,
+                "text_document_count": 1,
+                "substantive_text_document_count": 1,
+                "citation_count": 0,
+            }
+        return {
+            "temporal_formula_count": 7,
+            "proof_count": 9,
+            "document_count": 8,
+            "text_document_count": 6,
+            "substantive_text_document_count": 6,
+            "citation_count": 0,
+        }
 
     monkeypatch.setattr(
         "ipfs_datasets_py.processors.legal_data.courtlistener_ingestion.fetch_random_courtlistener_docket",
@@ -311,3 +341,98 @@ def test_find_rich_courtlistener_docket_returns_success(monkeypatch) -> None:
     assert result["status"] == "success"
     assert result["diagnostics"]["temporal_formula_count"] == 7
     assert attempts[:2] == [0, 1]
+
+
+def test_find_rich_courtlistener_docket_can_require_citations(monkeypatch) -> None:
+    attempts = []
+
+    def _fake_random_fetch(**kwargs):  # noqa: ANN001
+        attempts.append(int(kwargs.get("seed") or 0))
+        return {
+            "docket_id": f"docket-{kwargs.get('seed')}",
+            "case_name": "Candidate",
+            "documents": [{"id": "doc1", "title": "Doc", "text": "text"}],
+        }
+
+    def _fake_eval(payload):  # noqa: ANN001
+        docket_id = str(payload.get("docket_id"))
+        if docket_id.endswith("0"):
+            return {
+                "citation_count": 0,
+                "substantive_text_document_count": 1,
+                "temporal_formula_count": 7,
+                "proof_count": 9,
+                "deontic_statement_count": 1,
+            }
+        return {
+            "citation_count": 2,
+            "substantive_text_document_count": 2,
+            "temporal_formula_count": 7,
+            "proof_count": 9,
+            "deontic_statement_count": 1,
+        }
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_data.courtlistener_ingestion.fetch_random_courtlistener_docket",
+        _fake_random_fetch,
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_data.courtlistener_ingestion._evaluate_docket_formal_richness",
+        _fake_eval,
+    )
+
+    result = find_rich_courtlistener_docket(
+        seed=0,
+        attempts=3,
+        minimum_citation_count=1,
+        minimum_substantive_text_document_count=1,
+    )
+
+    assert result["status"] == "success"
+    assert result["diagnostics"]["citation_count"] == 2
+    assert attempts[:2] == [0, 1]
+
+
+def test_sample_random_courtlistener_dockets_batch_collects_parallel_results(monkeypatch) -> None:
+    def _fake_random_fetch(**kwargs):  # noqa: ANN001
+        seed = int(kwargs.get("seed") or 0)
+        if seed == 2:
+            raise CourtListenerIngestionError("sample failed")
+        return {
+            "docket_id": f"docket-{seed}",
+            "case_name": f"Case {seed}",
+            "court": "rnd",
+            "documents": [{"id": "doc1", "title": "Doc", "text": "text"}],
+        }
+
+    def _fake_eval(payload):  # noqa: ANN001
+        docket_id = str(payload.get("docket_id") or "")
+        seed = int(docket_id.rsplit("-", 1)[-1])
+        return {
+            "document_count": seed + 1,
+            "substantive_text_document_count": 1 if seed >= 1 else 0,
+            "citation_count": 2 if seed == 3 else 0,
+            "temporal_formula_count": seed,
+            "proof_count": seed,
+        }
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_data.courtlistener_ingestion.fetch_random_courtlistener_docket",
+        _fake_random_fetch,
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_data.courtlistener_ingestion._evaluate_docket_formal_richness",
+        _fake_eval,
+    )
+
+    result = sample_random_courtlistener_dockets_batch(base_seed=0, batch_size=4, max_workers=2)
+
+    assert result["status"] == "success"
+    assert result["batch_size"] == 4
+    assert result["success_count"] == 3
+    assert result["failure_count"] == 1
+    assert result["citation_bearing_count"] == 1
+    assert result["substantive_text_count"] == 2
+    assert result["selected"]["docket"]["docket_id"] == "docket-3"
+    failed = next(item for item in result["samples"] if item["status"] == "failed")
+    assert failed["seed"] == 2
