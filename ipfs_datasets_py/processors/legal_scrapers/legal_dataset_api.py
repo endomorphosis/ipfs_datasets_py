@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from datetime import datetime
 from typing import Any, Dict, Iterable, List
 
 import anyio
@@ -57,6 +58,73 @@ def _normalize_state_code(value: Any, *, default: str = "OR") -> str:
     if len(state) != 2 or not state.isalpha():
         raise ValueError("state must be a two-letter code (e.g., OR, CA, NY)")
     return state
+
+
+def _parse_iso_date(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        return ""
+
+
+def _extract_temporal_case(result_row: Dict[str, Any]) -> Dict[str, Any]:
+    case = result_row.get("case")
+    return case if isinstance(case, dict) else result_row
+
+
+def _result_matches_as_of(case: Dict[str, Any], as_of_date: str) -> bool:
+    target = _parse_iso_date(as_of_date)
+    if not target:
+        return True
+
+    version_start = _parse_iso_date(case.get("version_start_date") or case.get("effective_date"))
+    version_end = _parse_iso_date(case.get("version_end_date"))
+
+    if version_start and target < version_start:
+        return False
+    if version_end and target > version_end:
+        return False
+    return bool(version_start) or bool(case.get("is_current"))
+
+
+def _result_matches_effective_date(case: Dict[str, Any], effective_date: str) -> bool:
+    target = _parse_iso_date(effective_date)
+    if not target:
+        return True
+    return _parse_iso_date(case.get("version_start_date") or case.get("effective_date")) == target
+
+
+def _apply_netherlands_temporal_filters(
+    results: List[Dict[str, Any]],
+    *,
+    prefer_current_versions: bool,
+    include_historical_versions: bool,
+    as_of_date: str,
+    effective_date: str,
+) -> List[Dict[str, Any]]:
+    filtered: List[Dict[str, Any]] = []
+    for row in results:
+        case = _extract_temporal_case(row)
+        is_current = bool(case.get("is_current"))
+        if not include_historical_versions and not is_current:
+            continue
+        if effective_date and not _result_matches_effective_date(case, effective_date):
+            continue
+        if as_of_date and not _result_matches_as_of(case, as_of_date):
+            continue
+        filtered.append(row)
+
+    if prefer_current_versions:
+        filtered.sort(
+            key=lambda item: (
+                0 if bool(_extract_temporal_case(item).get("is_current")) else 1,
+                -float(item.get("score", 0.0)),
+            )
+        )
+    return filtered
 
 
 def _get_repo_root() -> Path:
@@ -1567,6 +1635,8 @@ async def search_netherlands_law_corpus_from_parameters(
     nl_params.setdefault("chunk_lookup_enabled", False)
     nl_params.setdefault("chunk_hf_parquet_file", None)
     nl_params.setdefault("chunk_hf_parquet_prefix", None)
+    nl_params.setdefault("prefer_current_versions", True)
+    nl_params.setdefault("include_historical_versions", True)
     nl_params.setdefault(
         "preferred_case_parquet_names",
         [
@@ -1582,6 +1652,23 @@ async def search_netherlands_law_corpus_from_parameters(
         tool_version=tool_version,
     )
     if isinstance(result, dict):
+        if isinstance(result.get("results"), list):
+            result["results"] = _apply_netherlands_temporal_filters(
+                list(result.get("results") or []),
+                prefer_current_versions=bool(nl_params.get("prefer_current_versions", True)),
+                include_historical_versions=bool(nl_params.get("include_historical_versions", True)),
+                as_of_date=str(nl_params.get("as_of_date") or ""),
+                effective_date=str(nl_params.get("effective_date") or ""),
+            )
+        result.setdefault(
+            "temporal_parameters",
+            {
+                "prefer_current_versions": bool(nl_params.get("prefer_current_versions", True)),
+                "include_historical_versions": bool(nl_params.get("include_historical_versions", True)),
+                "as_of_date": str(nl_params.get("as_of_date") or ""),
+                "effective_date": str(nl_params.get("effective_date") or ""),
+            },
+        )
         result.setdefault("jurisdiction", "NL")
     return result
 

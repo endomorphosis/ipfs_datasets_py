@@ -16,7 +16,7 @@ import json
 import logging
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Set
@@ -340,6 +340,41 @@ def _build_article_citation(document_citation: str, path_items: List[Dict[str, s
     return ", ".join(dict.fromkeys(segment for segment in segments if segment))
 
 
+def _build_canonical_law_url(identifier: str) -> str:
+    normalized = _normalize_space(identifier).upper()
+    return f"https://wetten.overheid.nl/{normalized}/" if normalized else ""
+
+
+def _extract_version_date_from_url(url: str) -> str:
+    match = re.search(r"/(\d{4}-\d{2}-\d{2})(?:/|$)", str(url or ""))
+    return match.group(1) if match else ""
+
+
+def _build_versioned_law_url(identifier: str, effective_date: str, fallback_url: str = "") -> str:
+    parsed_date = _parse_dutch_date(effective_date)
+    if identifier and parsed_date:
+        return f"https://wetten.overheid.nl/{identifier.upper()}/{parsed_date}/0/"
+    return _normalize_space(fallback_url)
+
+
+def _version_identifier(identifier: str, effective_date: str) -> str:
+    parsed_date = _parse_dutch_date(effective_date)
+    if identifier and parsed_date:
+        return f"{identifier.upper()}@{parsed_date}"
+    return _normalize_space(identifier).upper()
+
+
+def _infer_version_end_date(current_start: str, next_start: str) -> str:
+    current_date = _parse_dutch_date(current_start)
+    next_date = _parse_dutch_date(next_start)
+    if not current_date or not next_date:
+        return ""
+    try:
+        return (datetime.strptime(next_date, "%Y-%m-%d").date() - timedelta(days=1)).isoformat()
+    except ValueError:
+        return ""
+
+
 def _normalize_historical_versions(
     identifier: str,
     versions: List[Dict[str, str]],
@@ -347,14 +382,16 @@ def _normalize_historical_versions(
     current_document_url: str,
     current_info_url: str,
     current_effective_date: str,
-) -> List[Dict[str, str]]:
-    normalized: List[Dict[str, str]] = []
+) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
     seen: Set[str] = set()
+    canonical_law_url = _build_canonical_law_url(identifier)
 
     for version in versions:
         effective_date = _normalize_space(version.get("effective_date") or "")
         document_url = _normalize_space(version.get("source_url") or "")
-        info_url = document_url if document_url.endswith("/informatie") else f"{document_url.rstrip('/')}/informatie" if document_url else ""
+        versioned_document_url = document_url[:-11] if document_url.endswith("/informatie") else document_url
+        info_url = document_url if document_url.endswith("/informatie") else f"{versioned_document_url.rstrip('/')}/informatie" if versioned_document_url else ""
         key = f"{effective_date}|{document_url}|{info_url}"
         if key in seen:
             continue
@@ -362,9 +399,17 @@ def _normalize_historical_versions(
         normalized.append(
             {
                 "identifier": identifier,
+                "law_identifier": identifier,
+                "law_version_identifier": _version_identifier(identifier, effective_date),
+                "version_specific_identifier": _version_identifier(identifier, effective_date),
                 "effective_date": effective_date,
+                "version_start_date": effective_date,
+                "version_end_date": "",
                 "label": _normalize_space(version.get("label") or ""),
-                "document_url": document_url[:-11] if document_url.endswith("/informatie") else document_url,
+                "canonical_law_url": canonical_law_url,
+                "document_url": versioned_document_url,
+                "canonical_document_url": canonical_law_url,
+                "versioned_law_url": versioned_document_url or _build_versioned_law_url(identifier, effective_date),
                 "information_url": info_url,
                 "is_current": effective_date == current_effective_date,
             }
@@ -375,15 +420,26 @@ def _normalize_historical_versions(
         normalized.append(
             {
                 "identifier": identifier,
+                "law_identifier": identifier,
+                "law_version_identifier": _version_identifier(identifier, current_effective_date),
+                "version_specific_identifier": _version_identifier(identifier, current_effective_date),
                 "effective_date": current_effective_date,
+                "version_start_date": current_effective_date,
+                "version_end_date": "",
                 "label": "Huidige versie",
+                "canonical_law_url": canonical_law_url,
                 "document_url": current_document_url,
+                "canonical_document_url": canonical_law_url,
+                "versioned_law_url": _build_versioned_law_url(identifier, current_effective_date, current_document_url),
                 "information_url": current_info_url,
                 "is_current": True,
             }
         )
 
     normalized.sort(key=lambda item: item.get("effective_date", ""))
+    for index, version in enumerate(normalized):
+        next_effective_date = normalized[index + 1]["effective_date"] if index + 1 < len(normalized) else ""
+        version["version_end_date"] = _infer_version_end_date(version.get("version_start_date", ""), next_effective_date)
     return normalized
 
 
@@ -637,6 +693,10 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
     identifier = str(document_row.get("identifier") or "")
     aliases = list(document_row.get("aliases") or [])
     document_citation = _build_document_citation(canonical_title, identifier, aliases)
+    law_identifier = str(document_row.get("law_identifier") or identifier)
+    law_version_identifier = str(
+        document_row.get("law_version_identifier") or _version_identifier(law_identifier, str(document_row.get("version_start_date") or ""))
+    )
 
     for article in document_row.get("articles") or []:
         article_text = _normalize_space(article.get("text") or "")
@@ -657,16 +717,28 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
                 "language": document_row.get("language", "nl"),
                 "identifier": identifier,
                 "official_identifier": document_row.get("official_identifier", identifier),
-                "document_identifier": identifier,
-                "article_identifier": f"{identifier}:artikel:{article_number or _safe_id_fragment(article.get('label') or '')}",
+                "law_identifier": law_identifier,
+                "law_version_identifier": law_version_identifier,
+                "version_specific_identifier": law_version_identifier,
+                "document_identifier": law_identifier,
+                "document_version_identifier": law_version_identifier,
+                "article_identifier": (
+                    f"{law_version_identifier}:artikel:{article_number or _safe_id_fragment(article.get('label') or '')}"
+                ),
                 "title": canonical_title,
                 "canonical_title": canonical_title,
                 "aliases": aliases,
                 "document_type": document_row.get("document_type", "statute"),
                 "text": article_text,
                 "source_url": document_row.get("source_url"),
+                "canonical_law_url": document_row.get("canonical_law_url"),
+                "canonical_document_url": document_row.get("canonical_document_url"),
+                "versioned_law_url": document_row.get("versioned_law_url"),
                 "information_url": document_row.get("information_url"),
                 "effective_date": document_row.get("effective_date", ""),
+                "version_start_date": document_row.get("version_start_date", ""),
+                "version_end_date": document_row.get("version_end_date", ""),
+                "is_current": bool(document_row.get("is_current", False)),
                 "publication_date": document_row.get("publication_date", ""),
                 "last_modified_date": document_row.get("last_modified_date", ""),
                 "historical_versions": list(document_row.get("historical_versions") or []),
@@ -941,12 +1013,22 @@ async def scrape_netherlands_laws(
                 "country": "Netherlands",
                 "language": "nl",
                 "identifier": resolved_identifier,
+                "law_identifier": resolved_identifier,
                 "official_identifier": resolved_identifier,
+                "law_version_identifier": _version_identifier(resolved_identifier, str(info_metadata.get("effective_date") or "")),
+                "version_specific_identifier": _version_identifier(resolved_identifier, str(info_metadata.get("effective_date") or "")),
                 "title": canonical_title or "Netherlands Law",
                 "canonical_title": canonical_title or "Netherlands Law",
                 "aliases": aliases,
                 "text": text,
                 "source_url": law_url,
+                "canonical_law_url": _build_canonical_law_url(resolved_identifier),
+                "canonical_document_url": _build_canonical_law_url(resolved_identifier),
+                "versioned_law_url": _build_versioned_law_url(
+                    resolved_identifier,
+                    str(info_metadata.get("effective_date") or ""),
+                    law_url,
+                ),
                 "information_url": info_url or None,
                 "document_type": str(info_metadata.get("regulation_type") or "statute").lower().replace(" ", "_"),
                 "citation": document_citation,
@@ -956,6 +1038,9 @@ async def scrape_netherlands_laws(
                     "last_modified_date": info_metadata.get("last_modified_date") or "",
                 },
                 "effective_date": str(info_metadata.get("effective_date") or ""),
+                "version_start_date": str(info_metadata.get("effective_date") or ""),
+                "version_end_date": "",
+                "is_current": True,
                 "publication_date": str(info_metadata.get("publication_date") or ""),
                 "last_modified_date": str(info_metadata.get("last_modified_date") or ""),
                 "historical_versions": normalized_versions,

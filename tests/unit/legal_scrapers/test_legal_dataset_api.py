@@ -99,6 +99,8 @@ async def test_search_netherlands_law_corpus_applies_canonical_defaults(monkeypa
     assert captured["payload"]["chunk_lookup_enabled"] is False
     assert "citation" in captured["payload"]["text_field_candidates"]
     assert "hierarchy_path_text" in captured["payload"]["text_field_candidates"]
+    assert captured["payload"]["prefer_current_versions"] is True
+    assert captured["payload"]["include_historical_versions"] is True
 
 
 @pytest.mark.asyncio
@@ -178,6 +180,7 @@ async def test_fixture_to_searchable_corpus_result_preserves_article_citation(mo
 
 
 @pytest.mark.asyncio
+<<<<<<< HEAD
 async def test_recover_missing_legal_citation_source_api_delegates_parameters(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
     from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery as recovery_module
@@ -227,3 +230,173 @@ async def test_recover_missing_legal_citation_source_api_delegates_parameters(mo
     assert captured["archive_top_k"] == 2
     assert captured["publish_to_hf"] is True
     assert captured["hf_token"] == "token-123"
+=======
+async def test_netherlands_search_prefers_current_versions(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.99,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2018-01-01",
+                        "version_start_date": "2018-01-01",
+                        "version_end_date": "2020-12-31",
+                        "is_current": False,
+                        "citation": "Sr, Artikel 1",
+                    },
+                },
+                {
+                    "score": 0.90,
+                    "case": {
+                        "law_identifier": "BWBR0001854",
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "version_start_date": "2024-01-01",
+                        "version_end_date": "",
+                        "is_current": True,
+                        "citation": "Sr, Artikel 1",
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {"collection_name": "nl_laws", "query_vector": [0.1, 0.2], "auto_setup_venv": False},
+    )
+
+    assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2024-01-01"
+    assert result["results"][1]["case"]["law_version_identifier"] == "BWBR0001854@2018-01-01"
+
+
+@pytest.mark.asyncio
+async def test_netherlands_search_can_filter_to_current_versions_only(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {"score": 0.9, "case": {"law_version_identifier": "BWBR0001854@2018-01-01", "is_current": False}},
+                {"score": 0.8, "case": {"law_version_identifier": "BWBR0001854@2024-01-01", "is_current": True}},
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "include_historical_versions": False,
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2024-01-01"
+
+
+@pytest.mark.asyncio
+async def test_netherlands_search_as_of_date_selects_matching_version(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {
+                    "score": 0.95,
+                    "case": {
+                        "law_version_identifier": "BWBR0001854@2012-01-01",
+                        "version_start_date": "2012-01-01",
+                        "version_end_date": "2023-12-31",
+                        "is_current": False,
+                        "citation": "Sr, Artikel 1",
+                    },
+                },
+                {
+                    "score": 0.94,
+                    "case": {
+                        "law_version_identifier": "BWBR0001854@2024-01-01",
+                        "version_start_date": "2024-01-01",
+                        "version_end_date": "",
+                        "is_current": True,
+                        "citation": "Sr, Artikel 1",
+                    },
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "as_of_date": "2018-01-01",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2012-01-01"
+    assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"
+
+
+@pytest.mark.asyncio
+async def test_netherlands_search_effective_date_can_select_specific_version(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
+
+    async def _fake_search_cases(parameters, *, tool_version="1.0.0"):
+        return {
+            "status": "success",
+            "operation": "search_cases",
+            "tool_version": tool_version,
+            "results": [
+                {"score": 0.9, "case": {"law_version_identifier": "BWBR0001854@2012-01-01", "version_start_date": "2012-01-01", "is_current": False, "citation": "Sr, Artikel 1"}},
+                {"score": 0.8, "case": {"law_version_identifier": "BWBR0001854@2024-01-01", "version_start_date": "2024-01-01", "is_current": True, "citation": "Sr, Artikel 1"}},
+            ],
+        }
+
+    monkeypatch.setattr(
+        legal_dataset_api,
+        "search_caselaw_access_cases_from_parameters",
+        _fake_search_cases,
+    )
+
+    result = await legal_dataset_api.search_netherlands_law_corpus_from_parameters(
+        {
+            "collection_name": "nl_laws",
+            "query_vector": [0.1, 0.2],
+            "effective_date": "2024-01-01",
+            "auto_setup_venv": False,
+        },
+    )
+
+    assert len(result["results"]) == 1
+    assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2024-01-01"
+    assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"
+>>>>>>> cb8233b0 (feat(netherlands): add temporal version-aware retrieval for Dutch law corpus)

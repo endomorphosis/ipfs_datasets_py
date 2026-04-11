@@ -148,6 +148,8 @@ def test_fixture_document_parsing_builds_full_hierarchy_and_citations():
         "Afdeling 1 Strafbaarheid, Artikel 1"
     )
     assert article_records[2]["citation"].endswith("Artikel 92")
+    assert article_records[0]["law_identifier"] == "BWBR0001854"
+    assert article_records[0]["law_version_identifier"] == "BWBR0001854@1994-02-01"
 
 
 def test_extract_title_and_text_handles_partial_html():
@@ -224,11 +226,18 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
     assert result["data"][0]["canonical_title"] == "Wetboek van Strafrecht"
     assert result["data"][0]["aliases"] == ["Sr"]
     assert result["data"][0]["effective_date"] == "1994-02-01"
+    assert result["data"][0]["law_identifier"] == "BWBR0001854"
+    assert result["data"][0]["law_version_identifier"] == "BWBR0001854@1994-02-01"
+    assert result["data"][0]["canonical_law_url"] == "https://wetten.overheid.nl/BWBR0001854/"
+    assert result["data"][0]["versioned_law_url"] == "https://wetten.overheid.nl/BWBR0001854/1994-02-01/0/"
     assert result["data"][0]["last_modified_date"] == "2024-10-01"
     assert any(version["effective_date"] == "2012-01-01" for version in result["data"][0]["historical_versions"])
     assert any(version["is_current"] is True for version in result["data"][0]["historical_versions"])
+    assert any(version["law_version_identifier"] == "BWBR0001854@2012-01-01" for version in result["data"][0]["historical_versions"])
+    assert any(version["version_end_date"] for version in result["data"][0]["historical_versions"] if version["effective_date"] == "2012-01-01")
     assert result["data"][0]["citations"] == ["Artikel 1", "Artikel 2", "Artikel 92"]
     assert result["article_data"][0]["citation"].startswith("Sr, Boek 1 Algemene bepalingen")
+    assert result["article_data"][0]["document_version_identifier"] == "BWBR0001854@1994-02-01"
     assert result["article_data"][0]["hierarchy_path_text"].endswith("Artikel 1")
     assert result["article_data"][1]["article_heading"] == "Strafwet toepasselijkheid"
     assert result["data"][0]["metadata"]["verification"]["information_page_verified"] is True
