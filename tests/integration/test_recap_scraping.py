@@ -12,6 +12,7 @@ Usage:
 """
 import anyio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -26,9 +27,23 @@ from ipfs_datasets_py.processors.legal_scrapers.recap_archive_scraper import (
 )
 
 
+def _courtlistener_token_configured() -> bool:
+    return bool(str(os.environ.get("COURTLISTENER_API_TOKEN") or "").strip())
+
+
+def _is_auth_error(result: dict) -> bool:
+    error_text = str((result or {}).get("error") or "")
+    return "Authentication credentials were not provided" in error_text or "status 401" in error_text
+
+
 async def test_search():
     """Test searching RECAP Archive."""
     print("\n=== Test 1: Search RECAP Archive ===")
+
+    if not _courtlistener_token_configured():
+        print("Status: skipped")
+        print("Reason: COURTLISTENER_API_TOKEN is not configured")
+        return None
     
     result = await search_recap_documents(
         court='ca9',  # 9th Circuit
@@ -40,6 +55,10 @@ async def test_search():
     print(f"Documents found: {result['count']}")
     
     if result['status'] == 'error':
+        if _is_auth_error(result):
+            print("Status: skipped")
+            print("Reason: CourtListener authentication is required for this query")
+            return None
         print(f"Error: {result.get('error', 'Unknown error')}")
         return False
     
@@ -72,6 +91,11 @@ async def test_search():
 async def test_get_document():
     """Test retrieving a specific document."""
     print("\n=== Test 2: Get Specific Document ===")
+
+    if not _courtlistener_token_configured():
+        print("Status: skipped")
+        print("Reason: COURTLISTENER_API_TOKEN is not configured")
+        return None
     
     # First search to get a document ID
     search_result = await search_recap_documents(
@@ -81,6 +105,10 @@ async def test_get_document():
     )
     
     if search_result['status'] != 'success' or not search_result['documents']:
+        if _is_auth_error(search_result):
+            print("Status: skipped")
+            print("Reason: CourtListener authentication is required for this query")
+            return None
         print("Could not find document for testing")
         return False
     
@@ -111,6 +139,11 @@ async def test_get_document():
 async def test_scrape_small():
     """Test scraping a small dataset."""
     print("\n=== Test 3: Scrape Small Dataset ===")
+
+    if not _courtlistener_token_configured():
+        print("Status: skipped")
+        print("Reason: COURTLISTENER_API_TOKEN is not configured")
+        return None
     
     result = await scrape_recap_archive(
         courts=['ca9'],
@@ -141,6 +174,10 @@ async def test_scrape_small():
             return False
         return True
     else:
+        if _is_auth_error(result):
+            print("Status: skipped")
+            print("Reason: CourtListener authentication is required for this query")
+            return None
         print(f"  Error: {result.get('error', 'Unknown error')}")
         return False
 
@@ -148,6 +185,11 @@ async def test_scrape_small():
 async def test_resume():
     """Test resume capability."""
     print("\n=== Test 4: Resume Capability ===")
+
+    if not _courtlistener_token_configured():
+        print("Status: skipped")
+        print("Reason: COURTLISTENER_API_TOKEN is not configured")
+        return None
     
     # Use the same job_id to test resume
     result = await scrape_recap_archive(
@@ -204,18 +246,24 @@ async def main():
     print("Test Summary")
     print("=" * 60)
     
+    skipped = 0
     for test_name, success in results:
-        status = "✓ PASS" if success else "✗ FAIL"
+        if success is None:
+            status = "- SKIP"
+            skipped += 1
+        else:
+            status = "✓ PASS" if success else "✗ FAIL"
         print(f"{status}: {test_name}")
     
     total = len(results)
     passed = sum(1 for _, success in results if success)
+    failed = sum(1 for _, success in results if success is False)
     
-    print(f"\nTotal: {passed}/{total} tests passed")
+    print(f"\nTotal: {passed} passed, {failed} failed, {skipped} skipped")
     
-    return 0 if passed == total else 1
+    return 0 if failed == 0 else 1
 
 
 if __name__ == '__main__':
-    exit_code = anyio.run(main())
+    exit_code = anyio.run(main)
     sys.exit(exit_code)

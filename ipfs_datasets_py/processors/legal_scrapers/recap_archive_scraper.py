@@ -27,6 +27,7 @@ import logging
 import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,72 @@ FEDERAL_CIRCUITS = {
     "dc": "D.C. Circuit",
     "fed": "Federal Circuit"
 }
+
+
+def _resolve_courtlistener_api_token(api_token: Optional[str] = None) -> Optional[str]:
+    explicit = str(api_token or "").strip()
+    if explicit:
+        return explicit
+    env_token = str(os.environ.get('COURTLISTENER_API_TOKEN') or '').strip()
+    return env_token or None
+
+
+def _extract_docket_id_from_absolute_url(absolute_url: Optional[str]) -> Optional[str]:
+    absolute_url = str(absolute_url or '').strip()
+    marker = '/docket/'
+    if marker not in absolute_url:
+        return None
+    remainder = absolute_url.split(marker, 1)[1].strip('/')
+    if not remainder:
+        return None
+    docket_id = remainder.split('/', 1)[0].strip()
+    return docket_id if docket_id.isdigit() else None
+
+
+def _fetch_courtlistener_json(requests_module: Any, url: str, headers: Dict[str, str]) -> Optional[Dict[str, Any]]:
+    response = requests_module.get(url, headers=headers, timeout=30)
+    if response.status_code != 200:
+        logger.info("CourtListener hydration request failed for %s with status %s", url, response.status_code)
+        return None
+    return response.json()
+
+
+def _hydrate_recap_document_metadata(
+    data: Dict[str, Any],
+    requests_module: Any,
+    headers: Dict[str, str],
+) -> Dict[str, Any]:
+    hydrated: Dict[str, Any] = {}
+    docket_id = data.get('docket') or _extract_docket_id_from_absolute_url(data.get('absolute_url'))
+    if not docket_id:
+        return hydrated
+
+    docket_url = f"https://www.courtlistener.com/api/rest/v3/dockets/{docket_id}/"
+    docket_data = _fetch_courtlistener_json(requests_module, docket_url, headers)
+    if not docket_data:
+        return hydrated
+
+    hydrated['docket_id'] = str(docket_data.get('id') or docket_id)
+    hydrated['case_name'] = docket_data.get('case_name', '') or ''
+    hydrated['date_filed'] = docket_data.get('date_filed', '') or ''
+    hydrated['docket_number'] = docket_data.get('docket_number', '') or ''
+    hydrated['docket_url'] = docket_data.get('absolute_url', '') or data.get('absolute_url', '') or ''
+
+    court_value = docket_data.get('court', '') or ''
+    court_id = docket_data.get('court_id', '') or ''
+    hydrated['court_id'] = court_id
+
+    if isinstance(court_value, str) and court_value.startswith('http'):
+        court_data = _fetch_courtlistener_json(requests_module, court_value, headers)
+        if court_data:
+            hydrated['court'] = court_data.get('full_name', '') or court_data.get('short_name', '') or court_id
+            hydrated['court_full_name'] = court_data.get('full_name', '') or hydrated['court']
+        else:
+            hydrated['court'] = court_id
+    else:
+        hydrated['court'] = court_value or court_id
+
+    return hydrated
 
 
 async def search_recap_documents(
@@ -91,12 +158,9 @@ async def search_recap_documents(
     try:
         logger.info(f"Searching RECAP Archive: query={query}, court={court}, case_name={case_name}")
         
-        # Get API token from parameter or environment variable
-        if api_token is None:
-            import os
-            api_token = os.environ.get('COURTLISTENER_API_TOKEN')
-            if api_token:
-                logger.info("Using CourtListener API token from environment variable")
+        api_token = _resolve_courtlistener_api_token(api_token)
+        if api_token:
+            logger.info("Using CourtListener API token for RECAP search")
         
         # Import required libraries
         try:
@@ -135,13 +199,11 @@ async def search_recap_documents(
             # - Use /api/rest/v3/dockets/ for docket-specific searches
             # - Use /api/rest/v3/opinions/ for opinion-specific searches
             
-            # Add search query if provided (searches across all fields)
             if query:
                 api_params['q'] = query
             elif case_name:
-                api_params['case_name'] = case_name
+                api_params['q'] = case_name
             else:
-                # If no query provided, use a wildcard to get all results
                 api_params['q'] = '*'
                 
             # Add court filter (uses court abbreviation like 'ca9', 'nysd', etc.)
@@ -157,22 +219,12 @@ async def search_recap_documents(
             # Set result limit
             api_params['page_size'] = min(limit, 100)  # API max is typically 100
             
-            # Choose the appropriate API endpoint based on document type
-            if document_type == 'opinion':
-                # Use opinions endpoint for better results
-                api_url = "https://www.courtlistener.com/api/rest/v3/opinions/"
-            elif document_type == 'docket':
-                # Use dockets endpoint for docket information
-                api_url = "https://www.courtlistener.com/api/rest/v3/dockets/"
-            else:
-                # Use unified search for other types or unspecified
-                api_url = "https://www.courtlistener.com/api/rest/v3/search/"
-                # Add document type filter for unified search
-                if document_type:
-                    if document_type == 'opinion':
-                        api_params['type'] = 'o'  # Opinion
-                    elif document_type == 'docket':
-                        api_params['type'] = 'r'  # RECAP document
+            api_url = "https://www.courtlistener.com/api/rest/v3/search/"
+            if document_type:
+                if document_type == 'opinion':
+                    api_params['type'] = 'o'
+                elif document_type in {'docket', 'complaint', 'order', 'motion', 'brief'}:
+                    api_params['type'] = 'r'
             
             logger.info(f"Querying CourtListener API: {api_url} with params {api_params}")
             
@@ -279,7 +331,8 @@ async def search_recap_documents(
 async def get_recap_document(
     document_id: str,
     include_text: bool = True,
-    include_metadata: bool = True
+    include_metadata: bool = True,
+    api_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Get a specific RECAP document by ID.
     
@@ -312,19 +365,27 @@ async def get_recap_document(
         api_url = f"https://www.courtlistener.com/api/rest/v3/recap-documents/{document_id}/"
         
         try:
-            response = requests.get(api_url, timeout=30)
+            headers = {}
+            api_token = _resolve_courtlistener_api_token(api_token)
+            if api_token:
+                headers['Authorization'] = f'Token {api_token}'
+            response = requests.get(api_url, headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
+                hydrated = _hydrate_recap_document_metadata(data, requests, headers)
+                court_value = data.get('court', '') or hydrated.get('court', '')
+                if isinstance(court_value, str) and court_value.startswith('http'):
+                    court_value = hydrated.get('court', '')
                 
                 # Transform to our standardized format
                 document = {
                     "id": document_id,
-                    "docket_id": data.get('docket', ''),
-                    "case_name": data.get('case_name', ''),
-                    "court": data.get('court', ''),
+                    "docket_id": data.get('docket', '') or hydrated.get('docket_id', ''),
+                    "case_name": data.get('case_name', '') or hydrated.get('case_name', ''),
+                    "court": court_value,
                     "document_type": data.get('document_type', ''),
-                    "date_filed": data.get('date_filed', ''),
+                    "date_filed": data.get('date_filed', '') or hydrated.get('date_filed', ''),
                     "page_count": data.get('page_count', 0),
                     "recap_url": data.get('filepath_local', ''),
                     "text": data.get('plain_text', '') if include_text else None,
@@ -335,7 +396,11 @@ async def get_recap_document(
                         "plain_text_available": data.get('plain_text', '') != '',
                         "pdf_available": data.get('filepath_local', '') != '',
                         "description": data.get('description', ''),
-                        "document_number": data.get('document_number', '')
+                        "document_number": data.get('document_number', ''),
+                        "docket_number": hydrated.get('docket_number', ''),
+                        "docket_url": hydrated.get('docket_url', '') or data.get('absolute_url', ''),
+                        "court_id": hydrated.get('court_id', ''),
+                        "court_full_name": hydrated.get('court_full_name', '') or court_value,
                     } if include_metadata else None
                 }
                 
@@ -388,7 +453,8 @@ async def scrape_recap_archive(
     rate_limit_delay: float = 1.0,
     max_documents: Optional[int] = None,
     job_id: Optional[str] = None,
-    resume: bool = False
+    resume: bool = False,
+    api_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Scrape RECAP Archive documents and build a structured dataset.
     
@@ -417,8 +483,9 @@ async def scrape_recap_archive(
             - error: Error message (if failed)
     """
     try:
-        # Import state manager
-        from .state_manager import ScrapingState
+        from .scraping_state import ScrapingState
+
+        api_token = _resolve_courtlistener_api_token(api_token)
         
         # Generate job ID if not provided
         if job_id is None:
@@ -527,7 +594,8 @@ async def scrape_recap_archive(
                         filed_after=filed_after,
                         filed_before=filed_before,
                         case_name=case_name_pattern,
-                        limit=min(20, max_documents - documents_count if max_documents else 20)
+                        limit=min(20, max_documents - documents_count if max_documents else 20),
+                        api_token=api_token,
                     )
                     
                     if search_result['status'] == 'success' and search_result['documents']:
@@ -546,7 +614,8 @@ async def scrape_recap_archive(
                                 doc_details = await get_recap_document(
                                     doc['id'],
                                     include_text=include_text,
-                                    include_metadata=include_metadata
+                                    include_metadata=include_metadata,
+                                    api_token=api_token,
                                 )
                                 if doc_details['status'] == 'success' and doc_details.get('document'):
                                     # Merge search result with detailed document
@@ -598,6 +667,7 @@ async def scrape_recap_archive(
             "rate_limit_delay": rate_limit_delay,
             "include_text": include_text,
             "include_metadata": include_metadata,
+            "api_token_configured": bool(api_token),
             "job_id": job_id,
             "resumed": resume
         }
