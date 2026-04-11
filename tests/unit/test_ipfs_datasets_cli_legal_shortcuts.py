@@ -148,3 +148,51 @@ def test_legal_scrape_netherlands_laws_requires_source_args(capsys) -> None:
 
     out = capsys.readouterr().out
     assert "Usage: ipfs-datasets legal scrape-netherlands-laws" in out
+
+
+def test_legal_scrape_netherlands_laws_accepts_discovery_run_args(monkeypatch, capsys) -> None:
+    cli_module = _load_cli_module()
+    captured = {}
+
+    async def _fake_scrape_netherlands_laws_from_parameters(parameters, tool_version: str = "1.0.0"):
+        captured["parameters"] = dict(parameters)
+        captured["tool_version"] = tool_version
+        return {"status": "success", "metadata": {"seed_pages_visited": 1}}
+
+    fake_legal_dataset_api = ModuleType(
+        "ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api"
+    )
+    fake_legal_dataset_api.scrape_netherlands_laws_from_parameters = (
+        _fake_scrape_netherlands_laws_from_parameters
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api",
+        fake_legal_dataset_api,
+    )
+
+    cli_module.execute_heavy_command(
+        [
+            "legal",
+            "scrape-netherlands-laws",
+            "--seed_urls",
+            '["https://wetten.overheid.nl/zoeken/zoekresultaat/titel/test/page/1/count/100"]',
+            "--max_seed_pages",
+            "5",
+            "--crawl_depth",
+            "1",
+            "--rate_limit_delay",
+            "0.5",
+            "--skip_existing",
+            "true",
+        ]
+    )
+
+    out = capsys.readouterr().out
+    assert '"status": "success"' in out
+    params = captured["parameters"]
+    assert params["seed_urls"] == ["https://wetten.overheid.nl/zoeken/zoekresultaat/titel/test/page/1/count/100"]
+    assert params["max_seed_pages"] == 5
+    assert params["crawl_depth"] == 1
+    assert params["rate_limit_delay"] == 0.5
+    assert params["skip_existing"] is True
