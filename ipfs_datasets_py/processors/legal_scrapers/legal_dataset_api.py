@@ -1421,6 +1421,10 @@ async def search_caselaw_access_cases_from_parameters(
             "hf_parquet_files": parameters.get("hf_parquet_files"),
             "max_case_parquet_files": int(parameters.get("max_case_parquet_files", 0)),
             "preferred_chunk_parquet_names": parameters.get("preferred_chunk_parquet_names"),
+            "prefer_current_versions": parameters.get("prefer_current_versions"),
+            "include_historical_versions": parameters.get("include_historical_versions"),
+            "as_of_date": parameters.get("as_of_date"),
+            "effective_date": parameters.get("effective_date"),
         }
         result = await anyio.to_thread.run_sync(
             lambda: _run_cap_vector_operation_in_venv(

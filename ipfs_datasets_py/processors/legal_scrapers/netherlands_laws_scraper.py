@@ -47,7 +47,7 @@ _WS_RE = re.compile(r"\s+")
 _WETTEN_HOST_RE = re.compile(r"(^|\.)wetten\.overheid\.nl$", re.IGNORECASE)
 _BWB_ID_RE = re.compile(r"/(BWBR[0-9A-Z]+)(?:/|$)", re.IGNORECASE)
 _ARTICLE_HEADING_RE = re.compile(
-    r"^artikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b(?:\s*[:.\-]\s*(.*))?$",
+    r"^artikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b(?:\s*(?:(?:[:.\-])\s*|\s+)(.*))?$",
     re.IGNORECASE,
 )
 _STRUCTURE_KIND_PATTERNS: List[tuple[str, re.Pattern[str]]] = [
@@ -488,6 +488,31 @@ def _extract_document_structure(content_root: Any) -> Dict[str, Any]:
             _append_text(current_part, text)
 
     finalized_parts = _finalize_parts(parts)
+    if not any(str(part.get("kind")) == "artikel" for part in finalized_parts):
+        fallback_text = _normalize_space(content_root.get_text(" ", strip=True))
+        fallback_match = re.search(
+            r"\b(artikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?))\b(.*)$",
+            fallback_text,
+            re.IGNORECASE,
+        )
+        if fallback_match:
+            article_label = _normalize_space(fallback_match.group(1))
+            article_number = _normalize_space(fallback_match.group(2))
+            article_body = _normalize_space(fallback_match.group(3))
+            path_items = _hierarchy_path_items({}, article_number=article_number, article_label=article_label)
+            finalized_parts.append(
+                {
+                    "kind": "artikel",
+                    "label": article_label,
+                    "number": article_number,
+                    "citation": f"Artikel {article_number}" if article_number else "Artikel",
+                    "heading": "",
+                    "hierarchy": {},
+                    "hierarchy_path": path_items,
+                    "hierarchy_path_text": _hierarchy_path_string(path_items),
+                    "text": article_body,
+                }
+            )
     articles = [part for part in finalized_parts if str(part.get("kind")) == "artikel"]
     chapters = [
         part
@@ -694,8 +719,9 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
     aliases = list(document_row.get("aliases") or [])
     document_citation = _build_document_citation(canonical_title, identifier, aliases)
     law_identifier = str(document_row.get("law_identifier") or identifier)
+    version_date = str(document_row.get("version_start_date") or document_row.get("effective_date") or "")
     law_version_identifier = str(
-        document_row.get("law_version_identifier") or _version_identifier(law_identifier, str(document_row.get("version_start_date") or ""))
+        document_row.get("law_version_identifier") or _version_identifier(law_identifier, version_date)
     )
 
     for article in document_row.get("articles") or []:

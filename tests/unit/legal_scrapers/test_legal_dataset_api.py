@@ -180,7 +180,6 @@ async def test_fixture_to_searchable_corpus_result_preserves_article_citation(mo
 
 
 @pytest.mark.asyncio
-<<<<<<< HEAD
 async def test_recover_missing_legal_citation_source_api_delegates_parameters(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
     from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery as recovery_module
@@ -230,7 +229,7 @@ async def test_recover_missing_legal_citation_source_api_delegates_parameters(mo
     assert captured["archive_top_k"] == 2
     assert captured["publish_to_hf"] is True
     assert captured["hf_token"] == "token-123"
-=======
+
 async def test_netherlands_search_prefers_current_versions(monkeypatch):
     from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
 
@@ -399,4 +398,3 @@ async def test_netherlands_search_effective_date_can_select_specific_version(mon
     assert len(result["results"]) == 1
     assert result["results"][0]["case"]["law_version_identifier"] == "BWBR0001854@2024-01-01"
     assert result["results"][0]["case"]["citation"] == "Sr, Artikel 1"
->>>>>>> cb8233b0 (feat(netherlands): add temporal version-aware retrieval for Dutch law corpus)

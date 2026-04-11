@@ -174,7 +174,7 @@ def test_extract_title_and_text_handles_partial_html():
     assert "In deze wet" in parsed["structure"]["articles"][0]["text"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
 
@@ -245,7 +245,7 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
     assert result["data"][0]["metadata"]["verification"]["identifier_consistent"] is True
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_mcp_tool_scrape_netherlands_laws_delegates(monkeypatch):
     from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import mcp_tools
     from ipfs_datasets_py.processors.legal_scrapers import legal_dataset_api
