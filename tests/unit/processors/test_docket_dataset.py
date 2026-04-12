@@ -23,6 +23,7 @@ from ipfs_datasets_py.processors.legal_data import (
     execute_packaged_docket_query,
     execute_packaged_docket_follow_up_job,
     execute_packaged_docket_follow_up_plan,
+    export_docket_dataset_single_parquet,
     get_packaged_docket_operator_dashboard,
     get_packaged_docket_proof_revalidation_queue,
     get_packaged_docket_proof_revalidation_runs,
@@ -569,6 +570,50 @@ def test_packaged_operator_dashboard_includes_eu_citation_summary(tmp_path):
     assert "EU Documents With Citations: 1" in report_text
 
 
+def test_packaged_inspection_report_includes_eu_citation_summary(tmp_path):
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "1:24-cv-1015-eu-inspection",
+            "case_name": "Doe v. EU Inspection",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "EU Filing",
+                    "text": "See CELEX 32016R0679.",
+                }
+            ],
+        }
+    )
+    dataset.metadata["citation_source_audit"] = {
+        "eu_citation_audit": {
+            "citation_count": 1,
+            "unique_citation_count": 1,
+            "documents_with_citations": 1,
+        }
+    }
+    package = package_docket_dataset(
+        dataset.to_dict(),
+        tmp_path / "bundle_eu_inspection",
+        package_name="eu_inspection_bundle",
+        include_car=False,
+    )
+    manifest_path = package["manifest_json_path"]
+
+    inspection = DocketDatasetPackager().inspect_packaged_bundle(manifest_path)
+
+    assert inspection["eu_citation_count"] == 1
+    assert inspection["eu_unique_citation_count"] == 1
+    assert inspection["eu_documents_with_citations"] == 1
+
+    report_text = docket_packaging_module.render_packaged_docket_inspection_report(
+        manifest_path,
+        report_format="text",
+    )
+    assert "EU Citation Count: 1" in report_text
+    assert "EU Unique Citation Count: 1" in report_text
+    assert "EU Documents With Citations: 1" in report_text
+
+
 def test_packaged_follow_up_job_can_dispatch_citation_recovery_execution(tmp_path, monkeypatch):
     dataset = DocketDatasetBuilder().build_from_docket(
         {
@@ -1015,6 +1060,13 @@ def test_load_packaged_docket_summary_view_uses_manifest_counts(tmp_path):
         "preferred_state_codes": [],
         "authority_backed": True,
     }
+    dataset.metadata["citation_source_audit"] = {
+        "eu_citation_audit": {
+            "citation_count": 2,
+            "unique_citation_count": 2,
+            "documents_with_citations": 1,
+        }
+    }
     package = dataset.write_package(
         tmp_path / "summary_only_bundle",
         package_name="summary_only_bundle",
@@ -1036,11 +1088,17 @@ def test_load_packaged_docket_summary_view_uses_manifest_counts(tmp_path):
     assert summary_view["dataset_id"] == dataset.dataset_id
     assert summary_view["document_count"] == 1
     assert summary_view["attachment_count"] == 0
+    assert summary_view["eu_citation_count"] == 2
+    assert summary_view["eu_unique_citation_count"] == 2
+    assert summary_view["eu_documents_with_citations"] == 1
     assert "routing_reason" in summary_view["routing_provenance"]
 
     public_summary_view = load_packaged_docket_summary_view(package["manifest_json_path"])
     assert public_summary_view["document_count"] == 1
     assert public_summary_view["case_name"] == "Doe v. Summary View"
+    assert public_summary_view["eu_citation_count"] == 2
+    assert public_summary_view["eu_unique_citation_count"] == 2
+    assert public_summary_view["eu_documents_with_citations"] == 1
 
 
 def test_load_packaged_docket_inspection_report_skips_minimal_document_view(tmp_path):
@@ -1201,6 +1259,163 @@ def test_docket_dataset_builder_can_skip_formal_and_router_enrichment(monkeypatc
     assert payload["metadata"]["artifact_status"]["router_enrichment"] is False
     assert payload["bm25_index"]["document_count"] == 1
     assert payload["vector_index"]["document_count"] == 1
+
+
+def test_courtlistener_metadata_documents_prefer_rendered_filing_records_for_indices():
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "73179548",
+            "case_name": "Miranda Kay Crowder",
+            "documents": [
+                {
+                    "id": "summary",
+                    "title": "CourtListener docket summary",
+                    "text": "Court summary metadata only.",
+                    "document_type": "courtlistener_docket_summary",
+                    "metadata": {"text_extraction": {"source": "courtlistener_summary_metadata"}},
+                },
+                {
+                    "id": "entry_1",
+                    "title": "Docket entry 1",
+                    "text": "Entry metadata only.",
+                    "document_type": "courtlistener_docket_entry",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_entry_metadata"},
+                        "rendered_docket_row": {
+                            "document_number": "1",
+                            "date_filed": "Apr 11, 2026",
+                            "kind": "petition",
+                            "title": "Voluntary petition chapter 7 (attorney filer)",
+                            "pacer_available": True,
+                        },
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "document_number": "1",
+                                "title": "Voluntary petition chapter 7 (attorney filer)",
+                            }
+                        ],
+                    },
+                },
+                {
+                    "id": "recap_1",
+                    "title": "Voluntary petition chapter 7 (attorney filer)",
+                    "text": "",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_metadata_only"},
+                        "rendered_docket_row": {
+                            "document_number": "1",
+                            "date_filed": "Apr 11, 2026",
+                            "kind": "petition",
+                            "title": "Voluntary petition chapter 7 (attorney filer)",
+                            "pacer_available": True,
+                        },
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "document_number": "1",
+                                "title": "Voluntary petition chapter 7 (attorney filer)",
+                            }
+                        ],
+                    },
+                },
+                {
+                    "id": "recap_2",
+                    "title": "Employee income records",
+                    "text": "",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_metadata_only"},
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "title": "Employee income records",
+                            }
+                        ],
+                    },
+                },
+                {
+                    "id": "recap_3",
+                    "title": "none",
+                    "text": "",
+                    "metadata": {"text_extraction": {"source": "courtlistener_metadata_only"}},
+                },
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    summary = summarize_docket_dataset(dataset)
+    bm25_results = search_docket_dataset_bm25(dataset, "voluntary petition chapter 7", top_k=3)
+
+    assert summary["bm25_document_count"] == 2
+    assert summary["vector_document_count"] == 2
+    assert bm25_results["results"][0]["title"] == "Voluntary petition chapter 7 (attorney filer)"
+
+
+def test_generic_courtlistener_entry_metadata_without_acquisition_signal_is_not_indexed():
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "73179548",
+            "case_name": "Miranda Kay Crowder",
+            "documents": [
+                {
+                    "id": "entry_3",
+                    "title": "Docket entry 3",
+                    "text": "Entry number: 3\nDate filed: 2026-04-11\nDescription: Docket entry 3",
+                    "document_number": "3",
+                    "document_type": "courtlistener_docket_entry",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_entry_metadata"},
+                        "raw": {"description": ""},
+                    },
+                }
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    summary = summarize_docket_dataset(dataset)
+    assert summary["bm25_document_count"] == 0
+    assert summary["vector_document_count"] == 0
+
+
+def test_summarize_docket_dataset_surfaces_eu_citation_counts():
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "1:24-cv-1019",
+            "case_name": "Doe v. EU Summary",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "EU Filing",
+                    "text": "See CELEX 32016R0679.",
+                }
+            ],
+        }
+    )
+    dataset.metadata["citation_source_audit"] = {
+        "eu_citation_audit": {
+            "citation_count": 3,
+            "unique_citation_count": 2,
+            "documents_with_citations": 1,
+        }
+    }
+
+    summary = summarize_docket_dataset(dataset)
+
+    assert summary["eu_citation_count"] == 3
+    assert summary["eu_unique_citation_count"] == 2
+    assert summary["eu_documents_with_citations"] == 1
 
 
 def test_docket_dataset_extracts_structured_order_language():
@@ -3240,6 +3455,367 @@ def test_docket_dataset_can_be_packaged_into_parquet_and_car_bundle(tmp_path, mo
     assert "routing_provenance" in minimal_view
 
 
+def test_packaged_docket_extracts_courtlistener_acquisition_candidates_as_attachments(tmp_path):
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "73179548",
+            "case_name": "Miranda Kay Crowder",
+            "documents": [
+                {
+                    "id": "recap_1",
+                    "title": "Voluntary petition chapter 7 (attorney filer)",
+                    "text": "",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_metadata_only"},
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "document_number": "1",
+                                "title": "Voluntary petition chapter 7 (attorney filer)",
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    package_result = package_docket_dataset(
+        dataset,
+        tmp_path / "bundles",
+        package_name="courtlistener_attachment_bundle",
+        include_car=False,
+    )
+    manifest_path = tmp_path / "bundles" / "courtlistener_attachment_bundle" / "bundle_manifest.json"
+    bundle_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    attachment_piece = next(piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "attachments")
+    filing_piece = next(piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "filings")
+    acquisition_piece = next(piece for piece in bundle_manifest["pieces"] if piece["piece_id"] == "acquisition_queue")
+
+    assert attachment_piece["row_count"] >= 1
+    assert filing_piece["row_count"] >= 1
+    assert acquisition_piece["row_count"] >= 1
+    assert package_result["summary"]["attachment_count"] >= 1
+    assert package_result["summary"]["filing_count"] >= 1
+    assert package_result["summary"]["acquisition_queue_count"] >= 1
+
+
+def test_courtlistener_acquisition_queue_uses_pacer_browser_assist_plan(tmp_path):
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "73179548",
+            "case_name": "Miranda Kay Crowder",
+            "documents": [
+                {
+                    "id": "recap_1",
+                    "title": "Voluntary petition chapter 7 (attorney filer)",
+                    "text": "",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_metadata_only"},
+                        "rendered_docket_row": {
+                            "document_number": "1",
+                            "date_filed": "Apr 11, 2026",
+                            "kind": "petition",
+                            "title": "Voluntary petition chapter 7 (attorney filer)",
+                            "pacer_available": True,
+                        },
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "document_number": "1",
+                                "title": "Voluntary petition chapter 7 (attorney filer)",
+                            }
+                        ],
+                    },
+                }
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    package_result = package_docket_dataset(
+        dataset,
+        tmp_path / "bundles",
+        package_name="courtlistener_queue_bundle",
+        include_car=False,
+    )
+    manifest_path = tmp_path / "bundles" / "courtlistener_queue_bundle" / "bundle_manifest.json"
+    minimal_view = DocketDatasetPackager().load_minimal_dataset_view(manifest_path)
+    queue_rows = minimal_view["acquisition_queue"]
+
+    assert package_result["summary"]["acquisition_queue_count"] >= 1
+    assert queue_rows[0]["acquisition_kind"] == "pacer_gate"
+    assert queue_rows[0]["extractor_plan"] == "browser_assist_then_pdf_direct_then_ocr"
+    assert queue_rows[0]["ready_for_fetch"] is True
+
+
+def test_courtlistener_public_filing_pdf_documents_are_selected_for_retrieval_index() -> None:
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "67658002",
+            "case_name": "Example Public Filing",
+            "documents": [
+                {
+                    "id": "entry_1",
+                    "title": "Docket entry 1",
+                    "text": "Short metadata stub",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_entry_metadata"},
+                    },
+                },
+                {
+                    "id": "public_pdf_1",
+                    "title": "Example Filing PDF part 1",
+                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims." * 4,
+                    "document_number": "1",
+                    "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                    "document_type": "courtlistener_public_filing_pdf",
+                    "text_extraction": {
+                        "source": "courtlistener_public_filing_pdf",
+                        "method": "pdf_ocr",
+                    },
+                    "metadata": {
+                        "text_extraction": {
+                            "source": "courtlistener_public_filing_pdf",
+                            "method": "pdf_ocr",
+                        },
+                    },
+                },
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.metadata["artifact_provenance"]["retrieval_index"]["selected_document_count"] == 1
+    assert [item["document_id"] for item in dataset.bm25_index["documents"]] == ["public_pdf_1"]
+    assert [item["document_id"] for item in dataset.vector_index["items"]] == ["public_pdf_1"]
+
+
+def test_preview_retrieval_index_reports_public_filing_pdf_documents() -> None:
+    preview = DocketDatasetBuilder().preview_retrieval_index(
+        {
+            "docket_id": "67658002",
+            "case_name": "Example Public Filing",
+            "documents": [
+                {
+                    "id": "entry_1",
+                    "title": "Docket entry 1",
+                    "text": "Short metadata stub",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_entry_metadata"},
+                    },
+                },
+                {
+                    "id": "public_pdf_1",
+                    "title": "Example Filing PDF part 1",
+                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims." * 4,
+                    "document_number": "1",
+                    "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                    "document_type": "courtlistener_public_filing_pdf",
+                    "text_extraction": {
+                        "source": "courtlistener_public_filing_pdf",
+                        "method": "pdf_ocr",
+                    },
+                    "metadata": {
+                        "text_extraction": {
+                            "source": "courtlistener_public_filing_pdf",
+                            "method": "pdf_ocr",
+                        },
+                    },
+                },
+            ],
+        }
+    )
+
+    assert preview["selected_document_count"] == 1
+    assert preview["documents"][0]["document_id"] == "public_pdf_1"
+    assert preview["documents"][0]["metadata"]["retrieval_index"]["source_kind"] == "courtlistener_public_filing_pdf"
+    assert preview["documents"][0]["metadata"]["retrieval_index"]["evidence_quality"] == "extracted_pdf"
+    assert preview["evidence_quality_counts"]["extracted_pdf"] == 1
+
+
+def test_preview_retrieval_index_excludes_generic_courtlistener_metadata_only_rows() -> None:
+    preview = DocketDatasetBuilder().preview_retrieval_index(
+        {
+            "docket_id": "67658002",
+            "case_name": "Example Public Filing",
+            "documents": [
+                {
+                    "id": "metadata_1",
+                    "title": "1",
+                    "text": "",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_metadata_only"},
+                    },
+                },
+                {
+                    "id": "metadata_2",
+                    "title": "Main Document",
+                    "text": "",
+                    "document_number": "2",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_entry_metadata"},
+                    },
+                },
+                {
+                    "id": "public_pdf_1",
+                    "title": "Complaint for Injunctive Relief PDF part 1",
+                    "text": "This is substantive extracted filing text discussing equal protection, injunction relief, and constitutional claims." * 4,
+                    "document_number": "1",
+                    "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                    "document_type": "courtlistener_public_filing_pdf",
+                    "text_extraction": {
+                        "source": "courtlistener_public_filing_pdf",
+                        "method": "pdf_ocr",
+                    },
+                    "metadata": {
+                        "text_extraction": {
+                            "source": "courtlistener_public_filing_pdf",
+                            "method": "pdf_ocr",
+                        },
+                    },
+                },
+            ],
+        }
+    )
+
+    assert preview["selected_document_count"] == 1
+    assert [doc["document_id"] for doc in preview["documents"]] == ["public_pdf_1"]
+
+
+def test_preview_retrieval_index_excludes_title_only_low_value_courtlistener_rows() -> None:
+    preview = DocketDatasetBuilder().preview_retrieval_index(
+        {
+            "docket_id": "67658002",
+            "case_name": "Example Public Filing",
+            "documents": [
+                {
+                    "id": "entry_1",
+                    "title": "Main Document",
+                    "text": "",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_entry_metadata"},
+                    },
+                },
+                {
+                    "id": "entry_2",
+                    "title": "Submission of Motion for Temporary Restraining Order",
+                    "text": "",
+                    "document_number": "2",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_entry_metadata"},
+                    },
+                },
+            ],
+        }
+    )
+
+    assert preview["selected_document_count"] == 0
+    assert preview["documents"] == []
+
+
+def test_preview_retrieval_index_prefers_rendered_row_kind_when_title_is_generic() -> None:
+    preview = DocketDatasetBuilder().preview_retrieval_index(
+        {
+            "docket_id": "67658002",
+            "case_name": "Example Public Filing",
+            "documents": [
+                {
+                    "id": "rendered_1",
+                    "title": "Main Document",
+                    "text": "",
+                    "document_number": "8",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_rendered_docket"},
+                        "rendered_docket_row": {
+                            "document_number": "8",
+                            "date_filed": "Aug 2, 2023",
+                            "title": "Main Document",
+                            "kind": "Submission of Motion for Temporary Restraining Order",
+                            "pacer_available": False,
+                        },
+                    },
+                },
+            ],
+        }
+    )
+
+    assert preview["selected_document_count"] == 1
+    assert preview["documents"][0]["title"] == "Submission of Motion for Temporary Restraining Order"
+    assert preview["documents"][0]["metadata"]["retrieval_index"]["source_kind"] == "courtlistener_rendered_docket"
+    assert preview["documents"][0]["metadata"]["retrieval_index"]["evidence_quality"] == "rendered"
+
+
+def test_preview_retrieval_index_can_filter_by_min_evidence_quality() -> None:
+    preview = DocketDatasetBuilder().preview_retrieval_index(
+        {
+            "docket_id": "67658002",
+            "case_name": "Example Public Filing",
+            "documents": [
+                {
+                    "id": "rendered_1",
+                    "title": "Main Document",
+                    "text": "",
+                    "document_number": "8",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_rendered_docket"},
+                        "rendered_docket_row": {
+                            "document_number": "8",
+                            "date_filed": "Aug 2, 2023",
+                            "title": "Main Document",
+                            "kind": "Submission of Motion for Temporary Restraining Order",
+                            "pacer_available": False,
+                        },
+                    },
+                },
+                {
+                    "id": "plain_1",
+                    "title": "Complaint",
+                    "text": "This is plain text from CourtListener.",
+                    "document_number": "1",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_plain_text"},
+                    },
+                },
+                {
+                    "id": "public_pdf_1",
+                    "title": "Complaint PDF",
+                    "text": "This is substantive extracted filing text discussing equal protection." * 3,
+                    "document_number": "1",
+                    "text_extraction": {
+                        "source": "courtlistener_public_filing_pdf",
+                        "method": "pdf_ocr",
+                    },
+                    "metadata": {
+                        "text_extraction": {
+                            "source": "courtlistener_public_filing_pdf",
+                            "method": "pdf_ocr",
+                        },
+                    },
+                },
+            ],
+        },
+        min_evidence_quality="plain_text",
+    )
+
+    assert preview["selected_document_count"] == 2
+    assert [doc["document_id"] for doc in preview["documents"]] == ["plain_1", "public_pdf_1"]
+
+
 def test_docket_dataset_can_roundtrip_from_json_parquet_car_and_zip_bundle(tmp_path, monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
     dataset = DocketDatasetBuilder().build_from_docket(
@@ -3302,6 +3878,51 @@ def test_docket_dataset_can_roundtrip_from_json_parquet_car_and_zip_bundle(tmp_p
     assert len(components_from_parquet["documents"]) == 2
     assert len(components_from_car["documents"]) == 2
     assert len(components_from_zip["documents"]) == 2
+
+
+def test_docket_dataset_can_export_single_parquet_bundle(tmp_path) -> None:
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "single_parquet_docket",
+            "case_name": "Single Parquet Test",
+            "court": "gand",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Substantive complaint text.",
+                    "document_number": "1",
+                    "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                    "document_type": "courtlistener_public_filing_pdf",
+                    "text_extraction": {
+                        "source": "courtlistener_public_filing_pdf",
+                        "method": "pdf_ocr",
+                    },
+                    "metadata": {
+                        "text_extraction": {
+                            "source": "courtlistener_public_filing_pdf",
+                            "method": "pdf_ocr",
+                        },
+                    },
+                }
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    export_result = export_docket_dataset_single_parquet(
+        dataset,
+        tmp_path / "single_bundle.parquet",
+    )
+    table = pq.read_table(tmp_path / "single_bundle.parquet")
+    rows = table.to_pylist()
+
+    assert export_result["row_count"] == len(rows)
+    assert any(row["section"] == "documents" for row in rows)
+    assert any(row["section"] == "bm25_documents" for row in rows)
+    assert any(row["section"] == "vector_items" for row in rows)
+    assert any(row["section"] == "knowledge_graph_entities" for row in rows)
 
 
 def test_packaged_docket_logic_artifact_queries_execute_via_direct_and_planned_paths(tmp_path, monkeypatch):

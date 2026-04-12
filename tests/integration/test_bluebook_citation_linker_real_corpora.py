@@ -301,7 +301,7 @@ def _build_federal_register_cases(
     cases = []
     for row in rows:
         citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS)
-        if citation_text in (None, ""):
+        if citation_text in (None, "") or not _parser_accepts(str(citation_text), "federal_register", None):
             volume = _first_present(row, _VOLUME_FIELDS)
             page = _first_present(row, _PAGE_FIELDS)
             if volume in (None, "") or page in (None, ""):

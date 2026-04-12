@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 import logging
 from pathlib import Path
 import re
@@ -138,6 +139,7 @@ def _sql_literal_path(value: str) -> str:
     return str(value).replace("'", "''")
 
 
+@lru_cache(maxsize=64)
 def _dataset_server_parquet_records(dataset_id: str) -> List[Dict[str, Any]]:
     try:
         import requests
@@ -185,11 +187,14 @@ def _is_direct_citation_source(path: str) -> bool:
     return not (
         normalized.endswith("_embeddings.parquet")
         or normalized.endswith("_metadata.parquet")
+        or normalized.endswith("cid_index.parquet")
+        or "/cid_index/" in normalized
         or normalized.endswith(".faiss")
         or normalized.endswith(".index")
     )
 
 
+@lru_cache(maxsize=128)
 def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> List[Any]:
     try:
         from .justicedao_dataset_inventory import inspect_justicedao_datasets
@@ -482,6 +487,7 @@ class BluebookCitationResolver:
         self.local_root_overrides = dict(local_root_overrides or {})
         self.parquet_file_overrides = dict(parquet_file_overrides or {})
         self.extractor = extractor or CitationExtractor()
+        self._hf_source_cache: Dict[tuple[str, Optional[str]], List[str]] = {}
         self._schema_cache: Dict[str, set[str]] = {}
 
     def resolve_text(self, text: str, *, state_code: Optional[str] = None) -> List[CitationLink]:
@@ -660,6 +666,11 @@ class BluebookCitationResolver:
         return deduped
 
     def _find_hf_sources(self, config: CorpusSourceConfig, *, state_code: Optional[str]) -> List[str]:
+        cache_key = (config.key, state_code)
+        cached_sources = self._hf_source_cache.get(cache_key)
+        if cached_sources is not None:
+            return list(cached_sources)
+
         try:
             from huggingface_hub import hf_hub_url, list_repo_files
         except Exception:
@@ -679,14 +690,18 @@ class BluebookCitationResolver:
                     if parquet_files:
                         ordered = self._order_hf_parquet_files(config, repo_id, parquet_files, state_code=state_code)
                         if ordered:
-                            return [hf_hub_url(repo_id=repo_id, repo_type="dataset", filename=filename) for filename in ordered]
+                            resolved = [hf_hub_url(repo_id=repo_id, repo_type="dataset", filename=filename) for filename in ordered]
+                            self._hf_source_cache[cache_key] = list(resolved)
+                            return resolved
 
             if had_listing_error or list_repo_files is None or hf_hub_url is None:
                 parquet_records = _dataset_server_parquet_records(repo_id)
                 if parquet_records:
                     ordered_urls = _order_dataset_server_parquet_records(config, parquet_records, state_code=state_code)
                     if ordered_urls:
+                        self._hf_source_cache[cache_key] = list(ordered_urls)
                         return ordered_urls
+        self._hf_source_cache[cache_key] = []
         return []
 
     def _order_hf_parquet_files(

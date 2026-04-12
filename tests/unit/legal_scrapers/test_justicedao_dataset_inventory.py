@@ -1538,6 +1538,181 @@ def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_genitive
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-I-des-GG"
 
 
+def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_gg_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_paragraph_fullword_genitive_gg.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1absatzgenitivegg",
+                    "law_identifier": "GG-Artikel-1-Absatz-1-des-GG",
+                    "official_identifier": "Artikel 1 Absatz 1 des GG",
+                    "citation": "Art. 1 Abs. 1 des GG",
+                    "title": "Artikel 1 Absatz 1 des GG",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Artikel 1 Absatz 1 des GG",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Artikel-1-Absatz-1-des-GG"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_artikel_absatz_genitive_grundgesetz_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_paragraph_fullword_genitive_grundgesetz.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1absatzgrundgesetzes",
+                    "law_identifier": "GG-Artikel-1-Absatz-1-des-Grundgesetzes",
+                    "official_identifier": "Artikel 1 Absatz 1 des Grundgesetzes",
+                    "citation": "Art. 1 Abs. 1 des Grundgesetzes",
+                    "title": "Artikel 1 Absatz 1 des Grundgesetzes",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Artikel 1 Absatz 1 des Grundgesetzes",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Artikel-1-Absatz-1-des-Grundgesetzes"
+
+
+def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_genitive_gg_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_reversed_paragraph_fullword_genitive_gg.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydeggreversedabsatzgenitivegg",
+                    "law_identifier": "GG-Grundgesetz-Artikel-1-Absatz-1-des-GG",
+                    "official_identifier": "Grundgesetz Artikel 1 Absatz 1 des GG",
+                    "citation": "Grundgesetz Artikel 1 Absatz 1 des GG",
+                    "title": "Grundgesetz Artikel 1 Absatz 1 des GG",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Grundgesetz Artikel 1 Absatz 1 des GG",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Artikel-1-Absatz-1-des-GG"
+
+
+def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_genitive_grundgesetz_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_reversed_paragraph_fullword_genitive_grundgesetz.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydeggreversedabsatzgrundgesetzes",
+                    "law_identifier": "GG-Grundgesetz-Artikel-1-Absatz-1-des-Grundgesetzes",
+                    "official_identifier": "Grundgesetz Artikel 1 Absatz 1 des Grundgesetzes",
+                    "citation": "Grundgesetz Artikel 1 Absatz 1 des Grundgesetzes",
+                    "title": "Grundgesetz Artikel 1 Absatz 1 des Grundgesetzes",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Grundgesetz Artikel 1 Absatz 1 des Grundgesetzes",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Artikel-1-Absatz-1-des-Grundgesetzes"
+
+
+def test_query_canonical_legal_corpus_can_query_reversed_germany_artikel_absatz_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_reversed_paragraph_fullword.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydeggreversedabsatzplain",
+                    "law_identifier": "GG-Grundgesetz-Artikel-1-Absatz-1",
+                    "official_identifier": "Grundgesetz Artikel 1 Absatz 1",
+                    "citation": "Grundgesetz Artikel 1 Absatz 1",
+                    "title": "Grundgesetz Artikel 1 Absatz 1",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Grundgesetz Artikel 1 Absatz 1",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Artikel-1-Absatz-1"
+
+
 def test_query_canonical_legal_corpus_can_query_reversed_germany_roman_paragraph_variant_as_eu_branch(tmp_path):
     laws_path = tmp_path / "germany_laws_paragraph_roman_reversed.parquet"
     pq.write_table(

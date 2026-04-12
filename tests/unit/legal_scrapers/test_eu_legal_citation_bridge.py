@@ -146,6 +146,16 @@ def test_extract_eu_legal_citations_recognizes_german_paragraph_genitive_referen
     assert german_citations[0].member_state == "DE"
 
 
+def test_extract_eu_legal_citations_recognizes_german_artikel_absatz_reference():
+    citations = extract_eu_legal_citations("Artikel 1 Absatz 1 Grundgesetz", language="de")
+
+    german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
+
+    assert german_citations
+    assert german_citations[0].normalized_text == "1 abs 1 GG"
+    assert german_citations[0].member_state == "DE"
+
+
 def test_extract_eu_legal_citations_recognizes_german_roman_paragraph_reference():
     citations = extract_eu_legal_citations("Art. 1 I GG", language="de")
 
@@ -168,6 +178,56 @@ def test_extract_eu_legal_citations_recognizes_german_roman_paragraph_genitive_g
 
 def test_extract_eu_legal_citations_recognizes_reversed_german_roman_paragraph_reference():
     citations = extract_eu_legal_citations("Grundgesetz Art. 1 I", language="de")
+
+    german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
+
+    assert german_citations
+    assert german_citations[0].normalized_text == "1 abs 1 GG"
+    assert german_citations[0].member_state == "DE"
+
+
+def test_extract_eu_legal_citations_recognizes_reversed_german_artikel_absatz_reference():
+    citations = extract_eu_legal_citations("Grundgesetz Artikel 1 Absatz 1", language="de")
+
+    german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
+
+    assert german_citations
+    assert german_citations[0].normalized_text == "1 abs 1 GG"
+    assert german_citations[0].member_state == "DE"
+
+
+def test_extract_eu_legal_citations_recognizes_german_artikel_absatz_genitive_gg_reference():
+    citations = extract_eu_legal_citations("Artikel 1 Absatz 1 des GG", language="de")
+
+    german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
+
+    assert german_citations
+    assert german_citations[0].normalized_text == "1 abs 1 GG"
+    assert german_citations[0].member_state == "DE"
+
+
+def test_extract_eu_legal_citations_recognizes_german_artikel_absatz_genitive_grundgesetz_reference():
+    citations = extract_eu_legal_citations("Artikel 1 Absatz 1 des Grundgesetzes", language="de")
+
+    german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
+
+    assert german_citations
+    assert german_citations[0].normalized_text == "1 abs 1 GG"
+    assert german_citations[0].member_state == "DE"
+
+
+def test_extract_eu_legal_citations_recognizes_reversed_german_artikel_absatz_genitive_gg_reference():
+    citations = extract_eu_legal_citations("Grundgesetz Artikel 1 Absatz 1 des GG", language="de")
+
+    german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
+
+    assert german_citations
+    assert german_citations[0].normalized_text == "1 abs 1 GG"
+    assert german_citations[0].member_state == "DE"
+
+
+def test_extract_eu_legal_citations_recognizes_reversed_german_artikel_absatz_genitive_grundgesetz_reference():
+    citations = extract_eu_legal_citations("Grundgesetz Artikel 1 Absatz 1 des Grundgesetzes", language="de")
 
     german_citations = [citation for citation in citations if citation.scheme == "DE_GG_ARTICLE"]
 

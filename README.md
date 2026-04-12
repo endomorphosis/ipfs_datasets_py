@@ -61,6 +61,11 @@ pip install -e ".[all]"  # All features
 pip install -e ".[ml]"   # ML/AI features only
 ```
 
+The base install intentionally excludes the third-party `brave-search` package.
+Its currently installable release depends on an older `httpx` range that
+conflicts with the MCP/FastMCP stack used by this workspace. If you need Brave
+Search specifically, install it in a separate optional environment.
+
 ### Basic Usage
 
 ```python

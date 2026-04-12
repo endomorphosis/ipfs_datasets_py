@@ -149,8 +149,9 @@ ddgs>=9.11.2  # DuckDuckGo search API (no key required)
 google-api-python-client>=2.100.0  # Google Custom Search Engine API
 cloudscraper>=1.2.71  # Cloudflare-aware requests wrapper for search/scrape fallbacks
 cfscrape>=2.1.1; python_version < '3.12'  # Legacy Cloudflare fallback; incompatible with urllib3 on Python 3.12+
-# 0.2.0 currently publishes invalid metadata on PyPI; 0.1.8 is the newest installable release.
-brave-search==0.1.8  # Brave Search client package
+# Brave Search is intentionally excluded from the base environment.
+# The installable release line depends on older httpx, which conflicts with the MCP stack.
+# Install it separately only if you need that client in an isolated environment.
 
 # Add these one by one after basic setup works:
 datasets>=2.10.0,<3.0.0

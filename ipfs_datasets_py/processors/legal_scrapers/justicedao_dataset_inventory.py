@@ -1228,7 +1228,7 @@ def build_justicedao_bluebook_query_plan(
             )
         plans.append(
             CitationQueryPlan(
-                citation_text=str(getattr(citation, "raw_text", "") or getattr(citation, "normalized_text", "") or ""),
+                citation_text=_eu_query_text(citation),
                 citation_type=f"eu_{str(getattr(citation, 'scheme', 'identifier')).strip().lower()}",
                 normalized_citation=str(getattr(citation, "normalized_text", "") or "").strip(),
                 candidate_datasets=candidates,
@@ -1262,7 +1262,7 @@ def build_justicedao_bluebook_query_plan(
             ],
             *[
                 {
-                    "text": str(getattr(citation, "raw_text", "") or getattr(citation, "normalized_text", "") or ""),
+                    "text": _eu_query_text(citation),
                     "type": f"eu_{str(getattr(citation, 'scheme', 'identifier')).strip().lower()}",
                     "jurisdiction": getattr(citation, "jurisdiction", None),
                     "member_state": getattr(citation, "member_state", None),
@@ -4117,6 +4117,21 @@ def _compact_alnum(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
 
 
+def _contains_ordered_tokens(container: str, query: str) -> bool:
+    container_tokens = [token for token in str(container or "").split() if token]
+    query_tokens = [token for token in str(query or "").split() if token]
+    if not container_tokens or not query_tokens:
+        return False
+
+    query_index = 0
+    for token in container_tokens:
+        if token == query_tokens[query_index]:
+            query_index += 1
+            if query_index == len(query_tokens):
+                return True
+    return False
+
+
 def _eu_citation_match_terms(citation: Any) -> List[str]:
     terms: List[str] = []
 
@@ -4162,6 +4177,11 @@ def _row_matches_eu_citation(row: Dict[str, Any], citation: Any) -> bool:
             return True
         if normalized_value and any(
             term and (term in normalized_value or normalized_value in term) for term in normalized_terms
+        ):
+            return True
+        if normalized_value and any(
+            term and (_contains_ordered_tokens(normalized_value, term) or _contains_ordered_tokens(term, normalized_value))
+            for term in normalized_terms
         ):
             return True
         if compact_value and any(
@@ -4353,6 +4373,31 @@ def _notes_union(*groups: Sequence[str]) -> List[str]:
             if text and text not in notes:
                 notes.append(text)
     return notes
+
+def _eu_query_text(citation: Any) -> str:
+    raw_text = str(getattr(citation, "raw_text", "") or "").strip()
+    if raw_text and extract_eu_legal_citations(raw_text):
+        return raw_text
+
+    metadata = dict(getattr(citation, "metadata", {}) or {})
+    scheme = str(getattr(citation, "scheme", "") or "").strip().upper()
+    article = str(metadata.get("article") or "").strip()
+    code = str(metadata.get("code") or "").strip()
+    paragraph = str(metadata.get("paragraph") or "").strip()
+
+    if scheme == "DE_GG_ARTICLE" and article:
+        if paragraph:
+            return f"Art. {article} Abs. {paragraph} GG"
+        return f"Art. {article} GG"
+    if scheme == "FR_CC_ARTICLE" and article:
+        return f"Article {article} du code civil"
+    if scheme == "ES_CC_ARTICLE" and article:
+        return f"Articulo {article} del Codigo Civil"
+    if scheme == "NL_BW_ARTICLE" and article:
+        code_text = code or "BW"
+        return f"Artikel {article} {code_text}".strip()
+
+    return str(getattr(citation, "normalized_text", "") or "").strip()
 
 
 def _citation_state_code(citation: Citation) -> Optional[str]:

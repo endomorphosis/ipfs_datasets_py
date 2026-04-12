@@ -16,7 +16,6 @@ Requires-Dist: google-api-python-client>=2.192.0
 Requires-Dist: cloudscraper>=1.2.71
 Requires-Dist: playwright>=1.40.0
 Requires-Dist: cfscrape>=2.1.1; python_version < "3.12"
-Requires-Dist: brave-search==0.1.8
 Requires-Dist: nltk>=3.8.1
 Requires-Dist: pdfplumber>=0.11.7
 Requires-Dist: pymupdf>=1.26.3

@@ -27,7 +27,6 @@ dependencies = [
     "cloudscraper>=1.2.71",
     "playwright>=1.40.0",
     "cfscrape>=2.1.1; python_version < '3.12'",
-    "brave-search==0.1.8",
     "nltk>=3.8.1",
     "pdfplumber>=0.11.7",
     "pymupdf>=1.26.3",

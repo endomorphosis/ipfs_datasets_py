@@ -62,10 +62,19 @@ def _extract_document_attachments(documents: Sequence[Dict[str, Any]]) -> List[D
         source_path = raw.get("source_path") or metadata.get("source_path")
         if source_path:
             candidates.append(source_path)
+        acquisition_candidates = list(metadata.get("acquisition_candidates") or [])
+        if acquisition_candidates:
+            candidates.extend(acquisition_candidates)
         for attachment_index, candidate in enumerate(candidates, start=1):
             if isinstance(candidate, dict):
                 label = str(candidate.get("title") or candidate.get("label") or candidate.get("path") or candidate.get("url") or f"attachment_{attachment_index}")
-                path_or_url = str(candidate.get("path") or candidate.get("url") or candidate.get("source") or "")
+                path_or_url = str(
+                    candidate.get("path")
+                    or candidate.get("url")
+                    or candidate.get("docket_url")
+                    or candidate.get("source")
+                    or ""
+                )
                 attachment_type = str(candidate.get("type") or candidate.get("mime_type") or "")
                 attachment_metadata = dict(candidate)
             else:
@@ -84,6 +93,139 @@ def _extract_document_attachments(documents: Sequence[Dict[str, Any]]) -> List[D
                 }
             )
     return attachments
+
+
+def _normalize_filing_title(value: Any) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def _extract_preferred_filing_records(documents: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    best_by_key: Dict[str, tuple[int, Dict[str, Any]]] = {}
+
+    for index, document in enumerate(documents, start=1):
+        document_id = str(document.get("document_id") or document.get("id") or f"document_{index}")
+        metadata = dict(document.get("metadata") or {})
+        rendered_row = dict(metadata.get("rendered_docket_row") or {})
+        acquisition_candidates = [dict(item) for item in list(metadata.get("acquisition_candidates") or []) if isinstance(item, dict)]
+        text_extraction = dict(metadata.get("text_extraction") or {})
+        text_source = str(text_extraction.get("source") or "").strip()
+        if text_source in {"courtlistener_summary_metadata", "synthesized_docket_summary"}:
+            continue
+        document_number = str(document.get("document_number") or rendered_row.get("document_number") or "").strip()
+        title = str(rendered_row.get("title") or document.get("title") or "").strip()
+        if not title or title.lower() == "none":
+            continue
+        dedupe_key = f"{document_number}::{_normalize_filing_title(title)}" if document_number else _normalize_filing_title(title)
+        if not dedupe_key:
+            continue
+
+        priority = 0
+        if rendered_row and text_source == "courtlistener_metadata_only":
+            priority = 320
+        elif rendered_row:
+            priority = 300
+        elif acquisition_candidates:
+            priority = 250
+        elif str(document.get("text") or "").strip() and text_source not in {"courtlistener_summary_metadata", "courtlistener_entry_metadata"}:
+            priority = 200
+        elif str(document.get("title") or "").strip().lower().startswith("docket entry "):
+            priority = 0
+        else:
+            priority = 100
+        if priority <= 0:
+            continue
+
+        filing_row = {
+            "filing_id": f"{document_id}_filing",
+            "document_id": document_id,
+            "document_number": document_number,
+            "title": title,
+            "date_filed": str(document.get("date_filed") or rendered_row.get("date_filed") or "").strip(),
+            "source_url": str(document.get("source_url") or ""),
+            "pacer_available": bool(rendered_row.get("pacer_available")) or any(
+                bool(candidate.get("pacer_available")) for candidate in acquisition_candidates
+            ),
+            "text_available": bool(str(document.get("text") or "").strip()),
+            "text_source": text_source,
+            "selection_priority": int(priority),
+            "filing_source": (
+                "courtlistener_rendered_docket_row"
+                if rendered_row
+                else "courtlistener_acquisition_candidate"
+                if acquisition_candidates
+                else "document"
+            ),
+            "rendered_row_json": json.dumps(_jsonable(rendered_row), sort_keys=True),
+            "acquisition_candidates_json": json.dumps(_jsonable(acquisition_candidates), sort_keys=True),
+            "metadata_json": json.dumps(
+                _jsonable(
+                    {
+                        "document_type": metadata.get("document_type"),
+                        "classification": metadata.get("classification"),
+                        "retrieval_index": metadata.get("retrieval_index"),
+                    }
+                ),
+                sort_keys=True,
+            ),
+        }
+        existing = best_by_key.get(dedupe_key)
+        if existing is None or priority > existing[0]:
+            best_by_key[dedupe_key] = (priority, filing_row)
+
+    filings = [item[1] for item in best_by_key.values()]
+    filings.sort(key=lambda row: (str(row.get("date_filed") or ""), str(row.get("document_number") or ""), str(row.get("title") or "")))
+    return filings
+
+
+def _build_filing_acquisition_queue(filings: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    queue_rows: List[Dict[str, Any]] = []
+    for index, filing in enumerate(filings, start=1):
+        acquisition_candidates = _parse_json_list_field(filing.get("acquisition_candidates_json"))
+        source_url = str(filing.get("source_url") or "").strip()
+        pacer_available = bool(filing.get("pacer_available"))
+        acquisition_url = source_url
+        acquisition_kind = "direct_url" if source_url else "missing_url"
+        extractor_plan = "skip"
+        notes: Dict[str, Any] = {
+            "filing_source": str(filing.get("filing_source") or ""),
+            "text_source": str(filing.get("text_source") or ""),
+            "acquisition_candidates": acquisition_candidates,
+        }
+
+        if pacer_available:
+            docket_urls = [
+                str(item.get("docket_url") or "").strip()
+                for item in acquisition_candidates
+                if isinstance(item, Mapping) and str(item.get("docket_url") or "").strip()
+            ]
+            acquisition_url = docket_urls[0] if docket_urls else source_url
+            acquisition_kind = "pacer_gate"
+            extractor_plan = "browser_assist_then_pdf_direct_then_ocr"
+        elif source_url.lower().endswith(".pdf"):
+            acquisition_kind = "direct_pdf"
+            extractor_plan = "pdf_direct_then_ocr"
+        elif source_url:
+            acquisition_kind = "direct_url"
+            extractor_plan = "http_fetch_then_mime_router"
+
+        queue_rows.append(
+            {
+                "queue_id": f"acquisition_{index}",
+                "filing_id": str(filing.get("filing_id") or ""),
+                "document_id": str(filing.get("document_id") or ""),
+                "document_number": str(filing.get("document_number") or ""),
+                "title": str(filing.get("title") or ""),
+                "acquisition_url": acquisition_url,
+                "source_url": source_url,
+                "acquisition_kind": acquisition_kind,
+                "extractor_plan": extractor_plan,
+                "pacer_available": pacer_available,
+                "text_available": bool(filing.get("text_available")),
+                "ready_for_fetch": bool(acquisition_url),
+                "notes_json": json.dumps(_jsonable(notes), sort_keys=True),
+            }
+        )
+    return queue_rows
 
 
 def _flatten_mapping_rows(
@@ -147,6 +289,11 @@ def _build_packaged_inspection_payload(
     court: Any,
     document_count: int,
     attachment_count: int,
+    filing_count: int,
+    acquisition_queue_count: int,
+    eu_citation_count: int = 0,
+    eu_unique_citation_count: int = 0,
+    eu_documents_with_citations: int = 0,
     latest_proof_packet_id: Any,
     latest_proof_packet_version: Any,
     latest_routing_explanation: Mapping[str, Any] | None,
@@ -163,6 +310,11 @@ def _build_packaged_inspection_payload(
         "court": str(court or ""),
         "document_count": int(document_count or 0),
         "attachment_count": int(attachment_count or 0),
+        "filing_count": int(filing_count or 0),
+        "acquisition_queue_count": int(acquisition_queue_count or 0),
+        "eu_citation_count": int(eu_citation_count or 0),
+        "eu_unique_citation_count": int(eu_unique_citation_count or 0),
+        "eu_documents_with_citations": int(eu_documents_with_citations or 0),
         "latest_proof_packet_id": str(latest_proof_packet_id or ""),
         "latest_proof_packet_version": int(latest_proof_packet_version or 0),
         "latest_routing_reason": str(latest_routing.get("routing_reason") or ""),
@@ -464,6 +616,8 @@ class DocketDatasetPackager:
 
         documents = [dict(item) for item in list(dataset_payload.get("documents") or []) if isinstance(item, dict)]
         attachments = _extract_document_attachments(documents)
+        filings = _extract_preferred_filing_records(documents)
+        acquisition_queue = _build_filing_acquisition_queue(filings)
         knowledge_graph = dict(dataset_payload.get("knowledge_graph") or {})
         deontic_graph = dict(dataset_payload.get("deontic_graph") or {})
         deontic_triggers = dict(dataset_payload.get("deontic_triggers") or {})
@@ -547,6 +701,11 @@ class DocketDatasetPackager:
             court=dataset_payload.get("court"),
             document_count=len(documents),
             attachment_count=len(attachments),
+            filing_count=len(filings),
+            acquisition_queue_count=len(acquisition_queue),
+            eu_citation_count=int(eu_citation_audit.get("citation_count") or 0),
+            eu_unique_citation_count=int(eu_citation_audit.get("unique_citation_count") or 0),
+            eu_documents_with_citations=int(eu_citation_audit.get("documents_with_citations") or 0),
             latest_proof_packet_id=dataset_metadata.get("latest_proof_packet_id")
             or proof_assistant_metadata.get("latest_proof_packet_id"),
             latest_proof_packet_version=dataset_metadata.get("latest_proof_packet_version")
@@ -597,6 +756,8 @@ class DocketDatasetPackager:
             "summary": {
                 "document_count": len(documents),
                 "attachment_count": len(attachments),
+                "filing_count": len(filings),
+                "acquisition_queue_count": len(acquisition_queue),
                 "proof_packet_count": len(list(proof_assistant.get("evidence_packets") or [])),
                 "proof_store_count": len(list((proof_store.get("proofs") or {}).keys())),
                 "review_required_work_item_count": int(proof_assistant_summary.get("review_required_work_item_count") or 0),
@@ -635,6 +796,8 @@ class DocketDatasetPackager:
             ),
             ("documents", "documents", documents, ["dataset_core"]),
             ("attachments", "attachments", attachments, ["documents"]),
+            ("filings", "filings", filings, ["documents"]),
+            ("acquisition_queue", "acquisition", acquisition_queue, ["filings"]),
             (
                 "plaintiff_docket",
                 "docket_sidecars",
@@ -870,6 +1033,8 @@ class DocketDatasetPackager:
             "summary": {
                 "document_count": len(documents),
                 "attachment_count": len(attachments),
+                "filing_count": len(filings),
+                "acquisition_queue_count": len(acquisition_queue),
                 "knowledge_graph_entity_count": len(list(knowledge_graph.get("entities") or [])),
                 "knowledge_graph_relationship_count": len(list(knowledge_graph.get("relationships") or [])),
                 "deontic_rule_count": len(list((deontic_graph.get("rules") or {}).keys())),
@@ -989,7 +1154,7 @@ class DocketDatasetPackager:
         bundle_dir, manifest = self._resolve_manifest(manifest_path)
         rows_by_piece = self.load_package_components(
             bundle_dir,
-            piece_ids=["dataset_core", "documents", "attachments", "routing_provenance", "inspection_report", "proof_revalidation_report", "operator_dashboard_report"],
+            piece_ids=["dataset_core", "documents", "attachments", "filings", "acquisition_queue", "routing_provenance", "inspection_report", "proof_revalidation_report", "operator_dashboard_report"],
             manifest=manifest,
         )
         dataset_core = dict((rows_by_piece.get("dataset_core") or [{}])[0])
@@ -1004,6 +1169,8 @@ class DocketDatasetPackager:
             "court": str(dataset_core.get("court") or manifest.get("court") or ""),
             "documents": self._restore_rows(rows_by_piece.get("documents")),
             "attachments": self._restore_rows(rows_by_piece.get("attachments")),
+            "filings": self._restore_rows(rows_by_piece.get("filings")),
+            "acquisition_queue": self._restore_rows(rows_by_piece.get("acquisition_queue")),
             "routing_provenance": routing_provenance if routing_provenance and "_empty" not in routing_provenance else {},
             "inspection_report": _normalize_packaged_inspection_report_row(inspection_report),
             "proof_revalidation_report": _normalize_packaged_revalidation_report_row(revalidation_report),
@@ -1031,6 +1198,11 @@ class DocketDatasetPackager:
             "court": str(dataset_core.get("court") or manifest.get("court") or ""),
             "document_count": int(manifest_summary.get("document_count") or 0),
             "attachment_count": int(manifest_summary.get("attachment_count") or 0),
+            "filing_count": int(manifest_summary.get("filing_count") or 0),
+            "acquisition_queue_count": int(manifest_summary.get("acquisition_queue_count") or 0),
+            "eu_citation_count": int(manifest_summary.get("eu_citation_count") or 0),
+            "eu_unique_citation_count": int(manifest_summary.get("eu_unique_citation_count") or 0),
+            "eu_documents_with_citations": int(manifest_summary.get("eu_documents_with_citations") or 0),
             "knowledge_graph_entity_count": int(manifest_summary.get("knowledge_graph_entity_count") or 0),
             "knowledge_graph_relationship_count": int(manifest_summary.get("knowledge_graph_relationship_count") or 0),
             "deontic_rule_count": int(manifest_summary.get("deontic_rule_count") or 0),
@@ -1094,6 +1266,11 @@ class DocketDatasetPackager:
             court=summary_view.get("court"),
             document_count=int(summary_view.get("document_count") or 0),
             attachment_count=int(summary_view.get("attachment_count") or 0),
+            filing_count=int(summary_view.get("filing_count") or 0),
+            acquisition_queue_count=int(summary_view.get("acquisition_queue_count") or 0),
+            eu_citation_count=int(summary_view.get("eu_citation_count") or 0),
+            eu_unique_citation_count=int(summary_view.get("eu_unique_citation_count") or 0),
+            eu_documents_with_citations=int(summary_view.get("eu_documents_with_citations") or 0),
             latest_proof_packet_id=(manifest.get("metadata") or {}).get("latest_proof_packet_id"),
             latest_proof_packet_version=(manifest.get("metadata") or {}).get("latest_proof_packet_version"),
             latest_routing_explanation=latest_routing,
@@ -1125,6 +1302,11 @@ class DocketDatasetPackager:
             f"Court: {inspection_dict.get('court') or ''}",
             f"Document Count: {inspection_dict.get('document_count') or 0}",
             f"Attachment Count: {inspection_dict.get('attachment_count') or 0}",
+            f"Filing Count: {inspection_dict.get('filing_count') or 0}",
+            f"Acquisition Queue Count: {inspection_dict.get('acquisition_queue_count') or 0}",
+            f"EU Citation Count: {inspection_dict.get('eu_citation_count') or 0}",
+            f"EU Unique Citation Count: {inspection_dict.get('eu_unique_citation_count') or 0}",
+            f"EU Documents With Citations: {inspection_dict.get('eu_documents_with_citations') or 0}",
             f"Latest Proof Packet ID: {inspection_dict.get('latest_proof_packet_id') or ''}",
             f"Latest Proof Packet Version: {inspection_dict.get('latest_proof_packet_version') or 0}",
             f"Latest Routing Reason: {inspection_dict.get('latest_routing_reason') or ''}",
@@ -1156,6 +1338,11 @@ class DocketDatasetPackager:
             f"- Court: {inspection_dict.get('court') or ''}",
             f"- Document Count: {inspection_dict.get('document_count') or 0}",
             f"- Attachment Count: {inspection_dict.get('attachment_count') or 0}",
+            f"- Filing Count: {inspection_dict.get('filing_count') or 0}",
+            f"- Acquisition Queue Count: {inspection_dict.get('acquisition_queue_count') or 0}",
+            f"- EU Citation Count: {inspection_dict.get('eu_citation_count') or 0}",
+            f"- EU Unique Citation Count: {inspection_dict.get('eu_unique_citation_count') or 0}",
+            f"- EU Documents With Citations: {inspection_dict.get('eu_documents_with_citations') or 0}",
             f"- Latest Proof Packet ID: {inspection_dict.get('latest_proof_packet_id') or ''}",
             f"- Latest Proof Packet Version: {inspection_dict.get('latest_proof_packet_version') or 0}",
             f"- Latest Routing Reason: {inspection_dict.get('latest_routing_reason') or ''}",
@@ -1206,6 +1393,8 @@ class DocketDatasetPackager:
         }
         package_manifest = dict(manifest)
         package_manifest["attachments"] = self._restore_rows(rows_by_piece.get("attachments"))
+        package_manifest["filings"] = self._restore_rows(rows_by_piece.get("filings"))
+        package_manifest["acquisition_queue"] = self._restore_rows(rows_by_piece.get("acquisition_queue"))
         bm25_documents = self._restore_rows(rows_by_piece.get("bm25_documents"))
         vector_items = self._restore_rows(rows_by_piece.get("vector_items"))
         proof_agenda = self._restore_rows(rows_by_piece.get("proof_agenda"))
@@ -3069,6 +3258,107 @@ def package_docket_dataset(
         package_name=package_name,
         include_car=include_car,
     )
+
+
+def export_docket_dataset_single_parquet(
+    dataset: Any,
+    output_path: str | Path,
+) -> Dict[str, Any]:
+    """Export a docket dataset into a single parquet file with section-tagged rows."""
+
+    dataset_payload = dataset.to_dict() if hasattr(dataset, "to_dict") else dict(dataset)
+    documents = [dict(item) for item in list(dataset_payload.get("documents") or []) if isinstance(item, dict)]
+    attachments = _extract_document_attachments(documents)
+    filings = _extract_preferred_filing_records(documents)
+    acquisition_queue = _build_filing_acquisition_queue(filings)
+    knowledge_graph = dict(dataset_payload.get("knowledge_graph") or {})
+    deontic_graph = dict(dataset_payload.get("deontic_graph") or {})
+    deontic_triggers = dict(dataset_payload.get("deontic_triggers") or {})
+    proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
+    bm25_documents = [dict(item) for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or []) if isinstance(item, dict)]
+    vector_items = [dict(item) for item in list((dataset_payload.get("vector_index") or {}).get("items") or []) if isinstance(item, dict)]
+
+    section_map: List[tuple[str, List[Dict[str, Any]]]] = [
+        (
+            "dataset_core",
+            [
+                {
+                    "dataset_id": str(dataset_payload.get("dataset_id") or ""),
+                    "docket_id": str(dataset_payload.get("docket_id") or ""),
+                    "case_name": str(dataset_payload.get("case_name") or ""),
+                    "court": str(dataset_payload.get("court") or ""),
+                    "metadata": dict(dataset_payload.get("metadata") or {}),
+                }
+            ],
+        ),
+        ("documents", documents),
+        ("attachments", attachments),
+        ("filings", filings),
+        ("acquisition_queue", acquisition_queue),
+        ("plaintiff_docket", [dict(item) for item in list(dataset_payload.get("plaintiff_docket") or []) if isinstance(item, dict)]),
+        ("defendant_docket", [dict(item) for item in list(dataset_payload.get("defendant_docket") or []) if isinstance(item, dict)]),
+        ("authorities", [dict(item) for item in list(dataset_payload.get("authorities") or []) if isinstance(item, dict)]),
+        ("knowledge_graph_entities", [dict(item) for item in list(knowledge_graph.get("entities") or []) if isinstance(item, dict)]),
+        ("knowledge_graph_relationships", [dict(item) for item in list(knowledge_graph.get("relationships") or []) if isinstance(item, dict)]),
+        ("deontic_nodes", _flatten_mapping_rows(dict(deontic_graph.get("nodes") or {}), row_id_field="node_id")),
+        ("deontic_rules", _flatten_mapping_rows(dict(deontic_graph.get("rules") or {}), row_id_field="rule_id")),
+        ("deontic_trigger_entries", [dict(item) for item in list(deontic_triggers.get("entries") or []) if isinstance(item, dict)]),
+        ("proof_agenda", [dict(item) for item in list(proof_assistant.get("agenda") or []) if isinstance(item, dict)]),
+        ("proof_evidence_packets", [dict(item) for item in list(proof_assistant.get("evidence_packets") or []) if isinstance(item, dict)]),
+        ("proof_revalidation_runs", [dict(item) for item in list(proof_assistant.get("revalidation_runs") or []) if isinstance(item, dict)]),
+        ("bm25_documents", bm25_documents),
+        ("vector_items", vector_items),
+    ]
+
+    bundle_rows: List[Dict[str, Any]] = []
+    dataset_id = str(dataset_payload.get("dataset_id") or "")
+    docket_id = str(dataset_payload.get("docket_id") or "")
+    case_name = str(dataset_payload.get("case_name") or "")
+    court = str(dataset_payload.get("court") or "")
+    for section, rows in section_map:
+        for index, row in enumerate(rows, start=1):
+            payload = dict(row) if isinstance(row, Mapping) else {"value": row}
+            bundle_rows.append(
+                {
+                    "dataset_id": dataset_id,
+                    "docket_id": docket_id,
+                    "case_name": case_name,
+                    "court": court,
+                    "section": section,
+                    "row_index": index,
+                    "row_id": str(
+                        payload.get("document_id")
+                        or payload.get("id")
+                        or payload.get("filing_id")
+                        or payload.get("attachment_id")
+                        or payload.get("queue_id")
+                        or payload.get("entity_id")
+                        or payload.get("relationship_id")
+                        or payload.get("node_id")
+                        or payload.get("rule_id")
+                        or f"{section}_{index}"
+                    ),
+                    "title": str(payload.get("title") or payload.get("label") or payload.get("case_name") or ""),
+                    "document_number": str(payload.get("document_number") or ""),
+                    "source_url": str(payload.get("source_url") or payload.get("path_or_url") or ""),
+                    "text": str(payload.get("text") or ""),
+                    "payload_json": json.dumps(_jsonable(payload), sort_keys=True),
+                }
+            )
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_meta = _write_rows_to_parquet(bundle_rows, output_path)
+    return {
+        "parquet_path": str(output_path),
+        "row_count": int(write_meta["row_count"]),
+        "schema": list(write_meta["schema"]),
+        "sha256": _digest_file(output_path),
+        "section_counts": {
+            section: len(rows)
+            for section, rows in section_map
+        },
+    }
 
 
 def load_packaged_docket_dataset(manifest_path: str | Path) -> Dict[str, Any]:
@@ -6738,6 +7028,7 @@ __all__ = [
     "plan_packaged_docket_query",
     "persist_packaged_docket_proof_revalidation_queue",
     "prepare_packaged_docket_follow_up_job",
+    "export_docket_dataset_single_parquet",
     "package_docket_dataset",
     "render_packaged_docket_proof_revalidation_report",
     "render_packaged_docket_inspection_report",

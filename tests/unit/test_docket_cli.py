@@ -600,6 +600,7 @@ def test_docket_cli_json_summary_surfaces_latest_routing_reason_for_packaged_enr
     payload = json.loads(output.getvalue())
     assert payload["summary"]["has_latest_proof_packet_routing_explanation"] is True
     assert "42 U.S.C. § 1983" in payload["summary"]["latest_proof_packet_routing_reason"]
+    assert payload["summary"]["eu_citation_count"] == 0
 
 
 def test_docket_cli_can_inspect_packaged_bundle_routing_provenance(tmp_path: Path) -> None:
@@ -1134,6 +1135,94 @@ def test_docket_cli_can_emit_citation_source_audit_for_source_docket_without_out
     assert "document_count" not in payload["citation_source_audit"]
 
 
+def test_docket_cli_includes_eu_citation_audit_when_enabled(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "citation_audit_eu.json"
+    docket_path.write_text(
+        json.dumps(
+            {
+                "docket_id": "cl-citation-audit-eu",
+                "case_name": "CLI Citation Audit EU",
+                "documents": [
+                    {
+                        "id": "doc_1",
+                        "title": "EU Filing",
+                        "text": "See CELEX 32016R0679 and ECLI:DE:BGH:2020:XYZ.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "json",
+                "--input-path",
+                str(docket_path),
+                "--citation-source-audit",
+                "--citation-audit-fields",
+                "citation_count,eu_citation_audit",
+                "--eu-citation-language",
+                "en",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert "output_path" not in payload
+    assert "eu_citation_audit" in payload["citation_source_audit"]
+    eu_audit = payload["citation_source_audit"]["eu_citation_audit"]
+    assert eu_audit["citation_count"] >= 2
+    assert eu_audit["unique_citation_count"] >= 2
+
+
+def test_docket_cli_can_skip_eu_citation_audit(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "citation_audit_eu_skip.json"
+    docket_path.write_text(
+        json.dumps(
+            {
+                "docket_id": "cl-citation-audit-eu-skip",
+                "case_name": "CLI Citation Audit EU Skip",
+                "documents": [
+                    {
+                        "id": "doc_1",
+                        "title": "EU Filing",
+                        "text": "See CELEX 32016R0679.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "json",
+                "--input-path",
+                str(docket_path),
+                "--citation-source-audit",
+                "--citation-audit-fields",
+                "citation_count,eu_citation_audit",
+                "--no-eu-citation-audit",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert "output_path" not in payload
+    assert "eu_citation_audit" not in payload["citation_source_audit"]
+
+
 def test_docket_cli_can_emit_packaged_citation_source_audit_without_output(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
@@ -1497,6 +1586,347 @@ def test_docket_cli_packaged_action_alias_can_emit_summary_without_output(tmp_pa
     assert payload["packaged_summary_view"]["document_count"] == 1
 
 
+def test_docket_cli_packaged_action_alias_can_submit_recap_fetch_without_output(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1007-action-recap-fetch",
+            "case_name": "CLI Packaged Action RECAP Fetch",
+            "court": "akb",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Voluntary petition chapter 7 (attorney filer)",
+                    "text": "",
+                    "document_number": "1",
+                    "document_type": "courtlistener_rendered_docket_row",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_rendered_docket"},
+                        "rendered_docket_row": {
+                            "document_number": "1",
+                            "title": "Voluntary petition chapter 7 (attorney filer)",
+                            "pacer_available": True,
+                        },
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "document_number": "1",
+                                "title": "Voluntary petition chapter 7 (attorney filer)",
+                            }
+                        ],
+                    },
+                },
+                {
+                    "id": "73179548_summary",
+                    "title": "CourtListener docket summary",
+                    "text": "Case name: Miranda Kay Crowder",
+                    "document_number": "3-26-bk-90001",
+                    "document_type": "courtlistener_docket_summary",
+                    "metadata": {
+                        "raw": {
+                            "id": 73179548,
+                            "court": "akb",
+                            "court_name": "Bankr. D. Alaska",
+                            "docket_number": "3-26-bk-90001",
+                        },
+                        "text_extraction": {"source": "courtlistener_summary_metadata"},
+                    },
+                },
+            ],
+            "metadata": {
+                "source": "courtlistener",
+                "courtlistener_docket_url": "https://www.courtlistener.com/docket/73179548/",
+            },
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "packaged_action_recap_fetch_bundle",
+        package_name="packaged_action_recap_fetch_bundle",
+        include_car=False,
+    )
+
+    captured: dict[str, object] = {}
+
+    def _fake_submit(manifest_path, **kwargs):  # noqa: ANN001
+        captured["manifest_path"] = manifest_path
+        captured["kwargs"] = kwargs
+        return {
+            "status": "submitted",
+            "submission_count": 1,
+            "context": {"docket_number": "3-26-bk-90001"},
+        }
+
+    module.submit_packaged_docket_recap_fetch_requests = _fake_submit
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--packaged-action",
+                "recap-fetch",
+                "--pacer-username",
+                "pacer-user",
+                "--pacer-password",
+                "pacer-pass",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["recap_fetch_submission"]["submission_count"] == 1
+    assert Path(str(captured["manifest_path"])) == Path(str(package["manifest_json_path"]))
+    assert captured["kwargs"] == {
+        "api_token": None,
+        "pacer_username": "pacer-user",
+        "pacer_password": "pacer-pass",
+        "client_code": None,
+    }
+
+
+def test_docket_cli_can_poll_recap_fetch_status_without_output(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "recap_fetch_status.json"
+    docket_path.write_text(
+        json.dumps({"docket_id": "cl-recap-fetch-status", "documents": []}),
+        encoding="utf-8",
+    )
+
+    captured: dict[str, object] = {}
+
+    def _fake_status(request_id, **kwargs):  # noqa: ANN001
+        captured["request_id"] = request_id
+        captured["kwargs"] = kwargs
+        return {
+            "id": 321,
+            "status": 2,
+            "message": "Processed successfully.",
+        }
+
+    module.get_courtlistener_recap_fetch_request = _fake_status
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(docket_path),
+                "--recap-fetch-request-id",
+                "321",
+                "--fields",
+                "id,status",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert "output_path" not in payload
+    assert payload["recap_fetch_request"] == {"id": 321, "status": 2}
+    assert captured["request_id"] == "321"
+    assert captured["kwargs"] == {"api_token": None}
+
+
+def test_docket_cli_classifies_pacer_login_failures_for_recap_fetch(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1007-action-recap-fetch-failure",
+            "case_name": "CLI Packaged Action RECAP Fetch Failure",
+            "court": "akb",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Voluntary petition chapter 7 (attorney filer)",
+                    "text": "",
+                    "document_number": "1",
+                    "document_type": "courtlistener_rendered_docket_row",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_rendered_docket"},
+                        "rendered_docket_row": {
+                            "document_number": "1",
+                            "title": "Voluntary petition chapter 7 (attorney filer)",
+                            "pacer_available": True,
+                        },
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "document_number": "1",
+                                "title": "Voluntary petition chapter 7 (attorney filer)",
+                            }
+                        ],
+                    },
+                },
+                {
+                    "id": "73179548_summary",
+                    "title": "CourtListener docket summary",
+                    "text": "Case name: Miranda Kay Crowder",
+                    "document_number": "3-26-bk-90001",
+                    "document_type": "courtlistener_docket_summary",
+                    "metadata": {
+                        "raw": {
+                            "id": 73179548,
+                            "court": "akb",
+                            "court_name": "Bankr. D. Alaska",
+                            "docket_number": "3-26-bk-90001",
+                        },
+                        "text_extraction": {"source": "courtlistener_summary_metadata"},
+                    },
+                },
+            ],
+            "metadata": {
+                "source": "courtlistener",
+                "courtlistener_docket_url": "https://www.courtlistener.com/docket/73179548/",
+            },
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "packaged_action_recap_fetch_failure_bundle",
+        package_name="packaged_action_recap_fetch_failure_bundle",
+        include_car=False,
+    )
+
+    def _fake_submit(*args, **kwargs):  # noqa: ANN001
+        raise module.CourtListenerIngestionError(
+            'CourtListener POST failed (400) for https://www.courtlistener.com/api/rest/v4/recap-fetch/: '
+            '{"non_field_errors":["PacerLoginException: Did not get NextGenCSO cookie when attempting PACER login."]}'
+        )
+
+    module.submit_packaged_docket_recap_fetch_requests = _fake_submit
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--packaged-action",
+                "recap-fetch",
+                "--json",
+            ]
+        )
+
+    assert result == 1
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "error"
+    assert payload["error_type"] == "pacer_login_failed"
+    assert payload["details"]["provider"] == "CourtListener RECAP Fetch"
+    assert "verify_pacer_credentials_directly_in_pacer" in payload["details"]["recommended_next_steps"]
+
+
+def test_docket_cli_can_emit_recap_fetch_preflight_without_output(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "cl-1007-action-recap-preflight",
+            "case_name": "CLI Packaged Action RECAP Preflight",
+            "court": "akb",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Voluntary petition chapter 7 (attorney filer)",
+                    "text": "",
+                    "document_number": "1",
+                    "document_type": "courtlistener_rendered_docket_row",
+                    "metadata": {
+                        "text_extraction": {"source": "courtlistener_rendered_docket"},
+                        "rendered_docket_row": {
+                            "document_number": "1",
+                            "title": "Voluntary petition chapter 7 (attorney filer)",
+                            "pacer_available": True,
+                        },
+                        "acquisition_candidates": [
+                            {
+                                "source": "courtlistener_rendered_docket_page",
+                                "docket_url": "https://www.courtlistener.com/docket/73179548/",
+                                "pacer_available": True,
+                                "document_number": "1",
+                                "title": "Voluntary petition chapter 7 (attorney filer)",
+                            }
+                        ],
+                    },
+                },
+                {
+                    "id": "73179548_summary",
+                    "title": "CourtListener docket summary",
+                    "text": "Case name: Miranda Kay Crowder",
+                    "document_number": "3-26-bk-90001",
+                    "document_type": "courtlistener_docket_summary",
+                    "metadata": {
+                        "raw": {
+                            "id": 73179548,
+                            "court": "https://www.courtlistener.com/api/rest/v4/courts/akb/",
+                            "court_name": "Bankr. D. Alaska",
+                            "docket_number": "3-26-bk-90001",
+                        },
+                        "text_extraction": {"source": "courtlistener_summary_metadata"},
+                    },
+                },
+            ],
+            "metadata": {
+                "source": "courtlistener",
+                "courtlistener_docket_url": "https://www.courtlistener.com/docket/73179548/",
+            },
+        }
+    )
+    package = dataset.write_package(
+        tmp_path / "packaged_action_recap_preflight_bundle",
+        package_name="packaged_action_recap_preflight_bundle",
+        include_car=False,
+    )
+
+    def _fake_preflight(manifest_path, **kwargs):  # noqa: ANN001
+        return {
+            "status": "ready",
+            "ready": True,
+            "queue_row_count": 1,
+            "pacer_gate_row_count": 1,
+            "checks": {
+                "has_courtlistener_api_token": True,
+                "has_pacer_username": True,
+                "has_pacer_password": True,
+            },
+        }
+
+    module.build_packaged_docket_recap_fetch_preflight = _fake_preflight
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(package["manifest_json_path"]),
+                "--packaged-action",
+                "recap-preflight",
+                "--fields",
+                "status,ready,pacer_gate_row_count",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["recap_fetch_preflight"] == {
+        "status": "ready",
+        "ready": True,
+        "pacer_gate_row_count": 1,
+    }
+
+
 def test_docket_cli_rejects_conflicting_packaged_action_and_mode_flag(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
     dataset = DocketDatasetBuilder().build_from_docket(
@@ -1682,6 +2112,9 @@ def test_docket_cli_packaged_read_only_path_skips_minimal_document_view(tmp_path
     assert result == 0
     payload = json.loads(output.getvalue())
     assert payload["inspection"]["latest_routing_reason"] == "Summary-view packaged read routing reason."
+    assert payload["inspection"]["eu_citation_count"] == 0
+    assert payload["inspection"]["eu_unique_citation_count"] == 0
+    assert payload["inspection"]["eu_documents_with_citations"] == 0
     assert payload["summary"]["document_count"] == 1
 
 
@@ -1728,6 +2161,7 @@ def test_docket_cli_can_emit_packaged_summary_only_json_without_output(tmp_path:
     assert "output_path" not in payload
     assert payload["packaged_summary_view"]["document_count"] == 1
     assert payload["packaged_summary_view"]["case_name"] == "CLI Summary Only JSON"
+    assert payload["packaged_summary_view"]["eu_citation_count"] == 0
 
 
 def test_docket_cli_prints_packaged_summary_only_text(tmp_path: Path) -> None:
@@ -1765,6 +2199,7 @@ def test_docket_cli_prints_packaged_summary_only_text(tmp_path: Path) -> None:
     assert "Packaged Summary" in text
     assert "document_count: 1" in text
     assert "case_name: CLI Summary Only Text" in text
+    assert "eu_citation_count: 0" in text
 
 
 def test_docket_cli_can_filter_packaged_summary_fields_in_json(tmp_path: Path) -> None:

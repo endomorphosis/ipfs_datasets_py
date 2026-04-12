@@ -7,6 +7,7 @@ import types
 import pyarrow as pa
 import pyarrow.parquet as pq
 import ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory as inventory_module
+from tests.integration.test_bluebook_citation_linker_real_corpora import _build_federal_register_cases
 
 from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
@@ -956,6 +957,80 @@ def test_bluebook_citation_resolver_uses_datasets_server_parquet_fallback_on_hf_
         "https://huggingface.co/datasets/justicedao/ipfs_state_laws/resolve/refs%2Fconvert%2Fparquet/state_laws_canonical/train/0000.parquet",
         "https://huggingface.co/datasets/justicedao/ipfs_state_laws/resolve/refs%2Fconvert%2Fparquet/state_laws_embeddings/train/0000.parquet",
     ]
+
+
+def test_build_federal_register_cases_ignores_non_bluebook_identifier(tmp_path):
+    federal_register_path = tmp_path / "federal_register_sampling.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "identifier": "X94-90401",
+                    "volume": "59",
+                    "page": "1001",
+                    "name": "Sample Rule",
+                }
+            ]
+        ),
+        federal_register_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"federal_register": [str(federal_register_path)]},
+    )
+
+    cases = _build_federal_register_cases(None, resolver, sample_size=1)
+
+    assert cases == [
+        {
+            "citation_text": "59 FR 1001",
+            "citation_type": "federal_register",
+            "corpus_key": "federal_register",
+            "state_code": None,
+            "source_ref": str(federal_register_path),
+        }
+    ]
+
+
+def test_bluebook_citation_resolver_caches_hf_sources_per_corpus(monkeypatch):
+    list_calls = []
+
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        list_calls.append(repo_id)
+        return ["federal_register.parquet"]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    first = resolver._find_hf_sources(_CORPUS_CONFIGS["federal_register"], state_code=None)
+    second = resolver._find_hf_sources(_CORPUS_CONFIGS["federal_register"], state_code=None)
+
+    assert first == ["hf://justicedao/ipfs_federal_register/federal_register.parquet"]
+    assert second == first
+    assert list_calls == ["justicedao/ipfs_federal_register"]
+
+
+def test_bluebook_citation_resolver_filters_cid_index_sidecars_from_overrides(tmp_path):
+    primary_path = tmp_path / "uscode.parquet"
+    cid_index_path = tmp_path / "cid_index.parquet"
+    for path in (primary_path, cid_index_path):
+        pq.write_table(pa.Table.from_pylist([{"title": "42", "section": "1983"}]), path)
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"us_code": [str(cid_index_path), str(primary_path)]},
+    )
+
+    sources = list(resolver._iter_corpus_sources("us_code", state_code=None))
+
+    assert sources == [str(primary_path)]
 
 
 def test_bluebook_citation_resolver_uses_caselaw_hf_alias_when_primary_repo_has_no_parquet(monkeypatch):

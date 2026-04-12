@@ -77,6 +77,201 @@ def _normalize_authority_text(value: Any) -> str:
     return " ".join(str(value or "").strip().split())
 
 
+_LOW_VALUE_TEXT_SOURCES = {
+    "courtlistener_summary_metadata",
+    "synthesized_docket_summary",
+    "courtlistener_entry_metadata",
+    "synthesized_docket_entry",
+}
+
+_METADATA_ONLY_TEXT_SOURCES = {
+    "courtlistener_metadata_only",
+}
+
+_RETRIEVAL_EVIDENCE_RANK = {
+    "metadata": 0,
+    "rendered": 1,
+    "plain_text": 2,
+    "extracted_pdf": 3,
+}
+
+
+def _document_text_source(document: "DocketDocument") -> str:
+    return str((document.metadata.get("text_extraction") or {}).get("source") or "").strip()
+
+
+def _normalize_document_title(value: Any) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def _is_generic_index_title(value: Any) -> bool:
+    title = _normalize_document_title(value)
+    if not title or title == "none":
+        return True
+    if title.isdigit():
+        return True
+    generic_titles = {
+        "main document",
+        "attachment",
+        "attachments",
+        "document",
+        "exhibit",
+        "exhibits",
+    }
+    if title in generic_titles:
+        return True
+    return False
+
+
+def _document_rendered_row(document: "DocketDocument") -> Dict[str, Any]:
+    return dict(document.metadata.get("rendered_docket_row") or {})
+
+
+def _rendered_row_preferred_title(rendered_row: Mapping[str, Any]) -> str:
+    title = str(rendered_row.get("title") or "").strip()
+    kind = str(rendered_row.get("kind") or "").strip()
+    if title and not _is_generic_index_title(title) and any(ch.isalpha() for ch in title):
+        return title
+    if kind and not _is_generic_index_title(kind) and any(ch.isalpha() for ch in kind):
+        return kind
+    return title or kind
+
+
+def _document_acquisition_candidates(document: "DocketDocument") -> List[Dict[str, Any]]:
+    return [dict(item) for item in list(document.metadata.get("acquisition_candidates") or []) if isinstance(item, dict)]
+
+
+def _document_has_substantive_text(document: "DocketDocument") -> bool:
+    text = str(document.text or "").strip()
+    if not text:
+        return False
+    source = _document_text_source(document)
+    return source not in _LOW_VALUE_TEXT_SOURCES and source not in _METADATA_ONLY_TEXT_SOURCES
+
+
+def _document_retrieval_evidence_quality(document: "DocketDocument") -> str:
+    source = _document_text_source(document)
+    if source == "courtlistener_public_filing_pdf":
+        return "extracted_pdf"
+    if source == "courtlistener_public_recap_document":
+        method = str((document.metadata.get("text_extraction") or {}).get("method") or "").strip().lower()
+        if method in {"pdf_ocr", "pdf_text", "courtlistener_plain_text"}:
+            return "plain_text"
+        return "extracted_pdf"
+    if source in {"courtlistener_plain_text", "pdf_text", "pdf_ocr"}:
+        return "plain_text"
+    if source in {"courtlistener_rendered_docket", "courtlistener_rendered_docket_page"}:
+        return "rendered"
+    if _document_rendered_row(document):
+        return "rendered"
+    return "metadata"
+
+
+def _document_index_title(document: "DocketDocument") -> str:
+    rendered_row = _document_rendered_row(document)
+    rendered_title = _rendered_row_preferred_title(rendered_row)
+    title = str(document.title or "").strip()
+    if title.lower().startswith("docket entry ") and rendered_title:
+        return rendered_title
+    return rendered_title or title
+
+
+def _document_has_meaningful_index_title(document: "DocketDocument") -> bool:
+    title = _document_index_title(document)
+    if _is_generic_index_title(title):
+        return False
+    return any(ch.isalpha() for ch in str(title or ""))
+
+
+def _document_index_text(document: "DocketDocument") -> str:
+    if _document_has_substantive_text(document):
+        return str(document.text or "").strip()
+
+    rendered_row = _document_rendered_row(document)
+    rendered_title = _rendered_row_preferred_title(rendered_row)
+    if rendered_title and _document_has_meaningful_index_title(document):
+        text_lines = [
+            "CourtListener rendered docket filing",
+            f"Document number: {str(rendered_row.get('document_number') or document.document_number or '').strip()}",
+            f"Date filed: {str(rendered_row.get('date_filed') or document.date_filed or '').strip()}",
+            f"Kind: {str(rendered_row.get('kind') or '').strip()}",
+            f"Description: {rendered_title}",
+            "PACER purchase link available" if bool(rendered_row.get("pacer_available")) else "",
+        ]
+        return "\n".join(line for line in text_lines if line)
+
+    title = _document_index_title(document)
+    source = _document_text_source(document)
+    if (
+        source in _METADATA_ONLY_TEXT_SOURCES
+        and _document_has_meaningful_index_title(document)
+        and _document_acquisition_candidates(document)
+    ):
+        text_lines = [
+            "CourtListener filing metadata",
+            f"Document number: {str(document.document_number or '').strip()}",
+            f"Date filed: {str(document.date_filed or '').strip()}",
+            f"Description: {title}",
+        ]
+        if _document_acquisition_candidates(document):
+            text_lines.append("Acquisition candidate available")
+        return "\n".join(line for line in text_lines if line)
+
+    if source not in _LOW_VALUE_TEXT_SOURCES and str(document.text or "").strip():
+        return str(document.text or "").strip()
+    return ""
+
+
+def _document_index_priority(document: "DocketDocument") -> int:
+    if _document_has_substantive_text(document):
+        return 400
+    if (
+        _document_rendered_row(document)
+        and _document_text_source(document) in _METADATA_ONLY_TEXT_SOURCES
+        and _document_has_meaningful_index_title(document)
+    ):
+        return 320
+    if _document_rendered_row(document) and _document_has_meaningful_index_title(document):
+        return 300
+    source = _document_text_source(document)
+    if (
+        source in _METADATA_ONLY_TEXT_SOURCES
+        and _document_has_meaningful_index_title(document)
+        and _document_acquisition_candidates(document)
+    ):
+        return 220
+    if source not in _LOW_VALUE_TEXT_SOURCES and str(document.text or "").strip():
+        return 200
+    if source in {"courtlistener_summary_metadata", "synthesized_docket_summary"}:
+        return 0
+    if source in {"courtlistener_entry_metadata", "synthesized_docket_entry"}:
+        title = str(document.title or "").strip().lower()
+        raw = dict(document.metadata.get("raw") or {})
+        raw_description = str(raw.get("description") or "").strip()
+        if (
+            title.startswith("docket entry ")
+            and not raw_description
+            and not _document_acquisition_candidates(document)
+        ):
+            return 0
+        if not _document_has_meaningful_index_title(document) and not _document_acquisition_candidates(document):
+            return 0
+        return 80
+    return 0
+
+
+def _document_index_dedupe_key(document: "DocketDocument") -> str:
+    document_number = str(document.document_number or "").strip()
+    title = _normalize_document_title(_document_index_title(document))
+    if document_number and title:
+        return f"{document_number}::{title}"
+    if document_number:
+        return f"{document_number}::{_safe_identifier(_document_text_source(document) or 'document')}"
+    if title:
+        return title
+    return str(document.document_id or "")
+
+
 def _citation_recovery_candidate_from_link(document: "DocketDocument", link: Any) -> Optional[Dict[str, Any]]:
     matched = bool(getattr(link, "matched", False)) if not isinstance(link, dict) else bool(link.get("matched"))
     metadata = dict(getattr(link, "metadata", {}) or {}) if not isinstance(link, dict) else dict(link.get("metadata") or {})
@@ -1024,6 +1219,10 @@ class DocketDatasetObject:
         }
 
     def summary(self) -> Dict[str, Any]:
+        metadata = dict(self.metadata or {})
+        eu_audit = dict(metadata.get("eu_citation_audit") or {})
+        if not eu_audit:
+            eu_audit = dict((metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
         return {
             "dataset_id": self.dataset_id,
             "docket_id": self.docket_id,
@@ -1037,6 +1236,9 @@ class DocketDatasetObject:
             "proof_assistant_work_item_count": len(list((self.proof_assistant or {}).get("agenda") or [])),
             "bm25_document_count": int((self.bm25_index or {}).get("document_count") or 0),
             "vector_document_count": int((self.vector_index or {}).get("document_count") or 0),
+            "eu_citation_count": int(eu_audit.get("citation_count") or 0),
+            "eu_unique_citation_count": int(eu_audit.get("unique_citation_count") or 0),
+            "eu_documents_with_citations": int(eu_audit.get("documents_with_citations") or 0),
             "metadata": dict(self.metadata),
         }
 
@@ -1344,8 +1546,9 @@ class DocketDatasetBuilder:
             resolver=self.citation_resolver,
             state_code=str(docket.get("state_code") or docket.get("jurisdiction") or "").strip().upper() or None,
         )
+        index_documents = self._select_index_documents(normalized_documents)
 
-        knowledge_graph = self._build_knowledge_graph(dataset_id, docket_id, case_name, court, normalized_documents) if include_knowledge_graph else {}
+        knowledge_graph = self._build_knowledge_graph(dataset_id, docket_id, case_name, court, index_documents) if include_knowledge_graph else {}
         deontic_graph_object, deontic_triggers = build_docket_deontic_artifacts(
             dataset_id=dataset_id,
             docket_id=docket_id,
@@ -1354,8 +1557,8 @@ class DocketDatasetBuilder:
             authorities=authorities,
             explicit_statements=list(docket.get("deontic_statements") or []),
         )
-        bm25_index = self._build_bm25_index(dataset_id, normalized_documents) if include_bm25 else {}
-        vector_index = self._build_vector_index(dataset_id, normalized_documents) if include_vector_index else {}
+        bm25_index = self._build_bm25_index(dataset_id, index_documents) if include_bm25 else {}
+        vector_index = self._build_vector_index(dataset_id, index_documents) if include_vector_index else {}
         proof_assistant = build_docket_proof_assistant(
             dataset_id=dataset_id,
             docket_id=docket_id,
@@ -1417,6 +1620,10 @@ class DocketDatasetBuilder:
                 "is_mock": False,
                 **linked_authority_summary,
             },
+            "retrieval_index": {
+                "selected_document_count": len(index_documents),
+                "excluded_document_count": max(0, len(normalized_documents) - len(index_documents)),
+            },
         }
         artifact_status = {
             "knowledge_graph": bool(knowledge_graph),
@@ -1428,6 +1635,7 @@ class DocketDatasetBuilder:
             "formal_logic": bool((formal_enrichment.get("summary") or {}).get("processed_document_count")),
             "router_enrichment": bool((router_enrichment.get("summary") or {}).get("processed_document_count")),
             "linked_authorities": bool(linked_authority_summary.get("linked_authority_count")),
+            "retrieval_index": bool(index_documents),
         }
 
         return DocketDatasetObject(
@@ -1478,6 +1686,53 @@ class DocketDatasetBuilder:
             include_formal_logic=include_formal_logic,
             include_router_enrichment=include_router_enrichment,
         )
+
+    def preview_retrieval_index(
+        self,
+        docket: Dict[str, Any],
+        *,
+        min_evidence_quality: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        normalized_documents = self._normalize_documents(docket)
+        index_documents = self._select_index_documents(normalized_documents)
+        evidence_counts: Dict[str, int] = {}
+        for document in index_documents:
+            evidence_quality = str((document.metadata.get("retrieval_index") or {}).get("evidence_quality") or "metadata")
+            evidence_counts[evidence_quality] = evidence_counts.get(evidence_quality, 0) + 1
+        if min_evidence_quality is not None:
+            threshold = _RETRIEVAL_EVIDENCE_RANK.get(str(min_evidence_quality).strip().lower())
+            if threshold is None:
+                raise ValueError("min_evidence_quality must be one of: metadata, rendered, plain_text, extracted_pdf")
+            index_documents = [
+                document
+                for document in index_documents
+                if _RETRIEVAL_EVIDENCE_RANK.get(
+                    str((document.metadata.get("retrieval_index") or {}).get("evidence_quality") or "metadata"),
+                    0,
+                ) >= threshold
+            ]
+        return {
+            "docket_id": str(docket.get("docket_id") or docket.get("id") or "docket"),
+            "document_count": len(normalized_documents),
+            "selected_document_count": len(index_documents),
+            "excluded_document_count": max(0, len(normalized_documents) - len(index_documents)),
+            "evidence_quality_counts": evidence_counts,
+            "min_evidence_quality": min_evidence_quality,
+            "documents": [document.to_dict() for document in index_documents],
+        }
+
+    def preview_retrieval_index_from_json_file(
+        self,
+        path: str | Path,
+        *,
+        min_evidence_quality: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("Docket JSON payload must be an object")
+        payload.setdefault("source_type", "json_file")
+        payload.setdefault("source_path", str(Path(path)))
+        return self.preview_retrieval_index(payload, min_evidence_quality=min_evidence_quality)
 
     def build_from_directory(
         self,
@@ -1620,6 +1875,56 @@ class DocketDatasetBuilder:
             payload.setdefault("text", str(payload.get("text") or payload.get("description") or payload.get("title") or ""))
             normalized.append(payload)
         return normalized
+
+    def _select_index_documents(self, documents: Sequence[DocketDocument]) -> List[DocketDocument]:
+        best_by_key: Dict[str, tuple[int, int, DocketDocument]] = {}
+
+        for document in documents:
+            index_title = _document_index_title(document)
+            index_text = _document_index_text(document)
+            priority = _document_index_priority(document)
+            if priority <= 0:
+                continue
+            source = _document_text_source(document)
+            if source in _LOW_VALUE_TEXT_SOURCES.union(_METADATA_ONLY_TEXT_SOURCES) and not str(index_text or "").strip():
+                continue
+            if not (str(index_text or "").strip() or str(index_title or "").strip()):
+                continue
+
+            metadata = dict(document.metadata or {})
+            metadata["retrieval_index"] = {
+                "selected": True,
+                "priority": priority,
+                "title": index_title,
+                "source_kind": _document_text_source(document) or "synthetic",
+                "evidence_quality": _document_retrieval_evidence_quality(document),
+                "dedupe_key": _document_index_dedupe_key(document),
+            }
+            candidate = DocketDocument(
+                document_id=document.document_id,
+                docket_id=document.docket_id,
+                title=index_title or document.title,
+                text=index_text,
+                date_filed=document.date_filed,
+                document_number=document.document_number,
+                source_url=document.source_url,
+                metadata=metadata,
+            )
+            dedupe_key = _document_index_dedupe_key(document)
+            ranking = (priority, len(index_text or ""))
+            existing = best_by_key.get(dedupe_key)
+            if existing is None or ranking > existing[:2]:
+                best_by_key[dedupe_key] = (priority, len(index_text or ""), candidate)
+
+        selected = [item[2] for item in best_by_key.values()]
+        selected.sort(
+            key=lambda document: (
+                str(document.date_filed or ""),
+                str(document.document_number or ""),
+                str(document.document_id or ""),
+            )
+        )
+        return selected
 
     def _load_json_document_candidate(self, path: Path) -> Optional[Dict[str, Any]]:
         try:
@@ -2375,6 +2680,10 @@ def summarize_docket_dataset(dataset: DocketDatasetObject | Dict[str, Any]) -> D
 
     dataset_dict = dataset.to_dict() if isinstance(dataset, DocketDatasetObject) else dict(dataset)
     dataset_object = dataset if isinstance(dataset, DocketDatasetObject) else DocketDatasetObject.from_dict(dataset_dict)
+    metadata = dict(dataset_object.metadata or {})
+    eu_audit = dict(metadata.get("eu_citation_audit") or {})
+    if not eu_audit:
+        eu_audit = dict((metadata.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
     document_dates = [document.date_filed for document in dataset_object.documents if document.date_filed]
     document_numbers = [document.document_number for document in dataset_object.documents if document.document_number]
     latest_routing = dict(
@@ -2404,6 +2713,9 @@ def summarize_docket_dataset(dataset: DocketDatasetObject | Dict[str, Any]) -> D
         "parties_requiring_deontic_analysis": list(
             (((dataset_object.deontic_triggers or {}).get("summary") or {}).get("parties_requiring_analysis") or [])
         ),
+        "eu_citation_count": int(eu_audit.get("citation_count") or 0),
+        "eu_unique_citation_count": int(eu_audit.get("unique_citation_count") or 0),
+        "eu_documents_with_citations": int(eu_audit.get("documents_with_citations") or 0),
         "has_latest_proof_packet_routing_explanation": bool(latest_routing),
         "latest_proof_packet_routing_reason": str(latest_routing.get("routing_reason") or ""),
     }
