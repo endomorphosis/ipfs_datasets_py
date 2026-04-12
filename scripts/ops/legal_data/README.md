@@ -154,6 +154,14 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-dir /tmp/google_voice_bundle --package-name google_voice_bundle --no-car`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-dir /tmp/imap_bundle --package-name imap_bundle --no-car`
 	Search actions return both flat `results` and grouped bundle-aware `grouped_results`; text mode renders bundle groups inline so Google Voice parent events, enrichments, and readable attachments appear together.
+- Run `run_email_authority_enrichment.py` to enrich an `email_timeline_handoff.json`
+	with authority query plans, live legal authority search results, and a seed
+	authority recommendation catalog.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_email_authority_enrichment.py --input /tmp/email_timeline_handoff.json --json`
+	`.venv/bin/python scripts/ops/legal_data/run_email_authority_enrichment.py --input /tmp/email_timeline_handoff.json --catalog-path docs/examples/legal_data/email_authority_enrichment_catalog.example.json --output-dir /tmp/authority_enrichment --json`
+	Use `--no-state-archives` to skip supplemental archive domain lookups and
+	`--prefer-hacc-venv` to rerun under `/home/barberb/HACC/.venv` when available.
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

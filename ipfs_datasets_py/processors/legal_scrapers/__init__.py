@@ -171,6 +171,7 @@ from .citation_extraction import (
 from .bluebook_citation_linker import (
     BluebookCitationResolver,
     CitationLink,
+    audit_bluebook_exact_anchor_guarantees_for_documents,
     audit_bluebook_citation_resolution_for_documents,
     citation_link_to_dict,
     resolve_bluebook_lookup_result_document,

@@ -78,6 +78,23 @@ def _parse_args() -> argparse.Namespace:
         help="Vector dimension for local hashed projection embeddings.",
     )
     parser.add_argument(
+        "--full-logic-audit",
+        action="store_true",
+        help="Run full formal-logic, deontic, proof-assistant, and router enrichment before export.",
+    )
+    parser.add_argument(
+        "--formal-logic-max-documents",
+        type=int,
+        default=None,
+        help="Override formal logic max document count (default uses builder setting).",
+    )
+    parser.add_argument(
+        "--router-max-documents",
+        type=int,
+        default=None,
+        help="Override router enrichment max document count (default uses builder setting).",
+    )
+    parser.add_argument(
         "--citation-source-audit",
         action="store_true",
         help="Run the Bluebook citation source audit across docket documents.",
@@ -207,42 +224,69 @@ def main() -> int:
         embeddings_chunk_size=int(args.embeddings_chunk_size or 512),
         embeddings_chunk_overlap=int(args.embeddings_chunk_overlap or 0),
     )
+    if args.formal_logic_max_documents is not None:
+        builder.formal_logic_max_documents = max(0, int(args.formal_logic_max_documents))
+    if args.router_max_documents is not None:
+        builder.router_max_documents = max(0, int(args.router_max_documents))
 
     export_source = _build_strict_subset(enriched, builder) if bool(args.strict_evidence_mode) else enriched
 
-    normalized = builder._normalize_documents(export_source)
-    index_documents = builder._select_index_documents(normalized)
-    docket_id = str(export_source.get("docket_id") or "")
-    case_name = str(export_source.get("case_name") or docket_id)
-    court = str(export_source.get("court") or "")
-    dataset_id = f"docket_dataset_{docket_id.replace(':', '_').replace('-', '_')}"
-    knowledge_graph = builder._build_knowledge_graph(dataset_id, docket_id, case_name, court, index_documents)
-    bm25_index = builder._build_bm25_index(dataset_id, index_documents)
-    vector_index = builder._build_vector_index(dataset_id, index_documents)
+    if args.full_logic_audit:
+        if args.formal_logic_max_documents is None:
+            builder.formal_logic_max_documents = None
+        if args.router_max_documents is None:
+            builder.router_max_documents = None
+        dataset_obj = builder.build_from_docket(
+            export_source,
+            include_knowledge_graph=True,
+            include_bm25=True,
+            include_vector_index=True,
+            include_formal_logic=True,
+            include_router_enrichment=True,
+        )
+        dataset_payload = dataset_obj.to_dict()
+    else:
+        normalized = builder._normalize_documents(export_source)
+        index_documents = builder._select_index_documents(normalized)
+        docket_id = str(export_source.get("docket_id") or "")
+        case_name = str(export_source.get("case_name") or docket_id)
+        court = str(export_source.get("court") or "")
+        dataset_id = f"docket_dataset_{docket_id.replace(':', '_').replace('-', '_')}"
+        knowledge_graph = builder._build_knowledge_graph(dataset_id, docket_id, case_name, court, index_documents)
+        bm25_index = builder._build_bm25_index(dataset_id, index_documents)
+        vector_index = builder._build_vector_index(dataset_id, index_documents)
 
-    dataset_payload = {
-        "dataset_id": dataset_id,
-        "docket_id": docket_id,
-        "case_name": case_name,
-        "court": court,
-        "documents": [document.to_dict() for document in normalized],
-        "plaintiff_docket": list(export_source.get("plaintiff_docket") or []),
-        "defendant_docket": list(export_source.get("defendant_docket") or []),
-        "authorities": list(export_source.get("authorities") or []),
-        "knowledge_graph": knowledge_graph,
-        "deontic_graph": {},
-        "deontic_triggers": {},
-        "proof_assistant": {},
-        "bm25_index": bm25_index,
-        "vector_index": vector_index,
-        "metadata": dict(export_source.get("metadata") or {}),
-    }
+        dataset_payload = {
+            "dataset_id": dataset_id,
+            "docket_id": docket_id,
+            "case_name": case_name,
+            "court": court,
+            "documents": [document.to_dict() for document in normalized],
+            "plaintiff_docket": list(export_source.get("plaintiff_docket") or []),
+            "defendant_docket": list(export_source.get("defendant_docket") or []),
+            "authorities": list(export_source.get("authorities") or []),
+            "knowledge_graph": knowledge_graph,
+            "deontic_graph": {},
+            "deontic_triggers": {},
+            "proof_assistant": {},
+            "bm25_index": bm25_index,
+            "vector_index": vector_index,
+            "metadata": dict(export_source.get("metadata") or {}),
+        }
     if args.citation_source_audit:
         dataset_obj = DocketDatasetObject.from_dict(dataset_payload)
         citation_audit = audit_docket_dataset_citation_sources(dataset_obj)
         dataset_payload.setdefault("metadata", {})["citation_source_audit"] = dict(citation_audit)
 
     export_result = export_docket_dataset_single_parquet(dataset_payload, output_parquet)
+    docket_id = str(dataset_payload.get("docket_id") or "")
+    case_name = str(dataset_payload.get("case_name") or docket_id)
+    court = str(dataset_payload.get("court") or "")
+    knowledge_graph = dict(dataset_payload.get("knowledge_graph") or {})
+    bm25_index = dict(dataset_payload.get("bm25_index") or {})
+    vector_index = dict(dataset_payload.get("vector_index") or {})
+    proof_assistant = dict(dataset_payload.get("proof_assistant") or {})
+    citation_audit = dict((dataset_payload.get("metadata") or {}).get("citation_source_audit") or {})
     payload = {
         "docket_id": docket_id,
         "case_name": case_name,
@@ -254,6 +298,9 @@ def main() -> int:
         "vector_total_count": int((vector_index or {}).get("vector_count") or 0),
         "knowledge_graph_entity_count": len(list((knowledge_graph or {}).get("entities") or [])),
         "knowledge_graph_relationship_count": len(list((knowledge_graph or {}).get("relationships") or [])),
+        "proof_agenda_count": len(list((proof_assistant or {}).get("agenda") or [])),
+        "proof_evidence_packet_count": len(list((proof_assistant or {}).get("evidence_packets") or [])),
+        "proof_revalidation_count": len(list((proof_assistant or {}).get("revalidation_runs") or [])),
         "vector_backend": str((vector_index or {}).get("backend") or ""),
         "vector_provider": str((vector_index or {}).get("provider") or ""),
         "vector_model": str((vector_index or {}).get("model_name") or ""),
@@ -264,6 +311,9 @@ def main() -> int:
         "vector_batch_size": (vector_index or {}).get("batch_size"),
         "vector_parallel_batches": (vector_index or {}).get("parallel_batches"),
         "citation_audit_included": bool(args.citation_source_audit),
+        "citation_count": int(citation_audit.get("citation_count") or 0),
+        "unmatched_citation_count": int(citation_audit.get("unmatched_citation_count") or 0),
+        "documents_with_citations": int(citation_audit.get("documents_with_citations") or 0),
         "export": export_result,
     }
 
@@ -279,6 +329,13 @@ def main() -> int:
         print(f"Vector documents: {payload['vector_document_count']}")
         if payload.get("vector_total_count"):
             print(f"Vector count: {payload['vector_total_count']}")
+        if payload.get("citation_audit_included"):
+            print(
+                "Citation audit: "
+                f"citations={payload.get('citation_count')} "
+                f"unmatched={payload.get('unmatched_citation_count')} "
+                f"documents_with_citations={payload.get('documents_with_citations')}"
+            )
         if payload.get("vector_backend"):
             print(
                 "Vector backend: "

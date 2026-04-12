@@ -196,6 +196,10 @@ def _first_present(row: Dict[str, Any], fields: Iterable[str]) -> Optional[Any]:
     return None
 
 
+def _normalized_reporter(value: Any) -> str:
+    return _compact_alnum(value)
+
+
 def _sql_literal_path(value: str) -> str:
     return str(value).replace("'", "''")
 
@@ -541,11 +545,13 @@ class BluebookCitationResolver:
         self,
         *,
         allow_hf_fallback: bool = True,
+        require_exact_anchor: bool = True,
         local_root_overrides: Optional[Dict[str, str]] = None,
         parquet_file_overrides: Optional[Dict[str, Sequence[str] | str]] = None,
         extractor: Optional[CitationExtractor] = None,
     ) -> None:
         self.allow_hf_fallback = allow_hf_fallback
+        self.require_exact_anchor = bool(require_exact_anchor)
         self.local_root_overrides = dict(local_root_overrides or {})
         self.parquet_file_overrides = dict(parquet_file_overrides or {})
         self.extractor = extractor or CitationExtractor()
@@ -643,10 +649,13 @@ class BluebookCitationResolver:
                     metadata={
                         "state_code": effective_state,
                         "resolution_method": "canonical_corpus_match",
+                        "resolution_quality": "exact_anchor",
+                        "require_exact_anchor": bool(self.require_exact_anchor),
                         "source_row_present": True,
                         "source_ref_kind": "local_parquet"
                         if not str(source_ref).startswith(("http://", "https://"))
                         else "hf_parquet",
+                        "source_provenance": self._source_provenance_for_row(row),
                         **preferred_metadata,
                         "row": row,
                     },
@@ -677,6 +686,7 @@ class BluebookCitationResolver:
                 metadata={
                     "state_code": effective_state,
                     "resolution_method": "citation_url_fallback",
+                    "require_exact_anchor": bool(self.require_exact_anchor),
                     "source_row_present": False,
                     "recovery_supported": True,
                     "recovery_corpus_key": recovery_corpus_key,
@@ -697,6 +707,7 @@ class BluebookCitationResolver:
             metadata={
                 "state_code": effective_state,
                 "resolution_method": "unmatched",
+                "require_exact_anchor": bool(self.require_exact_anchor),
                 "source_row_present": False,
                 "recovery_supported": bool(recovery_corpus_key),
                 "recovery_corpus_key": recovery_corpus_key,
@@ -983,12 +994,15 @@ class BluebookCitationResolver:
                 metadata={
                     "state_code": state_code,
                     "resolution_method": f"canonical_{str(result.mode or 'query').lower()}_query",
+                    "resolution_quality": "exact_anchor",
+                    "require_exact_anchor": bool(self.require_exact_anchor),
                     "source_row_present": True,
                     "source_ref_kind": "hydrated_canonical_query",
                     "query_text": query_text,
                     "query_result": result_payload,
                     "exhaustive_query_enabled": True,
                     "exhaustive_query_attempts": attempts,
+                    "source_provenance": self._source_provenance_for_row(row),
                     **preferred_metadata,
                     "row": row,
                 },
@@ -1416,15 +1430,129 @@ class BluebookCitationResolver:
         best_row: Optional[Dict[str, Any]] = None
         best_field = ""
         best_score = 0.0
+        best_exact_rank = -1
         for row in rows:
+            exact_rank, exact_field = self._exact_anchor_rank(row, citation, state_code)
             score, field = self._row_score(row, citation, state_code, include_field=True)
-            if score > best_score:
+            if self.require_exact_anchor and exact_rank <= 0:
+                continue
+            effective_field = exact_field or field
+            effective_exact_rank = exact_rank if self.require_exact_anchor else 0
+            if (
+                effective_exact_rank > best_exact_rank
+                or (effective_exact_rank == best_exact_rank and score > best_score)
+            ):
                 best_row = row
-                best_field = field
+                best_field = effective_field
                 best_score = score
+                best_exact_rank = effective_exact_rank
         if best_row is None or best_score <= 0 or not best_field:
             return None
+        if self.require_exact_anchor and best_exact_rank <= 0:
+            return None
         return best_row, best_field, best_score
+
+    def _exact_anchor_rank(self, row: Dict[str, Any], citation: Citation, state_code: Optional[str]) -> tuple[int, str]:
+        normalized_terms = {_normalize_text(term) for term in _citation_match_terms(citation) if term}
+        compact_terms = {_compact_alnum(term) for term in _citation_match_terms(citation) if term}
+        row_state = str(_first_present(row, _STATE_FIELDS) or "").upper()
+        normalized_section = _normalize_section(citation.section)
+        row_section = _normalize_section(_first_present(row, _SECTION_FIELDS))
+
+        if citation.type == "usc":
+            row_title = str(_first_present(row, _TITLE_NUMBER_FIELDS) or "")
+            if row_title == str(citation.title or "") and row_section == normalized_section and normalized_section:
+                return 4, "title+section"
+            if row_section and row_section == normalized_section:
+                return 3, "section_number"
+            return 0, ""
+
+        if citation.type == "cfr":
+            row_title = str(_first_present(row, _TITLE_NUMBER_FIELDS) or "")
+            if row_title == str(citation.title or "") and row_section == normalized_section and normalized_section:
+                return 4, "title+section"
+            return 0, ""
+
+        if citation.type == "federal_register":
+            row_volume = str(_first_present(row, _VOLUME_FIELDS) or "")
+            row_page = str(_first_present(row, _PAGE_FIELDS) or "")
+            if row_volume == str(citation.volume or "") and row_page == str(citation.page or "") and row_volume and row_page:
+                return 4, "volume+page"
+            return 0, ""
+
+        if citation.type == "public_law":
+            row_congress = str(_first_present(row, _CONGRESS_FIELDS) or "")
+            row_law_number = str(_first_present(row, _LAW_NUMBER_FIELDS) or "")
+            if row_congress == str(citation.volume or "") and row_law_number == str(citation.page or "") and row_congress and row_law_number:
+                return 4, "congress+law_number"
+            for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS:
+                if field not in row:
+                    continue
+                value_norm = _normalize_text(row.get(field))
+                value_compact = _compact_alnum(row.get(field))
+                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                    return 3, field
+            return 0, ""
+
+        if citation.type == "case":
+            row_volume = str(_first_present(row, _VOLUME_FIELDS) or "")
+            row_page = str(_first_present(row, _PAGE_FIELDS) or "")
+            if not (row_volume and row_page and row_volume == str(citation.volume or "") and row_page == str(citation.page or "")):
+                return 0, ""
+            row_reporter = _normalized_reporter(_first_present(row, _REPORTER_FIELDS))
+            citation_reporter = _normalized_reporter(citation.reporter)
+            if citation_reporter and row_reporter and citation_reporter == row_reporter:
+                return 4, "volume+reporter+page"
+            return 3, "volume+page"
+
+        if citation.type == "state_statute":
+            expected_state = str(state_code or citation.jurisdiction or "").upper()
+            if expected_state and row_state and row_state != expected_state:
+                return 0, ""
+            if normalized_section and row_section == normalized_section:
+                return (4 if expected_state and row_state == expected_state else 3), "section_number"
+            aliases = _state_section_aliases(citation.section)
+            normalized_aliases = {_normalize_text(alias) for alias in aliases if alias}
+            compact_aliases = {_compact_alnum(alias) for alias in aliases if alias}
+            for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TEXT_FIELDS:
+                if field not in row:
+                    continue
+                normalized_value = _normalize_text(row.get(field))
+                compact_value = _compact_alnum(row.get(field))
+                if (
+                    normalized_value and any(alias and alias in normalized_value for alias in normalized_aliases)
+                ) or (
+                    compact_value and any(alias and alias in compact_value for alias in compact_aliases)
+                ):
+                    return (3 if expected_state else 2), field
+            return 0, ""
+
+        # Default fallback for unknown types: require exact normalized or compact token match.
+        for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS:
+            if field not in row:
+                continue
+            value_norm = _normalize_text(row.get(field))
+            value_compact = _compact_alnum(row.get(field))
+            if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                return 2, field
+        return 0, ""
+
+    def _source_provenance_for_row(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        primary_citation = str(_first_present(row, _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS) or "").strip()
+        source_title = str(_first_present(row, _TITLE_FIELDS) or "").strip()
+        source_url = str(_first_present(row, _URL_FIELDS) or "").strip()
+        source_cid = str(_first_present(row, _CID_FIELDS) or "").strip()
+        row_json = str(sorted((str(k), str(v)) for k, v in row.items())).encode("utf-8")
+        snippet = str(self._snippet_for_row(row) or "")
+        return {
+            "primary_citation": primary_citation,
+            "source_title": source_title,
+            "source_url": source_url,
+            "source_cid": source_cid,
+            "source_row_hash": hashlib.sha256(row_json).hexdigest(),
+            "snippet_hash": hashlib.sha256(snippet.encode("utf-8")).hexdigest() if snippet else "",
+            "guarantee_level": "exact_anchor",
+        }
 
     def _row_score(self, row: Dict[str, Any], citation: Citation, state_code: Optional[str], *, include_field: bool = False) -> Any:
         score = 0.0
@@ -1789,9 +1917,74 @@ def audit_bluebook_citation_resolution_for_documents(
     }
 
 
+def audit_bluebook_exact_anchor_guarantees_for_documents(
+    documents: Sequence[Dict[str, Any]],
+    *,
+    state_code: Optional[str] = None,
+    resolver: Optional[BluebookCitationResolver] = None,
+    exhaustive: bool = True,
+) -> Dict[str, Any]:
+    active_resolver = resolver or BluebookCitationResolver()
+    resolution_audit = audit_bluebook_citation_resolution_for_documents(
+        documents,
+        state_code=state_code,
+        resolver=active_resolver,
+        exhaustive=exhaustive,
+    )
+
+    non_exact_citations: List[Dict[str, Any]] = []
+    for document in list(resolution_audit.get("documents") or []):
+        document_id = str(document.get("document_id") or "")
+        document_title = str(document.get("document_title") or "")
+        for citation in list(document.get("citations") or []):
+            if not isinstance(citation, dict):
+                continue
+            if not bool(citation.get("matched")):
+                continue
+            metadata = dict(citation.get("metadata") or {})
+            resolution_quality = str(metadata.get("resolution_quality") or "")
+            guarantee_level = str((metadata.get("source_provenance") or {}).get("guarantee_level") or "")
+            if resolution_quality == "exact_anchor" and guarantee_level == "exact_anchor":
+                continue
+            non_exact_citations.append(
+                {
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "citation_text": str(citation.get("citation_text") or ""),
+                    "citation_type": str(citation.get("citation_type") or ""),
+                    "corpus_key": str(citation.get("corpus_key") or ""),
+                    "resolution_method": str(metadata.get("resolution_method") or ""),
+                    "resolution_quality": resolution_quality,
+                    "guarantee_level": guarantee_level,
+                    "source_url": str(citation.get("source_url") or ""),
+                    "source_cid": str(citation.get("source_cid") or ""),
+                }
+            )
+
+    matched_count = int(resolution_audit.get("matched_citation_count") or 0)
+    non_exact_count = len(non_exact_citations)
+    return {
+        "source": "bluebook_exact_anchor_guarantee_audit",
+        "require_exact_anchor": bool(getattr(active_resolver, "require_exact_anchor", True)),
+        "document_count": int(resolution_audit.get("document_count") or 0),
+        "citation_count": int(resolution_audit.get("citation_count") or 0),
+        "matched_citation_count": matched_count,
+        "exact_anchor_match_count": max(0, matched_count - non_exact_count),
+        "non_exact_match_count": non_exact_count,
+        "exact_anchor_match_ratio": (
+            (max(0, matched_count - non_exact_count) / matched_count)
+            if matched_count
+            else 1.0
+        ),
+        "non_exact_matches": non_exact_citations,
+        "resolution_audit": resolution_audit,
+    }
+
+
 __all__ = [
     "BluebookCitationResolver",
     "CitationLink",
+    "audit_bluebook_exact_anchor_guarantees_for_documents",
     "audit_bluebook_citation_resolution_for_documents",
     "citation_link_to_dict",
     "resolve_bluebook_lookup_result_document",

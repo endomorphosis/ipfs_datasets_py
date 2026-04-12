@@ -16,6 +16,7 @@ from tests.integration.test_bluebook_citation_linker_real_corpora import _build_
 from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
     CitationExtractor,
+    audit_bluebook_exact_anchor_guarantees_for_documents,
     audit_bluebook_citation_resolution_for_documents,
     resolve_bluebook_lookup_result_document,
     resolve_bluebook_citations_in_text,
@@ -554,6 +555,112 @@ def test_bluebook_citation_resolver_links_usc_and_state_law_from_local_parquet(t
     assert by_type["state_statute"].source_title == "Best interests of the child"
     assert "justicedao/ipfs_state_laws" in by_type["state_statute"].metadata["preferred_dataset_ids"]
     assert "STATE-MN.parquet" in by_type["state_statute"].metadata["preferred_parquet_files"]
+    assert by_type["state_statute"].metadata["resolution_quality"] == "exact_anchor"
+    assert by_type["state_statute"].metadata["source_provenance"]["guarantee_level"] == "exact_anchor"
+    assert by_type["state_statute"].metadata["source_provenance"]["primary_citation"] == "Minn. Stat. § 518.17"
+    assert by_type["state_statute"].metadata["source_provenance"]["source_row_hash"]
+
+
+def test_bluebook_citation_resolver_rejects_cross_state_section_collision(tmp_path):
+    state_law_path = tmp_path / "state_laws_cross_state.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "MN",
+                    "official_cite": "Minn. Stat. § 90.155",
+                    "code_name": "Stat.",
+                    "section_number": "90.155",
+                    "section_name": "Unrelated Minnesota section",
+                    "full_text": "This is not the Oregon ORS section.",
+                    "ipfs_cid": "bafymn90155",
+                    "source_url": "https://www.revisor.mn.gov/",
+                    "statute_id": "Minn. Stat. § 90.155",
+                }
+            ]
+        ),
+        state_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"state_laws": [str(state_law_path)]},
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "The filing relies on Or. Rev. Stat. § 90.155.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    link = links[0]
+    assert link.citation_type == "state_statute"
+    assert link.matched is False
+    assert link.source_cid in {None, ""}
+
+
+def test_bluebook_citation_resolver_strict_mode_toggle_allows_non_anchor_legacy_match(tmp_path):
+    uscode_path = tmp_path / "uscode_identifier_only.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "identifier": "42 U.S.C. § 1983",
+                    "heading": "Civil action for deprivation of rights",
+                    "text": "Every person who, under color of state law, subjects any citizen...",
+                    "cid": "bafyuscode1983",
+                    "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983",
+                }
+            ]
+        ),
+        uscode_path,
+    )
+
+    strict_resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        require_exact_anchor=True,
+        parquet_file_overrides={"us_code": [str(uscode_path)]},
+    )
+    strict_links = resolve_bluebook_citations_in_text(
+        "Claims may proceed under 42 U.S.C. § 1983.",
+        resolver=strict_resolver,
+    )
+    assert len(strict_links) == 1
+    assert strict_links[0].matched is False
+
+    permissive_resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        require_exact_anchor=False,
+        parquet_file_overrides={"us_code": [str(uscode_path)]},
+    )
+    permissive_links = resolve_bluebook_citations_in_text(
+        "Claims may proceed under 42 U.S.C. § 1983.",
+        resolver=permissive_resolver,
+    )
+    assert len(permissive_links) == 1
+    assert permissive_links[0].matched is True
+    assert permissive_links[0].metadata["require_exact_anchor"] is False
+
+
+def test_bluebook_exact_anchor_guarantee_audit_flags_case_url_fallback_non_exact():
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, require_exact_anchor=True)
+
+    report = audit_bluebook_exact_anchor_guarantees_for_documents(
+        [
+            {
+                "document_id": "doc_1",
+                "title": "Case-only fallback test",
+                "text": "The filing relies on 38 Mich. 90 as authority.",
+            }
+        ],
+        resolver=resolver,
+        exhaustive=False,
+    )
+
+    assert report["document_count"] == 1
+    assert report["matched_citation_count"] == 1
+    assert report["non_exact_match_count"] == 1
+    assert report["non_exact_matches"][0]["resolution_method"] == "citation_url_fallback"
 
 
 def test_bluebook_citation_resolver_surfaces_recovery_metadata_for_unmatched_state_law(tmp_path):
