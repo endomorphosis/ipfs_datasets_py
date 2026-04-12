@@ -70,6 +70,18 @@ def _parse_args() -> argparse.Namespace:
         default=16,
         help="Vector dimension for local hashed projection embeddings.",
     )
+    parser.add_argument("--embeddings-provider", default="", help="Embeddings router provider override.")
+    parser.add_argument("--embeddings-model", default="", help="Embeddings model name override.")
+    parser.add_argument("--embeddings-device", default="", help="Embeddings device override (cpu/cuda).")
+    parser.add_argument("--embeddings-batch-size", type=int, default=128, help="Batch size for embeddings_router.")
+    parser.add_argument("--embeddings-parallel-batches", type=int, default=1, help="Parallel batch workers for embeddings_router.")
+    parser.add_argument(
+        "--embeddings-chunking-strategy",
+        default="",
+        help="Chunking strategy for embeddings (semantic, sentences, fixed, sliding_window).",
+    )
+    parser.add_argument("--embeddings-chunk-size", type=int, default=512, help="Chunk size for embeddings chunking.")
+    parser.add_argument("--embeddings-chunk-overlap", type=int, default=50, help="Chunk overlap for embeddings chunking.")
     parser.add_argument(
         "--json",
         action="store_true",
@@ -146,6 +158,14 @@ def main() -> int:
         vector_dimension=max(8, int(args.vector_dimension or 16)),
         router_max_documents=4,
         formal_logic_max_documents=4,
+        embeddings_provider=str(args.embeddings_provider or "").strip() or None,
+        embeddings_model_name=str(args.embeddings_model or "").strip() or None,
+        embeddings_device=str(args.embeddings_device or "").strip() or None,
+        embeddings_batch_size=int(args.embeddings_batch_size or 128),
+        embeddings_parallel_batches=int(args.embeddings_parallel_batches or 1),
+        embeddings_chunking_strategy=str(args.embeddings_chunking_strategy or "").strip() or None,
+        embeddings_chunk_size=int(args.embeddings_chunk_size or 512),
+        embeddings_chunk_overlap=int(args.embeddings_chunk_overlap or 0),
     )
 
     export_source = _build_strict_subset(enriched, builder) if bool(args.strict_evidence_mode) else enriched

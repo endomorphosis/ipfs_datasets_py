@@ -28,7 +28,7 @@ from ..retrieval import (
     build_bm25_index,
     bm25_search_documents,
     embed_query_for_backend,
-    embed_texts_with_router_or_local,
+    embed_texts_with_router_or_local_chunked,
     hashed_term_projection,
     vector_dot,
 )
@@ -1516,11 +1516,27 @@ class DocketDatasetBuilder:
         router_max_documents: int | None = 3,
         formal_logic_max_documents: int | None = None,
         citation_resolver: Optional[BluebookCitationResolver] = None,
+        embeddings_provider: str | None = None,
+        embeddings_model_name: str | None = None,
+        embeddings_device: str | None = None,
+        embeddings_batch_size: int = 128,
+        embeddings_parallel_batches: int | None = None,
+        embeddings_chunking_strategy: str | None = None,
+        embeddings_chunk_size: int = 512,
+        embeddings_chunk_overlap: int = 50,
     ) -> None:
         self.vector_dimension = max(8, int(vector_dimension))
         self.router_max_documents = None if router_max_documents is None else max(1, int(router_max_documents))
         self.formal_logic_max_documents = None if formal_logic_max_documents is None else max(1, int(formal_logic_max_documents))
         self.citation_resolver = citation_resolver
+        self.embeddings_provider = embeddings_provider
+        self.embeddings_model_name = embeddings_model_name
+        self.embeddings_device = embeddings_device
+        self.embeddings_batch_size = max(1, int(embeddings_batch_size or 128))
+        self.embeddings_parallel_batches = None if embeddings_parallel_batches is None else max(1, int(embeddings_parallel_batches))
+        self.embeddings_chunking_strategy = embeddings_chunking_strategy
+        self.embeddings_chunk_size = max(16, int(embeddings_chunk_size or 512))
+        self.embeddings_chunk_overlap = max(0, int(embeddings_chunk_overlap or 0))
 
     def build_from_docket(
         self,
@@ -2223,9 +2239,17 @@ class DocketDatasetBuilder:
     def _build_vector_index(self, dataset_id: str, documents: Sequence[DocketDocument]) -> Dict[str, Any]:
         items: List[Dict[str, Any]] = []
         prepared_documents = [document for document in documents if (document.text or document.title).strip()]
-        vectors, vector_metadata = embed_texts_with_router_or_local(
+        vectors, vector_metadata = embed_texts_with_router_or_local_chunked(
             [document.text or document.title for document in prepared_documents],
             fallback_dimension=self.vector_dimension,
+            provider=self.embeddings_provider,
+            model_name=self.embeddings_model_name,
+            device=self.embeddings_device,
+            batch_size=self.embeddings_batch_size,
+            parallel_batches=self.embeddings_parallel_batches,
+            chunking_strategy=self.embeddings_chunking_strategy,
+            chunk_size=self.embeddings_chunk_size,
+            chunk_overlap=self.embeddings_chunk_overlap,
         )
         for document, vector in zip(prepared_documents, vectors):
             items.append(
@@ -2240,11 +2264,15 @@ class DocketDatasetBuilder:
             )
         return {
             "index_id": f"{dataset_id}_vector",
-            "dimension": self.vector_dimension,
+            "dimension": len(items[0]["vector"]) if items else self.vector_dimension,
             "metric": "cosine",
             "backend": str(vector_metadata.get("backend") or "local_hashed_term_projection"),
             "provider": str(vector_metadata.get("provider") or ""),
             "model_name": str(vector_metadata.get("model_name") or ""),
+            "device": str(vector_metadata.get("device") or ""),
+            "chunking_strategy": str(vector_metadata.get("chunking_strategy") or ""),
+            "chunk_size": vector_metadata.get("chunk_size"),
+            "chunk_overlap": vector_metadata.get("chunk_overlap"),
             "document_count": len(items),
             "items": items,
         }

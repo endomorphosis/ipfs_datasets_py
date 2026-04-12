@@ -5,9 +5,11 @@ import re
 from typing import Any, Dict, Iterable, List, Optional
 
 import pytest
+import requests
 
 from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import (
     build_canonical_corpus_local_root_overrides,
+    get_canonical_legal_corpus,
 )
 from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
@@ -137,12 +139,6 @@ def _materialize_hf_dataset_source(source_ref: str) -> str:
 
 
 def _read_rows(connection: Any, source_ref: str, where_clause: str, limit: int) -> List[Dict[str, Any]]:
-    if source_ref.startswith(("http://", "https://")):
-        try:
-            source_ref = _materialize_hf_dataset_source(source_ref)
-        except Exception:
-            pass
-
     if not source_ref.startswith(("http://", "https://")):
         table = pytest.importorskip("pyarrow.parquet").read_table(source_ref)
         rows = table.to_pylist()
@@ -160,10 +156,69 @@ def _read_rows(connection: Any, source_ref: str, where_clause: str, limit: int) 
         cursor = connection.execute(query)
     except Exception:
         fallback_query = f"SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}') LIMIT {int(limit)}"
-        cursor = connection.execute(fallback_query)
+        try:
+            cursor = connection.execute(fallback_query)
+        except Exception:
+            local_source_ref = _materialize_hf_dataset_source(source_ref)
+            table = pytest.importorskip("pyarrow.parquet").read_table(local_source_ref)
+            return table.to_pylist()[: int(limit)]
     rows = cursor.fetchall()
     columns = [description[0] for description in cursor.description]
     return [dict(zip(columns, row)) for row in rows]
+
+
+def _read_hf_dataset_first_rows(source_ref: str, limit: int) -> List[Dict[str, Any]]:
+    match = re.match(
+        r"https?://huggingface\.co/datasets/(?P<repo>[^/]+/[^/]+)/resolve/(?P<revision>[^/]+)/(?P<filename>.+)",
+        str(source_ref or "").strip(),
+    )
+    if not match:
+        return []
+
+    repo_id = str(match.group("repo"))
+    return _read_hf_dataset_first_rows_for_dataset(repo_id, limit)
+
+
+def _read_hf_dataset_first_rows_for_dataset(dataset_id: str, limit: int) -> List[Dict[str, Any]]:
+    repo_id = str(dataset_id or "").strip()
+    if not repo_id:
+        return []
+
+    session = requests.Session()
+    splits_response = session.get(
+        f"https://datasets-server.huggingface.co/splits?dataset={repo_id}",
+        timeout=60,
+    )
+    splits_response.raise_for_status()
+    splits_payload = dict(splits_response.json() or {})
+    splits = list(splits_payload.get("splits") or [])
+    if not splits:
+        return []
+
+    split_info = dict(splits[0] or {})
+    config = str(split_info.get("config") or "default").strip() or "default"
+    split = str(split_info.get("split") or "train").strip() or "train"
+    rows_response = session.get(
+        f"https://datasets-server.huggingface.co/first-rows?dataset={repo_id}&config={config}&split={split}",
+        timeout=60,
+    )
+    rows_response.raise_for_status()
+    rows_payload = dict(rows_response.json() or {})
+    rows = [dict(item.get("row") or {}) for item in list(rows_payload.get("rows") or [])]
+    return rows[: int(limit)]
+
+
+def _read_caselaw_sample_rows(connection: Any, source_ref: str, limit: int) -> List[Dict[str, Any]]:
+    canonical_dataset_id = get_canonical_legal_corpus("caselaw_access_project").hf_dataset_id
+    rows = _read_hf_dataset_first_rows_for_dataset(canonical_dataset_id, limit)
+    if rows:
+        return rows
+
+    rows = _read_hf_dataset_first_rows(source_ref, limit)
+    if rows:
+        return rows
+
+    return _read_rows(connection, source_ref, "", limit)
 
 
 def _first_non_empty_string(value: Any) -> str:
@@ -212,6 +267,55 @@ def _citation_text_from_row(row: Dict[str, Any], fields: Iterable[str]) -> str:
         if field not in row:
             continue
         citation_text = _citation_text_from_value(row.get(field))
+        if citation_text:
+            return citation_text
+    return ""
+
+
+def _text_blob_from_value(value: Any) -> str:
+    if value in (None, ""):
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (int, float)):
+        return str(value)
+    if isinstance(value, dict):
+        return " ".join(
+            part for part in (_text_blob_from_value(item) for item in value.values()) if part
+        )
+    if isinstance(value, (list, tuple)):
+        return " ".join(part for part in (_text_blob_from_value(item) for item in value) if part)
+    return str(value)
+
+
+def _extract_citation_by_regex(
+    source_text: str,
+    pattern: str,
+    citation_type: str,
+    state_code: Optional[str],
+) -> str:
+    for match in re.finditer(pattern, source_text, re.IGNORECASE):
+        candidate = re.sub(r"\s+", " ", str(match.group(0) or "")).strip()
+        if candidate and _parser_accepts(candidate, citation_type, state_code):
+            return candidate
+    return ""
+
+
+def _extract_federal_register_citation_from_row(row: Dict[str, Any]) -> str:
+    citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS)
+    if citation_text and _parser_accepts(str(citation_text), "federal_register", None):
+        return str(citation_text)
+
+    for field in ("jsonld", "text", "summary", "name"):
+        source_text = _text_blob_from_value(row.get(field)).strip()
+        if not source_text:
+            continue
+        citation_text = _extract_citation_by_regex(
+            source_text,
+            r"\b\d+\s+FR\s+\d+\b",
+            "federal_register",
+            None,
+        )
         if citation_text:
             return citation_text
     return ""
@@ -326,8 +430,8 @@ def _build_federal_register_cases(
 
     cases = []
     for row in rows:
-        citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS)
-        if citation_text in (None, "") or not _parser_accepts(str(citation_text), "federal_register", None):
+        citation_text = _extract_federal_register_citation_from_row(row)
+        if citation_text in (None, ""):
             volume = _first_present(row, _VOLUME_FIELDS)
             page = _first_present(row, _PAGE_FIELDS)
             if volume in (None, "") or page in (None, ""):
@@ -449,9 +553,13 @@ def _sample_cases_for_corpus(
         raise ValueError(f"Unsupported corpus key for real-corpora sampling: {corpus_key}")
 
     source_ref: Optional[str] = None
+    rows: List[Dict[str, Any]] = []
     try:
         source_ref = _find_source(resolver, corpus_key, state_code=state_code)
-        rows = _read_rows(connection, source_ref, "", sample_size * 8)
+        if corpus_key == "caselaw_access_project":
+            rows = _read_caselaw_sample_rows(connection, source_ref, sample_size * 8)
+        else:
+            rows = _read_rows(connection, source_ref, "", sample_size * 8)
         cases = builder_map[corpus_key]()
     except BaseException as exc:
         message = str(exc).strip() or exc.__class__.__name__
@@ -531,13 +639,20 @@ def _format_sampling_diagnostics(diagnostics: List[Dict[str, Any]]) -> List[Dict
     ]
 
 
+def _diagnostic_by_corpus(diagnostics: List[Dict[str, Any]], corpus_key: str) -> Dict[str, Any]:
+    for item in diagnostics:
+        if str(item.get("corpus_key") or "") == corpus_key:
+            return item
+    return {}
+
+
 def _build_caselaw_cases(
     connection: Any,
     resolver: BluebookCitationResolver,
     sample_size: int,
 ) -> List[Dict[str, Any]]:
     source_ref = _find_source(resolver, "caselaw_access_project", state_code=None)
-    rows = _read_rows(connection, source_ref, "", sample_size * 8)
+    rows = _read_caselaw_sample_rows(connection, source_ref, sample_size * 8)
 
     cases: List[Dict[str, Any]] = []
     for row in rows:
@@ -572,21 +687,26 @@ def _run_resolution_cases(
     matched_count = 0
     failures: List[Dict[str, Any]] = []
     for case in cases:
-        links = resolve_bluebook_citations_in_text(
-            _wrap_citation_text(case["citation_text"]),
-            resolver=resolver,
-            state_code=case["state_code"],
-        )
-        success = any(
-            link.matched is True
-            and link.citation_type == case["citation_type"]
-            and link.corpus_key == case["corpus_key"]
-            and (
-                case["state_code"] is None
-                or str(link.metadata.get("state_code") or "") == case["state_code"]
+        links: List[Any] = []
+        success = False
+        for _ in range(3):
+            links = resolve_bluebook_citations_in_text(
+                _wrap_citation_text(case["citation_text"]),
+                resolver=resolver,
+                state_code=case["state_code"],
             )
-            for link in links
-        )
+            success = any(
+                link.matched is True
+                and link.citation_type == case["citation_type"]
+                and link.corpus_key == case["corpus_key"]
+                and (
+                    case["state_code"] is None
+                    or str(link.metadata.get("state_code") or "") == case["state_code"]
+                )
+                for link in links
+            )
+            if success:
+                break
         if success:
             matched_count += 1
             continue
@@ -641,6 +761,13 @@ def test_bluebook_citation_resolver_real_justicedao_sampling(pytestconfig: pytes
             f"No real Justicedao citation samples were available. Diagnostics: {_format_sampling_diagnostics(diagnostics)}"
         )
 
+    federal_register_diagnostic = _diagnostic_by_corpus(diagnostics, "federal_register")
+    assert federal_register_diagnostic.get("status") == "ok", {
+        "expected_corpus": "federal_register",
+        "diagnostic": federal_register_diagnostic,
+        "sampling_diagnostics": _format_sampling_diagnostics(diagnostics),
+    }
+
     matched_count, failures = _run_resolution_cases(cases, resolver)
 
     coverage = matched_count / len(cases)
@@ -679,6 +806,13 @@ def test_bluebook_citation_resolver_real_justicedao_per_type_coverage_contract(p
         pytest.skip(
             f"No real Justicedao citation samples were available. Diagnostics: {_format_sampling_diagnostics(diagnostics)}"
         )
+
+    federal_register_diagnostic = _diagnostic_by_corpus(diagnostics, "federal_register")
+    assert federal_register_diagnostic.get("status") == "ok", {
+        "expected_corpus": "federal_register",
+        "diagnostic": federal_register_diagnostic,
+        "sampling_diagnostics": _format_sampling_diagnostics(diagnostics),
+    }
 
     by_type: Dict[str, List[Dict[str, Any]]] = {}
     for case in all_cases:

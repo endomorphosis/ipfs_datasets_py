@@ -26,6 +26,7 @@ from .retrieval import (
     build_bm25_index,
     embed_query_for_backend,
     embed_texts_with_router_or_local,
+    embed_texts_with_router_or_local_chunked,
     hashed_term_projection,
     search_bm25_index,
     tokenize_lexical_text,
@@ -60,6 +61,7 @@ __all__ = [
     'search_bm25_index',
     'bm25_search_documents',
     'embed_texts_with_router_or_local',
+    'embed_texts_with_router_or_local_chunked',
     'embed_query_for_backend',
     
     # Developer tools (Phase 7)

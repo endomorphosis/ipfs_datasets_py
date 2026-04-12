@@ -126,9 +126,135 @@ def test_workspace_dataset_builder_accepts_google_voice_manifest_shape():
 
     assert payload["workspace_id"] == "takeout"
     assert payload["source_type"] == "google_voice"
+    assert len(payload["collections"]) == 2
     assert payload["documents"][0]["document_id"] == "voice_1"
+    assert payload["documents"][0]["metadata"]["collection_id"] == "google_voice_bundle_voice_1"
     assert payload["documents"][0]["metadata"]["participants"] == ["(503) 555-0100"]
     assert payload["bm25_index"]["document_count"] == 1
+
+
+def test_workspace_dataset_builder_uses_google_voice_materialized_bundle_files(tmp_path):
+    bundle_dir = tmp_path / "google_voice_bundle_1"
+    bundle_dir.mkdir()
+    transcript_path = bundle_dir / "transcript.txt"
+    event_json_path = bundle_dir / "event.json"
+    source_html_path = bundle_dir / "source.html"
+    enrichment_path = bundle_dir / "audio.whisper.txt"
+
+    transcript_path.write_text(
+        "Tenant: Please send the inspection notice.\nAdvocate: I will send it tonight.\n",
+        encoding="utf-8",
+    )
+    enrichment_path.write_text("Generated voicemail transcription text.", encoding="utf-8")
+    source_html_path.write_text("<html><body>voice event</body></html>", encoding="utf-8")
+    event_json_path.write_text(
+        json.dumps(
+            {
+                "event_id": "voice_1",
+                "event_type": "voicemail",
+                "title": "Voicemail from advocate",
+                "timestamp": "2026-03-24T04:56:14Z",
+                "phone_numbers": ["(503) 555-0100"],
+                "attachments": [{"path": str(bundle_dir / "audio.mp3"), "kind": "audio"}],
+                "enrichments": [{"path": str(enrichment_path), "kind": "transcription", "source_attachment": str(bundle_dir / "audio.mp3")}],
+                "deduped_gmail_message_ids": ["gmail_1"],
+                "source_kind": "takeout",
+                "source_html_path": str(source_html_path),
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest = {
+        "status": "success",
+        "source_kind": "takeout",
+        "manifest_path": str(tmp_path / "google_voice_manifest.json"),
+        "bundles": [
+            {
+                "event_id": "voice_1",
+                "bundle_dir": str(bundle_dir),
+                "event_json_path": str(event_json_path),
+                "parsed_path": str(event_json_path),
+                "transcript_path": str(transcript_path),
+                "source_html_path": str(source_html_path),
+            }
+        ],
+    }
+
+    dataset = WorkspaceDatasetBuilder().build_from_google_voice_manifest(manifest)
+    payload = dataset.to_dict()
+
+    assert len(payload["collections"]) == 2
+    assert payload["collections"][1]["document_ids"] == ["voice_1", "voice_1_enrichment_1"]
+    assert payload["documents"][0]["title"] == "Voicemail from advocate"
+    assert "inspection notice" in payload["documents"][0]["text"]
+    assert payload["documents"][0]["metadata"]["enrichment_document_ids"] == ["voice_1_enrichment_1"]
+    assert payload["documents"][0]["metadata"]["parsed"]["event_type"] == "voicemail"
+    assert payload["documents"][0]["metadata"]["attachments"][0]["kind"] == "audio"
+    assert payload["documents"][0]["metadata"]["deduped_gmail_message_ids"] == ["gmail_1"]
+    assert payload["documents"][1]["metadata"]["parent_document_id"] == "voice_1"
+    assert payload["documents"][1]["metadata"]["collection_id"] == "google_voice_bundle_voice_1"
+    assert payload["documents"][1]["metadata"]["enrichment_kind"] == "transcription"
+    assert "Generated voicemail transcription text" in payload["documents"][1]["text"]
+    assert payload["bm25_index"]["document_count"] == 2
+
+
+def test_workspace_dataset_builder_promotes_text_google_voice_attachments(tmp_path):
+    bundle_dir = tmp_path / "google_voice_bundle_attachments"
+    bundle_dir.mkdir()
+    transcript_path = bundle_dir / "transcript.txt"
+    event_json_path = bundle_dir / "event.json"
+    notes_path = bundle_dir / "inspection_notes.txt"
+
+    transcript_path.write_text("Voice event transcript text.", encoding="utf-8")
+    notes_path.write_text("Inspection notes from the attached text file.", encoding="utf-8")
+    event_json_path.write_text(
+        json.dumps(
+            {
+                "event_id": "voice_2",
+                "event_type": "text_message",
+                "title": "Text conversation with attachment",
+                "timestamp": "2026-03-24T04:56:14Z",
+                "phone_numbers": ["(503) 555-0100"],
+                "attachments": [
+                    {
+                        "filename": "inspection_notes.txt",
+                        "path": str(notes_path),
+                        "kind": "document",
+                        "content_type": "text/plain",
+                    }
+                ],
+                "source_kind": "takeout",
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest = {
+        "status": "success",
+        "source_kind": "takeout",
+        "manifest_path": str(tmp_path / "google_voice_manifest.json"),
+        "bundles": [
+            {
+                "event_id": "voice_2",
+                "bundle_dir": str(bundle_dir),
+                "event_json_path": str(event_json_path),
+                "parsed_path": str(event_json_path),
+                "transcript_path": str(transcript_path),
+            }
+        ],
+    }
+
+    dataset = WorkspaceDatasetBuilder().build_from_google_voice_manifest(manifest)
+    payload = dataset.to_dict()
+
+    assert len(payload["documents"]) == 2
+    assert len(payload["collections"]) == 2
+    assert payload["collections"][1]["document_ids"] == ["voice_2", "voice_2_attachment_1"]
+    assert payload["documents"][0]["metadata"]["attachment_document_ids"] == ["voice_2_attachment_1"]
+    assert payload["documents"][1]["metadata"]["parent_document_id"] == "voice_2"
+    assert payload["documents"][1]["metadata"]["collection_id"] == "google_voice_bundle_voice_2"
+    assert payload["documents"][1]["metadata"]["attachment_kind"] == "document"
+    assert "Inspection notes from the attached text file" in payload["documents"][1]["text"]
+    assert payload["bm25_index"]["document_count"] == 2
 
 
 def test_workspace_dataset_builder_accepts_discord_export_shape():
@@ -187,6 +313,64 @@ def test_workspace_dataset_builder_accepts_email_export_shape():
     assert payload["documents"][0]["metadata"]["from"] == "tenant@example.com"
     assert payload["documents"][0]["metadata"]["attachments"][0]["filename"] == "notice.pdf"
     assert payload["bm25_index"]["document_count"] == 1
+
+
+def test_workspace_dataset_builder_uses_parsed_email_payload_when_body_missing(tmp_path):
+    parsed_path = tmp_path / "parsed_email.json"
+    parsed_path.write_text(
+        json.dumps(
+            {
+                "subject": "Parsed subject",
+                "body_text": "Parsed body text for the email import manifest.",
+                "date": "2026-03-25T07:00:00Z",
+                "message_id": "<parsed-message@example.com>",
+            }
+        ),
+        encoding="utf-8",
+    )
+    email_export = {
+        "status": "success",
+        "protocol": "imap",
+        "server": "mail.example.com",
+        "folder": "INBOX",
+        "emails": [
+            {
+                "message_id_header": "<manifest-message@example.com>",
+                "subject": "Manifest subject",
+                "from": "tenant@example.com",
+                "to": "advocate@example.com",
+                "date": "2026-03-24T06:00:00Z",
+                "parsed_path": str(parsed_path),
+                "attachments": [],
+            }
+        ],
+    }
+
+    dataset = WorkspaceDatasetBuilder().build_from_email_export(email_export)
+    payload = dataset.to_dict()
+
+    assert payload["documents"][0]["title"] == "Manifest subject"
+    assert "Parsed body text" in payload["documents"][0]["text"]
+    assert payload["bm25_index"]["document_count"] == 1
+
+
+def test_workspace_dataset_builder_accepts_imap_snippet_summary(tmp_path):
+    body_path = tmp_path / "body.txt"
+    headers_path = tmp_path / "headers.txt"
+    body_path.write_text("IMAP snippet body text.", encoding="utf-8")
+    headers_path.write_text("From: tenant@example.com\nSubject: Snippet\n", encoding="utf-8")
+
+    summary_payload = [
+        {"seq": 1, "body_path": str(body_path), "headers_path": str(headers_path)},
+        {"seq": 2, "body_path": str(body_path), "headers_path": str(headers_path)},
+    ]
+
+    dataset = WorkspaceDatasetBuilder().build_from_imap_snippet_summary(summary_payload)
+    payload = dataset.to_dict()
+
+    assert payload["source_type"] == "imap_snippets"
+    assert len(payload["documents"]) == 2
+    assert "IMAP snippet body text" in payload["documents"][0]["text"]
 
 
 def test_workspace_dataset_single_parquet_export_contains_index_sections(tmp_path):

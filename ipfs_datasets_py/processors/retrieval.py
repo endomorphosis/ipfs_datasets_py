@@ -46,6 +46,8 @@ def embed_texts_with_router_or_local(
     provider: str | None = None,
     model_name: str | None = None,
     device: str | None = None,
+    batch_size: int = 128,
+    parallel_batches: int | None = None,
 ) -> tuple[List[List[float]], Dict[str, Any]]:
     """Embed texts with `embeddings_router`, falling back to local projection."""
 
@@ -59,13 +61,15 @@ def embed_texts_with_router_or_local(
         }
 
     try:
-        from ..embeddings_router import embed_texts as router_embed_texts
+        from ..embeddings_router import embed_texts_batched as router_embed_texts_batched
 
-        vectors = router_embed_texts(
+        vectors = router_embed_texts_batched(
             items,
+            batch_size=batch_size,
             provider=provider,
             model_name=model_name,
             device=device,
+            parallel_batches=parallel_batches or 1,
         )
         normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
         if len(normalized) == len(items) and all(vector for vector in normalized):
@@ -89,6 +93,156 @@ def embed_texts_with_router_or_local(
             "is_mock": False,
         },
     )
+
+
+def _simple_chunk_text(text: str, *, chunk_size: int, chunk_overlap: int) -> List[str]:
+    if not text:
+        return []
+    size = max(1, int(chunk_size or 512))
+    overlap = max(0, int(chunk_overlap or 0))
+    chunks: List[str] = []
+    start = 0
+    while start < len(text):
+        end = min(start + size, len(text))
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end >= len(text):
+            break
+        start = max(0, end - overlap)
+        if start >= end:
+            start = end
+    return chunks
+
+
+def embed_texts_with_router_or_local_chunked(
+    texts: Sequence[str],
+    *,
+    fallback_dimension: int,
+    provider: str | None = None,
+    model_name: str | None = None,
+    device: str | None = None,
+    batch_size: int = 128,
+    parallel_batches: int | None = None,
+    chunking_strategy: str | None = None,
+    chunk_size: int = 512,
+    chunk_overlap: int = 50,
+) -> tuple[List[List[float]], Dict[str, Any]]:
+    """Embed texts with embeddings_router + chunking; fallback to hashed vectors."""
+
+    items = [str(text or "") for text in list(texts)]
+    if not items:
+        return [], {
+            "backend": "local_hashed_term_projection",
+            "provider": "local",
+            "model_name": "",
+            "is_mock": False,
+        }
+
+    strategy = str(chunking_strategy or "").strip().lower()
+    if strategy in {"", "none", "off"}:
+        return embed_texts_with_router_or_local(
+            items,
+            fallback_dimension=fallback_dimension,
+            provider=provider,
+            model_name=model_name,
+            device=device,
+            batch_size=batch_size,
+            parallel_batches=parallel_batches,
+        )
+
+    chunks_by_doc: List[List[str]] = []
+    try:
+        from ..ml.embeddings.chunker import Chunker
+
+        chunker = Chunker(
+            metadata={
+                "chunking_strategy": strategy,
+                "chunk_size": int(chunk_size or 512),
+                "chunk_overlap": int(chunk_overlap or 0),
+                "models": [model_name] if model_name else [],
+                "device": device or "cpu",
+            }
+        )
+        for text in items:
+            try:
+                chunks = [chunk.content for chunk in chunker.chunk_text(text) if str(chunk.content or "").strip()]
+            except Exception:
+                chunks = []
+            if not chunks:
+                chunks = _simple_chunk_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+            chunks_by_doc.append(chunks or [text])
+    except Exception:
+        for text in items:
+            chunks = _simple_chunk_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+            chunks_by_doc.append(chunks or [text])
+
+    flat_chunks = [chunk for chunks in chunks_by_doc for chunk in chunks]
+    try:
+        from ..embeddings_router import embed_texts_batched as router_embed_texts_batched
+
+        vectors = router_embed_texts_batched(
+            flat_chunks,
+            batch_size=batch_size,
+            provider=provider,
+            model_name=model_name,
+            device=device,
+            parallel_batches=parallel_batches or 1,
+        )
+        normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
+        if len(normalized) == len(flat_chunks) and all(vector for vector in normalized):
+            per_doc_vectors: List[List[float]] = []
+            offset = 0
+            for chunks in chunks_by_doc:
+                if not chunks:
+                    per_doc_vectors.append(hashed_term_projection("", dimension=fallback_dimension))
+                    continue
+                chunk_vecs = normalized[offset : offset + len(chunks)]
+                offset += len(chunks)
+                dimension = len(chunk_vecs[0]) if chunk_vecs else fallback_dimension
+                averaged = [0.0] * dimension
+                for vec in chunk_vecs:
+                    for i, value in enumerate(vec):
+                        averaged[i] += float(value)
+                count = max(1, len(chunk_vecs))
+                per_doc_vectors.append([value / count for value in averaged])
+            return per_doc_vectors, {
+                "backend": "embeddings_router",
+                "provider": provider or "auto",
+                "model_name": model_name or "",
+                "device": device or "",
+                "chunking_strategy": strategy,
+                "chunk_size": int(chunk_size or 0),
+                "chunk_overlap": int(chunk_overlap or 0),
+                "chunk_counts": [len(chunks) for chunks in chunks_by_doc],
+                "is_mock": False,
+            }
+    except Exception:
+        pass
+
+    per_doc_vectors = []
+    for chunks in chunks_by_doc:
+        chunk_vectors = [hashed_term_projection(chunk, dimension=fallback_dimension) for chunk in chunks]
+        if not chunk_vectors:
+            per_doc_vectors.append(hashed_term_projection("", dimension=fallback_dimension))
+            continue
+        averaged = [0.0] * len(chunk_vectors[0])
+        for vec in chunk_vectors:
+            for i, value in enumerate(vec):
+                averaged[i] += float(value)
+        count = max(1, len(chunk_vectors))
+        per_doc_vectors.append([value / count for value in averaged])
+    return per_doc_vectors, {
+        "backend": "local_hashed_term_projection",
+        "provider": "local",
+        "model_name": "",
+        "device": device or "",
+        "chunking_strategy": strategy,
+        "chunk_size": int(chunk_size or 0),
+        "chunk_overlap": int(chunk_overlap or 0),
+        "chunk_counts": [len(chunks) for chunks in chunks_by_doc],
+        "is_mock": False,
+    }
 
 
 def embed_query_for_backend(

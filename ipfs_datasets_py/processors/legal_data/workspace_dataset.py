@@ -11,7 +11,6 @@ from ..protocol import Entity, KnowledgeGraph, Relationship
 from .document_structure import parse_legal_document_to_graph
 from .docket_dataset import (
     DocketDatasetBuilder,
-    _document_index_dedupe_key,
     _document_index_priority,
     _document_index_text,
     _document_index_title,
@@ -220,37 +219,193 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
         )
         bundles = [dict(item) for item in list(payload.get("bundles") or []) if isinstance(item, dict)]
         workspace_id = str(payload.get("workspace_id") or payload.get("manifest_id") or payload.get("source_kind") or "google_voice")
+
+        def _read_text_file(path_value: Any) -> str:
+            path_text = str(path_value or "").strip()
+            if not path_text:
+                return ""
+            try:
+                return Path(path_text).read_text(encoding="utf-8", errors="replace").strip()
+            except Exception:
+                return ""
+
+        def _read_json_file(path_value: Any) -> Dict[str, Any]:
+            path_text = str(path_value or "").strip()
+            if not path_text:
+                return {}
+            try:
+                parsed = json.loads(Path(path_text).read_text(encoding="utf-8"))
+            except Exception:
+                return {}
+            return dict(parsed) if isinstance(parsed, dict) else {}
+
+        def _read_attachment_text(attachment: Dict[str, Any]) -> str:
+            path_text = str(attachment.get("path") or "").strip()
+            if not path_text:
+                return ""
+            attachment_path = Path(path_text)
+            suffix = attachment_path.suffix.lower()
+            content_type = str(attachment.get("content_type") or "").strip().lower()
+            text_like_suffixes = {".txt", ".md", ".json", ".csv", ".html", ".htm", ".xml", ".eml"}
+            if suffix not in text_like_suffixes and not content_type.startswith("text/"):
+                return ""
+            try:
+                return attachment_path.read_text(encoding="utf-8", errors="replace").strip()
+            except Exception:
+                return ""
+
+        collections: List[Dict[str, Any]] = [
+            {
+                "id": str(payload.get("source_kind") or "google_voice"),
+                "title": str(payload.get("source_kind") or "google_voice").replace("_", " ").title(),
+                "source_path": str(payload.get("manifest_path") or payload.get("source") or ""),
+                "source_type": "google_voice",
+            }
+        ]
+        documents: List[Dict[str, Any]] = []
+        for index, bundle in enumerate(bundles, start=1):
+            event_payload = _read_json_file(bundle.get("event_json_path") or bundle.get("parsed_path"))
+            transcript_text = _read_text_file(bundle.get("transcript_path"))
+            text = str(bundle.get("text_content") or transcript_text or event_payload.get("text_content") or "")
+            participants = list(bundle.get("participants") or bundle.get("phone_numbers") or event_payload.get("participants") or event_payload.get("phone_numbers") or [])
+            phone_numbers = list(bundle.get("phone_numbers") or event_payload.get("phone_numbers") or participants)
+            attachments = list(bundle.get("attachments") or event_payload.get("attachments") or [])
+            enrichments = list(bundle.get("enrichments") or event_payload.get("enrichments") or [])
+            parent_document_id = str(bundle.get("event_id") or event_payload.get("event_id") or f"voice_{index}")
+            parent_title = str(
+                bundle.get("evidence_title")
+                or bundle.get("title")
+                or event_payload.get("title")
+                or bundle.get("event_type")
+                or event_payload.get("event_type")
+                or f"Google Voice event {index}"
+            )
+            captured_at = str(bundle.get("timestamp") or bundle.get("date") or event_payload.get("timestamp") or event_payload.get("date") or "")
+            bundle_collection_id = f"google_voice_bundle_{_safe_identifier(parent_document_id)}"
+            attachment_document_ids: List[str] = []
+            enrichment_document_ids: List[str] = []
+            attachment_documents: List[Dict[str, Any]] = []
+            enrichment_documents: List[Dict[str, Any]] = []
+
+            for attachment_index, attachment in enumerate(attachments, start=1):
+                if not isinstance(attachment, dict):
+                    continue
+                attachment_text = _read_attachment_text(attachment)
+                if not attachment_text:
+                    continue
+                attachment_name = str(attachment.get("filename") or Path(str(attachment.get("path") or "attachment")).name or f"Attachment {attachment_index}")
+                attachment_document_id = f"{parent_document_id}_attachment_{attachment_index}"
+                attachment_document_ids.append(attachment_document_id)
+                attachment_documents.append(
+                    {
+                        "id": attachment_document_id,
+                        "title": f"{parent_title} - Attachment: {attachment_name}",
+                        "text": attachment_text,
+                        "timestamp": captured_at,
+                        "source_url": str(attachment.get("path") or ""),
+                        "document_type": "google_voice_attachment",
+                        "metadata": {
+                            "raw": dict(attachment),
+                            "collection_id": bundle_collection_id,
+                            "bundle_dir": str(bundle.get("bundle_dir") or event_payload.get("bundle_dir") or ""),
+                            "parent_document_id": parent_document_id,
+                            "participants": participants,
+                            "phone_numbers": phone_numbers,
+                            "attachment_kind": str(attachment.get("kind") or "attachment"),
+                            "content_type": str(attachment.get("content_type") or ""),
+                            "source_kind": bundle.get("source_kind") or event_payload.get("source_kind") or payload.get("source_kind"),
+                        },
+                    }
+                )
+
+            for enrichment_index, enrichment in enumerate(enrichments, start=1):
+                if not isinstance(enrichment, dict):
+                    continue
+                enrichment_text = _read_text_file(enrichment.get("path"))
+                if not enrichment_text:
+                    continue
+                enrichment_kind = str(enrichment.get("kind") or "enrichment")
+                enrichment_label = enrichment_kind.replace("_", " ").title()
+                enrichment_document_id = f"{parent_document_id}_enrichment_{enrichment_index}"
+                enrichment_document_ids.append(enrichment_document_id)
+                enrichment_documents.append(
+                    {
+                        "id": enrichment_document_id,
+                        "title": f"{parent_title} - {enrichment_label}",
+                        "text": enrichment_text,
+                        "timestamp": captured_at,
+                        "source_url": str(enrichment.get("path") or ""),
+                        "document_type": "google_voice_enrichment",
+                        "metadata": {
+                            "raw": dict(enrichment),
+                            "collection_id": bundle_collection_id,
+                            "bundle_dir": str(bundle.get("bundle_dir") or event_payload.get("bundle_dir") or ""),
+                            "parent_document_id": parent_document_id,
+                            "participants": participants,
+                            "phone_numbers": phone_numbers,
+                            "enrichment_kind": enrichment_kind,
+                            "source_attachment": str(enrichment.get("source_attachment") or ""),
+                            "source_kind": bundle.get("source_kind") or event_payload.get("source_kind") or payload.get("source_kind"),
+                        },
+                    }
+                )
+
+            documents.append(
+                {
+                    "id": parent_document_id,
+                    "title": parent_title,
+                    "text": text,
+                    "timestamp": captured_at,
+                    "source_url": bundle.get("bundle_dir")
+                    or bundle.get("event_json_path")
+                    or bundle.get("parsed_path")
+                    or bundle.get("transcript_path")
+                    or "",
+                    "document_type": bundle.get("event_type") or event_payload.get("event_type") or "google_voice_event",
+                    "metadata": {
+                        "raw": dict(bundle),
+                        "collection_id": bundle_collection_id,
+                        "bundle_dir": str(bundle.get("bundle_dir") or event_payload.get("bundle_dir") or ""),
+                        "parsed": event_payload,
+                        "participants": participants,
+                        "phone_numbers": phone_numbers,
+                        "attachment_document_ids": list(attachment_document_ids),
+                        "attachment_paths": list(bundle.get("attachment_paths") or [str(item.get("path") or "") for item in attachments if isinstance(item, dict) and item.get("path")]),
+                        "attachments": attachments,
+                        "enrichment_document_ids": list(enrichment_document_ids),
+                        "enrichment_paths": list(bundle.get("enrichment_paths") or [str(item.get("path") or "") for item in enrichments if isinstance(item, dict) and item.get("path")]),
+                        "enrichments": enrichments,
+                        "transcript_path": str(bundle.get("transcript_path") or event_payload.get("transcript_path") or ""),
+                        "source_html_path": str(bundle.get("source_html_path") or event_payload.get("source_html_path") or ""),
+                        "deduped_gmail_message_ids": list(bundle.get("deduped_gmail_message_ids") or event_payload.get("deduped_gmail_message_ids") or []),
+                        "source_kind": bundle.get("source_kind") or event_payload.get("source_kind") or payload.get("source_kind"),
+                    },
+                }
+            )
+            documents.extend(attachment_documents)
+            documents.extend(enrichment_documents)
+            collections.append(
+                {
+                    "id": bundle_collection_id,
+                    "title": parent_title,
+                    "source_path": str(bundle.get("bundle_dir") or event_payload.get("bundle_dir") or ""),
+                    "source_type": "google_voice_bundle",
+                    "parent_document_id": parent_document_id,
+                    "event_type": bundle.get("event_type") or event_payload.get("event_type") or "google_voice_event",
+                    "timestamp": captured_at,
+                    "participants": participants,
+                    "phone_numbers": phone_numbers,
+                    "document_ids": [parent_document_id, *attachment_document_ids, *enrichment_document_ids],
+                }
+            )
+
         workspace = {
             "workspace_id": workspace_id,
             "workspace_name": str(payload.get("workspace_name") or payload.get("source_kind") or "Google Voice Workspace"),
             "source_type": "google_voice",
             "source_path": str(payload.get("manifest_path") or payload.get("source") or ""),
-            "collections": [
-                {
-                    "id": str(payload.get("source_kind") or "google_voice"),
-                    "title": str(payload.get("source_kind") or "google_voice").replace("_", " ").title(),
-                    "source_path": str(payload.get("manifest_path") or payload.get("source") or ""),
-                    "source_type": "google_voice",
-                }
-            ],
-            "documents": [
-                {
-                    "id": bundle.get("event_id") or f"voice_{index}",
-                    "title": bundle.get("evidence_title") or bundle.get("title") or bundle.get("event_type") or f"Google Voice event {index}",
-                    "text": bundle.get("text_content") or "",
-                    "timestamp": bundle.get("timestamp") or bundle.get("date") or "",
-                    "source_url": bundle.get("bundle_dir") or bundle.get("event_json_path") or bundle.get("parsed_path") or "",
-                    "document_type": bundle.get("event_type") or "google_voice_event",
-                    "metadata": {
-                        "raw": dict(bundle),
-                        "participants": list(bundle.get("participants") or []),
-                        "phone_numbers": list(bundle.get("phone_numbers") or []),
-                        "attachment_paths": list(bundle.get("attachment_paths") or []),
-                        "source_kind": bundle.get("source_kind") or payload.get("source_kind"),
-                    },
-                }
-                for index, bundle in enumerate(bundles, start=1)
-            ],
+            "collections": collections,
+            "documents": documents,
         }
         return self.build_from_workspace(
             workspace,
@@ -335,6 +490,36 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
         )
         emails = [dict(item) for item in list(payload.get("emails") or []) if isinstance(item, dict)]
         folder = str(payload.get("folder") or payload.get("mailbox") or payload.get("label") or "email_export")
+
+        def _extract_email_text(email: Dict[str, Any]) -> tuple[str, Dict[str, Any] | None]:
+            text = str(
+                email.get("body_text")
+                or email.get("body_html")
+                or email.get("snippet")
+                or email.get("plain_text")
+                or ""
+            ).strip()
+            if text:
+                return text, None
+            parsed_path = email.get("parsed_path") or email.get("parsed_json_path") or ""
+            if parsed_path:
+                try:
+                    parsed_payload = json.loads(Path(parsed_path).read_text(encoding="utf-8"))
+                except Exception:
+                    parsed_payload = None
+                if isinstance(parsed_payload, dict):
+                    parsed_text = str(
+                        parsed_payload.get("body_text")
+                        or parsed_payload.get("body_html")
+                        or parsed_payload.get("snippet")
+                        or parsed_payload.get("plain_text")
+                        or parsed_payload.get("content")
+                        or ""
+                    ).strip()
+                    if parsed_text:
+                        return parsed_text, parsed_payload
+            return "", None
+
         workspace = {
             "workspace_id": _safe_identifier(folder),
             "workspace_name": folder,
@@ -351,14 +536,18 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
             "documents": [
                 {
                     "id": email.get("message_id_header") or email.get("message_id") or f"email_{index}",
-                    "title": email.get("subject") or f"Email {index}",
-                    "text": str(email.get("body_text") or email.get("body_html") or email.get("snippet") or ""),
-                    "timestamp": email.get("date") or email.get("sent_at") or "",
-                    "message_id": email.get("message_id_header") or email.get("message_id") or "",
+                    "title": (email.get("subject") or (parsed or {}).get("subject") or f"Email {index}"),
+                    "text": text,
+                    "timestamp": email.get("date") or email.get("sent_at") or (parsed or {}).get("date") or "",
+                    "message_id": email.get("message_id_header")
+                    or email.get("message_id")
+                    or (parsed or {}).get("message_id")
+                    or "",
                     "source_url": str(payload.get("output_path") or ""),
                     "document_type": "email_message",
                     "metadata": {
                         "raw": dict(email),
+                        "parsed": parsed or {},
                         "from": email.get("from"),
                         "to": email.get("to"),
                         "cc": email.get("cc"),
@@ -370,8 +559,81 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                     },
                 }
                 for index, email in enumerate(emails, start=1)
+                for text, parsed in [(_extract_email_text(email))]
             ],
         }
+        return self.build_from_workspace(
+            workspace,
+            include_knowledge_graph=include_knowledge_graph,
+            include_bm25=include_bm25,
+            include_vector_index=include_vector_index,
+        )
+
+    def build_from_imap_snippet_summary(
+        self,
+        summary_payload: Dict[str, Any] | str | Path,
+        *,
+        include_knowledge_graph: bool = True,
+        include_bm25: bool = True,
+        include_vector_index: bool = True,
+    ) -> WorkspaceDatasetObject:
+        payload = (
+            json.loads(Path(summary_payload).read_text(encoding="utf-8"))
+            if isinstance(summary_payload, (str, Path))
+            else summary_payload
+        )
+        if not isinstance(payload, list):
+            raise ValueError("IMAP snippet summary payload must be a list")
+        summary_path = Path(summary_payload) if isinstance(summary_payload, (str, Path)) else None
+        workspace_id = _safe_identifier(str(summary_path.parent.name if summary_path else "imap_snippets"))
+        workspace = {
+            "workspace_id": workspace_id,
+            "workspace_name": str(summary_path.parent.name if summary_path else "IMAP Snippets"),
+            "source_type": "imap_snippets",
+            "collections": [
+                {
+                    "id": workspace_id,
+                    "title": str(summary_path.parent.name if summary_path else "IMAP Snippets"),
+                    "source_path": str(summary_path or ""),
+                    "source_type": "imap_snippets",
+                }
+            ],
+            "documents": [],
+        }
+        for index, item in enumerate(payload, start=1):
+            if not isinstance(item, dict):
+                continue
+            body_path = str(item.get("body_path") or "")
+            headers_path = str(item.get("headers_path") or "")
+            body_text = ""
+            header_text = ""
+            if body_path:
+                try:
+                    body_text = Path(body_path).read_text(encoding="utf-8", errors="ignore").strip()
+                except Exception:
+                    body_text = ""
+            if headers_path:
+                try:
+                    header_text = Path(headers_path).read_text(encoding="utf-8", errors="ignore").strip()
+                except Exception:
+                    header_text = ""
+            text = body_text or header_text
+            workspace["documents"].append(
+                {
+                    "id": f"imap_snippet_{index}",
+                    "title": f"IMAP snippet {index}",
+                    "text": text,
+                    "timestamp": "",
+                    "source_url": body_path or headers_path,
+                    "document_type": "imap_snippet",
+                    "metadata": {
+                        "raw": dict(item),
+                        "body_path": body_path,
+                        "headers_path": headers_path,
+                        "headers_text": header_text,
+                    },
+                }
+            )
         return self.build_from_workspace(
             workspace,
             include_knowledge_graph=include_knowledge_graph,
@@ -428,6 +690,36 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                                 "metadata": {"raw": json_payload},
                             }
                         )
+                continue
+            if path.suffix.lower() == ".eml":
+                try:
+                    from email import policy
+                    from email.parser import BytesParser
+
+                    message = BytesParser(policy=policy.default).parsebytes(path.read_bytes())
+                    body = message.get_body(preferencelist=("plain", "html"))
+                    text = body.get_content().strip() if body else ""
+                except Exception:
+                    text = ""
+                    message = None
+                if not text:
+                    continue
+                subject = str(message.get("subject") or path.stem) if message else path.stem
+                documents.append(
+                    {
+                        "id": path.stem,
+                        "title": subject,
+                        "text": text,
+                        "source_url": str(path),
+                        "document_type": "eml",
+                        "source_path": str(path),
+                        "metadata": {
+                            "from": str(message.get("from") or "") if message else "",
+                            "to": str(message.get("to") or "") if message else "",
+                            "date": str(message.get("date") or "") if message else "",
+                        },
+                    }
+                )
                 continue
             text = path.read_text(encoding="utf-8", errors="ignore").strip()
             if not text:
@@ -598,7 +890,7 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                 "title": index_title,
                 "source_kind": str((document.metadata.get("text_extraction") or {}).get("source") or "") or "synthetic",
                 "evidence_quality": _workspace_document_retrieval_evidence_quality(document),
-                "dedupe_key": _document_index_dedupe_key(document),
+                "dedupe_key": _workspace_document_dedupe_key(document),
             }
             candidate = WorkspaceDocument(
                 document_id=document.document_id,
@@ -610,7 +902,7 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                 source_url=document.source_url,
                 metadata=metadata,
             )
-            dedupe_key = _document_index_dedupe_key(document)
+            dedupe_key = _workspace_document_dedupe_key(document)
             ranking = (priority, len(index_text or ""))
             existing = best_by_key.get(dedupe_key)
             if existing is None or ranking > existing[:2]:
@@ -703,6 +995,22 @@ def _workspace_document_retrieval_evidence_quality(document: WorkspaceDocument) 
     if source in {"plain_text", "text", "email_body", "message_body", "transcript"}:
         return "plain_text"
     return _document_retrieval_evidence_quality(document)
+
+
+def _workspace_document_dedupe_key(document: WorkspaceDocument) -> str:
+    title = _normalize_workspace_title(_document_index_title(document))
+    doc_id = str(document.document_id or "")
+    if doc_id and title:
+        return f"{doc_id}::{title}"
+    if doc_id:
+        return doc_id
+    if title:
+        return title
+    return doc_id
+
+
+def _normalize_workspace_title(title: str | None) -> str:
+    return str(title or "").strip().lower()
 
 
 def search_workspace_dataset_bm25(

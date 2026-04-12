@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from pathlib import Path
 
@@ -11,6 +12,16 @@ from ipfs_datasets_py.processors.legal_data import (
     WorkspaceDatasetBuilder,
     WorkspaceDatasetPackager,
 )
+
+
+def _load_single_bundle_export_module():
+    module_path = Path(__file__).resolve().parent / "export_workspace_dataset_single_bundle.py"
+    spec = importlib.util.spec_from_file_location("workspace_export_single_bundle_for_package", module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load workspace single-bundle export script from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -21,16 +32,16 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--input-directory", default="", help="Path to a directory of evidence files.")
     parser.add_argument(
         "--input-type",
-        choices=["workspace-json", "directory", "google-voice-manifest", "discord-export", "email-export"],
+        choices=["workspace-json", "directory", "google-voice-manifest", "discord-export", "email-export", "imap-snippet-summary"],
         default="",
-        help="Explicit input type when using --input-path.",
+        help="Explicit input type when using --input-path. Omit it to auto-detect supported source shapes.",
     )
-    parser.add_argument("--input-path", default="", help="Input path for --input-type driven imports.")
+    parser.add_argument("--input-path", default="", help="Input path for generic or source-specific workspace imports.")
     parser.add_argument("--output-dir", required=True, help="Directory to write the packaged bundle.")
     parser.add_argument("--package-name", default="", help="Optional package name for structured bundle output.")
     parser.add_argument("--workspace-id", default="", help="Optional workspace id override for directory ingestion.")
     parser.add_argument("--workspace-name", default="", help="Optional workspace name override for directory ingestion.")
-    parser.add_argument("--source-type", default="workspace", help="Logical workspace source type label.")
+    parser.add_argument("--source-type", default="", help="Logical workspace source type label.")
     parser.add_argument("--strict-evidence-mode", action="store_true", help="Restrict to the plain_text+ retrieval subset.")
     parser.add_argument("--vector-dimension", type=int, default=16, help="Vector dimension for local embeddings.")
     parser.add_argument("--glob-pattern", default="*", help="Glob filter for directory ingestion.")
@@ -40,36 +51,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if not str(args.input_json or "").strip() and not str(args.input_directory or "").strip():
         if not str(args.input_path or "").strip():
-            parser.error("Provide --input-json, --input-directory, or --input-path with --input-type.")
+            parser.error("Provide --input-json, --input-directory, or --input-path.")
     return args
-
-
-def _load_workspace_payload(args: argparse.Namespace) -> dict:
-    if str(args.input_json or "").strip():
-        path = Path(args.input_json).expanduser()
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict):
-            raise ValueError("Workspace JSON payload must be an object")
-        payload.setdefault("source_type", str(args.source_type or "workspace"))
-        payload.setdefault("source_path", str(path))
-        return payload
-
-    root = Path(args.input_directory).expanduser()
-    return {
-        "workspace_id": str(args.workspace_id or root.name),
-        "workspace_name": str(args.workspace_name or root.name.replace("_", " ").replace("-", " ")),
-        "source_type": str(args.source_type or "directory"),
-        "source_path": str(root),
-        "documents": [],
-        "collections": [
-            {
-                "id": root.name,
-                "title": str(args.workspace_name or root.name),
-                "source_path": str(root),
-                "source_type": str(args.source_type or "directory"),
-            }
-        ],
-    }
 
 
 def _build_strict_subset(workspace: dict, builder: WorkspaceDatasetBuilder) -> dict:
@@ -99,55 +82,47 @@ def _build_strict_subset(workspace: dict, builder: WorkspaceDatasetBuilder) -> d
     }
 
 
-def _build_workspace_dataset(args: argparse.Namespace) -> dict:
+
+
+def _build_workspace_dataset(args: argparse.Namespace, export_module) -> dict:
     builder = WorkspaceDatasetBuilder(vector_dimension=int(args.vector_dimension or 16))
-
-    if str(args.input_json or "").strip():
-        workspace = _load_workspace_payload(args)
-        dataset = builder.build_from_workspace(workspace)
-        return dataset.to_dict()
-
-    if str(args.input_directory or "").strip():
-        dataset = builder.build_from_directory(
-            args.input_directory,
-            workspace_id=str(args.workspace_id or ""),
-            workspace_name=str(args.workspace_name or ""),
-            source_type=str(args.source_type or "directory"),
-            glob_pattern=str(args.glob_pattern or "*"),
-        )
-        return dataset.to_dict()
-
-    input_type = str(args.input_type or "").strip()
-    input_path = str(args.input_path or "").strip()
-    if not input_type or not input_path:
-        raise ValueError("Missing --input-type or --input-path for workspace bundle export.")
-
-    if input_type == "workspace-json":
-        dataset = builder.build_from_json_file(input_path)
-    elif input_type == "directory":
-        dataset = builder.build_from_directory(
-            input_path,
-            workspace_id=str(args.workspace_id or ""),
-            workspace_name=str(args.workspace_name or ""),
-            source_type=str(args.source_type or "directory"),
-            glob_pattern=str(args.glob_pattern or "*"),
-        )
-    elif input_type == "google-voice-manifest":
-        dataset = builder.build_from_google_voice_manifest(input_path)
-    elif input_type == "discord-export":
-        dataset = builder.build_from_discord_export(input_path)
-    elif input_type == "email-export":
-        dataset = builder.build_from_email_export(input_path)
-    else:
-        raise ValueError(f"Unsupported input type: {input_type}")
+    dataset = export_module._load_dataset(args, builder)
     return dataset.to_dict()
+
+
+def _annotate_input_type_provenance(
+    dataset_payload: dict,
+    *,
+    input_type: str,
+    input_type_resolution: str,
+) -> dict:
+    payload = dict(dataset_payload)
+    metadata = dict(payload.get("metadata") or {})
+    artifact_provenance = dict(metadata.get("artifact_provenance") or {})
+    artifact_provenance["workspace_input"] = {
+        "input_type": str(input_type or ""),
+        "input_type_resolution": str(input_type_resolution or ""),
+    }
+    metadata["artifact_provenance"] = artifact_provenance
+    payload["metadata"] = metadata
+    return payload
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
-    dataset_payload = _build_workspace_dataset(args)
+    export_module = _load_single_bundle_export_module()
+    input_type, input_type_resolution = export_module._resolve_workspace_input_type(args)
+    dataset_payload = _build_workspace_dataset(args, export_module)
+    dataset_payload = _annotate_input_type_provenance(
+        dataset_payload,
+        input_type=input_type,
+        input_type_resolution=input_type_resolution,
+    )
     if args.strict_evidence_mode:
-        dataset_payload = _build_strict_subset(dataset_payload, WorkspaceDatasetBuilder(vector_dimension=int(args.vector_dimension or 16)))
+        dataset_payload = export_module._build_strict_subset(
+            dataset_payload,
+            WorkspaceDatasetBuilder(vector_dimension=int(args.vector_dimension or 16)),
+        )
 
     output_dir = Path(args.output_dir).expanduser()
     package_name = str(args.package_name or "").strip() or None
@@ -160,6 +135,8 @@ def main(argv: list[str] | None = None) -> int:
         package_name=package_name,
         include_car=include_car,
     )
+    result["input_type"] = input_type
+    result["input_type_resolution"] = input_type_resolution
 
     if str(args.write_normalized_json or "").strip():
         Path(args.write_normalized_json).expanduser().write_text(
@@ -173,6 +150,7 @@ def main(argv: list[str] | None = None) -> int:
         print("Workspace bundle packaged.")
         print(f"Bundle dir: {result.get('bundle_dir')}")
         print(f"Manifest: {result.get('manifest_json_path')}")
+        print(f"Input type: {result.get('input_type')} ({result.get('input_type_resolution')})")
         summary = dict(result.get("summary") or {})
         print(f"Documents: {summary.get('document_count')}")
         print(f"Collections: {summary.get('collection_count')}")

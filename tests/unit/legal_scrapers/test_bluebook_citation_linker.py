@@ -7,6 +7,7 @@ import types
 import pyarrow as pa
 import pyarrow.parquet as pq
 import ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory as inventory_module
+import ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker as linker_module
 from tests.integration.test_bluebook_citation_linker_real_corpora import _build_federal_register_cases
 
 from ipfs_datasets_py.processors.legal_scrapers import (
@@ -790,6 +791,60 @@ def test_bluebook_citation_resolver_links_case_cfr_and_public_law_from_local_par
     assert by_type["public_law"].source_cid == "bafypl1172"
 
 
+def test_bluebook_citation_resolver_links_cap_style_case_rows_from_local_parquet(tmp_path):
+    cap_path = tmp_path / "cap_cases.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "id": "cap_long_v_sinclair",
+                    "name": "John R. Long v. Robert P. Sinclair",
+                    "name_abbreviation": "Long v. Sinclair",
+                    "citations": "38 Mich. 90",
+                    "reporter": "Michigan Reports",
+                    "volume": "38",
+                    "first_page": "90",
+                    "source_url": "https://cite.case.law/mich/38/90/",
+                }
+            ]
+        ),
+        cap_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"caselaw_access_project": [str(cap_path)]},
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "The filing relies on 38 Mich. 90 as authority.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    assert links[0].citation_type == "case"
+    assert links[0].matched is True
+    assert links[0].corpus_key == "caselaw_access_project"
+    assert links[0].source_url == "https://cite.case.law/mich/38/90/"
+
+
+def test_bluebook_citation_resolver_falls_back_to_case_url_when_case_source_query_fails():
+    resolver = BluebookCitationResolver(allow_hf_fallback=False)
+
+    links = resolve_bluebook_citations_in_text(
+        "The filing relies on 38 Mich. 90 as authority.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    assert links[0].citation_type == "case"
+    assert links[0].matched is True
+    assert links[0].corpus_key == "caselaw_access_project"
+    assert links[0].metadata["resolution_method"] == "citation_url_fallback"
+    assert links[0].metadata["source_row_present"] is False
+    assert links[0].source_url == "https://www.courtlistener.com/opinion/38/mich/90/"
+
+
 def test_bluebook_citation_resolver_links_public_law_no_variant_from_local_parquet(tmp_path):
     uscode_public_law_path = tmp_path / "uscode_public_law.parquet"
     pq.write_table(
@@ -852,7 +907,6 @@ def test_bluebook_citation_resolver_prefers_primary_federal_register_hf_parquet(
     assert listed_repo_ids == ["justicedao/ipfs_federal_register"]
     assert sources == [
         "hf://justicedao/ipfs_federal_register/federal_register.parquet",
-        "hf://justicedao/ipfs_federal_register/federal_register_gte_small_metadata.parquet",
     ]
 
 
@@ -993,6 +1047,42 @@ def test_build_federal_register_cases_ignores_non_bluebook_identifier(tmp_path):
     ]
 
 
+def test_build_federal_register_cases_extracts_citation_from_jsonld(tmp_path):
+    federal_register_path = tmp_path / "federal_register_jsonld_sampling.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "identifier": "94-8025",
+                    "name": "Hearing of the Judicial Conference Advisory Committee on Rules of Criminal Procedure",
+                    "jsonld": (
+                        '{"text":"In the Federal Register of December 21, 1993 '
+                        '(58 FR 67420), a public hearing was originally scheduled."}'
+                    ),
+                }
+            ]
+        ),
+        federal_register_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"federal_register": [str(federal_register_path)]},
+    )
+
+    cases = _build_federal_register_cases(None, resolver, sample_size=1)
+
+    assert cases == [
+        {
+            "citation_text": "58 FR 67420",
+            "citation_type": "federal_register",
+            "corpus_key": "federal_register",
+            "state_code": None,
+            "source_ref": str(federal_register_path),
+        }
+    ]
+
+
 def test_bluebook_citation_resolver_caches_hf_sources_per_corpus(monkeypatch):
     list_calls = []
 
@@ -1053,6 +1143,7 @@ def test_bluebook_citation_resolver_uses_caselaw_hf_alias_when_primary_repo_has_
         hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
     )
     monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+    monkeypatch.setattr(linker_module, "_dataset_server_parquet_records", lambda dataset_id: [])
 
     resolver = BluebookCitationResolver(allow_hf_fallback=True)
 
@@ -1065,6 +1156,102 @@ def test_bluebook_citation_resolver_uses_caselaw_hf_alias_when_primary_repo_has_
     assert sources == [
         "hf://justicedao/dedup_ipfs_caselaw_access_project/repaired_parquet_batch_20260228/cases.parquet",
         "hf://justicedao/dedup_ipfs_caselaw_access_project/repaired_parquet_batch_20260228/metadata.parquet",
+    ]
+
+
+def test_bluebook_citation_resolver_filters_embeddings_directory_parquet_from_hf_sources(monkeypatch):
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        assert repo_id == "justicedao/ipfs_caselaw_access_project"
+        return [
+            "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+            "cases/cap_cases.parquet",
+        ]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["caselaw_access_project"], state_code=None)
+
+    assert sources == [
+        "hf://justicedao/ipfs_caselaw_access_project/cases/cap_cases.parquet",
+    ]
+
+
+def test_bluebook_citation_resolver_prefers_repaired_caselaw_shards_over_deduplicated_monolith(monkeypatch):
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        assert repo_id == "justicedao/ipfs_caselaw_access_project"
+        return [
+            "deduplicated_ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+            "repaired_parquet_batch_20260228/part-1.parquet",
+            "repaired_parquet_batch_20260228/part-0.parquet",
+        ]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["caselaw_access_project"], state_code=None)
+
+    assert sources[:3] == [
+        "hf://justicedao/ipfs_caselaw_access_project/repaired_parquet_batch_20260228/part-0.parquet",
+        "hf://justicedao/ipfs_caselaw_access_project/repaired_parquet_batch_20260228/part-1.parquet",
+        "hf://justicedao/ipfs_caselaw_access_project/deduplicated_ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+    ]
+
+
+def test_bluebook_citation_resolver_uses_dataset_server_parquet_when_repo_tree_only_has_embeddings(monkeypatch):
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        assert repo_id == "justicedao/ipfs_caselaw_access_project"
+        return [
+            "embeddings/ipfs_TeraflopAI___Caselaw_Access_Project.parquet",
+            "embeddings/sparse_chunks.parquet",
+        ]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+    monkeypatch.setattr(
+        linker_module,
+        "_dataset_server_parquet_records",
+        lambda dataset_id: [
+            {
+                "dataset": dataset_id,
+                "config": "default",
+                "split": "train",
+                "filename": "0001.parquet",
+                "url": f"https://example.test/{dataset_id}/0001.parquet",
+            },
+            {
+                "dataset": dataset_id,
+                "config": "default",
+                "split": "train",
+                "filename": "0000.parquet",
+                "url": f"https://example.test/{dataset_id}/0000.parquet",
+            },
+        ],
+    )
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["caselaw_access_project"], state_code=None)
+
+    assert sources == [
+        "https://example.test/justicedao/ipfs_caselaw_access_project/0000.parquet",
+        "https://example.test/justicedao/ipfs_caselaw_access_project/0001.parquet",
     ]
 
 

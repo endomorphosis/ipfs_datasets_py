@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from functools import lru_cache
+import hashlib
 import logging
 from pathlib import Path
 import re
+import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
@@ -15,18 +17,18 @@ from .legal_source_recovery import build_missing_citation_recovery_query
 
 logger = logging.getLogger(__name__)
 
-_IDENTIFIER_FIELDS = ["statute_id", "identifier", "id", "document_number", "citation", "name", "rule_id", "source_id"]
-_TITLE_FIELDS = ["section_name", "short_title", "heading", "title", "name", "title_name", "code_name"]
+_IDENTIFIER_FIELDS = ["statute_id", "identifier", "id", "document_number", "citation", "citations", "name", "name_abbreviation", "rule_id", "source_id"]
+_TITLE_FIELDS = ["section_name", "short_title", "heading", "title", "name", "name_abbreviation", "title_name", "code_name"]
 _URL_FIELDS = ["source_url", "url", "html_url", "pdf_url", "fr_page_url", "fr_json_url"]
 _TEXT_FIELDS = ["full_text", "text", "section_text", "content", "body", "semantic_text", "summary", "head_matter"]
 _CID_FIELDS = ["ipfs_cid", "cid", "source_cid"]
-_OFFICIAL_CITE_FIELDS = ["official_cite", "citation", "bluebook_citation", "identifier"]
+_OFFICIAL_CITE_FIELDS = ["official_cite", "citation", "citations", "bluebook_citation", "identifier"]
 _STATE_FIELDS = ["state_code", "state"]
 _SECTION_FIELDS = ["section", "section_number", "section_id", "title_num", "section_num"]
 _TITLE_NUMBER_FIELDS = ["title", "title_number", "title_no", "usc_title", "title_num"]
 _CODE_NAME_FIELDS = ["code_name", "code", "code_title", "title_name"]
 _VOLUME_FIELDS = ["volume", "volume_number", "fr_volume"]
-_PAGE_FIELDS = ["page", "page_number", "start_page", "page_start", "fr_page"]
+_PAGE_FIELDS = ["page", "page_number", "start_page", "page_start", "first_page", "last_page", "fr_page"]
 _REPORTER_FIELDS = ["reporter", "reporter_abbrev", "reporter_abbreviation", "publication", "series"]
 _CONGRESS_FIELDS = ["congress", "congress_number", "session", "volume"]
 _LAW_NUMBER_FIELDS = ["law_number", "public_law", "public_law_number", "pl_number", "page"]
@@ -185,7 +187,9 @@ def _is_direct_citation_source(path: str) -> bool:
     if not normalized:
         return False
     return not (
-        normalized.endswith("_embeddings.parquet")
+        normalized.startswith("embeddings/")
+        or "/embeddings/" in normalized
+        or normalized.endswith("_embeddings.parquet")
         or normalized.endswith("_metadata.parquet")
         or normalized.endswith("cid_index.parquet")
         or "/cid_index/" in normalized
@@ -487,6 +491,7 @@ class BluebookCitationResolver:
         self.parquet_file_overrides = dict(parquet_file_overrides or {})
         self.extractor = extractor or CitationExtractor()
         self._hf_source_cache: Dict[tuple[str, Optional[str]], List[str]] = {}
+        self._materialized_remote_sources: Dict[str, str] = {}
         self._schema_cache: Dict[str, set[str]] = {}
 
     def resolve_text(self, text: str, *, state_code: Optional[str] = None) -> List[CitationLink]:
@@ -548,6 +553,27 @@ class BluebookCitationResolver:
                         "row": row,
                     },
                 )
+
+        if citation.type == "case" and citation.url and recovery_corpus_key == "caselaw_access_project":
+            return CitationLink(
+                citation_text=citation.text,
+                citation_type=citation.type,
+                normalized_citation=normalized_citation,
+                matched=True,
+                corpus_key=recovery_corpus_key,
+                dataset_id=_CORPUS_CONFIGS[recovery_corpus_key].dataset_id,
+                confidence=0.55,
+                source_url=str(citation.url),
+                metadata={
+                    "state_code": effective_state,
+                    "resolution_method": "citation_url_fallback",
+                    "source_row_present": False,
+                    "recovery_supported": True,
+                    "recovery_corpus_key": recovery_corpus_key,
+                    "recovery_query": recovery_query,
+                    **preferred_metadata,
+                },
+            )
 
         return CitationLink(
             citation_text=citation.text,
@@ -678,6 +704,7 @@ class BluebookCitationResolver:
         repo_ids = [repo_id for repo_id in (config.dataset_id, *list(config.dataset_id_aliases or [])) if repo_id]
         for repo_id in repo_ids:
             had_listing_error = False
+            used_repo_listing = False
             if list_repo_files is not None and hf_hub_url is not None:
                 try:
                     repo_files = list_repo_files(repo_id=repo_id, repo_type="dataset")
@@ -685,7 +712,12 @@ class BluebookCitationResolver:
                     logger.warning("Failed to list HF files for %s: %s", repo_id, exc)
                     had_listing_error = True
                 else:
-                    parquet_files = [path for path in repo_files if str(path).endswith(".parquet")]
+                    used_repo_listing = True
+                    parquet_files = [
+                        path
+                        for path in repo_files
+                        if str(path).endswith(".parquet") and _is_direct_citation_source(str(path))
+                    ]
                     if parquet_files:
                         ordered = self._order_hf_parquet_files(config, repo_id, parquet_files, state_code=state_code)
                         if ordered:
@@ -693,7 +725,7 @@ class BluebookCitationResolver:
                             self._hf_source_cache[cache_key] = list(resolved)
                             return resolved
 
-            if had_listing_error or list_repo_files is None or hf_hub_url is None:
+            if had_listing_error or list_repo_files is None or hf_hub_url is None or used_repo_listing:
                 parquet_records = _dataset_server_parquet_records(repo_id)
                 if parquet_records:
                     ordered_urls = _order_dataset_server_parquet_records(config, parquet_records, state_code=state_code)
@@ -743,6 +775,9 @@ class BluebookCitationResolver:
                 if hint and hint in candidate_lower:
                     score += 75
 
+            if "repaired_parquet_" in candidate_lower:
+                score += 325
+
             if state_code:
                 state_filename = f"state-{str(state_code).strip().lower()}.parquet"
                 if candidate_lower.endswith(state_filename):
@@ -757,6 +792,8 @@ class BluebookCitationResolver:
 
             if "metadata" in filename:
                 score -= 200
+            if filename.startswith("deduplicated_"):
+                score -= 800
             if "embedding" in filename or "embeddings" in filename:
                 score -= 250
             if filename.endswith(".faiss") or filename.endswith(".index"):
@@ -770,6 +807,12 @@ class BluebookCitationResolver:
         return ordered[:8]
 
     def _query_source(self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]) -> List[Dict[str, Any]]:
+        if (
+            citation.type == "case"
+            and str(source_ref).startswith(("http://", "https://"))
+            and "refs%2fconvert%2fparquet" in str(source_ref).lower()
+        ):
+            return []
         try:
             import duckdb
         except Exception:
@@ -789,9 +832,45 @@ class BluebookCitationResolver:
             return [dict(zip(columns, row)) for row in rows]
         except Exception as exc:
             logger.debug("Citation source query failed for %s: %s", source_ref, exc)
+            if source_ref.startswith(("http://", "https://")):
+                local_source = self._materialize_remote_parquet(source_ref)
+                if local_source and local_source != source_ref:
+                    return self._query_source(local_source, corpus_key, citation, state_code)
             return []
         finally:
             con.close()
+
+    def _materialize_remote_parquet(self, source_ref: str) -> Optional[str]:
+        cached = self._materialized_remote_sources.get(source_ref)
+        if cached and Path(cached).exists():
+            return cached
+
+        try:
+            import requests
+        except Exception:
+            return None
+
+        digest = hashlib.sha256(source_ref.encode("utf-8")).hexdigest()
+        target_dir = Path(tempfile.gettempdir()) / "bluebook_remote_parquet_cache"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target_path = target_dir / f"{digest}.parquet"
+        if target_path.exists() and target_path.stat().st_size > 0:
+            self._materialized_remote_sources[source_ref] = str(target_path)
+            return str(target_path)
+
+        try:
+            with requests.get(source_ref, stream=True, timeout=120) as response:
+                response.raise_for_status()
+                with target_path.open("wb") as handle:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            handle.write(chunk)
+        except Exception as exc:
+            logger.debug("Failed to materialize remote parquet %s: %s", source_ref, exc)
+            return None
+
+        self._materialized_remote_sources[source_ref] = str(target_path)
+        return str(target_path)
 
     def _query_source_with_pandas(self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]) -> List[Dict[str, Any]]:
         rows = self._load_local_parquet_rows(source_ref)

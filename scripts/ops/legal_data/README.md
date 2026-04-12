@@ -58,37 +58,47 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --filing-url "https://www.courtlistener.com/docket/67658002/american-alliance-for-equal-rights-v-fearless-fund-management-llc-filing/" --output-parquet /tmp/fearless_single_bundle.parquet --strict-evidence-mode --write-enriched-json /tmp/fearless_enriched.json --json`
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --output-parquet /tmp/fearless_full.parquet`
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --input-enriched-json /tmp/fearless_enriched.json --output-parquet /tmp/fearless_from_cache.parquet --strict-evidence-mode`
+	Use embeddings_router + chunking by passing embedding flags, for example:
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --output-parquet /tmp/fearless_embeddings.parquet --embeddings-model "thenlper/gte-small" --embeddings-chunking-strategy sentences --embeddings-batch-size 64 --embeddings-parallel-batches 4`
 	Use `--strict-evidence-mode` when you want the bundle built from the
 	`plain_text+` subset instead of the full enriched docket payload.
 - Run `export_workspace_dataset_single_bundle.py` to ingest a workspace corpus
 	(email, Discord, Google Voice, directories, or custom JSON) and export a
 	single parquet bundle with documents, collections, BM25 rows, vector rows, and
-	knowledge-graph rows.
+	knowledge-graph rows. When `--input-path` is used without `--input-type`, the
+	script auto-detects supported source shapes for directories, Google Voice
+	manifests, Discord exports, email exports, and generic workspace JSON.
 	Examples:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-json /tmp/workspace_payload.json --output-parquet /tmp/workspace_bundle.parquet --json`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/evidence_dir --output-parquet /tmp/workspace_bundle.parquet --workspace-id ws-01 --workspace-name "Evidence Workspace" --source-type directory --glob-pattern "*.txt"`
-	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/google_voice_manifest.json --input-type google-voice-manifest --output-parquet /tmp/voice_bundle.parquet --strict-evidence-mode`
-	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/discord_export.json --input-type discord-export --output-parquet /tmp/discord_bundle.parquet`
-	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/email_export.json --input-type email-export --output-parquet /tmp/email_bundle.parquet`
-- Run `export_workspace_dataset_single_bundle.py` to ingest a generic workspace
-	corpus from JSON or a directory of evidence files and export a single parquet
-	bundle with normalized documents, collections, BM25 rows, vector rows, and
-	knowledge-graph rows. The script also understands explicit source-specific
-	payloads for Google Voice materialization manifests, Discord exports, and
-	email exports via `--input-type` plus `--input-path`.
-	Examples:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-json /tmp/workspace.json --output-parquet /tmp/workspace_bundle.parquet --strict-evidence-mode --write-normalized-json /tmp/workspace_dataset.json --json`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/mailbox --workspace-id mailbox-01 --workspace-name "Consumer Mailbox" --source-type email --output-parquet /tmp/mailbox_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/google_voice_manifest.json --output-parquet /tmp/google_voice_bundle.parquet --strict-evidence-mode`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/discord_export.json --output-parquet /tmp/discord_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/email_export.json --output-parquet /tmp/email_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/imap_snippets_summary.json --output-parquet /tmp/imap_bundle.parquet`
+	Explicit typing remains available when you want to pin the route rather than rely on auto-detection:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-parquet /tmp/google_voice_bundle.parquet --strict-evidence-mode`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type discord-export --input-path /tmp/discord_export.json --output-parquet /tmp/discord_bundle.parquet`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type email-export --input-path /tmp/email_export.json --output-parquet /tmp/email_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-parquet /tmp/imap_bundle.parquet`
+	To enable real embeddings + chunking:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/mailbox --output-parquet /tmp/mailbox_bundle.parquet --embeddings-model "thenlper/gte-small" --embeddings-chunking-strategy sentences --embeddings-batch-size 64 --embeddings-parallel-batches 4`
 	Use `--strict-evidence-mode` when you want the bundle built from the
 	`plain_text+` retrieval subset instead of the full normalized workspace payload.
 - Run `export_workspace_dataset_bundle.py` to package a workspace dataset into
 	chain-loadable parquet (and optional CAR) artifacts similar to docket bundles.
+	When `--input-path` is used without `--input-type`, the script auto-detects
+	the same supported source shapes as the single-bundle exporter.
 	Examples:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-directory /tmp/mailbox --workspace-id mailbox-01 --workspace-name "Consumer Mailbox" --source-type email --output-dir /tmp/mailbox_bundle --no-car`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-path /tmp/email_export.json --output-dir /tmp/email_bundle --package-name email_bundle --no-car --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json`
+	Explicit typing remains available when you want to pin the route:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-dir /tmp/google_voice_bundle --package-name google_voice_bundle --no-car`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-dir /tmp/imap_bundle --package-name imap_bundle --no-car`
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

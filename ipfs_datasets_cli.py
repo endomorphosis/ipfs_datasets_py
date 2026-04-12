@@ -3203,17 +3203,18 @@ Examples:
 
             if not subcommand or subcommand in ['-h', '--help']:
                 print("""
-ipfs-datasets workspace - Inspect workspace dataset single-parquet bundles
+ipfs-datasets workspace - Inspect, export, and package workspace dataset bundles
 
-Usage: ipfs-datasets workspace [--input-path PATH] [--action {summary,inspect,load,report,export}] [options]
+Usage: ipfs-datasets workspace [--input-path PATH] [--action {summary,inspect,load,report,export,package,package-summary,package-inspect,package-load,package-report,chain,components}] [options]
 
 Options:
     --input-path PATH
     --input-json PATH
     --input-directory PATH
-    --input-type {workspace-json,directory,google-voice-manifest,discord-export,email-export}
-    --action {summary,inspect,load,report,export}
+    --input-type {workspace-json,directory,google-voice-manifest,discord-export,email-export,imap-snippet-summary}
+        --action {summary,inspect,load,report,export,package,package-summary,package-inspect,package-load,package-report,chain,components}
     --output-parquet PATH
+        --output-dir PATH
   --fields FIELD1,FIELD2
     --report-format {markdown,text,json}
     --strict-evidence-mode
@@ -3224,7 +3225,8 @@ Examples:
   ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action inspect --fields workspace_id,row_count,sections
   ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action load --json
     ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action report --report-format markdown
-    ipfs-datasets workspace --action export --input-type email-export --input-path ./email_export.json --output-parquet ./email_bundle.parquet --json
+        ipfs-datasets workspace --action export --input-path ./email_export.json --output-parquet ./email_bundle.parquet --json
+        ipfs-datasets workspace --action package --input-path ./discord_export.json --output-dir ./workspace_package --package-name workspace_package --json
 """)
                 return
 

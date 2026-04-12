@@ -52,7 +52,21 @@ def _normalize_parquet_row(row: Mapping[str, Any]) -> Dict[str, Any]:
 
 def _write_rows_to_parquet(rows: Sequence[Dict[str, Any]], output_path: Path) -> Dict[str, Any]:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    normalized_rows = [_normalize_parquet_row(row) for row in rows] if rows else [{"_empty": True}]
+    if rows:
+        field_names: List[str] = []
+        seen = set()
+        for row in rows:
+            for key in row.keys():
+                name = str(key)
+                if name not in seen:
+                    seen.add(name)
+                    field_names.append(name)
+        normalized_rows = [
+            _normalize_parquet_row({name: row.get(name) for name in field_names})
+            for row in rows
+        ]
+    else:
+        normalized_rows = [{"_empty": True}]
     table = pa.Table.from_pylist(normalized_rows)
     pq.write_table(table, output_path)
     return {
@@ -147,6 +161,10 @@ class WorkspaceDatasetPackager:
         bm25_documents = [dict(item) for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or []) if isinstance(item, dict)]
         vector_items = [dict(item) for item in list((dataset_payload.get("vector_index") or {}).get("items") or []) if isinstance(item, dict)]
         metadata = dict(dataset_payload.get("metadata") or {})
+        artifact_provenance = dict(metadata.get("artifact_provenance") or {})
+        workspace_input_provenance = dict(artifact_provenance.get("workspace_input") or {})
+        input_type = str(workspace_input_provenance.get("input_type") or "")
+        input_type_resolution = str(workspace_input_provenance.get("input_type_resolution") or "")
 
         section_rows: List[tuple[str, str, List[Dict[str, Any]], List[str]]] = [
             (
@@ -225,6 +243,8 @@ class WorkspaceDatasetPackager:
             "workspace_id": str(dataset_payload.get("workspace_id") or ""),
             "workspace_name": str(dataset_payload.get("workspace_name") or ""),
             "source_type": str(dataset_payload.get("source_type") or "workspace"),
+            "input_type": input_type,
+            "input_type_resolution": input_type_resolution,
             "piece_count": len(pieces),
             "parquet_enabled": True,
             "car_enabled": include_car,
@@ -277,6 +297,8 @@ class WorkspaceDatasetPackager:
             "manifest_parquet_path": str(manifest_parquet_path),
             "manifest_car_path": str(bundle_dir / manifest_car_path) if manifest_car_path else "",
             "manifest_root_cid": manifest_root_cid,
+            "input_type": input_type,
+            "input_type_resolution": input_type_resolution,
             "piece_count": len(pieces),
             "pieces": [piece.to_dict() for piece in pieces],
             "summary": dict(manifest["summary"]),
@@ -329,6 +351,8 @@ class WorkspaceDatasetPackager:
             "workspace_id": str(dataset_core.get("workspace_id") or manifest.get("workspace_id") or ""),
             "workspace_name": str(dataset_core.get("workspace_name") or manifest.get("workspace_name") or ""),
             "source_type": str(dataset_core.get("source_type") or manifest.get("source_type") or "workspace"),
+            "input_type": str(manifest.get("input_type") or ""),
+            "input_type_resolution": str(manifest.get("input_type_resolution") or ""),
             "documents": _restore_rows(rows_by_piece.get("documents") or []),
             "collections": _restore_rows(rows_by_piece.get("collections") or []),
             "knowledge_graph": {
@@ -350,20 +374,42 @@ class WorkspaceDatasetPackager:
             },
         }
 
+    def _load_collection_overview(self, bundle_dir: Path, manifest: Mapping[str, Any]) -> List[Dict[str, Any]]:
+        rows = self.load_package_components(bundle_dir, piece_ids=["collections"], manifest=dict(manifest)).get("collections") or []
+        collections = _restore_rows(rows)
+        overview: List[Dict[str, Any]] = []
+        for collection in collections:
+            document_ids = _parse_possible_json(collection.get("document_ids")) or []
+            if not isinstance(document_ids, list):
+                document_ids = []
+            overview.append(
+                {
+                    "id": str(collection.get("id") or ""),
+                    "title": str(collection.get("title") or ""),
+                    "source_type": str(collection.get("source_type") or ""),
+                    "parent_document_id": str(collection.get("parent_document_id") or ""),
+                    "document_count": len(document_ids),
+                }
+            )
+        return overview
+
     def load_summary_view(self, manifest_path: str | Path) -> Dict[str, Any]:
-        _, manifest = self._resolve_manifest(manifest_path)
+        bundle_dir, manifest = self._resolve_manifest(manifest_path)
         summary = dict(manifest.get("summary") or {})
         return {
             "dataset_id": str(manifest.get("dataset_id") or ""),
             "workspace_id": str(manifest.get("workspace_id") or ""),
             "workspace_name": str(manifest.get("workspace_name") or ""),
             "source_type": str(manifest.get("source_type") or "workspace"),
+            "input_type": str(manifest.get("input_type") or ""),
+            "input_type_resolution": str(manifest.get("input_type_resolution") or ""),
             "document_count": int(summary.get("document_count") or 0),
             "collection_count": int(summary.get("collection_count") or 0),
             "knowledge_graph_entity_count": int(summary.get("knowledge_graph_entity_count") or 0),
             "knowledge_graph_relationship_count": int(summary.get("knowledge_graph_relationship_count") or 0),
             "bm25_document_count": int(summary.get("bm25_document_count") or 0),
             "vector_document_count": int(summary.get("vector_document_count") or 0),
+            "collection_overview": self._load_collection_overview(bundle_dir, manifest),
             "package_manifest": dict(manifest),
         }
 
@@ -375,8 +421,11 @@ class WorkspaceDatasetPackager:
             "workspace_id": summary.get("workspace_id"),
             "workspace_name": summary.get("workspace_name"),
             "source_type": summary.get("source_type"),
+            "input_type": summary.get("input_type"),
+            "input_type_resolution": summary.get("input_type_resolution"),
             "document_count": summary.get("document_count"),
             "collection_count": summary.get("collection_count"),
+            "collection_overview": list(summary.get("collection_overview") or []),
             "knowledge_graph_entity_count": summary.get("knowledge_graph_entity_count"),
             "knowledge_graph_relationship_count": summary.get("knowledge_graph_relationship_count"),
             "bm25_document_count": summary.get("bm25_document_count"),
@@ -442,6 +491,8 @@ def render_packaged_workspace_report(
         f"Workspace ID: {str(inspection.get('workspace_id') or '')}",
         f"Workspace Name: {str(inspection.get('workspace_name') or '')}",
         f"Source Type: {str(inspection.get('source_type') or '')}",
+        f"Input Type: {str(inspection.get('input_type') or '')}",
+        f"Input Type Resolution: {str(inspection.get('input_type_resolution') or '')}",
         f"Document Count: {int(inspection.get('document_count') or 0)}",
         f"Collection Count: {int(inspection.get('collection_count') or 0)}",
         f"Knowledge Graph Entities: {int(inspection.get('knowledge_graph_entity_count') or 0)}",
@@ -450,6 +501,16 @@ def render_packaged_workspace_report(
         f"Vector Documents: {int(inspection.get('vector_document_count') or 0)}",
         f"Piece Count: {int(inspection.get('piece_count') or 0)}",
     ]
+    collection_overview = [dict(item) for item in list(inspection.get("collection_overview") or []) if isinstance(item, Mapping)]
+    if collection_overview:
+        lines.append("Collection Overview:")
+        for item in collection_overview:
+            lines.append(
+                "  - "
+                f"{str(item.get('id') or '')}"
+                f" [{str(item.get('source_type') or '')}]"
+                f" ({int(item.get('document_count') or 0)} docs)"
+            )
     if normalized_format == "text":
         return "\n".join(lines) + "\n"
     if normalized_format == "markdown":

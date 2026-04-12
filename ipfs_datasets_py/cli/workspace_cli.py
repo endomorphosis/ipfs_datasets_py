@@ -14,6 +14,13 @@ from ipfs_datasets_py.processors.legal_data import (
     load_workspace_dataset_single_parquet,
     load_workspace_dataset_single_parquet_summary,
     render_workspace_dataset_single_parquet_report,
+    inspect_packaged_workspace_bundle,
+    iter_packaged_workspace_chain,
+    load_packaged_workspace_dataset,
+    load_packaged_workspace_dataset_components,
+    load_packaged_workspace_summary_view,
+    package_workspace_dataset,
+    render_packaged_workspace_report,
 )
 
 __all__ = ["create_parser", "main"]
@@ -62,31 +69,50 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--action",
-        choices=["summary", "inspect", "load", "report", "export"],
+        choices=["summary", "inspect", "load", "report", "export", "package", "package-summary", "package-inspect", "package-load", "package-report", "chain", "components"],
         default="summary",
-        help="Read a lightweight summary, bundle inspection view, full dataset-shaped payload, rendered report, or export a new workspace bundle.",
+        help="Read a lightweight summary, bundle inspection view, full dataset payload, rendered report, export a single parquet bundle, or package a multi-piece bundle.",
     )
     parser.add_argument(
         "--input-path",
         required=False,
-        help="Path to the workspace dataset bundle for read actions, or input source path for --action export when paired with --input-type.",
+        help="Path to the workspace dataset bundle for read actions, or an input source path for --action export/--action package.",
     )
-    parser.add_argument("--input-json", default="", help="For --action export, path to a workspace JSON payload.")
-    parser.add_argument("--input-directory", default="", help="For --action export, path to a directory corpus.")
+    parser.add_argument("--input-json", default="", help="For --action export or --action package, path to a workspace JSON payload.")
+    parser.add_argument("--input-directory", default="", help="For --action export or --action package, path to a directory corpus.")
     parser.add_argument(
         "--input-type",
-        choices=["workspace-json", "directory", "google-voice-manifest", "discord-export", "email-export"],
+        choices=[
+            "workspace-json",
+            "directory",
+            "google-voice-manifest",
+            "discord-export",
+            "email-export",
+            "imap-snippet-summary",
+        ],
         default="",
-        help="For --action export, explicit source type when using --input-path.",
+        help="For --action export or --action package, explicit source type when using --input-path. Omit it to auto-detect supported source shapes.",
     )
     parser.add_argument("--output-parquet", default="", help="For --action export, path to the output parquet bundle.")
-    parser.add_argument("--workspace-id", default="", help="For --action export directory imports, optional workspace id override.")
-    parser.add_argument("--workspace-name", default="", help="For --action export directory imports, optional workspace name override.")
-    parser.add_argument("--source-type", default="workspace", help="For --action export, logical workspace source type label.")
-    parser.add_argument("--strict-evidence-mode", action="store_true", help="For --action export, restrict to the plain_text+ retrieval subset.")
-    parser.add_argument("--vector-dimension", type=int, default=16, help="For --action export, local vector dimension.")
-    parser.add_argument("--glob-pattern", default="*", help="For --action export directory imports, optional file glob.")
+    parser.add_argument("--output-dir", default="", help="For --action package, directory to write a packaged bundle.")
+    parser.add_argument("--package-name", default="", help="For --action package, optional package name.")
+    parser.add_argument("--workspace-id", default="", help="For --action export or --action package directory imports, optional workspace id override.")
+    parser.add_argument("--workspace-name", default="", help="For --action export or --action package directory imports, optional workspace name override.")
+    parser.add_argument("--source-type", default="", help="For --action export or --action package, logical workspace source type label.")
+    parser.add_argument("--embeddings-provider", default="", help="For --action export, embeddings router provider override.")
+    parser.add_argument("--embeddings-model", default="", help="For --action export, embeddings model name override.")
+    parser.add_argument("--embeddings-device", default="", help="For --action export, embeddings device override.")
+    parser.add_argument("--embeddings-batch-size", type=int, default=128, help="For --action export, embeddings batch size.")
+    parser.add_argument("--embeddings-parallel-batches", type=int, default=1, help="For --action export, embeddings parallel batches.")
+    parser.add_argument("--embeddings-chunking-strategy", default="", help="For --action export, embeddings chunking strategy.")
+    parser.add_argument("--embeddings-chunk-size", type=int, default=512, help="For --action export, embeddings chunk size.")
+    parser.add_argument("--embeddings-chunk-overlap", type=int, default=50, help="For --action export, embeddings chunk overlap.")
+    parser.add_argument("--strict-evidence-mode", action="store_true", help="For --action export or --action package, restrict to the plain_text+ retrieval subset.")
+    parser.add_argument("--vector-dimension", type=int, default=16, help="For --action export or --action package, local vector dimension.")
+    parser.add_argument("--glob-pattern", default="*", help="For --action export or --action package directory imports, optional file glob.")
     parser.add_argument("--write-normalized-json", default="", help="For --action export, optional path to persist normalized dataset JSON.")
+    parser.add_argument("--no-car", action="store_true", help="For --action package, disable CAR emission.")
+    parser.add_argument("--piece-ids", default="", help="For --action components, comma-separated list of piece ids to load.")
     parser.add_argument(
         "--fields",
         default=None,
@@ -110,7 +136,7 @@ def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
 
-    if parsed.action == "export":
+    if parsed.action in {"export", "package"}:
         export_args: list[str] = ["--output-parquet", str(parsed.output_parquet or "")] if str(parsed.output_parquet or "").strip() else []
         if str(parsed.input_json or "").strip():
             export_args.extend(["--input-json", str(parsed.input_json)])
@@ -126,6 +152,22 @@ def main(args: list[str] | None = None) -> int:
             export_args.extend(["--workspace-name", str(parsed.workspace_name)])
         if str(parsed.source_type or "").strip():
             export_args.extend(["--source-type", str(parsed.source_type)])
+        if str(parsed.embeddings_provider or "").strip():
+            export_args.extend(["--embeddings-provider", str(parsed.embeddings_provider)])
+        if str(parsed.embeddings_model or "").strip():
+            export_args.extend(["--embeddings-model", str(parsed.embeddings_model)])
+        if str(parsed.embeddings_device or "").strip():
+            export_args.extend(["--embeddings-device", str(parsed.embeddings_device)])
+        if int(parsed.embeddings_batch_size or 0) > 0:
+            export_args.extend(["--embeddings-batch-size", str(parsed.embeddings_batch_size)])
+        if int(parsed.embeddings_parallel_batches or 0) > 0:
+            export_args.extend(["--embeddings-parallel-batches", str(parsed.embeddings_parallel_batches)])
+        if str(parsed.embeddings_chunking_strategy or "").strip():
+            export_args.extend(["--embeddings-chunking-strategy", str(parsed.embeddings_chunking_strategy)])
+        if int(parsed.embeddings_chunk_size or 0) > 0:
+            export_args.extend(["--embeddings-chunk-size", str(parsed.embeddings_chunk_size)])
+        if int(parsed.embeddings_chunk_overlap or 0) >= 0:
+            export_args.extend(["--embeddings-chunk-overlap", str(parsed.embeddings_chunk_overlap)])
         if bool(parsed.strict_evidence_mode):
             export_args.append("--strict-evidence-mode")
         if int(parsed.vector_dimension or 0) > 0:
@@ -138,8 +180,44 @@ def main(args: list[str] | None = None) -> int:
             export_args.append("--json")
         if not export_args:
             parser.error("--action export requires export input flags and --output-parquet.")
+        if parsed.action == "export":
+            export_module = _load_export_workspace_script_module()
+            return int(export_module.main(export_args))
+        if not str(parsed.output_dir or "").strip():
+            parser.error("--output-dir is required for --action package.")
+        from ipfs_datasets_py.processors.legal_data import WorkspaceDatasetBuilder
+
         export_module = _load_export_workspace_script_module()
-        return int(export_module.main(export_args))
+        builder = WorkspaceDatasetBuilder(vector_dimension=int(parsed.vector_dimension or 16))
+        try:
+            input_type, input_type_resolution = export_module._resolve_workspace_input_type(parsed)
+            dataset_payload = export_module._load_dataset(parsed, builder)
+        except ValueError as exc:
+            parser.error(str(exc))
+
+        dataset_dict = dataset_payload.to_dict() if hasattr(dataset_payload, "to_dict") else dict(dataset_payload)
+        metadata = dict(dataset_dict.get("metadata") or {})
+        artifact_provenance = dict(metadata.get("artifact_provenance") or {})
+        artifact_provenance["workspace_input"] = {
+            "input_type": str(input_type or ""),
+            "input_type_resolution": str(input_type_resolution or ""),
+        }
+        metadata["artifact_provenance"] = artifact_provenance
+        dataset_dict["metadata"] = metadata
+
+        packaged = package_workspace_dataset(
+            dataset_dict,
+            str(parsed.output_dir),
+            package_name=str(parsed.package_name or "") or None,
+            include_car=not bool(parsed.no_car),
+        )
+        packaged["input_type"] = str(input_type or "")
+        packaged["input_type_resolution"] = str(input_type_resolution or "")
+        if parsed.json:
+            print(json.dumps(packaged, indent=2, ensure_ascii=False))
+        else:
+            print(render_packaged_workspace_report(str(packaged.get("manifest_json_path") or ""), report_format="text"), end="")
+        return 0
 
     fields = _parse_fields_arg(parsed.fields)
     if not str(parsed.input_path or "").strip():
@@ -171,6 +249,29 @@ def main(args: list[str] | None = None) -> int:
         )
         print(rendered, end="")
         return 0
+    elif parsed.action == "package-summary":
+        payload = load_packaged_workspace_summary_view(bundle_path)
+        title = "Packaged Workspace Summary"
+    elif parsed.action == "package-inspect":
+        payload = inspect_packaged_workspace_bundle(bundle_path)
+        title = "Packaged Workspace Inspection"
+    elif parsed.action == "package-load":
+        payload = load_packaged_workspace_dataset(bundle_path)
+        title = "Packaged Workspace Dataset"
+    elif parsed.action == "package-report":
+        rendered = render_packaged_workspace_report(
+            bundle_path,
+            report_format="json" if parsed.json else parsed.report_format,
+        )
+        print(rendered, end="")
+        return 0
+    elif parsed.action == "chain":
+        payload = iter_packaged_workspace_chain(bundle_path)
+        title = "Packaged Workspace Chain"
+    elif parsed.action == "components":
+        piece_ids = [item.strip() for item in str(parsed.piece_ids or "").split(",") if item.strip()]
+        payload = load_packaged_workspace_dataset_components(bundle_path, piece_ids=piece_ids or None)
+        title = "Packaged Workspace Components"
     else:
         payload = load_workspace_dataset_single_parquet(bundle_path)
         title = "Workspace Bundle"
