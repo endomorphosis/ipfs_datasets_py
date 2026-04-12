@@ -205,6 +205,13 @@ class EULegalCitationLookupResult:
     notes: List[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class EULegalResolutionBundle:
+    reasoning_bundle: EULegalReasoningBundle
+    lookup_plan: EULegalCitationLookupPlan
+    lookup_result: Optional[EULegalCitationLookupResult] = None
+
+
 EU_JURISDICTION_PROFILES: Dict[str, EUJurisdictionProfile] = {
     "EU": EUJurisdictionProfile(
         code="EU",
@@ -351,12 +358,24 @@ def build_eu_legal_citation_lookup_plan(
             action_type = "member_state_law_lookup"
             query_text = citation.normalized_text
             action_notes.append("Use Netherlands law corpus search for BWBR/BW references.")
-        elif citation.member_state in {"DE", "FR", "ES"}:
-            handler_key = f"{citation.member_state.lower()}_law_registry"
-            dataset_id = f"{citation.member_state.lower()}_law_registry"
+        elif citation.member_state == "DE":
+            handler_key = "germany_laws"
+            dataset_id = "germany_laws"
             action_type = "member_state_law_lookup"
             query_text = citation.normalized_text
-            action_notes.append("Provide a member-state handler to execute this lookup.")
+            action_notes.append("Use Germany canonical law corpus for GG references.")
+        elif citation.member_state == "FR":
+            handler_key = "france_laws"
+            dataset_id = "france_laws"
+            action_type = "member_state_law_lookup"
+            query_text = citation.normalized_text
+            action_notes.append("Use France canonical law corpus for Code civil references.")
+        elif citation.member_state == "ES":
+            handler_key = "spain_laws"
+            dataset_id = "spain_laws"
+            action_type = "member_state_law_lookup"
+            query_text = citation.normalized_text
+            action_notes.append("Use Spain canonical law corpus for Codigo Civil references.")
         else:
             action_notes.append("Provide a custom handler to resolve this citation.")
 
@@ -464,6 +483,74 @@ def eu_legal_citation_lookup_result_to_dict(result: EULegalCitationLookupResult)
     }
 
 
+async def build_eu_legal_resolution_bundle(
+    text: str,
+    *,
+    language: Optional[str] = None,
+    execute_lookup: bool = False,
+    lookup_handlers: Optional[Dict[str, Callable[[EULegalCitationLookupAction], Any]]] = None,
+    tool_version: str = "1.0.0",
+) -> EULegalResolutionBundle:
+    reasoning_bundle = build_eu_legal_reasoning_bundle(text, language=language)
+    lookup_plan = build_eu_legal_citation_lookup_plan(text, language=language)
+    lookup_result: Optional[EULegalCitationLookupResult] = None
+    if execute_lookup:
+        handlers = lookup_handlers or build_default_eu_lookup_handlers(tool_version=tool_version)
+        lookup_result = await execute_eu_legal_citation_lookup_plan(lookup_plan, lookup_handlers=handlers)
+    return EULegalResolutionBundle(
+        reasoning_bundle=reasoning_bundle,
+        lookup_plan=lookup_plan,
+        lookup_result=lookup_result,
+    )
+
+
+def eu_legal_resolution_bundle_to_dict(bundle: EULegalResolutionBundle) -> Dict[str, Any]:
+    return {
+        "reasoning_bundle": eu_legal_reasoning_bundle_to_dict(bundle.reasoning_bundle),
+        "lookup_plan": eu_legal_citation_lookup_plan_to_dict(bundle.lookup_plan),
+        "lookup_result": eu_legal_citation_lookup_result_to_dict(bundle.lookup_result)
+        if bundle.lookup_result
+        else None,
+    }
+
+
+def _fetch_url_metadata(url: str, *, timeout: float = 10.0, label: str = "http") -> Dict[str, Any]:
+    try:
+        import requests
+    except Exception:
+        return {"resolved": False, "url": url, "error": "requests_unavailable", "handler": label}
+
+    try:
+        response = requests.get(url, timeout=timeout, headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"})
+        status = response.status_code
+        title = ""
+        if response.text:
+            match = re.search(r"<title>(.*?)</title>", response.text, re.IGNORECASE | re.DOTALL)
+            if match:
+                title = _normalize_space(match.group(1))
+            if not title:
+                og_match = re.search(
+                    r'<meta\s+property=["\']og:title["\']\s+content=["\'](.*?)["\']',
+                    response.text,
+                    re.IGNORECASE | re.DOTALL,
+                )
+                if og_match:
+                    title = _normalize_space(og_match.group(1))
+        return {
+            "resolved": bool(status and status < 400),
+            "url": url,
+            "status_code": status,
+            "title": title,
+            "handler": label,
+        }
+    except Exception as exc:
+        return {"resolved": False, "url": url, "error": str(exc), "handler": label}
+
+
+def _fetch_eurlex_metadata(url: str, *, timeout: float = 10.0) -> Dict[str, Any]:
+    return _fetch_url_metadata(url, timeout=timeout, label="eurlex_registry")
+
+
 def build_default_eu_lookup_handlers(
     *,
     tool_version: str = "1.0.0",
@@ -494,11 +581,67 @@ def build_default_eu_lookup_handlers(
         }
         return await search_netherlands_law_corpus_from_parameters(params, tool_version=tool_version)
 
+    async def _eurlex_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
+        url = action.query_text or action.citation.canonical_uri
+        return _fetch_eurlex_metadata(url)
+
+    def _ecli_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
+        canonical = action.citation.canonical_uri
+        return {
+            "resolved": False,
+            "query": action.query_text,
+            "canonical_uri": canonical,
+            "handler": "ecli_registry",
+            "notes": [
+                "ECLI identifiers are jurisdiction-specific; provide a resolver for the relevant court system.",
+                "Use the canonical ECLI identifier as the primary key when enriching case metadata.",
+            ],
+        }
+
+    async def _member_state_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
+        url = action.citation.canonical_uri
+        if not url or not url.startswith("http"):
+            return {
+                "resolved": False,
+                "query": action.query_text,
+                "canonical_uri": url,
+                "handler": action.handler_key,
+                "notes": ["No HTTP canonical URI available for this member-state citation."],
+            }
+        return _fetch_url_metadata(url, label=action.handler_key)
+
+    async def _canonical_corpus_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
+        try:
+            from .justicedao_dataset_inventory import canonical_corpus_query_result_to_dict, query_canonical_legal_corpus
+        except Exception:
+            return {
+                "resolved": False,
+                "query": action.query_text,
+                "results": [],
+                "notes": ["Canonical corpus query backend not available."],
+            }
+
+        result = query_canonical_legal_corpus(
+            str(action.dataset_id or action.handler_key or "").strip(),
+            query_text=action.query_text,
+            mode="auto",
+        )
+        payload = canonical_corpus_query_result_to_dict(result)
+        payload["resolved"] = bool(payload.get("results"))
+        payload["query"] = action.query_text
+        return payload
+
     return {
-        "eurlex_registry": _noop_handler,
-        "ecli_registry": _noop_handler,
+        "eurlex_registry": _eurlex_handler,
+        "ecli_registry": _ecli_handler,
         "eu_registry": _noop_handler,
         "netherlands_laws": _netherlands_handler,
+        "de_law_registry": _member_state_handler,
+        "fr_law_registry": _member_state_handler,
+        "es_law_registry": _member_state_handler,
+        "germany_laws": _canonical_corpus_handler,
+        "france_laws": _canonical_corpus_handler,
+        "spain_laws": _canonical_corpus_handler,
     }
 
 

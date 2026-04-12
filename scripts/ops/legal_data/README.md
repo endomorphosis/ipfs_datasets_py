@@ -41,6 +41,15 @@ Notes:
 	parquet for direct semantic retrieval. When `--publish-to-hf` is used, the
 	generated sidecars, and optionally the canonical parquet itself, are uploaded
 	back to the target JusticeDAO dataset repo.
+- Run `store_huggingface_token.py` to place a Hugging Face token into a usable
+	secret backend for this machine.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/store_huggingface_token.py --backend auto --json`
+	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/store_huggingface_token.py --backend keyring --service huggingface_hub --account endomorphosis`
+	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/store_huggingface_token.py --backend hf-local --json`
+	In `auto` mode the helper tries the system keyring first, but falls back to
+	Hugging Face's local token store if the secret-service backend is unavailable
+	or noninteractive.
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

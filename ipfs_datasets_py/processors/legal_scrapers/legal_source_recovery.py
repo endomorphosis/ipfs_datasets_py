@@ -24,6 +24,61 @@ from .legal_source_recovery_promotion import (
 )
 
 
+STATE_NAMES = {
+    "AK": "Alaska",
+    "AL": "Alabama",
+    "AR": "Arkansas",
+    "AZ": "Arizona",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DC": "District of Columbia",
+    "DE": "Delaware",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "IA": "Iowa",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "MA": "Massachusetts",
+    "MD": "Maryland",
+    "ME": "Maine",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MO": "Missouri",
+    "MS": "Mississippi",
+    "MT": "Montana",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "NE": "Nebraska",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NV": "Nevada",
+    "NY": "New York",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VA": "Virginia",
+    "VT": "Vermont",
+    "WA": "Washington",
+    "WI": "Wisconsin",
+    "WV": "West Virginia",
+    "WY": "Wyoming",
+}
+
+
 def build_missing_citation_recovery_query(
     citation_text: str,
     *,
@@ -45,8 +100,10 @@ def build_missing_citation_recovery_query(
         state_hint = f" {state}" if state else ""
         return f"{citation}{state_hint} court rules site:.gov OR site:.us"
     if corpus == "state_laws":
+        state_name = STATE_NAMES.get(state, "")
         state_hint = f" {state}" if state else ""
-        return f"{citation}{state_hint} statute site:.gov OR site:.us"
+        name_hint = f" {state_name}" if state_name else ""
+        return f"{citation}{state_hint}{name_hint} official statutes code legislature site:.gov OR site:.us"
     if corpus == "caselaw_access_project":
         return f"{citation} site:courtlistener.com OR site:law.justia.com OR site:.gov"
     return citation
@@ -81,6 +138,9 @@ def _jurisdiction_type_for_corpus(corpus_key: Optional[str]) -> Optional[str]:
 def _score_candidate(result: Dict[str, Any], *, corpus_key: Optional[str], state_code: Optional[str]) -> int:
     url = str(result.get("url") or "")
     domain = urlparse(url).netloc.lower()
+    title = str(result.get("title") or "")
+    snippet = str(result.get("snippet") or result.get("description") or "")
+    combined = f"{title} {url} {snippet}".lower()
     score = 0
     if domain.endswith(".gov") or ".gov" in domain:
         score += 5
@@ -94,6 +154,26 @@ def _score_candidate(result: Dict[str, Any], *, corpus_key: Optional[str], state
         score += 4
     if state_code and state_code.lower() in domain:
         score += 2
+    state_name = STATE_NAMES.get(str(state_code or "").upper(), "")
+    if state_name and state_name.lower() in combined:
+        score += 4
+    if corpus_key == "state_laws":
+        if "statute" in combined or "statutes" in combined or "code" in combined:
+            score += 3
+            if "/statute" in url.lower() or "/statutes" in url.lower() or "/basis/statutes" in url.lower():
+                score += 4
+        elif "legislature" in combined:
+            score -= 2
+        if "bill" in combined or "introduced" in combined or "committee" in combined:
+            score -= 3
+        if domain.endswith("akleg.gov") or ".akleg.gov" in domain:
+            score += 5
+        other_state_hits = [
+            name for code, name in STATE_NAMES.items()
+            if state_code and code != str(state_code).upper() and name.lower() in combined
+        ]
+        if other_state_hits and not (state_name and state_name.lower() in combined):
+            score -= 5
     if result.get("source_type") == "current":
         score += 1
     if result.get("source") == "common_crawl_indexes":
@@ -288,21 +368,7 @@ class LegalSourceRecoveryWorkflow:
                 live_results = []
                 backend_status["live_search_error"] = "live_search_failed"
 
-        effective_archive_searcher = self._archive_searcher or searcher
-        if effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
-            try:
-                archive_payload = effective_archive_searcher.search_with_indexes(
-                    query=query,
-                    jurisdiction_type=jurisdiction_type,
-                    state_code=state_code,
-                    max_results=max_candidates,
-                )
-                archived_results = list((archive_payload or {}).get("results", []) or [])
-            except Exception as exc:
-                archived_results = []
-                backend_status["archive_search_error"] = str(exc)
-
-        if not live_results and not archived_results:
+        if not live_results:
             try:
                 engines: List[str] = []
                 if backend_status["brave_configured"]:
@@ -334,6 +400,20 @@ class LegalSourceRecoveryWorkflow:
                     backend_status["multi_engine_error"] = "no_search_engines_available"
             except Exception as exc:
                 backend_status["multi_engine_error"] = str(exc)
+
+        effective_archive_searcher = self._archive_searcher or searcher
+        if (not live_results) and effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
+            try:
+                archive_payload = effective_archive_searcher.search_with_indexes(
+                    query=query,
+                    jurisdiction_type=jurisdiction_type,
+                    state_code=state_code,
+                    max_results=max_candidates,
+                )
+                archived_results = list((archive_payload or {}).get("results", []) or [])
+            except Exception as exc:
+                archived_results = []
+                backend_status["archive_search_error"] = str(exc)
 
         merged_results: List[Dict[str, Any]] = []
         seen_urls: set[str] = set()

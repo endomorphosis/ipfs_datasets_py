@@ -22,6 +22,7 @@ from .canonical_legal_corpora import (
     list_canonical_legal_corpora_by_country,
 )
 from .eu_legal_citation_bridge import get_eu_jurisdiction_profiles
+from .eu_legal_citation_bridge import extract_eu_legal_citations
 from .legal_source_recovery_promotion import (
     build_recovery_manifest_promotion_row,
     build_recovery_manifest_release_plan,
@@ -673,6 +674,12 @@ def build_eu_country_corpus_onboarding_plan(
             if dataset_id
         ]
         canonical_keys = [corpus.key for corpus in canonical_corpora if corpus.normalized_branch() == "eu"]
+        canonical_dataset_ids = {
+            str(corpus.hf_dataset_id)
+            for corpus in canonical_corpora
+            if corpus.normalized_branch() == "eu"
+        }
+        has_observed_primary_dataset = any(dataset_id in canonical_dataset_ids for dataset_id in existing_dataset_ids)
         proposed_corpus = proposed_corpora.get(country_code)
         plan[country_code] = {
             "label": label,
@@ -683,7 +690,7 @@ def build_eu_country_corpus_onboarding_plan(
             "existing_dataset_ids": sorted(existing_dataset_ids),
             "status": (
                 "covered"
-                if canonical_keys and existing_dataset_ids
+                if canonical_keys and has_observed_primary_dataset
                 else "registered"
                 if canonical_keys
                 else "in_progress"
@@ -1138,6 +1145,17 @@ def _strategy_rank_for_citation(citation: Citation, strategy: BluebookQueryStrat
     return 0
 
 
+def _strategy_rank_for_eu_citation(citation: Any, strategy: BluebookQueryStrategy) -> int:
+    member_state = str(getattr(citation, "member_state", "") or "").strip().upper()
+    if not member_state or member_state not in {str(code).strip().upper() for code in strategy.country_codes}:
+        return 0
+    if strategy.support_level == "metadata_only":
+        return 100
+    if strategy.support_level == "sidecar":
+        return 70
+    return 10
+
+
 def build_justicedao_bluebook_query_plan(
     text: str,
     *,
@@ -1146,6 +1164,7 @@ def build_justicedao_bluebook_query_plan(
 ) -> BluebookDatasetQueryPlan:
     active_extractor = extractor or CitationExtractor()
     citations = active_extractor.extract_citations(text)
+    eu_citations = extract_eu_legal_citations(text)
     active_profiles = list(profiles or inspect_justicedao_datasets(dataset_prefix=""))
     strategies = derive_justicedao_bluebook_strategies(active_profiles)
 
@@ -1177,27 +1196,66 @@ def build_justicedao_bluebook_query_plan(
             )
         )
 
+    for citation in eu_citations:
+        ranked = sorted(
+            strategies.values(),
+            key=lambda item: (-_strategy_rank_for_eu_citation(citation, item), item.dataset_id),
+        )
+        candidates = [item for item in ranked if _strategy_rank_for_eu_citation(citation, item) > 0]
+        if not candidates:
+            continue
+        notes = [
+            "Use the extracted EU/member-state identifier as the primary lookup key before falling back to lexical search.",
+        ]
+        if str(getattr(citation, "member_state", "") or "").strip().upper():
+            notes.append(
+                f"Prefer the canonical {str(getattr(citation, 'member_state', '')).strip().upper()} member-state corpus before sidecars."
+            )
+        plans.append(
+            CitationQueryPlan(
+                citation_text=str(getattr(citation, "raw_text", "") or getattr(citation, "normalized_text", "") or ""),
+                citation_type=f"eu_{str(getattr(citation, 'scheme', 'identifier')).strip().lower()}",
+                normalized_citation=str(getattr(citation, "normalized_text", "") or "").strip(),
+                candidate_datasets=candidates,
+                notes=notes,
+            )
+        )
+
     dataset_notes = [
         "Canonical corpora are partitioned into legal branches, currently US and EU, so dataset maintenance can expand country-by-country without mixing jurisdiction assumptions.",
         "JusticeDAO state-law, admin-rule, and court-rule corpora share a near-identical schema, so one Bluebook adapter can handle all three.",
         "american_municipal_law is best queried through its *_citation.parquet files, then joined to *_html.parquet by cid.",
         "ipfs_uscode is exposed as a CID index in the datasets server and should be treated as a two-step citation -> cid -> rich text lookup.",
         "Netherlands laws is maintained as an EU-country corpus, with BM25 and knowledge-graph sidecars layered on top of the primary laws dataset.",
+        "EU member-state citations extracted by the EU bridge can now seed canonical corpus query plans for Netherlands, France, Germany, and Spain.",
     ]
     return BluebookDatasetQueryPlan(
         input_text=str(text or ""),
         citations=[
-            {
-                "text": citation.text,
-                "type": citation.type,
-                "jurisdiction": citation.jurisdiction,
-                "title": citation.title,
-                "section": citation.section,
-                "volume": citation.volume,
-                "reporter": citation.reporter,
-                "page": citation.page,
-            }
-            for citation in citations
+            *[
+                {
+                    "text": citation.text,
+                    "type": citation.type,
+                    "jurisdiction": citation.jurisdiction,
+                    "title": citation.title,
+                    "section": citation.section,
+                    "volume": citation.volume,
+                    "reporter": citation.reporter,
+                    "page": citation.page,
+                }
+                for citation in citations
+            ],
+            *[
+                {
+                    "text": str(getattr(citation, "raw_text", "") or getattr(citation, "normalized_text", "") or ""),
+                    "type": f"eu_{str(getattr(citation, 'scheme', 'identifier')).strip().lower()}",
+                    "jurisdiction": getattr(citation, "jurisdiction", None),
+                    "member_state": getattr(citation, "member_state", None),
+                    "scheme": getattr(citation, "scheme", None),
+                    "canonical_uri": getattr(citation, "canonical_uri", None),
+                }
+                for citation in eu_citations
+            ],
         ],
         query_plans=plans,
         dataset_notes=dataset_notes,
@@ -3910,6 +3968,30 @@ def query_canonical_legal_corpus(
     text_fields = list(config["text_fields"])
     join_field = str(config["join_field"])
 
+    if active_mode in {"auto", "exact"} and _canonical_metadata_for_dataset(dataset_id).get("legal_branch") == "eu":
+        eu_citation_links, eu_exact_results = _exact_eu_query_rows(
+            parquet_path,
+            query_text=query_text,
+            title_fields=title_fields,
+            join_field=join_field,
+            top_k=top_k,
+        )
+        if eu_exact_results:
+            return CanonicalCorpusQueryResult(
+                corpus_key=normalized_corpus,
+                dataset_id=dataset_id,
+                legal_branch=_canonical_metadata_for_dataset(dataset_id).get("legal_branch"),
+                country_codes=list(_canonical_metadata_for_dataset(dataset_id).get("country_codes") or []),
+                mode="exact",
+                query_text=query_text,
+                state_code=normalized_state,
+                parquet_file=parquet_path,
+                embeddings_file=None,
+                citation_links=eu_citation_links,
+                results=eu_exact_results,
+                notes=["Resolved with EU citation bridge identifiers before semantic or lexical search."],
+            )
+
     if active_mode in {"semantic", "auto"} and faiss_index_path and faiss_metadata_path:
         faiss_results = _faiss_query_rows(
             parquet_path,
@@ -3997,6 +4079,120 @@ def _normalize_text(value: Any) -> str:
 
 def _compact_alnum(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
+
+
+def _eu_citation_match_terms(citation: Any) -> List[str]:
+    terms: List[str] = []
+
+    def _add(value: Any) -> None:
+        text = str(value or "").strip()
+        if text and text not in terms:
+            terms.append(text)
+
+    _add(getattr(citation, "raw_text", ""))
+    _add(getattr(citation, "normalized_text", ""))
+    _add(getattr(citation, "canonical_uri", ""))
+    for identifier in list(getattr(citation, "identifiers", []) or []):
+        _add(getattr(identifier, "value", ""))
+        _add(getattr(identifier, "canonical_uri", ""))
+    metadata = dict(getattr(citation, "metadata", {}) or {})
+    _add(metadata.get("article"))
+    _add(metadata.get("code"))
+    return terms
+
+
+def _row_matches_eu_citation(row: Dict[str, Any], citation: Any) -> bool:
+    terms = _eu_citation_match_terms(citation)
+    normalized_terms = {_normalize_text(term) for term in terms if term}
+    compact_terms = {_compact_alnum(term) for term in terms if term}
+    candidate_fields = [
+        "citation",
+        "identifier",
+        "law_identifier",
+        "official_identifier",
+        "title",
+        "source_id",
+        "jsonld_id",
+    ]
+    for field in candidate_fields:
+        value = row.get(field)
+        if value in (None, ""):
+            continue
+        normalized_value = _normalize_text(value)
+        compact_value = _compact_alnum(value)
+        if normalized_value and normalized_value in normalized_terms:
+            return True
+        if compact_value and compact_value in compact_terms:
+            return True
+        if normalized_value and any(
+            term and (term in normalized_value or normalized_value in term) for term in normalized_terms
+        ):
+            return True
+        if compact_value and any(
+            term and (term in compact_value or compact_value in term) for term in compact_terms
+        ):
+            return True
+    return False
+
+
+def _exact_eu_query_rows(
+    parquet_path: str,
+    *,
+    query_text: str,
+    title_fields: Sequence[str],
+    join_field: str,
+    top_k: int,
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    eu_citations = extract_eu_legal_citations(query_text)
+    if not eu_citations:
+        return [], []
+
+    rows = _load_rows_from_source(parquet_path)
+    if not rows:
+        return [], []
+
+    citation_links: List[Dict[str, Any]] = []
+    results: List[Dict[str, Any]] = []
+    seen_rows: set[str] = set()
+    for citation in eu_citations:
+        for row in rows:
+            if not _row_matches_eu_citation(row, citation):
+                continue
+            row_key = canonical_json_bytes(row).hex()
+            if row_key in seen_rows:
+                continue
+            seen_rows.add(row_key)
+            source_cid = str(row.get(join_field) or row.get("source_cid") or row.get("cid") or "")
+            citation_links.append(
+                {
+                    "citation_text": str(getattr(citation, "raw_text", "") or getattr(citation, "normalized_text", "") or ""),
+                    "citation_type": f"eu_{str(getattr(citation, 'scheme', 'identifier')).strip().lower()}",
+                    "normalized_citation": str(getattr(citation, "normalized_text", "") or "").strip(),
+                    "matched": True,
+                    "corpus_key": None,
+                    "dataset_id": None,
+                    "matched_field": "eu_identifier",
+                    "confidence": 1.0,
+                    "source_document_id": str(row.get("law_identifier") or row.get("identifier") or ""),
+                    "source_title": _row_title(row, title_fields),
+                    "source_url": str(row.get("source_url") or ""),
+                    "source_cid": source_cid,
+                    "source_ref": parquet_path,
+                    "metadata": {"row": dict(row), "canonical_uri": getattr(citation, "canonical_uri", None)},
+                }
+            )
+            results.append(
+                {
+                    "title": _row_title(row, title_fields),
+                    "score": 1.0,
+                    "source_url": str(row.get("source_url") or ""),
+                    "source_cid": source_cid,
+                    "row": dict(row),
+                }
+            )
+            if len(results) >= int(top_k):
+                return citation_links, results
+    return citation_links, results
 
 
 def _citation_match_terms(citation: Citation) -> List[str]:

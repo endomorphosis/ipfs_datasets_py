@@ -6,10 +6,12 @@ from ipfs_datasets_py.processors.legal_scrapers import (
     build_default_eu_lookup_handlers,
     build_eu_legal_reasoning_bundle,
     build_eu_legal_citation_lookup_plan,
+    build_eu_legal_resolution_bundle,
     eu_legal_citation_lookup_plan_to_dict,
     execute_eu_legal_citation_lookup_plan,
     eu_legal_citation_lookup_result_to_dict,
     eu_legal_reasoning_bundle_to_dict,
+    eu_legal_resolution_bundle_to_dict,
     extract_eu_legal_citations,
     get_eu_jurisdiction_profiles,
 )
@@ -97,7 +99,7 @@ def test_build_eu_legal_reasoning_bundle_surfaces_active_jurisdiction_profiles_a
 
 
 def test_build_eu_legal_citation_lookup_plan_includes_member_state_handlers():
-    text = "Artikel 6:162 BW and CELEX 32016R0679."
+    text = "Artikel 6:162 BW, Art. 1 GG, article 1240 du code civil, articulo 1902 del Codigo Civil, and CELEX 32016R0679."
     plan = build_eu_legal_citation_lookup_plan(text, language="nl")
     payload = eu_legal_citation_lookup_plan_to_dict(plan)
 
@@ -105,8 +107,14 @@ def test_build_eu_legal_citation_lookup_plan_includes_member_state_handlers():
     dataset_ids = {action["dataset_id"] for action in payload["actions"]}
 
     assert "netherlands_laws" in handler_keys
+    assert "germany_laws" in handler_keys
+    assert "france_laws" in handler_keys
+    assert "spain_laws" in handler_keys
     assert "eurlex_registry" in handler_keys
     assert "netherlands_laws" in dataset_ids
+    assert "germany_laws" in dataset_ids
+    assert "france_laws" in dataset_ids
+    assert "spain_laws" in dataset_ids
     assert "eurlex" in dataset_ids
 
 
@@ -159,4 +167,118 @@ def test_default_lookup_handlers_call_netherlands_backend(monkeypatch):
         action["dataset_id"] == "netherlands_laws"
         and action["results"]["results"][0]["id"] == "nl_doc"
         for action in payload["executed_actions"]
+    )
+
+
+def test_default_lookup_handlers_call_canonical_corpus_backend_for_france_germany_and_spain(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import justicedao_dataset_inventory
+
+    def _fake_query_canonical_legal_corpus(dataset_id, *, query_text, **kwargs):
+        return {
+            "resolved": True,
+            "dataset_id": dataset_id,
+            "query_text": query_text,
+            "results": [{"row": {"law_identifier": f"{dataset_id}:{query_text}"}}],
+        }
+
+    def _fake_canonical_corpus_query_result_to_dict(result):
+        return result
+
+    monkeypatch.setattr(
+        justicedao_dataset_inventory,
+        "query_canonical_legal_corpus",
+        _fake_query_canonical_legal_corpus,
+    )
+    monkeypatch.setattr(
+        justicedao_dataset_inventory,
+        "canonical_corpus_query_result_to_dict",
+        _fake_canonical_corpus_query_result_to_dict,
+    )
+
+    plan = build_eu_legal_citation_lookup_plan(
+        "Art. 1 GG, article 1240 du code civil, and articulo 1902 del Codigo Civil.",
+        language="en",
+    )
+    handlers = build_default_eu_lookup_handlers()
+
+    async def _run():
+        return await execute_eu_legal_citation_lookup_plan(plan, lookup_handlers=handlers)
+
+    result = anyio.run(_run)
+    payload = eu_legal_citation_lookup_result_to_dict(result)
+
+    executed = {action["dataset_id"]: action for action in payload["executed_actions"]}
+    assert executed["germany_laws"]["executed"] is True
+    assert executed["france_laws"]["executed"] is True
+    assert executed["spain_laws"]["executed"] is True
+    assert executed["germany_laws"]["results"]["resolved"] is True
+    assert executed["france_laws"]["results"]["resolved"] is True
+    assert executed["spain_laws"]["results"]["resolved"] is True
+
+
+def test_default_lookup_handlers_fetch_eurlex_metadata(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import eu_legal_citation_bridge
+
+    def _fake_fetch(url, *, timeout=10.0):
+        return {"resolved": True, "url": url, "status_code": 200, "title": "GDPR"}
+
+    monkeypatch.setattr(eu_legal_citation_bridge, "_fetch_eurlex_metadata", _fake_fetch)
+
+    plan = build_eu_legal_citation_lookup_plan("CELEX 32016R0679", language="en")
+    handlers = build_default_eu_lookup_handlers()
+
+    async def _run():
+        return await execute_eu_legal_citation_lookup_plan(plan, lookup_handlers=handlers)
+
+    result = anyio.run(_run)
+    payload = eu_legal_citation_lookup_result_to_dict(result)
+
+    assert any(
+        action["handler_key"] == "eurlex_registry"
+        and action["results"]["title"] == "GDPR"
+        for action in payload["executed_actions"]
+    )
+
+
+def test_default_lookup_handlers_return_structured_ecli_metadata():
+    plan = build_eu_legal_citation_lookup_plan("ECLI:NL:HR:2024:123", language="en")
+    handlers = build_default_eu_lookup_handlers()
+
+    async def _run():
+        return await execute_eu_legal_citation_lookup_plan(plan, lookup_handlers=handlers)
+
+    result = anyio.run(_run)
+    payload = eu_legal_citation_lookup_result_to_dict(result)
+
+    assert any(
+        action["handler_key"] == "ecli_registry"
+        and action["results"]["resolved"] is False
+        and action["results"]["canonical_uri"].startswith("ecli:")
+        for action in payload["executed_actions"]
+    )
+
+
+def test_build_eu_legal_resolution_bundle_executes_default_handlers(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import eu_legal_citation_bridge
+
+    def _fake_fetch(url, *, timeout=10.0, label="http"):
+        return {"resolved": True, "url": url, "status_code": 200, "title": "GDPR", "handler": label}
+
+    monkeypatch.setattr(eu_legal_citation_bridge, "_fetch_url_metadata", _fake_fetch)
+    monkeypatch.setattr(eu_legal_citation_bridge, "_fetch_eurlex_metadata", _fake_fetch)
+
+    async def _run():
+        return await build_eu_legal_resolution_bundle(
+            "CELEX 32016R0679 and ECLI:NL:HR:2024:123",
+            language="en",
+            execute_lookup=True,
+        )
+
+    bundle = anyio.run(_run)
+    payload = eu_legal_resolution_bundle_to_dict(bundle)
+
+    assert payload["lookup_result"] is not None
+    assert any(
+        action["handler_key"] == "eurlex_registry" and action["results"]["resolved"] is True
+        for action in payload["lookup_result"]["executed_actions"]
     )

@@ -100,8 +100,8 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
 
     assert result.status == "tracked_and_published"
     assert result.corpus_key == "state_laws"
-    assert result.candidate_count == 3
-    assert result.archived_count == 3
+    assert result.candidate_count == 2
+    assert result.archived_count == 2
     assert result.publish_report == {
         "repo_id": "justicedao/ipfs_state_laws",
         "path_in_repo": "source_recovery/20240102_030405_minn-stat-518-17",
@@ -114,7 +114,7 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
     assert manifest["citation_text"] == "Minn. Stat. § 518.17"
     assert manifest["corpus_key"] == "state_laws"
     assert manifest["hf_dataset_id"] == "justicedao/ipfs_state_laws"
-    assert manifest["search_query"].startswith("Minn. Stat. § 518.17 MN statute")
+    assert manifest["search_query"].startswith("Minn. Stat. § 518.17 MN Minnesota official statutes code legislature")
     assert manifest["candidates"][0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
     assert result.promotion_preview["hf_dataset_id"] == "justicedao/ipfs_state_laws"
     assert result.promotion_preview["target_parquet_file"] == "STATE-MN.parquet"
@@ -134,6 +134,19 @@ def test_build_missing_citation_recovery_query_prefers_official_domains():
     assert "42 U.S.C. § 1983" in query
     assert "site:uscode.house.gov" in query
     assert "site:govinfo.gov" in query
+
+
+def test_build_missing_citation_recovery_query_state_laws_includes_state_name_and_official_hints():
+    query = build_missing_citation_recovery_query(
+        "AK official statutes",
+        corpus_key="state_laws",
+        state_code="AK",
+    )
+
+    assert "AK" in query
+    assert "Alaska" in query
+    assert "official statutes code legislature" in query
+    assert "site:.gov" in query
 
 
 def test_build_recovery_feedback_entries_from_citation_audit_flattens_unresolved_documents():

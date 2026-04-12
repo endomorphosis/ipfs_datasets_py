@@ -400,13 +400,14 @@ def test_build_eu_country_corpus_onboarding_plan_marks_observed_proposed_dataset
     plan = build_eu_country_corpus_onboarding_plan(
         [
             *_profiles(),
-            DatasetProfile(dataset_id="justicedao/ipfs_italy_laws_bm25_index"),
-        ]
+            DatasetProfile(dataset_id="justicedao/ipfs_it_laws_bm25_index", legal_branch="eu", country_codes=["IT"]),
+        ],
+        expected_country_codes=["IT"],
     )
 
     assert plan["IT"]["status"] == "in_progress"
-    assert plan["IT"]["existing_dataset_ids"] == ["justicedao/ipfs_italy_laws_bm25_index"]
-    assert plan["IT"]["proposed_corpus_key"] == "italy_laws"
+    assert plan["IT"]["existing_dataset_ids"] == ["justicedao/ipfs_it_laws_bm25_index"]
+    assert plan["IT"]["proposed_corpus_key"] == "it_laws"
 
 
 def test_render_dataset_profiles_markdown_includes_branch_summary():
@@ -425,16 +426,16 @@ def test_render_dataset_profiles_markdown_includes_branch_summary():
     assert "US:" in markdown
 
 
-def test_render_dataset_profiles_markdown_shows_proposed_corpus_for_observed_future_eu_dataset():
+def test_render_dataset_profiles_markdown_shows_registered_state_for_sidecar_only_canonical_eu_dataset():
     markdown = render_dataset_profiles_markdown(
         [
-            DatasetProfile(dataset_id="justicedao/ipfs_italy_laws_bm25_index"),
+            DatasetProfile(dataset_id="justicedao/ipfs_spain_laws_bm25_index"),
         ]
     )
 
     assert "## EU Country Onboarding" in markdown
-    assert "IT: observed justicedao/ipfs_italy_laws_bm25_index; awaiting canonical registration as italy_laws" in markdown
-    assert "Proposed corpus: italy_laws" in markdown
+    assert "ES: canonical registry includes spain_laws; awaiting observed datasets" in markdown
+    assert "Canonical corpus: spain_laws" in markdown
 
 
 def test_build_justicedao_bluebook_query_plan_routes_state_and_usc_citations():
@@ -520,6 +521,19 @@ def test_derive_justicedao_bluebook_strategies_can_classify_spain_laws_when_obse
     assert spain_graph.country_codes == ["ES"]
 
 
+def test_build_eu_country_corpus_onboarding_plan_keeps_sidecar_only_canonical_observation_registered():
+    plan = build_eu_country_corpus_onboarding_plan(
+        [
+            *_profiles(),
+            DatasetProfile(dataset_id="justicedao/ipfs_spain_laws_bm25_index"),
+        ]
+    )
+
+    assert plan["ES"]["status"] == "registered"
+    assert plan["ES"]["existing_dataset_ids"] == ["justicedao/ipfs_spain_laws_bm25_index"]
+    assert plan["ES"]["canonical_corpus_keys"] == ["spain_laws"]
+
+
 def test_derive_justicedao_bluebook_strategies_can_classify_germany_laws_when_observed():
     strategies = derive_justicedao_bluebook_strategies(_profiles_with_germany_family())
 
@@ -554,6 +568,27 @@ def test_bluebook_query_plan_renderers_include_dataset_guidance():
     assert "JusticeDAO Bluebook Query Plan" in markdown
     assert "justicedao/caselaw_access_project" in markdown
     assert "justicedao/ipfs_federal_register" in markdown
+
+
+def test_build_justicedao_bluebook_query_plan_includes_eu_member_state_citations():
+    profiles = [
+        *_profiles_with_spain_family(),
+        *_profiles_with_germany_family()[len(_profiles()):],
+    ]
+
+    plan = build_justicedao_bluebook_query_plan(
+        "Art. 1 GG and Articulo 1902 del Codigo Civil.",
+        profiles=profiles,
+    )
+
+    eu_types = {item.citation_type for item in plan.query_plans}
+    assert "eu_de_gg_article" in eu_types
+    assert "eu_es_cc_article" in eu_types
+
+    germany_plan = next(item for item in plan.query_plans if item.citation_type == "eu_de_gg_article")
+    spain_plan = next(item for item in plan.query_plans if item.citation_type == "eu_es_cc_article")
+    assert germany_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_germany_laws"
+    assert spain_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_spain_laws"
 
 
 def test_execute_justicedao_bluebook_query_plan_matches_state_laws_and_uscode(tmp_path):
@@ -612,6 +647,69 @@ def test_execute_justicedao_bluebook_query_plan_matches_state_laws_and_uscode(tm
     usc_result = next(item for item in payload["execution_results"] if item["citation_type"] == "usc")
     assert usc_result["matches"][0]["dataset_id"] == "justicedao/ipfs_uscode"
     assert usc_result["matches"][0]["rows"][0]["section_number"] == "1983"
+
+
+def test_execute_justicedao_bluebook_query_plan_matches_eu_member_state_citations(tmp_path):
+    germany_path = tmp_path / "germany_laws.parquet"
+    spain_path = tmp_path / "spain_laws.parquet"
+
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1",
+                    "law_identifier": "GG-Art-1",
+                    "official_identifier": "Grundgesetz Art. 1",
+                    "citation": "Art. 1 GG",
+                    "title": "Grundgesetz Art. 1",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        germany_path,
+    )
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafyescc1902",
+                    "law_identifier": "CC-Articulo-1902",
+                    "official_identifier": "Codigo Civil art. 1902",
+                    "citation": "Articulo 1902 del Codigo Civil",
+                    "title": "Codigo Civil art. 1902",
+                    "text": "El que por accion u omision causa dano a otro interviniendo culpa o negligencia esta obligado a reparar el dano causado.",
+                    "summary": "Responsabilidad extracontractual del Codigo Civil.",
+                }
+            ]
+        ),
+        spain_path,
+    )
+
+    profiles = [
+        *_profiles_with_spain_family(),
+        *_profiles_with_germany_family()[len(_profiles()):],
+    ]
+    plan = build_justicedao_bluebook_query_plan(
+        "Art. 1 GG and Articulo 1902 del Codigo Civil.",
+        profiles=profiles,
+    )
+    result = execute_justicedao_bluebook_query_plan(
+        plan,
+        profiles=profiles,
+        parquet_file_overrides={
+            "justicedao/ipfs_germany_laws": [str(germany_path)],
+            "justicedao/ipfs_spain_laws": [str(spain_path)],
+        },
+    )
+
+    payload = bluebook_dataset_execution_result_to_dict(result)
+    germany_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_de_gg_article")
+    spain_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_es_cc_article")
+    assert germany_result["matches"][0]["dataset_id"] == "justicedao/ipfs_germany_laws"
+    assert germany_result["matches"][0]["rows"][0]["law_identifier"] == "GG-Art-1"
+    assert spain_result["matches"][0]["dataset_id"] == "justicedao/ipfs_spain_laws"
+    assert spain_result["matches"][0]["rows"][0]["law_identifier"] == "CC-Articulo-1902"
 
 
 def test_execute_justicedao_bluebook_query_plan_matches_municipal_citation_table(tmp_path):
@@ -978,12 +1076,12 @@ def test_query_canonical_legal_corpus_can_query_france_as_eu_branch(tmp_path):
             [
                 {
                     "source_cid": "bafyfrcodecivil",
-                    "law_identifier": "CC-Art-16",
-                    "official_identifier": "Code civil art. 16",
-                    "citation": "Art. 16 Code civil",
-                    "title": "Code civil art. 16",
-                    "text": "La loi assure la primaute de la personne.",
-                    "summary": "Disposition du Code civil relative a la primaute de la personne.",
+                    "law_identifier": "CC-Art-1240",
+                    "official_identifier": "Code civil art. 1240",
+                    "citation": "article 1240 du code civil",
+                    "title": "Code civil art. 1240",
+                    "text": "Tout fait quelconque de l'homme, qui cause a autrui un dommage, oblige celui par la faute duquel il est arrive a le reparer.",
+                    "summary": "Disposition du Code civil relative a la responsabilite civile.",
                 }
             ]
         ),
@@ -992,8 +1090,7 @@ def test_query_canonical_legal_corpus_can_query_france_as_eu_branch(tmp_path):
 
     result = query_canonical_legal_corpus(
         "france_laws",
-        query_text="Art. 16 Code civil",
-        mode="lexical",
+        query_text="article 1240 du code civil",
         parquet_file_overrides={"france_laws": [str(laws_path)]},
         allow_hf_fallback=False,
     )
@@ -1001,9 +1098,45 @@ def test_query_canonical_legal_corpus_can_query_france_as_eu_branch(tmp_path):
     payload = canonical_corpus_query_result_to_dict(result)
     assert payload["legal_branch"] == "eu"
     assert payload["country_codes"] == ["FR"]
-    assert payload["mode"] == "lexical"
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
     assert payload["results"]
-    assert payload["results"][0]["row"]["law_identifier"] == "CC-Art-16"
+    assert payload["results"][0]["row"]["law_identifier"] == "CC-Art-1240"
+
+
+def test_query_canonical_legal_corpus_can_query_spain_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "spain_laws.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafyescodigocivil",
+                    "law_identifier": "CC-Articulo-14",
+                    "official_identifier": "Codigo Civil art. 14",
+                    "citation": "Articulo 14 del Codigo Civil",
+                    "title": "Codigo Civil art. 14",
+                    "text": "Las leyes entraran en vigor segun lo dispuesto en el Codigo Civil.",
+                    "summary": "Disposicion del Codigo Civil sobre vigencia y aplicacion de las leyes.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "spain_laws",
+        query_text="Articulo 14 del Codigo Civil",
+        parquet_file_overrides={"spain_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["ES"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "CC-Articulo-14"
 
 
 def test_query_canonical_legal_corpus_can_query_germany_as_eu_branch(tmp_path):
@@ -1028,7 +1161,6 @@ def test_query_canonical_legal_corpus_can_query_germany_as_eu_branch(tmp_path):
     result = query_canonical_legal_corpus(
         "germany_laws",
         query_text="Art. 1 GG",
-        mode="lexical",
         parquet_file_overrides={"germany_laws": [str(laws_path)]},
         allow_hf_fallback=False,
     )
@@ -1036,7 +1168,8 @@ def test_query_canonical_legal_corpus_can_query_germany_as_eu_branch(tmp_path):
     payload = canonical_corpus_query_result_to_dict(result)
     assert payload["legal_branch"] == "eu"
     assert payload["country_codes"] == ["DE"]
-    assert payload["mode"] == "lexical"
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
     assert payload["results"]
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1"
 
@@ -1632,6 +1765,32 @@ def test_build_justicedao_rebuild_plan_can_include_observed_france_laws_targets(
     assert plan.recommendations == []
 
 
+def test_build_justicedao_rebuild_plan_can_include_observed_spain_laws_targets():
+    profiles = [
+        DatasetProfile(
+            dataset_id="justicedao/ipfs_spain_laws",
+            canonical_corpus_key="spain_laws",
+            legal_branch="eu",
+            country_codes=["ES"],
+            parquet_files=["parquet/laws/train-00000-of-00001.parquet"],
+            top_level_paths=["parquet"],
+            configs=[],
+        )
+    ]
+
+    plan = build_justicedao_rebuild_plan(
+        profiles=profiles,
+        corpus_keys=["spain_laws"],
+        batch_size=1,
+    )
+
+    assert len(plan.targets) == 1
+    assert plan.targets[0].corpus_key == "spain_laws"
+    assert plan.targets[0].dataset_id == "justicedao/ipfs_spain_laws"
+    assert plan.targets[0].parquet_path == "parquet/laws/train-00000-of-00001.parquet"
+    assert plan.recommendations == []
+
+
 def test_build_justicedao_rebuild_plan_includes_eu_onboarding_recommendations_when_not_corpus_scoped():
     plan = build_justicedao_rebuild_plan(
         profiles=_profiles(),
@@ -1645,12 +1804,14 @@ def test_build_justicedao_rebuild_plan_includes_eu_onboarding_recommendations_wh
     assert statuses["DE"] == "registered"
     assert reasons["FR"] == "canonical_registered_but_unobserved"
     assert statuses["FR"] == "registered"
-    assert reasons["ES"] == "missing_supported_country_dataset"
+    assert reasons["ES"] == "canonical_registered_but_unobserved"
+    assert statuses["ES"] == "registered"
 
     payload = justicedao_rebuild_plan_to_dict(plan)
     assert payload["recommendation_count"] == len(plan.recommendations)
     assert any(item["country_code"] == "DE" for item in payload["recommendations"])
     assert any(item["country_code"] == "FR" for item in payload["recommendations"])
+    assert any(item["country_code"] == "ES" for item in payload["recommendations"])
 
 
 def test_render_justicedao_rebuild_plan_markdown_includes_targets_batches_and_recommendations():
@@ -1667,4 +1828,4 @@ def test_render_justicedao_rebuild_plan_markdown_includes_targets_batches_and_re
     assert "## Recommendations" in markdown
     assert "DE: canonical registry includes germany_laws; awaiting observed datasets" in markdown
     assert "FR: canonical registry includes france_laws; awaiting observed datasets" in markdown
-    assert "ES: missing dataset; propose spain_laws -> justicedao/ipfs_spain_laws" in markdown
+    assert "ES: canonical registry includes spain_laws; awaiting observed datasets" in markdown
