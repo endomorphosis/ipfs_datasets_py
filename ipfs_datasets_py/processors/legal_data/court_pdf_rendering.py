@@ -163,15 +163,15 @@ class ExhibitCaptionConfig:
 
 DEFAULT_EXHIBIT_CAPTION = ExhibitCaptionConfig(
     court_lines=(
-        "IN THE CIRCUIT COURT OF THE STATE OF OREGON",
-        "FOR THE COUNTY OF CLACKAMAS",
-        "PROBATE DEPARTMENT",
+        "IN THE COURT OF COMPETENT JURISDICTION",
+        "FOR THE APPROPRIATE COUNTY OR DISTRICT",
+        "CIVIL / PROBATE / HOUSING DIVISION",
     ),
-    case_number="Case No. 26PR00641",
+    case_number="Case No. __________________",
     right_block_lines=(
         "In the Matter of:",
-        "Jane Kay Cortez,",
-        "Protected Person.",
+        "Protected Person / Party Name,",
+        "Party / Subject.",
     ),
 )
 
@@ -332,6 +332,9 @@ class StateCourtPleadingConfig:
     filed_date: str = ""
     signature_doc_keywords: Sequence[str] = field(default_factory=tuple)
     declaration_doc_keywords: Sequence[str] = field(default_factory=tuple)
+    signature_names: Sequence[str] = field(default_factory=tuple)
+    declaration_name_by_stem_keyword: Mapping[str, str] = field(default_factory=dict)
+    default_declarant_name: str = "Declarant"
 
 
 def _state_court_footer(pdf: canvas.Canvas, doc: SimpleDocTemplate) -> None:
@@ -500,6 +503,7 @@ def render_state_court_markdown_to_pdf(
 
     stem = md_path.stem.lower()
     if any(keyword in stem for keyword in config.signature_doc_keywords) and not stem.startswith("proposed_order"):
+        signature_names = list(config.signature_names or ["Party 1, pro se", "Party 2, pro se"])
         sig_block = [
             Spacer(1, 0.22 * inch),
             Paragraph(f"Dated: {config.filed_date}", base),
@@ -511,15 +515,25 @@ def render_state_court_markdown_to_pdf(
             Paragraph("__________________________________", base),
             Paragraph("Signature", small),
             Spacer(1, 0.12 * inch),
-            Paragraph("Benjamin Jay Barber, pro se", base),
-            Spacer(1, 0.22 * inch),
-            Paragraph("__________________________________", base),
-            Paragraph("Signature", small),
-            Spacer(1, 0.12 * inch),
-            Paragraph("Jane Kay Cortez, pro se", base),
+            Paragraph(str(signature_names[0]), base),
         ]
+        for name in signature_names[1:]:
+            sig_block.extend(
+                [
+                    Spacer(1, 0.22 * inch),
+                    Paragraph("__________________________________", base),
+                    Paragraph("Signature", small),
+                    Spacer(1, 0.12 * inch),
+                    Paragraph(str(name), base),
+                ]
+            )
         story.append(KeepTogether(sig_block))
     elif any(keyword in stem for keyword in config.declaration_doc_keywords):
+        declarant_name = str(config.default_declarant_name or "Declarant")
+        for keyword, name in dict(config.declaration_name_by_stem_keyword or {}).items():
+            if str(keyword).strip() and str(keyword).lower() in stem:
+                declarant_name = str(name)
+                break
         decl_block = [
             Spacer(1, 0.22 * inch),
             Paragraph(f"Dated: {config.filed_date}", base),
@@ -528,12 +542,7 @@ def render_state_court_markdown_to_pdf(
             Paragraph("Signature", small),
             Spacer(1, 0.12 * inch),
         ]
-        decl_block.append(
-            Paragraph(
-                "Benjamin Jay Barber, Declarant" if "benjamin" in stem else "Jane Kay Cortez, Declarant",
-                base,
-            )
-        )
+        decl_block.append(Paragraph(declarant_name, base))
         story.append(KeepTogether(decl_block))
 
     doc_title = humanize_label(title_line) if title_line else humanize_label(md_path.stem)

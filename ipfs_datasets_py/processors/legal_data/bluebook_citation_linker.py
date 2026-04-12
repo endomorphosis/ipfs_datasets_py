@@ -108,6 +108,30 @@ def _compact_alnum(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
 
 
+def _normalize_malformed_citation(text: str) -> str:
+    value = str(text or "")
+    if not value:
+        return value
+    normalized = value
+    replacements = [
+        (r"\bStat\s+§\s+Code\b", "Stat. Code §"),
+        (r"\bStat\s+§\s+Codes\b", "Stat. Code §"),
+        (r"\bStat\s+§\s+Code\b", "Stat. Code §"),
+        (r"\bRev\s+Stat\b", "Rev. Stat."),
+        (r"\bStat\b", "Stat."),
+        (r"\bCFR\b", "C.F.R."),
+        (r"\bUSC\b", "U.S.C."),
+        (r"\bORS\b", "ORS"),
+    ]
+    for pattern, replacement in replacements:
+        normalized = re.sub(pattern, replacement, normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bORSS\b", "ORS", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bCal\s+Stat\b", "Cal. Stat.", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bN\.?Y\.?\s+Stat\b", "N.Y. Stat.", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bTex\.?\s+Stat\b", "Tex. Stat.", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip()
+
 def _token_overlap_ratio(query_text: str, candidate_text: str) -> float:
     query_tokens = {token for token in _normalize_text(query_text).split() if token}
     candidate_tokens = {token for token in _normalize_text(candidate_text).split() if token}
@@ -555,7 +579,7 @@ class BluebookCitationResolver:
         state_code: Optional[str] = None,
         max_suggestions: int = 3,
     ) -> List[Dict[str, Any]]:
-        query_text = str(text or "").strip()
+        query_text = _normalize_malformed_citation(text)
         if not query_text:
             return []
 
@@ -1541,6 +1565,37 @@ def resolve_bluebook_lookup_result_document(
     link_payloads = [citation_link_to_dict(link) for link in links]
     matched_count = sum(1 for item in link_payloads if bool(item.get("matched")))
     unresolved = [item for item in link_payloads if not bool(item.get("matched"))]
+    suggestions: List[Dict[str, Any]] = []
+    if not link_payloads:
+        suggestions = active_resolver.suggest_citations_for_text(
+            text,
+            state_code=state_code,
+            max_suggestions=3,
+        )
+    else:
+        for item in unresolved:
+            metadata = dict(item.get("metadata") or {})
+            suggested = active_resolver.suggest_citations_for_text(
+                str(item.get("citation_text") or ""),
+                state_code=str(metadata.get("state_code") or "") or state_code,
+                max_suggestions=3,
+            )
+            if suggested:
+                item["citation_suggestions"] = suggested
+                suggestions.extend(suggested)
+        if suggestions:
+            deduped: List[Dict[str, Any]] = []
+            seen = set()
+            for suggestion in suggestions:
+                key = (
+                    str(suggestion.get("corpus_key") or ""),
+                    str(suggestion.get("suggested_citation") or ""),
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
+                deduped.append(suggestion)
+            suggestions = deduped[:3]
     recovery_results: List[Dict[str, Any]] = []
     recovery_status = {
         "enabled": bool(include_recovery),
@@ -1575,6 +1630,7 @@ def resolve_bluebook_lookup_result_document(
         "citation_resolution_ratio": (matched_count / len(link_payloads)) if link_payloads else 1.0,
         "citations": link_payloads,
         "unresolved_citations": unresolved,
+        "citation_suggestions": suggestions,
         "recovery_results": recovery_results,
     }
 

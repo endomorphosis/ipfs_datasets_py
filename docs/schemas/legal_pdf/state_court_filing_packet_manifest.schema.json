@@ -40,6 +40,17 @@
         "declaration_doc_keywords": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "signature_names": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "declaration_name_by_stem_keyword": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "default_declarant_name": {
+          "type": "string"
         }
       }
     }

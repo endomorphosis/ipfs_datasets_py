@@ -25,16 +25,16 @@ class BinderCourtConfig:
 
 
 DEFAULT_BINDER_COURT_CONFIG = BinderCourtConfig(
-    case_number="26FE0586",
-    court_name="IN THE CLACKAMAS COUNTY JUSTICE COURT",
-    state_name="STATE OF OREGON",
+    case_number="__________________",
+    court_name="IN THE COURT OF COMPETENT JURISDICTION",
+    state_name="STATE / JURISDICTION",
     contact_block_html=(
-        "Benjamin Jay Barber, pro se<br/>Jane Kay Cortez, pro se<br/>10043 SE 32nd Ave<br/>"
-        "Milwaukie, OR 97222<br/>971-270-0855<br/>starworks5@gmail.com<br/>Defendants"
+        "Filing Party, pro se<br/>Street Address<br/>City, State ZIP<br/>"
+        "Phone<br/>Email<br/>Party Role"
     ),
     caption_left_html=(
-        "HOUSING AUTHORITY OF CLACKAMAS COUNTY,<br/>Plaintiff,<br/><br/>v.<br/><br/>"
-        "BENJAMIN JAY BARBER and JANE KAY CORTEZ,<br/>Defendants."
+        "PLAINTIFF OR PETITIONER,<br/>Role,<br/><br/>v.<br/><br/>"
+        "DEFENDANT OR RESPONDENT,<br/>Role."
     ),
 )
 
@@ -143,11 +143,6 @@ def render_exhibit_binder_front_sheet(
             or stripped.startswith("IN THE ")
             or stripped == config.state_name
             or stripped.startswith("Case No.")
-            or stripped == "HOUSING AUTHORITY OF CLACKAMAS COUNTY,"
-            or stripped == "Plaintiff,"
-            or stripped == "v."
-            or stripped == "BENJAMIN JAY BARBER and JANE KAY CORTEZ,"
-            or stripped == "Defendants."
         ):
             continue
         body_started = True

@@ -1,6 +1,6 @@
 {
   "$schema": "../../schemas/legal_pdf/full_evidence_binder_manifest.schema.json",
-  "submitted_by": "Benjamin Barber, Pro Se",
+  "submitted_by": "Filing Party, Pro Se",
   "exhibit_covers_root": "covers",
   "working_dir": "build",
   "generated_dir": "build/generated_pdfs",
@@ -8,6 +8,20 @@
   "output_pdf": "build/full_binder.pdf",
   "lean_output_pdf": "build/full_binder_lean.pdf",
   "index_pdf": "binder_index.pdf",
+  "caption_config": {
+    "court_lines": [
+      "IN THE COURT OF COMPETENT JURISDICTION",
+      "FOR THE APPROPRIATE COUNTY OR DISTRICT",
+      "CIVIL / PROBATE / HOUSING DIVISION"
+    ],
+    "case_number": "Case No. __________________",
+    "right_block_lines": [
+      "In the Matter of:",
+      "Protected Person / Party Name,",
+      "Party / Subject."
+    ],
+    "left_block_label": "EXHIBIT VOLUME"
+  },
   "families": [
     {
       "name": "Primary Binder",

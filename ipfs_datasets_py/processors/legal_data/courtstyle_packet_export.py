@@ -7,8 +7,10 @@ import json
 import re
 import subprocess
 import textwrap
+from copy import deepcopy
 from email import policy
 from pathlib import Path
+from typing import Any
 
 from PIL import Image
 from reportlab.lib.pagesizes import letter
@@ -26,6 +28,142 @@ FULL_PACKET_DIR = ROOT / "assembled-full-packet"
 REDUCED_PACKET_DIR = ROOT / "assembled-reduced-packet"
 
 
+DEFAULT_COURTSTYLE_PACKET_CONFIG: dict[str, Any] = {
+    "root_dir": str(ROOT),
+    "summary_path": str(SUMMARY_PATH),
+    "complaint_md_path": str(COMPLAINT_MD),
+    "full_packet_dir": str(FULL_PACKET_DIR),
+    "reduced_packet_dir": str(REDUCED_PACKET_DIR),
+    "complaint_output_relative": "rendered/0001_complaint_courtstyle_v2.pdf",
+    "body_start_marker": "Plaintiffs allege as follows:",
+    "curated_sources": {
+        "Exhibit J": [
+            "README.md",
+            "representative_messages/J-12_message.eml",
+            "representative_messages/J-13_message.eml",
+            "representative_messages/J-14_message.eml",
+            "representative_messages/J-15_message.eml",
+            "representative_messages/J-16_message.eml",
+            "retained_attachments/J-1_Additional-Information-Needed-02.09.2026.pdf",
+            "retained_attachments/J-5_Additional-Information-Needed-02.25.2026.pdf",
+            "retained_attachments/J-12_Image_260226_173823.jpeg",
+            "retained_attachments/J-12_Image_260226_173852.jpeg",
+            "retained_attachments/J-15_Image_260309_103446.jpeg",
+        ],
+        "Exhibit M": [
+            "README.md",
+            "representative_messages/M-3_message.eml",
+            "representative_messages/M-4_message.eml",
+            "representative_messages/M-7_message.eml",
+            "representative_messages/M-8_message.eml",
+            "representative_messages/M-9_message.eml",
+            "representative_messages/M-10_message.eml",
+            "representative_messages/M-11_message.eml",
+            "retained_attachments/M-3_Cortez-TRSW-3.18.26.pdf",
+            "retained_attachments/M-4_TRSW---JC---03.19.2026.pdf",
+            "retained_attachments/M-4_VO---JC---03.19.2026.pdf",
+            "retained_attachments/M-7_Orientation---Required-Signatures-03.19.2026.pdf",
+            "retained_attachments/M-10_output.pdf",
+            "retained_attachments/M-8_Image_260320_142045.jpeg",
+            "retained_attachments/M-8_Image_260320_142321.jpeg",
+            "retained_attachments/M-8_Image_260320_142448.jpeg",
+        ],
+        "Exhibit R": [
+            "summary.json",
+            "seq_10269/headers.txt",
+            "seq_10269/body-snippet.txt",
+            "seq_10270/headers.txt",
+            "seq_10270/body-snippet.txt",
+            "seq_10273/headers.txt",
+            "seq_10273/body-snippet.txt",
+            "seq_10279/headers.txt",
+            "seq_10279/body-snippet.txt",
+            "seq_10280/headers.txt",
+            "seq_10280/body-snippet.txt",
+        ],
+    },
+    "r_snippet_ids": ["seq_10269", "seq_10270", "seq_10273", "seq_10279", "seq_10280"],
+    "r_summary_intro_lines": [
+        "Preserved Gmail sent-mail records confirm complaint emails on February 26, March 2, and March 9, 2026.",
+        "The preserved headers show recipients Kati Tilton, Ashley Ferron, and charity@magikcorp.com.",
+        "The body snippets say Blossom refused to process the application, refused to house a service animal, and engaged in discrimination on the basis of race.",
+    ],
+    "summary_sections": {
+        "Exhibit J": [
+            {
+                "heading": "Representative messages",
+                "lines": [
+                    "J-12_message.eml, J-13_message.eml, J-14_message.eml, J-15_message.eml, and J-16_message.eml are the strongest complaint-thread records.",
+                    "These messages capture the February 26, March 2, and March 9, 2026 sequence tied to additional-information demands, Blossom processing complaints, service-animal issues, and race-discrimination allegations.",
+                ],
+            },
+            {
+                "heading": "Key retained attachments",
+                "lines": [
+                    "J-1_Additional-Information-Needed-02.09.2026.pdf",
+                    "J-5_Additional-Information-Needed-02.25.2026.pdf",
+                    "J-12_Image_260226_173823.jpeg",
+                    "J-12_Image_260226_173852.jpeg",
+                    "J-15_Image_260309_103446.jpeg",
+                ],
+            },
+        ],
+        "Exhibit M": [
+            {
+                "heading": "Representative messages",
+                "lines": [
+                    "M-3_message.eml, M-4_message.eml, M-7_message.eml, M-8_message.eml, M-9_message.eml, M-10_message.eml, and M-11_message.eml capture the orientation, voucher reversal, and accommodation sequence.",
+                    "These materials support the March 17 through March 20, 2026 chronology concerning the two-bedroom voucher issuance, reversal, and accommodation-related follow-up.",
+                ],
+            },
+            {
+                "heading": "Key retained attachments",
+                "lines": [
+                    "M-4_TRSW---JC---03.19.2026.pdf",
+                    "M-4_VO---JC---03.19.2026.pdf",
+                    "M-7_Orientation---Required-Signatures-03.19.2026.pdf",
+                    "M-10_output.pdf",
+                    "M-8_Image_260320_142045.jpeg",
+                    "M-8_Image_260320_142321.jpeg",
+                    "M-8_Image_260320_142448.jpeg",
+                ],
+            },
+        ],
+    },
+    "static_image_exhibits": [
+        {
+            "source": "improved-complaint-from-temporary-session.former-employee-review.png",
+            "output_name": "Exhibit_Q_image.pdf",
+            "title": "Exhibit Q - Former-employee review screenshot",
+        },
+        {
+            "source": "improved-complaint-from-temporary-session.shs-race-goal.png",
+            "output_name": "Exhibit_S_image.pdf",
+            "title": "Exhibit S - SHS race-conscious outcome goal screenshot",
+        },
+        {
+            "source": "temporary-cli-session-migration/prior-research-results/full-evidence-review-run/chronology/emergency_motion_packet/exhibits/Exhibit N - Julio Eviction notice.jpeg",
+            "output_name": "Exhibit_N_image.pdf",
+            "title": "Exhibit N - Julio eviction notice",
+        },
+    ],
+}
+
+
+def _deep_update(base: dict[str, Any], updates: dict[str, Any]) -> dict[str, Any]:
+    for key, value in updates.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            _deep_update(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def _resolve_path(base_dir: Path, value: str | Path) -> Path:
+    value_path = Path(value)
+    return value_path if value_path.is_absolute() else base_dir / value_path
+
+
 def _footer(c: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     c.saveState()
     c.setFont("Times-Roman", 10)
@@ -34,8 +172,8 @@ def _footer(c: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     c.restoreState()
 
 
-def _load_body_lines() -> list[str]:
-    lines = COMPLAINT_MD.read_text(encoding="utf-8").splitlines()
+def _load_body_lines(*, complaint_md_path: Path = COMPLAINT_MD, body_start_marker: str = "Plaintiffs allege as follows:") -> list[str]:
+    lines = complaint_md_path.read_text(encoding="utf-8").splitlines()
     body: list[str] = []
     skip = True
     for raw in lines:
@@ -43,7 +181,7 @@ def _load_body_lines() -> list[str]:
         if not line:
             continue
         if skip:
-            if line == "Plaintiffs allege as follows:":
+            if line == body_start_marker:
                 skip = False
             continue
         body.append(line)
@@ -57,14 +195,20 @@ def _caption_breaks(text: str) -> str:
     return text
 
 
-def build_courtstyle_complaint(out_pdf: Path) -> None:
-    summary = json.loads(SUMMARY_PATH.read_text(encoding="utf-8"))
+def build_courtstyle_complaint(
+    out_pdf: Path,
+    *,
+    summary_path: Path = SUMMARY_PATH,
+    complaint_md_path: Path = COMPLAINT_MD,
+    body_start_marker: str = "Plaintiffs allege as follows:",
+) -> None:
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
     meta = summary.get("filing_metadata", {})
     caption_plaintiffs = summary.get("caption_plaintiffs", "")
     caption_defendants = summary.get("defendants", meta.get("caption_defendants", ""))
     address = meta.get("mailing_address", "")
     sig_name = meta.get("signature_plaintiff", "Benjamin Jay Barber")
-    body_lines = _load_body_lines()
+    body_lines = _load_body_lines(complaint_md_path=complaint_md_path, body_start_marker=body_start_marker)
 
     styles = getSampleStyleSheet()
     base = ParagraphStyle(
@@ -557,12 +701,25 @@ def image_to_pdf(img_path: Path, pdf_path: Path, title: str) -> None:
     c.save()
 
 
-def prepare_exhibit_support() -> None:
-    summary = json.loads(SUMMARY_PATH.read_text(encoding="utf-8"))
-    exhibits = {item["label"]: Path(item["path"]) for item in summary["recommended_exhibits"]}
-    exhibit_meta = {item["label"]: item for item in summary["recommended_exhibits"]}
+def prepare_exhibit_support(
+    *,
+    summary_path: Path = SUMMARY_PATH,
+    packet_dirs: tuple[Path, ...] = (REDUCED_PACKET_DIR, FULL_PACKET_DIR),
+    root_dir: Path = ROOT,
+    support_config: dict[str, Any] | None = None,
+) -> None:
+    config = support_config or {}
+    curated_sources = dict(config.get("curated_sources") or DEFAULT_COURTSTYLE_PACKET_CONFIG["curated_sources"])
+    summary_sections_config = dict(config.get("summary_sections") or DEFAULT_COURTSTYLE_PACKET_CONFIG["summary_sections"])
+    snippet_ids = [str(item) for item in list(config.get("r_snippet_ids") or DEFAULT_COURTSTYLE_PACKET_CONFIG["r_snippet_ids"])]
+    r_intro = [str(item) for item in list(config.get("r_summary_intro_lines") or DEFAULT_COURTSTYLE_PACKET_CONFIG["r_summary_intro_lines"])]
+    static_images = list(config.get("static_image_exhibits") or DEFAULT_COURTSTYLE_PACKET_CONFIG["static_image_exhibits"])
 
-    for packet_dir in (REDUCED_PACKET_DIR, FULL_PACKET_DIR):
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    exhibits = {str(item["label"]): Path(item["path"]) for item in summary["recommended_exhibits"]}
+    exhibit_meta = {str(item["label"]): item for item in summary["recommended_exhibits"]}
+
+    for packet_dir in packet_dirs:
         for label, item in exhibit_meta.items():
             make_exhibit_cover(
                 packet_dir / "rendered" / f"{label.replace(' ', '_')}_cover.pdf",
@@ -571,143 +728,94 @@ def prepare_exhibit_support() -> None:
                 item.get("use", ""),
             )
 
-    exhibit_j = exhibits["Exhibit J"]
-    exhibit_m = exhibits["Exhibit M"]
-    exhibit_r = exhibits["Exhibit R"]
+    for exhibit_label in ("Exhibit J", "Exhibit M", "Exhibit R"):
+        exhibit_dir = exhibits.get(exhibit_label)
+        if not exhibit_dir:
+            continue
+        short = exhibit_label.split()[-1]
+        for packet_dir in packet_dirs:
+            _render_folder_exhibit(
+                exhibit_dir,
+                packet_dir / "rendered" / f"Exhibit_{short}_expanded.pdf",
+                f"Exhibit {short} Expanded Contents",
+            )
+            _render_selected_sources(
+                exhibit_dir,
+                packet_dir / "rendered" / f"Exhibit_{short}_curated.pdf",
+                f"Exhibit {short} Curated Contents",
+                [str(item) for item in list(curated_sources.get(exhibit_label) or [])],
+            )
 
-    for packet_dir in (REDUCED_PACKET_DIR, FULL_PACKET_DIR):
-        _render_folder_exhibit(exhibit_j, packet_dir / "rendered" / "Exhibit_J_expanded.pdf", "Exhibit J Expanded Contents")
-        _render_folder_exhibit(exhibit_m, packet_dir / "rendered" / "Exhibit_M_expanded.pdf", "Exhibit M Expanded Contents")
-        _render_folder_exhibit(exhibit_r, packet_dir / "rendered" / "Exhibit_R_expanded.pdf", "Exhibit R Expanded Contents")
-        _render_selected_sources(
-            exhibit_j,
-            packet_dir / "rendered" / "Exhibit_J_curated.pdf",
-            "Exhibit J Curated Contents",
-            [
-                "README.md",
-                "representative_messages/J-12_message.eml",
-                "representative_messages/J-13_message.eml",
-                "representative_messages/J-14_message.eml",
-                "representative_messages/J-15_message.eml",
-                "representative_messages/J-16_message.eml",
-                "retained_attachments/J-1_Additional-Information-Needed-02.09.2026.pdf",
-                "retained_attachments/J-5_Additional-Information-Needed-02.25.2026.pdf",
-                "retained_attachments/J-12_Image_260226_173823.jpeg",
-                "retained_attachments/J-12_Image_260226_173852.jpeg",
-                "retained_attachments/J-15_Image_260309_103446.jpeg",
-            ],
-        )
-        _render_selected_sources(
-            exhibit_m,
-            packet_dir / "rendered" / "Exhibit_M_curated.pdf",
-            "Exhibit M Curated Contents",
-            [
-                "README.md",
-                "representative_messages/M-3_message.eml",
-                "representative_messages/M-4_message.eml",
-                "representative_messages/M-7_message.eml",
-                "representative_messages/M-8_message.eml",
-                "representative_messages/M-9_message.eml",
-                "representative_messages/M-10_message.eml",
-                "representative_messages/M-11_message.eml",
-                "retained_attachments/M-3_Cortez-TRSW-3.18.26.pdf",
-                "retained_attachments/M-4_TRSW---JC---03.19.2026.pdf",
-                "retained_attachments/M-4_VO---JC---03.19.2026.pdf",
-                "retained_attachments/M-7_Orientation---Required-Signatures-03.19.2026.pdf",
-                "retained_attachments/M-10_output.pdf",
-                "retained_attachments/M-8_Image_260320_142045.jpeg",
-                "retained_attachments/M-8_Image_260320_142321.jpeg",
-                "retained_attachments/M-8_Image_260320_142448.jpeg",
-            ],
-        )
-        _render_selected_sources(
-            exhibit_r,
-            packet_dir / "rendered" / "Exhibit_R_curated.pdf",
-            "Exhibit R Curated Contents",
-            [
-                "summary.json",
-                "seq_10269/headers.txt",
-                "seq_10269/body-snippet.txt",
-                "seq_10270/headers.txt",
-                "seq_10270/body-snippet.txt",
-                "seq_10273/headers.txt",
-                "seq_10273/body-snippet.txt",
-                "seq_10279/headers.txt",
-                "seq_10279/body-snippet.txt",
-                "seq_10280/headers.txt",
-                "seq_10280/body-snippet.txt",
-            ],
-        )
+    j_sections = [(str(item.get("heading") or ""), [str(line) for line in list(item.get("lines") or [])]) for item in list(summary_sections_config.get("Exhibit J") or [])]
+    m_sections = [(str(item.get("heading") or ""), [str(line) for line in list(item.get("lines") or [])]) for item in list(summary_sections_config.get("Exhibit M") or [])]
+    if exhibits.get("Exhibit J"):
+        j_sections.append(("Source path", [str(exhibits["Exhibit J"])]))
+    if exhibits.get("Exhibit M"):
+        m_sections.append(("Source path", [str(exhibits["Exhibit M"])]))
 
-    j_sections = [
-        (
-            "Representative messages",
-            [
-                "J-12_message.eml, J-13_message.eml, J-14_message.eml, J-15_message.eml, and J-16_message.eml are the strongest complaint-thread records.",
-                "These messages capture the February 26, March 2, and March 9, 2026 sequence tied to additional-information demands, Blossom processing complaints, service-animal issues, and race-discrimination allegations.",
-            ],
-        ),
-        (
-            "Key retained attachments",
-            [
-                "J-1_Additional-Information-Needed-02.09.2026.pdf",
-                "J-5_Additional-Information-Needed-02.25.2026.pdf",
-                "J-12_Image_260226_173823.jpeg",
-                "J-12_Image_260226_173852.jpeg",
-                "J-15_Image_260309_103446.jpeg",
-            ],
-        ),
-        ("Source path", [str(exhibit_j)]),
-    ]
-    m_sections = [
-        (
-            "Representative messages",
-            [
-                "M-3_message.eml, M-4_message.eml, M-7_message.eml, M-8_message.eml, M-9_message.eml, M-10_message.eml, and M-11_message.eml capture the orientation, voucher reversal, and accommodation sequence.",
-                "These materials support the March 17 through March 20, 2026 chronology concerning the two-bedroom voucher issuance, reversal, and accommodation-related follow-up.",
-            ],
-        ),
-        (
-            "Key retained attachments",
-            [
-                "M-4_TRSW---JC---03.19.2026.pdf",
-                "M-4_VO---JC---03.19.2026.pdf",
-                "M-7_Orientation---Required-Signatures-03.19.2026.pdf",
-                "M-10_output.pdf",
-                "M-8_Image_260320_142045.jpeg",
-                "M-8_Image_260320_142321.jpeg",
-                "M-8_Image_260320_142448.jpeg",
-            ],
-        ),
-        ("Source path", [str(exhibit_m)]),
-    ]
-    snippet_ids = ["seq_10269", "seq_10270", "seq_10273", "seq_10279", "seq_10280"]
-    r_lines = [
-        "Preserved Gmail sent-mail records confirm complaint emails on February 26, March 2, and March 9, 2026.",
-        "The preserved headers show recipients Kati Tilton, Ashley Ferron, and charity@magikcorp.com.",
-        "The body snippets say Blossom refused to process the application, refused to house a service animal, and engaged in discrimination on the basis of race.",
-    ]
-    for seq_id in snippet_ids:
-        header_path = exhibit_r / seq_id / "headers.txt"
-        if header_path.exists():
-            first_lines = [line.strip() for line in header_path.read_text(encoding="utf-8").splitlines() if line.strip()][:5]
-            r_lines.append(" | ".join(first_lines))
-    r_sections = [
-        ("Summary", r_lines),
-        ("Source path", [str(exhibit_r)]),
-    ]
-    for packet_dir in (REDUCED_PACKET_DIR, FULL_PACKET_DIR):
+    r_lines = list(r_intro)
+    exhibit_r = exhibits.get("Exhibit R")
+    if exhibit_r:
+        for seq_id in snippet_ids:
+            header_path = exhibit_r / seq_id / "headers.txt"
+            if header_path.exists():
+                first_lines = [line.strip() for line in header_path.read_text(encoding="utf-8").splitlines() if line.strip()][:5]
+                r_lines.append(" | ".join(first_lines))
+    r_sections = [("Summary", r_lines)]
+    if exhibit_r:
+        r_sections.append(("Source path", [str(exhibit_r)]))
+
+    for packet_dir in packet_dirs:
         make_summary_exhibit_pdf(packet_dir / "rendered" / "Exhibit_J_summary.pdf", "Exhibit J Summary", j_sections)
         make_summary_exhibit_pdf(packet_dir / "rendered" / "Exhibit_M_summary.pdf", "Exhibit M Summary", m_sections)
         make_summary_exhibit_pdf(packet_dir / "rendered" / "Exhibit_R_summary.pdf", "Exhibit R Summary", r_sections)
+        for image_entry in static_images:
+            source = _resolve_path(root_dir, str(image_entry.get("source") or ""))
+            if not source.exists():
+                continue
+            output_name = str(image_entry.get("output_name") or "")
+            if not output_name:
+                continue
+            image_to_pdf(
+                source,
+                packet_dir / "rendered" / output_name,
+                str(image_entry.get("title") or source.name),
+            )
 
-    img_q = ROOT / "improved-complaint-from-temporary-session.former-employee-review.png"
-    img_s = ROOT / "improved-complaint-from-temporary-session.shs-race-goal.png"
-    img_n = Path("/home/barberb/HACC/workspace/temporary-cli-session-migration/prior-research-results/full-evidence-review-run/chronology/emergency_motion_packet/exhibits/Exhibit N - Julio Eviction notice.jpeg")
-    for packet_dir in (REDUCED_PACKET_DIR, FULL_PACKET_DIR):
-        image_to_pdf(img_q, packet_dir / "rendered" / "Exhibit_Q_image.pdf", "Exhibit Q - Former-employee review screenshot")
-        image_to_pdf(img_s, packet_dir / "rendered" / "Exhibit_S_image.pdf", "Exhibit S - SHS race-conscious outcome goal screenshot")
-        image_to_pdf(img_n, packet_dir / "rendered" / "Exhibit_N_image.pdf", "Exhibit N - Julio eviction notice")
+
+def build_courtstyle_packet_from_config(path: str | Path) -> dict[str, Any]:
+    config_path = Path(path)
+    payload = json.loads(config_path.read_text(encoding="utf-8"))
+    config = _deep_update(deepcopy(DEFAULT_COURTSTYLE_PACKET_CONFIG), dict(payload))
+    base_dir = config_path.parent
+
+    root_dir = _resolve_path(base_dir, str(config.get("root_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["root_dir"]))
+    summary_path = _resolve_path(base_dir, str(config.get("summary_path") or DEFAULT_COURTSTYLE_PACKET_CONFIG["summary_path"]))
+    complaint_md_path = _resolve_path(base_dir, str(config.get("complaint_md_path") or DEFAULT_COURTSTYLE_PACKET_CONFIG["complaint_md_path"]))
+    full_packet_dir = _resolve_path(base_dir, str(config.get("full_packet_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["full_packet_dir"]))
+    reduced_packet_dir = _resolve_path(base_dir, str(config.get("reduced_packet_dir") or DEFAULT_COURTSTYLE_PACKET_CONFIG["reduced_packet_dir"]))
+    complaint_output = full_packet_dir / str(config.get("complaint_output_relative") or "rendered/0001_complaint_courtstyle_v2.pdf")
+
+    build_courtstyle_complaint(
+        complaint_output,
+        summary_path=summary_path,
+        complaint_md_path=complaint_md_path,
+        body_start_marker=str(config.get("body_start_marker") or "Plaintiffs allege as follows:"),
+    )
+    prepare_exhibit_support(
+        summary_path=summary_path,
+        packet_dirs=(reduced_packet_dir, full_packet_dir),
+        root_dir=root_dir,
+        support_config=config,
+    )
+    return {
+        "config_path": str(config_path),
+        "summary_path": str(summary_path),
+        "complaint_md_path": str(complaint_md_path),
+        "complaint_output": str(complaint_output),
+        "full_packet_dir": str(full_packet_dir),
+        "reduced_packet_dir": str(reduced_packet_dir),
+    }
 
 
 def build_default_courtstyle_packet() -> None:

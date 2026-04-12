@@ -17,6 +17,7 @@ from .exhibit_binder_export import (
     slugify_exhibit_label,
     source_to_pdf,
 )
+from .court_pdf_rendering import DEFAULT_EXHIBIT_CAPTION, ExhibitCaptionConfig
 from .legal_pdf_manifest import load_json_manifest
 
 
@@ -73,6 +74,20 @@ def _run_index_command(base_dir: Path, payload: Mapping[str, Any]) -> None:
     subprocess.run(resolved_command, check=True, cwd=str(base_dir))
 
 
+def _caption_config_from_manifest(payload: Mapping[str, Any]) -> ExhibitCaptionConfig:
+    data = dict(payload.get("caption_config") or {})
+    default = DEFAULT_EXHIBIT_CAPTION
+    court_lines = [str(item) for item in list(data.get("court_lines") or list(default.court_lines))]
+    if not court_lines:
+        court_lines = list(default.court_lines)
+    return ExhibitCaptionConfig(
+        court_lines=tuple(court_lines),
+        case_number=str(data.get("case_number") or default.case_number),
+        right_block_lines=tuple(str(item) for item in list(data.get("right_block_lines") or list(default.right_block_lines))),
+        left_block_label=str(data.get("left_block_label") or default.left_block_label),
+    )
+
+
 def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: bool = False) -> dict[str, Any]:
     manifest_path = Path(path)
     payload = load_json_manifest(manifest_path)
@@ -92,6 +107,7 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
     generated_dir.mkdir(parents=True, exist_ok=True)
 
     lean_replacements = _normalize_lean_replacements(payload)
+    caption_config = _caption_config_from_manifest(payload)
     merged_inputs: list[str] = []
     family_inputs: dict[str, list[str]] = {}
     family_output_paths: dict[str, str] = {}
@@ -101,7 +117,8 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
     render_binder_title_pdf(
         title_pdf,
         lean_mode=lean_mode,
-        submitted_by=str(payload.get("submitted_by") or "Benjamin Barber, Pro Se"),
+        caption_config=caption_config,
+        submitted_by=str(payload.get("submitted_by") or "Filing Party, Pro Se"),
     )
     merged_inputs.append(str(title_pdf))
     manifest_lines.extend(["## Binder Front Matter", f"- title: {title_pdf}"])
@@ -123,7 +140,7 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
         labels = [str(label) for label in list(family_payload.get("labels") or []) if str(label).strip()]
         family_inputs[family_name] = []
         divider_pdf = generated_dir / f"{family_slug(family_name)}_divider_page.pdf"
-        render_family_divider_pdf(divider_pdf, family_name, labels)
+        render_family_divider_pdf(divider_pdf, family_name, labels, caption_config=caption_config)
         merged_inputs.append(str(divider_pdf))
         family_inputs[family_name].append(str(divider_pdf))
         manifest_lines.append(f"## {family_name}")
@@ -136,8 +153,18 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
         for label in labels:
             tab_md, cover_md = _find_cover_paths(exhibit_covers_root, family_payload, label)
             slug = f"{family_slug(family_name)}_{slugify_exhibit_label(label)}"
-            tab_pdf = convert_markdown_to_binder_pdf(tab_md, generated_dir / f"{slug}_tab_cover_page.pdf", generated_dir=generated_dir)
-            cover_pdf = convert_markdown_to_binder_pdf(cover_md, generated_dir / f"{slug}_cover_page.pdf", generated_dir=generated_dir)
+            tab_pdf = convert_markdown_to_binder_pdf(
+                tab_md,
+                generated_dir / f"{slug}_tab_cover_page.pdf",
+                generated_dir=generated_dir,
+                caption_config=caption_config,
+            )
+            cover_pdf = convert_markdown_to_binder_pdf(
+                cover_md,
+                generated_dir / f"{slug}_cover_page.pdf",
+                generated_dir=generated_dir,
+                caption_config=caption_config,
+            )
             source = parse_exhibit_cover_source(cover_md)
             source_pdf = source_to_pdf(
                 source,

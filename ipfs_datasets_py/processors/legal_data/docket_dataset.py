@@ -1917,12 +1917,39 @@ class DocketDatasetBuilder:
 
     def _select_index_documents(self, documents: Sequence[DocketDocument]) -> List[DocketDocument]:
         best_by_key: Dict[str, tuple[int, int, DocketDocument]] = {}
+        fallback_by_key: Dict[str, tuple[int, int, DocketDocument]] = {}
 
         for document in documents:
             index_title = _document_index_title(document)
             index_text = _document_index_text(document)
             priority = _document_index_priority(document)
             if priority <= 0:
+                if not (str(index_text or "").strip() or str(index_title or "").strip()):
+                    continue
+                metadata = dict(document.metadata or {})
+                metadata["retrieval_index"] = {
+                    "selected": False,
+                    "priority": priority,
+                    "title": index_title,
+                    "source_kind": _document_text_source(document) or "synthetic",
+                    "evidence_quality": _document_retrieval_evidence_quality(document),
+                    "dedupe_key": _document_index_dedupe_key(document),
+                }
+                candidate = DocketDocument(
+                    document_id=document.document_id,
+                    docket_id=document.docket_id,
+                    title=index_title or document.title,
+                    text=index_text,
+                    date_filed=document.date_filed,
+                    document_number=document.document_number,
+                    source_url=document.source_url,
+                    metadata=metadata,
+                )
+                dedupe_key = _document_index_dedupe_key(document)
+                ranking = (priority, len(index_text or ""))
+                existing = fallback_by_key.get(dedupe_key)
+                if existing is None or ranking > existing[:2]:
+                    fallback_by_key[dedupe_key] = (priority, len(index_text or ""), candidate)
                 continue
             source = _document_text_source(document)
             if source in _LOW_VALUE_TEXT_SOURCES.union(_METADATA_ONLY_TEXT_SOURCES) and not str(index_text or "").strip():
@@ -1956,6 +1983,8 @@ class DocketDatasetBuilder:
                 best_by_key[dedupe_key] = (priority, len(index_text or ""), candidate)
 
         selected = [item[2] for item in best_by_key.values()]
+        if not selected and fallback_by_key:
+            selected = [item[2] for item in fallback_by_key.values()]
         selected.sort(
             key=lambda document: (
                 str(document.date_filed or ""),

@@ -23,6 +23,22 @@
       "type": "array",
       "items": { "type": ["string", "number", "boolean"] }
     },
+    "caption_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "court_lines": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "case_number": { "type": "string" },
+        "right_block_lines": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "left_block_label": { "type": "string" }
+      }
+    },
     "families": {
       "type": "array",
       "items": {

@@ -103,8 +103,12 @@ except Exception:  # pragma: no cover - optional dependency guard
     render_state_court_markdown_to_pdf = None
     render_text_lines_pdf = None
 try:
-    from .courtstyle_packet_export import build_default_courtstyle_packet
+    from .courtstyle_packet_export import (
+        build_courtstyle_packet_from_config,
+        build_default_courtstyle_packet,
+    )
 except Exception:  # pragma: no cover - optional dependency guard
+    build_courtstyle_packet_from_config = None
     build_default_courtstyle_packet = None
 try:
     from .court_ready_binder_index_export import (
@@ -676,6 +680,7 @@ __all__ = [
     "build_exhibit_binder_from_manifest",
     "build_full_evidence_binder_from_manifest",
     "build_default_courtstyle_packet",
+    "build_courtstyle_packet_from_config",
     "build_court_ready_binder_index",
     "build_court_ready_binder_index_from_config",
     "build_default_court_ready_binder_index",

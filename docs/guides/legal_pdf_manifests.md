@@ -37,14 +37,19 @@ Minimal shape:
   "output_dir": "rendered_pdfs",
   "packet_output_path": "rendered_pdfs/filing_packet.pdf",
   "config": {
-    "contact_block_html": "Benjamin Jay Barber, pro se<br/>Defendant",
-    "court_name": "IN THE CLACKAMAS COUNTY JUSTICE COURT",
-    "state_name": "STATE OF OREGON",
-    "caption_left_html": "PLAINTIFF,<br/>v.<br/>DEFENDANT.",
+    "contact_block_html": "Party Name, pro se<br/>Party Role",
+    "court_name": "IN THE [COURT NAME]",
+    "state_name": "[STATE OR JURISDICTION]",
+    "caption_left_html": "PLAINTIFF OR PETITIONER,<br/>v.<br/>DEFENDANT OR RESPONDENT.",
     "case_number_line": "Case No. __________________",
     "filed_date": "April 12, 2026",
     "signature_doc_keywords": ["motion", "memorandum", "certificate_of_service"],
-    "declaration_doc_keywords": ["declaration"]
+    "declaration_doc_keywords": ["declaration"],
+    "signature_names": ["Party One, pro se", "Party Two, pro se"],
+    "declaration_name_by_stem_keyword": {
+      "party_one": "Party One, Declarant"
+    },
+    "default_declarant_name": "Declarant"
   }
 }
 ```
@@ -151,7 +156,7 @@ Minimal shape:
 ```json
 {
   "$schema": "../schemas/legal_pdf/full_evidence_binder_manifest.schema.json",
-  "submitted_by": "Benjamin Barber, Pro Se",
+  "submitted_by": "Filing Party, Pro Se",
   "exhibit_covers_root": "covers",
   "working_dir": "build",
   "generated_dir": "build/generated_pdfs",
@@ -159,6 +164,20 @@ Minimal shape:
   "output_pdf": "build/full_binder.pdf",
   "lean_output_pdf": "build/full_binder_lean.pdf",
   "index_pdf": "binder_index.pdf",
+  "caption_config": {
+    "court_lines": [
+      "IN THE COURT OF COMPETENT JURISDICTION",
+      "FOR THE APPROPRIATE COUNTY OR DISTRICT",
+      "CIVIL / PROBATE / HOUSING DIVISION"
+    ],
+    "case_number": "Case No. __________________",
+    "right_block_lines": [
+      "In the Matter of:",
+      "Protected Person / Party Name,",
+      "Party / Subject."
+    ],
+    "left_block_label": "EXHIBIT VOLUME"
+  },
   "families": [
     {
       "name": "Primary Binder",
@@ -184,6 +203,7 @@ Minimal shape:
 
 Field notes:
 
+- `submitted_by`: text shown on the binder title page
 - `exhibit_covers_root`: root directory containing family cover subdirectories
 - `working_dir`: top-level build directory for regenerated artifacts
 - `generated_dir`: optional explicit PDF generation directory inside the build
@@ -192,6 +212,7 @@ Field notes:
 - `lean_output_pdf`: alternate output path used when `--lean-mode` is set
 - `index_pdf`: optional already-rendered index PDF inserted after the binder title page
 - `index_command`: optional command run before reading `index_pdf`
+- `caption_config`: optional caption override for title/divider/tab/cover pages
 - `families[].cover_dirs`: one or more subdirectories searched for tab/cover markdown files
 - `families[].labels`: exhibit labels in final merge order for that family
 - `families[].output_pdf`: optional per-family merged binder output
@@ -236,6 +257,22 @@ Full evidence binder:
 - `family_count`: number of family sections processed
 - `merged_input_count`: number of PDFs merged into the final binder
 - `lean_mode`: whether lean replacements were used
+
+## Config-Driven Default Builders
+
+Some reusable builders are not manifest-based but support JSON config files via
+`--config-path`:
+
+- `build-court-ready-binder-index-default`
+- `build-official-form-drafts-default`
+- `build-filing-specific-binders-default`
+
+Example config files:
+
+- [courtstyle_packet_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/courtstyle_packet_config.example.json)
+- [court_ready_binder_index_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/court_ready_binder_index_config.example.json)
+- [official_form_drafts_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/official_form_drafts_config.example.json)
+- [filing_specific_binders_config.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/filing_specific_binders_config.example.json)
 
 ## Practical Notes
 

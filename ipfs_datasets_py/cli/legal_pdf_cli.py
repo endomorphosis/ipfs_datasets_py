@@ -53,6 +53,7 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
             load_json_manifest,
         )
         from ipfs_datasets_py.processors.legal_data.courtstyle_packet_export import (
+            build_courtstyle_packet_from_config,
             build_default_courtstyle_packet,
         )
         from ipfs_datasets_py.processors.legal_data.court_ready_binder_index_export import (
@@ -73,6 +74,7 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
             "build_exhibit_binder_from_manifest": build_exhibit_binder_from_manifest,
             "build_full_evidence_binder_from_manifest": build_full_evidence_binder_from_manifest,
             "build_default_courtstyle_packet": build_default_courtstyle_packet,
+            "build_courtstyle_packet_from_config": build_courtstyle_packet_from_config,
             "build_default_court_ready_binder_index": build_default_court_ready_binder_index,
             "build_court_ready_binder_index_from_config": build_court_ready_binder_index_from_config,
             "build_default_official_form_drafts": build_default_official_form_drafts,
@@ -315,6 +317,9 @@ def main(args: list[str] | None = None) -> int:
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
     if action == "build-courtstyle-packet-default":
+        if parsed.config_path:
+            payload = _load_legal_data_exports(quiet=quiet_imports)["build_courtstyle_packet_from_config"](parsed.config_path)
+            return _emit({"action": action, **payload}, as_json=bool(parsed.json))
         _load_legal_data_exports(quiet=quiet_imports)["build_default_courtstyle_packet"]()
         return _emit({"action": action, "status": "ok"}, as_json=bool(parsed.json))
 

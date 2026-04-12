@@ -300,6 +300,38 @@ def test_legal_pdf_cli_build_courtstyle_packet_default_json_is_clean(capsys, mon
     assert marker["called"] is True
 
 
+def test_legal_pdf_cli_build_courtstyle_packet_default_with_config_json_is_clean(capsys, monkeypatch):
+    marker = {"config_path": None}
+
+    def _fake_builder(config_path: str):
+        marker["config_path"] = config_path
+        return {"config_path": config_path, "complaint_output": "/tmp/complaint.pdf"}
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_courtstyle_packet_from_config": _fake_builder},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-courtstyle-packet-default",
+            "--config-path",
+            "/tmp/courtstyle_packet_config.json",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-courtstyle-packet-default"
+    assert payload["complaint_output"] == "/tmp/complaint.pdf"
+    assert marker["config_path"] == "/tmp/courtstyle_packet_config.json"
+
+
 def test_legal_pdf_cli_build_court_ready_binder_index_default_json_is_clean(capsys, monkeypatch):
     expected = Path("/tmp/court_ready_index.pdf")
 

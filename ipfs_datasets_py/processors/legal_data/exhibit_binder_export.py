@@ -57,7 +57,7 @@ def render_binder_title_pdf(
     *,
     lean_mode: bool,
     caption_config: ExhibitCaptionConfig = DEFAULT_EXHIBIT_CAPTION,
-    submitted_by: str = "Benjamin Barber, Pro Se",
+    submitted_by: str = "Filing Party, Pro Se",
 ) -> Path:
     output_path = Path(output_path)
     pdf = canvas.Canvas(str(output_path), pagesize=letter)

@@ -132,15 +132,24 @@ Notes:
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-exhibit-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/exhibit-binder-court-ready/exhibit_binder_manifest.json --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-full-evidence-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/full_evidence_binder_manifest.json --lean-mode --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-courtstyle-packet-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-courtstyle-packet-default --config-path /path/to/courtstyle_packet_config.json --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-ready-binder-index-default --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-official-form-drafts-default --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-filing-specific-binders-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-ready-binder-index-default --config-path /path/to/court_ready_binder_index_config.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-official-form-drafts-default --config-path /path/to/official_form_drafts_config.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-filing-specific-binders-default --config-path /path/to/filing_specific_binders_config.json --json`
 	`.venv/bin/python ipfs_datasets_cli.py legal-pdf --action build-exhibit-binder --front-pdf /tmp/front.pdf --table-pdf /tmp/table.pdf --packet-pdfs /tmp/packet_a.pdf /tmp/packet_b.pdf --output-path /tmp/binder.pdf`
 	Manifest format guide: [docs/guides/legal_pdf_manifests.md](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/guides/legal_pdf_manifests.md)
 	JSON response highlights for manifest builders:
 	`build-court-filing-packet-from-manifest` -> `packet_path`, `rendered_paths`, `document_count`
 	`build-exhibit-binder-from-manifest` -> `output_pdf`, `front_pdf`, `table_pdf`, `packet_paths`, `exhibit_count`
 	`build-full-evidence-binder-from-manifest` -> `output_pdf`, `family_outputs`, `working_dir`, `generated_dir`, `build_manifest_output`, `family_count`, `merged_input_count`, `lean_mode`
+	Config-driven default builder actions also return reusable payloads:
+	`build-courtstyle-packet-default --config-path ...` -> `config_path`, `complaint_output`, `summary_path`, `complaint_md_path`, `full_packet_dir`, `reduced_packet_dir`
+	`build-court-ready-binder-index-default --config-path ...` -> `config_path`, `output_path`
+	`build-official-form-drafts-default --config-path ...` -> `config_path`, `output_paths`, `output_count`
+	`build-filing-specific-binders-default --config-path ...` -> `config_path`, `compiled_dir`, `output_paths`, `set_count`
 	Explicit typing remains available when you want to pin the route:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-dir /tmp/google_voice_bundle --package-name google_voice_bundle --no-car`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-dir /tmp/imap_bundle --package-name imap_bundle --no-car`

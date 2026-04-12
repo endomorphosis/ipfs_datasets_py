@@ -26,6 +26,12 @@ def _state_court_config_from_manifest(payload: Mapping[str, Any]) -> StateCourtP
         filed_date=str(config_payload.get("filed_date") or ""),
         signature_doc_keywords=tuple(str(item) for item in list(config_payload.get("signature_doc_keywords") or [])),
         declaration_doc_keywords=tuple(str(item) for item in list(config_payload.get("declaration_doc_keywords") or [])),
+        signature_names=tuple(str(item) for item in list(config_payload.get("signature_names") or [])),
+        declaration_name_by_stem_keyword={
+            str(key): str(value)
+            for key, value in dict(config_payload.get("declaration_name_by_stem_keyword") or {}).items()
+        },
+        default_declarant_name=str(config_payload.get("default_declarant_name") or "Declarant"),
     )
 
 

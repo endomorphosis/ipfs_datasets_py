@@ -708,6 +708,102 @@ def test_bluebook_citation_resolver_matches_ors_identifier_alias(tmp_path):
     assert link.source_url == "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545"
 
 
+def test_bluebook_lookup_result_document_suggests_citation_for_malformed_text(tmp_path):
+    state_law_path = tmp_path / "state_laws_or.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "OR",
+                    "identifier": "ORS 801.545",
+                    "name": "Section 801.545",
+                    "text": "Traffic crime. Traffic crime means any traffic offense that is punishable by a jail sentence.",
+                    "ipfs_cid": "bafyors801545",
+                    "source_url": "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545",
+                }
+            ]
+        ),
+        state_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"state_laws": [str(state_law_path)]},
+    )
+
+    result = resolve_bluebook_lookup_result_document(
+        "The filing relies on ORSS 801.545 as authority.",
+        resolver=resolver,
+        state_code="OR",
+        exhaustive=False,
+        include_recovery=False,
+    )
+
+    assert result["citation_count"] == 0
+    suggestions = result["citation_suggestions"]
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "ORS 801.545"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
+def test_bluebook_lookup_result_document_suggests_for_unmatched_citation(tmp_path):
+    state_law_path = tmp_path / "state_laws_or.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "OR",
+                    "identifier": "ORS 801.545",
+                    "name": "Section 801.545",
+                    "text": "Traffic crime. Traffic crime means any traffic offense that is punishable by a jail sentence.",
+                    "ipfs_cid": "bafyors801545",
+                    "source_url": "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545",
+                }
+            ]
+        ),
+        state_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"state_laws": [str(state_law_path)]},
+    )
+
+    result = resolve_bluebook_lookup_result_document(
+        "The filing relies on ORS 801.546 as authority.",
+        resolver=resolver,
+        state_code="OR",
+        exhaustive=False,
+        include_recovery=False,
+    )
+
+    assert result["citation_count"] == 1
+    assert result["unmatched_citation_count"] == 1
+    unresolved = result["unresolved_citations"][0]
+    suggestions = unresolved["citation_suggestions"]
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "ORS 801.545"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+    merged = result["citation_suggestions"]
+    assert merged
+    assert merged[0]["suggested_citation"] == "ORS 801.545"
+
+
+def test_normalize_malformed_citation_repairs_common_abbreviations():
+    from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import (
+        _normalize_malformed_citation,
+    )
+
+    assert _normalize_malformed_citation("ORSS 801.545") == "ORS 801.545"
+    assert _normalize_malformed_citation("Cal Stat § Code 12.34") == "Cal. Stat. § Code 12.34"
+    assert _normalize_malformed_citation("N.Y. Stat § 5") == "N.Y. Stat. § 5"
+    assert _normalize_malformed_citation("Tex Stat § 1.01") == "Tex. Stat. § 1.01"
+    assert _normalize_malformed_citation("40 CFR § 122.41") == "40 C.F.R. § 122.41"
+    assert _normalize_malformed_citation("42 USC § 1983") == "42 U.S.C. § 1983"
+
+
 def test_bluebook_citation_resolver_links_admin_and_court_rules_from_local_parquet(tmp_path):
     admin_path = tmp_path / "state_admin_rules.parquet"
     pq.write_table(
