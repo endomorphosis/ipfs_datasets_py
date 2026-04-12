@@ -1558,6 +1558,8 @@ def resolve_bluebook_lookup_result_document(
     include_recovery: bool = True,
     recovery_max_candidates: int = 8,
     recovery_archive_top_k: int = 3,
+    publish_recovery_to_hf: bool = False,
+    hf_token: Optional[str] = None,
 ) -> Dict[str, Any]:
     active_resolver = resolver or BluebookCitationResolver()
     links = active_resolver.resolve_text(text, state_code=state_code, exhaustive=exhaustive)
@@ -1616,6 +1618,41 @@ def resolve_bluebook_lookup_result_document(
                 unresolved,
                 max_candidates=recovery_max_candidates,
                 archive_top_k=recovery_archive_top_k,
+                publish_to_hf=publish_recovery_to_hf,
+                hf_token=hf_token,
+            )
+    elif include_recovery and not link_payloads:
+        active_loop = None
+        try:
+            active_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            active_loop = None
+
+        if active_loop is not None and active_loop.is_running():
+            recovery_status["skipped_reason"] = "running_event_loop"
+        else:
+            guessed_corpora = _guess_corpora_from_text(text, state_code)
+            inferred_corpus = str(guessed_corpora[0] or "").strip() if guessed_corpora else ""
+            if not inferred_corpus and suggestions:
+                inferred_corpus = str(suggestions[0].get("corpus_key") or "").strip()
+            synthetic_unresolved = [{
+                "citation_text": text,
+                "normalized_citation": text,
+                "corpus_key": inferred_corpus or None,
+                "metadata": {
+                    "state_code": state_code,
+                    "recovery_supported": True,
+                    "recovery_corpus_key": inferred_corpus or None,
+                    "candidate_corpora": [inferred_corpus] if inferred_corpus else guessed_corpora,
+                },
+            }]
+            recovery_status["attempted"] = True
+            recovery_results = _recover_unresolved_citation_payloads(
+                synthetic_unresolved,
+                max_candidates=recovery_max_candidates,
+                archive_top_k=recovery_archive_top_k,
+                publish_to_hf=publish_recovery_to_hf,
+                hf_token=hf_token,
             )
     return {
         "source": "bluebook_lookup_result_document",
@@ -1639,6 +1676,8 @@ def _recover_unresolved_citation_payloads(
     *,
     max_candidates: int,
     archive_top_k: int,
+    publish_to_hf: bool = False,
+    hf_token: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     try:
         from .legal_source_recovery import recover_missing_legal_citation_source
@@ -1665,8 +1704,8 @@ def _recover_unresolved_citation_payloads(
                     },
                     max_candidates=max(1, int(max_candidates or 8)),
                     archive_top_k=max(0, int(archive_top_k or 3)),
-                    publish_to_hf=False,
-                    hf_token=None,
+                    publish_to_hf=bool(publish_to_hf),
+                    hf_token=hf_token,
                 )
             )
         except Exception as exc:

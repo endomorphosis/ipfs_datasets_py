@@ -201,6 +201,7 @@ def test_docket_dataset_builder_creates_dataset_with_kg_bm25_and_vector_index():
     assert payload["proof_assistant"]["tactician"]["summary"]["starting_source_types"]
     assert payload["bm25_index"]["document_count"] == 2
     assert payload["vector_index"]["document_count"] == 2
+    assert payload["vector_index"]["vector_count"] >= payload["vector_index"]["document_count"]
 
 
 def test_docket_dataset_search_helpers_return_ranked_results():

@@ -24,8 +24,27 @@ from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker import 
 
 try:
     from hypothesis import given, settings, strategies as st
+    HYPOTHESIS_AVAILABLE = True
 except Exception:  # pragma: no cover - optional dependency
-    given = settings = st = None
+    HYPOTHESIS_AVAILABLE = False
+
+    def given(*args, **kwargs):
+        def _decorator(func):
+            return func
+        return _decorator
+
+    def settings(*args, **kwargs):
+        def _decorator(func):
+            return func
+        return _decorator
+
+    class _HypothesisStub:
+        def __getattr__(self, name):
+            def _factory(*args, **kwargs):
+                return None
+            return _factory
+
+    st = _HypothesisStub()
 
 
 def _build_fuzz_resolver(tmp_path):
@@ -1397,6 +1416,69 @@ def test_resolve_bluebook_lookup_result_document_includes_recovery_for_unmatched
     assert result["recovery_results"][0]["citation_text"] == "Minn. Stat. § 999.999"
 
 
+def test_resolve_bluebook_lookup_result_document_recovers_when_hf_lookup_misses_entirely(monkeypatch):
+    captured = {}
+
+    async def fake_recover_missing_legal_citation_source(**kwargs):
+        captured.update(kwargs)
+        return {
+            "status": "tracked_and_published",
+            "citation_text": kwargs["citation_text"],
+            "normalized_citation": kwargs["normalized_citation"],
+            "corpus_key": kwargs["corpus_key"],
+            "state_code": kwargs["state_code"],
+            "candidate_count": 1,
+            "archived_count": 0,
+            "publish_report": {"uploaded": True},
+            "candidate_files": [
+                {
+                    "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545",
+                    "fetch_success": True,
+                }
+            ],
+            "scraper_patch": {
+                "patch_path": "/tmp/recovery.patch",
+                "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            },
+        }
+
+    recovery_module = __import__(
+        "ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery",
+        fromlist=["recover_missing_legal_citation_source"],
+    )
+    monkeypatch.setattr(
+        recovery_module,
+        "recover_missing_legal_citation_source",
+        fake_recover_missing_legal_citation_source,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"state_laws": ["/tmp/missing_state_laws.parquet"]},
+    )
+
+    result = resolve_bluebook_lookup_result_document(
+        "The filing relies on ORSS 801.545 as authority.",
+        resolver=resolver,
+        state_code="OR",
+        exhaustive=False,
+        include_recovery=True,
+        publish_recovery_to_hf=True,
+        hf_token="hf-test-token",
+        recovery_archive_top_k=0,
+    )
+
+    assert result["citation_count"] == 0
+    assert result["recovery"]["attempted"] is True
+    assert len(result["recovery_results"]) == 1
+    assert result["recovery_results"][0]["status"] == "tracked_and_published"
+    assert captured["citation_text"] == "The filing relies on ORSS 801.545 as authority."
+    assert captured["corpus_key"] == "state_laws"
+    assert captured["state_code"] == "OR"
+    assert captured["publish_to_hf"] is True
+    assert captured["hf_token"] == "hf-test-token"
+
+
 def test_bluebook_citation_resolver_caches_hf_sources_per_corpus(monkeypatch):
     list_calls = []
 
@@ -1868,7 +1950,7 @@ def test_bluebook_citation_resolution_audit_reports_document_level_coverage(tmp_
     assert unresolved["metadata"]["recovery_supported"] is True
 
 
-@pytest.mark.skipif(st is None, reason="hypothesis not installed")
+@pytest.mark.skipif(not HYPOTHESIS_AVAILABLE, reason="hypothesis not installed")
 @given(
     payload=st.binary(min_size=1, max_size=4096),
     chunk_sizes=st.lists(st.integers(min_value=1, max_value=257), min_size=1, max_size=32),
@@ -1923,7 +2005,7 @@ def test_bluebook_citation_resolver_materialize_remote_parquet_preserves_downloa
         assert request_calls == [(source_ref, True, 120)]
 
 
-@pytest.mark.skipif(st is None, reason="hypothesis not installed")
+@pytest.mark.skipif(not HYPOTHESIS_AVAILABLE, reason="hypothesis not installed")
 @given(
     names=st.lists(
         st.text(

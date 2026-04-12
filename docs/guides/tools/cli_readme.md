@@ -157,6 +157,18 @@ See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
 ./ipfs-datasets workspace --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json
 ```
 
+### Email Authority Enrichment
+
+```bash
+# Build legal authority enrichment from an email timeline handoff
+./ipfs-datasets email authority-enrichment /path/to/email_timeline_handoff.json
+
+# Override topic hints/seed authority catalog
+./ipfs-datasets email authority-enrichment /path/to/email_timeline_handoff.json \
+  --catalog-path /path/to/email_authority_enrichment_catalog.json \
+  --output-dir /tmp/authority_enrichment
+```
+
 ## Tool Categories Available
 
 The enhanced CLI provides access to 31+ tool categories:

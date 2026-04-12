@@ -2314,6 +2314,11 @@ class DocketDatasetBuilder:
                     "norm": self._vector_norm(vector),
                 }
             )
+        chunk_counts = vector_metadata.get("chunk_counts")
+        if isinstance(chunk_counts, list) and chunk_counts:
+            total_vector_count = int(sum(int(count or 0) for count in chunk_counts))
+        else:
+            total_vector_count = len(items)
         return {
             "index_id": f"{dataset_id}_vector",
             "dimension": len(items[0]["vector"]) if items else self.vector_dimension,
@@ -2328,6 +2333,7 @@ class DocketDatasetBuilder:
             "chunk_size": vector_metadata.get("chunk_size"),
             "chunk_overlap": vector_metadata.get("chunk_overlap"),
             "chunk_counts": vector_metadata.get("chunk_counts"),
+            "vector_count": total_vector_count,
             "document_count": len(items),
             "items": items,
         }

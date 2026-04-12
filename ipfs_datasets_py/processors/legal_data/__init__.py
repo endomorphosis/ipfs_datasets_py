@@ -785,5 +785,12 @@ __all__ = [
     "load_packaged_workspace_summary_view",
     "package_workspace_dataset",
     "render_packaged_workspace_report",
+    "build_email_authority_query_plan",
+    "build_seed_authority_catalog",
+    "build_seed_authority_catalog_with_catalog",
+    "enrich_email_timeline_authorities",
+    "DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG",
+    "load_email_authority_enrichment_catalog",
+    "merge_email_authority_enrichment_catalog",
     "summarize_case_graph",
 ]

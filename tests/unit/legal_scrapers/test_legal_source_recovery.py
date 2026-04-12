@@ -187,6 +187,7 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
     assert published["repo_id"] == "justicedao/ipfs_state_laws"
     assert published["path_in_repo"] == "source_recovery/20240102_030405_minn-stat-518-17"
     assert Path(published["local_dir"]) == manifest_path.parent
+    assert published["allow_patterns"] == ["*.json", "candidate_files/*", "patches/*"]
 
 
 @pytest.mark.anyio

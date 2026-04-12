@@ -140,6 +140,45 @@ def create_parser() -> argparse.ArgumentParser:
                               help='Field to search (default: all)')
     search_parser.add_argument('--output', '-o', help='Output JSON file')
 
+    authority_enrichment_parser = subparsers.add_parser(
+        'authority-enrichment',
+        help='Enrich an email timeline handoff with legal authority queries and seed citations',
+    )
+    authority_enrichment_parser.add_argument(
+        'file_path',
+        help='Path to email timeline handoff JSON (for example: email_timeline_handoff.json)',
+    )
+    authority_enrichment_parser.add_argument(
+        '--output-dir',
+        help='Directory where enrichment outputs should be written (defaults to authority_enrichment beside the source file)',
+    )
+    authority_enrichment_parser.add_argument(
+        '--jurisdiction',
+        default='or',
+        help='Jurisdiction code passed to legal authority search (default: or)',
+    )
+    authority_enrichment_parser.add_argument(
+        '--jurisdiction-label',
+        default='Oregon',
+        help='Readable jurisdiction label used in generated query plans (default: Oregon)',
+    )
+    authority_enrichment_parser.add_argument(
+        '--max-queries',
+        type=int,
+        default=8,
+        help='Maximum number of live authority queries to execute (default: 8)',
+    )
+    authority_enrichment_parser.add_argument(
+        '--no-state-archives',
+        action='store_true',
+        help='Disable supplemental state web archive lookups',
+    )
+    authority_enrichment_parser.add_argument(
+        '--catalog-path',
+        help='Path to a JSON catalog override for authority seeds/topic hints',
+    )
+    authority_enrichment_parser.add_argument('--output', '-o', help='Write command payload to JSON file')
+
     # Google Voice Takeout parse command
     voice_parser = subparsers.add_parser('google-voice', help='Parse a Google Voice Takeout directory or zip archive')
     _add_google_voice_common_args(voice_parser)
@@ -737,6 +776,39 @@ async def cmd_search(args):
         }
         print(json_module.dumps(result, indent=2))
         return 1
+
+
+async def cmd_authority_enrichment(args):
+    """Enrich an email timeline handoff with legal authority search outputs."""
+    from ipfs_datasets_py.processors.legal_data import enrich_email_timeline_authorities
+
+    try:
+        payload = enrich_email_timeline_authorities(
+            args.file_path,
+            output_dir=args.output_dir,
+            jurisdiction=args.jurisdiction,
+            jurisdiction_label=args.jurisdiction_label,
+            max_queries=int(args.max_queries or 8),
+            search_state_archives=not bool(args.no_state_archives),
+            catalog_path=args.catalog_path,
+        )
+    except Exception as e:
+        payload = {
+            'status': 'error',
+            'error': str(e),
+            'file_path': args.file_path,
+            'catalog_path': str(args.catalog_path or ''),
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        return 1
+
+    if args.output:
+        with open(args.output, 'w', encoding='utf-8') as f:
+            json.dump(payload, f, indent=2, ensure_ascii=False)
+        print(f"Authority enrichment payload saved to {args.output}")
+    else:
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0 if payload.get('status') == 'success' else 1
 
 
 def _google_voice_summary(result: dict) -> dict:
@@ -1791,6 +1863,7 @@ async def main_async(args):
         'fetch': cmd_fetch,
         'analyze': cmd_analyze,
         'search': cmd_search,
+        'authority-enrichment': cmd_authority_enrichment,
         'google-voice': cmd_google_voice,
         'google-voice-vault': cmd_google_voice_vault,
         'google-voice-data-export': cmd_google_voice_data_export,

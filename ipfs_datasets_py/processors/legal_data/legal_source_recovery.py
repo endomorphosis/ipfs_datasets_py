@@ -285,6 +285,28 @@ class RecoveryScraperPatch:
 
 
 @dataclass
+class _FallbackPatch:
+    patch_id: str
+    agent_id: str
+    task_id: str
+    description: str
+    diff_content: str
+    target_files: List[str] = field(default_factory=list)
+    created_at: datetime = field(default_factory=datetime.now)
+    parent_patches: List[str] = field(default_factory=list)
+    ipfs_cid: Optional[str] = None
+    worktree_path: Optional[str] = None
+    validated: bool = False
+    applied: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload = asdict(self)
+        payload["created_at"] = self.created_at.isoformat()
+        return payload
+
+
+@dataclass
 class LegalSourceRecoveryResult:
     status: str
     citation_text: str
@@ -597,7 +619,11 @@ class LegalSourceRecoveryWorkflow:
                 "repo_id": corpus.hf_dataset_id,
                 "local_dir": str(manifest_dir),
                 "path_in_repo": f"source_recovery/{manifest_dir.name}",
-                "allow_patterns": ["*.json"],
+                "allow_patterns": [
+                    "*.json",
+                    "candidate_files/*",
+                    "patches/*",
+                ],
                 "cid_column": corpus.cid_field,
                 "publish_command": (
                     f"python scripts/repair/publish_parquet_to_hf.py --local-dir {manifest_dir} "
@@ -950,7 +976,10 @@ class LegalSourceRecoveryWorkflow:
             return None
 
         host = urlparse(source_url).netloc.lower() or None
-        from ...optimizers.agentic.patch_control import Patch
+        try:
+            from ...optimizers.agentic.patch_control import Patch
+        except Exception:
+            Patch = _FallbackPatch
 
         patch_id = f"recovery-{_slugify(normalized_citation, limit=40)}-{_slugify(host or 'host', limit=24)}"
         diff_content = self._build_scraper_patch_diff(

@@ -8,9 +8,11 @@ import json
 from pathlib import Path
 
 from ipfs_datasets_py.processors.legal_data import (
+    DocketDatasetObject,
     DocketDatasetBuilder,
     attach_available_courtlistener_recap_evidence_to_docket,
     attach_public_courtlistener_filing_pdfs_to_docket,
+    audit_docket_dataset_citation_sources,
     export_docket_dataset_single_parquet,
     fetch_courtlistener_docket,
 )
@@ -74,6 +76,11 @@ def _parse_args() -> argparse.Namespace:
         type=int,
         default=16,
         help="Vector dimension for local hashed projection embeddings.",
+    )
+    parser.add_argument(
+        "--citation-source-audit",
+        action="store_true",
+        help="Run the Bluebook citation source audit across docket documents.",
     )
     parser.add_argument("--embeddings-provider", default="", help="Embeddings router provider override.")
     parser.add_argument("--embeddings-model", default="", help="Embeddings model name override.")
@@ -230,6 +237,10 @@ def main() -> int:
         "vector_index": vector_index,
         "metadata": dict(export_source.get("metadata") or {}),
     }
+    if args.citation_source_audit:
+        dataset_obj = DocketDatasetObject.from_dict(dataset_payload)
+        citation_audit = audit_docket_dataset_citation_sources(dataset_obj)
+        dataset_payload.setdefault("metadata", {})["citation_source_audit"] = dict(citation_audit)
 
     export_result = export_docket_dataset_single_parquet(dataset_payload, output_parquet)
     payload = {
@@ -240,6 +251,7 @@ def main() -> int:
         "document_count": len(list(dataset_payload.get("documents") or [])),
         "bm25_document_count": int((bm25_index or {}).get("document_count") or 0),
         "vector_document_count": int((vector_index or {}).get("document_count") or 0),
+        "vector_total_count": int((vector_index or {}).get("vector_count") or 0),
         "knowledge_graph_entity_count": len(list((knowledge_graph or {}).get("entities") or [])),
         "knowledge_graph_relationship_count": len(list((knowledge_graph or {}).get("relationships") or [])),
         "vector_backend": str((vector_index or {}).get("backend") or ""),
@@ -251,6 +263,7 @@ def main() -> int:
         "vector_chunk_overlap": (vector_index or {}).get("chunk_overlap"),
         "vector_batch_size": (vector_index or {}).get("batch_size"),
         "vector_parallel_batches": (vector_index or {}).get("parallel_batches"),
+        "citation_audit_included": bool(args.citation_source_audit),
         "export": export_result,
     }
 
@@ -264,6 +277,8 @@ def main() -> int:
         print(f"Documents: {payload['document_count']}")
         print(f"BM25 documents: {payload['bm25_document_count']}")
         print(f"Vector documents: {payload['vector_document_count']}")
+        if payload.get("vector_total_count"):
+            print(f"Vector count: {payload['vector_total_count']}")
         if payload.get("vector_backend"):
             print(
                 "Vector backend: "
