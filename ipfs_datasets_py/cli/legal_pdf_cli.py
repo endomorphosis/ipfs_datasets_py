@@ -61,6 +61,9 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
         from ipfs_datasets_py.processors.legal_data.official_form_drafts_export import (
             build_default_official_form_drafts,
         )
+        from ipfs_datasets_py.processors.legal_data.filing_specific_binders_export import (
+            build_default_filing_specific_binders,
+        )
 
         return {
             "build_exhibit_binder": build_exhibit_binder,
@@ -69,6 +72,7 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
             "build_default_courtstyle_packet": build_default_courtstyle_packet,
             "build_default_court_ready_binder_index": build_default_court_ready_binder_index,
             "build_default_official_form_drafts": build_default_official_form_drafts,
+            "build_default_filing_specific_binders": build_default_filing_specific_binders,
             "build_state_court_filing_packet": build_state_court_filing_packet,
             "build_state_court_filing_packet_from_manifest": build_state_court_filing_packet_from_manifest,
             "convert_markdown_to_binder_pdf": convert_markdown_to_binder_pdf,
@@ -127,6 +131,7 @@ def create_parser() -> argparse.ArgumentParser:
             "build-courtstyle-packet-default",
             "build-court-ready-binder-index-default",
             "build-official-form-drafts-default",
+            "build-filing-specific-binders-default",
             "render-exhibit-tab",
             "render-exhibit-cover",
             "render-binder-title",
@@ -312,6 +317,10 @@ def main(args: list[str] | None = None) -> int:
 
     if action == "build-official-form-drafts-default":
         output_paths = _load_legal_data_exports(quiet=quiet_imports)["build_default_official_form_drafts"]()
+        return _emit({"action": action, "output_paths": [str(path) for path in list(output_paths or [])]}, as_json=bool(parsed.json))
+
+    if action == "build-filing-specific-binders-default":
+        output_paths = _load_legal_data_exports(quiet=quiet_imports)["build_default_filing_specific_binders"]()
         return _emit({"action": action, "output_paths": [str(path) for path in list(output_paths or [])]}, as_json=bool(parsed.json))
 
     if action == "render-exhibit-tab":

@@ -134,6 +134,7 @@ Notes:
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-courtstyle-packet-default --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-ready-binder-index-default --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-official-form-drafts-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-filing-specific-binders-default --json`
 	`.venv/bin/python ipfs_datasets_cli.py legal-pdf --action build-exhibit-binder --front-pdf /tmp/front.pdf --table-pdf /tmp/table.pdf --packet-pdfs /tmp/packet_a.pdf /tmp/packet_b.pdf --output-path /tmp/binder.pdf`
 	Manifest format guide: [docs/guides/legal_pdf_manifests.md](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/guides/legal_pdf_manifests.md)
 	JSON response highlights for manifest builders:

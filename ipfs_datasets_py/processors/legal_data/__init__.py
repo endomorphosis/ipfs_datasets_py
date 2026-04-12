@@ -115,6 +115,10 @@ try:
 except Exception:  # pragma: no cover - optional dependency guard
     build_default_official_form_drafts = None
 try:
+    from .filing_specific_binders_export import build_default_filing_specific_binders
+except Exception:  # pragma: no cover - optional dependency guard
+    build_default_filing_specific_binders = None
+try:
     from .exhibit_binder_export import (
         build_exhibit_binder,
         convert_markdown_to_binder_pdf,
@@ -656,6 +660,7 @@ __all__ = [
     "build_default_courtstyle_packet",
     "build_default_court_ready_binder_index",
     "build_default_official_form_drafts",
+    "build_default_filing_specific_binders",
     "binder_court_config_from_manifest",
     "BinderCourtConfig",
     "DEFAULT_BINDER_COURT_CONFIG",

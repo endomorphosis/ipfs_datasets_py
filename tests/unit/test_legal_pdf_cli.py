@@ -348,3 +348,28 @@ def test_legal_pdf_cli_build_official_form_drafts_default_json_is_clean(capsys, 
     payload = json.loads(captured.out)
     assert payload["action"] == "build-official-form-drafts-default"
     assert payload["output_paths"] == [str(path) for path in expected]
+
+
+def test_legal_pdf_cli_build_filing_specific_binders_default_json_is_clean(capsys, monkeypatch):
+    expected = [Path("/tmp/eviction_set.pdf"), Path("/tmp/show_cause_set.pdf")]
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_default_filing_specific_binders": lambda: expected},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-filing-specific-binders-default",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-filing-specific-binders-default"
+    assert payload["output_paths"] == [str(path) for path in expected]
