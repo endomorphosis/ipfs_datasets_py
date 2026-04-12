@@ -797,7 +797,7 @@ def test_normalize_malformed_citation_repairs_common_abbreviations():
     )
 
     assert _normalize_malformed_citation("ORSS 801.545") == "ORS 801.545"
-    assert _normalize_malformed_citation("Cal Stat § Code 12.34") == "Cal. Stat. § Code 12.34"
+    assert _normalize_malformed_citation("Cal Stat § Code 12.34") == "Cal. Stat. Code § 12.34"
     assert _normalize_malformed_citation("N.Y. Stat § 5") == "N.Y. Stat. § 5"
     assert _normalize_malformed_citation("Tex Stat § 1.01") == "Tex. Stat. § 1.01"
     assert _normalize_malformed_citation("40 CFR § 122.41") == "40 C.F.R. § 122.41"

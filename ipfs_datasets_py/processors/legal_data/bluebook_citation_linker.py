@@ -114,11 +114,9 @@ def _normalize_malformed_citation(text: str) -> str:
         return value
     normalized = value
     replacements = [
-        (r"\bStat\s+§\s+Code\b", "Stat. Code §"),
-        (r"\bStat\s+§\s+Codes\b", "Stat. Code §"),
-        (r"\bStat\s+§\s+Code\b", "Stat. Code §"),
+        (r"\bStat\.?\s+§\s+Codes?\b", "Stat. Code §"),
         (r"\bRev\s+Stat\b", "Rev. Stat."),
-        (r"\bStat\b", "Stat."),
+        (r"\bStat\b(?!\.)", "Stat."),
         (r"\bCFR\b", "C.F.R."),
         (r"\bUSC\b", "U.S.C."),
         (r"\bORS\b", "ORS"),
@@ -126,9 +124,10 @@ def _normalize_malformed_citation(text: str) -> str:
     for pattern, replacement in replacements:
         normalized = re.sub(pattern, replacement, normalized, flags=re.IGNORECASE)
     normalized = re.sub(r"\bORSS\b", "ORS", normalized, flags=re.IGNORECASE)
-    normalized = re.sub(r"\bCal\s+Stat\b", "Cal. Stat.", normalized, flags=re.IGNORECASE)
-    normalized = re.sub(r"\bN\.?Y\.?\s+Stat\b", "N.Y. Stat.", normalized, flags=re.IGNORECASE)
-    normalized = re.sub(r"\bTex\.?\s+Stat\b", "Tex. Stat.", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bCal\.?\s+Stat\.?\b", "Cal. Stat.", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bN\.?Y\.?\s+Stat\.?\b", "N.Y. Stat.", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\bTex\.?\s+Stat\.?\b", "Tex. Stat.", normalized, flags=re.IGNORECASE)
+    normalized = re.sub(r"\.\.+", ".", normalized)
     normalized = re.sub(r"\s+", " ", normalized)
     return normalized.strip()
 
