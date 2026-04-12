@@ -116,7 +116,33 @@ def _connect_duckdb():
     return connection
 
 
+def _materialize_hf_dataset_source(source_ref: str) -> str:
+    match = re.match(
+        r"https?://huggingface\.co/datasets/(?P<repo>[^/]+/[^/]+)/resolve/(?P<revision>[^/]+)/(?P<filename>.+)",
+        str(source_ref or "").strip(),
+    )
+    if not match:
+        return str(source_ref)
+
+    from huggingface_hub import hf_hub_download
+
+    return str(
+        hf_hub_download(
+            repo_id=str(match.group("repo")),
+            repo_type="dataset",
+            revision=str(match.group("revision")),
+            filename=str(match.group("filename")),
+        )
+    )
+
+
 def _read_rows(connection: Any, source_ref: str, where_clause: str, limit: int) -> List[Dict[str, Any]]:
+    if source_ref.startswith(("http://", "https://")):
+        try:
+            source_ref = _materialize_hf_dataset_source(source_ref)
+        except Exception:
+            pass
+
     if not source_ref.startswith(("http://", "https://")):
         table = pytest.importorskip("pyarrow.parquet").read_table(source_ref)
         rows = table.to_pylist()

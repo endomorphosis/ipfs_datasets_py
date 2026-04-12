@@ -395,6 +395,7 @@ Commands:
             --action inspect Read bundle sections and artifact counts
             --action load    Load the full dataset-shaped bundle payload
             --action report  Render a human-readable markdown/text bundle report
+            --action export  Export a workspace bundle from generic or source-specific inputs
 
     history-index Search persisted DuckDB history/GraphRAG index
     docket       Import a docket into a reusable dataset artifact
@@ -3204,13 +3205,18 @@ Examples:
                 print("""
 ipfs-datasets workspace - Inspect workspace dataset single-parquet bundles
 
-Usage: ipfs-datasets workspace --input-path PATH [--action {summary,inspect,load,report}] [options]
+Usage: ipfs-datasets workspace [--input-path PATH] [--action {summary,inspect,load,report,export}] [options]
 
 Options:
-  --input-path PATH
-    --action {summary,inspect,load,report}
+    --input-path PATH
+    --input-json PATH
+    --input-directory PATH
+    --input-type {workspace-json,directory,google-voice-manifest,discord-export,email-export}
+    --action {summary,inspect,load,report,export}
+    --output-parquet PATH
   --fields FIELD1,FIELD2
     --report-format {markdown,text,json}
+    --strict-evidence-mode
   --json
 
 Examples:
@@ -3218,6 +3224,7 @@ Examples:
   ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action inspect --fields workspace_id,row_count,sections
   ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action load --json
     ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action report --report-format markdown
+    ipfs-datasets workspace --action export --input-type email-export --input-path ./email_export.json --output-parquet ./email_bundle.parquet --json
 """)
                 return
 

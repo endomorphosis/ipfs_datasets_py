@@ -60,6 +60,16 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --input-enriched-json /tmp/fearless_enriched.json --output-parquet /tmp/fearless_from_cache.parquet --strict-evidence-mode`
 	Use `--strict-evidence-mode` when you want the bundle built from the
 	`plain_text+` subset instead of the full enriched docket payload.
+- Run `export_workspace_dataset_single_bundle.py` to ingest a workspace corpus
+	(email, Discord, Google Voice, directories, or custom JSON) and export a
+	single parquet bundle with documents, collections, BM25 rows, vector rows, and
+	knowledge-graph rows.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-json /tmp/workspace_payload.json --output-parquet /tmp/workspace_bundle.parquet --json`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/evidence_dir --output-parquet /tmp/workspace_bundle.parquet --workspace-id ws-01 --workspace-name "Evidence Workspace" --source-type directory --glob-pattern "*.txt"`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/google_voice_manifest.json --input-type google-voice-manifest --output-parquet /tmp/voice_bundle.parquet --strict-evidence-mode`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/discord_export.json --input-type discord-export --output-parquet /tmp/discord_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-path /tmp/email_export.json --input-type email-export --output-parquet /tmp/email_bundle.parquet`
 - Run `export_workspace_dataset_single_bundle.py` to ingest a generic workspace
 	corpus from JSON or a directory of evidence files and export a single parquet
 	bundle with normalized documents, collections, BM25 rows, vector rows, and
@@ -74,6 +84,11 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type email-export --input-path /tmp/email_export.json --output-parquet /tmp/email_bundle.parquet`
 	Use `--strict-evidence-mode` when you want the bundle built from the
 	`plain_text+` retrieval subset instead of the full normalized workspace payload.
+- Run `export_workspace_dataset_bundle.py` to package a workspace dataset into
+	chain-loadable parquet (and optional CAR) artifacts similar to docket bundles.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-directory /tmp/mailbox --workspace-id mailbox-01 --workspace-name "Consumer Mailbox" --source-type email --output-dir /tmp/mailbox_bundle --no-car`
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

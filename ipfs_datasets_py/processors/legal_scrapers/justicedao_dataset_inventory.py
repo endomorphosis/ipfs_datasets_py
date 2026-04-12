@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 import asyncio
 import hashlib
@@ -460,13 +461,11 @@ def _profile_country_codes(profile: DatasetProfile) -> List[str]:
     return [str(item).strip().upper() for item in list(_canonical_metadata_for_dataset(profile.dataset_id).get("country_codes") or []) if str(item).strip()]
 
 
-def inspect_justicedao_datasets(
+def _inspect_justicedao_datasets_uncached(
     *,
-    author: str = "justicedao",
-    dataset_prefix: str = "ipfs_",
-    legal_branch: Optional[str] = None,
-    country_code: Optional[str] = None,
-    session: Optional[requests.Session] = None,
+    author: str,
+    dataset_prefix: str,
+    session: Optional[requests.Session],
 ) -> List[DatasetProfile]:
     from huggingface_hub import list_datasets, list_repo_files
 
@@ -531,6 +530,36 @@ def inspect_justicedao_datasets(
             )
         except Exception as exc:
             profiles.append(DatasetProfile(dataset_id=dataset_id, error=str(exc), **_canonical_metadata_for_dataset(dataset_id)))
+    return profiles
+
+
+@lru_cache(maxsize=8)
+def _inspect_justicedao_datasets_cached(author: str, dataset_prefix: str) -> tuple[DatasetProfile, ...]:
+    return tuple(
+        _inspect_justicedao_datasets_uncached(
+            author=author,
+            dataset_prefix=dataset_prefix,
+            session=None,
+        )
+    )
+
+
+def inspect_justicedao_datasets(
+    *,
+    author: str = "justicedao",
+    dataset_prefix: str = "ipfs_",
+    legal_branch: Optional[str] = None,
+    country_code: Optional[str] = None,
+    session: Optional[requests.Session] = None,
+) -> List[DatasetProfile]:
+    if session is None:
+        profiles = list(_inspect_justicedao_datasets_cached(author, dataset_prefix))
+    else:
+        profiles = _inspect_justicedao_datasets_uncached(
+            author=author,
+            dataset_prefix=dataset_prefix,
+            session=session,
+        )
     return filter_dataset_profiles(
         profiles,
         legal_branch=legal_branch,

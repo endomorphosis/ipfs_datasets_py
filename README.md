@@ -136,6 +136,8 @@ ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
   --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
 ```
 
+See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
+
 ### VSCode CLI Integration
 
 ```bash

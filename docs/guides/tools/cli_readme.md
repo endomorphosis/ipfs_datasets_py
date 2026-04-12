@@ -142,6 +142,8 @@ python scripts/cli/enhanced_cli.py bespoke_tools system_health
   --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
 ```
 
+See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
+
 ## Tool Categories Available
 
 The enhanced CLI provides access to 31+ tool categories:

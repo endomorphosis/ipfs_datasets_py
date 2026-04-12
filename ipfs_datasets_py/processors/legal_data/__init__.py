@@ -93,6 +93,16 @@ from .workspace_dataset import (
     search_workspace_dataset_vector,
     summarize_workspace_dataset,
 )
+from .workspace_packaging import (
+    WorkspaceDatasetPackager,
+    inspect_packaged_workspace_bundle,
+    iter_packaged_workspace_chain,
+    load_packaged_workspace_dataset,
+    load_packaged_workspace_dataset_components,
+    load_packaged_workspace_summary_view,
+    package_workspace_dataset,
+    render_packaged_workspace_report,
+)
 from .docket_packaging import (
     DocketDatasetPackager,
     PackagedDocketQueryAdapter,
@@ -369,5 +379,13 @@ __all__ = [
     "search_workspace_dataset_bm25",
     "search_workspace_dataset_vector",
     "summarize_workspace_dataset",
+    "WorkspaceDatasetPackager",
+    "inspect_packaged_workspace_bundle",
+    "iter_packaged_workspace_chain",
+    "load_packaged_workspace_dataset",
+    "load_packaged_workspace_dataset_components",
+    "load_packaged_workspace_summary_view",
+    "package_workspace_dataset",
+    "render_packaged_workspace_report",
     "summarize_case_graph",
 ]

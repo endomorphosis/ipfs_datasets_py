@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,16 @@ def _render_text(payload: dict[str, Any], *, title: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _load_export_workspace_script_module():
+    module_path = Path(__file__).resolve().parents[2] / "scripts" / "ops" / "legal_data" / "export_workspace_dataset_single_bundle.py"
+    spec = importlib.util.spec_from_file_location("workspace_export_single_bundle_under_test", module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load workspace export script from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ipfs-datasets workspace",
@@ -51,15 +62,31 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--action",
-        choices=["summary", "inspect", "load", "report"],
+        choices=["summary", "inspect", "load", "report", "export"],
         default="summary",
-        help="Read a lightweight summary, bundle inspection view, full dataset-shaped payload, or rendered report.",
+        help="Read a lightweight summary, bundle inspection view, full dataset-shaped payload, rendered report, or export a new workspace bundle.",
     )
     parser.add_argument(
         "--input-path",
-        required=True,
-        help="Path to the workspace dataset single-parquet bundle.",
+        required=False,
+        help="Path to the workspace dataset bundle for read actions, or input source path for --action export when paired with --input-type.",
     )
+    parser.add_argument("--input-json", default="", help="For --action export, path to a workspace JSON payload.")
+    parser.add_argument("--input-directory", default="", help="For --action export, path to a directory corpus.")
+    parser.add_argument(
+        "--input-type",
+        choices=["workspace-json", "directory", "google-voice-manifest", "discord-export", "email-export"],
+        default="",
+        help="For --action export, explicit source type when using --input-path.",
+    )
+    parser.add_argument("--output-parquet", default="", help="For --action export, path to the output parquet bundle.")
+    parser.add_argument("--workspace-id", default="", help="For --action export directory imports, optional workspace id override.")
+    parser.add_argument("--workspace-name", default="", help="For --action export directory imports, optional workspace name override.")
+    parser.add_argument("--source-type", default="workspace", help="For --action export, logical workspace source type label.")
+    parser.add_argument("--strict-evidence-mode", action="store_true", help="For --action export, restrict to the plain_text+ retrieval subset.")
+    parser.add_argument("--vector-dimension", type=int, default=16, help="For --action export, local vector dimension.")
+    parser.add_argument("--glob-pattern", default="*", help="For --action export directory imports, optional file glob.")
+    parser.add_argument("--write-normalized-json", default="", help="For --action export, optional path to persist normalized dataset JSON.")
     parser.add_argument(
         "--fields",
         default=None,
@@ -82,7 +109,41 @@ def create_parser() -> argparse.ArgumentParser:
 def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
+
+    if parsed.action == "export":
+        export_args: list[str] = ["--output-parquet", str(parsed.output_parquet or "")] if str(parsed.output_parquet or "").strip() else []
+        if str(parsed.input_json or "").strip():
+            export_args.extend(["--input-json", str(parsed.input_json)])
+        if str(parsed.input_directory or "").strip():
+            export_args.extend(["--input-directory", str(parsed.input_directory)])
+        if str(parsed.input_type or "").strip():
+            export_args.extend(["--input-type", str(parsed.input_type)])
+        if str(parsed.input_path or "").strip():
+            export_args.extend(["--input-path", str(parsed.input_path)])
+        if str(parsed.workspace_id or "").strip():
+            export_args.extend(["--workspace-id", str(parsed.workspace_id)])
+        if str(parsed.workspace_name or "").strip():
+            export_args.extend(["--workspace-name", str(parsed.workspace_name)])
+        if str(parsed.source_type or "").strip():
+            export_args.extend(["--source-type", str(parsed.source_type)])
+        if bool(parsed.strict_evidence_mode):
+            export_args.append("--strict-evidence-mode")
+        if int(parsed.vector_dimension or 0) > 0:
+            export_args.extend(["--vector-dimension", str(parsed.vector_dimension)])
+        if str(parsed.glob_pattern or "").strip():
+            export_args.extend(["--glob-pattern", str(parsed.glob_pattern)])
+        if str(parsed.write_normalized_json or "").strip():
+            export_args.extend(["--write-normalized-json", str(parsed.write_normalized_json)])
+        if bool(parsed.json):
+            export_args.append("--json")
+        if not export_args:
+            parser.error("--action export requires export input flags and --output-parquet.")
+        export_module = _load_export_workspace_script_module()
+        return int(export_module.main(export_args))
+
     fields = _parse_fields_arg(parsed.fields)
+    if not str(parsed.input_path or "").strip():
+        parser.error("--input-path is required for workspace read actions.")
     bundle_path = Path(parsed.input_path)
 
     if not bundle_path.exists():
