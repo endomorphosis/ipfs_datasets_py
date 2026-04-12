@@ -22,7 +22,7 @@ import pyarrow.parquet as pq
 from ..serialization.car_conversion import DataInterchangeUtils
 from ..storage.ipld.storage import IPLDStorage
 from ..retrieval import bm25_search_documents, embed_query_for_backend, hashed_term_projection, vector_dot
-from ..legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from ..legal_data.canonical_legal_corpora import get_canonical_legal_corpus
 from .docket_pdf_export import export_docket_dataset_single_pdf
 
 

@@ -4,36 +4,91 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
+import logging
 from pathlib import Path
+import warnings
 
 import jsonschema
 from jsonschema.exceptions import ValidationError
 
-from ipfs_datasets_py.processors.legal_data import (
-    build_exhibit_binder,
-    build_exhibit_binder_from_manifest,
-    build_full_evidence_binder_from_manifest,
-    build_state_court_filing_packet,
-    build_state_court_filing_packet_from_manifest,
-    convert_markdown_to_binder_pdf,
-    eml_to_pdf,
-    image_to_pdf,
-    markdown_or_text_to_pdf,
-    merge_pdfs,
-    pdf_page_count,
-    render_binder_title_pdf,
-    render_exhibit_cover_from_markdown,
-    render_exhibit_tab_from_markdown,
-    render_family_divider_pdf,
-    render_state_court_markdown_to_pdf,
-    render_state_court_pdf_batch,
-    source_to_pdf,
-    StateCourtPleadingConfig,
-    load_json_manifest,
-)
-
 __all__ = ["create_parser", "main"]
+
+
+_LEGAL_DATA_EXPORTS: dict[str, object] | None = None
+
+
+def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
+    global _LEGAL_DATA_EXPORTS
+    if _LEGAL_DATA_EXPORTS is not None:
+        return _LEGAL_DATA_EXPORTS
+
+    def _import_exports() -> dict[str, object]:
+        from ipfs_datasets_py.processors.legal_data.court_pdf_rendering import (
+            StateCourtPleadingConfig,
+            build_state_court_filing_packet,
+            render_exhibit_cover_from_markdown,
+            render_exhibit_tab_from_markdown,
+            render_state_court_markdown_to_pdf,
+            render_state_court_pdf_batch,
+        )
+        from ipfs_datasets_py.processors.legal_data.exhibit_binder_export import (
+            build_exhibit_binder,
+            convert_markdown_to_binder_pdf,
+            eml_to_pdf,
+            image_to_pdf,
+            markdown_or_text_to_pdf,
+            merge_pdfs,
+            pdf_page_count,
+            render_binder_title_pdf,
+            render_family_divider_pdf,
+            source_to_pdf,
+        )
+        from ipfs_datasets_py.processors.legal_data.exhibit_binder_manifest import build_exhibit_binder_from_manifest
+        from ipfs_datasets_py.processors.legal_data.full_evidence_binder_manifest import build_full_evidence_binder_from_manifest
+        from ipfs_datasets_py.processors.legal_data.legal_pdf_manifest import (
+            build_state_court_filing_packet_from_manifest,
+            load_json_manifest,
+        )
+
+        return {
+            "build_exhibit_binder": build_exhibit_binder,
+            "build_exhibit_binder_from_manifest": build_exhibit_binder_from_manifest,
+            "build_full_evidence_binder_from_manifest": build_full_evidence_binder_from_manifest,
+            "build_state_court_filing_packet": build_state_court_filing_packet,
+            "build_state_court_filing_packet_from_manifest": build_state_court_filing_packet_from_manifest,
+            "convert_markdown_to_binder_pdf": convert_markdown_to_binder_pdf,
+            "eml_to_pdf": eml_to_pdf,
+            "image_to_pdf": image_to_pdf,
+            "markdown_or_text_to_pdf": markdown_or_text_to_pdf,
+            "merge_pdfs": merge_pdfs,
+            "pdf_page_count": pdf_page_count,
+            "render_binder_title_pdf": render_binder_title_pdf,
+            "render_exhibit_cover_from_markdown": render_exhibit_cover_from_markdown,
+            "render_exhibit_tab_from_markdown": render_exhibit_tab_from_markdown,
+            "render_family_divider_pdf": render_family_divider_pdf,
+            "render_state_court_markdown_to_pdf": render_state_court_markdown_to_pdf,
+            "render_state_court_pdf_batch": render_state_court_pdf_batch,
+            "source_to_pdf": source_to_pdf,
+            "StateCourtPleadingConfig": StateCourtPleadingConfig,
+            "load_json_manifest": load_json_manifest,
+        }
+
+    if quiet:
+        logging.disable(logging.CRITICAL)
+        stderr_buffer = io.StringIO()
+        stdout_buffer = io.StringIO()
+        try:
+            with warnings.catch_warnings(), contextlib.redirect_stderr(stderr_buffer), contextlib.redirect_stdout(stdout_buffer):
+                warnings.simplefilter("ignore")
+                _LEGAL_DATA_EXPORTS = _import_exports()
+        finally:
+            logging.disable(logging.NOTSET)
+    else:
+        _LEGAL_DATA_EXPORTS = _import_exports()
+    return _LEGAL_DATA_EXPORTS
 
 
 _SCHEMA_DIR = Path(__file__).resolve().parents[2] / "docs" / "schemas" / "legal_pdf"
@@ -95,8 +150,10 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _config_from_args(parsed: argparse.Namespace) -> StateCourtPleadingConfig:
-    return StateCourtPleadingConfig(
+def _config_from_args(parsed: argparse.Namespace, *, quiet_imports: bool = False) -> object:
+    exports = _load_legal_data_exports(quiet=quiet_imports)
+    state_court_pleading_config = exports["StateCourtPleadingConfig"]
+    return state_court_pleading_config(
         contact_block_html=str(parsed.contact_block or ""),
         court_name=str(parsed.court_name or ""),
         state_name=str(parsed.state_name or ""),
@@ -117,8 +174,10 @@ def _emit(payload: dict[str, object], *, as_json: bool) -> int:
     return 0
 
 
-def _validate_manifest(manifest_path: str | Path, *, action: str) -> dict[str, object]:
+def _validate_manifest(manifest_path: str | Path, *, action: str, quiet_imports: bool = False) -> dict[str, object]:
     manifest_path = Path(manifest_path)
+    exports = _load_legal_data_exports(quiet=quiet_imports)
+    load_json_manifest = exports["load_json_manifest"]
     payload = load_json_manifest(manifest_path)
     if action in {"build-court-filing-packet-from-manifest", "validate-manifest:state-court"}:
         schema_path = _STATE_COURT_PACKET_SCHEMA
@@ -144,10 +203,12 @@ def main(args: list[str] | None = None) -> int:
     parsed = parser.parse_args(args)
 
     action = str(parsed.action)
+    quiet_imports = bool(parsed.json)
     if action == "validate-manifest":
         if not parsed.manifest_path:
             parser.error("--manifest-path is required.")
-        payload = load_json_manifest(parsed.manifest_path)
+        exports = _load_legal_data_exports(quiet=bool(parsed.json))
+        payload = exports["load_json_manifest"](parsed.manifest_path)
         manifest_type = "state-court"
         if "families" in payload:
             manifest_type = "full-evidence-binder"
@@ -160,7 +221,7 @@ def main(args: list[str] | None = None) -> int:
         else:
             validate_action = "validate-manifest:exhibit-binder"
         try:
-            _validate_manifest(parsed.manifest_path, action=validate_action)
+            _validate_manifest(parsed.manifest_path, action=validate_action, quiet_imports=quiet_imports)
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
         return _emit(
@@ -176,23 +237,23 @@ def main(args: list[str] | None = None) -> int:
     if action == "render-state-court":
         if not parsed.input_path or not parsed.output_path:
             parser.error("--input-path and --output-path are required.")
-        path = render_state_court_markdown_to_pdf(parsed.input_path, parsed.output_path, config=_config_from_args(parsed))
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_state_court_markdown_to_pdf"](parsed.input_path, parsed.output_path, config=_config_from_args(parsed, quiet_imports=quiet_imports))
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-state-court-batch":
         if not parsed.input_paths or not parsed.output_dir:
             parser.error("--input-paths and --output-dir are required.")
-        outputs = render_state_court_pdf_batch(parsed.input_paths, parsed.output_dir, config=_config_from_args(parsed))
+        outputs = _load_legal_data_exports(quiet=quiet_imports)["render_state_court_pdf_batch"](parsed.input_paths, parsed.output_dir, config=_config_from_args(parsed, quiet_imports=quiet_imports))
         return _emit({"action": action, "output_paths": [str(path) for path in outputs]}, as_json=bool(parsed.json))
 
     if action == "build-court-filing-packet":
         if not parsed.input_paths or not parsed.output_dir or not parsed.packet_output_path:
             parser.error("--input-paths, --output-dir, and --packet-output-path are required.")
-        payload = build_state_court_filing_packet(
+        payload = _load_legal_data_exports(quiet=quiet_imports)["build_state_court_filing_packet"](
             parsed.input_paths,
             parsed.output_dir,
             parsed.packet_output_path,
-            config=_config_from_args(parsed),
+            config=_config_from_args(parsed, quiet_imports=quiet_imports),
         )
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
@@ -200,77 +261,77 @@ def main(args: list[str] | None = None) -> int:
         if not parsed.manifest_path:
             parser.error("--manifest-path is required.")
         try:
-            _validate_manifest(parsed.manifest_path, action=action)
+            _validate_manifest(parsed.manifest_path, action=action, quiet_imports=quiet_imports)
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
-        payload = build_state_court_filing_packet_from_manifest(parsed.manifest_path)
+        payload = _load_legal_data_exports(quiet=quiet_imports)["build_state_court_filing_packet_from_manifest"](parsed.manifest_path)
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
     if action == "build-exhibit-binder-from-manifest":
         if not parsed.manifest_path:
             parser.error("--manifest-path is required.")
         try:
-            _validate_manifest(parsed.manifest_path, action=action)
+            _validate_manifest(parsed.manifest_path, action=action, quiet_imports=quiet_imports)
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
-        payload = build_exhibit_binder_from_manifest(parsed.manifest_path)
+        payload = _load_legal_data_exports(quiet=quiet_imports)["build_exhibit_binder_from_manifest"](parsed.manifest_path)
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
     if action == "build-full-evidence-binder-from-manifest":
         if not parsed.manifest_path:
             parser.error("--manifest-path is required.")
         try:
-            _validate_manifest(parsed.manifest_path, action=action)
+            _validate_manifest(parsed.manifest_path, action=action, quiet_imports=quiet_imports)
         except Exception as exc:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
-        payload = build_full_evidence_binder_from_manifest(parsed.manifest_path, lean_mode=bool(parsed.lean_mode))
+        payload = _load_legal_data_exports(quiet=quiet_imports)["build_full_evidence_binder_from_manifest"](parsed.manifest_path, lean_mode=bool(parsed.lean_mode))
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
 
     if action == "render-exhibit-tab":
-        path = render_exhibit_tab_from_markdown(parsed.input_path, parsed.output_path)
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_exhibit_tab_from_markdown"](parsed.input_path, parsed.output_path)
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-exhibit-cover":
-        path = render_exhibit_cover_from_markdown(parsed.input_path, parsed.output_path)
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_exhibit_cover_from_markdown"](parsed.input_path, parsed.output_path)
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-binder-title":
-        path = render_binder_title_pdf(parsed.output_path, lean_mode=bool(parsed.lean_mode))
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_binder_title_pdf"](parsed.output_path, lean_mode=bool(parsed.lean_mode))
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "render-family-divider":
         labels = [item.strip() for item in str(parsed.labels or "").split(",") if item.strip()]
-        path = render_family_divider_pdf(parsed.output_path, str(parsed.family or ""), labels)
+        path = _load_legal_data_exports(quiet=quiet_imports)["render_family_divider_pdf"](parsed.output_path, str(parsed.family or ""), labels)
         return _emit({"action": action, "output_path": str(path), "labels": labels}, as_json=bool(parsed.json))
 
     if action == "convert-source":
         source = str(parsed.source or parsed.input_path or "")
         if not source or not parsed.output_path or not parsed.label or not parsed.family:
             parser.error("--source or --input-path, --output-path, --label, and --family are required.")
-        path = source_to_pdf(source, output_path=parsed.output_path, label=parsed.label, family=parsed.family, lean_mode=bool(parsed.lean_mode))
+        path = _load_legal_data_exports(quiet=quiet_imports)["source_to_pdf"](source, output_path=parsed.output_path, label=parsed.label, family=parsed.family, lean_mode=bool(parsed.lean_mode))
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "convert-markdown":
         if not parsed.input_path or not parsed.output_path:
             parser.error("--input-path and --output-path are required.")
-        path = convert_markdown_to_binder_pdf(parsed.input_path, parsed.output_path, generated_dir=Path(parsed.output_path).parent)
+        path = _load_legal_data_exports(quiet=quiet_imports)["convert_markdown_to_binder_pdf"](parsed.input_path, parsed.output_path, generated_dir=Path(parsed.output_path).parent)
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "merge-pdfs":
         if not parsed.input_paths or not parsed.output_path:
             parser.error("--input-paths and --output-path are required.")
-        path = merge_pdfs(parsed.output_path, parsed.input_paths)
+        path = _load_legal_data_exports(quiet=quiet_imports)["merge_pdfs"](parsed.output_path, parsed.input_paths)
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     if action == "count-pages":
         if not parsed.input_path:
             parser.error("--input-path is required.")
-        return _emit({"action": action, "input_path": str(parsed.input_path), "page_count": pdf_page_count(parsed.input_path)}, as_json=bool(parsed.json))
+        return _emit({"action": action, "input_path": str(parsed.input_path), "page_count": _load_legal_data_exports(quiet=quiet_imports)["pdf_page_count"](parsed.input_path)}, as_json=bool(parsed.json))
 
     if action == "build-exhibit-binder":
         if not parsed.front_pdf or not parsed.output_path or not parsed.packet_pdfs:
             parser.error("--front-pdf, --packet-pdfs, and --output-path are required.")
-        path = build_exhibit_binder(front_pdf=parsed.front_pdf, table_pdf=(parsed.table_pdf or None), packet_pdfs=parsed.packet_pdfs, output_pdf=parsed.output_path)
+        path = _load_legal_data_exports(quiet=quiet_imports)["build_exhibit_binder"](front_pdf=parsed.front_pdf, table_pdf=(parsed.table_pdf or None), packet_pdfs=parsed.packet_pdfs, output_pdf=parsed.output_path)
         return _emit({"action": action, "output_path": str(path)}, as_json=bool(parsed.json))
 
     parser.error(f"Unsupported action: {action}")

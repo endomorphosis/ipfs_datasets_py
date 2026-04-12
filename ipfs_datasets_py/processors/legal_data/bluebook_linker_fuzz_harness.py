@@ -17,12 +17,10 @@ import re
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Sequence
 
 from ipfs_datasets_py import llm_router
-from ipfs_datasets_py.processors.legal_scrapers import (
+from ipfs_datasets_py.processors.legal_data.citation_extraction import CitationExtractor
+from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import (
     BluebookCitationResolver,
     resolve_bluebook_lookup_result_document,
-)
-from ipfs_datasets_py.processors.legal_scrapers.citation_extraction import CitationExtractor
-from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker import (
     _OFFICIAL_CITE_FIELDS,
     _PAGE_FIELDS,
     _SECTION_FIELDS,
@@ -33,10 +31,10 @@ from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker import 
     _VOLUME_FIELDS,
     _first_present,
 )
-from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
+from ipfs_datasets_py.processors.legal_data.legal_source_recovery import (
     recover_missing_legal_citation_source,
 )
-from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery_promotion import (
+from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import (
     merge_recovery_manifest_into_canonical_dataset,
 )
 

@@ -5,7 +5,7 @@ This tool exposes the SearchResultCitationExtractor which extracts, ranks,
 and exports legal citations from search results with network building and
 multiple export formats.
 
-Core implementation: ipfs_datasets_py.processors.legal_scrapers.citation_extraction
+Core implementation: ipfs_datasets_py.processors.legal_data.citation_extraction
 """
 
 import logging
@@ -26,7 +26,7 @@ async def extract_legal_citations(
     Extract and rank legal citations from search results.
     
     This is a thin wrapper around SearchResultCitationExtractor from the processors module.
-    All business logic is in ipfs_datasets_py.processors.legal_scrapers.citation_extraction
+    All business logic is in ipfs_datasets_py.processors.legal_data.citation_extraction
     
     Features:
     - Extracts citations from URLs, titles, and snippets
@@ -64,7 +64,7 @@ async def extract_legal_citations(
         >>> print(f"Extracted {extracted['total_citations']} citations")
     """
     try:
-        from ipfs_datasets_py.processors.legal_scrapers import SearchResultCitationExtractor
+        from ipfs_datasets_py.processors.legal_data import SearchResultCitationExtractor
         
         # Validate input
         if not results or not isinstance(results, list):

@@ -142,11 +142,16 @@ Notes:
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action summary --fields dataset_id,document_count,proof_store_count --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action inspect --fields latest_routing_reason,top_routing_citation --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action report --report-format parsed --fields latest_routing_reason,top_routing_citation`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --citation-source-audit --fields citation_count,matched_citation_count,unmatched_citation_count --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --recover-citation-sources --fields feedback_entry_count,recovery_count --json`
 	Compatibility examples:
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --summary-only --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py --input-type packaged --input-path /path/to/bundle_manifest.json --inspect-packaged --fields latest_routing_reason,top_routing_citation --json`
 	These packaged read-only modes do not require `--output` and use the lightweight
 	manifest/provenance/report loaders instead of a full packaged docket rebuild.
+	Packaged `--citation-source-audit` and `--recover-citation-sources` now also stay on
+	the manifest-based path, so they avoid rebuilding the full packaged docket object
+	unless you explicitly request an enriched dataset operation such as `--enrich-query`.
 - Run `run_all_state_legal_corpora_agentic.py` to drive the agentic daemon across
 	state laws, state court rules, and state administrative rules with shared fetch
 	caching and IPFS-backed page reuse enabled by default.

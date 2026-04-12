@@ -27,3 +27,4 @@ WS11 automation:
 Workspace dataset bundles:
 - `scripts/ops/legal_data/README.md` includes the workspace dataset bundle export and packaging workflows.
 - `ipfs_datasets_py/docs/guides/CLI_TOOL_MERGE.md` documents `ipfs-datasets workspace` CLI usage for exports and packaged bundles.
+- `WORKSPACE_DATASET_BUNDLES.md` describes the workspace dataset bundle lifecycle end-to-end.

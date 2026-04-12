@@ -142,7 +142,7 @@ class ProofTactician:
                 [
                     "ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api",
                     "ipfs_datasets_py.processors.legal_scrapers.knowledge_base_loader",
-                    "ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora",
+                    "ipfs_datasets_py.processors.legal_data.canonical_legal_corpora",
                 ],
             ),
             (

@@ -33,24 +33,24 @@ from ..retrieval import (
     hashed_term_projection,
     vector_dot,
 )
-from ..legal_scrapers.bluebook_citation_linker import (
+from ..legal_data.bluebook_citation_linker import (
     BluebookCitationResolver,
     audit_bluebook_citation_resolution_for_documents,
     citation_link_to_dict,
     resolve_bluebook_citations_in_text,
 )
-from ..legal_scrapers.eu_legal_citation_bridge import (
+from ..legal_data.eu_legal_citation_bridge import (
     build_eu_lookup_action_for_citation,
     extract_eu_legal_citations,
 )
-from ..legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
-from ..legal_scrapers.legal_source_recovery_promotion import (
+from ..legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+from ..legal_data.legal_source_recovery_promotion import (
     build_recovery_manifest_promotion_row,
     build_recovery_manifest_release_plan,
     merge_recovery_manifest_into_canonical_dataset,
     promote_recovery_manifest_to_canonical_bundle,
 )
-from ..legal_scrapers.legal_source_recovery import recover_missing_legal_citation_source
+from ..legal_data.legal_source_recovery import recover_missing_legal_citation_source
 
 
 def _utc_now_isoformat() -> str:

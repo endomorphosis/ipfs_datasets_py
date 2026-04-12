@@ -12,9 +12,9 @@ import re
 import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
-from ipfs_datasets_py.processors.legal_scrapers.citation_extraction import Citation, CitationExtractor
-from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import build_missing_citation_recovery_query
+from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_data.citation_extraction import Citation, CitationExtractor
+from ipfs_datasets_py.processors.legal_data.legal_source_recovery import build_missing_citation_recovery_query
 
 logger = logging.getLogger(__name__)
 
@@ -1316,7 +1316,7 @@ def _recover_unresolved_citation_payloads(
     archive_top_k: int,
 ) -> List[Dict[str, Any]]:
     try:
-        from ..legal_scrapers.legal_source_recovery import recover_missing_legal_citation_source
+        from .legal_source_recovery import recover_missing_legal_citation_source
     except Exception as exc:
         return [{
             "status": "error",

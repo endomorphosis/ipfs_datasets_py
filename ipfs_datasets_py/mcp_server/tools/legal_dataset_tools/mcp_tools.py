@@ -12,7 +12,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
-from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
 from ipfs_datasets_py.processors.legal_data import (
     load_packaged_docket_dataset,
     load_packaged_workspace_dataset,

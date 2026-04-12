@@ -58,15 +58,24 @@ from .claim_intake import (
     registry_for_claim_type,
     render_question_text_from_intent,
 )
-from .bluebook_linker_fuzz_harness import (
-    BluebookCitationCandidate as BluebookLinkerFuzzCandidate,
-    BluebookCitationFuzzAttempt,
-    BluebookCitationFuzzRun,
-    build_bluebook_fuzz_generation_prompt,
-    collect_seeded_bluebook_fuzz_candidates,
-    parse_bluebook_fuzz_candidates,
-    run_bluebook_linker_fuzz_harness,
-)
+try:
+    from .bluebook_linker_fuzz_harness import (
+        BluebookCitationCandidate as BluebookLinkerFuzzCandidate,
+        BluebookCitationFuzzAttempt,
+        BluebookCitationFuzzRun,
+        build_bluebook_fuzz_generation_prompt,
+        collect_seeded_bluebook_fuzz_candidates,
+        parse_bluebook_fuzz_candidates,
+        run_bluebook_linker_fuzz_harness,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    BluebookLinkerFuzzCandidate = None
+    BluebookCitationFuzzAttempt = None
+    BluebookCitationFuzzRun = None
+    build_bluebook_fuzz_generation_prompt = None
+    collect_seeded_bluebook_fuzz_candidates = None
+    parse_bluebook_fuzz_candidates = None
+    run_bluebook_linker_fuzz_harness = None
 try:
     from .court_pdf_rendering import (
         DEFAULT_EXHIBIT_CAPTION,
