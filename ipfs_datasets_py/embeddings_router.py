@@ -992,6 +992,17 @@ def embed_texts_batched(
     if not items:
         return []
 
+    if not device:
+        auto_flag = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA") or "").strip().lower()
+        if auto_flag in {"1", "true", "yes", "on"}:
+            try:
+                import torch
+
+                if torch.cuda.is_available():
+                    device = "cuda"
+            except Exception:
+                device = None
+
     resolved_deps = deps or get_default_router_deps()
     backend = provider_instance or get_embeddings_provider(provider, deps=resolved_deps)
 

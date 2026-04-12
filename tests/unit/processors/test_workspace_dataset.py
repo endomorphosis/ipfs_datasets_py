@@ -46,6 +46,10 @@ def test_workspace_dataset_builder_creates_indexed_dataset_for_generic_corpus():
     assert payload["bm25_index"]["backend"] == "local_bm25"
     assert payload["bm25_index"]["document_count"] == 2
     assert payload["vector_index"]["document_count"] == 2
+    assert "batch_size" in payload["vector_index"]
+    assert "parallel_batches" in payload["vector_index"]
+    assert "chunk_counts" in payload["vector_index"]
+    assert "device" in payload["vector_index"]
     assert payload["knowledge_graph"]["entities"]
 
 

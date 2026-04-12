@@ -350,7 +350,7 @@ class LegalSourceRecoveryWorkflow:
     def _archiver_instance(self) -> Any:
         if self._archiver is not None:
             return self._archiver
-        from .parallel_web_archiver import ParallelWebArchiver
+        from ..legal_scrapers.parallel_web_archiver import ParallelWebArchiver
 
         return ParallelWebArchiver()
 
@@ -411,7 +411,7 @@ class LegalSourceRecoveryWorkflow:
         engines: List[str],
         max_results: int,
     ) -> Dict[str, Any]:
-        from .multi_engine_legal_search import multi_engine_legal_search
+        from ..legal_scrapers.multi_engine_legal_search import multi_engine_legal_search
 
         return await multi_engine_legal_search(
             query=query,

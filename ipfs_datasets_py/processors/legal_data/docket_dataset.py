@@ -2293,9 +2293,12 @@ class DocketDatasetBuilder:
             "provider": str(vector_metadata.get("provider") or ""),
             "model_name": str(vector_metadata.get("model_name") or ""),
             "device": str(vector_metadata.get("device") or ""),
+            "batch_size": vector_metadata.get("batch_size"),
+            "parallel_batches": vector_metadata.get("parallel_batches"),
             "chunking_strategy": str(vector_metadata.get("chunking_strategy") or ""),
             "chunk_size": vector_metadata.get("chunk_size"),
             "chunk_overlap": vector_metadata.get("chunk_overlap"),
+            "chunk_counts": vector_metadata.get("chunk_counts"),
             "document_count": len(items),
             "items": items,
         }
@@ -2347,6 +2350,7 @@ def search_docket_dataset_vector(
         dimension=int(vector_index.get("dimension") or builder.vector_dimension),
         provider=str(vector_index.get("provider") or "") or None,
         model_name=str(vector_index.get("model_name") or "") or None,
+        device=str(vector_index.get("device") or "") or None,
     )
     scored: List[Dict[str, Any]] = []
     for item in items:

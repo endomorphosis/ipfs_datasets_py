@@ -20,6 +20,11 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Export a CourtListener docket as a single parquet bundle with evidence-aware indexing."
     )
+    parser.add_argument(
+        "--prefer-hacc-venv",
+        action="store_true",
+        help="Rerun the export with /home/barberb/HACC/.venv when available to ensure CUDA-enabled embeddings.",
+    )
     parser.add_argument("--docket-id", required=True, help="CourtListener docket id.")
     parser.add_argument(
         "--input-enriched-json",
@@ -90,6 +95,21 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _auto_cuda_device(requested: str | None, *, enable: bool) -> str | None:
+    if str(requested or "").strip():
+        return str(requested)
+    if not enable:
+        return None
+    try:
+        import torch  # type: ignore
+
+        if torch.cuda.is_available():
+            return "cuda"
+    except Exception:
+        return None
+    return None
+
+
 def _build_strict_subset(enriched: dict, builder: DocketDatasetBuilder) -> dict:
     preview = builder.preview_retrieval_index(enriched, min_evidence_quality="plain_text")
     selected_ids = {str(doc.get("document_id") or "") for doc in list(preview.get("documents") or [])}
@@ -121,6 +141,13 @@ def _build_strict_subset(enriched: dict, builder: DocketDatasetBuilder) -> dict:
 
 def main() -> int:
     args = _parse_args()
+    if args.prefer_hacc_venv:
+        import os
+        import sys
+
+        target = "/home/barberb/HACC/.venv/bin/python"
+        if sys.executable != target and os.path.exists(target):
+            os.execv(target, [target, *sys.argv[1:]])
 
     output_parquet = Path(args.output_parquet).expanduser()
     output_parquet.parent.mkdir(parents=True, exist_ok=True)
@@ -154,13 +181,19 @@ def main() -> int:
         enriched_path.parent.mkdir(parents=True, exist_ok=True)
         enriched_path.write_text(json.dumps(enriched), encoding="utf-8")
 
+    auto_cuda = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA", "")).strip().lower() in {"1", "true", "yes", "on"}
+    embeddings_device = _auto_cuda_device(
+        str(args.embeddings_device or "").strip() or None,
+        enable=auto_cuda,
+    )
+
     builder = DocketDatasetBuilder(
         vector_dimension=max(8, int(args.vector_dimension or 16)),
         router_max_documents=4,
         formal_logic_max_documents=4,
         embeddings_provider=str(args.embeddings_provider or "").strip() or None,
         embeddings_model_name=str(args.embeddings_model or "").strip() or None,
-        embeddings_device=str(args.embeddings_device or "").strip() or None,
+        embeddings_device=embeddings_device,
         embeddings_batch_size=int(args.embeddings_batch_size or 128),
         embeddings_parallel_batches=int(args.embeddings_parallel_batches or 1),
         embeddings_chunking_strategy=str(args.embeddings_chunking_strategy or "").strip() or None,
@@ -209,6 +242,15 @@ def main() -> int:
         "vector_document_count": int((vector_index or {}).get("document_count") or 0),
         "knowledge_graph_entity_count": len(list((knowledge_graph or {}).get("entities") or [])),
         "knowledge_graph_relationship_count": len(list((knowledge_graph or {}).get("relationships") or [])),
+        "vector_backend": str((vector_index or {}).get("backend") or ""),
+        "vector_provider": str((vector_index or {}).get("provider") or ""),
+        "vector_model": str((vector_index or {}).get("model_name") or ""),
+        "vector_device": str((vector_index or {}).get("device") or ""),
+        "vector_chunking_strategy": str((vector_index or {}).get("chunking_strategy") or ""),
+        "vector_chunk_size": (vector_index or {}).get("chunk_size"),
+        "vector_chunk_overlap": (vector_index or {}).get("chunk_overlap"),
+        "vector_batch_size": (vector_index or {}).get("batch_size"),
+        "vector_parallel_batches": (vector_index or {}).get("parallel_batches"),
         "export": export_result,
     }
 
@@ -222,6 +264,14 @@ def main() -> int:
         print(f"Documents: {payload['document_count']}")
         print(f"BM25 documents: {payload['bm25_document_count']}")
         print(f"Vector documents: {payload['vector_document_count']}")
+        if payload.get("vector_backend"):
+            print(
+                "Vector backend: "
+                f"{payload.get('vector_backend')} "
+                f"model={payload.get('vector_model') or ''} "
+                f"device={payload.get('vector_device') or ''} "
+                f"chunking={payload.get('vector_chunking_strategy') or ''}"
+            )
         print(f"KG entities: {payload['knowledge_graph_entity_count']}")
         print(f"KG relationships: {payload['knowledge_graph_relationship_count']}")
         print(f"Output parquet: {export_result['parquet_path']}")

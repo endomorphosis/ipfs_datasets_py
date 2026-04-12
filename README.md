@@ -153,6 +153,8 @@ ipfs-datasets workspace --action package --input-path /path/to/discord_export.js
 ipfs-datasets workspace --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json
 ```
 
+See `docs/guides/legal_data/WORKSPACE_DATASET_BUNDLES.md` for the full bundle lifecycle guide.
+
 ### VSCode CLI Integration
 
 ```bash

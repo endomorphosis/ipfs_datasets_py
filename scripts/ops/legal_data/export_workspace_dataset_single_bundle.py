@@ -17,6 +17,11 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Export a workspace dataset as a single parquet bundle with evidence-aware indexing."
     )
+    parser.add_argument(
+        "--prefer-hacc-venv",
+        action="store_true",
+        help="Rerun the export with /home/barberb/HACC/.venv when available to ensure CUDA-enabled embeddings.",
+    )
     parser.add_argument("--output-parquet", required=True, help="Path to the output single-bundle parquet file.")
     parser.add_argument("--input-json", default="", help="Path to a workspace JSON payload.")
     parser.add_argument("--input-directory", default="", help="Path to a directory corpus to ingest.")
@@ -55,6 +60,21 @@ def _parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--write-normalized-json", default="", help="Optional path to persist the normalized dataset JSON.")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON output.")
     return parser.parse_args(args)
+
+
+def _auto_cuda_device(requested: str | None, *, enable: bool) -> str | None:
+    if str(requested or "").strip():
+        return str(requested)
+    if not enable:
+        return None
+    try:
+        import torch  # type: ignore
+
+        if torch.cuda.is_available():
+            return "cuda"
+    except Exception:
+        return None
+    return None
 
 
 def _build_strict_subset(workspace_payload: dict, builder: WorkspaceDatasetBuilder) -> dict:
@@ -180,8 +200,21 @@ def _load_dataset(args: argparse.Namespace, builder: WorkspaceDatasetBuilder):
 
 def main(args: list[str] | None = None) -> int:
     parsed = _parse_args(args)
+    if parsed.prefer_hacc_venv:
+        import os
+        import sys
+
+        target = "/home/barberb/HACC/.venv/bin/python"
+        if sys.executable != target and os.path.exists(target):
+            os.execv(target, [target, *sys.argv[1:]])
     output_parquet = Path(parsed.output_parquet).expanduser()
     output_parquet.parent.mkdir(parents=True, exist_ok=True)
+
+    auto_cuda = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA", "")).strip().lower() in {"1", "true", "yes", "on"}
+    embeddings_device = _auto_cuda_device(
+        str(parsed.embeddings_device or "").strip() or None,
+        enable=auto_cuda,
+    )
 
     builder = WorkspaceDatasetBuilder(
         vector_dimension=max(8, int(parsed.vector_dimension or 16)),
@@ -189,7 +222,7 @@ def main(args: list[str] | None = None) -> int:
         formal_logic_max_documents=4,
         embeddings_provider=str(parsed.embeddings_provider or "").strip() or None,
         embeddings_model_name=str(parsed.embeddings_model or "").strip() or None,
-        embeddings_device=str(parsed.embeddings_device or "").strip() or None,
+        embeddings_device=embeddings_device,
         embeddings_batch_size=int(parsed.embeddings_batch_size or 128),
         embeddings_parallel_batches=int(parsed.embeddings_parallel_batches or 1),
         embeddings_chunking_strategy=str(parsed.embeddings_chunking_strategy or "").strip() or None,
@@ -209,6 +242,15 @@ def main(args: list[str] | None = None) -> int:
         "input_type": input_type,
         "input_type_resolution": input_type_resolution,
         "strict_evidence_mode": bool(parsed.strict_evidence_mode),
+        "vector_backend": str((dataset.vector_index or {}).get("backend") or ""),
+        "vector_provider": str((dataset.vector_index or {}).get("provider") or ""),
+        "vector_model": str((dataset.vector_index or {}).get("model_name") or ""),
+        "vector_device": str((dataset.vector_index or {}).get("device") or ""),
+        "vector_chunking_strategy": str((dataset.vector_index or {}).get("chunking_strategy") or ""),
+        "vector_chunk_size": (dataset.vector_index or {}).get("chunk_size"),
+        "vector_chunk_overlap": (dataset.vector_index or {}).get("chunk_overlap"),
+        "vector_batch_size": (dataset.vector_index or {}).get("batch_size"),
+        "vector_parallel_batches": (dataset.vector_index or {}).get("parallel_batches"),
         "export": export_result,
     }
 
@@ -224,6 +266,14 @@ def main(args: list[str] | None = None) -> int:
         print(f"Collections: {payload.get('collection_count')}")
         print(f"BM25 documents: {payload.get('bm25_document_count')}")
         print(f"Vector documents: {payload.get('vector_document_count')}")
+        if payload.get("vector_backend"):
+            print(
+                "Vector backend: "
+                f"{payload.get('vector_backend')} "
+                f"model={payload.get('vector_model') or ''} "
+                f"device={payload.get('vector_device') or ''} "
+                f"chunking={payload.get('vector_chunking_strategy') or ''}"
+            )
         print(f"KG entities: {payload.get('knowledge_graph_entity_count')}")
         print(f"KG relationships: {payload.get('knowledge_graph_relationship_count')}")
         print(f"Output parquet: {export_result.get('parquet_path')}")

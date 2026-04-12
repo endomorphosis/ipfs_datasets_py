@@ -1061,6 +1061,14 @@ class BluebookCitationResolver:
             section_field = next((field for field in _SECTION_FIELDS if field in schema), None)
             identifier_fields = [field for field in _IDENTIFIER_FIELDS if field in schema]
             text_fields = [field for field in _TEXT_FIELDS if field in schema]
+            code_name_aliases: List[str] = []
+            if citation.type == "state_statute" and citation.section:
+                code_name = _normalize_text(citation.metadata.get("code_name") or citation.title or "")
+                if code_name:
+                    code_name_aliases = [
+                        f"{code_name} {citation.section}",
+                        f"{code_name} § {citation.section}",
+                    ]
             if state_code and state_field:
                 clauses.append(f"upper(CAST({state_field} AS VARCHAR)) = ?")
                 params.append(state_code)
@@ -1076,7 +1084,7 @@ class BluebookCitationResolver:
                 params.append(str(citation.section))
             if citation.type == "state_statute" and citation.section:
                 for field in identifier_fields + text_fields:
-                    for alias in _state_section_aliases(citation.section):
+                    for alias in _state_section_aliases(citation.section) + code_name_aliases:
                         subclauses.append(f"lower(CAST({field} AS VARCHAR)) LIKE lower(?)")
                         params.append(f"%{alias}%")
             if subclauses:
@@ -1203,6 +1211,14 @@ class BluebookCitationResolver:
             source_section_exact = False
             if not section_exact and citation.section:
                 state_aliases = _state_section_aliases(citation.section)
+                code_name = _normalize_text(citation.metadata.get("code_name") or citation.title or "")
+                if code_name:
+                    state_aliases.extend(
+                        [
+                            f"{code_name} {citation.section}",
+                            f"{code_name} § {citation.section}",
+                        ]
+                    )
                 normalized_aliases = {_normalize_text(alias) for alias in state_aliases}
                 compact_aliases = {_compact_alnum(alias) for alias in state_aliases}
                 for field in _IDENTIFIER_FIELDS + _TEXT_FIELDS:

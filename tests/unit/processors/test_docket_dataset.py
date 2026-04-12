@@ -185,6 +185,10 @@ def test_docket_dataset_builder_creates_dataset_with_kg_bm25_and_vector_index():
         "local_hashed_term_projection",
         "embeddings_router",
     }
+    assert "batch_size" in payload["vector_index"]
+    assert "parallel_batches" in payload["vector_index"]
+    assert "chunk_counts" in payload["vector_index"]
+    assert "device" in payload["vector_index"]
     first_plan = payload["proof_assistant"]["tactician"]["plans"][0]
     assert first_plan["recommended_route"][0] == "local_docket_documents"
     assert first_plan["selected_starting_source_type"] in {

@@ -672,6 +672,42 @@ def test_bluebook_citation_resolver_links_federal_register_from_local_parquet(tm
     assert links[0].source_url == "https://www.federalregister.gov/citation/90-FR-12345"
 
 
+def test_bluebook_citation_resolver_matches_ors_identifier_alias(tmp_path):
+    state_law_path = tmp_path / "state_laws_or.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "OR",
+                    "identifier": "ORS 801.545",
+                    "name": "Section 801.545",
+                    "text": "Traffic crime. Traffic crime means any traffic offense that is punishable by a jail sentence.",
+                    "ipfs_cid": "bafyors801545",
+                    "source_url": "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545",
+                }
+            ]
+        ),
+        state_law_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"state_laws": [str(state_law_path)]},
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "The filing relies on ORS 801.545.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    link = links[0]
+    assert link.matched is True
+    assert link.corpus_key == "state_laws"
+    assert link.source_cid == "bafyors801545"
+    assert link.source_url == "https://www.oregonlegislature.gov/bills_laws/ors/ors801.html#section-801.545"
+
+
 def test_bluebook_citation_resolver_links_admin_and_court_rules_from_local_parquet(tmp_path):
     admin_path = tmp_path / "state_admin_rules.parquet"
     pq.write_table(

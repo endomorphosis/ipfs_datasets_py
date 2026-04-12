@@ -1156,6 +1156,7 @@ def search_workspace_dataset_vector(
         dimension=int(vector_index.get("dimension") or builder.vector_dimension),
         provider=str(vector_index.get("provider") or "") or None,
         model_name=str(vector_index.get("model_name") or "") or None,
+        device=str(vector_index.get("device") or "") or None,
     )
     scored: List[Dict[str, Any]] = []
     for item in items:
@@ -1168,7 +1169,7 @@ def search_workspace_dataset_vector(
                 "captured_at": item.get("date_filed") or item.get("captured_at"),
                 "document_number": item.get("document_number"),
                 "score": score,
-                "backend": "local_hashed_term_projection",
+                "backend": str(vector_index.get("backend") or "local_hashed_term_projection"),
             }
         )
     scored.sort(key=lambda row: float(row.get("score") or 0.0), reverse=True)

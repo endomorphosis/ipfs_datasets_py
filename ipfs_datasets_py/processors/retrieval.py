@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 import hashlib
 import math
+import os
 import re
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
@@ -39,6 +40,50 @@ def hashed_term_projection(text: str, *, dimension: int) -> List[float]:
     return [value / norm for value in values]
 
 
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    raw = str(raw).strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def _resolve_batch_size(batch_size: int | None) -> int:
+    env_override = _env_int("IPFS_DATASETS_PY_EMBEDDINGS_BATCH_SIZE", 0)
+    if env_override > 0:
+        return max(1, env_override)
+    if batch_size is None:
+        return 128
+    return max(1, int(batch_size))
+
+
+def _resolve_parallel_batches(parallel_batches: int | None) -> int:
+    if parallel_batches is not None:
+        return max(1, int(parallel_batches))
+    env_override = _env_int("IPFS_DATASETS_PY_EMBEDDINGS_BATCH_WORKERS", 1)
+    return max(1, int(env_override))
+
+
+def _resolve_embeddings_device(device: str | None) -> str | None:
+    if device:
+        return device
+    auto_flag = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA") or "").strip().lower()
+    if auto_flag in {"1", "true", "yes", "on"}:
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                return "cuda"
+        except Exception:
+            return device
+    return device
+
+
 def embed_texts_with_router_or_local(
     texts: Sequence[str],
     *,
@@ -60,16 +105,20 @@ def embed_texts_with_router_or_local(
             "is_mock": False,
         }
 
+    resolved_batch_size = _resolve_batch_size(batch_size)
+    resolved_parallel_batches = _resolve_parallel_batches(parallel_batches)
+    resolved_device = _resolve_embeddings_device(device)
+
     try:
         from ..embeddings_router import embed_texts_batched as router_embed_texts_batched
 
         vectors = router_embed_texts_batched(
             items,
-            batch_size=batch_size,
+            batch_size=resolved_batch_size,
             provider=provider,
             model_name=model_name,
-            device=device,
-            parallel_batches=parallel_batches or 1,
+            device=resolved_device,
+            parallel_batches=resolved_parallel_batches,
         )
         normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
         if len(normalized) == len(items) and all(vector for vector in normalized):
@@ -77,7 +126,9 @@ def embed_texts_with_router_or_local(
                 "backend": "embeddings_router",
                 "provider": provider or "auto",
                 "model_name": model_name or "",
-                "device": device or "",
+                "device": resolved_device or "",
+                "batch_size": int(resolved_batch_size),
+                "parallel_batches": int(resolved_parallel_batches),
                 "is_mock": False,
             }
     except Exception:
@@ -89,7 +140,7 @@ def embed_texts_with_router_or_local(
             "backend": "local_hashed_term_projection",
             "provider": "local",
             "model_name": "",
-            "device": device or "",
+            "device": resolved_device or device or "",
             "is_mock": False,
         },
     )
@@ -139,6 +190,10 @@ def embed_texts_with_router_or_local_chunked(
             "is_mock": False,
         }
 
+    resolved_batch_size = _resolve_batch_size(batch_size)
+    resolved_parallel_batches = _resolve_parallel_batches(parallel_batches)
+    resolved_device = _resolve_embeddings_device(device)
+
     strategy = str(chunking_strategy or "").strip().lower()
     if strategy in {"", "none", "off"}:
         return embed_texts_with_router_or_local(
@@ -146,9 +201,9 @@ def embed_texts_with_router_or_local_chunked(
             fallback_dimension=fallback_dimension,
             provider=provider,
             model_name=model_name,
-            device=device,
-            batch_size=batch_size,
-            parallel_batches=parallel_batches,
+            device=resolved_device,
+            batch_size=resolved_batch_size,
+            parallel_batches=resolved_parallel_batches,
         )
 
     chunks_by_doc: List[List[str]] = []
@@ -161,7 +216,7 @@ def embed_texts_with_router_or_local_chunked(
                 "chunk_size": int(chunk_size or 512),
                 "chunk_overlap": int(chunk_overlap or 0),
                 "models": [model_name] if model_name else [],
-                "device": device or "cpu",
+                "device": resolved_device or "cpu",
             }
         )
         for text in items:
@@ -183,11 +238,11 @@ def embed_texts_with_router_or_local_chunked(
 
         vectors = router_embed_texts_batched(
             flat_chunks,
-            batch_size=batch_size,
+            batch_size=resolved_batch_size,
             provider=provider,
             model_name=model_name,
-            device=device,
-            parallel_batches=parallel_batches or 1,
+            device=resolved_device,
+            parallel_batches=resolved_parallel_batches,
         )
         normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
         if len(normalized) == len(flat_chunks) and all(vector for vector in normalized):
@@ -210,11 +265,13 @@ def embed_texts_with_router_or_local_chunked(
                 "backend": "embeddings_router",
                 "provider": provider or "auto",
                 "model_name": model_name or "",
-                "device": device or "",
+                "device": resolved_device or "",
                 "chunking_strategy": strategy,
                 "chunk_size": int(chunk_size or 0),
                 "chunk_overlap": int(chunk_overlap or 0),
                 "chunk_counts": [len(chunks) for chunks in chunks_by_doc],
+                "batch_size": int(resolved_batch_size),
+                "parallel_batches": int(resolved_parallel_batches),
                 "is_mock": False,
             }
     except Exception:
@@ -236,7 +293,7 @@ def embed_texts_with_router_or_local_chunked(
         "backend": "local_hashed_term_projection",
         "provider": "local",
         "model_name": "",
-        "device": device or "",
+        "device": resolved_device or device or "",
         "chunking_strategy": strategy,
         "chunk_size": int(chunk_size or 0),
         "chunk_overlap": int(chunk_overlap or 0),
