@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import asdict
+import os
 import re
+import time
+import threading
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 from ...knowledge_graphs.extraction import KnowledgeGraphExtractor
@@ -49,6 +52,37 @@ def enrich_docket_documents_with_formal_logic(
 ) -> Dict[str, Any]:
     """Extract formal artifacts from docket documents using repo-native modules."""
 
+    heartbeat_raw = str(os.getenv("IPFS_DATASETS_PY_LOGIC_HEARTBEAT_SECONDS", "30")).strip()
+    try:
+        heartbeat_seconds = max(0.0, float(heartbeat_raw))
+    except Exception:
+        heartbeat_seconds = 30.0
+    status = {
+        "stage": "init",
+        "document_id": "",
+        "processed": 0,
+        "skipped": 0,
+        "total": 0,
+    }
+    stop_event = threading.Event()
+
+    def _heartbeat() -> None:
+        if not heartbeat_seconds:
+            return
+        while not stop_event.wait(heartbeat_seconds):
+            print(
+                "[formal_logic] "
+                f"stage={status['stage']} "
+                f"document_id={status['document_id']} "
+                f"processed={status['processed']} "
+                f"skipped={status['skipped']} "
+                f"total={status['total']}",
+                flush=True,
+            )
+
+    heartbeat_thread = threading.Thread(target=_heartbeat, name="formal-logic-heartbeat", daemon=True)
+    heartbeat_thread.start()
+
     extractor = KnowledgeGraphExtractor(use_spacy=False, use_transformers=False, use_tracer=False, use_srl=False)
     deontic_extractor = DeonticExtractor()
     conflict_detector = ConflictDetector()
@@ -75,16 +109,23 @@ def enrich_docket_documents_with_formal_logic(
     if max_documents is not None:
         selected_documents = selected_documents[: max(0, int(max_documents))]
 
+    status["total"] = len(selected_documents)
     for document in selected_documents:
         document_id = str(getattr(document, "document_id", "") or getattr(document, "id", "") or "")
         title = str(getattr(document, "title", "") or "")
         text = str(getattr(document, "text", "") or "").strip()
         date_filed = str(getattr(document, "date_filed", "") or "")
+        status["stage"] = "document_start"
+        status["document_id"] = document_id
+        status["processed"] = processed_count
+        status["skipped"] = skipped_count
         if not document_id or not (text or title).strip():
             skipped_count += 1
+            status["skipped"] = skipped_count
             continue
         payload_text = (text or title)[:max_chars]
 
+        status["stage"] = "kg_extract"
         kg = extractor.extract_knowledge_graph(payload_text, extraction_temperature=0.45, structure_temperature=0.35)
         kg_payload = kg.to_dict()
         entities = [_normalize_kg_entity(item, document_id=document_id) for item in list(kg_payload.get("entities") or [])]
@@ -95,6 +136,7 @@ def enrich_docket_documents_with_formal_logic(
         ]
         relationships = [item for item in relationships if item]
 
+        status["stage"] = "deontic_extract"
         statements = deontic_extractor.extract_statements(payload_text, document_id)
         statements.extend(_extract_deontic_statements_fallback(payload_text, document_id=document_id))
         structured_signals = _extract_structured_legal_signals(
@@ -119,6 +161,7 @@ def enrich_docket_documents_with_formal_logic(
         dcec_formulas: List[str] = list(structured_signals.get("dcec_formulas") or [])
         temporal_formula_strings.extend(list(structured_signals.get("temporal_formulas") or []))
         if dcec_ready:
+            status["stage"] = "dcec_convert"
             for sentence in _iter_candidate_sentences(
                 payload_text,
                 statements,
@@ -128,6 +171,7 @@ def enrich_docket_documents_with_formal_logic(
                 if result.success and result.dcec_formula:
                     dcec_formulas.append(str(result.dcec_formula).strip())
 
+        status["stage"] = "frames"
         frames = [_frame_from_statement(stmt, docket_id=docket_id, case_name=case_name, court=court) for stmt in statements]
         frames.extend(list(structured_signals.get("frames") or []))
         document_frame = _document_frame(
@@ -146,6 +190,7 @@ def enrich_docket_documents_with_formal_logic(
         if document_frame:
             aggregate_document_frames[str(document_frame.get("frame_id") or document_frame.get("object_id") or f"{document_id}:document_frame")] = dict(document_frame)
 
+        status["stage"] = "proofs"
         propositions = [_proposition_from_statement(stmt) for stmt in statements]
         propositions.extend(list(structured_signals.get("propositions") or []))
         propositions = [prop for prop in propositions if prop]
@@ -200,6 +245,11 @@ def enrich_docket_documents_with_formal_logic(
         aggregate_document_temporal_formulas.extend(document_temporal_formula_strings)
         aggregate_dcec_formulas.extend(dcec_formulas)
         processed_count += 1
+        status["processed"] = processed_count
+
+    stop_event.set()
+    if heartbeat_thread.is_alive():
+        heartbeat_thread.join(timeout=1.0)
 
     conflicts = conflict_detector.detect_conflicts(all_statements) if all_statements else []
     conflict_payload = [_conflict_to_dict(conflict) for conflict in conflicts]

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 import re
+import time
+import threading
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 from ... import llm_router, multimodal_router
@@ -62,6 +65,37 @@ def enrich_docket_documents_with_routers(
 ) -> Dict[str, Any]:
     """Analyze docket documents with llm/multimodal routers when available."""
 
+    heartbeat_raw = str(os.getenv("IPFS_DATASETS_PY_LOGIC_HEARTBEAT_SECONDS", "30")).strip()
+    try:
+        heartbeat_seconds = max(0.0, float(heartbeat_raw))
+    except Exception:
+        heartbeat_seconds = 30.0
+    status = {
+        "stage": "init",
+        "document_id": "",
+        "processed": 0,
+        "skipped": 0,
+        "total": 0,
+    }
+    stop_event = threading.Event()
+
+    def _heartbeat() -> None:
+        if not heartbeat_seconds:
+            return
+        while not stop_event.wait(heartbeat_seconds):
+            print(
+                "[router_enrichment] "
+                f"stage={status['stage']} "
+                f"document_id={status['document_id']} "
+                f"processed={status['processed']} "
+                f"skipped={status['skipped']} "
+                f"total={status['total']}",
+                flush=True,
+            )
+
+    heartbeat_thread = threading.Thread(target=_heartbeat, name="router-enrichment-heartbeat", daemon=True)
+    heartbeat_thread.start()
+
     analyses: Dict[str, RichDocumentAnalysis] = {}
     aggregate_entities: List[Dict[str, Any]] = []
     aggregate_relationships: List[Dict[str, Any]] = []
@@ -76,15 +110,22 @@ def enrich_docket_documents_with_routers(
     selected_documents = list(documents)
     if max_documents is not None:
         selected_documents = selected_documents[: max(0, int(max_documents))]
+    status["total"] = len(selected_documents)
     for document in selected_documents:
         document_id = str(getattr(document, "document_id", "") or getattr(document, "id", "") or "")
         title = str(getattr(document, "title", "") or "")
         text = str(getattr(document, "text", "") or "").strip()
         source_url = str(getattr(document, "source_url", "") or "")
+        status["stage"] = "document_start"
+        status["document_id"] = document_id
+        status["processed"] = processed_count
+        status["skipped"] = skipped_count
         if not document_id:
             skipped_count += 1
+            status["skipped"] = skipped_count
             continue
 
+        status["stage"] = "router_analyze"
         analysis = analyze_document_with_routers(
             docket_id=docket_id,
             case_name=case_name,
@@ -104,6 +145,7 @@ def enrich_docket_documents_with_routers(
 
         analyses[document_id] = analysis
         processed_count += 1
+        status["processed"] = processed_count
         aggregate_entities.extend(analysis.entities)
         aggregate_relationships.extend(analysis.relationships)
         aggregate_temporal_formulas.extend(analysis.temporal_formulas)
@@ -115,7 +157,7 @@ def enrich_docket_documents_with_routers(
             proof = _build_proof_object(document_id=document_id, proposition=proposition)
             proof_objects[proof.proof_id] = _proof_to_dict(proof)
 
-    return {
+    result = {
         "document_analyses": {key: value.to_dict() for key, value in analyses.items()},
         "knowledge_graph": {
             "entities": _dedupe_dict_items(aggregate_entities, key_fields=("id", "label", "type")),
@@ -160,6 +202,10 @@ def enrich_docket_documents_with_routers(
             "proof_count": len(proof_objects),
         },
     }
+    stop_event.set()
+    if heartbeat_thread.is_alive():
+        heartbeat_thread.join(timeout=1.0)
+    return result
 
 
 def analyze_document_with_routers(
