@@ -76,6 +76,8 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --input-enriched-json /tmp/fearless_enriched.json --output-parquet /tmp/fearless_from_cache.parquet --strict-evidence-mode`
 	Use embeddings_router + chunking by passing embedding flags, for example:
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --output-parquet /tmp/fearless_embeddings.parquet --embeddings-model "thenlper/gte-small" --embeddings-chunking-strategy sentences --embeddings-batch-size 64 --embeddings-parallel-batches 4`
+	Use `--prefer-hacc-venv` to rerun the export with `/home/barberb/HACC/.venv` (CUDA-ready torch/transformers) when available.
+	Set `IPFS_DATASETS_PY_AUTO_CUDA=1` to auto-select `--embeddings-device cuda` when CUDA is available.
 	Use `--strict-evidence-mode` when you want the bundle built from the
 	`plain_text+` subset instead of the full enriched docket payload.
 - Run `export_workspace_dataset_single_bundle.py` to ingest a workspace corpus
@@ -100,6 +102,8 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-parquet /tmp/imap_bundle.parquet`
 	To enable real embeddings + chunking:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/mailbox --output-parquet /tmp/mailbox_bundle.parquet --embeddings-model "thenlper/gte-small" --embeddings-chunking-strategy sentences --embeddings-batch-size 64 --embeddings-parallel-batches 4`
+	Use `--prefer-hacc-venv` to rerun the export with `/home/barberb/HACC/.venv` (CUDA-ready torch/transformers) when available.
+	Set `IPFS_DATASETS_PY_AUTO_CUDA=1` to auto-select `--embeddings-device cuda` when CUDA is available.
 	Use `--strict-evidence-mode` when you want the bundle built from the
 	`plain_text+` retrieval subset instead of the full normalized workspace payload.
 - Run `export_workspace_dataset_bundle.py` to package a workspace dataset into
@@ -116,6 +120,7 @@ Notes:
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action search-vector --input-path /tmp/google_voice_bundle.parquet --query inspection --top-k 5`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-search-bm25 --input-path /tmp/google_voice_bundle/bundle_manifest.json --query inspection --top-k 5 --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-search-vector --input-path /tmp/google_voice_bundle/bundle_manifest.json --query inspection --top-k 5 --json`
+	For an end-to-end lifecycle overview, see `docs/guides/legal_data/WORKSPACE_DATASET_BUNDLES.md`.
 
 - Legal PDF helper CLI
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action validate-manifest --manifest-path /home/barberb/HACC/workspace/combined_state_court_packet_manifest.json --json`
@@ -126,8 +131,15 @@ Notes:
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-filing-packet-from-manifest --manifest-path /home/barberb/HACC/workspace/combined_state_court_packet_manifest.json --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-exhibit-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/exhibit-binder-court-ready/exhibit_binder_manifest.json --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-full-evidence-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/full_evidence_binder_manifest.json --lean-mode --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-courtstyle-packet-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-ready-binder-index-default --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-official-form-drafts-default --json`
 	`.venv/bin/python ipfs_datasets_cli.py legal-pdf --action build-exhibit-binder --front-pdf /tmp/front.pdf --table-pdf /tmp/table.pdf --packet-pdfs /tmp/packet_a.pdf /tmp/packet_b.pdf --output-path /tmp/binder.pdf`
 	Manifest format guide: [docs/guides/legal_pdf_manifests.md](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/guides/legal_pdf_manifests.md)
+	JSON response highlights for manifest builders:
+	`build-court-filing-packet-from-manifest` -> `packet_path`, `rendered_paths`, `document_count`
+	`build-exhibit-binder-from-manifest` -> `output_pdf`, `front_pdf`, `table_pdf`, `packet_paths`, `exhibit_count`
+	`build-full-evidence-binder-from-manifest` -> `output_pdf`, `family_outputs`, `working_dir`, `generated_dir`, `build_manifest_output`, `family_count`, `merged_input_count`, `lean_mode`
 	Explicit typing remains available when you want to pin the route:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-dir /tmp/google_voice_bundle --package-name google_voice_bundle --no-car`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-dir /tmp/imap_bundle --package-name imap_bundle --no-car`

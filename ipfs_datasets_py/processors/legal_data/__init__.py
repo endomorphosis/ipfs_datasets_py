@@ -103,6 +103,18 @@ except Exception:  # pragma: no cover - optional dependency guard
     render_state_court_markdown_to_pdf = None
     render_text_lines_pdf = None
 try:
+    from .courtstyle_packet_export import build_default_courtstyle_packet
+except Exception:  # pragma: no cover - optional dependency guard
+    build_default_courtstyle_packet = None
+try:
+    from .court_ready_binder_index_export import build_default_court_ready_binder_index
+except Exception:  # pragma: no cover - optional dependency guard
+    build_default_court_ready_binder_index = None
+try:
+    from .official_form_drafts_export import build_default_official_form_drafts
+except Exception:  # pragma: no cover - optional dependency guard
+    build_default_official_form_drafts = None
+try:
     from .exhibit_binder_export import (
         build_exhibit_binder,
         convert_markdown_to_binder_pdf,
@@ -640,6 +652,10 @@ __all__ = [
     "build_state_court_filing_packet",
     "build_state_court_filing_packet_from_manifest",
     "build_exhibit_binder_from_manifest",
+    "build_full_evidence_binder_from_manifest",
+    "build_default_courtstyle_packet",
+    "build_default_court_ready_binder_index",
+    "build_default_official_form_drafts",
     "binder_court_config_from_manifest",
     "BinderCourtConfig",
     "DEFAULT_BINDER_COURT_CONFIG",

@@ -52,11 +52,23 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
             build_state_court_filing_packet_from_manifest,
             load_json_manifest,
         )
+        from ipfs_datasets_py.processors.legal_data.courtstyle_packet_export import (
+            build_default_courtstyle_packet,
+        )
+        from ipfs_datasets_py.processors.legal_data.court_ready_binder_index_export import (
+            build_default_court_ready_binder_index,
+        )
+        from ipfs_datasets_py.processors.legal_data.official_form_drafts_export import (
+            build_default_official_form_drafts,
+        )
 
         return {
             "build_exhibit_binder": build_exhibit_binder,
             "build_exhibit_binder_from_manifest": build_exhibit_binder_from_manifest,
             "build_full_evidence_binder_from_manifest": build_full_evidence_binder_from_manifest,
+            "build_default_courtstyle_packet": build_default_courtstyle_packet,
+            "build_default_court_ready_binder_index": build_default_court_ready_binder_index,
+            "build_default_official_form_drafts": build_default_official_form_drafts,
             "build_state_court_filing_packet": build_state_court_filing_packet,
             "build_state_court_filing_packet_from_manifest": build_state_court_filing_packet_from_manifest,
             "convert_markdown_to_binder_pdf": convert_markdown_to_binder_pdf,
@@ -112,6 +124,9 @@ def create_parser() -> argparse.ArgumentParser:
             "build-court-filing-packet-from-manifest",
             "build-exhibit-binder-from-manifest",
             "build-full-evidence-binder-from-manifest",
+            "build-courtstyle-packet-default",
+            "build-court-ready-binder-index-default",
+            "build-official-form-drafts-default",
             "render-exhibit-tab",
             "render-exhibit-cover",
             "render-binder-title",
@@ -286,6 +301,18 @@ def main(args: list[str] | None = None) -> int:
             parser.error(f"Manifest validation failed: {_format_validation_error(exc)}")
         payload = _load_legal_data_exports(quiet=quiet_imports)["build_full_evidence_binder_from_manifest"](parsed.manifest_path, lean_mode=bool(parsed.lean_mode))
         return _emit({"action": action, **payload}, as_json=bool(parsed.json))
+
+    if action == "build-courtstyle-packet-default":
+        _load_legal_data_exports(quiet=quiet_imports)["build_default_courtstyle_packet"]()
+        return _emit({"action": action, "status": "ok"}, as_json=bool(parsed.json))
+
+    if action == "build-court-ready-binder-index-default":
+        output_path = _load_legal_data_exports(quiet=quiet_imports)["build_default_court_ready_binder_index"]()
+        return _emit({"action": action, "output_path": str(output_path)}, as_json=bool(parsed.json))
+
+    if action == "build-official-form-drafts-default":
+        output_paths = _load_legal_data_exports(quiet=quiet_imports)["build_default_official_form_drafts"]()
+        return _emit({"action": action, "output_paths": [str(path) for path in list(output_paths or [])]}, as_json=bool(parsed.json))
 
     if action == "render-exhibit-tab":
         path = _load_legal_data_exports(quiet=quiet_imports)["render_exhibit_tab_from_markdown"](parsed.input_path, parsed.output_path)

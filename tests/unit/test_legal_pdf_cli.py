@@ -24,6 +24,11 @@ COVER_MD = """`EXHIBIT LABEL` `Exhibit A`
 `LIMITATION NOTE` `Limitation.`
 """
 
+FRONT_SHEET_MD = """# Exhibit Binder Front Sheet
+
+This is a small synthetic front sheet.
+"""
+
 MOTION_MD = """# Motion To Test Packet
 
 Case No. TEST-123
@@ -162,6 +167,63 @@ def test_legal_pdf_cli_build_full_evidence_binder_json_is_clean(tmp_path: Path, 
     assert Path(payload["family_outputs"]["Primary Binder"]).exists()
 
 
+def test_legal_pdf_cli_build_exhibit_binder_json_is_clean(tmp_path: Path, capsys):
+    covers_dir = tmp_path / "covers"
+    exhibits_dir = tmp_path / "exhibits"
+    covers_dir.mkdir(parents=True)
+    exhibits_dir.mkdir(parents=True)
+
+    source_path = exhibits_dir / "Exhibit_A_sample.txt"
+    source_path.write_text("sample source text\n", encoding="utf-8")
+
+    (covers_dir / "EXHIBIT_BINDER_FRONT_SHEET.md").write_text(FRONT_SHEET_MD, encoding="utf-8")
+    (covers_dir / "Exhibit_A_tab_divider.md").write_text(TAB_MD, encoding="utf-8")
+    (covers_dir / "Exhibit_A_cover_sheet.md").write_text(COVER_MD.format(source=source_path), encoding="utf-8")
+
+    manifest_path = tmp_path / "exhibit_binder_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "family": "Core Exhibit Binder",
+                "front_sheet_markdown": "covers/EXHIBIT_BINDER_FRONT_SHEET.md",
+                "working_dir": "compiled",
+                "output_pdf": "compiled/binder.pdf",
+                "exhibits_root": "exhibits",
+                "exhibits": [
+                    {
+                        "code": "A",
+                        "title": "Sample Exhibit",
+                        "divider_markdown": "covers/Exhibit_A_tab_divider.md",
+                        "cover_markdown": "covers/Exhibit_A_cover_sheet.md"
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-exhibit-binder-from-manifest",
+            "--manifest-path",
+            str(manifest_path),
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-exhibit-binder-from-manifest"
+    assert payload["exhibit_count"] == 1
+    assert Path(payload["output_pdf"]).exists()
+    assert Path(payload["front_pdf"]).exists()
+    assert Path(payload["table_pdf"]).exists()
+    assert len(payload["packet_paths"]) == 1
+
+
 def test_legal_pdf_cli_build_state_court_filing_packet_json_is_clean(tmp_path: Path, capsys):
     motion_path = tmp_path / "motion.md"
     memo_path = tmp_path / "memorandum.md"
@@ -207,3 +269,82 @@ def test_legal_pdf_cli_build_state_court_filing_packet_json_is_clean(tmp_path: P
     assert payload["action"] == "build-court-filing-packet-from-manifest"
     assert Path(payload["packet_path"]).exists()
     assert len(payload["rendered_paths"]) == 2
+
+
+def test_legal_pdf_cli_build_courtstyle_packet_default_json_is_clean(capsys, monkeypatch):
+    marker = {"called": False}
+
+    def _fake_builder() -> None:
+        marker["called"] = True
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_default_courtstyle_packet": _fake_builder},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-courtstyle-packet-default",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-courtstyle-packet-default"
+    assert payload["status"] == "ok"
+    assert marker["called"] is True
+
+
+def test_legal_pdf_cli_build_court_ready_binder_index_default_json_is_clean(capsys, monkeypatch):
+    expected = Path("/tmp/court_ready_index.pdf")
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_default_court_ready_binder_index": lambda: expected},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-court-ready-binder-index-default",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-court-ready-binder-index-default"
+    assert payload["output_path"] == str(expected)
+
+
+def test_legal_pdf_cli_build_official_form_drafts_default_json_is_clean(capsys, monkeypatch):
+    expected = [Path("/tmp/js44.pdf"), Path("/tmp/ao440.pdf")]
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_default_official_form_drafts": lambda: expected},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-official-form-drafts-default",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-official-form-drafts-default"
+    assert payload["output_paths"] == [str(path) for path in expected]

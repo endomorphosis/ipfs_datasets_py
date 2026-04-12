@@ -202,6 +202,41 @@ Workspace example:
 - [full_evidence_binder_manifest.json](/home/barberb/HACC/workspace/full_evidence_binder_manifest.json)
 - Minimal reusable example: [full_evidence_binder_manifest.example.json](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/examples/legal_pdf/full_evidence_binder_manifest.example.json)
 
+## JSON Response Keys
+
+When `--json` is used, the manifest builder actions return these top-level payload keys.
+
+State-court filing packet:
+
+- `action`: `build-court-filing-packet-from-manifest`
+- `manifest_path`: source manifest path
+- `packet_path`: merged filing packet PDF
+- `rendered_paths`: individual rendered pleading PDFs
+- `document_count`: number of rendered documents
+
+Exhibit binder:
+
+- `action`: `build-exhibit-binder-from-manifest`
+- `manifest_path`: source manifest path
+- `output_pdf`: merged exhibit binder PDF
+- `front_pdf`: rendered front sheet PDF
+- `table_pdf`: rendered table-of-exhibits PDF
+- `packet_paths`: per-exhibit packet PDFs
+- `exhibit_count`: number of exhibit packets
+
+Full evidence binder:
+
+- `action`: `build-full-evidence-binder-from-manifest`
+- `manifest_path`: source manifest path
+- `working_dir`: top-level build directory
+- `generated_dir`: generated PDF directory
+- `build_manifest_output`: emitted text build manifest
+- `output_pdf`: merged full binder PDF
+- `family_outputs`: mapping of family name to per-family merged PDF
+- `family_count`: number of family sections processed
+- `merged_input_count`: number of PDFs merged into the final binder
+- `lean_mode`: whether lean replacements were used
+
 ## Practical Notes
 
 - Relative paths resolve from the manifest file's directory.
