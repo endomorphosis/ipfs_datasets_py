@@ -6,7 +6,8 @@ import pyarrow.parquet as pq
 
 from ipfs_datasets_py.processors.legal_data.rich_docket_enrichment import RichDocumentAnalysis
 from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory import (
-    BluebookDatasetQueryPlan,
+    LegalCitationQueryStrategy,
+    LegalCitationDatasetQueryPlan,
     JusticeDAORebuildRecommendation,
     JusticeDAORebuildTarget,
     build_justicedao_rebuild_plan,
@@ -16,21 +17,21 @@ from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory imp
     canonical_corpus_query_result_to_dict,
     DatasetConfigProfile,
     DatasetProfile,
-    bluebook_dataset_execution_result_to_dict,
-    bluebook_dataset_query_plan_to_dict,
+    legal_citation_dataset_execution_result_to_dict,
+    legal_citation_dataset_query_plan_to_dict,
     build_canonical_corpus_artifacts,
     build_canonical_corpus_semantic_index,
     _select_rows_for_llm_knowledge_graph,
     build_eu_country_corpus_onboarding_plan,
-    build_justicedao_bluebook_query_plan,
-    derive_justicedao_bluebook_strategies,
-    execute_justicedao_bluebook_query_plan,
+    build_justicedao_legal_citation_query_plan,
+    derive_justicedao_legal_citation_strategies,
+    execute_justicedao_legal_citation_query_plan,
     filter_dataset_profiles,
     justicedao_library_rebuild_result_to_dict,
     justicedao_rebuild_plan_to_dict,
     query_canonical_legal_corpus,
     rebuild_justicedao_dataset_library,
-    render_bluebook_dataset_query_plan_markdown,
+    render_justicedao_legal_citation_query_plan_markdown,
     render_dataset_profiles_markdown,
     render_justicedao_rebuild_plan_markdown,
     summarize_dataset_profile_coverage_by_branch,
@@ -289,10 +290,11 @@ def _profiles_with_spain_family() -> list[DatasetProfile]:
     ]
 
 
-def test_derive_justicedao_bluebook_strategies_covers_municipal_and_uscode_paths():
-    strategies = derive_justicedao_bluebook_strategies(_profiles())
+def test_derive_justicedao_legal_citation_strategies_covers_municipal_and_uscode_paths():
+    strategies = derive_justicedao_legal_citation_strategies(_profiles())
 
     municipal = strategies["justicedao/american_municipal_law"]
+    assert isinstance(municipal, LegalCitationQueryStrategy)
     assert municipal.support_level == "direct"
     assert municipal.query_path == "precomputed_citation_table_then_cid_join"
     assert "bluebook_citation" in municipal.citation_lookup_fields
@@ -313,7 +315,9 @@ def test_derive_justicedao_bluebook_strategies_covers_municipal_and_uscode_paths
 
 
 def test_dataset_profiles_to_dict_include_legal_branch_metadata(tmp_path):
-    payload = bluebook_dataset_query_plan_to_dict(build_justicedao_bluebook_query_plan("42 U.S.C. § 1983", profiles=_profiles()))
+    payload = legal_citation_dataset_query_plan_to_dict(
+        build_justicedao_legal_citation_query_plan("42 U.S.C. § 1983", profiles=_profiles())
+    )
     assert payload["dataset_notes"]
 
     uscode_path = tmp_path / "uscode.parquet"
@@ -438,8 +442,8 @@ def test_render_dataset_profiles_markdown_shows_registered_state_for_sidecar_onl
     assert "Canonical corpus: spain_laws" in markdown
 
 
-def test_build_justicedao_bluebook_query_plan_routes_state_and_usc_citations():
-    plan = build_justicedao_bluebook_query_plan(
+def test_build_justicedao_legal_citation_query_plan_routes_state_and_usc_citations():
+    plan = build_justicedao_legal_citation_query_plan(
         "See Or. Rev. Stat. § 90.155 and 42 U.S.C. § 1983.",
         profiles=_profiles(),
     )
@@ -455,8 +459,8 @@ def test_build_justicedao_bluebook_query_plan_routes_state_and_usc_citations():
     assert usc_plan.normalized_citation == "42 U.S.C. § 1983"
 
 
-def test_build_justicedao_bluebook_query_plan_marks_sidecars_as_secondary():
-    strategies = derive_justicedao_bluebook_strategies(
+def test_build_justicedao_legal_citation_query_plan_marks_sidecars_as_secondary():
+    strategies = derive_justicedao_legal_citation_strategies(
         [
             *_profiles_with_france_family(),
             *_profiles_with_spain_family()[len(_profiles()):],
@@ -477,8 +481,88 @@ def test_build_justicedao_bluebook_query_plan_marks_sidecars_as_secondary():
     assert strategies["justicedao/ipfs_germany_laws"].support_level == "metadata_only"
 
 
-def test_derive_justicedao_bluebook_strategies_can_classify_france_laws_when_observed():
-    strategies = derive_justicedao_bluebook_strategies(_profiles_with_france_family())
+def test_justicedao_legal_citation_query_plan_aliases_match_bluebook_functions(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory import (
+        bluebook_dataset_execution_result_to_dict,
+        bluebook_dataset_query_plan_to_dict,
+        build_justicedao_bluebook_query_plan,
+        execute_justicedao_bluebook_query_plan,
+        render_bluebook_dataset_query_plan_markdown,
+    )
+
+    text = "42 U.S.C. § 1983 and Art. 1 GG"
+    alias_plan = build_justicedao_legal_citation_query_plan(text, profiles=_profiles())
+    legacy_plan = build_justicedao_bluebook_query_plan(text, profiles=_profiles())
+
+    assert isinstance(alias_plan, LegalCitationDatasetQueryPlan)
+    assert legal_citation_dataset_query_plan_to_dict(alias_plan) == bluebook_dataset_query_plan_to_dict(legacy_plan)
+    assert render_justicedao_legal_citation_query_plan_markdown(alias_plan) == render_bluebook_dataset_query_plan_markdown(legacy_plan)
+
+    uscode_path = tmp_path / "us_code_alias.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafyuscode1983alias",
+                    "citation": "42 U.S.C. § 1983",
+                    "title": "42 U.S.C. § 1983",
+                    "text": "Every person who, under color of law, deprives another of rights secured by the Constitution...",
+                }
+            ]
+        ),
+        uscode_path,
+    )
+    germany_path = tmp_path / "germany_laws_alias.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1aliasplan",
+                    "law_identifier": "GG-Art-1",
+                    "official_identifier": "Grundgesetz Art. 1",
+                    "citation": "Art. 1 GG",
+                    "title": "Grundgesetz Art. 1",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                }
+            ]
+        ),
+        germany_path,
+    )
+
+    alias_result = execute_justicedao_legal_citation_query_plan(
+        alias_plan,
+        profiles=_profiles(),
+        parquet_file_overrides={
+            "ipfs_uscode": [str(uscode_path)],
+            "germany_laws": [str(germany_path)],
+        },
+    )
+    legacy_result = execute_justicedao_bluebook_query_plan(
+        legacy_plan,
+        profiles=_profiles(),
+        parquet_file_overrides={
+            "ipfs_uscode": [str(uscode_path)],
+            "germany_laws": [str(germany_path)],
+        },
+    )
+
+    assert legal_citation_dataset_execution_result_to_dict(alias_result) == bluebook_dataset_execution_result_to_dict(legacy_result)
+
+
+def test_justicedao_legal_citation_strategy_aliases_match_bluebook_functions():
+    from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory import (
+        derive_justicedao_bluebook_strategies,
+    )
+
+    alias_strategies = derive_justicedao_legal_citation_strategies(_profiles_with_germany_family())
+    legacy_strategies = derive_justicedao_bluebook_strategies(_profiles_with_germany_family())
+
+    assert alias_strategies == legacy_strategies
+    assert isinstance(alias_strategies["justicedao/ipfs_germany_laws"], LegalCitationQueryStrategy)
+
+
+def test_derive_justicedao_legal_citation_strategies_can_classify_france_laws_when_observed():
+    strategies = derive_justicedao_legal_citation_strategies(_profiles_with_france_family())
 
     france = strategies["justicedao/ipfs_france_laws"]
     assert france.support_level == "metadata_only"
@@ -499,8 +583,8 @@ def test_derive_justicedao_bluebook_strategies_can_classify_france_laws_when_obs
     assert france_graph.country_codes == ["FR"]
 
 
-def test_derive_justicedao_bluebook_strategies_can_classify_spain_laws_when_observed():
-    strategies = derive_justicedao_bluebook_strategies(_profiles_with_spain_family())
+def test_derive_justicedao_legal_citation_strategies_can_classify_spain_laws_when_observed():
+    strategies = derive_justicedao_legal_citation_strategies(_profiles_with_spain_family())
 
     spain = strategies["justicedao/ipfs_spain_laws"]
     assert spain.support_level == "metadata_only"
@@ -534,8 +618,8 @@ def test_build_eu_country_corpus_onboarding_plan_keeps_sidecar_only_canonical_ob
     assert plan["ES"]["canonical_corpus_keys"] == ["spain_laws"]
 
 
-def test_derive_justicedao_bluebook_strategies_can_classify_germany_laws_when_observed():
-    strategies = derive_justicedao_bluebook_strategies(_profiles_with_germany_family())
+def test_derive_justicedao_legal_citation_strategies_can_classify_germany_laws_when_observed():
+    strategies = derive_justicedao_legal_citation_strategies(_profiles_with_germany_family())
 
     germany = strategies["justicedao/ipfs_germany_laws"]
     assert germany.support_level == "metadata_only"
@@ -556,27 +640,27 @@ def test_derive_justicedao_bluebook_strategies_can_classify_germany_laws_when_ob
     assert germany_graph.country_codes == ["DE"]
 
 
-def test_bluebook_query_plan_renderers_include_dataset_guidance():
-    plan = build_justicedao_bluebook_query_plan(
+def test_legal_citation_query_plan_renderers_include_dataset_guidance():
+    plan = build_justicedao_legal_citation_query_plan(
         "347 U.S. 483 and 90 FR 12345",
         profiles=_profiles(),
     )
-    payload = bluebook_dataset_query_plan_to_dict(plan)
-    markdown = render_bluebook_dataset_query_plan_markdown(plan)
+    payload = legal_citation_dataset_query_plan_to_dict(plan)
+    markdown = render_justicedao_legal_citation_query_plan_markdown(plan)
 
     assert payload["query_plans"]
-    assert "JusticeDAO Bluebook Query Plan" in markdown
+    assert "JusticeDAO Legal Citation Query Plan" in markdown
     assert "justicedao/caselaw_access_project" in markdown
     assert "justicedao/ipfs_federal_register" in markdown
 
 
-def test_build_justicedao_bluebook_query_plan_includes_eu_member_state_citations():
+def test_build_justicedao_legal_citation_query_plan_includes_eu_member_state_citations():
     profiles = [
         *_profiles_with_spain_family(),
         *_profiles_with_germany_family()[len(_profiles()):],
     ]
 
-    plan = build_justicedao_bluebook_query_plan(
+    plan = build_justicedao_legal_citation_query_plan(
         "Art. 1 GG and Articulo 1902 del Codigo Civil.",
         profiles=profiles,
     )
@@ -591,7 +675,7 @@ def test_build_justicedao_bluebook_query_plan_includes_eu_member_state_citations
     assert spain_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_spain_laws"
 
 
-def test_execute_justicedao_bluebook_query_plan_matches_state_laws_and_uscode(tmp_path):
+def test_execute_justicedao_legal_citation_query_plan_matches_state_laws_and_uscode(tmp_path):
     state_laws_path = tmp_path / "state_laws.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -624,11 +708,11 @@ def test_execute_justicedao_bluebook_query_plan_matches_state_laws_and_uscode(tm
         uscode_index_path,
     )
 
-    plan = build_justicedao_bluebook_query_plan(
+    plan = build_justicedao_legal_citation_query_plan(
         "See Or. Rev. Stat. § 90.155 and 42 U.S.C. § 1983.",
         profiles=_profiles(),
     )
-    result = execute_justicedao_bluebook_query_plan(
+    result = execute_justicedao_legal_citation_query_plan(
         plan,
         profiles=_profiles(),
         parquet_file_overrides={
@@ -637,7 +721,7 @@ def test_execute_justicedao_bluebook_query_plan_matches_state_laws_and_uscode(tm
         },
     )
 
-    payload = bluebook_dataset_execution_result_to_dict(result)
+    payload = legal_citation_dataset_execution_result_to_dict(result)
     assert len(payload["execution_results"]) == 2
 
     state_result = next(item for item in payload["execution_results"] if item["citation_type"] == "state_statute")
@@ -649,7 +733,7 @@ def test_execute_justicedao_bluebook_query_plan_matches_state_laws_and_uscode(tm
     assert usc_result["matches"][0]["rows"][0]["section_number"] == "1983"
 
 
-def test_execute_justicedao_bluebook_query_plan_matches_eu_member_state_citations(tmp_path):
+def test_execute_justicedao_legal_citation_query_plan_matches_eu_member_state_citations(tmp_path):
     germany_path = tmp_path / "germany_laws.parquet"
     spain_path = tmp_path / "spain_laws.parquet"
 
@@ -690,11 +774,11 @@ def test_execute_justicedao_bluebook_query_plan_matches_eu_member_state_citation
         *_profiles_with_spain_family(),
         *_profiles_with_germany_family()[len(_profiles()):],
     ]
-    plan = build_justicedao_bluebook_query_plan(
+    plan = build_justicedao_legal_citation_query_plan(
         "Art. 1 GG and Articulo 1902 del Codigo Civil.",
         profiles=profiles,
     )
-    result = execute_justicedao_bluebook_query_plan(
+    result = execute_justicedao_legal_citation_query_plan(
         plan,
         profiles=profiles,
         parquet_file_overrides={
@@ -703,7 +787,7 @@ def test_execute_justicedao_bluebook_query_plan_matches_eu_member_state_citation
         },
     )
 
-    payload = bluebook_dataset_execution_result_to_dict(result)
+    payload = legal_citation_dataset_execution_result_to_dict(result)
     germany_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_de_gg_article")
     spain_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_es_cc_article")
     assert germany_result["matches"][0]["dataset_id"] == "justicedao/ipfs_germany_laws"
@@ -712,7 +796,7 @@ def test_execute_justicedao_bluebook_query_plan_matches_eu_member_state_citation
     assert spain_result["matches"][0]["rows"][0]["law_identifier"] == "CC-Articulo-1902"
 
 
-def test_execute_justicedao_bluebook_query_plan_matches_municipal_citation_table(tmp_path):
+def test_execute_justicedao_legal_citation_query_plan_matches_municipal_citation_table(tmp_path):
     municipal_citation_path = tmp_path / "municipal_citation.parquet"
     pq.write_table(
         pa.Table.from_pylist(
@@ -730,8 +814,8 @@ def test_execute_justicedao_bluebook_query_plan_matches_municipal_citation_table
         municipal_citation_path,
     )
 
-    strategies = derive_justicedao_bluebook_strategies(_profiles())
-    plan = BluebookDatasetQueryPlan(
+    strategies = derive_justicedao_legal_citation_strategies(_profiles())
+    plan = LegalCitationDatasetQueryPlan(
         input_text="See Buncombe, N.C., Chapter 10.",
         citations=[{"text": "Buncombe, N.C., Chapter 10", "type": "state_statute"}],
         query_plans=[
@@ -745,7 +829,7 @@ def test_execute_justicedao_bluebook_query_plan_matches_municipal_citation_table
         ],
         dataset_notes=[],
     )
-    result = execute_justicedao_bluebook_query_plan(
+    result = execute_justicedao_legal_citation_query_plan(
         plan,
         profiles=_profiles(),
         parquet_file_overrides={
@@ -753,14 +837,14 @@ def test_execute_justicedao_bluebook_query_plan_matches_municipal_citation_table
         },
     )
 
-    payload = bluebook_dataset_execution_result_to_dict(result)
+    payload = legal_citation_dataset_execution_result_to_dict(result)
     state_result = next(item for item in payload["execution_results"] if item["citation_type"] == "state_statute")
     assert state_result["matches"]
     assert state_result["matches"][0]["dataset_id"] == "justicedao/american_municipal_law"
     assert state_result["matches"][0]["rows"][0]["place_name"] == "Buncombe"
 
 
-def test_execute_justicedao_bluebook_query_plan_can_use_canonical_semantic_sidecar(tmp_path):
+def test_execute_justicedao_legal_citation_query_plan_can_use_canonical_semantic_sidecar(tmp_path):
     state_laws_path = tmp_path / "STATE-MN.parquet"
     embeddings_path = tmp_path / "STATE-MN_embeddings.parquet"
     semantic_text = "Minn. Stat. § 518.17 best interests of the child custody factors"
@@ -795,11 +879,11 @@ def test_execute_justicedao_bluebook_query_plan_can_use_canonical_semantic_sidec
         embeddings_path,
     )
 
-    plan = build_justicedao_bluebook_query_plan(
+    plan = build_justicedao_legal_citation_query_plan(
         "See Minn. Stat. § 518.17.",
         profiles=_profiles(),
     )
-    result = execute_justicedao_bluebook_query_plan(
+    result = execute_justicedao_legal_citation_query_plan(
         plan,
         profiles=_profiles(),
         parquet_file_overrides={
@@ -807,7 +891,7 @@ def test_execute_justicedao_bluebook_query_plan_can_use_canonical_semantic_sidec
         },
     )
 
-    payload = bluebook_dataset_execution_result_to_dict(result)
+    payload = legal_citation_dataset_execution_result_to_dict(result)
     state_result = next(item for item in payload["execution_results"] if item["citation_type"] == "state_statute")
     assert state_result["matches"]
     assert state_result["matches"][0]["dataset_id"] == "justicedao/ipfs_state_laws"
@@ -1104,6 +1188,41 @@ def test_query_canonical_legal_corpus_can_query_france_as_eu_branch(tmp_path):
     assert payload["results"][0]["row"]["law_identifier"] == "CC-Art-1240"
 
 
+def test_query_canonical_legal_corpus_can_query_france_short_form_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "france_laws_short_form.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafyfrcodecivil16",
+                    "law_identifier": "CC-Art-16",
+                    "official_identifier": "Code civil art. 16",
+                    "citation": "Art. 16 Code civil",
+                    "title": "Code civil art. 16",
+                    "text": "La loi assure la primaute de la personne, interdit toute atteinte a la dignite de celle-ci et garantit le respect de l'etre humain des le commencement de sa vie.",
+                    "summary": "Disposition du Code civil relative a la primaute de la personne.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "france_laws",
+        query_text="Art. 16 Code civil",
+        parquet_file_overrides={"france_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["FR"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "CC-Art-16"
+
+
 def test_query_canonical_legal_corpus_can_query_spain_as_eu_branch(tmp_path):
     laws_path = tmp_path / "spain_laws.parquet"
     pq.write_table(
@@ -1139,6 +1258,41 @@ def test_query_canonical_legal_corpus_can_query_spain_as_eu_branch(tmp_path):
     assert payload["results"][0]["row"]["law_identifier"] == "CC-Articulo-14"
 
 
+def test_query_canonical_legal_corpus_can_query_spain_short_form_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "spain_laws_short_form.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafyescodigocivil14",
+                    "law_identifier": "CC-Art-14",
+                    "official_identifier": "Codigo Civil art. 14",
+                    "citation": "Art. 14 Codigo Civil",
+                    "title": "Codigo Civil art. 14",
+                    "text": "Las leyes entraran en vigor segun lo dispuesto en el Codigo Civil.",
+                    "summary": "Disposicion del Codigo Civil sobre vigencia y aplicacion de las leyes.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "spain_laws",
+        query_text="Art. 14 Codigo Civil",
+        parquet_file_overrides={"spain_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["ES"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "CC-Art-14"
+
+
 def test_query_canonical_legal_corpus_can_query_germany_as_eu_branch(tmp_path):
     laws_path = tmp_path / "germany_laws.parquet"
     pq.write_table(
@@ -1172,6 +1326,251 @@ def test_query_canonical_legal_corpus_can_query_germany_as_eu_branch(tmp_path):
     assert payload["citation_links"][0]["matched"] is True
     assert payload["results"]
     assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_grundgesetz_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_grundgesetz.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1grundgesetz",
+                    "law_identifier": "GG-Art-1-Grundgesetz",
+                    "official_identifier": "Grundgesetz Art. 1",
+                    "citation": "Grundgesetz Art. 1",
+                    "title": "Grundgesetz Art. 1",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Grundgesetz Art. 1",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-Grundgesetz"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_genitive_grundgesetz_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_grundgesetz_genitive.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1grundgesetzgenitive",
+                    "law_identifier": "GG-Art-1-Grundgesetzes",
+                    "official_identifier": "Artikel 1 des Grundgesetzes",
+                    "citation": "Art. 1 des Grundgesetzes",
+                    "title": "Artikel 1 des Grundgesetzes",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Art. 1 des Grundgesetzes",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-Grundgesetzes"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_paragraph_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_paragraph.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1abs1",
+                    "law_identifier": "GG-Art-1-Abs-1",
+                    "official_identifier": "Artikel 1 Absatz 1 GG",
+                    "citation": "Art. 1 Abs. 1 GG",
+                    "title": "Artikel 1 Absatz 1 GG",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Art. 1 Abs. 1 GG",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-Abs-1"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_paragraph_genitive_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_paragraph_genitive.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1abs1genitive",
+                    "law_identifier": "GG-Art-1-Abs-1-Grundgesetzes",
+                    "official_identifier": "Artikel 1 Absatz 1 des Grundgesetzes",
+                    "citation": "Art. 1 Abs. 1 des Grundgesetzes",
+                    "title": "Artikel 1 Absatz 1 des Grundgesetzes",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Art. 1 Abs. 1 des Grundgesetzes",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-Abs-1-Grundgesetzes"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_paragraph_roman.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1roman",
+                    "law_identifier": "GG-Art-1-I",
+                    "official_identifier": "Artikel 1 Absatz 1 GG",
+                    "citation": "Art. 1 I GG",
+                    "title": "Artikel 1 Absatz 1 GG",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Art. 1 I GG",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-I"
+
+
+def test_query_canonical_legal_corpus_can_query_germany_roman_paragraph_genitive_gg_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_paragraph_roman_genitive_gg.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1romangenitivegg",
+                    "law_identifier": "GG-Art-1-I-des-GG",
+                    "official_identifier": "Artikel 1 Absatz 1 GG",
+                    "citation": "Art. 1 I des GG",
+                    "title": "Artikel 1 Absatz 1 GG",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Art. 1 I des GG",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Art-1-I-des-GG"
+
+
+def test_query_canonical_legal_corpus_can_query_reversed_germany_roman_paragraph_variant_as_eu_branch(tmp_path):
+    laws_path = tmp_path / "germany_laws_paragraph_roman_reversed.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafydegg1romanreversed",
+                    "law_identifier": "GG-Grundgesetz-Art-1-I",
+                    "official_identifier": "Grundgesetz Art. 1 I",
+                    "citation": "Grundgesetz Art. 1 I",
+                    "title": "Grundgesetz Art. 1 I",
+                    "text": "Die Wuerde des Menschen ist unantastbar.",
+                    "summary": "Artikel 1 Absatz 1 des Grundgesetzes schuetzt die Menschenwuerde.",
+                }
+            ]
+        ),
+        laws_path,
+    )
+
+    result = query_canonical_legal_corpus(
+        "germany_laws",
+        query_text="Grundgesetz Art. 1 I",
+        parquet_file_overrides={"germany_laws": [str(laws_path)]},
+        allow_hf_fallback=False,
+    )
+
+    payload = canonical_corpus_query_result_to_dict(result)
+    assert payload["legal_branch"] == "eu"
+    assert payload["country_codes"] == ["DE"]
+    assert payload["mode"] == "exact"
+    assert payload["citation_links"][0]["matched"] is True
+    assert payload["results"]
+    assert payload["results"][0]["row"]["law_identifier"] == "GG-Grundgesetz-Art-1-I"
 
 
 def test_query_canonical_legal_corpus_can_use_inventory_profile_when_remote_path_misses_templates(tmp_path, monkeypatch):

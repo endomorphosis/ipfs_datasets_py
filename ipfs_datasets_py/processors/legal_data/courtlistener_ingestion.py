@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 from pathlib import Path
@@ -9,7 +10,9 @@ from io import BytesIO
 import json
 import os
 import random
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import re
+import time
+from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Any, Dict, Iterable, List, Optional
 from urllib.parse import urljoin, urlparse
 
@@ -35,6 +38,13 @@ class CourtListenerIngestionError(RuntimeError):
     """Raised when CourtListener docket ingestion fails."""
 
 
+def _format_stage_timings(stage_timings: Dict[str, float]) -> str:
+    if not stage_timings:
+        return ""
+    parts = [f"{key}={value:.4f}s" for key, value in stage_timings.items()]
+    return ", ".join(parts)
+
+
 def resolve_courtlistener_api_token(api_token: str | None = None) -> str | None:
     """Resolve a CourtListener API token from explicit input, env, or token file."""
 
@@ -44,6 +54,10 @@ def resolve_courtlistener_api_token(api_token: str | None = None) -> str | None:
     env_token = str(os.environ.get("COURTLISTENER_API_TOKEN") or "").strip()
     if env_token:
         return env_token
+
+    shared_secret_token = _load_shared_secret_value("COURTLISTENER_API_TOKEN")
+    if shared_secret_token:
+        return shared_secret_token
 
     token_path = Path.home() / ".config" / "courtlistener" / "token"
     try:
@@ -59,8 +73,11 @@ def fetch_courtlistener_docket(
     api_token: str | None = None,
     include_recap_documents: bool = True,
     include_document_text: bool = True,
+    enable_pdf_text_backfill: bool = True,
+    enable_rendered_page_enrichment: bool = False,
     max_documents: int | None = None,
     page_size: int = 100,
+    request_timeout_seconds: float = 30.0,
     requests_module: Any | None = None,
     shared_fetch_cache: Any | None = None,
 ) -> Dict[str, Any]:
@@ -89,6 +106,7 @@ def fetch_courtlistener_docket(
         docket_url,
         headers=headers,
         requests_module=requests_module,
+        request_timeout_seconds=request_timeout_seconds,
         fetch_cache=fetch_cache,
         cache_namespace="courtlistener_json",
         cache_payload_name=f"courtlistener_docket_{docket_id}",
@@ -97,6 +115,7 @@ def fetch_courtlistener_docket(
         urljoin(COURTLISTENER_API_ROOT, f"docket-entries/?docket={docket_id}&page_size={max(1, min(int(page_size or 100), 100))}"),
         headers=headers,
         requests_module=requests_module,
+        request_timeout_seconds=request_timeout_seconds,
         fetch_cache=fetch_cache,
         cache_namespace="courtlistener_json",
     )
@@ -104,9 +123,11 @@ def fetch_courtlistener_docket(
         urljoin(COURTLISTENER_API_ROOT, f"parties/?docket={docket_id}&page_size={max(1, min(int(page_size or 100), 100))}"),
         headers=headers,
         requests_module=requests_module,
+        request_timeout_seconds=request_timeout_seconds,
         fetch_cache=fetch_cache,
         cache_namespace="courtlistener_json",
     )
+    recap_documents_error = ""
 
     documents: List[Dict[str, Any]] = []
     seen_document_ids: set[str] = set()
@@ -123,16 +144,23 @@ def fetch_courtlistener_docket(
         seen_document_ids.add(entry_id)
 
     if include_recap_documents:
-        recap_documents = list(
-            _iter_recap_documents(
-                docket_id,
-                headers=headers,
-                requests_module=requests_module,
-                page_size=page_size,
-                max_documents=max_documents,
-                fetch_cache=fetch_cache,
+        try:
+            recap_documents = list(
+                _iter_recap_documents(
+                    docket_id,
+                    headers=headers,
+                    requests_module=requests_module,
+                    page_size=page_size,
+                    max_documents=max_documents,
+                    request_timeout_seconds=request_timeout_seconds,
+                    fetch_cache=fetch_cache,
+                )
             )
-        )
+        except CourtListenerIngestionError as exc:
+            if not _is_throttled_courtlistener_error(exc):
+                raise
+            recap_documents = []
+            recap_documents_error = str(exc)
         for recap_document in recap_documents:
             document_id = str(recap_document.get("id") or "")
             if not document_id or document_id in seen_document_ids:
@@ -149,17 +177,20 @@ def fetch_courtlistener_docket(
                     detail_url,
                     headers=headers,
                     requests_module=requests_module,
+                    request_timeout_seconds=request_timeout_seconds,
                     fetch_cache=fetch_cache,
                     cache_namespace="courtlistener_json",
                     cache_payload_name=f"courtlistener_recap_{document_id}",
                 )
                 normalized = _normalize_recap_document(docket_id, detail_data)
-                normalized = _enrich_recap_text_from_pdf(
-                    normalized,
-                    headers=headers,
-                    requests_module=requests_module,
-                    fetch_cache=fetch_cache,
-                )
+                if enable_pdf_text_backfill:
+                    normalized = _enrich_recap_text_from_pdf(
+                        normalized,
+                        headers=headers,
+                        requests_module=requests_module,
+                        request_timeout_seconds=request_timeout_seconds,
+                        fetch_cache=fetch_cache,
+                    )
             documents.append(normalized)
             seen_document_ids.add(document_id)
 
@@ -183,8 +214,21 @@ def fetch_courtlistener_docket(
         or docket_data.get("court_name")
         or ""
     ).strip()
+    rendered_page_summary: Dict[str, Any] | None = None
+    if enable_rendered_page_enrichment and absolute_url:
+        try:
+            rendered_page_summary = _fetch_rendered_courtlistener_docket_summary(absolute_url)
+        except Exception:
+            rendered_page_summary = None
+    if rendered_page_summary:
+        documents = _merge_rendered_docket_rows_into_documents(
+            docket_id,
+            documents,
+            rendered_page_summary=rendered_page_summary,
+            docket_url=absolute_url or docket_url,
+        )
 
-    return {
+    payload = {
         "docket_id": str(docket_data.get("id") or docket_id),
         "case_name": case_name,
         "court": court,
@@ -200,8 +244,12 @@ def fetch_courtlistener_docket(
             "courtlistener_api_root": COURTLISTENER_API_ROOT,
             "courtlistener_docket_url": absolute_url or docket_url,
             "recap_document_count": max(0, len(documents) - 1),
+            **({"courtlistener_recap_documents_error": recap_documents_error} if recap_documents_error else {}),
+            **({"rendered_docket_page": rendered_page_summary} if rendered_page_summary else {}),
         },
     }
+    _record_known_courtlistener_docket_id(fetch_cache, str(payload.get("docket_id") or docket_id))
+    return payload
 
 
 def fetch_random_courtlistener_docket(
@@ -213,11 +261,15 @@ def fetch_random_courtlistener_docket(
     requests_module: Any | None = None,
     include_recap_documents: bool = True,
     include_document_text: bool = True,
+    enable_pdf_text_backfill: bool = False,
     minimum_entry_count: int = 1,
     minimum_recap_document_count: int = 0,
     minimum_downloaded_document_count: int = 3,
     minimum_text_document_count: int = 2,
     strict_content_requirements: bool = True,
+    request_timeout_seconds: float = 20.0,
+    shared_fetch_cache: Any | None = None,
+    fallback_docket_ids: Optional[Iterable[str]] = None,
 ) -> Dict[str, Any]:
     """Fetch a pseudo-random CourtListener docket from recent docket listings."""
 
@@ -233,16 +285,31 @@ def fetch_random_courtlistener_docket(
     headers = {}
     if token:
         headers["Authorization"] = f"Token {token}"
+    fetch_cache = _resolve_fetch_cache(shared_fetch_cache)
 
     rng = random.Random(seed)
     candidate_ids: List[str] = []
+    used_cached_candidates = False
+    listing_errors: List[str] = []
+    stage_timings: Dict[str, float] = {}
     max_pages = max(1, int(sample_pages or 1))
     per_page = max(1, min(int(page_size or 20), 100))
+    listing_started = time.monotonic()
     for page_number in range(1, max_pages + 1):
         url = urljoin(COURTLISTENER_API_ROOT, f"dockets/?page={page_number}&page_size={per_page}")
         try:
-            payload = _get_json(url, headers=headers, requests_module=requests_module)
-        except CourtListenerIngestionError:
+            payload = _get_json(
+                url,
+                headers=headers,
+                requests_module=requests_module,
+                request_timeout_seconds=request_timeout_seconds,
+                fetch_cache=fetch_cache,
+                cache_namespace="courtlistener_json",
+            )
+        except CourtListenerIngestionError as exc:
+            listing_errors.append(str(exc))
+            if _is_throttled_courtlistener_error(exc):
+                break
             continue
         for item in list(payload.get("results") or []):
             if not isinstance(item, dict):
@@ -250,9 +317,31 @@ def fetch_random_courtlistener_docket(
             docket_id = str(item.get("id") or "").strip()
             if docket_id:
                 candidate_ids.append(docket_id)
+    stage_timings["sample_listing_seconds"] = round(time.monotonic() - listing_started, 4)
+    if not candidate_ids:
+        cached_ids = _collect_known_courtlistener_docket_ids(fetch_cache, fallback_docket_ids=fallback_docket_ids)
+        if cached_ids:
+            candidate_ids.extend(cached_ids)
+            used_cached_candidates = True
+            stage_timings["cached_candidate_count"] = float(len(cached_ids))
 
     if not candidate_ids:
-        raise CourtListenerIngestionError("Unable to sample any CourtListener dockets for random selection.")
+        timing_detail = _format_stage_timings(stage_timings)
+        if any(_is_throttled_courtlistener_error(error) for error in listing_errors):
+            detail = next(
+                (error for error in listing_errors if _is_throttled_courtlistener_error(error)),
+                "",
+            )
+            raise CourtListenerIngestionError(
+                "CourtListener random sampling was throttled while listing dockets."
+                + (f" timings: {timing_detail}" if timing_detail else "")
+                + (f" detail: {detail}" if detail else "")
+            )
+        raise CourtListenerIngestionError(
+            "Unable to sample any CourtListener dockets for random selection."
+            + (f" timings: {timing_detail}" if timing_detail else "")
+            + (f" listing_errors: {listing_errors[:2]}" if listing_errors else "")
+        )
     shuffled_ids = list(candidate_ids)
     rng.shuffle(shuffled_ids)
     selected_id = ""
@@ -262,30 +351,51 @@ def fetch_random_courtlistener_docket(
     min_recap_documents = max(0, int(minimum_recap_document_count or 0))
     min_downloaded_documents = max(1, int(minimum_downloaded_document_count or 1))
     min_text_documents = max(0, int(minimum_text_document_count or 0))
+    count_checks_started = time.monotonic()
+    count_checks = 0
+    docket_fetch_started = 0.0
+    docket_fetches = 0
     for candidate_id in shuffled_ids:
-        entry_count = _count_list_endpoint(
-            urljoin(COURTLISTENER_API_ROOT, f"docket-entries/?docket={candidate_id}&page_size=1"),
-            headers=headers,
-            requests_module=requests_module,
-        )
-        recap_count = 0
-        if include_recap_documents:
-            recap_count = _count_list_endpoint(
-                urljoin(COURTLISTENER_API_ROOT, f"recap-documents/?docket_entry__docket={candidate_id}&page_size=1"),
+        try:
+            entry_count = _count_list_endpoint(
+                urljoin(COURTLISTENER_API_ROOT, f"docket-entries/?docket={candidate_id}&page_size=1"),
                 headers=headers,
                 requests_module=requests_module,
+                request_timeout_seconds=request_timeout_seconds,
             )
+            count_checks += 1
+            recap_count = 0
+            if include_recap_documents:
+                recap_count = _count_list_endpoint(
+                    urljoin(COURTLISTENER_API_ROOT, f"recap-documents/?docket_entry__docket={candidate_id}&page_size=1"),
+                    headers=headers,
+                    requests_module=requests_module,
+                    request_timeout_seconds=request_timeout_seconds,
+                )
+                count_checks += 1
+        except CourtListenerIngestionError as exc:
+            if not _is_throttled_courtlistener_error(exc) or not used_cached_candidates:
+                raise
+            stage_timings["count_throttle_count"] = float(int(stage_timings.get("count_throttle_count", 0.0)) + 1)
+            entry_count = min_entries
+            recap_count = min_recap_documents
         if entry_count < min_entries or recap_count < min_recap_documents:
             continue
         try:
+            if docket_fetch_started == 0.0:
+                docket_fetch_started = time.monotonic()
             payload = fetch_courtlistener_docket(
                 candidate_id,
                 api_token=token,
                 include_recap_documents=include_recap_documents,
                 include_document_text=include_document_text,
+                enable_pdf_text_backfill=enable_pdf_text_backfill,
                 page_size=page_size,
+                request_timeout_seconds=request_timeout_seconds,
                 requests_module=requests_module,
+                shared_fetch_cache=fetch_cache,
             )
+            docket_fetches += 1
         except CourtListenerIngestionError:
             continue
         documents = list(payload.get("documents") or [])
@@ -296,24 +406,56 @@ def fetch_random_courtlistener_docket(
             best_score = score
             best_payload = payload
         if document_count >= min_downloaded_documents and text_document_count >= min_text_documents:
+            stage_timings["count_check_seconds"] = round(time.monotonic() - count_checks_started, 4)
+            stage_timings["count_check_calls"] = float(count_checks)
+            if docket_fetch_started:
+                stage_timings["docket_fetch_seconds"] = round(time.monotonic() - docket_fetch_started, 4)
+                stage_timings["docket_fetch_count"] = float(docket_fetches)
+            payload_metadata = dict(payload.get("metadata") or {})
+            payload_metadata["courtlistener_sampling_stage_timings"] = dict(stage_timings)
+            payload["metadata"] = payload_metadata
             return payload
         selected_id = candidate_id
     if strict_content_requirements:
+        stage_timings["count_check_seconds"] = round(time.monotonic() - count_checks_started, 4)
+        stage_timings["count_check_calls"] = float(count_checks)
+        if docket_fetch_started:
+            stage_timings["docket_fetch_seconds"] = round(time.monotonic() - docket_fetch_started, 4)
+            stage_timings["docket_fetch_count"] = float(docket_fetches)
+        timing_detail = _format_stage_timings(stage_timings)
         raise CourtListenerIngestionError(
             "Unable to find a sampled CourtListener docket meeting the minimum downloaded/text document requirements."
+            + (f" timings: {timing_detail}" if timing_detail else "")
         )
     if best_payload is not None:
+        stage_timings["count_check_seconds"] = round(time.monotonic() - count_checks_started, 4)
+        stage_timings["count_check_calls"] = float(count_checks)
+        if docket_fetch_started:
+            stage_timings["docket_fetch_seconds"] = round(time.monotonic() - docket_fetch_started, 4)
+            stage_timings["docket_fetch_count"] = float(docket_fetches)
+        payload_metadata = dict(best_payload.get("metadata") or {})
+        payload_metadata["courtlistener_sampling_stage_timings"] = dict(stage_timings)
+        best_payload["metadata"] = payload_metadata
         return best_payload
     if not selected_id:
         selected_id = shuffled_ids[0]
-    return fetch_courtlistener_docket(
+    payload = fetch_courtlistener_docket(
         selected_id,
         api_token=token,
         include_recap_documents=include_recap_documents,
         include_document_text=include_document_text,
+        enable_pdf_text_backfill=enable_pdf_text_backfill,
         page_size=page_size,
+        request_timeout_seconds=request_timeout_seconds,
         requests_module=requests_module,
+        shared_fetch_cache=fetch_cache,
     )
+    stage_timings["count_check_seconds"] = round(time.monotonic() - count_checks_started, 4)
+    stage_timings["count_check_calls"] = float(count_checks)
+    payload_metadata = dict(payload.get("metadata") or {})
+    payload_metadata["courtlistener_sampling_stage_timings"] = dict(stage_timings)
+    payload["metadata"] = payload_metadata
+    return payload
 
 
 def find_rich_courtlistener_docket(
@@ -325,6 +467,7 @@ def find_rich_courtlistener_docket(
     page_size: int = 20,
     include_recap_documents: bool = True,
     include_document_text: bool = True,
+    enable_pdf_text_backfill: bool = False,
     minimum_entry_count: int = 5,
     minimum_recap_document_count: int = 3,
     minimum_downloaded_document_count: int = 6,
@@ -333,13 +476,20 @@ def find_rich_courtlistener_docket(
     minimum_citation_count: int = 0,
     minimum_temporal_formula_count: int = 5,
     minimum_proof_count: int = 5,
+    allow_partial_fallback: bool = False,
+    use_fast_final_diagnostics: bool = False,
+    request_timeout_seconds: float = 20.0,
     requests_module: Any | None = None,
+    shared_fetch_cache: Any | None = None,
+    fallback_docket_ids: Optional[Iterable[str]] = None,
 ) -> Dict[str, Any]:
     """Sample CourtListener dockets until one yields meaningful formal enrichment."""
 
     base_seed = 0 if seed is None else int(seed)
     best_candidate: Dict[str, Any] | None = None
     best_score = (-1, -1, -1, -1, -1)
+    best_fast_candidate: Dict[str, Any] | None = None
+    best_fast_score = (-1, -1)
     failures: List[str] = []
 
     for attempt_index in range(max(1, int(attempts or 1))):
@@ -353,14 +503,32 @@ def find_rich_courtlistener_docket(
                 requests_module=requests_module,
                 include_recap_documents=include_recap_documents,
                 include_document_text=include_document_text,
+                enable_pdf_text_backfill=enable_pdf_text_backfill,
                 minimum_entry_count=minimum_entry_count,
                 minimum_recap_document_count=minimum_recap_document_count,
                 minimum_downloaded_document_count=minimum_downloaded_document_count,
                 minimum_text_document_count=minimum_text_document_count,
-                strict_content_requirements=True,
+                request_timeout_seconds=request_timeout_seconds,
+                strict_content_requirements=not bool(allow_partial_fallback),
+                shared_fetch_cache=shared_fetch_cache,
+                fallback_docket_ids=fallback_docket_ids,
             )
         except CourtListenerIngestionError as exc:
             failures.append(str(exc))
+            continue
+
+        if allow_partial_fallback:
+            fast_diagnostics = _evaluate_docket_fast_richness(docket_payload)
+            fast_score = (
+                int(fast_diagnostics.get("substantive_text_document_count") or 0),
+                int(fast_diagnostics.get("document_count") or 0),
+            )
+            if fast_score > best_fast_score:
+                best_fast_score = fast_score
+                best_fast_candidate = {
+                    "docket": docket_payload,
+                    "diagnostics": fast_diagnostics,
+                }
             continue
 
         formal_diagnostics = _evaluate_docket_formal_richness(docket_payload)
@@ -402,12 +570,63 @@ def find_rich_courtlistener_docket(
                 "status": "success",
             }
 
+    if allow_partial_fallback and best_fast_candidate is not None:
+        if use_fast_final_diagnostics:
+            return {
+                "docket": best_fast_candidate["docket"],
+                "diagnostics": best_fast_candidate["diagnostics"],
+                "attempt_count": max(1, int(attempts or 1)),
+                "status": "best_effort",
+                "failures": failures,
+                "selection_mode": "fast_prefilter_fast_final",
+            }
+        formal_diagnostics = _evaluate_docket_formal_richness(best_fast_candidate["docket"])
+        score = (
+            int(formal_diagnostics.get("citation_count") or 0),
+            int(formal_diagnostics.get("substantive_text_document_count") or 0),
+            int(
+                formal_diagnostics.get("substantive_temporal_formula_count")
+                or formal_diagnostics.get("temporal_formula_count")
+                or 0
+            ),
+            int(formal_diagnostics.get("substantive_proof_count") or formal_diagnostics.get("proof_count") or 0),
+            int(formal_diagnostics.get("deontic_statement_count") or 0),
+        )
+        best_candidate = {
+            "docket": best_fast_candidate["docket"],
+            "diagnostics": formal_diagnostics,
+        }
+        if score > best_score:
+            best_score = score
+        if (
+            int(formal_diagnostics.get("citation_count") or 0)
+            >= max(0, int(minimum_citation_count or 0))
+            and int(formal_diagnostics.get("substantive_text_document_count") or 0)
+            >= max(0, int(minimum_substantive_text_document_count or 0))
+            and
+            int(
+                formal_diagnostics.get("substantive_temporal_formula_count")
+                or formal_diagnostics.get("temporal_formula_count")
+                or 0
+            ) >= max(0, int(minimum_temporal_formula_count or 0))
+            and int(formal_diagnostics.get("substantive_proof_count") or formal_diagnostics.get("proof_count") or 0)
+            >= max(0, int(minimum_proof_count or 0))
+        ):
+            return {
+                "docket": best_fast_candidate["docket"],
+                "diagnostics": formal_diagnostics,
+                "attempt_count": max(1, int(attempts or 1)),
+                "status": "success",
+                "selection_mode": "fast_prefilter_partial_fallback",
+            }
+
     if best_candidate is not None:
         return {
             **best_candidate,
             "attempt_count": max(1, int(attempts or 1)),
             "status": "best_effort",
             "failures": failures,
+            **({"selection_mode": "fast_prefilter_partial_fallback"} if allow_partial_fallback else {}),
         }
 
     raise CourtListenerIngestionError(
@@ -425,11 +644,18 @@ def sample_random_courtlistener_dockets_batch(
     page_size: int = 20,
     include_recap_documents: bool = True,
     include_document_text: bool = True,
+    enable_pdf_text_backfill: bool = False,
     minimum_entry_count: int = 1,
     minimum_recap_document_count: int = 0,
     minimum_downloaded_document_count: int = 3,
     minimum_text_document_count: int = 2,
+    use_fast_diagnostics: bool = False,
+    allow_partial_fallback: bool = False,
+    request_timeout_seconds: float = 20.0,
+    sample_timeout_seconds: float = 45.0,
     requests_module: Any | None = None,
+    shared_fetch_cache: Any | None = None,
+    fallback_docket_ids: Optional[Iterable[str]] = None,
 ) -> Dict[str, Any]:
     """Sample a batch of pseudo-random CourtListener dockets in parallel and collect diagnostics."""
 
@@ -437,7 +663,9 @@ def sample_random_courtlistener_dockets_batch(
     worker_count = max(1, min(int(max_workers or 1), len(seeds)))
 
     def _sample(seed_value: int) -> Dict[str, Any]:
+        stage_timings: Dict[str, float] = {}
         try:
+            started = time.monotonic()
             docket_payload = fetch_random_courtlistener_docket(
                 api_token=api_token,
                 seed=seed_value,
@@ -446,13 +674,23 @@ def sample_random_courtlistener_dockets_batch(
                 requests_module=requests_module,
                 include_recap_documents=include_recap_documents,
                 include_document_text=include_document_text,
+                enable_pdf_text_backfill=enable_pdf_text_backfill,
                 minimum_entry_count=minimum_entry_count,
                 minimum_recap_document_count=minimum_recap_document_count,
                 minimum_downloaded_document_count=minimum_downloaded_document_count,
                 minimum_text_document_count=minimum_text_document_count,
-                strict_content_requirements=True,
+                request_timeout_seconds=request_timeout_seconds,
+                strict_content_requirements=not bool(allow_partial_fallback),
+                shared_fetch_cache=shared_fetch_cache,
+                fallback_docket_ids=fallback_docket_ids,
             )
-            diagnostics = _evaluate_docket_formal_richness(docket_payload)
+            stage_timings["fetch_random_docket_seconds"] = round(time.monotonic() - started, 4)
+            diagnostics_started = time.monotonic()
+            if use_fast_diagnostics:
+                diagnostics = _evaluate_docket_fast_richness(docket_payload)
+            else:
+                diagnostics = _evaluate_docket_formal_richness(docket_payload)
+            stage_timings["diagnostics_seconds"] = round(time.monotonic() - diagnostics_started, 4)
             return {
                 "seed": seed_value,
                 "status": "success",
@@ -462,19 +700,35 @@ def sample_random_courtlistener_dockets_batch(
                     "court": str(docket_payload.get("court") or ""),
                 },
                 "diagnostics": diagnostics,
+                "stage_timings": stage_timings,
             }
         except Exception as exc:
             return {
                 "seed": seed_value,
                 "status": "failed",
                 "error": str(exc),
+                "stage_timings": stage_timings,
             }
 
     samples: List[Dict[str, Any]] = []
-    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+    executor = ThreadPoolExecutor(max_workers=worker_count)
+    try:
         futures = {executor.submit(_sample, seed): seed for seed in seeds}
-        for future in as_completed(futures):
+        done, not_done = wait(futures, timeout=max(1.0, float(sample_timeout_seconds or 45.0)))
+        for future in done:
             samples.append(future.result())
+        for future in not_done:
+            seed_value = futures[future]
+            future.cancel()
+            samples.append(
+                {
+                    "seed": seed_value,
+                    "status": "failed",
+                    "error": f"sample_timeout_after_{float(sample_timeout_seconds or 45.0):.1f}s",
+                }
+            )
+    finally:
+        executor.shutdown(wait=False, cancel_futures=True)
 
     samples.sort(key=lambda item: int(item.get("seed") or 0))
     successful = [item for item in samples if item.get("status") == "success"]
@@ -507,7 +761,38 @@ def sample_random_courtlistener_dockets_batch(
         "substantive_text_count": len(substantive_text),
         "selected": best_sample,
         "samples": samples,
+        "timed_out_count": sum(1 for item in failed if "sample_timeout_after_" in str(item.get("error") or "")),
         "source": "courtlistener_random_batch_sampling",
+    }
+
+
+def _evaluate_docket_fast_richness(docket_payload: Dict[str, Any]) -> Dict[str, Any]:
+    documents = list(docket_payload.get("documents") or [])
+    return {
+        "docket_id": str(docket_payload.get("docket_id") or ""),
+        "case_name": str(docket_payload.get("case_name") or ""),
+        "document_count": len(documents),
+        "text_document_count": sum(1 for item in documents if str(dict(item).get("text") or "").strip()),
+        "substantive_text_document_count": sum(
+            1 for item in documents if _document_has_substantive_text(item)
+        ),
+        "citation_count": 0,
+        "matched_citation_count": 0,
+        "unmatched_citation_count": 0,
+        "documents_with_citations": 0,
+        "temporal_formula_count": 0,
+        "substantive_temporal_formula_count": 0,
+        "document_temporal_formula_count": 0,
+        "proof_count": 0,
+        "substantive_proof_count": 0,
+        "dcec_formula_count": 0,
+        "frame_count": 0,
+        "document_frame_count": 0,
+        "deontic_statement_count": 0,
+        "knowledge_graph_entity_count": 0,
+        "knowledge_graph_relationship_count": 0,
+        "proof_store_present": False,
+        "diagnostic_mode": "fast",
     }
 
 
@@ -556,10 +841,23 @@ def _evaluate_docket_formal_richness(docket_payload: Dict[str, Any]) -> Dict[str
     }
 
 
-def _count_list_endpoint(url: str, *, headers: Dict[str, str], requests_module: Any) -> int:
+def _count_list_endpoint(
+    url: str,
+    *,
+    headers: Dict[str, str],
+    requests_module: Any,
+    request_timeout_seconds: float = 30.0,
+) -> int:
     try:
-        payload = _get_json(url, headers=headers, requests_module=requests_module)
-    except CourtListenerIngestionError:
+        payload = _get_json(
+            url,
+            headers=headers,
+            requests_module=requests_module,
+            request_timeout_seconds=request_timeout_seconds,
+        )
+    except CourtListenerIngestionError as exc:
+        if _is_throttled_courtlistener_error(exc):
+            raise
         return 0
     try:
         return max(0, int(payload.get("count") or 0))
@@ -583,11 +881,300 @@ def _extract_docket_id(identifier: str) -> str:
     return text
 
 
+def _shared_secret_paths() -> List[Path]:
+    configured = str(os.environ.get("IPFS_DATASETS_SECRETS_FILE") or "").strip()
+    candidates = [
+        configured,
+        str(Path.home() / ".config" / "ipfs_datasets_py" / "secrets.json"),
+        "/etc/github-runner-secrets/secrets.json",
+        "/var/lib/github-runner/secrets.json",
+    ]
+    paths: List[Path] = []
+    for candidate in candidates:
+        if not candidate:
+            continue
+        path = Path(candidate).expanduser()
+        if path not in paths:
+            paths.append(path)
+    return paths
+
+
+def _load_shared_secret_value(key: str) -> str | None:
+    secret_key = str(key or "").strip()
+    if not secret_key:
+        return None
+    for path in _shared_secret_paths():
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        value = str(payload.get(secret_key) or "").strip()
+        if value:
+            return value
+    return None
+
+
+def _is_throttled_courtlistener_error(error: Exception | str) -> bool:
+    message = str(error or "").lower()
+    return "429" in message or "throttled" in message or "too many requests" in message
+
+
+def _fetch_rendered_courtlistener_docket_summary(url: str) -> Dict[str, Any]:
+    return asyncio.run(_fetch_rendered_courtlistener_docket_summary_async(url))
+
+
+async def _fetch_rendered_courtlistener_docket_summary_async(url: str) -> Dict[str, Any]:
+    try:
+        from playwright.async_api import async_playwright
+    except Exception as exc:  # pragma: no cover
+        raise CourtListenerIngestionError("Playwright is required for rendered CourtListener docket enrichment.") from exc
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    )
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        try:
+            context = await browser.new_context(
+                user_agent=user_agent,
+                viewport={"width": 1400, "height": 1000},
+                locale="en-US",
+            )
+            page = await context.new_page()
+            await page.goto(url, wait_until="networkidle", timeout=30000)
+            await page.wait_for_timeout(3000)
+            body_text = await page.locator("body").inner_text()
+            return _summarize_rendered_docket_text(body_text, url=url)
+        finally:
+            await browser.close()
+
+
+def _summarize_rendered_docket_text(body_text: str, *, url: str) -> Dict[str, Any]:
+    normalized = "\n".join(line.strip() for line in str(body_text or "").replace("\u00ad", "").splitlines() if line.strip())
+    row_pattern = re.compile(
+        r"(?P<number>\d+)\n(?P<date>[A-Z][a-z]{2} \d{1,2}, \d{4})\n(?P<kind>Main Document)\n(?P<title>.+?)\nBuy on PACER",
+        re.DOTALL,
+    )
+    rows: List[Dict[str, Any]] = []
+    for match in row_pattern.finditer(normalized):
+        title = " ".join(str(match.group("title") or "").split())
+        rows.append(
+            {
+                "document_number": str(match.group("number") or "").strip(),
+                "date_filed": str(match.group("date") or "").strip(),
+                "kind": str(match.group("kind") or "").strip(),
+                "title": title,
+                "pacer_available": True,
+            }
+        )
+    if not rows:
+        lines = [line.strip().replace("\u00ad", "") for line in normalized.splitlines() if line.strip()]
+        marker_index = next(
+            (index for index, line in enumerate(lines) if line.lower() == "document number"),
+            -1,
+        )
+        if marker_index >= 0:
+            cursor = marker_index + 3
+            while cursor < len(lines):
+                line = lines[cursor]
+                if line.lower() in {"newsletter", "about", "help & faq", "donate"}:
+                    break
+                document_number = ""
+                if re.fullmatch(r"\d+", line):
+                    document_number = line
+                    cursor += 1
+                    if cursor >= len(lines):
+                        break
+                    line = lines[cursor]
+                if not re.fullmatch(r"[A-Z][a-z]{2} \d{1,2}, \d{4}", line):
+                    cursor += 1
+                    continue
+                date_filed = line
+                cursor += 1
+                if cursor >= len(lines):
+                    break
+                kind = lines[cursor]
+                cursor += 1
+                if cursor >= len(lines):
+                    break
+                title = lines[cursor]
+                pacer_available = False
+                if cursor + 1 < len(lines) and lines[cursor + 1] == "Buy on PACER":
+                    pacer_available = True
+                    cursor += 2
+                    while cursor < len(lines) and re.fullmatch(r"\d+\s*🙏?", lines[cursor]):
+                        cursor += 1
+                else:
+                    cursor += 1
+                rows.append(
+                    {
+                        "document_number": document_number,
+                        "date_filed": date_filed,
+                        "kind": kind,
+                        "title": title,
+                        "pacer_available": pacer_available,
+                    }
+                )
+    return {
+        "url": url,
+        "row_count": len(rows),
+        "rows": rows[:50],
+        "contains_pacer_purchase_links": "buy on pacer" in normalized.lower(),
+        "body_text_preview": normalized[:1200],
+    }
+
+
+def _merge_rendered_docket_rows_into_documents(
+    docket_id: str,
+    documents: List[Dict[str, Any]],
+    *,
+    rendered_page_summary: Dict[str, Any],
+    docket_url: str,
+) -> List[Dict[str, Any]]:
+    rows = [dict(item) for item in list(rendered_page_summary.get("rows") or []) if isinstance(item, dict)]
+    if not rows:
+        return documents
+
+    updated_documents: List[Dict[str, Any]] = [dict(item) for item in documents]
+    matched_row_indexes: set[int] = set()
+
+    for index, document in enumerate(updated_documents):
+        document_number = str(document.get("document_number") or "").strip()
+        title = _normalize_rendered_title(document.get("title") or "")
+        best_row_index: int | None = None
+        for row_index, row in enumerate(rows):
+            row_number = str(row.get("document_number") or "").strip()
+            row_title = _normalize_rendered_title(row.get("title") or "")
+            if document_number and row_number and document_number == row_number:
+                best_row_index = row_index
+                break
+            if title and row_title and title == row_title:
+                best_row_index = row_index
+                break
+        if best_row_index is None:
+            continue
+        matched_row_indexes.add(best_row_index)
+        row = rows[best_row_index]
+        metadata = dict(document.get("metadata") or {})
+        metadata["rendered_docket_row"] = dict(row)
+        acquisition_candidates = list(metadata.get("acquisition_candidates") or [])
+        acquisition_candidates.append(
+            {
+                "source": "courtlistener_rendered_docket_page",
+                "docket_url": docket_url,
+                "pacer_available": bool(row.get("pacer_available")),
+                "document_number": str(row.get("document_number") or ""),
+                "title": str(row.get("title") or ""),
+            }
+        )
+        metadata["acquisition_candidates"] = acquisition_candidates
+        document["metadata"] = metadata
+        updated_documents[index] = document
+
+    for row_index, row in enumerate(rows):
+        if row_index in matched_row_indexes:
+            continue
+        synthetic_id = f"{docket_id}_rendered_row_{str(row.get('document_number') or row_index + 1).strip() or row_index + 1}"
+        title = str(row.get("title") or "Rendered docket row").strip()
+        document_number = str(row.get("document_number") or "").strip()
+        date_filed = str(row.get("date_filed") or "").strip()
+        kind = str(row.get("kind") or "").strip()
+        text_lines = [
+            "Rendered CourtListener docket row",
+            f"Document number: {document_number}" if document_number else "",
+            f"Date filed: {date_filed}" if date_filed else "",
+            f"Kind: {kind}" if kind else "",
+            f"Description: {title}" if title else "",
+            "PACER purchase link available" if bool(row.get("pacer_available")) else "",
+        ]
+        updated_documents.append(
+            {
+                "id": synthetic_id,
+                "title": title,
+                "text": "\n".join(line for line in text_lines if line),
+                "date_filed": date_filed,
+                "document_number": document_number,
+                "source_url": docket_url,
+                "document_type": "courtlistener_rendered_docket_row",
+                "metadata": {
+                    "rendered_docket_row": dict(row),
+                    "acquisition_candidates": [
+                        {
+                            "source": "courtlistener_rendered_docket_page",
+                            "docket_url": docket_url,
+                            "pacer_available": bool(row.get("pacer_available")),
+                            "document_number": document_number,
+                            "title": title,
+                        }
+                    ],
+                    "text_extraction": {"source": "courtlistener_rendered_docket"},
+                },
+            }
+        )
+    return updated_documents
+
+
+def _normalize_rendered_title(value: Any) -> str:
+    return " ".join(str(value or "").replace("\u00ad", "").split()).strip().lower()
+
+
+def _collect_known_courtlistener_docket_ids(
+    fetch_cache: Any | None,
+    *,
+    fallback_docket_ids: Optional[Iterable[str]] = None,
+) -> List[str]:
+    seen: set[str] = set()
+    collected: List[str] = []
+    for raw_value in list(fallback_docket_ids or []):
+        docket_id = str(raw_value or "").strip()
+        if docket_id and docket_id not in seen:
+            seen.add(docket_id)
+            collected.append(docket_id)
+    if fetch_cache is None:
+        return collected
+    payload = _load_cached_json(
+        fetch_cache,
+        namespace="courtlistener_state",
+        url="courtlistener_known_docket_ids",
+    ) or {}
+    for raw_value in list(payload.get("docket_ids") or []):
+        docket_id = str(raw_value or "").strip()
+        if docket_id and docket_id not in seen:
+            seen.add(docket_id)
+            collected.append(docket_id)
+    return collected
+
+
+def _record_known_courtlistener_docket_id(fetch_cache: Any | None, docket_id: str) -> None:
+    normalized = str(docket_id or "").strip()
+    if not normalized or fetch_cache is None:
+        return
+    existing = _load_cached_json(
+        fetch_cache,
+        namespace="courtlistener_state",
+        url="courtlistener_known_docket_ids",
+    ) or {}
+    known_ids = [str(item or "").strip() for item in list(existing.get("docket_ids") or []) if str(item or "").strip()]
+    if normalized in known_ids:
+        return
+    known_ids.append(normalized)
+    known_ids = known_ids[-200:]
+    _save_cached_json(
+        fetch_cache,
+        namespace="courtlistener_state",
+        url="courtlistener_known_docket_ids",
+        payload={"docket_ids": known_ids, "updated_at": time.time()},
+        payload_name="courtlistener_known_docket_ids",
+    )
+
+
 def _get_json(
     url: str,
     *,
     headers: Dict[str, str],
     requests_module: Any,
+    request_timeout_seconds: float = 30.0,
     fetch_cache: Any | None = None,
     cache_namespace: str = "courtlistener_json",
     cache_payload_name: str | None = None,
@@ -596,7 +1183,7 @@ def _get_json(
     cached_payload = _load_cached_json(fetch_cache, namespace=cache_namespace, url=normalized_url)
     if cached_payload is not None:
         return cached_payload
-    response = requests_module.get(url, headers=headers, timeout=30)
+    response = requests_module.get(url, headers=headers, timeout=max(1.0, float(request_timeout_seconds or 30.0)))
     status_code = int(getattr(response, "status_code", 0) or 0)
     if status_code != 200:
         body = ""
@@ -623,13 +1210,14 @@ def _get_binary(
     *,
     headers: Dict[str, str],
     requests_module: Any,
+    request_timeout_seconds: float = 60.0,
     fetch_cache: Any | None = None,
 ) -> bytes:
     normalized_url = _normalize_cache_url(url)
     cached_blob = _load_cached_binary(fetch_cache, namespace="courtlistener_binary", url=normalized_url)
     if cached_blob:
         return cached_blob
-    response = requests_module.get(url, headers=headers, timeout=60)
+    response = requests_module.get(url, headers=headers, timeout=max(1.0, float(request_timeout_seconds or 60.0)))
     status_code = int(getattr(response, "status_code", 0) or 0)
     if status_code != 200:
         return b""
@@ -653,6 +1241,7 @@ def _iter_paginated_results(
     *,
     headers: Dict[str, str],
     requests_module: Any,
+    request_timeout_seconds: float = 30.0,
     fetch_cache: Any | None = None,
     cache_namespace: str = "courtlistener_json",
 ) -> Iterable[Dict[str, Any]]:
@@ -662,6 +1251,7 @@ def _iter_paginated_results(
             next_url,
             headers=headers,
             requests_module=requests_module,
+            request_timeout_seconds=request_timeout_seconds,
             fetch_cache=fetch_cache,
             cache_namespace=cache_namespace,
         )
@@ -683,6 +1273,7 @@ def _iter_recap_documents(
     requests_module: Any,
     page_size: int,
     max_documents: int | None,
+    request_timeout_seconds: float = 30.0,
     fetch_cache: Any | None = None,
 ) -> Iterable[Dict[str, Any]]:
     page_size = max(1, min(int(page_size or 100), 100))
@@ -692,6 +1283,7 @@ def _iter_recap_documents(
         url,
         headers=headers,
         requests_module=requests_module,
+        request_timeout_seconds=request_timeout_seconds,
         fetch_cache=fetch_cache,
     ):
         yield item
@@ -705,6 +1297,7 @@ def _safe_list_fetch(
     *,
     headers: Dict[str, str],
     requests_module: Any,
+    request_timeout_seconds: float = 30.0,
     fetch_cache: Any | None = None,
     cache_namespace: str = "courtlistener_json",
 ) -> List[Dict[str, Any]]:
@@ -714,6 +1307,7 @@ def _safe_list_fetch(
                 url,
                 headers=headers,
                 requests_module=requests_module,
+                request_timeout_seconds=request_timeout_seconds,
                 fetch_cache=fetch_cache,
                 cache_namespace=cache_namespace,
             )
@@ -882,6 +1476,7 @@ def _enrich_recap_text_from_pdf(
     *,
     headers: Dict[str, str],
     requests_module: Any,
+    request_timeout_seconds: float = 60.0,
     fetch_cache: Any | None = None,
 ) -> Dict[str, Any]:
     updated = dict(document)
@@ -898,6 +1493,7 @@ def _enrich_recap_text_from_pdf(
         source_url,
         headers=headers,
         requests_module=requests_module,
+        request_timeout_seconds=request_timeout_seconds,
         fetch_cache=fetch_cache,
     )
     if not pdf_bytes:

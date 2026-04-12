@@ -133,11 +133,27 @@ def _filter_mapping_fields(payload: dict[str, object], fields: list[str]) -> dic
     return {field: payload[field] for field in fields if field in payload}
 
 
-def _build_citation_source_audit_from_dataset(dataset: object) -> dict[str, object]:
+def _build_citation_source_audit_from_dataset(
+    dataset: object,
+    *,
+    include_eu_audit: bool = True,
+    eu_language: str | None = None,
+    eu_max_documents: int = 120,
+) -> dict[str, object]:
     if isinstance(dataset, DocketDatasetObject):
-        return audit_docket_dataset_citation_sources(dataset)
+        return audit_docket_dataset_citation_sources(
+            dataset,
+            include_eu_audit=include_eu_audit,
+            eu_language=eu_language,
+            eu_max_documents=eu_max_documents,
+        )
     if isinstance(dataset, dict):
-        return audit_docket_dataset_citation_sources(DocketDatasetObject.from_dict(dataset))
+        return audit_docket_dataset_citation_sources(
+            DocketDatasetObject.from_dict(dataset),
+            include_eu_audit=include_eu_audit,
+            eu_language=eu_language,
+            eu_max_documents=eu_max_documents,
+        )
     raise TypeError("citation source audit requires a docket dataset object or dictionary payload")
 
 
@@ -689,6 +705,9 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--summary-fields", default=None, help="Comma-separated field subset for --summary-only packaged output.")
     parser.add_argument("--citation-source-audit", action="store_true", help="Include a citation source resolution audit for the docket dataset or packaged bundle.")
     parser.add_argument("--citation-audit-fields", default=None, help="Comma-separated field subset for --citation-source-audit output.")
+    parser.add_argument("--no-eu-citation-audit", action="store_true", help="Skip the EU/member-state citation audit within --citation-source-audit.")
+    parser.add_argument("--eu-citation-language", default=None, help="Optional language hint for EU/member-state citation extraction.")
+    parser.add_argument("--eu-citation-max-documents", type=int, default=120, help="Max documents to scan for EU/member-state citations.")
     parser.add_argument("--recover-citation-sources", action="store_true", help="Run unresolved citation audit misses through the legal source recovery workflow.")
     parser.add_argument("--citation-recovery-fields", default=None, help="Comma-separated field subset for --recover-citation-sources output.")
     parser.add_argument("--recovery-max-candidates", type=int, default=8, help="Maximum recovery candidates to keep per unresolved citation.")
@@ -717,6 +736,9 @@ def main(args: list[str] | None = None) -> int:
     citation_recovery_fields = _parse_summary_fields_arg(parsed.citation_recovery_fields)
     report_fields = _parse_summary_fields_arg(parsed.report_fields)
     generic_fields = _parse_summary_fields_arg(parsed.fields)
+    include_eu_audit = not bool(parsed.no_eu_citation_audit)
+    eu_citation_language = str(parsed.eu_citation_language or "").strip() or None
+    eu_citation_max_documents = max(0, int(parsed.eu_citation_max_documents or 120))
     packaged_modes = _packaged_read_modes(parsed)
     packaged_read_only = _is_packaged_read_only(parsed, packaged_modes)
     citation_audit_only = bool(
@@ -856,9 +878,30 @@ def main(args: list[str] | None = None) -> int:
         payload["output_path"] = str(output_path)
     if parsed.citation_source_audit:
         if dataset is not None:
-            citation_audit = _build_citation_source_audit_from_dataset(dataset)
+            citation_audit = _build_citation_source_audit_from_dataset(
+                dataset,
+                include_eu_audit=include_eu_audit,
+                eu_language=eu_citation_language,
+                eu_max_documents=eu_citation_max_documents,
+            )
+            if hasattr(dataset, "metadata"):
+                dataset.metadata = dict(getattr(dataset, "metadata") or {})
+                dataset.metadata["citation_source_audit"] = dict(citation_audit)
+                if isinstance(citation_audit.get("eu_citation_audit"), dict):
+                    dataset.metadata["eu_citation_audit"] = dict(citation_audit.get("eu_citation_audit") or {})
+            elif isinstance(dataset, dict):
+                metadata = dict(dataset.get("metadata") or {})
+                metadata["citation_source_audit"] = dict(citation_audit)
+                if isinstance(citation_audit.get("eu_citation_audit"), dict):
+                    metadata["eu_citation_audit"] = dict(citation_audit.get("eu_citation_audit") or {})
+                dataset["metadata"] = metadata
         else:
-            citation_audit = audit_packaged_docket_citation_sources(parsed.input_path)
+            citation_audit = audit_packaged_docket_citation_sources(
+                parsed.input_path,
+                include_eu_audit=include_eu_audit,
+                eu_language=eu_citation_language,
+                eu_max_documents=eu_citation_max_documents,
+            )
         payload["citation_source_audit"] = _filter_mapping_fields(
             citation_audit,
             active_citation_audit_fields,
@@ -868,14 +911,34 @@ def main(args: list[str] | None = None) -> int:
             citation_audit = dict(payload["citation_source_audit"])
             if active_citation_audit_fields:
                 if dataset is not None:
-                    citation_audit = _build_citation_source_audit_from_dataset(dataset)
+                    citation_audit = _build_citation_source_audit_from_dataset(
+                        dataset,
+                        include_eu_audit=include_eu_audit,
+                        eu_language=eu_citation_language,
+                        eu_max_documents=eu_citation_max_documents,
+                    )
                 else:
-                    citation_audit = audit_packaged_docket_citation_sources(parsed.input_path)
+                    citation_audit = audit_packaged_docket_citation_sources(
+                        parsed.input_path,
+                        include_eu_audit=include_eu_audit,
+                        eu_language=eu_citation_language,
+                        eu_max_documents=eu_citation_max_documents,
+                    )
         else:
             if dataset is not None:
-                citation_audit = _build_citation_source_audit_from_dataset(dataset)
+                citation_audit = _build_citation_source_audit_from_dataset(
+                    dataset,
+                    include_eu_audit=include_eu_audit,
+                    eu_language=eu_citation_language,
+                    eu_max_documents=eu_citation_max_documents,
+                )
             else:
-                citation_audit = audit_packaged_docket_citation_sources(parsed.input_path)
+                citation_audit = audit_packaged_docket_citation_sources(
+                    parsed.input_path,
+                    include_eu_audit=include_eu_audit,
+                    eu_language=eu_citation_language,
+                    eu_max_documents=eu_citation_max_documents,
+                )
         citation_recovery = _recover_citation_sources_from_audit(
             citation_audit,
             publish_to_hf=bool(parsed.publish_recovered_citations_to_hf),

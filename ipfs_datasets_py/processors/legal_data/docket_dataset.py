@@ -38,6 +38,10 @@ from ..legal_scrapers.bluebook_citation_linker import (
     citation_link_to_dict,
     resolve_bluebook_citations_in_text,
 )
+from ..legal_scrapers.eu_legal_citation_bridge import (
+    build_eu_lookup_action_for_citation,
+    extract_eu_legal_citations,
+)
 from ..legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
 from ..legal_scrapers.legal_source_recovery_promotion import (
     build_recovery_manifest_promotion_row,
@@ -171,6 +175,9 @@ def audit_docket_dataset_citation_sources(
     dataset: "DocketDatasetObject",
     *,
     resolver: Optional[BluebookCitationResolver] = None,
+    include_eu_audit: bool = True,
+    eu_language: Optional[str] = None,
+    eu_max_documents: int = 120,
 ) -> Dict[str, Any]:
     report = audit_bluebook_citation_resolution_for_documents(
         [
@@ -186,15 +193,116 @@ def audit_docket_dataset_citation_sources(
     report["dataset_id"] = dataset.dataset_id
     report["docket_id"] = dataset.docket_id
     report["source"] = "docket_dataset_citation_source_audit"
+    if include_eu_audit:
+        report["eu_citation_audit"] = audit_docket_dataset_eu_citation_sources(
+            dataset,
+            language=eu_language,
+            max_documents=eu_max_documents,
+        )
     return report
 
 
-def audit_packaged_docket_citation_sources(manifest_path: str | Path) -> Dict[str, Any]:
+def audit_packaged_docket_citation_sources(
+    manifest_path: str | Path,
+    *,
+    resolver: Optional[BluebookCitationResolver] = None,
+    include_eu_audit: bool = True,
+    eu_language: Optional[str] = None,
+    eu_max_documents: int = 120,
+) -> Dict[str, Any]:
     dataset = DocketDatasetObject.from_package(manifest_path)
-    result = audit_docket_dataset_citation_sources(dataset)
+    result = audit_docket_dataset_citation_sources(
+        dataset,
+        resolver=resolver,
+        include_eu_audit=include_eu_audit,
+        eu_language=eu_language,
+        eu_max_documents=eu_max_documents,
+    )
     result["manifest_path"] = str(Path(manifest_path))
     result["source"] = "packaged_docket_citation_source_audit"
     return result
+
+
+def audit_docket_dataset_eu_citation_sources(
+    dataset: "DocketDatasetObject",
+    *,
+    language: Optional[str] = None,
+    max_documents: int = 120,
+) -> Dict[str, Any]:
+    documents = list(dataset.documents or [])
+    selected_documents = documents[: max(0, int(max_documents))]
+    document_summaries: List[Dict[str, Any]] = []
+    citations: List[Any] = []
+    total_citation_count = 0
+
+    for document in selected_documents:
+        text = str(document.text or document.title or "").strip()
+        if not text:
+            continue
+        extracted = extract_eu_legal_citations(text, language=language)
+        if not extracted:
+            continue
+        total_citation_count += len(extracted)
+        schemes = sorted({citation.scheme for citation in extracted if citation.scheme})
+        member_states = sorted({citation.member_state for citation in extracted if citation.member_state})
+        document_summaries.append(
+            {
+                "document_id": document.document_id,
+                "title": document.title,
+                "citation_count": len(extracted),
+                "schemes": schemes,
+                "member_states": member_states,
+            }
+        )
+        citations.extend(extracted)
+
+    unique_citations: List[Any] = []
+    seen_citations: set[tuple[str, str, str, str]] = set()
+    for citation in citations:
+        key = (
+            str(citation.scheme or ""),
+            str(citation.canonical_uri or ""),
+            str(citation.member_state or ""),
+            str(citation.normalized_text or ""),
+        )
+        if key in seen_citations:
+            continue
+        seen_citations.add(key)
+        unique_citations.append(citation)
+
+    actions = [build_eu_lookup_action_for_citation(citation, language=language) for citation in unique_citations]
+    handler_counts: Dict[str, int] = {}
+    for action in actions:
+        handler = str(action.handler_key or "")
+        if not handler:
+            continue
+        handler_counts[handler] = int(handler_counts.get(handler) or 0) + 1
+
+    schemes_count: Dict[str, int] = {}
+    member_state_count: Dict[str, int] = {}
+    for citation in unique_citations:
+        if citation.scheme:
+            schemes_count[citation.scheme] = int(schemes_count.get(citation.scheme) or 0) + 1
+        if citation.member_state:
+            member_state_count[citation.member_state] = int(member_state_count.get(citation.member_state) or 0) + 1
+
+    return {
+        "dataset_id": dataset.dataset_id,
+        "docket_id": dataset.docket_id,
+        "source": "docket_dataset_eu_citation_audit",
+        "document_count": len(documents),
+        "documents_analyzed": len(selected_documents),
+        "documents_with_citations": len(document_summaries),
+        "citation_count": total_citation_count,
+        "unique_citation_count": len(unique_citations),
+        "citations_by_scheme": schemes_count,
+        "citations_by_member_state": member_state_count,
+        "lookup_action_count": len(actions),
+        "lookup_handlers": handler_counts,
+        "documents": document_summaries,
+        "citations": [asdict(citation) for citation in unique_citations],
+        "lookup_actions": [asdict(action) for action in actions],
+    }
 
 
 def _build_missing_authority_follow_up_work_item(
@@ -939,12 +1047,39 @@ class DocketDatasetObject:
     def collect_packaged_citation_recovery_candidates(cls, manifest_path: str | Path) -> Dict[str, Any]:
         return collect_packaged_docket_citation_recovery_candidates(manifest_path)
 
-    def audit_citation_sources(self) -> Dict[str, Any]:
-        return audit_docket_dataset_citation_sources(self)
+    def audit_citation_sources(
+        self,
+        *,
+        resolver: Optional[BluebookCitationResolver] = None,
+        include_eu_audit: bool = True,
+        eu_language: Optional[str] = None,
+        eu_max_documents: int = 120,
+    ) -> Dict[str, Any]:
+        return audit_docket_dataset_citation_sources(
+            self,
+            resolver=resolver,
+            include_eu_audit=include_eu_audit,
+            eu_language=eu_language,
+            eu_max_documents=eu_max_documents,
+        )
 
     @classmethod
-    def audit_packaged_citation_sources(cls, manifest_path: str | Path) -> Dict[str, Any]:
-        return audit_packaged_docket_citation_sources(manifest_path)
+    def audit_packaged_citation_sources(
+        cls,
+        manifest_path: str | Path,
+        *,
+        resolver: Optional[BluebookCitationResolver] = None,
+        include_eu_audit: bool = True,
+        eu_language: Optional[str] = None,
+        eu_max_documents: int = 120,
+    ) -> Dict[str, Any]:
+        return audit_packaged_docket_citation_sources(
+            manifest_path,
+            resolver=resolver,
+            include_eu_audit=include_eu_audit,
+            eu_language=eu_language,
+            eu_max_documents=eu_max_documents,
+        )
 
     async def recover_missing_authorities(
         self,
@@ -1177,10 +1312,12 @@ class DocketDatasetBuilder:
         *,
         vector_dimension: int = 32,
         router_max_documents: int | None = 3,
+        formal_logic_max_documents: int | None = None,
         citation_resolver: Optional[BluebookCitationResolver] = None,
     ) -> None:
         self.vector_dimension = max(8, int(vector_dimension))
         self.router_max_documents = None if router_max_documents is None else max(1, int(router_max_documents))
+        self.formal_logic_max_documents = None if formal_logic_max_documents is None else max(1, int(formal_logic_max_documents))
         self.citation_resolver = citation_resolver
 
     def build_from_docket(
@@ -1190,6 +1327,8 @@ class DocketDatasetBuilder:
         include_knowledge_graph: bool = True,
         include_bm25: bool = True,
         include_vector_index: bool = True,
+        include_formal_logic: bool = True,
+        include_router_enrichment: bool = True,
     ) -> DocketDatasetObject:
         normalized_documents = self._normalize_documents(docket)
         docket_id = str(docket.get("docket_id") or docket.get("id") or "docket")
@@ -1232,32 +1371,36 @@ class DocketDatasetBuilder:
             bm25_index=bm25_index,
             vector_index=vector_index,
         )
-        formal_enrichment = enrich_docket_documents_with_formal_logic(
-            normalized_documents,
-            docket_id=docket_id,
-            case_name=case_name,
-            court=court,
-            max_documents=None,
-        )
-        self._merge_router_enrichment(
-            documents=normalized_documents,
-            knowledge_graph=knowledge_graph,
-            proof_assistant=proof_assistant,
-            router_enrichment=formal_enrichment,
-        )
-        router_enrichment = enrich_docket_documents_with_routers(
-            normalized_documents,
-            docket_id=docket_id,
-            case_name=case_name,
-            court=court,
-            max_documents=self.router_max_documents,
-        )
-        self._merge_router_enrichment(
-            documents=normalized_documents,
-            knowledge_graph=knowledge_graph,
-            proof_assistant=proof_assistant,
-            router_enrichment=router_enrichment,
-        )
+        formal_enrichment: Dict[str, Any] = {}
+        if include_formal_logic:
+            formal_enrichment = enrich_docket_documents_with_formal_logic(
+                normalized_documents,
+                docket_id=docket_id,
+                case_name=case_name,
+                court=court,
+                max_documents=self.formal_logic_max_documents,
+            )
+            self._merge_router_enrichment(
+                documents=normalized_documents,
+                knowledge_graph=knowledge_graph,
+                proof_assistant=proof_assistant,
+                router_enrichment=formal_enrichment,
+            )
+        router_enrichment: Dict[str, Any] = {}
+        if include_router_enrichment:
+            router_enrichment = enrich_docket_documents_with_routers(
+                normalized_documents,
+                docket_id=docket_id,
+                case_name=case_name,
+                court=court,
+                max_documents=self.router_max_documents,
+            )
+            self._merge_router_enrichment(
+                documents=normalized_documents,
+                knowledge_graph=knowledge_graph,
+                proof_assistant=proof_assistant,
+                router_enrichment=router_enrichment,
+            )
         artifact_provenance = {
             "knowledge_graph": {"backend": "parsed_document_structure_graph", "is_mock": False},
             "bm25_index": {"backend": "local_bm25", "is_mock": False},
@@ -1319,6 +1462,8 @@ class DocketDatasetBuilder:
         include_knowledge_graph: bool = True,
         include_bm25: bool = True,
         include_vector_index: bool = True,
+        include_formal_logic: bool = True,
+        include_router_enrichment: bool = True,
     ) -> DocketDatasetObject:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
@@ -1330,6 +1475,8 @@ class DocketDatasetBuilder:
             include_knowledge_graph=include_knowledge_graph,
             include_bm25=include_bm25,
             include_vector_index=include_vector_index,
+            include_formal_logic=include_formal_logic,
+            include_router_enrichment=include_router_enrichment,
         )
 
     def build_from_directory(
@@ -1342,6 +1489,8 @@ class DocketDatasetBuilder:
         include_knowledge_graph: bool = True,
         include_bm25: bool = True,
         include_vector_index: bool = True,
+        include_formal_logic: bool = True,
+        include_router_enrichment: bool = True,
         glob_pattern: str = "*",
     ) -> DocketDatasetObject:
         root = Path(directory)
@@ -1387,6 +1536,8 @@ class DocketDatasetBuilder:
             include_knowledge_graph=include_knowledge_graph,
             include_bm25=include_bm25,
             include_vector_index=include_vector_index,
+            include_formal_logic=include_formal_logic,
+            include_router_enrichment=include_router_enrichment,
         )
 
     def _normalize_documents(self, docket: Dict[str, Any]) -> List[DocketDocument]:

@@ -473,6 +473,12 @@ class DocketDatasetPackager:
         proof_assistant_metadata = dict(proof_assistant.get("metadata") or {})
         proof_assistant_summary = dict(proof_assistant.get("summary") or {})
         dataset_metadata = dict(dataset_payload.get("metadata") or {})
+        citation_audit = dict(dataset_metadata.get("citation_source_audit") or {})
+        eu_citation_audit = dict(
+            citation_audit.get("eu_citation_audit")
+            or dataset_metadata.get("eu_citation_audit")
+            or {}
+        )
         latest_routing_explanation = dict(
             dataset_metadata.get("latest_proof_packet_routing_explanation")
             or proof_assistant_metadata.get("latest_proof_packet_routing_explanation")
@@ -596,6 +602,9 @@ class DocketDatasetPackager:
                 "review_required_work_item_count": int(proof_assistant_summary.get("review_required_work_item_count") or 0),
                 "high_priority_revalidation_count": int(proof_assistant_summary.get("high_priority_revalidation_count") or 0),
                 "revalidation_run_count": len(list(proof_assistant.get("revalidation_runs") or [])),
+                "eu_citation_count": int(eu_citation_audit.get("citation_count") or 0),
+                "eu_unique_citation_count": int(eu_citation_audit.get("unique_citation_count") or 0),
+                "eu_documents_with_citations": int(eu_citation_audit.get("documents_with_citations") or 0),
             },
             "source": "packaged_operator_dashboard",
         }
@@ -871,10 +880,14 @@ class DocketDatasetPackager:
                 "review_required_work_item_count": int((proof_assistant_summary.get("review_required_work_item_count") or 0)),
                 "high_priority_revalidation_count": int((proof_assistant_summary.get("high_priority_revalidation_count") or 0)),
                 "revalidation_run_count": len(list(proof_assistant.get("revalidation_runs") or [])),
+                "eu_citation_count": int(eu_citation_audit.get("citation_count") or 0),
+                "eu_unique_citation_count": int(eu_citation_audit.get("unique_citation_count") or 0),
+                "eu_documents_with_citations": int(eu_citation_audit.get("documents_with_citations") or 0),
             },
             "provenance": {
                 "latest_proof_packet_routing_explanation": _jsonable(latest_routing_explanation),
                 "has_latest_proof_packet_routing_explanation": bool(latest_routing_explanation),
+                "has_eu_citation_audit": bool(eu_citation_audit),
             },
         }
 
@@ -3202,6 +3215,9 @@ def render_packaged_docket_operator_dashboard(
         f"Court: {str(dashboard.get('court') or '')}",
         f"Document Count: {int(summary.get('document_count') or 0)}",
         f"Attachment Count: {int(summary.get('attachment_count') or 0)}",
+        f"EU Citation Count: {int(summary.get('eu_citation_count') or 0)}",
+        f"EU Unique Citation Count: {int(summary.get('eu_unique_citation_count') or 0)}",
+        f"EU Documents With Citations: {int(summary.get('eu_documents_with_citations') or 0)}",
         f"Latest Proof Packet ID: {str(inspection.get('latest_proof_packet_id') or '')}",
         f"Latest Routing Reason: {str(inspection.get('latest_routing_reason') or '')}",
         f"Pending Review Count: {int(summary.get('review_required_work_item_count') or 0)}",

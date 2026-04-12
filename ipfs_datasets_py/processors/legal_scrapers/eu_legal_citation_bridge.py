@@ -26,6 +26,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 import re
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+import os
 import inspect
 
 from ipfs_datasets_py.logic.deontic.graph import (
@@ -49,15 +50,19 @@ _DUTCH_BW_ARTICLE_RE = re.compile(
     re.IGNORECASE,
 )
 _GERMAN_GG_ARTICLE_RE = re.compile(
-    r"\b(?:artikel|art\.?)\s+(?P<article>[0-9]+[a-z]?)\s+(?P<code>GG)\b",
+    r"\b(?:artikel|art\.?)\s+(?P<article>[0-9]+[a-z]?)(?:\s+(?:abs\.?|absatz)\s+(?P<paragraph>[0-9]+|[ivxlcdm]+)|\s+(?P<paragraph_roman>[ivxlcdm]+))?(?:\s+des)?\s+(?P<code>GG|Grundgesetz(?:es)?)\b",
+    re.IGNORECASE,
+)
+_GERMAN_GG_ARTICLE_REVERSED_RE = re.compile(
+    r"\b(?:des\s+)?(?P<code>Grundgesetz(?:es)?)\s+(?:artikel|art\.?)\s+(?P<article>[0-9]+[a-z]?)(?:\s+(?:abs\.?|absatz)\s+(?P<paragraph>[0-9]+|[ivxlcdm]+)|\s+(?P<paragraph_roman>[ivxlcdm]+))?\b",
     re.IGNORECASE,
 )
 _FRENCH_CC_ARTICLE_RE = re.compile(
-    r"\b(?:article|art\.?)\s+(?P<article>[0-9]+(?:-[0-9]+)?)\s+du\s+(?P<code>code civil)\b",
+    r"\b(?:article|art\.?)\s+(?P<article>[0-9]+(?:-[0-9]+)?)(?:\s+du)?\s+(?P<code>code civil)\b",
     re.IGNORECASE,
 )
 _SPANISH_CC_ARTICLE_RE = re.compile(
-    r"\b(?:art[ií]culo|art\.?)\s+(?P<article>[0-9]+)\s+del\s+(?P<code>c[oó]digo civil)\b",
+    r"\b(?:art[ií]culo|art\.?)\s+(?P<article>[0-9]+)(?:\s+del)?\s+(?P<code>c[oó]digo civil)\b",
     re.IGNORECASE,
 )
 _SENTENCE_RE = re.compile(r"(?<=[.;:])\s+|\n+")
@@ -212,6 +217,31 @@ class EULegalResolutionBundle:
     lookup_result: Optional[EULegalCitationLookupResult] = None
 
 
+@dataclass(frozen=True)
+class ECLILookupTask:
+    ecli: str
+    member_state: Optional[str] = None
+    court_hint: Optional[str] = None
+    year: Optional[str] = None
+    case_code: Optional[str] = None
+    candidate_sources: List[Dict[str, Any]] = field(default_factory=list)
+
+
+ECLI_RESOLVER_REGISTRY: Dict[str, Callable[[str], Dict[str, Any]]] = {}
+
+
+@dataclass(frozen=True)
+class ECLIHTTPResolverConfig:
+    member_state: str
+    base_url: str
+    query_param: str = "id"
+    return_param: Optional[str] = None
+    handler_label: str = "ecli_http_resolver"
+    title_regexes: List[str] = field(default_factory=list)
+    issued_regexes: List[str] = field(default_factory=list)
+    creator_regexes: List[str] = field(default_factory=list)
+
+
 EU_JURISDICTION_PROFILES: Dict[str, EUJurisdictionProfile] = {
     "EU": EUJurisdictionProfile(
         code="EU",
@@ -325,6 +355,67 @@ def _profiles_for_citations(citations: Sequence[EULegalCitation]) -> List[EUJuri
     return [EU_JURISDICTION_PROFILES[code] for code in sorted(codes) if code in EU_JURISDICTION_PROFILES]
 
 
+def build_eu_lookup_action_for_citation(
+    citation: EULegalCitation,
+    *,
+    language: Optional[str] = None,
+) -> EULegalCitationLookupAction:
+    handler_key = "eu_registry"
+    dataset_id = "eu_legal_registry"
+    action_type = "registry_lookup"
+    query_text = citation.canonical_uri
+    action_notes: List[str] = []
+
+    if citation.scheme in {"CELEX", "ELI"}:
+        handler_key = "eurlex_registry"
+        dataset_id = "eurlex"
+        action_type = "eu_legislation_lookup"
+        query_text = citation.canonical_uri
+        action_notes.append("Prefer EUR-Lex/Eli resolvers for CELEX/ELI anchors.")
+    elif citation.scheme == "ECLI":
+        handler_key = "ecli_registry"
+        dataset_id = "ecli"
+        action_type = "case_law_lookup"
+        query_text = citation.normalized_text
+        action_notes.append("Prefer ECLI resolvers for case law anchors.")
+    elif citation.member_state == "NL":
+        handler_key = "netherlands_laws"
+        dataset_id = "netherlands_laws"
+        action_type = "member_state_law_lookup"
+        query_text = citation.normalized_text
+        action_notes.append("Use Netherlands law corpus search for BWBR/BW references.")
+    elif citation.member_state == "DE":
+        handler_key = "germany_laws"
+        dataset_id = "germany_laws"
+        action_type = "member_state_law_lookup"
+        query_text = citation.normalized_text
+        action_notes.append("Use Germany canonical law corpus for GG references.")
+    elif citation.member_state == "FR":
+        handler_key = "france_laws"
+        dataset_id = "france_laws"
+        action_type = "member_state_law_lookup"
+        query_text = citation.normalized_text
+        action_notes.append("Use France canonical law corpus for Code civil references.")
+    elif citation.member_state == "ES":
+        handler_key = "spain_laws"
+        dataset_id = "spain_laws"
+        action_type = "member_state_law_lookup"
+        query_text = citation.normalized_text
+        action_notes.append("Use Spain canonical law corpus for Codigo Civil references.")
+    else:
+        action_notes.append("Provide a custom handler to resolve this citation.")
+
+    return EULegalCitationLookupAction(
+        citation=citation,
+        dataset_id=dataset_id,
+        handler_key=handler_key,
+        query_text=query_text,
+        action_type=action_type,
+        parameters={"language": language, "member_state": citation.member_state},
+        notes=action_notes,
+    )
+
+
 def build_eu_legal_citation_lookup_plan(
     text: str,
     *,
@@ -334,62 +425,7 @@ def build_eu_legal_citation_lookup_plan(
     actions: List[EULegalCitationLookupAction] = []
     notes: List[str] = []
     for citation in citations:
-        handler_key = "eu_registry"
-        dataset_id = "eu_legal_registry"
-        action_type = "registry_lookup"
-        query_text = citation.canonical_uri
-        action_notes: List[str] = []
-
-        if citation.scheme in {"CELEX", "ELI"}:
-            handler_key = "eurlex_registry"
-            dataset_id = "eurlex"
-            action_type = "eu_legislation_lookup"
-            query_text = citation.canonical_uri
-            action_notes.append("Prefer EUR-Lex/Eli resolvers for CELEX/ELI anchors.")
-        elif citation.scheme == "ECLI":
-            handler_key = "ecli_registry"
-            dataset_id = "ecli"
-            action_type = "case_law_lookup"
-            query_text = citation.normalized_text
-            action_notes.append("Prefer ECLI resolvers for case law anchors.")
-        elif citation.member_state == "NL":
-            handler_key = "netherlands_laws"
-            dataset_id = "netherlands_laws"
-            action_type = "member_state_law_lookup"
-            query_text = citation.normalized_text
-            action_notes.append("Use Netherlands law corpus search for BWBR/BW references.")
-        elif citation.member_state == "DE":
-            handler_key = "germany_laws"
-            dataset_id = "germany_laws"
-            action_type = "member_state_law_lookup"
-            query_text = citation.normalized_text
-            action_notes.append("Use Germany canonical law corpus for GG references.")
-        elif citation.member_state == "FR":
-            handler_key = "france_laws"
-            dataset_id = "france_laws"
-            action_type = "member_state_law_lookup"
-            query_text = citation.normalized_text
-            action_notes.append("Use France canonical law corpus for Code civil references.")
-        elif citation.member_state == "ES":
-            handler_key = "spain_laws"
-            dataset_id = "spain_laws"
-            action_type = "member_state_law_lookup"
-            query_text = citation.normalized_text
-            action_notes.append("Use Spain canonical law corpus for Codigo Civil references.")
-        else:
-            action_notes.append("Provide a custom handler to resolve this citation.")
-
-        actions.append(
-            EULegalCitationLookupAction(
-                citation=citation,
-                dataset_id=dataset_id,
-                handler_key=handler_key,
-                query_text=query_text,
-                action_type=action_type,
-                parameters={"language": language, "member_state": citation.member_state},
-                notes=action_notes,
-            )
-        )
+        actions.append(build_eu_lookup_action_for_citation(citation, language=language))
 
     if not actions:
         notes.append("No EU/member-state identifiers detected in input.")
@@ -551,10 +587,302 @@ def _fetch_eurlex_metadata(url: str, *, timeout: float = 10.0) -> Dict[str, Any]
     return _fetch_url_metadata(url, timeout=timeout, label="eurlex_registry")
 
 
+def _parse_ecli(ecli_text: str) -> ECLILookupTask:
+    raw = _normalize_space(ecli_text)
+    if raw.upper().startswith("ECLI:"):
+        parts = raw.split(":")
+    else:
+        parts = ["ECLI"] + raw.split(":")
+    member_state = parts[1] if len(parts) > 1 else None
+    court_hint = parts[2] if len(parts) > 2 else None
+    year = parts[3] if len(parts) > 3 else None
+    case_code = parts[4] if len(parts) > 4 else None
+    candidate_sources: List[Dict[str, Any]] = []
+    if member_state:
+        candidate_sources.append(
+            {
+                "source_type": "national_registry",
+                "member_state": member_state,
+                "description": "Provide a member-state case law registry or scraper.",
+            }
+        )
+    if member_state == "NL":
+        candidate_sources.append(
+            {
+                "source_type": "rechtspraak",
+                "member_state": "NL",
+                "description": "Dutch judiciary portal (Rechtspraak) lookup keyed by ECLI.",
+            }
+        )
+    return ECLILookupTask(
+        ecli=raw,
+        member_state=member_state,
+        court_hint=court_hint,
+        year=year,
+        case_code=case_code,
+        candidate_sources=candidate_sources,
+    )
+
+
+def _fetch_rechtspraak_ecli_metadata(ecli: str, *, timeout: float = 10.0) -> Dict[str, Any]:
+    try:
+        import requests
+    except Exception:
+        return {
+            "resolved": False,
+            "ecli": ecli,
+            "error": "requests_unavailable",
+            "handler": "ecli_registry",
+        }
+
+    base_url = "https://data.rechtspraak.nl/uitspraken/content"
+    params = {"id": ecli}
+    params["return"] = "META"
+    try:
+        response = requests.get(base_url, params=params, timeout=timeout, headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"})
+        status = response.status_code
+        text = response.text or ""
+        title_match = re.search(r"<dcterms:title[^>]*>(.*?)</dcterms:title>", text, re.IGNORECASE | re.DOTALL)
+        issued_match = re.search(r"<dcterms:issued[^>]*>(.*?)</dcterms:issued>", text, re.IGNORECASE | re.DOTALL)
+        creator_match = re.search(r"<dcterms:creator[^>]*>(.*?)</dcterms:creator>", text, re.IGNORECASE | re.DOTALL)
+        title = _normalize_space(title_match.group(1)) if title_match else ""
+        issued = _normalize_space(issued_match.group(1)) if issued_match else ""
+        creator = _normalize_space(creator_match.group(1)) if creator_match else ""
+        return {
+            "resolved": bool(status and status < 400),
+            "ecli": ecli,
+            "status_code": status,
+            "title": title,
+            "issued": issued,
+            "creator": creator,
+            "handler": "ecli_registry",
+            "raw_xml_available": bool(text),
+        }
+    except Exception as exc:
+        return {
+            "resolved": False,
+            "ecli": ecli,
+            "error": str(exc),
+            "handler": "ecli_registry",
+        }
+
+
+def register_ecli_resolver(member_state: str, resolver: Callable[[str], Dict[str, Any]]) -> None:
+    key = str(member_state or "").upper()
+    if not key:
+        return
+    ECLI_RESOLVER_REGISTRY[key] = resolver
+
+
+def _fetch_judilibre_ecli_metadata(
+    ecli: str,
+    *,
+    key_id: str,
+    base_url: str,
+    timeout: float = 10.0,
+) -> Dict[str, Any]:
+    try:
+        import requests
+    except Exception:
+        return {
+            "resolved": False,
+            "ecli": ecli,
+            "error": "requests_unavailable",
+            "handler": "judilibre",
+        }
+
+    url = base_url.rstrip("/") + "/search"
+    headers = {"accept": "application/json", "KeyId": key_id}
+    params = {"query": ecli}
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=timeout)
+        status = response.status_code
+        payload = {}
+        try:
+            payload = response.json()
+        except Exception:
+            payload = {}
+        return {
+            "resolved": bool(status and status < 400),
+            "status_code": status,
+            "ecli": ecli,
+            "handler": "judilibre",
+            "response": payload,
+        }
+    except Exception as exc:
+        return {
+            "resolved": False,
+            "ecli": ecli,
+            "error": str(exc),
+            "handler": "judilibre",
+        }
+
+
+def register_fr_judilibre_ecli_resolver(
+    *,
+    key_id: Optional[str] = None,
+    base_url: Optional[str] = None,
+) -> None:
+    resolved_key_id = str(key_id or os.getenv("JUDILIBRE_KEY_ID") or "").strip()
+    if not resolved_key_id:
+        return
+    resolved_base = base_url or os.getenv("JUDILIBRE_BASE_URL") or "https://sandbox-api.piste.gouv.fr/cassation/judilibre/v1.0"
+
+    def _resolver(ecli: str) -> Dict[str, Any]:
+        return _fetch_judilibre_ecli_metadata(
+            ecli,
+            key_id=resolved_key_id,
+            base_url=resolved_base,
+        )
+
+    ECLI_RESOLVER_REGISTRY["FR"] = _resolver
+
+
+def _fetch_openlegaldata_case_search(
+    ecli: str,
+    *,
+    api_key: Optional[str],
+    base_url: str,
+    timeout: float = 10.0,
+) -> Dict[str, Any]:
+    try:
+        import requests
+    except Exception:
+        return {
+            "resolved": False,
+            "ecli": ecli,
+            "error": "requests_unavailable",
+            "handler": "openlegaldata",
+        }
+
+    url = base_url.rstrip("/") + "/cases/search/"
+    headers = {"accept": "application/json"}
+    if api_key:
+        headers["Authorization"] = api_key
+    params = {"query": ecli}
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=timeout)
+        status = response.status_code
+        payload = {}
+        try:
+            payload = response.json()
+        except Exception:
+            payload = {}
+        return {
+            "resolved": bool(status and status < 400),
+            "status_code": status,
+            "ecli": ecli,
+            "handler": "openlegaldata",
+            "response": payload,
+        }
+    except Exception as exc:
+        return {
+            "resolved": False,
+            "ecli": ecli,
+            "error": str(exc),
+            "handler": "openlegaldata",
+        }
+
+
+def register_de_openlegaldata_ecli_resolver(
+    *,
+    api_key: Optional[str] = None,
+    base_url: Optional[str] = None,
+) -> None:
+    resolved_base = base_url or os.getenv("OPENLEGALDATA_API_BASE_URL") or "https://de.openlegaldata.io/api"
+    resolved_key = api_key or os.getenv("OPENLEGALDATA_API_KEY") or os.getenv("OLDP_API_KEY")
+
+    def _resolver(ecli: str) -> Dict[str, Any]:
+        return _fetch_openlegaldata_case_search(
+            ecli,
+            api_key=resolved_key,
+            base_url=resolved_base,
+        )
+
+    ECLI_RESOLVER_REGISTRY["DE"] = _resolver
+
+
+def _fetch_ecli_http_metadata(
+    base_url: str,
+    params: Dict[str, Any],
+    *,
+    title_regexes: Sequence[str],
+    issued_regexes: Sequence[str],
+    creator_regexes: Sequence[str],
+    handler_label: str,
+    timeout: float = 10.0,
+) -> Dict[str, Any]:
+    try:
+        import requests
+    except Exception:
+        return {
+            "resolved": False,
+            "error": "requests_unavailable",
+            "handler": handler_label,
+        }
+
+    try:
+        response = requests.get(base_url, params=params, timeout=timeout, headers={"User-Agent": "ipfs-datasets-eu-bridge/1.0"})
+        status = response.status_code
+        text = response.text or ""
+
+        def _extract(regexes: Sequence[str]) -> str:
+            for pattern in regexes:
+                match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+                if match:
+                    return _normalize_space(match.group(1))
+            return ""
+
+        title = _extract(title_regexes)
+        issued = _extract(issued_regexes)
+        creator = _extract(creator_regexes)
+        return {
+            "resolved": bool(status and status < 400),
+            "status_code": status,
+            "title": title,
+            "issued": issued,
+            "creator": creator,
+            "handler": handler_label,
+            "raw_xml_available": bool(text),
+        }
+    except Exception as exc:
+        return {
+            "resolved": False,
+            "error": str(exc),
+            "handler": handler_label,
+        }
+
+
+def register_ecli_http_resolver(config: ECLIHTTPResolverConfig) -> None:
+    key = str(config.member_state or "").upper()
+    if not key:
+        return
+
+    def _resolver(ecli: str) -> Dict[str, Any]:
+        params = {config.query_param: ecli}
+        if config.return_param:
+            params["return"] = config.return_param
+        return _fetch_ecli_http_metadata(
+            config.base_url,
+            params,
+            title_regexes=config.title_regexes,
+            issued_regexes=config.issued_regexes,
+            creator_regexes=config.creator_regexes,
+            handler_label=config.handler_label,
+        )
+
+    ECLI_RESOLVER_REGISTRY[key] = _resolver
+
+
 def build_default_eu_lookup_handlers(
     *,
     tool_version: str = "1.0.0",
 ) -> Dict[str, Callable[[EULegalCitationLookupAction], Any]]:
+    if "DE" not in ECLI_RESOLVER_REGISTRY:
+        register_de_openlegaldata_ecli_resolver()
+    if "FR" not in ECLI_RESOLVER_REGISTRY:
+        register_fr_judilibre_ecli_resolver()
+
     def _noop_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
         return {
             "resolved": False,
@@ -587,11 +915,29 @@ def build_default_eu_lookup_handlers(
 
     def _ecli_handler(action: EULegalCitationLookupAction) -> Dict[str, Any]:
         canonical = action.citation.canonical_uri
+        task = _parse_ecli(action.query_text or canonical)
+        if task.member_state:
+            resolver = ECLI_RESOLVER_REGISTRY.get(task.member_state.upper())
+            if resolver is None and task.member_state == "NL":
+                resolver = _fetch_rechtspraak_ecli_metadata
+            if resolver is not None:
+                metadata = resolver(task.ecli)
+                metadata.update(
+                    {
+                        "query": action.query_text,
+                        "canonical_uri": canonical,
+                        "lookup_task": asdict(task),
+                        "candidate_sources": list(task.candidate_sources),
+                    }
+                )
+                return metadata
         return {
             "resolved": False,
             "query": action.query_text,
             "canonical_uri": canonical,
             "handler": "ecli_registry",
+            "lookup_task": asdict(task),
+            "candidate_sources": list(task.candidate_sources),
             "notes": [
                 "ECLI identifiers are jurisdiction-specific; provide a resolver for the relevant court system.",
                 "Use the canonical ECLI identifier as the primary key when enriching case metadata.",
@@ -647,6 +993,27 @@ def build_default_eu_lookup_handlers(
 
 def _normalize_space(value: Any) -> str:
     return _WS_RE.sub(" ", str(value or "")).strip()
+
+
+def _normalize_german_paragraph_token(value: Any) -> str:
+    token = _normalize_space(value).lower()
+    if not token:
+        return ""
+    if token.isdigit():
+        return token
+    roman_values = {"i": 1, "v": 5, "x": 10, "l": 50, "c": 100, "d": 500, "m": 1000}
+    total = 0
+    previous = 0
+    for char in reversed(token):
+        current = roman_values.get(char)
+        if current is None:
+            return token
+        if current < previous:
+            total -= current
+        else:
+            total += current
+            previous = current
+    return str(total)
 
 
 def _slug(value: Any) -> str:
@@ -769,14 +1136,29 @@ def extract_eu_legal_citations(text: str, *, language: Optional[str] = None) -> 
         )
     for match in _GERMAN_GG_ARTICLE_RE.finditer(content):
         article = match.group("article")
-        code = match.group("code").upper()
+        paragraph = _normalize_german_paragraph_token(match.group("paragraph") or match.group("paragraph_roman"))
+        code = "GG"
+        normalized = f"{article} abs {paragraph} {code}" if paragraph else f"{article} {code}"
         _append(
-            f"{article} {code}",
+            normalized,
             scheme="DE_GG_ARTICLE",
             citation_type="member_state_legislation",
             jurisdiction="DE",
             member_state="DE",
-            metadata={"article": article, "code": code},
+            metadata={"article": article, "paragraph": paragraph, "code": code},
+        )
+    for match in _GERMAN_GG_ARTICLE_REVERSED_RE.finditer(content):
+        article = match.group("article")
+        paragraph = _normalize_german_paragraph_token(match.group("paragraph") or match.group("paragraph_roman"))
+        code = "GG"
+        normalized = f"{article} abs {paragraph} {code}" if paragraph else f"{article} {code}"
+        _append(
+            normalized,
+            scheme="DE_GG_ARTICLE",
+            citation_type="member_state_legislation",
+            jurisdiction="DE",
+            member_state="DE",
+            metadata={"article": article, "paragraph": paragraph, "code": code},
         )
     for match in _FRENCH_CC_ARTICLE_RE.finditer(content):
         article = match.group("article")

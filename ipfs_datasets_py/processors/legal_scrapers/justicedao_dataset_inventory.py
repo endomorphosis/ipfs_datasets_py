@@ -83,6 +83,9 @@ class BluebookQueryStrategy:
     notes: List[str] = field(default_factory=list)
 
 
+LegalCitationQueryStrategy = BluebookQueryStrategy
+
+
 @dataclass(frozen=True)
 class CitationQueryPlan:
     citation_text: str
@@ -98,6 +101,9 @@ class BluebookDatasetQueryPlan:
     citations: List[Dict[str, Any]] = field(default_factory=list)
     query_plans: List[CitationQueryPlan] = field(default_factory=list)
     dataset_notes: List[str] = field(default_factory=list)
+
+
+LegalCitationDatasetQueryPlan = BluebookDatasetQueryPlan
 
 
 @dataclass(frozen=True)
@@ -231,6 +237,9 @@ class BluebookDatasetExecutionResult:
     input_text: str
     citations: List[Dict[str, Any]] = field(default_factory=list)
     execution_results: List[CitationExecutionPlanResult] = field(default_factory=list)
+
+
+LegalCitationDatasetExecutionResult = BluebookDatasetExecutionResult
 
 
 def _feature_names(features_payload: Sequence[Dict[str, Any]]) -> List[str]:
@@ -1124,6 +1133,12 @@ def derive_justicedao_bluebook_strategies(
     return strategies
 
 
+def derive_justicedao_legal_citation_strategies(
+    profiles: Sequence[DatasetProfile],
+) -> Dict[str, BluebookQueryStrategy]:
+    return derive_justicedao_bluebook_strategies(profiles)
+
+
 def _strategy_rank_for_citation(citation: Citation, strategy: BluebookQueryStrategy) -> int:
     if citation.type == "state_statute":
         if strategy.dataset_id.endswith("ipfs_state_laws"):
@@ -1223,7 +1238,7 @@ def build_justicedao_bluebook_query_plan(
 
     dataset_notes = [
         "Canonical corpora are partitioned into legal branches, currently US and EU, so dataset maintenance can expand country-by-country without mixing jurisdiction assumptions.",
-        "JusticeDAO state-law, admin-rule, and court-rule corpora share a near-identical schema, so one Bluebook adapter can handle all three.",
+        "JusticeDAO state-law, admin-rule, and court-rule corpora share a near-identical schema, so one legal citation adapter can handle all three.",
         "american_municipal_law is best queried through its *_citation.parquet files, then joined to *_html.parquet by cid.",
         "ipfs_uscode is exposed as a CID index in the datasets server and should be treated as a two-step citation -> cid -> rich text lookup.",
         "Netherlands laws is maintained as an EU-country corpus, with BM25 and knowledge-graph sidecars layered on top of the primary laws dataset.",
@@ -1292,10 +1307,14 @@ def bluebook_dataset_query_plan_to_dict(plan: BluebookDatasetQueryPlan) -> Dict[
     }
 
 
+def legal_citation_dataset_query_plan_to_dict(plan: BluebookDatasetQueryPlan) -> Dict[str, Any]:
+    return bluebook_dataset_query_plan_to_dict(plan)
+
+
 def render_bluebook_dataset_query_plan_markdown(plan: BluebookDatasetQueryPlan) -> str:
-    lines: List[str] = ["# JusticeDAO Bluebook Query Plan", ""]
+    lines: List[str] = ["# JusticeDAO Legal Citation Query Plan", ""]
     if not plan.citations:
-        lines.append("No Bluebook-style citations were extracted from the supplied text.")
+        lines.append("No supported legal citations were extracted from the supplied text.")
         lines.append("")
     for item in plan.query_plans:
         lines.append(f"## {item.citation_text}")
@@ -1326,6 +1345,23 @@ def render_bluebook_dataset_query_plan_markdown(plan: BluebookDatasetQueryPlan) 
             lines.append(f"- {note}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def build_justicedao_legal_citation_query_plan(
+    text: str,
+    *,
+    profiles: Optional[Sequence[DatasetProfile]] = None,
+    extractor: Optional[CitationExtractor] = None,
+) -> BluebookDatasetQueryPlan:
+    return build_justicedao_bluebook_query_plan(
+        text,
+        profiles=profiles,
+        extractor=extractor,
+    )
+
+
+def render_justicedao_legal_citation_query_plan_markdown(plan: BluebookDatasetQueryPlan) -> str:
+    return render_bluebook_dataset_query_plan_markdown(plan)
 
 
 def _normalize_citation_text(citation: Citation) -> str:
@@ -4462,6 +4498,21 @@ def execute_justicedao_bluebook_query_plan(
     )
 
 
+def execute_justicedao_legal_citation_query_plan(
+    plan: BluebookDatasetQueryPlan,
+    *,
+    profiles: Optional[Sequence[DatasetProfile]] = None,
+    parquet_file_overrides: Optional[Dict[str, Sequence[str] | str]] = None,
+    max_rows_per_dataset: int = 5,
+) -> BluebookDatasetExecutionResult:
+    return execute_justicedao_bluebook_query_plan(
+        plan,
+        profiles=profiles,
+        parquet_file_overrides=parquet_file_overrides,
+        max_rows_per_dataset=max_rows_per_dataset,
+    )
+
+
 def bluebook_dataset_execution_result_to_dict(result: BluebookDatasetExecutionResult) -> Dict[str, Any]:
     return {
         "input_text": result.input_text,
@@ -4493,3 +4544,7 @@ def bluebook_dataset_execution_result_to_dict(result: BluebookDatasetExecutionRe
             for item in result.execution_results
         ],
     }
+
+
+def legal_citation_dataset_execution_result_to_dict(result: BluebookDatasetExecutionResult) -> Dict[str, Any]:
+    return bluebook_dataset_execution_result_to_dict(result)

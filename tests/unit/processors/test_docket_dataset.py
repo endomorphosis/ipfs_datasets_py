@@ -346,6 +346,55 @@ def test_docket_dataset_citation_audit_reports_retrieval_coverage_from_local_res
     assert audit["unresolved_documents"][0]["unmatched_citations"][0]["metadata"]["recovery_supported"] is True
 
 
+def test_audit_docket_dataset_citation_sources_includes_eu_audit():
+    docket = {
+        "docket_id": "1:24-cv-1012-eu-audit",
+        "case_name": "Doe v. EU Audit",
+        "documents": [
+            {
+                "id": "doc_1",
+                "title": "EU Filing",
+                "text": "See CELEX 32016R0679 and ECLI:DE:BGH:2020:XYZ.",
+            },
+            {
+                "id": "doc_2",
+                "title": "Domestic Filing",
+                "text": "This one has no EU citations.",
+            },
+        ],
+    }
+
+    dataset = DocketDatasetBuilder().build_from_docket(docket)
+    audit = audit_docket_dataset_citation_sources(dataset, include_eu_audit=True, eu_language="en", eu_max_documents=10)
+
+    assert "eu_citation_audit" in audit
+    eu_audit = dict(audit["eu_citation_audit"])
+    assert eu_audit["documents_with_citations"] == 1
+    assert eu_audit["citation_count"] >= 2
+    assert eu_audit["lookup_action_count"] >= 2
+    assert "CELEX" in eu_audit["citations_by_scheme"]
+    assert "ECLI" in eu_audit["citations_by_scheme"]
+
+
+def test_audit_docket_dataset_citation_sources_can_skip_eu_audit():
+    docket = {
+        "docket_id": "1:24-cv-1013-eu-audit-skip",
+        "case_name": "Doe v. EU Audit Skip",
+        "documents": [
+            {
+                "id": "doc_1",
+                "title": "EU Filing",
+                "text": "See CELEX 32016R0679.",
+            }
+        ],
+    }
+
+    dataset = DocketDatasetBuilder().build_from_docket(docket)
+    audit = audit_docket_dataset_citation_sources(dataset, include_eu_audit=False)
+
+    assert "eu_citation_audit" not in audit
+
+
 def test_tactician_uses_linked_authority_corpus_metadata():
     docket = {
         "docket_id": "1:24-cv-1011",
@@ -477,6 +526,47 @@ def test_packaged_parser_follow_up_job_preserves_state_corpus_and_state_code(tmp
     assert parser_execution["dispatch"]["adapter"]["parameters"]["state"] == "MN"
     assert parser_execution["dispatch"]["adapter"]["parameters"]["hf_parquet_file"] == "STATE-MN.parquet"
     assert "Minn. Stat. § 518.17" in parser_execution["dispatch"]["routing_reason"]
+
+
+def test_packaged_operator_dashboard_includes_eu_citation_summary(tmp_path):
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "1:24-cv-1014-eu-dashboard",
+            "case_name": "Doe v. EU Dashboard",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "EU Filing",
+                    "text": "See CELEX 32016R0679 and ECLI:FR:CCASS:2020:XYZ.",
+                }
+            ],
+        }
+    )
+    dataset.metadata["citation_source_audit"] = {
+        "eu_citation_audit": {
+            "citation_count": 2,
+            "unique_citation_count": 2,
+            "documents_with_citations": 1,
+        }
+    }
+    package = package_docket_dataset(
+        dataset.to_dict(),
+        tmp_path / "bundle_eu_dashboard",
+        package_name="eu_dashboard_bundle",
+        include_car=False,
+    )
+    manifest_path = package["manifest_json_path"]
+
+    dashboard = get_packaged_docket_operator_dashboard(manifest_path)
+
+    assert dashboard["summary"]["eu_citation_count"] == 2
+    assert dashboard["summary"]["eu_unique_citation_count"] == 2
+    assert dashboard["summary"]["eu_documents_with_citations"] == 1
+
+    report_text = render_packaged_docket_operator_dashboard(manifest_path, report_format="text")
+    assert "EU Citation Count: 2" in report_text
+    assert "EU Unique Citation Count: 2" in report_text
+    assert "EU Documents With Citations: 1" in report_text
 
 
 def test_packaged_follow_up_job_can_dispatch_citation_recovery_execution(tmp_path, monkeypatch):
@@ -1072,6 +1162,45 @@ def test_docket_dataset_builds_formal_logic_artifacts():
     assert document["metadata"]["rich_analysis"]["deontic_statements"]
     assert payload["proof_assistant"]["temporal_fol"]["formulas"]
     assert payload["proof_assistant"]["deontic_cognitive_event_calculus"]["formulas"] or payload["documents"][0]["metadata"]["rich_analysis"]["dcec_formulas"] == []
+
+
+def test_docket_dataset_builder_can_skip_formal_and_router_enrichment(monkeypatch):
+    calls = {"formal": 0, "router": 0}
+
+    def _fake_formal(*args, **kwargs):
+        calls["formal"] += 1
+        return {"summary": {"processed_document_count": 1}}
+
+    def _fake_router(*args, **kwargs):
+        calls["router"] += 1
+        return {"summary": {"processed_document_count": 1}}
+
+    monkeypatch.setattr(docket_dataset_module, "enrich_docket_documents_with_formal_logic", _fake_formal)
+    monkeypatch.setattr(docket_dataset_module, "enrich_docket_documents_with_routers", _fake_router)
+
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "1:24-cv-1005-fast",
+            "case_name": "Doe v. Fast Packaging",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Notice",
+                    "text": "This filing should build packageable docket artifacts without router enrichment.",
+                }
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+    payload = dataset.to_dict()
+
+    assert calls == {"formal": 0, "router": 0}
+    assert payload["metadata"]["document_count"] == 1
+    assert payload["metadata"]["artifact_status"]["formal_logic"] is False
+    assert payload["metadata"]["artifact_status"]["router_enrichment"] is False
+    assert payload["bm25_index"]["document_count"] == 1
+    assert payload["vector_index"]["document_count"] == 1
 
 
 def test_docket_dataset_extracts_structured_order_language():
