@@ -50,6 +50,15 @@ Notes:
 	In `auto` mode the helper tries the system keyring first, but falls back to
 	Hugging Face's local token store if the secret-service backend is unavailable
 	or noninteractive.
+- Run `export_courtlistener_docket_single_bundle.py` to ingest a CourtListener
+	docket, attach public RECAP evidence and optional public filing-page PDFs, and
+	export a single parquet bundle with documents, filings, acquisition queue,
+	BM25 rows, vector rows, and knowledge-graph rows.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --filing-url "https://www.courtlistener.com/docket/67658002/american-alliance-for-equal-rights-v-fearless-fund-management-llc-filing/" --output-parquet /tmp/fearless_single_bundle.parquet --strict-evidence-mode --write-enriched-json /tmp/fearless_enriched.json --json`
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --output-parquet /tmp/fearless_full.parquet`
+	Use `--strict-evidence-mode` when you want the bundle built from the
+	`plain_text+` subset instead of the full enriched docket payload.
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

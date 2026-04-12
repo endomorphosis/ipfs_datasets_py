@@ -671,8 +671,29 @@ def test_build_justicedao_legal_citation_query_plan_includes_eu_member_state_cit
 
     germany_plan = next(item for item in plan.query_plans if item.citation_type == "eu_de_gg_article")
     spain_plan = next(item for item in plan.query_plans if item.citation_type == "eu_es_cc_article")
+    assert germany_plan.citation_text == "Art. 1 GG"
+    assert spain_plan.citation_text == "Articulo 1902 del Codigo Civil"
     assert germany_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_germany_laws"
     assert spain_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_spain_laws"
+
+
+def test_build_justicedao_legal_citation_query_plan_uses_parser_friendly_text_for_france_and_netherlands():
+    france_plan = build_justicedao_legal_citation_query_plan(
+        "article 1240 du code civil.",
+        profiles=_profiles_with_france_family(),
+    )
+    netherlands_plan = build_justicedao_legal_citation_query_plan(
+        "Artikel 6:162 BW.",
+        profiles=_profiles(),
+    )
+
+    france_citation_plan = next(item for item in france_plan.query_plans if item.citation_type == "eu_fr_cc_article")
+    netherlands_citation_plan = next(item for item in netherlands_plan.query_plans if item.citation_type == "eu_nl_bw_article")
+
+    assert france_citation_plan.citation_text == "Article 1240 du code civil"
+    assert france_citation_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_france_laws"
+    assert netherlands_citation_plan.citation_text == "Artikel 6:162 BW"
+    assert netherlands_citation_plan.candidate_datasets[0].dataset_id == "justicedao/ipfs_netherlands_laws"
 
 
 def test_execute_justicedao_legal_citation_query_plan_matches_state_laws_and_uscode(tmp_path):
