@@ -410,3 +410,44 @@ async def test_run_bluebook_linker_fuzz_harness_seed_only_emits_actionable_cover
     assert backlog["clusters"][0]["target_file"].endswith("us_code_scraper.py")
     assert run.summary["failure_patch_backlog_path"]
     assert Path(run.summary["failure_patch_backlog_path"]).exists()
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_records_malformed_repairs(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(
+            [
+                {
+                    "citation_text": "ORSS 801.545",
+                    "context_text": "The filing relies on ORSS 801.545.",
+                    "state_code": "OR",
+                    "corpus_key_hint": "state_laws",
+                    "citation_type_hint": "state_statute",
+                    "expected_valid": False,
+                }
+            ]
+        )
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 0,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 0,
+            "citations": [],
+            "unresolved_citations": [],
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        output_dir=tmp_path / "artifacts",
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        enable_recovery=False,
+    )
+
+    repairs = run.summary["malformed_repairs"]
+    assert repairs
+    assert repairs[0]["raw_citation"] == "ORSS 801.545"
+    assert repairs[0]["normalized_citation"] == "ORS 801.545"
+    assert run.summary["malformed_repairs_path"]
+    assert Path(run.summary["malformed_repairs_path"]).exists()

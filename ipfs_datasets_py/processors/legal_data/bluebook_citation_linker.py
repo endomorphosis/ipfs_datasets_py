@@ -117,6 +117,8 @@ def _normalize_malformed_citation(text: str) -> str:
         (r"\bStat\.?\s+§\s+Codes?\b", "Stat. Code §"),
         (r"\bRev\s+Stat\b", "Rev. Stat."),
         (r"\bStat\b(?!\.)", "Stat."),
+        (r"\bPub\.?\s+L\.?\b", "Pub. L."),
+        (r"\bFed\.?\s+Reg\.?\b", "Fed. Reg."),
         (r"\bCFR\b", "C.F.R."),
         (r"\bUSC\b", "U.S.C."),
         (r"\bORS\b", "ORS"),
@@ -674,19 +676,21 @@ class BluebookCitationResolver:
                 return fallback_link
 
         if citation.type == "case" and citation.url and recovery_corpus_key == "caselaw_access_project":
+            strict_mode = bool(self.require_exact_anchor)
             return CitationLink(
                 citation_text=citation.text,
                 citation_type=citation.type,
                 normalized_citation=normalized_citation,
-                matched=True,
+                matched=(not strict_mode),
                 corpus_key=recovery_corpus_key,
                 dataset_id=_CORPUS_CONFIGS[recovery_corpus_key].dataset_id,
-                confidence=0.55,
+                confidence=(0.0 if strict_mode else 0.55),
                 source_url=str(citation.url),
                 metadata={
                     "state_code": effective_state,
                     "resolution_method": "citation_url_fallback",
                     "require_exact_anchor": bool(self.require_exact_anchor),
+                    "resolution_quality": ("non_exact_fallback" if strict_mode else "fallback"),
                     "source_row_present": False,
                     "recovery_supported": True,
                     "recovery_corpus_key": recovery_corpus_key,

@@ -21,6 +21,7 @@ from ipfs_datasets_py.processors.legal_data.citation_extraction import CitationE
 from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import (
     BluebookCitationResolver,
     resolve_bluebook_lookup_result_document,
+    _normalize_malformed_citation,
     _OFFICIAL_CITE_FIELDS,
     _PAGE_FIELDS,
     _SECTION_FIELDS,
@@ -636,6 +637,39 @@ def _cluster_failure_recoveries(attempts: Sequence[BluebookCitationFuzzAttempt])
     return ordered
 
 
+def _collect_malformed_repairs(
+    candidates: Sequence[BluebookCitationCandidate],
+) -> List[Dict[str, Any]]:
+    repairs: Dict[tuple[str, str], Dict[str, Any]] = {}
+    for candidate in candidates:
+        raw = str(candidate.citation_text or "").strip()
+        normalized = _normalize_malformed_citation(raw)
+        if not raw or normalized == raw:
+            continue
+        key = (raw, normalized)
+        entry = repairs.setdefault(
+            key,
+            {
+                "raw_citation": raw,
+                "normalized_citation": normalized,
+                "count": 0,
+                "examples": [],
+            },
+        )
+        entry["count"] += 1
+        examples = entry["examples"]
+        if len(examples) < 3:
+            examples.append(
+                {
+                    "state_code": candidate.state_code,
+                    "corpus_key_hint": candidate.corpus_key_hint,
+                    "context_text": candidate.context_text,
+                }
+            )
+    ranked = sorted(repairs.values(), key=lambda item: (-int(item["count"]), item["raw_citation"]))
+    return ranked
+
+
 def _build_failure_backlog(
     *,
     attempts: Sequence[BluebookCitationFuzzAttempt],
@@ -844,6 +878,7 @@ async def run_bluebook_linker_fuzz_harness(
         min_actionable_failures=min_actionable_failures,
     )
     summary["failure_patch_clusters"] = _cluster_failure_recoveries(attempts)
+    summary["malformed_repairs"] = _collect_malformed_repairs(candidates)
     summary["sampling"] = {
         "seed_examples_per_corpus": int(seed_examples_per_corpus),
         "max_seed_examples_per_state": int(max_seed_examples_per_state or seed_examples_per_corpus),
@@ -875,7 +910,10 @@ async def run_bluebook_linker_fuzz_harness(
         output_file.write_text(json.dumps(run.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
         backlog_file = output_root / "bluebook_linker_fuzz_patch_backlog.json"
         backlog_file.write_text(json.dumps(failure_backlog, indent=2, sort_keys=True), encoding="utf-8")
+        repairs_file = output_root / "bluebook_linker_fuzz_malformed_repairs.json"
+        repairs_file.write_text(json.dumps(summary["malformed_repairs"], indent=2, sort_keys=True), encoding="utf-8")
         run.summary["failure_patch_backlog_path"] = str(backlog_file)
+        run.summary["malformed_repairs_path"] = str(repairs_file)
         output_path = str(output_file)
         run.output_path = output_path
 

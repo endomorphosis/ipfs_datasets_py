@@ -643,7 +643,7 @@ def test_bluebook_citation_resolver_strict_mode_toggle_allows_non_anchor_legacy_
 
 
 def test_bluebook_exact_anchor_guarantee_audit_flags_case_url_fallback_non_exact():
-    resolver = BluebookCitationResolver(allow_hf_fallback=False, require_exact_anchor=True)
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, require_exact_anchor=False)
 
     report = audit_bluebook_exact_anchor_guarantees_for_documents(
         [
@@ -928,6 +928,8 @@ def test_normalize_malformed_citation_repairs_common_abbreviations():
     assert _normalize_malformed_citation("Tex Stat § 1.01") == "Tex. Stat. § 1.01"
     assert _normalize_malformed_citation("40 CFR § 122.41") == "40 C.F.R. § 122.41"
     assert _normalize_malformed_citation("42 USC § 1983") == "42 U.S.C. § 1983"
+    assert _normalize_malformed_citation("Pub L 117-2") == "Pub. L. 117-2"
+    assert _normalize_malformed_citation("Fed Reg 89 12345") == "Fed. Reg. 89 12345"
 
 
 def test_bluebook_citation_resolver_links_admin_and_court_rules_from_local_parquet(tmp_path):
@@ -1118,11 +1120,30 @@ def test_bluebook_citation_resolver_falls_back_to_case_url_when_case_source_quer
 
     assert len(links) == 1
     assert links[0].citation_type == "case"
-    assert links[0].matched is True
+    assert links[0].matched is False
+    assert links[0].confidence == 0.0
     assert links[0].corpus_key == "caselaw_access_project"
     assert links[0].metadata["resolution_method"] == "citation_url_fallback"
+    assert links[0].metadata["resolution_quality"] == "non_exact_fallback"
+    assert links[0].metadata["require_exact_anchor"] is True
     assert links[0].metadata["source_row_present"] is False
     assert links[0].source_url == "https://www.courtlistener.com/opinion/38/mich/90/"
+
+
+def test_bluebook_citation_resolver_permissive_mode_keeps_case_url_fallback_as_match():
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, require_exact_anchor=False)
+
+    links = resolve_bluebook_citations_in_text(
+        "The filing relies on 38 Mich. 90 as authority.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    assert links[0].citation_type == "case"
+    assert links[0].matched is True
+    assert links[0].confidence > 0.0
+    assert links[0].metadata["resolution_method"] == "citation_url_fallback"
+    assert links[0].metadata["require_exact_anchor"] is False
 
 
 def test_bluebook_citation_resolver_links_public_law_no_variant_from_local_parquet(tmp_path):

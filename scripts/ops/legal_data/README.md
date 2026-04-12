@@ -63,9 +63,18 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 60 --seed-only --seed-from-corpora --states MN,OR,NY --corpora us_code,state_laws,state_admin_rules,state_court_rules,caselaw_access_project --seed-examples-per-corpus 12 --max-seed-examples-per-state 4 --max-seed-examples-per-source 2 --sampling-shuffle-seed 11 --max-acceptable-failure-rate 0.08 --min-actionable-failures 3 --merge-recovered-rows --json`
 	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 30 --merge-recovered-rows --output-dir /tmp/bluebook_fuzz_run`
 	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 12 --publish-to-hf --hf-token $HF_TOKEN`
-	The run artifact is written to `bluebook_linker_fuzz_run.json` and the
+	The run artifact is written to `bluebook_linker_fuzz_run.json`, the
 	actionable scraper patch queue is written to
-	`bluebook_linker_fuzz_patch_backlog.json` under `--output-dir`.
+	`bluebook_linker_fuzz_patch_backlog.json`, and malformed citation repairs are
+	written to `bluebook_linker_fuzz_malformed_repairs.json` under `--output-dir`.
+- Run `run_bluebook_exact_anchor_audit.py` to verify Bluebook citation outputs
+	are exact-anchor guaranteed (or surface non-exact fallback matches).
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_exact_anchor_audit.py --input /tmp/documents.json --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_exact_anchor_audit.py --input /tmp/documents.json --output /tmp/bluebook_exact_anchor_audit.json --report-output /tmp/bluebook_exact_anchor_audit.txt`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_exact_anchor_audit.py --input /tmp/documents.json --allow-non-exact --json`
+	Exit code is `0` when no non-exact matches are found, `2` when non-exact
+	matches are present, and `1` on script/runtime errors.
 - Run `export_courtlistener_docket_single_bundle.py` to ingest a CourtListener
 	docket, attach public RECAP evidence and optional public filing-page PDFs, and
 	export a single parquet bundle with documents, filings, acquisition queue,
