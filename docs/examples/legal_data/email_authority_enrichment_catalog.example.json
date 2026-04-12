@@ -1,0 +1,37 @@
+{
+  "topic_query_hints": {
+    "housing_subsidy": [
+      "public housing voucher subsidy termination informal hearing",
+      "housing authority subsidy overpayment due process"
+    ]
+  },
+  "topic_priority": {
+    "housing_subsidy": 7
+  },
+  "default_state_archive_domains": [
+    "hud.gov",
+    "state.example.gov"
+  ],
+  "base_seed_authorities": [
+    {
+      "authority_type": "statute",
+      "title": "Example disability accommodation statute",
+      "citation": "42 U.S.C. § 3604(f)(3)(B)",
+      "source_url": "https://uscode.house.gov/",
+      "topic": "reasonable_accommodation",
+      "rationale": "Baseline accommodation anchor authority."
+    }
+  ],
+  "topic_case_seeds": {
+    "housing_subsidy": [
+      {
+        "authority_type": "case_law",
+        "title": "Example v. Housing Authority",
+        "citation": "123 F.3d 456",
+        "source_url": "https://law.justia.com/",
+        "topic": "housing_subsidy",
+        "rationale": "Sample placeholder for a local subsidy/hearing authority."
+      }
+    ]
+  }
+}

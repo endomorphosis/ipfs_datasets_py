@@ -35,6 +35,22 @@
         "caption_left_html": { "type": "string" }
       }
     },
+    "caption_config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "court_lines": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "case_number": { "type": "string" },
+        "right_block_lines": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "left_block_label": { "type": "string" }
+      }
+    },
     "exhibits": {
       "type": "array",
       "minItems": 1,

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from .court_pdf_rendering import DEFAULT_EXHIBIT_CAPTION, ExhibitCaptionConfig
 from .court_pdf_rendering import StateCourtPleadingConfig, build_state_court_filing_packet
 from .exhibit_binder_templates import BinderCourtConfig, DEFAULT_BINDER_COURT_CONFIG
 
@@ -47,6 +48,22 @@ def binder_court_config_from_manifest(payload: Mapping[str, Any]) -> BinderCourt
     )
 
 
+def exhibit_caption_config_from_manifest(payload: Mapping[str, Any]) -> ExhibitCaptionConfig:
+    config_payload = dict(payload.get("caption_config") or {})
+    default = DEFAULT_EXHIBIT_CAPTION
+    court_lines = [str(item) for item in list(config_payload.get("court_lines") or list(default.court_lines))]
+    if not court_lines:
+        court_lines = list(default.court_lines)
+    return ExhibitCaptionConfig(
+        court_lines=tuple(court_lines),
+        case_number=str(config_payload.get("case_number") or default.case_number),
+        right_block_lines=tuple(
+            str(item) for item in list(config_payload.get("right_block_lines") or list(default.right_block_lines))
+        ),
+        left_block_label=str(config_payload.get("left_block_label") or default.left_block_label),
+    )
+
+
 def build_state_court_filing_packet_from_manifest(path: str | Path) -> dict[str, object]:
     manifest_path = Path(path)
     payload = load_json_manifest(manifest_path)
@@ -62,5 +79,6 @@ def build_state_court_filing_packet_from_manifest(path: str | Path) -> dict[str,
 __all__ = [
     "binder_court_config_from_manifest",
     "build_state_court_filing_packet_from_manifest",
+    "exhibit_caption_config_from_manifest",
     "load_json_manifest",
 ]

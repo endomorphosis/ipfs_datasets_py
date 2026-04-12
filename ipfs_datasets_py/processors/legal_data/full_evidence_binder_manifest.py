@@ -17,8 +17,7 @@ from .exhibit_binder_export import (
     slugify_exhibit_label,
     source_to_pdf,
 )
-from .court_pdf_rendering import DEFAULT_EXHIBIT_CAPTION, ExhibitCaptionConfig
-from .legal_pdf_manifest import load_json_manifest
+from .legal_pdf_manifest import exhibit_caption_config_from_manifest, load_json_manifest
 
 
 def _resolve_path(base_dir: Path, value: str | Path | None) -> Path:
@@ -74,20 +73,6 @@ def _run_index_command(base_dir: Path, payload: Mapping[str, Any]) -> None:
     subprocess.run(resolved_command, check=True, cwd=str(base_dir))
 
 
-def _caption_config_from_manifest(payload: Mapping[str, Any]) -> ExhibitCaptionConfig:
-    data = dict(payload.get("caption_config") or {})
-    default = DEFAULT_EXHIBIT_CAPTION
-    court_lines = [str(item) for item in list(data.get("court_lines") or list(default.court_lines))]
-    if not court_lines:
-        court_lines = list(default.court_lines)
-    return ExhibitCaptionConfig(
-        court_lines=tuple(court_lines),
-        case_number=str(data.get("case_number") or default.case_number),
-        right_block_lines=tuple(str(item) for item in list(data.get("right_block_lines") or list(default.right_block_lines))),
-        left_block_label=str(data.get("left_block_label") or default.left_block_label),
-    )
-
-
 def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: bool = False) -> dict[str, Any]:
     manifest_path = Path(path)
     payload = load_json_manifest(manifest_path)
@@ -107,7 +92,7 @@ def build_full_evidence_binder_from_manifest(path: str | Path, *, lean_mode: boo
     generated_dir.mkdir(parents=True, exist_ok=True)
 
     lean_replacements = _normalize_lean_replacements(payload)
-    caption_config = _caption_config_from_manifest(payload)
+    caption_config = exhibit_caption_config_from_manifest(payload)
     merged_inputs: list[str] = []
     family_inputs: dict[str, list[str]] = {}
     family_output_paths: dict[str, str] = {}

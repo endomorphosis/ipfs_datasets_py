@@ -97,11 +97,25 @@ Minimal shape:
   "output_pdf": "compiled_from_manifest/MASTER_Exhibit_Binder_Core_Set.pdf",
   "exhibits_root": "exhibits",
   "court_config": {
-    "case_number": "26FE0586",
-    "court_name": "IN THE CLACKAMAS COUNTY JUSTICE COURT",
-    "state_name": "STATE OF OREGON",
-    "contact_block_html": "Benjamin Jay Barber, pro se<br/>Defendant",
-    "caption_left_html": "PLAINTIFF,<br/>v.<br/>DEFENDANT."
+    "case_number": "Case No. __________________",
+    "court_name": "IN THE COURT OF COMPETENT JURISDICTION",
+    "state_name": "STATE / JURISDICTION",
+    "contact_block_html": "Filing Party, pro se<br/>Party Role",
+    "caption_left_html": "PLAINTIFF OR PETITIONER,<br/>v.<br/>DEFENDANT OR RESPONDENT."
+  },
+  "caption_config": {
+    "court_lines": [
+      "IN THE COURT OF COMPETENT JURISDICTION",
+      "FOR THE APPROPRIATE COUNTY OR DISTRICT",
+      "CIVIL / PROBATE / HOUSING DIVISION"
+    ],
+    "case_number": "Case No. __________________",
+    "right_block_lines": [
+      "In the Matter of:",
+      "Protected Person / Party Name,",
+      "Party / Subject."
+    ],
+    "left_block_label": "EXHIBIT VOLUME"
   },
   "exhibits": [
     {
@@ -121,6 +135,7 @@ Field notes:
 - `output_pdf`: final merged binder PDF
 - `exhibits_root`: optional directory used to infer each exhibit source file by `Exhibit_<CODE>_*`
 - `court_config`: optional binder caption/header override; defaults to the package binder court config
+- `caption_config`: optional tab/cover exhibit-caption override for divider and cover-page renderers
 - `exhibits[].source`: optional explicit source path; overrides inference
 - `exhibits[].divider_markdown`: divider/tab markdown
 - `exhibits[].cover_markdown`: cover sheet markdown

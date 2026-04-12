@@ -12,7 +12,11 @@ from .exhibit_binder_export import (
     source_to_pdf,
 )
 from .exhibit_binder_templates import render_exhibit_binder_front_sheet, render_table_of_exhibits_pdf
-from .legal_pdf_manifest import binder_court_config_from_manifest, load_json_manifest
+from .legal_pdf_manifest import (
+    binder_court_config_from_manifest,
+    exhibit_caption_config_from_manifest,
+    load_json_manifest,
+)
 
 
 def _resolve_exhibit_source(base_dir: Path, payload: dict[str, Any], exhibit: dict[str, Any], code: str) -> str:
@@ -36,6 +40,7 @@ def build_exhibit_binder_from_manifest(path: str | Path) -> dict[str, Any]:
     front_md = base_dir / str(payload.get("front_sheet_markdown") or "")
     front_pdf = working_dir / "0000_Exhibit_Binder_Front_Sheet.pdf"
     court_config = binder_court_config_from_manifest(payload)
+    caption_config = exhibit_caption_config_from_manifest(payload)
     working_dir.mkdir(parents=True, exist_ok=True)
     render_exhibit_binder_front_sheet(front_md, front_pdf, config=court_config)
 
@@ -56,8 +61,18 @@ def build_exhibit_binder_from_manifest(path: str | Path) -> dict[str, Any]:
         source_pdf = working_dir / f"Exhibit_{code}_source.pdf"
         packet_pdf = working_dir / f"Exhibit_{code}_packet.pdf"
 
-        convert_markdown_to_binder_pdf(divider_md, divider_pdf, generated_dir=working_dir)
-        convert_markdown_to_binder_pdf(cover_md, cover_pdf, generated_dir=working_dir)
+        convert_markdown_to_binder_pdf(
+            divider_md,
+            divider_pdf,
+            generated_dir=working_dir,
+            caption_config=caption_config,
+        )
+        convert_markdown_to_binder_pdf(
+            cover_md,
+            cover_pdf,
+            generated_dir=working_dir,
+            caption_config=caption_config,
+        )
         source_to_pdf(source, output_path=source_pdf, label=f"Exhibit {code}", family=str(payload.get("family") or "Exhibit Binder"))
 
         starts[code] = current_page

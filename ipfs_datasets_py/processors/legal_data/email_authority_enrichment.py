@@ -6,146 +6,11 @@ from typing import Any, Dict, List, Optional
 
 from mediator.mediator import Mediator
 
-
-_TOPIC_QUERY_HINTS: Dict[str, List[str]] = {
-    "fraud_household": [
-        "24 CFR 982.551 24 CFR 982.552 informal hearing",
-        "public housing fraud allegation informal hearing",
-        "voucher termination family obligations",
-    ],
-    "additional_information": [
-        "public housing authority documentation request grievance process",
-        "voucher file documentation request case law",
-    ],
-    "annual_certification": [
-        "annual certification recertification housing choice voucher",
-        "24 CFR 982.516 recertification case law",
-    ],
-    "cortez_case": [
-        "housing voucher denial reasonable accommodation case law",
-        "fair housing reasonable accommodation denial public housing authority",
-    ],
-    "hcv_orientation": [
-        "24 CFR 982.555 informal review reasonable accommodation voucher",
-        "42 USC 3604(f)(3)(B) reasonable accommodation housing authority",
-        "housing choice voucher orientation reasonable accommodation informal review",
-    ],
-}
-
-_TOPIC_PRIORITY = {
-    "hcv_orientation": 6,
-    "cortez_case": 5,
-    "fraud_household": 4,
-    "additional_information": 3,
-    "annual_certification": 2,
-    "clackamas_process": 1,
-}
-
-_DEFAULT_STATE_ARCHIVE_DOMAINS = [
-    "hud.gov",
-    "oregon.public.law",
-    "oregonlegislature.gov",
-    "oregonlaws.org",
-    "clackamas.us",
-]
-
-_BASE_SEED_AUTHORITIES: List[Dict[str, str]] = [
-    {
-        "authority_type": "statute",
-        "title": "Fair Housing Act reasonable accommodations",
-        "citation": "42 U.S.C. § 3604(f)(3)(B)",
-        "source_url": "https://uscode.house.gov/view.xhtml?edition=prelim&num=0&req=granuleid%3AUSC-prelim-title42-section3604%28c%29",
-        "topic": "reasonable_accommodation",
-        "rationale": "Federal housing-discrimination anchor for accommodation requests tied to voucher administration or dwelling access.",
-    },
-    {
-        "authority_type": "regulation",
-        "title": "Family obligations under the Housing Choice Voucher program",
-        "citation": "24 C.F.R. § 982.551",
-        "source_url": "https://www.ecfr.gov/current/title-24/subtitle-B/chapter-IX/part-982/subpart-L/section-982.551",
-        "topic": "fraud_household",
-        "rationale": "Core HCV family-obligation rule for allegations tied to household composition or reporting duties.",
-    },
-    {
-        "authority_type": "regulation",
-        "title": "Denial or termination of assistance",
-        "citation": "24 C.F.R. § 982.552",
-        "source_url": "https://www.ecfr.gov/current/title-24/subtitle-B/chapter-IX/part-982/subpart-L/section-982.552",
-        "topic": "fraud_household",
-        "rationale": "Termination and denial rule commonly implicated by fraud-allegation and voucher-loss disputes.",
-    },
-    {
-        "authority_type": "regulation",
-        "title": "Informal review and hearing for participants",
-        "citation": "24 C.F.R. § 982.555",
-        "source_url": "https://www.ecfr.gov/current/title-24/subtitle-B/chapter-IX/part-982/subpart-L/section-982.555",
-        "topic": "hcv_orientation",
-        "rationale": "Primary HCV hearing/review regulation for termination, denial, and challenge process issues.",
-    },
-    {
-        "authority_type": "guidance",
-        "title": "HUD Housing Choice Voucher Program Guidebook",
-        "citation": "HUD HCV Guidebook",
-        "source_url": "https://www.hud.gov/helping-americans/housing-choice-vouchers-guidebook",
-        "topic": "hcv_orientation",
-        "rationale": "Current HUD program guidance, including chapters on informal hearings, reviews, fair housing, and terminations.",
-    },
-    {
-        "authority_type": "guidance",
-        "title": "HUD/DOJ Joint Statement on Reasonable Accommodations under the Fair Housing Act",
-        "citation": "HUD/DOJ Joint Statement (May 17, 2004)",
-        "source_url": "https://www.hud.gov/sites/documents/JOINTSTATEMENT.PDF",
-        "topic": "reasonable_accommodation",
-        "rationale": "Federal guidance on accommodation duties that often accompanies FHA reasonable-accommodation claims.",
-    },
-    {
-        "authority_type": "state_statute",
-        "title": "Oregon disability discrimination in real property transactions",
-        "citation": "ORS 659A.145",
-        "source_url": "https://oregon.public.law/statutes/ors_659a.145",
-        "topic": "reasonable_accommodation",
-        "rationale": "Oregon housing-discrimination statute with an accommodation clause for rules, policies, practices, or services.",
-    },
-    {
-        "authority_type": "state_statute",
-        "title": "Oregon Housing Authorities Law",
-        "citation": "ORS Chapter 456",
-        "source_url": "https://www.oregonlegislature.gov/bills_laws/ors/ors456.html",
-        "topic": "clackamas_process",
-        "rationale": "State housing-authority powers and governance context for Clackamas County housing authority conduct.",
-    },
-]
-
-_TOPIC_CASE_SEEDS: Dict[str, List[Dict[str, str]]] = {
-    "reasonable_accommodation": [
-        {
-            "authority_type": "case_law",
-            "title": "Giebeler v. M & B Associates",
-            "citation": "343 F.3d 1143 (9th Cir. 2003)",
-            "source_url": "https://law.justia.com/cases/federal/appellate-courts/F3/343/1143/636375/",
-            "topic": "reasonable_accommodation",
-            "rationale": "Ninth Circuit authority on FHA reasonable accommodations and policy adjustments for disabled tenants.",
-        }
-    ],
-    "hcv_orientation": [
-        {
-            "authority_type": "case_law",
-            "title": "Basham v. Freda",
-            "citation": "805 F. Supp. 930 (M.D. Fla. 1992)",
-            "source_url": "https://law.justia.com/cases/federal/district-courts/FSupp/805/930/2593123/",
-            "topic": "hcv_orientation",
-            "rationale": "Section 8 termination/hearing case discussing due-process requirements for voucher termination decisions.",
-        },
-        {
-            "authority_type": "case_law",
-            "title": "Hayward v. Brown",
-            "citation": "No. 8:15-cv-03381 (D. Md. 2016)",
-            "source_url": "https://law.justia.com/cases/federal/district-courts/maryland/mddce/8%3A2015cv03381/333339/24/",
-            "topic": "hcv_orientation",
-            "rationale": "Voucher hearing case collecting due-process authorities and HUD hearing-regulation history.",
-        },
-    ],
-}
+from .email_authority_catalog import (
+    DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG,
+    load_email_authority_enrichment_catalog,
+    merge_email_authority_enrichment_catalog,
+)
 
 
 def _load_email_timeline_handoff(path: str | Path) -> Dict[str, Any]:
@@ -167,7 +32,34 @@ def _topic_summary_items(email_timeline_handoff: Dict[str, Any]) -> List[tuple[s
         items.append((str(topic), dict(value)))
     items.sort(
         key=lambda item: (
-            int(_TOPIC_PRIORITY.get(str(item[0]), 0)),
+            int(DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG.get("topic_priority", {}).get(str(item[0]), 0)),
+            int(item[1].get("count") or 0),
+        ),
+        reverse=True,
+    )
+    return items
+
+
+def _topic_summary_items_with_catalog(
+    email_timeline_handoff: Dict[str, Any],
+    *,
+    catalog: Dict[str, Any],
+) -> List[tuple[str, Dict[str, Any]]]:
+    packet = (
+        email_timeline_handoff.get("claim_support_temporal_handoff")
+        if isinstance(email_timeline_handoff.get("claim_support_temporal_handoff"), dict)
+        else {}
+    )
+    summary = packet.get("topic_summary") if isinstance(packet.get("topic_summary"), dict) else {}
+    items: List[tuple[str, Dict[str, Any]]] = []
+    for topic, value in summary.items():
+        if not isinstance(value, dict):
+            continue
+        items.append((str(topic), dict(value)))
+    topic_priority = dict(catalog.get("topic_priority") or {})
+    items.sort(
+        key=lambda item: (
+            int(topic_priority.get(str(item[0]), 0)),
             int(item[1].get("count") or 0),
         ),
         reverse=True,
@@ -202,7 +94,9 @@ def build_email_authority_query_plan(
     *,
     jurisdiction_label: str = "Oregon",
     max_topics: int = 5,
+    catalog: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
+    resolved_catalog = merge_email_authority_enrichment_catalog(catalog)
     claim_type = str(email_timeline_handoff.get("claim_type") or "").strip() or "retaliation"
     claim_element_id = str(email_timeline_handoff.get("claim_element_id") or "").strip() or "causation"
     participants = _collect_participants(email_timeline_handoff)
@@ -242,9 +136,10 @@ def build_email_authority_query_plan(
         rationale="Broad state and case-law sweep anchored to the email-derived claim posture.",
     )
 
-    selected_topics = _topic_summary_items(email_timeline_handoff)[:max_topics]
+    selected_topics = _topic_summary_items_with_catalog(email_timeline_handoff, catalog=resolved_catalog)[:max_topics]
+    topic_query_hints = dict(resolved_catalog.get("topic_query_hints") or {})
     topic_hints_map = {
-        topic: _TOPIC_QUERY_HINTS.get(topic, [topic.replace("_", " ")])[:3]
+        topic: list(topic_query_hints.get(topic) or [topic.replace("_", " ")])[:3]
         for topic, _ in selected_topics
     }
 
@@ -274,10 +169,23 @@ def build_email_authority_query_plan(
 
 
 def build_seed_authority_catalog(email_timeline_handoff: Dict[str, Any]) -> List[Dict[str, str]]:
-    topics = {topic for topic, _ in _topic_summary_items(email_timeline_handoff)}
+    return build_seed_authority_catalog_with_catalog(
+        email_timeline_handoff,
+        catalog=DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG,
+    )
+
+
+def build_seed_authority_catalog_with_catalog(
+    email_timeline_handoff: Dict[str, Any],
+    *,
+    catalog: Dict[str, Any],
+) -> List[Dict[str, str]]:
+    topics = {topic for topic, _ in _topic_summary_items_with_catalog(email_timeline_handoff, catalog=catalog)}
     seed_catalog: List[Dict[str, str]] = []
     seen = set()
-    for item in _BASE_SEED_AUTHORITIES:
+    base_seed_authorities = list(catalog.get("base_seed_authorities") or [])
+    topic_case_seeds = dict(catalog.get("topic_case_seeds") or {})
+    for item in base_seed_authorities:
         topic = str(item.get("topic") or "")
         if topic and topic not in topics and topic not in {"reasonable_accommodation", "clackamas_process"}:
             continue
@@ -291,7 +199,7 @@ def build_seed_authority_catalog(email_timeline_handoff: Dict[str, Any]) -> List
         topics.add("reasonable_accommodation")
 
     for topic in sorted(topics):
-        for item in _TOPIC_CASE_SEEDS.get(topic, []):
+        for item in list(topic_case_seeds.get(topic) or []):
             key = str(item.get("citation") or item.get("source_url") or "")
             if key in seen:
                 continue
@@ -324,13 +232,21 @@ def enrich_email_timeline_authorities(
     jurisdiction_label: str = "Oregon",
     max_queries: int = 8,
     search_state_archives: bool = True,
+    catalog_path: Optional[str | Path] = None,
+    catalog_override: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     source_path = Path(email_timeline_handoff_path).expanduser().resolve()
     email_timeline_handoff = _load_email_timeline_handoff(source_path)
+    resolved_catalog = (
+        load_email_authority_enrichment_catalog(catalog_path)
+        if catalog_path
+        else merge_email_authority_enrichment_catalog(catalog_override)
+    )
     mediator = Mediator(backends=[])
     query_plan = build_email_authority_query_plan(
         email_timeline_handoff,
         jurisdiction_label=jurisdiction_label,
+        catalog=resolved_catalog,
     )[:max_queries]
 
     query_results: List[Dict[str, Any]] = []
@@ -345,7 +261,7 @@ def enrich_email_timeline_authorities(
         )
         state_archive_results: List[Dict[str, Any]] = []
         if search_state_archives:
-            for domain in _DEFAULT_STATE_ARCHIVE_DOMAINS:
+            for domain in list(resolved_catalog.get("default_state_archive_domains") or []):
                 try:
                     matches = mediator.legal_authority_search.search_web_archives(
                         domain,
@@ -376,7 +292,10 @@ def enrich_email_timeline_authorities(
             }
         )
 
-    seed_authorities = build_seed_authority_catalog(email_timeline_handoff)
+    seed_authorities = build_seed_authority_catalog_with_catalog(
+        email_timeline_handoff,
+        catalog=resolved_catalog,
+    )
     seed_summary = _build_seed_authority_summary(seed_authorities)
     for item in query_results:
         topic = str(item.get("topic") or "")
@@ -403,6 +322,7 @@ def enrich_email_timeline_authorities(
             ),
             "seed_authority_count": len(seed_authorities),
         },
+        "catalog_path": str(catalog_path) if catalog_path else "",
     }
 
     destination_dir = Path(output_dir).expanduser().resolve() if output_dir else source_path.parent / "authority_enrichment"
@@ -436,5 +356,6 @@ def enrich_email_timeline_authorities(
 __all__ = [
     "build_email_authority_query_plan",
     "build_seed_authority_catalog",
+    "build_seed_authority_catalog_with_catalog",
     "enrich_email_timeline_authorities",
 ]

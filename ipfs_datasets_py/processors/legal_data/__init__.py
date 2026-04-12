@@ -313,7 +313,13 @@ try:
     from .email_authority_enrichment import (
         build_email_authority_query_plan,
         build_seed_authority_catalog,
+        build_seed_authority_catalog_with_catalog,
         enrich_email_timeline_authorities,
+    )
+    from .email_authority_catalog import (
+        DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG,
+        load_email_authority_enrichment_catalog,
+        merge_email_authority_enrichment_catalog,
     )
     from .email_corpus import (
         build_email_duckdb_artifacts,
@@ -370,7 +376,11 @@ except Exception:  # pragma: no cover - optional dependency guard
     search_email_corpus_agentic = None
     build_email_authority_query_plan = None
     build_seed_authority_catalog = None
+    build_seed_authority_catalog_with_catalog = None
     enrich_email_timeline_authorities = None
+    DEFAULT_EMAIL_AUTHORITY_ENRICHMENT_CATALOG = None
+    load_email_authority_enrichment_catalog = None
+    merge_email_authority_enrichment_catalog = None
     build_email_duckdb_artifacts = None
     build_email_graphrag_artifacts = None
     search_email_graphrag_duckdb = None
