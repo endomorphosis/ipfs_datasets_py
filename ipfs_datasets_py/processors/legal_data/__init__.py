@@ -107,16 +107,34 @@ try:
 except Exception:  # pragma: no cover - optional dependency guard
     build_default_courtstyle_packet = None
 try:
-    from .court_ready_binder_index_export import build_default_court_ready_binder_index
+    from .court_ready_binder_index_export import (
+        build_court_ready_binder_index,
+        build_court_ready_binder_index_from_config,
+        build_default_court_ready_binder_index,
+    )
 except Exception:  # pragma: no cover - optional dependency guard
+    build_court_ready_binder_index = None
+    build_court_ready_binder_index_from_config = None
     build_default_court_ready_binder_index = None
 try:
-    from .official_form_drafts_export import build_default_official_form_drafts
+    from .official_form_drafts_export import (
+        build_default_official_form_drafts,
+        build_official_form_drafts,
+        build_official_form_drafts_from_config,
+    )
 except Exception:  # pragma: no cover - optional dependency guard
+    build_official_form_drafts = None
+    build_official_form_drafts_from_config = None
     build_default_official_form_drafts = None
 try:
-    from .filing_specific_binders_export import build_default_filing_specific_binders
+    from .filing_specific_binders_export import (
+        build_default_filing_specific_binders,
+        build_filing_specific_binders,
+        build_filing_specific_binders_from_config,
+    )
 except Exception:  # pragma: no cover - optional dependency guard
+    build_filing_specific_binders = None
+    build_filing_specific_binders_from_config = None
     build_default_filing_specific_binders = None
 try:
     from .exhibit_binder_export import (
@@ -658,8 +676,14 @@ __all__ = [
     "build_exhibit_binder_from_manifest",
     "build_full_evidence_binder_from_manifest",
     "build_default_courtstyle_packet",
+    "build_court_ready_binder_index",
+    "build_court_ready_binder_index_from_config",
     "build_default_court_ready_binder_index",
+    "build_official_form_drafts",
+    "build_official_form_drafts_from_config",
     "build_default_official_form_drafts",
+    "build_filing_specific_binders",
+    "build_filing_specific_binders_from_config",
     "build_default_filing_specific_binders",
     "binder_court_config_from_manifest",
     "BinderCourtConfig",

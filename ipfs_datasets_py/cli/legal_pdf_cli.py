@@ -57,12 +57,15 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
         )
         from ipfs_datasets_py.processors.legal_data.court_ready_binder_index_export import (
             build_default_court_ready_binder_index,
+            build_court_ready_binder_index_from_config,
         )
         from ipfs_datasets_py.processors.legal_data.official_form_drafts_export import (
             build_default_official_form_drafts,
+            build_official_form_drafts_from_config,
         )
         from ipfs_datasets_py.processors.legal_data.filing_specific_binders_export import (
             build_default_filing_specific_binders,
+            build_filing_specific_binders_from_config,
         )
 
         return {
@@ -71,8 +74,11 @@ def _load_legal_data_exports(*, quiet: bool = False) -> dict[str, object]:
             "build_full_evidence_binder_from_manifest": build_full_evidence_binder_from_manifest,
             "build_default_courtstyle_packet": build_default_courtstyle_packet,
             "build_default_court_ready_binder_index": build_default_court_ready_binder_index,
+            "build_court_ready_binder_index_from_config": build_court_ready_binder_index_from_config,
             "build_default_official_form_drafts": build_default_official_form_drafts,
+            "build_official_form_drafts_from_config": build_official_form_drafts_from_config,
             "build_default_filing_specific_binders": build_default_filing_specific_binders,
+            "build_filing_specific_binders_from_config": build_filing_specific_binders_from_config,
             "build_state_court_filing_packet": build_state_court_filing_packet,
             "build_state_court_filing_packet_from_manifest": build_state_court_filing_packet_from_manifest,
             "convert_markdown_to_binder_pdf": convert_markdown_to_binder_pdf,
@@ -150,6 +156,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", default="", help="Output directory for batch rendering.")
     parser.add_argument("--packet-output-path", default="", help="Merged output PDF path for build-court-filing-packet.")
     parser.add_argument("--manifest-path", default="", help="JSON manifest path for manifest-driven actions.")
+    parser.add_argument("--config-path", default="", help="JSON config path for reusable default builder actions.")
     parser.add_argument("--front-pdf", default="", help="Front sheet PDF for build-exhibit-binder.")
     parser.add_argument("--table-pdf", default="", help="Optional table-of-exhibits PDF for build-exhibit-binder.")
     parser.add_argument("--packet-pdfs", nargs="*", default=[], help="Packet PDFs for build-exhibit-binder.")
@@ -312,14 +319,23 @@ def main(args: list[str] | None = None) -> int:
         return _emit({"action": action, "status": "ok"}, as_json=bool(parsed.json))
 
     if action == "build-court-ready-binder-index-default":
+        if parsed.config_path:
+            payload = _load_legal_data_exports(quiet=quiet_imports)["build_court_ready_binder_index_from_config"](parsed.config_path)
+            return _emit({"action": action, **payload}, as_json=bool(parsed.json))
         output_path = _load_legal_data_exports(quiet=quiet_imports)["build_default_court_ready_binder_index"]()
         return _emit({"action": action, "output_path": str(output_path)}, as_json=bool(parsed.json))
 
     if action == "build-official-form-drafts-default":
+        if parsed.config_path:
+            payload = _load_legal_data_exports(quiet=quiet_imports)["build_official_form_drafts_from_config"](parsed.config_path)
+            return _emit({"action": action, **payload}, as_json=bool(parsed.json))
         output_paths = _load_legal_data_exports(quiet=quiet_imports)["build_default_official_form_drafts"]()
         return _emit({"action": action, "output_paths": [str(path) for path in list(output_paths or [])]}, as_json=bool(parsed.json))
 
     if action == "build-filing-specific-binders-default":
+        if parsed.config_path:
+            payload = _load_legal_data_exports(quiet=quiet_imports)["build_filing_specific_binders_from_config"](parsed.config_path)
+            return _emit({"action": action, **payload}, as_json=bool(parsed.json))
         output_paths = _load_legal_data_exports(quiet=quiet_imports)["build_default_filing_specific_binders"]()
         return _emit({"action": action, "output_paths": [str(path) for path in list(output_paths or [])]}, as_json=bool(parsed.json))
 

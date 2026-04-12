@@ -1,0 +1,44 @@
+{
+  "forms_dir": "../../../../workspace/official-forms",
+  "preview_dir": "../../../../workspace/render-previews",
+  "out_dir": "../../../../workspace/official-forms/draft-filled",
+  "js44": {
+    "output_name": "js44-draft-filled.pdf",
+    "plaintiffs_lines": [
+      "Benjamin Jay Barber, Jane Kay Cortez,",
+      "and Julio Regal Florez-Cortez"
+    ],
+    "defendants_lines": [
+      "Housing Authority of Clackamas County",
+      "and Quantum Residential"
+    ],
+    "county_left": "Clackamas",
+    "county_right": "Clackamas",
+    "filer_lines": [
+      "Benjamin Jay Barber, pro se",
+      "10043 SE 32nd Ave",
+      "Milwaukie, OR 97222"
+    ]
+  },
+  "summons": [
+    {
+      "output_name": "ao440-hacc-draft-filled.pdf",
+      "defendant_lines": ["Housing Authority of Clackamas County"],
+      "to_lines": [
+        "Housing Authority of Clackamas County",
+        "13930 Gain Street",
+        "Oregon City, OR 97045"
+      ],
+      "state_text": "Oregon",
+      "plaintiffs_lines": [
+        "Benjamin Jay Barber, Jane Kay Cortez,",
+        "and Julio Regal Florez-Cortez"
+      ],
+      "filer_lines": [
+        "Benjamin Jay Barber, pro se",
+        "10043 SE 32nd Ave",
+        "Milwaukie, OR 97222"
+      ]
+    }
+  ]
+}

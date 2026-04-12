@@ -1,0 +1,19 @@
+{
+  "src_path": "../../../../workspace/evidence_binder_exhibit_and_cover_sheet_index_2026-04-09.md",
+  "out_path": "../../../../workspace/evidence_binder_exhibit_and_cover_sheet_index_custom.pdf",
+  "court_lines": [
+    "IN THE CIRCUIT COURT OF THE STATE OF OREGON",
+    "FOR THE COUNTY OF CLACKAMAS",
+    "PROBATE DEPARTMENT"
+  ],
+  "case_no": "Case No. 26PR00641",
+  "matter_lines": [
+    "In the Matter of:",
+    "Jane Kay Cortez,",
+    "Protected Person."
+  ],
+  "document_title": "EVIDENCE BINDER INDEX",
+  "document_subtitle": "EXHIBIT REGISTER",
+  "footer_label": "Evidence Binder Index",
+  "max_lines_per_page": 36
+}

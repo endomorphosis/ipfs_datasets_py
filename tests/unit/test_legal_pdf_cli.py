@@ -373,3 +373,99 @@ def test_legal_pdf_cli_build_filing_specific_binders_default_json_is_clean(capsy
     payload = json.loads(captured.out)
     assert payload["action"] == "build-filing-specific-binders-default"
     assert payload["output_paths"] == [str(path) for path in expected]
+
+
+def test_legal_pdf_cli_build_court_ready_binder_index_default_with_config_json_is_clean(capsys, monkeypatch):
+    marker = {"config_path": None}
+
+    def _fake_builder(config_path: str):
+        marker["config_path"] = config_path
+        return {"config_path": config_path, "output_path": "/tmp/custom_index.pdf"}
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_court_ready_binder_index_from_config": _fake_builder},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-court-ready-binder-index-default",
+            "--config-path",
+            "/tmp/custom_index_config.json",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-court-ready-binder-index-default"
+    assert payload["output_path"] == "/tmp/custom_index.pdf"
+    assert marker["config_path"] == "/tmp/custom_index_config.json"
+
+
+def test_legal_pdf_cli_build_official_form_drafts_default_with_config_json_is_clean(capsys, monkeypatch):
+    marker = {"config_path": None}
+
+    def _fake_builder(config_path: str):
+        marker["config_path"] = config_path
+        return {"config_path": config_path, "output_paths": ["/tmp/js44.pdf", "/tmp/ao440.pdf"], "output_count": 2}
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_official_form_drafts_from_config": _fake_builder},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-official-form-drafts-default",
+            "--config-path",
+            "/tmp/custom_forms_config.json",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-official-form-drafts-default"
+    assert payload["output_count"] == 2
+    assert marker["config_path"] == "/tmp/custom_forms_config.json"
+
+
+def test_legal_pdf_cli_build_filing_specific_binders_default_with_config_json_is_clean(capsys, monkeypatch):
+    marker = {"config_path": None}
+
+    def _fake_builder(config_path: str):
+        marker["config_path"] = config_path
+        return {"config_path": config_path, "output_paths": ["/tmp/set_a.pdf"], "set_count": 1}
+
+    monkeypatch.setattr(
+        legal_pdf_cli,
+        "_load_legal_data_exports",
+        lambda quiet=False: {"build_filing_specific_binders_from_config": _fake_builder},
+    )
+
+    result = legal_pdf_cli.main(
+        [
+            "--action",
+            "build-filing-specific-binders-default",
+            "--config-path",
+            "/tmp/custom_sets_config.json",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["action"] == "build-filing-specific-binders-default"
+    assert payload["set_count"] == 1
+    assert marker["config_path"] == "/tmp/custom_sets_config.json"

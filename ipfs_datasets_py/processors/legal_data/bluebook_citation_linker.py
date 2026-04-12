@@ -13,7 +13,11 @@ import tempfile
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
-from ipfs_datasets_py.processors.legal_data.citation_extraction import Citation, CitationExtractor
+from ipfs_datasets_py.processors.legal_data.citation_extraction import (
+    BLUEBOOK_STATE_TO_CODE,
+    Citation,
+    CitationExtractor,
+)
 from ipfs_datasets_py.processors.legal_data.legal_source_recovery import build_missing_citation_recovery_query
 
 logger = logging.getLogger(__name__)
@@ -102,6 +106,37 @@ def _normalize_section(value: Any) -> str:
 
 def _compact_alnum(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
+
+
+def _token_overlap_ratio(query_text: str, candidate_text: str) -> float:
+    query_tokens = {token for token in _normalize_text(query_text).split() if token}
+    candidate_tokens = {token for token in _normalize_text(candidate_text).split() if token}
+    if not query_tokens or not candidate_tokens:
+        return 0.0
+    return len(query_tokens & candidate_tokens) / max(1, len(query_tokens))
+
+
+def _suggested_citation_from_row(row: Dict[str, Any]) -> str:
+    return str(_first_present(row, _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS) or "").strip()
+
+
+def _guess_corpora_from_text(text: str, state_code: Optional[str]) -> List[str]:
+    normalized = _normalize_text(text)
+    if not normalized:
+        return []
+    if "u s c" in normalized or "usc" in normalized:
+        return ["us_code"]
+    if "c f r" in normalized or "cfr" in normalized:
+        return ["federal_register", "us_code"]
+    if "fr" in normalized or "fed reg" in normalized or "federal register" in normalized:
+        return ["federal_register"]
+    if "pub l" in normalized or "public law" in normalized:
+        return ["us_code", "federal_register", "caselaw_access_project"]
+    if "ors" in normalized or "rev stat" in normalized or "stat" in normalized or "code" in normalized:
+        return ["state_laws", "state_admin_rules", "state_court_rules"]
+    if state_code:
+        return ["state_laws", "state_admin_rules", "state_court_rules"]
+    return ["us_code", "federal_register", "caselaw_access_project"]
 
 
 def _state_section_aliases(section: Any) -> List[str]:
@@ -513,6 +548,33 @@ class BluebookCitationResolver:
             links.append(self.resolve_citation(citation, state_code=state_code, exhaustive=exhaustive))
         return links
 
+    def suggest_citations_for_text(
+        self,
+        text: str,
+        *,
+        state_code: Optional[str] = None,
+        max_suggestions: int = 3,
+    ) -> List[Dict[str, Any]]:
+        query_text = str(text or "").strip()
+        if not query_text:
+            return []
+
+        effective_state = (state_code or "").strip().upper() or None
+        corpora = _guess_corpora_from_text(query_text, effective_state)
+        suggestions: List[Dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+
+        for corpus_key in corpora:
+            for suggestion in self._suggest_from_corpus(query_text, corpus_key, effective_state, max_suggestions=max_suggestions):
+                key = (str(suggestion.get("corpus_key") or ""), str(suggestion.get("suggested_citation") or ""))
+                if key in seen:
+                    continue
+                seen.add(key)
+                suggestions.append(suggestion)
+                if len(suggestions) >= max_suggestions:
+                    return suggestions[:max_suggestions]
+        return suggestions[:max_suggestions]
+
     def resolve_citation(
         self,
         citation: Citation,
@@ -621,6 +683,214 @@ class BluebookCitationResolver:
                 **preferred_metadata,
             },
         )
+
+    def _suggest_from_corpus(
+        self,
+        query_text: str,
+        corpus_key: str,
+        state_code: Optional[str],
+        *,
+        max_suggestions: int,
+    ) -> List[Dict[str, Any]]:
+        override_value = self.parquet_file_overrides.get(corpus_key)
+        override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in list(override_value or [])]
+        if override_items:
+            return self._suggest_from_parquet_overrides(
+                query_text,
+                corpus_key,
+                override_items,
+                state_code=state_code,
+                max_suggestions=max_suggestions,
+            )
+
+        try:
+            from ..legal_scrapers.justicedao_dataset_inventory import query_canonical_legal_corpus
+        except Exception:
+            return []
+
+        try:
+            result = query_canonical_legal_corpus(
+                corpus_key,
+                query_text=query_text,
+                state_code=state_code,
+                mode="semantic",
+                top_k=max_suggestions,
+                allow_hf_fallback=self.allow_hf_fallback,
+                parquet_file_overrides=self.parquet_file_overrides,
+            )
+        except Exception:
+            return []
+
+        suggestions: List[Dict[str, Any]] = []
+        for item in list(result.results or [])[: max_suggestions]:
+            row = dict(item.get("row") or {})
+            suggestion_text = _suggested_citation_from_row(row)
+            if not suggestion_text:
+                continue
+            semantic_score = float(item.get("score") or 0.0)
+            estimate_vector = self._build_estimate_vector(
+                query_text,
+                row,
+                semantic_score=semantic_score,
+                semantic_mode=str(result.mode or "semantic"),
+            )
+            suggestions.append(
+                self._suggestion_payload(
+                    corpus_key=corpus_key,
+                    row=row,
+                    suggestion_text=suggestion_text,
+                    estimate_vector=estimate_vector,
+                )
+            )
+        return suggestions
+
+    def _suggest_from_parquet_overrides(
+        self,
+        query_text: str,
+        corpus_key: str,
+        override_items: Sequence[str],
+        *,
+        state_code: Optional[str],
+        max_suggestions: int,
+    ) -> List[Dict[str, Any]]:
+        tokens = [token for token in _normalize_text(query_text).split() if len(token) >= 3]
+        if not tokens:
+            return []
+
+        candidate_rows: List[Dict[str, Any]] = []
+        for item in override_items:
+            if not item:
+                continue
+            if item.startswith(("http://", "https://")):
+                local_path = self._materialize_remote_parquet(item)
+                if not local_path:
+                    continue
+                item = local_path
+            rows = self._filter_rows_for_suggestion(item, tokens, state_code=state_code)
+            candidate_rows.extend(rows)
+
+        suggestions: List[Dict[str, Any]] = []
+        for row in candidate_rows:
+            suggestion_text = _suggested_citation_from_row(row)
+            if not suggestion_text:
+                continue
+            estimate_vector = self._build_estimate_vector(
+                query_text,
+                row,
+                semantic_score=0.0,
+                semantic_mode="override_scan",
+            )
+            suggestions.append(
+                self._suggestion_payload(
+                    corpus_key=corpus_key,
+                    row=row,
+                    suggestion_text=suggestion_text,
+                    estimate_vector=estimate_vector,
+                )
+            )
+            if len(suggestions) >= max_suggestions:
+                break
+        return suggestions[:max_suggestions]
+
+    def _filter_rows_for_suggestion(
+        self,
+        source_ref: str,
+        tokens: Sequence[str],
+        *,
+        state_code: Optional[str],
+        max_rows: int = 25,
+    ) -> List[Dict[str, Any]]:
+        try:
+            import duckdb
+        except Exception:
+            duckdb = None
+
+        if duckdb is None:
+            rows = self._load_local_parquet_rows(source_ref)
+            filtered = []
+            for row in rows:
+                if state_code and str(row.get("state_code") or "").upper() not in {"", str(state_code).upper()}:
+                    continue
+                haystack = _normalize_text(" ".join(str(row.get(field) or "") for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _TEXT_FIELDS))
+                if any(token in haystack for token in tokens):
+                    filtered.append(row)
+                if len(filtered) >= max_rows:
+                    break
+            return filtered
+
+        con = duckdb.connect()
+        try:
+            schema = self._schema_for_source(con, source_ref)
+            search_fields = [field for field in (_OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _TEXT_FIELDS) if field in schema]
+            if not search_fields:
+                return []
+            clauses: List[str] = []
+            params: List[Any] = []
+            for field in search_fields:
+                for token in tokens:
+                    clauses.append(f"lower(CAST({field} AS VARCHAR)) LIKE ?")
+                    params.append(f"%{token}%")
+            if state_code and "state_code" in schema:
+                clauses.append("upper(CAST(state_code AS VARCHAR)) = ?")
+                params.append(str(state_code).upper())
+            query = f"SELECT * FROM read_parquet('{_sql_literal_path(source_ref)}') WHERE {' OR '.join(clauses)} LIMIT {max_rows}"
+            cursor = con.execute(query, params)
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            return [dict(zip(columns, row)) for row in rows]
+        except Exception:
+            return []
+        finally:
+            con.close()
+
+    def _build_estimate_vector(
+        self,
+        query_text: str,
+        row: Dict[str, Any],
+        *,
+        semantic_score: float,
+        semantic_mode: str,
+    ) -> Dict[str, Any]:
+        row_text = " ".join(
+            str(row.get(field) or "")
+            for field in (_OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _TEXT_FIELDS)
+        )
+        token_overlap = _token_overlap_ratio(query_text, row_text)
+        semantic_confidence = 1.0 / (1.0 + abs(float(semantic_score or 0.0))) if semantic_mode else 0.0
+        confidence = max(0.0, min(1.0, 0.2 + (0.6 * token_overlap) + (0.2 * semantic_confidence)))
+        return {
+            "semantic_score": float(semantic_score or 0.0),
+            "semantic_mode": str(semantic_mode or ""),
+            "semantic_confidence": float(semantic_confidence),
+            "token_overlap": float(token_overlap),
+            "confidence": float(confidence),
+        }
+
+    def _suggestion_payload(
+        self,
+        *,
+        corpus_key: str,
+        row: Dict[str, Any],
+        suggestion_text: str,
+        estimate_vector: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        return {
+            "suggested_citation": suggestion_text,
+            "corpus_key": corpus_key,
+            "dataset_id": _CORPUS_CONFIGS.get(corpus_key).dataset_id if corpus_key in _CORPUS_CONFIGS else None,
+            "state_code": str(_first_present(row, _STATE_FIELDS) or "").upper() or None,
+            "source_document_id": str(_first_present(row, _IDENTIFIER_FIELDS) or ""),
+            "source_title": str(_first_present(row, _TITLE_FIELDS) or ""),
+            "source_url": str(_first_present(row, _URL_FIELDS) or ""),
+            "source_cid": str(_first_present(row, _CID_FIELDS) or ""),
+            "metadata": {
+                "identifier": str(_first_present(row, _IDENTIFIER_FIELDS) or ""),
+                "official_cite": str(_first_present(row, _OFFICIAL_CITE_FIELDS) or ""),
+                "code_name": str(_first_present(row, _CODE_NAME_FIELDS) or ""),
+            },
+            "estimate_vector": dict(estimate_vector),
+            "confidence": float(estimate_vector.get("confidence") or 0.0),
+        }
 
     def _resolve_citation_via_exhaustive_corpus_query(
         self,
@@ -1061,14 +1331,6 @@ class BluebookCitationResolver:
             section_field = next((field for field in _SECTION_FIELDS if field in schema), None)
             identifier_fields = [field for field in _IDENTIFIER_FIELDS if field in schema]
             text_fields = [field for field in _TEXT_FIELDS if field in schema]
-            code_name_aliases: List[str] = []
-            if citation.type == "state_statute" and citation.section:
-                code_name = _normalize_text(citation.metadata.get("code_name") or citation.title or "")
-                if code_name:
-                    code_name_aliases = [
-                        f"{code_name} {citation.section}",
-                        f"{code_name} § {citation.section}",
-                    ]
             if state_code and state_field:
                 clauses.append(f"upper(CAST({state_field} AS VARCHAR)) = ?")
                 params.append(state_code)
@@ -1084,7 +1346,7 @@ class BluebookCitationResolver:
                 params.append(str(citation.section))
             if citation.type == "state_statute" and citation.section:
                 for field in identifier_fields + text_fields:
-                    for alias in _state_section_aliases(citation.section) + code_name_aliases:
+                    for alias in _state_section_aliases(citation.section):
                         subclauses.append(f"lower(CAST({field} AS VARCHAR)) LIKE lower(?)")
                         params.append(f"%{alias}%")
             if subclauses:
@@ -1211,14 +1473,6 @@ class BluebookCitationResolver:
             source_section_exact = False
             if not section_exact and citation.section:
                 state_aliases = _state_section_aliases(citation.section)
-                code_name = _normalize_text(citation.metadata.get("code_name") or citation.title or "")
-                if code_name:
-                    state_aliases.extend(
-                        [
-                            f"{code_name} {citation.section}",
-                            f"{code_name} § {citation.section}",
-                        ]
-                    )
                 normalized_aliases = {_normalize_text(alias) for alias in state_aliases}
                 compact_aliases = {_compact_alnum(alias) for alias in state_aliases}
                 for field in _IDENTIFIER_FIELDS + _TEXT_FIELDS:
