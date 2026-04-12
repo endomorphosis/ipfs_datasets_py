@@ -145,6 +145,19 @@ async def my_tool(arg1, arg2):
 # No special flags needed
 ```
 
+### 7. Docket Dataset CLI
+
+The merged CLI includes a dedicated docket dataset command that can audit citations (including EU/member-state citations).
+
+```bash
+# Import a docket JSON and emit citation audit (including EU/member-state citations)
+ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citation-source-audit --json
+
+# Tune EU/member-state citation audit extraction
+ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
+  --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
+```
+
 ## Advantages of Merged CLI
 
 ### 1. Single Interface

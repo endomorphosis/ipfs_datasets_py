@@ -2916,10 +2916,22 @@ def _semantic_query_rows(
     if not sample_vector:
         return []
 
+    sample_backend = str(embeddings_rows[0].get("embedding_backend") or "").strip()
+    sample_model = str(embeddings_rows[0].get("embedding_model") or "").strip()
+    query_backend = sample_backend or "embeddings_router"
+    normalized_model = sample_model.lower()
+    if not sample_backend and (
+        normalized_model.startswith("local")
+        or normalized_model.endswith("-test")
+        or normalized_model == "test"
+    ):
+        query_backend = "local_hashed_term_projection"
+
     query_vector = embed_query_for_backend(
         query_text,
-        backend="embeddings_router",
+        backend=query_backend,
         dimension=len(sample_vector),
+        model_name=sample_model or None,
     )
     query_vector = _fit_vector_dimension(query_vector, len(sample_vector))
     if not query_vector:
@@ -3095,6 +3107,7 @@ def build_canonical_corpus_semantic_index(
         emb_row: Dict[str, Any] = {
             join_field: row.get(join_field),
             "semantic_text": semantic_text,
+            "embedding_backend": metadata.get("backend") or "local_hashed_term_projection",
             "embedding_model": metadata.get("model_name") or "",
             "embedding": [float(item) for item in vector],
         }
@@ -3859,14 +3872,24 @@ def query_canonical_legal_corpus(
     notes: List[str] = []
 
     resolver_parquet_overrides = _canonical_only_overrides(parquet_file_overrides)
-
-    active_resolver = resolver or BluebookCitationResolver(
-        allow_hf_fallback=allow_hf_fallback,
-        parquet_file_overrides=resolver_parquet_overrides,
+    override_value = (parquet_file_overrides or {}).get(normalized_corpus)
+    override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in list(override_value or [])]
+    prefer_override_search = (
+        active_mode == "auto"
+        and any(
+            item.endswith("_embeddings.parquet")
+            or item.endswith("_metadata.parquet")
+            or item.endswith(".faiss")
+            for item in override_items
+        )
     )
 
     extracted_links = []
-    if active_mode in {"auto", "exact"}:
+    if active_mode in {"auto", "exact"} and not prefer_override_search:
+        active_resolver = resolver or BluebookCitationResolver(
+            allow_hf_fallback=allow_hf_fallback,
+            parquet_file_overrides=resolver_parquet_overrides,
+        )
         try:
             links = active_resolver.resolve_text(query_text, state_code=normalized_state)
             for link in links:
@@ -3904,7 +3927,6 @@ def query_canonical_legal_corpus(
                 notes=["Resolved with BluebookCitationResolver before parquet search."],
             )
 
-    override_value = (parquet_file_overrides or {}).get(normalized_corpus)
     parquet_path: Optional[str] = None
     embeddings_path: Optional[str] = None
     faiss_index_path: Optional[str] = None
@@ -4501,7 +4523,7 @@ def execute_justicedao_bluebook_query_plan(
                 match = _match_from_canonical_query(strategy, result)
                 if match is not None:
                     matches.append(match)
-                    continue
+                    break
             source_refs = _resolve_local_or_hf_sources(
                 profile,
                 strategy,
@@ -4527,6 +4549,7 @@ def execute_justicedao_bluebook_query_plan(
                         notes=list(strategy.notes),
                     )
                 )
+                break
         execution_results.append(
             CitationExecutionPlanResult(
                 citation_text=query_plan.citation_text,

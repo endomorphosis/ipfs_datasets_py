@@ -390,6 +390,12 @@ Commands:
       google-voice-takeout-case-report Export a markdown or HTML report for a Takeout case/download directory or manifest
       google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
 
+        workspace    Inspect workspace dataset single-parquet bundles
+            --action summary Read a lightweight workspace bundle summary
+            --action inspect Read bundle sections and artifact counts
+            --action load    Load the full dataset-shaped bundle payload
+            --action report  Render a human-readable markdown/text bundle report
+
     history-index Search persisted DuckDB history/GraphRAG index
     docket       Import a docket into a reusable dataset artifact
       chunks      Search chunk text and metadata
@@ -3189,6 +3195,59 @@ Examples:
                 import traceback
                 traceback.print_exc()
                 return
+
+        if command == "workspace":
+            """Handle workspace dataset bundle inspection commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets workspace - Inspect workspace dataset single-parquet bundles
+
+Usage: ipfs-datasets workspace --input-path PATH [--action {summary,inspect,load,report}] [options]
+
+Options:
+  --input-path PATH
+    --action {summary,inspect,load,report}
+  --fields FIELD1,FIELD2
+    --report-format {markdown,text,json}
+  --json
+
+Examples:
+  ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action summary --json
+  ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action inspect --fields workspace_id,row_count,sections
+  ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action load --json
+    ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action report --report-format markdown
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                workspace_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "workspace_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_workspace_cli", workspace_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load workspace CLI from {workspace_cli_path}")
+                workspace_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(workspace_cli_module)
+                workspace_main = workspace_cli_module.main
+
+                workspace_args = list(args[1:])
+                if json_output and '--json' not in workspace_args:
+                    workspace_args = ['--json', *workspace_args]
+                exit_code = workspace_main(workspace_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: workspace CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing workspace command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
         
         if command == "detect-type":
             # File type detection commands
@@ -3947,7 +4006,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'workspace', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]

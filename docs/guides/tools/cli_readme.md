@@ -29,6 +29,7 @@ python ipfs_datasets_cli.py [command] [options]
 - `vector` - Vector indexing and search
 - `graph` - Knowledge graph operations
 - `cli` - Command execution (limited for security)
+- `docket` - Docket dataset import, packaging, and citation auditing
 
 ### 2. Enhanced CLI Tool (`scripts/cli/enhanced_cli.py`) - Deprecated
 
@@ -128,6 +129,17 @@ python scripts/cli/enhanced_cli.py analysis_tools analysis_tools
 # System monitoring
 python scripts/cli/enhanced_cli.py bespoke_tools system_status
 python scripts/cli/enhanced_cli.py bespoke_tools system_health
+```
+
+### Docket Dataset Audit
+
+```bash
+# Import a docket JSON and emit citation audit (including EU/member-state citations)
+./ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citation-source-audit --json
+
+# Tune EU/member-state citation audit extraction
+./ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
+  --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
 ```
 
 ## Tool Categories Available

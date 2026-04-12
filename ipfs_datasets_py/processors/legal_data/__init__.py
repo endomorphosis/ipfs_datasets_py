@@ -80,6 +80,19 @@ from .docket_dataset import (
     search_docket_dataset_vector,
     summarize_docket_dataset,
 )
+from .workspace_dataset import (
+    WorkspaceDatasetBuilder,
+    WorkspaceDatasetObject,
+    WorkspaceDocument,
+    export_workspace_dataset_single_parquet,
+    inspect_workspace_dataset_single_parquet,
+    load_workspace_dataset_single_parquet,
+    load_workspace_dataset_single_parquet_summary,
+    render_workspace_dataset_single_parquet_report,
+    search_workspace_dataset_bm25,
+    search_workspace_dataset_vector,
+    summarize_workspace_dataset,
+)
 from .docket_packaging import (
     DocketDatasetPackager,
     PackagedDocketQueryAdapter,
@@ -345,5 +358,16 @@ __all__ = [
     "submit_courtlistener_recap_fetch_request",
     "submit_packaged_docket_recap_fetch_requests",
     "summarize_docket_dataset",
+    "WorkspaceDatasetBuilder",
+    "WorkspaceDatasetObject",
+    "WorkspaceDocument",
+    "export_workspace_dataset_single_parquet",
+    "inspect_workspace_dataset_single_parquet",
+    "load_workspace_dataset_single_parquet",
+    "load_workspace_dataset_single_parquet_summary",
+    "render_workspace_dataset_single_parquet_report",
+    "search_workspace_dataset_bm25",
+    "search_workspace_dataset_vector",
+    "summarize_workspace_dataset",
     "summarize_case_graph",
 ]

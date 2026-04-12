@@ -22,6 +22,11 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--docket-id", required=True, help="CourtListener docket id.")
     parser.add_argument(
+        "--input-enriched-json",
+        default="",
+        help="Optional path to a cached enriched docket JSON payload to skip refetching.",
+    )
+    parser.add_argument(
         "--filing-url",
         default="",
         help="Optional CourtListener filing page URL to harvest public filing PDFs from.",
@@ -108,25 +113,29 @@ def main() -> int:
     output_parquet = Path(args.output_parquet).expanduser()
     output_parquet.parent.mkdir(parents=True, exist_ok=True)
 
-    enriched = fetch_courtlistener_docket(
-        str(args.docket_id),
-        enable_rendered_page_enrichment=True,
-        enable_pdf_text_backfill=False,
-        include_recap_documents=True,
-        include_document_text=True,
-    )
-    enriched = attach_available_courtlistener_recap_evidence_to_docket(
-        enriched,
-        max_documents=None if int(args.max_recap_documents or 0) <= 0 else int(args.max_recap_documents),
-        request_timeout_seconds=float(args.request_timeout_seconds or 30.0),
-    )
-    if str(args.filing_url or "").strip():
-        enriched = attach_public_courtlistener_filing_pdfs_to_docket(
+    if str(args.input_enriched_json or "").strip():
+        enriched_path = Path(args.input_enriched_json).expanduser()
+        enriched = json.loads(enriched_path.read_text(encoding="utf-8"))
+    else:
+        enriched = fetch_courtlistener_docket(
+            str(args.docket_id),
+            enable_rendered_page_enrichment=True,
+            enable_pdf_text_backfill=False,
+            include_recap_documents=True,
+            include_document_text=True,
+        )
+        enriched = attach_available_courtlistener_recap_evidence_to_docket(
             enriched,
-            str(args.filing_url).strip(),
-            max_pdfs=max(0, int(args.max_filing_pdfs or 0)),
+            max_documents=None if int(args.max_recap_documents or 0) <= 0 else int(args.max_recap_documents),
             request_timeout_seconds=float(args.request_timeout_seconds or 30.0),
         )
+        if str(args.filing_url or "").strip():
+            enriched = attach_public_courtlistener_filing_pdfs_to_docket(
+                enriched,
+                str(args.filing_url).strip(),
+                max_pdfs=max(0, int(args.max_filing_pdfs or 0)),
+                request_timeout_seconds=float(args.request_timeout_seconds or 30.0),
+            )
 
     if args.write_enriched_json:
         enriched_path = Path(args.write_enriched_json).expanduser()

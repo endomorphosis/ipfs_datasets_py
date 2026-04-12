@@ -194,7 +194,6 @@ def _is_direct_citation_source(path: str) -> bool:
     )
 
 
-@lru_cache(maxsize=128)
 def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> List[Any]:
     try:
         from .justicedao_dataset_inventory import inspect_justicedao_datasets

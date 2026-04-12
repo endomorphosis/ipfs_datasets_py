@@ -9,6 +9,7 @@ Packaged bundle read helpers:
 - `--operator-dashboard` reads the combined packaged operator dashboard payload.
 - `--load-operator-dashboard-report` reads the archived `operator_dashboard_report` artifact.
 - `--citation-source-audit` reports which citations resolved to legal source records.
+- `--eu-citation-language`, `--eu-citation-max-documents`, `--no-eu-citation-audit` control EU/member-state citation audit behavior.
 - `--fields` applies to the active packaged read mode.
 
 Examples:
@@ -20,6 +21,7 @@ Examples:
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action recap-fetch --json`
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action recap-preflight --json`
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --citation-source-audit --json`
+- `... --input-type json --input-path /path/to/docket.json --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json`
 """
 
 from __future__ import annotations

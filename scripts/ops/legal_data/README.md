@@ -57,8 +57,23 @@ Notes:
 	Examples:
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --filing-url "https://www.courtlistener.com/docket/67658002/american-alliance-for-equal-rights-v-fearless-fund-management-llc-filing/" --output-parquet /tmp/fearless_single_bundle.parquet --strict-evidence-mode --write-enriched-json /tmp/fearless_enriched.json --json`
 	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --output-parquet /tmp/fearless_full.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_courtlistener_docket_single_bundle.py --docket-id 67658002 --input-enriched-json /tmp/fearless_enriched.json --output-parquet /tmp/fearless_from_cache.parquet --strict-evidence-mode`
 	Use `--strict-evidence-mode` when you want the bundle built from the
 	`plain_text+` subset instead of the full enriched docket payload.
+- Run `export_workspace_dataset_single_bundle.py` to ingest a generic workspace
+	corpus from JSON or a directory of evidence files and export a single parquet
+	bundle with normalized documents, collections, BM25 rows, vector rows, and
+	knowledge-graph rows. The script also understands explicit source-specific
+	payloads for Google Voice materialization manifests, Discord exports, and
+	email exports via `--input-type` plus `--input-path`.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-json /tmp/workspace.json --output-parquet /tmp/workspace_bundle.parquet --strict-evidence-mode --write-normalized-json /tmp/workspace_dataset.json --json`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-directory /tmp/mailbox --workspace-id mailbox-01 --workspace-name "Consumer Mailbox" --source-type email --output-parquet /tmp/mailbox_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-parquet /tmp/google_voice_bundle.parquet --strict-evidence-mode`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type discord-export --input-path /tmp/discord_export.json --output-parquet /tmp/discord_bundle.parquet`
+	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_single_bundle.py --input-type email-export --input-path /tmp/email_export.json --output-parquet /tmp/email_bundle.parquet`
+	Use `--strict-evidence-mode` when you want the bundle built from the
+	`plain_text+` retrieval subset instead of the full normalized workspace payload.
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

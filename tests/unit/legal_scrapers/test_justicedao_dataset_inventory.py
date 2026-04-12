@@ -817,6 +817,66 @@ def test_execute_justicedao_legal_citation_query_plan_matches_eu_member_state_ci
     assert spain_result["matches"][0]["rows"][0]["law_identifier"] == "CC-Articulo-1902"
 
 
+def test_execute_justicedao_legal_citation_query_plan_matches_france_and_netherlands_member_state_citations(tmp_path):
+    france_path = tmp_path / "france_laws.parquet"
+    netherlands_path = tmp_path / "netherlands_laws.parquet"
+
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafyfrcc1240",
+                    "law_identifier": "CC-Article-1240",
+                    "official_identifier": "Article 1240 du code civil",
+                    "citation": "Article 1240 du code civil",
+                    "title": "Article 1240 du code civil",
+                    "text": "Tout fait quelconque de l homme qui cause a autrui un dommage oblige celui par la faute duquel il est arrive a le reparer.",
+                    "summary": "Responsabilite civile delictuelle du code civil.",
+                }
+            ]
+        ),
+        france_path,
+    )
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_cid": "bafynlbw6162",
+                    "law_identifier": "BW-6-162",
+                    "official_identifier": "Artikel 6:162 BW",
+                    "citation": "Artikel 6:162 BW",
+                    "title": "Artikel 6:162 BW",
+                    "text": "Hij die jegens een ander een onrechtmatige daad pleegt welke hem kan worden toegerekend moet de schade vergoeden.",
+                    "summary": "Onrechtmatige daad in het Burgerlijk Wetboek.",
+                }
+            ]
+        ),
+        netherlands_path,
+    )
+
+    profiles = _profiles_with_france_family()
+    plan = build_justicedao_legal_citation_query_plan(
+        "article 1240 du code civil and Artikel 6:162 BW.",
+        profiles=profiles,
+    )
+    result = execute_justicedao_legal_citation_query_plan(
+        plan,
+        profiles=profiles,
+        parquet_file_overrides={
+            "justicedao/ipfs_france_laws": [str(france_path)],
+            "justicedao/ipfs_netherlands_laws": [str(netherlands_path)],
+        },
+    )
+
+    payload = legal_citation_dataset_execution_result_to_dict(result)
+    france_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_fr_cc_article")
+    netherlands_result = next(item for item in payload["execution_results"] if item["citation_type"] == "eu_nl_bw_article")
+    assert france_result["matches"][0]["dataset_id"] == "justicedao/ipfs_france_laws"
+    assert france_result["matches"][0]["rows"][0]["law_identifier"] == "CC-Article-1240"
+    assert netherlands_result["matches"][0]["dataset_id"] == "justicedao/ipfs_netherlands_laws"
+    assert netherlands_result["matches"][0]["rows"][0]["law_identifier"] == "BW-6-162"
+
+
 def test_execute_justicedao_legal_citation_query_plan_matches_municipal_citation_table(tmp_path):
     municipal_citation_path = tmp_path / "municipal_citation.parquet"
     pq.write_table(

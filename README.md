@@ -125,6 +125,17 @@ ipfs-datasets tools run dataset_tools load_dataset --source squad
 ipfs-datasets tools execute dataset_tools load_dataset --source squad --split train
 ```
 
+### Docket Dataset Audit
+
+```bash
+# Import a docket JSON and emit citation audit (including EU/member-state citations)
+ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citation-source-audit --json
+
+# Tune EU/member-state citation audit extraction
+ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
+  --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
+```
+
 ### VSCode CLI Integration
 
 ```bash

@@ -157,6 +157,7 @@ def test_ipfs_datasets_cli_dispatches_docket_command(tmp_path: Path, monkeypatch
     payload = json.loads(output.getvalue())
     assert payload["status"] == "success"
     assert payload["summary"]["document_count"] == 1
+    assert payload["summary"]["eu_citation_count"] == 0
 
 
 def test_docket_cli_main_json_output_from_courtlistener(tmp_path: Path, monkeypatch) -> None:
@@ -200,6 +201,7 @@ def test_docket_cli_main_json_output_from_courtlistener(tmp_path: Path, monkeypa
     assert payload["status"] == "success"
     assert Path(payload["output_path"]).exists()
     assert payload["summary"]["document_count"] == 1
+    assert payload["summary"]["eu_citation_count"] == 0
 
 
 def test_docket_cli_can_write_parquet_only_bundle(tmp_path: Path, monkeypatch) -> None:
@@ -2061,6 +2063,7 @@ def test_docket_cli_packaged_read_only_path_skips_full_dataset_load(tmp_path: Pa
     payload = json.loads(output.getvalue())
     assert payload["loaded_packaged_report"]["latest_routing_reason"] == "Lightweight packaged read routing reason."
     assert payload["summary"]["document_count"] == 1
+    assert payload["summary"]["eu_citation_count"] == 0
 
 
 def test_docket_cli_packaged_read_only_path_skips_minimal_document_view(tmp_path: Path, monkeypatch) -> None:
@@ -2137,6 +2140,13 @@ def test_docket_cli_can_emit_packaged_summary_only_json_without_output(tmp_path:
         "preferred_state_codes": [],
         "authority_backed": True,
     }
+    dataset.metadata["citation_source_audit"] = {
+        "eu_citation_audit": {
+            "citation_count": 2,
+            "unique_citation_count": 2,
+            "documents_with_citations": 1,
+        }
+    }
     package = dataset.write_package(
         tmp_path / "summary_only_json_bundle",
         package_name="summary_only_json_bundle",
@@ -2161,7 +2171,9 @@ def test_docket_cli_can_emit_packaged_summary_only_json_without_output(tmp_path:
     assert "output_path" not in payload
     assert payload["packaged_summary_view"]["document_count"] == 1
     assert payload["packaged_summary_view"]["case_name"] == "CLI Summary Only JSON"
-    assert payload["packaged_summary_view"]["eu_citation_count"] == 0
+    assert payload["packaged_summary_view"]["eu_citation_count"] == 2
+    assert payload["packaged_summary_view"]["eu_unique_citation_count"] == 2
+    assert payload["packaged_summary_view"]["eu_documents_with_citations"] == 1
 
 
 def test_docket_cli_prints_packaged_summary_only_text(tmp_path: Path) -> None:
@@ -2176,6 +2188,13 @@ def test_docket_cli_prints_packaged_summary_only_text(tmp_path: Path) -> None:
             ],
         }
     )
+    dataset.metadata["citation_source_audit"] = {
+        "eu_citation_audit": {
+            "citation_count": 2,
+            "unique_citation_count": 2,
+            "documents_with_citations": 1,
+        }
+    }
     package = dataset.write_package(
         tmp_path / "summary_only_text_bundle",
         package_name="summary_only_text_bundle",
@@ -2199,6 +2218,43 @@ def test_docket_cli_prints_packaged_summary_only_text(tmp_path: Path) -> None:
     assert "Packaged Summary" in text
     assert "document_count: 1" in text
     assert "case_name: CLI Summary Only Text" in text
+    assert "eu_citation_count: 2" in text
+    assert "eu_unique_citation_count: 2" in text
+    assert "eu_documents_with_citations: 1" in text
+
+
+def test_docket_cli_prints_non_packaged_summary_with_eu_counts(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "summary_text_docket.json"
+    docket_path.write_text(
+        json.dumps(
+            {
+                "docket_id": "cl-summary-text",
+                "case_name": "CLI Summary Text",
+                "documents": [
+                    {"id": "doc_1", "title": "Complaint", "text": "Breach of contract allegations."}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "json",
+                "--input-path",
+                str(docket_path),
+                "--output",
+                str(tmp_path / "summary_text_dataset.json"),
+            ]
+        )
+
+    assert result == 0
+    text = output.getvalue()
+    assert "document_count: 1" in text
     assert "eu_citation_count: 0" in text
 
 
