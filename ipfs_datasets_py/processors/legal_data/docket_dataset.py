@@ -5,8 +5,9 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 import hashlib
-import math
 import json
+import math
+import os
 from pathlib import Path
 import subprocess
 from typing import Any, Dict, Iterable, List, Optional, Sequence
@@ -75,6 +76,25 @@ def _dedupe_string_sequence(values: Iterable[Any]) -> List[str]:
 
 def _normalize_authority_text(value: Any) -> str:
     return " ".join(str(value or "").strip().split())
+
+
+def _local_only_bluebook_resolver() -> BluebookCitationResolver:
+    return BluebookCitationResolver(allow_hf_fallback=False)
+
+
+def _truthy_env(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _formal_logic_enrichment_enabled() -> bool:
+    return not _truthy_env(os.getenv("IPFS_DATASETS_PY_DISABLE_DOCKET_FORMAL_LOGIC"))
+
+
+def _router_enrichment_enabled() -> bool:
+    return not (
+        _truthy_env(os.getenv("IPFS_DATASETS_PY_DISABLE_DOCKET_ROUTER_ENRICHMENT"))
+        or _truthy_env(os.getenv("IPFS_DATASETS_PY_DISABLE_EMBEDDINGS_ROUTER"))
+    )
 
 
 _LOW_VALUE_TEXT_SOURCES = {
@@ -303,6 +323,7 @@ def _citation_recovery_candidate_from_link(document: "DocketDocument", link: Any
 def _collect_document_citation_recovery_candidates(document: "DocketDocument") -> List[Dict[str, Any]]:
     link_payloads = list(document.metadata.get("citation_links") or [])
     if not link_payloads and str(document.text or "").strip():
+        resolver = _local_only_bluebook_resolver()
         link_payloads = [
             {
                 "citation_text": link.citation_text,
@@ -312,7 +333,7 @@ def _collect_document_citation_recovery_candidates(document: "DocketDocument") -
                 "corpus_key": link.corpus_key,
                 "metadata": dict(link.metadata),
             }
-            for link in resolve_bluebook_citations_in_text(document.text)
+            for link in resolver.resolve_text(document.text, exhaustive=False)
         ]
 
     candidates: List[Dict[str, Any]] = []
@@ -995,6 +1016,7 @@ def _merge_linked_authorities(
     document_count = 0
     unresolved_count = 0
     recovery_candidates: List[Dict[str, Any]] = []
+    active_resolver = resolver or _local_only_bluebook_resolver()
     citation_audit = audit_bluebook_citation_resolution_for_documents(
         [
             {
@@ -1005,7 +1027,8 @@ def _merge_linked_authorities(
             for document in documents
         ],
         state_code=state_code,
-        resolver=resolver,
+        resolver=active_resolver,
+        exhaustive=False,
     )
     audit_by_document_id = {
         str(item.get("document_id") or ""): item
@@ -1026,9 +1049,7 @@ def _merge_linked_authorities(
         if not text:
             continue
         links = (
-            resolver.resolve_text(text, state_code=state_code)
-            if resolver is not None
-            else resolve_bluebook_citations_in_text(text, state_code=state_code)
+            active_resolver.resolve_text(text, state_code=state_code, exhaustive=False)
         )
         if not links:
             continue
@@ -1548,6 +1569,8 @@ class DocketDatasetBuilder:
         include_formal_logic: bool = True,
         include_router_enrichment: bool = True,
     ) -> DocketDatasetObject:
+        include_formal_logic = bool(include_formal_logic) and _formal_logic_enrichment_enabled()
+        include_router_enrichment = bool(include_router_enrichment) and _router_enrichment_enabled()
         normalized_documents = self._normalize_documents(docket)
         docket_id = str(docket.get("docket_id") or docket.get("id") or "docket")
         case_name = str(docket.get("case_name") or docket.get("title") or docket_id)

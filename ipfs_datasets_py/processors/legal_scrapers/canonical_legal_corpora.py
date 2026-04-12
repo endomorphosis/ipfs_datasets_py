@@ -5,9 +5,24 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import re
+import sys
+import importlib.util
 from typing import Dict, List, Mapping, MutableMapping, Optional, Tuple
 
-from .eu_legal_citation_bridge import get_eu_jurisdiction_profiles
+try:
+    from .eu_legal_citation_bridge import get_eu_jurisdiction_profiles
+except ImportError:  # pragma: no cover - file-based test imports
+    _EU_MODULE_PATH = Path(__file__).with_name("eu_legal_citation_bridge.py")
+    _EU_SPEC = importlib.util.spec_from_file_location(
+        "eu_legal_citation_bridge",
+        _EU_MODULE_PATH,
+    )
+    if _EU_SPEC is None or _EU_SPEC.loader is None:
+        raise
+    _EU_MODULE = importlib.util.module_from_spec(_EU_SPEC)
+    sys.modules.setdefault("eu_legal_citation_bridge", _EU_MODULE)
+    _EU_SPEC.loader.exec_module(_EU_MODULE)
+    get_eu_jurisdiction_profiles = _EU_MODULE.get_eu_jurisdiction_profiles
 
 
 @dataclass(frozen=True)

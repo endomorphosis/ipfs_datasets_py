@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schemas/legal_pdf/state_court_filing_packet_manifest.schema.json",
+  "documents": [
+    "motion.md",
+    "memorandum.md",
+    "declaration.md"
+  ],
+  "output_dir": "rendered_pdfs",
+  "packet_output_path": "rendered_pdfs/filing_packet.pdf",
+  "config": {
+    "contact_block_html": "Benjamin Jay Barber, pro se<br/>Defendant",
+    "court_name": "IN THE CLACKAMAS COUNTY JUSTICE COURT",
+    "state_name": "STATE OF OREGON",
+    "caption_left_html": "PLAINTIFF,<br/>v.<br/>DEFENDANT.",
+    "case_number_line": "Case No. __________________",
+    "filed_date": "April 12, 2026",
+    "signature_doc_keywords": [
+      "motion",
+      "memorandum",
+      "certificate_of_service"
+    ],
+    "declaration_doc_keywords": [
+      "declaration"
+    ]
+  }
+}

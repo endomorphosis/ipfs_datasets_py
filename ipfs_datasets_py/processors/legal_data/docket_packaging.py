@@ -23,6 +23,7 @@ from ..serialization.car_conversion import DataInterchangeUtils
 from ..storage.ipld.storage import IPLDStorage
 from ..retrieval import bm25_search_documents, embed_query_for_backend, hashed_term_projection, vector_dot
 from ..legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from .docket_pdf_export import export_docket_dataset_single_pdf
 
 
 def _safe_identifier(value: Any) -> str:
@@ -602,6 +603,8 @@ class DocketDatasetPackager:
         *,
         package_name: str | None = None,
         include_car: bool = True,
+        include_pdf: bool = False,
+        pdf_options: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         dataset_payload = dataset.to_dict() if hasattr(dataset, "to_dict") else dict(dataset)
         output_root = Path(output_dir)
@@ -1056,6 +1059,37 @@ class DocketDatasetPackager:
             },
         }
 
+        pdf_artifacts: List[Dict[str, Any]] = []
+        if include_pdf:
+            normalized_pdf_options = dict(pdf_options or {})
+            pdf_dir = bundle_dir if legacy_layout else bundle_dir / "pdf"
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            pdf_filename = str(
+                normalized_pdf_options.get("filename")
+                or f"{_safe_identifier(bundle_name)}.pdf"
+            )
+            pdf_path = pdf_dir / pdf_filename
+            pdf_result = export_docket_dataset_single_pdf(
+                dataset_payload,
+                pdf_path,
+                title=str(normalized_pdf_options.get("title") or dataset_payload.get("case_name") or bundle_name),
+                include_source_files=bool(normalized_pdf_options.get("include_source_files", True)),
+            )
+            pdf_artifacts.append(
+                {
+                    "path": str(pdf_path.relative_to(bundle_dir)),
+                    "title": str(pdf_result.get("title") or ""),
+                    "page_count": int(pdf_result.get("page_count") or 0),
+                    "file_size": int(pdf_result.get("file_size") or 0),
+                    "sha256": str(pdf_result.get("sha256") or ""),
+                    "document_count": int(pdf_result.get("document_count") or 0),
+                    "source_artifact_count": int(pdf_result.get("source_artifact_count") or 0),
+                    "included_source_files": bool(pdf_result.get("included_source_files")),
+                }
+            )
+        manifest["pdf_enabled"] = bool(pdf_artifacts)
+        manifest["pdf_artifacts"] = pdf_artifacts
+
         manifest_json_path = bundle_dir / ("manifest.json" if legacy_layout else "bundle_manifest.json")
         manifest_json_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         manifest_parquet_path = parquet_dir / ("manifest.parquet" if legacy_layout else "bundle_manifest.parquet")
@@ -1088,6 +1122,9 @@ class DocketDatasetPackager:
             "manifest_parquet_path": str(manifest_parquet_path),
             "manifest_car_path": str(bundle_dir / manifest_car_path) if manifest_car_path else "",
             "manifest_root_cid": manifest_root_cid,
+            "pdf_enabled": bool(pdf_artifacts),
+            "pdf_artifacts": list(pdf_artifacts),
+            "primary_pdf_path": str(bundle_dir / pdf_artifacts[0]["path"]) if pdf_artifacts else "",
             "piece_count": len(pieces),
             "pieces": [piece.to_dict() for piece in pieces],
             "summary": dict(manifest["summary"]),
@@ -3249,6 +3286,8 @@ def package_docket_dataset(
     *,
     package_name: str | None = None,
     include_car: bool = True,
+    include_pdf: bool = False,
+    pdf_options: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Package a docket dataset into linked Parquet and CAR bundle artifacts."""
 
@@ -3257,6 +3296,8 @@ def package_docket_dataset(
         output_dir,
         package_name=package_name,
         include_car=include_car,
+        include_pdf=include_pdf,
+        pdf_options=pdf_options,
     )
 
 
@@ -7027,6 +7068,7 @@ __all__ = [
     "load_packaged_docket_inspection_report",
     "plan_packaged_docket_query",
     "persist_packaged_docket_proof_revalidation_queue",
+    "export_docket_dataset_single_pdf",
     "prepare_packaged_docket_follow_up_job",
     "export_docket_dataset_single_parquet",
     "package_docket_dataset",

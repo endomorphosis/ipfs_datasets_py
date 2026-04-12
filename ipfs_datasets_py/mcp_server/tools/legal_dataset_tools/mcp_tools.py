@@ -7,10 +7,21 @@ Business logic is in ipfs_datasets_py.processors.legal_scrapers.legal_dataset_ap
 """
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Dict, List, Optional
+from pathlib import Path
 
 from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import get_canonical_legal_corpus
+from ipfs_datasets_py.processors.legal_data import (
+    load_packaged_docket_dataset,
+    load_packaged_workspace_dataset,
+    load_workspace_dataset_single_parquet,
+    search_docket_dataset_bm25,
+    search_docket_dataset_vector,
+    search_workspace_dataset_bm25,
+    search_workspace_dataset_vector,
+)
 from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import (
     DEFAULT_CAP_CHUNK_HF_PARQUET_FILE,
     DEFAULT_CAP_HF_DATASET_ID,
@@ -180,6 +191,128 @@ async def search_netherlands_law_corpus(parameters: Dict[str, Any]) -> Dict[str,
         search_netherlands_law_corpus_from_parameters,
     )
     return await search_netherlands_law_corpus_from_parameters(parameters, tool_version=_TOOL_VERSION)
+
+
+async def search_workspace_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search a workspace dataset bundle or packaged manifest using BM25 or vector retrieval."""
+    input_path = str(parameters.get("input_path") or "").strip()
+    query = str(parameters.get("query") or "").strip()
+    backend = str(parameters.get("backend") or "bm25").strip().lower() or "bm25"
+    input_kind = str(parameters.get("input_kind") or "auto").strip().lower() or "auto"
+    top_k = int(parameters.get("top_k") or 10)
+
+    if not input_path:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": "input_path is required",
+        }
+    if not query:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": "query is required",
+        }
+    if backend not in {"bm25", "vector"}:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": f"Unsupported backend: {backend}",
+        }
+    if input_kind not in {"auto", "single", "packaged"}:
+        return {
+            "status": "error",
+            "operation": "search_workspace_dataset",
+            "error": f"Unsupported input_kind: {input_kind}",
+        }
+
+    bundle_path = Path(input_path)
+    resolved_input_kind = input_kind
+    if resolved_input_kind == "auto":
+        if bundle_path.suffix.lower() == ".parquet":
+            resolved_input_kind = "single"
+        else:
+            resolved_input_kind = "packaged"
+
+    dataset = (
+        load_workspace_dataset_single_parquet(bundle_path)
+        if resolved_input_kind == "single"
+        else load_packaged_workspace_dataset(bundle_path)
+    )
+    result = (
+        search_workspace_dataset_bm25(dataset, query, top_k=top_k)
+        if backend == "bm25"
+        else search_workspace_dataset_vector(dataset, query, top_k=top_k)
+    )
+    return {
+        "status": "success",
+        "operation": "search_workspace_dataset",
+        "tool_version": _TOOL_VERSION,
+        "input_path": input_path,
+        "input_kind": resolved_input_kind,
+        "backend": backend,
+        **result,
+    }
+
+
+async def search_docket_dataset(parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """Search a docket dataset JSON artifact or packaged manifest using BM25 or vector retrieval."""
+    input_path = str(parameters.get("input_path") or "").strip()
+    query = str(parameters.get("query") or "").strip()
+    backend = str(parameters.get("backend") or "bm25").strip().lower() or "bm25"
+    input_kind = str(parameters.get("input_kind") or "auto").strip().lower() or "auto"
+    top_k = int(parameters.get("top_k") or 10)
+    vector_dimension = int(parameters.get("vector_dimension") or 32)
+
+    if not input_path:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": "input_path is required",
+        }
+    if not query:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": "query is required",
+        }
+    if backend not in {"bm25", "vector"}:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": f"Unsupported backend: {backend}",
+        }
+    if input_kind not in {"auto", "dataset", "packaged"}:
+        return {
+            "status": "error",
+            "operation": "search_docket_dataset",
+            "error": f"Unsupported input_kind: {input_kind}",
+        }
+
+    resolved_input_path = Path(input_path)
+    resolved_input_kind = input_kind
+    if resolved_input_kind == "auto":
+        resolved_input_kind = "packaged" if resolved_input_path.name == "bundle_manifest.json" else "dataset"
+
+    dataset = (
+        json.loads(resolved_input_path.read_text(encoding="utf-8"))
+        if resolved_input_kind == "dataset"
+        else load_packaged_docket_dataset(resolved_input_path)
+    )
+    result = (
+        search_docket_dataset_bm25(dataset, query, top_k=top_k)
+        if backend == "bm25"
+        else search_docket_dataset_vector(dataset, query, top_k=top_k, vector_dimension=vector_dimension)
+    )
+    return {
+        "status": "success",
+        "operation": "search_docket_dataset",
+        "tool_version": _TOOL_VERSION,
+        "input_path": input_path,
+        "input_kind": resolved_input_kind,
+        "backend": backend,
+        **result,
+    }
 
 
 async def recover_missing_legal_citation_source(parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -743,8 +876,35 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
         "category": "legal_dataset_tools",
     },
     {
+        "name": "search_workspace_dataset",
+        "description": "Search a workspace dataset single bundle or packaged manifest and return grouped bundle-aware results.",
+        "function": search_workspace_dataset,
+        "parameters": {
+            "input_path": {"type": "string", "required": True},
+            "query": {"type": "string", "required": True},
+            "backend": {"type": "string", "default": "bm25"},
+            "input_kind": {"type": "string", "default": "auto"},
+            "top_k": {"type": "integer", "default": 10},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
+        "name": "search_docket_dataset",
+        "description": "Search a docket dataset JSON artifact or packaged manifest with BM25 or vector retrieval.",
+        "function": search_docket_dataset,
+        "parameters": {
+            "input_path": {"type": "string", "required": True},
+            "query": {"type": "string", "required": True},
+            "backend": {"type": "string", "default": "bm25"},
+            "input_kind": {"type": "string", "default": "auto"},
+            "top_k": {"type": "integer", "default": 10},
+            "vector_dimension": {"type": "integer", "default": 32},
+        },
+        "category": "legal_dataset_tools",
+    },
+    {
         "name": "recover_missing_legal_citation_source",
-        "description": "Recover candidate official sources for an unresolved legal citation using search, archive, and optional HF publish steps.",
+        "description": "Recover candidate official sources for an unresolved legal citation using search, archive, candidate-file fetch artifacts, scraper patch scaffolds, and optional HF publish steps.",
         "function": recover_missing_legal_citation_source,
         "parameters": {
             "citation_text": {"type": "string", "required": True},
@@ -1017,6 +1177,8 @@ __all__ = [
     "search_court_rules_corpus",
     "search_federal_register_corpus",
     "search_netherlands_law_corpus",
+    "search_workspace_dataset",
+    "search_docket_dataset",
     "recover_missing_legal_citation_source",
     "promote_recovery_manifest_to_canonical_bundle",
     "preview_recovery_manifest_release_plan",

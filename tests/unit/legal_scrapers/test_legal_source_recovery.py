@@ -13,6 +13,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
     build_recovery_feedback_entries_from_citation_audit,
     build_missing_citation_recovery_query,
     recover_citation_audit_feedback,
+    recover_missing_legal_citation_source,
 )
 
 
@@ -67,6 +68,62 @@ class _FakeArchiver:
         ]
 
 
+class _FakeFetchAPI:
+    def fetch(self, request, **kwargs):
+        url = request if isinstance(request, str) else request.url
+        if url == "https://www.revisor.mn.gov/statutes/cite/518.17":
+            return SimpleNamespace(
+                success=True,
+                document=SimpleNamespace(
+                    title="Minnesota Statutes 518.17",
+                    text="Official statute page",
+                    html="<a href=\"https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf\">Download PDF</a>",
+                    content_type="text/html",
+                    metadata={
+                        "content_type": "text/html",
+                        "links": [
+                            {
+                                "url": "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf",
+                                "text": "Download PDF",
+                            }
+                        ],
+                    },
+                    extraction_provenance={"method": "requests_only"},
+                ),
+                errors=[],
+            )
+        if url == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf":
+            return SimpleNamespace(
+                success=True,
+                document=SimpleNamespace(
+                    title="Minnesota Statutes 518.17 PDF",
+                    text="Minnesota Statutes 518.17 full text",
+                    html="",
+                    content_type="application/pdf",
+                    metadata={
+                        "content_type": "application/pdf",
+                        "raw_bytes": b"%PDF-1.4 fake",
+                    },
+                    extraction_provenance={"method": "requests_only"},
+                ),
+                errors=[],
+            )
+        return SimpleNamespace(success=False, document=None, errors=[SimpleNamespace(message="not found")])
+
+
+class _FakePatchManager:
+    def __init__(self):
+        self.saved = []
+
+    def save_patch(self, patch, output_path=None):
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(patch.diff_content, encoding="utf-8")
+        output_path.with_suffix(".json").write_text(json.dumps(patch.to_dict(), indent=2), encoding="utf-8")
+        self.saved.append((patch, output_path))
+        return output_path
+
+
 @pytest.mark.anyio
 async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, tmp_path):
     published = {}
@@ -85,6 +142,9 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
         live_searcher=_FakeLiveSearcher(),
         archive_searcher=_FakeArchiveSearcher(),
         archiver=_FakeArchiver(),
+        fetch_api=_FakeFetchAPI(),
+        patch_manager=_FakePatchManager(),
+        enable_candidate_file_fetch=True,
         publish_func=_fake_publish,
         now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
     )
@@ -100,8 +160,8 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
 
     assert result.status == "tracked_and_published"
     assert result.corpus_key == "state_laws"
-    assert result.candidate_count == 2
-    assert result.archived_count == 2
+    assert result.candidate_count == 3
+    assert result.archived_count == 3
     assert result.publish_report == {
         "repo_id": "justicedao/ipfs_state_laws",
         "path_in_repo": "source_recovery/20240102_030405_minn-stat-518-17",
@@ -116,6 +176,10 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
     assert manifest["hf_dataset_id"] == "justicedao/ipfs_state_laws"
     assert manifest["search_query"].startswith("Minn. Stat. § 518.17 MN Minnesota official statutes code legislature")
     assert manifest["candidates"][0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
+    assert manifest["candidate_files"][0]["url"] == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf"
+    assert manifest["candidate_files"][0]["artifact_path"].endswith(".pdf")
+    assert manifest["scraper_patch"]["target_file"] == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+    assert Path(manifest["scraper_patch"]["patch_path"]).exists()
     assert result.promotion_preview["hf_dataset_id"] == "justicedao/ipfs_state_laws"
     assert result.promotion_preview["target_parquet_file"] == "STATE-MN.parquet"
     assert result.release_plan_preview["artifacts"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
@@ -123,6 +187,97 @@ async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, 
     assert published["repo_id"] == "justicedao/ipfs_state_laws"
     assert published["path_in_repo"] == "source_recovery/20240102_030405_minn-stat-518-17"
     assert Path(published["local_dir"]) == manifest_path.parent
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_discovers_candidate_files_and_writes_patch(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    patch_manager = _FakePatchManager()
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_FakeLiveSearcher(),
+        archive_searcher=_FakeArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        fetch_api=_FakeFetchAPI(),
+        patch_manager=patch_manager,
+        enable_candidate_file_fetch=True,
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+    )
+
+    assert result.candidate_files
+    assert result.candidate_files[0].url == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf"
+    assert result.candidate_files[0].fetch_success is True
+    assert result.candidate_files[0].artifact_path is not None
+    assert Path(result.candidate_files[0].artifact_path).exists()
+    assert result.scraper_patch is not None
+    assert result.scraper_patch.host == "www.revisor.mn.gov"
+    assert patch_manager.saved
+    patch_text = Path(result.scraper_patch.patch_path).read_text(encoding="utf-8")
+    assert "UnifiedWebArchivingAPI.fetch" in patch_text
+    assert "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf" in patch_text
+
+
+@pytest.mark.anyio
+async def test_public_recover_missing_legal_citation_source_emits_candidate_files_and_patch(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    fake_searcher = SimpleNamespace(
+        legal_searcher=_FakeLiveSearcher(),
+        search_with_indexes=_FakeArchiveSearcher().search_with_indexes,
+    )
+
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_searcher",
+        lambda self: fake_searcher,
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_archiver_instance",
+        lambda self: _FakeArchiver(),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_fetch_api_instance",
+        lambda self: _FakeFetchAPI(),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_patch_manager_instance",
+        lambda self, *, manifest_dir: _FakePatchManager(),
+    )
+
+    result = await recover_missing_legal_citation_source(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+        archive_top_k=1,
+    )
+
+    assert result["status"] == "tracked"
+    assert result["candidate_files"]
+    assert result["candidate_files"][0]["url"] == "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf"
+    assert result["candidate_files"][0]["fetch_success"] is True
+    assert result["scraper_patch"]["host"] == "www.revisor.mn.gov"
+    assert Path(result["scraper_patch"]["patch_path"]).exists()
 
 
 def test_build_missing_citation_recovery_query_prefers_official_domains():

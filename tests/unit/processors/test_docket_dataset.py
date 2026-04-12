@@ -3,6 +3,8 @@ from pathlib import Path
 import zipfile
 
 import pytest
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from ipfs_datasets_py.processors.legal_data import docket_dataset as docket_dataset_module
 from ipfs_datasets_py.processors.legal_data import docket_packaging as docket_packaging_module
 
@@ -23,6 +25,7 @@ from ipfs_datasets_py.processors.legal_data import (
     execute_packaged_docket_query,
     execute_packaged_docket_follow_up_job,
     execute_packaged_docket_follow_up_plan,
+    export_docket_dataset_single_pdf,
     export_docket_dataset_single_parquet,
     get_packaged_docket_operator_dashboard,
     get_packaged_docket_proof_revalidation_queue,
@@ -55,10 +58,16 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import ipfs_datasets_py.processors as processors_module
 
+try:
+    from PyPDF2 import PdfReader
+except Exception:  # pragma: no cover - dependency fallback
+    from pypdf import PdfReader  # type: ignore
+
 
 @pytest.fixture(autouse=True)
 def disable_embeddings_router(monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_EMBEDDINGS_ROUTER", "1")
+    monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_DOCKET_FORMAL_LOGIC", "1")
     monkeypatch.setattr(
         docket_dataset_module,
         "enrich_docket_documents_with_routers",
@@ -3923,6 +3932,86 @@ def test_docket_dataset_can_export_single_parquet_bundle(tmp_path) -> None:
     assert any(row["section"] == "bm25_documents" for row in rows)
     assert any(row["section"] == "vector_items" for row in rows)
     assert any(row["section"] == "knowledge_graph_entities" for row in rows)
+
+
+def test_docket_dataset_can_export_single_pdf_bundle(tmp_path) -> None:
+    source_pdf = tmp_path / "source_exhibit.pdf"
+    source_canvas = canvas.Canvas(str(source_pdf), pagesize=letter)
+    source_canvas.drawString(72, 720, "Source exhibit for docket PDF export")
+    source_canvas.save()
+
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "single_pdf_docket",
+            "case_name": "Single PDF Test",
+            "court": "gand",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Complaint",
+                    "text": "Substantive complaint text for the PDF export.",
+                    "document_number": "1",
+                    "source_url": "https://storage.courtlistener.com/recap/example.1.0.pdf",
+                    "metadata": {
+                        "source_path": str(source_pdf),
+                    },
+                }
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    export_result = export_docket_dataset_single_pdf(
+        dataset,
+        tmp_path / "single_bundle.pdf",
+    )
+
+    reader = PdfReader(str(tmp_path / "single_bundle.pdf"))
+    extracted_text = "\n".join((page.extract_text() or "") for page in reader.pages)
+
+    assert export_result["page_count"] == len(reader.pages)
+    assert export_result["document_count"] == 1
+    assert export_result["source_artifact_count"] == 1
+    assert "Single PDF Test" in extracted_text
+    assert "Substantive complaint text for the PDF export." in extracted_text
+
+
+def test_packaged_docket_bundle_can_include_pdf_export(tmp_path) -> None:
+    dataset = DocketDatasetBuilder().build_from_docket(
+        {
+            "docket_id": "packaged_pdf_docket",
+            "case_name": "Packaged PDF Test",
+            "court": "D. Example",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Motion",
+                    "text": "The packaged bundle should include a PDF export artifact.",
+                }
+            ],
+        },
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    package_result = package_docket_dataset(
+        dataset,
+        tmp_path / "bundle_with_pdf",
+        package_name="bundle_with_pdf",
+        include_car=False,
+        include_pdf=True,
+    )
+
+    manifest = json.loads(Path(package_result["manifest_json_path"]).read_text(encoding="utf-8"))
+    primary_pdf_path = Path(str(package_result["primary_pdf_path"]))
+
+    assert package_result["pdf_enabled"] is True
+    assert primary_pdf_path.exists()
+    assert manifest["pdf_enabled"] is True
+    assert len(manifest["pdf_artifacts"]) == 1
+    assert manifest["pdf_artifacts"][0]["path"].endswith(".pdf")
+    assert manifest["pdf_artifacts"][0]["page_count"] >= 2
 
 
 def test_packaged_docket_logic_artifact_queries_execute_via_direct_and_planned_paths(tmp_path, monkeypatch):

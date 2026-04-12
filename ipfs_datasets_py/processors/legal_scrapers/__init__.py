@@ -173,6 +173,7 @@ from .bluebook_citation_linker import (
     CitationLink,
     audit_bluebook_citation_resolution_for_documents,
     citation_link_to_dict,
+    resolve_bluebook_lookup_result_document,
     resolve_bluebook_citations_in_text,
 )
 from .legal_source_recovery import (

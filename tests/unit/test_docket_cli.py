@@ -55,6 +55,7 @@ _ROUTER_STUB = {
 @pytest.fixture(autouse=True)
 def _disable_router_for_cli_tests(monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_EMBEDDINGS_ROUTER", "1")
+    monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_DOCKET_FORMAL_LOGIC", "1")
     monkeypatch.setattr(
         _docket_dataset_module,
         "enrich_docket_documents_with_routers",
@@ -110,6 +111,96 @@ def test_docket_cli_main_json_output_from_json_file(tmp_path: Path) -> None:
     assert payload["summary"]["document_count"] == 1
 
 
+def test_docket_cli_can_search_source_docket_with_bm25(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    docket_path = tmp_path / "docket.json"
+    docket_path.write_text(json.dumps({"docket_id": "1:24-cv-1002", "documents": []}), encoding="utf-8")
+
+    monkeypatch.setattr(
+        module.DocketDatasetBuilder,
+        "build_from_json_file",
+        lambda self, path, **kwargs: {"dataset_id": "docket_dataset_1", "documents": []},
+    )
+    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "dataset_id": "docket_dataset_1"})
+    monkeypatch.setattr(
+        module,
+        "search_docket_dataset_bm25",
+        lambda dataset, query, *, top_k=10: {
+            "query": query,
+            "top_k": top_k,
+            "results": [{"id": "doc_1", "title": "Complaint"}],
+            "result_count": 1,
+            "source": "local_bm25",
+        },
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "json",
+                "--input-path",
+                str(docket_path),
+                "--search-backend",
+                "bm25",
+                "--query",
+                "complaint",
+                "--top-k",
+                "5",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["search_results"]["result_count"] == 1
+    assert payload["search_results"]["results"][0]["id"] == "doc_1"
+
+
+def test_docket_cli_can_search_packaged_docket_with_vector(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    manifest_path = tmp_path / "bundle_manifest.json"
+    manifest_path.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(module, "load_packaged_docket_dataset", lambda path: {"dataset_id": "packaged_docket_1", "documents": []})
+    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 2, "dataset_id": "packaged_docket_1"})
+    monkeypatch.setattr(
+        module,
+        "search_docket_dataset_vector",
+        lambda dataset, query, *, top_k=10, vector_dimension=32: {
+            "query": query,
+            "top_k": top_k,
+            "results": [{"document_id": "doc_2", "title": "Response", "score": 0.8}],
+            "result_count": 1,
+            "source": "local_hashed_term_projection",
+        },
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "packaged",
+                "--input-path",
+                str(manifest_path),
+                "--search-backend",
+                "vector",
+                "--query",
+                "response",
+                "--top-k",
+                "3",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["search_results"]["result_count"] == 1
+    assert payload["search_results"]["results"][0]["document_id"] == "doc_2"
+
+
 def test_ipfs_datasets_cli_dispatches_docket_command(tmp_path: Path, monkeypatch) -> None:
     docket_path = tmp_path / "docket.json"
     docket_path.write_text(
@@ -158,6 +249,39 @@ def test_ipfs_datasets_cli_dispatches_docket_command(tmp_path: Path, monkeypatch
     assert payload["status"] == "success"
     assert payload["summary"]["document_count"] == 1
     assert payload["summary"]["eu_citation_count"] == 0
+
+
+def test_ipfs_datasets_cli_docket_help_mentions_search_options(monkeypatch) -> None:
+    module_path = Path(__file__).resolve().parents[2] / "ipfs_datasets_cli.py"
+    spec = importlib.util.spec_from_file_location("ipfs_datasets_cli_under_test", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        monkeypatch.setattr(module.sys, "argv", ["ipfs-datasets", "docket", "--help"])
+        module.main()
+
+    rendered = output.getvalue()
+    assert "--search-backend {bm25,vector}" in rendered
+    assert "--packaged-action {summary,inspect,dashboard,report,dashboard-report,recap-fetch,recap-preflight}" in rendered
+    assert "Import, search, inspect, and package docket datasets" in rendered
+
+
+def test_docket_cli_help_mentions_search_options() -> None:
+    module = _load_docket_cli_module()
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        with pytest.raises(SystemExit) as exc:
+            module.main(["--help"])
+
+    assert exc.value.code == 0
+    rendered = output.getvalue()
+    assert "Import, inspect, search, and package dockets" in rendered
+    assert "--search-backend {bm25,vector}" in rendered
+    assert "--top-k TOP_K" in rendered
 
 
 def test_docket_cli_main_json_output_from_courtlistener(tmp_path: Path, monkeypatch) -> None:
@@ -1113,6 +1237,12 @@ def test_docket_cli_can_emit_citation_source_audit_for_source_docket_without_out
         ),
         encoding="utf-8",
     )
+    module._build_citation_source_audit_from_dataset = lambda dataset_payload, **kwargs: {
+        "citation_count": 2,
+        "matched_citation_count": 1,
+        "unmatched_citation_count": 1,
+        "source": "docket_dataset_citation_source_audit",
+    }
 
     output = io.StringIO()
     with redirect_stdout(output):
@@ -1251,7 +1381,7 @@ def test_docket_cli_can_emit_packaged_citation_source_audit_without_output(tmp_p
         package_name="citation_audit_packaged_bundle",
         include_car=False,
     )
-    module._build_citation_source_audit_from_dataset = lambda dataset_payload: {
+    module.audit_packaged_docket_citation_sources = lambda manifest_path: {
         "citation_count": 3,
         "matched_citation_count": 2,
         "unmatched_citation_count": 1,
@@ -1300,6 +1430,28 @@ def test_docket_cli_can_recover_citation_sources_for_source_docket_without_outpu
         ),
         encoding="utf-8",
     )
+    module._build_citation_source_audit_from_dataset = lambda dataset_payload, **kwargs: {
+        "document_count": 1,
+        "unmatched_citation_count": 1,
+        "unresolved_documents": [
+            {
+                "document_id": "doc_1",
+                "document_title": "Motion",
+                "unmatched_citations": [
+                    {
+                        "citation_text": "Minn. Stat. § 999.999",
+                        "normalized_citation": "Minn. Stat. § 999.999",
+                        "metadata": {
+                            "state_code": "MN",
+                            "recovery_corpus_key": "state_laws",
+                            "candidate_corpora": ["state_laws"],
+                        },
+                    }
+                ],
+            }
+        ],
+        "source": "docket_dataset_citation_source_audit",
+    }
 
     captured: dict[str, object] = {}
 
@@ -1454,6 +1606,28 @@ def test_docket_cli_can_recover_citation_sources_end_to_end(tmp_path: Path, monk
         ),
         encoding="utf-8",
     )
+    module._build_citation_source_audit_from_dataset = lambda dataset_payload, **kwargs: {
+        "document_count": 1,
+        "unmatched_citation_count": 1,
+        "unresolved_documents": [
+            {
+                "document_id": "doc_1",
+                "document_title": "Motion",
+                "unmatched_citations": [
+                    {
+                        "citation_text": "Minn. Stat. § 518.17",
+                        "normalized_citation": "Minn. Stat. § 518.17",
+                        "metadata": {
+                            "state_code": "MN",
+                            "recovery_corpus_key": "state_laws",
+                            "candidate_corpora": ["state_laws"],
+                        },
+                    }
+                ],
+            }
+        ],
+        "source": "docket_dataset_citation_source_audit",
+    }
 
     class _FakeLiveSearcher:
         def search(self, query: str, max_results: int = 20, **kwargs):

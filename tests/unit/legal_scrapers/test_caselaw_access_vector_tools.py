@@ -108,6 +108,8 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
         "search_caselaw_access_cases",
         "search_us_code_corpus",
         "search_state_law_corpus",
+        "search_workspace_dataset",
+        "search_docket_dataset",
         "search_federal_register_corpus",
         "search_netherlands_law_corpus",
         "recover_missing_legal_citation_source",
@@ -165,7 +167,20 @@ def test_cap_tool_specs_include_bundle_and_centroid_search() -> None:
     assert "as_of_date" in netherlands_params
     assert "effective_date" in netherlands_params
 
+    workspace_params = by_name["search_workspace_dataset"]["parameters"]
+    assert workspace_params["input_path"].get("required") is True
+    assert workspace_params["query"].get("required") is True
+    assert workspace_params["backend"]["default"] == "bm25"
+    assert workspace_params["input_kind"]["default"] == "auto"
+
+    docket_params = by_name["search_docket_dataset"]["parameters"]
+    assert docket_params["input_path"].get("required") is True
+    assert docket_params["query"].get("required") is True
+    assert docket_params["backend"]["default"] == "bm25"
+    assert docket_params["input_kind"]["default"] == "auto"
+
     recovery_params = by_name["recover_missing_legal_citation_source"]["parameters"]
+    assert "candidate-file fetch artifacts" in by_name["recover_missing_legal_citation_source"]["description"]
     assert recovery_params["citation_text"].get("required") is True
     assert recovery_params["max_candidates"]["default"] == 8
     assert recovery_params["archive_top_k"]["default"] == 3
@@ -214,6 +229,8 @@ def test_tool_registration_mapping_includes_cap_entries() -> None:
         "search_caselaw_access_cases",
         "search_us_code_corpus",
         "search_state_law_corpus",
+        "search_workspace_dataset",
+        "search_docket_dataset",
         "search_netherlands_law_corpus",
         "recover_missing_legal_citation_source",
         "promote_recovery_manifest_to_canonical_bundle",
@@ -240,6 +257,208 @@ async def test_search_requires_query_vector() -> None:
     assert result["status"] == "error"
     assert result["operation"] == "search"
     assert "query_vector is required" in result["error"]
+
+
+@pytest.mark.anyio
+async def test_mcp_workspace_search_auto_loads_single_bundle_and_returns_grouped_results(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Workspace MCP search should auto-load a single bundle and return grouped results."""
+    captured = {}
+
+    def _fake_load_single(path):
+        captured["load_single"] = str(path)
+        return {"dataset_id": "workspace_1"}
+
+    def _fake_search(dataset, query, *, top_k=10):
+        captured["search"] = {"dataset": dataset, "query": query, "top_k": top_k}
+        return {
+            "query": query,
+            "top_k": top_k,
+            "results": [{"id": "voice_1"}],
+            "grouped_results": [{"group_id": "google_voice_bundle_voice_1"}],
+            "result_count": 1,
+            "group_count": 1,
+            "source": "local_bm25",
+        }
+
+    monkeypatch.setattr(mcp_tools, "load_workspace_dataset_single_parquet", _fake_load_single)
+    monkeypatch.setattr(mcp_tools, "search_workspace_dataset_bm25", _fake_search)
+
+    result = await mcp_tools.search_workspace_dataset(
+        {
+            "input_path": "/tmp/workspace_bundle.parquet",
+            "query": "inspection",
+            "top_k": 5,
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_workspace_dataset"
+    assert result["input_kind"] == "single"
+    assert result["backend"] == "bm25"
+    assert result["group_count"] == 1
+    assert result["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_1"
+    assert captured["load_single"] == "/tmp/workspace_bundle.parquet"
+    assert captured["search"]["query"] == "inspection"
+    assert captured["search"]["top_k"] == 5
+
+
+@pytest.mark.anyio
+async def test_mcp_workspace_search_auto_loads_packaged_manifest_and_uses_vector_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Workspace MCP search should auto-load packaged manifests and dispatch vector search."""
+    captured = {}
+
+    def _fake_load_packaged(path):
+        captured["load_packaged"] = str(path)
+        return {"dataset_id": "workspace_packaged_1"}
+
+    def _fake_vector_search(dataset, query, *, top_k=10):
+        captured["vector_search"] = {"dataset": dataset, "query": query, "top_k": top_k}
+        return {
+            "query": query,
+            "top_k": top_k,
+            "results": [{"document_id": "voice_1", "score": 0.81}],
+            "grouped_results": [{"group_id": "google_voice_bundle_voice_1"}],
+            "result_count": 1,
+            "group_count": 1,
+        }
+
+    monkeypatch.setattr(mcp_tools, "load_packaged_workspace_dataset", _fake_load_packaged)
+    monkeypatch.setattr(mcp_tools, "search_workspace_dataset_vector", _fake_vector_search)
+
+    result = await mcp_tools.search_workspace_dataset(
+        {
+            "input_path": "/tmp/workspace_package/bundle_manifest.json",
+            "query": "inspection",
+            "backend": "vector",
+            "top_k": 7,
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_workspace_dataset"
+    assert result["input_kind"] == "packaged"
+    assert result["backend"] == "vector"
+    assert result["group_count"] == 1
+    assert result["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_1"
+    assert captured["load_packaged"] == "/tmp/workspace_package/bundle_manifest.json"
+    assert captured["vector_search"]["query"] == "inspection"
+    assert captured["vector_search"]["top_k"] == 7
+
+
+@pytest.mark.anyio
+async def test_mcp_workspace_search_rejects_unknown_backend() -> None:
+    """Workspace MCP search should fail fast on unsupported backend values."""
+    result = await mcp_tools.search_workspace_dataset(
+        {
+            "input_path": "/tmp/workspace_bundle.parquet",
+            "query": "inspection",
+            "backend": "hybrid",
+        }
+    )
+
+    assert result["status"] == "error"
+    assert result["operation"] == "search_workspace_dataset"
+    assert "Unsupported backend" in result["error"]
+
+
+@pytest.mark.anyio
+async def test_mcp_docket_search_auto_loads_dataset_json_and_dispatches_bm25(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Docket MCP search should auto-load dataset JSON artifacts and dispatch BM25 search."""
+    dataset_path = tmp_path / "docket_dataset.json"
+    dataset_path.write_text('{"dataset_id": "docket_1"}', encoding="utf-8")
+    captured = {}
+
+    def _fake_search(dataset, query, *, top_k=10):
+        captured["search"] = {"dataset": dataset, "query": query, "top_k": top_k}
+        return {
+            "query": query,
+            "top_k": top_k,
+            "results": [{"id": "doc_1"}],
+            "result_count": 1,
+            "source": "local_bm25",
+        }
+
+    monkeypatch.setattr(mcp_tools, "search_docket_dataset_bm25", _fake_search)
+
+    result = await mcp_tools.search_docket_dataset(
+        {
+            "input_path": str(dataset_path),
+            "query": "complaint",
+            "top_k": 4,
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_docket_dataset"
+    assert result["input_kind"] == "dataset"
+    assert result["backend"] == "bm25"
+    assert captured["search"]["dataset"]["dataset_id"] == "docket_1"
+    assert captured["search"]["query"] == "complaint"
+    assert captured["search"]["top_k"] == 4
+
+
+@pytest.mark.anyio
+async def test_mcp_docket_search_auto_loads_packaged_manifest_and_uses_vector_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Docket MCP search should auto-load packaged manifests and dispatch vector search."""
+    captured = {}
+
+    def _fake_load_packaged(path):
+        captured["load_packaged"] = str(path)
+        return {"dataset_id": "packaged_docket_1"}
+
+    def _fake_vector_search(dataset, query, *, top_k=10, vector_dimension=32):
+        captured["vector_search"] = {
+            "dataset": dataset,
+            "query": query,
+            "top_k": top_k,
+            "vector_dimension": vector_dimension,
+        }
+        return {
+            "query": query,
+            "top_k": top_k,
+            "results": [{"document_id": "doc_2", "score": 0.75}],
+            "result_count": 1,
+        }
+
+    monkeypatch.setattr(mcp_tools, "load_packaged_docket_dataset", _fake_load_packaged)
+    monkeypatch.setattr(mcp_tools, "search_docket_dataset_vector", _fake_vector_search)
+
+    result = await mcp_tools.search_docket_dataset(
+        {
+            "input_path": "/tmp/docket_package/bundle_manifest.json",
+            "query": "response",
+            "backend": "vector",
+            "top_k": 6,
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["operation"] == "search_docket_dataset"
+    assert result["input_kind"] == "packaged"
+    assert result["backend"] == "vector"
+    assert captured["load_packaged"] == "/tmp/docket_package/bundle_manifest.json"
+    assert captured["vector_search"]["query"] == "response"
+    assert captured["vector_search"]["top_k"] == 6
+
+
+@pytest.mark.anyio
+async def test_mcp_docket_search_rejects_unknown_backend() -> None:
+    """Docket MCP search should fail fast on unsupported backend values."""
+    result = await mcp_tools.search_docket_dataset(
+        {
+            "input_path": "/tmp/docket_dataset.json",
+            "query": "response",
+            "backend": "hybrid",
+        }
+    )
+
+    assert result["status"] == "error"
+    assert result["operation"] == "search_docket_dataset"
+    assert "Unsupported backend" in result["error"]
 
 
 @pytest.mark.anyio
@@ -600,7 +819,20 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
     async def _fake_recover_missing_legal_citation_source_from_parameters(parameters, *, tool_version="1.0.0"):
         captured["parameters"] = dict(parameters)
         captured["tool_version"] = tool_version
-        return {"status": "tracked", "operation": "recover_missing_legal_citation_source"}
+        return {
+            "status": "tracked",
+            "operation": "recover_missing_legal_citation_source",
+            "candidate_files": [
+                {
+                    "url": "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf",
+                    "fetch_success": True,
+                }
+            ],
+            "scraper_patch": {
+                "patch_path": "/tmp/recovery.patch",
+                "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            },
+        }
 
     async def _fake_promote_recovery_manifest_to_canonical_bundle_from_parameters(parameters, *, tool_version="1.0.0"):
         captured["promote_parameters"] = dict(parameters)
@@ -655,6 +887,8 @@ async def test_mcp_recovery_tool_delegates_to_api(monkeypatch: pytest.MonkeyPatc
     )
 
     assert result["status"] == "tracked"
+    assert result["candidate_files"][0]["fetch_success"] is True
+    assert result["scraper_patch"]["target_file"] == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
     assert promote_result["status"] == "success"
     assert release_plan_result["status"] == "planned"
     assert merge_result["status"] == "success"

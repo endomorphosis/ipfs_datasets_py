@@ -132,6 +132,7 @@ STATE_STATUTE_PATTERNS = [
     r'Codified\s+Laws|Fam\.\s+Code|Civ\.\s+Code|Penal\s+Code|'
     r'Admin\.\s+Code|Court\s+Rules?|R\.\s+[A-Za-z.\s]+)'
     r')\s+§?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
+    r'(?P<text>(?P<state_shorthand>ORS)\s+(?P<section_shorthand>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
 ]
 
 
@@ -323,9 +324,14 @@ class CitationExtractor:
         for pattern in self.state_statute_patterns:
             for match in pattern.finditer(text):
                 citation_text = match.group("text")
-                state_abbrev = match.group("state")
-                code_name = " ".join(match.group("code_name").split())
-                section = match.group("section")
+                if match.groupdict().get("state_shorthand"):
+                    state_abbrev = "Or."
+                    code_name = str(match.group("state_shorthand") or "").strip()
+                    section = str(match.group("section_shorthand") or "")
+                else:
+                    state_abbrev = match.group("state")
+                    code_name = " ".join(match.group("code_name").split())
+                    section = match.group("section")
                 cleaned_section = section.rstrip(".,;:")
                 if cleaned_section != section:
                     citation_text = citation_text[: len(citation_text) - (len(section) - len(cleaned_section))]

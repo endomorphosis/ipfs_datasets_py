@@ -24,16 +24,86 @@ import inspect
 import threading
 from typing import Any, Optional, TypeVar
 
-import anyio
+try:
+    import anyio
+except ModuleNotFoundError:  # pragma: no cover - exercised in minimal environments
+    anyio = None
 
 
 T = TypeVar("T")
 TimeoutError = TimeoutError
-Semaphore = anyio.Semaphore
+if anyio is not None:
+    Semaphore = anyio.Semaphore
+else:
+    Semaphore = _stdlib_asyncio.Semaphore
 
 
 class AsyncContextError(RuntimeError):
     """Raised when attempting to start a new event loop inside an async context."""
+
+
+if anyio is None:
+    class _FallbackToThread:
+        @staticmethod
+        async def run_sync(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
+            return await _stdlib_asyncio.to_thread(func, *args, **kwargs)
+
+
+    class _FallbackTaskGroup:
+        def __init__(self) -> None:
+            self._tasks: list[_stdlib_asyncio.Task[Any]] = []
+
+        async def __aenter__(self) -> "_FallbackTaskGroup":
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb) -> None:
+            if self._tasks:
+                await _stdlib_asyncio.gather(*self._tasks, return_exceptions=True)
+
+        def start_soon(self, func: Callable[..., Awaitable[Any]], /, *args: Any) -> None:
+            self._tasks.append(_stdlib_asyncio.create_task(func(*args)))
+
+
+    class _FallbackAnyIO:
+        Event = _stdlib_asyncio.Event
+        Semaphore = _stdlib_asyncio.Semaphore
+        to_thread = _FallbackToThread()
+
+        @staticmethod
+        def get_current_task() -> _stdlib_asyncio.Task[Any]:
+            task = _stdlib_asyncio.current_task()
+            if task is None:
+                raise RuntimeError("No active asyncio task")
+            return task
+
+        @staticmethod
+        def run(func: Callable[[], Awaitable[T]]) -> T:
+            return _stdlib_asyncio.run(func())
+
+        @staticmethod
+        async def sleep(seconds: float) -> None:
+            await _stdlib_asyncio.sleep(seconds)
+
+        @staticmethod
+        def get_cancelled_exc_class() -> type[BaseException]:
+            return _stdlib_asyncio.CancelledError
+
+        @staticmethod
+        def fail_after(seconds: float):
+            del seconds
+            return _stdlib_asyncio.timeout(None)
+
+        @staticmethod
+        def move_on_after(seconds: float):
+            del seconds
+            return _stdlib_asyncio.timeout(None)
+
+        @staticmethod
+        def create_task_group() -> _FallbackTaskGroup:
+            return _FallbackTaskGroup()
+
+
+    anyio = _FallbackAnyIO()
 
 
 def in_async_context() -> bool:

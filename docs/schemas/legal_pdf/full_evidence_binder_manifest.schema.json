@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hallucinate-llc.local/schemas/legal_pdf/full_evidence_binder_manifest.schema.json",
+  "title": "Full Evidence Binder Manifest",
+  "type": "object",
+  "required": [
+    "exhibit_covers_root",
+    "working_dir",
+    "output_pdf",
+    "families"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "submitted_by": { "type": "string" },
+    "exhibit_covers_root": { "type": "string" },
+    "working_dir": { "type": "string" },
+    "generated_dir": { "type": "string" },
+    "build_manifest_output": { "type": "string" },
+    "output_pdf": { "type": "string" },
+    "lean_output_pdf": { "type": "string" },
+    "index_pdf": { "type": "string" },
+    "index_command": {
+      "type": "array",
+      "items": { "type": ["string", "number", "boolean"] }
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "cover_dirs", "labels"],
+        "properties": {
+          "name": { "type": "string" },
+          "cover_dirs": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "labels": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "output_pdf": { "type": "string" },
+          "lean_output_pdf": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "lean_replacements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["family", "label", "lines"],
+        "properties": {
+          "family": { "type": "string" },
+          "label": { "type": "string" },
+          "lines": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

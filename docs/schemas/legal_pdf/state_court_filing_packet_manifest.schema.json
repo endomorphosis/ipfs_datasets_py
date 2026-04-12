@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ipfs_datasets_py/legal_pdf/state_court_filing_packet_manifest.schema.json",
+  "title": "State Court Filing Packet Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["documents", "output_dir", "packet_output_path", "config"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "output_dir": {
+      "type": "string"
+    },
+    "packet_output_path": {
+      "type": "string"
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contact_block_html", "court_name", "state_name", "caption_left_html"],
+      "properties": {
+        "contact_block_html": { "type": "string" },
+        "court_name": { "type": "string" },
+        "state_name": { "type": "string" },
+        "caption_left_html": { "type": "string" },
+        "case_number_line": { "type": "string" },
+        "filed_date": { "type": "string" },
+        "signature_doc_keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "declaration_doc_keywords": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -33,12 +33,18 @@ from .courtlistener_ingestion import (
     submit_courtlistener_recap_fetch_request,
     submit_packaged_docket_recap_fetch_requests,
 )
-from .courtlistener_cache_packaging import (
-    CourtListenerCachePackager,
-    load_packaged_courtlistener_fetch_cache,
-    load_packaged_courtlistener_fetch_cache_components,
-    package_courtlistener_fetch_cache,
-)
+try:
+    from .courtlistener_cache_packaging import (
+        CourtListenerCachePackager,
+        load_packaged_courtlistener_fetch_cache,
+        load_packaged_courtlistener_fetch_cache_components,
+        package_courtlistener_fetch_cache,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    CourtListenerCachePackager = None
+    load_packaged_courtlistener_fetch_cache = None
+    load_packaged_courtlistener_fetch_cache_components = None
+    package_courtlistener_fetch_cache = None
 from .claim_intake import (
     CLAIM_INTAKE_REQUIREMENTS,
     build_claim_element_question_intent,
@@ -52,6 +58,97 @@ from .claim_intake import (
     registry_for_claim_type,
     render_question_text_from_intent,
 )
+from .bluebook_linker_fuzz_harness import (
+    BluebookCitationCandidate as BluebookLinkerFuzzCandidate,
+    BluebookCitationFuzzAttempt,
+    BluebookCitationFuzzRun,
+    build_bluebook_fuzz_generation_prompt,
+    collect_seeded_bluebook_fuzz_candidates,
+    parse_bluebook_fuzz_candidates,
+    run_bluebook_linker_fuzz_harness,
+)
+try:
+    from .court_pdf_rendering import (
+        DEFAULT_EXHIBIT_CAPTION,
+        ExhibitCaptionConfig,
+        StateCourtPleadingConfig,
+        build_state_court_filing_packet,
+        draw_exhibit_caption,
+        parse_exhibit_cover_source,
+        render_exhibit_cover_from_markdown,
+        render_exhibit_tab_from_markdown,
+        render_state_court_pdf_batch,
+        render_state_court_markdown_to_pdf,
+        render_text_lines_pdf,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    DEFAULT_EXHIBIT_CAPTION = None
+    ExhibitCaptionConfig = None
+    StateCourtPleadingConfig = None
+    build_state_court_filing_packet = None
+    draw_exhibit_caption = None
+    parse_exhibit_cover_source = None
+    render_exhibit_cover_from_markdown = None
+    render_exhibit_tab_from_markdown = None
+    render_state_court_pdf_batch = None
+    render_state_court_markdown_to_pdf = None
+    render_text_lines_pdf = None
+try:
+    from .exhibit_binder_export import (
+        build_exhibit_binder,
+        convert_markdown_to_binder_pdf,
+        eml_to_pdf,
+        family_slug,
+        image_to_pdf,
+        markdown_or_text_to_pdf,
+        merge_pdfs,
+        note_pdf,
+        render_binder_title_pdf,
+        render_family_divider_pdf,
+        run_command,
+        slugify_exhibit_label,
+        source_to_pdf,
+        pdf_page_count,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    build_exhibit_binder = None
+    convert_markdown_to_binder_pdf = None
+    eml_to_pdf = None
+    family_slug = None
+    image_to_pdf = None
+    markdown_or_text_to_pdf = None
+    merge_pdfs = None
+    note_pdf = None
+    render_binder_title_pdf = None
+    render_family_divider_pdf = None
+    run_command = None
+    slugify_exhibit_label = None
+    source_to_pdf = None
+    pdf_page_count = None
+try:
+    from .exhibit_binder_templates import (
+        BinderCourtConfig,
+        DEFAULT_BINDER_COURT_CONFIG,
+        render_exhibit_binder_front_sheet,
+        render_table_of_exhibits_pdf,
+    )
+    from .legal_pdf_manifest import (
+        binder_court_config_from_manifest,
+        build_state_court_filing_packet_from_manifest,
+        load_json_manifest,
+    )
+    from .exhibit_binder_manifest import build_exhibit_binder_from_manifest
+    from .full_evidence_binder_manifest import build_full_evidence_binder_from_manifest
+except Exception:  # pragma: no cover - optional dependency guard
+    BinderCourtConfig = None
+    DEFAULT_BINDER_COURT_CONFIG = None
+    render_exhibit_binder_front_sheet = None
+    render_table_of_exhibits_pdf = None
+    build_state_court_filing_packet_from_manifest = None
+    load_json_manifest = None
+    build_exhibit_binder_from_manifest = None
+    build_full_evidence_binder_from_manifest = None
+    binder_court_config_from_manifest = None
 from .dependency_graph import (
     Dependency,
     DependencyGraph,
@@ -60,89 +157,280 @@ from .dependency_graph import (
     DependencyType,
     NodeType,
 )
-from .docket_dataset import (
-    DocketDatasetBuilder,
-    DocketDatasetObject,
-    DocketDocument,
-    audit_docket_dataset_citation_sources,
-    audit_docket_dataset_eu_citation_sources,
-    audit_packaged_docket_citation_sources,
-    build_docket_deontic_artifacts,
-    collect_docket_dataset_citation_recovery_candidates,
-    collect_packaged_docket_citation_recovery_candidates,
-    execute_docket_dataset_missing_authority_follow_up,
-    execute_packaged_docket_missing_authority_follow_up,
-    plan_docket_dataset_missing_authority_follow_up,
-    plan_packaged_docket_missing_authority_follow_up,
-    recover_docket_dataset_missing_authorities,
-    recover_packaged_docket_missing_authorities,
-    search_docket_dataset_bm25,
-    search_docket_dataset_vector,
-    summarize_docket_dataset,
-)
-from .workspace_dataset import (
-    WorkspaceDatasetBuilder,
-    WorkspaceDatasetObject,
-    WorkspaceDocument,
-    export_workspace_dataset_single_parquet,
-    inspect_workspace_dataset_single_parquet,
-    load_workspace_dataset_single_parquet,
-    load_workspace_dataset_single_parquet_summary,
-    render_workspace_dataset_single_parquet_report,
-    search_workspace_dataset_bm25,
-    search_workspace_dataset_vector,
-    summarize_workspace_dataset,
-)
-from .workspace_packaging import (
-    WorkspaceDatasetPackager,
-    inspect_packaged_workspace_bundle,
-    iter_packaged_workspace_chain,
-    load_packaged_workspace_dataset,
-    load_packaged_workspace_dataset_components,
-    load_packaged_workspace_summary_view,
-    package_workspace_dataset,
-    render_packaged_workspace_report,
-)
-from .docket_packaging import (
-    DocketDatasetPackager,
-    PackagedDocketQueryAdapter,
-    attach_packaged_docket_proof_assistant_packet,
-    PackagedQueryExecutionPlan,
-    build_packaged_docket_proof_evidence_bundle,
-    build_packaged_docket_proof_assistant_packet,
-    execute_packaged_docket_action_candidate,
-    execute_packaged_docket_action_candidates,
-    enrich_packaged_docket_with_tactician,
-    execute_packaged_docket_next_action,
-    execute_packaged_docket_proof_revalidation_queue,
-    execute_packaged_docket_query,
-    execute_packaged_docket_follow_up_job,
-    execute_packaged_docket_follow_up_plan,
-    get_packaged_docket_operator_dashboard,
-    get_packaged_docket_proof_revalidation_queue,
-    get_packaged_docket_proof_revalidation_runs,
-    get_packaged_docket_proof_revalidation_snapshot,
-    iter_packaged_docket_chain,
-    load_packaged_docket_dataset,
-    load_packaged_docket_dataset_components,
-    load_packaged_docket_operator_dashboard_report,
-    load_packaged_docket_proof_revalidation_report,
-    load_packaged_docket_summary_view,
-    load_packaged_docket_inspection_report,
-    inspect_packaged_docket_bundle,
-    export_docket_dataset_single_parquet,
-    plan_packaged_docket_query,
-    persist_packaged_docket_proof_revalidation_queue,
-    prepare_packaged_docket_follow_up_job,
-    render_packaged_docket_proof_revalidation_report,
-    render_packaged_docket_operator_dashboard,
-    package_docket_dataset,
-    render_packaged_docket_inspection_report,
-    search_packaged_docket_dataset_bm25,
-    search_packaged_docket_dataset_vector,
-    search_packaged_docket_logic_artifacts,
-    search_packaged_docket_proof_tasks,
-)
+try:
+    from .docket_dataset import (
+        DocketDatasetBuilder,
+        DocketDatasetObject,
+        DocketDocument,
+        audit_docket_dataset_citation_sources,
+        audit_docket_dataset_eu_citation_sources,
+        audit_packaged_docket_citation_sources,
+        build_docket_deontic_artifacts,
+        collect_docket_dataset_citation_recovery_candidates,
+        collect_packaged_docket_citation_recovery_candidates,
+        execute_docket_dataset_missing_authority_follow_up,
+        execute_packaged_docket_missing_authority_follow_up,
+        plan_docket_dataset_missing_authority_follow_up,
+        plan_packaged_docket_missing_authority_follow_up,
+        recover_docket_dataset_missing_authorities,
+        recover_packaged_docket_missing_authorities,
+        search_docket_dataset_bm25,
+        search_docket_dataset_vector,
+        summarize_docket_dataset,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    DocketDatasetBuilder = None
+    DocketDatasetObject = None
+    DocketDocument = None
+    audit_docket_dataset_citation_sources = None
+    audit_docket_dataset_eu_citation_sources = None
+    audit_packaged_docket_citation_sources = None
+    build_docket_deontic_artifacts = None
+    collect_docket_dataset_citation_recovery_candidates = None
+    collect_packaged_docket_citation_recovery_candidates = None
+    execute_docket_dataset_missing_authority_follow_up = None
+    execute_packaged_docket_missing_authority_follow_up = None
+    plan_docket_dataset_missing_authority_follow_up = None
+    plan_packaged_docket_missing_authority_follow_up = None
+    recover_docket_dataset_missing_authorities = None
+    recover_packaged_docket_missing_authorities = None
+    search_docket_dataset_bm25 = None
+    search_docket_dataset_vector = None
+    summarize_docket_dataset = None
+try:
+    from .workspace_dataset import (
+        WorkspaceDatasetBuilder,
+        WorkspaceDatasetObject,
+        WorkspaceDocument,
+        export_workspace_dataset_single_parquet,
+        inspect_workspace_dataset_single_parquet,
+        load_workspace_dataset_single_parquet,
+        load_workspace_dataset_single_parquet_summary,
+        render_workspace_dataset_single_parquet_report,
+        search_workspace_dataset_bm25,
+        search_workspace_dataset_vector,
+        summarize_workspace_dataset,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    WorkspaceDatasetBuilder = None
+    WorkspaceDatasetObject = None
+    WorkspaceDocument = None
+    export_workspace_dataset_single_parquet = None
+    inspect_workspace_dataset_single_parquet = None
+    load_workspace_dataset_single_parquet = None
+    load_workspace_dataset_single_parquet_summary = None
+    render_workspace_dataset_single_parquet_report = None
+    search_workspace_dataset_bm25 = None
+    search_workspace_dataset_vector = None
+    summarize_workspace_dataset = None
+try:
+    from .workspace_packaging import (
+        WorkspaceDatasetPackager,
+        inspect_packaged_workspace_bundle,
+        iter_packaged_workspace_chain,
+        load_packaged_workspace_dataset,
+        load_packaged_workspace_dataset_components,
+        load_packaged_workspace_summary_view,
+        package_workspace_dataset,
+        render_packaged_workspace_report,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    WorkspaceDatasetPackager = None
+    inspect_packaged_workspace_bundle = None
+    iter_packaged_workspace_chain = None
+    load_packaged_workspace_dataset = None
+    load_packaged_workspace_dataset_components = None
+    load_packaged_workspace_summary_view = None
+    package_workspace_dataset = None
+    render_packaged_workspace_report = None
+try:
+    from .email_auth import (
+        DEFAULT_TOKEN_ROOT,
+        GMAIL_IMAP_SCOPE,
+        IPFS_VAULT_SECRET_PREFIX,
+        KEYRING_SERVICE,
+        build_xoauth2_bytes,
+        default_token_cache_path,
+        load_cached_token,
+        read_password_from_ipfs_secrets_vault,
+        read_password_from_keyring,
+        resolve_gmail_credentials,
+        resolve_gmail_oauth_access_token,
+        run_local_server_oauth_flow,
+        save_cached_token,
+        save_password_to_ipfs_secrets_vault,
+        save_password_to_keyring,
+        token_is_usable,
+    )
+    from .email_agentic_search import search_email_corpus_agentic
+    from .email_authority_enrichment import (
+        build_email_authority_query_plan,
+        build_seed_authority_catalog,
+        enrich_email_timeline_authorities,
+    )
+    from .email_corpus import (
+        build_email_duckdb_artifacts,
+        build_email_graphrag_artifacts,
+        search_email_graphrag_duckdb,
+    )
+    from .email_import import import_gmail_evidence
+    from .email_pipeline import (
+        run_gmail_duckdb_pipeline,
+        search_email_duckdb_corpus,
+    )
+    from .email_relevance import (
+        DEFAULT_QUERY_TERMS,
+        build_complaint_terms,
+        collect_email_relevance_text,
+        generate_email_search_plan,
+        load_keyword_lines,
+        score_email_relevance,
+        tokenize_relevance_text,
+    )
+    from .email_seed_planner import build_email_seed_plan
+    from .email_timeline_handoff import (
+        build_email_timeline_handoff,
+        build_email_timeline_handoff_from_file,
+    )
+    from .email_workspace import (
+        EmailCorpusPaths,
+        build_email_workspace_corpus,
+        canonical_email_corpus_paths,
+        import_gmail_workspace_evidence,
+        import_local_eml_directory,
+        merge_email_manifests,
+        run_gmail_workspace_duckdb_pipeline,
+        save_email_bundle,
+        search_email_workspace_corpus,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    DEFAULT_TOKEN_ROOT = None
+    GMAIL_IMAP_SCOPE = None
+    IPFS_VAULT_SECRET_PREFIX = None
+    KEYRING_SERVICE = None
+    build_xoauth2_bytes = None
+    default_token_cache_path = None
+    load_cached_token = None
+    read_password_from_ipfs_secrets_vault = None
+    read_password_from_keyring = None
+    resolve_gmail_credentials = None
+    resolve_gmail_oauth_access_token = None
+    run_local_server_oauth_flow = None
+    save_cached_token = None
+    save_password_to_ipfs_secrets_vault = None
+    save_password_to_keyring = None
+    token_is_usable = None
+    search_email_corpus_agentic = None
+    build_email_authority_query_plan = None
+    build_seed_authority_catalog = None
+    enrich_email_timeline_authorities = None
+    build_email_duckdb_artifacts = None
+    build_email_graphrag_artifacts = None
+    search_email_graphrag_duckdb = None
+    import_gmail_evidence = None
+    run_gmail_duckdb_pipeline = None
+    search_email_duckdb_corpus = None
+    DEFAULT_QUERY_TERMS = None
+    build_complaint_terms = None
+    collect_email_relevance_text = None
+    generate_email_search_plan = None
+    load_keyword_lines = None
+    score_email_relevance = None
+    tokenize_relevance_text = None
+    build_email_seed_plan = None
+    build_email_timeline_handoff = None
+    build_email_timeline_handoff_from_file = None
+    EmailCorpusPaths = None
+    build_email_workspace_corpus = None
+    canonical_email_corpus_paths = None
+    import_gmail_workspace_evidence = None
+    import_local_eml_directory = None
+    merge_email_manifests = None
+    run_gmail_workspace_duckdb_pipeline = None
+    save_email_bundle = None
+    search_email_workspace_corpus = None
+try:
+    from .docket_packaging import (
+        DocketDatasetPackager,
+        PackagedDocketQueryAdapter,
+        attach_packaged_docket_proof_assistant_packet,
+        PackagedQueryExecutionPlan,
+        build_packaged_docket_proof_evidence_bundle,
+        build_packaged_docket_proof_assistant_packet,
+        execute_packaged_docket_action_candidate,
+        execute_packaged_docket_action_candidates,
+        enrich_packaged_docket_with_tactician,
+        execute_packaged_docket_next_action,
+        execute_packaged_docket_proof_revalidation_queue,
+        execute_packaged_docket_query,
+        execute_packaged_docket_follow_up_job,
+        execute_packaged_docket_follow_up_plan,
+        get_packaged_docket_operator_dashboard,
+        get_packaged_docket_proof_revalidation_queue,
+        get_packaged_docket_proof_revalidation_runs,
+        get_packaged_docket_proof_revalidation_snapshot,
+        iter_packaged_docket_chain,
+        load_packaged_docket_dataset,
+        load_packaged_docket_dataset_components,
+        load_packaged_docket_operator_dashboard_report,
+        load_packaged_docket_proof_revalidation_report,
+        load_packaged_docket_summary_view,
+        load_packaged_docket_inspection_report,
+        inspect_packaged_docket_bundle,
+        export_docket_dataset_single_pdf,
+        export_docket_dataset_single_parquet,
+        plan_packaged_docket_query,
+        persist_packaged_docket_proof_revalidation_queue,
+        prepare_packaged_docket_follow_up_job,
+        render_packaged_docket_proof_revalidation_report,
+        render_packaged_docket_operator_dashboard,
+        package_docket_dataset,
+        render_packaged_docket_inspection_report,
+        search_packaged_docket_dataset_bm25,
+        search_packaged_docket_dataset_vector,
+        search_packaged_docket_logic_artifacts,
+        search_packaged_docket_proof_tasks,
+    )
+except Exception:  # pragma: no cover - optional dependency guard
+    DocketDatasetPackager = None
+    PackagedDocketQueryAdapter = None
+    attach_packaged_docket_proof_assistant_packet = None
+    PackagedQueryExecutionPlan = None
+    build_packaged_docket_proof_evidence_bundle = None
+    build_packaged_docket_proof_assistant_packet = None
+    execute_packaged_docket_action_candidate = None
+    execute_packaged_docket_action_candidates = None
+    enrich_packaged_docket_with_tactician = None
+    execute_packaged_docket_next_action = None
+    execute_packaged_docket_proof_revalidation_queue = None
+    execute_packaged_docket_query = None
+    execute_packaged_docket_follow_up_job = None
+    execute_packaged_docket_follow_up_plan = None
+    get_packaged_docket_operator_dashboard = None
+    get_packaged_docket_proof_revalidation_queue = None
+    get_packaged_docket_proof_revalidation_runs = None
+    get_packaged_docket_proof_revalidation_snapshot = None
+    iter_packaged_docket_chain = None
+    load_packaged_docket_dataset = None
+    load_packaged_docket_dataset_components = None
+    load_packaged_docket_operator_dashboard_report = None
+    load_packaged_docket_proof_revalidation_report = None
+    load_packaged_docket_summary_view = None
+    load_packaged_docket_inspection_report = None
+    inspect_packaged_docket_bundle = None
+    export_docket_dataset_single_pdf = None
+    export_docket_dataset_single_parquet = None
+    plan_packaged_docket_query = None
+    persist_packaged_docket_proof_revalidation_queue = None
+    prepare_packaged_docket_follow_up_job = None
+    render_packaged_docket_proof_revalidation_report = None
+    render_packaged_docket_operator_dashboard = None
+    package_docket_dataset = None
+    render_packaged_docket_inspection_report = None
+    search_packaged_docket_dataset_bm25 = None
+    search_packaged_docket_dataset_vector = None
+    search_packaged_docket_logic_artifacts = None
+    search_packaged_docket_proof_tasks = None
 from .proof_assistant import (
     DocketProofAssistant,
     DocketProofAssistantBuilder,
@@ -248,6 +536,7 @@ __all__ = [
     "plan_packaged_docket_missing_authority_follow_up",
     "execute_packaged_docket_action_candidate",
     "execute_packaged_docket_next_action",
+    "export_docket_dataset_single_pdf",
     "export_docket_dataset_single_parquet",
     "execute_packaged_docket_proof_revalidation_queue",
     "execute_packaged_docket_query",
@@ -326,7 +615,26 @@ __all__ = [
     "SupportMapBuilder",
     "SupportMapEntry",
     "build_legal_analysis_bundle",
+    "BluebookLinkerFuzzCandidate",
+    "BluebookCitationFuzzAttempt",
+    "BluebookCitationFuzzRun",
+    "build_bluebook_fuzz_generation_prompt",
+    "collect_seeded_bluebook_fuzz_candidates",
+    "parse_bluebook_fuzz_candidates",
+    "run_bluebook_linker_fuzz_harness",
     "CLAIM_INTAKE_REQUIREMENTS",
+    "DEFAULT_EXHIBIT_CAPTION",
+    "ExhibitCaptionConfig",
+    "StateCourtPleadingConfig",
+    "convert_markdown_to_binder_pdf",
+    "build_exhibit_binder",
+    "build_state_court_filing_packet",
+    "build_state_court_filing_packet_from_manifest",
+    "build_exhibit_binder_from_manifest",
+    "binder_court_config_from_manifest",
+    "BinderCourtConfig",
+    "DEFAULT_BINDER_COURT_CONFIG",
+    "eml_to_pdf",
     "analyze_case_graph_gaps",
     "build_claim_element_question_intent",
     "build_claim_element_question_text",
@@ -345,7 +653,28 @@ __all__ = [
     "probe_courtlistener_public_filing_pdfs",
     "get_courtlistener_recap_fetch_request",
     "probe_courtlistener_document_acquisition_target",
+    "draw_exhibit_caption",
+    "family_slug",
+    "image_to_pdf",
+    "markdown_or_text_to_pdf",
+    "merge_pdfs",
+    "note_pdf",
+    "parse_exhibit_cover_source",
+    "pdf_page_count",
+    "render_binder_title_pdf",
+    "render_exhibit_binder_front_sheet",
+    "render_exhibit_cover_from_markdown",
+    "render_family_divider_pdf",
+    "render_exhibit_tab_from_markdown",
+    "render_state_court_pdf_batch",
+    "render_state_court_markdown_to_pdf",
+    "render_table_of_exhibits_pdf",
+    "load_json_manifest",
+    "render_text_lines_pdf",
+    "run_command",
     "sample_random_courtlistener_dockets_batch",
+    "slugify_exhibit_label",
+    "source_to_pdf",
     "load_packaged_courtlistener_fetch_cache",
     "load_packaged_courtlistener_fetch_cache_components",
     "package_courtlistener_fetch_cache",

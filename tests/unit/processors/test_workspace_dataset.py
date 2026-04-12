@@ -67,10 +67,80 @@ def test_workspace_dataset_search_and_summary_helpers_return_ranked_results():
 
     assert bm25_results["result_count"] >= 1
     assert bm25_results["results"][0]["id"] == "email_1"
+    assert bm25_results["group_count"] == 1
+    assert bm25_results["grouped_results"][0]["group_id"] == "document:email_1"
     assert vector_results["result_count"] >= 1
     assert vector_results["results"][0]["backend"] == "local_hashed_term_projection"
+    assert vector_results["group_count"] >= 1
+    assert "document:email_1" in {item["group_id"] for item in vector_results["grouped_results"]}
     assert summary["workspace_id"] == "mailbox-01"
     assert summary["bm25_document_count"] == 2
+
+
+def test_workspace_dataset_search_groups_google_voice_bundle_results(tmp_path):
+    bundle_dir = tmp_path / "google_voice_bundle_search"
+    bundle_dir.mkdir()
+    transcript_path = bundle_dir / "transcript.txt"
+    event_json_path = bundle_dir / "event.json"
+    notes_path = bundle_dir / "inspection_notes.txt"
+
+    transcript_path.write_text("Tenant asked for the inspection notice during the call.", encoding="utf-8")
+    notes_path.write_text("Inspection notes from the attached text file.", encoding="utf-8")
+    event_json_path.write_text(
+        json.dumps(
+            {
+                "event_id": "voice_search_1",
+                "event_type": "text_message",
+                "title": "Inspection follow-up",
+                "timestamp": "2026-03-24T04:56:14Z",
+                "attachments": [
+                    {
+                        "filename": "inspection_notes.txt",
+                        "path": str(notes_path),
+                        "kind": "document",
+                        "content_type": "text/plain",
+                    }
+                ],
+                "source_kind": "takeout",
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest = {
+        "status": "success",
+        "source_kind": "takeout",
+        "manifest_path": str(tmp_path / "google_voice_manifest.json"),
+        "bundles": [
+            {
+                "event_id": "voice_search_1",
+                "bundle_dir": str(bundle_dir),
+                "event_json_path": str(event_json_path),
+                "parsed_path": str(event_json_path),
+                "transcript_path": str(transcript_path),
+            }
+        ],
+    }
+
+    dataset = WorkspaceDatasetBuilder().build_from_google_voice_manifest(manifest)
+
+    bm25_results = search_workspace_dataset_bm25(dataset, "inspection", top_k=5)
+    vector_results = search_workspace_dataset_vector(dataset, "inspection", top_k=5)
+
+    assert bm25_results["result_count"] == 2
+    assert bm25_results["group_count"] == 1
+    assert bm25_results["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_search_1"
+    assert bm25_results["grouped_results"][0]["source_type"] == "google_voice_bundle"
+    assert bm25_results["grouped_results"][0]["document_ids"] == ["voice_search_1", "voice_search_1_attachment_1"]
+    assert bm25_results["grouped_results"][0]["match_count"] == 2
+    assert [item["document_id"] for item in bm25_results["grouped_results"][0]["matched_results"]] == [
+        "voice_search_1",
+        "voice_search_1_attachment_1",
+    ]
+
+    assert vector_results["result_count"] == 2
+    assert vector_results["group_count"] == 1
+    assert vector_results["grouped_results"][0]["group_id"] == "google_voice_bundle_voice_search_1"
+    assert vector_results["grouped_results"][0]["document_ids"] == ["voice_search_1", "voice_search_1_attachment_1"]
 
 
 def test_workspace_dataset_preview_and_directory_ingestion_select_textual_documents(tmp_path):

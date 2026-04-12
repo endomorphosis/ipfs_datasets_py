@@ -158,6 +158,23 @@ ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
   --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
 ```
 
+### 8. Workspace Dataset CLI
+
+The merged CLI also includes a workspace dataset command for ingesting, searching, and packaging workspace bundles.
+
+```bash
+# Export a workspace dataset bundle (single parquet) from a JSON workspace payload
+ipfs-datasets workspace --action export --input-path /path/to/workspace.json \
+  --output-parquet /tmp/workspace_bundle.parquet --json
+
+# Package a workspace dataset bundle into chain-loadable parquet + optional CAR artifacts
+ipfs-datasets workspace --action package --input-path /path/to/discord_export.json \
+  --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json
+
+# Inspect a packaged workspace bundle summary
+ipfs-datasets workspace --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json
+```
+
 ## Advantages of Merged CLI
 
 ### 1. Single Interface

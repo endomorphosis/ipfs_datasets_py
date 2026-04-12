@@ -9,6 +9,7 @@ Packaged bundle read helpers:
 - `--operator-dashboard` reads the combined packaged operator dashboard payload.
 - `--load-operator-dashboard-report` reads the archived `operator_dashboard_report` artifact.
 - `--citation-source-audit` reports which citations resolved to legal source records.
+- `--search-backend bm25|vector --query TEXT` searches source or packaged docket datasets.
 - `--eu-citation-language`, `--eu-citation-max-documents`, `--no-eu-citation-audit` control EU/member-state citation audit behavior.
 - `--fields` applies to the active packaged read mode.
 
@@ -21,7 +22,9 @@ Examples:
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action recap-fetch --json`
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action recap-preflight --json`
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --citation-source-audit --json`
+- `... --input-type packaged --input-path /path/to/bundle_manifest.json --search-backend bm25 --query response --top-k 5 --json`
 - `... --input-type json --input-path /path/to/docket.json --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json`
+- `... --input-type json --input-path /path/to/docket.json --search-backend vector --query injunction --top-k 5 --json`
 """
 
 from __future__ import annotations
@@ -50,6 +53,8 @@ from ipfs_datasets_py.processors.legal_data import (
     package_docket_dataset,
     package_courtlistener_fetch_cache,
     render_packaged_docket_operator_dashboard,
+    search_docket_dataset_bm25,
+    search_docket_dataset_vector,
     submit_packaged_docket_recap_fetch_requests,
     summarize_docket_dataset,
 )
@@ -164,6 +169,23 @@ def _print_packaged_inspection(inspection: dict[str, object]) -> None:
         print(f"{key}: {rendered}")
 
 
+def _render_search_text(search_payload: dict[str, object], *, backend: str) -> str:
+    title = "Docket BM25 Search" if backend == "bm25" else "Docket Vector Search"
+    lines = [title]
+    for key in ("query", "top_k", "result_count", "source"):
+        if key in search_payload:
+            lines.append(f"{key}: {search_payload[key]}")
+    for result in list(search_payload.get("results") or []):
+        title_value = str(result.get("title") or "")
+        document_id = str(result.get("document_id") or result.get("id") or "")
+        score = result.get("score")
+        line = f"* {document_id}: {title_value}" if document_id else f"* {title_value}"
+        if score is not None:
+            line = f"{line} (score={score})"
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def _write_text_output(path: str | Path, content: str) -> str:
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -226,6 +248,27 @@ def _build_citation_source_audit_from_dataset(
     raise TypeError("citation source audit requires a docket dataset object or dictionary payload")
 
 
+def _call_citation_source_audit_builder(
+    dataset: object,
+    *,
+    include_eu_audit: bool = True,
+    eu_language: str | None = None,
+    eu_max_documents: int = 120,
+) -> dict[str, object]:
+    try:
+        return _build_citation_source_audit_from_dataset(
+            dataset,
+            include_eu_audit=include_eu_audit,
+            eu_language=eu_language,
+            eu_max_documents=eu_max_documents,
+        )
+    except TypeError as exc:
+        message = str(exc)
+        if "unexpected keyword argument" not in message:
+            raise
+        return _build_citation_source_audit_from_dataset(dataset)
+
+
 def _recover_citation_sources_from_audit(
     audit_payload: dict[str, object],
     *,
@@ -243,6 +286,27 @@ def _recover_citation_sources_from_audit(
             archive_top_k=archive_top_k,
         )
     )
+
+
+def _call_packaged_citation_audit_builder(
+    manifest_path: str | Path,
+    *,
+    include_eu_audit: bool = True,
+    eu_language: str | None = None,
+    eu_max_documents: int = 120,
+) -> dict[str, object]:
+    try:
+        return audit_packaged_docket_citation_sources(
+            manifest_path,
+            include_eu_audit=include_eu_audit,
+            eu_language=eu_language,
+            eu_max_documents=eu_max_documents,
+        )
+    except TypeError as exc:
+        message = str(exc)
+        if "unexpected keyword argument" not in message:
+            raise
+        return audit_packaged_docket_citation_sources(manifest_path)
 
 
 def _packaged_read_modes(parsed: argparse.Namespace) -> set[str]:
@@ -353,6 +417,9 @@ def _build_packaged_read_only_summary(packager: DocketDatasetPackager, manifest_
     manifest = dict(summary_view.get("package_manifest") or {})
     manifest_summary = dict(manifest.get("summary") or {})
     provenance = dict(manifest.get("provenance") or {})
+    eu_audit = dict(manifest.get("eu_citation_audit") or {})
+    if not eu_audit:
+        eu_audit = dict((provenance.get("citation_source_audit") or {}).get("eu_citation_audit") or {})
     latest_routing = dict(provenance.get("latest_proof_packet_routing_explanation") or {})
     return {
         "dataset_id": str(summary_view.get("dataset_id") or manifest.get("dataset_id") or ""),
@@ -361,6 +428,9 @@ def _build_packaged_read_only_summary(packager: DocketDatasetPackager, manifest_
         "court": str(summary_view.get("court") or manifest.get("court") or ""),
         "document_count": int(summary_view.get("document_count") or 0),
         "attachment_count": int(summary_view.get("attachment_count") or 0),
+        "eu_citation_count": int(eu_audit.get("citation_count") or 0),
+        "eu_unique_citation_count": int(eu_audit.get("unique_citation_count") or 0),
+        "eu_documents_with_citations": int(eu_audit.get("documents_with_citations") or 0),
         "knowledge_graph_entity_count": int(manifest_summary.get("knowledge_graph_entity_count") or 0),
         "knowledge_graph_relationship_count": int(manifest_summary.get("knowledge_graph_relationship_count") or 0),
         "proof_tactician_plan_count": int(manifest_summary.get("tactician_plan_count") or 0),
@@ -790,7 +860,7 @@ def _handle_packaged_read_outputs(
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ipfs-datasets docket",
-        description="Import a docket into a reusable dataset artifact with KG, BM25, and vector indexes.",
+        description="Import, inspect, search, and package dockets with KG, BM25, and vector indexes.",
     )
     parser.add_argument(
         "--input-type",
@@ -812,6 +882,9 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-courtlistener-documents", type=int, default=None, help="Optional limit for RECAP documents fetched from CourtListener.")
     parser.add_argument("--skip-courtlistener-documents", action="store_true", help="Only import the CourtListener docket metadata and party records, skipping RECAP document fetches.")
     parser.add_argument("--skip-courtlistener-text", action="store_true", help="Do not fetch missing full text for RECAP documents from CourtListener.")
+    parser.add_argument("--search-backend", choices=["bm25", "vector"], default=None, help="Search the loaded docket dataset or packaged manifest with the selected backend.")
+    parser.add_argument("--query", default=None, help="Search query text used with --search-backend.")
+    parser.add_argument("--top-k", type=int, default=10, help="Top-k result count used with --search-backend.")
     parser.add_argument("--enrich-query", action="append", default=None, help="For packaged inputs, run a tactician-guided enrichment query and attach a proof packet. Repeat for multiple queries.")
     parser.add_argument("--follow-up-top-k", type=int, default=10, help="Top-k used for tactician follow-up retrieval against packaged bundles.")
     parser.add_argument("--package-dir", default=None, help="Optional directory to also write a packaged parquet/CAR docket bundle.")
@@ -865,6 +938,11 @@ def create_parser() -> argparse.ArgumentParser:
 def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
+
+    if parsed.search_backend and not str(parsed.query or "").strip():
+        parser.error("--query is required with --search-backend.")
+    if parsed.query and not parsed.search_backend:
+        parser.error("--search-backend is required with --query.")
     _apply_packaged_action_alias(parsed, parser)
     summary_fields = _parse_summary_fields_arg(parsed.summary_fields)
     inspection_fields = _parse_summary_fields_arg(parsed.inspection_fields)
@@ -907,7 +985,28 @@ def main(args: list[str] | None = None) -> int:
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
     )
-    if not parsed.output and not packaged_read_only and not citation_audit_only and not citation_recovery_only and not recap_fetch_status_only:
+    search_only = bool(
+        parsed.search_backend
+        and not parsed.package_dir
+        and not parsed.parquet_dir
+        and not parsed.courtlistener_cache_package_dir
+        and not packaged_modes
+        and not parsed.export_packaged_report
+        and not parsed.export_operator_dashboard_report
+    )
+    packaged_manifest_audit_or_recovery = bool(
+        parsed.input_type == "packaged"
+        and not parsed.enrich_query
+        and (parsed.citation_source_audit or parsed.recover_citation_sources)
+        and not parsed.package_dir
+        and not parsed.parquet_dir
+        and not parsed.courtlistener_cache_package_dir
+        and not packaged_modes
+        and not parsed.export_packaged_report
+        and not parsed.export_operator_dashboard_report
+        and not parsed.search_backend
+    )
+    if not parsed.output and not packaged_read_only and not citation_audit_only and not citation_recovery_only and not recap_fetch_status_only and not search_only:
         parser.error("--output is required unless you are only inspecting or loading a packaged report.")
     if citation_audit_fields and not parsed.citation_source_audit:
         parser.error("--citation-audit-fields is only valid with --citation-source-audit.")
@@ -952,7 +1051,7 @@ def main(args: list[str] | None = None) -> int:
     }
 
     dataset = None
-    packaged_read_packager = DocketDatasetPackager() if packaged_read_only else None
+    packaged_read_packager = DocketDatasetPackager() if (packaged_read_only or packaged_manifest_audit_or_recovery) else None
 
     try:
         if parsed.input_type == "json":
@@ -984,6 +1083,8 @@ def main(args: list[str] | None = None) -> int:
                     top_k=int(parsed.follow_up_top_k or 10),
                 )
             elif recap_fetch_status_only:
+                dataset = None
+            elif packaged_manifest_audit_or_recovery:
                 dataset = None
             elif not packaged_read_only:
                 dataset = load_packaged_docket_dataset(parsed.input_path)
@@ -1038,6 +1139,23 @@ def main(args: list[str] | None = None) -> int:
                     package_name=parsed.package_name,
                     include_car=include_car,
                 )
+        search_payload = None
+        if parsed.search_backend:
+            assert dataset is not None
+            search_payload = (
+                search_docket_dataset_bm25(
+                    dataset,
+                    parsed.query,
+                    top_k=int(parsed.top_k or 10),
+                )
+                if parsed.search_backend == "bm25"
+                else search_docket_dataset_vector(
+                    dataset,
+                    parsed.query,
+                    top_k=int(parsed.top_k or 10),
+                    vector_dimension=int(parsed.vector_dimension or 32),
+                )
+            )
         if dataset is not None:
             summary = summarize_docket_dataset(dataset)
         elif recap_fetch_status_only:
@@ -1049,11 +1167,13 @@ def main(args: list[str] | None = None) -> int:
             "status": "success",
             "summary": summary,
         }
+        if search_payload is not None:
+            payload["search_results"] = search_payload
         if output_path is not None:
             payload["output_path"] = str(output_path)
         if parsed.citation_source_audit:
             if dataset is not None:
-                citation_audit = _build_citation_source_audit_from_dataset(
+                citation_audit = _call_citation_source_audit_builder(
                     dataset,
                     include_eu_audit=include_eu_audit,
                     eu_language=eu_citation_language,
@@ -1071,7 +1191,7 @@ def main(args: list[str] | None = None) -> int:
                         metadata["eu_citation_audit"] = dict(citation_audit.get("eu_citation_audit") or {})
                     dataset["metadata"] = metadata
             else:
-                citation_audit = audit_packaged_docket_citation_sources(
+                citation_audit = _call_packaged_citation_audit_builder(
                     parsed.input_path,
                     include_eu_audit=include_eu_audit,
                     eu_language=eu_citation_language,
@@ -1086,14 +1206,14 @@ def main(args: list[str] | None = None) -> int:
                 citation_audit = dict(payload["citation_source_audit"])
                 if active_citation_audit_fields:
                     if dataset is not None:
-                        citation_audit = _build_citation_source_audit_from_dataset(
+                        citation_audit = _call_citation_source_audit_builder(
                             dataset,
                             include_eu_audit=include_eu_audit,
                             eu_language=eu_citation_language,
                             eu_max_documents=eu_citation_max_documents,
                         )
                     else:
-                        citation_audit = audit_packaged_docket_citation_sources(
+                        citation_audit = _call_packaged_citation_audit_builder(
                             parsed.input_path,
                             include_eu_audit=include_eu_audit,
                             eu_language=eu_citation_language,
@@ -1101,14 +1221,14 @@ def main(args: list[str] | None = None) -> int:
                         )
             else:
                 if dataset is not None:
-                    citation_audit = _build_citation_source_audit_from_dataset(
+                    citation_audit = _call_citation_source_audit_builder(
                         dataset,
                         include_eu_audit=include_eu_audit,
                         eu_language=eu_citation_language,
                         eu_max_documents=eu_citation_max_documents,
                     )
                 else:
-                    citation_audit = audit_packaged_docket_citation_sources(
+                    citation_audit = _call_packaged_citation_audit_builder(
                         parsed.input_path,
                         include_eu_audit=include_eu_audit,
                         eu_language=eu_citation_language,
@@ -1205,6 +1325,8 @@ def main(args: list[str] | None = None) -> int:
         elif not packaged_read_only:
             for key, value in payload["summary"].items():
                 print(f"{key}: {value}")
+        if parsed.search_backend and "search_results" in payload:
+            print(_render_search_text(payload["search_results"], backend=str(parsed.search_backend)))
         if parsed.inspect_packaged and "inspection" in payload:
             _print_packaged_inspection(dict(payload["inspection"]))
         if parsed.operator_dashboard and "operator_dashboard" in payload:

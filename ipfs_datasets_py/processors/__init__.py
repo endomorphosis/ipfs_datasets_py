@@ -32,7 +32,11 @@ from .retrieval import (
     tokenize_lexical_text,
     vector_dot,
 )
-from .universal_processor import UniversalProcessor, ProcessorConfig
+try:
+    from .universal_processor import UniversalProcessor, ProcessorConfig
+except Exception:  # pragma: no cover - optional dependency guard
+    UniversalProcessor = None
+    ProcessorConfig = None
 
 __all__ = [
     # New unified architecture
@@ -145,6 +149,28 @@ __all__ = [
     'fetch_pacer_document_with_browser',
     'find_rich_courtlistener_docket',
     'fetch_random_courtlistener_docket',
+    'render_exhibit_cover_from_markdown',
+    'render_exhibit_tab_from_markdown',
+    'build_state_court_filing_packet',
+    'build_state_court_filing_packet_from_manifest',
+    'build_exhibit_binder_from_manifest',
+    'binder_court_config_from_manifest',
+    'render_state_court_pdf_batch',
+    'render_state_court_markdown_to_pdf',
+    'render_text_lines_pdf',
+    'parse_exhibit_cover_source',
+    'render_binder_title_pdf',
+    'render_family_divider_pdf',
+    'convert_markdown_to_binder_pdf',
+    'build_exhibit_binder',
+    'BinderCourtConfig',
+    'DEFAULT_BINDER_COURT_CONFIG',
+    'source_to_pdf',
+    'merge_pdfs',
+    'pdf_page_count',
+    'render_exhibit_binder_front_sheet',
+    'render_table_of_exhibits_pdf',
+    'load_json_manifest',
     'get_courtlistener_recap_fetch_request',
     'probe_courtlistener_public_filing_pdfs',
     'probe_courtlistener_document_acquisition_target',

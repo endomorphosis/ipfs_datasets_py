@@ -6,6 +6,12 @@ from ipfs_datasets_py.processors.legal_data import docket_dataset as docket_data
 from ipfs_datasets_py.processors.legal_data import DocketDatasetBuilder
 
 
+@pytest.fixture(autouse=True)
+def _disable_heavy_docket_enrichment(monkeypatch):
+    monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_EMBEDDINGS_ROUTER", "1")
+    monkeypatch.setenv("IPFS_DATASETS_PY_DISABLE_DOCKET_FORMAL_LOGIC", "1")
+
+
 def test_docket_dataset_collects_citation_recovery_candidates():
     dataset = DocketDatasetBuilder().build_from_docket(
         {

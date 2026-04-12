@@ -1,0 +1,37 @@
+{
+  "$schema": "../../schemas/legal_pdf/full_evidence_binder_manifest.schema.json",
+  "submitted_by": "Benjamin Barber, Pro Se",
+  "exhibit_covers_root": "covers",
+  "working_dir": "build",
+  "generated_dir": "build/generated_pdfs",
+  "build_manifest_output": "build/manifest.txt",
+  "output_pdf": "build/full_binder.pdf",
+  "lean_output_pdf": "build/full_binder_lean.pdf",
+  "index_pdf": "binder_index.pdf",
+  "families": [
+    {
+      "name": "Primary Binder",
+      "cover_dirs": ["primary"],
+      "labels": ["Exhibit A", "Exhibit B"],
+      "output_pdf": "build/primary_binder.pdf",
+      "lean_output_pdf": "build/primary_binder_lean.pdf"
+    },
+    {
+      "name": "Supplemental Appendix",
+      "cover_dirs": ["appendix"],
+      "labels": ["Exhibit C-1"],
+      "output_pdf": "build/appendix.pdf"
+    }
+  ],
+  "lean_replacements": [
+    {
+      "family": "Primary Binder",
+      "label": "Exhibit B",
+      "lines": [
+        "Lean binder replacement page.",
+        "",
+        "This exhibit is incorporated by reference from Exhibit A in the same binder."
+      ]
+    }
+  ]
+}

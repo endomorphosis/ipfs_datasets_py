@@ -285,6 +285,10 @@ Commands:
       install    Install or update GitHub CLI
       auth       Manage GitHub authentication
       execute    Execute GitHub CLI command
+
+    legal-pdf    Legal PDF rendering helpers
+      render     Render state-court filings and exhibit binder components
+      merge      Merge PDF bundles and count pages
       
     copilot      GitHub Copilot CLI management
       status     Show Copilot CLI installation status
@@ -390,12 +394,17 @@ Commands:
       google-voice-takeout-case-report Export a markdown or HTML report for a Takeout case/download directory or manifest
       google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
 
-        workspace    Inspect workspace dataset single-parquet bundles
-            --action summary Read a lightweight workspace bundle summary
-            --action inspect Read bundle sections and artifact counts
-            --action load    Load the full dataset-shaped bundle payload
-            --action report  Render a human-readable markdown/text bundle report
-            --action export  Export a workspace bundle from generic or source-specific inputs
+        workspace    Inspect, search, export, and package workspace dataset bundles
+            --action summary            Read a lightweight workspace bundle summary
+            --action inspect            Read bundle sections and artifact counts
+            --action load               Load the full dataset-shaped bundle payload
+            --action report             Render a human-readable markdown/text bundle report
+            --action search-bm25        Search a workspace bundle with grouped BM25 results
+            --action search-vector      Search a workspace bundle with grouped vector results
+            --action export             Export a workspace bundle from generic or source-specific inputs
+            --action package            Package a workspace bundle into chain-loadable artifacts
+            --action package-search-bm25 Search a packaged workspace bundle with grouped BM25 results
+            --action package-search-vector Search a packaged workspace bundle with grouped vector results
 
     history-index Search persisted DuckDB history/GraphRAG index
     docket       Import a docket into a reusable dataset artifact
@@ -3145,27 +3154,34 @@ Examples:
 
             if not subcommand or subcommand in ['-h', '--help']:
                 print("""
-ipfs-datasets docket - Import a docket into a reusable dataset artifact
+ipfs-datasets docket - Import, search, inspect, and package docket datasets
 
-Usage: ipfs-datasets docket --input-type {json,directory} --input-path PATH --output PATH [options]
+Usage: ipfs-datasets docket --input-type {json,directory,courtlistener,packaged} --input-path PATH [options]
 
 Options:
-  --input-type {json,directory}
-  --input-path PATH
-  --output PATH
-  --docket-id TEXT
-  --case-name TEXT
-  --court TEXT
-  --glob PATTERN
-  --skip-knowledge-graph
-  --skip-bm25
-  --skip-vector-index
-  --vector-dimension N
-  --json
+    --input-type {json,directory,courtlistener,packaged}
+    --input-path PATH
+    --output PATH
+    --search-backend {bm25,vector}
+    --query TEXT
+    --top-k N
+    --docket-id TEXT
+    --case-name TEXT
+    --court TEXT
+    --glob PATTERN
+    --skip-knowledge-graph
+    --skip-bm25
+    --skip-vector-index
+    --vector-dimension N
+    --packaged-action {summary,inspect,dashboard,report,dashboard-report,recap-fetch,recap-preflight}
+    --citation-source-audit
+    --json
 
 Examples:
-  ipfs-datasets docket --input-type json --input-path ./docket.json --output ./docket_dataset.json
-  ipfs-datasets docket --input-type directory --input-path ./docket_docs --output ./docket_dataset.json --case-name "Doe v. Acme"
+    ipfs-datasets docket --input-type json --input-path ./docket.json --output ./docket_dataset.json
+    ipfs-datasets docket --input-type json --input-path ./docket.json --search-backend bm25 --query injunction --top-k 5 --json
+    ipfs-datasets docket --input-type packaged --input-path ./docket_package/bundle_manifest.json --search-backend vector --query response --top-k 5 --json
+    ipfs-datasets docket --input-type packaged --input-path ./docket_package/bundle_manifest.json --packaged-action summary --json
 """)
                 return
 
@@ -3203,18 +3219,20 @@ Examples:
 
             if not subcommand or subcommand in ['-h', '--help']:
                 print("""
-ipfs-datasets workspace - Inspect, export, and package workspace dataset bundles
+ipfs-datasets workspace - Inspect, search, export, and package workspace dataset bundles
 
-Usage: ipfs-datasets workspace [--input-path PATH] [--action {summary,inspect,load,report,export,package,package-summary,package-inspect,package-load,package-report,chain,components}] [options]
+Usage: ipfs-datasets workspace [--input-path PATH] [--action {summary,inspect,load,report,search-bm25,search-vector,export,package,package-summary,package-inspect,package-load,package-report,package-search-bm25,package-search-vector,chain,components}] [options]
 
 Options:
     --input-path PATH
     --input-json PATH
     --input-directory PATH
     --input-type {workspace-json,directory,google-voice-manifest,discord-export,email-export,imap-snippet-summary}
-        --action {summary,inspect,load,report,export,package,package-summary,package-inspect,package-load,package-report,chain,components}
+                --action {summary,inspect,load,report,search-bm25,search-vector,export,package,package-summary,package-inspect,package-load,package-report,package-search-bm25,package-search-vector,chain,components}
     --output-parquet PATH
         --output-dir PATH
+        --query TEXT
+        --top-k N
   --fields FIELD1,FIELD2
     --report-format {markdown,text,json}
     --strict-evidence-mode
@@ -3224,9 +3242,11 @@ Examples:
   ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action summary --json
   ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action inspect --fields workspace_id,row_count,sections
   ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action load --json
+    ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action search-bm25 --query inspection --top-k 5
     ipfs-datasets workspace --input-path ./workspace_bundle.parquet --action report --report-format markdown
         ipfs-datasets workspace --action export --input-path ./email_export.json --output-parquet ./email_bundle.parquet --json
         ipfs-datasets workspace --action package --input-path ./discord_export.json --output-dir ./workspace_package --package-name workspace_package --json
+                ipfs-datasets workspace --input-path ./workspace_package/bundle_manifest.json --action package-search-bm25 --query inspection --top-k 5 --json
 """)
                 return
 
@@ -3254,6 +3274,73 @@ Examples:
                 return
             except Exception as e:
                 print(f"Error executing workspace command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+
+        if command == "legal-pdf":
+            """Handle legal PDF rendering commands."""
+            subcommand = args[1] if len(args) > 1 else None
+
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets legal-pdf - Render legal PDF artifacts from shared package helpers
+
+Usage: ipfs-datasets legal-pdf --action ACTION [options]
+
+Actions:
+  validate-manifest
+  render-state-court
+  render-state-court-batch
+  build-court-filing-packet
+  build-court-filing-packet-from-manifest
+  build-exhibit-binder-from-manifest
+  render-exhibit-tab
+  render-exhibit-cover
+  render-binder-title
+  render-family-divider
+  convert-source
+  convert-markdown
+  merge-pdfs
+  count-pages
+  build-exhibit-binder
+
+Examples:
+  ipfs-datasets legal-pdf --action validate-manifest --manifest-path ./court_packet_manifest.json --json
+  ipfs-datasets legal-pdf --action count-pages --input-path ./packet.pdf --json
+  ipfs-datasets legal-pdf --action build-court-filing-packet --input-paths a.md b.md --output-dir ./pdfs --packet-output-path ./packet.pdf --contact-block "..." --court-name "IN THE ..." --state-name "STATE OF OREGON" --caption-left "Plaintiff v. Defendant"
+  ipfs-datasets legal-pdf --action build-court-filing-packet-from-manifest --manifest-path ./court_packet_manifest.json --json
+  ipfs-datasets legal-pdf --action build-exhibit-binder-from-manifest --manifest-path ./exhibit_binder_manifest.json --json
+  ipfs-datasets legal-pdf --action merge-pdfs --input-paths a.pdf b.pdf --output-path merged.pdf
+  ipfs-datasets legal-pdf --action render-binder-title --output-path title.pdf --lean-mode
+  ipfs-datasets legal-pdf --action build-exhibit-binder --front-pdf front.pdf --table-pdf table.pdf --packet-pdfs pkt1.pdf pkt2.pdf --output-path binder.pdf
+""")
+                return
+
+            try:
+                import importlib.util
+                from pathlib import Path
+
+                legal_pdf_cli_path = Path(__file__).resolve().parent / "ipfs_datasets_py" / "cli" / "legal_pdf_cli.py"
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_legal_pdf_cli", legal_pdf_cli_path)
+                if spec is None or spec.loader is None:
+                    raise ImportError(f"Unable to load legal PDF CLI from {legal_pdf_cli_path}")
+                legal_pdf_cli_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(legal_pdf_cli_module)
+                legal_pdf_main = legal_pdf_cli_module.main
+
+                legal_pdf_args = list(args[1:])
+                if json_output and '--json' not in legal_pdf_args:
+                    legal_pdf_args = ['--json', *legal_pdf_args]
+                exit_code = legal_pdf_main(legal_pdf_args)
+                sys.exit(exit_code)
+
+            except ImportError as e:
+                print(f"Error: legal PDF CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing legal-pdf command: {e}")
                 import traceback
                 traceback.print_exc()
                 return
@@ -4015,7 +4102,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'workspace', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'legal-pdf', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'workspace', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]

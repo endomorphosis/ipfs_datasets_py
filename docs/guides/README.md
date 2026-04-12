@@ -42,6 +42,13 @@ Use `ls -lt` to see recently modified files, or search by keyword:
 grep -r "keyword" *.md
 ```
 
+## Workspace Dataset Bundles
+
+For the workspace dataset bundle tooling (export, packaging, and chain-loadable manifests), see:
+
+- [CLI Tool Merge](CLI_TOOL_MERGE.md) for `ipfs-datasets workspace` examples.
+- [Unified Tools Suite](UNIFIED_TOOLS_SUITE.md) for the CLI tools catalog entry.
+
 ## Related Directories
 
 - [guides/](../guides/) - Feature guides and how-tos

@@ -50,6 +50,22 @@ Notes:
 	In `auto` mode the helper tries the system keyring first, but falls back to
 	Hugging Face's local token store if the secret-service backend is unavailable
 	or noninteractive.
+- Run `run_bluebook_linker_fuzz_harness.py` to have `llm_router` generate
+	Bluebook-style citations, run them through the linker with Hugging Face
+	dataset fallback enabled, and optionally recover/merge unresolved citations
+	into the local canonical parquet path that later gets published to HF.
+	The harness now supports deterministic stratified seeded sampling across
+	corpus/state/source partitions and writes a patch backlog artifact for
+	statistically actionable failures.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 20 --provider openrouter --model openai/gpt-4.1-mini --states MN,OR,NY --corpora us_code,state_laws,caselaw_access_project --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 20 --seed-from-corpora --seed-examples-per-corpus 3 --states MN,OR,NY --corpora us_code,state_laws,state_admin_rules,caselaw_access_project --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 60 --seed-only --seed-from-corpora --states MN,OR,NY --corpora us_code,state_laws,state_admin_rules,state_court_rules,caselaw_access_project --seed-examples-per-corpus 12 --max-seed-examples-per-state 4 --max-seed-examples-per-source 2 --sampling-shuffle-seed 11 --max-acceptable-failure-rate 0.08 --min-actionable-failures 3 --merge-recovered-rows --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 30 --merge-recovered-rows --output-dir /tmp/bluebook_fuzz_run`
+	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 12 --publish-to-hf --hf-token $HF_TOKEN`
+	The run artifact is written to `bluebook_linker_fuzz_run.json` and the
+	actionable scraper patch queue is written to
+	`bluebook_linker_fuzz_patch_backlog.json` under `--output-dir`.
 - Run `export_courtlistener_docket_single_bundle.py` to ingest a CourtListener
 	docket, attach public RECAP evidence and optional public filing-page PDFs, and
 	export a single parquet bundle with documents, filings, acquisition queue,
@@ -96,9 +112,26 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-path /tmp/email_export.json --output-dir /tmp/email_bundle --package-name email_bundle --no-car --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json`
 	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action search-bm25 --input-path /tmp/google_voice_bundle.parquet --query inspection --top-k 5`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action search-vector --input-path /tmp/google_voice_bundle.parquet --query inspection --top-k 5`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-search-bm25 --input-path /tmp/google_voice_bundle/bundle_manifest.json --query inspection --top-k 5 --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/workspace_cli.py --action package-search-vector --input-path /tmp/google_voice_bundle/bundle_manifest.json --query inspection --top-k 5 --json`
+
+- Legal PDF helper CLI
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action validate-manifest --manifest-path /home/barberb/HACC/workspace/combined_state_court_packet_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action count-pages --input-path /tmp/packet.pdf --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action render-binder-title --output-path /tmp/binder_title.pdf --lean-mode`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action merge-pdfs --input-paths /tmp/front.pdf /tmp/table.pdf /tmp/packet_a.pdf --output-path /tmp/binder.pdf`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-filing-packet --input-paths /tmp/motion.md /tmp/memo.md --output-dir /tmp/filing_pdfs --packet-output-path /tmp/filing_packet.pdf --contact-block "Benjamin Jay Barber, pro se<br/>Defendant" --court-name "IN THE CLACKAMAS COUNTY JUSTICE COURT" --state-name "STATE OF OREGON" --caption-left "PLAINTIFF,<br/>v.<br/>DEFENDANT."`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-court-filing-packet-from-manifest --manifest-path /home/barberb/HACC/workspace/combined_state_court_packet_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-exhibit-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/exhibit-binder-court-ready/exhibit_binder_manifest.json --json`
+	`.venv/bin/python ipfs_datasets_py/ipfs_datasets_py/cli/legal_pdf_cli.py --action build-full-evidence-binder-from-manifest --manifest-path /home/barberb/HACC/workspace/full_evidence_binder_manifest.json --lean-mode --json`
+	`.venv/bin/python ipfs_datasets_cli.py legal-pdf --action build-exhibit-binder --front-pdf /tmp/front.pdf --table-pdf /tmp/table.pdf --packet-pdfs /tmp/packet_a.pdf /tmp/packet_b.pdf --output-path /tmp/binder.pdf`
+	Manifest format guide: [docs/guides/legal_pdf_manifests.md](/home/barberb/HACC/complaint-generator/ipfs_datasets_py/docs/guides/legal_pdf_manifests.md)
 	Explicit typing remains available when you want to pin the route:
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type google-voice-manifest --input-path /tmp/google_voice_manifest.json --output-dir /tmp/google_voice_bundle --package-name google_voice_bundle --no-car`
 	`.venv/bin/python scripts/ops/legal_data/export_workspace_dataset_bundle.py --input-type imap-snippet-summary --input-path /tmp/imap_snippets_summary.json --output-dir /tmp/imap_bundle --package-name imap_bundle --no-car`
+	Search actions return both flat `results` and grouped bundle-aware `grouped_results`; text mode renders bundle groups inline so Google Voice parent events, enrichments, and readable attachments appear together.
 - Packaged docket bundle inspection/read workflow:
 	Use `ipfs_datasets_py/ipfs_datasets_py/cli/docket_cli.py` with `--input-type packaged`
 	to inspect bundle metadata without rebuilding the full packaged dataset object.

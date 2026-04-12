@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from pathlib import Path
 import random
 import sys
 import types
+import uuid
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 import ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory as inventory_module
 import ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker as linker_module
 from tests.integration.test_bluebook_citation_linker_real_corpora import _build_federal_register_cases
@@ -14,9 +17,15 @@ from ipfs_datasets_py.processors.legal_scrapers import (
     BluebookCitationResolver,
     CitationExtractor,
     audit_bluebook_citation_resolution_for_documents,
+    resolve_bluebook_lookup_result_document,
     resolve_bluebook_citations_in_text,
 )
 from ipfs_datasets_py.processors.legal_scrapers.bluebook_citation_linker import _CORPUS_CONFIGS
+
+try:
+    from hypothesis import given, settings, strategies as st
+except Exception:  # pragma: no cover - optional dependency
+    given = settings = st = None
 
 
 def _build_fuzz_resolver(tmp_path):
@@ -412,6 +421,19 @@ def test_citation_extractor_extracts_bluebook_state_statute():
     assert state_citations[0].jurisdiction == "MN"
     assert state_citations[0].metadata["code_name"] == "Stat."
     assert state_citations[0].section == "518.17"
+
+
+def test_citation_extractor_extracts_oregon_ors_shorthand():
+    extractor = CitationExtractor()
+    citations = extractor.extract_citations(
+        "The petition relies on ORS 127.652 for the governing procedure."
+    )
+
+    state_citations = [citation for citation in citations if citation.type == "state_statute"]
+    assert len(state_citations) == 1
+    assert state_citations[0].jurisdiction == "OR"
+    assert state_citations[0].metadata["code_name"] == "ORS"
+    assert state_citations[0].section == "127.652"
 
 
 def test_citation_extractor_extracts_bluebook_admin_and_court_rules():
@@ -1083,6 +1105,166 @@ def test_build_federal_register_cases_extracts_citation_from_jsonld(tmp_path):
     ]
 
 
+def test_bluebook_citation_resolver_uses_exhaustive_canonical_query_fallback(monkeypatch):
+    expected_row = {
+        "title": "42",
+        "section": "1983",
+        "heading": "Civil action for deprivation of rights",
+        "identifier": "42 U.S.C. § 1983",
+        "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983",
+        "cid": "bafyuscode1983",
+        "text": "Every person who, under color of state law, subjects any citizen...",
+    }
+
+    def fake_query_canonical_legal_corpus(*args, **kwargs):
+        return inventory_module.CanonicalCorpusQueryResult(
+            corpus_key="us_code",
+            dataset_id="justicedao/ipfs_uscode",
+            mode="lexical",
+            query_text=str(kwargs.get("query_text") or ""),
+            parquet_file="/tmp/uscode_hydrated.parquet",
+            citation_links=[],
+            results=[
+                {
+                    "title": expected_row["heading"],
+                    "score": 0.95,
+                    "source_url": expected_row["source_url"],
+                    "source_cid": expected_row["cid"],
+                    "row": dict(expected_row),
+                }
+            ],
+            notes=["Resolved with lexical fallback."],
+        )
+
+    monkeypatch.setattr(inventory_module, "query_canonical_legal_corpus", fake_query_canonical_legal_corpus)
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, parquet_file_overrides={"us_code": []})
+
+    links = resolve_bluebook_citations_in_text(
+        "The filing relies on 42 U.S.C. § 1983 as authority.",
+        resolver=resolver,
+        exhaustive=True,
+    )
+
+    assert len(links) == 1
+    link = links[0]
+    assert link.matched is True
+    assert link.corpus_key == "us_code"
+    assert link.source_cid == "bafyuscode1983"
+    assert link.metadata["resolution_method"] == "canonical_lexical_query"
+    assert link.metadata["exhaustive_query_enabled"] is True
+    assert link.metadata["row"]["identifier"] == "42 U.S.C. § 1983"
+
+
+def test_resolve_bluebook_lookup_result_document_returns_exhaustive_payload(monkeypatch):
+    expected_row = {
+        "title": "42",
+        "section": "1983",
+        "heading": "Civil action for deprivation of rights",
+        "identifier": "42 U.S.C. § 1983",
+        "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983",
+        "cid": "bafyuscode1983",
+        "text": "Every person who, under color of state law, subjects any citizen...",
+    }
+
+    def fake_query_canonical_legal_corpus(*args, **kwargs):
+        return inventory_module.CanonicalCorpusQueryResult(
+            corpus_key="us_code",
+            dataset_id="justicedao/ipfs_uscode",
+            mode="lexical",
+            query_text=str(kwargs.get("query_text") or ""),
+            parquet_file="/tmp/uscode_hydrated.parquet",
+            citation_links=[],
+            results=[
+                {
+                    "title": expected_row["heading"],
+                    "score": 0.95,
+                    "source_url": expected_row["source_url"],
+                    "source_cid": expected_row["cid"],
+                    "row": dict(expected_row),
+                }
+            ],
+            notes=["Resolved with lexical fallback."],
+        )
+
+    monkeypatch.setattr(inventory_module, "query_canonical_legal_corpus", fake_query_canonical_legal_corpus)
+
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, parquet_file_overrides={"us_code": []})
+
+    result = resolve_bluebook_lookup_result_document(
+        "The filing relies on 42 U.S.C. § 1983 as authority.",
+        resolver=resolver,
+        exhaustive=True,
+    )
+
+    assert result["source"] == "bluebook_lookup_result_document"
+    assert result["exhaustive"] is True
+    assert result["citation_count"] == 1
+    assert result["matched_citation_count"] == 1
+    assert result["citations"][0]["matched"] is True
+    assert result["citations"][0]["metadata"]["resolution_method"] == "canonical_lexical_query"
+
+
+def test_resolve_bluebook_lookup_result_document_includes_recovery_for_unmatched(monkeypatch):
+    async def fake_recover_missing_legal_citation_source(**kwargs):
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "normalized_citation": kwargs["normalized_citation"],
+            "corpus_key": kwargs["corpus_key"],
+            "state_code": kwargs["state_code"],
+            "candidate_count": 1,
+            "archived_count": 0,
+            "candidates": [
+                {
+                    "url": "https://www.revisor.mn.gov/statutes/cite/999.999",
+                    "title": "Recovered statute candidate",
+                    "source_type": "current",
+                    "source": "multi_engine",
+                    "score": 12,
+                }
+            ],
+            "manifest_path": "/tmp/recovery_manifest.json",
+        }
+
+    monkeypatch.setattr(
+        linker_module,
+        "resolve_bluebook_citations_in_text",
+        resolve_bluebook_citations_in_text,
+    )
+    recovery_module = __import__(
+        "ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery",
+        fromlist=["recover_missing_legal_citation_source"],
+    )
+    monkeypatch.setattr(
+        recovery_module,
+        "recover_missing_legal_citation_source",
+        fake_recover_missing_legal_citation_source,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={
+            "state_laws": ["/tmp/missing_state_laws.parquet"],
+        },
+    )
+
+    result = resolve_bluebook_lookup_result_document(
+        "The motion relies on Minn. Stat. § 999.999.",
+        resolver=resolver,
+        exhaustive=True,
+        include_recovery=True,
+        recovery_archive_top_k=0,
+    )
+
+    assert result["unmatched_citation_count"] == 1
+    assert result["recovery"]["enabled"] is True
+    assert result["recovery"]["attempted"] is True
+    assert len(result["recovery_results"]) == 1
+    assert result["recovery_results"][0]["status"] == "tracked"
+    assert result["recovery_results"][0]["citation_text"] == "Minn. Stat. § 999.999"
+
+
 def test_bluebook_citation_resolver_caches_hf_sources_per_corpus(monkeypatch):
     list_calls = []
 
@@ -1552,3 +1734,101 @@ def test_bluebook_citation_resolution_audit_reports_document_level_coverage(tmp_
     assert unresolved["citation_text"] == "Minn. Stat. § 999.999"
     assert unresolved["metadata"]["source_row_present"] is False
     assert unresolved["metadata"]["recovery_supported"] is True
+
+
+@pytest.mark.skipif(st is None, reason="hypothesis not installed")
+@given(
+    payload=st.binary(min_size=1, max_size=4096),
+    chunk_sizes=st.lists(st.integers(min_value=1, max_value=257), min_size=1, max_size=32),
+)
+@settings(max_examples=40)
+def test_bluebook_citation_resolver_materialize_remote_parquet_preserves_downloaded_bytes(
+    payload,
+    chunk_sizes,
+):
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+    source_ref = f"https://example.test/bluebook/{uuid.uuid4().hex}.parquet"
+    request_calls = []
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def raise_for_status(self):
+            return None
+
+        def iter_content(self, chunk_size=1024 * 1024):
+            del chunk_size
+            offset = 0
+            size_index = 0
+            while offset < len(payload):
+                step = chunk_sizes[size_index % len(chunk_sizes)]
+                size_index += 1
+                next_offset = min(len(payload), offset + step)
+                yield payload[offset:next_offset]
+                offset = next_offset
+
+    def fake_get(url, stream=True, timeout=120):
+        request_calls.append((url, stream, timeout))
+        assert stream is True
+        assert timeout == 120
+        return _Response()
+
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr("requests.get", fake_get)
+
+        first_path = resolver._materialize_remote_parquet(source_ref)
+        assert first_path is not None
+        assert Path(first_path).read_bytes() == payload
+        assert request_calls == [(source_ref, True, 120)]
+
+        second_path = resolver._materialize_remote_parquet(source_ref)
+        assert second_path == first_path
+        assert Path(second_path).read_bytes() == payload
+        assert request_calls == [(source_ref, True, 120)]
+
+
+@pytest.mark.skipif(st is None, reason="hypothesis not installed")
+@given(
+    names=st.lists(
+        st.text(
+            alphabet=st.characters(
+                whitelist_categories=("Ll", "Lu", "Nd"),
+                whitelist_characters=("/._-"),
+            ),
+            min_size=1,
+            max_size=48,
+        ),
+        min_size=1,
+        max_size=16,
+    )
+)
+@settings(max_examples=50)
+def test_bluebook_citation_resolver_iter_corpus_sources_filters_only_direct_sources(names):
+    normalized_names = []
+    for name in names:
+        candidate = name.strip().strip("/")
+        if not candidate:
+            continue
+        if not candidate.endswith((".parquet", ".faiss", ".index")):
+            candidate = f"{candidate}.parquet"
+        normalized_names.append(candidate)
+
+    if not normalized_names:
+        normalized_names = ["uscode.parquet"]
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"us_code": normalized_names},
+    )
+
+    expected = [
+        item
+        for item in [str(path) for path in normalized_names]
+        if linker_module._is_direct_citation_source(item)
+    ]
+
+    assert resolver._iter_corpus_sources("us_code", state_code=None) == expected

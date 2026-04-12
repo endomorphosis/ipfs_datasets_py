@@ -23,3 +23,7 @@ Templates:
 WS11 automation:
 - `scripts/ops/legal_data/create_ws11_github_issues.py`
 - `scripts/ops/legal_data/create_ws11_github_issues.sh`
+
+Workspace dataset bundles:
+- `scripts/ops/legal_data/README.md` includes the workspace dataset bundle export and packaging workflows.
+- `ipfs_datasets_py/docs/guides/CLI_TOOL_MERGE.md` documents `ipfs-datasets workspace` CLI usage for exports and packaged bundles.

@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Workspace dataset bundle inspection CLI."""
+"""Workspace dataset bundle inspection CLI.
+
+Examples:
+- `ipfs-datasets workspace --action summary --input-path /path/to/workspace_bundle.parquet --json`
+- `ipfs-datasets workspace --action export --input-json /tmp/workspace.json --output-parquet /tmp/workspace_bundle.parquet --json`
+- `ipfs-datasets workspace --action package --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json`
+- `ipfs-datasets workspace --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json`
+"""
 
 from __future__ import annotations
 
@@ -13,7 +20,6 @@ from ipfs_datasets_py.processors.legal_data import (
     inspect_workspace_dataset_single_parquet,
     load_workspace_dataset_single_parquet,
     load_workspace_dataset_single_parquet_summary,
-    render_workspace_dataset_single_parquet_report,
     inspect_packaged_workspace_bundle,
     iter_packaged_workspace_chain,
     load_packaged_workspace_dataset,
@@ -21,6 +27,9 @@ from ipfs_datasets_py.processors.legal_data import (
     load_packaged_workspace_summary_view,
     package_workspace_dataset,
     render_packaged_workspace_report,
+    render_workspace_dataset_single_parquet_report,
+    search_workspace_dataset_bm25,
+    search_workspace_dataset_vector,
 )
 
 __all__ = ["create_parser", "main"]
@@ -52,6 +61,34 @@ def _render_text(payload: dict[str, Any], *, title: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _render_search_text(payload: dict[str, Any], *, title: str) -> str:
+    lines = [title]
+    lines.append(f"query: {str(payload.get('query') or '')}")
+    lines.append(f"result_count: {int(payload.get('result_count') or 0)}")
+    lines.append(f"group_count: {int(payload.get('group_count') or 0)}")
+
+    grouped_results = [dict(item) for item in list(payload.get("grouped_results") or []) if isinstance(item, dict)]
+    if grouped_results:
+        lines.append("groups:")
+        for group in grouped_results:
+            lines.append(
+                "  - "
+                f"{str(group.get('group_id') or '')}"
+                f" [{str(group.get('source_type') or '')}]"
+                f" matches={int(group.get('match_count') or 0)}"
+                f" docs={len(list(group.get('document_ids') or []))}"
+            )
+            for document in [dict(item) for item in list(group.get("documents") or []) if isinstance(item, dict)]:
+                marker = "*" if bool(document.get("is_match")) else "-"
+                lines.append(
+                    "    "
+                    f"{marker} {str(document.get('document_id') or '')}: {str(document.get('title') or '')}"
+                )
+    else:
+        lines.append("groups: none")
+    return "\n".join(lines) + "\n"
+
+
 def _load_export_workspace_script_module():
     module_path = Path(__file__).resolve().parents[2] / "scripts" / "ops" / "legal_data" / "export_workspace_dataset_single_bundle.py"
     spec = importlib.util.spec_from_file_location("workspace_export_single_bundle_under_test", module_path)
@@ -65,13 +102,30 @@ def _load_export_workspace_script_module():
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="ipfs-datasets workspace",
-        description="Inspect workspace dataset single-parquet bundles.",
+        description="Inspect, search, export, and package workspace datasets and packaged bundles.",
     )
     parser.add_argument(
         "--action",
-        choices=["summary", "inspect", "load", "report", "export", "package", "package-summary", "package-inspect", "package-load", "package-report", "chain", "components"],
+        choices=[
+            "summary",
+            "inspect",
+            "load",
+            "report",
+            "search-bm25",
+            "search-vector",
+            "export",
+            "package",
+            "package-summary",
+            "package-inspect",
+            "package-load",
+            "package-report",
+            "package-search-bm25",
+            "package-search-vector",
+            "chain",
+            "components",
+        ],
         default="summary",
-        help="Read a lightweight summary, bundle inspection view, full dataset payload, rendered report, export a single parquet bundle, or package a multi-piece bundle.",
+        help="Read, search, export, or package workspace datasets and packaged bundles.",
     )
     parser.add_argument(
         "--input-path",
@@ -113,6 +167,8 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--write-normalized-json", default="", help="For --action export, optional path to persist normalized dataset JSON.")
     parser.add_argument("--no-car", action="store_true", help="For --action package, disable CAR emission.")
     parser.add_argument("--piece-ids", default="", help="For --action components, comma-separated list of piece ids to load.")
+    parser.add_argument("--query", default="", help="For search actions, query text.")
+    parser.add_argument("--top-k", type=int, default=10, help="For search actions, maximum results to return.")
     parser.add_argument(
         "--fields",
         default=None,
@@ -242,6 +298,24 @@ def main(args: list[str] | None = None) -> int:
     elif parsed.action == "inspect":
         payload = inspect_workspace_dataset_single_parquet(bundle_path)
         title = "Workspace Bundle Inspection"
+    elif parsed.action == "search-bm25":
+        if not str(parsed.query or "").strip():
+            parser.error("--query is required for --action search-bm25.")
+        payload = search_workspace_dataset_bm25(
+            load_workspace_dataset_single_parquet(bundle_path),
+            str(parsed.query),
+            top_k=int(parsed.top_k or 10),
+        )
+        title = "Workspace BM25 Search"
+    elif parsed.action == "search-vector":
+        if not str(parsed.query or "").strip():
+            parser.error("--query is required for --action search-vector.")
+        payload = search_workspace_dataset_vector(
+            load_workspace_dataset_single_parquet(bundle_path),
+            str(parsed.query),
+            top_k=int(parsed.top_k or 10),
+        )
+        title = "Workspace Vector Search"
     elif parsed.action == "report":
         rendered = render_workspace_dataset_single_parquet_report(
             bundle_path,
@@ -258,6 +332,24 @@ def main(args: list[str] | None = None) -> int:
     elif parsed.action == "package-load":
         payload = load_packaged_workspace_dataset(bundle_path)
         title = "Packaged Workspace Dataset"
+    elif parsed.action == "package-search-bm25":
+        if not str(parsed.query or "").strip():
+            parser.error("--query is required for --action package-search-bm25.")
+        payload = search_workspace_dataset_bm25(
+            load_packaged_workspace_dataset(bundle_path),
+            str(parsed.query),
+            top_k=int(parsed.top_k or 10),
+        )
+        title = "Packaged Workspace BM25 Search"
+    elif parsed.action == "package-search-vector":
+        if not str(parsed.query or "").strip():
+            parser.error("--query is required for --action package-search-vector.")
+        payload = search_workspace_dataset_vector(
+            load_packaged_workspace_dataset(bundle_path),
+            str(parsed.query),
+            top_k=int(parsed.top_k or 10),
+        )
+        title = "Packaged Workspace Vector Search"
     elif parsed.action == "package-report":
         rendered = render_packaged_workspace_report(
             bundle_path,
@@ -279,6 +371,8 @@ def main(args: list[str] | None = None) -> int:
     payload = _select_fields(payload, fields)
     if parsed.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
+    elif parsed.action in {"search-bm25", "search-vector", "package-search-bm25", "package-search-vector"}:
+        print(_render_search_text(payload, title=title), end="")
     else:
         print(_render_text(payload, title=title), end="")
     return 0

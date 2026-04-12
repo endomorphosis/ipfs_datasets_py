@@ -78,6 +78,51 @@ STATE_NAMES = {
     "WY": "Wyoming",
 }
 
+DOWNLOADABLE_LEGAL_FILE_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".rtf",
+    ".txt",
+    ".xml",
+    ".json",
+    ".csv",
+    ".zip",
+}
+
+DOWNLOADABLE_CONTENT_TYPE_SUFFIXES = {
+    "application/pdf": ".pdf",
+    "application/msword": ".doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "application/rtf": ".rtf",
+    "text/rtf": ".rtf",
+    "application/xml": ".xml",
+    "text/xml": ".xml",
+    "application/json": ".json",
+    "text/json": ".json",
+    "text/csv": ".csv",
+    "application/zip": ".zip",
+    "application/x-zip-compressed": ".zip",
+    "text/plain": ".txt",
+}
+
+LEGAL_FILE_HINT_TERMS = (
+    "statute",
+    "statutes",
+    "code",
+    "rule",
+    "rules",
+    "regulation",
+    "regulations",
+    "register",
+    "appendix",
+    "opinion",
+    "order",
+    "decision",
+    "notice",
+    "chapter",
+)
+
 
 def build_missing_citation_recovery_query(
     citation_text: str,
@@ -216,6 +261,30 @@ class ArchivedSourceRecord:
 
 
 @dataclass
+class RecoveredCandidateFile:
+    url: str
+    title: Optional[str] = None
+    discovered_from_url: Optional[str] = None
+    source: Optional[str] = None
+    source_type: Optional[str] = None
+    score: int = 0
+    content_type: Optional[str] = None
+    file_extension: Optional[str] = None
+    fetch_success: bool = False
+    artifact_path: Optional[str] = None
+    metadata_path: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@dataclass
+class RecoveryScraperPatch:
+    patch_path: str
+    target_file: Optional[str] = None
+    host: Optional[str] = None
+    rationale: Optional[str] = None
+
+
+@dataclass
 class LegalSourceRecoveryResult:
     status: str
     citation_text: str
@@ -236,12 +305,16 @@ class LegalSourceRecoveryResult:
     release_plan_preview: Optional[Dict[str, Any]] = None
     feedback_entry: Optional[Dict[str, Any]] = None
     search_backend_status: Optional[Dict[str, Any]] = None
+    candidate_files: List[RecoveredCandidateFile] = field(default_factory=list)
+    scraper_patch: Optional[RecoveryScraperPatch] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             **asdict(self),
             "candidates": [asdict(item) for item in self.candidates],
             "archived_sources": [asdict(item) for item in self.archived_sources],
+            "candidate_files": [asdict(item) for item in self.candidate_files],
+            "scraper_patch": asdict(self.scraper_patch) if self.scraper_patch is not None else None,
         }
 
 
@@ -252,12 +325,18 @@ class LegalSourceRecoveryWorkflow:
         archive_searcher: Optional[_ArchiveSearcher] = None,
         live_searcher: Optional[_LiveSearcher] = None,
         archiver: Any = None,
+        fetch_api: Any = None,
+        patch_manager: Any = None,
+        enable_candidate_file_fetch: bool = False,
         publish_func: Optional[Callable[..., Dict[str, Any]]] = None,
         now_factory: Optional[Callable[[], datetime]] = None,
     ) -> None:
         self._archive_searcher = archive_searcher
         self._live_searcher = live_searcher
         self._archiver = archiver
+        self._fetch_api = fetch_api
+        self._patch_manager = patch_manager
+        self._enable_candidate_file_fetch = bool(enable_candidate_file_fetch)
         self._publish_func = publish_func
         self._now_factory = now_factory or datetime.utcnow
 
@@ -281,6 +360,20 @@ class LegalSourceRecoveryWorkflow:
         from scripts.repair.publish_parquet_to_hf import publish
 
         return publish
+
+    def _fetch_api_instance(self) -> Any:
+        if self._fetch_api is not None:
+            return self._fetch_api
+        from ..web_archiving.unified_api import UnifiedWebArchivingAPI
+
+        return UnifiedWebArchivingAPI()
+
+    def _patch_manager_instance(self, *, manifest_dir: Path) -> Any:
+        if self._patch_manager is not None:
+            return self._patch_manager
+        from ...optimizers.agentic.patch_control import PatchManager
+
+        return PatchManager(patches_dir=manifest_dir / "patches", enable_cache=False)
 
     def _search_backend_status(self) -> Dict[str, Any]:
         brave_api_key = str(
@@ -402,7 +495,7 @@ class LegalSourceRecoveryWorkflow:
                 backend_status["multi_engine_error"] = str(exc)
 
         effective_archive_searcher = self._archive_searcher or searcher
-        if (not live_results) and effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
+        if effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
             try:
                 archive_payload = effective_archive_searcher.search_with_indexes(
                     query=query,
@@ -456,6 +549,15 @@ class LegalSourceRecoveryWorkflow:
                     )
                 )
 
+        candidate_files: List[RecoveredCandidateFile] = []
+        scraper_patch: Optional[RecoveryScraperPatch] = None
+        if self._enable_candidate_file_fetch:
+            candidate_files = self._discover_candidate_files(
+                candidates=candidates,
+                corpus_key=recovery_corpus_key,
+                state_code=state_code,
+            )
+
         manifest_dir, manifest_path = self._write_manifest(
             citation_text=citation_text,
             normalized_citation=normalized_citation or citation_text,
@@ -464,7 +566,27 @@ class LegalSourceRecoveryWorkflow:
             query=query,
             candidates=candidates,
             archived_sources=archived_sources,
+            candidate_files=candidate_files,
         )
+
+        if self._enable_candidate_file_fetch:
+            candidate_files = self._materialize_candidate_file_artifacts(
+                manifest_dir=manifest_dir,
+                candidate_files=candidate_files,
+            )
+            scraper_patch = self._write_scraper_patch_scaffold(
+                manifest_dir=manifest_dir,
+                citation_text=citation_text,
+                normalized_citation=normalized_citation or citation_text,
+                corpus_key=recovery_corpus_key,
+                candidates=candidates,
+                candidate_files=candidate_files,
+            )
+            self._rewrite_manifest_with_artifacts(
+                manifest_path=manifest_path,
+                candidate_files=candidate_files,
+                scraper_patch=scraper_patch,
+            )
 
         publish_plan = None
         publish_report = None
@@ -529,7 +651,374 @@ class LegalSourceRecoveryWorkflow:
                 "candidate_corpora": list((metadata or {}).get("candidate_corpora") or []),
             },
             search_backend_status=backend_status,
+            candidate_files=candidate_files,
+            scraper_patch=scraper_patch,
         )
+
+    @staticmethod
+    def _file_extension_from_url(url: str) -> Optional[str]:
+        suffix = Path(urlparse(str(url or "")).path).suffix.lower()
+        return suffix or None
+
+    @staticmethod
+    def _content_type_matches_downloadable(content_type: Optional[str]) -> bool:
+        lowered = str(content_type or "").split(";", 1)[0].strip().lower()
+        return lowered in DOWNLOADABLE_CONTENT_TYPE_SUFFIXES
+
+    @classmethod
+    def _is_downloadable_legal_file(
+        cls,
+        *,
+        url: str,
+        title: Optional[str],
+        content_type: Optional[str] = None,
+    ) -> bool:
+        ext = cls._file_extension_from_url(url)
+        if ext in DOWNLOADABLE_LEGAL_FILE_EXTENSIONS:
+            return True
+        if cls._content_type_matches_downloadable(content_type):
+            return True
+        hay = f"{url} {title or ''}".lower()
+        return ("download" in hay or "document" in hay) and any(term in hay for term in LEGAL_FILE_HINT_TERMS)
+
+    @staticmethod
+    def _candidate_file_score(
+        *,
+        url: str,
+        title: Optional[str],
+        content_type: Optional[str],
+        state_code: Optional[str],
+    ) -> int:
+        score = 0
+        domain = urlparse(url).netloc.lower()
+        hay = f"{url} {title or ''} {content_type or ''}".lower()
+        ext = Path(urlparse(url).path).suffix.lower()
+        if domain.endswith(".gov") or ".gov" in domain:
+            score += 4
+        if domain.endswith(".us") or ".state." in domain:
+            score += 3
+        if ext == ".pdf":
+            score += 5
+        elif ext in {".xml", ".json", ".docx", ".doc", ".rtf", ".zip"}:
+            score += 3
+        if content_type and LegalSourceRecoveryWorkflow._content_type_matches_downloadable(content_type):
+            score += 3
+        if state_code and state_code.lower() in hay:
+            score += 2
+        if any(term in hay for term in LEGAL_FILE_HINT_TERMS):
+            score += 3
+        return score
+
+    @classmethod
+    def _register_candidate_file(
+        cls,
+        *,
+        storage: Dict[str, RecoveredCandidateFile],
+        url: str,
+        title: Optional[str],
+        discovered_from_url: Optional[str],
+        source: Optional[str],
+        source_type: Optional[str],
+        content_type: Optional[str],
+        state_code: Optional[str],
+    ) -> None:
+        normalized_url = str(url or "").strip()
+        if not normalized_url:
+            return
+        if not cls._is_downloadable_legal_file(url=normalized_url, title=title, content_type=content_type):
+            return
+        score = cls._candidate_file_score(
+            url=normalized_url,
+            title=title,
+            content_type=content_type,
+            state_code=state_code,
+        )
+        existing = storage.get(normalized_url)
+        if existing is None:
+            storage[normalized_url] = RecoveredCandidateFile(
+                url=normalized_url,
+                title=title or None,
+                discovered_from_url=discovered_from_url,
+                source=source,
+                source_type=source_type,
+                score=score,
+                content_type=content_type or None,
+                file_extension=cls._file_extension_from_url(normalized_url),
+            )
+            return
+        if title and not existing.title:
+            existing.title = title
+        if discovered_from_url and not existing.discovered_from_url:
+            existing.discovered_from_url = discovered_from_url
+        if source and not existing.source:
+            existing.source = source
+        if source_type and not existing.source_type:
+            existing.source_type = source_type
+        if content_type and not existing.content_type:
+            existing.content_type = content_type
+        existing.score = max(existing.score, score)
+
+    def _discover_candidate_files(
+        self,
+        *,
+        candidates: Iterable[LegalSourceCandidate],
+        corpus_key: Optional[str],
+        state_code: Optional[str],
+    ) -> List[RecoveredCandidateFile]:
+        del corpus_key
+        fetch_api = self._fetch_api_instance()
+        discovered: Dict[str, RecoveredCandidateFile] = {}
+
+        for candidate in list(candidates)[:4]:
+            self._register_candidate_file(
+                storage=discovered,
+                url=candidate.url,
+                title=candidate.title,
+                discovered_from_url=candidate.url,
+                source=candidate.source,
+                source_type=candidate.source_type,
+                content_type=None,
+                state_code=state_code,
+            )
+
+            try:
+                fetch_response = fetch_api.fetch(
+                    candidate.url,
+                    domain="legal",
+                    metadata={"title_hint": candidate.title or ""},
+                )
+            except Exception:
+                continue
+
+            document = getattr(fetch_response, "document", None)
+            if not getattr(fetch_response, "success", False) or document is None:
+                continue
+
+            document_metadata = dict(getattr(document, "metadata", {}) or {})
+            document_content_type = str(
+                getattr(document, "content_type", "")
+                or document_metadata.get("content_type")
+                or ""
+            ).strip()
+            self._register_candidate_file(
+                storage=discovered,
+                url=candidate.url,
+                title=candidate.title or getattr(document, "title", "") or None,
+                discovered_from_url=candidate.url,
+                source=candidate.source,
+                source_type=candidate.source_type,
+                content_type=document_content_type or None,
+                state_code=state_code,
+            )
+
+            for link in list(document_metadata.get("links") or [])[:50]:
+                if not isinstance(link, dict):
+                    continue
+                self._register_candidate_file(
+                    storage=discovered,
+                    url=str(link.get("url") or ""),
+                    title=str(link.get("text") or "") or None,
+                    discovered_from_url=candidate.url,
+                    source=candidate.source,
+                    source_type=candidate.source_type,
+                    content_type=None,
+                    state_code=state_code,
+                )
+
+        files = list(discovered.values())
+        files.sort(key=lambda item: (-item.score, item.url))
+        return files[:8]
+
+    @staticmethod
+    def _artifact_suffix(*, url: str, content_type: Optional[str], has_bytes: bool) -> str:
+        ext = Path(urlparse(url).path).suffix.lower()
+        if ext:
+            return ext
+        lowered = str(content_type or "").split(";", 1)[0].strip().lower()
+        if lowered in DOWNLOADABLE_CONTENT_TYPE_SUFFIXES:
+            return DOWNLOADABLE_CONTENT_TYPE_SUFFIXES[lowered]
+        if has_bytes:
+            return ".bin"
+        return ".txt"
+
+    @staticmethod
+    def _safe_metadata_excerpt(text: str, *, limit: int = 1200) -> str:
+        cleaned = " ".join(str(text or "").split())
+        return cleaned[:limit]
+
+    def _materialize_candidate_file_artifacts(
+        self,
+        *,
+        manifest_dir: Path,
+        candidate_files: Iterable[RecoveredCandidateFile],
+    ) -> List[RecoveredCandidateFile]:
+        fetch_api = self._fetch_api_instance()
+        artifacts_dir = manifest_dir / "candidate_files"
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+        materialized: List[RecoveredCandidateFile] = []
+        for index, item in enumerate(list(candidate_files)[:3], start=1):
+            updated = RecoveredCandidateFile(**asdict(item))
+            try:
+                fetch_response = fetch_api.fetch(
+                    updated.url,
+                    domain="legal",
+                    metadata={"title_hint": updated.title or ""},
+                )
+            except Exception as exc:
+                updated.fetch_success = False
+                updated.notes = f"fetch_exception: {exc}"
+                materialized.append(updated)
+                continue
+
+            document = getattr(fetch_response, "document", None)
+            if not getattr(fetch_response, "success", False) or document is None:
+                updated.fetch_success = False
+                errors = getattr(fetch_response, "errors", None) or []
+                updated.notes = "; ".join(str(getattr(err, "message", err)) for err in errors) or "fetch_failed"
+                materialized.append(updated)
+                continue
+
+            metadata = dict(getattr(document, "metadata", {}) or {})
+            content_type = str(getattr(document, "content_type", "") or metadata.get("content_type") or "").strip() or None
+            raw_bytes = metadata.get("raw_bytes")
+            has_bytes = isinstance(raw_bytes, (bytes, bytearray)) and len(raw_bytes) > 0
+            suffix = self._artifact_suffix(url=updated.url, content_type=content_type, has_bytes=has_bytes)
+            artifact_base = f"{index:02d}_{_slugify(updated.title or Path(urlparse(updated.url).path).stem or 'candidate-file', limit=48)}"
+            artifact_path = artifacts_dir / f"{artifact_base}{suffix}"
+
+            if has_bytes:
+                artifact_path.write_bytes(bytes(raw_bytes))
+            else:
+                artifact_text = str(getattr(document, "text", "") or getattr(document, "html", "") or "")
+                artifact_path.write_text(artifact_text, encoding="utf-8")
+
+            metadata_path = artifacts_dir / f"{artifact_base}.json"
+            metadata_payload = {
+                "url": updated.url,
+                "title": updated.title,
+                "discovered_from_url": updated.discovered_from_url,
+                "source": updated.source,
+                "source_type": updated.source_type,
+                "content_type": content_type,
+                "artifact_path": str(artifact_path),
+                "artifact_size": artifact_path.stat().st_size if artifact_path.exists() else 0,
+                "fetch_success": True,
+                "text_excerpt": self._safe_metadata_excerpt(getattr(document, "text", "") or ""),
+                "extraction_provenance": dict(getattr(document, "extraction_provenance", {}) or {}),
+            }
+            metadata_path.write_text(json.dumps(metadata_payload, indent=2, sort_keys=True), encoding="utf-8")
+
+            updated.fetch_success = True
+            updated.content_type = content_type
+            updated.file_extension = suffix
+            updated.artifact_path = str(artifact_path)
+            updated.metadata_path = str(metadata_path)
+            materialized.append(updated)
+
+        return materialized + list(candidate_files)[3:]
+
+    @staticmethod
+    def _target_scraper_file_for_corpus(corpus_key: Optional[str]) -> Optional[str]:
+        mapping = {
+            "state_laws": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            "state_admin_rules": "ipfs_datasets_py/processors/legal_scrapers/state_admin_rules_scraper.py",
+            "state_court_rules": "ipfs_datasets_py/processors/legal_scrapers/state_procedure_rules_scraper.py",
+            "federal_register": "ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/federal_register_scraper.py",
+            "us_code": "ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/us_code_scraper.py",
+        }
+        return mapping.get(str(corpus_key or "").strip().lower())
+
+    def _write_scraper_patch_scaffold(
+        self,
+        *,
+        manifest_dir: Path,
+        citation_text: str,
+        normalized_citation: str,
+        corpus_key: Optional[str],
+        candidates: Iterable[LegalSourceCandidate],
+        candidate_files: Iterable[RecoveredCandidateFile],
+    ) -> Optional[RecoveryScraperPatch]:
+        target_file = self._target_scraper_file_for_corpus(corpus_key)
+        if not target_file:
+            return None
+
+        primary_file = next((item for item in candidate_files if item.url), None)
+        primary_candidate = next((item for item in candidates if item.url), None)
+        source_url = primary_file.url if primary_file is not None else (primary_candidate.url if primary_candidate is not None else "")
+        if not source_url:
+            return None
+
+        host = urlparse(source_url).netloc.lower() or None
+        from ...optimizers.agentic.patch_control import Patch
+
+        patch_id = f"recovery-{_slugify(normalized_citation, limit=40)}-{_slugify(host or 'host', limit=24)}"
+        diff_content = self._build_scraper_patch_diff(
+            target_file=target_file,
+            citation_text=citation_text,
+            source_url=source_url,
+            discovered_from_url=getattr(primary_file, "discovered_from_url", None),
+            host=host,
+        )
+        patch = Patch(
+            patch_id=patch_id,
+            agent_id="legal_source_recovery",
+            task_id=f"citation-recovery:{_slugify(normalized_citation, limit=48)}",
+            description=f"Scraper scaffold for recovered source host {host or 'unknown'}",
+            diff_content=diff_content,
+            target_files=[target_file],
+            metadata={
+                "citation_text": citation_text,
+                "normalized_citation": normalized_citation,
+                "host": host,
+                "candidate_url": source_url,
+            },
+        )
+
+        patch_manager = self._patch_manager_instance(manifest_dir=manifest_dir)
+        patch_path = patch_manager.save_patch(patch, manifest_dir / "patches" / f"{patch_id}.patch")
+        return RecoveryScraperPatch(
+            patch_path=str(patch_path),
+            target_file=target_file,
+            host=host,
+            rationale="Host-specific recovery scaffold generated from discovered candidate file.",
+        )
+
+    @staticmethod
+    def _build_scraper_patch_diff(
+        *,
+        target_file: str,
+        citation_text: str,
+        source_url: str,
+        discovered_from_url: Optional[str],
+        host: Optional[str],
+    ) -> str:
+        discovered_line = f"# discovered_from: {discovered_from_url}\n" if discovered_from_url else ""
+        return (
+            f"diff --git a/{target_file} b/{target_file}\n"
+            f"--- a/{target_file}\n"
+            f"+++ b/{target_file}\n"
+            "@@\n"
+            "+# TODO(recovery): add host-specific file retrieval using UnifiedWebArchivingAPI or UnifiedWebScraper.\n"
+            f"+# citation: {citation_text}\n"
+            f"+# host: {host or ''}\n"
+            f"+# candidate_url: {source_url}\n"
+            f"+{discovered_line}"
+            "+# preferred_fetch_path: UnifiedWebArchivingAPI.fetch(url, domain=\"legal\")\n"
+            "+# fallback_fetch_path: UnifiedWebScraper.scrape_sync(url)\n"
+        )
+
+    @staticmethod
+    def _rewrite_manifest_with_artifacts(
+        *,
+        manifest_path: Path,
+        candidate_files: Iterable[RecoveredCandidateFile],
+        scraper_patch: Optional[RecoveryScraperPatch],
+    ) -> None:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        payload["candidate_files"] = [asdict(item) for item in candidate_files]
+        payload["scraper_patch"] = asdict(scraper_patch) if scraper_patch is not None else None
+        manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     def _write_manifest(
         self,
@@ -541,6 +1030,7 @@ class LegalSourceRecoveryWorkflow:
         query: str,
         candidates: Iterable[LegalSourceCandidate],
         archived_sources: Iterable[ArchivedSourceRecord],
+        candidate_files: Iterable[RecoveredCandidateFile],
     ) -> tuple[Path, Path]:
         now = self._now_factory()
         corpus_root = Path.cwd() / "source_recovery"
@@ -561,6 +1051,8 @@ class LegalSourceRecoveryWorkflow:
             "generated_at": now.isoformat(),
             "candidates": [asdict(item) for item in candidates],
             "archived_sources": [asdict(item) for item in archived_sources],
+            "candidate_files": [asdict(item) for item in candidate_files],
+            "scraper_patch": None,
         }
         manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return manifest_dir, manifest_path
@@ -578,7 +1070,7 @@ async def recover_missing_legal_citation_source(
     publish_to_hf: bool = False,
     hf_token: Optional[str] = None,
 ) -> Dict[str, Any]:
-    workflow = LegalSourceRecoveryWorkflow()
+    workflow = LegalSourceRecoveryWorkflow(enable_candidate_file_fetch=True)
     result = await workflow.recover_unresolved_citation(
         citation_text=citation_text,
         normalized_citation=normalized_citation,

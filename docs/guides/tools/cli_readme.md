@@ -144,6 +144,19 @@ python scripts/cli/enhanced_cli.py bespoke_tools system_health
 
 See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
 
+### Workspace Dataset Bundles
+
+```bash
+# Export a single-parquet workspace bundle
+./ipfs-datasets workspace --action export --input-json /tmp/workspace.json --output-parquet /tmp/workspace_bundle.parquet --json
+
+# Package a multi-piece workspace bundle (Parquet + optional CAR)
+./ipfs-datasets workspace --action package --input-json /tmp/workspace.json --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json
+
+# Inspect packaged bundle summary
+./ipfs-datasets workspace --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json
+```
+
 ## Tool Categories Available
 
 The enhanced CLI provides access to 31+ tool categories:

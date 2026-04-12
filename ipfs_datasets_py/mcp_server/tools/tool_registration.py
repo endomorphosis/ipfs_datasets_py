@@ -605,10 +605,22 @@ TOOL_MAPPINGS = {
                 "description": "Search federal and state court-rules corpus with jurisdiction filtering from the canonical JusticeDAO court-rules dataset",
                 "tags": ["legal", "court_rules", "federal_rules", "state_rules", "vector-search", "cid", "retrieval"]
             },
+            "search_workspace_dataset": {
+                "name": "search_workspace_dataset",
+                "category": "legal_datasets",
+                "description": "Search a workspace dataset bundle or packaged manifest with grouped BM25 or vector results",
+                "tags": ["legal", "workspace", "bm25", "vector-search", "grouped-results", "retrieval"]
+            },
+            "search_docket_dataset": {
+                "name": "search_docket_dataset",
+                "category": "legal_datasets",
+                "description": "Search a docket dataset JSON artifact or packaged manifest with BM25 or vector retrieval",
+                "tags": ["legal", "docket", "bm25", "vector-search", "retrieval"]
+            },
             "recover_missing_legal_citation_source": {
                 "name": "recover_missing_legal_citation_source",
                 "category": "legal_datasets",
-                "description": "Recover missing legal citation sources via search, archive, and optional JusticeDAO HF publish planning",
+                "description": "Recover missing legal citation sources via search, archive, candidate-file fetch artifacts, scraper patch scaffolds, and optional JusticeDAO HF publish planning",
                 "tags": ["legal", "citations", "recovery", "archive", "hf", "retrieval"]
             },
             "promote_recovery_manifest_to_canonical_bundle": {

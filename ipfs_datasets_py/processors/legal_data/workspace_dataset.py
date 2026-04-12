@@ -1013,6 +1013,110 @@ def _normalize_workspace_title(title: str | None) -> str:
     return str(title or "").strip().lower()
 
 
+def _workspace_search_result_document_id(result: Dict[str, Any]) -> str:
+    return str(result.get("document_id") or result.get("id") or "")
+
+
+def _workspace_group_document_ids(collection: Dict[str, Any]) -> List[str]:
+    raw = collection.get("document_ids") or []
+    if not isinstance(raw, list):
+        return []
+    return [str(item) for item in raw if str(item or "")]
+
+
+def _workspace_result_score(result: Dict[str, Any]) -> float:
+    try:
+        return float(result.get("score") or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _group_workspace_search_results(
+    dataset_payload: Dict[str, Any],
+    results: Sequence[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    documents = {
+        str(item.get("document_id") or item.get("id") or ""): dict(item)
+        for item in list(dataset_payload.get("documents") or [])
+        if isinstance(item, dict) and str(item.get("document_id") or item.get("id") or "")
+    }
+    collections = [dict(item) for item in list(dataset_payload.get("collections") or []) if isinstance(item, dict)]
+    collection_by_id = {
+        str(collection.get("id") or ""): collection
+        for collection in collections
+        if str(collection.get("id") or "")
+    }
+    collection_by_document_id: Dict[str, str] = {}
+    for collection in collections:
+        collection_id = str(collection.get("id") or "")
+        if not collection_id:
+            continue
+        for document_id in _workspace_group_document_ids(collection):
+            collection_by_document_id.setdefault(document_id, collection_id)
+
+    grouped: List[Dict[str, Any]] = []
+    grouped_index: Dict[str, int] = {}
+    grouped_matches: Dict[str, set[str]] = {}
+
+    for result in results:
+        result_payload = dict(result)
+        document_id = _workspace_search_result_document_id(result_payload)
+        document = dict(documents.get(document_id) or {})
+        metadata = dict(document.get("metadata") or {})
+        collection_id = str(metadata.get("collection_id") or collection_by_document_id.get(document_id) or "")
+        if not collection_id:
+            collection_id = f"document:{document_id}" if document_id else f"result:{len(grouped) + 1}"
+
+        group_position = grouped_index.get(collection_id)
+        if group_position is None:
+            collection = dict(collection_by_id.get(collection_id) or {})
+            group_document_ids = _workspace_group_document_ids(collection)
+            if not group_document_ids and document_id:
+                group_document_ids = [document_id]
+            group_documents: List[Dict[str, Any]] = []
+            for group_document_id in group_document_ids:
+                group_document = dict(documents.get(group_document_id) or {})
+                group_metadata = dict(group_document.get("metadata") or {})
+                group_documents.append(
+                    {
+                        "document_id": group_document_id,
+                        "title": str(group_document.get("title") or group_document_id),
+                        "document_type": str(group_metadata.get("document_type") or group_document.get("document_type") or ""),
+                        "parent_document_id": str(group_metadata.get("parent_document_id") or group_document_id),
+                        "is_match": group_document_id == document_id,
+                    }
+                )
+            grouped.append(
+                {
+                    "group_id": collection_id,
+                    "group_title": str(collection.get("title") or document.get("title") or document_id or collection_id),
+                    "source_type": str(collection.get("source_type") or dataset_payload.get("source_type") or "workspace"),
+                    "parent_document_id": str(collection.get("parent_document_id") or metadata.get("parent_document_id") or document_id),
+                    "document_ids": group_document_ids,
+                    "documents": group_documents,
+                    "matched_results": [result_payload],
+                    "match_count": 1,
+                    "top_score": _workspace_result_score(result_payload),
+                }
+            )
+            grouped_index[collection_id] = len(grouped) - 1
+            grouped_matches[collection_id] = {document_id} if document_id else set()
+            continue
+
+        group = grouped[group_position]
+        group["matched_results"].append(result_payload)
+        group["match_count"] = int(group.get("match_count") or 0) + 1
+        group["top_score"] = max(float(group.get("top_score") or 0.0), _workspace_result_score(result_payload))
+        if document_id and document_id not in grouped_matches[collection_id]:
+            grouped_matches[collection_id].add(document_id)
+            for group_document in list(group.get("documents") or []):
+                if str(group_document.get("document_id") or "") == document_id:
+                    group_document["is_match"] = True
+                    break
+
+    return grouped
+
+
 def search_workspace_dataset_bm25(
     dataset: WorkspaceDatasetObject | Dict[str, Any],
     query: str,
@@ -1023,10 +1127,13 @@ def search_workspace_dataset_bm25(
     bm25_index = dict(dataset_payload.get("bm25_index") or {})
     documents = list(bm25_index.get("documents") or [])
     results = bm25_search_documents(query, documents, top_k=top_k)
+    grouped_results = _group_workspace_search_results(dataset_payload, results)
     return {
         "query": query,
         "top_k": top_k,
         "results": results,
+        "grouped_results": grouped_results,
+        "group_count": len(grouped_results),
         "result_count": len(results),
         "source": "local_bm25",
     }
@@ -1066,10 +1173,13 @@ def search_workspace_dataset_vector(
         )
     scored.sort(key=lambda row: float(row.get("score") or 0.0), reverse=True)
     results = scored[:top_k]
+    grouped_results = _group_workspace_search_results(dataset_payload, results)
     return {
         "query": query,
         "top_k": top_k,
         "results": results,
+        "grouped_results": grouped_results,
+        "group_count": len(grouped_results),
         "result_count": len(results),
     }
 

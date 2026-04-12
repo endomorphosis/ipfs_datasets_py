@@ -209,6 +209,16 @@ async def test_recover_missing_legal_citation_source_api_delegates_parameters(mo
             "status": "tracked",
             "citation_text": kwargs["citation_text"],
             "corpus_key": kwargs["corpus_key"],
+            "candidate_files": [
+                {
+                    "url": "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf",
+                    "fetch_success": True,
+                }
+            ],
+            "scraper_patch": {
+                "patch_path": "/tmp/recovery.patch",
+                "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            },
         }
 
     monkeypatch.setattr(
@@ -236,6 +246,8 @@ async def test_recover_missing_legal_citation_source_api_delegates_parameters(mo
     assert result["status"] == "tracked"
     assert result["operation"] == "recover_missing_legal_citation_source"
     assert result["tool_version"] == "5.0.0"
+    assert result["candidate_files"][0]["fetch_success"] is True
+    assert result["scraper_patch"]["target_file"] == "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
     assert captured["citation_text"] == "Minn. Stat. § 518.17"
     assert captured["normalized_citation"] == "Minn. Stat. § 518.17"
     assert captured["corpus_key"] == "state_laws"
