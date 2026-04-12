@@ -408,6 +408,7 @@ async def test_run_bluebook_linker_fuzz_harness_seed_only_emits_actionable_cover
     assert backlog["actionable_corpora"] == ["us_code"]
     assert backlog["cluster_count"] == 1
     assert backlog["clusters"][0]["target_file"].endswith("us_code_scraper.py")
+    assert "malformed_repairs" in backlog
     assert run.summary["failure_patch_backlog_path"]
     assert Path(run.summary["failure_patch_backlog_path"]).exists()
 
