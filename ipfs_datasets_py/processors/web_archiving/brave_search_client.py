@@ -41,6 +41,17 @@ except ImportError:
     BraveSearchIPFSCache = None
 
 
+def _truthy_env(value: Optional[str]) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _brave_ipfs_cache_enabled() -> bool:
+    explicit = os.environ.get("BRAVE_SEARCH_IPFS_CACHE")
+    if explicit is not None:
+        return _truthy_env(explicit) and HAVE_IPFS_CACHE
+    return HAVE_IPFS_CACHE
+
+
 def brave_web_search_max_count() -> int:
     """Return the maximum per-request result count supported by Brave web search.
     
@@ -340,9 +351,7 @@ def brave_web_search(
     cache_key = _brave_cache_key(q=q, count=int(count), offset=int(offset), country=str(country), safesearch=str(safesearch))
     
     # IPFS cache configuration
-    ipfs_cache_enabled = (os.environ.get("BRAVE_SEARCH_IPFS_CACHE") or "").strip().lower() in {
-        "1", "true", "yes", "on"
-    } and HAVE_IPFS_CACHE
+    ipfs_cache_enabled = _brave_ipfs_cache_enabled()
     ipfs_cache = None
     if ipfs_cache_enabled:
         try:
@@ -704,9 +713,7 @@ class BraveSearchClient:
         # Initialize IPFS cache if enabled
         self.ipfs_cache = None
         if HAVE_IPFS_CACHE:
-            ipfs_cache_enabled = (os.environ.get("BRAVE_SEARCH_IPFS_CACHE") or "").strip().lower() in {
-                "1", "true", "yes", "on"
-            }
+            ipfs_cache_enabled = _brave_ipfs_cache_enabled()
             if ipfs_cache_enabled:
                 try:
                     self.ipfs_cache = BraveSearchIPFSCache()

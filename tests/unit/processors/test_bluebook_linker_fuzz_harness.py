@@ -177,6 +177,7 @@ def test_collect_seeded_bluebook_fuzz_candidates_skips_state_law_name_only_rows(
                 {
                     "state_code": "MN",
                     "name": "Chief Clerk",
+                    "source_id": "urn:state:mn:statute:Minnesota Statutes § Section-15",
                     "source_url": "https://example.test/chief-clerk",
                 },
                 {

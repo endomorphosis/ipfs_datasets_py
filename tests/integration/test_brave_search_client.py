@@ -97,8 +97,8 @@ class TestBraveSearchClient:
         # GIVEN a BraveSearchClient instance
         from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
         
-        # Ensure IPFS cache is disabled
-        os.environ.pop("BRAVE_SEARCH_IPFS_CACHE", None)
+        # Ensure IPFS cache is explicitly disabled
+        os.environ["BRAVE_SEARCH_IPFS_CACHE"] = "0"
         
         client = BraveSearchClient()
         
@@ -109,6 +109,27 @@ class TestBraveSearchClient:
         assert isinstance(stats, dict)
         assert "available" in stats
         assert stats["available"] is False
+        os.environ.pop("BRAVE_SEARCH_IPFS_CACHE", None)
+
+    def test_brave_search_client_enables_ipfs_cache_by_default_when_available(self, monkeypatch):
+        """Test IPFS cache auto-enables unless explicitly turned off."""
+        from ipfs_datasets_py.processors.web_archiving import brave_search_client as brave_module
+
+        monkeypatch.delenv("BRAVE_SEARCH_IPFS_CACHE", raising=False)
+        monkeypatch.setattr(brave_module, "HAVE_IPFS_CACHE", True)
+
+        class FakeIPFSCache:
+            def is_available(self):
+                return True
+
+            def stats(self):
+                return {"available": True}
+
+        monkeypatch.setattr(brave_module, "BraveSearchIPFSCache", FakeIPFSCache)
+
+        client = brave_module.BraveSearchClient()
+
+        assert client.ipfs_cache is not None
     
     def test_ipfs_cache_class_initialization(self):
         """Test BraveSearchIPFSCache class initialization."""

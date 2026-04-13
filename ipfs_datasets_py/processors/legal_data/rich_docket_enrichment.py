@@ -8,6 +8,7 @@ import os
 import re
 import time
 import threading
+import concurrent.futures
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 from ... import llm_router, multimodal_router
@@ -70,6 +71,11 @@ def enrich_docket_documents_with_routers(
         heartbeat_seconds = max(0.0, float(heartbeat_raw))
     except Exception:
         heartbeat_seconds = 30.0
+    timeout_raw = str(os.getenv("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS", "60")).strip()
+    try:
+        router_timeout_seconds = max(0.0, float(timeout_raw))
+    except Exception:
+        router_timeout_seconds = 60.0
     status = {
         "stage": "init",
         "document_id": "",
@@ -126,15 +132,43 @@ def enrich_docket_documents_with_routers(
             continue
 
         status["stage"] = "router_analyze"
-        analysis = analyze_document_with_routers(
-            docket_id=docket_id,
-            case_name=case_name,
-            court=court,
-            document_id=document_id,
-            title=title,
-            text=text[:max_chars],
-            source_url=source_url,
-        )
+        if router_timeout_seconds:
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+            future = executor.submit(
+                analyze_document_with_routers,
+                docket_id=docket_id,
+                case_name=case_name,
+                court=court,
+                document_id=document_id,
+                title=title,
+                text=text[:max_chars],
+                source_url=source_url,
+            )
+            try:
+                analysis = future.result(timeout=router_timeout_seconds)
+            except concurrent.futures.TimeoutError:
+                status["stage"] = "router_timeout"
+                print(
+                    f"[router_enrichment] timeout document_id={document_id} after {router_timeout_seconds}s",
+                    flush=True,
+                )
+                skipped_count += 1
+                status["skipped"] = skipped_count
+                future.cancel()
+                executor.shutdown(wait=False, cancel_futures=True)
+                continue
+            finally:
+                executor.shutdown(wait=False, cancel_futures=True)
+        else:
+            analysis = analyze_document_with_routers(
+                docket_id=docket_id,
+                case_name=case_name,
+                court=court,
+                document_id=document_id,
+                title=title,
+                text=text[:max_chars],
+                source_url=source_url,
+            )
         if analysis is None:
             skipped_count += 1
             continue
@@ -221,6 +255,9 @@ def analyze_document_with_routers(
     model_name: str | None = None,
     return_diagnostics: bool = False,
 ) -> RichDocumentAnalysis | None | tuple[RichDocumentAnalysis | None, Dict[str, Any]]:
+    trace_enabled = str(os.getenv("IPFS_DATASETS_PY_ROUTER_TRACE", "")).strip().lower() in {"1", "true", "yes", "on"}
+    trace_prefix = f"[router_trace] document_id={document_id}"
+    stage_started = time.monotonic()
     prompt = _build_analysis_prompt(
         docket_id=docket_id,
         case_name=case_name,
@@ -236,6 +273,9 @@ def analyze_document_with_routers(
         "status": "unknown",
     }
     try:
+        if trace_enabled:
+            print(f"{trace_prefix} stage=llm_generate start", flush=True)
+        llm_started = time.monotonic()
         response = llm_router.generate_text(
             prompt,
             provider=provider,
@@ -245,6 +285,8 @@ def analyze_document_with_routers(
             allow_local_fallback=False,
             disable_model_retry=True,
         )
+        if trace_enabled:
+            print(f"{trace_prefix} stage=llm_generate done elapsed={time.monotonic() - llm_started:.2f}s", flush=True)
         trace = llm_router.get_last_generation_trace()
         provider = str(trace.get("provider_name") or "").strip().lower()
         model_name = str(trace.get("model_name") or "").strip()
@@ -260,18 +302,30 @@ def analyze_document_with_routers(
             diagnostics["status"] = "prompt_echo"
             result = None
             return (result, diagnostics) if return_diagnostics else result
+        if trace_enabled:
+            print(f"{trace_prefix} stage=parse_json start", flush=True)
+        parse_started = time.monotonic()
         payload = _parse_json_response(response)
+        if trace_enabled:
+            print(f"{trace_prefix} stage=parse_json done elapsed={time.monotonic() - parse_started:.2f}s", flush=True)
         if not _payload_has_semantic_content(payload):
             diagnostics["status"] = "no_semantic_payload"
             diagnostics["payload_keys"] = sorted(str(key) for key in dict(payload).keys())
             result = None
             return (result, diagnostics) if return_diagnostics else result
         if source_url.lower().endswith(".pdf"):
+            if trace_enabled:
+                print(f"{trace_prefix} stage=multimodal_summary start", flush=True)
+            summary_started = time.monotonic()
             multimodal_summary = _try_multimodal_summary(title=title, text=text, source_url=source_url)
+            if trace_enabled:
+                print(f"{trace_prefix} stage=multimodal_summary done elapsed={time.monotonic() - summary_started:.2f}s", flush=True)
             if multimodal_summary:
                 payload.setdefault("summary", multimodal_summary)
                 payload.setdefault("provenance", {})["multimodal_summary"] = True
         diagnostics["status"] = "ok"
+        if trace_enabled:
+            print(f"{trace_prefix} stage=coerce done total_elapsed={time.monotonic() - stage_started:.2f}s", flush=True)
         result = _coerce_analysis_payload(payload, provider=provider or "unknown", model_name=model_name)
         return (result, diagnostics) if return_diagnostics else result
     except Exception as exc:

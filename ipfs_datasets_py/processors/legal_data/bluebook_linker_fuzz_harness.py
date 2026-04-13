@@ -22,6 +22,7 @@ from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import (
     BluebookCitationResolver,
     resolve_bluebook_lookup_result_document,
     _normalize_malformed_citation,
+    _IDENTIFIER_FIELDS,
     _OFFICIAL_CITE_FIELDS,
     _PAGE_FIELDS,
     _SECTION_FIELDS,
@@ -312,7 +313,13 @@ def _synthesize_seed_candidate_from_row(
         if not citation_text:
             citation_text = _citation_text_from_row_text(row, "state_statute", resolved_state)
         if not citation_text and resolved_state:
-            citation_text = _synthesize_state_statute_citation_from_row(row, resolved_state)
+            identifier_fields = [field for field in _IDENTIFIER_FIELDS if field not in {"source_id", "name", "name_abbreviation"}]
+            has_structured_fields = any(
+                _first_present(row, fields) not in (None, "")
+                for fields in (_OFFICIAL_CITE_FIELDS, _SECTION_FIELDS, _TITLE_NUMBER_FIELDS, identifier_fields)
+            )
+            if has_structured_fields:
+                citation_text = _synthesize_state_statute_citation_from_row(row, resolved_state)
         citation_type = "state_statute"
     if not citation_text:
         return None

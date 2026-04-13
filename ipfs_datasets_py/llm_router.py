@@ -91,8 +91,8 @@ _P2P_TASK_PREFIX = "p2p://"
 _HF_ARCH_ROUTER_MODEL_ID = "katanemo/Arch-Router-1.5B"
 _UNPINNED_OPTIONAL_PROVIDER_ORDER = [
     "codex_cli",
-    "openai",
     "copilot_cli",
+    "openai",
     "hf_inference_api",
     "openrouter",
     "gemini_cli",
@@ -2487,7 +2487,7 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                 (model_name or "").strip()
                 or os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_MODEL", "").strip()
                 or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "").strip()
-                or "gpt-5-mini"
+                or "gpt-5.4"
             )
             timeout = float(kwargs.get("timeout", 180))
 

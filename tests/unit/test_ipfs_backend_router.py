@@ -74,8 +74,9 @@ def test_ipfs_kit_backend_uses_simulated_cid_for_non_pinned_add_failures(monkeyp
 def test_router_bootstraps_ipfs_kit_when_kubo_cli_missing(monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
     monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_CACHE", "0")
-    monkeypatch.setenv("IPFS_DATASETS_AUTO_INSTALL", "true")
     monkeypatch.delenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_AUTO_INSTALL", raising=False)
+    monkeypatch.delenv("IPFS_AUTO_INSTALL", raising=False)
 
     _purge_modules("ipfs_datasets_py")
 
@@ -100,3 +101,26 @@ def test_router_bootstraps_ipfs_kit_when_kubo_cli_missing(monkeypatch):
     assert cid == "bafyautobootstrap"
     assert calls["bootstrap"] == 1
     assert os.environ["IPFS_DATASETS_PY_ENABLE_IPFS_KIT"] == "1"
+
+
+def test_router_respects_ipfs_kit_auto_install_opt_out(monkeypatch):
+    monkeypatch.setenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
+    monkeypatch.setenv("IPFS_DATASETS_PY_ROUTER_CACHE", "0")
+    monkeypatch.setenv("IPFS_DATASETS_AUTO_INSTALL_IPFS_KIT", "0")
+    monkeypatch.delenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", raising=False)
+
+    _purge_modules("ipfs_datasets_py")
+
+    calls = {"bootstrap": 0}
+
+    import ipfs_datasets_py.auto_installer as auto_installer
+
+    monkeypatch.setattr(auto_installer, "ensure_main_ipfs_kit_py", lambda: calls.__setitem__("bootstrap", calls["bootstrap"] + 1) or True)
+
+    ipfs_backend_router = importlib.import_module("ipfs_datasets_py.ipfs_backend_router")
+    monkeypatch.setattr(ipfs_backend_router, "_kubo_cli_available", lambda cmd=None: False)
+
+    backend = ipfs_backend_router.get_ipfs_backend(use_cache=False)
+
+    assert isinstance(backend, ipfs_backend_router.KuboCLIBackend)
+    assert calls["bootstrap"] == 0

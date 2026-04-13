@@ -39,7 +39,18 @@ def _cache_enabled() -> bool:
 
 
 def _auto_install_enabled() -> bool:
-    return _truthy(os.getenv("IPFS_DATASETS_AUTO_INSTALL")) or _truthy(os.getenv("IPFS_AUTO_INSTALL"))
+    primary = os.getenv("IPFS_DATASETS_AUTO_INSTALL")
+    secondary = os.getenv("IPFS_AUTO_INSTALL")
+    if primary is None and secondary is None:
+        return True
+    return _truthy(primary) or _truthy(secondary)
+
+
+def _auto_install_ipfs_kit_enabled() -> bool:
+    configured = os.getenv("IPFS_DATASETS_AUTO_INSTALL_IPFS_KIT")
+    if configured is None:
+        return _auto_install_enabled()
+    return _truthy(configured)
 
 
 def _kubo_cli_available(cmd: Optional[str] = None) -> bool:
@@ -50,7 +61,7 @@ def _kubo_cli_available(cmd: Optional[str] = None) -> bool:
 
 
 def _bootstrap_ipfs_kit_if_needed() -> bool:
-    if not _auto_install_enabled():
+    if not _auto_install_ipfs_kit_enabled():
         return False
     if _truthy(os.getenv("IPFS_KIT_DISABLE")):
         return False
