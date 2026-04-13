@@ -127,12 +127,20 @@ class BraveSearchEngine(SearchEngineAdapter):
         start_time = time.time()
         
         try:
+            client_kwargs = {}
+            safesearch = kwargs.get("safesearch")
+            country = kwargs.get("country")
+            if safesearch is not None:
+                client_kwargs["safesearch"] = safesearch
+            if country is not None:
+                client_kwargs["country"] = country
+
             # Call Brave API
             brave_results = self.client.search(
                 query=query,
                 count=max_results,
                 offset=offset,
-                **kwargs
+                **client_kwargs,
             )
             
             # Normalize results

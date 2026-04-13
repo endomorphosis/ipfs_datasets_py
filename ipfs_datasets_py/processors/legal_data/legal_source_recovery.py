@@ -486,7 +486,9 @@ class LegalSourceRecoveryWorkflow:
         if not live_results:
             try:
                 engines: List[str] = []
-                if backend_status["brave_configured"]:
+                # Avoid immediately reusing Brave in the multi-engine fallback if the
+                # primary live search path already exercised the Brave-backed stack.
+                if backend_status["brave_configured"] and effective_live_searcher is None:
                     engines.append("brave")
                 if backend_status["duckduckgo_configured"]:
                     engines.append("duckduckgo")
