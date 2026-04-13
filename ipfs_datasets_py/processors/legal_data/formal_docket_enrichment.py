@@ -47,6 +47,32 @@ _LAST_FORMAL_PROGRESS: Dict[str, str] = {
     "detail": "",
 }
 
+_FORMAL_SINGLETON_LOCK = threading.Lock()
+_FORMAL_SINGLETONS: Dict[str, Any] | None = None
+
+
+def _get_formal_singletons() -> Dict[str, Any]:
+    global _FORMAL_SINGLETONS
+    if _FORMAL_SINGLETONS is not None:
+        return _FORMAL_SINGLETONS
+    with _FORMAL_SINGLETON_LOCK:
+        if _FORMAL_SINGLETONS is None:
+            extractor = KnowledgeGraphExtractor(use_spacy=False, use_transformers=False, use_tracer=False, use_srl=False)
+            deontic_extractor = DeonticExtractor()
+            conflict_detector = ConflictDetector()
+            dcec_wrapper = EngDCECWrapper(use_native=True)
+            dcec_ready = bool(dcec_wrapper.initialize())
+            zkp_prover = ZKPProver(enable_caching=True, backend="simulated")
+            _FORMAL_SINGLETONS = {
+                "extractor": extractor,
+                "deontic_extractor": deontic_extractor,
+                "conflict_detector": conflict_detector,
+                "dcec_wrapper": dcec_wrapper,
+                "dcec_ready": dcec_ready,
+                "zkp_prover": zkp_prover,
+            }
+    return _FORMAL_SINGLETONS or {}
+
 
 def get_formal_logic_progress() -> Dict[str, str]:
     return dict(_LAST_FORMAL_PROGRESS)
@@ -102,12 +128,15 @@ def enrich_docket_documents_with_formal_logic(
     heartbeat_thread = threading.Thread(target=_heartbeat, name="formal-logic-heartbeat", daemon=True)
     heartbeat_thread.start()
 
-    extractor = KnowledgeGraphExtractor(use_spacy=False, use_transformers=False, use_tracer=False, use_srl=False)
-    deontic_extractor = DeonticExtractor()
-    conflict_detector = ConflictDetector()
-    dcec_wrapper = EngDCECWrapper(use_native=True)
-    dcec_ready = bool(dcec_wrapper.initialize())
-    zkp_prover = ZKPProver(enable_caching=True, backend="simulated")
+    singletons = _get_formal_singletons()
+    extractor = singletons.get("extractor") or KnowledgeGraphExtractor(
+        use_spacy=False, use_transformers=False, use_tracer=False, use_srl=False
+    )
+    deontic_extractor = singletons.get("deontic_extractor") or DeonticExtractor()
+    conflict_detector = singletons.get("conflict_detector") or ConflictDetector()
+    dcec_wrapper = singletons.get("dcec_wrapper") or EngDCECWrapper(use_native=True)
+    dcec_ready = bool(singletons.get("dcec_ready")) if singletons else bool(dcec_wrapper.initialize())
+    zkp_prover = singletons.get("zkp_prover") or ZKPProver(enable_caching=True, backend="simulated")
 
     analyses: Dict[str, Dict[str, Any]] = {}
     aggregate_entities: List[Dict[str, Any]] = []

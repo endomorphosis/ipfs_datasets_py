@@ -119,6 +119,11 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Run the Bluebook citation source audit across docket documents.",
     )
+    parser.add_argument(
+        "--low-memory",
+        action="store_true",
+        help="Enable low-memory mode (disable router caches, EU audit, and cap citation audit text).",
+    )
     parser.add_argument("--embeddings-provider", default="", help="Embeddings router provider override.")
     parser.add_argument("--embeddings-model", default="", help="Embeddings model name override.")
     parser.add_argument("--embeddings-device", default="", help="Embeddings device override (cpu/cuda).")
@@ -237,6 +242,13 @@ def main() -> int:
         target = "/home/barberb/HACC/.venv/bin/python"
         if sys.executable != target and os.path.exists(target):
             os.execv(target, [target, *sys.argv[1:]])
+
+    if args.low_memory:
+        os.environ.setdefault("IPFS_DATASETS_PY_ROUTER_CACHE", "0")
+        os.environ.setdefault("IPFS_DATASETS_PY_ROUTER_RESPONSE_CACHE", "0")
+        os.environ.setdefault("IPFS_DATASETS_PY_DISABLE_EU_AUDIT", "1")
+        os.environ.setdefault("IPFS_DATASETS_PY_CITATION_AUDIT_MAX_CHARS", "20000")
+        os.environ.setdefault("IPFS_DATASETS_PY_EMBEDDINGS_BATCH_WORKERS", "1")
 
     heartbeat_raw = str(os.getenv("IPFS_DATASETS_PY_EXPORT_HEARTBEAT_SECONDS", "0")).strip()
     try:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from functools import lru_cache
 import asyncio
+import concurrent.futures
 import hashlib
 import logging
 import os
@@ -47,6 +48,11 @@ _LAST_CITATION_AUDIT_PROGRESS: Dict[str, str] = {
 
 def get_citation_audit_progress() -> Dict[str, str]:
     return dict(_LAST_CITATION_AUDIT_PROGRESS)
+
+
+def _resolve_text_worker(text: str, state_code: Optional[str], exhaustive: bool) -> List["CitationLink"]:
+    resolver = BluebookCitationResolver()
+    return resolver.resolve_text(text, state_code=state_code, exhaustive=exhaustive)
 
 
 @dataclass(frozen=True)
@@ -1875,6 +1881,7 @@ def audit_bluebook_citation_resolution_for_documents(
     global _LAST_CITATION_AUDIT_PROGRESS
     active_resolver = resolver or BluebookCitationResolver()
     document_reports: List[Dict[str, Any]] = []
+    errored_documents: List[Dict[str, Any]] = []
     total_citations = 0
     matched_citations = 0
     unresolved_citations = 0
@@ -1886,6 +1893,11 @@ def audit_bluebook_citation_resolution_for_documents(
             max_chars = max(0, int(max_chars_raw))
         except Exception:
             max_chars = 0
+    timeout_raw = str(os.getenv("IPFS_DATASETS_PY_CITATION_RESOLVE_TIMEOUT_SECONDS", "")).strip()
+    try:
+        resolve_timeout = max(0.0, float(timeout_raw)) if timeout_raw else 0.0
+    except Exception:
+        resolve_timeout = 0.0
     for index, document in enumerate(documents, start=1):
         if not isinstance(document, dict):
             continue
@@ -1894,9 +1906,36 @@ def audit_bluebook_citation_resolution_for_documents(
             text = text[:max_chars]
         document_id = str(document.get("document_id") or document.get("id") or f"document_{index}")
         document_title = str(document.get("title") or document.get("label") or f"Document {index}")
+        skip_raw = str(os.getenv("IPFS_DATASETS_PY_CITATION_AUDIT_SKIP_DOCUMENT_IDS", "")).strip()
+        skip_ids = {item.strip() for item in skip_raw.split(",") if item.strip()}
+        if document_id in skip_ids:
+            document_reports.append({
+                "document_id": document_id,
+                "document_title": document_title,
+                "citation_count": 0,
+                "matched_citation_count": 0,
+                "unmatched_citation_count": 0,
+                "all_citations_resolved": False,
+                "citations": [],
+                "error": "skipped_by_env",
+            })
+            continue
         _LAST_CITATION_AUDIT_PROGRESS = {
             "stage": "resolve_text",
             "detail": f"document={index}/{total_documents} id={document_id}",
+        }
+        timeout_raw = str(os.getenv("IPFS_DATASETS_PY_CITATION_AUDIT_TIMEOUT_SECONDS", "")).strip()
+        timeout_seconds = 0.0
+        if timeout_raw:
+            try:
+                timeout_seconds = max(0.0, float(timeout_raw))
+            except Exception:
+                timeout_seconds = 0.0
+        use_process_timeout = str(os.getenv("IPFS_DATASETS_PY_CITATION_AUDIT_USE_PROCESS", "")).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
         }
         if not text:
             document_reports.append({
@@ -1909,7 +1948,67 @@ def audit_bluebook_citation_resolution_for_documents(
                 "citations": [],
             })
             continue
-        links = active_resolver.resolve_text(text, state_code=state_code, exhaustive=exhaustive)
+        try:
+            if timeout_seconds:
+                if use_process_timeout:
+                    import multiprocessing as mp
+
+                    ctx = mp.get_context("spawn")
+                    with ctx.Pool(processes=1) as pool:
+                        async_result = pool.apply_async(
+                            _resolve_text_worker,
+                            (text, state_code, exhaustive),
+                        )
+                        links = async_result.get(timeout=timeout_seconds)
+                else:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                        future = executor.submit(
+                            active_resolver.resolve_text,
+                            text,
+                            state_code=state_code,
+                            exhaustive=exhaustive,
+                        )
+                        links = future.result(timeout=timeout_seconds)
+            else:
+                links = active_resolver.resolve_text(text, state_code=state_code, exhaustive=exhaustive)
+        except concurrent.futures.TimeoutError:
+            errored_documents.append(
+                {
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "error": f"timeout_after_{timeout_seconds:.1f}s",
+                }
+            )
+            document_reports.append({
+                "document_id": document_id,
+                "document_title": document_title,
+                "citation_count": 0,
+                "matched_citation_count": 0,
+                "unmatched_citation_count": 0,
+                "all_citations_resolved": False,
+                "citations": [],
+                "error": f"timeout_after_{timeout_seconds:.1f}s",
+            })
+            continue
+        except Exception as exc:
+            errored_documents.append(
+                {
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "error": str(exc),
+                }
+            )
+            document_reports.append({
+                "document_id": document_id,
+                "document_title": document_title,
+                "citation_count": 0,
+                "matched_citation_count": 0,
+                "unmatched_citation_count": 0,
+                "all_citations_resolved": False,
+                "citations": [],
+                "error": str(exc),
+            })
+            continue
         link_payloads = [citation_link_to_dict(link) for link in links]
         matched_count = sum(1 for item in link_payloads if bool(item.get("matched")))
         unresolved_count = len(link_payloads) - matched_count
@@ -1940,10 +2039,12 @@ def audit_bluebook_citation_resolution_for_documents(
         "citation_count": total_citations,
         "matched_citation_count": matched_citations,
         "unmatched_citation_count": unresolved_citations,
+        "error_count": len(errored_documents),
         "citation_resolution_ratio": (matched_citations / total_citations) if total_citations else 1.0,
         "document_resolution_ratio": (fully_resolved_documents / documents_with_citations) if documents_with_citations else 1.0,
         "documents": document_reports,
         "unresolved_documents": unresolved_documents,
+        "errored_documents": errored_documents,
         "source": "bluebook_citation_resolution_audit",
     }
 
