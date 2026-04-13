@@ -171,10 +171,14 @@ if _MINIMAL_IMPORTS:
     def ensure_module(*_: object, **__: object) -> bool:  # type: ignore
         return False
 else:
-    from .auto_installer import get_installer, ensure_module
+    from .auto_installer import get_installer, ensure_module, ensure_repo_installer_current
 
     # Initialize installer with environment configuration
     installer = get_installer()
+    try:
+        ensure_repo_installer_current()
+    except Exception:
+        pass
 
 class _FallbackIPFSDatasets:
     """Fallback IPFSDatasets interface when core dependencies are missing."""

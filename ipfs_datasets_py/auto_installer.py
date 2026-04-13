@@ -10,11 +10,77 @@ import platform
 import subprocess
 import importlib
 import logging
+import json
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Tuple, Set
 import warnings
 
 logger = logging.getLogger(__name__)
+
+
+def _truthy_env_value(value: Optional[str]) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _runtime_installer_check_enabled() -> bool:
+    configured = os.getenv("IPFS_DATASETS_ENSURE_INSTALLER")
+    if configured is None:
+        return True
+    return _truthy_env_value(configured)
+
+
+def _runtime_installer_marker_path() -> Path:
+    repo_root = Path(__file__).resolve().parents[1]
+    return repo_root / "state" / "runtime_installer_state.json"
+
+
+def _current_repo_revision() -> str:
+    repo_root = Path(__file__).resolve().parents[1]
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            value = (result.stdout or "").strip()
+            if value:
+                return value
+    except Exception:
+        pass
+
+    fallback_paths = [
+        repo_root / "setup.py",
+        repo_root / "scripts" / "setup" / "install.py",
+        repo_root / "ipfs_datasets_py" / "__init__.py",
+    ]
+    stamp_parts: List[str] = []
+    for path in fallback_paths:
+        try:
+            stat = path.stat()
+            stamp_parts.append(f"{path.name}:{int(stat.st_mtime)}:{stat.st_size}")
+        except Exception:
+            continue
+    return "|".join(stamp_parts) or "unknown"
+
+
+def _load_runtime_installer_state() -> Dict[str, object]:
+    marker_path = _runtime_installer_marker_path()
+    if not marker_path.exists():
+        return {}
+    try:
+        data = json.loads(marker_path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_runtime_installer_state(payload: Dict[str, object]) -> None:
+    marker_path = _runtime_installer_marker_path()
+    marker_path.parent.mkdir(parents=True, exist_ok=True)
+    marker_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 class DependencyInstaller:
@@ -1235,6 +1301,58 @@ def ensure_main_ipfs_kit_py() -> bool:
         return True
     except Exception:
         return False
+
+
+def ensure_repo_installer_current(force: bool = False) -> bool:
+    """Ensure installer bootstrap has run for the current checkout revision.
+
+    This keeps runtime behavior aligned with the currently checked-out repo
+    version instead of relying on a one-time manual setup.
+    """
+    if not _runtime_installer_check_enabled() and not force:
+        return False
+
+    current_revision = _current_repo_revision()
+    state = _load_runtime_installer_state()
+    if (
+        not force
+        and state.get("status") == "success"
+        and str(state.get("repo_revision") or "") == current_revision
+    ):
+        return False
+
+    module = _load_setup_install_module()
+    if module is None:
+        return False
+
+    helper_names = [
+        "ensure_main_ipfs_kit_py",
+        "ensure_libp2p_main",
+        "ensure_ipfs_accelerate_py",
+    ]
+    completed: List[str] = []
+    failures: List[str] = []
+
+    for helper_name in helper_names:
+        helper = getattr(module, helper_name, None)
+        if not callable(helper):
+            continue
+        try:
+            helper()
+            completed.append(helper_name)
+        except Exception as exc:
+            failures.append(f"{helper_name}: {exc}")
+
+    status = "success" if not failures else "partial"
+    _save_runtime_installer_state(
+        {
+            "completed_helpers": completed,
+            "failures": failures,
+            "repo_revision": current_revision,
+            "status": status,
+        }
+    )
+    return True
 
 def get_installer() -> DependencyInstaller:
     """Get global installer instance"""
