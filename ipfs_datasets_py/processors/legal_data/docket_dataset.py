@@ -115,6 +115,15 @@ _RETRIEVAL_EVIDENCE_RANK = {
     "extracted_pdf": 3,
 }
 
+_LAST_DATASET_PROGRESS: Dict[str, str] = {
+    "stage": "",
+    "detail": "",
+}
+
+
+def get_docket_dataset_progress() -> Dict[str, str]:
+    return dict(_LAST_DATASET_PROGRESS)
+
 
 def _document_text_source(document: "DocketDocument") -> str:
     return str((document.metadata.get("text_extraction") or {}).get("source") or "").strip()
@@ -1197,7 +1206,16 @@ class DocketDocument:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        return {
+            "document_id": self.document_id,
+            "docket_id": self.docket_id,
+            "title": self.title,
+            "text": self.text,
+            "date_filed": self.date_filed,
+            "document_number": self.document_number,
+            "source_url": self.source_url,
+            "metadata": dict(self.metadata),
+        }
 
 
 @dataclass
@@ -1571,7 +1589,9 @@ class DocketDatasetBuilder:
     ) -> DocketDatasetObject:
         include_formal_logic = bool(include_formal_logic) and _formal_logic_enrichment_enabled()
         include_router_enrichment = bool(include_router_enrichment) and _router_enrichment_enabled()
+        _LAST_DATASET_PROGRESS.update({"stage": "normalize_documents", "detail": ""})
         normalized_documents = self._normalize_documents(docket)
+        _LAST_DATASET_PROGRESS.update({"stage": "normalize_documents", "detail": f"documents={len(normalized_documents)}"})
         docket_id = str(docket.get("docket_id") or docket.get("id") or "docket")
         case_name = str(docket.get("case_name") or docket.get("title") or docket_id)
         court = str(docket.get("court") or docket.get("court_full_name") or "")
@@ -1579,15 +1599,31 @@ class DocketDatasetBuilder:
         plaintiff_docket = self._normalize_auxiliary_items(docket.get("plaintiff_docket") or docket.get("plaintiffs_docket") or [])
         defendant_docket = self._normalize_auxiliary_items(docket.get("defendant_docket") or docket.get("defendants_docket") or [])
         authorities = self._normalize_auxiliary_items(docket.get("authorities") or docket.get("authorities_list") or [])
+        _LAST_DATASET_PROGRESS.update({"stage": "link_authorities", "detail": f"authorities={len(authorities)}"})
         authorities, linked_authority_summary = _merge_linked_authorities(
             authorities,
             normalized_documents,
             resolver=self.citation_resolver,
             state_code=str(docket.get("state_code") or docket.get("jurisdiction") or "").strip().upper() or None,
         )
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "link_authorities", "detail": f"linked={linked_authority_summary.get('linked_authority_count', 0)}"}
+        )
+        _LAST_DATASET_PROGRESS.update({"stage": "select_index_documents", "detail": f"documents={len(normalized_documents)}"})
         index_documents = self._select_index_documents(normalized_documents)
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "select_index_documents", "detail": f"selected={len(index_documents)}"}
+        )
 
+        _LAST_DATASET_PROGRESS.update({"stage": "build_knowledge_graph", "detail": f"selected={len(index_documents)}"})
         knowledge_graph = self._build_knowledge_graph(dataset_id, docket_id, case_name, court, index_documents) if include_knowledge_graph else {}
+        _LAST_DATASET_PROGRESS.update(
+            {
+                "stage": "build_knowledge_graph",
+                "detail": f"entities={len(list(knowledge_graph.get('entities') or []))} relationships={len(list(knowledge_graph.get('relationships') or []))}",
+            }
+        )
+        _LAST_DATASET_PROGRESS.update({"stage": "build_deontic_artifacts", "detail": ""})
         deontic_graph_object, deontic_triggers = build_docket_deontic_artifacts(
             dataset_id=dataset_id,
             docket_id=docket_id,
@@ -1596,8 +1632,26 @@ class DocketDatasetBuilder:
             authorities=authorities,
             explicit_statements=list(docket.get("deontic_statements") or []),
         )
+        _LAST_DATASET_PROGRESS.update(
+            {
+                "stage": "build_deontic_artifacts",
+                "detail": f"rules={len(list(deontic_graph_object.rules.values()))} triggers={len(list((deontic_triggers or {}).get('entries') or []))}",
+            }
+        )
+        _LAST_DATASET_PROGRESS.update({"stage": "build_bm25", "detail": f"selected={len(index_documents)}"})
         bm25_index = self._build_bm25_index(dataset_id, index_documents) if include_bm25 else {}
+        _LAST_DATASET_PROGRESS.update(
+            {"stage": "build_bm25", "detail": f"documents={int(bm25_index.get('document_count') or 0)}"}
+        )
+        _LAST_DATASET_PROGRESS.update({"stage": "build_vector_index", "detail": f"selected={len(index_documents)}"})
         vector_index = self._build_vector_index(dataset_id, index_documents) if include_vector_index else {}
+        _LAST_DATASET_PROGRESS.update(
+            {
+                "stage": "build_vector_index",
+                "detail": f"documents={int(vector_index.get('document_count') or 0)} vectors={int(vector_index.get('vector_count') or 0)}",
+            }
+        )
+        _LAST_DATASET_PROGRESS.update({"stage": "build_proof_assistant", "detail": ""})
         proof_assistant = build_docket_proof_assistant(
             dataset_id=dataset_id,
             docket_id=docket_id,
@@ -1613,14 +1667,27 @@ class DocketDatasetBuilder:
             bm25_index=bm25_index,
             vector_index=vector_index,
         )
+        _LAST_DATASET_PROGRESS.update(
+            {
+                "stage": "build_proof_assistant",
+                "detail": f"agenda={len(list((proof_assistant or {}).get('agenda') or []))}",
+            }
+        )
         formal_enrichment: Dict[str, Any] = {}
         if include_formal_logic:
+            _LAST_DATASET_PROGRESS.update({"stage": "build_formal_logic", "detail": f"documents={len(normalized_documents)}"})
             formal_enrichment = enrich_docket_documents_with_formal_logic(
                 normalized_documents,
                 docket_id=docket_id,
                 case_name=case_name,
                 court=court,
                 max_documents=self.formal_logic_max_documents,
+            )
+            _LAST_DATASET_PROGRESS.update(
+                {
+                    "stage": "build_formal_logic",
+                    "detail": f"processed={int((formal_enrichment.get('summary') or {}).get('processed_document_count') or 0)}",
+                }
             )
             self._merge_router_enrichment(
                 documents=normalized_documents,
@@ -1630,6 +1697,7 @@ class DocketDatasetBuilder:
             )
         router_enrichment: Dict[str, Any] = {}
         if include_router_enrichment:
+            _LAST_DATASET_PROGRESS.update({"stage": "build_router_enrichment", "detail": f"documents={len(normalized_documents)}"})
             router_enrichment = enrich_docket_documents_with_routers(
                 normalized_documents,
                 docket_id=docket_id,
@@ -1637,12 +1705,19 @@ class DocketDatasetBuilder:
                 court=court,
                 max_documents=self.router_max_documents,
             )
+            _LAST_DATASET_PROGRESS.update(
+                {
+                    "stage": "build_router_enrichment",
+                    "detail": f"processed={int((router_enrichment.get('summary') or {}).get('processed_document_count') or 0)}",
+                }
+            )
             self._merge_router_enrichment(
                 documents=normalized_documents,
                 knowledge_graph=knowledge_graph,
                 proof_assistant=proof_assistant,
                 router_enrichment=router_enrichment,
             )
+        _LAST_DATASET_PROGRESS.update({"stage": "finalize", "detail": f"documents={len(normalized_documents)}"})
         artifact_provenance = {
             "knowledge_graph": {"backend": "parsed_document_structure_graph", "is_mock": False},
             "bm25_index": {"backend": "local_bm25", "is_mock": False},

@@ -7,6 +7,7 @@ from functools import lru_cache
 import asyncio
 import hashlib
 import logging
+import os
 from pathlib import Path
 import re
 import tempfile
@@ -37,6 +38,15 @@ _PAGE_FIELDS = ["page", "page_number", "start_page", "page_start", "first_page",
 _REPORTER_FIELDS = ["reporter", "reporter_abbrev", "reporter_abbreviation", "publication", "series"]
 _CONGRESS_FIELDS = ["congress", "congress_number", "session", "volume"]
 _LAW_NUMBER_FIELDS = ["law_number", "public_law", "public_law_number", "pl_number", "page"]
+
+_LAST_CITATION_AUDIT_PROGRESS: Dict[str, str] = {
+    "stage": "",
+    "detail": "",
+}
+
+
+def get_citation_audit_progress() -> Dict[str, str]:
+    return dict(_LAST_CITATION_AUDIT_PROGRESS)
 
 
 @dataclass(frozen=True)
@@ -125,6 +135,8 @@ def _normalize_malformed_citation(text: str) -> str:
     ]
     for pattern, replacement in replacements:
         normalized = re.sub(pattern, replacement, normalized, flags=re.IGNORECASE)
+    if "U.S.C." in normalized and "§" not in normalized:
+        normalized = re.sub(r"(U\.S\.C\.)\s+(\d+[A-Za-z0-9.-]*)", r"\1 § \2", normalized)
     normalized = re.sub(r"\bORSS\b", "ORS", normalized, flags=re.IGNORECASE)
     normalized = re.sub(r"\bCal\.?\s+Stat\.?\b", "Cal. Stat.", normalized, flags=re.IGNORECASE)
     normalized = re.sub(r"\bN\.?Y\.?\s+Stat\.?\b", "N.Y. Stat.", normalized, flags=re.IGNORECASE)
@@ -1860,17 +1872,32 @@ def audit_bluebook_citation_resolution_for_documents(
     resolver: Optional[BluebookCitationResolver] = None,
     exhaustive: bool = True,
 ) -> Dict[str, Any]:
+    global _LAST_CITATION_AUDIT_PROGRESS
     active_resolver = resolver or BluebookCitationResolver()
     document_reports: List[Dict[str, Any]] = []
     total_citations = 0
     matched_citations = 0
     unresolved_citations = 0
+    total_documents = len(list(documents))
+    max_chars_raw = str(os.getenv("IPFS_DATASETS_PY_CITATION_AUDIT_MAX_CHARS", "")).strip()
+    max_chars = 0
+    if max_chars_raw:
+        try:
+            max_chars = max(0, int(max_chars_raw))
+        except Exception:
+            max_chars = 0
     for index, document in enumerate(documents, start=1):
         if not isinstance(document, dict):
             continue
         text = str(document.get("text") or "").strip()
+        if max_chars and len(text) > max_chars:
+            text = text[:max_chars]
         document_id = str(document.get("document_id") or document.get("id") or f"document_{index}")
         document_title = str(document.get("title") or document.get("label") or f"Document {index}")
+        _LAST_CITATION_AUDIT_PROGRESS = {
+            "stage": "resolve_text",
+            "detail": f"document={index}/{total_documents} id={document_id}",
+        }
         if not text:
             document_reports.append({
                 "document_id": document_id,

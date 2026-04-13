@@ -917,6 +917,96 @@ def test_bluebook_lookup_result_document_suggests_for_unmatched_citation(tmp_pat
     assert merged[0]["suggested_citation"] == "ORS 801.545"
 
 
+def test_bluebook_citation_resolver_suggests_for_malformed_usc(tmp_path):
+    uscode_path = tmp_path / "us_code.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "title": "42",
+                    "section": "1983",
+                    "identifier": "42 U.S.C. § 1983",
+                    "heading": "Civil action for deprivation of rights",
+                    "ipfs_cid": "bafyusc1983",
+                    "source_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983",
+                }
+            ]
+        ),
+        uscode_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"us_code": [str(uscode_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("42 USC 1983")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "42 U.S.C. § 1983"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
+def test_bluebook_citation_resolver_suggests_for_malformed_cfr(tmp_path):
+    fr_path = tmp_path / "fr_cfr.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "title": "40",
+                    "section": "122.41",
+                    "citation": "40 C.F.R. § 122.41",
+                    "semantic_text": "Conditions applicable to all NPDES permits.",
+                    "cid": "bafycfr12241",
+                    "fr_page_url": "https://www.ecfr.gov/current/title-40/section-122.41",
+                }
+            ]
+        ),
+        fr_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"federal_register": [str(fr_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("40 CFR 122.41")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "40 C.F.R. § 122.41"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
+def test_bluebook_citation_resolver_suggests_for_malformed_fed_reg(tmp_path):
+    fr_path = tmp_path / "fr_reg.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "volume": "89",
+                    "page": "12345",
+                    "citation": "89 Fed. Reg. 12345",
+                    "semantic_text": "Notice of proposed rulemaking.",
+                    "cid": "bafyfr12345",
+                    "fr_page_url": "https://www.federalregister.gov/d/2024-00000",
+                }
+            ]
+        ),
+        fr_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"federal_register": [str(fr_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("89 Fed Reg 12345")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "89 Fed. Reg. 12345"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
 def test_normalize_malformed_citation_repairs_common_abbreviations():
     from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import (
         _normalize_malformed_citation,
@@ -928,6 +1018,7 @@ def test_normalize_malformed_citation_repairs_common_abbreviations():
     assert _normalize_malformed_citation("Tex Stat § 1.01") == "Tex. Stat. § 1.01"
     assert _normalize_malformed_citation("40 CFR § 122.41") == "40 C.F.R. § 122.41"
     assert _normalize_malformed_citation("42 USC § 1983") == "42 U.S.C. § 1983"
+    assert _normalize_malformed_citation("42 USC 1983") == "42 U.S.C. § 1983"
     assert _normalize_malformed_citation("Pub L 117-2") == "Pub. L. 117-2"
     assert _normalize_malformed_citation("Fed Reg 89 12345") == "Fed. Reg. 89 12345"
 

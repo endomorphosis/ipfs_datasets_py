@@ -233,17 +233,40 @@ def embed_texts_with_router_or_local_chunked(
             chunks_by_doc.append(chunks or [text])
 
     flat_chunks = [chunk for chunks in chunks_by_doc for chunk in chunks]
+    router_error: str | None = None
     try:
         from ..embeddings_router import embed_texts_batched as router_embed_texts_batched
+        import concurrent.futures
 
-        vectors = router_embed_texts_batched(
-            flat_chunks,
-            batch_size=resolved_batch_size,
-            provider=provider,
-            model_name=model_name,
-            device=resolved_device,
-            parallel_batches=resolved_parallel_batches,
-        )
+        timeout_raw = str(os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_TIMEOUT_SECONDS", "0")).strip()
+        try:
+            timeout_seconds = max(0.0, float(timeout_raw))
+        except Exception:
+            timeout_seconds = 0.0
+        if timeout_seconds:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    router_embed_texts_batched,
+                    flat_chunks,
+                    batch_size=resolved_batch_size,
+                    provider=provider,
+                    model_name=model_name,
+                    device=resolved_device,
+                    parallel_batches=resolved_parallel_batches,
+                )
+                try:
+                    vectors = future.result(timeout=timeout_seconds)
+                except concurrent.futures.TimeoutError:
+                    raise TimeoutError(f"embeddings_router timed out after {timeout_seconds:.1f}s")
+        else:
+            vectors = router_embed_texts_batched(
+                flat_chunks,
+                batch_size=resolved_batch_size,
+                provider=provider,
+                model_name=model_name,
+                device=resolved_device,
+                parallel_batches=resolved_parallel_batches,
+            )
         normalized = [[float(value) for value in list(vector or [])] for vector in list(vectors or [])]
         if len(normalized) == len(flat_chunks) and all(vector for vector in normalized):
             per_doc_vectors: List[List[float]] = []
@@ -274,8 +297,8 @@ def embed_texts_with_router_or_local_chunked(
                 "parallel_batches": int(resolved_parallel_batches),
                 "is_mock": False,
             }
-    except Exception:
-        pass
+    except Exception as exc:
+        router_error = str(exc)
 
     per_doc_vectors = []
     for chunks in chunks_by_doc:
@@ -298,6 +321,7 @@ def embed_texts_with_router_or_local_chunked(
         "chunk_size": int(chunk_size or 0),
         "chunk_overlap": int(chunk_overlap or 0),
         "chunk_counts": [len(chunks) for chunks in chunks_by_doc],
+        "fallback_reason": router_error,
         "is_mock": False,
     }
 

@@ -258,6 +258,7 @@ def analyze_document_with_routers(
     trace_enabled = str(os.getenv("IPFS_DATASETS_PY_ROUTER_TRACE", "")).strip().lower() in {"1", "true", "yes", "on"}
     trace_prefix = f"[router_trace] document_id={document_id}"
     stage_started = time.monotonic()
+    _LAST_ROUTER_PROGRESS.update({"stage": "llm_generate", "document_id": document_id, "detail": "llm_generate start"})
     prompt = _build_analysis_prompt(
         docket_id=docket_id,
         case_name=case_name,
@@ -287,6 +288,7 @@ def analyze_document_with_routers(
         )
         if trace_enabled:
             print(f"{trace_prefix} stage=llm_generate done elapsed={time.monotonic() - llm_started:.2f}s", flush=True)
+        _LAST_ROUTER_PROGRESS.update({"stage": "parse_json", "document_id": document_id, "detail": "parse_json start"})
         trace = llm_router.get_last_generation_trace()
         provider = str(trace.get("provider_name") or "").strip().lower()
         model_name = str(trace.get("model_name") or "").strip()
@@ -316,6 +318,7 @@ def analyze_document_with_routers(
         if source_url.lower().endswith(".pdf"):
             if trace_enabled:
                 print(f"{trace_prefix} stage=multimodal_summary start", flush=True)
+            _LAST_ROUTER_PROGRESS.update({"stage": "multimodal_summary", "document_id": document_id, "detail": "multimodal_summary start"})
             summary_started = time.monotonic()
             multimodal_summary = _try_multimodal_summary(title=title, text=text, source_url=source_url)
             if trace_enabled:
@@ -326,6 +329,7 @@ def analyze_document_with_routers(
         diagnostics["status"] = "ok"
         if trace_enabled:
             print(f"{trace_prefix} stage=coerce done total_elapsed={time.monotonic() - stage_started:.2f}s", flush=True)
+        _LAST_ROUTER_PROGRESS.update({"stage": "coerce", "document_id": document_id, "detail": "coerce done"})
         result = _coerce_analysis_payload(payload, provider=provider or "unknown", model_name=model_name)
         return (result, diagnostics) if return_diagnostics else result
     except Exception as exc:
@@ -567,3 +571,12 @@ def _dedupe_dict_items(items: Iterable[Mapping[str, Any]], *, key_fields: Sequen
 
 
 __all__ = ["RichDocumentAnalysis", "analyze_document_with_routers", "enrich_docket_documents_with_routers"]
+_LAST_ROUTER_PROGRESS: Dict[str, str] = {
+    "stage": "",
+    "document_id": "",
+    "detail": "",
+}
+
+
+def get_router_enrichment_progress() -> Dict[str, str]:
+    return dict(_LAST_ROUTER_PROGRESS)

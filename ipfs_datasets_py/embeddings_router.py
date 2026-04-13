@@ -139,6 +139,16 @@ def _text_digest(text: str) -> str:
     return hashlib.sha256((text or "").encode("utf-8")).hexdigest()[:16]
 
 
+_LAST_EMBEDDING_PROGRESS: Dict[str, str] = {
+    "stage": "",
+    "detail": "",
+}
+
+
+def get_embedding_progress() -> Dict[str, str]:
+    return dict(_LAST_EMBEDDING_PROGRESS)
+
+
 def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs: Dict[str, object]) -> str:
     """Best-effort model identifier for caching.
 
@@ -992,6 +1002,13 @@ def embed_texts_batched(
     if not items:
         return []
 
+    _LAST_EMBEDDING_PROGRESS.update(
+        {
+            "stage": "start",
+            "detail": f"items={len(items)} batch_size={int(batch_size)}",
+        }
+    )
+
     if not device:
         auto_flag = str(os.getenv("IPFS_DATASETS_PY_AUTO_CUDA") or "").strip().lower()
         if auto_flag in {"1", "true", "yes", "on"}:
@@ -1021,6 +1038,13 @@ def embed_texts_batched(
     out: List[List[float]] = []
     if allow_parallel_batches:
         ranges = list(range(0, len(items), int(batch_size)))
+        total_batches = len(ranges)
+        _LAST_EMBEDDING_PROGRESS.update(
+            {
+                "stage": "batch_submit",
+                "detail": f"batches={total_batches} parallel={parallel_batches}",
+            }
+        )
 
         def _embed_batch(start: int) -> List[List[float]]:
             batch = items[start : start + int(batch_size)]
@@ -1036,15 +1060,41 @@ def embed_texts_batched(
 
         batch_results: Dict[int, List[List[float]]] = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_batches) as executor:
-            future_map = {executor.submit(_embed_batch, start): start for start in ranges}
+            future_map = {}
+            submitted = 0
+            for start in ranges:
+                future_map[executor.submit(_embed_batch, start)] = start
+                submitted += 1
+                _LAST_EMBEDDING_PROGRESS.update(
+                    {
+                        "stage": "batch_running",
+                        "detail": f"submitted={submitted} total={total_batches}",
+                    }
+                )
+            completed = 0
             for future in concurrent.futures.as_completed(future_map):
                 batch_results[future_map[future]] = future.result()
+                completed += 1
+                _LAST_EMBEDDING_PROGRESS.update(
+                    {
+                        "stage": "batch_complete",
+                        "detail": f"completed={completed} total={total_batches}",
+                    }
+                )
 
         for start in ranges:
             out.extend(batch_results.get(start, []))
     else:
+        total_batches = max(1, (len(items) + int(batch_size) - 1) // int(batch_size))
+        completed = 0
         for start in range(0, len(items), int(batch_size)):
             batch = items[start : start + int(batch_size)]
+            _LAST_EMBEDDING_PROGRESS.update(
+                {
+                    "stage": "batch_running",
+                    "detail": f"batch={completed + 1} total={total_batches} size={len(batch)}",
+                }
+            )
             out.extend(
                 embed_texts(
                     batch,
@@ -1056,6 +1106,14 @@ def embed_texts_batched(
                     **kwargs,
                 )
             )
+            completed += 1
+            _LAST_EMBEDDING_PROGRESS.update(
+                {
+                    "stage": "batch_complete",
+                    "detail": f"completed={completed} total={total_batches}",
+                }
+            )
+    _LAST_EMBEDDING_PROGRESS.update({"stage": "done", "detail": f"vectors={len(out)}"})
     return out
 
 

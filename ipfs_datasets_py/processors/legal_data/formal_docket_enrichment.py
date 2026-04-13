@@ -41,6 +41,17 @@ from .reasoner import (
 )
 
 
+_LAST_FORMAL_PROGRESS: Dict[str, str] = {
+    "stage": "",
+    "document_id": "",
+    "detail": "",
+}
+
+
+def get_formal_logic_progress() -> Dict[str, str]:
+    return dict(_LAST_FORMAL_PROGRESS)
+
+
 def enrich_docket_documents_with_formal_logic(
     documents: Sequence[Any],
     *,
@@ -57,6 +68,8 @@ def enrich_docket_documents_with_formal_logic(
     def _trace(message: str) -> None:
         if trace_enabled:
             print(f"[formal_trace] {message}", flush=True)
+        if message:
+            _LAST_FORMAL_PROGRESS["detail"] = message
 
     heartbeat_raw = str(os.getenv("IPFS_DATASETS_PY_LOGIC_HEARTBEAT_SECONDS", "30")).strip()
     try:
@@ -125,6 +138,7 @@ def enrich_docket_documents_with_formal_logic(
         status["document_id"] = document_id
         status["processed"] = processed_count
         status["skipped"] = skipped_count
+        _LAST_FORMAL_PROGRESS.update({"stage": "document_start", "document_id": document_id})
         if not document_id or not (text or title).strip():
             skipped_count += 1
             status["skipped"] = skipped_count
@@ -132,6 +146,7 @@ def enrich_docket_documents_with_formal_logic(
         payload_text = (text or title)[:max_chars]
 
         status["stage"] = "kg_extract"
+        _LAST_FORMAL_PROGRESS.update({"stage": "kg_extract", "document_id": document_id})
         kg_started = time.monotonic()
         _trace(f"document_id={document_id} stage=kg_extract start")
         kg = extractor.extract_knowledge_graph(payload_text, extraction_temperature=0.45, structure_temperature=0.35)
@@ -146,6 +161,7 @@ def enrich_docket_documents_with_formal_logic(
         relationships = [item for item in relationships if item]
 
         status["stage"] = "deontic_extract"
+        _LAST_FORMAL_PROGRESS.update({"stage": "deontic_extract", "document_id": document_id})
         deontic_started = time.monotonic()
         _trace(f"document_id={document_id} stage=deontic_extract start")
         statements = deontic_extractor.extract_statements(payload_text, document_id)
@@ -174,6 +190,7 @@ def enrich_docket_documents_with_formal_logic(
         temporal_formula_strings.extend(list(structured_signals.get("temporal_formulas") or []))
         if dcec_ready:
             status["stage"] = "dcec_convert"
+            _LAST_FORMAL_PROGRESS.update({"stage": "dcec_convert", "document_id": document_id})
             dcec_started = time.monotonic()
             _trace(f"document_id={document_id} stage=dcec_convert start")
             for sentence in _iter_candidate_sentences(
@@ -187,6 +204,7 @@ def enrich_docket_documents_with_formal_logic(
             _trace(f"document_id={document_id} stage=dcec_convert done elapsed={time.monotonic() - dcec_started:.2f}s")
 
         status["stage"] = "frames"
+        _LAST_FORMAL_PROGRESS.update({"stage": "frames", "document_id": document_id})
         frame_started = time.monotonic()
         _trace(f"document_id={document_id} stage=frames start")
         frames = [_frame_from_statement(stmt, docket_id=docket_id, case_name=case_name, court=court) for stmt in statements]
@@ -210,6 +228,7 @@ def enrich_docket_documents_with_formal_logic(
         _trace(f"document_id={document_id} stage=frames done elapsed={time.monotonic() - frame_started:.2f}s")
 
         status["stage"] = "proofs"
+        _LAST_FORMAL_PROGRESS.update({"stage": "proofs", "document_id": document_id})
         proof_started = time.monotonic()
         _trace(f"document_id={document_id} stage=proofs start")
         propositions = [_proposition_from_statement(stmt) for stmt in statements]
@@ -274,6 +293,7 @@ def enrich_docket_documents_with_formal_logic(
         heartbeat_thread.join(timeout=1.0)
 
     status["stage"] = "conflict_detection"
+    _LAST_FORMAL_PROGRESS.update({"stage": "conflict_detection", "document_id": ""})
     conflict_started = time.monotonic()
     _trace("stage=conflict_detection start")
     conflicts = conflict_detector.detect_conflicts(all_statements) if all_statements else []

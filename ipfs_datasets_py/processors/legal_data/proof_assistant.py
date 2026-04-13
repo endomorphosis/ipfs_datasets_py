@@ -6,6 +6,15 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
+_LAST_PROOF_PROGRESS: Dict[str, str] = {
+    "stage": "",
+    "detail": "",
+}
+
+
+def get_proof_assistant_progress() -> Dict[str, str]:
+    return dict(_LAST_PROOF_PROGRESS)
+
 from ...logic.deontic import DeonticGraph
 from ..protocol import Entity, KnowledgeGraph, Relationship
 from .frames import FrameKnowledgeBase
@@ -125,7 +134,9 @@ class DocketProofAssistantBuilder:
         trigger_state = dict(deontic_triggers or {})
         trigger_entries = list(trigger_state.get("entries") or [])
         party_analysis = dict(trigger_state.get("party_analysis") or {})
+        _LAST_PROOF_PROGRESS.update({"stage": "agenda", "detail": f"entries={len(trigger_entries)}"})
         agenda = self._build_agenda(graph, trigger_entries, party_analysis)
+        _LAST_PROOF_PROGRESS.update({"stage": "frames", "detail": f"agenda={len(agenda)}"})
         frames = self._build_frames(
             dataset_id=dataset_id,
             docket_id=docket_id,
@@ -137,8 +148,11 @@ class DocketProofAssistantBuilder:
             authorities=authorities,
             agenda=agenda,
         )
+        _LAST_PROOF_PROGRESS.update({"stage": "temporal_fol", "detail": f"agenda={len(agenda)}"})
         temporal_fol = self._build_temporal_fol(docket_id=docket_id, documents=documents, agenda=agenda)
+        _LAST_PROOF_PROGRESS.update({"stage": "dcec", "detail": f"agenda={len(agenda)}"})
         dcec = self._build_dcec(docket_id=docket_id, documents=documents, agenda=agenda)
+        _LAST_PROOF_PROGRESS.update({"stage": "proof_kg", "detail": f"agenda={len(agenda)}"})
         proof_kg = self._build_proof_knowledge_graph(
             dataset_id=dataset_id,
             docket_id=docket_id,
@@ -149,6 +163,7 @@ class DocketProofAssistantBuilder:
             trigger_entries=trigger_entries,
             agenda=agenda,
         )
+        _LAST_PROOF_PROGRESS.update({"stage": "tactician", "detail": f"agenda={len(agenda)}"})
         tactician = build_proof_tactician_manifest(
             dataset_id=dataset_id,
             docket_id=docket_id,
@@ -158,6 +173,7 @@ class DocketProofAssistantBuilder:
             bm25_index=bm25_index,
             vector_index=vector_index,
         )
+        _LAST_PROOF_PROGRESS.update({"stage": "party_analysis", "detail": f"agenda={len(agenda)}"})
         enriched_party_analysis = self._enrich_party_analysis(party_analysis=party_analysis, agenda=agenda)
         extractor_status = {
             "deontic_temporal_first_order_logic": {
@@ -207,6 +223,7 @@ class DocketProofAssistantBuilder:
             "proof_knowledge_graph_relationship_count": len(list((proof_kg or {}).get("relationships") or [])),
             "extractor_count": len(extractor_status),
         }
+        _LAST_PROOF_PROGRESS.update({"stage": "finalize", "detail": f"work_items={len(agenda)}"})
         return DocketProofAssistant(
             dataset_id=dataset_id,
             docket_id=docket_id,

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 import threading
 from pathlib import Path
@@ -15,10 +16,16 @@ from ipfs_datasets_py.processors.legal_data import (
     attach_available_courtlistener_recap_evidence_to_docket,
     attach_public_courtlistener_filing_pdfs_to_docket,
     audit_docket_dataset_citation_sources,
+    docket_dataset,
     export_docket_dataset_single_parquet,
     fetch_courtlistener_docket,
+    formal_docket_enrichment,
+    proof_assistant as proof_assistant_module,
+    rich_docket_enrichment,
+    bluebook_citation_linker,
 )
 from ipfs_datasets_py import llm_router
+from ipfs_datasets_py import embeddings_router
 
 
 def _parse_args() -> argparse.Namespace:
@@ -132,6 +139,51 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _strip_document_raw_metadata(documents: list) -> None:
+    keep_raw = str(os.getenv("IPFS_DATASETS_PY_EXPORT_KEEP_RAW_METADATA", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if keep_raw:
+        return
+    for document in documents:
+        metadata = getattr(document, "metadata", None)
+        if isinstance(metadata, dict):
+            metadata.pop("raw", None)
+
+
+def _serialize_dataset_payload(dataset_obj: DocketDatasetObject, status: dict) -> dict:
+    documents = []
+    total_documents = len(list(getattr(dataset_obj, "documents", []) or []))
+    for index, document in enumerate(getattr(dataset_obj, "documents", []) or [], start=1):
+        documents.append(document.to_dict())
+        if index == total_documents or index % 25 == 0:
+            status["detail"] = f"documents={index}/{total_documents}"
+    return {
+        "dataset_id": dataset_obj.dataset_id,
+        "docket_id": dataset_obj.docket_id,
+        "case_name": dataset_obj.case_name,
+        "court": dataset_obj.court,
+        "documents": documents,
+        "plaintiff_docket": [dict(item) for item in list(dataset_obj.plaintiff_docket or [])],
+        "defendant_docket": [dict(item) for item in list(dataset_obj.defendant_docket or [])],
+        "authorities": [dict(item) for item in list(dataset_obj.authorities or [])],
+        "knowledge_graph": dict(dataset_obj.knowledge_graph or {}),
+        "deontic_graph": dict(dataset_obj.deontic_graph or {}),
+        "deontic_triggers": dict(dataset_obj.deontic_triggers or {}),
+        "proof_assistant": dict(dataset_obj.proof_assistant or {}),
+        "bm25_index": dict(dataset_obj.bm25_index or {}),
+        "vector_index": dict(dataset_obj.vector_index or {}),
+        "metadata": dict(dataset_obj.metadata or {}),
+    }
+
+
+def _truthy_env(name: str) -> bool:
+    return str(os.getenv(name, "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _auto_cuda_device(requested: str | None, *, enable: bool) -> str | None:
     if str(requested or "").strip():
         return str(requested)
@@ -201,7 +253,28 @@ def main() -> int:
         if not heartbeat_seconds:
             return
         while not stop_event.wait(heartbeat_seconds):
-            print(f"[export] stage={status['stage']} detail={status['detail']}", flush=True)
+            detail = status["detail"]
+            if status["stage"] == "build_full_logic":
+                formal = formal_docket_enrichment.get_formal_logic_progress()
+                router = rich_docket_enrichment.get_router_enrichment_progress()
+                proof = proof_assistant_module.get_proof_assistant_progress()
+                dataset_progress = docket_dataset.get_docket_dataset_progress()
+                embed_progress = embeddings_router.get_embedding_progress()
+                if formal.get("stage"):
+                    detail = f"formal:{formal.get('stage')} doc={formal.get('document_id')}"
+                if router.get("stage"):
+                    detail = f"{detail} router:{router.get('stage')} doc={router.get('document_id')}".strip()
+                if proof.get("stage"):
+                    detail = f"{detail} proof:{proof.get('stage')} {proof.get('detail')}".strip()
+                if dataset_progress.get("stage"):
+                    detail = f"{detail} dataset:{dataset_progress.get('stage')} {dataset_progress.get('detail')}".strip()
+                if embed_progress.get("stage"):
+                    detail = f"{detail} embed:{embed_progress.get('stage')} {embed_progress.get('detail')}".strip()
+            elif status["stage"] == "citation_audit":
+                citation_progress = bluebook_citation_linker.get_citation_audit_progress()
+                if citation_progress.get("stage"):
+                    detail = f"citations:{citation_progress.get('stage')} {citation_progress.get('detail')}".strip()
+            print(f"[export] stage={status['stage']} detail={detail}", flush=True)
 
     heartbeat_thread = threading.Thread(target=_heartbeat, name="export-heartbeat", daemon=True)
     heartbeat_thread.start()
@@ -340,7 +413,11 @@ def main() -> int:
             include_formal_logic=True,
             include_router_enrichment=not bool(args.no_router_enrichment),
         )
-        dataset_payload = dataset_obj.to_dict()
+        status["stage"] = "trim_metadata"
+        _strip_document_raw_metadata(getattr(dataset_obj, "documents", []))
+        status["stage"] = "serialize_full_logic"
+        status["detail"] = ""
+        dataset_payload = _serialize_dataset_payload(dataset_obj, status)
     else:
         status["stage"] = "build_lightweight"
         normalized = builder._normalize_documents(export_source)
@@ -371,8 +448,20 @@ def main() -> int:
             "metadata": dict(export_source.get("metadata") or {}),
         }
     if args.citation_source_audit:
+        status["stage"] = "citation_audit"
         dataset_obj = DocketDatasetObject.from_dict(dataset_payload)
-        citation_audit = audit_docket_dataset_citation_sources(dataset_obj)
+        eu_max_raw = str(os.getenv("IPFS_DATASETS_PY_EU_AUDIT_MAX_DOCUMENTS", "")).strip()
+        eu_max_documents = None
+        if eu_max_raw:
+            try:
+                eu_max_documents = max(0, int(eu_max_raw))
+            except Exception:
+                eu_max_documents = None
+        citation_audit = audit_docket_dataset_citation_sources(
+            dataset_obj,
+            include_eu_audit=not _truthy_env("IPFS_DATASETS_PY_DISABLE_EU_AUDIT"),
+            eu_max_documents=eu_max_documents or 120,
+        )
         dataset_payload.setdefault("metadata", {})["citation_source_audit"] = dict(citation_audit)
     if preflight_report:
         dataset_payload.setdefault("metadata", {})["router_preflight"] = dict(preflight_report)
