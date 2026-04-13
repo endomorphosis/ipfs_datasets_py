@@ -236,7 +236,6 @@ def _build_strict_subset(enriched: dict, builder: DocketDatasetBuilder) -> dict:
 def main() -> int:
     args = _parse_args()
     if args.prefer_hacc_venv:
-        import os
         import sys
 
         target = "/home/barberb/HACC/.venv/bin/python"

@@ -55,6 +55,37 @@ def _resolve_text_worker(text: str, state_code: Optional[str], exhaustive: bool)
     return resolver.resolve_text(text, state_code=state_code, exhaustive=exhaustive)
 
 
+def _resolve_text_in_process(
+    text: str,
+    *,
+    state_code: Optional[str],
+    exhaustive: bool,
+    timeout_seconds: float,
+) -> List["CitationLink"]:
+    import multiprocessing as mp
+
+    ctx = mp.get_context("spawn")
+    queue: mp.Queue[List["CitationLink"]] = ctx.Queue(maxsize=1)
+
+    def _runner(q: mp.Queue) -> None:
+        try:
+            q.put(_resolve_text_worker(text, state_code, exhaustive), block=False)
+        except Exception:
+            # If resolver crashes, leave queue empty to signal failure.
+            pass
+
+    process = ctx.Process(target=_runner, args=(queue,), daemon=True)
+    process.start()
+    process.join(timeout_seconds)
+    if process.is_alive():
+        process.terminate()
+        process.join(timeout=1.0)
+        raise TimeoutError(f"citation_resolver_timeout_after_{timeout_seconds:.1f}s")
+    if not queue.empty():
+        return queue.get()
+    return []
+
+
 @dataclass(frozen=True)
 class CorpusSourceConfig:
     key: str
@@ -1951,15 +1982,12 @@ def audit_bluebook_citation_resolution_for_documents(
         try:
             if timeout_seconds:
                 if use_process_timeout:
-                    import multiprocessing as mp
-
-                    ctx = mp.get_context("spawn")
-                    with ctx.Pool(processes=1) as pool:
-                        async_result = pool.apply_async(
-                            _resolve_text_worker,
-                            (text, state_code, exhaustive),
-                        )
-                        links = async_result.get(timeout=timeout_seconds)
+                    links = _resolve_text_in_process(
+                        text,
+                        state_code=state_code,
+                        exhaustive=exhaustive,
+                        timeout_seconds=timeout_seconds,
+                    )
                 else:
                     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                         future = executor.submit(
@@ -1991,6 +2019,25 @@ def audit_bluebook_citation_resolution_for_documents(
             })
             continue
         except Exception as exc:
+            if isinstance(exc, TimeoutError) and "citation_resolver_timeout_after" in str(exc):
+                errored_documents.append(
+                    {
+                        "document_id": document_id,
+                        "document_title": document_title,
+                        "error": str(exc),
+                    }
+                )
+                document_reports.append({
+                    "document_id": document_id,
+                    "document_title": document_title,
+                    "citation_count": 0,
+                    "matched_citation_count": 0,
+                    "unmatched_citation_count": 0,
+                    "all_citations_resolved": False,
+                    "citations": [],
+                    "error": str(exc),
+                })
+                continue
             errored_documents.append(
                 {
                     "document_id": document_id,
