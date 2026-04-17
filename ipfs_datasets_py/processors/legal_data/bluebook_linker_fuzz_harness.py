@@ -527,6 +527,8 @@ def parse_bluebook_fuzz_candidates(raw_text: str) -> List[BluebookCitationCandid
 
     candidates: List[BluebookCitationCandidate] = []
     for item in payload:
+        if isinstance(item, str):
+            item = {"citation_text": item}
         if not isinstance(item, dict):
             continue
         candidate = BluebookCitationCandidate.from_dict(item)
@@ -539,6 +541,25 @@ def parse_bluebook_fuzz_candidates(raw_text: str) -> List[BluebookCitationCandid
 
 def _attempt_succeeded(attempt: BluebookCitationFuzzAttempt) -> bool:
     return int(attempt.resolution.get("matched_citation_count") or 0) > 0
+
+
+def _attempt_corpus_key(attempt: BluebookCitationFuzzAttempt) -> str:
+    candidate_hint = str(attempt.candidate.corpus_key_hint or "").strip()
+    if candidate_hint:
+        return candidate_hint
+    for recovery in attempt.recoveries:
+        recovery_hint = str(recovery.get("corpus_key") or "").strip()
+        if recovery_hint:
+            return recovery_hint
+    for unresolved in attempt.resolution.get("unresolved_citations") or []:
+        if not isinstance(unresolved, dict):
+            continue
+        metadata = unresolved.get("metadata") if isinstance(unresolved.get("metadata"), dict) else {}
+        for key in ("recovery_corpus_key", "preferred_corpus_key", "corpus_key"):
+            metadata_hint = str(metadata.get(key) or unresolved.get(key) or "").strip()
+            if metadata_hint:
+                return metadata_hint
+    return "unknown"
 
 
 def _wilson_upper_bound(failures: int, total: int, *, z: float = 1.96) -> float:
@@ -560,7 +581,7 @@ def _summarize_attempts_by_corpus(
 ) -> Dict[str, Any]:
     by_corpus: Dict[str, List[BluebookCitationFuzzAttempt]] = {}
     for attempt in attempts:
-        corpus_key = str(attempt.candidate.corpus_key_hint or "unknown").strip() or "unknown"
+        corpus_key = _attempt_corpus_key(attempt)
         by_corpus.setdefault(corpus_key, []).append(attempt)
 
     summary_rows: List[Dict[str, Any]] = []
@@ -609,7 +630,7 @@ def _cluster_failure_recoveries(attempts: Sequence[BluebookCitationFuzzAttempt])
     for attempt in attempts:
         if _attempt_succeeded(attempt):
             continue
-        corpus_key = str(attempt.candidate.corpus_key_hint or "unknown").strip() or "unknown"
+        corpus_key = _attempt_corpus_key(attempt)
         for recovery in attempt.recoveries:
             scraper_patch = dict(recovery.get("scraper_patch") or {})
             host = str(scraper_patch.get("host") or "").strip()

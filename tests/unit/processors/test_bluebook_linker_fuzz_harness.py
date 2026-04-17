@@ -62,6 +62,61 @@ def test_parse_bluebook_fuzz_candidates_accepts_prior_run_candidates_payload() -
     assert candidates[0].state_code == "MN"
 
 
+def test_parse_bluebook_fuzz_candidates_accepts_plain_citation_list() -> None:
+    raw = json.dumps(["Minn. Stat. § 518.17", "ORS 801.545"])
+
+    candidates = parse_bluebook_fuzz_candidates(raw)
+
+    assert [item.citation_text for item in candidates] == ["Minn. Stat. § 518.17", "ORS 801.545"]
+    assert candidates[0].render_document_text() == "The filing cites Minn. Stat. § 518.17 as supporting authority."
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_labels_plain_list_failures_from_recovery(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(["Minn. Stat. § 518.17"])
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": "Minn. Stat. § 518.17",
+                    "normalized_citation": "Minn. Stat. § 518.17",
+                    "metadata": {"recovery_corpus_key": "state_laws"},
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "corpus_key": "state_laws",
+            "manifest_path": str(tmp_path / "recovery_manifest.json"),
+            "scraper_patch": {
+                "host": "www.revisor.mn.gov",
+                "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+                "patch_path": str(tmp_path / "recovery.patch"),
+            },
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        min_actionable_failures=1,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["coverage_by_corpus"]["actionable_corpora"] == ["state_laws"]
+    assert run.summary["failure_patch_clusters"][0]["corpus_key"] == "state_laws"
+
+
 def test_collect_seeded_bluebook_fuzz_candidates_uses_grounded_rows() -> None:
     class _FakeResolver:
         def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
