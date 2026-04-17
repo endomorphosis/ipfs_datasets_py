@@ -438,9 +438,20 @@ class LegalSourceRecoveryWorkflow:
     def _publisher(self) -> Callable[..., Dict[str, Any]]:
         if self._publish_func is not None:
             return self._publish_func
-        from scripts.repair.publish_parquet_to_hf import publish
+        try:
+            from scripts.repair.publish_parquet_to_hf import publish
 
-        return publish
+            return publish
+        except ModuleNotFoundError as exc:
+            if exc.name not in {"scripts", "scripts.repair", "scripts.repair.publish_parquet_to_hf"}:
+                raise
+        module_path = Path(__file__).resolve().parents[3] / "scripts" / "repair" / "publish_parquet_to_hf.py"
+        spec = importlib.util.spec_from_file_location("ipfs_datasets_py_publish_parquet_to_hf", module_path)
+        if spec is None or spec.loader is None:
+            raise ModuleNotFoundError(f"Unable to load Hugging Face publisher from {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.publish
 
     def _fetch_api_instance(self) -> Any:
         if self._fetch_api is not None:

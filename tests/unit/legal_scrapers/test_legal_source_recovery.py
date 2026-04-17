@@ -125,6 +125,13 @@ class _FakePatchManager:
         return output_path
 
 
+def test_default_publisher_loads_repo_script() -> None:
+    publisher = LegalSourceRecoveryWorkflow()._publisher()
+
+    assert callable(publisher)
+    assert publisher.__name__ == "publish"
+
+
 @pytest.mark.anyio
 async def test_legal_source_recovery_tracks_and_publishes_manifest(monkeypatch, tmp_path):
     published = {}
