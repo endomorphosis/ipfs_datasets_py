@@ -565,6 +565,62 @@ class LegalSourceRecoveryWorkflow:
         corpus = str(corpus_key or "").strip().lower()
         state = str(state_code or "").strip().upper()
         text = f"{citation_text or ''} {normalized_citation or ''}"
+        rows: List[Dict[str, Any]] = []
+
+        if corpus == "us_code":
+            usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*([0-9A-Za-z][\w\-]*(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
+            if usc_match:
+                title, section = usc_match.groups()
+                rows.append(
+                    {
+                        "url": f"https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title{title}-section{section}",
+                        "title": f"{title} U.S.C. section {section}",
+                        "source": "citation_url_hint",
+                        "source_type": "current",
+                        "snippet": "Citation-derived official U.S. Code section URL.",
+                    }
+                )
+            public_law_match = re.search(r"(?:Pub\.?\s+L\.?|P\.L\.?)\s+(?:No\.?\s*)?([0-9]+)-([0-9]+)", text, re.IGNORECASE)
+            if public_law_match:
+                congress, law_number = public_law_match.groups()
+                rows.append(
+                    {
+                        "url": f"https://www.congress.gov/public-law/{congress}th-congress/{law_number}",
+                        "title": f"Public Law {congress}-{law_number}",
+                        "source": "citation_url_hint",
+                        "source_type": "current",
+                        "snippet": "Citation-derived Congress.gov public law URL.",
+                    }
+                )
+            return rows
+
+        if corpus == "federal_register":
+            cfr_match = re.search(r"\b([0-9]+)\s+C\.?F\.?R\.?\s+§?\s*([0-9]+(?:\.[0-9]+)?(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
+            if cfr_match:
+                title, section = cfr_match.groups()
+                rows.append(
+                    {
+                        "url": f"https://www.ecfr.gov/current/title-{title}/section-{section}",
+                        "title": f"{title} C.F.R. section {section}",
+                        "source": "citation_url_hint",
+                        "source_type": "current",
+                        "snippet": "Citation-derived official eCFR section URL.",
+                    }
+                )
+            fr_match = re.search(r"\b([0-9]+)\s+(?:FR|Fed\.?\s+Reg\.?)\s+([0-9]+)", text, re.IGNORECASE)
+            if fr_match:
+                volume, page = fr_match.groups()
+                rows.append(
+                    {
+                        "url": f"https://www.federalregister.gov/citation/{volume}-FR-{page}",
+                        "title": f"{volume} FR {page}",
+                        "source": "citation_url_hint",
+                        "source_type": "current",
+                        "snippet": "Citation-derived Federal Register citation URL.",
+                    }
+                )
+            return rows
+
         if corpus != "state_laws":
             return []
 
@@ -578,7 +634,6 @@ class LegalSourceRecoveryWorkflow:
             return []
 
         section = section_match.group(1).strip(".")
-        rows: List[Dict[str, Any]] = []
         if state == "MN" or re.search(r"\bMinn\.\s+Stat\.", text, re.IGNORECASE):
             rows.append(
                 {

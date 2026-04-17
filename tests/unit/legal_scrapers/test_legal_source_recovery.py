@@ -384,6 +384,42 @@ def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states()
     assert all(result["source"] == "citation_url_hint" for result in [ca_results[0], ny_results[0], tx_results[0]])
 
 
+def test_legal_source_recovery_citation_url_hints_cover_federal_citations():
+    usc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="42 U.S.C. § 1983",
+        normalized_citation="42 U.S.C. § 1983",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    public_law_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Pub. L. No. 117-58",
+        normalized_citation="Pub. L. No. 117-58",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    cfr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="21 C.F.R. § 314.80",
+        normalized_citation="21 C.F.R. § 314.80",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+    fr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="89 Fed. Reg. 12345",
+        normalized_citation="89 Fed. Reg. 12345",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+
+    assert usc_results[0]["url"] == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+    assert public_law_results[0]["url"] == "https://www.congress.gov/public-law/117th-congress/58"
+    assert cfr_results[0]["url"] == "https://www.ecfr.gov/current/title-21/section-314.80"
+    assert fr_results[0]["url"] == "https://www.federalregister.gov/citation/89-FR-12345"
+    assert all(
+        result["source"] == "citation_url_hint"
+        for result in [usc_results[0], public_law_results[0], cfr_results[0], fr_results[0]]
+    )
+
+
 def test_legal_source_recovery_official_hint_domains_cover_bluebook_fuzz_states():
     assert LegalSourceRecoveryWorkflow._official_hint_domains(corpus_key="state_laws", state_code="MN")[:1] == [
         "revisor.mn.gov"
@@ -633,9 +669,14 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
         archive_top_k=0,
     )
 
-    assert result.candidate_count == 3
-    assert result.candidates[0].source == "common_crawl_indexes"
-    assert result.candidates[0].url == "https://uscode.house.gov/download/title42-section1983.pdf"
+    assert result.candidate_count == 4
+    assert result.candidates[0].source == "citation_url_hint"
+    assert result.candidates[0].url == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+    assert any(
+        candidate.source == "common_crawl_indexes"
+        and candidate.url == "https://uscode.house.gov/download/title42-section1983.pdf"
+        for candidate in result.candidates
+    )
     assert result.search_backend_status["common_crawl_used"] is True
     assert result.search_backend_status["common_crawl_available"] is True
     assert result.search_backend_status["common_crawl_domains"][0] == "uscode.house.gov"
