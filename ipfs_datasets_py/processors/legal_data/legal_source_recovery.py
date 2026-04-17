@@ -676,6 +676,9 @@ class LegalSourceRecoveryWorkflow:
                         query=query,
                         jurisdiction_type=_jurisdiction_type_for_corpus(corpus_key),
                         state_code=state_code,
+                        year=os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_YEAR") or None,
+                        max_parquet_files=int(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "8")),
+                        per_parquet_limit=int(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "200")),
                     )
                 except Exception:
                     continue

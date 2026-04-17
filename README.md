@@ -128,13 +128,53 @@ ipfs-datasets tools execute dataset_tools load_dataset --source squad --split tr
 ### Docket Dataset Audit
 
 ```bash
+# Auto-detect a local docket directory, JSON file, packaged bundle, or CourtListener URL/id
+ipfs-datasets docket --input-type auto --input-path /path/to/docket_dir --output /tmp/docket_dataset.json
+
 # Import a docket JSON and emit citation audit (including EU/member-state citations)
 ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citation-source-audit --json
+
+# Import a normalized PACER export directory or JSON payload
+ipfs-datasets docket --input-type pacer --input-path /path/to/pacer_export --case-name "Doe v. Example" --json
+
+# Import a normalized Tyler Host export JSON or directory
+ipfs-datasets docket --input-type tyler_host --input-path /path/to/tyler_export.json --court "State Court" --json
 
 # Tune EU/member-state citation audit extraction
 ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
   --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
 ```
+
+Normalized PACER/Tyler Host input shape:
+
+```json
+{
+  "docket_id": "1:24-cv-1001",
+  "case_name": "Doe v. Example",
+  "court": "D. Example",
+  "source_type": "pacer",
+  "case_number": "1:24-cv-1001",
+  "documents": [
+    {
+      "id": "doc_1",
+      "title": "Complaint",
+      "text": "Complaint text or extracted PDF text.",
+      "date_filed": "2024-01-10",
+      "document_number": "1",
+      "source_url": "file:///exports/complaint.pdf",
+      "metadata": {
+        "source_path": "/exports/complaint.pdf",
+        "text_extraction": {"source": "directory_pdf"}
+      }
+    }
+  ],
+  "plaintiff_docket": [],
+  "defendant_docket": [],
+  "authorities": []
+}
+```
+
+For local export folders, the docket CLI can ingest `.txt`, `.md`, `.json`, and `.pdf` documents. PDF folders are post-processed to extract text and detect case numbers from caption text when available.
 
 See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
 

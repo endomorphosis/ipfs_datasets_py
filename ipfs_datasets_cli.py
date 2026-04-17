@@ -3156,10 +3156,10 @@ Examples:
                 print("""
 ipfs-datasets docket - Import, search, inspect, and package docket datasets
 
-Usage: ipfs-datasets docket --input-type {json,directory,courtlistener,packaged} --input-path PATH [options]
+Usage: ipfs-datasets docket --input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged} --input-path PATH [options]
 
 Options:
-    --input-type {json,directory,courtlistener,packaged}
+    --input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}
     --input-path PATH
     --output PATH
     --search-backend {bm25,vector}
@@ -3178,7 +3178,10 @@ Options:
     --json
 
 Examples:
+    ipfs-datasets docket --input-type auto --input-path ./docket_dir --output ./docket_dataset.json
     ipfs-datasets docket --input-type json --input-path ./docket.json --output ./docket_dataset.json
+    ipfs-datasets docket --input-type pacer --input-path ./pacer_export_dir --case-name "Doe v. Example" --json
+    ipfs-datasets docket --input-type tyler_host --input-path ./tyler_export.json --court "State Court" --json
     ipfs-datasets docket --input-type json --input-path ./docket.json --search-backend bm25 --query injunction --top-k 5 --json
     ipfs-datasets docket --input-type packaged --input-path ./docket_package/bundle_manifest.json --search-backend vector --query response --top-k 5 --json
     ipfs-datasets docket --input-type packaged --input-path ./docket_package/bundle_manifest.json --packaged-action summary --json

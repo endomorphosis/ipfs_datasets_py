@@ -23,8 +23,11 @@ Examples:
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --packaged-action recap-preflight --json`
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --citation-source-audit --json`
 - `... --input-type packaged --input-path /path/to/bundle_manifest.json --search-backend bm25 --query response --top-k 5 --json`
+- `... --input-type auto --input-path /path/to/docket_dir --json`
 - `... --input-type json --input-path /path/to/docket.json --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json`
 - `... --input-type json --input-path /path/to/docket.json --search-backend vector --query injunction --top-k 5 --json`
+- `... --input-type pacer --input-path /path/to/pacer_export_dir --case-name "Doe v. Example" --json`
+- `... --input-type tyler_host --input-path /path/to/tyler_export.json --court "State Court" --json`
 """
 
 from __future__ import annotations
@@ -46,6 +49,7 @@ from ipfs_datasets_py.processors.legal_data import (
     enrich_packaged_docket_with_tactician,
     fetch_courtlistener_docket,
     get_courtlistener_recap_fetch_request,
+    ingest_docket_dataset,
     get_packaged_docket_operator_dashboard,
     load_packaged_docket_dataset,
     load_packaged_docket_operator_dashboard_report,
@@ -61,6 +65,59 @@ from ipfs_datasets_py.processors.legal_data import (
 from ipfs_datasets_py.processors.legal_scrapers import recover_citation_audit_feedback
 
 __all__ = ["create_parser", "main"]
+
+
+def _detect_auto_input_type(input_path: str) -> str:
+    raw = str(input_path or "").strip()
+    if not raw:
+        raise ValueError("--input-path is required for --input-type auto.")
+
+    lowered = raw.lower()
+    if "courtlistener.com" in lowered:
+        return "courtlistener"
+
+    path = Path(raw)
+    if path.exists():
+        if path.is_dir():
+            if (path / "bundle_manifest.json").exists():
+                return "packaged"
+            return "directory"
+
+        suffix = path.suffix.lower()
+        if path.name == "bundle_manifest.json" or suffix in {".zip", ".car"}:
+            return "packaged"
+
+        if suffix == ".json":
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                return "json"
+
+            if isinstance(payload, dict):
+                metadata = dict(payload.get("metadata") or {})
+                source_hint = str(
+                    payload.get("source_type")
+                    or payload.get("upstream_source_type")
+                    or metadata.get("source_type")
+                    or metadata.get("upstream_source_type")
+                    or ""
+                ).strip().lower()
+                if source_hint in {"pacer", "tyler_host", "courtlistener"}:
+                    return source_hint
+            return "json"
+
+        return "json"
+
+    if raw.isdigit():
+        return "courtlistener"
+    if "pacer" in lowered:
+        return "pacer"
+    if "tyler" in lowered:
+        return "tyler_host"
+
+    raise ValueError(
+        "Unable to infer input type from --input-path. Use an explicit --input-type instead."
+    )
 
 
 def _classify_courtlistener_error(message: str) -> tuple[str, dict[str, object]]:
@@ -864,11 +921,11 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--input-type",
-        choices=["json", "directory", "courtlistener", "packaged"],
+        choices=["auto", "json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"],
         required=True,
-        help="Whether --input-path points to a docket JSON object, a docket directory, a CourtListener docket id/URL, or an existing packaged docket manifest/archive.",
+        help="Whether --input-path points to a docket JSON object, a docket directory, a CourtListener docket id/URL, a normalized PACER export, a Tyler Host export, an existing packaged docket manifest/archive, or should be auto-detected.",
     )
-    parser.add_argument("--input-path", required=True, help="Path to the docket JSON file, docket document directory, or CourtListener docket id/URL.")
+    parser.add_argument("--input-path", required=True, help="Path to the docket JSON file, docket document directory, CourtListener docket id/URL, PACER export path, Tyler Host export path, packaged manifest/archive, or an auto-detected source path.")
     parser.add_argument("--output", required=False, help="Path to write the docket dataset artifact JSON.")
     parser.add_argument("--docket-id", default=None, help="Optional docket id override for directory imports.")
     parser.add_argument("--case-name", default=None, help="Optional case name override for directory imports.")
@@ -938,6 +995,12 @@ def create_parser() -> argparse.ArgumentParser:
 def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
+
+    if parsed.input_type == "auto":
+        try:
+            parsed.input_type = _detect_auto_input_type(parsed.input_path)
+        except ValueError as exc:
+            parser.error(str(exc))
 
     if parsed.search_backend and not str(parsed.query or "").strip():
         parser.error("--query is required with --search-backend.")
@@ -1071,6 +1134,20 @@ def main(args: list[str] | None = None) -> int:
             if parsed.docket_id:
                 docket_payload["docket_id"] = parsed.docket_id
             dataset = builder.build_from_docket(docket_payload, **common_kwargs)
+        elif parsed.input_type in {"pacer", "tyler_host"}:
+            dataset = ingest_docket_dataset(
+                parsed.input_path,
+                builder=builder,
+                docket_id=parsed.docket_id,
+                case_name=parsed.case_name,
+                court=parsed.court or None,
+                glob_pattern=parsed.glob,
+                **common_kwargs,
+            )
+            if hasattr(dataset, "metadata"):
+                dataset.metadata["source_type"] = str(parsed.input_type)
+                dataset.metadata["upstream_source_type"] = str(parsed.input_type)
+                dataset.metadata["source_path"] = str(parsed.input_path)
         elif parsed.input_type == "packaged":
             if parsed.skip_knowledge_graph or parsed.skip_bm25 or parsed.skip_vector_index:
                 parser.error("Skip flags are only valid for source docket imports, not packaged bundle enrichment.")

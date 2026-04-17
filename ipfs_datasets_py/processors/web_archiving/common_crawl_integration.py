@@ -87,6 +87,60 @@ def _default_parquet_root() -> Path:
 def _default_master_db_path() -> Path:
     return _env_path("CCINDEX_MASTER_DB") or Path("/storage/ccindex_duckdb/cc_pointers_master/cc_master_index.duckdb")
 
+
+def _env_flag(name: str, *, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return bool(default)
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _default_hf_meta_index_dataset() -> str:
+    return (
+        os.getenv("COMMON_CRAWL_HF_META_INDEX_DATASET")
+        or os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_HF_META_INDEX_DATASET")
+        or "Publicus/common_crawl_pointer_indices"
+    )
+
+
+def _default_hf_pointer_dataset() -> str:
+    return (
+        os.getenv("COMMON_CRAWL_HF_POINTER_DATASET")
+        or os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_HF_POINTER_DATASET")
+        or "Publicus/common_crawl_pointers_by_collection"
+    )
+
+
+def _ensure_common_crawl_source_checkout() -> Optional[Path]:
+    if not _env_flag("COMMON_CRAWL_AUTO_CLONE_SOURCE", default=True):
+        return None
+
+    target = Path(__file__).resolve().parent / "common_crawl_search_engine"
+    init_file = target / "__init__.py"
+    if init_file.exists():
+        return target.parent
+    if target.exists() and any(target.iterdir()):
+        return None
+
+    repo_url = os.getenv(
+        "COMMON_CRAWL_SEARCH_ENGINE_REPO",
+        "https://github.com/endomorphosis/common_crawl_search_engine.git",
+    )
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, str(target)],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=float(os.getenv("COMMON_CRAWL_AUTO_CLONE_TIMEOUT_SECONDS", "60")),
+        )
+        return target.parent if init_file.exists() else None
+    except Exception as exc:
+        logger.warning("Failed to auto-clone common_crawl_search_engine from %s: %s", repo_url, exc)
+        return None
+
+
 def _discover_common_crawl_import_roots() -> List[Path]:
     """Discover likely sys.path roots that contain `common_crawl_search_engine`."""
     here = Path(__file__).resolve().parent
@@ -118,6 +172,10 @@ def _discover_common_crawl_import_roots() -> List[Path]:
 
 def _ensure_common_crawl_import_path() -> Optional[Path]:
     """Ensure a valid import root for `common_crawl_search_engine` is on sys.path."""
+    auto_root = _ensure_common_crawl_source_checkout()
+    if auto_root is not None and str(auto_root) not in sys.path:
+        sys.path.insert(0, str(auto_root))
+
     for root in _discover_common_crawl_import_roots():
         root_str = str(root)
         if root_str not in sys.path:
@@ -274,29 +332,6 @@ class CommonCrawlSearchEngine:
         parquet_root = _default_parquet_root()
         master_db = self.master_db_path if self.master_db_path else _default_master_db_path()
 
-        # Short-circuit when the local Common Crawl index assets are not present.
-        if not parquet_root.exists() or not master_db.exists():
-            logger.warning(
-                "Common Crawl local mode disabled; missing index assets "
-                "(parquet_root=%s exists=%s, master_db=%s exists=%s)",
-                parquet_root,
-                parquet_root.exists(),
-                master_db,
-                master_db.exists(),
-            )
-            self.api = None
-            if HAVE_HF_CC_FALLBACK:
-                try:
-                    self.hf_search = HuggingFaceAPISearch(use_streaming=True)
-                    self._hf_fallback_enabled = True
-                    self._available = True
-                    logger.info("Common Crawl local mode falling back to HuggingFace index search")
-                    return
-                except Exception as exc:
-                    logger.warning("Failed to initialize HuggingFace Common Crawl fallback: %s", exc)
-            self._available = False
-            return
-
         # Import ccindex API (lazy import to avoid issues if submodule isn't initialized)
         try:
             import_root = _ensure_common_crawl_import_path()
@@ -305,11 +340,29 @@ class CommonCrawlSearchEngine:
             from common_crawl_search_engine.ccindex import api
             self.api = api
             self._available = True
+            if not parquet_root.exists() or not master_db.exists():
+                logger.warning(
+                    "Common Crawl local index assets missing; local mode will use HF remote meta "
+                    "pointer lookup when enabled (parquet_root=%s exists=%s, master_db=%s exists=%s)",
+                    parquet_root,
+                    parquet_root.exists(),
+                    master_db,
+                    master_db.exists(),
+                )
             logger.info("Common Crawl Search Engine initialized in local mode (root=%s)", import_root)
         except ImportError as e:
             logger.warning(f"Common Crawl Search Engine not available in local mode: {e}")
             logger.info("Make sure common_crawl_search_engine sources are available (e.g., in src/common_crawl_search_engine)")
             self.api = None
+            if HAVE_HF_CC_FALLBACK and _env_flag("COMMON_CRAWL_ENABLE_LEGACY_HF_STREAMING_FALLBACK", default=False):
+                try:
+                    self.hf_search = HuggingFaceAPISearch(use_streaming=True)
+                    self._hf_fallback_enabled = True
+                    self._available = True
+                    logger.info("Common Crawl local mode falling back to legacy HuggingFace streaming search")
+                    return
+                except Exception as exc:
+                    logger.warning("Failed to initialize legacy HuggingFace Common Crawl fallback: %s", exc)
             self._available = False
     
     def _init_remote_mode(self) -> None:
@@ -438,18 +491,49 @@ class CommonCrawlSearchEngine:
         collection_db = kwargs.get("collection_db")
         max_parquet_files = int(kwargs.get("max_parquet_files", 200) or 200)
         per_parquet_limit = int(kwargs.get("per_parquet_limit", 2000) or 2000)
+        master_db = self.master_db_path if self.master_db_path else _default_master_db_path()
+        master_db_arg = Path(kwargs.get("master_db")) if kwargs.get("master_db") else master_db
+        year_db_arg = Path(year_db) if year_db else None
+        collection_db_arg = Path(collection_db) if collection_db else None
 
-        result = self.api.search_domain_via_meta_indexes(
-            domain,
-            parquet_root=Path(parquet_root) if parquet_root else _default_parquet_root(),
-            master_db=(self.master_db_path if self.master_db_path else _default_master_db_path()),
-            year_db=(Path(year_db) if year_db else None),
-            collection_db=(Path(collection_db) if collection_db else None),
-            year=(str(year) if year else None),
-            max_parquet_files=max_parquet_files,
-            max_matches=int(max_matches),
-            per_parquet_limit=per_parquet_limit,
+        has_local_meta = any(
+            path is not None and Path(path).exists()
+            for path in (master_db_arg, year_db_arg, collection_db_arg)
         )
+        hf_remote_meta = kwargs.get("hf_remote_meta")
+        if hf_remote_meta is None:
+            hf_remote_meta = _env_flag(
+                "COMMON_CRAWL_HF_REMOTE_META",
+                default=_env_flag("IPFS_DATASETS_PY_COMMON_CRAWL_HF_REMOTE_META", default=True),
+            )
+        hf_remote_meta = bool(hf_remote_meta)
+
+        options: Dict[str, Any] = {
+            "parquet_root": Path(parquet_root) if parquet_root else _default_parquet_root(),
+            "master_db": master_db_arg,
+            "year_db": year_db_arg,
+            "collection_db": collection_db_arg,
+            "year": str(year) if year else None,
+            "max_parquet_files": max_parquet_files,
+            "max_matches": int(max_matches),
+            "per_parquet_limit": per_parquet_limit,
+        }
+        if hf_remote_meta and not has_local_meta:
+            options.update(
+                {
+                    "master_db": None,
+                    "year_db": None,
+                    "collection_db": None,
+                    "hf_remote_meta": True,
+                    "hf_meta_index_dataset": str(kwargs.get("hf_meta_index_dataset") or _default_hf_meta_index_dataset()),
+                    "hf_pointer_dataset": str(kwargs.get("hf_pointer_dataset") or _default_hf_pointer_dataset()),
+                    "hf_revision": str(kwargs.get("hf_revision") or os.getenv("COMMON_CRAWL_HF_REVISION") or "main"),
+                }
+            )
+        else:
+            options["hf_remote_meta"] = bool(kwargs.get("hf_remote_meta", False))
+
+        result = self.api.search_domain_via_meta_indexes(domain, **options)
         return self._normalize_records(result.records)
     
     def _search_domain_remote(

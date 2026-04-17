@@ -266,6 +266,7 @@ def test_ipfs_datasets_cli_docket_help_mentions_search_options(monkeypatch) -> N
     rendered = output.getvalue()
     assert "--search-backend {bm25,vector}" in rendered
     assert "--packaged-action {summary,inspect,dashboard,report,dashboard-report,recap-fetch,recap-preflight}" in rendered
+    assert "--input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
     assert "Import, search, inspect, and package docket datasets" in rendered
 
 
@@ -281,7 +282,83 @@ def test_docket_cli_help_mentions_search_options() -> None:
     rendered = output.getvalue()
     assert "Import, inspect, search, and package dockets" in rendered
     assert "--search-backend {bm25,vector}" in rendered
+    assert "--input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
     assert "--top-k TOP_K" in rendered
+
+
+def test_docket_cli_auto_input_type_detects_directory_import(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    output_path = tmp_path / "auto_docket_dataset.json"
+    docket_dir = tmp_path / "auto_docket_dir"
+    docket_dir.mkdir()
+    (docket_dir / "complaint.txt").write_text("Complaint text.", encoding="utf-8")
+
+    monkeypatch.setattr(
+        module.DocketDatasetBuilder,
+        "build_from_directory",
+        lambda self, path, **kwargs: DocketDatasetObject(
+            dataset_id="docket_dataset_auto_1",
+            docket_id="AUTO-1",
+            case_name="Auto Directory",
+            court="",
+            metadata={"source_type": "directory", "document_count": 1},
+        ),
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(docket_dir),
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert Path(payload["output_path"]).exists()
+
+
+def test_docket_cli_auto_input_type_detects_courtlistener_numeric_id(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    output_path = tmp_path / "auto_courtlistener_dataset.json"
+
+    monkeypatch.setattr(
+        module,
+        "fetch_courtlistener_docket",
+        lambda *args, **kwargs: {
+            "docket_id": "cl-123",
+            "case_name": "Doe v. CourtListener",
+            "court": "D. Example",
+            "documents": [{"id": "doc_1", "title": "Summary", "text": "text"}],
+            "source_type": "courtlistener",
+        },
+    )
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                "12345",
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert Path(payload["output_path"]).exists()
 
 
 def test_docket_cli_main_json_output_from_courtlistener(tmp_path: Path, monkeypatch) -> None:
@@ -326,6 +403,91 @@ def test_docket_cli_main_json_output_from_courtlistener(tmp_path: Path, monkeypa
     assert Path(payload["output_path"]).exists()
     assert payload["summary"]["document_count"] == 1
     assert payload["summary"]["eu_citation_count"] == 0
+
+
+def test_docket_cli_main_json_output_from_pacer_alias(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    output_path = tmp_path / "pacer_docket_dataset.json"
+
+    captured: dict[str, object] = {}
+
+    def _fake_ingest(source, **kwargs):
+        captured["source"] = source
+        captured.update(kwargs)
+        return DocketDatasetObject(
+            dataset_id="docket_dataset_pacer_1",
+            docket_id="1:24-cv-5555",
+            case_name="Doe v. PACER",
+            court="D. Example",
+            metadata={"source_type": "pacer", "document_count": 1},
+        )
+
+    monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
+    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "eu_citation_count": 0})
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "pacer",
+                "--input-path",
+                str(tmp_path / "pacer_export"),
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert captured["source"] == str(tmp_path / "pacer_export")
+    assert Path(payload["output_path"]).exists()
+
+
+def test_docket_cli_main_json_output_from_tyler_host_alias(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    output_path = tmp_path / "tyler_host_docket_dataset.json"
+
+    captured: dict[str, object] = {}
+
+    def _fake_ingest(source, **kwargs):
+        captured["source"] = source
+        captured.update(kwargs)
+        return DocketDatasetObject(
+            dataset_id="docket_dataset_tyler_1",
+            docket_id="TYLER-1",
+            case_name="Doe v. Tyler",
+            court="State Court",
+            metadata={"source_type": "tyler_host", "document_count": 2},
+        )
+
+    monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
+    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 2, "eu_citation_count": 0})
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "tyler_host",
+                "--input-path",
+                str(tmp_path / "tyler_export.json"),
+                "--output",
+                str(output_path),
+                "--court",
+                "State Court",
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert captured["source"] == str(tmp_path / "tyler_export.json")
+    assert captured["court"] == "State Court"
+    assert Path(payload["output_path"]).exists()
 
 
 def test_docket_cli_can_write_parquet_only_bundle(tmp_path: Path, monkeypatch) -> None:

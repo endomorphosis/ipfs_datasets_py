@@ -546,8 +546,12 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
     )
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_YEAR", "2024")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "2")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "25")
 
     from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
+    observed_search_kwargs = {}
 
     class _FakeCommonCrawlSearchEngine:
         def __init__(self, **kwargs):
@@ -557,6 +561,7 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
             return True
 
         def search_domain(self, domain, max_matches=100, collection=None, **kwargs):
+            observed_search_kwargs.update(kwargs)
             return [
                 {
                     "url": f"https://{domain}/download/title42-section1983.pdf",
@@ -599,5 +604,8 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
     assert result.search_backend_status["common_crawl_used"] is True
     assert result.search_backend_status["common_crawl_available"] is True
     assert result.search_backend_status["common_crawl_domains"][0] == "uscode.house.gov"
+    assert observed_search_kwargs["year"] == "2024"
+    assert observed_search_kwargs["max_parquet_files"] == 2
+    assert observed_search_kwargs["per_parquet_limit"] == 25
     assert result.scraper_patch is not None
     assert result.scraper_patch.host == "uscode.house.gov"
