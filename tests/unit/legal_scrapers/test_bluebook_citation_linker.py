@@ -472,6 +472,23 @@ def test_citation_extractor_extracts_bluebook_admin_and_court_rules():
     assert state_citations[1].section == "5.010"
 
 
+def test_citation_extractor_extracts_family_code_and_act_state_citations():
+    extractor = CitationExtractor()
+    citations = extractor.extract_citations(
+        "Authorities include Cal. Fam. Code § 3011, Tex. Fam. Code § 153.002, "
+        "and N.Y. Fam. Ct. Act § 651."
+    )
+
+    state_citations = [citation for citation in citations if citation.type == "state_statute"]
+    by_state = {citation.jurisdiction: citation for citation in state_citations}
+    assert by_state["CA"].section == "3011"
+    assert by_state["CA"].metadata["code_name"] == "Fam. Code"
+    assert by_state["TX"].section == "153.002"
+    assert by_state["TX"].metadata["code_name"] == "Fam. Code"
+    assert by_state["NY"].section == "651"
+    assert by_state["NY"].metadata["code_name"] == "Fam. Ct. Act"
+
+
 def test_citation_extractor_extracts_michigan_case_reporters_and_public_law_no():
     extractor = CitationExtractor()
     citations = extractor.extract_citations(

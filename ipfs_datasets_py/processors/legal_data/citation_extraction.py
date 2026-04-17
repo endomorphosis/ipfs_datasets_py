@@ -130,7 +130,8 @@ STATE_STATUTE_PATTERNS = [
     r'(?:Code(?:\s+Ann\.)?|Stat(?:\.|utes)?(?:\s+Ann\.)?|'
     r'Rev\.\s+Stat\.?|Gen\.\s+Stat\.?|Comp\.\s+Laws|Cent\.\s+Code|'
     r'Codified\s+Laws|Fam\.\s+Code|Civ\.\s+Code|Penal\s+Code|'
-    r'Admin\.\s+Code|Court\s+Rules?|R\.\s+[A-Za-z.\s]+)'
+    r'Admin\.\s+Code|Court\s+Rules?|Fam\.\s+Ct\.\s+Act|[A-Z][A-Za-z.\'/-]*\s+Law|'
+    r'R\.\s+[A-Za-z.\s]+)'
     r')\s+§?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
     r'(?P<text>(?P<state_shorthand>ORS)\s+(?P<section_shorthand>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
 ]

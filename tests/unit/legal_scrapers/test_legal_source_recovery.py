@@ -356,6 +356,34 @@ async def test_legal_source_recovery_times_out_multi_engine_search_and_still_wri
     assert Path(result.manifest_path).exists()
 
 
+def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states():
+    ca_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Cal. Fam. Code § 3011",
+        normalized_citation="Cal. Fam. Code § 3011",
+        corpus_key="state_laws",
+        state_code="CA",
+    )
+    ny_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="N.Y. Fam. Ct. Act § 651",
+        normalized_citation="N.Y. Fam. Ct. Act § 651",
+        corpus_key="state_laws",
+        state_code="NY",
+    )
+    tx_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Tex. Fam. Code § 153.002",
+        normalized_citation="Tex. Fam. Code § 153.002",
+        corpus_key="state_laws",
+        state_code="TX",
+    )
+
+    assert ca_results[0]["url"] == (
+        "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=FAM&sectionNum=3011"
+    )
+    assert ny_results[0]["url"] == "https://www.nysenate.gov/legislation/laws/FCT/651"
+    assert tx_results[0]["url"] == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
+    assert all(result["source"] == "citation_url_hint" for result in [ca_results[0], ny_results[0], tx_results[0]])
+
+
 def test_legal_source_recovery_official_hint_domains_cover_bluebook_fuzz_states():
     assert LegalSourceRecoveryWorkflow._official_hint_domains(corpus_key="state_laws", state_code="MN")[:1] == [
         "revisor.mn.gov"
@@ -616,3 +644,46 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
     assert observed_search_kwargs["per_parquet_limit"] == 25
     assert result.scraper_patch is not None
     assert result.scraper_patch.host == "uscode.house.gov"
+
+
+@pytest.mark.anyio
+async def test_common_crawl_fallback_prioritizes_citation_hint_domains(monkeypatch):
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+
+    from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery
+    from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
+
+    monkeypatch.setattr(legal_source_recovery, "_MAX_COMMON_CRAWL_DOMAINS", 1)
+
+    observed = {}
+
+    class _FakeCommonCrawlSearchEngine:
+        def __init__(self, **kwargs):
+            pass
+
+        def is_available(self):
+            return True
+
+        def search_domain(self, domain, max_matches=100, collection=None, **kwargs):
+            observed["domain"] = domain
+            return [{"url": f"https://{domain}/statutes/cite/518.17", "timestamp": "20240101000000"}]
+
+    monkeypatch.setattr(common_crawl_integration, "CommonCrawlSearchEngine", _FakeCommonCrawlSearchEngine)
+
+    workflow = LegalSourceRecoveryWorkflow()
+    backend_status = {}
+    rows = await workflow._common_crawl_fallback_results(
+        query="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        live_results=[{"url": "https://en.wikipedia.org/wiki/Minnesota_Statutes"}],
+        archived_results=[],
+        max_candidates=2,
+        backend_status=backend_status,
+        citation_hint_results=[{"url": "https://www.revisor.mn.gov/statutes/cite/518.17"}],
+    )
+
+    assert observed["domain"] == "www.revisor.mn.gov"
+    assert backend_status["common_crawl_domains"] == ["www.revisor.mn.gov"]
+    assert rows[0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"

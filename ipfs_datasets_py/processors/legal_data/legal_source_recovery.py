@@ -568,7 +568,12 @@ class LegalSourceRecoveryWorkflow:
         if corpus != "state_laws":
             return []
 
-        section_match = re.search(r"\b(?:Minn\.\s+Stat\.|ORS)\s*(?:§|sec\.?|section)?\s*([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)", text, re.IGNORECASE)
+        section_match = re.search(
+            r"\b(?:Minn\.\s+Stat\.|ORS|Cal\.\s+[A-Za-z.\s]+Code|N\.Y\.\s+[A-Za-z.\s]+(?:Law|Act)|Tex\.\s+[A-Za-z.\s]+Code)"
+            r"\s*(?:§|sec\.?|section)?\s*([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
+            text,
+            re.IGNORECASE,
+        )
         if not section_match:
             return []
 
@@ -604,6 +609,46 @@ class LegalSourceRecoveryWorkflow:
                     },
                 ]
             )
+        if state == "CA" or re.search(r"\bCal\.", text, re.IGNORECASE):
+            law_code = "FAM"
+            if re.search(r"\bPenal\s+Code\b", text, re.IGNORECASE):
+                law_code = "PEN"
+            elif re.search(r"\bCiv\.\s+Code\b", text, re.IGNORECASE):
+                law_code = "CIV"
+            rows.append(
+                {
+                    "url": f"https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode={law_code}&sectionNum={section}",
+                    "title": f"California {law_code} section {section}",
+                    "source": "citation_url_hint",
+                    "source_type": "current",
+                    "snippet": "Citation-derived official California Legislature section URL.",
+                }
+            )
+        if state == "NY" or re.search(r"\bN\.Y\.", text, re.IGNORECASE):
+            law_code = "FCT" if re.search(r"\bFam\.\s+Ct\.\s+Act\b", text, re.IGNORECASE) else "DOM"
+            rows.append(
+                {
+                    "url": f"https://www.nysenate.gov/legislation/laws/{law_code}/{section}",
+                    "title": f"New York {law_code} section {section}",
+                    "source": "citation_url_hint",
+                    "source_type": "current",
+                    "snippet": "Citation-derived official New York Senate legislation URL.",
+                }
+            )
+        if state == "TX" or re.search(r"\bTex\.", text, re.IGNORECASE):
+            law_code = "FA"
+            if re.search(r"\bPenal\s+Code\b", text, re.IGNORECASE):
+                law_code = "PE"
+            chapter = section.split(".", 1)[0]
+            rows.append(
+                {
+                    "url": f"https://statutes.capitol.texas.gov/Docs/{law_code}/htm/{law_code}.{chapter}.htm#{section}",
+                    "title": f"Texas {law_code} section {section}",
+                    "source": "citation_url_hint",
+                    "source_type": "current",
+                    "snippet": "Citation-derived official Texas Statutes section URL.",
+                }
+            )
         return rows
 
     @staticmethod
@@ -629,6 +674,7 @@ class LegalSourceRecoveryWorkflow:
         archived_results: Iterable[Dict[str, Any]],
         max_candidates: int,
         backend_status: Dict[str, Any],
+        citation_hint_results: Iterable[Dict[str, Any]] = (),
     ) -> List[Dict[str, Any]]:
         backend_status["common_crawl_available"] = False
         backend_status["common_crawl_domains"] = []
@@ -640,6 +686,7 @@ class LegalSourceRecoveryWorkflow:
 
         live_rows = list(live_results or [])
         archived_rows = list(archived_results or [])
+        citation_hint_rows = list(citation_hint_results or [])
         should_search = (
             _env_flag("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", default=False)
             or not live_rows
@@ -651,8 +698,9 @@ class LegalSourceRecoveryWorkflow:
         domains: List[str] = []
         seen: set[str] = set()
         for domain in [
-            *self._candidate_domains(live_rows, archived_rows),
+            *self._candidate_domains(citation_hint_rows),
             *self._official_hint_domains(corpus_key=corpus_key, state_code=state_code),
+            *self._candidate_domains(live_rows, archived_rows),
         ]:
             normalized = str(domain or "").strip().lower()
             if not normalized or normalized in seen:
@@ -874,6 +922,7 @@ class LegalSourceRecoveryWorkflow:
             query=query,
             corpus_key=recovery_corpus_key,
             state_code=state_code,
+            citation_hint_results=citation_hint_results,
             live_results=live_results,
             archived_results=archived_results,
             max_candidates=max_candidates,
