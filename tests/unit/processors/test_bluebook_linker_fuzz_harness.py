@@ -162,7 +162,7 @@ def test_collect_seeded_bluebook_fuzz_candidates_filters_mixed_state_rows_to_req
     assert all(seed.citation_text != "ORS 127.652" for seed in seeds)
 
 
-def test_collect_seeded_bluebook_fuzz_candidates_skips_state_law_name_only_rows() -> None:
+def test_collect_seeded_bluebook_fuzz_candidates_keeps_structured_and_source_backed_state_law_rows() -> None:
     class _FakeResolver:
         def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
             if corpus_key != "state_laws":
@@ -196,8 +196,43 @@ def test_collect_seeded_bluebook_fuzz_candidates_skips_state_law_name_only_rows(
         sample_count=2,
     )
 
+    assert len(seeds) == 2
+    assert {seed.citation_text for seed in seeds} == {"Minn. Stat. § 15", "Minn. Stat. § 518.17"}
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_synthesizes_from_state_source_id_rows() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_laws":
+                return []
+            return ["memory://mn-state-laws"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "MN",
+                    "name": "Chief Clerk",
+                    "source_id": "urn:state:mn:statute:Minnesota Statutes § Section-15",
+                    "text": "Section Section-15: Chief Clerk",
+                    "source_url": "https://example.test/chief-clerk",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_laws"],
+        state_codes=["MN"],
+        examples_per_corpus=1,
+        sample_count=1,
+    )
+
     assert len(seeds) == 1
-    assert seeds[0].citation_text == "Minn. Stat. § 518.17"
+    assert seeds[0].citation_text == "Minn. Stat. § 15"
+    assert seeds[0].state_code == "MN"
+    assert seeds[0].citation_type_hint == "state_statute"
 
 
 @pytest.mark.anyio

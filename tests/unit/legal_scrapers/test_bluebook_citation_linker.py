@@ -1007,6 +1007,160 @@ def test_bluebook_citation_resolver_suggests_for_malformed_fed_reg(tmp_path):
     assert suggestions[0]["confidence"] > 0
 
 
+def test_bluebook_citation_resolver_suggests_for_malformed_public_law(tmp_path):
+    uscode_path = tmp_path / "uscode_public_law.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "identifier": "Pub. L. 117-2",
+                    "congress": "117",
+                    "law_number": "2",
+                    "heading": "Infrastructure Investment and Jobs Act",
+                    "cid": "bafypl1172",
+                    "source_url": "https://www.congress.gov/public-laws/117th-congress",
+                }
+            ]
+        ),
+        uscode_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"us_code": [str(uscode_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("Pub L 117-2")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "Pub. L. 117-2"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
+def test_bluebook_citation_resolver_suggests_for_malformed_reporter(tmp_path):
+    cap_path = tmp_path / "cap_cases.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "id": "cap_sample",
+                    "title": "Sample v. Reporter",
+                    "citation": "123 F.3d 456",
+                    "reporter": "F.3d",
+                    "volume": "123",
+                    "page": "456",
+                    "source_url": "https://cite.case.law/f3d/123/456/",
+                }
+            ]
+        ),
+        cap_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"caselaw_access_project": [str(cap_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("123 F3d 456")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "123 F.3d 456"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
+def test_bluebook_citation_resolver_suggests_for_malformed_sct_reporter(tmp_path):
+    cap_path = tmp_path / "cap_cases_sct.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "id": "cap_sct",
+                    "title": "Example v. Supreme",
+                    "citation": "123 S. Ct. 456",
+                    "reporter": "S. Ct.",
+                    "volume": "123",
+                    "page": "456",
+                    "source_url": "https://cite.case.law/s-ct/123/456/",
+                }
+            ]
+        ),
+        cap_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"caselaw_access_project": [str(cap_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("123 S Ct 456")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "123 S. Ct. 456"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
+def test_bluebook_citation_resolver_suggests_for_malformed_led_reporter(tmp_path):
+    cap_path = tmp_path / "cap_cases_led.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "id": "cap_led",
+                    "title": "Example v. LEd",
+                    "citation": "123 L. Ed. 2d 456",
+                    "reporter": "L. Ed. 2d",
+                    "volume": "123",
+                    "page": "456",
+                    "source_url": "https://cite.case.law/l-ed-2d/123/456/",
+                }
+            ]
+        ),
+        cap_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"caselaw_access_project": [str(cap_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("123 L Ed 2d 456")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "123 L. Ed. 2d 456"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
+def test_bluebook_citation_resolver_suggests_for_malformed_us_reporter(tmp_path):
+    cap_path = tmp_path / "cap_cases_us.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "id": "cap_us",
+                    "title": "Example v. United States",
+                    "citation": "410 U.S. 113",
+                    "reporter": "U.S.",
+                    "volume": "410",
+                    "page": "113",
+                    "source_url": "https://cite.case.law/us/410/113/",
+                }
+            ]
+        ),
+        cap_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        parquet_file_overrides={"caselaw_access_project": [str(cap_path)]},
+    )
+
+    suggestions = resolver.suggest_citations_for_text("410 US 113")
+    assert suggestions
+    assert suggestions[0]["suggested_citation"] == "410 U.S. 113"
+    assert suggestions[0]["estimate_vector"]["token_overlap"] > 0
+    assert suggestions[0]["confidence"] > 0
+
+
 def test_normalize_malformed_citation_repairs_common_abbreviations():
     from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import (
         _normalize_malformed_citation,
@@ -1019,6 +1173,14 @@ def test_normalize_malformed_citation_repairs_common_abbreviations():
     assert _normalize_malformed_citation("40 CFR § 122.41") == "40 C.F.R. § 122.41"
     assert _normalize_malformed_citation("42 USC § 1983") == "42 U.S.C. § 1983"
     assert _normalize_malformed_citation("42 USC 1983") == "42 U.S.C. § 1983"
+    assert _normalize_malformed_citation("123 F Supp 456") == "123 F. Supp. 456"
+    assert _normalize_malformed_citation("123 F2d 456") == "123 F.2d 456"
+    assert _normalize_malformed_citation("123 F 3d 456") == "123 F.3d 456"
+    assert _normalize_malformed_citation("123 S Ct 456") == "123 S. Ct. 456"
+    assert _normalize_malformed_citation("123 L Ed 2d 456") == "123 L. Ed. 2d 456"
+    assert _normalize_malformed_citation("410 US 113") == "410 U.S. 113"
+    assert _normalize_malformed_citation("123 S.Ct. 456") == "123 S. Ct. 456"
+    assert _normalize_malformed_citation("123 L.Ed.2d 456") == "123 L. Ed. 2d 456"
     assert _normalize_malformed_citation("Pub L 117-2") == "Pub. L. 117-2"
     assert _normalize_malformed_citation("Fed Reg 89 12345") == "Fed. Reg. 89 12345"
 
@@ -1339,6 +1501,7 @@ def test_bluebook_citation_resolver_uses_inventory_to_rank_opaque_hf_parquet_nam
             )
         ],
     )
+    linker_module._inventory_profiles_for_repo.cache_clear()
 
     resolver = BluebookCitationResolver(allow_hf_fallback=True)
 

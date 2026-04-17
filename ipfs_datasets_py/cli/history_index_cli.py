@@ -214,7 +214,7 @@ def create_parser() -> argparse.ArgumentParser:
         epilog=textwrap.dedent(__doc__),
     )
     parser.add_argument("query", nargs="+", help="Search query")
-    parser.add_argument("--index-path", default="./research_results/history_index_v8/duckdb/evidence_index.duckdb", help="DuckDB file path or index directory")
+    parser.add_argument("--index-path", default="./research_results/history_index/duckdb/evidence_index.duckdb", help="DuckDB file path or index directory")
     parser.add_argument("--table", choices=["chunks", "documents", "entities", "relationships"], default="chunks")
     parser.add_argument("--top-k", type=int, default=10, help="Maximum results to return")
     parser.add_argument("--source-like", default="", help="Optional metadata substring filter, e.g. google_voice or gmail_email")

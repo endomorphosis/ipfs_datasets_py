@@ -265,6 +265,7 @@ def _synthesize_state_statute_citation_from_row(row: Dict[str, Any], state_code:
         return ""
 
     section = str(section_match.group("section") or "").strip().rstrip(".,;:")
+    section = re.sub(r"^(?:section|rule|part)[-\\s:]+", "", section, flags=re.IGNORECASE).strip()
     if not section:
         return ""
 
@@ -318,7 +319,8 @@ def _synthesize_seed_candidate_from_row(
                 _first_present(row, fields) not in (None, "")
                 for fields in (_OFFICIAL_CITE_FIELDS, _SECTION_FIELDS, _TITLE_NUMBER_FIELDS, identifier_fields)
             )
-            if has_structured_fields:
+            has_source_backed_fields = bool(_first_non_empty_string(row.get("source_id")) or _first_non_empty_string(row.get("text")))
+            if has_structured_fields or has_source_backed_fields:
                 citation_text = _synthesize_state_statute_citation_from_row(row, resolved_state)
         citation_type = "state_statute"
     if not citation_text:
@@ -816,6 +818,7 @@ async def run_bluebook_linker_fuzz_harness(
             resolver=active_resolver,
             exhaustive=exhaustive,
             include_recovery=False,
+            include_suggestions=False,
         )
 
         if int(resolution.get("matched_citation_count") or 0) > 0:

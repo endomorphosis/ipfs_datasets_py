@@ -7,6 +7,7 @@ candidate official sources and recorded in a canonical recovery manifest.
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import json
@@ -121,6 +122,15 @@ LEGAL_FILE_HINT_TERMS = (
     "decision",
     "notice",
     "chapter",
+)
+
+_SEARCH_TIMEOUT_SECONDS = max(
+    1.0,
+    float(os.getenv("LEGAL_SOURCE_RECOVERY_SEARCH_TIMEOUT_SECONDS", "12")),
+)
+_ARCHIVE_TIMEOUT_SECONDS = max(
+    1.0,
+    float(os.getenv("LEGAL_SOURCE_RECOVERY_ARCHIVE_TIMEOUT_SECONDS", "20")),
 )
 
 
@@ -365,6 +375,13 @@ class LegalSourceRecoveryWorkflow:
     def _searcher(self) -> Any:
         if self._archive_searcher is not None or self._live_searcher is not None:
             return None
+        if str(os.getenv("LEGAL_SOURCE_RECOVERY_USE_LEGACY_SEARCHER") or "").strip().lower() not in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }:
+            return None
         from ..legal_scrapers.legal_web_archive_search import LegalWebArchiveSearch
 
         return LegalWebArchiveSearch(auto_archive=False, use_hf_indexes=False)
@@ -442,6 +459,18 @@ class LegalSourceRecoveryWorkflow:
             brave_api_key=(os.getenv("BRAVE_API_KEY") or os.getenv("BRAVE_SEARCH_API_KEY") or None),
         )
 
+    async def _run_sync_with_timeout(
+        self,
+        func: Callable[..., Any],
+        *,
+        timeout_seconds: float,
+        **kwargs: Any,
+    ) -> Any:
+        return await asyncio.wait_for(
+            asyncio.to_thread(func, **kwargs),
+            timeout=max(1.0, float(timeout_seconds)),
+        )
+
     async def recover_unresolved_citation(
         self,
         *,
@@ -477,8 +506,16 @@ class LegalSourceRecoveryWorkflow:
         effective_live_searcher = self._live_searcher or getattr(searcher, "legal_searcher", None)
         if effective_live_searcher is not None:
             try:
-                live_payload = effective_live_searcher.search(query=query, max_results=max_candidates)
+                live_payload = await self._run_sync_with_timeout(
+                    effective_live_searcher.search,
+                    timeout_seconds=_SEARCH_TIMEOUT_SECONDS,
+                    query=query,
+                    max_results=max_candidates,
+                )
                 live_results = list((live_payload or {}).get("results", []) or [])
+            except asyncio.TimeoutError:
+                live_results = []
+                backend_status["live_search_error"] = "live_search_timeout"
             except Exception:
                 live_results = []
                 backend_status["live_search_error"] = "live_search_failed"
@@ -494,10 +531,13 @@ class LegalSourceRecoveryWorkflow:
                     engines.append("duckduckgo")
                 backend_status["engines_attempted"] = list(engines)
                 if engines:
-                    multi_engine_payload = await self._multi_engine_search(
-                        query=query,
-                        engines=engines,
-                        max_results=max_candidates,
+                    multi_engine_payload = await asyncio.wait_for(
+                        self._multi_engine_search(
+                            query=query,
+                            engines=engines,
+                            max_results=max_candidates,
+                        ),
+                        timeout=_SEARCH_TIMEOUT_SECONDS,
                     )
                     backend_status["multi_engine_used"] = True
                     if str(multi_engine_payload.get("status") or "").lower() == "success":
@@ -515,19 +555,26 @@ class LegalSourceRecoveryWorkflow:
                         backend_status["multi_engine_error"] = str(multi_engine_payload.get("message") or "multi_engine_search_failed")
                 else:
                     backend_status["multi_engine_error"] = "no_search_engines_available"
+            except asyncio.TimeoutError:
+                backend_status["multi_engine_error"] = "multi_engine_timeout"
             except Exception as exc:
                 backend_status["multi_engine_error"] = str(exc)
 
         effective_archive_searcher = self._archive_searcher or searcher
         if effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
             try:
-                archive_payload = effective_archive_searcher.search_with_indexes(
+                archive_payload = await self._run_sync_with_timeout(
+                    effective_archive_searcher.search_with_indexes,
+                    timeout_seconds=_SEARCH_TIMEOUT_SECONDS,
                     query=query,
                     jurisdiction_type=jurisdiction_type,
                     state_code=state_code,
                     max_results=max_candidates,
                 )
                 archived_results = list((archive_payload or {}).get("results", []) or [])
+            except asyncio.TimeoutError:
+                archived_results = []
+                backend_status["archive_search_error"] = "archive_search_timeout"
             except Exception as exc:
                 archived_results = []
                 backend_status["archive_search_error"] = str(exc)
@@ -557,11 +604,22 @@ class LegalSourceRecoveryWorkflow:
         archived_sources: List[ArchivedSourceRecord] = []
         if candidates and archive_top_k > 0:
             archiver = self._archiver_instance()
-            archive_results = await archiver.archive_urls_parallel(
-                [item.url for item in candidates[:archive_top_k]],
-                jurisdiction=jurisdiction_type,
-                state_code=state_code,
-            )
+            try:
+                archive_results = await asyncio.wait_for(
+                    archiver.archive_urls_parallel(
+                        [item.url for item in candidates[:archive_top_k]],
+                        jurisdiction=jurisdiction_type,
+                        state_code=state_code,
+                    ),
+                    timeout=_ARCHIVE_TIMEOUT_SECONDS,
+                )
+            except asyncio.TimeoutError:
+                backend_status["archive_search_error"] = (
+                    f"{backend_status['archive_search_error']};archiver_timeout"
+                    if backend_status["archive_search_error"]
+                    else "archiver_timeout"
+                )
+                archive_results = []
             for item in archive_results:
                 archived_sources.append(
                     ArchivedSourceRecord(

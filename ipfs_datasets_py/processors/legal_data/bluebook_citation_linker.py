@@ -166,6 +166,12 @@ def _normalize_malformed_citation(text: str) -> str:
         (r"\bStat\b(?!\.)", "Stat."),
         (r"\bPub\.?\s+L\.?\b", "Pub. L."),
         (r"\bFed\.?\s+Reg\.?\b", "Fed. Reg."),
+        (r"\bF\.?\s+Supp\.?\b", "F. Supp."),
+        (r"\bF\.?\s*2d\b", "F.2d"),
+        (r"\bF\.?\s*3d\b", "F.3d"),
+        (r"\bS\.?\s*Ct\.?\b", "S. Ct."),
+        (r"\bL\.?\s*Ed\.?\s*2d\b", "L. Ed. 2d"),
+        (r"\bU\.?\s*S\.?\b", "U.S."),
         (r"\bCFR\b", "C.F.R."),
         (r"\bUSC\b", "U.S.C."),
         (r"\bORS\b", "ORS"),
@@ -312,13 +318,17 @@ def _is_direct_citation_source(path: str) -> bool:
     )
 
 
-def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> List[Any]:
+@lru_cache(maxsize=128)
+def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> tuple[Any, ...]:
+    disable_inventory_bonus = str(os.getenv("IPFS_DATASETS_PY_DISABLE_INVENTORY_BONUS", "")).strip().lower()
+    if disable_inventory_bonus in {"1", "true", "yes", "on"}:
+        return ()
     try:
         from ipfs_datasets_py.processors.legal_scrapers.justicedao_dataset_inventory import inspect_justicedao_datasets
 
         profiles = inspect_justicedao_datasets(dataset_prefix="")
     except Exception:
-        return []
+        return ()
 
     matches: List[Any] = []
     normalized_repo = str(repo_id or "").strip()
@@ -328,7 +338,7 @@ def _inventory_profiles_for_repo(repo_id: str, corpus_key: str) -> List[Any]:
         canonical_corpus_key = str(getattr(profile, "canonical_corpus_key", "") or "").strip().lower()
         if dataset_id == normalized_repo or canonical_corpus_key == normalized_corpus:
             matches.append(profile)
-    return matches
+    return tuple(matches)
 
 
 def _inventory_bonus_for_candidate(
@@ -800,7 +810,7 @@ class BluebookCitationResolver:
                 corpus_key,
                 query_text=query_text,
                 state_code=state_code,
-                mode="semantic",
+                mode="lexical",
                 top_k=max_suggestions,
                 allow_hf_fallback=self.allow_hf_fallback,
                 parquet_file_overrides=self.parquet_file_overrides,
@@ -1008,7 +1018,7 @@ class BluebookCitationResolver:
                     corpus_key,
                     query_text=query_text,
                     state_code=state_code,
-                    mode="semantic",
+                    mode="lexical",
                     top_k=5,
                     allow_hf_fallback=self.allow_hf_fallback,
                     parquet_file_overrides=self.parquet_file_overrides,
@@ -1177,7 +1187,14 @@ class BluebookCitationResolver:
             used_repo_listing = False
             if list_repo_files is not None and hf_hub_url is not None:
                 try:
-                    repo_files = list_repo_files(repo_id=repo_id, repo_type="dataset")
+                    timeout_raw = str(os.getenv("IPFS_DATASETS_PY_HF_LIST_TIMEOUT_SECONDS", "12")).strip()
+                    try:
+                        timeout_seconds = max(1.0, float(timeout_raw))
+                    except Exception:
+                        timeout_seconds = 12.0
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                        future = executor.submit(list_repo_files, repo_id=repo_id, repo_type="dataset")
+                        repo_files = future.result(timeout=timeout_seconds)
                 except Exception as exc:
                     logger.warning("Failed to list HF files for %s: %s", repo_id, exc)
                     had_listing_error = True
@@ -1352,13 +1369,40 @@ class BluebookCitationResolver:
         return filtered[:25]
 
     def _load_local_parquet_rows(self, source_ref: str) -> List[Dict[str, Any]]:
+        max_rows_raw = str(os.getenv("IPFS_DATASETS_PY_BLUEBOOK_SEED_MAX_ROWS", "")).strip()
+        max_rows = 0
+        if max_rows_raw:
+            try:
+                max_rows = max(0, int(max_rows_raw))
+            except Exception:
+                max_rows = 0
         try:
             import pyarrow.parquet as pq
+            if max_rows:
+                parquet_file = pq.ParquetFile(source_ref)
+                collected: List[Dict[str, Any]] = []
+                for row_group_index in range(parquet_file.num_row_groups):
+                    table = parquet_file.read_row_group(row_group_index)
+                    rows = table.to_pylist()
+                    remaining = max_rows - len(collected)
+                    if remaining <= 0:
+                        break
+                    if len(rows) > remaining:
+                        rows = rows[:remaining]
+                    collected.extend(rows)
+                    if len(collected) >= max_rows:
+                        break
+                return collected
             return pq.read_table(source_ref).to_pylist()
         except Exception:
             pass
         try:
             import pandas as pd
+            if max_rows:
+                df = pd.read_parquet(source_ref)
+                if len(df) > max_rows:
+                    df = df.head(max_rows)
+                return df.to_dict("records")
             return pd.read_parquet(source_ref).to_dict("records")
         except Exception:
             return []
@@ -1737,6 +1781,7 @@ def resolve_bluebook_lookup_result_document(
     resolver: Optional[BluebookCitationResolver] = None,
     exhaustive: bool = True,
     include_recovery: bool = True,
+    include_suggestions: bool = True,
     recovery_max_candidates: int = 8,
     recovery_archive_top_k: int = 3,
     publish_recovery_to_hf: bool = False,
@@ -1748,13 +1793,13 @@ def resolve_bluebook_lookup_result_document(
     matched_count = sum(1 for item in link_payloads if bool(item.get("matched")))
     unresolved = [item for item in link_payloads if not bool(item.get("matched"))]
     suggestions: List[Dict[str, Any]] = []
-    if not link_payloads:
+    if include_suggestions and not link_payloads:
         suggestions = active_resolver.suggest_citations_for_text(
             text,
             state_code=state_code,
             max_suggestions=3,
         )
-    else:
+    elif include_suggestions:
         for item in unresolved:
             metadata = dict(item.get("metadata") or {})
             suggested = active_resolver.suggest_citations_for_text(

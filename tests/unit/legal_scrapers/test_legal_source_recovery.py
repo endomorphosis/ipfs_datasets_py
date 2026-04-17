@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 import json
 from pathlib import Path
@@ -279,6 +280,62 @@ async def test_public_recover_missing_legal_citation_source_emits_candidate_file
     assert result["candidate_files"][0]["fetch_success"] is True
     assert result["scraper_patch"]["host"] == "www.revisor.mn.gov"
     assert Path(result["scraper_patch"]["patch_path"]).exists()
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_times_out_multi_engine_search_and_still_writes_manifest(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery._SEARCH_TIMEOUT_SECONDS",
+        0.01,
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    async def _slow_multi_engine_search(*, query: str, engines: list[str], max_results: int):
+        del query, engines, max_results
+        await asyncio.sleep(0.2)
+        return {"status": "success", "results": []}
+
+    monkeypatch.setattr(workflow, "_multi_engine_search", _slow_multi_engine_search)
+    monkeypatch.setattr(
+        workflow,
+        "_searcher",
+        lambda: None,
+    )
+    monkeypatch.setattr(
+        workflow,
+        "_search_backend_status",
+        lambda: {
+            "brave_configured": False,
+            "duckduckgo_configured": True,
+            "archive_search_available": False,
+            "live_search_available": False,
+            "brave_api_key_env": "",
+            "datasets_available": False,
+        },
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+        archive_top_k=0,
+    )
+
+    assert result.status == "tracked"
+    assert result.candidate_count == 0
+    assert result.search_backend_status["multi_engine_error"] == "multi_engine_timeout"
+    assert result.manifest_path is not None
+    assert Path(result.manifest_path).exists()
 
 
 def test_build_missing_citation_recovery_query_prefers_official_domains():
