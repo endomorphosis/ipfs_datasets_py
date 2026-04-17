@@ -132,6 +132,26 @@ _ARCHIVE_TIMEOUT_SECONDS = max(
     1.0,
     float(os.getenv("LEGAL_SOURCE_RECOVERY_ARCHIVE_TIMEOUT_SECONDS", "20")),
 )
+_FETCH_TIMEOUT_SECONDS = max(
+    1.0,
+    float(os.getenv("LEGAL_SOURCE_RECOVERY_FETCH_TIMEOUT_SECONDS", "8")),
+)
+_COMMON_CRAWL_TIMEOUT_SECONDS = max(
+    1.0,
+    float(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_TIMEOUT_SECONDS", str(_SEARCH_TIMEOUT_SECONDS))),
+)
+_MAX_COMMON_CRAWL_DOMAINS = max(
+    1,
+    int(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_DOMAINS", "4")),
+)
+_MAX_CANDIDATE_DISCOVERY_PAGES = max(
+    1,
+    int(os.getenv("LEGAL_SOURCE_RECOVERY_MAX_CANDIDATE_DISCOVERY_PAGES", "3")),
+)
+_MAX_CANDIDATE_FETCHES = max(
+    1,
+    int(os.getenv("LEGAL_SOURCE_RECOVERY_MAX_CANDIDATE_FETCHES", "2")),
+)
 
 
 def build_missing_citation_recovery_query(
@@ -236,6 +256,13 @@ def _score_candidate(result: Dict[str, Any], *, corpus_key: Optional[str], state
     return score
 
 
+def _env_flag(name: str, *, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return bool(default)
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
 class _LiveSearcher(Protocol):
     def search(self, query: str, max_results: int = 20, **kwargs: Any) -> Dict[str, Any]:
         ...
@@ -292,6 +319,7 @@ class RecoveryScraperPatch:
     target_file: Optional[str] = None
     host: Optional[str] = None
     rationale: Optional[str] = None
+    extraction_recipe_path: Optional[str] = None
 
 
 @dataclass
@@ -314,6 +342,18 @@ class _FallbackPatch:
         payload = asdict(self)
         payload["created_at"] = self.created_at.isoformat()
         return payload
+
+
+class _FallbackPatchManager:
+    def __init__(self, *, patches_dir: Path) -> None:
+        self.patches_dir = Path(patches_dir)
+
+    def save_patch(self, patch: _FallbackPatch, output_path: Optional[Path] = None) -> Path:
+        target = Path(output_path or (self.patches_dir / f"{patch.patch_id}.patch"))
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(str(patch.diff_content or ""), encoding="utf-8")
+        target.with_suffix(".json").write_text(json.dumps(patch.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+        return target
 
 
 @dataclass
@@ -404,15 +444,32 @@ class LegalSourceRecoveryWorkflow:
         if self._fetch_api is not None:
             return self._fetch_api
         from ..web_archiving.unified_api import UnifiedWebArchivingAPI
+        from ..web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper
 
-        return UnifiedWebArchivingAPI()
+        scraper = UnifiedWebScraper(
+            ScraperConfig(
+                timeout=max(1, int(_FETCH_TIMEOUT_SECONDS)),
+                max_retries=1,
+                retry_delay=0.1,
+                preferred_methods=[ScraperMethod.REQUESTS_ONLY],
+                fallback_enabled=False,
+                playwright_hydration_wait_ms=500,
+                playwright_shell_retry_wait_ms=500,
+                archive_is_submit_on_miss=False,
+                archive_is_submit_wait=False,
+            )
+        )
+        return UnifiedWebArchivingAPI(scraper=scraper)
 
     def _patch_manager_instance(self, *, manifest_dir: Path) -> Any:
         if self._patch_manager is not None:
             return self._patch_manager
-        from ...optimizers.agentic.patch_control import PatchManager
+        try:
+            from ...optimizers.agentic.patch_control import PatchManager
 
-        return PatchManager(patches_dir=manifest_dir / "patches", enable_cache=False)
+            return PatchManager(patches_dir=manifest_dir / "patches", enable_cache=False)
+        except Exception:
+            return _FallbackPatchManager(patches_dir=manifest_dir / "patches")
 
     def _search_backend_status(self) -> Dict[str, Any]:
         brave_api_key = str(
@@ -459,6 +516,162 @@ class LegalSourceRecoveryWorkflow:
             brave_api_key=(os.getenv("BRAVE_API_KEY") or os.getenv("BRAVE_SEARCH_API_KEY") or None),
         )
 
+    @staticmethod
+    def _official_hint_domains(*, corpus_key: Optional[str], state_code: Optional[str]) -> List[str]:
+        corpus = str(corpus_key or "").strip().lower()
+        state = str(state_code or "").strip().upper()
+        if corpus == "us_code":
+            return ["uscode.house.gov", "govinfo.gov", "law.cornell.edu"]
+        if corpus == "federal_register":
+            return ["federalregister.gov", "govinfo.gov"]
+        if corpus == "caselaw_access_project":
+            return ["courtlistener.com", "law.justia.com"]
+        state_domains = {
+            "CA": ["leginfo.legislature.ca.gov", "courts.ca.gov"],
+            "NY": ["nysenate.gov", "nyassembly.gov", "dos.ny.gov", "nycourts.gov"],
+            "TX": ["statutes.capitol.texas.gov", "texreg.sos.state.tx.us", "txcourts.gov"],
+            "FL": ["leg.state.fl.us", "flrules.org", "flcourts.gov"],
+            "GA": ["legis.ga.gov", "rules.sos.ga.gov", "georgiacourts.gov"],
+            "IL": ["ilga.gov", "ilsos.gov", "illinoiscourts.gov"],
+            "MN": ["revisor.mn.gov", "mncourts.gov"],
+            "OR": ["oregonlegislature.gov", "oregon.public.law", "courts.oregon.gov"],
+            "PA": ["legis.state.pa.us", "pacodeandbulletin.gov", "pacourts.us"],
+        }
+        if corpus in {"state_laws", "state_admin_rules", "state_court_rules"}:
+            return list(state_domains.get(state, []))
+        return []
+
+    @staticmethod
+    def _candidate_domains(*rows: Iterable[Dict[str, Any]]) -> List[str]:
+        domains: List[str] = []
+        seen: set[str] = set()
+        for group in rows:
+            for row in list(group or []):
+                host = urlparse(str(row.get("url") or "")).netloc.lower()
+                if not host or host in seen:
+                    continue
+                seen.add(host)
+                domains.append(host)
+        return domains
+
+    async def _common_crawl_fallback_results(
+        self,
+        *,
+        query: str,
+        corpus_key: Optional[str],
+        state_code: Optional[str],
+        live_results: Iterable[Dict[str, Any]],
+        archived_results: Iterable[Dict[str, Any]],
+        max_candidates: int,
+        backend_status: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        backend_status["common_crawl_available"] = False
+        backend_status["common_crawl_domains"] = []
+        backend_status["common_crawl_domain_count"] = 0
+        backend_status["common_crawl_result_count"] = 0
+        if not _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", default=False):
+            backend_status["common_crawl_error"] = "common_crawl_disabled"
+            return []
+
+        live_rows = list(live_results or [])
+        archived_rows = list(archived_results or [])
+        should_search = (
+            _env_flag("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", default=False)
+            or not live_rows
+            or not archived_rows
+        )
+        if not should_search:
+            return []
+
+        domains: List[str] = []
+        seen: set[str] = set()
+        for domain in [
+            *self._candidate_domains(live_rows, archived_rows),
+            *self._official_hint_domains(corpus_key=corpus_key, state_code=state_code),
+        ]:
+            normalized = str(domain or "").strip().lower()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            domains.append(normalized)
+            if len(domains) >= _MAX_COMMON_CRAWL_DOMAINS:
+                break
+
+        backend_status["common_crawl_domains"] = list(domains)
+        backend_status["common_crawl_domain_count"] = len(domains)
+        if not domains:
+            backend_status["common_crawl_error"] = "no_common_crawl_domains"
+            return []
+
+        def _search_domains() -> List[Dict[str, Any]]:
+            from ..web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+
+            engine = CommonCrawlSearchEngine(
+                mode=str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local").strip() or "local",
+                mcp_endpoint=os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT") or None,
+                mcp_timeout=_COMMON_CRAWL_TIMEOUT_SECONDS,
+            )
+            if not engine.is_available():
+                return []
+            results: List[Dict[str, Any]] = []
+            for domain in domains:
+                try:
+                    rows = engine.search_domain(
+                        domain,
+                        max_matches=max(1, max_candidates),
+                        query=query,
+                        jurisdiction_type=_jurisdiction_type_for_corpus(corpus_key),
+                        state_code=state_code,
+                    )
+                except Exception:
+                    continue
+                for row in list(rows or []):
+                    url = str(
+                        row.get("url")
+                        or row.get("archive_url")
+                        or row.get("wayback_url")
+                        or row.get("target_url")
+                        or ""
+                    ).strip()
+                    if not url:
+                        continue
+                    results.append(
+                        {
+                            "url": url,
+                            "title": str(row.get("title") or f"Common Crawl match for {domain}"),
+                            "source": "common_crawl_indexes",
+                            "source_type": "archived",
+                            "search_domain": domain,
+                            "snippet": str(row.get("snippet") or row.get("mime") or row.get("status") or ""),
+                            "common_crawl_record": {
+                                key: value
+                                for key, value in row.items()
+                                if key in {"timestamp", "collection", "mime", "status", "digest", "filename", "offset", "length"}
+                            },
+                        }
+                    )
+            return results
+
+        try:
+            payload = await self._run_sync_with_timeout(
+                _search_domains,
+                timeout_seconds=_COMMON_CRAWL_TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError:
+            backend_status["common_crawl_error"] = "common_crawl_timeout"
+            return []
+        except Exception as exc:
+            backend_status["common_crawl_error"] = str(exc)
+            return []
+
+        results = list(payload or [])
+        backend_status["common_crawl_used"] = True
+        backend_status["common_crawl_available"] = bool(results)
+        backend_status["common_crawl_result_count"] = len(results)
+        if not results and not backend_status.get("common_crawl_error"):
+            backend_status["common_crawl_error"] = "common_crawl_no_results"
+        return results
+
     async def _run_sync_with_timeout(
         self,
         func: Callable[..., Any],
@@ -500,7 +713,9 @@ class LegalSourceRecoveryWorkflow:
         backend_status["archive_search_error"] = ""
         backend_status["live_search_error"] = ""
         backend_status["multi_engine_error"] = ""
+        backend_status["common_crawl_error"] = ""
         backend_status["multi_engine_used"] = False
+        backend_status["common_crawl_used"] = False
         backend_status["engines_attempted"] = []
 
         effective_live_searcher = self._live_searcher or getattr(searcher, "legal_searcher", None)
@@ -561,7 +776,9 @@ class LegalSourceRecoveryWorkflow:
                 backend_status["multi_engine_error"] = str(exc)
 
         effective_archive_searcher = self._archive_searcher or searcher
-        if effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
+        if int(archive_top_k or 0) <= 0:
+            backend_status["archive_search_error"] = "archive_search_skipped"
+        elif effective_archive_searcher is not None and hasattr(effective_archive_searcher, "search_with_indexes"):
             try:
                 archive_payload = await self._run_sync_with_timeout(
                     effective_archive_searcher.search_with_indexes,
@@ -579,9 +796,19 @@ class LegalSourceRecoveryWorkflow:
                 archived_results = []
                 backend_status["archive_search_error"] = str(exc)
 
+        common_crawl_results = await self._common_crawl_fallback_results(
+            query=query,
+            corpus_key=recovery_corpus_key,
+            state_code=state_code,
+            live_results=live_results,
+            archived_results=archived_results,
+            max_candidates=max_candidates,
+            backend_status=backend_status,
+        )
+
         merged_results: List[Dict[str, Any]] = []
         seen_urls: set[str] = set()
-        for source_type, rows in (("current", live_results), ("archived", archived_results)):
+        for source_type, rows in (("current", live_results), ("archived", archived_results), ("common_crawl", common_crawl_results)):
             for row in rows:
                 url = str(row.get("url") or "").strip()
                 if not url or url in seen_urls:
@@ -649,6 +876,7 @@ class LegalSourceRecoveryWorkflow:
             candidates=candidates,
             archived_sources=archived_sources,
             candidate_files=candidate_files,
+            search_backend_status=backend_status,
         )
 
         if self._enable_candidate_file_fetch:
@@ -656,19 +884,19 @@ class LegalSourceRecoveryWorkflow:
                 manifest_dir=manifest_dir,
                 candidate_files=candidate_files,
             )
-            scraper_patch = self._write_scraper_patch_scaffold(
-                manifest_dir=manifest_dir,
-                citation_text=citation_text,
-                normalized_citation=normalized_citation or citation_text,
-                corpus_key=recovery_corpus_key,
-                candidates=candidates,
-                candidate_files=candidate_files,
-            )
-            self._rewrite_manifest_with_artifacts(
-                manifest_path=manifest_path,
-                candidate_files=candidate_files,
-                scraper_patch=scraper_patch,
-            )
+        scraper_patch = self._write_scraper_patch_scaffold(
+            manifest_dir=manifest_dir,
+            citation_text=citation_text,
+            normalized_citation=normalized_citation or citation_text,
+            corpus_key=recovery_corpus_key,
+            candidates=candidates,
+            candidate_files=candidate_files,
+        )
+        self._rewrite_manifest_with_artifacts(
+            manifest_path=manifest_path,
+            candidate_files=candidate_files,
+            scraper_patch=scraper_patch,
+        )
 
         publish_plan = None
         publish_report = None
@@ -855,7 +1083,7 @@ class LegalSourceRecoveryWorkflow:
         fetch_api = self._fetch_api_instance()
         discovered: Dict[str, RecoveredCandidateFile] = {}
 
-        for candidate in list(candidates)[:4]:
+        for candidate in list(candidates)[:_MAX_CANDIDATE_DISCOVERY_PAGES]:
             self._register_candidate_file(
                 storage=discovered,
                 url=candidate.url,
@@ -871,7 +1099,10 @@ class LegalSourceRecoveryWorkflow:
                 fetch_response = fetch_api.fetch(
                     candidate.url,
                     domain="legal",
-                    metadata={"title_hint": candidate.title or ""},
+                    metadata={
+                        "title_hint": candidate.title or "",
+                        "suppress_relocation_search": True,
+                    },
                 )
             except Exception:
                 continue
@@ -897,7 +1128,7 @@ class LegalSourceRecoveryWorkflow:
                 state_code=state_code,
             )
 
-            for link in list(document_metadata.get("links") or [])[:50]:
+            for link in list(document_metadata.get("links") or [])[:12]:
                 if not isinstance(link, dict):
                     continue
                 self._register_candidate_file(
@@ -913,7 +1144,7 @@ class LegalSourceRecoveryWorkflow:
 
         files = list(discovered.values())
         files.sort(key=lambda item: (-item.score, item.url))
-        return files[:8]
+        return files[: max(4, _MAX_CANDIDATE_FETCHES)]
 
     @staticmethod
     def _artifact_suffix(*, url: str, content_type: Optional[str], has_bytes: bool) -> str:
@@ -932,6 +1163,79 @@ class LegalSourceRecoveryWorkflow:
         cleaned = " ".join(str(text or "").split())
         return cleaned[:limit]
 
+    @staticmethod
+    def _looks_like_blocked_page(text: str, *, content_type: Optional[str] = None) -> bool:
+        hay = f"{content_type or ''} {text or ''}".lower()
+        blocked_markers = (
+            "attention required",
+            "cloudflare",
+            "enable javascript",
+            "checking your browser",
+            "access denied",
+            "request blocked",
+            "captcha",
+            "please verify you are human",
+        )
+        return any(marker in hay for marker in blocked_markers)
+
+    @staticmethod
+    def _recommended_parser_kind(*, url: str, content_type: Optional[str], has_bytes: bool) -> str:
+        suffix = Path(urlparse(url).path).suffix.lower()
+        lowered = str(content_type or "").split(";", 1)[0].strip().lower()
+        if suffix == ".pdf" or lowered == "application/pdf":
+            return "pdf"
+        if suffix in {".xml", ".json", ".csv"} or lowered in {"application/xml", "text/xml", "application/json", "text/json", "text/csv"}:
+            return suffix.lstrip(".") or lowered
+        if "html" in lowered:
+            return "html"
+        if lowered.startswith("text/"):
+            return "text"
+        if has_bytes:
+            return "binary"
+        return "html_or_text"
+
+    @classmethod
+    def _build_extraction_recipe(
+        cls,
+        *,
+        url: str,
+        title: Optional[str],
+        content_type: Optional[str],
+        text: str,
+        html: str,
+        has_bytes: bool,
+    ) -> Dict[str, Any]:
+        host = urlparse(str(url or "")).netloc.lower()
+        parser_kind = cls._recommended_parser_kind(url=url, content_type=content_type, has_bytes=has_bytes)
+        source_text = text or html
+        return {
+            "host": host,
+            "candidate_url": url,
+            "title": title,
+            "content_type": content_type,
+            "parser_kind": parser_kind,
+            "blocked_signals_detected": cls._looks_like_blocked_page(source_text, content_type=content_type),
+            "preferred_fetch_path": "UnifiedWebArchivingAPI.fetch(url, domain=\"legal\")",
+            "fallback_fetch_paths": [
+                "UnifiedWebScraper.scrape_sync(url)",
+                "CommonCrawlSearchEngine.search_domain(host, query=citation_query)",
+                "HuggingFace Common Crawl fallback when local Common Crawl indexes are unavailable",
+            ],
+            "html_selectors": [
+                "main",
+                "article",
+                "#content",
+                ".content",
+                ".main-content",
+                ".document",
+                ".statute",
+                ".law",
+                "pre",
+            ],
+            "text_excerpt": cls._safe_metadata_excerpt(source_text),
+            "recommended_scraper_function": f"_extract_recovered_{_slugify(host or 'host', limit=32).replace('-', '_')}_text",
+        }
+
     def _materialize_candidate_file_artifacts(
         self,
         *,
@@ -943,13 +1247,17 @@ class LegalSourceRecoveryWorkflow:
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         materialized: List[RecoveredCandidateFile] = []
-        for index, item in enumerate(list(candidate_files)[:3], start=1):
+        candidate_file_list = list(candidate_files)
+        for index, item in enumerate(candidate_file_list[:_MAX_CANDIDATE_FETCHES], start=1):
             updated = RecoveredCandidateFile(**asdict(item))
             try:
                 fetch_response = fetch_api.fetch(
                     updated.url,
                     domain="legal",
-                    metadata={"title_hint": updated.title or ""},
+                    metadata={
+                        "title_hint": updated.title or "",
+                        "suppress_relocation_search": True,
+                    },
                 )
             except Exception as exc:
                 updated.fetch_success = False
@@ -969,6 +1277,8 @@ class LegalSourceRecoveryWorkflow:
             content_type = str(getattr(document, "content_type", "") or metadata.get("content_type") or "").strip() or None
             raw_bytes = metadata.get("raw_bytes")
             has_bytes = isinstance(raw_bytes, (bytes, bytearray)) and len(raw_bytes) > 0
+            document_text = str(getattr(document, "text", "") or "")
+            document_html = str(getattr(document, "html", "") or metadata.get("html", "") or "")
             suffix = self._artifact_suffix(url=updated.url, content_type=content_type, has_bytes=has_bytes)
             artifact_base = f"{index:02d}_{_slugify(updated.title or Path(urlparse(updated.url).path).stem or 'candidate-file', limit=48)}"
             artifact_path = artifacts_dir / f"{artifact_base}{suffix}"
@@ -976,8 +1286,17 @@ class LegalSourceRecoveryWorkflow:
             if has_bytes:
                 artifact_path.write_bytes(bytes(raw_bytes))
             else:
-                artifact_text = str(getattr(document, "text", "") or getattr(document, "html", "") or "")
+                artifact_text = document_text or document_html
                 artifact_path.write_text(artifact_text, encoding="utf-8")
+
+            extraction_recipe = self._build_extraction_recipe(
+                url=updated.url,
+                title=updated.title,
+                content_type=content_type,
+                text=document_text,
+                html=document_html,
+                has_bytes=has_bytes,
+            )
 
             metadata_path = artifacts_dir / f"{artifact_base}.json"
             metadata_payload = {
@@ -990,8 +1309,9 @@ class LegalSourceRecoveryWorkflow:
                 "artifact_path": str(artifact_path),
                 "artifact_size": artifact_path.stat().st_size if artifact_path.exists() else 0,
                 "fetch_success": True,
-                "text_excerpt": self._safe_metadata_excerpt(getattr(document, "text", "") or ""),
+                "text_excerpt": self._safe_metadata_excerpt(document_text or document_html),
                 "extraction_provenance": dict(getattr(document, "extraction_provenance", {}) or {}),
+                "extraction_recipe": extraction_recipe,
             }
             metadata_path.write_text(json.dumps(metadata_payload, indent=2, sort_keys=True), encoding="utf-8")
 
@@ -1000,9 +1320,10 @@ class LegalSourceRecoveryWorkflow:
             updated.file_extension = suffix
             updated.artifact_path = str(artifact_path)
             updated.metadata_path = str(metadata_path)
+            updated.notes = "blocked_page_detected" if extraction_recipe.get("blocked_signals_detected") else None
             materialized.append(updated)
 
-        return materialized + list(candidate_files)[3:]
+        return materialized + candidate_file_list[_MAX_CANDIDATE_FETCHES:]
 
     @staticmethod
     def _target_scraper_file_for_corpus(corpus_key: Optional[str]) -> Optional[str]:
@@ -1049,6 +1370,19 @@ class LegalSourceRecoveryWorkflow:
             discovered_from_url=getattr(primary_file, "discovered_from_url", None),
             host=host,
         )
+        extraction_recipe_path = manifest_dir / "patches" / f"{patch_id}_extraction_recipe.json"
+        extraction_recipe_path.parent.mkdir(parents=True, exist_ok=True)
+        extraction_recipe = {
+            "citation_text": citation_text,
+            "normalized_citation": normalized_citation,
+            "target_file": target_file,
+            "host": host,
+            "source_url": source_url,
+            "candidate_files": [asdict(item) for item in candidate_files],
+            "patch_intent": "Add host-specific extraction/fetch support for a legal source recovered after a Hugging Face lookup miss.",
+            "common_crawl_fallback": "Use CommonCrawlSearchEngine.search_domain(host, query=search_query) when direct fetch is blocked by Cloudflare or similar anti-bot pages.",
+        }
+        extraction_recipe_path.write_text(json.dumps(extraction_recipe, indent=2, sort_keys=True), encoding="utf-8")
         patch = Patch(
             patch_id=patch_id,
             agent_id="legal_source_recovery",
@@ -1061,6 +1395,7 @@ class LegalSourceRecoveryWorkflow:
                 "normalized_citation": normalized_citation,
                 "host": host,
                 "candidate_url": source_url,
+                "extraction_recipe_path": str(extraction_recipe_path),
             },
         )
 
@@ -1071,6 +1406,7 @@ class LegalSourceRecoveryWorkflow:
             target_file=target_file,
             host=host,
             rationale="Host-specific recovery scaffold generated from discovered candidate file.",
+            extraction_recipe_path=str(extraction_recipe_path),
         )
 
     @staticmethod
@@ -1082,19 +1418,51 @@ class LegalSourceRecoveryWorkflow:
         discovered_from_url: Optional[str],
         host: Optional[str],
     ) -> str:
-        discovered_line = f"# discovered_from: {discovered_from_url}\n" if discovered_from_url else ""
+        function_name = f"_extract_recovered_{_slugify(host or 'host', limit=32).replace('-', '_')}_text"
+        discovered_line = f"+# discovered_from: {discovered_from_url}\n" if discovered_from_url else ""
         return (
             f"diff --git a/{target_file} b/{target_file}\n"
             f"--- a/{target_file}\n"
             f"+++ b/{target_file}\n"
             "@@\n"
-            "+# TODO(recovery): add host-specific file retrieval using UnifiedWebArchivingAPI or UnifiedWebScraper.\n"
+            "+from typing import Any\n"
+            "+\n"
+            f"+def {function_name}(document: Any) -> str:\n"
+            "+    \"\"\"Extract text from a recovered legal source candidate.\n"
+            "+\n"
+            "+    Generated by the Bluebook self-healing recovery workflow after a\n"
+            "+    Hugging Face corpus miss. Keep this host-specific and promote it into\n"
+            "+    the surrounding scraper once validated against related corpus pages.\n"
+            "+    \"\"\"\n"
+            "+    metadata = dict(getattr(document, \"metadata\", {}) or {})\n"
+            "+    text = str(getattr(document, \"text\", \"\") or \"\").strip()\n"
+            "+    if text:\n"
+            "+        return text\n"
+            "+    html = str(getattr(document, \"html\", \"\") or metadata.get(\"html\", \"\") or \"\")\n"
+            "+    if not html.strip():\n"
+            "+        return \"\"\n"
+            "+    try:\n"
+            "+        from bs4 import BeautifulSoup\n"
+            "+    except Exception:\n"
+            "+        return html\n"
+            "+    soup = BeautifulSoup(html, \"html.parser\")\n"
+            "+    for selector in (\"main\", \"article\", \"#content\", \".content\", \".main-content\", \".document\", \".statute\", \".law\", \"pre\"):\n"
+            "+        node = soup.select_one(selector)\n"
+            "+        if node:\n"
+            "+            extracted = node.get_text(\"\\n\", strip=True)\n"
+            "+            if extracted:\n"
+            "+                return extracted\n"
+            "+    return soup.get_text(\"\\n\", strip=True)\n"
+            "+\n"
+            "+# Recovery notes for the scraper maintainer:\n"
             f"+# citation: {citation_text}\n"
             f"+# host: {host or ''}\n"
             f"+# candidate_url: {source_url}\n"
             f"+{discovered_line}"
             "+# preferred_fetch_path: UnifiedWebArchivingAPI.fetch(url, domain=\"legal\")\n"
             "+# fallback_fetch_path: UnifiedWebScraper.scrape_sync(url)\n"
+            "+# blocked_fetch_fallback: CommonCrawlSearchEngine.search_domain(host, query=search_query)\n"
+            "+# hf_common_crawl_fallback: Common Crawl integration falls back to Hugging Face indexes when local CC assets are unavailable.\n"
         )
 
     @staticmethod
@@ -1120,6 +1488,7 @@ class LegalSourceRecoveryWorkflow:
         candidates: Iterable[LegalSourceCandidate],
         archived_sources: Iterable[ArchivedSourceRecord],
         candidate_files: Iterable[RecoveredCandidateFile],
+        search_backend_status: Optional[Dict[str, Any]] = None,
     ) -> tuple[Path, Path]:
         now = self._now_factory()
         corpus_root = Path.cwd() / "source_recovery"
@@ -1142,6 +1511,7 @@ class LegalSourceRecoveryWorkflow:
             "archived_sources": [asdict(item) for item in archived_sources],
             "candidate_files": [asdict(item) for item in candidate_files],
             "scraper_patch": None,
+            "search_backend_status": dict(search_backend_status or {}),
         }
         manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return manifest_dir, manifest_path
@@ -1158,8 +1528,11 @@ async def recover_missing_legal_citation_source(
     archive_top_k: int = 3,
     publish_to_hf: bool = False,
     hf_token: Optional[str] = None,
+    enable_candidate_file_fetch: Optional[bool] = None,
 ) -> Dict[str, Any]:
-    workflow = LegalSourceRecoveryWorkflow(enable_candidate_file_fetch=True)
+    if enable_candidate_file_fetch is None:
+        enable_candidate_file_fetch = _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_CANDIDATE_FILE_FETCH", default=True)
+    workflow = LegalSourceRecoveryWorkflow(enable_candidate_file_fetch=bool(enable_candidate_file_fetch))
     result = await workflow.recover_unresolved_citation(
         citation_text=citation_text,
         normalized_citation=normalized_citation,

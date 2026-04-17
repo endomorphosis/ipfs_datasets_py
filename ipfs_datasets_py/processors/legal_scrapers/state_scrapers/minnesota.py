@@ -115,6 +115,7 @@ class MinnesotaScraper(BaseStateScraper):
             chapter_urls = [
                 f"{self.get_base_url()}/statutes/cite/609",
                 f"{self.get_base_url()}/statutes/cite/645",
+                f"{self.get_base_url()}/statutes/cite/518",
                 f"{self.get_base_url()}/statutes/cite/518B",
                 f"{self.get_base_url()}/statutes/cite/169A",
                 f"{self.get_base_url()}/statutes/cite/8",

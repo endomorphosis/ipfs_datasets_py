@@ -9,14 +9,15 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import subprocess
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 import anyio
 
 from ...logic.deontic import DeonticGraph, DeonticGraphBuilder
 from ..protocol import Entity, KnowledgeGraph, Relationship
-from .document_structure import parse_legal_document_to_graph
+from .document_structure import parse_legal_document, parse_legal_document_to_graph
 from .docket_packaging import (
     load_packaged_docket_dataset,
     load_packaged_docket_dataset_components,
@@ -62,6 +63,13 @@ def _safe_identifier(value: Any) -> str:
     return text or "item"
 
 
+_CASE_NUMBER_LABEL_PATTERN = re.compile(
+    r"\b(?:case|cause|civil action|docket)\s*(?:no\.?|number)?\s*[:#]?\s*([A-Za-z0-9:\-\.]+)",
+    re.IGNORECASE,
+)
+_CASE_NUMBER_TOKEN_PATTERN = re.compile(r"\b\d{1,4}:\d{2,4}[- ]?[a-z]{1,6}[- ]?\d{1,8}\b", re.IGNORECASE)
+
+
 def _dedupe_string_sequence(values: Iterable[Any]) -> List[str]:
     seen: set[str] = set()
     output: List[str] = []
@@ -76,6 +84,55 @@ def _dedupe_string_sequence(values: Iterable[Any]) -> List[str]:
 
 def _normalize_authority_text(value: Any) -> str:
     return " ".join(str(value or "").strip().split())
+
+
+def _normalize_case_number_text(value: Any) -> str:
+    text = " ".join(str(value or "").strip().split())
+    if not text:
+        return ""
+    text = re.sub(r"^(?:case|cause|civil action|docket)\s*(?:no\.?|number)?\s*[:#]?\s*", "", text, flags=re.IGNORECASE)
+    return text.strip(" .:#")
+
+
+def _extract_case_number_from_text(text: str) -> str:
+    if not text:
+        return ""
+    for line in text.splitlines()[:80]:
+        stripped = str(line).strip()
+        if not stripped:
+            continue
+        labeled = _CASE_NUMBER_LABEL_PATTERN.search(stripped)
+        if labeled:
+            return _normalize_case_number_text(labeled.group(1))
+        token = _CASE_NUMBER_TOKEN_PATTERN.search(stripped)
+        if token:
+            return _normalize_case_number_text(token.group(0))
+    return ""
+
+
+def _extract_text_from_pdf(path: Path) -> str:
+    errors: List[str] = []
+    for module_name in ("pypdf", "PyPDF2"):
+        try:
+            module = __import__(module_name, fromlist=["PdfReader"])
+            reader_cls = getattr(module, "PdfReader", None)
+            if reader_cls is None:
+                continue
+            reader = reader_cls(str(path))
+            pages = []
+            for page in list(getattr(reader, "pages", []) or []):
+                try:
+                    pages.append(str(page.extract_text() or ""))
+                except Exception as exc:
+                    errors.append(f"{module_name}:page:{exc}")
+            text = "\n".join(page for page in pages if page.strip()).strip()
+            if text:
+                return text
+        except Exception as exc:
+            errors.append(f"{module_name}:{exc}")
+    if errors:
+        logger.warning("Failed to extract PDF text from %s: %s", path, "; ".join(errors))
+    return ""
 
 
 def _local_only_bluebook_resolver() -> BluebookCitationResolver:
@@ -1592,7 +1649,13 @@ class DocketDatasetBuilder:
         _LAST_DATASET_PROGRESS.update({"stage": "normalize_documents", "detail": ""})
         normalized_documents = self._normalize_documents(docket)
         _LAST_DATASET_PROGRESS.update({"stage": "normalize_documents", "detail": f"documents={len(normalized_documents)}"})
-        docket_id = str(docket.get("docket_id") or docket.get("id") or "docket")
+        docket_metadata = dict(docket.get("metadata") or {})
+        detected_case_number = _normalize_case_number_text(
+            docket.get("case_number")
+            or docket_metadata.get("case_number")
+            or docket.get("docket_number")
+        )
+        docket_id = str(docket.get("docket_id") or docket.get("id") or detected_case_number or "docket")
         case_name = str(docket.get("case_name") or docket.get("title") or docket_id)
         court = str(docket.get("court") or docket.get("court_full_name") or "")
         dataset_id = f"docket_dataset_{_safe_identifier(docket_id)}"
@@ -1773,7 +1836,9 @@ class DocketDatasetBuilder:
                 "artifact_provenance": artifact_provenance,
                 "artifact_status": artifact_status,
                 "source_type": str(docket.get("source_type") or "docket"),
+                "case_number": detected_case_number,
                 "linked_authorities": linked_authority_summary,
+                **({"detected_case_numbers": docket_metadata.get("detected_case_numbers")} if docket_metadata.get("detected_case_numbers") else {}),
             },
         )
 
@@ -1869,7 +1934,8 @@ class DocketDatasetBuilder:
             raise ValueError(f"Docket import path is not a directory: {root}")
 
         documents: List[Dict[str, Any]] = []
-        supported_suffixes = {".txt", ".md", ".json"}
+        supported_suffixes = {".txt", ".md", ".json", ".pdf"}
+        detected_case_numbers: List[str] = []
         for path in sorted(candidate for candidate in root.rglob(glob_pattern) if candidate.is_file()):
             if path.suffix.lower() not in supported_suffixes:
                 continue
@@ -1877,10 +1943,52 @@ class DocketDatasetBuilder:
                 json_payload = self._load_json_document_candidate(path)
                 if json_payload is not None:
                     documents.append(json_payload)
+                    detected = _normalize_case_number_text(
+                        json_payload.get("case_number")
+                        or _extract_case_number_from_text(str(json_payload.get("text") or ""))
+                    )
+                    if detected:
+                        detected_case_numbers.append(detected)
+                continue
+            if path.suffix.lower() == ".pdf":
+                text = _extract_text_from_pdf(path)
+                parsed = parse_legal_document(text) if text else None
+                detected = _normalize_case_number_text(
+                    (parsed.header.case_number if parsed and parsed.header else "")
+                    or _extract_case_number_from_text(text)
+                )
+                if detected:
+                    detected_case_numbers.append(detected)
+                if not text:
+                    continue
+                documents.append(
+                    {
+                        "id": path.stem,
+                        "title": (parsed.title if parsed and parsed.title else path.stem.replace("_", " ").replace("-", " ").strip()) or path.name,
+                        "text": text,
+                        "source_url": str(path),
+                        "document_type": "pdf",
+                        "source_path": str(path),
+                        "case_number": detected,
+                        "metadata": {
+                            "source_path": str(path),
+                            "source_suffix": ".pdf",
+                            "text_extraction": {
+                                "source": "directory_pdf",
+                                "backend": "pypdf",
+                            },
+                            "parsed_legal_document": parsed.to_dict() if parsed else {},
+                            "detected_case_number": detected,
+                        },
+                    }
+                )
                 continue
             text = path.read_text(encoding="utf-8", errors="ignore").strip()
             if not text:
                 continue
+            detected = _extract_case_number_from_text(text)
+            if detected:
+                detected_case_numbers.append(detected)
             documents.append(
                 {
                     "id": path.stem,
@@ -1889,16 +1997,30 @@ class DocketDatasetBuilder:
                     "source_url": str(path),
                     "document_type": path.suffix.lower().lstrip("."),
                     "source_path": str(path),
+                    "case_number": detected,
+                    "metadata": {
+                        "source_path": str(path),
+                        "source_suffix": path.suffix.lower(),
+                        "detected_case_number": detected,
+                    },
                 }
             )
 
+        unique_case_numbers = _dedupe_string_sequence(detected_case_numbers)
+        resolved_case_number = unique_case_numbers[0] if unique_case_numbers else ""
+
         docket_payload = {
-            "docket_id": docket_id or root.name,
+            "docket_id": docket_id or resolved_case_number or root.name,
             "case_name": case_name or root.name.replace("_", " ").replace("-", " "),
             "court": court,
             "documents": documents,
             "source_type": "directory",
             "source_path": str(root),
+            "case_number": resolved_case_number,
+            "metadata": {
+                "case_number": resolved_case_number,
+                "detected_case_numbers": unique_case_numbers,
+            },
         }
         return self.build_from_docket(
             docket_payload,
@@ -2077,21 +2199,33 @@ class DocketDatasetBuilder:
         if not isinstance(payload, dict):
             return None
         if any(key in payload for key in {"text", "plain_text", "content", "description"}):
+            text = str(
+                payload.get("text")
+                or payload.get("plain_text")
+                or payload.get("content")
+                or payload.get("description")
+                or ""
+            )
+            detected_case_number = _normalize_case_number_text(
+                payload.get("case_number")
+                or _extract_case_number_from_text(text)
+            )
             return {
                 "id": str(payload.get("document_id") or payload.get("id") or path.stem),
                 "title": str(payload.get("title") or payload.get("description") or path.stem),
-                "text": str(
-                    payload.get("text")
-                    or payload.get("plain_text")
-                    or payload.get("content")
-                    or payload.get("description")
-                    or ""
-                ),
+                "text": text,
                 "date_filed": str(payload.get("date_filed") or payload.get("filed") or ""),
                 "document_number": str(payload.get("document_number") or payload.get("entry_number") or ""),
                 "source_url": str(payload.get("source_url") or path),
                 "document_type": str(payload.get("document_type") or "json"),
                 "source_path": str(path),
+                "case_number": detected_case_number,
+                "metadata": {
+                    **dict(payload.get("metadata") or {}),
+                    "source_path": str(path),
+                    "source_suffix": ".json",
+                    "detected_case_number": detected_case_number,
+                },
             }
         return None
 

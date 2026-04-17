@@ -517,7 +517,7 @@ def _extract_json_payload(raw_text: str) -> Any:
 def parse_bluebook_fuzz_candidates(raw_text: str) -> List[BluebookCitationCandidate]:
     payload = _extract_json_payload(raw_text)
     if isinstance(payload, dict):
-        for key in ("items", "citations", "results", "cases"):
+        for key in ("candidates", "items", "citations", "results", "cases"):
             value = payload.get(key)
             if isinstance(value, list):
                 payload = value

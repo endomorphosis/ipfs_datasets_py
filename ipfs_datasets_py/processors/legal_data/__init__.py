@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 """Legal data processing modules consolidated under ipfs_datasets_py.processors."""
+
+from pathlib import Path
 
 from .analysis_bundle import build_legal_analysis_bundle
 from .case_knowledge import (
@@ -244,6 +248,83 @@ except Exception:  # pragma: no cover - optional dependency guard
     search_docket_dataset_bm25 = None
     search_docket_dataset_vector = None
     summarize_docket_dataset = None
+
+
+def ingest_docket_dataset(
+    source: str | dict,
+    *,
+    builder: DocketDatasetBuilder | None = None,
+    courtlistener_api_token: str | None = None,
+    include_recap_documents: bool = True,
+    include_document_text: bool = True,
+    max_documents: int | None = None,
+    docket_id: str | None = None,
+    case_name: str | None = None,
+    court: str | None = None,
+    glob_pattern: str = "*",
+    include_knowledge_graph: bool = True,
+    include_bm25: bool = True,
+    include_vector_index: bool = True,
+    include_formal_logic: bool = True,
+    include_router_enrichment: bool = True,
+) -> DocketDatasetObject:
+    """Build a docket dataset from a supported source payload or path."""
+
+    if DocketDatasetBuilder is None:
+        raise RuntimeError("Docket dataset support is unavailable in this environment.")
+
+    active_builder = builder or DocketDatasetBuilder()
+    common_kwargs = {
+        "include_knowledge_graph": include_knowledge_graph,
+        "include_bm25": include_bm25,
+        "include_vector_index": include_vector_index,
+        "include_formal_logic": include_formal_logic,
+        "include_router_enrichment": include_router_enrichment,
+    }
+
+    if isinstance(source, dict):
+        payload = dict(source)
+        if docket_id:
+            payload["docket_id"] = docket_id
+        if case_name:
+            payload["case_name"] = case_name
+        if court:
+            payload["court"] = court
+        return active_builder.build_from_docket(payload, **common_kwargs)
+
+    source_text = str(source or "").strip()
+    if not source_text:
+        raise ValueError("source must be a non-empty path, URL, or docket payload")
+
+    if "courtlistener.com" in source_text:
+        payload = fetch_courtlistener_docket(
+            source_text,
+            api_token=courtlistener_api_token,
+            include_recap_documents=include_recap_documents,
+            include_document_text=include_document_text,
+            max_documents=max_documents,
+        )
+        if docket_id:
+            payload["docket_id"] = docket_id
+        if case_name:
+            payload["case_name"] = case_name
+        if court:
+            payload["court"] = court
+        return active_builder.build_from_docket(payload, **common_kwargs)
+
+    source_path = Path(source_text)
+    if source_path.is_file():
+        return active_builder.build_from_json_file(source_path, **common_kwargs)
+    if source_path.is_dir():
+        return active_builder.build_from_directory(
+            source_path,
+            docket_id=docket_id,
+            case_name=case_name,
+            court=court or "",
+            glob_pattern=glob_pattern,
+            **common_kwargs,
+        )
+    raise FileNotFoundError(f"Unsupported docket dataset source: {source_text}")
 try:
     from .workspace_dataset import (
         WorkspaceDatasetBuilder,
@@ -766,6 +847,7 @@ __all__ = [
     "submit_courtlistener_recap_fetch_request",
     "submit_packaged_docket_recap_fetch_requests",
     "summarize_docket_dataset",
+    "ingest_docket_dataset",
     "WorkspaceDatasetBuilder",
     "WorkspaceDatasetObject",
     "WorkspaceDocument",

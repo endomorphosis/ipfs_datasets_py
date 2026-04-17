@@ -59,10 +59,19 @@ Notes:
 	statistically actionable failures.
 	Examples:
 	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 20 --provider openrouter --model openai/gpt-4.1-mini --states MN,OR,NY --corpora us_code,state_laws,caselaw_access_project --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --input-candidates /tmp/bluebook_candidates.json --samples 12 --disable-hf-fallback --disable-exhaustive --recovery-archive-top-k 0 --output-dir /tmp/bluebook_gap_fill --json`
 	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 20 --seed-from-corpora --seed-examples-per-corpus 3 --states MN,OR,NY --corpora us_code,state_laws,state_admin_rules,caselaw_access_project --json`
 	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 60 --seed-only --seed-from-corpora --states MN,OR,NY --corpora us_code,state_laws,state_admin_rules,state_court_rules,caselaw_access_project --seed-examples-per-corpus 12 --max-seed-examples-per-state 4 --max-seed-examples-per-source 2 --sampling-shuffle-seed 11 --max-acceptable-failure-rate 0.08 --min-actionable-failures 3 --merge-recovered-rows --json`
+	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 12 --disable-hf-fallback --disable-exhaustive --states MN,OR --corpora state_laws --json`
 	`.venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 30 --merge-recovered-rows --output-dir /tmp/bluebook_fuzz_run`
 	`HF_TOKEN=... .venv/bin/python scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py --samples 12 --publish-to-hf --hf-token $HF_TOKEN`
+	Use `--input-candidates` when you already have unresolved citations from an
+	audit, issue, prior fuzz run artifact, or hand-curated gap list. This bypasses
+	LLM generation while still exercising linker resolution, live recovery,
+	manifest creation, scraper patch scaffolding, and the patch backlog writer.
+	Common Crawl/Hugging Face archive-index recovery is opt-in for this gap-fill
+	path; set `LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL=1` when live search
+	candidates are insufficient and you want the deeper archive lookup.
 	The run artifact is written to `bluebook_linker_fuzz_run.json`, the
 	actionable scraper patch queue is written to
 	`bluebook_linker_fuzz_patch_backlog.json`, and malformed citation repairs are

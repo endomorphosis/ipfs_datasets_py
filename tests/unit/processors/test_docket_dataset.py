@@ -38,6 +38,7 @@ from ipfs_datasets_py.processors.legal_data import (
     load_packaged_docket_proof_revalidation_report,
     load_packaged_docket_summary_view,
     load_packaged_docket_inspection_report,
+    ingest_docket_dataset,
     package_docket_dataset,
     persist_packaged_docket_proof_revalidation_queue,
     plan_packaged_docket_query,
@@ -1823,6 +1824,67 @@ def test_docket_dataset_builder_supports_json_file_and_directory_import(tmp_path
     assert dir_dataset.docket_id == "dir-1"
     assert dir_dataset.metadata["document_count"] == 3
     assert dir_dataset.bm25_index["document_count"] == 3
+
+
+def test_docket_dataset_builder_supports_pdf_directory_import_with_case_number_detection(tmp_path, monkeypatch):
+    directory = tmp_path / "pdf_docket_dir"
+    directory.mkdir()
+    pdf_path = directory / "001_complaint.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4\n%stub\n")
+
+    pdf_text = "".join(
+        [
+            "IN THE UNITED STATES DISTRICT COURT\n",
+            "FOR THE DISTRICT OF EXAMPLE\n\n",
+            "Case No. 3:24-cv-00999\n\n",
+            "DOE v. ACME\n\n",
+            "COMPLAINT\n",
+            "Plaintiff alleges breach of contract.\n",
+        ]
+    )
+    monkeypatch.setattr(docket_dataset_module, "_extract_text_from_pdf", lambda path: pdf_text)
+
+    dataset = DocketDatasetBuilder().build_from_directory(directory, case_name="PDF Docket")
+
+    assert dataset.docket_id == "3:24-cv-00999"
+    assert dataset.metadata["case_number"] == "3:24-cv-00999"
+    assert dataset.metadata["document_count"] == 1
+    assert dataset.documents[0].metadata["detected_case_number"] == "3:24-cv-00999"
+    assert dataset.documents[0].metadata["text_extraction"]["source"] == "directory_pdf"
+
+
+def test_ingest_docket_dataset_dispatches_directory_import(tmp_path, monkeypatch):
+    directory = tmp_path / "ingest_dir"
+    directory.mkdir()
+    (directory / "complaint.txt").write_text("Case No. 2:24-cv-4444\nComplaint text.", encoding="utf-8")
+
+    captured: dict[str, object] = {}
+
+    def _fake_build_from_directory(self, path, **kwargs):
+        captured["path"] = Path(path)
+        captured.update(kwargs)
+        return DocketDatasetObject(
+            dataset_id="docket_dataset_2_24_cv_4444",
+            docket_id="2:24-cv-4444",
+            case_name=str(kwargs.get("case_name") or "Imported Docket"),
+            court=str(kwargs.get("court") or ""),
+            metadata={"source_type": "directory", "document_count": 1},
+        )
+
+    monkeypatch.setattr(DocketDatasetBuilder, "build_from_directory", _fake_build_from_directory)
+
+    dataset = ingest_docket_dataset(
+        str(directory),
+        docket_id="2:24-cv-4444",
+        case_name="Imported Docket",
+        court="D. Example",
+    )
+
+    assert dataset.docket_id == "2:24-cv-4444"
+    assert captured["path"] == directory
+    assert captured["docket_id"] == "2:24-cv-4444"
+    assert captured["case_name"] == "Imported Docket"
+    assert captured["court"] == "D. Example"
 
 
 def test_docket_dataset_can_be_packaged_as_linked_parquet_and_car_bundle(tmp_path, monkeypatch):

@@ -38,6 +38,30 @@ def test_parse_bluebook_fuzz_candidates_accepts_fenced_json_payload() -> None:
     assert candidates[0].expected_valid is True
 
 
+def test_parse_bluebook_fuzz_candidates_accepts_prior_run_candidates_payload() -> None:
+    raw = json.dumps(
+        {
+            "summary": {"sample_count_executed": 1},
+            "candidates": [
+                {
+                    "citation_text": "Minn. Stat. § 518.17",
+                    "context_text": "The motion relies on Minn. Stat. § 518.17.",
+                    "state_code": "MN",
+                    "corpus_key_hint": "state_laws",
+                    "citation_type_hint": "state_statute",
+                    "expected_valid": True,
+                }
+            ],
+        }
+    )
+
+    candidates = parse_bluebook_fuzz_candidates(raw)
+
+    assert len(candidates) == 1
+    assert candidates[0].citation_text == "Minn. Stat. § 518.17"
+    assert candidates[0].state_code == "MN"
+
+
 def test_collect_seeded_bluebook_fuzz_candidates_uses_grounded_rows() -> None:
     class _FakeResolver:
         def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):

@@ -225,10 +225,17 @@ async def test_legal_source_recovery_discovers_candidate_files_and_writes_patch(
     assert Path(result.candidate_files[0].artifact_path).exists()
     assert result.scraper_patch is not None
     assert result.scraper_patch.host == "www.revisor.mn.gov"
+    assert result.scraper_patch.extraction_recipe_path is not None
+    assert Path(result.scraper_patch.extraction_recipe_path).exists()
     assert patch_manager.saved
     patch_text = Path(result.scraper_patch.patch_path).read_text(encoding="utf-8")
     assert "UnifiedWebArchivingAPI.fetch" in patch_text
+    assert "CommonCrawlSearchEngine.search_domain" in patch_text
+    assert "_extract_recovered_www_revisor_mn_gov_text" in patch_text
     assert "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf" in patch_text
+    artifact_metadata = json.loads(Path(result.candidate_files[0].metadata_path).read_text(encoding="utf-8"))
+    assert artifact_metadata["extraction_recipe"]["parser_kind"] == "pdf"
+    assert "CommonCrawlSearchEngine.search_domain(host, query=citation_query)" in artifact_metadata["extraction_recipe"]["fallback_fetch_paths"]
 
 
 @pytest.mark.anyio
@@ -272,6 +279,7 @@ async def test_public_recover_missing_legal_citation_source_emits_candidate_file
         state_code="MN",
         metadata={"candidate_corpora": ["state_laws"]},
         archive_top_k=1,
+        enable_candidate_file_fetch=True,
     )
 
     assert result["status"] == "tracked"
@@ -336,6 +344,16 @@ async def test_legal_source_recovery_times_out_multi_engine_search_and_still_wri
     assert result.search_backend_status["multi_engine_error"] == "multi_engine_timeout"
     assert result.manifest_path is not None
     assert Path(result.manifest_path).exists()
+
+
+def test_legal_source_recovery_official_hint_domains_cover_bluebook_fuzz_states():
+    assert LegalSourceRecoveryWorkflow._official_hint_domains(corpus_key="state_laws", state_code="MN")[:1] == [
+        "revisor.mn.gov"
+    ]
+    assert "oregonlegislature.gov" in LegalSourceRecoveryWorkflow._official_hint_domains(
+        corpus_key="state_laws",
+        state_code="OR",
+    )
 
 
 def test_build_missing_citation_recovery_query_prefers_official_domains():
@@ -514,3 +532,69 @@ async def test_legal_source_recovery_uses_multi_engine_fallback_and_reports_back
     assert result.candidates[0].url == "https://www.akleg.gov/basis/statutes.asp"
     assert result.search_backend_status["multi_engine_used"] is True
     assert "duckduckgo" in result.search_backend_status["engines_attempted"]
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_miss(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
+
+    from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
+
+    class _FakeCommonCrawlSearchEngine:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        def is_available(self):
+            return True
+
+        def search_domain(self, domain, max_matches=100, collection=None, **kwargs):
+            return [
+                {
+                    "url": f"https://{domain}/download/title42-section1983.pdf",
+                    "title": "Recovered official PDF",
+                    "mime": "application/pdf",
+                    "timestamp": "20240101000000",
+                    "collection": "CC-MAIN-2024-10",
+                }
+            ]
+
+    monkeypatch.setattr(common_crawl_integration, "CommonCrawlSearchEngine", _FakeCommonCrawlSearchEngine)
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_search_backend_status",
+        lambda self: {
+            "brave_configured": False,
+            "duckduckgo_configured": False,
+            "archive_search_available": False,
+            "live_search_available": False,
+            "brave_api_key_env": "",
+            "datasets_available": False,
+        },
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="42 U.S.C. § 1983",
+        normalized_citation="42 U.S.C. § 1983",
+        corpus_key="us_code",
+        state_code=None,
+        archive_top_k=0,
+    )
+
+    assert result.candidate_count == 3
+    assert result.candidates[0].source == "common_crawl_indexes"
+    assert result.candidates[0].url == "https://uscode.house.gov/download/title42-section1983.pdf"
+    assert result.search_backend_status["common_crawl_used"] is True
+    assert result.search_backend_status["common_crawl_available"] is True
+    assert result.search_backend_status["common_crawl_domains"][0] == "uscode.house.gov"
+    assert result.scraper_patch is not None
+    assert result.scraper_patch.host == "uscode.house.gov"
