@@ -267,6 +267,7 @@ def test_ipfs_datasets_cli_docket_help_mentions_search_options(monkeypatch) -> N
     assert "--search-backend {bm25,vector}" in rendered
     assert "--packaged-action {summary,inspect,dashboard,report,dashboard-report,recap-fetch,recap-preflight}" in rendered
     assert "--input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
+    assert "--source-type-hint {json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
     assert "Import, search, inspect, and package docket datasets" in rendered
 
 
@@ -283,6 +284,7 @@ def test_docket_cli_help_mentions_search_options() -> None:
     assert "Import, inspect, search, and package dockets" in rendered
     assert "--search-backend {bm25,vector}" in rendered
     assert "--input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
+    assert "--source-type-hint {json,directory,courtlistener,pacer,tyler_host,packaged}" in rendered
     assert "--top-k TOP_K" in rendered
 
 
@@ -359,6 +361,122 @@ def test_docket_cli_auto_input_type_detects_courtlistener_numeric_id(tmp_path: P
     payload = json.loads(output.getvalue())
     assert payload["status"] == "success"
     assert Path(payload["output_path"]).exists()
+
+
+def test_detect_auto_input_type_returns_json_without_hint_for_normalized_fixture() -> None:
+    module = _load_docket_cli_module()
+    pacer_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+
+    assert module._detect_auto_input_type(str(pacer_fixture)) == "json"
+
+
+def test_detect_auto_input_type_uses_pacer_hint_for_normalized_fixture() -> None:
+    module = _load_docket_cli_module()
+    pacer_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+
+    assert module._detect_auto_input_type(str(pacer_fixture), "pacer") == "pacer"
+
+
+def test_detect_auto_input_type_uses_tyler_hint_for_normalized_fixture() -> None:
+    module = _load_docket_cli_module()
+    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_tyler_host_export.json"
+
+    assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
+
+
+def test_detect_auto_input_type_detects_packaged_directory(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    package_dir = tmp_path / "bundle_dir"
+    package_dir.mkdir()
+    (package_dir / "bundle_manifest.json").write_text("{}", encoding="utf-8")
+
+    assert module._detect_auto_input_type(str(package_dir)) == "packaged"
+
+
+def test_docket_cli_auto_input_type_uses_source_type_hint_for_pacer_fixture(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+    output_path = tmp_path / "auto_pacer_dataset.json"
+
+    captured: dict[str, object] = {}
+
+    def _fake_ingest(source, **kwargs):
+        captured["source"] = source
+        captured.update(kwargs)
+        return DocketDatasetObject(
+            dataset_id="docket_dataset_auto_pacer_1",
+            docket_id="1:24-cv-1001",
+            case_name="Doe v. Example",
+            court="D. Example",
+            metadata={"source_type": "pacer", "document_count": 1},
+        )
+
+    monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
+    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "eu_citation_count": 0})
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--source-type-hint",
+                "pacer",
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert captured["source"] == str(fixture_path)
+
+
+def test_docket_cli_auto_input_type_uses_source_type_hint_for_tyler_fixture(tmp_path: Path, monkeypatch) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "normalized_tyler_host_export.json"
+    output_path = tmp_path / "auto_tyler_dataset.json"
+
+    captured: dict[str, object] = {}
+
+    def _fake_ingest(source, **kwargs):
+        captured["source"] = source
+        captured.update(kwargs)
+        return DocketDatasetObject(
+            dataset_id="docket_dataset_auto_tyler_1",
+            docket_id="TYLER-2024-001",
+            case_name="Doe v. Example",
+            court="State Court",
+            metadata={"source_type": "tyler_host", "document_count": 1},
+        )
+
+    monkeypatch.setattr(module, "ingest_docket_dataset", _fake_ingest)
+    monkeypatch.setattr(module, "summarize_docket_dataset", lambda dataset: {"document_count": 1, "eu_citation_count": 0})
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--source-type-hint",
+                "tyler_host",
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert captured["source"] == str(fixture_path)
 
 
 def test_docket_cli_main_json_output_from_courtlistener(tmp_path: Path, monkeypatch) -> None:

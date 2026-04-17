@@ -67,10 +67,17 @@ from ipfs_datasets_py.processors.legal_scrapers import recover_citation_audit_fe
 __all__ = ["create_parser", "main"]
 
 
-def _detect_auto_input_type(input_path: str) -> str:
+def _detect_auto_input_type(input_path: str, source_type_hint: str | None = None) -> str:
     raw = str(input_path or "").strip()
     if not raw:
         raise ValueError("--input-path is required for --input-type auto.")
+
+    normalized_hint = str(source_type_hint or "").strip().lower()
+    if normalized_hint:
+        if normalized_hint not in {"json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"}:
+            raise ValueError("--source-type-hint must be one of: json, directory, courtlistener, pacer, tyler_host, packaged")
+        if normalized_hint in {"pacer", "tyler_host", "courtlistener"}:
+            return normalized_hint
 
     lowered = raw.lower()
     if "courtlistener.com" in lowered:
@@ -79,19 +86,19 @@ def _detect_auto_input_type(input_path: str) -> str:
     path = Path(raw)
     if path.exists():
         if path.is_dir():
-            if (path / "bundle_manifest.json").exists():
+            if normalized_hint == "packaged" or (path / "bundle_manifest.json").exists():
                 return "packaged"
-            return "directory"
+            return normalized_hint if normalized_hint in {"directory", "pacer", "tyler_host"} else "directory"
 
         suffix = path.suffix.lower()
-        if path.name == "bundle_manifest.json" or suffix in {".zip", ".car"}:
+        if normalized_hint == "packaged" or path.name == "bundle_manifest.json" or suffix in {".zip", ".car"}:
             return "packaged"
 
         if suffix == ".json":
             try:
                 payload = json.loads(path.read_text(encoding="utf-8"))
             except Exception:
-                return "json"
+                return normalized_hint or "json"
 
             if isinstance(payload, dict):
                 metadata = dict(payload.get("metadata") or {})
@@ -104,12 +111,14 @@ def _detect_auto_input_type(input_path: str) -> str:
                 ).strip().lower()
                 if source_hint in {"pacer", "tyler_host", "courtlistener"}:
                     return source_hint
-            return "json"
+            return normalized_hint or "json"
 
-        return "json"
+        return normalized_hint or "json"
 
     if raw.isdigit():
         return "courtlistener"
+    if normalized_hint:
+        return normalized_hint
     if "pacer" in lowered:
         return "pacer"
     if "tyler" in lowered:
@@ -927,6 +936,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--input-path", required=True, help="Path to the docket JSON file, docket document directory, CourtListener docket id/URL, PACER export path, Tyler Host export path, packaged manifest/archive, or an auto-detected source path.")
     parser.add_argument("--output", required=False, help="Path to write the docket dataset artifact JSON.")
+    parser.add_argument("--source-type-hint", choices=["json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"], default=None, help="Optional hint for --input-type auto when the path alone is ambiguous. Useful for normalized PACER or Tyler Host JSON exports.")
     parser.add_argument("--docket-id", default=None, help="Optional docket id override for directory imports.")
     parser.add_argument("--case-name", default=None, help="Optional case name override for directory imports.")
     parser.add_argument("--court", default="", help="Optional court name to attach to the dataset.")
@@ -998,7 +1008,7 @@ def main(args: list[str] | None = None) -> int:
 
     if parsed.input_type == "auto":
         try:
-            parsed.input_type = _detect_auto_input_type(parsed.input_path)
+            parsed.input_type = _detect_auto_input_type(parsed.input_path, parsed.source_type_hint)
         except ValueError as exc:
             parser.error(str(exc))
 

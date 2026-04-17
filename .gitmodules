@@ -30,3 +30,7 @@
 	path = ipfs_datasets_py/multimedia/omni_converter_mk2
 	url = https://github.com/endomorphosis/omni_converter_mk2.git
 	branch = main
+[submodule "ipfs_datasets_py/processors/web_archiving/common_crawl_search_engine"]
+	path = ipfs_datasets_py/processors/web_archiving/common_crawl_search_engine
+	url = https://github.com/endomorphosis/common_crawl_search_engine.git
+	branch = main

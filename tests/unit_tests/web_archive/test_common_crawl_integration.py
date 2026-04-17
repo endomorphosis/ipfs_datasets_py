@@ -79,6 +79,40 @@ def test_search_domain_local_uses_hf_remote_meta_when_local_assets_missing(monke
     assert observed["hf_pointer_dataset"] == "Publicus/common_crawl_pointers_by_collection"
 
 
+def test_search_domain_local_caches_hf_remote_meta_results(monkeypatch, tmp_path) -> None:
+    engine = CommonCrawlSearchEngine.__new__(CommonCrawlSearchEngine)
+    calls = {"count": 0}
+
+    class _Result:
+        records = [
+            {
+                "url": "https://www.revisor.mn.gov/statutes/cite/518.17",
+                "timestamp": "20260417000000",
+            }
+        ]
+
+    class _FakeApi:
+        @staticmethod
+        def search_domain_via_meta_indexes(domain, **kwargs):
+            calls["count"] += 1
+            return _Result()
+
+    engine.api = _FakeApi()
+    engine.master_db_path = tmp_path / "missing-master.duckdb"
+    engine._normalize_records = CommonCrawlSearchEngine._normalize_records
+
+    kwargs = {
+        "parquet_root": tmp_path / "missing-parquet",
+        "hf_remote_meta_cache_dir": tmp_path / "cc-cache",
+    }
+    first = engine._search_domain_local("www.revisor.mn.gov", 3, None, **kwargs)
+    second = engine._search_domain_local("www.revisor.mn.gov", 3, None, **kwargs)
+
+    assert first == second
+    assert calls["count"] == 1
+    assert list((tmp_path / "cc-cache").glob("*.json"))
+
+
 def test_common_crawl_source_checkout_auto_clone(monkeypatch, tmp_path) -> None:
     import ipfs_datasets_py.processors.web_archiving.common_crawl_integration as module
 

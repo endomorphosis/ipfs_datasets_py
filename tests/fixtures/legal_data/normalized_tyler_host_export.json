@@ -1,0 +1,25 @@
+{
+  "docket_id": "TYLER-2024-001",
+  "case_name": "Doe v. Example",
+  "court": "State Court",
+  "case_number": "TYLER-2024-001",
+  "documents": [
+    {
+      "id": "doc_1",
+      "title": "Notice of Hearing",
+      "text": "Notice text from a normalized Tyler Host export.",
+      "date_filed": "2024-02-05",
+      "document_number": "12",
+      "source_url": "file:///exports/tyler/notice.pdf",
+      "metadata": {
+        "source_path": "/exports/tyler/notice.pdf",
+        "text_extraction": {
+          "source": "directory_pdf"
+        }
+      }
+    }
+  ],
+  "plaintiff_docket": [],
+  "defendant_docket": [],
+  "authorities": []
+}

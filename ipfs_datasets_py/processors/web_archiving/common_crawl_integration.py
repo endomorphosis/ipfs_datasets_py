@@ -17,6 +17,8 @@ import subprocess
 import json
 import base64
 import re
+import hashlib
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Literal
 from urllib.parse import urlparse
@@ -109,6 +111,55 @@ def _default_hf_pointer_dataset() -> str:
         or os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_HF_POINTER_DATASET")
         or "Publicus/common_crawl_pointers_by_collection"
     )
+
+
+def _default_hf_remote_meta_cache_dir() -> Path:
+    return (
+        _env_path("COMMON_CRAWL_HF_REMOTE_META_CACHE_DIR")
+        or _env_path("IPFS_DATASETS_PY_COMMON_CRAWL_HF_REMOTE_META_CACHE_DIR")
+        or Path.home() / ".cache" / "ipfs_datasets_py" / "common_crawl_hf_remote_meta"
+    )
+
+
+def _hf_remote_meta_cache_ttl_seconds() -> float:
+    try:
+        return float(
+            os.getenv("COMMON_CRAWL_HF_REMOTE_META_CACHE_TTL_SECONDS")
+            or os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_HF_REMOTE_META_CACHE_TTL_SECONDS")
+            or "86400"
+        )
+    except ValueError:
+        return 86400.0
+
+
+def _json_cache_key(payload: Dict[str, Any]) -> str:
+    raw = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _read_json_cache(path: Path, *, ttl_seconds: float) -> Optional[List[Dict[str, Any]]]:
+    if ttl_seconds <= 0 or not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        created_at = float(payload.get("created_at") or 0)
+        if created_at <= 0 or time.time() - created_at > ttl_seconds:
+            return None
+        records = payload.get("records")
+        return records if isinstance(records, list) else None
+    except Exception:
+        return None
+
+
+def _write_json_cache(path: Path, records: List[Dict[str, Any]]) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"created_at": time.time(), "records": records}, sort_keys=True, default=str),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.debug("Failed to write Common Crawl HF remote-meta cache %s: %s", path, exc)
 
 
 def _ensure_common_crawl_source_checkout() -> Optional[Path]:
@@ -533,8 +584,24 @@ class CommonCrawlSearchEngine:
         else:
             options["hf_remote_meta"] = bool(kwargs.get("hf_remote_meta", False))
 
+        cache_path: Optional[Path] = None
+        use_cache = (
+            bool(options.get("hf_remote_meta"))
+            and _env_flag("COMMON_CRAWL_HF_REMOTE_META_CACHE", default=True)
+        )
+        if use_cache:
+            cache_dir = Path(kwargs.get("hf_remote_meta_cache_dir") or _default_hf_remote_meta_cache_dir())
+            cache_key = _json_cache_key({"domain": domain, "collection": collection, "options": options})
+            cache_path = cache_dir / f"{cache_key}.json"
+            cached = _read_json_cache(cache_path, ttl_seconds=_hf_remote_meta_cache_ttl_seconds())
+            if cached is not None:
+                return self._normalize_records(cached)[: int(max_matches)]
+
         result = self.api.search_domain_via_meta_indexes(domain, **options)
-        return self._normalize_records(result.records)
+        records = self._normalize_records(result.records)
+        if cache_path is not None:
+            _write_json_cache(cache_path, records)
+        return records
     
     def _search_domain_remote(
         self,

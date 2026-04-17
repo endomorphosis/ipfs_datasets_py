@@ -3162,6 +3162,7 @@ Options:
     --input-type {auto,json,directory,courtlistener,pacer,tyler_host,packaged}
     --input-path PATH
     --output PATH
+    --source-type-hint {json,directory,courtlistener,pacer,tyler_host,packaged}
     --search-backend {bm25,vector}
     --query TEXT
     --top-k N
@@ -3179,6 +3180,7 @@ Options:
 
 Examples:
     ipfs-datasets docket --input-type auto --input-path ./docket_dir --output ./docket_dataset.json
+    ipfs-datasets docket --input-type auto --input-path ./normalized_export.json --source-type-hint pacer --json
     ipfs-datasets docket --input-type json --input-path ./docket.json --output ./docket_dataset.json
     ipfs-datasets docket --input-type pacer --input-path ./pacer_export_dir --case-name "Doe v. Example" --json
     ipfs-datasets docket --input-type tyler_host --input-path ./tyler_export.json --court "State Court" --json

@@ -131,6 +131,9 @@ ipfs-datasets tools execute dataset_tools load_dataset --source squad --split tr
 # Auto-detect a local docket directory, JSON file, packaged bundle, or CourtListener URL/id
 ipfs-datasets docket --input-type auto --input-path /path/to/docket_dir --output /tmp/docket_dataset.json
 
+# Hint auto-detection when a normalized export JSON should be labeled as PACER or Tyler Host
+ipfs-datasets docket --input-type auto --input-path /path/to/normalized_export.json --source-type-hint pacer --json
+
 # Import a docket JSON and emit citation audit (including EU/member-state citations)
 ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citation-source-audit --json
 
@@ -175,6 +178,7 @@ Normalized PACER/Tyler Host input shape:
 ```
 
 For local export folders, the docket CLI can ingest `.txt`, `.md`, `.json`, and `.pdf` documents. PDF folders are post-processed to extract text and detect case numbers from caption text when available.
+Use `--source-type-hint pacer` or `--source-type-hint tyler_host` with `--input-type auto` when a normalized JSON export does not already carry a `source_type` field.
 
 See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
 
