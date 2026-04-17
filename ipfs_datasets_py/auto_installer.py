@@ -205,6 +205,7 @@ class DependencyInstaller:
             # LLM APIs
             'openai': ['openai>=1.0.0,<2.0.0'],
             'anthropic': ['anthropic>=0.50.0,<1.0.0'],
+            'tiktoken': ['tiktoken>=0.6.0'],
             
             # Web and API
             'fastapi': ['fastapi>=0.100.0,<1.0.0'],

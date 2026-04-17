@@ -230,6 +230,7 @@ async def test_legal_source_recovery_discovers_candidate_files_and_writes_patch(
     assert patch_manager.saved
     patch_text = Path(result.scraper_patch.patch_path).read_text(encoding="utf-8")
     assert "UnifiedWebArchivingAPI.fetch" in patch_text
+    assert "++# preferred_fetch_path" not in patch_text
     assert "CommonCrawlSearchEngine.search_domain" in patch_text
     assert "_extract_recovered_www_revisor_mn_gov_text" in patch_text
     assert "https://www.revisor.mn.gov/statutes/2024/cite/518.17.pdf" in patch_text
@@ -340,7 +341,9 @@ async def test_legal_source_recovery_times_out_multi_engine_search_and_still_wri
     )
 
     assert result.status == "tracked"
-    assert result.candidate_count == 0
+    assert result.candidate_count == 1
+    assert result.candidates[0].source == "citation_url_hint"
+    assert result.candidates[0].url == "https://www.revisor.mn.gov/statutes/cite/518.17"
     assert result.search_backend_status["multi_engine_error"] == "multi_engine_timeout"
     assert result.manifest_path is not None
     assert Path(result.manifest_path).exists()

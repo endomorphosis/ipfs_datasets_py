@@ -251,6 +251,8 @@ def _score_candidate(result: Dict[str, Any], *, corpus_key: Optional[str], state
             score -= 5
     if result.get("source_type") == "current":
         score += 1
+    if result.get("source") == "citation_url_hint":
+        score += 10
     if result.get("source") == "common_crawl_indexes":
         score += 1
     return score
@@ -542,6 +544,58 @@ class LegalSourceRecoveryWorkflow:
         return []
 
     @staticmethod
+    def _citation_url_hint_results(
+        *,
+        citation_text: str,
+        normalized_citation: Optional[str],
+        corpus_key: Optional[str],
+        state_code: Optional[str],
+    ) -> List[Dict[str, Any]]:
+        corpus = str(corpus_key or "").strip().lower()
+        state = str(state_code or "").strip().upper()
+        text = f"{citation_text or ''} {normalized_citation or ''}"
+        if corpus != "state_laws":
+            return []
+
+        section_match = re.search(r"\b(?:Minn\.\s+Stat\.|ORS)\s*(?:§|sec\.?|section)?\s*([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)", text, re.IGNORECASE)
+        if not section_match:
+            return []
+
+        section = section_match.group(1).strip(".")
+        rows: List[Dict[str, Any]] = []
+        if state == "MN" or re.search(r"\bMinn\.\s+Stat\.", text, re.IGNORECASE):
+            rows.append(
+                {
+                    "url": f"https://www.revisor.mn.gov/statutes/cite/{section}",
+                    "title": f"Minnesota Statutes section {section}",
+                    "source": "citation_url_hint",
+                    "source_type": "current",
+                    "snippet": "Citation-derived official Minnesota Revisor statute URL.",
+                }
+            )
+        if state == "OR" or re.search(r"\bORS\b", text, re.IGNORECASE):
+            chapter = section.split(".", 1)[0]
+            rows.extend(
+                [
+                    {
+                        "url": f"https://oregon.public.law/statutes/ors_{section}",
+                        "title": f"Oregon Revised Statutes {section}",
+                        "source": "citation_url_hint",
+                        "source_type": "current",
+                        "snippet": "Citation-derived Oregon statute URL.",
+                    },
+                    {
+                        "url": f"https://www.oregonlegislature.gov/bills_laws/ors/ors{chapter}.html",
+                        "title": f"Oregon Revised Statutes chapter {chapter}",
+                        "source": "citation_url_hint",
+                        "source_type": "current",
+                        "snippet": "Citation-derived official Oregon Legislature chapter URL.",
+                    },
+                ]
+            )
+        return rows
+
+    @staticmethod
     def _candidate_domains(*rows: Iterable[Dict[str, Any]]) -> List[str]:
         domains: List[str] = []
         seen: set[str] = set()
@@ -707,6 +761,12 @@ class LegalSourceRecoveryWorkflow:
         jurisdiction_type = _jurisdiction_type_for_corpus(recovery_corpus_key)
 
         searcher = self._searcher()
+        citation_hint_results = self._citation_url_hint_results(
+            citation_text=citation_text,
+            normalized_citation=normalized_citation,
+            corpus_key=recovery_corpus_key,
+            state_code=state_code,
+        )
         live_results: List[Dict[str, Any]] = []
         archived_results: List[Dict[str, Any]] = []
         backend_status = self._search_backend_status()
@@ -808,7 +868,7 @@ class LegalSourceRecoveryWorkflow:
 
         merged_results: List[Dict[str, Any]] = []
         seen_urls: set[str] = set()
-        for source_type, rows in (("current", live_results), ("archived", archived_results), ("common_crawl", common_crawl_results)):
+        for source_type, rows in (("current", citation_hint_results), ("current", live_results), ("archived", archived_results), ("common_crawl", common_crawl_results)):
             for row in rows:
                 url = str(row.get("url") or "").strip()
                 if not url or url in seen_urls:
@@ -1458,7 +1518,7 @@ class LegalSourceRecoveryWorkflow:
             f"+# citation: {citation_text}\n"
             f"+# host: {host or ''}\n"
             f"+# candidate_url: {source_url}\n"
-            f"+{discovered_line}"
+            f"{discovered_line}"
             "+# preferred_fetch_path: UnifiedWebArchivingAPI.fetch(url, domain=\"legal\")\n"
             "+# fallback_fetch_path: UnifiedWebScraper.scrape_sync(url)\n"
             "+# blocked_fetch_fallback: CommonCrawlSearchEngine.search_domain(host, query=search_query)\n"
@@ -1531,7 +1591,7 @@ async def recover_missing_legal_citation_source(
     enable_candidate_file_fetch: Optional[bool] = None,
 ) -> Dict[str, Any]:
     if enable_candidate_file_fetch is None:
-        enable_candidate_file_fetch = _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_CANDIDATE_FILE_FETCH", default=True)
+        enable_candidate_file_fetch = _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_CANDIDATE_FILE_FETCH", default=False)
     workflow = LegalSourceRecoveryWorkflow(enable_candidate_file_fetch=bool(enable_candidate_file_fetch))
     result = await workflow.recover_unresolved_citation(
         citation_text=citation_text,

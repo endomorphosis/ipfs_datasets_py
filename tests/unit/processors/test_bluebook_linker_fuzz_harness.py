@@ -333,6 +333,9 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
     assert run.attempts[0].merge_reports[0]["status"] == "success"
     assert run.output_path is not None
     assert Path(run.output_path).exists()
+    persisted = json.loads(Path(run.output_path).read_text(encoding="utf-8"))
+    assert persisted["summary"]["failure_patch_backlog_path"]
+    assert persisted["summary"]["malformed_repairs_path"]
 
 
 @pytest.mark.anyio

@@ -920,15 +920,15 @@ async def run_bluebook_linker_fuzz_harness(
         output_root = Path(output_dir).expanduser().resolve()
         output_root.mkdir(parents=True, exist_ok=True)
         output_file = output_root / "bluebook_linker_fuzz_run.json"
-        output_file.write_text(json.dumps(run.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
         backlog_file = output_root / "bluebook_linker_fuzz_patch_backlog.json"
-        backlog_file.write_text(json.dumps(failure_backlog, indent=2, sort_keys=True), encoding="utf-8")
         repairs_file = output_root / "bluebook_linker_fuzz_malformed_repairs.json"
-        repairs_file.write_text(json.dumps(summary["malformed_repairs"], indent=2, sort_keys=True), encoding="utf-8")
         run.summary["failure_patch_backlog_path"] = str(backlog_file)
         run.summary["malformed_repairs_path"] = str(repairs_file)
         output_path = str(output_file)
         run.output_path = output_path
+        output_file.write_text(json.dumps(run.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+        backlog_file.write_text(json.dumps(failure_backlog, indent=2, sort_keys=True), encoding="utf-8")
+        repairs_file.write_text(json.dumps(summary["malformed_repairs"], indent=2, sort_keys=True), encoding="utf-8")
 
     return run
 
