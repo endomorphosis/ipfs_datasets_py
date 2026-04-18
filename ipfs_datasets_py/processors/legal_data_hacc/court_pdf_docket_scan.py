@@ -127,6 +127,31 @@ def _extract_pdf_ocr_text(path: Path, *, max_pages: int = 5) -> str:
     return "\n\n".join(text_parts).strip()
 
 
+def _pdf_page_count(path: Path) -> int:
+    for module_name in ("pypdf", "PyPDF2"):
+        try:
+            module = __import__(module_name, fromlist=["PdfReader"])
+            reader_cls = getattr(module, "PdfReader", None)
+            if reader_cls is None:
+                continue
+            reader = reader_cls(str(path))
+            return len(list(getattr(reader, "pages", []) or []))
+        except Exception:
+            continue
+    return 0
+
+
+def _file_metadata(path: Path) -> Dict[str, Any]:
+    stats = path.stat()
+    return {
+        "file_name": path.name,
+        "file_size_bytes": int(stats.st_size),
+        "modified_at": datetime.fromtimestamp(stats.st_mtime, tz=UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "suffix": path.suffix.lower(),
+        "page_count": _pdf_page_count(path),
+    }
+
+
 def _extract_text_from_pdf_with_ocr(path: Path, *, max_ocr_pages: int = 5) -> tuple[str, str]:
     extracted = _extract_text_from_pdf(path)
     if extracted and not _is_likely_scanned_pdf_text(extracted):
@@ -328,11 +353,45 @@ def scan_hacc_pdfs_for_dockets(
     datasets_root = destination_root / "docket_datasets"
     collected_root.mkdir(parents=True, exist_ok=True)
     datasets_root.mkdir(parents=True, exist_ok=True)
+    manifest_path = destination_root / "scan_manifest.json"
     scan_started_at = _utc_now_isoformat()
     skipped_pdf_count = 0
 
     all_results: List[HACCCourtPDFScanResult] = []
     grouped: Dict[str, List[HACCCourtPDFScanResult]] = defaultdict(list)
+
+    def _build_manifest(*, status: str) -> Dict[str, Any]:
+        return {
+            "scan_status": status,
+            "scan_started_at": scan_started_at,
+            "scan_completed_at": _utc_now_isoformat() if status == "completed" else "",
+            "scan_root": str(root),
+            "output_dir": str(destination_root),
+            "manifest_path": str(manifest_path),
+            "scan_parameters": {
+                "glob_pattern": glob_pattern,
+                "max_ocr_pages": int(max_ocr_pages),
+                "include_knowledge_graph": bool(include_knowledge_graph),
+                "include_bm25": bool(include_bm25),
+                "include_vector_index": bool(include_vector_index),
+                "include_formal_logic": bool(include_formal_logic),
+                "include_router_enrichment": bool(include_router_enrichment),
+            },
+            "pdf_count": len(all_results),
+            "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
+            "skipped_pdf_count": skipped_pdf_count,
+            "candidate_case_count": len(case_outputs),
+            "ocr_available": _has_ocr_support(),
+            "cases": case_outputs,
+            "pdf_results": [item.to_dict() for item in all_results],
+        }
+
+    def _write_manifest(*, status: str) -> None:
+        manifest_path.write_text(json.dumps(_build_manifest(status=status), indent=2, sort_keys=True), encoding="utf-8")
+
+    case_outputs: List[Dict[str, Any]] = []
+    _write_manifest(status="running")
+
     for pdf_path in sorted(root.rglob(glob_pattern)):
         if not pdf_path.is_file() or pdf_path.suffix.lower() != ".pdf":
             continue
@@ -348,7 +407,9 @@ def scan_hacc_pdfs_for_dockets(
         if result.is_likely_court_case and result.case_number:
             grouped[result.case_number].append(result)
 
-    case_outputs: List[Dict[str, Any]] = []
+        if len(all_results) % 100 == 0:
+            _write_manifest(status="running")
+
     for case_number, results in sorted(grouped.items()):
         case_slug = _safe_identifier(case_number)
         case_collect_root = collected_root / case_slug
@@ -360,6 +421,7 @@ def scan_hacc_pdfs_for_dockets(
         documents: List[Dict[str, Any]] = []
         for index, result in enumerate(results, start=1):
             source_path = Path(result.path)
+            source_file_metadata = _file_metadata(source_path)
             copied_path = _relative_copy_path(root, source_path, case_collect_root)
             copied_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_path, copied_path)
@@ -376,6 +438,7 @@ def scan_hacc_pdfs_for_dockets(
                     "metadata": {
                         "source_path": str(source_path),
                         "relative_path": result.relative_path,
+                        "source_file": source_file_metadata,
                         "collected_path": str(copied_path),
                         "collected_relative_path": copied_relative_paths[-1],
                         "scan_detection": {
@@ -385,11 +448,14 @@ def scan_hacc_pdfs_for_dockets(
                             "matched_court_headers": list(result.matched_court_headers),
                             "style_lines": list(result.style_lines),
                             "text_length": result.text_length,
+                            "header_match_count": len(result.matched_court_headers),
+                            "style_line_count": len(result.style_lines),
                         },
                         "text_extraction": {
                             "source": "hacc_pdf_scan",
                             "backend": result.extraction_method,
                             "ocr_attempted": result.extraction_method == "ocr",
+                            "max_ocr_pages": int(max_ocr_pages),
                         },
                         "case_detection": {
                             "case_number": result.case_number,
@@ -419,6 +485,7 @@ def scan_hacc_pdfs_for_dockets(
                     "case_slug": case_slug,
                     "scan_glob_pattern": glob_pattern,
                     "max_ocr_pages": int(max_ocr_pages),
+                    "scan_status": "completed",
                     "collected_pdf_count": len(copied_paths),
                     "collected_pdf_paths": copied_paths,
                     "collected_pdf_relative_paths": copied_relative_paths,
@@ -456,32 +523,10 @@ def scan_hacc_pdfs_for_dockets(
                 "scan_case_graph_summary": case_graph_summary.get("summary") or {},
             }
         )
+        _write_manifest(status="running")
 
-    manifest = {
-        "scan_started_at": scan_started_at,
-        "scan_completed_at": _utc_now_isoformat(),
-        "scan_root": str(root),
-        "output_dir": str(destination_root),
-        "scan_parameters": {
-            "glob_pattern": glob_pattern,
-            "max_ocr_pages": int(max_ocr_pages),
-            "include_knowledge_graph": bool(include_knowledge_graph),
-            "include_bm25": bool(include_bm25),
-            "include_vector_index": bool(include_vector_index),
-            "include_formal_logic": bool(include_formal_logic),
-            "include_router_enrichment": bool(include_router_enrichment),
-        },
-        "pdf_count": len(all_results),
-        "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
-        "skipped_pdf_count": skipped_pdf_count,
-        "candidate_case_count": len(case_outputs),
-        "ocr_available": _has_ocr_support(),
-        "cases": case_outputs,
-        "pdf_results": [item.to_dict() for item in all_results],
-    }
-    manifest_path = destination_root / "scan_manifest.json"
+    manifest = _build_manifest(status="completed")
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
-    manifest["manifest_path"] = str(manifest_path)
     return manifest
 
 
