@@ -147,6 +147,7 @@ _LAZY_EXPORTS = {'BinderCourtConfig': ('.exhibit_binder_templates', 'BinderCourt
                                                         'execute_docket_dataset_missing_authority_follow_up'),
  'execute_packaged_docket_acquisition_plan': ('.courtlistener_ingestion', 'execute_packaged_docket_acquisition_plan'),
  'execute_packaged_docket_action_candidate': ('.docket_packaging', 'execute_packaged_docket_action_candidate'),
+ 'execute_packaged_docket_action_candidates': ('.docket_packaging', 'execute_packaged_docket_action_candidates'),
  'execute_packaged_docket_follow_up_job': ('.docket_packaging', 'execute_packaged_docket_follow_up_job'),
  'execute_packaged_docket_follow_up_plan': ('.docket_packaging', 'execute_packaged_docket_follow_up_plan'),
  'execute_packaged_docket_missing_authority_follow_up': ('.docket_dataset',

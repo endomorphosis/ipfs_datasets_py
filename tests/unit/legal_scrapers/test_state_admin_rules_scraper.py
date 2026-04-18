@@ -474,6 +474,20 @@ def test_candidate_links_from_html_keeps_california_westlaw_document_link() -> N
         ]
 
 
+def test_new_york_admin_seed_urls_include_open_westlaw_nycrr() -> None:
+    ny_urls = scraper_module._extract_seed_urls_for_state("NY", "New York")
+    allowed_hosts = _allowed_discovery_hosts_for_state("NY", "New York")
+
+    assert "https://govt.westlaw.com/nycrr" in ny_urls
+    assert "govt.westlaw.com" in allowed_hosts
+
+
+def test_new_york_westlaw_document_pages_are_direct_details() -> None:
+    assert scraper_module._is_direct_detail_candidate_url(
+        "https://govt.westlaw.com/nycrr/Document/I9a267131212611e1b7120000845b8d3e?viewType=FullText"
+    )
+
+
 def test_gap_summary_host_key_collapses_california_portal_hosts_into_official_ccr_host() -> None:
     assert scraper_module._gap_summary_host_key("https://oal.ca.gov/publications/ccr/") == "govt.westlaw.com"
     assert scraper_module._gap_summary_host_key("http://carules.elaws.us/search/allcode") == "govt.westlaw.com"
@@ -8728,6 +8742,50 @@ async def test_discover_new_york_rule_document_urls_follows_elaws_hierarchy() ->
     )
 
     assert discovered == [section_url]
+
+
+@pytest.mark.anyio
+async def test_discover_new_york_westlaw_document_urls_follows_open_nycrr_hierarchy() -> None:
+    root_url = "https://govt.westlaw.com/nycrr"
+    title_url = (
+        "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/"
+        "UnofficialNewYorkCodesRulesandRegulations?guid=TITLE1"
+    )
+    chapter_url = (
+        "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/"
+        "UnofficialNewYorkCodesRulesandRegulations?guid=CHAPTER1"
+    )
+    subchapter_url = (
+        "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/"
+        "UnofficialNewYorkCodesRulesandRegulations?guid=SUBCHAPTERA"
+    )
+    part_url = (
+        "https://govt.westlaw.com/nycrr/Browse/Home/NewYork/"
+        "UnofficialNewYorkCodesRulesandRegulations?guid=PART1"
+    )
+    document_url = "https://govt.westlaw.com/nycrr/Document/DOC1?viewType=FullText"
+
+    class _FakeUnifiedWebScraper:
+        async def scrape(self, url: str):
+            if url.rstrip("/") == root_url.rstrip("/"):
+                return SimpleNamespace(html=f"<a href='{title_url}'>Title 1 Department of Agriculture and Markets</a>")
+            if url == title_url:
+                return SimpleNamespace(html=f"<a href='{chapter_url}'>Chapter I Milk Control</a>")
+            if url == chapter_url:
+                return SimpleNamespace(html=f"<a href='{subchapter_url}'>Subchapter A Dairy Products</a>")
+            if url == subchapter_url:
+                return SimpleNamespace(html=f"<a href='{part_url}'>Part 1 Vitamin D Milk</a>")
+            if url == part_url:
+                return SimpleNamespace(html=f"<a href='{document_url}'>1 CRR-NY 1.1 Definitions.</a>")
+            raise AssertionError(f"unexpected scrape URL: {url}")
+
+    discovered = await scraper_module._discover_new_york_westlaw_document_urls(
+        seed_urls=[root_url],
+        live_scraper=_FakeUnifiedWebScraper(),
+        limit=1,
+    )
+
+    assert discovered == [document_url]
 
 
 @pytest.mark.anyio

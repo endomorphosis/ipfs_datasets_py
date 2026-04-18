@@ -37,7 +37,7 @@ class WashingtonScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
         """Scrape a specific code from Washington's legislative website.
         
         Washington RCW database uses JavaScript navigation, so we use Playwright.
@@ -62,7 +62,7 @@ class WashingtonScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        return_threshold = self._bounded_return_threshold(20)
+        return_threshold = min(self._bounded_return_threshold(20), int(max_statutes or 20))
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -82,7 +82,7 @@ class WashingtonScraper(BaseStateScraper):
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
                     if len(statutes) >= return_threshold:
-                        return statutes
+                        return statutes[:return_threshold]
                 except Exception:
                     pass
 
@@ -91,9 +91,9 @@ class WashingtonScraper(BaseStateScraper):
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
             if len(statutes) >= return_threshold:
-                return statutes
+                return statutes[:return_threshold]
 
-        return best_statutes
+        return best_statutes[:return_threshold]
 
 
 # Register this scraper with the registry

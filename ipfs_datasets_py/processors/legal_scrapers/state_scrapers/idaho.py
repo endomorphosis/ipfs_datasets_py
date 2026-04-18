@@ -34,7 +34,7 @@ class IdahoScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
         """Scrape a specific code from Idaho's legislative website.
         
         Args:
@@ -53,7 +53,7 @@ class IdahoScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        return_threshold = self._bounded_return_threshold(30)
+        return_threshold = max(1, int(max_statutes or self._bounded_return_threshold(30)))
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -73,7 +73,7 @@ class IdahoScraper(BaseStateScraper):
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
                     if len(statutes) >= return_threshold:
-                        return statutes
+                        return statutes[:return_threshold]
                 except Exception:
                     pass
 
@@ -82,9 +82,9 @@ class IdahoScraper(BaseStateScraper):
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
             if len(statutes) >= return_threshold:
-                return statutes
+                return statutes[:return_threshold]
 
-        return best_statutes
+        return best_statutes[:return_threshold]
 
 
 # Register this scraper with the registry

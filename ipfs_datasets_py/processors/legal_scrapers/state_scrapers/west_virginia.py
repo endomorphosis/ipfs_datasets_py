@@ -34,7 +34,7 @@ class WestVirginiaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(self, code_name: str, code_url: str, max_statutes: int | None = None) -> List[NormalizedStatute]:
         """Scrape a specific code from West Virginia's legislative website.
         
         Args:
@@ -55,7 +55,7 @@ class WestVirginiaScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        return_threshold = self._bounded_return_threshold(15)
+        return_threshold = min(self._bounded_return_threshold(15), int(max_statutes or 15))
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -75,7 +75,7 @@ class WestVirginiaScraper(BaseStateScraper):
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
                     if len(statutes) >= return_threshold:
-                        return statutes
+                        return statutes[:return_threshold]
                 except Exception:
                     pass
 
@@ -84,9 +84,9 @@ class WestVirginiaScraper(BaseStateScraper):
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
             if len(statutes) >= return_threshold:
-                return statutes
+                return statutes[:return_threshold]
 
-        return best_statutes
+        return best_statutes[:return_threshold]
 
 
 # Register this scraper with the registry

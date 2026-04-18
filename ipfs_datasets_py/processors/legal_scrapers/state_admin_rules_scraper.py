@@ -357,6 +357,12 @@ _NY_ELAWS_SECTION_PATH_RE = re.compile(
     r"^/nycrr/title\d+_[\w.-]+_part[\w.-]+_s[\w.-]+/?$",
     re.IGNORECASE,
 )
+_NY_WESTLAW_INDEX_PATH_RE = re.compile(r"^/nycrr(?:/Index)?/?$", re.IGNORECASE)
+_NY_WESTLAW_BROWSE_PATH_RE = re.compile(
+    r"^/nycrr/Browse/Home/NewYork/UnofficialNewYorkCodesRulesandRegulations/?$",
+    re.IGNORECASE,
+)
+_NY_WESTLAW_DOCUMENT_PATH_RE = re.compile(r"^/nycrr/Document/[^/]+/?$", re.IGNORECASE)
 
 _CO_CCR_WELCOME_PATH_RE = re.compile(r"^/CCR/Welcome\.do/?$", re.IGNORECASE)
 _CO_CCR_DEPT_LIST_PATH_RE = re.compile(r"^/CCR/NumericalDeptList\.do/?$", re.IGNORECASE)
@@ -1716,7 +1722,13 @@ def _max_fetch_cap_for_state(state_code: str) -> Optional[int]:
 
     raw_default = str(os.getenv("LEGAL_ADMIN_RULES_MAX_FETCH_PER_STATE") or "").strip()
     if not raw_default:
-        return None
+        default_caps = {
+            # NYCRR Westlaw documents are reliable but slower than most direct
+            # HTML/PDF endpoints. Keep each bounded daemon cycle small so it can
+            # checkpoint recovered rows instead of timing out and losing work.
+            "NY": 4,
+        }
+        return default_caps.get(state_key)
     try:
         cap_value = int(raw_default)
     except Exception:
@@ -2183,6 +2195,12 @@ def _score_candidate_url(url: str) -> int:
         score += 4
     if host == "govt.westlaw.com" and path.lower().startswith("/calregs/document/"):
         score += 10
+    if host == "govt.westlaw.com" and _NY_WESTLAW_BROWSE_PATH_RE.fullmatch(path):
+        score += 6
+    if host == "govt.westlaw.com" and _NY_WESTLAW_INDEX_PATH_RE.fullmatch(path):
+        score += 4
+    if host == "govt.westlaw.com" and _NY_WESTLAW_DOCUMENT_PATH_RE.fullmatch(path):
+        score += 10
     if host == "carules.elaws.us" and path.lower().startswith("/code/"):
         score += 5
     if host == "oal.ca.gov" and normalized_path.lower() in {"/publications", "/publications/ccr"}:
@@ -2593,6 +2611,17 @@ def _score_candidate_link(link_url: str, link_text: str = "", page_url: str = ""
             score += 4
         elif re.search(r"\btitle\b", hay, re.IGNORECASE):
             score += 2
+    if host == "govt.westlaw.com" and _NY_WESTLAW_DOCUMENT_PATH_RE.fullmatch(path):
+        score += 12
+    if host == "govt.westlaw.com" and _NY_WESTLAW_BROWSE_PATH_RE.fullmatch(path):
+        if re.search(r"\bpart\b", hay, re.IGNORECASE):
+            score += 8
+        elif re.search(r"\bsubchapter\b", hay, re.IGNORECASE):
+            score += 7
+        elif re.search(r"\bchapter\b", hay, re.IGNORECASE):
+            score += 6
+        elif re.search(r"\btitle\b", hay, re.IGNORECASE):
+            score += 2
     if re.search(r"/code/(?:current|2006)/\d+/\d+(?:\.\d+)?", lower_url):
         score += 4
         if re.search(r"\b(?:article|rule)\b", hay, re.IGNORECASE):
@@ -2765,7 +2794,18 @@ def _state_seed_expansion_backlog_is_ready(
     if _seed_expansion_backlog_is_ready(seed_expansion_candidates, max_fetch):
         return True
     if state_code != "CA":
-        return False
+        if state_code != "NY":
+            return False
+        new_york_detail_keys = {
+            _url_key(url)
+            for url, score in seed_expansion_candidates
+            if _url_key(url)
+            and int(score) > 0
+            and _is_direct_detail_candidate_url(url)
+            and urlparse(str(url or "").strip()).netloc.lower() == "govt.westlaw.com"
+            and _NY_WESTLAW_DOCUMENT_PATH_RE.fullmatch(urlparse(str(url or "").strip()).path or "")
+        }
+        return len(new_york_detail_keys) >= min(2, max(1, int(max_fetch)))
     california_detail_keys = {
         _url_key(url)
         for url, score in seed_expansion_candidates
@@ -2788,6 +2828,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "eregulations.ct.gov" and _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
         return True
     if host == "nyrules.elaws.us" and _NY_ELAWS_SECTION_PATH_RE.fullmatch(path):
+        return True
+    if host == "govt.westlaw.com" and _NY_WESTLAW_DOCUMENT_PATH_RE.fullmatch(path):
         return True
     if host in {"www.sos.state.co.us", "www.coloradosos.gov"}:
         query_params = parse_qs(parsed.query or "")
@@ -10611,6 +10653,53 @@ def _new_york_elaws_links_from_html(*, html: str, page_url: str, limit: int) -> 
     return links
 
 
+def _new_york_westlaw_links_from_html(*, html: str, page_url: str, limit: int) -> List[str]:
+    links: List[tuple[int, str]] = []
+    seen: set[str] = set()
+    soup = BeautifulSoup(str(html or ""), "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        absolute_url = urljoin(page_url, unescape(str(anchor.get("href") or "").strip()))
+        parsed = urlparse(absolute_url)
+        if parsed.netloc.lower() != "govt.westlaw.com":
+            continue
+        path = parsed.path or ""
+        is_document = bool(_NY_WESTLAW_DOCUMENT_PATH_RE.fullmatch(path))
+        is_browse = bool(_NY_WESTLAW_BROWSE_PATH_RE.fullmatch(path))
+        if not is_document and not is_browse and not _NY_WESTLAW_INDEX_PATH_RE.fullmatch(path):
+            continue
+        if _NY_WESTLAW_INDEX_PATH_RE.fullmatch(path) and not (parsed.query or "").strip():
+            continue
+
+        normalized_url = urlunparse(("https", parsed.netloc, path.rstrip("/") or "/", "", parsed.query, ""))
+        key = _url_key(normalized_url)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+
+        link_text = re.sub(r"\s+", " ", anchor.get_text(" ", strip=True)).strip()
+        priority = 0
+        if is_document:
+            priority = 100
+            if re.search(r"\b(?:notes?|notice)\b", link_text, re.IGNORECASE):
+                priority -= 20
+        elif is_browse:
+            priority = 10
+            if re.search(r"\bpart\b", link_text, re.IGNORECASE):
+                priority += 30
+            elif re.search(r"\bsubchapter\b", link_text, re.IGNORECASE):
+                priority += 20
+            elif re.search(r"\bchapter\b", link_text, re.IGNORECASE):
+                priority += 10
+            elif re.search(r"\btitle\b", link_text, re.IGNORECASE):
+                priority += 1
+            if re.search(r"\brepealed\b", link_text, re.IGNORECASE):
+                priority -= 15
+        links.append((priority, normalized_url))
+
+    links.sort(key=lambda item: item[0], reverse=True)
+    return [link_url for _, link_url in links[: max(1, int(limit))]]
+
+
 async def _discover_new_york_rule_document_urls(
     *,
     seed_urls: List[str],
@@ -10673,6 +10762,86 @@ async def _discover_new_york_rule_document_urls(
         if not frontier:
             break
     return discovered
+
+
+async def _discover_new_york_westlaw_document_urls(
+    *,
+    seed_urls: List[str],
+    live_scraper: Any,
+    limit: int = 8,
+) -> List[str]:
+    frontier: List[str] = [
+        urlunparse(("https", "govt.westlaw.com", "/nycrr", "", "", "")),
+    ]
+    for seed_url in seed_urls:
+        parsed = urlparse(str(seed_url or "").strip())
+        if parsed.netloc.lower() != "govt.westlaw.com":
+            continue
+        if _NY_WESTLAW_INDEX_PATH_RE.fullmatch(parsed.path or "") or _NY_WESTLAW_BROWSE_PATH_RE.fullmatch(parsed.path or ""):
+            normalized_url = urlunparse(
+                ("https", parsed.netloc, (parsed.path or "/nycrr").rstrip("/") or "/nycrr", "", parsed.query, "")
+            )
+            if normalized_url not in frontier:
+                frontier.append(normalized_url)
+
+    document_urls: List[str] = []
+    seen_pages: set[str] = set()
+    seen_documents: set[str] = set()
+
+    async def _fetch_links(page_url: str, *, link_limit: int) -> List[str]:
+        page_key = _url_key(page_url)
+        if not page_key or page_key in seen_pages:
+            return []
+        seen_pages.add(page_key)
+        html = ""
+        try:
+            scraped = await asyncio.wait_for(live_scraper.scrape(page_url), timeout=8.0)
+            html = str(getattr(scraped, "html", "") or "")
+        except Exception:
+            html = ""
+        if not html:
+            try:
+                response = await _run_state_worker(
+                    lambda: requests.get(
+                        page_url,
+                        timeout=12,
+                        headers={"User-Agent": "Mozilla/5.0"},
+                    )
+                )
+                html = str(getattr(response, "text", "") or "")
+            except Exception:
+                html = ""
+        if not html:
+            return []
+        return _new_york_westlaw_links_from_html(
+            html=html,
+            page_url=page_url,
+            limit=link_limit,
+        )
+
+    for _depth in range(6):
+        next_frontier: List[str] = []
+        for page_url in frontier[:3]:
+            links = await _fetch_links(page_url, link_limit=max(10, min(max(1, int(limit)) * 5, 32)))
+            for link_url in links:
+                path = urlparse(link_url).path or ""
+                if _NY_WESTLAW_DOCUMENT_PATH_RE.fullmatch(path):
+                    document_key = _url_key(link_url)
+                    if not document_key or document_key in seen_documents:
+                        continue
+                    seen_documents.add(document_key)
+                    document_urls.append(link_url)
+                    if len(document_urls) >= max(1, int(limit)):
+                        return document_urls
+                elif _NY_WESTLAW_BROWSE_PATH_RE.fullmatch(path):
+                    link_key = _url_key(link_url)
+                    if link_key and link_key not in seen_pages and link_url not in next_frontier:
+                        next_frontier.append(link_url)
+        frontier = next_frontier
+        if not frontier:
+            break
+
+    return document_urls
 
 
 def _colorado_pdf_url(base_url: str, rule_version_id: str, file_name: str) -> str:
@@ -12712,6 +12881,7 @@ async def _agentic_discover_admin_state_blocks(
         south_dakota_bootstrap_document_urls: List[str] = []
         montana_bootstrap_document_urls: List[str] = []
         california_bootstrap_document_urls: List[str] = []
+        new_york_bootstrap_document_urls: List[str] = []
         new_hampshire_bootstrap_document_urls: List[str] = []
         nebraska_bootstrap_document_urls: List[str] = []
         georgia_bootstrap_document_urls: List[str] = []
@@ -12998,7 +13168,7 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["connecticut_eregulations_bootstrap"] = len(connecticut_bootstrap_document_urls)
 
         if state_code == "NY" and not seeded_direct_detail_urls:
-            new_york_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
+            new_york_bootstrap_limit = min(max(1, int(max_fetch)), 8)
             try:
                 from ..web_archiving.unified_web_scraper import (
                     ScraperConfig as _ScraperConfig,
@@ -13031,9 +13201,10 @@ async def _agentic_discover_admin_state_blocks(
             else:
                 new_york_bootstrap_scraper = live_scraper
 
+            new_york_bootstrap_source = "new_york_westlaw_document_bootstrap"
             try:
                 new_york_bootstrap_document_urls = await asyncio.wait_for(
-                    _discover_new_york_rule_document_urls(
+                    _discover_new_york_westlaw_document_urls(
                         seed_urls=ordered_seed_urls,
                         live_scraper=new_york_bootstrap_scraper,
                         limit=new_york_bootstrap_limit,
@@ -13042,10 +13213,23 @@ async def _agentic_discover_admin_state_blocks(
                 )
             except Exception:
                 new_york_bootstrap_document_urls = []
+            if not new_york_bootstrap_document_urls:
+                new_york_bootstrap_source = "new_york_elaws_bootstrap"
+                try:
+                    new_york_bootstrap_document_urls = await asyncio.wait_for(
+                        _discover_new_york_rule_document_urls(
+                            seed_urls=ordered_seed_urls,
+                            live_scraper=new_york_bootstrap_scraper,
+                            limit=new_york_bootstrap_limit,
+                        ),
+                        timeout=15.0,
+                    )
+                except Exception:
+                    new_york_bootstrap_document_urls = []
             for document_url in new_york_bootstrap_document_urls:
                 candidate_urls.append(document_url)
             if new_york_bootstrap_document_urls:
-                source_breakdown["new_york_elaws_bootstrap"] = len(new_york_bootstrap_document_urls)
+                source_breakdown[new_york_bootstrap_source] = len(new_york_bootstrap_document_urls)
 
         if state_code == "CA" and not seeded_direct_detail_urls:
             california_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
@@ -13197,13 +13381,14 @@ async def _agentic_discover_admin_state_blocks(
             or seeded_direct_detail_urls
             or montana_bootstrap_document_urls
             or california_bootstrap_document_urls
+            or new_york_bootstrap_document_urls
             or new_hampshire_bootstrap_document_urls
             or georgia_bootstrap_document_urls
             or kansas_bootstrap_document_urls
             or idaho_bootstrap_document_urls
         ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
-            max_fetch=max_fetch_per_state,
+            max_fetch=max_fetch,
         )
 
         # Curated seeds often already expose substantive rule pages or article/part
@@ -13360,7 +13545,7 @@ async def _agentic_discover_admin_state_blocks(
         if not direct_detail_ready:
             direct_detail_ready = _direct_detail_candidate_backlog_is_ready(
                 candidate_urls,
-                max_fetch=max_fetch_per_state,
+                max_fetch=max_fetch,
             )
 
         if not preseed_signal:
@@ -13502,6 +13687,9 @@ async def _agentic_discover_admin_state_blocks(
         expanded_urls = 0
         inspected_urls = 0
         max_fetch = max(1, int(max_fetch_per_state))
+        state_fetch_cap = _max_fetch_cap_for_state(state_code)
+        if state_fetch_cap is not None:
+            max_fetch = min(max_fetch, state_fetch_cap)
         min_text_chars = max(140, int(min_full_text_chars // 2))
         if require_substantive_text:
             min_text_chars = max(220, int(min_full_text_chars))
@@ -14930,6 +15118,14 @@ async def _agentic_discover_admin_state_blocks(
             inspected=inspected_urls,
             seed_expansions=len(seed_expansion_candidates),
         )
+        new_york_official_bootstrap_recovered_rules = (
+            state_code == "NY"
+            and bool(new_york_bootstrap_document_urls)
+            and len(statutes) > 0
+            and any(_url_key(rule_url) in direct_doc_urls for rule_url in new_york_bootstrap_document_urls)
+        )
+        if new_york_official_bootstrap_recovered_rules:
+            max_fetch = len(statutes)
 
         if state_code == "AZ" and len(statutes) < max_fetch:
             az_late_retry_urls = _prioritized_arizona_late_retry_urls(
@@ -15858,7 +16054,7 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         max_candidates = max(1, int(max_candidates_per_state))
-        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules or kansas_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
+        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules or kansas_official_bootstrap_recovered_rules or new_york_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
             ranked_urls=ranked_urls,
             seed_expansion_candidates=seed_expansion_candidates,
             max_candidates=max_candidates,
