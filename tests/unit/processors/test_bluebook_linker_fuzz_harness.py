@@ -361,9 +361,19 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
         assert kwargs["corpus_key"] == "state_laws"
         assert kwargs["state_code"] == "MN"
         return {
-            "status": "tracked",
+            "status": "tracked_and_published",
+            "hf_dataset_id": "justicedao/ipfs_state_laws",
             "manifest_path": str(manifest_path),
             "citation_text": kwargs["citation_text"],
+            "publish_report": {
+                "repo_id": "justicedao/ipfs_state_laws",
+                "upload_commit": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/tree/main/source_recovery/test",
+            },
+            "scraper_patch": {
+                "patch_path": str(tmp_path / "recovery.patch"),
+                "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+                "host": "www.revisor.mn.gov",
+            },
         }
 
     def fake_merge(path: str):
@@ -384,7 +394,12 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
     assert run.summary["matched_attempt_count"] == 0
     assert run.summary["recovery_count"] == 1
     assert run.summary["merged_recovery_count"] == 1
-    assert run.attempts[0].recoveries[0]["status"] == "tracked"
+    assert run.attempts[0].recoveries[0]["status"] == "tracked_and_published"
+    assert run.summary["recovery_publication"]["published_count"] == 1
+    assert run.summary["recovery_publication"]["repo_counts"] == {"justicedao/ipfs_state_laws": 1}
+    assert run.summary["recovery_publication"]["patch_path_count"] == 1
+    assert run.summary["recovery_publication"]["manifest_path_count"] == 1
+    assert run.summary["failure_patch_clusters"][0]["patch_paths"] == [str(tmp_path / "recovery.patch")]
     assert run.attempts[0].merge_reports[0]["status"] == "success"
     assert run.output_path is not None
     assert Path(run.output_path).exists()

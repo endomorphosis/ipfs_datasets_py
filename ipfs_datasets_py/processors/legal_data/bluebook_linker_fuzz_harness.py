@@ -8,6 +8,7 @@ dataset merge path that later gets published back to Hugging Face.
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 import json
 import math
@@ -662,9 +663,53 @@ def _cluster_failure_recoveries(attempts: Sequence[BluebookCitationFuzzAttempt])
     ordered = sorted(clusters.values(), key=lambda item: (-int(item["failure_count"]), item["corpus_key"], item["host"], item["target_file"]))
     for item in ordered:
         item["citations"] = item["citations"][:10]
-        item["manifest_paths"] = item["manifest_paths"][:10]
-        item["patch_paths"] = item["patch_paths"][:10]
     return ordered
+
+
+def _summarize_recovery_publication(attempts: Sequence[BluebookCitationFuzzAttempt]) -> Dict[str, Any]:
+    status_counts: Counter[str] = Counter()
+    repo_counts: Counter[str] = Counter()
+    publish_error_counts: Counter[str] = Counter()
+    upload_urls: List[str] = []
+    patch_path_count = 0
+    manifest_path_count = 0
+
+    for attempt in attempts:
+        for recovery in attempt.recoveries:
+            status = str(recovery.get("status") or "unknown").strip() or "unknown"
+            status_counts[status] += 1
+
+            repo_id = str(recovery.get("hf_dataset_id") or "").strip()
+            if repo_id:
+                repo_counts[repo_id] += 1
+
+            if str(recovery.get("manifest_path") or "").strip():
+                manifest_path_count += 1
+
+            scraper_patch = recovery.get("scraper_patch") if isinstance(recovery.get("scraper_patch"), dict) else {}
+            if str(scraper_patch.get("patch_path") or "").strip():
+                patch_path_count += 1
+
+            publish_report = recovery.get("publish_report")
+            if not isinstance(publish_report, dict):
+                continue
+            error = str(publish_report.get("error") or "").strip()
+            if error:
+                publish_error_counts[error] += 1
+            upload_url = str(publish_report.get("upload_commit") or "").strip()
+            if upload_url and upload_url not in upload_urls:
+                upload_urls.append(upload_url)
+
+    published_count = sum(count for status, count in status_counts.items() if "published" in status)
+    return {
+        "status_counts": dict(sorted(status_counts.items())),
+        "published_count": published_count,
+        "repo_counts": dict(sorted(repo_counts.items())),
+        "publish_error_counts": dict(sorted(publish_error_counts.items())),
+        "manifest_path_count": manifest_path_count,
+        "patch_path_count": patch_path_count,
+        "sample_upload_urls": upload_urls[:10],
+    }
 
 
 def _collect_malformed_repairs(
@@ -910,6 +955,7 @@ async def run_bluebook_linker_fuzz_harness(
         max_acceptable_failure_rate=max_acceptable_failure_rate,
         min_actionable_failures=min_actionable_failures,
     )
+    summary["recovery_publication"] = _summarize_recovery_publication(attempts)
     summary["failure_patch_clusters"] = _cluster_failure_recoveries(attempts)
     summary["malformed_repairs"] = _collect_malformed_repairs(candidates)
     summary["sampling"] = {
