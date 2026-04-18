@@ -3,8 +3,12 @@
 Delaware Code Online uses heavy JavaScript rendering.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional, Tuple
 import re
+from urllib.parse import urljoin
+
+from ipfs_datasets_py.utils import anyio_compat as asyncio
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 from ...playwright_limiter import acquire_playwright_slot
@@ -24,6 +28,10 @@ class DelawareScraper(BaseStateScraper):
     """
 
     _DE_CHAPTER_URL_RE = re.compile(r"/title\d+/c\d+/index\.html$", re.IGNORECASE)
+    _DE_TITLE_URL_RE = re.compile(r"/title\d+/index\.html$", re.IGNORECASE)
+    _DE_TITLE_NUMBER_RE = re.compile(r"/title(\d+)/", re.IGNORECASE)
+    _DE_CHAPTER_NUMBER_RE = re.compile(r"/c(\d+)/", re.IGNORECASE)
+    _DE_SECTION_HEAD_RE = re.compile(r"§\s*([0-9A-Za-z\-]+)\.\s*(.+)", re.IGNORECASE)
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -56,11 +64,180 @@ class DelawareScraper(BaseStateScraper):
         """Return list of available codes/statutes for Delaware."""
         return [{
             "name": "Delaware Code",
-            "url": f"{self.get_base_url()}/title1/c001/index.html",
+            "url": f"{self.get_base_url()}/index.html",
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def _fetch_official_de_html(self, url: str, timeout_seconds: int = 6) -> str:
+        timeout = max(1, int(timeout_seconds or 6))
+
+        def _request() -> str:
+            try:
+                import requests
+
+                response = requests.get(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-delaware-code-scraper/2.0",
+                        "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                    },
+                    timeout=timeout,
+                )
+                if int(response.status_code or 0) != 200:
+                    return ""
+                return bytes(response.content or b"").decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            html = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
+        except asyncio.TimeoutError:
+            html = ""
+        self._record_fetch_event(provider="requests_direct", success=bool(html))
+        return html
+
+    def _title_number_from_url(self, url: str) -> str:
+        match = self._DE_TITLE_NUMBER_RE.search(str(url or ""))
+        return match.group(1) if match else ""
+
+    def _chapter_number_from_url(self, url: str) -> str:
+        match = self._DE_CHAPTER_NUMBER_RE.search(str(url or ""))
+        if not match:
+            return ""
+        value = match.group(1).lstrip("0")
+        return value or "0"
+
+    async def _discover_title_links(self) -> List[Tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        index_url = f"{self.get_base_url()}/index.html"
+        html = await self._fetch_official_de_html(index_url)
+        if not html:
+            return []
+        soup = BeautifulSoup(html, "html.parser")
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            label = re.sub(r"\s+", " ", anchor.get_text(" ", strip=True) or "").strip()
+            href = urljoin(index_url, str(anchor.get("href") or "").strip())
+            if not self._DE_TITLE_URL_RE.search(href):
+                continue
+            if not label.lower().startswith("title "):
+                continue
+            if href in seen:
+                continue
+            seen.add(href)
+            out.append((href, label))
+        return out
+
+    async def _discover_chapter_links(self, title_url: str) -> List[Tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        html = await self._fetch_official_de_html(title_url)
+        if not html:
+            return []
+        soup = BeautifulSoup(html, "html.parser")
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            label = re.sub(r"\s+", " ", anchor.get_text(" ", strip=True) or "").strip()
+            href = urljoin(title_url, str(anchor.get("href") or "").strip())
+            if not self._DE_CHAPTER_URL_RE.search(href):
+                continue
+            if not label.lower().startswith("chapter "):
+                continue
+            if href in seen:
+                continue
+            seen.add(href)
+            out.append((href, label))
+        return out
+
+    async def _parse_chapter_sections(
+        self,
+        *,
+        code_name: str,
+        chapter_url: str,
+        chapter_label: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        html = await self._fetch_official_de_html(chapter_url)
+        if not html:
+            return []
+        soup = BeautifulSoup(html, "html.parser")
+
+        title_number = self._title_number_from_url(chapter_url)
+        chapter_number = self._chapter_number_from_url(chapter_url)
+        title_head = soup.select_one("#TitleHead")
+        title_name = ""
+        if title_head is not None:
+            headings = [re.sub(r"\s+", " ", h.get_text(" ", strip=True) or "").strip() for h in title_head.find_all(["h1", "h2", "h3", "h4"])]
+            title_name = " ".join([h for h in headings if h and not h.upper().startswith("TITLE ") and not h.upper().startswith("CHAPTER ")])[:200]
+
+        statutes: List[NormalizedStatute] = []
+        for section in soup.select("div.Section"):
+            if max_statutes is not None and len(statutes) >= max_statutes:
+                break
+            head = section.select_one(".SectionHead")
+            if head is None:
+                continue
+            head_text = re.sub(r"\s+", " ", head.get_text(" ", strip=True) or "").strip()
+            match = self._DE_SECTION_HEAD_RE.search(head_text)
+            if not match:
+                continue
+            section_number = match.group(1).strip()
+            section_name = match.group(2).strip()
+            section_id = str(head.get("id") or section_number).strip()
+            full_url = f"{chapter_url}#{section_id}"
+            full_text = self._normalize_legal_text(section.get_text(" ", strip=True))
+            if len(full_text) < 80:
+                continue
+
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"DE-{title_number}-{section_number}",
+                    code_name=code_name,
+                    title_number=title_number,
+                    title_name=title_name or None,
+                    chapter_number=chapter_number,
+                    chapter_name=chapter_label,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    short_title=section_name[:200],
+                    full_text=full_text,
+                    legal_area=self._identify_legal_area(section_name),
+                    source_url=full_url,
+                    official_cite=f"{title_number} Del. C. § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_delaware_code_html",
+                        "discovery_method": "official_title_chapter_index",
+                        "chapter_url": chapter_url,
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+
+        return statutes
+
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: int | None = None,
+    ) -> List[NormalizedStatute]:
         """Scrape Delaware Code.
         
         Args:
@@ -70,49 +247,29 @@ class DelawareScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        candidate_urls = [
-            f"{self.get_base_url()}/title1/c001/index.html",
-            f"{self.get_base_url()}/title2/c001/index.html",
-            f"{self.get_base_url()}/title3/c001/index.html",
-            f"{self.get_base_url()}/title4/c001/index.html",
-            f"{self.get_base_url()}/title5/c001/index.html",
-            f"{self.get_base_url()}/title11/c005/index.html",
-            f"{self.get_base_url()}/title6/c001/index.html",
-            f"{self.get_base_url()}/title16/c001/index.html",
-            f"{self.get_base_url()}/title21/c001/index.html",
-            f"{self.get_base_url()}/title24/c001/index.html",
-            f"{self.get_base_url()}/index.html",
-            code_url,
-        ]
+        limit = max(1, int(max_statutes)) if max_statutes else None
+        statutes: List[NormalizedStatute] = []
+        title_links = await self._discover_title_links()
+        if not title_links and self._DE_CHAPTER_URL_RE.search(str(code_url or "")):
+            title_links = [(urljoin(code_url, "../../index.html"), "")]
 
-        best_statutes: List[NormalizedStatute] = []
-        seen = set()
-        for candidate in candidate_urls:
-            if candidate in seen:
-                continue
-            seen.add(candidate)
+        for title_url, _title_label in title_links:
+            if limit is not None and len(statutes) >= limit:
+                break
+            for chapter_url, chapter_label in await self._discover_chapter_links(title_url):
+                if limit is not None and len(statutes) >= limit:
+                    break
+                remaining = None if limit is None else max(0, limit - len(statutes))
+                statutes.extend(
+                    await self._parse_chapter_sections(
+                        code_name=code_name,
+                        chapter_url=chapter_url,
+                        chapter_label=chapter_label,
+                        max_statutes=remaining,
+                    )
+                )
 
-            if PLAYWRIGHT_AVAILABLE:
-                try:
-                    self.logger.info("Delaware: Using Playwright for JavaScript rendering")
-                    statutes = await self._scrape_with_playwright(code_name, candidate, "Del. Code")
-                    statutes = self._filter_section_level(statutes)
-                    if len(statutes) > len(best_statutes):
-                        best_statutes = statutes
-                    if len(statutes) >= 20:
-                        return statutes
-                except Exception as e:
-                    self.logger.warning(f"Delaware Playwright scrape failed for {candidate}: {e}")
-
-            self.logger.warning("Delaware requires Playwright for JavaScript rendering - using fallback")
-            statutes = await self._custom_scrape_delaware(code_name, candidate, "Del. Code")
-            statutes = self._filter_section_level(statutes)
-            if len(statutes) > len(best_statutes):
-                best_statutes = statutes
-            if len(statutes) >= 20:
-                return statutes
-
-        return best_statutes
+        return statutes[:limit] if limit is not None else statutes
     
     async def _scrape_with_playwright(
         self,

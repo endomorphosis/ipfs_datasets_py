@@ -269,6 +269,18 @@ def _citation_text_parses_as(citation_text: str, citation_type: str) -> bool:
     return any(citation.type == citation_type for citation in extractor.extract_citations(text))
 
 
+def _parsed_citation_type(citation_text: str, citation_types: Sequence[str]) -> str:
+    text = str(citation_text or "").strip()
+    if not text:
+        return ""
+    wanted = {str(item or "").strip() for item in citation_types if str(item or "").strip()}
+    extractor = CitationExtractor()
+    for citation in extractor.extract_citations(text):
+        if citation.type in wanted:
+            return str(citation.type)
+    return ""
+
+
 def _candidate_source_ref(candidate: BluebookCitationCandidate) -> str:
     notes = str(candidate.notes or "")
     match = re.search(r"(?:^|;\s*)source_ref=(?P<source_ref>[^;]+)", notes)
@@ -426,7 +438,33 @@ def _synthetic_state_identifier(value: Any) -> bool:
     )
 
 
+def _court_rule_section_from_value(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    patterns = (
+        r"\bUTCR\s+(?P<section>\d+(?:\.\d+)*(?:\([^)]+\))?)(?![\w.])",
+        r"\bLocal\s+Rule\s+(?P<section>\d+(?:\.\d+)*(?:\([^)]+\))?)(?![\w.])",
+        r"\bSupplemental\s+Local\s+Court\s+Rule\s+(?P<section>\d+(?:\.\d+)*(?:\([^)]+\))?)(?![\w.])",
+        r"\bRule\s+(?P<section>\d+(?:\.\d+)*(?:\([^)]+\))?)(?![\w.])",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        section = str(match.group("section") or "").strip().rstrip(".,;:")
+        if section and re.search(r"\d", section) and not _synthetic_state_identifier(section):
+            return section
+    return ""
+
+
 def _state_rule_section_from_row(row: Dict[str, Any], *, corpus_key: str) -> str:
+    if corpus_key == "state_court_rules":
+        for field in ("rule_number", "name", "title", "text", "source_id", "section", "section_number"):
+            section = _court_rule_section_from_value(_first_non_empty_string(row.get(field)))
+            if section:
+                return section
+
     values = [
         _first_non_empty_string(row.get(field))
         for field in ("section", "section_number", "rule_number", "source_id", "text", "name", "title", "source_url", "url")
@@ -511,9 +549,10 @@ def _synthesize_seed_candidate_from_row(
     elif corpus_key == "federal_register":
         for field in ("citation_text", "normalized_citation", "official_cite", "citation", "bluebook_citation"):
             candidate_text = _first_non_empty_string(row.get(field))
-            if _citation_text_parses_as(candidate_text, "federal_register"):
+            parsed_type = _parsed_citation_type(candidate_text, ("federal_register", "cfr"))
+            if parsed_type:
                 citation_text = candidate_text
-                citation_type = "federal_register"
+                citation_type = parsed_type
                 break
         volume = _first_present(row, _VOLUME_FIELDS)
         page = _first_present(row, _PAGE_FIELDS)
@@ -628,10 +667,13 @@ def _balanced_select_candidates(
             by_partition[key] = []
         by_partition[key].append(item)
 
-    working = {
-        key: list(_select_evenly_spaced_candidates(group, limit=min(len(group), max(1, int(per_partition_limit or len(group))))))
-        for key, group in by_partition.items()
-    }
+    working: Dict[str, List[BluebookCitationCandidate]] = {}
+    for key, group in by_partition.items():
+        is_state_partition = any(str(item.state_code or "").strip() for item in group)
+        limit = len(group)
+        if is_state_partition and per_partition_limit is not None:
+            limit = min(len(group), max(1, int(per_partition_limit)))
+        working[key] = list(_select_evenly_spaced_candidates(group, limit=limit))
 
     selected: List[BluebookCitationCandidate] = []
     while len(selected) < total_limit:
@@ -746,7 +788,8 @@ def collect_seeded_bluebook_fuzz_candidates(
                                 continue
                         source_candidates.append(candidate)
                 state_candidates.extend(_select_evenly_spaced_candidates(source_candidates, limit=max_per_source))
-            corpus_candidates.extend(_select_evenly_spaced_candidates(state_candidates, limit=max_per_state))
+            state_limit = max_per_state if corpus_key.startswith("state_") else max_per_corpus
+            corpus_candidates.extend(_select_evenly_spaced_candidates(state_candidates, limit=state_limit))
         candidates.extend(_select_evenly_spaced_candidates(corpus_candidates, limit=max_per_corpus))
 
     rng = random.Random(int(shuffle_seed))

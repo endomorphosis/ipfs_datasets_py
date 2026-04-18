@@ -442,18 +442,25 @@ def test_collect_seeded_bluebook_fuzz_candidates_uses_federal_register_citation_
                     "normalized_citation": "89 FR 12345",
                     "name": "Dataset-backed Federal Register row",
                 },
+                {
+                    "identifier": "CFR-40-122-41",
+                    "citation_text": "40 C.F.R. § 122.41",
+                    "normalized_citation": "40 C.F.R. § 122.41",
+                    "name": "Dataset-backed CFR row recovered into federal register corpus",
+                },
             ]
 
     seeds = collect_seeded_bluebook_fuzz_candidates(
         resolver=_FakeResolver(),
         corpus_keys=["federal_register"],
-        examples_per_corpus=1,
+        examples_per_corpus=2,
     )
 
-    assert len(seeds) == 1
-    assert seeds[0].citation_text == "89 FR 12345"
-    assert seeds[0].citation_type_hint == "federal_register"
-    assert seeds[0].corpus_key_hint == "federal_register"
+    by_text = {seed.citation_text: seed for seed in seeds}
+    assert by_text["89 FR 12345"].citation_type_hint == "federal_register"
+    assert by_text["89 FR 12345"].corpus_key_hint == "federal_register"
+    assert by_text["40 C.F.R. § 122.41"].citation_type_hint == "cfr"
+    assert by_text["40 C.F.R. § 122.41"].corpus_key_hint == "federal_register"
 
 
 def test_collect_seeded_bluebook_fuzz_candidates_finds_sparse_federal_register_rows(tmp_path: Path) -> None:
@@ -589,6 +596,39 @@ def test_collect_seeded_bluebook_fuzz_candidates_balances_across_states_and_sour
     assert any("source_ref=memory://MN/part-b" in note for note in note_fragments)
     assert any("source_ref=memory://OR/part-a" in note for note in note_fragments)
     assert any("source_ref=memory://OR/part-b" in note for note in note_fragments)
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_does_not_state_cap_non_state_corpora() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key == "us_code":
+                return ["memory://us_code"]
+            return []
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "title": "42",
+                    "section": str(1980 + index),
+                    "heading": f"Section {index}",
+                }
+                for index in range(10)
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["us_code"],
+        examples_per_corpus=8,
+        sample_count=8,
+        max_examples_per_state=2,
+        max_examples_per_source=8,
+    )
+
+    assert len(seeds) == 8
+    assert {seed.corpus_key_hint for seed in seeds} == {"us_code"}
 
 
 def test_collect_seeded_bluebook_fuzz_candidates_filters_mixed_state_rows_to_requested_state() -> None:
@@ -797,6 +837,62 @@ def test_collect_seeded_bluebook_fuzz_candidates_synthesizes_state_court_rule_se
     assert seeds[0].citation_text == "Minn. Court Rules § 56.03"
     assert seeds[0].state_code == "MN"
     assert seeds[0].corpus_key_hint == "state_court_rules"
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_prefers_court_rule_names_over_internal_sections() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_court_rules":
+                return []
+            return ["memory://or-court-rules"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "OR",
+                    "identifier": "Section-1",
+                    "source_id": "urn:state:or:court-rule:Section-1",
+                    "name": "UTCR 8.120",
+                    "text": "Section Section-1: UTCR 8.120",
+                    "source_url": "https://www.courts.oregon.gov/rules/utcr",
+                },
+                {
+                    "state_code": "OR",
+                    "identifier": "Section-2",
+                    "source_id": "urn:state:or:court-rule:Section-2",
+                    "name": "\u200bLocal Rule 8.013",
+                    "text": "Section Section-2: Local Rule 8.013",
+                    "source_url": "https://www.courts.oregon.gov/rules/local",
+                },
+                {
+                    "state_code": "OR",
+                    "identifier": "Section-3",
+                    "source_id": "urn:state:or:court-rule:Section-3",
+                    "name": "UTCR 21.070(5)",
+                    "text": "Section Section-3: UTCR 21.070(5)",
+                    "source_url": "https://www.courts.oregon.gov/rules/utcr",
+                },
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_court_rules"],
+        state_codes=["OR"],
+        examples_per_corpus=3,
+        sample_count=3,
+        shuffle_seed=0,
+    )
+
+    assert {seed.citation_text for seed in seeds} == {
+        "Or. Court Rules § 8.120",
+        "Or. Court Rules § 8.013",
+        "Or. Court Rules § 21.070(5)",
+    }
+    assert {seed.state_code for seed in seeds} == {"OR"}
+    assert {seed.corpus_key_hint for seed in seeds} == {"state_court_rules"}
 
 
 def test_collect_seeded_bluebook_fuzz_candidates_does_not_seed_admin_from_implemented_statutes() -> None:

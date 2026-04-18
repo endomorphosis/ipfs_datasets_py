@@ -9,6 +9,8 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
     BaseStateScraper,
     NormalizedStatute,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska import AlaskaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky import KentuckyScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota import MinnesotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi import MississippiScraper
@@ -217,7 +219,7 @@ async def test_kentucky_section_builder_rejects_failed_pdf_extraction(monkeypatc
     async def fake_extract(**kwargs) -> dict[str, str]:
         return {"text": "%PDF-1.5 \ufffd\ufffd binary stream endobj startxref", "method": "basic"}
 
-    monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", fake_fetch)
+    monkeypatch.setattr(scraper, "_fetch_official_ky_bytes", fake_fetch)
     monkeypatch.setattr(scraper, "_extract_text_from_document_bytes", fake_extract)
 
     statute = await scraper._build_statute_from_section_page(
@@ -253,7 +255,7 @@ async def test_kentucky_section_builder_splits_effective_date_from_history(monke
             "method": "pdf_processor",
         }
 
-    monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", fake_fetch)
+    monkeypatch.setattr(scraper, "_fetch_official_ky_bytes", fake_fetch)
     monkeypatch.setattr(scraper, "_extract_text_from_document_bytes", fake_extract)
 
     statute = await scraper._build_statute_from_section_page(
@@ -269,6 +271,88 @@ async def test_kentucky_section_builder_splits_effective_date_from_history(monke
     assert statute is not None
     assert statute.metadata.effective_date == "July 15, 2024"
     assert statute.metadata.history == ["Created 2024 Ky. Acts ch. 1."]
+
+
+@pytest.mark.anyio
+async def test_delaware_static_chapter_parser_builds_real_sections(monkeypatch) -> None:
+    scraper = DelawareScraper("DE", "Delaware")
+
+    async def fake_discover_title_links() -> list[tuple[str, str]]:
+        return [("https://delcode.delaware.gov/title1/index.html", "Title 1 - General Provisions")]
+
+    async def fake_discover_chapter_links(title_url: str) -> list[tuple[str, str]]:
+        return [("https://delcode.delaware.gov/title1/c001/index.html", "Chapter 1. DELAWARE CODE")]
+
+    async def fake_fetch_html(url: str, timeout_seconds: int = 6) -> str:
+        return """
+        <div id="TitleHead">
+          <h1>TITLE 1</h1>
+          <h4>General Provisions</h4>
+          <h3>CHAPTER 1. Delaware Code</h3>
+        </div>
+        <div id="CodeBody">
+          <div class="Section">
+            <div class="SectionHead" id="101">§ 101. Designation and citation of Code.</div>
+            <p class="subsection">(a) The laws embraced in this title constitute the Delaware Code.</p>
+          </div>
+          <div class="Section">
+            <div class="SectionHead" id="102">§ 102. Effective date of Code.</div>
+            <p class="subsection">This Code shall become effective upon enactment.</p>
+          </div>
+        </div>
+        """
+
+    monkeypatch.setattr(scraper, "_discover_title_links", fake_discover_title_links)
+    monkeypatch.setattr(scraper, "_discover_chapter_links", fake_discover_chapter_links)
+    monkeypatch.setattr(scraper, "_fetch_official_de_html", fake_fetch_html)
+
+    statutes = await scraper.scrape_code(
+        "Delaware Code",
+        "https://delcode.delaware.gov/index.html",
+        max_statutes=1,
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "101"
+    assert statutes[0].official_cite == "1 Del. C. § 101"
+    assert statutes[0].source_url == "https://delcode.delaware.gov/title1/c001/index.html#101"
+    assert statutes[0].structured_data["source_kind"] == "official_delaware_code_html"
+
+
+@pytest.mark.anyio
+async def test_alaska_ajax_fetch_parser_builds_real_sections(monkeypatch) -> None:
+    scraper = AlaskaScraper("AK", "Alaska")
+
+    async def fake_fetch_chunk(sec_start: str, timeout_seconds: int = 8) -> tuple[str, str]:
+        assert sec_start == "1"
+        return (
+            """
+            <div class="statute">
+              <b><a name="01.05"> </a><h6>Chapter 05. Alaska Statutes.</h6></b>
+              <b><a name="01.05.006"> </a>Sec. 01.05.006. Adoption of Alaska Statutes; notes, headings, and references not law.</b>
+              The bulk formal revision of the laws of Alaska is adopted and enacted as the general and permanent law of Alaska.
+            </div>
+            <div class="statute">
+              <b><a name="01.05.011"> </a>Sec. 01.05.011. Citation.</b>
+              This section may be cited as Alaska Statutes and has enough text for parser acceptance.
+            </div>
+            """,
+            "1.05.011",
+        )
+
+    monkeypatch.setattr(scraper, "_fetch_statute_chunk", fake_fetch_chunk)
+
+    statutes = await scraper.scrape_code(
+        "Alaska Statutes",
+        "https://www.akleg.gov/basis/statutes.asp",
+        max_statutes=1,
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "01.05.006"
+    assert statutes[0].official_cite == "Alaska Stat. § 01.05.006"
+    assert statutes[0].source_url == "https://www.akleg.gov/basis/statutes.asp#01.05.006"
+    assert statutes[0].structured_data["source_kind"] == "official_alaska_statutes_ajax_html"
 
 
 @pytest.mark.anyio

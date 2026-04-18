@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
 import shutil
 from collections import defaultdict
@@ -482,6 +483,7 @@ def scan_hacc_pdfs_for_dockets(
     include_vector_index: bool = True,
     include_formal_logic: bool = True,
     include_router_enrichment: bool = True,
+    router_timeout_seconds: float | None = None,
 ) -> Dict[str, Any]:
     root = Path(scan_root)
     if not root.exists():
@@ -523,6 +525,9 @@ def scan_hacc_pdfs_for_dockets(
                 "include_vector_index": bool(include_vector_index),
                 "include_formal_logic": bool(include_formal_logic),
                 "include_router_enrichment": bool(include_router_enrichment),
+                "router_timeout_seconds": (
+                    None if router_timeout_seconds is None else max(0.0, float(router_timeout_seconds))
+                ),
             },
             "pdf_count": len(all_results),
             "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
@@ -618,41 +623,55 @@ def scan_hacc_pdfs_for_dockets(
             )
 
         case_graph_summary = _build_case_graph_summary(results, case_number=case_number, court=court, case_name=case_name)
-        dataset = ingest_docket_dataset(
-            {
-                "docket_id": case_number,
-                "case_name": case_name,
-                "court": court,
-                "case_number": case_number,
-                "source_type": "hacc_pdf_scan",
-                "documents": documents,
-                "metadata": {
-                    "scan_root": str(root),
-                    "scan_started_at": scan_started_at,
+        previous_router_timeout = os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS")
+        if router_timeout_seconds is not None:
+            os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = str(max(0.0, float(router_timeout_seconds)))
+        try:
+            dataset = ingest_docket_dataset(
+                {
+                    "docket_id": case_number,
+                    "case_name": case_name,
+                    "court": court,
                     "case_number": case_number,
-                    "case_slug": case_slug,
-                    "scan_glob_pattern": glob_pattern,
-                    "max_ocr_pages": int(max_ocr_pages),
-                    "scan_status": "completed",
-                    "collected_pdf_count": len(copied_paths),
-                    "collected_pdf_paths": copied_paths,
-                    "collected_pdf_relative_paths": copied_relative_paths,
-                    "matched_source_paths": [item.path for item in results],
-                    "matched_relative_paths": [item.relative_path for item in results],
-                    "scan_confidence_summary": {
-                        "max_confidence": max(item.confidence for item in results),
-                        "min_confidence": min(item.confidence for item in results),
-                        "average_confidence": sum(item.confidence for item in results) / len(results),
+                    "source_type": "hacc_pdf_scan",
+                    "documents": documents,
+                    "metadata": {
+                        "scan_root": str(root),
+                        "scan_started_at": scan_started_at,
+                        "case_number": case_number,
+                        "case_slug": case_slug,
+                        "scan_glob_pattern": glob_pattern,
+                        "max_ocr_pages": int(max_ocr_pages),
+                        "scan_status": "completed",
+                        "router_timeout_seconds": (
+                            None if router_timeout_seconds is None else max(0.0, float(router_timeout_seconds))
+                        ),
+                        "collected_pdf_count": len(copied_paths),
+                        "collected_pdf_paths": copied_paths,
+                        "collected_pdf_relative_paths": copied_relative_paths,
+                        "matched_source_paths": [item.path for item in results],
+                        "matched_relative_paths": [item.relative_path for item in results],
+                        "scan_confidence_summary": {
+                            "max_confidence": max(item.confidence for item in results),
+                            "min_confidence": min(item.confidence for item in results),
+                            "average_confidence": sum(item.confidence for item in results) / len(results),
+                        },
+                        "scan_case_graph": case_graph_summary,
                     },
-                    "scan_case_graph": case_graph_summary,
                 },
-            },
-            include_knowledge_graph=include_knowledge_graph,
-            include_bm25=include_bm25,
-            include_vector_index=include_vector_index,
-            include_formal_logic=include_formal_logic,
-            include_router_enrichment=include_router_enrichment,
-        )
+                include_knowledge_graph=include_knowledge_graph,
+                include_bm25=include_bm25,
+                include_vector_index=include_vector_index,
+                include_formal_logic=include_formal_logic,
+                include_router_enrichment=include_router_enrichment,
+            )
+        finally:
+            if router_timeout_seconds is None:
+                pass
+            elif previous_router_timeout is None:
+                os.environ.pop("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS", None)
+            else:
+                os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = previous_router_timeout
         parquet_export = export_docket_dataset_single_parquet(dataset, datasets_root / f"{case_slug}.parquet")
         case_outputs.append(
             {
@@ -693,6 +712,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-vector-index", action="store_true", help="Disable dataset vector index generation.")
     parser.add_argument("--no-formal-logic", action="store_true", help="Disable docket formal-logic enrichment.")
     parser.add_argument("--no-router-enrichment", action="store_true", help="Disable router enrichment.")
+    parser.add_argument("--router-timeout-seconds", type=float, help="Override the per-document router enrichment timeout in seconds.")
     parser.add_argument("--manifest-path", help="Read an existing scan manifest instead of running a new scan.")
     parser.add_argument("--summary-only", action="store_true", help="When reading --manifest-path, print only a condensed status summary.")
     return parser
@@ -720,6 +740,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         include_vector_index=not args.no_vector_index,
         include_formal_logic=not args.no_formal_logic,
         include_router_enrichment=not args.no_router_enrichment,
+        router_timeout_seconds=args.router_timeout_seconds,
     )
     print(json.dumps(manifest, indent=2, sort_keys=True))
     return 0

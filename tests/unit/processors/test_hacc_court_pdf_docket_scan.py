@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from reportlab.pdfgen import canvas
@@ -216,6 +217,51 @@ def test_scan_hacc_pdfs_for_dockets_enables_full_enrichment_by_default(tmp_path:
     assert manifest["scan_parameters"]["include_vector_index"] is True
     assert manifest["scan_parameters"]["include_formal_logic"] is True
     assert manifest["scan_parameters"]["include_router_enrichment"] is True
+
+
+def test_scan_hacc_pdfs_for_dockets_sets_router_timeout_env_for_packaging(monkeypatch, tmp_path: Path) -> None:
+    scan_root = tmp_path / "hacc"
+    _write_pdf(
+        scan_root / "case_a" / "complaint.pdf",
+        [
+            "IN THE UNITED STATES DISTRICT COURT",
+            "FOR THE DISTRICT OF EXAMPLE",
+            "Case No. 2:25-cv-4004",
+            "Roe v. Example Holdings",
+            "Complaint for damages",
+        ],
+    )
+
+    captured = {}
+
+    def _fake_ingest(payload, **kwargs):
+        captured["router_timeout_env"] = os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS")
+        captured["payload"] = payload
+        captured["kwargs"] = kwargs
+        return {"payload": payload, "kwargs": kwargs}
+
+    def _fake_export(dataset, output_path):
+        output_path.write_text("stub", encoding="utf-8")
+        return {
+            "parquet_path": str(output_path),
+            "row_count": 1,
+            "section_counts": {"dataset_core": 1},
+        }
+
+    monkeypatch.setattr(scan_module, "ingest_docket_dataset", _fake_ingest)
+    monkeypatch.setattr(scan_module, "export_docket_dataset_single_parquet", _fake_export)
+
+    manifest = scan_hacc_pdfs_for_dockets(
+        scan_root,
+        output_dir=tmp_path / "output",
+        router_timeout_seconds=1.5,
+    )
+
+    assert captured["router_timeout_env"] == "1.5"
+    assert captured["kwargs"]["include_router_enrichment"] is True
+    assert captured["payload"]["metadata"]["router_timeout_seconds"] == 1.5
+    assert manifest["scan_parameters"]["router_timeout_seconds"] == 1.5
+    assert os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS") is None
 
 
 def test_manifest_summary_helper_reads_condensed_status(tmp_path: Path) -> None:
