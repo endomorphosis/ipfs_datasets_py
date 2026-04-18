@@ -491,6 +491,38 @@ def test_legal_source_recovery_citation_url_hints_cover_federal_citations():
     )
 
 
+def test_legal_source_recovery_citation_url_hints_preserve_expanded_federal_forms():
+    usc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="5 U.S.C. section 552",
+        normalized_citation="5 U.S.C. section 552",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    public_law_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Public Law No. 111-148",
+        normalized_citation="Public Law No. 111-148",
+        corpus_key="us_code",
+        state_code=None,
+    )
+    cfr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="17 CFR 240.10b-5",
+        normalized_citation="17 C.F.R. § 240.10b-5",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+    fr_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="87 Federal Register 54321",
+        normalized_citation="87 Federal Register 54321",
+        corpus_key="federal_register",
+        state_code=None,
+    )
+
+    assert usc_results[0]["url"] == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title5-section552"
+    assert public_law_results[0]["url"] == "https://www.congress.gov/public-law/111th-congress/148"
+    assert cfr_results[0]["url"] == "https://www.ecfr.gov/current/title-17/section-240.10b-5"
+    assert fr_results[0]["url"] == "https://www.federalregister.gov/citation/87-FR-54321"
+
+
 def test_legal_source_recovery_official_hint_domains_cover_bluebook_fuzz_states():
     assert LegalSourceRecoveryWorkflow._official_hint_domains(corpus_key="state_laws", state_code="MN")[:1] == [
         "revisor.mn.gov"

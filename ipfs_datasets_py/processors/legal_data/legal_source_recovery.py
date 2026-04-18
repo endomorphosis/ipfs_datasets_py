@@ -695,7 +695,7 @@ class LegalSourceRecoveryWorkflow:
         if corpus == "us_code":
             from ..legal_scrapers.federal_scrapers.us_code_scraper import build_public_law_url, build_uscode_section_url
 
-            usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*([0-9A-Za-z][\w\-]*(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
+            usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+(?:§|section|sec\.?)?\s*([0-9A-Za-z][\w\-]*(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
             if usc_match:
                 title, section = usc_match.groups()
                 rows.append(
@@ -707,7 +707,7 @@ class LegalSourceRecoveryWorkflow:
                         "snippet": "Citation-derived official U.S. Code section URL.",
                     }
                 )
-            public_law_match = re.search(r"(?:Pub\.?\s+L\.?|P\.L\.?)\s+(?:No\.?\s*)?([0-9]+)-([0-9]+)", text, re.IGNORECASE)
+            public_law_match = re.search(r"(?:Pub\.?\s+L\.?|P\.L\.?|Public\s+Law)\s+(?:No\.?\s*)?([0-9]+)-([0-9]+)", text, re.IGNORECASE)
             if public_law_match:
                 congress, law_number = public_law_match.groups()
                 rows.append(
@@ -727,7 +727,7 @@ class LegalSourceRecoveryWorkflow:
                 build_federal_register_citation_url,
             )
 
-            cfr_match = re.search(r"\b([0-9]+)\s+C\.?F\.?R\.?\s+§?\s*([0-9]+(?:\.[0-9]+)?(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
+            cfr_match = re.search(r"\b([0-9]+)\s+C\.?F\.?R\.?\s+(?:§|section|sec\.?)?\s*([0-9]+(?:\.[\w-]+)*(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
             if cfr_match:
                 title, section = cfr_match.groups()
                 rows.append(
@@ -739,7 +739,7 @@ class LegalSourceRecoveryWorkflow:
                         "snippet": "Citation-derived official eCFR section URL.",
                     }
                 )
-            fr_match = re.search(r"\b([0-9]+)\s+(?:FR|Fed\.?\s+Reg\.?)\s+([0-9]+)", text, re.IGNORECASE)
+            fr_match = re.search(r"\b([0-9]+)\s+(?:FR|Fed\.?\s+Reg\.?|Fed\.?\s+Register|Federal\s+Register)\s+([0-9]+)", text, re.IGNORECASE)
             if fr_match:
                 volume, page = fr_match.groups()
                 rows.append(
