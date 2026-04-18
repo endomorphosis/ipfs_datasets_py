@@ -663,6 +663,7 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_YEAR", "2024")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "2")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "25")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
 
     from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
     observed_search_kwargs = {}
@@ -734,6 +735,7 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
 async def test_common_crawl_fallback_prioritizes_citation_hint_domains(monkeypatch):
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
 
     from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery
     from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
@@ -778,6 +780,7 @@ async def test_legal_source_recovery_can_skip_live_search_for_common_crawl_fuzz(
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", "1")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
 
     from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
 

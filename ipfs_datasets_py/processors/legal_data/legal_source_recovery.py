@@ -1020,7 +1020,7 @@ class LegalSourceRecoveryWorkflow:
         try:
             payload = await self._run_sync_with_timeout(
                 _search_domains,
-                timeout_seconds=_COMMON_CRAWL_TIMEOUT_SECONDS,
+                timeout_seconds=(_COMMON_CRAWL_TIMEOUT_SECONDS * max(1, len(domains))) + 2.0,
             )
         except asyncio.TimeoutError:
             backend_status["common_crawl_error"] = "common_crawl_timeout"
