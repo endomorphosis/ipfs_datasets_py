@@ -36,7 +36,11 @@ from .orchestration.planner import SearchPlanner
 from .orchestration.scoring import ProviderScorer
 from .structured_schema_compat import normalize_domain, normalize_structured_fields
 from .search_engines.orchestrator import MultiEngineOrchestrator, OrchestratorConfig
-from ..legal_scrapers.shared_fetch_cache import SharedFetchCache
+from ..legal_scrapers.shared_fetch_cache import (
+    SharedFetchCache,
+    decode_cache_json_value,
+    encode_cache_json_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +181,7 @@ class UnifiedWebArchivingAPI:
                 "metadata": dict(response.document.metadata or {}),
                 "extraction_provenance": dict(response.document.extraction_provenance or {}),
             }
-        return {
+        return encode_cache_json_value({
             "url": response.url,
             "document": document_payload,
             "trace": cls._trace_to_payload(response.trace),
@@ -185,9 +189,10 @@ class UnifiedWebArchivingAPI:
             "success": bool(response.success),
             "quality_score": float(response.quality_score or 0.0),
             "metadata": dict(response.metadata or {}),
-        }
+        })
 
     def _cache_payload_to_response(self, payload: Dict[str, Any]) -> UnifiedFetchResponse:
+        payload = decode_cache_json_value(payload)
         trace_payload = payload.get("trace")
         trace = None
         if isinstance(trace_payload, dict):

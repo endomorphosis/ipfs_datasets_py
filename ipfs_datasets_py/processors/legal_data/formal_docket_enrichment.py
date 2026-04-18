@@ -342,6 +342,9 @@ def enrich_docket_documents_with_formal_logic(
         _trace(f"document_id={document_id} stage=proofs start")
         propositions = [_proposition_from_statement(stmt) for stmt in statements]
         propositions.extend(list(structured_signals.get("propositions") or []))
+        propositions.extend(_propositions_from_fol_formulas(fol_formulas))
+        propositions.extend(_propositions_from_logic_formulas(dcec_formulas, logic_system="deontic_cognitive_event_calculus"))
+        propositions.extend(_propositions_from_logic_formulas(temporal_formula_strings, logic_system="deontic_temporal_first_order_logic"))
         propositions = [prop for prop in propositions if prop]
         for proposition in propositions:
             proof = _build_formal_proof(

@@ -7,6 +7,8 @@ from typing import List, Dict, Optional, Tuple
 import re
 from urllib.parse import urljoin
 
+from ipfs_datasets_py.utils import anyio_compat as asyncio
+
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -17,7 +19,7 @@ class KentuckyScraper(BaseStateScraper):
     _KY_STATUTES_BASE = "https://apps.legislature.ky.gov/law/statutes/"
     _KY_SECTION_URL_RE = re.compile(r"/law/statutes/statute\.aspx\?id=\d+$", re.IGNORECASE)
     _KY_CHAPTER_URL_RE = re.compile(r"/law/statutes/chapter\.aspx\?id=\d+$", re.IGNORECASE)
-    _CHAPTER_LABEL_RE = re.compile(r"\bchapter\s+([A-Za-z0-9][A-Za-z0-9\.-]*)\b", re.IGNORECASE)
+    _CHAPTER_LABEL_RE = re.compile(r"^\s*chapter\s+(\d+[A-Za-z]?)\b", re.IGNORECASE)
     _SECTION_LABEL_RE = re.compile(r"^\s*(?:KRS\s+)?(?:§\s*)?(\d+\.\d+[A-Za-z0-9\.-]*|\.\d+[A-Za-z0-9\.-]*)\b")
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
@@ -46,8 +48,44 @@ class KentuckyScraper(BaseStateScraper):
             "type": "Code"
         }]
 
+    async def _fetch_official_ky_bytes(self, url: str, timeout_seconds: int = 5) -> bytes:
+        """Fetch Kentucky's official KRS pages directly.
+
+        The official KRS index/chapter/section endpoints respond quickly to
+        normal HTTP requests, while the generic archival fetch chain may import
+        and initialize unrelated web/search infrastructure. Keep this official
+        corpus path direct and bounded.
+        """
+        timeout = max(1, int(timeout_seconds or 5))
+
+        def _request() -> bytes:
+            try:
+                import requests
+
+                response = requests.get(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-kentucky-krs-scraper/2.0",
+                        "Accept": "text/html,application/pdf,*/*;q=0.8",
+                    },
+                    timeout=timeout,
+                )
+                if int(response.status_code or 0) != 200:
+                    return b""
+                return bytes(response.content or b"")
+            except Exception:
+                return b""
+
+        try:
+            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
+        except asyncio.TimeoutError:
+            payload = b""
+
+        self._record_fetch_event(provider="requests_direct", success=bool(payload))
+        return payload
+
     async def _fetch_html(self, url: str, timeout_seconds: int = 5) -> str:
-        payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+        payload = await self._fetch_official_ky_bytes(url, timeout_seconds=timeout_seconds)
         if not payload:
             return ""
         return payload.decode("utf-8", errors="replace")
@@ -113,6 +151,8 @@ class KentuckyScraper(BaseStateScraper):
                 continue
             if href in seen:
                 continue
+            if not label.upper().startswith("CHAPTER "):
+                continue
             chapter_number = self._extract_chapter_number(label)
             if not chapter_number:
                 continue
@@ -163,7 +203,7 @@ class KentuckyScraper(BaseStateScraper):
         chapter_label: str,
         chapter_number: str,
     ) -> Optional[NormalizedStatute]:
-        raw_bytes = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=5)
+        raw_bytes = await self._fetch_official_ky_bytes(section_url, timeout_seconds=5)
         extracted_text = ""
         method = "unknown"
         if raw_bytes:

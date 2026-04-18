@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 import os
+import base64
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,40 @@ from typing import Any, Dict, Optional
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 logger = logging.getLogger(__name__)
+
+_BINARY_JSON_MARKER = "__ipfs_datasets_py_binary_v1__"
+
+
+def encode_cache_json_value(value: Any) -> Any:
+    """Convert cache payload values into JSON-safe equivalents."""
+    if isinstance(value, bytes):
+        return {
+            _BINARY_JSON_MARKER: True,
+            "encoding": "base64",
+            "length": len(value),
+            "data": base64.b64encode(value).decode("ascii"),
+        }
+    if isinstance(value, bytearray):
+        return encode_cache_json_value(bytes(value))
+    if isinstance(value, dict):
+        return {str(key): encode_cache_json_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [encode_cache_json_value(item) for item in value]
+    return value
+
+
+def decode_cache_json_value(value: Any) -> Any:
+    """Restore binary values encoded by encode_cache_json_value."""
+    if isinstance(value, dict):
+        if value.get(_BINARY_JSON_MARKER) is True and value.get("encoding") == "base64":
+            try:
+                return base64.b64decode(str(value.get("data") or "").encode("ascii"))
+            except Exception:
+                return b""
+        return {key: decode_cache_json_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [decode_cache_json_value(item) for item in value]
+    return value
 
 
 class SharedFetchCache:
@@ -132,6 +167,7 @@ class SharedFetchCache:
             if not isinstance(index_payload, dict) or not isinstance(payload, dict):
                 return None
 
+            payload = decode_cache_json_value(payload)
             payload["_cache"] = {
                 "namespace": namespace,
                 "cache_key": key,
@@ -160,7 +196,7 @@ class SharedFetchCache:
 
         normalized_url = self.normalize_url(url)
         cached_at = datetime.now(timezone.utc).isoformat()
-        serializable_payload = dict(payload)
+        serializable_payload = encode_cache_json_value(dict(payload))
         serializable_payload.pop("_cache", None)
 
         self._write_json_atomic(payload_path, serializable_payload)

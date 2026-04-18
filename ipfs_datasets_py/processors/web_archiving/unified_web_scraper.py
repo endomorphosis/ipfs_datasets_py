@@ -39,7 +39,11 @@ from urllib.parse import urlparse, urljoin
 import hashlib
 
 from ..playwright_limiter import acquire_playwright_slot
-from ..legal_scrapers.shared_fetch_cache import SharedFetchCache
+from ..legal_scrapers.shared_fetch_cache import (
+    SharedFetchCache,
+    decode_cache_json_value,
+    encode_cache_json_value,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +264,7 @@ class UnifiedWebScraper:
 
     @staticmethod
     def _serialize_scraper_result(result: ScraperResult) -> Dict[str, Any]:
-        return {
+        return encode_cache_json_value({
             "url": result.url,
             "content": result.content,
             "html": result.html,
@@ -273,10 +277,11 @@ class UnifiedWebScraper:
             "errors": list(result.errors or []),
             "timestamp": result.timestamp,
             "extraction_time": float(result.extraction_time or 0.0),
-        }
+        })
 
     @staticmethod
     def _deserialize_scraper_result(payload: Dict[str, Any]) -> ScraperResult:
+        payload = decode_cache_json_value(payload)
         method_value = str(payload.get("method_used") or "").strip()
         method_used = None
         if method_value:

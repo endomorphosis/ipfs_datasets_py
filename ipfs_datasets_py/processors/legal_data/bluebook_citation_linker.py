@@ -1529,6 +1529,32 @@ class BluebookCitationResolver:
             if subclauses:
                 clauses.append(f"({' OR '.join(subclauses)})")
             return clauses, params
+        if corpus_key == "caselaw_access_project" and citation.type == "case":
+            citation_fields = [
+                field
+                for field in ("official_cite", "citation", "citations", "bluebook_citation", "identifier")
+                if field in schema
+            ]
+            reporter_field = next((field for field in _REPORTER_FIELDS if field in schema), None)
+            page_field = next((field for field in _PAGE_FIELDS if field in schema), None)
+            subclauses: List[str] = []
+            for field in citation_fields:
+                for term in _citation_match_terms(citation)[:8]:
+                    if not term:
+                        continue
+                    subclauses.append(f"lower(CAST({field} AS VARCHAR)) = lower(?)")
+                    params.append(term)
+                    if len(term) >= 6:
+                        subclauses.append(f"lower(CAST({field} AS VARCHAR)) LIKE lower(?)")
+                        params.append(f"%{term}%")
+            if reporter_field and page_field and citation.reporter and citation.page:
+                subclauses.append(
+                    f"(lower(CAST({reporter_field} AS VARCHAR)) = lower(?) AND CAST({page_field} AS VARCHAR) = ?)"
+                )
+                params.extend([str(citation.reporter), str(citation.page)])
+            if subclauses:
+                clauses.append(f"({' OR '.join(subclauses)})")
+            return clauses, params
         search_fields = [
             field for field in (_OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS + _TITLE_FIELDS + _REPORTER_FIELDS + _TEXT_FIELDS)
             if field in schema
@@ -1656,6 +1682,15 @@ class BluebookCitationResolver:
             return 0, ""
 
         if citation.type == "case":
+            for field in _OFFICIAL_CITE_FIELDS + _IDENTIFIER_FIELDS:
+                if field not in row:
+                    continue
+                value_norm = _normalize_text(row.get(field))
+                value_compact = _compact_alnum(row.get(field))
+                if (value_norm and any(term in value_norm for term in normalized_terms)) or (
+                    value_compact and any(term in value_compact for term in compact_terms)
+                ):
+                    return 4, field
             row_volume = str(_first_present(row, _VOLUME_FIELDS) or "")
             row_page = str(_first_present(row, _PAGE_FIELDS) or "")
             if not (row_volume and row_page and row_volume == str(citation.volume or "") and row_page == str(citation.page or "")):
