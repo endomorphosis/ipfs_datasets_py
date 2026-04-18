@@ -39,9 +39,10 @@ class ConnecticutScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=180)
+        return_threshold = self._bounded_return_threshold(30)
+        live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
 
-        archival_stubs = await self._scrape_archived_chapter_stubs(code_name, max_statutes=140)
+        archival_stubs = await self._scrape_archived_chapter_stubs(code_name, max_statutes=max(10, return_threshold))
 
         candidate_urls = [
             code_url,
@@ -60,13 +61,13 @@ class ConnecticutScraper(BaseStateScraper):
             statutes = await self._custom_scrape_connecticut(code_name, candidate, "Conn. Gen. Stat.", max_sections=260)
             if len(statutes) > len(best):
                 best = statutes
-            if len(statutes) >= 30:
+            if len(statutes) >= return_threshold:
                 return statutes
 
             generic = await self._generic_scrape(code_name, candidate, "Conn. Gen. Stat.", max_sections=260)
             if len(generic) > len(best):
                 best = generic
-            if len(generic) >= 30:
+            if len(generic) >= return_threshold:
                 return generic
 
         if len(live_stubs) > len(best):

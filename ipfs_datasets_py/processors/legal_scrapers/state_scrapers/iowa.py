@@ -37,9 +37,10 @@ class IowaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=220)
+        return_threshold = self._bounded_return_threshold(30)
+        live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=max(10, return_threshold))
 
-        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=140)
+        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=max(10, return_threshold))
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -54,7 +55,7 @@ class IowaScraper(BaseStateScraper):
 
         _merge(live_stubs)
         _merge(archival_stubs)
-        if len(merged) >= 30:
+        if len(merged) >= return_threshold:
             return merged
 
         candidate_urls = [
@@ -78,8 +79,8 @@ class IowaScraper(BaseStateScraper):
                 best_statutes = statutes
             if len(merged) > len(best_statutes):
                 best_statutes = list(merged)
-            if len(statutes) >= 30:
-                return list(merged) if len(merged) >= 30 else statutes
+            if len(statutes) >= return_threshold:
+                return list(merged) if len(merged) >= return_threshold else statutes
 
         if len(merged) > len(best_statutes):
             best_statutes = list(merged)

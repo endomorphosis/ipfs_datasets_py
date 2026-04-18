@@ -73,8 +73,9 @@ class OklahomaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         best_archival: List[NormalizedStatute] = []
+        return_threshold = self._bounded_return_threshold(30)
         for attempt in range(3):
-            archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=320)
+            archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=max(10, return_threshold))
             if len(archival) > len(best_archival):
                 best_archival = archival
             if best_archival:

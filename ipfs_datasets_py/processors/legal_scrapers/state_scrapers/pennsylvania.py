@@ -45,6 +45,7 @@ class PennsylvaniaScraper(BaseStateScraper):
         seen = set()
         merged: List[NormalizedStatute] = []
         merged_keys = set()
+        return_threshold = self._bounded_return_threshold(80)
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
@@ -61,7 +62,7 @@ class PennsylvaniaScraper(BaseStateScraper):
 
             statutes = await self._generic_scrape(code_name, candidate, "Pa. Cons. Stat.", max_sections=900)
             _merge(statutes)
-            if len(merged) >= 80:
+            if len(merged) >= return_threshold:
                 return merged
 
         return merged

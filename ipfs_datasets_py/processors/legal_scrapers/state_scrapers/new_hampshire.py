@@ -65,12 +65,13 @@ class NewHampshireScraper(BaseStateScraper):
             "https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
             "https://web.archive.org/web/20250101000000/https://gc.nh.gov/rsa/html/NHTOC.htm",
         ]
+        return_threshold = self._bounded_return_threshold(40)
         # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
-        for archived in await self._discover_archived_rsa_urls(limit=80):
+        for archived in await self._discover_archived_rsa_urls(limit=max(10, return_threshold)):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
 
-        archived_title_stubs = await self._scrape_archived_title_stubs(code_name, max_statutes=120)
+        archived_title_stubs = await self._scrape_archived_title_stubs(code_name, max_statutes=max(10, return_threshold))
 
         seen = set()
         merged: List[NormalizedStatute] = []
@@ -85,7 +86,7 @@ class NewHampshireScraper(BaseStateScraper):
                 merged.append(statute)
 
         _merge(archived_title_stubs)
-        if len(merged) >= 40:
+        if len(merged) >= return_threshold:
             return merged
 
         for candidate in candidate_urls:
@@ -101,7 +102,7 @@ class NewHampshireScraper(BaseStateScraper):
             )
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
-            if len(merged) >= 40:
+            if len(merged) >= return_threshold:
                 return merged
 
         return merged

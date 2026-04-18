@@ -65,6 +65,7 @@ class NorthDakotaScraper(BaseStateScraper):
 
         best: List[NormalizedStatute] = []
         seen = set()
+        return_threshold = self._bounded_return_threshold(60)
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -73,11 +74,13 @@ class NorthDakotaScraper(BaseStateScraper):
             statutes = self._filter_non_code_results(statutes)
             if len(statutes) > len(best):
                 best = statutes
+            if len(best) >= return_threshold:
+                return best
 
-        if len(best) >= 60:
+        if len(best) >= return_threshold:
             return best
 
-        pdf_statutes = await self._scrape_cencode_pdfs(code_name, max_statutes=260)
+        pdf_statutes = await self._scrape_cencode_pdfs(code_name, max_statutes=max(10, return_threshold))
         if pdf_statutes:
             return pdf_statutes
         return best

@@ -18,6 +18,7 @@ import asyncio
 import importlib.util
 import json
 import os
+import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -94,6 +95,20 @@ def _normalize_corpora(value: str | Sequence[str] | None) -> List[str]:
             if corpus not in corpora:
                 corpora.append(corpus)
     return corpora
+
+
+def _decode_json_from_mixed_output(text: str) -> Dict[str, Any]:
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(text):
+        if char != "{":
+            continue
+        try:
+            value, _ = decoder.raw_decode(text[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            return value
+    raise ValueError("no JSON object found")
 
 
 @dataclass
@@ -855,42 +870,102 @@ class LegalScraperDaemon:
         output_dir.mkdir(parents=True, exist_ok=True)
         if self.agentic_runner is not None:
             return await self.agentic_runner(corpus=corpus, states=list(self.states), output_dir=str(output_dir))
-        try:
-            from ipfs_datasets_py.processors.legal_scrapers.state_laws_agentic_daemon import (
-                StateLawsAgenticDaemon,
-                StateLawsAgenticDaemonConfig,
-            )
+        return await self._run_agentic_corpus_subprocess(corpus=corpus, output_dir=output_dir)
 
-            daemon = StateLawsAgenticDaemon(
-                StateLawsAgenticDaemonConfig(
-                    corpus_key=corpus,
-                    states=list(self.states),
-                    output_dir=str(output_dir),
-                    max_cycles=max(1, int(config.max_cycles)),
-                    cycle_interval_seconds=float(config.cycle_interval_seconds),
-                    max_statutes=int(config.max_statutes or 0),
-                    target_score=float(config.target_score),
-                    stop_on_target_score=bool(config.stop_on_target_score),
-                    per_state_timeout_seconds=float(config.per_state_timeout_seconds),
-                    scrape_timeout_seconds=float(config.scrape_timeout_seconds),
-                    admin_agentic_max_candidates_per_state=max(1, int(config.admin_agentic_max_candidates_per_state)),
-                    admin_agentic_max_fetch_per_state=max(1, int(config.admin_agentic_max_fetch_per_state)),
-                    admin_agentic_max_results_per_domain=max(1, int(config.admin_agentic_max_results_per_domain)),
-                    admin_agentic_max_hops=max(0, int(config.admin_agentic_max_hops)),
-                    admin_agentic_max_pages=max(1, int(config.admin_agentic_max_pages)),
-                    admin_parallel_assist_enabled=bool(config.admin_parallel_assist_enabled),
-                    admin_parallel_assist_state_limit=max(0, int(config.admin_parallel_assist_state_limit)),
-                    admin_parallel_assist_max_urls_per_domain=max(
-                        1,
-                        int(config.admin_parallel_assist_max_urls_per_domain),
-                    ),
-                    admin_parallel_assist_timeout_seconds=max(1.0, float(config.admin_parallel_assist_timeout_seconds)),
-                )
-            )
-            summary = await daemon.run()
-            return {"status": "success", "output_dir": str(output_dir), "summary": summary}
+    async def _run_agentic_corpus_subprocess(self, *, corpus: str, output_dir: Path) -> Dict[str, Any]:
+        config = self.config.agentic_corpora
+        command = [
+            sys.executable,
+            "-m",
+            "ipfs_datasets_py.processors.legal_scrapers.state_laws_agentic_daemon",
+            "--corpus",
+            str(corpus),
+            "--states",
+            ",".join(self.states),
+            "--output-dir",
+            str(output_dir),
+            "--max-cycles",
+            str(max(1, int(config.max_cycles))),
+            "--max-statutes",
+            str(int(config.max_statutes or 0)),
+            "--per-state-timeout-seconds",
+            str(float(config.per_state_timeout_seconds)),
+            "--scrape-timeout-seconds",
+            str(float(config.scrape_timeout_seconds)),
+            "--admin-agentic-max-candidates-per-state",
+            str(max(1, int(config.admin_agentic_max_candidates_per_state))),
+            "--admin-agentic-max-fetch-per-state",
+            str(max(1, int(config.admin_agentic_max_fetch_per_state))),
+            "--admin-agentic-max-results-per-domain",
+            str(max(1, int(config.admin_agentic_max_results_per_domain))),
+            "--admin-agentic-max-hops",
+            str(max(0, int(config.admin_agentic_max_hops))),
+            "--admin-agentic-max-pages",
+            str(max(1, int(config.admin_agentic_max_pages))),
+            "--admin-parallel-assist-state-limit",
+            str(max(0, int(config.admin_parallel_assist_state_limit))),
+            "--admin-parallel-assist-max-urls-per-domain",
+            str(max(1, int(config.admin_parallel_assist_max_urls_per_domain))),
+            "--admin-parallel-assist-timeout-seconds",
+            str(max(1.0, float(config.admin_parallel_assist_timeout_seconds))),
+            "--target-score",
+            str(float(config.target_score)),
+        ]
+        if not bool(config.admin_parallel_assist_enabled):
+            command.append("--no-admin-parallel-assist-enabled")
+        if bool(config.stop_on_target_score):
+            command.append("--stop-on-target-score")
+
+        process = await asyncio.create_subprocess_exec(
+            *command,
+            cwd=str(Path.cwd()),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        timeout = float(config.scrape_timeout_seconds or 0.0)
+        try:
+            if timeout > 0:
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+            else:
+                stdout, stderr = await process.communicate()
+        except asyncio.TimeoutError:
+            process.terminate()
+            try:
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=10.0)
+            except asyncio.TimeoutError:
+                process.kill()
+                stdout, stderr = await process.communicate()
+            return {
+                "status": "error",
+                "error": f"agentic corpus subprocess timed out after {timeout:.1f}s",
+                "exception_type": "TimeoutError",
+                "output_dir": str(output_dir),
+                "command": command,
+                "stdout_tail": stdout.decode("utf-8", errors="replace")[-4000:],
+                "stderr_tail": stderr.decode("utf-8", errors="replace")[-4000:],
+            }
         except Exception as exc:
             return {"status": "error", "error": str(exc), "output_dir": str(output_dir)}
+        stdout_text = stdout.decode("utf-8", errors="replace")
+        stderr_text = stderr.decode("utf-8", errors="replace")
+        summary: Dict[str, Any]
+        try:
+            summary = _decode_json_from_mixed_output(stdout_text)
+        except Exception:
+            summary = {
+                "status": "error",
+                "error": "agentic corpus subprocess did not return valid JSON",
+                "stdout_tail": stdout_text[-4000:],
+                "stderr_tail": stderr_text[-4000:],
+            }
+        status = "success" if int(process.returncode or 0) == 0 and str(summary.get("status") or "").lower() != "error" else "error"
+        return {
+            "status": status,
+            "output_dir": str(output_dir),
+            "summary": summary,
+            "returncode": process.returncode,
+            "stderr_tail": stderr_text[-4000:],
+        }
 
 
 def build_arg_parser() -> argparse.ArgumentParser:

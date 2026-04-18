@@ -58,7 +58,8 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=140)
+        return_threshold = self._bounded_return_threshold(30)
+        archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=max(10, return_threshold))
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -72,12 +73,12 @@ class HawaiiScraper(BaseStateScraper):
                 merged.append(statute)
 
         _merge(archival_stubs)
-        if len(merged) >= 30:
+        if len(merged) >= return_threshold:
             return merged
 
         try:
             archival = await asyncio.wait_for(
-                self._scrape_archived_hrscurrent(code_name, max_statutes=80),
+                self._scrape_archived_hrscurrent(code_name, max_statutes=max(10, return_threshold)),
                 timeout=220,
             )
         except asyncio.TimeoutError:
@@ -117,8 +118,8 @@ class HawaiiScraper(BaseStateScraper):
                 best = statutes
             if len(merged) > len(best):
                 best = list(merged)
-            if len(statutes) >= 30:
-                return list(merged) if len(merged) >= 30 else statutes
+            if len(statutes) >= return_threshold:
+                return list(merged) if len(merged) >= return_threshold else statutes
 
         if len(merged) > len(best):
             best = list(merged)

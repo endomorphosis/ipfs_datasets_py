@@ -40,8 +40,13 @@ class UtahScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        live_title_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=80)
-        live_chapter_stubs = await self._scrape_live_chapter_stubs(code_name, title_limit=12, per_title_limit=10)
+        return_threshold = self._bounded_return_threshold(40)
+        live_title_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
+        live_chapter_stubs = await self._scrape_live_chapter_stubs(
+            code_name,
+            title_limit=max(1, min(12, return_threshold)),
+            per_title_limit=max(1, min(10, return_threshold)),
+        )
 
         candidate_urls = [
             code_url,
@@ -51,7 +56,7 @@ class UtahScraper(BaseStateScraper):
             "https://law.justia.com/codes/utah/",
             "https://web.archive.org/web/20250101000000/https://law.justia.com/codes/utah/",
         ]
-        for archived in await self._discover_archived_title_urls(limit=220):
+        for archived in await self._discover_archived_title_urls(limit=max(10, return_threshold)):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
 
@@ -69,7 +74,7 @@ class UtahScraper(BaseStateScraper):
 
         _merge(live_title_stubs)
         _merge(live_chapter_stubs)
-        if len(merged) >= 40:
+        if len(merged) >= return_threshold:
             return merged
 
         for candidate in candidate_urls:
@@ -79,7 +84,7 @@ class UtahScraper(BaseStateScraper):
 
             statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=260)
             _merge(statutes)
-            if len(merged) >= 40:
+            if len(merged) >= return_threshold:
                 return merged
 
         return merged

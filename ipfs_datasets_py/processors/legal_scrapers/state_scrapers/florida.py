@@ -38,6 +38,7 @@ class FloridaScraper(BaseStateScraper):
 
         seen = set()
         best: List[NormalizedStatute] = []
+        return_threshold = self._bounded_return_threshold(30)
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -45,7 +46,7 @@ class FloridaScraper(BaseStateScraper):
             statutes = await self._generic_scrape(code_name, candidate, "Fla. Stat.", max_sections=260)
             if len(statutes) > len(best):
                 best = statutes
-            if len(statutes) >= 30:
+            if len(statutes) >= return_threshold:
                 return statutes
 
         return best

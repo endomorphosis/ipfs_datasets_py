@@ -81,9 +81,14 @@ class GeorgiaScraper(BaseStateScraper):
             "https://law.justia.com/codes/georgia/",
         ]
 
-        justia_statutes = await self._scrape_justia_year(code_name, year="2024", max_statutes=180)
+        return_threshold = self._bounded_return_threshold(60)
+        justia_statutes = await self._scrape_justia_year(
+            code_name,
+            year="2024",
+            max_statutes=max(10, return_threshold),
+        )
         justia_statutes = self._filter_non_code_results(justia_statutes)
-        if len(justia_statutes) >= 60:
+        if len(justia_statutes) >= return_threshold:
             return justia_statutes
 
         best_statutes: List[NormalizedStatute] = []
@@ -102,7 +107,7 @@ class GeorgiaScraper(BaseStateScraper):
                     result = self._filter_non_code_results(result)
                     if len(result) > len(best_statutes):
                         best_statutes = result
-                    if len(result) >= 30:
+                    if len(result) >= self._bounded_return_threshold(30):
                         return result
                 except Exception as e:
                     self.logger.warning(f"Georgia Playwright failed: {e}, falling back")
@@ -111,7 +116,7 @@ class GeorgiaScraper(BaseStateScraper):
             generic = self._filter_non_code_results(generic)
             if len(generic) > len(best_statutes):
                 best_statutes = generic
-            if len(generic) >= 30:
+            if len(generic) >= self._bounded_return_threshold(30):
                 return generic
 
         if best_statutes:

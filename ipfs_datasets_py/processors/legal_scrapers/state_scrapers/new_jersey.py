@@ -42,8 +42,9 @@ class NewJerseyScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        statutes = await self._scrape_via_xhitlist(code_name)
-        if len(statutes) >= 20:
+        return_threshold = self._bounded_return_threshold(20)
+        statutes = await self._scrape_via_xhitlist(code_name, max_sections=max(10, return_threshold))
+        if len(statutes) >= return_threshold:
             return statutes
 
         self.logger.warning(

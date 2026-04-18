@@ -9,11 +9,20 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_scraper_daemon import (
     LegalScraperDaemon,
     LegalScraperDaemonConfig,
     StateRefreshDaemonConfig,
+    _decode_json_from_mixed_output,
     _normalize_corpora,
     _normalize_states,
     config_from_args,
     build_arg_parser,
 )
+
+
+def test_decode_json_from_mixed_output_skips_import_logs():
+    payload = _decode_json_from_mixed_output(
+        '2026-04-18 09:17:43,013 [WARNING] noisy import log\n{"status": "success", "rows": 3}\n'
+    )
+
+    assert payload == {"status": "success", "rows": 3}
 
 
 @pytest.mark.asyncio

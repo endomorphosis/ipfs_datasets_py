@@ -44,7 +44,8 @@ class LouisianaScraper(BaseStateScraper):
         Louisiana live endpoints can be brittle in automation contexts.
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
-        archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=120)
+        return_threshold = self._bounded_return_threshold(30)
+        archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=max(10, return_threshold))
         if archival:
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
             return archival
@@ -55,6 +56,7 @@ class LouisianaScraper(BaseStateScraper):
             "La. Rev. Stat.",
             wait_for_selector="a[href*='RS'], .law-link",
             timeout=45000,
+            max_sections=max(10, return_threshold),
         )
 
     async def _scrape_archived_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:

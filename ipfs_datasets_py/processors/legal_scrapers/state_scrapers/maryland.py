@@ -238,8 +238,9 @@ class MarylandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        api_statutes = await self._scrape_api_sections(code_name, max_statutes=140)
-        if len(api_statutes) >= 80:
+        return_threshold = self._bounded_return_threshold(80)
+        api_statutes = await self._scrape_api_sections(code_name, max_statutes=max(10, return_threshold))
+        if len(api_statutes) >= return_threshold:
             return api_statutes
 
         candidate_urls = [
@@ -265,7 +266,7 @@ class MarylandScraper(BaseStateScraper):
                 merged.append(statute)
 
         _merge(api_statutes)
-        if len(merged) >= 80:
+        if len(merged) >= return_threshold:
             return merged
 
         for candidate in candidate_urls:
@@ -287,7 +288,7 @@ class MarylandScraper(BaseStateScraper):
                 statutes = []
 
             _merge(statutes)
-            if len(merged) >= 80:
+            if len(merged) >= return_threshold:
                 return merged
 
             try:
@@ -296,7 +297,7 @@ class MarylandScraper(BaseStateScraper):
                 generic = []
 
             _merge(generic)
-            if len(merged) >= 80:
+            if len(merged) >= return_threshold:
                 return merged
 
         return merged
