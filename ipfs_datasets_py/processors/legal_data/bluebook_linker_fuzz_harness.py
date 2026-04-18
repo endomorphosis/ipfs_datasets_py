@@ -805,6 +805,7 @@ def _build_failure_backlog(
     attempts: Sequence[BluebookCitationFuzzAttempt],
     coverage_summary: Dict[str, Any],
     failure_patch_clusters: Sequence[Dict[str, Any]],
+    scraper_coverage: Dict[str, Any],
     malformed_repairs: Sequence[Dict[str, Any]],
     max_acceptable_failure_rate: float,
     min_actionable_failures: int,
@@ -853,6 +854,7 @@ def _build_failure_backlog(
         "actionable_corpora": sorted(actionable_corpora),
         "cluster_count": len(backlog_clusters),
         "clusters": backlog_clusters,
+        "scraper_coverage": dict(scraper_coverage or {}),
         "malformed_repairs": list(malformed_repairs or [])[:50],
     }
 
@@ -1024,6 +1026,7 @@ async def run_bluebook_linker_fuzz_harness(
         attempts=attempts,
         coverage_summary=summary["coverage_by_corpus"],
         failure_patch_clusters=summary["failure_patch_clusters"],
+        scraper_coverage=summary["scraper_coverage"],
         malformed_repairs=summary["malformed_repairs"],
         max_acceptable_failure_rate=max_acceptable_failure_rate,
         min_actionable_failures=min_actionable_failures,

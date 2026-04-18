@@ -1428,11 +1428,20 @@ class LegalSourceRecoveryWorkflow:
         title: Optional[str],
         content_type: Optional[str],
         state_code: Optional[str],
+        discovered_from_url: Optional[str] = None,
     ) -> int:
         score = 0
-        domain = urlparse(url).netloc.lower()
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower()
         hay = f"{url} {title or ''} {content_type or ''}".lower()
-        ext = Path(urlparse(url).path).suffix.lower()
+        ext = Path(parsed.path).suffix.lower()
+        discovered = str(discovered_from_url or "").strip()
+        if discovered:
+            discovered_parsed = urlparse(discovered)
+            if url == discovered:
+                score += 4
+            elif domain == discovered_parsed.netloc.lower() and parsed.path == discovered_parsed.path:
+                score += 2
         if domain.endswith(".gov") or ".gov" in domain:
             score += 4
         if domain.endswith(".us") or ".state." in domain:
@@ -1473,6 +1482,7 @@ class LegalSourceRecoveryWorkflow:
             title=title,
             content_type=content_type,
             state_code=state_code,
+            discovered_from_url=discovered_from_url,
         )
         existing = storage.get(normalized_url)
         if existing is None:
@@ -1765,7 +1775,10 @@ class LegalSourceRecoveryWorkflow:
 
         primary_file = next((item for item in candidate_files if item.url), None)
         primary_candidate = next((item for item in candidates if item.url), None)
-        source_url = primary_file.url if primary_file is not None else (primary_candidate.url if primary_candidate is not None else "")
+        source_url = self._preferred_scraper_patch_source_url(
+            primary_file=primary_file,
+            primary_candidate=primary_candidate,
+        )
         if not source_url:
             return None
 
@@ -1821,6 +1834,23 @@ class LegalSourceRecoveryWorkflow:
             rationale="Host-specific recovery scaffold generated from discovered candidate file.",
             extraction_recipe_path=str(extraction_recipe_path),
         )
+
+    @staticmethod
+    def _preferred_scraper_patch_source_url(
+        *,
+        primary_file: Optional[RecoveredCandidateFile],
+        primary_candidate: Optional[LegalSourceCandidate],
+    ) -> str:
+        file_url = str(getattr(primary_file, "url", "") or "").strip()
+        candidate_url = str(getattr(primary_candidate, "url", "") or "").strip()
+        file_host = urlparse(file_url).netloc.lower()
+        if candidate_url and (
+            not file_url
+            or file_host.startswith("unblock.")
+            or "unblock.federalregister.gov" in file_host
+        ):
+            return candidate_url
+        return file_url or candidate_url
 
     @staticmethod
     def _build_scraper_patch_diff(

@@ -705,6 +705,42 @@ def test_bluebook_citation_resolver_strict_mode_toggle_allows_non_anchor_legacy_
     assert permissive_links[0].metadata["require_exact_anchor"] is False
 
 
+def test_bluebook_resolver_matches_recovery_promotion_rows_in_strict_mode(tmp_path):
+    uscode_path = tmp_path / "uscode_recovery_rows.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_type": "legal_source_recovery_manifest",
+                    "corpus_key": "us_code",
+                    "citation_text": "42 U.S.C. § 1983",
+                    "normalized_citation": "42 U.S.C. § 1983",
+                    "primary_candidate_title": "42 U.S.C. section 1983",
+                    "primary_candidate_url": "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983",
+                    "cid": "bafy-recovered-uscode-1983",
+                }
+            ]
+        ),
+        uscode_path,
+    )
+
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        require_exact_anchor=True,
+        parquet_file_overrides={"us_code": [str(uscode_path)]},
+    )
+
+    links = resolve_bluebook_citations_in_text(
+        "The complaint asserts claims under 42 U.S.C. § 1983.",
+        resolver=resolver,
+    )
+
+    assert len(links) == 1
+    assert links[0].matched is True
+    assert links[0].matched_field == "citation_text"
+    assert links[0].source_url == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+
+
 def test_bluebook_exact_anchor_guarantee_audit_flags_case_url_fallback_non_exact():
     resolver = BluebookCitationResolver(allow_hf_fallback=False, require_exact_anchor=False)
 

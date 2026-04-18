@@ -10,7 +10,9 @@ import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.canonical_legal_corpora import CanonicalLegalCorpus
 from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
+    LegalSourceCandidate,
     LegalSourceRecoveryWorkflow,
+    RecoveredCandidateFile,
     build_recovery_feedback_entries_from_citation_audit,
     build_missing_citation_recovery_query,
     recover_citation_audit_feedback,
@@ -159,6 +161,47 @@ def test_archiver_can_opt_into_warc_pointer_streaming(monkeypatch):
 
     assert captured["use_warc_pointers"] is True
     assert captured["fallback_priority"] == ["warc", "wayback", "web_archive"]
+
+
+def test_candidate_file_ranking_prefers_exact_citation_url_over_generic_links():
+    workflow = LegalSourceRecoveryWorkflow(fetch_api=_FakeFetchAPI(), enable_candidate_file_fetch=True)
+
+    files = workflow._discover_candidate_files(
+        candidates=[
+            LegalSourceCandidate(
+                url="https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002",
+                title="Texas FA section 153.002",
+                source="citation_url_hint",
+                source_type="current",
+                score=27,
+            )
+        ],
+        corpus_key="state_laws",
+        state_code="TX",
+    )
+
+    assert files[0].url == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
+
+
+def test_scraper_patch_source_prefers_candidate_url_over_unblock_interstitial():
+    source_url = LegalSourceRecoveryWorkflow._preferred_scraper_patch_source_url(
+        primary_file=RecoveredCandidateFile(
+            url="https://unblock.federalregister.gov/",
+            title="Candidate File",
+            discovered_from_url="https://www.ecfr.gov/current/title-8/section-214.2",
+            source="citation_url_hint",
+            source_type="current",
+        ),
+        primary_candidate=LegalSourceCandidate(
+            url="https://www.ecfr.gov/current/title-8/section-214.2",
+            title="8 C.F.R. section 214.2",
+            source="citation_url_hint",
+            source_type="current",
+            score=16,
+        ),
+    )
+
+    assert source_url == "https://www.ecfr.gov/current/title-8/section-214.2"
 
 
 def test_default_publisher_loads_repo_script() -> None:

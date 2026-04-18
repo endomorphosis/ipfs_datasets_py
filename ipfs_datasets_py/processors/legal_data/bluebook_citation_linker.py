@@ -25,11 +25,12 @@ from ipfs_datasets_py.processors.legal_data.legal_source_recovery import build_m
 logger = logging.getLogger(__name__)
 
 _IDENTIFIER_FIELDS = ["statute_id", "identifier", "id", "document_number", "citation", "citations", "name", "name_abbreviation", "rule_id", "source_id"]
-_TITLE_FIELDS = ["section_name", "short_title", "heading", "title", "name", "name_abbreviation", "title_name", "code_name"]
-_URL_FIELDS = ["source_url", "url", "html_url", "pdf_url", "fr_page_url", "fr_json_url"]
+_TITLE_FIELDS = ["section_name", "short_title", "heading", "title", "name", "name_abbreviation", "title_name", "code_name", "primary_candidate_title"]
+_URL_FIELDS = ["source_url", "url", "html_url", "pdf_url", "fr_page_url", "fr_json_url", "primary_candidate_url"]
 _TEXT_FIELDS = ["full_text", "text", "section_text", "content", "body", "semantic_text", "summary", "head_matter"]
 _CID_FIELDS = ["ipfs_cid", "cid", "source_cid"]
-_OFFICIAL_CITE_FIELDS = ["official_cite", "citation", "citations", "bluebook_citation", "identifier"]
+_OFFICIAL_CITE_FIELDS = ["official_cite", "citation", "citations", "bluebook_citation", "identifier", "citation_text", "normalized_citation"]
+_RECOVERY_CITE_FIELDS = ["citation_text", "normalized_citation"]
 _STATE_FIELDS = ["state_code", "state"]
 _SECTION_FIELDS = ["section", "section_number", "section_id", "title_num", "section_num"]
 _TITLE_NUMBER_FIELDS = ["title", "title_number", "title_no", "usc_title", "title_num"]
@@ -1130,8 +1131,8 @@ class BluebookCitationResolver:
 
     def _iter_corpus_sources(self, corpus_key: str, *, state_code: Optional[str]) -> List[str]:
         config = _CORPUS_CONFIGS[corpus_key]
-        override_value = self.parquet_file_overrides.get(corpus_key)
-        if override_value:
+        if corpus_key in self.parquet_file_overrides:
+            override_value = self.parquet_file_overrides.get(corpus_key)
             override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in override_value]
             filtered_items = [item for item in override_items if _is_direct_citation_source(item)]
             return filtered_items
@@ -1562,12 +1563,26 @@ class BluebookCitationResolver:
                 return 4, "title+section"
             if row_section and row_section == normalized_section:
                 return 3, "section_number"
+            for field in _RECOVERY_CITE_FIELDS:
+                if field not in row:
+                    continue
+                value_norm = _normalize_text(row.get(field))
+                value_compact = _compact_alnum(row.get(field))
+                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                    return 3, field
             return 0, ""
 
         if citation.type == "cfr":
             row_title = str(_first_present(row, _TITLE_NUMBER_FIELDS) or "")
             if row_title == str(citation.title or "") and row_section == normalized_section and normalized_section:
                 return 4, "title+section"
+            for field in _RECOVERY_CITE_FIELDS:
+                if field not in row:
+                    continue
+                value_norm = _normalize_text(row.get(field))
+                value_compact = _compact_alnum(row.get(field))
+                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                    return 3, field
             return 0, ""
 
         if citation.type == "federal_register":
@@ -1575,6 +1590,13 @@ class BluebookCitationResolver:
             row_page = str(_first_present(row, _PAGE_FIELDS) or "")
             if row_volume == str(citation.volume or "") and row_page == str(citation.page or "") and row_volume and row_page:
                 return 4, "volume+page"
+            for field in _RECOVERY_CITE_FIELDS:
+                if field not in row:
+                    continue
+                value_norm = _normalize_text(row.get(field))
+                value_compact = _compact_alnum(row.get(field))
+                if (value_norm and value_norm in normalized_terms) or (value_compact and value_compact in compact_terms):
+                    return 3, field
             return 0, ""
 
         if citation.type == "public_law":

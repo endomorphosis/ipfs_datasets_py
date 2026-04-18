@@ -27,6 +27,25 @@ The current `ingest_docket_dataset(...)` flow is now regression-tested against t
 - `--input-type auto` detects PACER/Tyler wrapped JSON without `--source-type-hint` when nested `source_type` metadata is present under `result`, `case`, `data`, or `payload`.
 - `--source-type-hint` is still useful when upstream JSON omits any source label.
 
+## Fixture Matrix
+
+The following checked-in fixtures back the currently supported source shapes:
+
+| Source family | Shape | Fixture |
+| --- | --- | --- |
+| PACER | Normalized flat JSON | `tests/fixtures/legal_data/normalized_pacer_export.json` |
+| PACER | Wrapped JSON under `result`/`case` | `tests/fixtures/legal_data/pacer_wrapped_export.json` |
+| PACER | Raw PACER docket HTML | `tests/fixtures/legal_data/pacer_docket_sample.html` |
+| PACER | PACER HTML with extra columns/links/multiline cells | `tests/fixtures/legal_data/pacer_docket_complex_sample.html` |
+| Tyler Host | Normalized flat JSON | `tests/fixtures/legal_data/normalized_tyler_host_export.json` |
+| Tyler Host | Portal-style camelCase JSON | `tests/fixtures/legal_data/tyler_host_camel_case_export.json` |
+| Tyler Host | Wrapped portal JSON under `result`/`case` | `tests/fixtures/legal_data/tyler_host_wrapped_export.json` |
+
+Validation coverage is split across:
+
+- processor-level ingestion tests in `tests/unit/processors/test_docket_dataset.py`
+- CLI detection and end-to-end output tests in `tests/unit/test_docket_cli.py`
+
 ## Recommended Sources
 
 ### 1. PACER HTML: `freelawproject/juriscraper`
