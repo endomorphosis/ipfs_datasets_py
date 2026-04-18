@@ -443,6 +443,8 @@ def _court_rule_section_from_value(value: str) -> str:
     if not text:
         return ""
     patterns = (
+        r"\bChief\s+Justice\s+Order\s+(?P<section>\d{4}-\d+)(?![\w.])",
+        r"\bCJO\s+(?P<section>\d{4}-\d+)(?![\w.])",
         r"\bUTCR\s+(?P<section>\d+(?:\.\d+)*(?:\([^)]+\))?)(?![\w.])",
         r"\bLocal\s+Rule\s+(?P<section>\d+(?:\.\d+)*(?:\([^)]+\))?)(?![\w.])",
         r"\bSupplemental\s+Local\s+Court\s+Rule\s+(?P<section>\d+(?:\.\d+)*(?:\([^)]+\))?)(?![\w.])",

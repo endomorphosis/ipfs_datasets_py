@@ -875,14 +875,22 @@ def test_collect_seeded_bluebook_fuzz_candidates_prefers_court_rule_names_over_i
                     "text": "Section Section-3: UTCR 21.070(5)",
                     "source_url": "https://www.courts.oregon.gov/rules/utcr",
                 },
+                {
+                    "state_code": "OR",
+                    "identifier": "2025-018",
+                    "source_id": "urn:state:or:court-rule:2025-018",
+                    "name": "Chief Justice Order 2025-018",
+                    "text": "Chief Justice Order 2025-018 adopts temporary local procedures.",
+                    "source_url": "https://www.courts.oregon.gov/courts/lane/resources/Pages/Chief-Justice-Order-2025-018.aspx",
+                },
             ]
 
     seeds = collect_seeded_bluebook_fuzz_candidates(
         resolver=_FakeResolver(),
         corpus_keys=["state_court_rules"],
         state_codes=["OR"],
-        examples_per_corpus=3,
-        sample_count=3,
+        examples_per_corpus=4,
+        sample_count=4,
         shuffle_seed=0,
     )
 
@@ -890,6 +898,7 @@ def test_collect_seeded_bluebook_fuzz_candidates_prefers_court_rule_names_over_i
         "Or. Court Rules § 8.120",
         "Or. Court Rules § 8.013",
         "Or. Court Rules § 21.070(5)",
+        "Or. Court Rules § 2025-018",
     }
     assert {seed.state_code for seed in seeds} == {"OR"}
     assert {seed.corpus_key_hint for seed in seeds} == {"state_court_rules"}

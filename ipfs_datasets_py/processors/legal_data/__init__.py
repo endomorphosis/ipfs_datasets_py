@@ -579,73 +579,80 @@ except Exception:  # pragma: no cover - optional dependency guard
     search_packaged_docket_dataset_vector = None
     search_packaged_docket_logic_artifacts = None
     search_packaged_docket_proof_tasks = None
-from .proof_assistant import (
-    DocketProofAssistant,
-    DocketProofAssistantBuilder,
-    ProofAssistantWorkItem,
-    build_docket_proof_assistant,
-)
-from .proof_tactician import (
-    ProofSearchPlan,
-    ProofSearchSource,
-    ProofTactician,
-    build_proof_tactician_manifest,
-)
-from .document_structure import (
-    DocumentSection,
-    ParsedLegalDocument,
-    PleadingCaption,
-    PleadingHeader,
-    build_pleading_caption,
-    build_document_knowledge_graph,
-    extract_pleading_header,
-    forbidden_formal_document_meta_phrases,
-    paginate_pleading_lines,
-    parse_legal_document,
-    parse_legal_document_to_graph,
-    render_pleading_caption_block,
-    required_formal_document_markers,
-    summarize_formal_document,
-    validate_formal_document,
-)
-from .frames import Frame, FrameKnowledgeBase, FrameSlotEvidence
-from .formal_docket_enrichment import enrich_docket_documents_with_formal_logic
-from .neurosymbolic import NeurosymbolicMatcher
-from .requirements_graph import (
-    LegalElement,
-    LegalRelation,
-    LegalRequirementsGraph,
-    LegalRequirementsGraphBuilder,
-)
-from .reasoner import (
-    HybridLawReasoner,
-    IRReference,
-    ProofObject,
-    ProofStep,
-    SourceProvenance,
-    append_proof_to_store,
-    load_legal_ir_from_json,
-    load_proof_store,
-    proof_from_dict,
-    proof_to_dict,
-    write_proof_store,
-)
-from .rich_docket_enrichment import (
-    analyze_document_with_routers,
-    enrich_docket_documents_with_routers,
-)
-from ..retrieval import (
-    build_bm25_index,
-    search_bm25_index,
-    bm25_search_documents,
-)
-from .support_map import (
-    FilingSupportReference,
-    MotionSupportMap,
-    SupportFact,
-    SupportMapBuilder,
-    SupportMapEntry,
-)
+_LAZY_EXPORTS = {
+    "DocketProofAssistant": (".proof_assistant", "DocketProofAssistant"),
+    "DocketProofAssistantBuilder": (".proof_assistant", "DocketProofAssistantBuilder"),
+    "ProofAssistantWorkItem": (".proof_assistant", "ProofAssistantWorkItem"),
+    "build_docket_proof_assistant": (".proof_assistant", "build_docket_proof_assistant"),
+    "ProofSearchPlan": (".proof_tactician", "ProofSearchPlan"),
+    "ProofSearchSource": (".proof_tactician", "ProofSearchSource"),
+    "ProofTactician": (".proof_tactician", "ProofTactician"),
+    "build_proof_tactician_manifest": (".proof_tactician", "build_proof_tactician_manifest"),
+    "DocumentSection": (".document_structure", "DocumentSection"),
+    "ParsedLegalDocument": (".document_structure", "ParsedLegalDocument"),
+    "PleadingCaption": (".document_structure", "PleadingCaption"),
+    "PleadingHeader": (".document_structure", "PleadingHeader"),
+    "build_pleading_caption": (".document_structure", "build_pleading_caption"),
+    "build_document_knowledge_graph": (".document_structure", "build_document_knowledge_graph"),
+    "extract_pleading_header": (".document_structure", "extract_pleading_header"),
+    "forbidden_formal_document_meta_phrases": (".document_structure", "forbidden_formal_document_meta_phrases"),
+    "paginate_pleading_lines": (".document_structure", "paginate_pleading_lines"),
+    "parse_legal_document": (".document_structure", "parse_legal_document"),
+    "parse_legal_document_to_graph": (".document_structure", "parse_legal_document_to_graph"),
+    "render_pleading_caption_block": (".document_structure", "render_pleading_caption_block"),
+    "required_formal_document_markers": (".document_structure", "required_formal_document_markers"),
+    "summarize_formal_document": (".document_structure", "summarize_formal_document"),
+    "validate_formal_document": (".document_structure", "validate_formal_document"),
+    "Frame": (".frames", "Frame"),
+    "FrameKnowledgeBase": (".frames", "FrameKnowledgeBase"),
+    "FrameSlotEvidence": (".frames", "FrameSlotEvidence"),
+    "enrich_docket_documents_with_formal_logic": (".formal_docket_enrichment", "enrich_docket_documents_with_formal_logic"),
+    "NeurosymbolicMatcher": (".neurosymbolic", "NeurosymbolicMatcher"),
+    "LegalElement": (".requirements_graph", "LegalElement"),
+    "LegalRelation": (".requirements_graph", "LegalRelation"),
+    "LegalRequirementsGraph": (".requirements_graph", "LegalRequirementsGraph"),
+    "LegalRequirementsGraphBuilder": (".requirements_graph", "LegalRequirementsGraphBuilder"),
+    "HybridLawReasoner": (".reasoner", "HybridLawReasoner"),
+    "IRReference": (".reasoner", "IRReference"),
+    "ProofObject": (".reasoner", "ProofObject"),
+    "ProofStep": (".reasoner", "ProofStep"),
+    "SourceProvenance": (".reasoner", "SourceProvenance"),
+    "append_proof_to_store": (".reasoner", "append_proof_to_store"),
+    "load_legal_ir_from_json": (".reasoner", "load_legal_ir_from_json"),
+    "load_proof_store": (".reasoner", "load_proof_store"),
+    "proof_from_dict": (".reasoner", "proof_from_dict"),
+    "proof_to_dict": (".reasoner", "proof_to_dict"),
+    "write_proof_store": (".reasoner", "write_proof_store"),
+    "analyze_document_with_routers": (".rich_docket_enrichment", "analyze_document_with_routers"),
+    "enrich_docket_documents_with_routers": (".rich_docket_enrichment", "enrich_docket_documents_with_routers"),
+    "build_bm25_index": ("..retrieval", "build_bm25_index"),
+    "search_bm25_index": ("..retrieval", "search_bm25_index"),
+    "bm25_search_documents": ("..retrieval", "bm25_search_documents"),
+    "FilingSupportReference": (".support_map", "FilingSupportReference"),
+    "MotionSupportMap": (".support_map", "MotionSupportMap"),
+    "SupportFact": (".support_map", "SupportFact"),
+    "SupportMapBuilder": (".support_map", "SupportMapBuilder"),
+    "SupportMapEntry": (".support_map", "SupportMapEntry"),
+}
+
+
+def __getattr__(name: str):
+    """Resolve expensive optional legal-data exports on first use."""
+
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from importlib import import_module
+
+    module_name, attribute_name = target
+    module = import_module(module_name, __name__)
+    value = getattr(module, attribute_name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
 __all__ = [
     "DocumentSection",
     "Dependency",
