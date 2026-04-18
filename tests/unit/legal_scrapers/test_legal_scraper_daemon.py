@@ -11,6 +11,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_scraper_daemon import (
     StateRefreshDaemonConfig,
     _agentic_subprocess_status,
     _decode_json_from_mixed_output,
+    _load_agentic_latest_summary,
     _main_async,
     _normalize_corpora,
     _normalize_states,
@@ -40,6 +41,53 @@ def test_agentic_subprocess_status_treats_latest_cycle_error_as_error():
     )
 
     assert status == "error"
+
+
+def test_agentic_subprocess_status_accepts_partial_cycle_with_nonzero_coverage():
+    status = _agentic_subprocess_status(
+        returncode=0,
+        summary={
+            "status": "partial_success",
+            "latest_cycle": {
+                "status": "partial_success",
+                "diagnostics": {
+                    "coverage": {
+                        "states_returned": 1,
+                        "states_with_nonzero_statutes": 1,
+                        "coverage_gap_states": [],
+                    },
+                },
+            },
+        },
+    )
+
+    assert status == "success"
+
+
+def test_load_agentic_latest_summary_wraps_cycle_shaped_summary(tmp_path):
+    summary_dir = tmp_path / "agentic"
+    summary_dir.mkdir()
+    (summary_dir / "latest_summary.json").write_text(
+        json.dumps(
+            {
+                "status": "partial_success",
+                "states": ["NJ"],
+                "diagnostics": {
+                    "coverage": {
+                        "states_returned": 1,
+                        "states_with_nonzero_statutes": 1,
+                        "coverage_gap_states": [],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = _load_agentic_latest_summary(summary_dir)
+
+    assert payload["states"] == ["NJ"]
+    assert payload["latest_cycle"]["diagnostics"]["coverage"]["states_with_nonzero_statutes"] == 1
 
 
 @pytest.mark.asyncio

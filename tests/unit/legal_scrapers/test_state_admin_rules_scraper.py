@@ -8694,6 +8694,43 @@ async def test_discover_connecticut_rule_document_urls_uses_embedded_json_data()
 
 
 @pytest.mark.anyio
+async def test_discover_new_york_rule_document_urls_follows_elaws_hierarchy() -> None:
+    root_url = "https://nyrules.elaws.us/nycrr"
+    title_url = "https://nyrules.elaws.us/nycrr/title1"
+    chapter_url = "https://nyrules.elaws.us/nycrr/title1_chapteri"
+    subchapter_url = "https://nyrules.elaws.us/nycrr/title1_chapteri_subchaptera"
+    part_url = "https://nyrules.elaws.us/nycrr/title1_chapteri_subchaptera_part1"
+    section_url = "https://nyrules.elaws.us/nycrr/title1_chapteri_subchaptera_part1_s1.1"
+
+    class _FakeUnifiedWebScraper:
+        async def scrape(self, url: str):
+            if url.rstrip("/") == root_url.rstrip("/"):
+                html = f"<a href='{title_url}'>TITLE 1. Department of Agriculture and Markets</a>"
+                return SimpleNamespace(html=html)
+            if url.rstrip("/") == title_url.rstrip("/"):
+                html = f"<a href='{chapter_url}'>Chapter I. Milk Control</a>"
+                return SimpleNamespace(html=html)
+            if url.rstrip("/") == chapter_url.rstrip("/"):
+                html = f"<a href='{subchapter_url}'>Subchapter A. Dairy Products</a>"
+                return SimpleNamespace(html=html)
+            if url.rstrip("/") == subchapter_url.rstrip("/"):
+                html = f"<a href='{part_url}'>Part 1. Vitamin D Milk</a>"
+                return SimpleNamespace(html=html)
+            if url.rstrip("/") == part_url.rstrip("/"):
+                html = f"<a href='{section_url}'>Sec. 1.1. Definitions</a>"
+                return SimpleNamespace(html=html)
+            raise AssertionError(f"unexpected scrape URL: {url}")
+
+    discovered = await scraper_module._discover_new_york_rule_document_urls(
+        seed_urls=[root_url],
+        live_scraper=_FakeUnifiedWebScraper(),
+        limit=1,
+    )
+
+    assert discovered == [section_url]
+
+
+@pytest.mark.anyio
 async def test_discover_colorado_rule_document_urls_extracts_pdf_targets_from_doclist(monkeypatch: pytest.MonkeyPatch) -> None:
     doc_list_url = "https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58"
     display_rule_url = (

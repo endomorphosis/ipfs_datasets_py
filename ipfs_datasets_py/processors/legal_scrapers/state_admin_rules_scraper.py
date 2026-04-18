@@ -347,6 +347,16 @@ _CT_EREGS_SUBTITLE_ROW_RE = re.compile(
     re.IGNORECASE,
 )
 _CT_EREGS_SECTION_ROW_RE = re.compile(r"\b(?:Sec\.\s*)?\d+[a-z]?(?:-\d+[a-z]?)+\b", re.IGNORECASE)
+_NY_ELAWS_ROOT_PATH_RE = re.compile(r"^/nycrr/?$", re.IGNORECASE)
+_NY_ELAWS_TITLE_PATH_RE = re.compile(r"^/nycrr/title\d+/?$", re.IGNORECASE)
+_NY_ELAWS_INTERMEDIATE_PATH_RE = re.compile(
+    r"^/nycrr/title\d+_(?:chapter|subchapter|part|appendices)[\w.-]+/?$",
+    re.IGNORECASE,
+)
+_NY_ELAWS_SECTION_PATH_RE = re.compile(
+    r"^/nycrr/title\d+_[\w.-]+_part[\w.-]+_s[\w.-]+/?$",
+    re.IGNORECASE,
+)
 
 _CO_CCR_WELCOME_PATH_RE = re.compile(r"^/CCR/Welcome\.do/?$", re.IGNORECASE)
 _CO_CCR_DEPT_LIST_PATH_RE = re.compile(r"^/CCR/NumericalDeptList\.do/?$", re.IGNORECASE)
@@ -1178,7 +1188,7 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "HI", "ID", "KS", "LA", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "OK", "TN", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "GA", "HI", "ID", "KS", "LA", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "NY", "OK", "TN", "UT", "VT", "WY"}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -2776,6 +2786,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
         return bool(_AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url)))
     if host == "eregulations.ct.gov" and _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
+        return True
+    if host == "nyrules.elaws.us" and _NY_ELAWS_SECTION_PATH_RE.fullmatch(path):
         return True
     if host in {"www.sos.state.co.us", "www.coloradosos.gov"}:
         query_params = parse_qs(parsed.query or "")
@@ -10572,6 +10584,97 @@ def _candidate_connecticut_eregulations_urls_from_html(
     return candidates
 
 
+def _new_york_elaws_links_from_html(*, html: str, page_url: str, limit: int) -> List[str]:
+    links: List[str] = []
+    seen: set[str] = set()
+    soup = BeautifulSoup(str(html or ""), "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        absolute_url = urljoin(page_url, str(anchor.get("href") or "").strip())
+        parsed = urlparse(absolute_url)
+        if parsed.netloc.lower() != "nyrules.elaws.us":
+            continue
+        path = parsed.path or ""
+        if not (
+            _NY_ELAWS_TITLE_PATH_RE.fullmatch(path)
+            or _NY_ELAWS_INTERMEDIATE_PATH_RE.fullmatch(path)
+            or _NY_ELAWS_SECTION_PATH_RE.fullmatch(path)
+        ):
+            continue
+        normalized_url = urlunparse(("https", parsed.netloc, path.rstrip("/") or "/", "", "", ""))
+        key = _url_key(normalized_url)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        links.append(normalized_url)
+        if len(links) >= max(1, int(limit)):
+            break
+    return links
+
+
+async def _discover_new_york_rule_document_urls(
+    *,
+    seed_urls: List[str],
+    live_scraper: Any,
+    limit: int = 8,
+) -> List[str]:
+    root_url = "https://nyrules.elaws.us/nycrr"
+    for seed_url in seed_urls:
+        parsed = urlparse(str(seed_url or "").strip())
+        if parsed.netloc.lower() == "nyrules.elaws.us" and _NY_ELAWS_ROOT_PATH_RE.fullmatch(parsed.path or ""):
+            root_url = urlunparse(("https", parsed.netloc, parsed.path.rstrip("/") or "/nycrr", "", "", ""))
+            break
+
+    discovered: List[str] = []
+    seen_pages: set[str] = set()
+    seen_docs: set[str] = set()
+
+    async def _fetch_links(page_url: str, *, link_limit: int) -> List[str]:
+        page_key = _url_key(page_url)
+        if not page_key or page_key in seen_pages:
+            return []
+        seen_pages.add(page_key)
+        try:
+            scraped = await asyncio.wait_for(live_scraper.scrape(page_url), timeout=10.0)
+        except Exception:
+            return []
+        return _new_york_elaws_links_from_html(
+            html=str(getattr(scraped, "html", "") or ""),
+            page_url=page_url,
+            limit=link_limit,
+        )
+
+    title_urls = [
+        url for url in await _fetch_links(root_url, link_limit=max(6, min(max(1, int(limit)) * 3, 18)))
+        if _NY_ELAWS_TITLE_PATH_RE.fullmatch(urlparse(url).path or "")
+    ][:6]
+    frontier = list(title_urls)
+    for _depth in range(4):
+        next_frontier: List[str] = []
+        for page_url in frontier:
+            for link_url in await _fetch_links(page_url, link_limit=max(8, min(max(1, int(limit)) * 4, 24))):
+                path = urlparse(link_url).path or ""
+                if _NY_ELAWS_SECTION_PATH_RE.fullmatch(path):
+                    doc_key = _url_key(link_url)
+                    if doc_key and doc_key not in seen_docs:
+                        seen_docs.add(doc_key)
+                        discovered.append(link_url)
+                        if len(discovered) >= max(1, int(limit)):
+                            return discovered
+                elif _NY_ELAWS_INTERMEDIATE_PATH_RE.fullmatch(path):
+                    next_frontier.append(link_url)
+        deduped_frontier: List[str] = []
+        seen_frontier: set[str] = set()
+        for value in next_frontier:
+            key = _url_key(value)
+            if key and key not in seen_frontier:
+                seen_frontier.add(key)
+                deduped_frontier.append(value)
+        frontier = deduped_frontier[: max(4, min(max(1, int(limit)) * 3, 16))]
+        if not frontier:
+            break
+    return discovered
+
+
 def _colorado_pdf_url(base_url: str, rule_version_id: str, file_name: str) -> str:
     parsed = urlparse(base_url)
     host = parsed.netloc or "www.coloradosos.gov"
@@ -12893,6 +12996,56 @@ async def _agentic_discover_admin_state_blocks(
                 candidate_urls.append(document_url)
             if connecticut_bootstrap_document_urls:
                 source_breakdown["connecticut_eregulations_bootstrap"] = len(connecticut_bootstrap_document_urls)
+
+        if state_code == "NY" and not seeded_direct_detail_urls:
+            new_york_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
+            try:
+                from ..web_archiving.unified_web_scraper import (
+                    ScraperConfig as _ScraperConfig,
+                    ScraperMethod as _ScraperMethod,
+                    UnifiedWebScraper as _UnifiedWebScraper,
+                )
+            except Exception:
+                try:
+                    from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (  # type: ignore[no-redef]
+                        ScraperConfig as _ScraperConfig,
+                        ScraperMethod as _ScraperMethod,
+                        UnifiedWebScraper as _UnifiedWebScraper,
+                    )
+                except Exception:
+                    _ScraperConfig = None  # type: ignore[assignment]
+                    _ScraperMethod = None  # type: ignore[assignment]
+                    _UnifiedWebScraper = None  # type: ignore[assignment]
+
+            if _UnifiedWebScraper is not None and _ScraperConfig is not None and _ScraperMethod is not None:
+                new_york_bootstrap_scraper = _UnifiedWebScraper(
+                    _ScraperConfig(
+                        timeout=20,
+                        max_retries=1,
+                        extract_links=True,
+                        extract_text=True,
+                        fallback_enabled=False,
+                        preferred_methods=[_ScraperMethod.REQUESTS_ONLY],
+                    )
+                )
+            else:
+                new_york_bootstrap_scraper = live_scraper
+
+            try:
+                new_york_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_new_york_rule_document_urls(
+                        seed_urls=ordered_seed_urls,
+                        live_scraper=new_york_bootstrap_scraper,
+                        limit=new_york_bootstrap_limit,
+                    ),
+                    timeout=30.0,
+                )
+            except Exception:
+                new_york_bootstrap_document_urls = []
+            for document_url in new_york_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if new_york_bootstrap_document_urls:
+                source_breakdown["new_york_elaws_bootstrap"] = len(new_york_bootstrap_document_urls)
 
         if state_code == "CA" and not seeded_direct_detail_urls:
             california_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)

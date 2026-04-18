@@ -6,6 +6,7 @@ DeliverDocument statute pages.
 
 import json
 from ipfs_datasets_py.utils import anyio_compat as asyncio
+import os
 import re
 from typing import Dict, List, Set
 from urllib.parse import quote, urljoin
@@ -32,7 +33,7 @@ class OklahomaScraper(BaseStateScraper):
         "&output=json&filter=statuscode:200&limit=1200"
     )
     _ANTI_BOT_RE = re.compile(
-        r"why am i seeing this\?|verify (?:you are|you're) human|automated traffic|cloudflare",
+        r"why am i seeing this\?|verify (?:you are|you're) human|automated traffic|cf-browser-verification|just a moment",
         re.IGNORECASE,
     )
     _CASELAW_RE = re.compile(
@@ -139,6 +140,20 @@ class OklahomaScraper(BaseStateScraper):
                 return
             seen.add(normalized)
             candidates.append(normalized)
+
+        bounded_limit = self._bounded_return_threshold(0)
+        bounded_direct_only = str(os.getenv("STATE_SCRAPER_BOUNDED_DIRECT_ONLY", "")).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        if bounded_limit > 0 and bounded_direct_only:
+            for seed_url in self._SEED_INDEX_URLS:
+                _add(seed_url)
+                if len(candidates) >= max(1, bounded_limit):
+                    return candidates
+            return candidates
 
         for seed_url in self._SEED_INDEX_URLS:
             _add(seed_url)
@@ -275,6 +290,7 @@ class OklahomaScraper(BaseStateScraper):
         text = max(candidates, key=len)
         # Drop OSCN global navigation noise that often prefixes archived pages.
         text = re.sub(r"^\s*OSCN\s+navigation\s+.*?\bHelp\b\s*", "", text, flags=re.IGNORECASE)
+        text = re.split(r"\bCitationizer\s+©\s+Summary\s+of\s+Documents\s+Citing\s+This\s+Document\b", text, maxsplit=1)[0]
         return self._normalize_legal_text(text)
 
     async def _build_statute_from_document_url(
@@ -295,10 +311,17 @@ class OklahomaScraper(BaseStateScraper):
         if self._ANTI_BOT_RE.search(text):
             return None
 
-        if self._CASELAW_RE.search(text):
+        document_lead = text[:1200]
+
+        has_statute_signal = bool(
+            re.search(r"\b\d+\s+O\.S\.\s*§?\s*[0-9A-Za-z.\-]+", text)
+            or re.search(r"\bTitle\s+\d+.*?\bSection\s+[0-9A-Za-z.\-]+", text, flags=re.IGNORECASE)
+        )
+
+        if self._CASELAW_RE.search(document_lead) and not has_statute_signal:
             return None
 
-        if self._NON_STATUTE_RE.search(text):
+        if self._NON_STATUTE_RE.search(document_lead) and not has_statute_signal:
             return None
 
         # Ignore obvious navigation/event pages that happen to be long.
@@ -312,8 +335,13 @@ class OklahomaScraper(BaseStateScraper):
         section_name_match = re.search(r"Section\s+[0-9A-Za-z.\-]+\s*-\s*([^\n\r]+)", text, flags=re.IGNORECASE)
         section_name = section_name_match.group(1).strip()[:180] if section_name_match else f"Section {section_number}"
 
-        official_cite_match = re.search(r"\b\d+\s+O\.S\.\s*[0-9A-Za-z.\-]+\b", text)
-        official_cite = official_cite_match.group(0) if official_cite_match else f"Okla. Stat. {section_number}"
+        official_cite_match = (
+            re.search(r"\bCite\s+as:\s*(\d+\s+O\.S\.\s*§?\s*[0-9A-Za-z.\-]+)", text, flags=re.IGNORECASE)
+            or re.search(r"\b\d+\s+O\.S\.\s*§?\s*[0-9A-Za-z.\-]+\b", text)
+        )
+        official_cite = (
+            official_cite_match.group(1) if official_cite_match and official_cite_match.lastindex else official_cite_match.group(0)
+        ) if official_cite_match else f"Okla. Stat. {section_number}"
 
         return NormalizedStatute(
             state_code=self.state_code,
@@ -333,6 +361,10 @@ class OklahomaScraper(BaseStateScraper):
         return match.group(1) if match else ""
 
     async def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
+        direct_oscn_text = await self._request_live_oscn_text(url, headers=headers, timeout=timeout)
+        if direct_oscn_text:
+            return direct_oscn_text
+
         try:
             request_url = self._normalize_wayback_url(url)
             content = await self._fetch_page_content_with_archival_fallback(
@@ -347,6 +379,52 @@ class OklahomaScraper(BaseStateScraper):
             return text
         except Exception:
             return ""
+
+    async def _request_live_oscn_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
+        """Fetch live OSCN statute pages without invoking broader archival recovery.
+
+        OSCN DeliverDocument pages are ordinary HTML, but the generic fetch
+        stack can spend its bounded-run budget trying Wayback/Common Crawl
+        fallbacks first. This narrow fast path keeps Oklahoma health checks
+        from stalling when the live official page is already reachable.
+        """
+        normalized_url = str(url or "").strip()
+        if "oscn.net/applications/oscn/deliverdocument.asp" not in normalized_url.lower():
+            return ""
+        if normalized_url.lower().startswith(("https://web.archive.org/", "http://web.archive.org/")):
+            return ""
+
+        def _fetch() -> str:
+            try:
+                import requests
+
+                request_headers = {
+                    "User-Agent": str(headers.get("User-Agent") or "Mozilla/5.0"),
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                }
+                response = requests.get(
+                    normalized_url,
+                    headers=request_headers,
+                    timeout=max(1, min(int(timeout or 12), 12)),
+                )
+                if int(getattr(response, "status_code", 0) or 0) != 200:
+                    return ""
+                return str(getattr(response, "text", "") or "")
+            except Exception:
+                return ""
+
+        try:
+            text = await asyncio.wait_for(
+                asyncio.to_thread(_fetch),
+                timeout=max(2, min(int(timeout or 12) + 1, 14)),
+            )
+        except Exception:
+            return ""
+
+        if not text or self._ANTI_BOT_RE.search(text):
+            return ""
+        self._record_fetch_event(provider="requests_oscn_direct", success=True)
+        return text
 
 
 # Register this scraper with the registry

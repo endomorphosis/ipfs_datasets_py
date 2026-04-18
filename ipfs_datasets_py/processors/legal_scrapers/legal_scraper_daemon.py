@@ -113,14 +113,44 @@ def _decode_json_from_mixed_output(text: str) -> Dict[str, Any]:
 
 def _agentic_subprocess_status(*, returncode: Optional[int], summary: Dict[str, Any]) -> str:
     summary_status = str((summary or {}).get("status") or "").lower()
-    latest_cycle_status = str((((summary or {}).get("latest_cycle") or {}) or {}).get("status") or "").lower()
+    latest_cycle = ((summary or {}).get("latest_cycle") or {}) or {}
+    latest_cycle_status = str(latest_cycle.get("status") or "").lower()
+    diagnostics = latest_cycle.get("diagnostics") if isinstance(latest_cycle.get("diagnostics"), dict) else {}
+    coverage = diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
+    returned = int(coverage.get("states_with_nonzero_statutes") or coverage.get("states_returned") or 0)
+    gaps = [item for item in list(coverage.get("coverage_gap_states") or []) if str(item).strip()]
     if int(returncode or 0) != 0:
         return "error"
+    if returned > 0 and not gaps:
+        return "success"
+    if returned > 0 and gaps:
+        return "partial_success"
     if summary_status in {"error", "partial_success"}:
         return "error"
     if latest_cycle_status in {"error", "partial_success"}:
         return "error"
     return "success"
+
+
+def _load_agentic_latest_summary(output_dir: Path) -> Dict[str, Any]:
+    summary_path = output_dir / "latest_summary.json"
+    if not summary_path.exists():
+        return {}
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    if isinstance(payload.get("latest_cycle"), dict):
+        return payload
+    if isinstance(payload.get("diagnostics"), dict):
+        return {
+            "status": payload.get("status"),
+            "states": payload.get("states") or payload.get("cycle_state_order") or [],
+            "latest_cycle": payload,
+        }
+    return payload
 
 
 @dataclass
@@ -947,7 +977,7 @@ class LegalScraperDaemon:
             coverage = diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
             etl = diagnostics.get("etl_readiness") if isinstance(diagnostics.get("etl_readiness"), dict) else {}
             documents = diagnostics.get("documents") if isinstance(diagnostics.get("documents"), dict) else {}
-            if str(result.get("status") or "").lower() == "success" and int(coverage.get("states_with_nonzero_statutes") or 0) > 0:
+            if int(coverage.get("states_with_nonzero_statutes") or coverage.get("states_returned") or 0) > 0:
                 successful_states.append(state)
                 total_statutes += int(etl.get("total_statutes") or 0)
             else:
@@ -1064,6 +1094,23 @@ class LegalScraperDaemon:
             except asyncio.TimeoutError:
                 process.kill()
                 stdout, stderr = await process.communicate()
+            recovered_summary = _load_agentic_latest_summary(output_dir)
+            if recovered_summary:
+                status = _agentic_subprocess_status(returncode=0, summary=recovered_summary)
+                return {
+                    "status": status,
+                    "error": None if status != "error" else f"agentic corpus subprocess exceeded supervisor timeout after {supervisor_timeout:.1f}s",
+                    "exception_type": "TimeoutError" if status == "error" else None,
+                    "output_dir": str(output_dir),
+                    "command": command,
+                    "summary": recovered_summary,
+                    "returncode": process.returncode,
+                    "scrape_timeout_seconds": timeout,
+                    "supervisor_timeout_seconds": supervisor_timeout,
+                    "recovered_latest_summary_after_timeout": True,
+                    "stdout_tail": stdout.decode("utf-8", errors="replace")[-4000:],
+                    "stderr_tail": stderr.decode("utf-8", errors="replace")[-4000:],
+                }
             return {
                 "status": "error",
                 "error": f"agentic corpus subprocess exceeded supervisor timeout after {supervisor_timeout:.1f}s",
