@@ -15414,6 +15414,7 @@ tests/unit/legal_scrapers/test_legal_scraper_daemon.py
 tests/unit/legal_scrapers/test_legal_source_recovery.py
 tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py
 tests/unit/legal_scrapers/test_legal_web_archive_search.py
+tests/unit/legal_scrapers/test_minnesota_scraper_bounds.py
 tests/unit/legal_scrapers/test_netherlands_laws_scraper.py
 tests/unit/legal_scrapers/test_oregon_admin_rules_scraper.py
 tests/unit/legal_scrapers/test_oregon_rules_expansion.py

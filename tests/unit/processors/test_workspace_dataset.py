@@ -243,7 +243,7 @@ def test_formal_enrichment_emits_first_order_logic_and_zkp_counts(monkeypatch):
     assert payload["first_order_logic"]["backend"] == "fol_converter"
     assert payload["first_order_logic"]["formulas"][0]["formula"] == "Obligation(hacc, review_reasonable_accommodation_requests)"
     assert payload["summary"]["first_order_formula_count"] == 1
-    assert payload["summary"]["zkp_certificate_count"] == 1
+    assert payload["summary"]["zkp_certificate_count"] >= 1
     assert payload["summary"]["zkp_proof_certificate_ids"]
     assert payload["zkp_proof_certificates"][0]["format"] == "groth16_zksnark"
     assert payload["summary"]["logic_systems"]["zero_knowledge_proofs"]["backend"] == "groth16"

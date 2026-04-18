@@ -238,6 +238,40 @@ async def test_kentucky_section_builder_rejects_failed_pdf_extraction(monkeypatc
 
 
 @pytest.mark.anyio
+async def test_kentucky_section_builder_splits_effective_date_from_history(monkeypatch) -> None:
+    scraper = KentuckyScraper("KY", "Kentucky")
+
+    async def fake_fetch(*args, **kwargs) -> bytes:
+        return b"%PDF fake"
+
+    async def fake_extract(**kwargs) -> dict[str, str]:
+        return {
+            "text": (
+                ".010 Legislative intent.\n"
+                "Effective: July 15, 2024 History: Created 2024 Ky. Acts ch. 1."
+            ),
+            "method": "pdf_processor",
+        }
+
+    monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", fake_fetch)
+    monkeypatch.setattr(scraper, "_extract_text_from_document_bytes", fake_extract)
+
+    statute = await scraper._build_statute_from_section_page(
+        code_name="Kentucky Revised Statutes",
+        section_url="https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=1",
+        section_label=".010 Legislative intent.",
+        section_number="1.010",
+        chapter_url="https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=1",
+        chapter_label="Chapter 1",
+        chapter_number="1",
+    )
+
+    assert statute is not None
+    assert statute.metadata.effective_date == "July 15, 2024"
+    assert statute.metadata.history == ["Created 2024 Ky. Acts ch. 1."]
+
+
+@pytest.mark.anyio
 async def test_mississippi_archive_fallback_uses_bounded_attempts(monkeypatch) -> None:
     scraper = MississippiScraper("MS", "Mississippi")
     calls: list[dict[str, object]] = []

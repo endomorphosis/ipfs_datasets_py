@@ -21,6 +21,8 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
+from ..legal_scrapers.shared_fetch_cache import decode_cache_json_value, encode_cache_json_value
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -165,7 +167,7 @@ class BraveSearchIPFSCache:
         
         try:
             # Prepare cache entry
-            cache_entry = {
+            cache_entry = encode_cache_json_value({
                 "query": query,
                 "count": count,
                 "offset": offset,
@@ -175,7 +177,7 @@ class BraveSearchIPFSCache:
                 "metadata": metadata or {},
                 "timestamp": time.time(),
                 "version": "v1"
-            }
+            })
             
             # Store in IPFS
             cache_json = json.dumps(cache_entry, sort_keys=True, indent=2).encode("utf-8")
@@ -253,7 +255,7 @@ class BraveSearchIPFSCache:
             
             # Retrieve from IPFS
             raw = ipfs_router.cat(cid)
-            cache_entry = json.loads(raw.decode("utf-8"))
+            cache_entry = decode_cache_json_value(json.loads(raw.decode("utf-8")))
             
             if not isinstance(cache_entry, dict):
                 logger.warning(f"Invalid cache entry from IPFS: {cid}")

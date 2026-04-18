@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import asdict
+import hashlib
 import os
 import re
 import time
@@ -431,7 +432,11 @@ def enrich_docket_documents_with_formal_logic(
     deduped_certificates = _dedupe_dict_items(certificates, key_fields=("certificate_id", "backend", "theorem"))
     zkp_proof_certificates = _filter_zkp_certificates(deduped_certificates)
     zkp_status = dict(singletons.get("zkp_status") or {"backend": _formal_zkp_backend_name(), "available": bool(zkp_prover)})
-    zkp_certificate_ids = [str(item.get("certificate_id") or "") for item in zkp_proof_certificates if str(item.get("certificate_id") or "")]
+    zkp_certificate_ids = _dedupe_strings(
+        str(item.get("certificate_id") or "")
+        for item in zkp_proof_certificates
+        if str(item.get("certificate_id") or "")
+    )
     zkp_certificate_count = len(zkp_proof_certificates)
 
     return {
@@ -1439,10 +1444,47 @@ def _proposition_from_statement(statement: DeonticStatement) -> Dict[str, Any]:
     return {"statement": proposition, "assumptions": assumptions}
 
 
+def _propositions_from_fol_formulas(formulas: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    propositions: List[Dict[str, Any]] = []
+    for formula in formulas:
+        formula_text = str(formula.get("formula") or "").strip()
+        if not formula_text:
+            continue
+        source_text = str(formula.get("source_text") or "").strip()
+        assumptions = [source_text] if source_text else ["first_order_logic_conversion"]
+        propositions.append(
+            {
+                "statement": formula_text,
+                "assumptions": assumptions,
+                "logic_system": "first_order_logic",
+                "document_id": str(formula.get("document_id") or ""),
+            }
+        )
+    return propositions
+
+
+def _propositions_from_logic_formulas(formulas: Sequence[str], *, logic_system: str) -> List[Dict[str, Any]]:
+    propositions: List[Dict[str, Any]] = []
+    for formula in formulas:
+        formula_text = str(formula or "").strip()
+        if not formula_text:
+            continue
+        propositions.append(
+            {
+                "statement": formula_text,
+                "assumptions": [f"{logic_system}_conversion"],
+                "logic_system": logic_system,
+            }
+        )
+    return propositions
+
+
 def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp_prover: ZKPProver | None) -> Dict[str, Any]:
     statement = str(proposition.get("statement") or "").strip()
     assumptions = [str(item) for item in list(proposition.get("assumptions") or []) if str(item).strip()]
-    proof_id = f"formal_proof_{_sanitize_symbol(document_id)}_{_sanitize_symbol(statement)[:32]}"
+    logic_system = str(proposition.get("logic_system") or "formal_logic").strip() or "formal_logic"
+    proof_hash = hashlib.sha256(f"{document_id}\n{logic_system}\n{statement}".encode("utf-8")).hexdigest()[:12]
+    proof_id = f"formal_proof_{_sanitize_symbol(document_id)}_{_sanitize_symbol(statement)[:32]}_{proof_hash}"
     zkp_proof = None
     try:
         axioms = [_sanitize_symbol(item) for item in assumptions if _sanitize_symbol(item)]
@@ -1462,6 +1504,7 @@ def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp
                 "document_id": document_id,
                 "statement": statement,
                 "assumptions": assumptions,
+                "logic_system": logic_system,
             },
         }
     ]
@@ -1476,13 +1519,15 @@ def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp
                 "format": proof_format,
                 "theorem": statement,
                 "assumptions": assumptions,
+                "logic_system": logic_system,
                 "payload": zkp_proof.to_dict(),
             }
         )
     return {
         "proof_id": proof_id,
-        "query": {"document_id": document_id, "statement": statement},
+        "query": {"document_id": document_id, "statement": statement, "logic_system": logic_system},
         "root_conclusion": statement,
+        "logic_system": logic_system,
         "status": "proved",
         "proof_hash": f"formal_hash_{_sanitize_symbol(statement)[:48]}",
         "steps": [

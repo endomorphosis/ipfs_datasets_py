@@ -21,6 +21,8 @@ from ipfs_datasets_py import llm_router
 from ipfs_datasets_py.processors.legal_data.citation_extraction import CitationExtractor
 from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import (
     BluebookCitationResolver,
+    CitationLink,
+    citation_link_to_dict,
     resolve_bluebook_lookup_result_document,
     _normalize_malformed_citation,
     _IDENTIFIER_FIELDS,
@@ -43,6 +45,15 @@ from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion impo
 
 
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(.+?)\s*```", re.IGNORECASE | re.DOTALL)
+_SEEDED_SOURCE_ROW_CACHE: Dict[tuple[str, str, str], Dict[str, Any]] = {}
+_DEFAULT_FUZZ_CORPORA = [
+    "us_code",
+    "federal_register",
+    "state_laws",
+    "state_admin_rules",
+    "state_court_rules",
+    "caselaw_access_project",
+]
 _STATE_CODE_TO_BLUEBOOK = {
     "AK": "Alaska",
     "AL": "Ala.",
@@ -258,6 +269,90 @@ def _citation_text_parses_as(citation_text: str, citation_type: str) -> bool:
     return any(citation.type == citation_type for citation in extractor.extract_citations(text))
 
 
+def _candidate_source_ref(candidate: BluebookCitationCandidate) -> str:
+    notes = str(candidate.notes or "")
+    match = re.search(r"(?:^|;\s*)source_ref=(?P<source_ref>[^;]+)", notes)
+    return str(match.group("source_ref") if match else "").strip()
+
+
+def _seeded_row_cache_key(corpus_key: str, source_ref: str, citation_text: str) -> tuple[str, str, str]:
+    return (
+        str(corpus_key or "").strip(),
+        str(source_ref or "").strip(),
+        str(citation_text or "").strip().lower(),
+    )
+
+
+def _resolve_candidate_from_seeded_row_cache(
+    candidate: BluebookCitationCandidate,
+    *,
+    resolver: BluebookCitationResolver,
+    exhaustive: bool,
+) -> Optional[Dict[str, Any]]:
+    source_ref = _candidate_source_ref(candidate)
+    corpus_key = str(candidate.corpus_key_hint or "").strip()
+    citation_text = str(candidate.citation_text or "").strip()
+    if not (source_ref and corpus_key and citation_text):
+        return None
+    row = _SEEDED_SOURCE_ROW_CACHE.get(_seeded_row_cache_key(corpus_key, source_ref, citation_text))
+    if not row:
+        return None
+
+    links: List[Dict[str, Any]] = []
+    for citation in resolver.extractor.extract_citations(candidate.render_document_text()):
+        if str(citation.text or "").strip().lower() != citation_text.lower():
+            continue
+        ranked = resolver._rank_rows([dict(row)], citation, candidate.state_code)
+        if ranked is None:
+            return None
+        matched_row, matched_field, confidence = ranked
+        normalized_citation = resolver._normalized_citation(citation)
+        link = CitationLink(
+            citation_text=citation.text,
+            citation_type=citation.type,
+            normalized_citation=normalized_citation,
+            matched=True,
+            corpus_key=corpus_key,
+            matched_field=matched_field,
+            confidence=confidence,
+            source_document_id=str(_first_present(matched_row, _IDENTIFIER_FIELDS) or ""),
+            source_title=str(_first_present(matched_row, _TITLE_FIELDS) or ""),
+            source_url=str(_first_present(matched_row, _URL_FIELDS) or ""),
+            source_cid=str(_first_present(matched_row, ("ipfs_cid", "cid", "source_cid")) or ""),
+            source_ref=source_ref,
+            snippet=resolver._snippet_for_row(matched_row),
+            metadata={
+                "state_code": candidate.state_code,
+                "resolution_method": "seeded_source_row_cache",
+                "resolution_quality": "exact_anchor",
+                "require_exact_anchor": bool(getattr(resolver, "require_exact_anchor", True)),
+                "source_row_present": True,
+                "source_ref_kind": "seeded_source_ref",
+                "row": dict(matched_row),
+            },
+        )
+        links.append(citation_link_to_dict(link))
+
+    if not links:
+        return None
+    matched_count = sum(1 for item in links if bool(item.get("matched")))
+    return {
+        "source": "bluebook_lookup_result_document",
+        "input_text": candidate.render_document_text(),
+        "state_code": candidate.state_code,
+        "exhaustive": bool(exhaustive),
+        "recovery": {"enabled": False, "attempted": False, "skipped_reason": "seeded_source_row_cache"},
+        "citation_count": len(links),
+        "matched_citation_count": matched_count,
+        "unmatched_citation_count": len(links) - matched_count,
+        "citation_resolution_ratio": (matched_count / len(links)) if links else 1.0,
+        "citations": links,
+        "unresolved_citations": [item for item in links if not bool(item.get("matched"))],
+        "citation_suggestions": [],
+        "recovery_results": [],
+    }
+
+
 def _sql_literal_path(path: str) -> str:
     return str(path).replace("'", "''")
 
@@ -465,7 +560,7 @@ def _synthesize_seed_candidate_from_row(
         note_parts.append(f"title={title}")
     if url:
         note_parts.append(f"url={url}")
-    return BluebookCitationCandidate(
+    candidate = BluebookCitationCandidate(
         citation_text=citation_text,
         context_text=context,
         state_code=resolved_state,
@@ -474,6 +569,8 @@ def _synthesize_seed_candidate_from_row(
         expected_valid=True,
         notes="; ".join(note_parts),
     )
+    _SEEDED_SOURCE_ROW_CACHE[_seeded_row_cache_key(corpus_key, source_ref, citation_text)] = dict(row)
+    return candidate
 
 
 def _normalized_partition_key(corpus_key: str, state_code: Optional[str]) -> str:
@@ -730,7 +827,15 @@ def _fallback_bluebook_fuzz_candidates(
         if str(item or "").strip()
     ]
     if not requested_corpora:
-        requested_corpora = {"state_laws", "us_code", "federal_register", "caselaw_access_project"}
+        requested_corpora = {
+            "caselaw_access_project",
+            "cfr",
+            "federal_register",
+            "state_admin_rules",
+            "state_court_rules",
+            "state_laws",
+            "us_code",
+        }
     if not requested_states:
         requested_states = ["MN", "OR", "NY", "CA", "TX"]
 
@@ -806,7 +911,7 @@ def _fallback_bluebook_fuzz_candidates(
         ],
     }
 
-    candidates: List[BluebookCitationCandidate] = []
+    state_candidates: List[BluebookCitationCandidate] = []
     if "state_laws" in requested_corpora or "state_statute" in requested_corpora:
         for state_code in requested_states:
             citation, topic, _prefix, citation_type = state_examples.get(
@@ -818,7 +923,7 @@ def _fallback_bluebook_fuzz_candidates(
                     "state_statute",
                 ),
             )
-            candidates.append(
+            state_candidates.append(
                 BluebookCitationCandidate(
                     citation_text=citation,
                     context_text=f"The filing cites {citation} for {topic}.",
@@ -830,8 +935,15 @@ def _fallback_bluebook_fuzz_candidates(
                 )
             )
 
+    corpus_candidates: List[BluebookCitationCandidate] = []
     for corpus_key in sorted(requested_corpora):
-        candidates.extend(corpus_examples.get(corpus_key, []))
+        corpus_candidates.extend(corpus_examples.get(corpus_key, []))
+
+    candidates: List[BluebookCitationCandidate] = []
+    if state_candidates:
+        candidates.append(state_candidates[0])
+    candidates.extend(corpus_candidates)
+    candidates.extend(state_candidates[1:])
 
     if not candidates:
         candidates = corpus_examples["us_code"] + corpus_examples["caselaw_access_project"]
@@ -1036,6 +1148,111 @@ def _summarize_scraper_coverage(attempts: Sequence[BluebookCitationFuzzAttempt])
         "targets": targets,
         "hosts": dict(sorted(host_counts.items())),
         "corpora": dict(sorted(corpus_counts.items())),
+    }
+
+
+def _requested_fuzz_corpora(corpus_keys: Optional[Sequence[str]]) -> List[str]:
+    values = [str(item or "").strip() for item in list(corpus_keys or []) if str(item or "").strip()]
+    return values or list(_DEFAULT_FUZZ_CORPORA)
+
+
+def _summarize_scraper_family_matrix(
+    attempts: Sequence[BluebookCitationFuzzAttempt],
+    *,
+    requested_corpora: Sequence[str],
+) -> Dict[str, Any]:
+    requested = [str(item or "").strip() for item in requested_corpora if str(item or "").strip()]
+    requested_set = set(requested)
+    matrix: Dict[str, Dict[str, Any]] = {}
+
+    def row_for(corpus_key: str) -> Dict[str, Any]:
+        key = str(corpus_key or "").strip() or "unknown"
+        return matrix.setdefault(
+            key,
+            {
+                "corpus_key": key,
+                "requested": key in requested_set,
+                "attempt_count": 0,
+                "matched_attempt_count": 0,
+                "failed_attempt_count": 0,
+                "recovery_count": 0,
+                "merge_success_count": 0,
+                "merge_failure_count": 0,
+                "hosts": [],
+                "target_files": [],
+                "target_local_parquet_paths": [],
+                "sample_citations": [],
+            },
+        )
+
+    for corpus_key in requested:
+        row_for(corpus_key)
+
+    for attempt in attempts:
+        corpus_key = _attempt_corpus_key(attempt)
+        row = row_for(corpus_key)
+        row["attempt_count"] += 1
+        if _attempt_succeeded(attempt):
+            row["matched_attempt_count"] += 1
+        else:
+            row["failed_attempt_count"] += 1
+        citation_text = str(attempt.candidate.citation_text or "").strip()
+        if citation_text and citation_text not in row["sample_citations"]:
+            row["sample_citations"].append(citation_text)
+
+        for recovery in attempt.recoveries:
+            row["recovery_count"] += 1
+            scraper_patch = recovery.get("scraper_patch") if isinstance(recovery.get("scraper_patch"), dict) else {}
+            host = str(scraper_patch.get("host") or "").strip()
+            if host and host not in row["hosts"]:
+                row["hosts"].append(host)
+            target_file = str(scraper_patch.get("target_file") or "").strip()
+            if target_file and target_file not in row["target_files"]:
+                row["target_files"].append(target_file)
+
+        for merge_report in attempt.merge_reports:
+            status = str(merge_report.get("status") or "unknown").strip().lower()
+            if status == "success":
+                row["merge_success_count"] += 1
+            else:
+                row["merge_failure_count"] += 1
+            target_path = str(merge_report.get("target_local_parquet_path") or "").strip()
+            if target_path and target_path not in row["target_local_parquet_paths"]:
+                row["target_local_parquet_paths"].append(target_path)
+
+    rows = []
+    for row in matrix.values():
+        row["hosts"] = sorted(row["hosts"])
+        row["target_files"] = sorted(row["target_files"])
+        row["target_local_parquet_paths"] = row["target_local_parquet_paths"][:10]
+        row["sample_citations"] = row["sample_citations"][:10]
+        rows.append(row)
+
+    rows = sorted(rows, key=lambda item: (not bool(item["requested"]), item["corpus_key"]))
+    missing_requested = [
+        row["corpus_key"]
+        for row in rows
+        if bool(row["requested"]) and int(row["attempt_count"]) <= 0
+    ]
+    unmerged_recoveries = [
+        row["corpus_key"]
+        for row in rows
+        if bool(row["requested"])
+        and int(row["recovery_count"]) > 0
+        and int(row["merge_success_count"]) <= 0
+    ]
+
+    return {
+        "requested_corpora": requested,
+        "covered_corpora": [row["corpus_key"] for row in rows if int(row["attempt_count"]) > 0],
+        "missing_requested_corpora": missing_requested,
+        "unmerged_recovery_corpora": unmerged_recoveries,
+        "fully_merged_recovery_corpora": [
+            row["corpus_key"]
+            for row in rows
+            if int(row["recovery_count"]) > 0 and int(row["merge_success_count"]) > 0 and int(row["merge_failure_count"]) <= 0
+        ],
+        "rows": rows,
     }
 
 
@@ -1254,6 +1471,7 @@ def _build_failure_backlog(
     scraper_coverage: Dict[str, Any],
     recovery_merge: Dict[str, Any],
     recovery_artifact_quality: Dict[str, Any],
+    scraper_family_matrix: Dict[str, Any],
     malformed_repairs: Sequence[Dict[str, Any]],
     max_acceptable_failure_rate: float,
     min_actionable_failures: int,
@@ -1272,7 +1490,7 @@ def _build_failure_backlog(
             attempt
             for attempt in attempts
             if not _attempt_succeeded(attempt)
-            and str(attempt.candidate.corpus_key_hint or "unknown").strip() == corpus_key
+            and _attempt_corpus_key(attempt) == corpus_key
             and any(
                 str((recovery.get("scraper_patch") or {}).get("target_file") or "").strip() == str(cluster.get("target_file") or "").strip()
                 and str((recovery.get("scraper_patch") or {}).get("host") or "").strip() == str(cluster.get("host") or "").strip()
@@ -1303,6 +1521,7 @@ def _build_failure_backlog(
         "cluster_count": len(backlog_clusters),
         "clusters": backlog_clusters,
         "scraper_coverage": dict(scraper_coverage or {}),
+        "scraper_family_matrix": dict(scraper_family_matrix or {}),
         "recovery_merge": dict(recovery_merge or {}),
         "recovery_artifact_quality": dict(recovery_artifact_quality or {}),
         "malformed_repairs": list(malformed_repairs or [])[:50],
@@ -1411,14 +1630,36 @@ async def run_bluebook_linker_fuzz_harness(
     merged_count = 0
 
     for ordinal, candidate in enumerate(candidates, start=1):
-        resolution = active_resolve_document(
-            candidate.render_document_text(),
-            state_code=candidate.state_code,
-            resolver=active_resolver,
-            exhaustive=exhaustive,
-            include_recovery=False,
-            include_suggestions=False,
-        )
+        candidate_resolver = active_resolver
+        candidate_source_ref = _candidate_source_ref(candidate)
+        candidate_corpus_key = str(candidate.corpus_key_hint or "").strip()
+        if resolve_document_func is None and candidate_source_ref and candidate_corpus_key:
+            candidate_resolver = BluebookCitationResolver(
+                allow_hf_fallback=bool(getattr(active_resolver, "allow_hf_fallback", allow_hf_fallback)),
+                prefer_hf_sources=bool(getattr(active_resolver, "prefer_hf_sources", prefer_hf_corpora)),
+                primary_corpora_only=bool(getattr(active_resolver, "primary_corpora_only", primary_corpora_only)),
+                exact_state_partition_only=bool(getattr(active_resolver, "exact_state_partition_only", exact_state_partitions_only)),
+                materialize_remote_sources=bool(getattr(active_resolver, "materialize_remote_sources", materialize_hf_corpora)),
+                require_exact_anchor=bool(getattr(active_resolver, "require_exact_anchor", True)),
+                parquet_file_overrides={candidate_corpus_key: [candidate_source_ref]},
+                extractor=getattr(active_resolver, "extractor", None),
+            )
+        resolution = None
+        if resolve_document_func is None:
+            resolution = _resolve_candidate_from_seeded_row_cache(
+                candidate,
+                resolver=candidate_resolver,
+                exhaustive=exhaustive,
+            )
+        if resolution is None:
+            resolution = active_resolve_document(
+                candidate.render_document_text(),
+                state_code=candidate.state_code,
+                resolver=candidate_resolver,
+                exhaustive=exhaustive,
+                include_recovery=False,
+                include_suggestions=False,
+            )
 
         if int(resolution.get("matched_citation_count") or 0) > 0:
             matched_attempts += 1
@@ -1545,6 +1786,10 @@ async def run_bluebook_linker_fuzz_harness(
     summary["recovery_artifact_quality"] = _summarize_recovery_artifact_quality(attempts)
     summary["failure_patch_clusters"] = _cluster_failure_recoveries(attempts)
     summary["scraper_coverage"] = _summarize_scraper_coverage(attempts)
+    summary["scraper_family_matrix"] = _summarize_scraper_family_matrix(
+        attempts,
+        requested_corpora=_requested_fuzz_corpora(corpus_keys),
+    )
     summary["malformed_repairs"] = _collect_malformed_repairs(candidates)
     summary["sampling"] = {
         "seed_examples_per_corpus": int(seed_examples_per_corpus),
@@ -1559,6 +1804,7 @@ async def run_bluebook_linker_fuzz_harness(
         scraper_coverage=summary["scraper_coverage"],
         recovery_merge=summary["recovery_merge"],
         recovery_artifact_quality=summary["recovery_artifact_quality"],
+        scraper_family_matrix=summary["scraper_family_matrix"],
         malformed_repairs=summary["malformed_repairs"],
         max_acceptable_failure_rate=max_acceptable_failure_rate,
         min_actionable_failures=min_actionable_failures,

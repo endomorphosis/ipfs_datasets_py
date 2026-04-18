@@ -571,6 +571,35 @@ def test_citation_extractor_extracts_michigan_case_reporters_and_public_law_no()
     assert public_law_citations[0].text == "Pub. L. No. 117-58"
 
 
+def test_bluebook_resolver_matches_caselaw_access_project_citation_field(tmp_path: Path):
+    source_path = tmp_path / "cap.parquet"
+    pq.write_table(
+        pa.table(
+            {
+                "id": ["cap-38-mich-90"],
+                "citations": ["38 Mich. 90"],
+                "reporter": ["Mich."],
+                "first_page": ["90"],
+                "name": ["John R. Long v. Robert P. Sinclair"],
+                "text": ["The opinion is reported at 38 Mich. 90."],
+            }
+        ),
+        source_path,
+    )
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        primary_corpora_only=True,
+        parquet_file_overrides={"caselaw_access_project": [str(source_path)]},
+    )
+
+    links = resolver.resolve_text("The filing relies on 38 Mich. 90 as authority.")
+
+    assert len(links) == 1
+    assert links[0].matched is True
+    assert links[0].matched_field == "citations"
+    assert links[0].source_document_id == "cap-38-mich-90"
+
+
 def test_bluebook_citation_resolver_links_usc_and_state_law_from_local_parquet(tmp_path):
     uscode_path = tmp_path / "uscode.parquet"
     pq.write_table(

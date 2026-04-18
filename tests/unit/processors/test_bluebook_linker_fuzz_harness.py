@@ -9,7 +9,9 @@ from ipfs_datasets_py.processors.legal_data.bluebook_linker_fuzz_harness import 
     collect_seeded_bluebook_fuzz_candidates,
     parse_bluebook_fuzz_candidates,
     run_bluebook_linker_fuzz_harness,
+    _fallback_bluebook_fuzz_candidates,
 )
+from ipfs_datasets_py.processors.legal_data.bluebook_citation_linker import BluebookCitationResolver
 
 
 def test_parse_bluebook_fuzz_candidates_accepts_fenced_json_payload() -> None:
@@ -71,6 +73,21 @@ def test_parse_bluebook_fuzz_candidates_accepts_plain_citation_list() -> None:
     assert candidates[0].render_document_text() == "The filing cites Minn. Stat. § 518.17 as supporting authority."
 
 
+def test_fallback_bluebook_fuzz_candidates_cover_scraper_families() -> None:
+    candidates = _fallback_bluebook_fuzz_candidates(sample_count=6)
+
+    assert [item.corpus_key_hint for item in candidates] == [
+        "state_laws",
+        "caselaw_access_project",
+        "cfr",
+        "federal_register",
+        "state_admin_rules",
+        "state_court_rules",
+    ]
+    assert candidates[0].state_code == "MN"
+    assert candidates[-1].citation_text == "Minn. R. Civ. P. 56.03"
+
+
 @pytest.mark.anyio
 async def test_run_bluebook_linker_fuzz_harness_labels_plain_list_failures_from_recovery(tmp_path: Path) -> None:
     def fake_generate(*args, **kwargs) -> str:
@@ -115,6 +132,15 @@ async def test_run_bluebook_linker_fuzz_harness_labels_plain_list_failures_from_
 
     assert run.summary["coverage_by_corpus"]["actionable_corpora"] == ["state_laws"]
     assert run.summary["failure_patch_clusters"][0]["corpus_key"] == "state_laws"
+    backlog_cluster = run.summary["failure_patch_backlog"]["clusters"][0]
+    assert backlog_cluster["sample_contexts"] == [
+        {
+            "citation_text": "Minn. Stat. § 518.17",
+            "context_text": "",
+            "state_code": None,
+            "notes": None,
+        }
+    ]
 
 
 @pytest.mark.anyio
@@ -474,6 +500,51 @@ def test_collect_seeded_bluebook_fuzz_candidates_finds_sparse_federal_register_r
     assert seeds[0].citation_type_hint == "federal_register"
 
 
+@pytest.mark.anyio
+async def test_seed_only_fuzzer_resolves_caselaw_from_seeded_source_row_cache(tmp_path: Path) -> None:
+    pa = pytest.importorskip("pyarrow")
+    pq = pytest.importorskip("pyarrow.parquet")
+    pytest.importorskip("duckdb")
+
+    source_path = tmp_path / "cap.parquet"
+    pq.write_table(
+        pa.table(
+            {
+                "id": ["cap-38-mich-90"],
+                "citations": ["38 Mich. 90"],
+                "reporter": ["Mich."],
+                "first_page": ["90"],
+                "name": ["John R. Long v. Robert P. Sinclair"],
+                "text": ["The opinion is reported at 38 Mich. 90."],
+            }
+        ),
+        source_path,
+    )
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        primary_corpora_only=True,
+        parquet_file_overrides={"caselaw_access_project": [str(source_path)]},
+    )
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        resolver=resolver,
+        corpus_keys=["caselaw_access_project"],
+        seed_from_corpora=True,
+        seed_only=True,
+        seed_examples_per_corpus=1,
+        enable_recovery=False,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["sample_count_executed"] == 1
+    assert run.summary["matched_attempt_count"] == 1
+    assert run.summary["unmatched_citation_count"] == 0
+    citation = run.attempts[0].resolution["citations"][0]
+    assert citation["matched_field"] == "citations"
+    assert citation["metadata"]["resolution_method"] == "seeded_source_row_cache"
+
+
 def test_collect_seeded_bluebook_fuzz_candidates_balances_across_states_and_sources() -> None:
     class _FakeResolver:
         def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
@@ -691,6 +762,41 @@ def test_collect_seeded_bluebook_fuzz_candidates_skips_synthetic_court_rule_iden
     )
 
     assert seeds == []
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_synthesizes_state_court_rule_sections() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_court_rules":
+                return []
+            return ["memory://mn-court-rules"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "MN",
+                    "name": "Summary Judgment",
+                    "source_id": "urn:state:mn:court-rule:Rule 56.03",
+                    "text": "Rule 56.03 Summary Judgment A party may move for summary judgment.",
+                    "source_url": "https://www.revisor.mn.gov/court_rules/cp/id/56/",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_court_rules"],
+        state_codes=["MN"],
+        examples_per_corpus=1,
+        sample_count=1,
+    )
+
+    assert len(seeds) == 1
+    assert seeds[0].citation_text == "Minn. Court Rules § 56.03"
+    assert seeds[0].state_code == "MN"
+    assert seeds[0].corpus_key_hint == "state_court_rules"
 
 
 def test_collect_seeded_bluebook_fuzz_candidates_does_not_seed_admin_from_implemented_statutes() -> None:
@@ -1164,6 +1270,7 @@ async def test_run_bluebook_linker_fuzz_harness_summarizes_multiple_scraper_targ
         recovery_func=fake_recovery,
         merge_recovered_rows=True,
         merge_manifest_func=fake_merge,
+        corpus_keys=["state_laws", "us_code", "state_admin_rules"],
         min_actionable_failures=1,
         output_dir=tmp_path / "artifacts",
     )
@@ -1190,7 +1297,24 @@ async def test_run_bluebook_linker_fuzz_harness_summarizes_multiple_scraper_targ
     assert run.summary["recovery_merge"]["success_count"] == 1
     assert run.summary["recovery_merge"]["failure_count"] == 1
     assert run.summary["recovery_merge"]["error_counts"] == {"missing canonical us_code target parquet": 1}
+    matrix = run.summary["scraper_family_matrix"]
+    assert matrix["requested_corpora"] == ["state_laws", "us_code", "state_admin_rules"]
+    assert matrix["covered_corpora"] == ["state_laws", "us_code"]
+    assert matrix["missing_requested_corpora"] == ["state_admin_rules"]
+    assert matrix["unmerged_recovery_corpora"] == ["us_code"]
+    assert matrix["fully_merged_recovery_corpora"] == ["state_laws"]
+    matrix_rows = {row["corpus_key"]: row for row in matrix["rows"]}
+    assert matrix_rows["state_laws"]["merge_success_count"] == 1
+    assert matrix_rows["state_laws"]["target_local_parquet_paths"] == [str(tmp_path / "STATE-MN.parquet")]
+    assert matrix_rows["us_code"]["merge_failure_count"] == 1
+    assert matrix_rows["us_code"]["target_files"] == [
+        "ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/us_code_scraper.py"
+    ]
+    assert matrix_rows["state_admin_rules"]["attempt_count"] == 0
     assert run.summary["failure_patch_backlog"]["scraper_coverage"]["scraper_target_count"] == 2
+    assert run.summary["failure_patch_backlog"]["scraper_family_matrix"]["missing_requested_corpora"] == [
+        "state_admin_rules"
+    ]
     assert run.summary["failure_patch_backlog"]["scraper_coverage"]["hosts"] == {
         "uscode.house.gov": 1,
         "www.revisor.mn.gov": 1,

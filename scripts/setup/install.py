@@ -339,7 +339,7 @@ def _sync_venv_dependencies(repo_root: Path, venv_dir: Path) -> None:
     print(f"📦 Syncing dependencies into {venv_dir}...")
     subprocess.run([str(python_path), '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'], check=True, text=True)
     _install_requirements_with_local_overrides(python_path, repo_root, requirements_path)
-    subprocess.run([str(python_path), '-m', 'pip', 'install', '-e', str(editable_target), '--no-deps'], check=True, text=True)
+    subprocess.run([str(python_path), '-m', 'pip', 'install', '-e', str(editable_target)], check=True, text=True)
     _prune_stale_torch_cuda_packages(python_path)
     _ensure_ocr_runtime(python_path)
     _write_venv_sync_marker(repo_root, venv_dir)
@@ -706,6 +706,9 @@ def show_status():
         ('requests', 'requests'),
         ('pyyaml', 'yaml'),
         ('tqdm', 'tqdm'),
+        ('symbolicai', 'symai'),
+        ('faiss', 'faiss'),
+        ('sentence_tx', 'sentence_transformers'),
     ]
     
     for label, module_name in critical_deps:

@@ -1,17 +1,137 @@
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 import sys
 import types
 
 import pytest
 
+from ipfs_datasets_py.processors.legal_scrapers.shared_fetch_cache import SharedFetchCache
+from ipfs_datasets_py.processors.legal_scrapers.url_archive_cache import URLArchiveCache
+from ipfs_datasets_py.processors.web_archiving.contracts import UnifiedDocument, UnifiedFetchResponse
+from ipfs_datasets_py.processors.web_archiving.unified_api import UnifiedWebArchivingAPI
 from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
     ScraperConfig,
     ScraperMethod,
     ScraperResult,
     UnifiedWebScraper,
 )
+
+
+def test_shared_fetch_cache_round_trips_binary_payloads(tmp_path) -> None:
+    cache = SharedFetchCache(cache_dir=str(tmp_path / "cache"))
+    raw_pdf = b"%PDF-1.4 cached bytes"
+
+    cache.save(
+        namespace="test",
+        url="https://example.test/rules.pdf",
+        payload={"metadata": {"raw_bytes": raw_pdf}},
+    )
+    loaded = cache.load(namespace="test", url="https://example.test/rules.pdf")
+
+    assert loaded is not None
+    assert loaded["metadata"]["raw_bytes"] == raw_pdf
+
+
+def test_unified_scraper_cache_payload_is_json_safe_with_raw_bytes() -> None:
+    raw_pdf = b"%PDF-1.4 cached bytes"
+    result = ScraperResult(
+        url="https://example.test/rules.pdf",
+        title="rules.pdf",
+        text="Parsed rules",
+        method_used=ScraperMethod.REQUESTS_ONLY,
+        success=True,
+        metadata={"raw_bytes": raw_pdf, "binary_document": True},
+    )
+
+    payload = UnifiedWebScraper._serialize_scraper_result(result)
+    json.dumps(payload)
+    restored = UnifiedWebScraper._deserialize_scraper_result(payload)
+
+    assert restored.metadata["raw_bytes"] == raw_pdf
+    assert restored.metadata["binary_document"] is True
+
+
+def test_unified_fetch_cache_payload_is_json_safe_with_raw_bytes() -> None:
+    raw_pdf = b"%PDF-1.4 cached bytes"
+    response = UnifiedFetchResponse(
+        url="https://example.test/rules.pdf",
+        document=UnifiedDocument(
+            url="https://example.test/rules.pdf",
+            title="rules.pdf",
+            text="Parsed rules",
+            content_type="application/pdf",
+            metadata={"raw_bytes": raw_pdf, "binary_document": True},
+        ),
+        trace=None,
+        errors=[],
+        success=True,
+        quality_score=0.95,
+        metadata={"requested_domain": "legal"},
+    )
+
+    payload = UnifiedWebArchivingAPI._response_to_cache_payload(response)
+    json.dumps(payload)
+    restored = object.__new__(UnifiedWebArchivingAPI)._cache_payload_to_response(payload)
+
+    assert restored.document is not None
+    assert restored.document.metadata["raw_bytes"] == raw_pdf
+    assert restored.document.metadata["binary_document"] is True
+
+
+@pytest.mark.anyio
+async def test_url_archive_cache_round_trips_binary_metadata(tmp_path) -> None:
+    raw_pdf = b"%PDF-1.4 archived bytes"
+    cache = URLArchiveCache(metadata_dir=str(tmp_path / "url-cache"), persist_to_ipfs=False)
+
+    result = await cache.put(
+        url="https://example.test/rules.pdf",
+        content="Parsed rules",
+        source="test",
+        metadata={"raw_bytes": raw_pdf, "binary_document": True},
+    )
+    loaded = cache.get("https://example.test/rules.pdf")
+
+    assert result["status"] == "success"
+    assert loaded is not None
+    assert loaded.metadata is not None
+    assert loaded.metadata["raw_bytes"] == raw_pdf
+    assert loaded.metadata["binary_document"] is True
+
+
+def test_brave_search_ipfs_cache_serializes_binary_metadata(monkeypatch, tmp_path) -> None:
+    from ipfs_datasets_py.processors.web_archiving import brave_search_ipfs_cache as brave_cache_module
+
+    store: dict[str, bytes] = {}
+
+    class FakeIPFSRouter:
+        @staticmethod
+        def add_bytes(data: bytes, pin: bool = False) -> str:
+            store["cid-test"] = data
+            return "cid-test"
+
+        @staticmethod
+        def cat(cid: str) -> bytes:
+            return store[cid]
+
+    monkeypatch.setattr(brave_cache_module, "_IPFS_ROUTER_AVAILABLE", True)
+    monkeypatch.setattr(brave_cache_module, "ipfs_router", FakeIPFSRouter)
+    monkeypatch.setenv("BRAVE_SEARCH_IPFS_INDEX_PATH", str(tmp_path / "brave-ipfs-index.json"))
+
+    cache = brave_cache_module.BraveSearchIPFSCache()
+    raw_pdf = b"%PDF-1.4 brave metadata"
+
+    cid = cache.store(
+        "site:example.test rules",
+        [{"title": "Rules", "url": "https://example.test/rules.pdf"}],
+        metadata={"raw_bytes": raw_pdf},
+    )
+    restored = cache.retrieve("site:example.test rules")
+
+    assert cid == "cid-test"
+    assert restored is not None
+    assert restored["metadata"]["raw_bytes"] == raw_pdf
 
 
 class _FakeLocator:

@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import urldefrag
 
+from .shared_fetch_cache import decode_cache_json_value, encode_cache_json_value
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,6 +69,7 @@ class URLArchiveCache:
 
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
+            payload = decode_cache_json_value(payload)
         except Exception as exc:
             logger.debug("Failed reading archive cache entry for %s: %s", normalized, exc)
             return None
@@ -98,14 +101,14 @@ class URLArchiveCache:
         if not normalized or not text:
             return {"status": "skipped", "reason": "empty-url-or-content"}
 
-        payload: Dict[str, Any] = {
+        payload: Dict[str, Any] = encode_cache_json_value({
             "url": str(url or normalized),
             "normalized_url": normalized,
             "content": text,
             "source": str(source or "unknown"),
             "cached_at": datetime.now(timezone.utc).isoformat(),
             "metadata": dict(metadata or {}),
-        }
+        })
 
         if self.persist_to_ipfs:
             try:

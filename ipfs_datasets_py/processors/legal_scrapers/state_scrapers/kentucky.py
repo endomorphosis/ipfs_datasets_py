@@ -236,7 +236,7 @@ class KentuckyScraper(BaseStateScraper):
         effective_date = None
         history: List[str] = []
         if extracted_text:
-            effective_match = re.search(r"\bEffective:\s*([^\n]+)", extracted_text, re.IGNORECASE)
+            effective_match = re.search(r"\bEffective:\s*(.*?)(?:\s+History:|$)", extracted_text, re.IGNORECASE | re.DOTALL)
             if effective_match:
                 effective_date = effective_match.group(1).strip()
             history_match = re.search(r"\bHistory:\s*(.+)$", extracted_text, re.IGNORECASE | re.DOTALL)
