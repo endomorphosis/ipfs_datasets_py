@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -13,6 +14,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery import (
     LegalSourceCandidate,
     LegalSourceRecoveryWorkflow,
     RecoveredCandidateFile,
+    _blocked_fetch_escalation_worker,
     build_recovery_feedback_entries_from_citation_audit,
     build_missing_citation_recovery_query,
     recover_citation_audit_feedback,
@@ -428,6 +430,36 @@ def test_candidate_fetch_response_preserves_original_failure_when_escalation_fai
     assert response is lightweight_response
     assert any("http_status_403" in str(error) for error in response.errors)
     assert any("playwright error" in str(error) for error in response.errors)
+
+
+def test_blocked_fetch_escalation_reports_jina_status_when_only_jina_configured(monkeypatch):
+    class _FakeQueue:
+        def __init__(self):
+            self.payload = None
+
+        def put(self, payload):
+            self.payload = payload
+
+    fake_requests = SimpleNamespace(
+        get=lambda *args, **kwargs: SimpleNamespace(
+            status_code=503,
+            text="",
+            headers={"content-type": "text/plain"},
+        )
+    )
+    queue = _FakeQueue()
+    monkeypatch.setitem(sys.modules, "requests", fake_requests)
+
+    _blocked_fetch_escalation_worker(
+        queue,
+        url="https://example.test/blocked",
+        title_hint="Blocked",
+        methods=["jina_reader"],
+        timeout_seconds=1,
+    )
+
+    assert queue.payload["success"] is False
+    assert queue.payload["errors"] == ["jina_reader_http_status_503"]
 
 
 def test_candidate_file_materialization_escalates_unconfirmed_success(monkeypatch, tmp_path):
