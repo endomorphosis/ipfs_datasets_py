@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import queue as queue_module
 import re
+import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol
 from urllib.parse import urljoin, urlparse
 import importlib
@@ -320,39 +321,74 @@ def _blocked_fetch_escalation_worker(
                 import requests
 
                 reader_url = f"https://r.jina.ai/http://{url}"
-                response = requests.get(
-                    reader_url,
-                    timeout=max(1.0, float(timeout_seconds)),
-                    headers={
-                        "User-Agent": "ipfs-datasets-legal-source-recovery/1.0",
-                        "Accept": "text/markdown,text/plain,*/*;q=0.8",
-                    },
-                )
-                if 200 <= int(response.status_code) < 400 and str(response.text or "").strip():
-                    queue.put(
-                        {
-                            "success": True,
-                            "document": {
-                                "title": str(title_hint or ""),
-                                "text": str(response.text or ""),
-                                "html": "",
-                                "content_type": str(response.headers.get("content-type") or "text/markdown"),
-                                "metadata": {
-                                    "content_type": str(response.headers.get("content-type") or "text/markdown"),
-                                    "reader_url": reader_url,
-                                    "source_url": url,
-                                },
-                                "extraction_provenance": {
-                                    "method": "blocked_fetch_escalation",
-                                    "scraper_method": "jina_reader",
-                                    "status_code": int(response.status_code),
-                                },
+                max_attempts = max(1, int(os.getenv("LEGAL_SOURCE_RECOVERY_JINA_READER_RETRIES", "3")))
+                for attempt_index in range(max_attempts):
+                    lock_file = None
+                    try:
+                        if _env_flag("LEGAL_SOURCE_RECOVERY_JINA_READER_LOCK", default=True):
+                            import fcntl
+
+                            lock_path = Path(
+                                os.getenv("LEGAL_SOURCE_RECOVERY_JINA_READER_LOCK_PATH")
+                                or "/tmp/ipfs_datasets_py_jina_reader.lock"
+                            )
+                            lock_path.parent.mkdir(parents=True, exist_ok=True)
+                            lock_file = lock_path.open("a+", encoding="utf-8")
+                            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+                        response = requests.get(
+                            reader_url,
+                            timeout=max(1.0, float(timeout_seconds)),
+                            headers={
+                                "User-Agent": "ipfs-datasets-legal-source-recovery/1.0",
+                                "Accept": "text/markdown,text/plain,*/*;q=0.8",
                             },
-                            "errors": [],
-                        }
-                    )
-                    return
-                errors.append(f"jina_reader_http_status_{int(response.status_code)}")
+                        )
+                        min_interval = max(0.0, float(os.getenv("LEGAL_SOURCE_RECOVERY_JINA_READER_MIN_INTERVAL_SECONDS", "0.25")))
+                        if min_interval:
+                            time.sleep(min_interval)
+                    finally:
+                        if lock_file is not None:
+                            try:
+                                import fcntl
+
+                                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                            finally:
+                                lock_file.close()
+                    if 200 <= int(response.status_code) < 400 and str(response.text or "").strip():
+                        queue.put(
+                            {
+                                "success": True,
+                                "document": {
+                                    "title": str(title_hint or ""),
+                                    "text": str(response.text or ""),
+                                    "html": "",
+                                    "content_type": str(response.headers.get("content-type") or "text/markdown"),
+                                    "metadata": {
+                                        "content_type": str(response.headers.get("content-type") or "text/markdown"),
+                                        "reader_url": reader_url,
+                                        "source_url": url,
+                                    },
+                                    "extraction_provenance": {
+                                        "method": "blocked_fetch_escalation",
+                                        "scraper_method": "jina_reader",
+                                        "status_code": int(response.status_code),
+                                        "attempts": attempt_index + 1,
+                                    },
+                                },
+                                "errors": [],
+                            }
+                        )
+                        return
+                    status_code = int(response.status_code)
+                    if status_code != 429 or attempt_index >= max_attempts - 1:
+                        errors.append(f"jina_reader_http_status_{status_code}")
+                        break
+                    retry_after = str(response.headers.get("retry-after") or "").strip()
+                    try:
+                        delay = float(retry_after)
+                    except Exception:
+                        delay = 1.0 + float(attempt_index)
+                    time.sleep(min(max(delay, 0.25), max(1.0, float(timeout_seconds))))
             except Exception as exc:
                 errors.append(f"jina_reader_error: {exc}")
 

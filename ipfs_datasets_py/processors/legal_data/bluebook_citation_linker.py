@@ -1476,14 +1476,14 @@ class BluebookCitationResolver:
         if corpus_key == "us_code":
             title_field = next((field for field in _TITLE_NUMBER_FIELDS if field in schema), None)
             section_field = next((field for field in _SECTION_FIELDS if field in schema), None)
-            official_field = next((field for field in _OFFICIAL_CITE_FIELDS if field in schema), None)
+            official_fields = [field for field in _OFFICIAL_CITE_FIELDS if field in schema]
             congress_field = next((field for field in _CONGRESS_FIELDS if field in schema), None)
             law_field = next((field for field in _LAW_NUMBER_FIELDS if field in schema), None)
             subclauses: List[str] = []
             if title_field and section_field and citation.title and citation.section:
                 subclauses.append(f"(CAST({title_field} AS VARCHAR) = ? AND CAST({section_field} AS VARCHAR) = ?)")
                 params.extend([str(citation.title), str(citation.section)])
-            if official_field:
+            for official_field in official_fields:
                 for term in _citation_match_terms(citation):
                     subclauses.append(f"lower(CAST({official_field} AS VARCHAR)) = lower(?)")
                     params.append(term)
@@ -1496,20 +1496,21 @@ class BluebookCitationResolver:
         if corpus_key == "federal_register":
             volume_field = next((field for field in _VOLUME_FIELDS if field in schema), None)
             page_field = next((field for field in _PAGE_FIELDS if field in schema), None)
-            official_field = next((field for field in _OFFICIAL_CITE_FIELDS if field in schema), None)
+            official_fields = [field for field in _OFFICIAL_CITE_FIELDS if field in schema]
             subclauses: List[str] = []
             if volume_field and page_field and citation.volume and citation.page:
                 subclauses.append(f"(CAST({volume_field} AS VARCHAR) = ? AND CAST({page_field} AS VARCHAR) = ?)")
                 params.extend([str(citation.volume), str(citation.page)])
-            if official_field:
-                subclauses.append(f"lower(CAST({official_field} AS VARCHAR)) = lower(?)")
-                params.append(citation.text)
+            for official_field in official_fields:
+                for term in _citation_match_terms(citation):
+                    subclauses.append(f"lower(CAST({official_field} AS VARCHAR)) = lower(?)")
+                    params.append(term)
             if subclauses:
                 clauses.append(f"({' OR '.join(subclauses)})")
             return clauses, params
         if corpus_key in {"state_laws", "state_admin_rules", "state_court_rules"}:
             state_field = next((field for field in _STATE_FIELDS if field in schema), None)
-            official_field = next((field for field in _OFFICIAL_CITE_FIELDS if field in schema), None)
+            official_fields = [field for field in _OFFICIAL_CITE_FIELDS if field in schema]
             section_field = next((field for field in _SECTION_FIELDS if field in schema), None)
             identifier_fields = [field for field in _IDENTIFIER_FIELDS if field in schema]
             text_fields = [field for field in _TEXT_FIELDS if field in schema]
@@ -1517,7 +1518,7 @@ class BluebookCitationResolver:
                 clauses.append(f"upper(CAST({state_field} AS VARCHAR)) = ?")
                 params.append(state_code)
             subclauses: List[str] = []
-            if official_field:
+            for official_field in official_fields:
                 for term in _citation_match_terms(citation)[:8]:
                     if not term:
                         continue

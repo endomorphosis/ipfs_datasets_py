@@ -1636,6 +1636,65 @@ def test_bluebook_citation_resolver_can_materialize_remote_sources_before_query(
     assert materialized == ["https://example.test/uscode.parquet"]
 
 
+def test_bluebook_citation_resolver_queries_recovered_state_citation_text_when_identifier_exists(tmp_path):
+    parquet_path = tmp_path / "STATE-FL.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "state_code": "FL",
+                    "identifier": None,
+                    "citation_text": "Fla. Stat. § 61.13",
+                    "normalized_citation": "Fla. Stat. § 61.13",
+                    "title": "Florida Statutes section 61.13",
+                    "source_url": "https://www.leg.state.fl.us/statutes/index.cfm",
+                }
+            ]
+        ),
+        parquet_path,
+    )
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        primary_corpora_only=True,
+        local_root_overrides={"state_laws": str(tmp_path)},
+    )
+
+    links = resolver.resolve_text("The filing cites Fla. Stat. § 61.13.", state_code="FL", exhaustive=False)
+
+    assert len(links) == 1
+    assert links[0].matched is True
+    assert links[0].matched_field == "citation_text"
+
+
+def test_bluebook_citation_resolver_queries_recovered_federal_register_citation_text_when_identifier_exists(tmp_path):
+    parquet_path = tmp_path / "federal_register.parquet"
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "identifier": None,
+                    "citation_text": "87 FR 54321",
+                    "normalized_citation": "87 FR 54321",
+                    "title": "Recovered Federal Register notice",
+                    "source_url": "https://www.federalregister.gov/citation/87-FR-54321",
+                }
+            ]
+        ),
+        parquet_path,
+    )
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=False,
+        primary_corpora_only=True,
+        local_root_overrides={"federal_register": str(tmp_path)},
+    )
+
+    links = resolver.resolve_text("The notice appeared at 87 FR 54321.", exhaustive=False)
+
+    assert len(links) == 1
+    assert links[0].matched is True
+    assert links[0].matched_field == "citation_text"
+
+
 def test_bluebook_citation_resolver_can_prefer_hf_sources_over_local_sources(monkeypatch):
     calls = []
     resolver = BluebookCitationResolver(allow_hf_fallback=True, prefer_hf_sources=True)
