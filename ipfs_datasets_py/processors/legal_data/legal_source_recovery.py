@@ -665,9 +665,26 @@ class LegalSourceRecoveryWorkflow:
         if corpus == "caselaw_access_project":
             return ["courtlistener.com", "law.justia.com"]
         state_domains = {
+            "AK": ["akleg.gov"],
+            "AZ": ["azleg.gov"],
             "CA": ["leginfo.legislature.ca.gov", "courts.ca.gov"],
+            "ID": ["legislature.idaho.gov"],
+            "IA": ["legis.iowa.gov"],
+            "KS": ["ksrevisor.gov"],
+            "ME": ["mainelegislature.org"],
+            "MI": ["legislature.mi.gov"],
+            "MO": ["revisor.mo.gov"],
+            "NC": ["ncleg.gov"],
+            "NE": ["nebraskalegislature.gov"],
+            "NV": ["leg.state.nv.us"],
             "NY": ["nysenate.gov", "nyassembly.gov", "dos.ny.gov", "nycourts.gov"],
+            "OH": ["codes.ohio.gov"],
+            "SD": ["sdlegislature.gov"],
             "TX": ["statutes.capitol.texas.gov", "texreg.sos.state.tx.us", "txcourts.gov"],
+            "UT": ["le.utah.gov"],
+            "WA": ["app.leg.wa.gov"],
+            "WI": ["docs.legis.wisconsin.gov"],
+            "WV": ["code.wvlegislature.gov"],
             "FL": ["leg.state.fl.us", "flrules.org", "flcourts.gov"],
             "GA": ["legis.ga.gov", "rules.sos.ga.gov", "georgiacourts.gov"],
             "IL": ["ilga.gov", "ilsos.gov", "illinoiscourts.gov"],
@@ -773,15 +790,35 @@ class LegalSourceRecoveryWorkflow:
         ]
         section_match = None
         section_kind = ""
+        extracted_state = state
+        extracted_code_name = ""
+        extracted_section = ""
+        try:
+            from .citation_extraction import CitationExtractor
+
+            for citation in CitationExtractor().extract_citations(text):
+                if citation.type != "state_statute":
+                    continue
+                citation_state = str(citation.jurisdiction or "").strip().upper()
+                if state and citation_state and citation_state != state:
+                    continue
+                extracted_state = citation_state or state
+                extracted_code_name = str((citation.metadata or {}).get("code_name") or citation.title or "").strip()
+                extracted_section = str(citation.section or "").strip().strip(".")
+                break
+        except Exception:
+            pass
         for candidate_kind, candidate_pattern in section_patterns:
             section_match = re.search(candidate_pattern, text, re.IGNORECASE)
             if section_match:
                 section_kind = candidate_kind
                 break
-        if not section_match:
+        if not section_match and extracted_section:
+            section_kind = "extracted"
+        if not section_match and not extracted_section:
             return []
 
-        section = section_match.group("section").strip(".")
+        section = section_match.group("section").strip(".") if section_match else extracted_section
         from ..legal_scrapers.state_laws_scraper import build_state_law_section_url
 
         if state == "MN" or re.search(r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes)", text, re.IGNORECASE):
@@ -892,6 +929,18 @@ class LegalSourceRecoveryWorkflow:
                     "snippet": "Citation-derived official Pennsylvania General Assembly consolidated statute URL.",
                 }
             )
+        if not rows and extracted_state:
+            generic_url = build_state_law_section_url(extracted_state, section, code_name=extracted_code_name)
+            if generic_url:
+                rows.append(
+                    {
+                        "url": generic_url,
+                        "title": f"{extracted_state} statute section {section}",
+                        "source": "citation_url_hint",
+                        "source_type": "current",
+                        "snippet": "Citation-derived official state statute URL.",
+                    }
+                )
         return rows
 
     @staticmethod

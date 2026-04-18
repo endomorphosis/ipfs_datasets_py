@@ -536,6 +536,45 @@ def test_legal_source_recovery_citation_url_hints_cover_prose_and_section_varian
     assert tx_penal_results[0]["url"] == "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.31.htm#31.03"
 
 
+def test_legal_source_recovery_citation_url_hints_cover_derived_state_builders():
+    az_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Ariz. Rev. Stat. § 13-1203",
+        normalized_citation="Ariz. Rev. Stat. § 13-1203",
+        corpus_key="state_laws",
+        state_code="AZ",
+    )
+    me_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Me. Rev. Stat. § 17-A:207",
+        normalized_citation="Me. Rev. Stat. § 17-A:207",
+        corpus_key="state_laws",
+        state_code="ME",
+    )
+    nc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="N.C. Gen. Stat. § 14-33",
+        normalized_citation="N.C. Gen. Stat. § 14-33",
+        corpus_key="state_laws",
+        state_code="NC",
+    )
+    oh_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Ohio Rev. Code § 2903.13",
+        normalized_citation="Ohio Rev. Code § 2903.13",
+        corpus_key="state_laws",
+        state_code="OH",
+    )
+    wa_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Wash. Rev. Code § 9A.36.041",
+        normalized_citation="Wash. Rev. Code § 9A.36.041",
+        corpus_key="state_laws",
+        state_code="WA",
+    )
+
+    assert az_results[0]["url"] == "https://www.azleg.gov/ars/13/01203.htm"
+    assert me_results[0]["url"] == "https://www.mainelegislature.org/legis/statutes/17-A/title17-Asec207.html"
+    assert nc_results[0]["url"] == "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-33.html"
+    assert oh_results[0]["url"] == "https://codes.ohio.gov/ohio-revised-code/section-2903.13"
+    assert wa_results[0]["url"] == "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.36.041"
+
+
 def test_legal_source_recovery_citation_url_hints_cover_federal_citations():
     usc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
         citation_text="42 U.S.C. § 1983",

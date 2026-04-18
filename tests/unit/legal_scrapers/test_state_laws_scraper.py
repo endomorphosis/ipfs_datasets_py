@@ -39,6 +39,30 @@ def test_state_laws_scraper_builds_recovery_section_urls():
         scraper_module.build_state_law_section_url("PA", "5328", code_name="23 Pa.C.S.")
         == "https://www.palegis.us/statutes/consolidated/view-statute?CHAPTER=053.&DIV=00.&SECTION=028.&SUBSCTN=000.&TTL=23"
     )
+    assert (
+        scraper_module.build_state_law_section_url("AZ", "13-1203", code_name="Ariz. Rev. Stat.")
+        == "https://www.azleg.gov/ars/13/01203.htm"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("KS", "21-5413", code_name="Kan. Stat.")
+        == "https://www.ksrevisor.gov/statutes/chapters/ch21/021_054_0013.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("ME", "17-A:207", code_name="Me. Rev. Stat.")
+        == "https://www.mainelegislature.org/legis/statutes/17-A/title17-Asec207.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("NC", "14-33", code_name="N.C. Gen. Stat.")
+        == "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-33.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("OH", "2903.13", code_name="Ohio Rev. Code")
+        == "https://codes.ohio.gov/ohio-revised-code/section-2903.13"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("WA", "9A.36.041", code_name="Wash. Rev. Code")
+        == "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.36.041"
+    )
 
 
 def test_state_laws_scraper_recovery_section_url_edge_cases():

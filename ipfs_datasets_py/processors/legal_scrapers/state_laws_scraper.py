@@ -579,8 +579,18 @@ def build_state_law_section_url(
     if not state or not normalized_section:
         return ""
 
+    def _section_parts(separator: str = "-") -> List[str]:
+        return [part for part in normalized_section.split(separator) if part]
+
     if state == "MN" or "revisor.mn.gov" in host_hint:
         return f"https://www.revisor.mn.gov/statutes/cite/{normalized_section}"
+    if state == "AK" or "akleg.gov" in host_hint:
+        return f"https://www.akleg.gov/basis/statutes.asp#{normalized_section}"
+    if state == "AZ" or "azleg.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            return f"https://www.azleg.gov/ars/{int(parts[0])}/{int(parts[1]):05d}.htm"
+        return ""
     if state == "OR" or "oregon.public.law" in host_hint:
         return f"https://oregon.public.law/statutes/ors_{normalized_section}"
     if state == "CA" or "leginfo.legislature.ca.gov" in host_hint:
@@ -602,6 +612,63 @@ def build_state_law_section_url(
             law_code = "PE"
         chapter = normalized_section.split(".", 1)[0]
         return f"https://statutes.capitol.texas.gov/Docs/{law_code}/htm/{law_code}.{chapter}.htm#{normalized_section}"
+    if state == "ID" or "legislature.idaho.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            chapter = str(int(parts[1][0])) if len(parts[1]) >= 3 else str(int(parts[1]))
+            return f"https://legislature.idaho.gov/statutesrules/idstat/title{int(parts[0])}/t{int(parts[0])}ch{chapter}/sect{normalized_section}/"
+        return ""
+    if state == "IA" or "legis.iowa.gov" in host_hint:
+        return f"https://www.legis.iowa.gov/docs/code/{normalized_section}.pdf"
+    if state == "KS" or "ksrevisor.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit() and len(parts[1]) >= 3:
+            chapter = int(parts[0])
+            article = int(parts[1][:-2])
+            section_num = int(parts[1][-2:])
+            return f"https://www.ksrevisor.gov/statutes/chapters/ch{chapter:02d}/{chapter:03d}_{article:03d}_{section_num:04d}.html"
+        return ""
+    if state == "ME" or "mainelegislature.org" in host_hint:
+        title_section = normalized_section.split(":", 1)
+        if len(title_section) == 2:
+            title, section = title_section
+            return f"https://www.mainelegislature.org/legis/statutes/{title}/title{title}sec{section}.html"
+        return ""
+    if state == "MI" or "legislature.mi.gov" in host_hint:
+        return f"https://legislature.mi.gov/Laws/MCL?objectName=mcl-{normalized_section}"
+    if state == "MO" or "revisor.mo.gov" in host_hint:
+        return f"https://revisor.mo.gov/main/OneSection.aspx?section={normalized_section}"
+    if state == "NC" or "ncleg.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 2:
+            return f"https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_{parts[0]}/GS_{normalized_section}.html"
+        return ""
+    if state == "NE" or "nebraskalegislature.gov" in host_hint:
+        return f"https://nebraskalegislature.gov/laws/statutes.php?statute={normalized_section}"
+    if state == "NV" or "leg.state.nv.us" in host_hint:
+        chapter = normalized_section.split(".", 1)[0]
+        suffix = normalized_section.split(".", 1)[1] if "." in normalized_section else ""
+        if chapter.isdigit() and suffix:
+            return f"https://www.leg.state.nv.us/NRS/NRS-{int(chapter):03d}.html#NRS{int(chapter)}Sec{suffix}"
+        return ""
+    if state == "OH" or "codes.ohio.gov" in host_hint:
+        return f"https://codes.ohio.gov/ohio-revised-code/section-{normalized_section}"
+    if state == "SD" or "sdlegislature.gov" in host_hint:
+        return f"https://sdlegislature.gov/Statutes/{normalized_section}"
+    if state == "UT" or "le.utah.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 3 and parts[0].isdigit():
+            return f"https://le.utah.gov/xcode/Title{parts[0]}/Chapter{parts[1]}/{parts[0]}-{parts[1]}-S{'-'.join(parts[2:])}.html"
+        return ""
+    if state == "WA" or "app.leg.wa.gov" in host_hint:
+        return f"https://app.leg.wa.gov/RCW/default.aspx?cite={normalized_section}"
+    if state == "WI" or "docs.legis.wisconsin.gov" in host_hint:
+        chapter, _, section_tail = normalized_section.partition(".")
+        if chapter and section_tail:
+            return f"https://docs.legis.wisconsin.gov/statutes/statutes/{chapter}/{section_tail}"
+        return ""
+    if state == "WV" or "code.wvlegislature.gov" in host_hint:
+        return f"https://code.wvlegislature.gov/{normalized_section}/"
     if state == "FL" or "leg.state.fl.us" in host_hint:
         chapter = normalized_section.split(".", 1)[0]
         if not chapter.isdigit():
