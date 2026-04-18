@@ -756,16 +756,32 @@ class LegalSourceRecoveryWorkflow:
         if corpus != "state_laws":
             return []
 
-        section_match = re.search(
-            r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes|ORS|Cal\.\s+[A-Za-z.\s]+Code|N\.Y\.\s+[A-Za-z.\s]+(?:Law|Act)|Tex\.\s+[A-Za-z.\s]+Code)"
-            r"\s*(?:§|section|sec\.?)?\s*([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
-            text,
-            re.IGNORECASE,
-        )
+        section_patterns = [
+            (
+                "generic",
+                r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes|ORS|Cal\.\s+[A-Za-z.\s]+Code|N\.Y\.\s+[A-Za-z.\s]+(?:Law|Act)|Tex\.\s+[A-Za-z.\s]+Code|Fla\.\s+Stat\.|Florida\s+Statutes)"
+                r"\s*(?:§|section|sec\.?)?\s*(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
+            ),
+            (
+                "ilcs",
+                r"\b(?P<il_title>[0-9]+)\s+ILCS\s+(?P<il_act>[0-9]+)/(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
+            ),
+            (
+                "pa_cs",
+                r"\b(?P<pa_title>[0-9]+)\s+Pa\.?\s*C\.?S\.?(?:A\.?)?\s*(?:§|section|sec\.?)?\s*(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
+            ),
+        ]
+        section_match = None
+        section_kind = ""
+        for candidate_kind, candidate_pattern in section_patterns:
+            section_match = re.search(candidate_pattern, text, re.IGNORECASE)
+            if section_match:
+                section_kind = candidate_kind
+                break
         if not section_match:
             return []
 
-        section = section_match.group(1).strip(".")
+        section = section_match.group("section").strip(".")
         from ..legal_scrapers.state_laws_scraper import build_state_law_section_url
 
         if state == "MN" or re.search(r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes)", text, re.IGNORECASE):
@@ -841,6 +857,39 @@ class LegalSourceRecoveryWorkflow:
                     "source": "citation_url_hint",
                     "source_type": "current",
                     "snippet": "Citation-derived official Texas Statutes section URL.",
+                }
+            )
+        if state == "FL" or re.search(r"\b(?:Fla\.\s+Stat\.|Florida\s+Statutes)", text, re.IGNORECASE):
+            rows.append(
+                {
+                    "url": build_state_law_section_url("FL", section, code_name="Fla. Stat."),
+                    "title": f"Florida Statutes section {section}",
+                    "source": "citation_url_hint",
+                    "source_type": "current",
+                    "snippet": "Citation-derived official Florida Legislature statute URL.",
+                }
+            )
+        if state == "IL" or section_kind == "ilcs" or re.search(r"\bILCS\b", text, re.IGNORECASE):
+            il_title = section_match.groupdict().get("il_title") or "750"
+            il_act = section_match.groupdict().get("il_act") or "5"
+            rows.append(
+                {
+                    "url": build_state_law_section_url("IL", section, code_name=f"{il_title} ILCS {il_act}"),
+                    "title": f"Illinois Compiled Statutes {il_title} ILCS {il_act}/{section}",
+                    "source": "citation_url_hint",
+                    "source_type": "current",
+                    "snippet": "Citation-derived official Illinois General Assembly ILCS URL.",
+                }
+            )
+        if state == "PA" or section_kind == "pa_cs" or re.search(r"\bPa\.?\s*C\.?S\.?", text, re.IGNORECASE):
+            pa_title = section_match.groupdict().get("pa_title") or "23"
+            rows.append(
+                {
+                    "url": build_state_law_section_url("PA", section, code_name=f"{pa_title} Pa.C.S."),
+                    "title": f"Pennsylvania Consolidated Statutes {pa_title} Pa.C.S. section {section}",
+                    "source": "citation_url_hint",
+                    "source_type": "current",
+                    "snippet": "Citation-derived official Pennsylvania General Assembly consolidated statute URL.",
                 }
             )
         return rows

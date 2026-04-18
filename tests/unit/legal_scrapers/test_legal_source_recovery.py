@@ -417,6 +417,24 @@ def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states()
         corpus_key="state_laws",
         state_code="TX",
     )
+    fl_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Fla. Stat. § 61.13",
+        normalized_citation="Fla. Stat. § 61.13",
+        corpus_key="state_laws",
+        state_code="FL",
+    )
+    il_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="750 ILCS 5/602.7",
+        normalized_citation="750 ILCS 5/602.7",
+        corpus_key="state_laws",
+        state_code="IL",
+    )
+    pa_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="23 Pa.C.S. § 5328",
+        normalized_citation="23 Pa.C.S. § 5328",
+        corpus_key="state_laws",
+        state_code="PA",
+    )
 
     assert ca_results[0]["url"] == (
         "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=FAM&sectionNum=3011"
@@ -424,7 +442,17 @@ def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states()
     assert mn_results[0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
     assert ny_results[0]["url"] == "https://www.nysenate.gov/legislation/laws/FCT/651"
     assert tx_results[0]["url"] == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
-    assert all(result["source"] == "citation_url_hint" for result in [mn_results[0], ca_results[0], ny_results[0], tx_results[0]])
+    assert fl_results[0]["url"] == (
+        "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0061/Sections/0061.13.html"
+    )
+    assert il_results[0]["url"] == "https://www.ilga.gov/documents/legislation/ilcs/documents/075000050K602.7.htm"
+    assert pa_results[0]["url"] == (
+        "https://www.palegis.us/statutes/consolidated/view-statute?CHAPTER=053.&DIV=00.&SECTION=028.&SUBSCTN=000.&TTL=23"
+    )
+    assert all(
+        result["source"] == "citation_url_hint"
+        for result in [mn_results[0], ca_results[0], ny_results[0], tx_results[0], fl_results[0], il_results[0], pa_results[0]]
+    )
 
 
 def test_legal_source_recovery_citation_url_hints_cover_federal_citations():

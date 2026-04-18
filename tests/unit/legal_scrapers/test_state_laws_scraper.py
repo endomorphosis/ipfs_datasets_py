@@ -27,6 +27,18 @@ def test_state_laws_scraper_builds_recovery_section_urls():
         scraper_module.build_state_law_section_url("TX", "153.002", code_name="Fam. Code")
         == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
     )
+    assert (
+        scraper_module.build_state_law_section_url("FL", "61.13", code_name="Fla. Stat.")
+        == "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0061/Sections/0061.13.html"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("IL", "602.7", code_name="750 ILCS 5")
+        == "https://www.ilga.gov/documents/legislation/ilcs/documents/075000050K602.7.htm"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("PA", "5328", code_name="23 Pa.C.S.")
+        == "https://www.palegis.us/statutes/consolidated/view-statute?CHAPTER=053.&DIV=00.&SECTION=028.&SUBSCTN=000.&TTL=23"
+    )
 
 
 @pytest.mark.asyncio

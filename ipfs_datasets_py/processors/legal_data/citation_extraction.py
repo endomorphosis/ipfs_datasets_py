@@ -46,24 +46,24 @@ CASE_CITATION_PATTERNS = [
 
 USC_CITATION_PATTERNS = [
     # U.S. Code: e.g., "42 U.S.C. § 1983", "18 USC 2251"
-    r'(\d+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*(\d+[\w\-]*(?:\([a-z0-9]+\))?)',
+    r'(\d+)\s+U\.?S\.?C\.?(?:A\.?)?\s+(?:§|section|sec\.?)?\s*(\d+[\w\-]*(?:\([a-z0-9]+\))?)',
 ]
 
 CFR_CITATION_PATTERNS = [
     # Code of Federal Regulations: e.g., "40 C.F.R. § 1.1", "21 CFR 314.80"
-    r'(\d+)\s+C\.?F\.?R\.?\s+§?\s*(\d+(?:\.\d+)?(?:\([a-z0-9]+\))?)',
+    r'(\d+)\s+C\.?F\.?R\.?\s+(?:§|section|sec\.?)?\s*(\d+(?:\.[\w-]+)*(?:\([a-z0-9]+\))?)',
 ]
 
 FEDERAL_REGISTER_PATTERNS = [
     # Federal Register: e.g., "85 FR 12345", "90 Fed. Reg. 54321"
-    r'(\d+)\s+(?:FR|Fed\.?\s+Reg\.?)\s+(\d+)',
+    r'(\d+)\s+(?:FR|Fed\.?\s+Reg\.?|Fed\.?\s+Register|Federal\s+Register)\s+(\d+)',
 ]
 
 PUBLIC_LAW_PATTERNS = [
     # Public Law: e.g., "Pub. L. 111-148", "P.L. 117-2"
     r'(?:Pub\.?\s+L\.?|P\.L\.)\s+(\d+)-(\d+)',
     # Public Law with "No.": e.g., "Pub. L. No. 117-58", "P.L. No. 117-58"
-    r'(?:Pub\.?\s+L\.?|P\.L\.?)\s+(?:No\.?\s*)?(\d+)-(\d+)',
+    r'(?:Pub\.?\s+L\.?|P\.L\.?|Public\s+Law)\s+(?:No\.?\s*)?(\d+)-(\d+)',
 ]
 
 BLUEBOOK_STATE_TO_CODE = {
@@ -77,6 +77,7 @@ BLUEBOOK_STATE_TO_CODE = {
     "Del.": "DE",
     "D.C.": "DC",
     "Fla.": "FL",
+    "Florida": "FL",
     "Ga.": "GA",
     "Haw.": "HI",
     "Idaho": "ID",
@@ -134,7 +135,9 @@ STATE_STATUTE_PATTERNS = [
     r'Admin\.\s+Code|Court\s+Rules?|Fam\.\s+Ct\.\s+Act|[A-Z][A-Za-z.\'/-]*\s+Law|'
     r'R\.\s+[A-Za-z.\s]+)'
     r')\s+(?:§|sec\.?|section)?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
-    r'(?P<text>(?P<state_shorthand>ORS)\s+(?P<section_shorthand>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
+    r'(?P<text>(?P<state_shorthand>ORS)\s+(?:§|sec\.?|section)?\s*(?P<section_shorthand>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
+    r'(?P<text>(?P<il_title>\d+)\s+ILCS\s+(?P<il_act>\d+)/(?P<il_section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
+    r'(?P<text>(?P<pa_title>\d+)\s+Pa\.?\s*C\.?S\.?(?:A\.?)?\s+(?:§|sec\.?|section)?\s*(?P<pa_section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
 ]
 
 
@@ -297,9 +300,13 @@ class CitationExtractor:
     def _extract_pl_citations(self, text: str) -> List[Citation]:
         """Extract Public Law citations."""
         citations = []
+        seen_spans = set()
         
         for pattern in self.pl_patterns:
             for match in pattern.finditer(text):
+                if match.span() in seen_spans:
+                    continue
+                seen_spans.add(match.span())
                 congress = match.group(1)
                 law = match.group(2)
                 
@@ -312,8 +319,7 @@ class CitationExtractor:
                     end_pos=match.end()
                 )
                 
-                # Generate URL (Congress.gov)
-                citation.url = f"https://www.congress.gov/bill/{congress}th-congress/house-bill"
+                citation.url = f"https://www.congress.gov/public-law/{congress}th-congress/{law}"
                 
                 citations.append(citation)
         
@@ -326,10 +332,19 @@ class CitationExtractor:
         for pattern in self.state_statute_patterns:
             for match in pattern.finditer(text):
                 citation_text = match.group("text")
-                if match.groupdict().get("state_shorthand"):
+                groupdict = match.groupdict()
+                if groupdict.get("state_shorthand"):
                     state_abbrev = "Or."
                     code_name = str(match.group("state_shorthand") or "").strip()
                     section = str(match.group("section_shorthand") or "")
+                elif groupdict.get("il_title"):
+                    state_abbrev = "Ill."
+                    code_name = f"{match.group('il_title')} ILCS {match.group('il_act')}"
+                    section = str(match.group("il_section") or "")
+                elif groupdict.get("pa_title"):
+                    state_abbrev = "Pa."
+                    code_name = f"{match.group('pa_title')} Pa.C.S."
+                    section = str(match.group("pa_section") or "")
                 else:
                     state_abbrev = match.group("state")
                     code_name = " ".join(match.group("code_name").split())

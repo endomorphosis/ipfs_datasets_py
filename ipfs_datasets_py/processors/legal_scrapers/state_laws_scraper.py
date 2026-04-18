@@ -602,6 +602,35 @@ def build_state_law_section_url(
             law_code = "PE"
         chapter = normalized_section.split(".", 1)[0]
         return f"https://statutes.capitol.texas.gov/Docs/{law_code}/htm/{law_code}.{chapter}.htm#{normalized_section}"
+    if state == "FL" or "leg.state.fl.us" in host_hint:
+        chapter = normalized_section.split(".", 1)[0]
+        if not chapter.isdigit():
+            return ""
+        chapter_num = int(chapter)
+        range_start = (chapter_num // 100) * 100
+        range_end = range_start + 99
+        return (
+            "https://www.leg.state.fl.us/statutes/index.cfm"
+            f"?App_mode=Display_Statute&URL={range_start:04d}-{range_end:04d}/{chapter_num:04d}/Sections/{chapter_num:04d}.{normalized_section.split('.', 1)[1] if '.' in normalized_section else '00'}.html"
+        )
+    if state == "IL" or "ilga.gov" in host_hint:
+        il_match = re.search(r"\b(?P<title>\d+)\s+ILCS\s+(?P<act>\d+)\b", code_hint, re.IGNORECASE)
+        if not il_match:
+            return ""
+        title = int(il_match.group("title"))
+        act = int(il_match.group("act"))
+        return f"https://www.ilga.gov/documents/legislation/ilcs/documents/{title:04d}{act:04d}0K{normalized_section}.htm"
+    if state == "PA" or "palegis.us" in host_hint:
+        title_match = re.search(r"\b(?P<title>\d+)\s+Pa\.?\s*C\.?S\.?", code_hint, re.IGNORECASE)
+        if not title_match or not normalized_section.isdigit() or len(normalized_section) < 3:
+            return ""
+        title = int(title_match.group("title"))
+        chapter = int(normalized_section[:-2])
+        section = int(normalized_section[-2:])
+        return (
+            "https://www.palegis.us/statutes/consolidated/view-statute"
+            f"?CHAPTER={chapter:03d}.&DIV=00.&SECTION={section:03d}.&SUBSCTN=000.&TTL={title}"
+        )
     return ""
 
 

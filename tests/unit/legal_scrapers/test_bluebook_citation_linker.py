@@ -486,6 +486,38 @@ def test_citation_extractor_extracts_long_form_minnesota_statutes():
     assert state_citations[0].section == "518.17"
 
 
+def test_citation_extractor_extracts_expanded_federal_fuzz_forms():
+    extractor = CitationExtractor()
+    citations = extractor.extract_citations(
+        "Authorities include 5 U.S.C. section 552, 40 C.F.R. section 122.26, "
+        "87 Federal Register 54321, and Public Law No. 111-148."
+    )
+
+    by_type = {citation.type: citation for citation in citations}
+    assert by_type["usc"].section == "552"
+    assert by_type["cfr"].section == "122.26"
+    assert by_type["federal_register"].text == "87 Federal Register 54321"
+    assert by_type["public_law"].url == "https://www.congress.gov/public-law/111th-congress/148"
+
+
+def test_citation_extractor_extracts_expanded_state_fuzz_forms():
+    extractor = CitationExtractor()
+    citations = extractor.extract_citations(
+        "The filing cites Florida Statutes section 61.30, 750 ILCS 5/602.7, "
+        "23 Pa.C.S. § 5328, and ORS section 107.137."
+    )
+
+    state_citations = [citation for citation in citations if citation.type == "state_statute"]
+    by_state = {citation.jurisdiction: citation for citation in state_citations}
+    assert by_state["FL"].section == "61.30"
+    assert by_state["FL"].metadata["code_name"] == "Statutes"
+    assert by_state["IL"].section == "602.7"
+    assert by_state["IL"].metadata["code_name"] == "750 ILCS 5"
+    assert by_state["PA"].section == "5328"
+    assert by_state["PA"].metadata["code_name"] == "23 Pa.C.S."
+    assert by_state["OR"].section == "107.137"
+
+
 def test_citation_extractor_extracts_family_code_and_act_state_citations():
     extractor = CitationExtractor()
     citations = extractor.extract_citations(
