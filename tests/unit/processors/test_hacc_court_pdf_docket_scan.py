@@ -195,6 +195,29 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert list((output_dir / "collected_pdfs").rglob("*.pdf"))
 
 
+def test_scan_hacc_pdfs_for_dockets_enables_full_enrichment_by_default(tmp_path: Path) -> None:
+    scan_root = tmp_path / "hacc"
+    _write_pdf(
+        scan_root / "case_a" / "complaint.pdf",
+        [
+            "IN THE UNITED STATES DISTRICT COURT",
+            "FOR THE DISTRICT OF EXAMPLE",
+            "Case No. 2:25-cv-4004",
+            "Roe v. Example Holdings",
+            "Complaint for damages",
+        ],
+    )
+
+    output_dir = tmp_path / "output"
+    manifest = scan_hacc_pdfs_for_dockets(scan_root, output_dir=output_dir)
+
+    assert manifest["scan_parameters"]["include_knowledge_graph"] is True
+    assert manifest["scan_parameters"]["include_bm25"] is True
+    assert manifest["scan_parameters"]["include_vector_index"] is True
+    assert manifest["scan_parameters"]["include_formal_logic"] is True
+    assert manifest["scan_parameters"]["include_router_enrichment"] is True
+
+
 def test_manifest_summary_helper_reads_condensed_status(tmp_path: Path) -> None:
     manifest_path = tmp_path / "scan_manifest.json"
     manifest_path.write_text(

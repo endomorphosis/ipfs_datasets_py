@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 from typing import List
 
 import pytest
 
-from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import NormalizedStatute
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
+    BaseStateScraper,
+    NormalizedStatute,
+)
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky import KentuckyScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota import MinnesotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.mississippi import MississippiScraper
@@ -21,6 +25,18 @@ def _statute(index: int) -> NormalizedStatute:
         official_cite=f"Minn. Stat. § 609.{index}",
         full_text=f"Section {index}",
     )
+
+
+class _SlowLegacyScraper(BaseStateScraper):
+    def get_base_url(self) -> str:
+        return "https://example.test"
+
+    def get_code_list(self) -> list[dict[str, str]]:
+        return [{"name": "Legacy Code", "url": "https://example.test/code"}]
+
+    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+        await asyncio.sleep(0.05)
+        return [_statute(1)]
 
 
 @pytest.mark.anyio
@@ -78,18 +94,74 @@ async def test_minnesota_chapter_section_fetch_is_capped(monkeypatch) -> None:
 
 
 @pytest.mark.anyio
+async def test_base_scraper_times_out_legacy_scrape_code_during_bounded_run(monkeypatch) -> None:
+    scraper = _SlowLegacyScraper("ZZ", "Test")
+    monkeypatch.setenv("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", "0.01")
+
+    statutes = await scraper.scrape_all(max_statutes=1, rate_limit_delay=0.0)
+
+    assert statutes == []
+
+
+@pytest.mark.anyio
+async def test_base_fetch_timeout_is_capped_by_bounded_run_env(monkeypatch) -> None:
+    scraper = _SlowLegacyScraper("ZZ", "Test")
+    observed: dict[str, int] = {}
+
+    async def fake_load(url: str):
+        return None
+
+    async def fake_unified_fetch(*, url: str, timeout_seconds: int) -> bytes:
+        observed["timeout_seconds"] = timeout_seconds
+        return b"<html>ok</html>"
+
+    async def fake_store(**kwargs):
+        return None
+
+    monkeypatch.setenv("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", "3")
+    monkeypatch.setattr(scraper, "_load_page_bytes_from_ipfs_cache", fake_load)
+    monkeypatch.setattr(scraper, "_fetch_page_content_with_unified_api", fake_unified_fetch)
+    monkeypatch.setattr(scraper, "_store_page_bytes_in_ipfs_cache", fake_store)
+
+    payload = await scraper._fetch_page_content_with_archival_fallback("https://example.test/code", timeout_seconds=30)
+
+    assert payload == b"<html>ok</html>"
+    assert observed["timeout_seconds"] == 3
+
+
+@pytest.mark.anyio
 async def test_kentucky_scrape_code_honors_max_statutes(monkeypatch) -> None:
     scraper = KentuckyScraper("KY", "Kentucky")
-    observed: list[int] = []
+    built: list[str] = []
 
-    async def fake_generic_scrape(*args, **kwargs) -> List[NormalizedStatute]:
-        observed.append(kwargs["max_sections"])
-        statutes = [_statute(index) for index in range(10)]
-        for index, statute in enumerate(statutes):
-            statute.source_url = f"https://apps.legislature.ky.gov/law/statutes/statute.aspx?id={index}"
-        return statutes
+    async def fake_discover_chapter_links() -> list[tuple[str, str, str]]:
+        return [("https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=37024", "CHAPTER 1 BOUNDARIES", "1")]
 
-    monkeypatch.setattr(scraper, "_generic_scrape", fake_generic_scrape)
+    async def fake_discover_section_links(chapter_url: str, chapter_label: str, chapter_number: str) -> list[tuple[str, str, str, str]]:
+        assert chapter_number == "1"
+        return [
+            (
+                f"https://apps.legislature.ky.gov/law/statutes/statute.aspx?id={index}",
+                f".0{index} Section {index}",
+                f"1.0{index}",
+                chapter_label,
+            )
+            for index in range(10)
+        ]
+
+    async def fake_build(*, section_url: str, section_number: str, **kwargs) -> NormalizedStatute:
+        built.append(section_url)
+        statute = _statute(len(built))
+        statute.state_code = "KY"
+        statute.state_name = "Kentucky"
+        statute.section_number = section_number
+        statute.source_url = section_url
+        statute.official_cite = f"Ky. Rev. Stat. § {section_number}"
+        return statute
+
+    monkeypatch.setattr(scraper, "_discover_chapter_links", fake_discover_chapter_links)
+    monkeypatch.setattr(scraper, "_discover_section_links", fake_discover_section_links)
+    monkeypatch.setattr(scraper, "_build_statute_from_section_page", fake_build)
 
     statutes = await scraper.scrape_code(
         "Kentucky Revised Statutes",
@@ -97,32 +169,72 @@ async def test_kentucky_scrape_code_honors_max_statutes(monkeypatch) -> None:
         max_statutes=4,
     )
 
-    assert observed == [4]
+    assert len(built) == 4
     assert len(statutes) == 4
+    assert [statute.section_number for statute in statutes] == ["1.00", "1.01", "1.02", "1.03"]
+    assert all("/law/statutes/statute.aspx?id=" in statute.source_url for statute in statutes)
 
 
 @pytest.mark.anyio
-async def test_kentucky_scrape_code_keeps_bounded_generic_rows_when_filter_is_empty(monkeypatch) -> None:
+async def test_kentucky_discovers_official_chapters_and_sections(monkeypatch) -> None:
     scraper = KentuckyScraper("KY", "Kentucky")
 
-    async def fake_generic_scrape(*args, **kwargs) -> List[NormalizedStatute]:
-        statutes = [_statute(index) for index in range(5)]
-        for index, statute in enumerate(statutes):
-            statute.state_code = "KY"
-            statute.state_name = "Kentucky"
-            statute.source_url = f"https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id={index}"
-        return statutes
+    async def fake_fetch_html(url: str, timeout_seconds: int = 5) -> str:
+        if url.endswith("/law/statutes/"):
+            return """
+            <a href="chapter.aspx?id=37024">CHAPTER 1 BOUNDARIES</a>
+            <a href="/Law/kar/Pages/default.aspx">Administrative Regulations</a>
+            """
+        return """
+        <a href="statute.aspx?id=50298">.010 Legislative intent in establishing Kentucky State Plane Coordinate System.</a>
+        <a href="statute.aspx?id=50299">.020 Kentucky State Plane Coordinate System.</a>
+        <a href="chapter.aspx?id=bad">Chapter navigation</a>
+        """
 
-    monkeypatch.setattr(scraper, "_generic_scrape", fake_generic_scrape)
+    monkeypatch.setattr(scraper, "_fetch_html", fake_fetch_html)
 
-    statutes = await scraper.scrape_code(
-        "Kentucky Revised Statutes",
-        "https://legislature.ky.gov/",
-        max_statutes=2,
+    chapters = await scraper._discover_chapter_links()
+    sections = await scraper._discover_section_links(
+        chapter_url=chapters[0][0],
+        chapter_label=chapters[0][1],
+        chapter_number=chapters[0][2],
     )
 
-    assert len(statutes) == 2
-    assert all(statute.state_code == "KY" for statute in statutes)
+    assert chapters == [
+        ("https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=37024", "CHAPTER 1 BOUNDARIES", "1")
+    ]
+    assert [section[2] for section in sections] == ["1.010", "1.020"]
+    assert all("/law/statutes/statute.aspx?id=" in section[0] for section in sections)
+
+
+@pytest.mark.anyio
+async def test_kentucky_section_builder_rejects_failed_pdf_extraction(monkeypatch) -> None:
+    scraper = KentuckyScraper("KY", "Kentucky")
+
+    async def fake_fetch(*args, **kwargs) -> bytes:
+        return b"%PDF-1.5 binary-ish stream endobj startxref"
+
+    async def fake_extract(**kwargs) -> dict[str, str]:
+        return {"text": "%PDF-1.5 \ufffd\ufffd binary stream endobj startxref", "method": "basic"}
+
+    monkeypatch.setattr(scraper, "_fetch_page_content_with_archival_fallback", fake_fetch)
+    monkeypatch.setattr(scraper, "_extract_text_from_document_bytes", fake_extract)
+
+    statute = await scraper._build_statute_from_section_page(
+        code_name="Kentucky Revised Statutes",
+        section_url="https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=1",
+        section_label=".010 Definitions",
+        section_number="1.010",
+        chapter_url="https://apps.legislature.ky.gov/law/statutes/chapter.aspx?id=1",
+        chapter_label="Chapter 1",
+        chapter_number="1",
+    )
+
+    assert statute is not None
+    assert not statute.full_text.startswith("%PDF")
+    assert statute.full_text == "KRS 1.010: .010 Definitions"
+    assert statute.structured_data["extraction_method"] == "failed_pdf_extraction"
+    assert statute.structured_data["skip_hydrate"] is True
 
 
 @pytest.mark.anyio

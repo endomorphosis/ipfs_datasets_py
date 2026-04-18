@@ -109,6 +109,13 @@ _NAV_URL_HINTS = (
 )
 
 
+def _env_float(name: str, default: float = 0.0) -> float:
+    try:
+        return float(str(os.getenv(name, "") or default))
+    except Exception:
+        return float(default)
+
+
 @dataclass
 class StatuteMetadata:
     """Metadata for a statute."""
@@ -259,6 +266,10 @@ class BaseStateScraper(ABC):
             "LEGAL_SCRAPER_IPFS_PAGE_CACHE_TTL_SECONDS",
             default=60 * 60 * 24 * 30,
         )
+        self._ipfs_page_cache_timeout_seconds = self._env_int(
+            "LEGAL_SCRAPER_IPFS_PAGE_CACHE_TIMEOUT_SECONDS",
+            default=5,
+        )
         self._ipfs_page_cache_metadata_dir = Path(
             os.environ.get("LEGAL_SCRAPER_IPFS_PAGE_CACHE_DIR")
             or (Path.home() / ".ipfs_datasets" / "legal_page_cache")
@@ -332,7 +343,13 @@ class BaseStateScraper(ABC):
             return b""
 
         try:
-            data = ipfs_router.cat(cid)
+            data = await asyncio.wait_for(
+                asyncio.to_thread(ipfs_router.cat, cid),
+                timeout=max(1, int(self._ipfs_page_cache_timeout_seconds or 5)),
+            )
+        except asyncio.TimeoutError:
+            self.logger.debug("IPFS page cache read timed out for %s", url)
+            return b""
         except Exception as exc:
             self.logger.debug("IPFS page cache read failed for %s: %s", url, exc)
             return b""
@@ -358,7 +375,13 @@ class BaseStateScraper(ABC):
             return None
 
         try:
-            cid = ipfs_router.add_bytes(payload, pin=self._ipfs_page_cache_pin)
+            cid = await asyncio.wait_for(
+                asyncio.to_thread(ipfs_router.add_bytes, payload, pin=self._ipfs_page_cache_pin),
+                timeout=max(1, int(self._ipfs_page_cache_timeout_seconds or 5)),
+            )
+        except asyncio.TimeoutError:
+            self.logger.debug("IPFS page cache write timed out for %s", url)
+            return None
         except Exception as exc:
             self.logger.debug("IPFS page cache write failed for %s: %s", url, exc)
             return None
@@ -459,7 +482,20 @@ class BaseStateScraper(ABC):
                 if remaining is not None and "max_statutes" in scrape_code_params:
                     statutes = await self.scrape_code(code_name, code_url, max_statutes=remaining)
                 else:
-                    statutes = await self.scrape_code(code_name, code_url)
+                    scrape_task = self.scrape_code(code_name, code_url)
+                    code_timeout = _env_float("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", 0.0)
+                    if remaining is not None and code_timeout > 0:
+                        try:
+                            statutes = await asyncio.wait_for(scrape_task, timeout=code_timeout)
+                        except TimeoutError:
+                            self.logger.error(
+                                "Timed out scraping %s after %.1f seconds during bounded run",
+                                code_name,
+                                code_timeout,
+                            )
+                            statutes = []
+                    else:
+                        statutes = await scrape_task
                 if max_statutes:
                     statutes = statutes[:remaining]
                 enriched_statutes: List[NormalizedStatute] = []
@@ -860,6 +896,11 @@ class BaseStateScraper(ABC):
         This keeps Common Crawl/Wayback/Archive.is logic inside state scrapers,
         mirroring Oregon archival workflow for all states.
         """
+        original_timeout_seconds = timeout_seconds
+        bounded_fetch_timeout = _env_float("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", 0.0)
+        if bounded_fetch_timeout > 0:
+            timeout_seconds = max(1, int(min(float(timeout_seconds), bounded_fetch_timeout)))
+
         cached_bytes = await self._load_page_bytes_from_ipfs_cache(url)
         if cached_bytes:
             self._record_fetch_event(provider="ipfs_page_cache", success=True)
@@ -868,7 +909,7 @@ class BaseStateScraper(ABC):
         unified_enabled = str(os.getenv("STATE_SCRAPER_UNIFIED_FETCH_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
         # Very small hydration timeouts are usually smoke-test budgets. Avoid
         # non-cancellable background fetch workers in that mode.
-        if timeout_seconds <= 5:
+        if original_timeout_seconds <= 5 and bounded_fetch_timeout <= 0:
             unified_enabled = False
         if unified_enabled:
             for candidate_url in self._wayback_replay_candidates(url):
@@ -886,29 +927,33 @@ class BaseStateScraper(ABC):
                     )
                     return unified_bytes
 
-        try:
-            from .state_archival_fetch import ArchivalFetchClient
+        archival_enabled = str(os.getenv("STATE_SCRAPER_ARCHIVAL_FETCH_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
+        if original_timeout_seconds <= 5 and bounded_fetch_timeout <= 0:
+            archival_enabled = False
+        if archival_enabled:
+            try:
+                from .state_archival_fetch import ArchivalFetchClient
 
-            client = ArchivalFetchClient(
-                request_timeout_seconds=timeout_seconds,
-                delay_seconds=0.0,
-            )
-            fetched = await client.fetch_with_fallback(url)
-            self._record_fetch_event(
-                provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
-                success=bool(getattr(fetched, "content", b"")),
-            )
-            content = bytes(fetched.content or b"")
-            if content:
-                await self._store_page_bytes_in_ipfs_cache(
-                    url=url,
-                    payload=content,
-                    provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
+                client = ArchivalFetchClient(
+                    request_timeout_seconds=timeout_seconds,
+                    delay_seconds=0.0,
                 )
-                return content
-        except Exception as exc:
-            self._record_fetch_event(provider="archival_fallback", success=False, error=str(exc))
-            pass
+                fetched = await client.fetch_with_fallback(url)
+                self._record_fetch_event(
+                    provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
+                    success=bool(getattr(fetched, "content", b"")),
+                )
+                content = bytes(fetched.content or b"")
+                if content:
+                    await self._store_page_bytes_in_ipfs_cache(
+                        url=url,
+                        payload=content,
+                        provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
+                    )
+                    return content
+            except Exception as exc:
+                self._record_fetch_event(provider="archival_fallback", success=False, error=str(exc))
+                pass
 
         try:
             from urllib.request import Request, urlopen
@@ -1166,11 +1211,6 @@ class BaseStateScraper(ABC):
         if not (pdf_candidate or rtf_candidate):
             return None
 
-        try:
-            from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedWebScraper
-        except Exception:
-            return None
-
         if pdf_candidate:
             # Fast path for text-native PDFs so we can avoid expensive OCR/model bootstrap.
             try:
@@ -1189,6 +1229,11 @@ class BaseStateScraper(ABC):
                 }
 
             try:
+                from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedWebScraper
+            except Exception:
+                return None
+
+            try:
                 extracted = await UnifiedWebScraper._extract_pdf_text(raw_bytes)
             except Exception:
                 extracted = ""
@@ -1201,6 +1246,11 @@ class BaseStateScraper(ABC):
                 }
 
         if rtf_candidate:
+            try:
+                from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedWebScraper
+            except Exception:
+                return None
+
             try:
                 extracted = await UnifiedWebScraper._extract_rtf_text(raw_bytes)
             except Exception:

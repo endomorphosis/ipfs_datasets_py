@@ -11,6 +11,7 @@ import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import json
+import os
 import re
 from pathlib import Path
 
@@ -856,6 +857,7 @@ def _scrape_state_once_sync(
     strict_full_text: bool,
     min_full_text_chars: int,
     hydrate_statute_text: bool,
+    per_state_timeout_seconds: float = 0.0,
 ) -> Dict[str, Any]:
     from .state_scrapers import get_scraper_for_state, GenericStateScraper
 
@@ -951,6 +953,14 @@ async def _run_sync_scrape_on_daemon_thread(
             result_future.set_exception(exc)
 
     def _worker() -> None:
+        prior_code_timeout = os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS")
+        prior_fetch_timeout = os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS")
+        bounded_timeout = max(0.0, float(timeout_seconds or 0.0))
+        if max_statutes and int(max_statutes) > 0 and bounded_timeout > 0:
+            code_timeout = max(0.1, min(bounded_timeout * 0.8, 45.0))
+            fetch_timeout = max(0.1, min(code_timeout / 3.0, 12.0))
+            os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
+            os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
         try:
             result = _scrape_state_once_sync(
                 state_code=state_code,
@@ -960,6 +970,7 @@ async def _run_sync_scrape_on_daemon_thread(
                 strict_full_text=strict_full_text,
                 min_full_text_chars=min_full_text_chars,
                 hydrate_statute_text=hydrate_statute_text,
+                per_state_timeout_seconds=timeout_seconds,
             )
         except BaseException as exc:
             try:
@@ -967,6 +978,15 @@ async def _run_sync_scrape_on_daemon_thread(
             except RuntimeError:
                 pass  # event loop already closed (e.g. outer timeout fired)
             return
+        finally:
+            if prior_code_timeout is None:
+                os.environ.pop("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", None)
+            else:
+                os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = prior_code_timeout
+            if prior_fetch_timeout is None:
+                os.environ.pop("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", None)
+            else:
+                os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = prior_fetch_timeout
 
         try:
             loop.call_soon_threadsafe(_publish_result, result)
@@ -1114,16 +1134,12 @@ def _trim_scraped_statutes_to_max(
         return scraped_statutes, sum(len((block or {}).get("statutes") or []) for block in scraped_statutes)
 
     trimmed: List[Dict[str, Any]] = []
-    remaining = max_statutes
     for block in scraped_statutes:
-        if remaining <= 0:
-            break
         if not isinstance(block, dict):
             continue
 
         statutes = list(block.get("statutes") or [])
-        kept = statutes[:remaining]
-        remaining -= len(kept)
+        kept = statutes[:max_statutes]
 
         out_block = dict(block)
         out_block["statutes"] = kept

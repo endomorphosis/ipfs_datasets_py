@@ -394,6 +394,86 @@ def test_collect_seeded_bluebook_fuzz_candidates_uses_grounded_rows() -> None:
     assert by_corpus["state_laws"].citation_type_hint == "state_statute"
 
 
+def test_collect_seeded_bluebook_fuzz_candidates_uses_federal_register_citation_fields() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key == "federal_register":
+                return ["memory://federal_register"]
+            return []
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "identifier": "X94-90401",
+                    "name": "CFR PARTS AFFECTED IN THIS ISSUE",
+                },
+                {
+                    "identifier": "FR-2024-12345",
+                    "citation_text": "89 FR 12345",
+                    "normalized_citation": "89 FR 12345",
+                    "name": "Dataset-backed Federal Register row",
+                },
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["federal_register"],
+        examples_per_corpus=1,
+    )
+
+    assert len(seeds) == 1
+    assert seeds[0].citation_text == "89 FR 12345"
+    assert seeds[0].citation_type_hint == "federal_register"
+    assert seeds[0].corpus_key_hint == "federal_register"
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_finds_sparse_federal_register_rows(tmp_path: Path) -> None:
+    pa = pytest.importorskip("pyarrow")
+    pq = pytest.importorskip("pyarrow.parquet")
+    pytest.importorskip("duckdb")
+
+    source_path = tmp_path / "federal_register.parquet"
+    table = pa.table(
+        {
+            "identifier": ["X94-90401", None],
+            "name": ["CFR PARTS AFFECTED IN THIS ISSUE", "Dataset-backed Federal Register row"],
+            "citation_text": [None, "89 FR 12345"],
+            "normalized_citation": [None, "89 FR 12345"],
+        }
+    )
+    pq.write_table(table, source_path)
+
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key == "federal_register":
+                return [str(source_path)]
+            return []
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "identifier": "X94-90401",
+                    "name": "CFR PARTS AFFECTED IN THIS ISSUE",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["federal_register"],
+        examples_per_corpus=1,
+    )
+
+    assert len(seeds) == 1
+    assert seeds[0].citation_text == "89 FR 12345"
+    assert seeds[0].citation_type_hint == "federal_register"
+
+
 def test_collect_seeded_bluebook_fuzz_candidates_balances_across_states_and_sources() -> None:
     class _FakeResolver:
         def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import time
 
 import pytest
@@ -133,6 +134,23 @@ def test_state_laws_scraper_builds_unknown_backlog_section_urls():
         assert scraper_module.build_state_law_section_url(state, section, code_name=code_name) == expected_url
 
 
+def test_state_laws_scraper_trims_max_statutes_per_state() -> None:
+    scraped, total = scraper_module._trim_scraped_statutes_to_max(
+        [
+            {"state_code": "MN", "statutes": [{"id": "mn-1"}, {"id": "mn-2"}, {"id": "mn-3"}]},
+            {"state_code": "KY", "statutes": [{"id": "ky-1"}, {"id": "ky-2"}, {"id": "ky-3"}]},
+        ],
+        2,
+    )
+
+    assert [block["state_code"] for block in scraped] == ["MN", "KY"]
+    assert [[row["id"] for row in block["statutes"]] for block in scraped] == [
+        ["mn-1", "mn-2"],
+        ["ky-1", "ky-2"],
+    ]
+    assert total == 4
+
+
 @pytest.mark.asyncio
 async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
     captured = {}
@@ -147,6 +165,9 @@ async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
             self._target()
 
     def _fake_scrape_state_once_sync(**kwargs):
+        captured["code_timeout"] = os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS")
+        captured["fetch_timeout"] = os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS")
+        captured["per_state_timeout_seconds"] = kwargs.get("per_state_timeout_seconds")
         return {"state_code": kwargs["state_code"], "status": "ok"}
 
     monkeypatch.setattr(scraper_module.threading, "Thread", _FakeThread)
@@ -166,6 +187,9 @@ async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
     assert result == {"state_code": "OR", "status": "ok"}
     assert captured["daemon"] is True
     assert captured["name"] == "state-scrape-or"
+    assert captured["code_timeout"] == "0.400"
+    assert captured["fetch_timeout"] == "0.133"
+    assert captured["per_state_timeout_seconds"] == 0.5
 
 
 @pytest.mark.asyncio

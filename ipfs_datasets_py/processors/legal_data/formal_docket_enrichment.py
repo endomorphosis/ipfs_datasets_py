@@ -426,8 +426,10 @@ def enrich_docket_documents_with_formal_logic(
 
     deduped_fol_formulas = _dedupe_fol_formula_dicts(aggregate_fol_formulas)
     deduped_certificates = _dedupe_dict_items(certificates, key_fields=("certificate_id", "backend", "theorem"))
+    zkp_proof_certificates = _filter_zkp_certificates(deduped_certificates)
     zkp_status = dict(singletons.get("zkp_status") or {"backend": _formal_zkp_backend_name(), "available": bool(zkp_prover)})
-    zkp_certificate_count = _count_zkp_certificates(deduped_certificates)
+    zkp_certificate_ids = [str(item.get("certificate_id") or "") for item in zkp_proof_certificates if str(item.get("certificate_id") or "")]
+    zkp_certificate_count = len(zkp_proof_certificates)
 
     return {
         "document_analyses": analyses,
@@ -449,6 +451,7 @@ def enrich_docket_documents_with_formal_logic(
         },
         "frame_logic": aggregate_frames,
         "document_frame_logic": aggregate_document_frames,
+        "zkp_proof_certificates": zkp_proof_certificates,
         "proof_store": {
             "proofs": proofs,
             "certificates": deduped_certificates,
@@ -456,6 +459,7 @@ def enrich_docket_documents_with_formal_logic(
                 "proof_count": len(proofs),
                 "proof_certificate_count": len(deduped_certificates),
                 "zkp_certificate_count": zkp_certificate_count,
+                "zkp_proof_certificate_ids": zkp_certificate_ids,
                 "zkp_backend": str(zkp_status.get("backend") or _formal_zkp_backend_name()),
                 "zkp_available": bool(zkp_status.get("available")),
                 "processed_document_count": processed_count,
@@ -483,6 +487,7 @@ def enrich_docket_documents_with_formal_logic(
             "proof_count": len(proofs),
             "proof_certificate_count": len(deduped_certificates),
             "zkp_certificate_count": zkp_certificate_count,
+            "zkp_proof_certificate_ids": zkp_certificate_ids,
             "zkp_backend": str(zkp_status.get("backend") or _formal_zkp_backend_name()),
             "zkp_available": bool(zkp_status.get("available")),
             "deontic_conflict_count": len(conflicts),
@@ -1627,11 +1632,7 @@ def _dedupe_fol_formula_dicts(items: Iterable[Mapping[str, Any]]) -> List[Dict[s
         formula = str(payload.get("formula") or "").strip()
         if not formula:
             continue
-        key = (
-            str(payload.get("document_id") or ""),
-            formula,
-            str(payload.get("source_text") or "")[:160],
-        )
+        key = (str(payload.get("document_id") or ""), formula)
         if key in seen:
             continue
         seen.add(key)
@@ -1640,13 +1641,27 @@ def _dedupe_fol_formula_dicts(items: Iterable[Mapping[str, Any]]) -> List[Dict[s
 
 
 def _count_zkp_certificates(certificates: Iterable[Mapping[str, Any]]) -> int:
-    total = 0
+    return len(_filter_zkp_certificates(certificates))
+
+
+def _filter_zkp_certificates(certificates: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    output: List[Dict[str, Any]] = []
     for certificate in certificates:
-        backend = str(certificate.get("backend") or "").lower()
-        fmt = str(certificate.get("format") or "").lower()
-        if "zkp" in backend or "zkp" in fmt or "groth16" in backend or "groth16" in fmt or "zksnark" in fmt:
-            total += 1
-    return total
+        payload = dict(certificate or {})
+        backend = str(payload.get("backend") or "").lower()
+        fmt = str(payload.get("format") or "").lower()
+        nested_payload = payload.get("payload") if isinstance(payload.get("payload"), Mapping) else {}
+        nested_system = str((nested_payload or {}).get("proof_system") or "").lower()
+        if (
+            "zkp" in backend
+            or "zkp" in fmt
+            or "groth16" in backend
+            or "groth16" in fmt
+            or "groth16" in nested_system
+            or "zksnark" in fmt
+        ):
+            output.append(payload)
+    return output
 
 
 def _dedupe_strings(values: Iterable[str]) -> List[str]:

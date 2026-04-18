@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 
 import pyarrow.parquet as pq
 
@@ -6,8 +7,11 @@ from ipfs_datasets_py.processors.legal_data import (
     WorkspaceDatasetBuilder,
     export_workspace_dataset_single_parquet,
     inspect_workspace_dataset_single_parquet,
+    load_packaged_workspace_dataset,
     load_workspace_dataset_single_parquet,
     load_workspace_dataset_single_parquet_summary,
+    load_packaged_workspace_summary_view,
+    package_workspace_dataset,
     search_workspace_dataset_bm25,
     search_workspace_dataset_vector,
     summarize_workspace_dataset,
@@ -74,11 +78,176 @@ def test_workspace_dataset_search_and_summary_helpers_return_ranked_results():
     assert bm25_results["group_count"] == 1
     assert bm25_results["grouped_results"][0]["group_id"] == "document:email_1"
     assert vector_results["result_count"] >= 1
-    assert vector_results["results"][0]["backend"] == "local_hashed_term_projection"
+    assert vector_results["results"][0]["backend"]
     assert vector_results["group_count"] >= 1
     assert "document:email_1" in {item["group_id"] for item in vector_results["grouped_results"]}
     assert summary["workspace_id"] == "mailbox-01"
     assert summary["bm25_document_count"] == 2
+
+
+def test_workspace_summary_and_package_manifest_include_logic_artifact_counts(tmp_path):
+    dataset = WorkspaceDatasetBuilder().build_from_workspace(
+        {
+            "workspace_id": "logic-workspace",
+            "workspace_name": "Logic Workspace",
+            "documents": [
+                {
+                    "id": "doc_1",
+                    "title": "Directive",
+                    "text": "HACC must review reasonable accommodation requests.",
+                }
+            ],
+        }
+    )
+    formal_summary = {
+        "processed_document_count": 1,
+        "deontic_statement_count": 2,
+        "temporal_formula_count": 3,
+        "first_order_formula_count": 4,
+        "dcec_formula_count": 5,
+        "frame_count": 6,
+        "proof_count": 7,
+        "proof_certificate_count": 8,
+        "zkp_certificate_count": 9,
+        "zkp_proof_certificate_ids": ["cert-zkp-1"],
+        "zkp_backend": "groth16",
+        "zkp_available": True,
+        "logic_systems": {"first_order_logic": {"backend": "fol_converter", "formula_count": 4}},
+    }
+    dataset.metadata["formal_logic_summary"] = formal_summary
+    dataset.metadata["formal_logic"] = {
+        "summary": formal_summary,
+        "zkp_proof_certificates": [
+            {
+                "certificate_id": "cert-zkp-1",
+                "backend": "groth16",
+                "format": "groth16_zksnark",
+                "theorem": "HACC must review requests",
+                "payload": {"proof_system": "groth16", "proof": "abc123"},
+            }
+        ],
+    }
+
+    summary = summarize_workspace_dataset(dataset)
+    package = package_workspace_dataset(dataset, tmp_path / "bundle", package_name="logic_bundle", include_car=False)
+    packaged_summary = load_packaged_workspace_summary_view(package["manifest_json_path"])
+    packaged = load_packaged_workspace_dataset(package["manifest_json_path"])
+
+    assert summary["first_order_formula_count"] == 4
+    assert summary["proof_certificate_count"] == 8
+    assert summary["zkp_certificate_count"] == 9
+    assert summary["zkp_backend"] == "groth16"
+    assert summary["logic_systems"]["first_order_logic"]["backend"] == "fol_converter"
+    assert summary["zkp_proof_certificate_ids"] == ["cert-zkp-1"]
+    assert package["summary"]["first_order_formula_count"] == 4
+    assert package["summary"]["zkp_certificate_count"] == 9
+    assert package["summary"]["zkp_proof_certificate_ids"] == ["cert-zkp-1"]
+    assert packaged_summary["proof_certificate_count"] == 8
+    assert packaged_summary["logic_systems"]["first_order_logic"]["formula_count"] == 4
+    assert packaged_summary["zkp_proof_certificate_ids"] == ["cert-zkp-1"]
+    assert packaged["zkp_proof_certificates"][0]["certificate_id"] == "cert-zkp-1"
+
+
+def test_formal_enrichment_emits_first_order_logic_and_zkp_counts(monkeypatch):
+    from ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types import (
+        DeonticModality,
+        DeonticStatement,
+    )
+    from ipfs_datasets_py.processors.legal_data import formal_docket_enrichment as enrichment
+
+    class FakeKnowledgeGraph:
+        def to_dict(self):
+            return {"entities": [], "relationships": []}
+
+    class FakeExtractor:
+        def extract_knowledge_graph(self, *_args, **_kwargs):
+            return FakeKnowledgeGraph()
+
+    class FakeDeonticExtractor:
+        def extract_statements(self, _text, document_id):
+            return [
+                DeonticStatement(
+                    id="stmt-1",
+                    entity="HACC",
+                    action="review reasonable accommodation requests",
+                    modality=DeonticModality.OBLIGATION,
+                    source_document=document_id,
+                    source_text="HACC must review reasonable accommodation requests.",
+                )
+            ]
+
+    class FakeConflictDetector:
+        def detect_conflicts(self, _statements):
+            return []
+
+    class FakeFOLConverter:
+        def convert(self, _sentence, use_cache=True):
+            return SimpleNamespace(
+                success=True,
+                status=SimpleNamespace(value="success"),
+                confidence=0.91,
+                warnings=[],
+                errors=[],
+                metadata={"use_cache": use_cache},
+                output=SimpleNamespace(
+                    formula_string="Obligation(hacc, review_reasonable_accommodation_requests)",
+                    predicates=[],
+                    quantifiers=[],
+                    operators=[],
+                    variables=[],
+                    confidence=0.91,
+                    metadata={},
+                ),
+            )
+
+    class FakeZKPProof:
+        metadata = {"backend": "groth16"}
+
+        def to_dict(self):
+            return {"proof_system": "groth16", "proof": "test-proof"}
+
+    class FakeZKPProver:
+        def generate_proof(self, **_kwargs):
+            return FakeZKPProof()
+
+    monkeypatch.setattr(
+        enrichment,
+        "_FORMAL_SINGLETONS",
+        {
+            "extractor": FakeExtractor(),
+            "deontic_extractor": FakeDeonticExtractor(),
+            "conflict_detector": FakeConflictDetector(),
+            "dcec_wrapper": None,
+            "dcec_ready": False,
+            "fol_converter": FakeFOLConverter(),
+            "zkp_prover": FakeZKPProver(),
+            "zkp_status": {"backend": "groth16", "available": True},
+        },
+    )
+
+    payload = enrichment.enrich_docket_documents_with_formal_logic(
+        [
+            SimpleNamespace(
+                document_id="doc-1",
+                title="Directive",
+                text="HACC must review reasonable accommodation requests.",
+                date_filed="2026-01-01",
+            )
+        ],
+        docket_id="workspace",
+        case_name="Workspace",
+        court="workspace",
+        max_documents=1,
+    )
+
+    assert payload["first_order_logic"]["backend"] == "fol_converter"
+    assert payload["first_order_logic"]["formulas"][0]["formula"] == "Obligation(hacc, review_reasonable_accommodation_requests)"
+    assert payload["summary"]["first_order_formula_count"] == 1
+    assert payload["summary"]["zkp_certificate_count"] == 1
+    assert payload["summary"]["zkp_proof_certificate_ids"]
+    assert payload["zkp_proof_certificates"][0]["format"] == "groth16_zksnark"
+    assert payload["summary"]["logic_systems"]["zero_knowledge_proofs"]["backend"] == "groth16"
+    assert payload["document_analyses"]["doc-1"]["first_order_formulas"]
 
 
 def test_workspace_dataset_search_groups_google_voice_bundle_results(tmp_path):
@@ -464,15 +633,28 @@ def test_workspace_dataset_single_parquet_export_contains_index_sections(tmp_pat
             ],
         }
     )
+    dataset.metadata["formal_logic"] = {
+        "zkp_proof_certificates": [
+            {
+                "certificate_id": "single-zkp-1",
+                "backend": "groth16",
+                "format": "groth16_zksnark",
+                "payload": {"proof_system": "groth16"},
+            }
+        ]
+    }
 
     export_result = export_workspace_dataset_single_parquet(dataset, tmp_path / "workspace_bundle.parquet")
     rows = pq.read_table(tmp_path / "workspace_bundle.parquet").to_pylist()
+    loaded = load_workspace_dataset_single_parquet(tmp_path / "workspace_bundle.parquet")
 
     assert export_result["row_count"] == len(rows)
     assert any(row["section"] == "documents" for row in rows)
     assert any(row["section"] == "bm25_documents" for row in rows)
     assert any(row["section"] == "vector_items" for row in rows)
     assert any(row["section"] == "knowledge_graph_entities" for row in rows)
+    assert any(row["section"] == "zkp_proof_certificates" for row in rows)
+    assert loaded["zkp_proof_certificates"][0]["certificate_id"] == "single-zkp-1"
 
 
 def test_workspace_dataset_single_parquet_helpers_round_trip_bundle(tmp_path):

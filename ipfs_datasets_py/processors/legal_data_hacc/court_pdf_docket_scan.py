@@ -479,9 +479,9 @@ def scan_hacc_pdfs_for_dockets(
     max_ocr_pages: int = 5,
     include_knowledge_graph: bool = True,
     include_bm25: bool = True,
-    include_vector_index: bool = False,
-    include_formal_logic: bool = False,
-    include_router_enrichment: bool = False,
+    include_vector_index: bool = True,
+    include_formal_logic: bool = True,
+    include_router_enrichment: bool = True,
 ) -> Dict[str, Any]:
     root = Path(scan_root)
     if not root.exists():
@@ -690,9 +690,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-ocr-pages", type=int, default=5, help="Maximum number of pages to OCR for weakly extracted PDFs.")
     parser.add_argument("--no-knowledge-graph", action="store_true", help="Disable dataset-level knowledge graph generation.")
     parser.add_argument("--no-bm25", action="store_true", help="Disable dataset BM25 index generation.")
-    parser.add_argument("--include-vector-index", action="store_true", help="Enable dataset vector index generation.")
-    parser.add_argument("--include-formal-logic", action="store_true", help="Enable docket formal-logic enrichment.")
-    parser.add_argument("--include-router-enrichment", action="store_true", help="Enable router enrichment.")
+    parser.add_argument("--no-vector-index", action="store_true", help="Disable dataset vector index generation.")
+    parser.add_argument("--no-formal-logic", action="store_true", help="Disable docket formal-logic enrichment.")
+    parser.add_argument("--no-router-enrichment", action="store_true", help="Disable router enrichment.")
     parser.add_argument("--manifest-path", help="Read an existing scan manifest instead of running a new scan.")
     parser.add_argument("--summary-only", action="store_true", help="When reading --manifest-path, print only a condensed status summary.")
     return parser
@@ -717,9 +717,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         max_ocr_pages=max(1, int(args.max_ocr_pages or 1)),
         include_knowledge_graph=not args.no_knowledge_graph,
         include_bm25=not args.no_bm25,
-        include_vector_index=bool(args.include_vector_index),
-        include_formal_logic=bool(args.include_formal_logic),
-        include_router_enrichment=bool(args.include_router_enrichment),
+        include_vector_index=not args.no_vector_index,
+        include_formal_logic=not args.no_formal_logic,
+        include_router_enrichment=not args.no_router_enrichment,
     )
     print(json.dumps(manifest, indent=2, sort_keys=True))
     return 0

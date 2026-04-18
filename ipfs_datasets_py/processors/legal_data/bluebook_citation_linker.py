@@ -1342,12 +1342,6 @@ class BluebookCitationResolver:
             local_source = self._materialize_remote_parquet(source_ref)
             if local_source:
                 return self._query_source(local_source, corpus_key, citation, state_code)
-        if (
-            citation.type == "case"
-            and str(source_ref).startswith(("http://", "https://"))
-            and "refs%2fconvert%2fparquet" in str(source_ref).lower()
-        ):
-            return []
         try:
             import duckdb
         except Exception:

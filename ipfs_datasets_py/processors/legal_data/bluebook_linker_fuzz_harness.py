@@ -250,6 +250,76 @@ def _citation_text_from_row_text(
     return ""
 
 
+def _citation_text_parses_as(citation_text: str, citation_type: str) -> bool:
+    text = str(citation_text or "").strip()
+    if not text:
+        return False
+    extractor = CitationExtractor()
+    return any(citation.type == citation_type for citation in extractor.extract_citations(text))
+
+
+def _sql_literal_path(path: str) -> str:
+    return str(path).replace("'", "''")
+
+
+def _load_targeted_seed_rows_from_parquet(
+    source_ref: str,
+    *,
+    corpus_key: str,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    source_text = str(source_ref or "").strip()
+    is_remote = source_text.startswith(("http://", "https://"))
+    if is_remote:
+        sql_source = source_text
+    else:
+        path = Path(source_text).expanduser()
+        if not path.exists() or path.suffix.lower() != ".parquet":
+            return []
+        sql_source = str(path)
+    if not sql_source:
+        return []
+    try:
+        import duckdb
+    except Exception:
+        return []
+
+    field_preferences = {
+        "federal_register": ["citation_text", "normalized_citation", "official_cite", "citation", "bluebook_citation"],
+        "us_code": ["citation_text", "normalized_citation", "official_cite", "citation", "identifier", "title_number", "section_number"],
+        "caselaw_access_project": ["citation", "citations", "official_cite", "name_abbreviation", "name"],
+        "state_laws": ["official_cite", "citation_text", "normalized_citation", "citation", "citations", "identifier", "section"],
+        "state_admin_rules": ["citation_text", "normalized_citation", "official_cite", "citations", "section", "rule_number", "source_id"],
+        "state_court_rules": ["citation_text", "normalized_citation", "official_cite", "citations", "section", "rule_number", "source_id"],
+    }
+    wanted_fields = field_preferences.get(corpus_key, ["citation_text", "normalized_citation", "official_cite", "citation"])
+    try:
+        con = duckdb.connect()
+        schema_rows = con.execute(f"DESCRIBE SELECT * FROM read_parquet('{_sql_literal_path(sql_source)}')").fetchall()
+        schema = {str(row[0]) for row in schema_rows}
+        available = [field for field in wanted_fields if field in schema]
+        if not available:
+            return []
+        clauses = [
+            f"({field} IS NOT NULL AND trim(cast({field} AS varchar)) <> '')"
+            for field in available
+        ]
+        query = (
+            f"SELECT * FROM read_parquet('{_sql_literal_path(sql_source)}') "
+            f"WHERE {' OR '.join(clauses)} LIMIT {max(1, int(limit))}"
+        )
+        rows = con.execute(query).fetchall()
+        names = [desc[0] for desc in con.description]
+        return [dict(zip(names, row)) for row in rows]
+    except Exception:
+        return []
+    finally:
+        try:
+            con.close()
+        except Exception:
+            pass
+
+
 def _synthetic_state_identifier(value: Any) -> bool:
     text = str(value or "").strip()
     if not text:
@@ -344,9 +414,15 @@ def _synthesize_seed_candidate_from_row(
             citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS) or f"{title} U.S.C. § {section}"
             citation_type = "usc"
     elif corpus_key == "federal_register":
+        for field in ("citation_text", "normalized_citation", "official_cite", "citation", "bluebook_citation"):
+            candidate_text = _first_non_empty_string(row.get(field))
+            if _citation_text_parses_as(candidate_text, "federal_register"):
+                citation_text = candidate_text
+                citation_type = "federal_register"
+                break
         volume = _first_present(row, _VOLUME_FIELDS)
         page = _first_present(row, _PAGE_FIELDS)
-        if volume not in (None, "") and page not in (None, ""):
+        if not citation_text and volume not in (None, "") and page not in (None, ""):
             citation_text = _citation_text_from_row(row, _OFFICIAL_CITE_FIELDS) or f"{volume} FR {page}"
             citation_type = "federal_register"
     elif corpus_key == "caselaw_access_project":
@@ -507,6 +583,30 @@ def collect_seeded_bluebook_fuzz_candidates(
         for state_code in state_iter:
             state_candidates: List[BluebookCitationCandidate] = []
             for source_ref in resolver._iter_corpus_sources(corpus_key, state_code=state_code):
+                source_candidates: List[BluebookCitationCandidate] = []
+                if str(source_ref).startswith(("http://", "https://")):
+                    targeted_rows = _load_targeted_seed_rows_from_parquet(
+                        source_ref,
+                        corpus_key=corpus_key,
+                        limit=max(max_per_source * 10, 50),
+                    )
+                    for row in targeted_rows:
+                        candidate = _synthesize_seed_candidate_from_row(
+                            corpus_key=corpus_key,
+                            row=dict(row),
+                            state_code=state_code,
+                            source_ref=source_ref,
+                        )
+                        if candidate is None:
+                            continue
+                        if corpus_key.startswith("state_") and state_code:
+                            candidate_state = str(candidate.state_code or "").strip().upper()
+                            if candidate_state and candidate_state != str(state_code).strip().upper():
+                                continue
+                        source_candidates.append(candidate)
+                    if source_candidates:
+                        state_candidates.extend(_select_evenly_spaced_candidates(source_candidates, limit=max_per_source))
+                        continue
                 local_source = source_ref
                 if str(source_ref).startswith(("http://", "https://")):
                     materialized = resolver._materialize_remote_parquet(source_ref)
@@ -514,7 +614,6 @@ def collect_seeded_bluebook_fuzz_candidates(
                         continue
                     local_source = materialized
                 rows = resolver._load_local_parquet_rows(local_source)
-                source_candidates: List[BluebookCitationCandidate] = []
                 for row in rows:
                     candidate = _synthesize_seed_candidate_from_row(
                         corpus_key=corpus_key,
@@ -529,6 +628,26 @@ def collect_seeded_bluebook_fuzz_candidates(
                         if candidate_state and candidate_state != str(state_code).strip().upper():
                             continue
                     source_candidates.append(candidate)
+                if not source_candidates:
+                    targeted_rows = _load_targeted_seed_rows_from_parquet(
+                        local_source,
+                        corpus_key=corpus_key,
+                        limit=max(max_per_source * 10, 50),
+                    )
+                    for row in targeted_rows:
+                        candidate = _synthesize_seed_candidate_from_row(
+                            corpus_key=corpus_key,
+                            row=dict(row),
+                            state_code=state_code,
+                            source_ref=source_ref,
+                        )
+                        if candidate is None:
+                            continue
+                        if corpus_key.startswith("state_") and state_code:
+                            candidate_state = str(candidate.state_code or "").strip().upper()
+                            if candidate_state and candidate_state != str(state_code).strip().upper():
+                                continue
+                        source_candidates.append(candidate)
                 state_candidates.extend(_select_evenly_spaced_candidates(source_candidates, limit=max_per_source))
             corpus_candidates.extend(_select_evenly_spaced_candidates(state_candidates, limit=max_per_state))
         candidates.extend(_select_evenly_spaced_candidates(corpus_candidates, limit=max_per_corpus))

@@ -1406,6 +1406,7 @@ def _build_workspace_formal_logic_metadata(
                 "proof_count": 0,
                 "proof_certificate_count": 0,
                 "zkp_certificate_count": 0,
+                "zkp_proof_certificate_ids": [],
                 "zkp_backend": "groth16",
                 "zkp_available": False,
                 "logic_systems": {},
@@ -1611,11 +1612,45 @@ def summarize_workspace_dataset(dataset: WorkspaceDatasetObject | Dict[str, Any]
         "proof_count": int(formal_summary.get("proof_count") or 0),
         "proof_certificate_count": int(formal_summary.get("proof_certificate_count") or 0),
         "zkp_certificate_count": int(formal_summary.get("zkp_certificate_count") or 0),
+        "zkp_proof_certificate_ids": [
+            str(item)
+            for item in list(formal_summary.get("zkp_proof_certificate_ids") or [])
+            if str(item or "")
+        ],
         "zkp_backend": str(formal_summary.get("zkp_backend") or ""),
         "zkp_available": bool(formal_summary.get("zkp_available")),
         "logic_systems": dict(formal_summary.get("logic_systems") or {}),
         "metadata": metadata,
     }
+
+
+def _is_workspace_zkp_certificate(certificate: Dict[str, Any]) -> bool:
+    backend = str(certificate.get("backend") or "").lower()
+    fmt = str(certificate.get("format") or "").lower()
+    payload = certificate.get("payload") if isinstance(certificate.get("payload"), dict) else {}
+    proof_system = str((payload or {}).get("proof_system") or "").lower()
+    return (
+        "zkp" in backend
+        or "zkp" in fmt
+        or "groth16" in backend
+        or "groth16" in fmt
+        or "groth16" in proof_system
+        or "zksnark" in fmt
+    )
+
+
+def _extract_workspace_zkp_proof_certificates(metadata: Dict[str, Any]) -> List[Dict[str, Any]]:
+    formal_logic = dict(metadata.get("formal_logic") or {})
+    proof_store = dict(formal_logic.get("proof_store") or {})
+    certificates = [dict(item) for item in list(proof_store.get("certificates") or []) if isinstance(item, dict)]
+    explicit = [dict(item) for item in list(formal_logic.get("zkp_proof_certificates") or []) if isinstance(item, dict)]
+    by_id: Dict[str, Dict[str, Any]] = {}
+    for certificate in explicit + certificates:
+        if not _is_workspace_zkp_certificate(certificate):
+            continue
+        certificate_id = str(certificate.get("certificate_id") or "")
+        by_id[certificate_id or f"zkp_certificate_{len(by_id) + 1}"] = certificate
+    return list(by_id.values())
 
 
 def _load_workspace_bundle_rows(parquet_path: str | Path) -> List[Dict[str, Any]]:
@@ -1650,6 +1685,7 @@ def load_workspace_dataset_single_parquet(parquet_path: str | Path) -> Dict[str,
     knowledge_graph_relationships = _decode_workspace_bundle_section(rows, "knowledge_graph_relationships")
     bm25_documents = _decode_workspace_bundle_section(rows, "bm25_documents")
     vector_items = _decode_workspace_bundle_section(rows, "vector_items")
+    zkp_proof_certificates = _decode_workspace_bundle_section(rows, "zkp_proof_certificates")
     return {
         "dataset_id": str(dataset_core.get("dataset_id") or ""),
         "workspace_id": str(dataset_core.get("workspace_id") or ""),
@@ -1672,6 +1708,7 @@ def load_workspace_dataset_single_parquet(parquet_path: str | Path) -> Dict[str,
             "document_count": len(vector_items),
         },
         "metadata": dict(dataset_core.get("metadata") or {}),
+        "zkp_proof_certificates": zkp_proof_certificates,
         "bundle": {
             "parquet_path": str(Path(parquet_path)),
             "row_count": len(rows),
@@ -1806,6 +1843,8 @@ def export_workspace_dataset_single_parquet(
     dataset_payload = dataset.to_dict() if isinstance(dataset, WorkspaceDatasetObject) else dict(dataset)
     documents = [dict(item) for item in list(dataset_payload.get("documents") or []) if isinstance(item, dict)]
     knowledge_graph = dict(dataset_payload.get("knowledge_graph") or {})
+    metadata = dict(dataset_payload.get("metadata") or {})
+    zkp_proof_certificates = _extract_workspace_zkp_proof_certificates(metadata)
     bm25_documents = [dict(item) for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or []) if isinstance(item, dict)]
     vector_items = [dict(item) for item in list((dataset_payload.get("vector_index") or {}).get("items") or []) if isinstance(item, dict)]
     collections = [dict(item) for item in list(dataset_payload.get("collections") or []) if isinstance(item, dict)]
@@ -1819,7 +1858,7 @@ def export_workspace_dataset_single_parquet(
                     "workspace_id": str(dataset_payload.get("workspace_id") or ""),
                     "workspace_name": str(dataset_payload.get("workspace_name") or ""),
                     "source_type": str(dataset_payload.get("source_type") or "workspace"),
-                    "metadata": dict(dataset_payload.get("metadata") or {}),
+                    "metadata": metadata,
                 }
             ],
         ),
@@ -1829,6 +1868,7 @@ def export_workspace_dataset_single_parquet(
         ("knowledge_graph_relationships", [dict(item) for item in list(knowledge_graph.get("relationships") or []) if isinstance(item, dict)]),
         ("bm25_documents", bm25_documents),
         ("vector_items", vector_items),
+        ("zkp_proof_certificates", zkp_proof_certificates),
     ]
 
     bundle_rows: List[Dict[str, Any]] = []

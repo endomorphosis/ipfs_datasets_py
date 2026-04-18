@@ -30,6 +30,35 @@ def _jsonable(value: Any) -> Any:
     return str(value)
 
 
+def _is_zkp_certificate(certificate: Mapping[str, Any]) -> bool:
+    backend = str(certificate.get("backend") or "").lower()
+    fmt = str(certificate.get("format") or "").lower()
+    payload = certificate.get("payload") if isinstance(certificate.get("payload"), Mapping) else {}
+    proof_system = str((payload or {}).get("proof_system") or "").lower()
+    return (
+        "zkp" in backend
+        or "zkp" in fmt
+        or "groth16" in backend
+        or "groth16" in fmt
+        or "groth16" in proof_system
+        or "zksnark" in fmt
+    )
+
+
+def _extract_zkp_proof_certificates(metadata: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    formal_logic = dict(metadata.get("formal_logic") or {})
+    proof_store = dict(formal_logic.get("proof_store") or {})
+    certificates = [dict(item) for item in list(proof_store.get("certificates") or []) if isinstance(item, Mapping)]
+    explicit = [dict(item) for item in list(formal_logic.get("zkp_proof_certificates") or []) if isinstance(item, Mapping)]
+    by_id: Dict[str, Dict[str, Any]] = {}
+    for certificate in explicit + certificates:
+        if not _is_zkp_certificate(certificate):
+            continue
+        certificate_id = str(certificate.get("certificate_id") or "")
+        by_id[certificate_id or f"zkp_certificate_{len(by_id) + 1}"] = certificate
+    return list(by_id.values())
+
+
 def _digest_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -161,6 +190,13 @@ class WorkspaceDatasetPackager:
         bm25_documents = [dict(item) for item in list((dataset_payload.get("bm25_index") or {}).get("documents") or []) if isinstance(item, dict)]
         vector_items = [dict(item) for item in list((dataset_payload.get("vector_index") or {}).get("items") or []) if isinstance(item, dict)]
         metadata = dict(dataset_payload.get("metadata") or {})
+        formal_summary = dict(metadata.get("formal_logic_summary") or (metadata.get("formal_logic") or {}).get("summary") or {})
+        zkp_proof_certificates = _extract_zkp_proof_certificates(metadata)
+        zkp_proof_certificate_ids = [
+            str(item.get("certificate_id") or "")
+            for item in zkp_proof_certificates
+            if str(item.get("certificate_id") or "")
+        ]
         artifact_provenance = dict(metadata.get("artifact_provenance") or {})
         workspace_input_provenance = dict(artifact_provenance.get("workspace_input") or {})
         input_type = str(workspace_input_provenance.get("input_type") or "")
@@ -197,6 +233,7 @@ class WorkspaceDatasetPackager:
             ),
             ("bm25_documents", "bm25_index", bm25_documents, ["documents"]),
             ("vector_items", "vector_index", vector_items, ["documents"]),
+            ("zkp_proof_certificates", "formal_logic", zkp_proof_certificates, ["dataset_core"]),
         ]
 
         pieces: List[WorkspacePackagePiece] = []
@@ -262,6 +299,19 @@ class WorkspaceDatasetPackager:
                 "knowledge_graph_relationship_count": len(list(knowledge_graph.get("relationships") or [])),
                 "bm25_document_count": len(bm25_documents),
                 "vector_document_count": len(vector_items),
+                "formal_logic_processed_document_count": int(formal_summary.get("processed_document_count") or 0),
+                "deontic_statement_count": int(formal_summary.get("deontic_statement_count") or 0),
+                "temporal_formula_count": int(formal_summary.get("temporal_formula_count") or 0),
+                "first_order_formula_count": int(formal_summary.get("first_order_formula_count") or 0),
+                "dcec_formula_count": int(formal_summary.get("dcec_formula_count") or 0),
+                "frame_logic_count": int(formal_summary.get("frame_count") or 0),
+                "proof_count": int(formal_summary.get("proof_count") or 0),
+                "proof_certificate_count": int(formal_summary.get("proof_certificate_count") or 0),
+                "zkp_certificate_count": int(formal_summary.get("zkp_certificate_count") or len(zkp_proof_certificates)),
+                "zkp_proof_certificate_ids": list(formal_summary.get("zkp_proof_certificate_ids") or zkp_proof_certificate_ids),
+                "zkp_backend": str(formal_summary.get("zkp_backend") or ""),
+                "zkp_available": bool(formal_summary.get("zkp_available")),
+                "logic_systems": _jsonable(dict(formal_summary.get("logic_systems") or {})),
             },
         }
 
@@ -355,6 +405,7 @@ class WorkspaceDatasetPackager:
             "input_type_resolution": str(manifest.get("input_type_resolution") or ""),
             "documents": _restore_rows(rows_by_piece.get("documents") or []),
             "collections": _restore_rows(rows_by_piece.get("collections") or []),
+            "zkp_proof_certificates": _restore_rows(rows_by_piece.get("zkp_proof_certificates") or []),
             "knowledge_graph": {
                 "entities": _restore_rows(rows_by_piece.get("knowledge_graph_entities") or []),
                 "relationships": _restore_rows(rows_by_piece.get("knowledge_graph_relationships") or []),
@@ -409,6 +460,23 @@ class WorkspaceDatasetPackager:
             "knowledge_graph_relationship_count": int(summary.get("knowledge_graph_relationship_count") or 0),
             "bm25_document_count": int(summary.get("bm25_document_count") or 0),
             "vector_document_count": int(summary.get("vector_document_count") or 0),
+            "formal_logic_processed_document_count": int(summary.get("formal_logic_processed_document_count") or 0),
+            "deontic_statement_count": int(summary.get("deontic_statement_count") or 0),
+            "temporal_formula_count": int(summary.get("temporal_formula_count") or 0),
+            "first_order_formula_count": int(summary.get("first_order_formula_count") or 0),
+            "dcec_formula_count": int(summary.get("dcec_formula_count") or 0),
+            "frame_logic_count": int(summary.get("frame_logic_count") or 0),
+            "proof_count": int(summary.get("proof_count") or 0),
+            "proof_certificate_count": int(summary.get("proof_certificate_count") or 0),
+            "zkp_certificate_count": int(summary.get("zkp_certificate_count") or 0),
+            "zkp_proof_certificate_ids": [
+                str(item)
+                for item in list(summary.get("zkp_proof_certificate_ids") or [])
+                if str(item or "")
+            ],
+            "zkp_backend": str(summary.get("zkp_backend") or ""),
+            "zkp_available": bool(summary.get("zkp_available")),
+            "logic_systems": dict(summary.get("logic_systems") or {}),
             "collection_overview": self._load_collection_overview(bundle_dir, manifest),
             "package_manifest": dict(manifest),
         }
@@ -430,6 +498,19 @@ class WorkspaceDatasetPackager:
             "knowledge_graph_relationship_count": summary.get("knowledge_graph_relationship_count"),
             "bm25_document_count": summary.get("bm25_document_count"),
             "vector_document_count": summary.get("vector_document_count"),
+            "formal_logic_processed_document_count": summary.get("formal_logic_processed_document_count"),
+            "deontic_statement_count": summary.get("deontic_statement_count"),
+            "temporal_formula_count": summary.get("temporal_formula_count"),
+            "first_order_formula_count": summary.get("first_order_formula_count"),
+            "dcec_formula_count": summary.get("dcec_formula_count"),
+            "frame_logic_count": summary.get("frame_logic_count"),
+            "proof_count": summary.get("proof_count"),
+            "proof_certificate_count": summary.get("proof_certificate_count"),
+            "zkp_certificate_count": summary.get("zkp_certificate_count"),
+            "zkp_proof_certificate_ids": list(summary.get("zkp_proof_certificate_ids") or []),
+            "zkp_backend": summary.get("zkp_backend"),
+            "zkp_available": summary.get("zkp_available"),
+            "logic_systems": dict(summary.get("logic_systems") or {}),
             "piece_count": int(manifest.get("piece_count") or 0),
             "source": "packaged_workspace_dataset_inspection",
         }
