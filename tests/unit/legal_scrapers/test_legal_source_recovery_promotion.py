@@ -91,12 +91,21 @@ async def test_recovery_manifest_can_be_promoted_to_bundle(monkeypatch, tmp_path
 
     merge_report = merge_recovery_manifest_into_canonical_dataset(result.manifest_path or "")
     merge_report_repeat = merge_recovery_manifest_into_canonical_dataset(result.manifest_path or "")
+    second_manifest_dir = Path(result.manifest_path or "").parent.parent / "second-run-mn-518-17"
+    second_manifest_dir.mkdir(parents=True)
+    second_manifest_path = second_manifest_dir / "recovery_manifest.json"
+    second_manifest_payload = json.loads(Path(result.manifest_path or "").read_text(encoding="utf-8"))
+    second_manifest_payload["manifest_directory"] = str(second_manifest_dir)
+    second_manifest_path.write_text(json.dumps(second_manifest_payload, indent=2), encoding="utf-8")
+    merge_report_second_manifest = merge_recovery_manifest_into_canonical_dataset(second_manifest_path)
 
     assert merge_report["status"] == "success"
     assert Path(merge_report["target_local_parquet_path"]).exists()
     assert Path(merge_report["merge_report_path"]).exists()
     assert merge_report_repeat["merged_row_count"] == 1
     assert merge_report_repeat["deduplicated_count"] >= 1
+    assert merge_report_second_manifest["merged_row_count"] == 1
+    assert merge_report_second_manifest["deduplicated_count"] >= 1
 
     import pyarrow.parquet as pq
 

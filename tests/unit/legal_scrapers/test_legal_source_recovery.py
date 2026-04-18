@@ -125,6 +125,42 @@ class _FakePatchManager:
         return output_path
 
 
+def test_default_archiver_disables_warc_pointer_streaming(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver
+
+    captured = {}
+
+    class _Archiver:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", raising=False)
+    monkeypatch.setattr(parallel_web_archiver, "ParallelWebArchiver", _Archiver)
+
+    LegalSourceRecoveryWorkflow()._archiver_instance()
+
+    assert captured["use_warc_pointers"] is False
+    assert captured["fallback_priority"] == ["wayback", "web_archive"]
+
+
+def test_archiver_can_opt_into_warc_pointer_streaming(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver
+
+    captured = {}
+
+    class _Archiver:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", "1")
+    monkeypatch.setattr(parallel_web_archiver, "ParallelWebArchiver", _Archiver)
+
+    LegalSourceRecoveryWorkflow()._archiver_instance()
+
+    assert captured["use_warc_pointers"] is True
+    assert captured["fallback_priority"] == ["warc", "wayback", "web_archive"]
+
+
 def test_default_publisher_loads_repo_script() -> None:
     publisher = LegalSourceRecoveryWorkflow()._publisher()
 
@@ -627,6 +663,7 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_YEAR", "2024")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "2")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "25")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
 
     from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
     observed_search_kwargs = {}
@@ -698,6 +735,7 @@ async def test_legal_source_recovery_uses_common_crawl_fallback_when_searches_mi
 async def test_common_crawl_fallback_prioritizes_citation_hint_domains(monkeypatch):
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
 
     from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery
     from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
@@ -742,6 +780,7 @@ async def test_legal_source_recovery_can_skip_live_search_for_common_crawl_fuzz(
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", "1")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
     monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", "0")
 
     from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
 

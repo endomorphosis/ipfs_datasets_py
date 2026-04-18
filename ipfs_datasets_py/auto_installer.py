@@ -25,7 +25,9 @@ def _truthy_env_value(value: Optional[str]) -> bool:
 def _runtime_installer_check_enabled() -> bool:
     configured = os.getenv("IPFS_DATASETS_ENSURE_INSTALLER")
     if configured is None:
-        return True
+        return _truthy_env_value(os.getenv("IPFS_DATASETS_AUTO_INSTALL")) or _truthy_env_value(
+            os.getenv("IPFS_AUTO_INSTALL")
+        )
     return _truthy_env_value(configured)
 
 
