@@ -140,6 +140,9 @@ ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citat
 # Import a normalized PACER export directory or JSON payload
 ipfs-datasets docket --input-type pacer --input-path /path/to/pacer_export --case-name "Doe v. Example" --json
 
+# Import a raw PACER docket HTML file
+ipfs-datasets docket --input-type pacer --input-path /path/to/pacer_docket.html --json
+
 # Import a normalized Tyler Host export JSON or directory
 ipfs-datasets docket --input-type tyler_host --input-path /path/to/tyler_export.json --court "State Court" --json
 
@@ -178,6 +181,7 @@ Normalized PACER/Tyler Host input shape:
 ```
 
 For local export folders, the docket CLI can ingest `.txt`, `.md`, `.json`, and `.pdf` documents. PDF folders are post-processed to extract text and detect case numbers from caption text when available.
+The `pacer` input type also accepts raw PACER docket HTML files and normalizes docket rows into document records.
 Use `--source-type-hint pacer` or `--source-type-hint tyler_host` with `--input-type auto` when a normalized JSON export does not already carry a `source_type` field.
 
 See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.

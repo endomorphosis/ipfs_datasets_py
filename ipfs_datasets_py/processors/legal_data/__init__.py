@@ -314,6 +314,14 @@ def ingest_docket_dataset(
 
     source_path = Path(source_text)
     if source_path.is_file():
+        if source_path.suffix.lower() in {".html", ".htm"}:
+            return active_builder.build_from_html_file(
+                source_path,
+                docket_id=docket_id,
+                case_name=case_name,
+                court=court,
+                **common_kwargs,
+            )
         return active_builder.build_from_json_file(source_path, **common_kwargs)
     if source_path.is_dir():
         return active_builder.build_from_directory(
