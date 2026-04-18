@@ -125,6 +125,42 @@ class _FakePatchManager:
         return output_path
 
 
+def test_default_archiver_disables_warc_pointer_streaming(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver
+
+    captured = {}
+
+    class _Archiver:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", raising=False)
+    monkeypatch.setattr(parallel_web_archiver, "ParallelWebArchiver", _Archiver)
+
+    LegalSourceRecoveryWorkflow()._archiver_instance()
+
+    assert captured["use_warc_pointers"] is False
+    assert captured["fallback_priority"] == ["wayback", "web_archive"]
+
+
+def test_archiver_can_opt_into_warc_pointer_streaming(monkeypatch):
+    from ipfs_datasets_py.processors.legal_scrapers import parallel_web_archiver
+
+    captured = {}
+
+    class _Archiver:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", "1")
+    monkeypatch.setattr(parallel_web_archiver, "ParallelWebArchiver", _Archiver)
+
+    LegalSourceRecoveryWorkflow()._archiver_instance()
+
+    assert captured["use_warc_pointers"] is True
+    assert captured["fallback_priority"] == ["warc", "wayback", "web_archive"]
+
+
 def test_default_publisher_loads_repo_script() -> None:
     publisher = LegalSourceRecoveryWorkflow()._publisher()
 

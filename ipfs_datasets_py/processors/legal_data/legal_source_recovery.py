@@ -469,7 +469,15 @@ class LegalSourceRecoveryWorkflow:
             return self._archiver
         from ..legal_scrapers.parallel_web_archiver import ParallelWebArchiver
 
-        return ParallelWebArchiver()
+        enable_warc_pointers = _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_WARC_POINTERS", default=False)
+        fallback_priority = ["wayback", "web_archive"]
+        if enable_warc_pointers:
+            fallback_priority.insert(0, "warc")
+        return ParallelWebArchiver(
+            use_warc_pointers=enable_warc_pointers,
+            timeout=max(1, int(_ARCHIVE_TIMEOUT_SECONDS)),
+            fallback_priority=fallback_priority,
+        )
 
     def _publisher(self) -> Callable[..., Dict[str, Any]]:
         if self._publish_func is not None:
@@ -866,7 +874,7 @@ class LegalSourceRecoveryWorkflow:
         backend_status["common_crawl_domains"] = []
         backend_status["common_crawl_domain_count"] = 0
         backend_status["common_crawl_result_count"] = 0
-        if not _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", default=False):
+        if not _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", default=True):
             backend_status["common_crawl_error"] = "common_crawl_disabled"
             return []
 
@@ -902,19 +910,95 @@ class LegalSourceRecoveryWorkflow:
             backend_status["common_crawl_error"] = "no_common_crawl_domains"
             return []
 
-        def _search_domains() -> List[Dict[str, Any]]:
-            from ..web_archiving.common_crawl_integration import CommonCrawlSearchEngine
-
-            engine = CommonCrawlSearchEngine(
-                mode=str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local").strip() or "local",
-                mcp_endpoint=os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT") or None,
-                mcp_timeout=_COMMON_CRAWL_TIMEOUT_SECONDS,
+        def _search_domain_hard_timeout(domain: str) -> Dict[str, Any]:
+            start_method = str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PROCESS_START_METHOD") or "").strip()
+            if start_method:
+                context = mp.get_context(start_method)
+            else:
+                available = set(mp.get_all_start_methods())
+                context = mp.get_context("fork" if "fork" in available else "spawn")
+            queue = context.Queue(maxsize=1)
+            process = context.Process(
+                target=_common_crawl_domain_worker,
+                kwargs={
+                    "queue": queue,
+                    "domain": domain,
+                    "max_matches": max_candidates,
+                    "query": query,
+                    "jurisdiction_type": _jurisdiction_type_for_corpus(corpus_key),
+                    "state_code": state_code,
+                    "mode": str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local").strip() or "local",
+                    "mcp_endpoint": os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT") or None,
+                    "timeout_seconds": _COMMON_CRAWL_TIMEOUT_SECONDS,
+                },
             )
-            if not engine.is_available():
-                return []
+            process.start()
+            process.join(_COMMON_CRAWL_TIMEOUT_SECONDS)
+            if process.is_alive():
+                process.terminate()
+                process.join(1)
+                if process.is_alive():
+                    process.kill()
+                    process.join(1)
+                return {"results": [], "error": "common_crawl_domain_timeout"}
+            try:
+                return dict(queue.get_nowait())
+            except Exception:
+                return {"results": [], "error": f"common_crawl_domain_exit_{process.exitcode}"}
+
+        def _normalize_common_crawl_rows(domain: str, rows: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+            normalized_rows: List[Dict[str, Any]] = []
+            for row in list(rows or []):
+                url = str(
+                    row.get("url")
+                    or row.get("archive_url")
+                    or row.get("wayback_url")
+                    or row.get("target_url")
+                    or ""
+                ).strip()
+                if not url:
+                    continue
+                normalized_rows.append(
+                    {
+                        "url": url,
+                        "title": str(row.get("title") or f"Common Crawl match for {domain}"),
+                        "source": "common_crawl_indexes",
+                        "source_type": "archived",
+                        "search_domain": domain,
+                        "snippet": str(row.get("snippet") or row.get("mime") or row.get("status") or ""),
+                        "common_crawl_record": {
+                            key: value
+                            for key, value in row.items()
+                            if key in {"timestamp", "collection", "mime", "status", "digest", "filename", "offset", "length"}
+                        },
+                    }
+                )
+            return normalized_rows
+
+        def _search_domains() -> List[Dict[str, Any]]:
             results: List[Dict[str, Any]] = []
+            domain_errors: Dict[str, str] = {}
             for domain in domains:
+                if _env_flag("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_USE_PROCESS", default=True):
+                    domain_payload = _search_domain_hard_timeout(domain)
+                    rows = list(domain_payload.get("results") or [])
+                    error = str(domain_payload.get("error") or "").strip()
+                    if error:
+                        domain_errors[domain] = error
+                    results.extend(_normalize_common_crawl_rows(domain, rows))
+                    continue
+
+                from ..web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+
                 try:
+                    engine = CommonCrawlSearchEngine(
+                        mode=str(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MODE") or "local").strip() or "local",
+                        mcp_endpoint=os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MCP_ENDPOINT") or None,
+                        mcp_timeout=_COMMON_CRAWL_TIMEOUT_SECONDS,
+                    )
+                    if not engine.is_available():
+                        domain_errors[domain] = "common_crawl_unavailable"
+                        continue
                     rows = engine.search_domain(
                         domain,
                         max_matches=max(1, max_candidates),
@@ -925,33 +1009,12 @@ class LegalSourceRecoveryWorkflow:
                         max_parquet_files=int(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_MAX_PARQUET_FILES", "8")),
                         per_parquet_limit=int(os.getenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_PER_PARQUET_LIMIT", "200")),
                     )
-                except Exception:
+                    results.extend(_normalize_common_crawl_rows(domain, rows))
+                except Exception as exc:
+                    domain_errors[domain] = str(exc)
                     continue
-                for row in list(rows or []):
-                    url = str(
-                        row.get("url")
-                        or row.get("archive_url")
-                        or row.get("wayback_url")
-                        or row.get("target_url")
-                        or ""
-                    ).strip()
-                    if not url:
-                        continue
-                    results.append(
-                        {
-                            "url": url,
-                            "title": str(row.get("title") or f"Common Crawl match for {domain}"),
-                            "source": "common_crawl_indexes",
-                            "source_type": "archived",
-                            "search_domain": domain,
-                            "snippet": str(row.get("snippet") or row.get("mime") or row.get("status") or ""),
-                            "common_crawl_record": {
-                                key: value
-                                for key, value in row.items()
-                                if key in {"timestamp", "collection", "mime", "status", "digest", "filename", "offset", "length"}
-                            },
-                        }
-                    )
+            if domain_errors:
+                backend_status["common_crawl_domain_errors"] = dict(domain_errors)
             return results
 
         try:
