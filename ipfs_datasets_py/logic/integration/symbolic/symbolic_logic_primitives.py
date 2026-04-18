@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 # Conditional imports based on SymbolicAI availability
 try:
+    from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+    ensure_symai_config_for_import()
     from symai import Symbol
     from symai.ops.primitives import Primitive
     import symai.core as core

@@ -1437,6 +1437,14 @@ def install_for_component(component: str) -> bool:
         ]
     elif component == 'ipfs':
         return ensure_main_ipfs_kit_py()
+    elif component == 'ipld':
+        dependencies = [
+            ('libipld', 'libipld>=3.3.2'),
+            ('ipld_car', 'ipld-car>=0.0.1'),
+            ('ipld_dag_pb', 'ipld-dag-pb>=0.0.1'),
+            ('dag_cbor', 'dag-cbor>=0.3.3'),
+            ('multiformats', 'multiformats>=0.3.0'),
+        ]
     elif component == 'theorem_provers':
         # Install theorem provers and SAT/SMT solvers
         return installer.install_theorem_provers()
@@ -1466,6 +1474,11 @@ def install_for_component(component: str) -> bool:
             ('cvc5', 'cvc5', ['cvc5']),
             ('pysmt', 'pysmt'),
         ]
+    elif component in {'logic', 'symbolicai'}:
+        dependencies = [
+            ('cv2', 'opencv-python>=4.8.1.78,<4.12.0'),
+            ('symai', 'symbolicai>=1.14.0,<2.0.0'),
+        ]
     elif component == 'web':
         dependencies = [
             ('requests', 'requests'),
@@ -1475,6 +1488,8 @@ def install_for_component(component: str) -> bool:
         ]
     elif component == 'symai_router':
         dependencies = [
+            ('cv2', 'opencv-python>=4.8.1.78,<4.12.0'),
+            ('symai', 'symbolicai>=1.14.0,<2.0.0'),
             ('copilot', 'github-copilot-sdk'),
         ]
         if not installer.ensure_nodejs(min_major=20):

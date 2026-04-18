@@ -10,6 +10,7 @@ import subprocess
 import argparse
 import json
 import platform
+import shutil
 from pathlib import Path
 import importlib.util
 import importlib.metadata
@@ -175,11 +176,162 @@ print(json.dumps({'stale': stale}))
     subprocess.run([str(python_path), '-m', 'pip', 'uninstall', '-y', *stale_packages], check=True, text=True)
 
 
+def _ocr_runtime_status(python_path: Path) -> dict:
+    script = r'''
+import importlib
+import json
+import shutil
+
+payload = {
+    'fitz': False,
+    'pillow': False,
+    'pytesseract': False,
+    'tesseract_cmd': '',
+    'tesseract_version': '',
+    'languages': [],
+    'ocr_available': False,
+}
+
+try:
+    import fitz  # noqa: F401
+    payload['fitz'] = True
+except Exception as exc:
+    payload['fitz_error'] = str(exc)
+
+try:
+    import PIL  # noqa: F401
+    payload['pillow'] = True
+except Exception as exc:
+    payload['pillow_error'] = str(exc)
+
+try:
+    import pytesseract
+    payload['pytesseract'] = True
+    configured_cmd = str(getattr(getattr(pytesseract, 'pytesseract', None), 'tesseract_cmd', '') or 'tesseract').strip()
+    resolved_cmd = shutil.which(configured_cmd) or (configured_cmd if configured_cmd and configured_cmd != 'tesseract' else '')
+    payload['tesseract_cmd'] = resolved_cmd or configured_cmd
+    payload['tesseract_version'] = str(pytesseract.get_tesseract_version())
+    try:
+        payload['languages'] = [str(item).strip() for item in pytesseract.get_languages(config='') if str(item).strip()]
+    except Exception as exc:
+        payload['languages_error'] = str(exc)
+except Exception as exc:
+    payload['pytesseract_error'] = str(exc)
+
+payload['ocr_available'] = bool(
+    payload['fitz']
+    and payload['pillow']
+    and payload['pytesseract']
+    and payload['tesseract_version']
+)
+print(json.dumps(payload))
+'''
+    try:
+        result = subprocess.run([str(python_path), '-c', script], check=True, text=True, capture_output=True)
+        return json.loads(result.stdout.strip() or '{}')
+    except Exception as exc:
+        return {
+            'fitz': False,
+            'pillow': False,
+            'pytesseract': False,
+            'tesseract_cmd': '',
+            'tesseract_version': '',
+            'languages': [],
+            'ocr_available': False,
+            'error': str(exc),
+        }
+
+
+def _noninteractive_privilege_prefix() -> list[str] | None:
+    if not IS_LINUX:
+        return []
+    geteuid = getattr(os, 'geteuid', None)
+    if callable(geteuid) and geteuid() == 0:
+        return []
+    if shutil.which('sudo'):
+        try:
+            result = subprocess.run(['sudo', '-n', 'true'], check=False, capture_output=True, text=True)
+        except Exception:
+            return None
+        if result.returncode == 0:
+            return ['sudo', '-n']
+    return None
+
+
+def _tesseract_install_commands() -> list[list[str]]:
+    if IS_LINUX:
+        privilege_prefix = _noninteractive_privilege_prefix()
+        if privilege_prefix is None:
+            return []
+        if shutil.which('apt-get'):
+            return [
+                [*privilege_prefix, 'apt-get', 'update'],
+                [*privilege_prefix, 'apt-get', 'install', '-y', 'tesseract-ocr', 'tesseract-ocr-eng'],
+            ]
+        if shutil.which('dnf'):
+            return [[*privilege_prefix, 'dnf', 'install', '-y', 'tesseract', 'tesseract-langpack-eng']]
+        if shutil.which('yum'):
+            return [[*privilege_prefix, 'yum', 'install', '-y', 'tesseract', 'tesseract-langpack-eng']]
+        if shutil.which('zypper'):
+            return [[*privilege_prefix, 'zypper', '--non-interactive', 'install', 'tesseract-ocr']]
+        if shutil.which('pacman'):
+            return [[*privilege_prefix, 'pacman', '-Sy', '--noconfirm', 'tesseract', 'tesseract-data-eng']]
+        return []
+    if IS_MACOS and shutil.which('brew'):
+        return [['brew', 'install', 'tesseract']]
+    if IS_WINDOWS and shutil.which('winget'):
+        return [[
+            'winget',
+            'install',
+            '--exact',
+            '--id',
+            'UB-Mannheim.TesseractOCR',
+            '--accept-package-agreements',
+            '--accept-source-agreements',
+        ]]
+    if IS_WINDOWS and shutil.which('choco'):
+        return [['choco', 'install', '-y', 'tesseract']]
+    return []
+
+
+def _ensure_ocr_runtime(python_path: Path) -> None:
+    if str(os.environ.get('IPFS_DATASETS_PY_AUTO_INSTALL_OCR', '1')).strip().lower() in {'0', 'false', 'no', 'off'}:
+        return
+
+    status = _ocr_runtime_status(python_path)
+    if status.get('ocr_available'):
+        version = str(status.get('tesseract_version') or '').strip()
+        if version:
+            print(f"✅ OCR runtime available (Tesseract {version})")
+        return
+
+    commands = _tesseract_install_commands()
+    if not commands:
+        print('⚠️ OCR runtime unavailable and no non-interactive Tesseract installer was found')
+        return
+
+    print('📦 Installing OCR runtime dependencies...')
+    for command in commands:
+        result = subprocess.run(command, check=False, text=True)
+        if result.returncode != 0:
+            print(f"⚠️ OCR runtime install step failed: {' '.join(command)}")
+            return
+
+    verified = _ocr_runtime_status(python_path)
+    if verified.get('ocr_available'):
+        version = str(verified.get('tesseract_version') or '').strip()
+        if version:
+            print(f"✅ OCR runtime installed (Tesseract {version})")
+    else:
+        print('⚠️ OCR runtime is still unavailable after attempted install')
+
+
 def _sync_venv_dependencies(repo_root: Path, venv_dir: Path) -> None:
     python_path = _create_or_reuse_venv(venv_dir)
     needs_sync = _needs_venv_sync(repo_root, venv_dir)
     if not needs_sync:
         _prune_stale_torch_cuda_packages(python_path)
+        _ensure_ocr_runtime(python_path)
         return
 
     requirements_path = repo_root / 'requirements.txt'
@@ -189,6 +341,7 @@ def _sync_venv_dependencies(repo_root: Path, venv_dir: Path) -> None:
     _install_requirements_with_local_overrides(python_path, repo_root, requirements_path)
     subprocess.run([str(python_path), '-m', 'pip', 'install', '-e', str(editable_target), '--no-deps'], check=True, text=True)
     _prune_stale_torch_cuda_packages(python_path)
+    _ensure_ocr_runtime(python_path)
     _write_venv_sync_marker(repo_root, venv_dir)
 
 
@@ -561,6 +714,13 @@ def show_status():
             print(f"✅ {label:12s} - Available")
         except ImportError:
             print(f"❌ {label:12s} - Missing")
+
+    ocr_status = _ocr_runtime_status(Path(sys.executable))
+    if ocr_status.get('ocr_available'):
+        version = str(ocr_status.get('tesseract_version') or '').strip()
+        print(f"✅ {'ocr_runtime':12s} - Available ({version or 'Tesseract detected'})")
+    else:
+        print(f"❌ {'ocr_runtime':12s} - Missing")
     
     print(f"\nFor detailed status, run: python {_setup_scripts_dir() / 'dependency_health_checker.py'} check")
 

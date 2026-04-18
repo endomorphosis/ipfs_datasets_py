@@ -81,6 +81,38 @@ async def test_legal_scraper_daemon_runs_bluebook_and_refresh_with_safe_publish_
 
 
 @pytest.mark.asyncio
+async def test_legal_scraper_daemon_writes_running_phase_checkpoint(tmp_path, monkeypatch):
+    monkeypatch.setenv("LEGAL_SCRAPER_DAEMON_HEARTBEAT_SECONDS", "0")
+    observed = {}
+
+    class _FakeBluebookRun:
+        def to_dict(self):
+            return {"summary": {"recovery_count": 0}}
+
+    async def _fake_bluebook_runner(**kwargs):
+        phase_path = tmp_path / "cycles" / "cycle_0001" / "bluebook_phase.json"
+        observed["checkpoint"] = json.loads(phase_path.read_text(encoding="utf-8"))
+        return _FakeBluebookRun()
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            states=["MN"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(samples=1),
+            state_refresh=StateRefreshDaemonConfig(enabled=False),
+            agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+        ),
+        bluebook_runner=_fake_bluebook_runner,
+    )
+
+    await daemon.run()
+
+    assert observed["checkpoint"]["status"] == "running"
+    assert observed["checkpoint"]["phase"] == "bluebook"
+    assert observed["checkpoint"]["heartbeat_count"] == 0
+
+
+@pytest.mark.asyncio
 async def test_legal_scraper_daemon_resumes_completed_phase(tmp_path):
     calls = {"bluebook": 0, "refresh": 0}
 
@@ -201,10 +233,33 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
     assert config.state_refresh.scrape is True
     assert config.state_refresh.parallel_workers == 8
     assert config.state_refresh.publish_to_hf is False
+    assert config.state_refresh.hydrate_statute_text is True
+    assert config.state_refresh.hydrate_timeout_seconds == 25.0
     assert config.cache.cache_dir == str(tmp_path / "cache")
     assert config.cache.mirror_to_ipfs is True
     assert config.agentic_corpora.enabled is True
     assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules"]
+
+
+def test_legal_scraper_daemon_arg_config_allows_state_hydration_controls(tmp_path):
+    args = build_arg_parser().parse_args(
+        [
+            "--states",
+            "KY",
+            "--output-dir",
+            str(tmp_path),
+            "--state-refresh-scrape",
+            "--no-hydrate-state-text",
+            "--state-refresh-hydrate-timeout-seconds",
+            "3",
+        ]
+    )
+
+    config = config_from_args(args)
+
+    assert config.state_refresh.scrape is True
+    assert config.state_refresh.hydrate_statute_text is False
+    assert config.state_refresh.hydrate_timeout_seconds == 3.0
 
 
 def test_legal_scraper_daemon_normalizers():

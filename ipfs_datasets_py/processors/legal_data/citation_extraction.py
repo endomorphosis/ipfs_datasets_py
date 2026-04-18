@@ -126,6 +126,13 @@ _STATE_ABBREV_PATTERN = "|".join(
     sorted((re.escape(value) for value in BLUEBOOK_STATE_TO_CODE), key=len, reverse=True)
 )
 STATE_STATUTE_PATTERNS = [
+    rf'(?P<text>(?P<titled_state>{_STATE_ABBREV_PATTERN})\s+'
+    r'(?P<titled_code_name>'
+    r'(?:[A-Z][A-Za-z&.\'/-]*\s+){0,5}'
+    r'(?:Code(?:\s+Ann\.)?|Stat(?:\.|utes)?(?:\s+Ann\.)?|'
+    r'Rev\.\s+Stat\.?|Gen\.\s+(?:Laws|Stat\.?)|Comp\.\s+Laws|Cent\.\s+Code)'
+    r')\s+tit\.?\s+(?P<titled_title>\d+)\s+'
+    r'(?:§|sec\.?|section)?\s*(?P<titled_section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
     rf'(?P<text>(?P<state>{_STATE_ABBREV_PATTERN})\s+'
     r'(?P<code_name>'
     r'(?:[A-Z][A-Za-z&.\'/-]*\s+){0,5}'
@@ -345,6 +352,10 @@ class CitationExtractor:
                     state_abbrev = "Pa."
                     code_name = f"{match.group('pa_title')} Pa.C.S."
                     section = str(match.group("pa_section") or "")
+                elif groupdict.get("titled_state"):
+                    state_abbrev = match.group("titled_state")
+                    code_name = f"{' '.join(match.group('titled_code_name').split())} tit. {match.group('titled_title')}"
+                    section = str(match.group("titled_section") or "")
                 else:
                     state_abbrev = match.group("state")
                     code_name = " ".join(match.group("code_name").split())

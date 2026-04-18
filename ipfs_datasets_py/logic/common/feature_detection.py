@@ -136,7 +136,7 @@ class FeatureDetector:
 
     @classmethod
     def has_symbolicai(cls) -> bool:
-        return is_module_available("symbolicai")
+        return is_module_available("symai")
 
     @classmethod
     def has_z3(cls) -> bool:

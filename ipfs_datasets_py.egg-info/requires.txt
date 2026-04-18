@@ -5,6 +5,11 @@ google-api-python-client>=2.192.0
 cloudscraper>=1.2.71
 playwright>=1.40.0
 jsonschema>=4.0.0
+libipld>=3.3.2
+ipld-car>=0.0.1
+ipld-dag-pb>=0.0.1
+dag-cbor>=0.3.3
+multiformats>=0.3.0
 nltk>=3.8.1
 pdfplumber>=0.11.7
 pymupdf>=1.26.3
@@ -17,6 +22,8 @@ tiktoken>=0.6.0
 pysbd
 markitdown>=0.1.0
 python-docx>=1.1.2
+opencv-python<4.12.0,>=4.8.1.78
+symbolicai<2.0.0,>=1.14.0
 
 [:platform_system != "Windows" and python_version < "3.14"]
 surya-ocr>=0.14.6
@@ -54,6 +61,7 @@ autoscraper>=1.1.14
 cdx-toolkit>=0.9.37
 wayback>=0.4.5
 internetarchive>=5.5.0
+symbolicai<2.0.0,>=1.14.0
 
 [all:platform_system != "Windows"]
 faiss-cpu>=1.8.0
@@ -86,6 +94,10 @@ scipy>=1.7.0
 matplotlib>=3.5.0
 plotly>=5.9.0
 rdflib>=6.0.0
+
+[logic]
+nltk>=3.8.1
+symbolicai<2.0.0,>=1.14.0
 
 [scraping]
 beautifulsoup4<5.0.0,>=4.12.0

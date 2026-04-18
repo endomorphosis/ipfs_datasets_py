@@ -40,7 +40,12 @@ class KentuckyScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: int | None = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Kentucky's legislative website.
         
         Args:
@@ -59,6 +64,8 @@ class KentuckyScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
+        limit = max(1, int(max_statutes or 200))
+        enough = min(30, limit)
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -70,26 +77,28 @@ class KentuckyScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Ky. Rev. Stat.",
-                        max_sections=200,
+                        max_sections=limit,
                         wait_for_selector="a[href*='statute.aspx?id='], a[href*='chapter.aspx?id=']",
                         timeout=45000,
                     )
-                    statutes = self._filter_section_level(statutes)
+                    filtered = self._filter_section_level(statutes)
+                    statutes = (filtered or statutes)[:limit]
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
-                    if len(statutes) >= 30:
+                    if len(statutes) >= enough:
                         return statutes
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Ky. Rev. Stat.", max_sections=200)
-            statutes = self._filter_section_level(statutes)
+            statutes = await self._generic_scrape(code_name, candidate, "Ky. Rev. Stat.", max_sections=limit)
+            filtered = self._filter_section_level(statutes)
+            statutes = (filtered or statutes)[:limit]
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= 30:
+            if len(statutes) >= enough:
                 return statutes
 
-        return best_statutes
+        return best_statutes[:limit]
 
 
 # Register this scraper with the registry

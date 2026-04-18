@@ -95,6 +95,9 @@ def enable_symbolicai(*, autoconfigure_env: bool | None = None) -> bool:
             from ...utils.engine_env import autoconfigure_engine_env
 
             autoconfigure_engine_env()
+        from ...utils.symai_config import ensure_symai_config_for_import
+
+        ensure_symai_config_for_import()
 
         import symai  # noqa: F401
 

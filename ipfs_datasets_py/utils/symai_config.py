@@ -16,6 +16,8 @@ def _default_symai_config() -> Dict[str, Any]:
         "NEUROSYMBOLIC_ENGINE_MODEL": "",
         "SYMBOLIC_ENGINE_API_KEY": "",
         "SYMBOLIC_ENGINE": "",
+        "FORMAL_ENGINE_API_KEY": "",
+        "FORMAL_ENGINE": "",
         "EMBEDDING_ENGINE_API_KEY": "",
         "EMBEDDING_ENGINE_MODEL": "",
         "DRAWING_ENGINE_API_KEY": "",
@@ -24,6 +26,7 @@ def _default_symai_config() -> Dict[str, Any]:
         "SEARCH_ENGINE_API_KEY": "",
         "SEARCH_ENGINE_MODEL": "",
         "OCR_ENGINE_API_KEY": "",
+        "OCR_ENGINE_MODEL": "",
         "SPEECH_TO_TEXT_ENGINE_MODEL": "",
         "SPEECH_TO_TEXT_API_KEY": "",
         "TEXT_TO_SPEECH_ENGINE_API_KEY": "",
@@ -173,3 +176,32 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
         # This value is not used by the Codex engine; it just prevents `symai` from exiting.
         "api_key": "codex",
     }
+
+
+def ensure_symai_config_for_import(*, force: bool = False) -> Optional[Path]:
+    """Create a non-interactive SyMAI config before importing `symai`.
+
+    SymbolicAI can create an empty config and then raise `SystemExit(1)` on first
+    import.  Logic modules import `symai` at module load time, so this helper gives
+    them a safe default config without requiring a user prompt or a real API key.
+    """
+
+    chosen_engine = choose_symai_neurosymbolic_engine() or {}
+    model = str(
+        chosen_engine.get("model")
+        or os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL")
+        or os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL")
+        or "ipfs:default"
+    )
+    api_key = str(
+        chosen_engine.get("api_key")
+        or os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY")
+        or os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_API_KEY")
+        or "ipfs"
+    )
+    return ensure_symai_config(
+        neurosymbolic_model=model,
+        neurosymbolic_api_key=api_key,
+        force=force,
+        apply_engine_router=True,
+    )

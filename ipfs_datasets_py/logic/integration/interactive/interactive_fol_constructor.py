@@ -23,9 +23,12 @@ logger = logging.getLogger(__name__)
 
 # Conditional imports
 try:
+    from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+    ensure_symai_config_for_import()
     from symai import Symbol
     SYMBOLIC_AI_AVAILABLE = True
-except ImportError:
+except (ImportError, SystemExit):
     SYMBOLIC_AI_AVAILABLE = False
     logger.warning("SymbolicAI not available. Interactive constructor will use fallback mode.")
     

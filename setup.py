@@ -213,6 +213,7 @@ setup(
         "jsonschema>=4.0.0",
 
         # IPLD components (always available)
+        "libipld>=3.3.2",
         "ipld-car>=0.0.1",
         "ipld-dag-pb>=0.0.1",
         "dag-cbor>=0.3.3",
@@ -230,7 +231,7 @@ setup(
         "eth-keys>=0.5.0",
 
         # IPLD components
-        "multiformats>=0.2.1",
+        "multiformats>=0.3.0",
 
         # Data provenance components
         "networkx>=2.8.0",
@@ -269,13 +270,18 @@ setup(
         'pysbd',
         'markitdown>=0.1.0',
         'python-docx>=1.1.2',
+        # Keep OpenCV on the NumPy 1.x-compatible line used by the rest of this package.
+        'opencv-python>=4.8.1.78,<4.12.0',
+        # SymbolicAI is imported as `symai`; keep it in base installs so the
+        # logic/proof stack does not silently drop to fallback mode.
+        'symbolicai>=1.14.0,<2.0.0',
     ],
     extras_require={
         # Logic integration / legal reasoning
         # SymbolicAI is imported as `symai` but distributed on PyPI as `symbolicai`.
         'logic': [
             'nltk>=3.8.1',
-            'symbolicai>=0.13.1',
+            'symbolicai>=1.14.0,<2.0.0',
         ],
         # API server extras for the logic module (FastAPI + uvicorn for api_server.py)
         'logic-api': [
@@ -463,7 +469,7 @@ setup(
             # Combine all non-platform-specific extras
             # Logic
             'nltk>=3.8.1',
-            'symbolicai>=0.13.1',
+            'symbolicai>=1.14.0,<2.0.0',
             # ZKP Groth16 FFI wrapper
             'jsonschema>=4.0.0',
             # IPLD

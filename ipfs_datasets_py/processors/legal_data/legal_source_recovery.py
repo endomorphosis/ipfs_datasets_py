@@ -1128,6 +1128,11 @@ class LegalSourceRecoveryWorkflow:
 
         section_patterns = [
             (
+                "state_title_section",
+                r"\b(?:Okla\.?\s+Stat\.?|Oklahoma\s+Statutes|Vt\.?\s+Stat\.?|Vermont\s+Statutes)"
+                r"\s+tit\.?\s*(?P<title>[0-9A-Za-z]+)\s*(?:§|section|sec\.?)?\s*(?P<section>[0-9A-Za-z]+(?:[.\-][0-9A-Za-z]+)*)",
+            ),
+            (
                 "generic",
                 r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes|ORS|Cal\.\s+[A-Za-z.\s]+Code|N\.Y\.\s+[A-Za-z.\s]+(?:Law|Act)|Tex\.\s+[A-Za-z.\s]+Code|Fla\.\s+Stat\.|Florida\s+Statutes)"
                 r"\s*(?:§|section|sec\.?)?\s*(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
@@ -1172,6 +1177,9 @@ class LegalSourceRecoveryWorkflow:
             return []
 
         section = section_match.group("section").strip(".") if section_match else extracted_section
+        if section_match and section_kind == "state_title_section":
+            title_part = str(section_match.groupdict().get("title") or "").strip(".")
+            section = f"{title_part}-{section}" if title_part else section
         from ..legal_scrapers.state_laws_scraper import build_state_law_section_url
 
         if state == "MN" or re.search(r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes)", text, re.IGNORECASE):
@@ -2472,6 +2480,7 @@ class LegalSourceRecoveryWorkflow:
             "state_court_rules": "ipfs_datasets_py/processors/legal_scrapers/state_procedure_rules_scraper.py",
             "federal_register": "ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/federal_register_scraper.py",
             "us_code": "ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/us_code_scraper.py",
+            "caselaw_access_project": "ipfs_datasets_py/processors/legal_scrapers/caselaw_access_program/vector_search_integration.py",
         }
         return mapping.get(str(corpus_key or "").strip().lower())
 

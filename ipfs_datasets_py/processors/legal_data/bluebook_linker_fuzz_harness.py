@@ -250,33 +250,78 @@ def _citation_text_from_row_text(
     return ""
 
 
-def _synthesize_state_statute_citation_from_row(row: Dict[str, Any], state_code: str) -> str:
+def _synthetic_state_identifier(value: Any) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return False
+    return bool(
+        re.match(r"^[A-Z]{2}-ADMIN-[0-9a-f]{8,}$", text, flags=re.IGNORECASE)
+        or re.match(r"^[A-Z]{2}-[a-z_]+-\d{8,}$", text, flags=re.IGNORECASE)
+        or re.match(r"^doc-\d+$", text, flags=re.IGNORECASE)
+    )
+
+
+def _state_rule_section_from_row(row: Dict[str, Any], *, corpus_key: str) -> str:
+    values = [
+        _first_non_empty_string(row.get(field))
+        for field in ("section", "section_number", "rule_number", "source_id", "text", "name", "title", "source_url", "url")
+    ]
+    for value in values:
+        if not value:
+            continue
+        if corpus_key == "state_admin_rules":
+            match = re.search(r"\b(?P<section>\d{3}-\d{3}-\d{4})\b", value)
+            if match:
+                return str(match.group("section")).strip()
+        match = re.search(r"(?:Section|Rule|Part)[\s:-]+(?P<section>[A-Za-z0-9.:-]+)", value, re.IGNORECASE)
+        if match:
+            section = str(match.group("section") or "").strip().rstrip(".,;:")
+            section = re.sub(r"^(?:section|rule|part)[-\\s:]+", "", section, flags=re.IGNORECASE).strip()
+            if section and re.search(r"\d", section) and not _synthetic_state_identifier(section):
+                return section
+    return ""
+
+
+def _state_seed_citation_matches_corpus(citation_text: str, corpus_key: str, state_code: Optional[str]) -> bool:
+    citations = CitationExtractor().extract_citations(citation_text)
+    for citation in citations:
+        if citation.type != "state_statute":
+            continue
+        parsed_state = str(citation.jurisdiction or "").strip().upper()
+        if state_code and parsed_state not in ("", str(state_code).strip().upper()):
+            continue
+        code_name = str(citation.metadata.get("code_name") or "").lower()
+        if corpus_key == "state_admin_rules":
+            return "admin" in code_name
+        if corpus_key == "state_court_rules":
+            return "court" in code_name or "r." in code_name
+        return True
+    return False
+
+
+def _synthesize_state_statute_citation_from_row(
+    row: Dict[str, Any],
+    state_code: str,
+    *,
+    corpus_key: str = "state_laws",
+) -> str:
     source_id = str(row.get("source_id") or "").strip()
     text = _first_non_empty_string(row.get("text"))
     bluebook_abbrev = _STATE_CODE_TO_BLUEBOOK.get(state_code)
     if not bluebook_abbrev:
         return ""
 
-    section_match = None
-    for candidate in (source_id, text):
-        section_match = re.search(r"(?:Section|Rule|Part)[\s:-]+(?P<section>[A-Za-z0-9.:-]+)", candidate, re.IGNORECASE)
-        if section_match:
-            break
-    if not section_match:
-        return ""
-
-    section = str(section_match.group("section") or "").strip().rstrip(".,;:")
-    section = re.sub(r"^(?:section|rule|part)[-\\s:]+", "", section, flags=re.IGNORECASE).strip()
+    section = _state_rule_section_from_row(row, corpus_key=corpus_key)
     if not section:
         return ""
 
     lowered_source = source_id.lower()
-    if "statute" in lowered_source:
-        code_name = "Stat."
-    elif "court-rule" in lowered_source or "court rule" in lowered_source:
-        code_name = "Court Rules"
-    elif "state-admin" in lowered_source or "administrative" in lowered_source:
+    if corpus_key == "state_admin_rules" or "state-admin" in lowered_source or "administrative" in lowered_source:
         code_name = "Admin. Code"
+    elif corpus_key == "state_court_rules" or "court-rule" in lowered_source or "court rule" in lowered_source:
+        code_name = "Court Rules"
+    elif "statute" in lowered_source or corpus_key == "state_laws":
+        code_name = "Stat."
     else:
         return ""
     return f"{bluebook_abbrev} {code_name} § {section}"
@@ -311,9 +356,12 @@ def _synthesize_seed_candidate_from_row(
         citation_type = "case"
     elif corpus_key in {"state_laws", "state_admin_rules", "state_court_rules"}:
         resolved_state = str(_first_present(row, _STATE_FIELDS) or state_code or "").strip().upper() or None
-        citation_text = _citation_text_from_row(row, tuple(list(_OFFICIAL_CITE_FIELDS) + ["citations"]))
-        if not citation_text:
-            citation_text = _citation_text_from_row_text(row, "state_statute", resolved_state)
+        if corpus_key == "state_laws":
+            citation_text = _citation_text_from_row(row, tuple(list(_OFFICIAL_CITE_FIELDS) + ["citations"]))
+        else:
+            citation_text = _citation_text_from_row(row, ("citation_text", "normalized_citation", "official_cite", "bluebook_citation", "citations"))
+            if _synthetic_state_identifier(citation_text):
+                citation_text = ""
         if not citation_text and resolved_state:
             identifier_fields = [field for field in _IDENTIFIER_FIELDS if field not in {"source_id", "name", "name_abbreviation"}]
             has_structured_fields = any(
@@ -322,7 +370,13 @@ def _synthesize_seed_candidate_from_row(
             )
             has_source_backed_fields = bool(_first_non_empty_string(row.get("source_id")) or _first_non_empty_string(row.get("text")))
             if has_structured_fields or has_source_backed_fields:
-                citation_text = _synthesize_state_statute_citation_from_row(row, resolved_state)
+                citation_text = _synthesize_state_statute_citation_from_row(row, resolved_state, corpus_key=corpus_key)
+        if not citation_text:
+            extracted_text = _citation_text_from_row_text(row, "state_statute", resolved_state)
+            if corpus_key == "state_laws" or _state_seed_citation_matches_corpus(extracted_text, corpus_key, resolved_state):
+                citation_text = extracted_text
+        if citation_text and corpus_key != "state_laws" and not _state_seed_citation_matches_corpus(citation_text, corpus_key, resolved_state):
+            citation_text = ""
         citation_type = "state_statute"
     if not citation_text:
         return None
@@ -538,6 +592,135 @@ def parse_bluebook_fuzz_candidates(raw_text: str) -> List[BluebookCitationCandid
     if not candidates:
         raise ValueError("Generated citation payload did not contain any usable citations")
     return candidates
+
+
+def _fallback_bluebook_fuzz_candidates(
+    *,
+    sample_count: int,
+    corpus_keys: Optional[Sequence[str]] = None,
+    state_codes: Optional[Sequence[str]] = None,
+) -> List[BluebookCitationCandidate]:
+    requested_corpora = {
+        str(item or "").strip().lower()
+        for item in (corpus_keys or [])
+        if str(item or "").strip()
+    }
+    requested_states = [
+        str(item or "").strip().upper()
+        for item in (state_codes or [])
+        if str(item or "").strip()
+    ]
+    if not requested_corpora:
+        requested_corpora = {"state_laws", "us_code", "federal_register", "caselaw_access_project"}
+    if not requested_states:
+        requested_states = ["MN", "OR", "NY", "CA", "TX"]
+
+    state_examples = {
+        "MN": ("Minn. Stat. § 518.17", "Minnesota best interests custody factor", "Minn. Stat.", "state_statute"),
+        "OR": ("Or. Rev. Stat. § 659A.030", "Oregon unlawful employment practice", "Or. Rev. Stat.", "state_statute"),
+        "NY": ("N.Y. C.P.L.R. 3211", "New York motion to dismiss standard", "N.Y. C.P.L.R.", "state_statute"),
+        "CA": ("Cal. Civ. Proc. Code § 425.16", "California anti-SLAPP procedure", "Cal. Civ. Proc. Code", "state_statute"),
+        "TX": ("Tex. Civ. Prac. & Rem. Code § 27.003", "Texas dismissal procedure", "Tex. Civ. Prac. & Rem. Code", "state_statute"),
+    }
+    corpus_examples = {
+        "us_code": [
+            BluebookCitationCandidate(
+                citation_text="42 U.S.C. § 1983",
+                context_text="The complaint cites 42 U.S.C. § 1983 for civil rights relief.",
+                corpus_key_hint="us_code",
+                citation_type_hint="usc",
+                expected_valid=True,
+                notes="deterministic fallback federal statute",
+            )
+        ],
+        "federal_register": [
+            BluebookCitationCandidate(
+                citation_text="89 Fed. Reg. 1001",
+                context_text="The agency notice appears at 89 Fed. Reg. 1001.",
+                corpus_key_hint="federal_register",
+                citation_type_hint="federal_register",
+                expected_valid=True,
+                notes="deterministic fallback federal register citation",
+            )
+        ],
+        "cfr": [
+            BluebookCitationCandidate(
+                citation_text="21 C.F.R. § 314.80",
+                context_text="The safety reporting rule appears at 21 C.F.R. § 314.80.",
+                corpus_key_hint="cfr",
+                citation_type_hint="cfr",
+                expected_valid=True,
+                notes="deterministic fallback regulation citation",
+            )
+        ],
+        "state_admin_rules": [
+            BluebookCitationCandidate(
+                citation_text="Minn. R. 3400.0100",
+                context_text="The administrative rule cites Minn. R. 3400.0100.",
+                state_code="MN",
+                corpus_key_hint="state_admin_rules",
+                citation_type_hint="state_admin_rule",
+                expected_valid=True,
+                notes="deterministic fallback state rule citation",
+            )
+        ],
+        "state_court_rules": [
+            BluebookCitationCandidate(
+                citation_text="Minn. R. Civ. P. 56.03",
+                context_text="The motion invokes Minn. R. Civ. P. 56.03.",
+                state_code="MN",
+                corpus_key_hint="state_court_rules",
+                citation_type_hint="state_court_rule",
+                expected_valid=True,
+                notes="deterministic fallback court rule citation",
+            )
+        ],
+        "caselaw_access_project": [
+            BluebookCitationCandidate(
+                citation_text="410 U.S. 113",
+                context_text="The brief discusses 410 U.S. 113 as controlling precedent.",
+                corpus_key_hint="caselaw_access_project",
+                citation_type_hint="case",
+                expected_valid=True,
+                notes="deterministic fallback case citation",
+            )
+        ],
+    }
+
+    candidates: List[BluebookCitationCandidate] = []
+    if "state_laws" in requested_corpora or "state_statute" in requested_corpora:
+        for state_code in requested_states:
+            citation, topic, _prefix, citation_type = state_examples.get(
+                state_code,
+                (
+                    f"{_STATE_CODE_TO_BLUEBOOK.get(state_code, state_code)} Stat. § 1.01",
+                    f"{state_code} fallback state statute",
+                    "Stat.",
+                    "state_statute",
+                ),
+            )
+            candidates.append(
+                BluebookCitationCandidate(
+                    citation_text=citation,
+                    context_text=f"The filing cites {citation} for {topic}.",
+                    state_code=state_code,
+                    corpus_key_hint="state_laws",
+                    citation_type_hint=citation_type,
+                    expected_valid=True,
+                    notes="deterministic fallback after generation parse failure",
+                )
+            )
+
+    for corpus_key in sorted(requested_corpora):
+        candidates.extend(corpus_examples.get(corpus_key, []))
+
+    if not candidates:
+        candidates = corpus_examples["us_code"] + corpus_examples["caselaw_access_project"]
+    limit = max(1, int(sample_count))
+    repeated: List[BluebookCitationCandidate] = []
+    while len(repeated) < limit:
+        repeated.extend(candidates)
+    return repeated[:limit]
 
 
 def _attempt_succeeded(attempt: BluebookCitationFuzzAttempt) -> bool:
@@ -1074,6 +1257,8 @@ async def run_bluebook_linker_fuzz_harness(
     if seed_only:
         raw_generation = ""
         candidates = list(seeded_candidates)[: max(1, int(sample_count))]
+        generation_parse_error = None
+        used_fallback_candidates = False
     else:
         active_generate = llm_generate_func or llm_router.generate_text
         raw_generation = active_generate(
@@ -1082,7 +1267,19 @@ async def run_bluebook_linker_fuzz_harness(
             model_name=model_name,
             temperature=temperature,
         )
-        candidates = parse_bluebook_fuzz_candidates(raw_generation)[: max(1, int(sample_count))]
+        try:
+            candidates = parse_bluebook_fuzz_candidates(raw_generation)[: max(1, int(sample_count))]
+            generation_parse_error = None
+            used_fallback_candidates = False
+        except ValueError as exc:
+            generation_parse_error = str(exc)
+            fallback_candidates = list(seeded_candidates) or _fallback_bluebook_fuzz_candidates(
+                sample_count=sample_count,
+                corpus_keys=corpus_keys,
+                state_codes=state_codes,
+            )
+            candidates = fallback_candidates[: max(1, int(sample_count))]
+            used_fallback_candidates = True
 
     active_resolve_document = resolve_document_func or resolve_bluebook_lookup_result_document
     active_recovery = recovery_func or recover_missing_legal_citation_source
@@ -1107,6 +1304,32 @@ async def run_bluebook_linker_fuzz_harness(
         if int(resolution.get("matched_citation_count") or 0) > 0:
             matched_attempts += 1
         unmatched_payloads = [dict(item) for item in list(resolution.get("unresolved_citations") or []) if isinstance(item, dict)]
+        if (
+            enable_recovery
+            and not unmatched_payloads
+            and int(resolution.get("matched_citation_count") or 0) <= 0
+            and int(resolution.get("citation_count") or 0) <= 0
+            and candidate.expected_valid is True
+            and str(candidate.citation_text or "").strip()
+        ):
+            unmatched_payloads = [
+                {
+                    "citation_text": str(candidate.citation_text or "").strip(),
+                    "normalized_citation": str(candidate.citation_text or "").strip(),
+                    "corpus_key": str(candidate.corpus_key_hint or "").strip(),
+                    "metadata": {
+                        "recovery_corpus_key": str(candidate.corpus_key_hint or "").strip(),
+                        "state_code": str(candidate.state_code or "").strip().upper(),
+                        "candidate_corpora": [str(candidate.corpus_key_hint or "").strip()]
+                        if str(candidate.corpus_key_hint or "").strip()
+                        else [],
+                        "recovery_reason": "expected_valid_candidate_not_extracted",
+                    },
+                }
+            ]
+            resolution["unresolved_citations"] = unmatched_payloads
+            resolution["unmatched_citation_count"] = 1
+            resolution["citation_count"] = 1
         unmatched_citations += len(unmatched_payloads)
 
         recoveries: List[Dict[str, Any]] = []
@@ -1188,6 +1411,8 @@ async def run_bluebook_linker_fuzz_harness(
         "seed_from_corpora": bool(seed_from_corpora),
         "seed_only": bool(seed_only),
         "seeded_example_count": len(seeded_examples),
+        "generation_parse_error": generation_parse_error,
+        "used_fallback_candidates": used_fallback_candidates,
         "max_acceptable_failure_rate": float(max_acceptable_failure_rate),
         "min_actionable_failures": int(min_actionable_failures),
     }

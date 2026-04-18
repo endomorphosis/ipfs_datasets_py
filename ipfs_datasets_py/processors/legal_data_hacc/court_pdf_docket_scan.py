@@ -28,7 +28,7 @@ try:
 except Exception:  # pragma: no cover - optional OCR dependency
     pytesseract = None
 
-from ..legal_data import ingest_docket_dataset
+from ..legal_data import export_docket_dataset_single_parquet, ingest_docket_dataset
 from ..legal_data.case_knowledge import build_case_knowledge_graph, summarize_case_graph
 from ..legal_data.document_structure import build_document_knowledge_graph, parse_legal_document
 from ..legal_data.docket_dataset import _extract_case_number_from_text, _extract_text_from_pdf, _normalize_case_number_text
@@ -109,7 +109,41 @@ def _utc_now_isoformat() -> str:
 
 
 def _has_ocr_support() -> bool:
-    return bool(fitz and pytesseract and Image)
+    return bool(_ocr_support_summary().get("available"))
+
+
+def _ocr_support_summary() -> Dict[str, Any]:
+    summary: Dict[str, Any] = {
+        "available": False,
+        "fitz": bool(fitz),
+        "pillow": bool(Image),
+        "pytesseract": bool(pytesseract),
+        "tesseract_command": "",
+        "tesseract_version": "",
+        "languages": [],
+    }
+    if not (fitz and Image and pytesseract):
+        return summary
+
+    configured_command = str(getattr(getattr(pytesseract, "pytesseract", None), "tesseract_cmd", "") or "tesseract").strip()
+    resolved_command = shutil.which(configured_command) or (configured_command if configured_command and Path(configured_command).exists() else "")
+    summary["tesseract_command"] = resolved_command or configured_command
+    try:
+        summary["tesseract_version"] = str(pytesseract.get_tesseract_version())
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        summary["error"] = str(exc)
+        return summary
+
+    try:
+        summary["languages"] = [str(item).strip() for item in pytesseract.get_languages(config="") if str(item).strip()]
+    except Exception as exc:  # pragma: no cover - environment-dependent
+        summary["languages_error"] = str(exc)
+
+    supports_english = True
+    if summary["languages"]:
+        supports_english = "eng" in {str(item).lower() for item in summary["languages"]}
+    summary["available"] = bool(resolved_command and summary["tesseract_version"] and supports_english)
+    return summary
 
 
 def _is_likely_scanned_pdf_text(text: str) -> bool:
@@ -464,6 +498,7 @@ def scan_hacc_pdfs_for_dockets(
     manifest_path = destination_root / "scan_manifest.json"
     scan_started_at = _utc_now_isoformat()
     skipped_pdf_count = 0
+    ocr_support = _ocr_support_summary()
 
     all_results: List[HACCCourtPDFScanResult] = []
     grouped: Dict[str, List[HACCCourtPDFScanResult]] = defaultdict(list)
@@ -493,7 +528,8 @@ def scan_hacc_pdfs_for_dockets(
             "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
             "skipped_pdf_count": skipped_pdf_count,
             "candidate_case_count": len(case_outputs) if status == "completed" else len(grouped),
-            "ocr_available": _has_ocr_support(),
+            "ocr_available": bool(ocr_support.get("available")),
+            "ocr_support": dict(ocr_support),
             "cases": case_outputs if status == "completed" else preview_cases,
             "pdf_results": [item.to_dict() for item in all_results],
         }
@@ -617,7 +653,7 @@ def scan_hacc_pdfs_for_dockets(
             include_formal_logic=include_formal_logic,
             include_router_enrichment=include_router_enrichment,
         )
-        dataset_path = dataset.write_json(datasets_root / f"{case_slug}.json")
+        parquet_export = export_docket_dataset_single_parquet(dataset, datasets_root / f"{case_slug}.parquet")
         case_outputs.append(
             {
                 "status": "completed",
@@ -625,7 +661,10 @@ def scan_hacc_pdfs_for_dockets(
                 "case_name": case_name,
                 "court": court,
                 "document_count": len(results),
-                "dataset_path": str(dataset_path),
+                "dataset_path": str(parquet_export.get("parquet_path") or ""),
+                "dataset_format": "parquet",
+                "dataset_row_count": int(parquet_export.get("row_count") or 0),
+                "dataset_section_counts": dict(parquet_export.get("section_counts") or {}),
                 "collected_pdf_root": str(case_collect_root),
                 "matched_relative_paths": [item.relative_path for item in results],
                 "scan_confidence_summary": {

@@ -118,6 +118,87 @@ async def test_run_bluebook_linker_fuzz_harness_labels_plain_list_failures_from_
 
 
 @pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_falls_back_when_generation_is_not_json(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return "I can help draft citations, but here is some prose instead."
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 1,
+            "unmatched_citation_count": 0,
+            "citations": [{"citation_text": text, "matched": True}],
+            "unresolved_citations": [],
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=2,
+        corpus_keys=["state_laws"],
+        state_codes=["MN"],
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["used_fallback_candidates"] is True
+    assert "Unable to parse JSON payload" in run.summary["generation_parse_error"]
+    assert run.raw_generation == "I can help draft citations, but here is some prose instead."
+    assert [candidate.corpus_key_hint for candidate in run.candidates] == ["state_laws", "state_laws"]
+    assert {candidate.state_code for candidate in run.candidates} == {"MN"}
+    assert run.summary["matched_attempt_count"] == 2
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_recovers_expected_valid_extraction_misses(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(
+            [
+                {
+                    "citation_text": "Okla. Stat. tit. 21 § 644",
+                    "context_text": "The filing cites Okla. Stat. tit. 21 § 644.",
+                    "state_code": "OK",
+                    "corpus_key_hint": "state_laws",
+                    "expected_valid": True,
+                }
+            ]
+        )
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 0,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 0,
+            "citations": [],
+            "unresolved_citations": [],
+        }
+
+    async def fake_recovery(**kwargs):
+        assert kwargs["citation_text"] == "Okla. Stat. tit. 21 § 644"
+        assert kwargs["corpus_key"] == "state_laws"
+        assert kwargs["state_code"] == "OK"
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "corpus_key": kwargs["corpus_key"],
+            "manifest_path": str(tmp_path / "recovery_manifest.json"),
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["unmatched_citation_count"] == 1
+    assert run.summary["recovery_count"] == 1
+    assert run.attempts[0].resolution["unresolved_citations"][0]["metadata"]["recovery_reason"] == (
+        "expected_valid_candidate_not_extracted"
+    )
+
+
+@pytest.mark.anyio
 async def test_run_bluebook_linker_fuzz_harness_records_prefer_hf_corpora(tmp_path: Path) -> None:
     def fake_generate(*args, **kwargs) -> str:
         return json.dumps(["42 U.S.C. § 1983"])
@@ -461,6 +542,107 @@ def test_collect_seeded_bluebook_fuzz_candidates_synthesizes_from_state_source_i
     assert seeds[0].citation_text == "Minn. Stat. § 15"
     assert seeds[0].state_code == "MN"
     assert seeds[0].citation_type_hint == "state_statute"
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_synthesizes_admin_rule_sections() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_admin_rules":
+                return []
+            return ["memory://or-admin-rules"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "OR",
+                    "identifier": "OR-ADMIN-cb01eb1cd186",
+                    "source_id": "urn:state-admin:OR:OR-ADMIN-cb01eb1cd186:c1354a8d203848ec",
+                    "name": "Career Education",
+                    "text": "581-022-2055 Career Education Each school district shall implement plans.",
+                    "source_url": "https://secure.sos.state.or.us/oard/viewSingleRule.action?ruleVrsnRsn=314719",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_admin_rules"],
+        state_codes=["OR"],
+        examples_per_corpus=1,
+        sample_count=1,
+    )
+
+    assert len(seeds) == 1
+    assert seeds[0].citation_text == "Or. Admin. Code § 581-022-2055"
+    assert seeds[0].state_code == "OR"
+    assert seeds[0].corpus_key_hint == "state_admin_rules"
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_skips_synthetic_court_rule_identifiers() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_court_rules":
+                return []
+            return ["memory://or-court-rules"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "OR",
+                    "identifier": "doc-2",
+                    "source_id": "urn:state:or:statute:Clatsop County Local Rule doc-2",
+                    "name": "Clatsop Rules",
+                    "text": "Clatsop County Local Rule doc-2: Clatsop Rules",
+                    "source_url": "https://www.courts.oregon.gov/courts/clatsop/go/Pages/rules.aspx",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_court_rules"],
+        state_codes=["OR"],
+        examples_per_corpus=1,
+        sample_count=1,
+    )
+
+    assert seeds == []
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_does_not_seed_admin_from_implemented_statutes() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_admin_rules":
+                return []
+            return ["memory://or-admin-implemented-statutes"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "OR",
+                    "identifier": "OR-ADMIN-cb01eb1cd186",
+                    "name": "Career Education",
+                    "text": "Statutory/Other Authority: ORS 326.051 Statutes/Other Implemented: ORS 329.275",
+                    "source_url": "https://secure.sos.state.or.us/oard/viewSingleRule.action?ruleVrsnRsn=314719",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_admin_rules"],
+        state_codes=["OR"],
+        examples_per_corpus=1,
+        sample_count=1,
+    )
+
+    assert seeds == []
 
 
 @pytest.mark.anyio
@@ -1209,6 +1391,107 @@ async def test_run_bluebook_linker_fuzz_harness_covers_state_admin_rules_scraper
     backlog = run.summary["failure_patch_backlog"]
     assert backlog["scraper_coverage"]["hosts"] == {"www.revisor.mn.gov": 1}
     assert backlog["recovery_merge"]["merge_report_paths"] == [str(tmp_path / "state-admin-rules-merge-report.json")]
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_covers_caselaw_access_project_merge(
+    tmp_path: Path,
+) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(
+            [
+                {
+                    "citation_text": "410 U.S. 113",
+                    "context_text": "The complaint cites Roe v. Wade, 410 U.S. 113.",
+                    "state_code": "",
+                    "corpus_key_hint": "caselaw_access_project",
+                    "citation_type_hint": "case",
+                    "expected_valid": True,
+                }
+            ]
+        )
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": "410 U.S. 113",
+                    "normalized_citation": "410 U.S. 113",
+                    "metadata": {
+                        "recovery_corpus_key": "caselaw_access_project",
+                        "candidate_corpora": ["caselaw_access_project"],
+                    },
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        assert kwargs["corpus_key"] == "caselaw_access_project"
+        manifest_path = tmp_path / "caselaw_access_project.json"
+        manifest_path.write_text("{}", encoding="utf-8")
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "corpus_key": kwargs["corpus_key"],
+            "manifest_path": str(manifest_path),
+            "candidate_files": [
+                {
+                    "url": "https://www.courtlistener.com/opinion/108713/roe-v-wade/",
+                    "fetch_success": True,
+                    "validation_status": "confirmed",
+                }
+            ],
+            "scraper_patch": {
+                "host": "www.courtlistener.com",
+                "target_file": (
+                    "ipfs_datasets_py/processors/legal_scrapers/"
+                    "caselaw_access_program/vector_search_integration.py"
+                ),
+                "patch_path": str(tmp_path / "caselaw_access_project.patch"),
+            },
+        }
+
+    def fake_merge(manifest_path: str):
+        assert Path(manifest_path).name == "caselaw_access_project.json"
+        return {
+            "status": "success",
+            "target_local_parquet_path": str(tmp_path / "caselaw_access_project.parquet"),
+            "merge_report_path": str(tmp_path / "caselaw-access-project-merge-report.json"),
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        merge_recovered_rows=True,
+        merge_manifest_func=fake_merge,
+        min_actionable_failures=1,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["coverage_by_corpus"]["actionable_corpora"] == ["caselaw_access_project"]
+    assert run.summary["recovery_merge"]["status_counts"] == {"success": 1}
+    assert run.summary["recovery_merge"]["target_local_parquet_paths"] == [
+        str(tmp_path / "caselaw_access_project.parquet")
+    ]
+    assert run.summary["recovery_artifact_quality"]["candidate_file_count"] == 1
+    scraper_target = run.summary["scraper_coverage"]["targets"][0]
+    assert scraper_target["target_file"].endswith("caselaw_access_program/vector_search_integration.py")
+    assert scraper_target["hosts"] == ["www.courtlistener.com"]
+    assert scraper_target["corpora"] == ["caselaw_access_project"]
+    assert scraper_target["citations"] == ["410 U.S. 113"]
+    assert scraper_target["merge_status_counts"] == {"success": 1}
+    assert scraper_target["target_local_parquet_paths"] == [str(tmp_path / "caselaw_access_project.parquet")]
+    backlog = run.summary["failure_patch_backlog"]
+    assert backlog["scraper_coverage"]["hosts"] == {"www.courtlistener.com": 1}
+    assert backlog["recovery_merge"]["merge_report_paths"] == [
+        str(tmp_path / "caselaw-access-project-merge-report.json")
+    ]
 
 
 @pytest.mark.anyio

@@ -518,6 +518,22 @@ def test_citation_extractor_extracts_expanded_state_fuzz_forms():
     assert by_state["OR"].section == "107.137"
 
 
+def test_citation_extractor_extracts_titled_state_statutes():
+    extractor = CitationExtractor()
+    citations = extractor.extract_citations(
+        "Authorities include Okla. Stat. tit. 21 § 644 and Vt. Stat. tit. 13 § 1023."
+    )
+
+    state_citations = [citation for citation in citations if citation.type == "state_statute"]
+    by_state = {citation.jurisdiction: citation for citation in state_citations}
+    assert by_state["OK"].text == "Okla. Stat. tit. 21 § 644"
+    assert by_state["OK"].section == "644"
+    assert by_state["OK"].metadata["code_name"] == "Stat. tit. 21"
+    assert by_state["VT"].text == "Vt. Stat. tit. 13 § 1023"
+    assert by_state["VT"].section == "1023"
+    assert by_state["VT"].metadata["code_name"] == "Stat. tit. 13"
+
+
 def test_citation_extractor_extracts_family_code_and_act_state_citations():
     extractor = CitationExtractor()
     citations = extractor.extract_citations(

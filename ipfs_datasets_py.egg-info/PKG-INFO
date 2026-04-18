@@ -17,6 +17,11 @@ Requires-Dist: google-api-python-client>=2.192.0
 Requires-Dist: cloudscraper>=1.2.71
 Requires-Dist: playwright>=1.40.0
 Requires-Dist: jsonschema>=4.0.0
+Requires-Dist: libipld>=3.3.2
+Requires-Dist: ipld-car>=0.0.1
+Requires-Dist: ipld-dag-pb>=0.0.1
+Requires-Dist: dag-cbor>=0.3.3
+Requires-Dist: multiformats>=0.3.0
 Requires-Dist: cfscrape>=2.1.1; python_version < "3.12"
 Requires-Dist: nltk>=3.8.1
 Requires-Dist: pdfplumber>=0.11.7
@@ -30,6 +35,8 @@ Requires-Dist: tiktoken>=0.6.0
 Requires-Dist: pysbd
 Requires-Dist: markitdown>=0.1.0
 Requires-Dist: python-docx>=1.1.2
+Requires-Dist: opencv-python<4.12.0,>=4.8.1.78
+Requires-Dist: symbolicai<2.0.0,>=1.14.0
 Requires-Dist: surya-ocr>=0.14.6; platform_system != "Windows" and python_version < "3.14"
 Provides-Extra: ipld
 Requires-Dist: libipld>=3.3.2; extra == "ipld"
@@ -45,6 +52,9 @@ Requires-Dist: scipy>=1.7.0; extra == "knowledge-graphs"
 Requires-Dist: matplotlib>=3.5.0; extra == "knowledge-graphs"
 Requires-Dist: plotly>=5.9.0; extra == "knowledge-graphs"
 Requires-Dist: rdflib>=6.0.0; extra == "knowledge-graphs"
+Provides-Extra: logic
+Requires-Dist: nltk>=3.8.1; extra == "logic"
+Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "logic"
 Provides-Extra: file-conversion
 Requires-Dist: markitdown>=0.1.0; extra == "file-conversion"
 Requires-Dist: aiohttp>=3.8.0; extra == "file-conversion"
@@ -102,6 +112,7 @@ Requires-Dist: autoscraper>=1.1.14; extra == "all"
 Requires-Dist: cdx-toolkit>=0.9.37; extra == "all"
 Requires-Dist: wayback>=0.4.5; extra == "all"
 Requires-Dist: internetarchive>=5.5.0; extra == "all"
+Requires-Dist: symbolicai<2.0.0,>=1.14.0; extra == "all"
 Dynamic: author
 Dynamic: license-file
 Dynamic: requires-python

@@ -22,6 +22,7 @@ from ...logic.TDFOL import (
     create_prohibition,
 )
 from ...logic.flogic import FLogicFrame
+from ...logic.fol import FOLConverter
 from ...logic.integration.reasoning.deontological_reasoning import (
     ConflictDetector,
     DeonticExtractor,
@@ -74,6 +75,16 @@ def _get_formal_singletons() -> Dict[str, Any]:
             dcec_wrapper = EngDCECWrapper(use_native=True)
             dcec_ready = bool(dcec_wrapper.initialize())
             try:
+                fol_converter = FOLConverter(
+                    use_cache=True,
+                    use_ipfs=False,
+                    use_ml=False,
+                    use_nlp=False,
+                    enable_monitoring=False,
+                )
+            except Exception:
+                fol_converter = None
+            try:
                 zkp_prover = _create_formal_zkp_prover()
                 backend_info = {}
                 if zkp_prover is not None:
@@ -101,6 +112,7 @@ def _get_formal_singletons() -> Dict[str, Any]:
                 "conflict_detector": conflict_detector,
                 "dcec_wrapper": dcec_wrapper,
                 "dcec_ready": dcec_ready,
+                "fol_converter": fol_converter,
                 "zkp_prover": zkp_prover,
                 "zkp_status": zkp_status,
             }
@@ -169,6 +181,7 @@ def enrich_docket_documents_with_formal_logic(
     conflict_detector = singletons.get("conflict_detector") or ConflictDetector()
     dcec_wrapper = singletons.get("dcec_wrapper") or EngDCECWrapper(use_native=True)
     dcec_ready = bool(singletons.get("dcec_ready")) if singletons else bool(dcec_wrapper.initialize())
+    fol_converter = singletons.get("fol_converter")
     zkp_prover = singletons.get("zkp_prover")
 
     analyses: Dict[str, Dict[str, Any]] = {}
@@ -176,6 +189,7 @@ def enrich_docket_documents_with_formal_logic(
     aggregate_relationships: List[Dict[str, Any]] = []
     aggregate_temporal_formulas: List[str] = []
     aggregate_document_temporal_formulas: List[str] = []
+    aggregate_fol_formulas: List[Dict[str, Any]] = []
     aggregate_dcec_formulas: List[str] = []
     aggregate_frames: Dict[str, Dict[str, Any]] = {}
     aggregate_document_frames: Dict[str, Dict[str, Any]] = {}
@@ -247,6 +261,39 @@ def enrich_docket_documents_with_formal_logic(
             title=title,
             date_filed=date_filed,
         )
+
+        fol_formulas: List[Dict[str, Any]] = []
+        if fol_converter is not None:
+            status["stage"] = "fol_convert"
+            _LAST_FORMAL_PROGRESS.update({"stage": "fol_convert", "document_id": document_id})
+            fol_started = time.monotonic()
+            _trace(f"document_id={document_id} stage=fol_convert start")
+            for sentence in _iter_candidate_sentences(
+                payload_text,
+                statements,
+                preferred_sentences=list(structured_signals.get("normative_sentences") or []),
+            ):
+                try:
+                    result = fol_converter.convert(sentence, use_cache=True)
+                except Exception as exc:
+                    fol_formulas.append(
+                        {
+                            "document_id": document_id,
+                            "source_text": sentence[:500],
+                            "backend": "fol_converter",
+                            "status": "failed",
+                            "errors": [str(exc)],
+                        }
+                    )
+                    continue
+                formula_payload = _fol_conversion_to_dict(
+                    result,
+                    document_id=document_id,
+                    source_text=sentence,
+                )
+                if formula_payload:
+                    fol_formulas.append(formula_payload)
+            _trace(f"document_id={document_id} stage=fol_convert done elapsed={time.monotonic() - fol_started:.2f}s")
 
         dcec_formulas: List[str] = list(structured_signals.get("dcec_formulas") or [])
         temporal_formula_strings.extend(list(structured_signals.get("temporal_formulas") or []))
@@ -326,26 +373,30 @@ def enrich_docket_documents_with_formal_logic(
             "propositions": propositions,
             "temporal_formulas": temporal_formula_strings,
             "document_temporal_formulas": document_temporal_formula_strings,
+            "first_order_formulas": _dedupe_fol_formula_dicts(fol_formulas),
             "dcec_formulas": _dedupe_strings(dcec_formulas),
             "summary": summary,
             "provenance": {
                 "backend": "formal_logic_pipeline",
                 "provider": "repo_native",
-                "model_name": "knowledge_graphs+deontic+tdfol+dcec+flogic",
+                "model_name": "knowledge_graphs+deontic+tdfol+fol+dcec+flogic",
                 "modules": [
                     "knowledge_graphs.extraction",
                     "logic.integration.reasoning.deontological_reasoning",
                     "logic.TDFOL",
+                    "logic.fol",
                     "logic.CEC.eng_dcec_wrapper",
                     "logic.flogic",
                 ],
                 "dcec_available": dcec_ready,
+                "fol_available": fol_converter is not None,
             },
         }
         aggregate_entities.extend(analyses[document_id]["entities"])
         aggregate_relationships.extend(analyses[document_id]["relationships"])
         aggregate_temporal_formulas.extend(temporal_formula_strings)
         aggregate_document_temporal_formulas.extend(document_temporal_formula_strings)
+        aggregate_fol_formulas.extend(fol_formulas)
         aggregate_dcec_formulas.extend(dcec_formulas)
         processed_count += 1
         status["processed"] = processed_count
@@ -373,6 +424,11 @@ def enrich_docket_documents_with_formal_logic(
         if related and document_id in analyses:
             analyses[document_id]["deontic_conflicts"] = related
 
+    deduped_fol_formulas = _dedupe_fol_formula_dicts(aggregate_fol_formulas)
+    deduped_certificates = _dedupe_dict_items(certificates, key_fields=("certificate_id", "backend", "theorem"))
+    zkp_status = dict(singletons.get("zkp_status") or {"backend": _formal_zkp_backend_name(), "available": bool(zkp_prover)})
+    zkp_certificate_count = _count_zkp_certificates(deduped_certificates)
+
     return {
         "document_analyses": analyses,
         "knowledge_graph": {
@@ -383,6 +439,10 @@ def enrich_docket_documents_with_formal_logic(
             "backend": "tdfol_constructor",
             "formulas": _dedupe_strings(aggregate_temporal_formulas),
         },
+        "first_order_logic": {
+            "backend": "fol_converter",
+            "formulas": deduped_fol_formulas,
+        },
         "deontic_cognitive_event_calculus": {
             "backend": "eng_dcec_wrapper",
             "formulas": _dedupe_strings(aggregate_dcec_formulas),
@@ -391,16 +451,20 @@ def enrich_docket_documents_with_formal_logic(
         "document_frame_logic": aggregate_document_frames,
         "proof_store": {
             "proofs": proofs,
-            "certificates": _dedupe_dict_items(certificates, key_fields=("certificate_id", "backend", "theorem")),
+            "certificates": deduped_certificates,
             "summary": {
                 "proof_count": len(proofs),
+                "proof_certificate_count": len(deduped_certificates),
+                "zkp_certificate_count": zkp_certificate_count,
+                "zkp_backend": str(zkp_status.get("backend") or _formal_zkp_backend_name()),
+                "zkp_available": bool(zkp_status.get("available")),
                 "processed_document_count": processed_count,
                 "skipped_document_count": skipped_count,
                 "conflict_count": len(conflicts),
             },
             "metadata": {
                 "backend": "formal_logic_proof_store",
-                "zkp_status": dict(singletons.get("zkp_status") or {"backend": _formal_zkp_backend_name(), "available": bool(zkp_prover)}),
+                "zkp_status": zkp_status,
             },
         },
         "deontic_conflicts": conflict_payload,
@@ -412,12 +476,42 @@ def enrich_docket_documents_with_formal_logic(
             "relationship_count": len(_dedupe_dict_items(aggregate_relationships, key_fields=("id", "source", "target", "type"))),
             "temporal_formula_count": len(_dedupe_strings(aggregate_temporal_formulas)),
             "document_temporal_formula_count": len(_dedupe_strings(aggregate_document_temporal_formulas)),
+            "first_order_formula_count": len(deduped_fol_formulas),
             "dcec_formula_count": len(_dedupe_strings(aggregate_dcec_formulas)),
             "frame_count": len(aggregate_frames),
             "document_frame_count": len(aggregate_document_frames),
             "proof_count": len(proofs),
+            "proof_certificate_count": len(deduped_certificates),
+            "zkp_certificate_count": zkp_certificate_count,
+            "zkp_backend": str(zkp_status.get("backend") or _formal_zkp_backend_name()),
+            "zkp_available": bool(zkp_status.get("available")),
             "deontic_conflict_count": len(conflicts),
             "deontic_conflict_types": dict(conflict_count_by_type),
+            "logic_systems": {
+                "deontic_temporal_first_order_logic": {
+                    "backend": "tdfol_constructor",
+                    "formula_count": len(_dedupe_strings(aggregate_temporal_formulas)),
+                },
+                "first_order_logic": {
+                    "backend": "fol_converter",
+                    "formula_count": len(deduped_fol_formulas),
+                    "available": fol_converter is not None,
+                },
+                "deontic_cognitive_event_calculus": {
+                    "backend": "eng_dcec_wrapper",
+                    "formula_count": len(_dedupe_strings(aggregate_dcec_formulas)),
+                    "available": dcec_ready,
+                },
+                "frame_logic": {
+                    "backend": "logic.flogic",
+                    "frame_count": len(aggregate_frames),
+                },
+                "zero_knowledge_proofs": {
+                    "backend": str(zkp_status.get("backend") or _formal_zkp_backend_name()),
+                    "certificate_count": zkp_certificate_count,
+                    "available": bool(zkp_status.get("available")),
+                },
+            },
         },
     }
 

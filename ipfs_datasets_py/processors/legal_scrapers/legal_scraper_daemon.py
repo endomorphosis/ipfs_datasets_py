@@ -130,6 +130,7 @@ class StateRefreshDaemonConfig:
     per_state_retry_attempts: int = 1
     strict_full_text: bool = False
     hydrate_statute_text: bool = True
+    hydrate_timeout_seconds: float = 25.0
 
 
 @dataclass
@@ -176,7 +177,11 @@ AgenticRunner = Callable[..., Awaitable[Dict[str, Any]]]
 
 
 def _load_refresh_state_laws_module() -> Any:
-    script_path = Path(__file__).resolve().parents[4] / "scripts" / "ops" / "legal_data" / "refresh_state_laws_corpus.py"
+    package_root = Path(__file__).resolve().parents[3]
+    outer_root = Path(__file__).resolve().parents[4]
+    script_path = package_root / "scripts" / "ops" / "legal_data" / "refresh_state_laws_corpus.py"
+    if not script_path.exists():
+        script_path = outer_root / "scripts" / "ops" / "legal_data" / "refresh_state_laws_corpus.py"
     spec = importlib.util.spec_from_file_location("refresh_state_laws_corpus", script_path)
     if spec is None or spec.loader is None:
         raise ImportError(f"Unable to load refresh_state_laws_corpus from {script_path}")
@@ -381,6 +386,17 @@ class LegalScraperDaemon:
         payload["_resume_context"] = self._phase_resume_context(phase_name)
         path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
 
+    def _write_phase_checkpoint(self, cycle_dir: Path, phase_name: str, payload: Dict[str, Any]) -> None:
+        checkpoint = dict(payload)
+        checkpoint.setdefault("status", "running")
+        checkpoint["phase"] = phase_name
+        checkpoint["updated_at"] = _utc_now()
+        checkpoint["_resume_context"] = self._phase_resume_context(phase_name)
+        self._phase_path(cycle_dir, phase_name).write_text(
+            json.dumps(checkpoint, indent=2, sort_keys=True, default=str),
+            encoding="utf-8",
+        )
+
     def _phase_resume_context(self, phase_name: str) -> Dict[str, Any]:
         phase_config: Dict[str, Any] = {}
         if phase_name == "bluebook":
@@ -405,7 +421,47 @@ class LegalScraperDaemon:
         cached = self._load_resumable_phase(cycle_dir, phase_name)
         if cached is not None:
             return cached
-        result = await runner()
+        started_at = _utc_now()
+        self._write_phase_checkpoint(
+            cycle_dir,
+            phase_name,
+            {"status": "running", "started_at": started_at, "heartbeat_count": 0},
+        )
+        heartbeat_seconds = max(0.0, float(os.getenv("LEGAL_SCRAPER_DAEMON_HEARTBEAT_SECONDS", "15") or 0.0))
+        stop_heartbeat = asyncio.Event()
+
+        async def _heartbeat() -> None:
+            count = 0
+            while not stop_heartbeat.is_set():
+                try:
+                    await asyncio.wait_for(stop_heartbeat.wait(), timeout=heartbeat_seconds)
+                    break
+                except asyncio.TimeoutError:
+                    count += 1
+                    self._write_phase_checkpoint(
+                        cycle_dir,
+                        phase_name,
+                        {
+                            "status": "running",
+                            "started_at": started_at,
+                            "heartbeat_count": count,
+                            "message": f"{phase_name} phase still running",
+                        },
+                    )
+
+        heartbeat_task = None
+        if heartbeat_seconds > 0:
+            heartbeat_task = asyncio.create_task(_heartbeat())
+        try:
+            result = await runner()
+        finally:
+            stop_heartbeat.set()
+            if heartbeat_task is not None:
+                heartbeat_task.cancel()
+                try:
+                    await heartbeat_task
+                except asyncio.CancelledError:
+                    pass
         self._write_phase_result(cycle_dir, phase_name, result)
         return result
 
@@ -502,11 +558,18 @@ class LegalScraperDaemon:
             dry_run=False,
             json=True,
         )
+        old_hydrate_timeout = os.environ.get("STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS")
+        os.environ["STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS"] = str(max(1.0, float(config.hydrate_timeout_seconds or 25.0)))
         try:
             result = await runner(args)
             return dict(result)
         except Exception as exc:
             return {"status": "error", "error": str(exc), "output_root": str(output_root)}
+        finally:
+            if old_hydrate_timeout is None:
+                os.environ.pop("STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS", None)
+            else:
+                os.environ["STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS"] = old_hydrate_timeout
 
     async def _run_agentic_corpora_phase(self, cycle_dir: Path) -> Dict[str, Any]:
         config = self.config.agentic_corpora
@@ -587,6 +650,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--parallel-workers", type=int, default=4)
     parser.add_argument("--per-state-timeout-seconds", type=float, default=900.0)
     parser.add_argument("--per-state-retry-attempts", type=int, default=1)
+    parser.add_argument("--no-hydrate-state-text", action="store_true")
+    parser.add_argument("--state-refresh-hydrate-timeout-seconds", type=float, default=25.0)
 
     parser.add_argument("--enable-agentic-corpora", action="store_true")
     parser.add_argument("--agentic-corpora", default="all")
@@ -633,6 +698,8 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
             parallel_workers=max(1, int(args.parallel_workers)),
             per_state_timeout_seconds=max(1.0, float(args.per_state_timeout_seconds)),
             per_state_retry_attempts=max(0, int(args.per_state_retry_attempts)),
+            hydrate_statute_text=not bool(args.no_hydrate_state_text),
+            hydrate_timeout_seconds=max(1.0, float(args.state_refresh_hydrate_timeout_seconds)),
         ),
         agentic_corpora=AgenticCorpusDaemonConfig(
             enabled=bool(args.enable_agentic_corpora),

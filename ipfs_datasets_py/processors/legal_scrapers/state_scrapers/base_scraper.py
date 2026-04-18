@@ -13,6 +13,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 from pathlib import Path
 import hashlib
+import inspect
 from io import BytesIO
 import json
 import logging
@@ -448,11 +449,18 @@ class BaseStateScraper(ABC):
             
             try:
                 self.logger.info(f"Scraping {code_name}...")
-                statutes = await self.scrape_code(code_name, code_url)
                 if max_statutes:
                     remaining = max_statutes - len(all_statutes)
                     if remaining <= 0:
                         break
+                else:
+                    remaining = None
+                scrape_code_params = inspect.signature(self.scrape_code).parameters
+                if remaining is not None and "max_statutes" in scrape_code_params:
+                    statutes = await self.scrape_code(code_name, code_url, max_statutes=remaining)
+                else:
+                    statutes = await self.scrape_code(code_name, code_url)
+                if max_statutes:
                     statutes = statutes[:remaining]
                 enriched_statutes: List[NormalizedStatute] = []
                 for statute in statutes:
@@ -857,20 +865,26 @@ class BaseStateScraper(ABC):
             self._record_fetch_event(provider="ipfs_page_cache", success=True)
             return cached_bytes
 
-        for candidate_url in self._wayback_replay_candidates(url):
-            unified_bytes = await self._fetch_page_content_with_unified_api(
-                url=candidate_url,
-                timeout_seconds=timeout_seconds,
-            )
-            if self._is_object_moved_placeholder(unified_bytes):
-                unified_bytes = b""
-            if unified_bytes:
-                await self._store_page_bytes_in_ipfs_cache(
-                    url=url,
-                    payload=unified_bytes,
-                    provider="unified_api",
+        unified_enabled = str(os.getenv("STATE_SCRAPER_UNIFIED_FETCH_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
+        # Very small hydration timeouts are usually smoke-test budgets. Avoid
+        # non-cancellable background fetch workers in that mode.
+        if timeout_seconds <= 5:
+            unified_enabled = False
+        if unified_enabled:
+            for candidate_url in self._wayback_replay_candidates(url):
+                unified_bytes = await self._fetch_page_content_with_unified_api(
+                    url=candidate_url,
+                    timeout_seconds=timeout_seconds,
                 )
-                return unified_bytes
+                if self._is_object_moved_placeholder(unified_bytes):
+                    unified_bytes = b""
+                if unified_bytes:
+                    await self._store_page_bytes_in_ipfs_cache(
+                        url=url,
+                        payload=unified_bytes,
+                        provider="unified_api",
+                    )
+                    return unified_bytes
 
         try:
             from .state_archival_fetch import ArchivalFetchClient
@@ -990,7 +1004,13 @@ class BaseStateScraper(ABC):
                 domain="legal",
                 metadata={"pipeline": "state_laws"},
             )
-            response = await asyncio.to_thread(api.fetch, request)
+            response = await asyncio.wait_for(
+                asyncio.to_thread(api.fetch, request),
+                timeout=max(1, int(timeout_seconds or 25)),
+            )
+        except asyncio.TimeoutError:
+            self._record_fetch_event(provider="unified_api", success=False, error="unified_api_fetch_timeout")
+            return b""
         except Exception as exc:
             self._record_fetch_event(provider="unified_api", success=False, error=str(exc))
             return b""
@@ -1088,7 +1108,8 @@ class BaseStateScraper(ABC):
         if not self._looks_like_shallow_stub_text(base_text):
             return
 
-        raw_bytes = await self._fetch_page_content_with_archival_fallback(source_url)
+        hydrate_timeout = max(1, int(float(os.getenv("STATE_SCRAPER_HYDRATE_TIMEOUT_SECONDS", "25") or 25)))
+        raw_bytes = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=hydrate_timeout)
         if not raw_bytes:
             return
 

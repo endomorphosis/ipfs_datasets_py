@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from reportlab.pdfgen import canvas
+import pyarrow.parquet as pq
 
 from ipfs_datasets_py.processors.legal_data_hacc import (
     analyze_pdf_for_court_case,
@@ -160,10 +161,15 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert case_payload["status"] == "completed"
     dataset_path = Path(case_payload["dataset_path"])
     assert dataset_path.exists()
-    dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
+    assert dataset_path.suffix == ".parquet"
+    assert case_payload["dataset_format"] == "parquet"
+    assert case_payload["dataset_row_count"] >= 3
+    assert case_payload["dataset_section_counts"]["documents"] == 2
+    dataset_rows = pq.read_table(dataset_path).to_pylist()
+    dataset_core = next(row for row in dataset_rows if row["section"] == "dataset_core")
+    dataset = json.loads(dataset_core["payload_json"])
     assert dataset["docket_id"] == "2:25-cv-4004"
     assert dataset["case_name"] == "Roe v. Example Holdings"
-    assert len(dataset["documents"]) == 2
     assert dataset["metadata"]["scan_root"] == str(scan_root)
     assert dataset["metadata"]["scan_started_at"].endswith("Z")
     assert dataset["metadata"]["scan_status"] == "completed"
@@ -172,17 +178,19 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert dataset["metadata"]["matched_relative_paths"] == ["case_a/complaint.pdf", "case_a/motion.pdf"]
     assert dataset["metadata"]["scan_confidence_summary"]["average_confidence"] >= 0.85
     assert dataset["metadata"]["scan_case_graph"]["summary"]["entity_count"] >= 1
-    assert dataset["documents"][0]["metadata"]["scan_detection"]["confidence"] >= 0.85
-    assert dataset["documents"][0]["metadata"]["scan_detection"]["is_likely_court_case"] is True
-    assert dataset["documents"][0]["metadata"]["scan_detection"]["text_length"] > 0
-    assert dataset["documents"][0]["metadata"]["scan_detection"]["header_match_count"] >= 1
-    assert dataset["documents"][0]["metadata"]["relative_path"] == "case_a/complaint.pdf"
-    assert dataset["documents"][0]["metadata"]["source_file"]["file_size_bytes"] > 0
-    assert dataset["documents"][0]["metadata"]["source_file"]["page_count"] >= 1
-    assert dataset["documents"][0]["metadata"]["case_detection"]["case_number"] == "2:25-cv-4004"
-    assert dataset["documents"][0]["metadata"]["document_knowledge_graph_summary"]["node_count"] >= 1
-    assert dataset["documents"][0]["metadata"]["text_extraction"]["max_ocr_pages"] == 5
-    assert dataset["documents"][0]["metadata"]["document_knowledge_graph"]["summary"]["node_count"] >= 1
+    document_rows = [json.loads(row["payload_json"]) for row in dataset_rows if row["section"] == "documents"]
+    assert len(document_rows) == 2
+    assert document_rows[0]["metadata"]["scan_detection"]["confidence"] >= 0.85
+    assert document_rows[0]["metadata"]["scan_detection"]["is_likely_court_case"] is True
+    assert document_rows[0]["metadata"]["scan_detection"]["text_length"] > 0
+    assert document_rows[0]["metadata"]["scan_detection"]["header_match_count"] >= 1
+    assert document_rows[0]["metadata"]["relative_path"] == "case_a/complaint.pdf"
+    assert document_rows[0]["metadata"]["source_file"]["file_size_bytes"] > 0
+    assert document_rows[0]["metadata"]["source_file"]["page_count"] >= 1
+    assert document_rows[0]["metadata"]["case_detection"]["case_number"] == "2:25-cv-4004"
+    assert document_rows[0]["metadata"]["document_knowledge_graph_summary"]["node_count"] >= 1
+    assert document_rows[0]["metadata"]["text_extraction"]["max_ocr_pages"] == 5
+    assert document_rows[0]["metadata"]["document_knowledge_graph"]["summary"]["node_count"] >= 1
     assert Path(case_payload["collected_pdf_root"]).exists()
     assert list((output_dir / "collected_pdfs").rglob("*.pdf"))
 

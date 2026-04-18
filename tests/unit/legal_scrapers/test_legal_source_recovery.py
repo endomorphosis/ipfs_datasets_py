@@ -902,12 +902,26 @@ def test_legal_source_recovery_citation_url_hints_cover_derived_state_builders()
         corpus_key="state_laws",
         state_code="WA",
     )
+    ok_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Okla. Stat. tit. 21 § 644",
+        normalized_citation="Okla. Stat. tit. 21 § 644",
+        corpus_key="state_laws",
+        state_code="OK",
+    )
+    vt_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Vt. Stat. tit. 13 § 1023",
+        normalized_citation="Vt. Stat. tit. 13 § 1023",
+        corpus_key="state_laws",
+        state_code="VT",
+    )
 
     assert az_results[0]["url"] == "https://www.azleg.gov/ars/13/01203.htm"
     assert me_results[0]["url"] == "https://www.mainelegislature.org/legis/statutes/17-A/title17-Asec207.html"
     assert nc_results[0]["url"] == "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-33.html"
     assert oh_results[0]["url"] == "https://codes.ohio.gov/ohio-revised-code/section-2903.13"
     assert wa_results[0]["url"] == "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.36.041"
+    assert ok_results[0]["url"] == "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf"
+    assert vt_results[0]["url"] == "https://legislature.vermont.gov/statutes/section/13/019/01023"
 
 
 def test_legal_source_recovery_citation_url_hints_cover_federal_citations():

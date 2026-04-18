@@ -36,7 +36,12 @@ class MississippiScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: int | None = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Mississippi's legislative website.
         
         Args:
@@ -46,10 +51,11 @@ class MississippiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=40)
+        limit = max(1, int(max_statutes or 40))
+        archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit)
         if archival:
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
-            return archival
+            return archival[:limit]
 
         candidate_urls = [
             code_url,
@@ -71,23 +77,26 @@ class MississippiScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Miss. Code Ann.",
-                        max_sections=150,
+                        max_sections=limit,
                         wait_for_selector="a[href*='statute'], a[href*='code'], a[href*='title'], a[href*='chapter']",
                         timeout=45000,
                     )
                     if statutes:
-                        return statutes
+                        return statutes[:limit]
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Miss. Code Ann.", max_sections=150)
+            statutes = await self._generic_scrape(code_name, candidate, "Miss. Code Ann.", max_sections=limit)
             if statutes:
-                return statutes
+                return statutes[:limit]
 
         return []
 
     async def _scrape_archived_bill_history(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
+        bounded_scrape = max_statutes <= 10
+        if bounded_scrape:
+            headers["X-Bounded-Scrape"] = "1"
         statutes: List[NormalizedStatute] = []
         seen_history_urls = set()
 
@@ -95,7 +104,12 @@ class MississippiScraper(BaseStateScraper):
             if len(statutes) >= max_statutes:
                 break
 
-            html = await self._request_text(index_url, headers=headers, timeout=60)
+            html = await self._request_text(
+                index_url,
+                headers=headers,
+                timeout=15 if max_statutes <= 10 else 60,
+                attempts=1 if max_statutes <= 10 else 3,
+            )
             if not html:
                 continue
 
@@ -134,7 +148,12 @@ class MississippiScraper(BaseStateScraper):
         history_url: str,
         headers: Dict[str, str],
     ) -> Optional[NormalizedStatute]:
-        html = await self._request_text(history_url, headers=headers, timeout=60)
+        html = await self._request_text(
+            history_url,
+            headers=headers,
+            timeout=15 if headers.get("X-Bounded-Scrape") == "1" else 60,
+            attempts=1 if headers.get("X-Bounded-Scrape") == "1" else 3,
+        )
         if not html:
             return None
 
@@ -201,8 +220,14 @@ class MississippiScraper(BaseStateScraper):
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()
 
-    async def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
-        for _ in range(3):
+    async def _request_text(
+        self,
+        url: str,
+        headers: Dict[str, str],
+        timeout: int,
+        attempts: int = 3,
+    ) -> str:
+        for _ in range(max(1, int(attempts))):
             try:
                 payload = await self._fetch_page_content_with_archival_fallback(
                     url,
