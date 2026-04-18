@@ -689,6 +689,10 @@ def _summarize_scraper_coverage(attempts: Sequence[BluebookCitationFuzzAttempt])
                     "target_file": target_file,
                     "recovery_count": 0,
                     "failure_count": 0,
+                    "merge_status_counts": {},
+                    "merge_success_count": 0,
+                    "merge_failure_count": 0,
+                    "target_local_parquet_paths": [],
                     "hosts": [],
                     "corpora": [],
                     "citations": [],
@@ -703,12 +707,24 @@ def _summarize_scraper_coverage(attempts: Sequence[BluebookCitationFuzzAttempt])
                 row["corpora"].append(corpus_key)
             if citation_text and citation_text not in row["citations"]:
                 row["citations"].append(citation_text)
+            for merge_report in attempt.merge_reports:
+                status = str(merge_report.get("status") or "unknown").strip() or "unknown"
+                row["merge_status_counts"][status] = int(row["merge_status_counts"].get(status, 0)) + 1
+                if status.lower() == "success":
+                    row["merge_success_count"] += 1
+                else:
+                    row["merge_failure_count"] += 1
+                target_path = str(merge_report.get("target_local_parquet_path") or "").strip()
+                if target_path and target_path not in row["target_local_parquet_paths"]:
+                    row["target_local_parquet_paths"].append(target_path)
 
     targets = sorted(by_target.values(), key=lambda item: (-int(item["recovery_count"]), item["target_file"]))
     for target in targets:
         target["hosts"] = sorted(target["hosts"])
         target["corpora"] = sorted(target["corpora"])
         target["citations"] = target["citations"][:10]
+        target["merge_status_counts"] = dict(sorted(target["merge_status_counts"].items()))
+        target["target_local_parquet_paths"] = target["target_local_parquet_paths"][:10]
 
     return {
         "recovery_count": recovery_count,
@@ -767,6 +783,134 @@ def _summarize_recovery_publication(attempts: Sequence[BluebookCitationFuzzAttem
     }
 
 
+def _summarize_recovery_merges(attempts: Sequence[BluebookCitationFuzzAttempt]) -> Dict[str, Any]:
+    status_counts: Counter[str] = Counter()
+    target_paths: List[str] = []
+    merge_report_paths: List[str] = []
+    error_counts: Counter[str] = Counter()
+
+    for attempt in attempts:
+        for merge_report in attempt.merge_reports:
+            status = str(merge_report.get("status") or "unknown").strip() or "unknown"
+            status_counts[status] += 1
+            target_path = str(merge_report.get("target_local_parquet_path") or "").strip()
+            if target_path and target_path not in target_paths:
+                target_paths.append(target_path)
+            report_path = str(merge_report.get("merge_report_path") or "").strip()
+            if report_path and report_path not in merge_report_paths:
+                merge_report_paths.append(report_path)
+            error = str(merge_report.get("error") or "").strip()
+            if error:
+                error_counts[error] += 1
+
+    success_count = sum(count for status, count in status_counts.items() if status.lower() == "success")
+    return {
+        "status_counts": dict(sorted(status_counts.items())),
+        "success_count": success_count,
+        "failure_count": sum(status_counts.values()) - success_count,
+        "target_local_parquet_paths": target_paths[:25],
+        "merge_report_paths": merge_report_paths[:25],
+        "error_counts": dict(sorted(error_counts.items())),
+    }
+
+
+def _load_candidate_file_metadata(candidate_file: Dict[str, Any]) -> Dict[str, Any]:
+    metadata_path = str(candidate_file.get("metadata_path") or "").strip()
+    if not metadata_path:
+        return {}
+    try:
+        path = Path(metadata_path).expanduser()
+        if not path.exists() or not path.is_file():
+            return {}
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
+
+
+def _summarize_recovery_artifact_quality(attempts: Sequence[BluebookCitationFuzzAttempt]) -> Dict[str, Any]:
+    notes_counts: Counter[str] = Counter()
+    content_type_counts: Counter[str] = Counter()
+    common_crawl_domain_errors: Counter[str] = Counter()
+    sample_unconfirmed: List[Dict[str, Any]] = []
+
+    candidate_file_count = 0
+    fetch_success_count = 0
+    fetch_failure_count = 0
+    validation_metadata_count = 0
+    citation_confirmed_count = 0
+    citation_unconfirmed_count = 0
+    no_result_marker_count = 0
+    blocked_page_count = 0
+
+    for attempt in attempts:
+        for recovery in attempt.recoveries:
+            backend_status = recovery.get("search_backend_status") if isinstance(recovery.get("search_backend_status"), dict) else {}
+            for domain, error in dict(backend_status.get("common_crawl_domain_errors") or {}).items():
+                error_text = str(error or "").strip()
+                if error_text:
+                    common_crawl_domain_errors[f"{domain}:{error_text}"] += 1
+
+            for candidate_file in list(recovery.get("candidate_files") or []):
+                if not isinstance(candidate_file, dict):
+                    continue
+                candidate_file_count += 1
+                if bool(candidate_file.get("fetch_success")):
+                    fetch_success_count += 1
+                else:
+                    fetch_failure_count += 1
+
+                for note in str(candidate_file.get("notes") or "").split(";"):
+                    cleaned_note = note.strip()
+                    if cleaned_note:
+                        notes_counts[cleaned_note] += 1
+
+                metadata = _load_candidate_file_metadata(candidate_file)
+                content_type = str(metadata.get("content_type") or candidate_file.get("content_type") or "").strip()
+                if content_type:
+                    content_type_counts[content_type] += 1
+                recipe = metadata.get("extraction_recipe") if isinstance(metadata.get("extraction_recipe"), dict) else {}
+                if bool(recipe.get("blocked_signals_detected")):
+                    blocked_page_count += 1
+                validation = metadata.get("candidate_validation") if isinstance(metadata.get("candidate_validation"), dict) else {}
+                if not validation:
+                    continue
+                validation_metadata_count += 1
+                if bool(validation.get("no_result_detected")):
+                    no_result_marker_count += 1
+                if bool(validation.get("confirmed")):
+                    citation_confirmed_count += 1
+                else:
+                    citation_unconfirmed_count += 1
+                    if len(sample_unconfirmed) < 10:
+                        sample_unconfirmed.append(
+                            {
+                                "citation_text": str(validation.get("citation_text") or recovery.get("citation_text") or attempt.candidate.citation_text or ""),
+                                "candidate_url": str(candidate_file.get("url") or ""),
+                                "metadata_path": str(candidate_file.get("metadata_path") or ""),
+                                "notes": str(candidate_file.get("notes") or ""),
+                                "matched_fragments": list(validation.get("matched_fragments") or [])[:8],
+                                "no_result_detected": bool(validation.get("no_result_detected")),
+                                "confidence": validation.get("confidence"),
+                            }
+                        )
+
+    return {
+        "candidate_file_count": candidate_file_count,
+        "fetch_success_count": fetch_success_count,
+        "fetch_failure_count": fetch_failure_count,
+        "validation_metadata_count": validation_metadata_count,
+        "citation_confirmed_count": citation_confirmed_count,
+        "citation_unconfirmed_count": citation_unconfirmed_count,
+        "no_result_marker_count": no_result_marker_count,
+        "blocked_page_count": blocked_page_count,
+        "notes_counts": dict(sorted(notes_counts.items())),
+        "content_type_counts": dict(sorted(content_type_counts.items())),
+        "common_crawl_domain_error_counts": dict(sorted(common_crawl_domain_errors.items())),
+        "sample_unconfirmed": sample_unconfirmed,
+    }
+
+
 def _collect_malformed_repairs(
     candidates: Sequence[BluebookCitationCandidate],
 ) -> List[Dict[str, Any]]:
@@ -806,6 +950,8 @@ def _build_failure_backlog(
     coverage_summary: Dict[str, Any],
     failure_patch_clusters: Sequence[Dict[str, Any]],
     scraper_coverage: Dict[str, Any],
+    recovery_merge: Dict[str, Any],
+    recovery_artifact_quality: Dict[str, Any],
     malformed_repairs: Sequence[Dict[str, Any]],
     max_acceptable_failure_rate: float,
     min_actionable_failures: int,
@@ -855,6 +1001,8 @@ def _build_failure_backlog(
         "cluster_count": len(backlog_clusters),
         "clusters": backlog_clusters,
         "scraper_coverage": dict(scraper_coverage or {}),
+        "recovery_merge": dict(recovery_merge or {}),
+        "recovery_artifact_quality": dict(recovery_artifact_quality or {}),
         "malformed_repairs": list(malformed_repairs or [])[:50],
     }
 
@@ -1013,6 +1161,8 @@ async def run_bluebook_linker_fuzz_harness(
         min_actionable_failures=min_actionable_failures,
     )
     summary["recovery_publication"] = _summarize_recovery_publication(attempts)
+    summary["recovery_merge"] = _summarize_recovery_merges(attempts)
+    summary["recovery_artifact_quality"] = _summarize_recovery_artifact_quality(attempts)
     summary["failure_patch_clusters"] = _cluster_failure_recoveries(attempts)
     summary["scraper_coverage"] = _summarize_scraper_coverage(attempts)
     summary["malformed_repairs"] = _collect_malformed_repairs(candidates)
@@ -1027,6 +1177,8 @@ async def run_bluebook_linker_fuzz_harness(
         coverage_summary=summary["coverage_by_corpus"],
         failure_patch_clusters=summary["failure_patch_clusters"],
         scraper_coverage=summary["scraper_coverage"],
+        recovery_merge=summary["recovery_merge"],
+        recovery_artifact_quality=summary["recovery_artifact_quality"],
         malformed_repairs=summary["malformed_repairs"],
         max_acceptable_failure_rate=max_acceptable_failure_rate,
         min_actionable_failures=min_actionable_failures,

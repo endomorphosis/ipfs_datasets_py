@@ -339,6 +339,7 @@ try:
         WorkspaceDatasetObject,
         WorkspaceDocument,
         export_workspace_dataset_single_parquet,
+        ingest_workspace_pdf_directory,
         inspect_workspace_dataset_single_parquet,
         load_workspace_dataset_single_parquet,
         load_workspace_dataset_single_parquet_summary,
@@ -352,6 +353,7 @@ except Exception:  # pragma: no cover - optional dependency guard
     WorkspaceDatasetObject = None
     WorkspaceDocument = None
     export_workspace_dataset_single_parquet = None
+    ingest_workspace_pdf_directory = None
     inspect_workspace_dataset_single_parquet = None
     load_workspace_dataset_single_parquet = None
     load_workspace_dataset_single_parquet_summary = None
@@ -860,6 +862,7 @@ __all__ = [
     "WorkspaceDatasetObject",
     "WorkspaceDocument",
     "export_workspace_dataset_single_parquet",
+    "ingest_workspace_pdf_directory",
     "inspect_workspace_dataset_single_parquet",
     "load_workspace_dataset_single_parquet",
     "load_workspace_dataset_single_parquet_summary",

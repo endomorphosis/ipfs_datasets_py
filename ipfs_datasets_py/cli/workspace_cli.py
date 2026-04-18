@@ -21,6 +21,7 @@ from ipfs_datasets_py.processors.legal_data import (
     load_workspace_dataset_single_parquet,
     load_workspace_dataset_single_parquet_summary,
     inspect_packaged_workspace_bundle,
+    ingest_workspace_pdf_directory,
     iter_packaged_workspace_chain,
     load_packaged_workspace_dataset,
     load_packaged_workspace_dataset_components,
@@ -123,6 +124,7 @@ def create_parser() -> argparse.ArgumentParser:
             "package-search-vector",
             "chain",
             "components",
+            "ingest-pdf-dir",
         ],
         default="summary",
         help="Read, search, export, or package workspace datasets and packaged bundles.",
@@ -143,6 +145,7 @@ def create_parser() -> argparse.ArgumentParser:
             "discord-export",
             "email-export",
             "imap-snippet-summary",
+            "pdf-directory",
         ],
         default="",
         help="For --action export or --action package, explicit source type when using --input-path. Omit it to auto-detect supported source shapes.",
@@ -164,6 +167,11 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--strict-evidence-mode", action="store_true", help="For --action export or --action package, restrict to the plain_text+ retrieval subset.")
     parser.add_argument("--vector-dimension", type=int, default=16, help="For --action export or --action package, local vector dimension.")
     parser.add_argument("--glob-pattern", default="*", help="For --action export or --action package directory imports, optional file glob.")
+    parser.add_argument("--exclude-dir", action="append", default=[], help="For --action ingest-pdf-dir, directory name to exclude; can be repeated.")
+    parser.add_argument("--max-pdf-pages", type=int, default=0, help="For --action ingest-pdf-dir, optional max pages per PDF.")
+    parser.add_argument("--max-pdf-chars", type=int, default=0, help="For --action ingest-pdf-dir, optional max extracted characters per PDF.")
+    parser.add_argument("--max-logic-documents", type=int, default=0, help="For --action ingest-pdf-dir, optional max documents for formal logic extraction.")
+    parser.add_argument("--no-formal-logic", action="store_true", help="For --action ingest-pdf-dir, skip formal logic/theorem extraction metadata.")
     parser.add_argument("--write-normalized-json", default="", help="For --action export, optional path to persist normalized dataset JSON.")
     parser.add_argument("--no-car", action="store_true", help="For --action package, disable CAR emission.")
     parser.add_argument("--piece-ids", default="", help="For --action components, comma-separated list of piece ids to load.")
@@ -191,6 +199,33 @@ def create_parser() -> argparse.ArgumentParser:
 def main(args: list[str] | None = None) -> int:
     parser = create_parser()
     parsed = parser.parse_args(args)
+
+    if parsed.action == "ingest-pdf-dir":
+        input_directory = str(parsed.input_directory or parsed.input_path or "").strip()
+        output_parquet = str(parsed.output_parquet or "").strip()
+        if not input_directory:
+            parser.error("--input-directory or --input-path is required for --action ingest-pdf-dir.")
+        if not output_parquet:
+            parser.error("--output-parquet is required for --action ingest-pdf-dir.")
+        payload = ingest_workspace_pdf_directory(
+            input_directory,
+            output_parquet,
+            workspace_id=str(parsed.workspace_id or "") or None,
+            workspace_name=str(parsed.workspace_name or "") or None,
+            source_type=str(parsed.source_type or "pdf_directory"),
+            vector_dimension=int(parsed.vector_dimension or 16),
+            include_formal_logic=not bool(parsed.no_formal_logic),
+            formal_logic_max_documents=int(parsed.max_logic_documents) if int(parsed.max_logic_documents or 0) > 0 else None,
+            max_pdf_pages=int(parsed.max_pdf_pages) if int(parsed.max_pdf_pages or 0) > 0 else None,
+            max_pdf_chars=int(parsed.max_pdf_chars) if int(parsed.max_pdf_chars or 0) > 0 else None,
+            glob_pattern=str(parsed.glob_pattern or "*.pdf"),
+            exclude_dirs=list(parsed.exclude_dir or []),
+        )
+        if parsed.json:
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            print(_render_text(payload, title="Workspace PDF Directory Ingest"), end="")
+        return 0
 
     if parsed.action in {"export", "package"}:
         export_args: list[str] = ["--output-parquet", str(parsed.output_parquet or "")] if str(parsed.output_parquet or "").strip() else []

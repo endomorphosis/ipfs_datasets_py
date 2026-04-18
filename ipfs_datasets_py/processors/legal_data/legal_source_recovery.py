@@ -1358,6 +1358,8 @@ class LegalSourceRecoveryWorkflow:
             candidate_files = self._materialize_candidate_file_artifacts(
                 manifest_dir=manifest_dir,
                 candidate_files=candidate_files,
+                citation_text=citation_text,
+                normalized_citation=normalized_citation or citation_text,
             )
         scraper_patch = self._write_scraper_patch_scaffold(
             manifest_dir=manifest_dir,
@@ -1644,6 +1646,94 @@ class LegalSourceRecoveryWorkflow:
         return cleaned[:limit]
 
     @staticmethod
+    def _citation_validation_fragments(*, citation_text: str, normalized_citation: str) -> List[str]:
+        text = f"{citation_text or ''} {normalized_citation or ''}"
+        fragments: List[str] = []
+        for value in (citation_text, normalized_citation):
+            cleaned = " ".join(str(value or "").split()).strip()
+            if cleaned and cleaned not in fragments:
+                fragments.append(cleaned)
+        section_matches = re.findall(r"(?:§|section|sec\.?)\s*([0-9A-Za-z][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)", text, flags=re.IGNORECASE)
+        for section in section_matches:
+            cleaned_section = str(section or "").strip().strip(".")
+            if cleaned_section and cleaned_section not in fragments:
+                fragments.append(cleaned_section)
+        usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*([0-9A-Za-z][\w.\-]*)", text, flags=re.IGNORECASE)
+        if usc_match:
+            for fragment in (usc_match.group(1), usc_match.group(2), f"{usc_match.group(1)} {usc_match.group(2)}"):
+                if fragment and fragment not in fragments:
+                    fragments.append(fragment)
+        return fragments[:8]
+
+    @classmethod
+    def _validate_candidate_content(
+        cls,
+        *,
+        citation_text: str,
+        normalized_citation: str,
+        url: str,
+        title: Optional[str],
+        content_type: Optional[str],
+        text: str,
+        html: str,
+    ) -> Dict[str, Any]:
+        del url, title
+        source_text = " ".join(str(value or "") for value in (text, html))
+        hay = re.sub(r"\s+", " ", source_text).lower()
+        fragments = cls._citation_validation_fragments(
+            citation_text=citation_text,
+            normalized_citation=normalized_citation,
+        )
+        matched_fragments = [
+            fragment
+            for fragment in fragments
+            if fragment and str(fragment).lower() in hay
+        ]
+        no_result_markers = (
+            "no matches",
+            "no results",
+            "not found",
+            "does not exist",
+            "invalid section",
+            "unable to locate",
+            "search returned no",
+            "there are no",
+        )
+        no_result_detected = any(marker in hay for marker in no_result_markers)
+        exact_citation_present = any(
+            str(value or "").strip() and str(value or "").strip().lower() in hay
+            for value in (citation_text, normalized_citation)
+        )
+        section_fragment_present = any(
+            fragment for fragment in matched_fragments if re.search(r"\d", fragment)
+        )
+        multi_fragment_present = len(set(matched_fragments)) >= 2
+        confirmed = bool(exact_citation_present or (section_fragment_present and multi_fragment_present and not no_result_detected))
+        confidence = 0.0
+        if exact_citation_present:
+            confidence += 0.7
+        if section_fragment_present and multi_fragment_present:
+            confidence += 0.2
+        if no_result_detected:
+            confidence -= 0.6
+        if cls._looks_like_blocked_page(source_text, content_type=content_type):
+            confidence -= 0.4
+        confidence = max(0.0, min(1.0, confidence))
+        return {
+            "citation_text": citation_text,
+            "normalized_citation": normalized_citation,
+            "checked_fragments": fragments,
+            "matched_fragments": matched_fragments,
+            "exact_citation_present": exact_citation_present,
+            "section_fragment_present": section_fragment_present,
+            "multi_fragment_present": multi_fragment_present,
+            "no_result_detected": no_result_detected,
+            "content_type": content_type,
+            "confirmed": confirmed,
+            "confidence": confidence,
+        }
+
+    @staticmethod
     def _looks_like_blocked_page(text: str, *, content_type: Optional[str] = None) -> bool:
         hay = f"{content_type or ''} {text or ''}".lower()
         blocked_markers = (
@@ -1721,6 +1811,8 @@ class LegalSourceRecoveryWorkflow:
         *,
         manifest_dir: Path,
         candidate_files: Iterable[RecoveredCandidateFile],
+        citation_text: str,
+        normalized_citation: str,
     ) -> List[RecoveredCandidateFile]:
         artifacts_dir = manifest_dir / "candidate_files"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
@@ -1769,6 +1861,15 @@ class LegalSourceRecoveryWorkflow:
                 html=document_html,
                 has_bytes=has_bytes,
             )
+            candidate_validation = self._validate_candidate_content(
+                citation_text=citation_text,
+                normalized_citation=normalized_citation,
+                url=updated.url,
+                title=updated.title,
+                content_type=content_type,
+                text=document_text,
+                html=document_html,
+            )
 
             metadata_path = artifacts_dir / f"{artifact_base}.json"
             metadata_payload = {
@@ -1784,6 +1885,7 @@ class LegalSourceRecoveryWorkflow:
                 "text_excerpt": self._safe_metadata_excerpt(document_text or document_html),
                 "extraction_provenance": dict(getattr(document, "extraction_provenance", {}) or {}),
                 "extraction_recipe": extraction_recipe,
+                "candidate_validation": candidate_validation,
             }
             metadata_path.write_text(json.dumps(metadata_payload, indent=2, sort_keys=True), encoding="utf-8")
 
@@ -1792,7 +1894,14 @@ class LegalSourceRecoveryWorkflow:
             updated.file_extension = suffix
             updated.artifact_path = str(artifact_path)
             updated.metadata_path = str(metadata_path)
-            updated.notes = "blocked_page_detected" if extraction_recipe.get("blocked_signals_detected") else None
+            notes: List[str] = []
+            if extraction_recipe.get("blocked_signals_detected"):
+                notes.append("blocked_page_detected")
+            if not candidate_validation.get("confirmed"):
+                notes.append("citation_anchor_not_confirmed")
+            if candidate_validation.get("no_result_detected"):
+                notes.append("no_result_marker_detected")
+            updated.notes = ";".join(notes) if notes else None
             materialized.append(updated)
 
         return materialized + candidate_file_list[_MAX_CANDIDATE_FETCHES:]

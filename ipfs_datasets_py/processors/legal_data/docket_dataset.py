@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 import html
 import hashlib
 import json
+import logging
 import math
 import os
 from pathlib import Path
@@ -15,6 +16,8 @@ import subprocess
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 import anyio
+
+logger = logging.getLogger(__name__)
 
 from ...logic.deontic import DeonticGraph, DeonticGraphBuilder
 from ..protocol import Entity, KnowledgeGraph, Relationship

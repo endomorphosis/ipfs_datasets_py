@@ -10,9 +10,12 @@ __all__ = [
     "COMPLAINT_GENERATOR_ROOT",
     "REPO_ROOT",
     "HACCResearchEngine",
+    "HACCCourtPDFScanResult",
+    "analyze_pdf_for_court_case",
     "call_workspace_mcp",
     "call_workspace_tool",
     "complaint_manager_interfaces",
+    "scan_hacc_pdfs_for_dockets",
     "create_workspace_service",
     "ensure_complaint_generator_on_path",
     "grounded_pipeline_main",
@@ -51,5 +54,8 @@ def __getattr__(name: str) -> Any:
         return getattr(module, name)
     if name == "HACCResearchEngine":
         module = import_module(".research_engine", __name__)
+        return getattr(module, name)
+    if name in {"HACCCourtPDFScanResult", "analyze_pdf_for_court_case", "scan_hacc_pdfs_for_dockets"}:
+        module = import_module(".court_pdf_docket_scan", __name__)
         return getattr(module, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

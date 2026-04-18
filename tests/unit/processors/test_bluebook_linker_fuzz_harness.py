@@ -356,6 +356,23 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
 
     manifest_path = tmp_path / "recovery_manifest.json"
     manifest_path.write_text("{}", encoding="utf-8")
+    candidate_metadata_path = tmp_path / "candidate_file.json"
+    candidate_metadata_path.write_text(
+        json.dumps(
+            {
+                "content_type": "text/html",
+                "extraction_recipe": {"blocked_signals_detected": False},
+                "candidate_validation": {
+                    "citation_text": "Minn. Stat. § 999.999",
+                    "confirmed": False,
+                    "confidence": 0.0,
+                    "matched_fragments": ["999.999"],
+                    "no_result_detected": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
 
     async def fake_recovery(**kwargs):
         assert kwargs["corpus_key"] == "state_laws"
@@ -369,6 +386,17 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
                 "repo_id": "justicedao/ipfs_state_laws",
                 "upload_commit": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/tree/main/source_recovery/test",
             },
+            "search_backend_status": {
+                "common_crawl_domain_errors": {"www.revisor.mn.gov": "common_crawl_domain_timeout"}
+            },
+            "candidate_files": [
+                {
+                    "url": "https://www.revisor.mn.gov/statutes/cite/999.999",
+                    "fetch_success": True,
+                    "metadata_path": str(candidate_metadata_path),
+                    "notes": "citation_anchor_not_confirmed;no_result_marker_detected",
+                }
+            ],
             "scraper_patch": {
                 "patch_path": str(tmp_path / "recovery.patch"),
                 "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
@@ -378,7 +406,11 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
 
     def fake_merge(path: str):
         assert path == str(manifest_path)
-        return {"status": "success", "target_local_parquet_path": str(tmp_path / "STATE-MN.parquet")}
+        return {
+            "status": "success",
+            "target_local_parquet_path": str(tmp_path / "STATE-MN.parquet"),
+            "merge_report_path": str(tmp_path / "canonical_merge_report.json"),
+        }
 
     run = await run_bluebook_linker_fuzz_harness(
         sample_count=1,
@@ -399,6 +431,28 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
     assert run.summary["recovery_publication"]["repo_counts"] == {"justicedao/ipfs_state_laws": 1}
     assert run.summary["recovery_publication"]["patch_path_count"] == 1
     assert run.summary["recovery_publication"]["manifest_path_count"] == 1
+    assert run.summary["recovery_merge"]["status_counts"] == {"success": 1}
+    assert run.summary["recovery_merge"]["success_count"] == 1
+    assert run.summary["recovery_merge"]["failure_count"] == 0
+    assert run.summary["recovery_merge"]["target_local_parquet_paths"] == [str(tmp_path / "STATE-MN.parquet")]
+    assert run.summary["recovery_merge"]["merge_report_paths"] == [str(tmp_path / "canonical_merge_report.json")]
+    scraper_target = run.summary["scraper_coverage"]["targets"][0]
+    assert scraper_target["target_file"].endswith("state_laws_scraper.py")
+    assert scraper_target["merge_status_counts"] == {"success": 1}
+    assert scraper_target["merge_success_count"] == 1
+    assert scraper_target["merge_failure_count"] == 0
+    assert scraper_target["target_local_parquet_paths"] == [str(tmp_path / "STATE-MN.parquet")]
+    assert run.summary["recovery_artifact_quality"]["candidate_file_count"] == 1
+    assert run.summary["recovery_artifact_quality"]["fetch_success_count"] == 1
+    assert run.summary["recovery_artifact_quality"]["citation_unconfirmed_count"] == 1
+    assert run.summary["recovery_artifact_quality"]["no_result_marker_count"] == 1
+    assert run.summary["recovery_artifact_quality"]["notes_counts"] == {
+        "citation_anchor_not_confirmed": 1,
+        "no_result_marker_detected": 1,
+    }
+    assert run.summary["recovery_artifact_quality"]["common_crawl_domain_error_counts"] == {
+        "www.revisor.mn.gov:common_crawl_domain_timeout": 1
+    }
     assert run.summary["failure_patch_clusters"][0]["patch_paths"] == [str(tmp_path / "recovery.patch")]
     assert run.attempts[0].merge_reports[0]["status"] == "success"
     assert run.output_path is not None
@@ -406,6 +460,81 @@ async def test_run_bluebook_linker_fuzz_harness_recovers_and_merges_unmatched(tm
     persisted = json.loads(Path(run.output_path).read_text(encoding="utf-8"))
     assert persisted["summary"]["failure_patch_backlog_path"]
     assert persisted["summary"]["malformed_repairs_path"]
+    assert persisted["summary"]["recovery_merge"]["success_count"] == 1
+    backlog = run.summary["failure_patch_backlog"]
+    assert backlog["recovery_merge"]["success_count"] == 1
+    assert backlog["recovery_artifact_quality"]["citation_unconfirmed_count"] == 1
+    assert backlog["recovery_merge"]["target_local_parquet_paths"] == [str(tmp_path / "STATE-MN.parquet")]
+    persisted_backlog = json.loads(Path(run.summary["failure_patch_backlog_path"]).read_text(encoding="utf-8"))
+    assert persisted_backlog["recovery_merge"]["success_count"] == 1
+    assert persisted_backlog["recovery_merge"]["merge_report_paths"] == [str(tmp_path / "canonical_merge_report.json")]
+    assert persisted_backlog["recovery_artifact_quality"]["no_result_marker_count"] == 1
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_summarizes_merge_failures(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(["Minn. Stat. § 999.999"])
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": "Minn. Stat. § 999.999",
+                    "normalized_citation": "Minn. Stat. § 999.999",
+                    "metadata": {"state_code": "MN", "recovery_corpus_key": "state_laws"},
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "manifest_path": str(tmp_path / "recovery_manifest.json"),
+            "scraper_patch": {
+                "patch_path": str(tmp_path / "recovery.patch"),
+                "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+                "host": "www.revisor.mn.gov",
+            },
+        }
+
+    def fake_merge(path: str):
+        return {
+            "status": "failed",
+            "error": "missing canonical target parquet",
+            "target_local_parquet_path": str(tmp_path / "STATE-MN.parquet"),
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        merge_manifest_func=fake_merge,
+        merge_recovered_rows=True,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["merged_recovery_count"] == 0
+    assert run.summary["recovery_merge"]["status_counts"] == {"failed": 1}
+    assert run.summary["recovery_merge"]["success_count"] == 0
+    assert run.summary["recovery_merge"]["failure_count"] == 1
+    assert run.summary["recovery_merge"]["error_counts"] == {"missing canonical target parquet": 1}
+    assert run.summary["recovery_merge"]["target_local_parquet_paths"] == [str(tmp_path / "STATE-MN.parquet")]
+    scraper_target = run.summary["scraper_coverage"]["targets"][0]
+    assert scraper_target["merge_status_counts"] == {"failed": 1}
+    assert scraper_target["merge_success_count"] == 0
+    assert scraper_target["merge_failure_count"] == 1
+    assert scraper_target["target_local_parquet_paths"] == [str(tmp_path / "STATE-MN.parquet")]
+    assert run.summary["failure_patch_backlog"]["recovery_merge"]["failure_count"] == 1
+    assert run.summary["failure_patch_backlog"]["recovery_merge"]["error_counts"] == {
+        "missing canonical target parquet": 1
+    }
 
 
 @pytest.mark.anyio

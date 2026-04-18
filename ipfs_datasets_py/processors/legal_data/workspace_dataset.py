@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 import json
+import os
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from ..protocol import Entity, KnowledgeGraph, Relationship
@@ -757,6 +758,175 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
             include_vector_index=include_vector_index,
         )
 
+    def build_from_pdf_paths(
+        self,
+        pdf_paths: Sequence[str | Path],
+        *,
+        workspace_id: Optional[str] = None,
+        workspace_name: Optional[str] = None,
+        source_type: str = "pdf_directory",
+        include_knowledge_graph: bool = True,
+        include_bm25: bool = True,
+        include_vector_index: bool = True,
+        include_formal_logic: bool = True,
+        formal_logic_max_documents: Optional[int] = None,
+        max_pdf_pages: Optional[int] = None,
+        max_pdf_chars: Optional[int] = None,
+    ) -> WorkspaceDatasetObject:
+        """Build a workspace dataset from local PDF files."""
+
+        resolved_paths = [Path(path).expanduser().resolve() for path in pdf_paths]
+        documents: List[Dict[str, Any]] = []
+        collections: List[Dict[str, Any]] = []
+        extraction_errors: List[Dict[str, Any]] = []
+
+        for index, path in enumerate(sorted(resolved_paths, key=lambda item: str(item)), start=1):
+            if not path.exists() or not path.is_file() or path.suffix.lower() != ".pdf":
+                continue
+            extraction = _extract_pdf_text(path, max_pages=max_pdf_pages)
+            text = str(extraction.get("text") or "").strip()
+            if max_pdf_chars is not None and int(max_pdf_chars) > 0:
+                text = text[: int(max_pdf_chars)]
+            if not text:
+                extraction_errors.append(
+                    {
+                        "path": str(path),
+                        "error": str(extraction.get("error") or "no_text_extracted"),
+                        "page_count": int(extraction.get("page_count") or 0),
+                    }
+                )
+                continue
+
+            collection_id = _safe_identifier(path.parent.name or "pdfs")
+            document_id = _safe_identifier(f"{path.parent.name}-{path.stem}-{index}") or f"pdf_{index}"
+            documents.append(
+                {
+                    "id": document_id,
+                    "title": path.stem.replace("_", " ").replace("-", " ").strip() or path.name,
+                    "text": text,
+                    "source_url": str(path),
+                    "document_type": "pdf",
+                    "page_count": int(extraction.get("page_count") or 0),
+                    "metadata": {
+                        "collection_id": collection_id,
+                        "document_type": "pdf",
+                        "source_path": str(path),
+                        "source_name": path.name,
+                        "source_suffix": path.suffix.lower(),
+                        "parent_directory": str(path.parent),
+                        "relative_parent": path.parent.name,
+                        "file_size_bytes": path.stat().st_size,
+                        "text_extraction": {
+                            "source": str(extraction.get("backend") or "pypdf"),
+                            "backend": str(extraction.get("backend") or "pypdf"),
+                            "page_count": int(extraction.get("page_count") or 0),
+                            "character_count": len(text),
+                            "truncated": bool(max_pdf_chars is not None and int(max_pdf_chars) > 0 and len(str(extraction.get("text") or "")) > len(text)),
+                        },
+                    },
+                }
+            )
+            if not any(str(item.get("id") or "") == collection_id for item in collections):
+                collections.append(
+                    {
+                        "id": collection_id,
+                        "title": path.parent.name.replace("_", " ").replace("-", " ") or "PDFs",
+                        "source_path": str(path.parent),
+                        "source_type": source_type,
+                        "document_type": "pdf",
+                    }
+                )
+
+        workspace = {
+            "workspace_id": workspace_id or _safe_identifier(workspace_name or source_type or "pdf_workspace"),
+            "workspace_name": workspace_name or "PDF Workspace Dataset",
+            "source_type": source_type,
+            "source_path": os.path.commonpath([str(path.parent) for path in resolved_paths]) if resolved_paths else "",
+            "collections": collections,
+            "documents": documents,
+        }
+        dataset = self.build_from_workspace(
+            workspace,
+            include_knowledge_graph=include_knowledge_graph,
+            include_bm25=include_bm25,
+            include_vector_index=include_vector_index,
+        )
+        metadata = dict(dataset.metadata or {})
+        metadata["pdf_ingest"] = {
+            "input_pdf_count": len(resolved_paths),
+            "ingested_document_count": len(documents),
+            "extraction_error_count": len(extraction_errors),
+            "extraction_errors": extraction_errors[:25],
+            "max_pdf_pages": max_pdf_pages,
+            "max_pdf_chars": max_pdf_chars,
+        }
+        if include_formal_logic and documents:
+            formal_logic = _build_workspace_formal_logic_metadata(
+                dataset,
+                max_documents=formal_logic_max_documents,
+            )
+            metadata["formal_logic"] = formal_logic
+            metadata["formal_logic_summary"] = dict(formal_logic.get("summary") or {})
+            artifact_status = dict(metadata.get("artifact_status") or {})
+            artifact_status["formal_logic"] = bool(formal_logic.get("summary"))
+            metadata["artifact_status"] = artifact_status
+            artifact_provenance = dict(metadata.get("artifact_provenance") or {})
+            artifact_provenance["formal_logic"] = {
+                "backend": "repo_native_formal_logic_pipeline",
+                "is_mock": False,
+                "max_documents": formal_logic_max_documents,
+            }
+            metadata["artifact_provenance"] = artifact_provenance
+            formal_graph = dict(formal_logic.get("knowledge_graph") or {})
+            if formal_graph:
+                dataset.knowledge_graph = _merge_workspace_knowledge_graphs(dataset.knowledge_graph, formal_graph)
+        dataset.metadata = metadata
+        return dataset
+
+    def build_from_pdf_directory(
+        self,
+        directory: str | Path,
+        *,
+        workspace_id: Optional[str] = None,
+        workspace_name: Optional[str] = None,
+        source_type: str = "pdf_directory",
+        include_knowledge_graph: bool = True,
+        include_bm25: bool = True,
+        include_vector_index: bool = True,
+        include_formal_logic: bool = True,
+        formal_logic_max_documents: Optional[int] = None,
+        max_pdf_pages: Optional[int] = None,
+        max_pdf_chars: Optional[int] = None,
+        glob_pattern: str = "*.pdf",
+        exclude_dirs: Optional[Sequence[str]] = None,
+    ) -> WorkspaceDatasetObject:
+        root = Path(directory).expanduser().resolve()
+        if not root.exists():
+            raise FileNotFoundError(f"PDF workspace directory not found: {root}")
+        if not root.is_dir():
+            raise ValueError(f"PDF workspace import path is not a directory: {root}")
+        excluded = {str(item).strip() for item in list(exclude_dirs or []) if str(item).strip()}
+        paths = [
+            path
+            for path in root.rglob(glob_pattern or "*.pdf")
+            if path.is_file()
+            and path.suffix.lower() == ".pdf"
+            and not any(part in excluded for part in path.relative_to(root).parts)
+        ]
+        return self.build_from_pdf_paths(
+            paths,
+            workspace_id=workspace_id or _safe_identifier(root.name),
+            workspace_name=workspace_name or root.name.replace("_", " ").replace("-", " "),
+            source_type=source_type,
+            include_knowledge_graph=include_knowledge_graph,
+            include_bm25=include_bm25,
+            include_vector_index=include_vector_index,
+            include_formal_logic=include_formal_logic,
+            formal_logic_max_documents=formal_logic_max_documents,
+            max_pdf_pages=max_pdf_pages,
+            max_pdf_chars=max_pdf_chars,
+        )
+
     def preview_retrieval_index(
         self,
         workspace: Dict[str, Any],
@@ -1013,6 +1183,137 @@ def _normalize_workspace_title(title: str | None) -> str:
     return str(title or "").strip().lower()
 
 
+def _extract_pdf_text(path: Path, *, max_pages: Optional[int] = None) -> Dict[str, Any]:
+    backends: List[str] = []
+    errors: List[str] = []
+    page_texts: List[str] = []
+    page_count = 0
+
+    try:
+        from pypdf import PdfReader  # type: ignore
+
+        backends.append("pypdf")
+        reader = PdfReader(str(path))
+        pages = list(reader.pages)
+        page_count = len(pages)
+        if max_pages is not None:
+            pages = pages[: max(0, int(max_pages))]
+        for page in pages:
+            try:
+                page_texts.append(str(page.extract_text() or ""))
+            except Exception as exc:
+                errors.append(f"pypdf_page_error:{exc}")
+    except Exception as exc:
+        errors.append(f"pypdf:{exc}")
+
+    if not "".join(page_texts).strip():
+        page_texts = []
+        try:
+            import pdfplumber  # type: ignore
+
+            backends.append("pdfplumber")
+            with pdfplumber.open(str(path)) as pdf:
+                pages = list(pdf.pages)
+                page_count = page_count or len(pages)
+                if max_pages is not None:
+                    pages = pages[: max(0, int(max_pages))]
+                for page in pages:
+                    try:
+                        page_texts.append(str(page.extract_text() or ""))
+                    except Exception as exc:
+                        errors.append(f"pdfplumber_page_error:{exc}")
+        except Exception as exc:
+            errors.append(f"pdfplumber:{exc}")
+
+    if not "".join(page_texts).strip():
+        page_texts = []
+        try:
+            import fitz  # type: ignore
+
+            backends.append("pymupdf")
+            document = fitz.open(str(path))
+            page_count = page_count or len(document)
+            pages = range(len(document))
+            if max_pages is not None:
+                pages = range(min(len(document), max(0, int(max_pages))))
+            for page_index in pages:
+                try:
+                    page_texts.append(str(document[page_index].get_text() or ""))
+                except Exception as exc:
+                    errors.append(f"pymupdf_page_error:{exc}")
+        except Exception as exc:
+            errors.append(f"pymupdf:{exc}")
+
+    return {
+        "text": "\n\n".join(text.strip() for text in page_texts if text and text.strip()).strip(),
+        "page_count": page_count,
+        "backend": backends[-1] if backends else "",
+        "errors": errors,
+        "error": "; ".join(errors[-3:]),
+    }
+
+
+def _merge_workspace_knowledge_graphs(primary: Dict[str, Any], secondary: Dict[str, Any]) -> Dict[str, Any]:
+    merged = dict(primary or {})
+    entity_index: Dict[str, Dict[str, Any]] = {}
+    relationship_index: Dict[str, Dict[str, Any]] = {}
+
+    for entity in list((primary or {}).get("entities") or []) + list((secondary or {}).get("entities") or []):
+        if not isinstance(entity, dict):
+            continue
+        entity_id = str(entity.get("id") or entity.get("entity_id") or "")
+        if entity_id:
+            entity_index[entity_id] = dict(entity)
+    for relationship in list((primary or {}).get("relationships") or []) + list((secondary or {}).get("relationships") or []):
+        if not isinstance(relationship, dict):
+            continue
+        relationship_id = str(relationship.get("id") or relationship.get("relationship_id") or "")
+        if not relationship_id:
+            relationship_id = ":".join(
+                [
+                    str(relationship.get("source") or ""),
+                    str(relationship.get("type") or ""),
+                    str(relationship.get("target") or ""),
+                ]
+            )
+        relationship_index[relationship_id] = dict(relationship)
+    merged["entities"] = list(entity_index.values())
+    merged["relationships"] = list(relationship_index.values())
+    return merged
+
+
+def _build_workspace_formal_logic_metadata(
+    dataset: WorkspaceDatasetObject,
+    *,
+    max_documents: Optional[int] = None,
+) -> Dict[str, Any]:
+    try:
+        from .formal_docket_enrichment import enrich_docket_documents_with_formal_logic
+
+        return enrich_docket_documents_with_formal_logic(
+            list(dataset.documents or []),
+            docket_id=str(dataset.workspace_id or dataset.dataset_id or "workspace"),
+            case_name=str(dataset.workspace_name or dataset.workspace_id or "Workspace"),
+            court="workspace",
+            max_documents=max_documents,
+            max_chars=5000,
+        )
+    except Exception as exc:
+        return {
+            "summary": {
+                "processed_document_count": 0,
+                "skipped_document_count": len(list(dataset.documents or [])),
+                "deontic_statement_count": 0,
+                "temporal_formula_count": 0,
+                "dcec_formula_count": 0,
+                "frame_count": 0,
+                "proof_count": 0,
+            },
+            "error": str(exc),
+            "source": "workspace_pdf_formal_logic_metadata",
+        }
+
+
 def _workspace_search_result_document_id(result: Dict[str, Any]) -> str:
     return str(result.get("document_id") or result.get("id") or "")
 
@@ -1187,6 +1488,8 @@ def search_workspace_dataset_vector(
 
 def summarize_workspace_dataset(dataset: WorkspaceDatasetObject | Dict[str, Any]) -> Dict[str, Any]:
     dataset_payload = dataset.to_dict() if isinstance(dataset, WorkspaceDatasetObject) else dict(dataset)
+    metadata = dict(dataset_payload.get("metadata") or {})
+    formal_summary = dict(metadata.get("formal_logic_summary") or (metadata.get("formal_logic") or {}).get("summary") or {})
     return {
         "dataset_id": str(dataset_payload.get("dataset_id") or ""),
         "workspace_id": str(dataset_payload.get("workspace_id") or ""),
@@ -1198,7 +1501,13 @@ def summarize_workspace_dataset(dataset: WorkspaceDatasetObject | Dict[str, Any]
         "knowledge_graph_relationship_count": len(list((dataset_payload.get("knowledge_graph") or {}).get("relationships") or [])),
         "bm25_document_count": int((dataset_payload.get("bm25_index") or {}).get("document_count") or 0),
         "vector_document_count": int((dataset_payload.get("vector_index") or {}).get("document_count") or 0),
-        "metadata": dict(dataset_payload.get("metadata") or {}),
+        "formal_logic_processed_document_count": int(formal_summary.get("processed_document_count") or 0),
+        "deontic_statement_count": int(formal_summary.get("deontic_statement_count") or 0),
+        "temporal_formula_count": int(formal_summary.get("temporal_formula_count") or 0),
+        "dcec_formula_count": int(formal_summary.get("dcec_formula_count") or 0),
+        "frame_logic_count": int(formal_summary.get("frame_count") or 0),
+        "proof_count": int(formal_summary.get("proof_count") or 0),
+        "metadata": metadata,
     }
 
 
@@ -1331,6 +1640,45 @@ def render_workspace_dataset_single_parquet_report(
         ]
         return "\n".join(markdown_lines) + "\n"
     raise ValueError(f"Unsupported workspace dataset report format: {report_format}")
+
+
+def ingest_workspace_pdf_directory(
+    directory: str | Path,
+    output_parquet: str | Path,
+    *,
+    workspace_id: Optional[str] = None,
+    workspace_name: Optional[str] = None,
+    source_type: str = "pdf_directory",
+    vector_dimension: int = 16,
+    include_formal_logic: bool = True,
+    formal_logic_max_documents: Optional[int] = None,
+    max_pdf_pages: Optional[int] = None,
+    max_pdf_chars: Optional[int] = None,
+    glob_pattern: str = "*.pdf",
+    exclude_dirs: Optional[Sequence[str]] = None,
+) -> Dict[str, Any]:
+    builder = WorkspaceDatasetBuilder(vector_dimension=int(vector_dimension or 16))
+    dataset = builder.build_from_pdf_directory(
+        directory,
+        workspace_id=workspace_id,
+        workspace_name=workspace_name,
+        source_type=source_type,
+        include_formal_logic=include_formal_logic,
+        formal_logic_max_documents=formal_logic_max_documents,
+        max_pdf_pages=max_pdf_pages,
+        max_pdf_chars=max_pdf_chars,
+        glob_pattern=glob_pattern,
+        exclude_dirs=exclude_dirs,
+    )
+    export_result = export_workspace_dataset_single_parquet(dataset, output_parquet)
+    return {
+        **dict(export_result),
+        "summary": summarize_workspace_dataset(dataset),
+        "dataset_id": dataset.dataset_id,
+        "workspace_id": dataset.workspace_id,
+        "workspace_name": dataset.workspace_name,
+        "source": "workspace_pdf_directory_ingest",
+    }
 
 
 def export_workspace_dataset_single_parquet(
