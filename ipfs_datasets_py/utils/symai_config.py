@@ -38,6 +38,24 @@ def _default_symai_config() -> Dict[str, Any]:
     }
 
 
+def _symai_prefix_path() -> Path:
+    configured_prefix = os.environ.get("IPFS_DATASETS_PY_SYMAI_PREFIX", "").strip()
+    if configured_prefix:
+        return Path(configured_prefix).expanduser()
+
+    env_prefix = Path(sys.prefix)
+    try:
+        env_prefix.mkdir(parents=True, exist_ok=True)
+        test_dir = env_prefix / ".symai"
+        test_dir.mkdir(parents=True, exist_ok=True)
+        test_file = test_dir / ".write-test"
+        test_file.write_text("", encoding="utf-8")
+        test_file.unlink(missing_ok=True)
+        return env_prefix
+    except Exception:
+        return Path.home() / ".local" / "share" / "ipfs_datasets_py" / "symai"
+
+
 def ensure_symai_config(
     *,
     neurosymbolic_model: str,
@@ -58,7 +76,8 @@ def ensure_symai_config(
     if not neurosymbolic_model:
         return None
 
-    config_dir = Path(sys.prefix) / ".symai"
+    prefix_path = _symai_prefix_path()
+    config_dir = prefix_path / ".symai"
     config_path = config_dir / "symai.config.json"
 
     try:
@@ -199,9 +218,28 @@ def ensure_symai_config_for_import(*, force: bool = False) -> Optional[Path]:
         or os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_API_KEY")
         or "ipfs"
     )
-    return ensure_symai_config(
+    config_path = ensure_symai_config(
         neurosymbolic_model=model,
         neurosymbolic_api_key=api_key,
         force=force,
         apply_engine_router=True,
     )
+    if config_path is None:
+        return None
+
+    # SymbolicAI 1.14 creates `${sys.prefix}/.symai` unconditionally during
+    # import. System Python often has sys.prefix=/usr, which is not writable for
+    # normal users, so import it once with a managed writable prefix. After the
+    # module is loaded its config manager has concrete paths and sys.prefix can
+    # safely be restored for the rest of the process.
+    if "symai" not in sys.modules:
+        original_prefix = sys.prefix
+        try:
+            sys.prefix = str(config_path.parent.parent)
+            __import__("symai")
+        except Exception:
+            sys.modules.pop("symai", None)
+        finally:
+            sys.prefix = original_prefix
+
+    return config_path

@@ -34,9 +34,9 @@ def _ipfs_kit_dependency() -> str:
     )
     if os.path.isdir(local_path) and any(os.path.exists(marker) for marker in local_markers):
         # `file:` URL must be absolute for reliability.
-        return f"ipfs_kit_py @ file://{os.path.abspath(local_path)}"
+        return f"ipfs_kit_py[api,ipld,ai_ml] @ file://{os.path.abspath(local_path)}"
 
-    return "ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main"
+    return "ipfs_kit_py[api,ipld,ai_ml] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main"
 
 
 ipfs_kit_dependency = _ipfs_kit_dependency()

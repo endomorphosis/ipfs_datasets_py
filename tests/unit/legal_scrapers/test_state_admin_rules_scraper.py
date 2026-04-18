@@ -8650,6 +8650,50 @@ async def test_discover_connecticut_rule_document_urls_follows_browse_hierarchy(
 
 
 @pytest.mark.anyio
+async def test_discover_connecticut_rule_document_urls_uses_embedded_json_data() -> None:
+    root_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA"
+    title_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1/"
+    subtitle_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1h/"
+    section_url = "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_1Subtitle_1-1hSection_1-1h-4/"
+
+    class _FakeUnifiedWebScraper:
+        async def scrape(self, url: str):
+            if url.rstrip("/") == root_url.rstrip("/"):
+                html = (
+                    '<script>var jsonData = {"Titles": ['
+                    '{"TitleNumber": "1", "TitleText": "Title 1 - Provisions of General Application"}'
+                    "]};</script>"
+                )
+                return SimpleNamespace(html=html, text="Select a Title to Browse its Contents", links=[])
+            if url.rstrip("/") == title_url.rstrip("/"):
+                html = (
+                    '<script>var jsonData = {"TitleNumber": "1", "SubjectMatters": ['
+                    '{"Agency": "Department of Motor Vehicles", "SubjectMatters": ['
+                    '{"TitleNumber": "1", "SubjectMatterDisplayTitle": "1-1h", '
+                    '"SubjectMatterTitle": "Identity Card Issued To Persons Who Do Not Possess Motor Vehicle Operator Licenses"}'
+                    "]}]};</script>"
+                )
+                return SimpleNamespace(html=html, text="Select a Subtitle to Browse its Contents", links=[])
+            if url.rstrip("/") == subtitle_url.rstrip("/"):
+                html = (
+                    '<script>var jsonData = {"TitleNumber": "1", "SubjectMatterDisplayTitle": "1-1h", '
+                    '"Html": "<a class=\'sm-nav-sec-link\' href=\'http://eregulations.ct.gov/eRegsPortal/Browse/RCSA/'
+                    "Title_1Subtitle_1-1hSection_1-1h-4/'>1-1h-4 Requirements for issuance</a>\"};</script>"
+                )
+                return SimpleNamespace(html=html, text="Select a Section to Browse its Contents", links=[])
+            raise AssertionError(f"unexpected scrape URL: {url}")
+
+    discovered = await scraper_module._discover_connecticut_rule_document_urls(
+        seed_urls=[root_url],
+        live_scraper=_FakeUnifiedWebScraper(),
+        allowed_hosts={"eregulations.ct.gov"},
+        limit=1,
+    )
+
+    assert discovered == [section_url]
+
+
+@pytest.mark.anyio
 async def test_discover_colorado_rule_document_urls_extracts_pdf_targets_from_doclist(monkeypatch: pytest.MonkeyPatch) -> None:
     doc_list_url = "https://www.coloradosos.gov/CCR/NumericalCCRDocList.do?deptID=0&agencyID=58"
     display_rule_url = (

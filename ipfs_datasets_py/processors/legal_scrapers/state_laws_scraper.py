@@ -264,6 +264,24 @@ async def scrape_state_laws(
         # Try to use state-specific scrapers if enabled
         if use_state_specific_scrapers:
             try:
+                prior_bounded_env = {
+                    "STATE_SCRAPER_CODE_TIMEOUT_SECONDS": os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS"),
+                    "STATE_SCRAPER_FETCH_TIMEOUT_SECONDS": os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"),
+                    "STATE_SCRAPER_MAX_STATUTES": os.environ.get("STATE_SCRAPER_MAX_STATUTES"),
+                    "STATE_SCRAPER_BOUNDED_DIRECT_ONLY": os.environ.get("STATE_SCRAPER_BOUNDED_DIRECT_ONLY"),
+                    "STATE_SCRAPER_GLOBAL_BOUNDED_ENV": os.environ.get("STATE_SCRAPER_GLOBAL_BOUNDED_ENV"),
+                }
+                bounded_timeout = max(0.0, float(per_state_timeout_seconds or 0.0))
+                use_global_bounded_env = bool(max_statutes and int(max_statutes) > 0 and bounded_timeout > 0)
+                if use_global_bounded_env:
+                    code_timeout = max(0.1, min(bounded_timeout * 0.8, 45.0))
+                    fetch_timeout = max(0.1, min(code_timeout / 3.0, 12.0))
+                    os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
+                    os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
+                    os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))
+                    os.environ["STATE_SCRAPER_BOUNDED_DIRECT_ONLY"] = "1"
+                    os.environ["STATE_SCRAPER_GLOBAL_BOUNDED_ENV"] = "1"
+
                 async def _run_state(state_code: str) -> Dict[str, Any]:
                     return await _scrape_state_with_retries(
                         state_code=state_code,
@@ -292,6 +310,13 @@ async def scrape_state_laws(
                             return await _run_state(state_code)
 
                     state_results = await asyncio.gather(*[_guarded_run(code) for code in selected_states])
+
+                if use_global_bounded_env:
+                    for key, value in prior_bounded_env.items():
+                        if value is None:
+                            os.environ.pop(key, None)
+                        else:
+                            os.environ[key] = value
 
                 result_by_state = {str(item.get("state_code") or ""): item for item in state_results}
                 for state_code in selected_states:
@@ -953,16 +978,24 @@ async def _run_sync_scrape_on_daemon_thread(
             result_future.set_exception(exc)
 
     def _worker() -> None:
+        global_bounded_env = str(os.environ.get("STATE_SCRAPER_GLOBAL_BOUNDED_ENV") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
         prior_code_timeout = os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS")
         prior_fetch_timeout = os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS")
         prior_max_statutes = os.environ.get("STATE_SCRAPER_MAX_STATUTES")
+        prior_direct_only = os.environ.get("STATE_SCRAPER_BOUNDED_DIRECT_ONLY")
         bounded_timeout = max(0.0, float(timeout_seconds or 0.0))
-        if max_statutes and int(max_statutes) > 0 and bounded_timeout > 0:
+        if not global_bounded_env and max_statutes and int(max_statutes) > 0 and bounded_timeout > 0:
             code_timeout = max(0.1, min(bounded_timeout * 0.8, 45.0))
             fetch_timeout = max(0.1, min(code_timeout / 3.0, 12.0))
             os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
             os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
             os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))
+            os.environ["STATE_SCRAPER_BOUNDED_DIRECT_ONLY"] = "1"
         try:
             result = _scrape_state_once_sync(
                 state_code=state_code,
@@ -981,18 +1014,23 @@ async def _run_sync_scrape_on_daemon_thread(
                 pass  # event loop already closed (e.g. outer timeout fired)
             return
         finally:
-            if prior_code_timeout is None:
-                os.environ.pop("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", None)
-            else:
-                os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = prior_code_timeout
-            if prior_fetch_timeout is None:
-                os.environ.pop("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", None)
-            else:
-                os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = prior_fetch_timeout
-            if prior_max_statutes is None:
-                os.environ.pop("STATE_SCRAPER_MAX_STATUTES", None)
-            else:
-                os.environ["STATE_SCRAPER_MAX_STATUTES"] = prior_max_statutes
+            if not global_bounded_env:
+                if prior_code_timeout is None:
+                    os.environ.pop("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", None)
+                else:
+                    os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = prior_code_timeout
+                if prior_fetch_timeout is None:
+                    os.environ.pop("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", None)
+                else:
+                    os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = prior_fetch_timeout
+                if prior_max_statutes is None:
+                    os.environ.pop("STATE_SCRAPER_MAX_STATUTES", None)
+                else:
+                    os.environ["STATE_SCRAPER_MAX_STATUTES"] = prior_max_statutes
+                if prior_direct_only is None:
+                    os.environ.pop("STATE_SCRAPER_BOUNDED_DIRECT_ONLY", None)
+                else:
+                    os.environ["STATE_SCRAPER_BOUNDED_DIRECT_ONLY"] = prior_direct_only
 
         try:
             loop.call_soon_threadsafe(_publish_result, result)

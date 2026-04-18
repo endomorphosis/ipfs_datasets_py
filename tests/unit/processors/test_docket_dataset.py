@@ -4124,12 +4124,16 @@ def test_docket_dataset_can_export_single_parquet_bundle(tmp_path) -> None:
     )
     table = pq.read_table(tmp_path / "single_bundle.parquet")
     rows = table.to_pylist()
+    dataset_core = next(row for row in rows if row["section"] == "dataset_core")
+    dataset_core_payload = json.loads(dataset_core["payload_json"])
 
     assert export_result["row_count"] == len(rows)
     assert any(row["section"] == "documents" for row in rows)
     assert any(row["section"] == "bm25_documents" for row in rows)
     assert any(row["section"] == "vector_items" for row in rows)
     assert any(row["section"] == "knowledge_graph_entities" for row in rows)
+    assert dataset_core_payload["document_count"] == 1
+    assert dataset_core_payload["source_type"] == "docket"
 
 
 def test_docket_dataset_can_export_single_pdf_bundle(tmp_path) -> None:

@@ -17,6 +17,10 @@ Requires-Dist: google-api-python-client>=2.192.0
 Requires-Dist: cloudscraper>=1.2.71
 Requires-Dist: playwright>=1.40.0
 Requires-Dist: jsonschema>=4.0.0
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn>=0.23.0
+Requires-Dist: python-multipart>=0.0.6
+Requires-Dist: jinja2>=3.1.0
 Requires-Dist: libipld>=3.3.2
 Requires-Dist: ipld-car>=0.0.1
 Requires-Dist: ipld-dag-pb>=0.0.1
@@ -100,6 +104,10 @@ Requires-Dist: rdflib>=6.0.0; extra == "all"
 Requires-Dist: aiohttp>=3.8.0; extra == "all"
 Requires-Dist: python-docx>=1.1.2; extra == "all"
 Requires-Dist: jsonschema>=4.0.0; extra == "all"
+Requires-Dist: fastapi>=0.100.0; extra == "all"
+Requires-Dist: uvicorn>=0.23.0; extra == "all"
+Requires-Dist: python-multipart>=0.0.6; extra == "all"
+Requires-Dist: jinja2>=3.1.0; extra == "all"
 Requires-Dist: sentence-transformers<6.0.0,>=3.0.0; extra == "all"
 Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "all"
 Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "all"

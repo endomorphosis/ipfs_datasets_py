@@ -3328,6 +3328,12 @@ def export_docket_dataset_single_parquet(
                     "docket_id": str(dataset_payload.get("docket_id") or ""),
                     "case_name": str(dataset_payload.get("case_name") or ""),
                     "court": str(dataset_payload.get("court") or ""),
+                    "source_type": str(
+                        dataset_payload.get("source_type")
+                        or (dataset_payload.get("metadata") or {}).get("source_type")
+                        or ""
+                    ),
+                    "document_count": len(documents),
                     "metadata": dict(dataset_payload.get("metadata") or {}),
                 }
             ],

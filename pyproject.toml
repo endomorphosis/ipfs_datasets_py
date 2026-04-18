@@ -20,6 +20,7 @@ requires-python = ">=3.12"
 dependencies = [
     "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
     "numpy>=2.0.0; python_version >= '3.14'",
+    "ipfs_kit_py[api,ipld,ai_ml] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main",
     "torch>=2.7.0,<2.11; platform_system == 'Linux' and platform_machine == 'aarch64'",
     "requests>=2.25.0,<3.0.0",
     "beautifulsoup4>=4.12.0,<5.0.0",
@@ -28,6 +29,10 @@ dependencies = [
     "cloudscraper>=1.2.71",
     "playwright>=1.40.0",
     "jsonschema>=4.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "python-multipart>=0.0.6",
+    "jinja2>=3.1.0",
     # IPLD components used by logic storage, GraphRAG, CAR export/import, and proof caching.
     "libipld>=3.3.2",
     "ipld-car>=0.0.1",
@@ -95,6 +100,12 @@ vectors = [
 groth16 = [
     "jsonschema>=4.0.0",
 ]
+api = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "python-multipart>=0.0.6",
+    "jinja2>=3.1.0",
+]
 scraping = [
     "beautifulsoup4>=4.12.0,<5.0.0",
     "selenium>=4.15.0,<4.16.0",
@@ -127,6 +138,10 @@ all = [
     "aiohttp>=3.8.0",
     "python-docx>=1.1.2",
     "jsonschema>=4.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "python-multipart>=0.0.6",
+    "jinja2>=3.1.0",
     "sentence-transformers>=3.0.0,<6.0.0",
     "faiss-cpu>=1.7.0; platform_system == 'Windows'",
     "faiss-cpu>=1.8.0; platform_system != 'Windows'",

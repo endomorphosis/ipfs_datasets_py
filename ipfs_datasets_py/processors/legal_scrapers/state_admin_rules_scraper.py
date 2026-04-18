@@ -10497,6 +10497,81 @@ def _connecticut_bootstrap_priority(url: str) -> int:
     return score
 
 
+def _connecticut_json_data_from_html(html: str) -> Dict[str, Any]:
+    marker = "var jsonData"
+    value = str(html or "")
+    marker_index = value.find(marker)
+    if marker_index < 0:
+        return {}
+    object_index = value.find("{", marker_index)
+    if object_index < 0:
+        return {}
+    try:
+        parsed, _ = json.JSONDecoder().raw_decode(value[object_index:])
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _candidate_connecticut_eregulations_urls_from_html(
+    *,
+    html: str,
+    page_url: str,
+    limit: int,
+) -> List[str]:
+    data = _connecticut_json_data_from_html(html)
+    if not data:
+        return []
+
+    candidates: List[str] = []
+    seen: set[str] = set()
+
+    def _append(url: str) -> None:
+        if len(candidates) >= max(1, int(limit)):
+            return
+        absolute_url = _normalize_connecticut_eregulations_url(urljoin(page_url, str(url or "").strip()))
+        key = _url_key(absolute_url)
+        if not key or key in seen:
+            return
+        seen.add(key)
+        candidates.append(absolute_url)
+
+    for title in data.get("Titles") or []:
+        if not isinstance(title, dict):
+            continue
+        title_number = str(title.get("TitleNumber") or "").strip()
+        if title_number:
+            _append(f"https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_{quote(title_number, safe='')}/")
+
+    def _walk_subject_matter(value: Any) -> None:
+        if isinstance(value, dict):
+            title_number = str(value.get("TitleNumber") or data.get("TitleNumber") or "").strip()
+            display_title = str(value.get("SubjectMatterDisplayTitle") or "").strip()
+            if title_number and display_title:
+                _append(
+                    "https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/"
+                    f"Title_{quote(title_number, safe='')}Subtitle_{quote(display_title, safe='')}/"
+                )
+            html_fragment = str(value.get("Html") or "")
+            for match in re.finditer(r"href=['\"](?P<url>[^'\"]+)['\"]", html_fragment, re.IGNORECASE):
+                section_url = match.group("url")
+                if _CT_EREGS_SECTION_PATH_RE.fullmatch(urlparse(section_url).path or ""):
+                    _append(section_url)
+                else:
+                    absolute_url = urljoin(page_url, section_url)
+                    if _CT_EREGS_SECTION_PATH_RE.fullmatch(urlparse(absolute_url).path or ""):
+                        _append(absolute_url)
+            for child in value.get("SubjectMatters") or []:
+                _walk_subject_matter(child)
+        elif isinstance(value, list):
+            for child in value:
+                _walk_subject_matter(child)
+
+    _walk_subject_matter(data.get("SubjectMatters") or [])
+    _walk_subject_matter(data)
+    return candidates
+
+
 def _colorado_pdf_url(base_url: str, rule_version_id: str, file_name: str) -> str:
     parsed = urlparse(base_url)
     host = parsed.netloc or "www.coloradosos.gov"
@@ -10578,6 +10653,13 @@ async def _discover_connecticut_rule_document_urls(
         )
         html = str(getattr(scraped, "html", "") or "")
         if html:
+            candidate_links.extend(
+                _candidate_connecticut_eregulations_urls_from_html(
+                    html=html,
+                    page_url=normalized_page_url,
+                    limit=max(8, int(limit_n) * 3),
+                )
+            )
             candidate_links.extend(
                 _candidate_links_from_html(
                     html,

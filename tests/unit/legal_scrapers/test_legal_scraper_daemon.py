@@ -9,7 +9,9 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_scraper_daemon import (
     LegalScraperDaemon,
     LegalScraperDaemonConfig,
     StateRefreshDaemonConfig,
+    _agentic_subprocess_status,
     _decode_json_from_mixed_output,
+    _main_async,
     _normalize_corpora,
     _normalize_states,
     config_from_args,
@@ -23,6 +25,21 @@ def test_decode_json_from_mixed_output_skips_import_logs():
     )
 
     assert payload == {"status": "success", "rows": 3}
+
+
+def test_agentic_subprocess_status_treats_latest_cycle_error_as_error():
+    status = _agentic_subprocess_status(
+        returncode=0,
+        summary={
+            "status": "success",
+            "latest_cycle": {
+                "status": "error",
+                "diagnostics": {"coverage": {"coverage_gap_states": ["CT"]}},
+            },
+        },
+    )
+
+    assert status == "error"
 
 
 @pytest.mark.asyncio
@@ -309,6 +326,8 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
             "--enable-agentic-corpora",
             "--agentic-corpora",
             "laws,admin",
+            "--agentic-archive-warmup-urls",
+            "6",
             "--agentic-per-state-timeout-seconds",
             "11",
             "--agentic-scrape-timeout-seconds",
@@ -359,6 +378,7 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
     assert config.cache.mirror_to_ipfs is True
     assert config.agentic_corpora.enabled is True
     assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules"]
+    assert config.agentic_corpora.archive_warmup_urls == 6
     assert config.agentic_corpora.per_state_timeout_seconds == 11.0
     assert config.agentic_corpora.scrape_timeout_seconds == 22.0
     assert config.agentic_corpora.admin_agentic_max_candidates_per_state == 33
@@ -431,6 +451,7 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert config.agentic_corpora.enabled is True
     assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules", "state_court_rules"]
     assert config.agentic_corpora.max_statutes == 0
+    assert config.agentic_corpora.archive_warmup_urls == 0
     assert config.agentic_corpora.per_state_timeout_seconds == 86400.0
     assert config.agentic_corpora.admin_parallel_assist_enabled is True
 
@@ -452,6 +473,58 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert target_manifest["corpora"]["state_laws"]["state_shards"][0]["state"] == "AL"
     assert target_manifest["corpora"]["state_laws"]["state_shards"][-1]["state"] == "DC"
     assert target_manifest["corpora"]["state_laws"]["state_shards"][-1]["hf_parquet_path"].endswith("STATE-DC.parquet")
+
+
+def test_legal_scraper_daemon_writes_preflight_artifacts(tmp_path):
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            include_dc=True,
+            states=["all"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(corpora=["state_laws", "state_admin_rules", "state_court_rules"]),
+            state_refresh=StateRefreshDaemonConfig(scrape=True, merge_hf_existing=True, max_statutes=0),
+            agentic_corpora=AgenticCorpusDaemonConfig(
+                enabled=True,
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"],
+                max_statutes=0,
+            ),
+        )
+    )
+
+    payload = daemon.write_preflight_artifacts()
+
+    preflight_path = tmp_path / "preflight_plan.json"
+    target_manifest_path = tmp_path / "target_manifest.json"
+    assert payload["status"] == "ready"
+    assert preflight_path.exists()
+    assert target_manifest_path.exists()
+    assert json.loads(preflight_path.read_text(encoding="utf-8"))["target_manifest"]["state_shard_count"] == 153
+    assert json.loads(target_manifest_path.read_text(encoding="utf-8"))["state_shard_count"] == 153
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_preflight_only_main_writes_without_cycles(tmp_path, capsys):
+    args = build_arg_parser().parse_args(
+        [
+            "--full-corpus",
+            "--preflight-only",
+            "--output-dir",
+            str(tmp_path),
+            "--json",
+        ]
+    )
+
+    exit_code = await _main_async(args)
+    captured = capsys.readouterr()
+    payload = _decode_json_from_mixed_output(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ready"
+    assert payload["target_manifest"]["state_shard_count"] == 153
+    assert (tmp_path / "preflight_plan.json").exists()
+    assert (tmp_path / "target_manifest.json").exists()
+    assert not (tmp_path / "latest_cycle.json").exists()
 
 
 @pytest.mark.asyncio

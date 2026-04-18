@@ -111,6 +111,18 @@ def _decode_json_from_mixed_output(text: str) -> Dict[str, Any]:
     raise ValueError("no JSON object found")
 
 
+def _agentic_subprocess_status(*, returncode: Optional[int], summary: Dict[str, Any]) -> str:
+    summary_status = str((summary or {}).get("status") or "").lower()
+    latest_cycle_status = str((((summary or {}).get("latest_cycle") or {}) or {}).get("status") or "").lower()
+    if int(returncode or 0) != 0:
+        return "error"
+    if summary_status in {"error", "partial_success"}:
+        return "error"
+    if latest_cycle_status in {"error", "partial_success"}:
+        return "error"
+    return "success"
+
+
 @dataclass
 class BluebookDaemonConfig:
     enabled: bool = True
@@ -165,6 +177,7 @@ class AgenticCorpusDaemonConfig:
     max_cycles: int = 1
     cycle_interval_seconds: float = 900.0
     max_statutes: int = 0
+    archive_warmup_urls: int = 0
     target_score: float = 0.92
     stop_on_target_score: bool = False
     per_state_timeout_seconds: float = 86400.0
@@ -274,6 +287,35 @@ class LegalScraperDaemon:
                 "agentic_corpora": asdict(self.config.agentic_corpora),
             },
         }
+
+    def build_preflight_payload(self) -> Dict[str, Any]:
+        plan = self.build_plan()
+        preflight = plan.get("preflight") if isinstance(plan.get("preflight"), dict) else {}
+        target_manifest = plan.get("target_manifest") if isinstance(plan.get("target_manifest"), dict) else {}
+        status = str(preflight.get("status") or "unknown")
+        payload = {
+            "status": status,
+            "generated_at": _utc_now(),
+            "output_dir": str(self.output_dir),
+            "plan": plan,
+            "preflight": preflight,
+            "target_manifest": target_manifest,
+        }
+        payload["preflight_path"] = str(self.output_dir / "preflight_plan.json")
+        payload["target_manifest_path"] = str(self.output_dir / "target_manifest.json")
+        return payload
+
+    def write_preflight_artifacts(self) -> Dict[str, Any]:
+        payload = self.build_preflight_payload()
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        preflight_path = Path(str(payload["preflight_path"]))
+        target_manifest_path = Path(str(payload["target_manifest_path"]))
+        preflight_path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
+        target_manifest_path.write_text(
+            json.dumps(payload.get("target_manifest") or {}, indent=2, sort_keys=True, default=str),
+            encoding="utf-8",
+        )
+        return payload
 
     def build_preflight_report(self) -> Dict[str, Any]:
         """Build cheap local checks that predict whether a full-corpus run can cover every target."""
@@ -888,6 +930,8 @@ class LegalScraperDaemon:
             str(max(1, int(config.max_cycles))),
             "--max-statutes",
             str(int(config.max_statutes or 0)),
+            "--archive-warmup-urls",
+            str(max(0, int(config.archive_warmup_urls))),
             "--per-state-timeout-seconds",
             str(float(config.per_state_timeout_seconds)),
             "--scrape-timeout-seconds",
@@ -923,9 +967,12 @@ class LegalScraperDaemon:
             stderr=asyncio.subprocess.PIPE,
         )
         timeout = float(config.scrape_timeout_seconds or 0.0)
+        supervisor_timeout = 0.0
+        if timeout > 0:
+            supervisor_timeout = timeout + min(60.0, max(10.0, timeout * 0.25))
         try:
             if timeout > 0:
-                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=supervisor_timeout)
             else:
                 stdout, stderr = await process.communicate()
         except asyncio.TimeoutError:
@@ -937,10 +984,12 @@ class LegalScraperDaemon:
                 stdout, stderr = await process.communicate()
             return {
                 "status": "error",
-                "error": f"agentic corpus subprocess timed out after {timeout:.1f}s",
+                "error": f"agentic corpus subprocess exceeded supervisor timeout after {supervisor_timeout:.1f}s",
                 "exception_type": "TimeoutError",
                 "output_dir": str(output_dir),
                 "command": command,
+                "scrape_timeout_seconds": timeout,
+                "supervisor_timeout_seconds": supervisor_timeout,
                 "stdout_tail": stdout.decode("utf-8", errors="replace")[-4000:],
                 "stderr_tail": stderr.decode("utf-8", errors="replace")[-4000:],
             }
@@ -958,7 +1007,7 @@ class LegalScraperDaemon:
                 "stdout_tail": stdout_text[-4000:],
                 "stderr_tail": stderr_text[-4000:],
             }
-        status = "success" if int(process.returncode or 0) == 0 and str(summary.get("status") or "").lower() != "error" else "error"
+        status = _agentic_subprocess_status(returncode=process.returncode, summary=summary)
         return {
             "status": status,
             "output_dir": str(output_dir),
@@ -976,6 +1025,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=3600.0)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help="Write the preflight plan and target manifest, then exit without running scraper phases.",
+    )
     parser.add_argument("--no-resume", action="store_true")
     parser.add_argument(
         "--full-corpus",
@@ -1028,6 +1082,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--enable-agentic-corpora", action="store_true")
     parser.add_argument("--agentic-corpora", default="all")
     parser.add_argument("--agentic-max-cycles", type=int, default=1)
+    parser.add_argument("--agentic-archive-warmup-urls", type=int, default=0)
     parser.add_argument("--agentic-per-state-timeout-seconds", type=float, default=86400.0)
     parser.add_argument("--agentic-scrape-timeout-seconds", type=float, default=0.0)
     parser.add_argument("--agentic-admin-max-candidates-per-state", type=int, default=1000)
@@ -1107,6 +1162,7 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
             corpora=agentic_corpora,
             max_cycles=max(1, int(args.agentic_max_cycles)),
             max_statutes=0 if full_corpus else max(0, int(args.max_statutes)),
+            archive_warmup_urls=max(0, int(args.agentic_archive_warmup_urls)),
             per_state_timeout_seconds=max(
                 86400.0 if full_corpus else 1.0,
                 float(args.agentic_per_state_timeout_seconds),
@@ -1130,7 +1186,7 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
 
 async def _main_async(args: argparse.Namespace) -> int:
     daemon = LegalScraperDaemon(config_from_args(args))
-    result = await daemon.run()
+    result = daemon.write_preflight_artifacts() if bool(getattr(args, "preflight_only", False)) else await daemon.run()
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))
     else:

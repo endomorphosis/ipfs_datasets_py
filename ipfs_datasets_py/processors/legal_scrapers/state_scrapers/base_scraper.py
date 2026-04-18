@@ -964,6 +964,9 @@ class BaseStateScraper(ABC):
             direct_bytes = await _try_requests_direct()
             if direct_bytes:
                 return direct_bytes
+            direct_only = str(os.getenv("STATE_SCRAPER_BOUNDED_DIRECT_ONLY", "")).strip().lower()
+            if direct_only in {"1", "true", "yes", "on"}:
+                return b""
 
         unified_enabled = str(os.getenv("STATE_SCRAPER_UNIFIED_FETCH_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
         # Very small hydration timeouts are usually smoke-test budgets. Avoid
