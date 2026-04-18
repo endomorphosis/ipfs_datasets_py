@@ -44,6 +44,10 @@ def test_state_laws_scraper_builds_recovery_section_urls():
         == "https://www.azleg.gov/ars/13/01203.htm"
     )
     assert (
+        scraper_module.build_state_law_section_url("IN", "35-42-2-1", code_name="Ind. Code")
+        == "https://iga.in.gov/laws/2026/ic/titles/35#35-42-2-1"
+    )
+    assert (
         scraper_module.build_state_law_section_url("KS", "21-5413", code_name="Kan. Stat.")
         == "https://www.ksrevisor.gov/statutes/chapters/ch21/021_054_0013.html"
     )
@@ -52,12 +56,28 @@ def test_state_laws_scraper_builds_recovery_section_urls():
         == "https://www.mainelegislature.org/legis/statutes/17-A/title17-Asec207.html"
     )
     assert (
+        scraper_module.build_state_law_section_url("MT", "45-5-201", code_name="Mont. Code")
+        == "https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0020/section_0010/0450-0050-0020-0010.html"
+    )
+    assert (
         scraper_module.build_state_law_section_url("NC", "14-33", code_name="N.C. Gen. Stat.")
         == "https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_14/GS_14-33.html"
     )
     assert (
         scraper_module.build_state_law_section_url("OH", "2903.13", code_name="Ohio Rev. Code")
         == "https://codes.ohio.gov/ohio-revised-code/section-2903.13"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("SC", "16-3-600", code_name="S.C. Code")
+        == "https://www.scstatehouse.gov/code/t16c003.php#16-3-600"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("VA", "18.2-57", code_name="Va. Code")
+        == "https://law.lis.virginia.gov/vacode/title18.2/chapter4/section18.2-57/"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("VT", "13-1023", code_name="Vt. Stat.")
+        == "https://legislature.vermont.gov/statutes/section/13/019/01023"
     )
     assert (
         scraper_module.build_state_law_section_url("WA", "9A.36.041", code_name="Wash. Rev. Code")

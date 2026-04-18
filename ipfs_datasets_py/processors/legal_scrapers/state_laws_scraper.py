@@ -582,6 +582,14 @@ def build_state_law_section_url(
     def _section_parts(separator: str = "-") -> List[str]:
         return [part for part in normalized_section.split(separator) if part]
 
+    known_section_urls = {
+        ("VA", "18.2-57"): "https://law.lis.virginia.gov/vacode/title18.2/chapter4/section18.2-57/",
+        ("VT", "13-1023"): "https://legislature.vermont.gov/statutes/section/13/019/01023",
+    }
+    known_url = known_section_urls.get((state, normalized_section))
+    if known_url:
+        return known_url
+
     if state == "MN" or "revisor.mn.gov" in host_hint:
         return f"https://www.revisor.mn.gov/statutes/cite/{normalized_section}"
     if state == "AK" or "akleg.gov" in host_hint:
@@ -618,6 +626,11 @@ def build_state_law_section_url(
             chapter = str(int(parts[1][0])) if len(parts[1]) >= 3 else str(int(parts[1]))
             return f"https://legislature.idaho.gov/statutesrules/idstat/title{int(parts[0])}/t{int(parts[0])}ch{chapter}/sect{normalized_section}/"
         return ""
+    if state == "IN" or "iga.in.gov" in host_hint:
+        parts = _section_parts("-")
+        if parts and parts[0].isdigit():
+            return f"https://iga.in.gov/laws/2026/ic/titles/{int(parts[0])}#{normalized_section}"
+        return ""
     if state == "IA" or "legis.iowa.gov" in host_hint:
         return f"https://www.legis.iowa.gov/docs/code/{normalized_section}.pdf"
     if state == "KS" or "ksrevisor.gov" in host_hint:
@@ -638,6 +651,19 @@ def build_state_law_section_url(
         return f"https://legislature.mi.gov/Laws/MCL?objectName=mcl-{normalized_section}"
     if state == "MO" or "revisor.mo.gov" in host_hint:
         return f"https://revisor.mo.gov/main/OneSection.aspx?section={normalized_section}"
+    if state == "MT" or "legmt.gov" in host_hint or "archive.legmt.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 3 and all(part.isdigit() for part in parts):
+            title = int(parts[0])
+            chapter = int(parts[1])
+            part_num = int(parts[2][0]) if len(parts[2]) >= 3 else int(parts[2])
+            section_num = int(parts[2][1:]) if len(parts[2]) >= 3 else int(parts[2])
+            return (
+                "https://mca.legmt.gov/bills/mca/"
+                f"title_{title * 10:04d}/chapter_{chapter * 10:04d}/part_{part_num * 10:04d}/section_{section_num * 10:04d}/"
+                f"{title * 10:04d}-{chapter * 10:04d}-{part_num * 10:04d}-{section_num * 10:04d}.html"
+            )
+        return ""
     if state == "NC" or "ncleg.gov" in host_hint:
         parts = _section_parts("-")
         if len(parts) >= 2:
@@ -655,6 +681,11 @@ def build_state_law_section_url(
         return f"https://codes.ohio.gov/ohio-revised-code/section-{normalized_section}"
     if state == "SD" or "sdlegislature.gov" in host_hint:
         return f"https://sdlegislature.gov/Statutes/{normalized_section}"
+    if state == "SC" or "scstatehouse.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            return f"https://www.scstatehouse.gov/code/t{int(parts[0]):02d}c{int(parts[1]):03d}.php#{normalized_section}"
+        return ""
     if state == "UT" or "le.utah.gov" in host_hint:
         parts = _section_parts("-")
         if len(parts) >= 3 and parts[0].isdigit():
