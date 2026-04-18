@@ -1554,6 +1554,101 @@ def _build_document_summary(
     return "; ".join(parts)
 
 
+def _jsonable_logic_value(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    enum_value = getattr(value, "value", None)
+    if isinstance(enum_value, (str, int, float, bool)):
+        return enum_value
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable_logic_value(val) for key, val in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_jsonable_logic_value(item) for item in value]
+    try:
+        return _jsonable_logic_value(asdict(value))
+    except Exception:
+        return str(value)
+
+
+def _fol_formula_to_dict(formula: Any) -> Dict[str, Any]:
+    if formula is None:
+        return {}
+    formula_text = str(getattr(formula, "formula_string", "") or str(formula) or "").strip()
+    if not formula_text:
+        return {}
+    predicates = []
+    for predicate in list(getattr(formula, "predicates", []) or []):
+        predicates.append(
+            {
+                "name": str(getattr(predicate, "name", "") or ""),
+                "arity": int(getattr(predicate, "arity", 0) or 0),
+                "category": _jsonable_logic_value(getattr(predicate, "category", "")),
+                "definition": str(getattr(predicate, "definition", "") or ""),
+            }
+        )
+    return {
+        "formula": formula_text,
+        "predicates": [item for item in predicates if item.get("name")],
+        "quantifiers": _jsonable_logic_value(list(getattr(formula, "quantifiers", []) or [])),
+        "operators": _jsonable_logic_value(list(getattr(formula, "operators", []) or [])),
+        "variables": _jsonable_logic_value(list(getattr(formula, "variables", []) or [])),
+        "confidence": float(getattr(formula, "confidence", 0.0) or 0.0),
+        "metadata": _jsonable_logic_value(dict(getattr(formula, "metadata", {}) or {})),
+    }
+
+
+def _fol_conversion_to_dict(result: Any, *, document_id: str, source_text: str) -> Dict[str, Any]:
+    if result is None or not bool(getattr(result, "success", False)):
+        return {}
+    payload = _fol_formula_to_dict(getattr(result, "output", None))
+    if not payload:
+        return {}
+    status = getattr(getattr(result, "status", ""), "value", getattr(result, "status", ""))
+    payload.update(
+        {
+            "document_id": document_id,
+            "source_text": source_text[:500],
+            "backend": "fol_converter",
+            "status": str(status or ""),
+            "confidence": float(getattr(result, "confidence", payload.get("confidence") or 0.0) or 0.0),
+            "warnings": _jsonable_logic_value(list(getattr(result, "warnings", []) or [])),
+            "errors": _jsonable_logic_value(list(getattr(result, "errors", []) or [])),
+            "conversion_metadata": _jsonable_logic_value(dict(getattr(result, "metadata", {}) or {})),
+        }
+    )
+    return payload
+
+
+def _dedupe_fol_formula_dicts(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    seen: set[tuple[str, str, str]] = set()
+    output: List[Dict[str, Any]] = []
+    for item in items:
+        payload = dict(item or {})
+        formula = str(payload.get("formula") or "").strip()
+        if not formula:
+            continue
+        key = (
+            str(payload.get("document_id") or ""),
+            formula,
+            str(payload.get("source_text") or "")[:160],
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(payload)
+    return output
+
+
+def _count_zkp_certificates(certificates: Iterable[Mapping[str, Any]]) -> int:
+    total = 0
+    for certificate in certificates:
+        backend = str(certificate.get("backend") or "").lower()
+        fmt = str(certificate.get("format") or "").lower()
+        if "zkp" in backend or "zkp" in fmt or "groth16" in backend or "groth16" in fmt or "zksnark" in fmt:
+            total += 1
+    return total
+
+
 def _dedupe_strings(values: Iterable[str]) -> List[str]:
     seen: set[str] = set()
     output: List[str] = []
