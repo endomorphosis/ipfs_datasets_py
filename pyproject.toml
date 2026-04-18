@@ -29,6 +29,7 @@ dependencies = [
     "cloudscraper>=1.2.71",
     "playwright>=1.40.0",
     "jsonschema>=4.0.0",
+    "cffi>=1.16.0",
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
     "python-multipart>=0.0.6",

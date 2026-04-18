@@ -211,6 +211,7 @@ setup(
         "huggingface-hub>=0.34.0,<1.0.0",
         "jsonpatch>=1.33",
         "jsonschema>=4.0.0",
+        "cffi>=1.16.0",
 
         # IPLD components (always available)
         "libipld>=3.3.2",
