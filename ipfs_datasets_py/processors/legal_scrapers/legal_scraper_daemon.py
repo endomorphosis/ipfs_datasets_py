@@ -252,6 +252,7 @@ class LegalScraperDaemon:
             "resume": bool(self.config.resume),
             "cache": self.cache_plan(),
             "preflight": self.build_preflight_report(),
+            "target_manifest": self.build_target_manifest(),
             "phases": {
                 "bluebook": asdict(self.config.bluebook),
                 "state_refresh": asdict(self.config.state_refresh),
@@ -323,6 +324,60 @@ class LegalScraperDaemon:
             "hf_datasets": hf_datasets,
             "invariants": invariants,
             "blocking_invariants": blocking_invariants,
+        }
+
+    def build_target_manifest(self) -> Dict[str, Any]:
+        """Describe every corpus/state artifact a full-corpus run is expected to retrieve."""
+        try:
+            from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+        except Exception as exc:
+            return {
+                "status": "error",
+                "error": str(exc),
+                "states": list(self.states),
+                "corpora": {},
+            }
+
+        corpora: Dict[str, Any] = {}
+        for corpus_key in SUPPORTED_CORPORA:
+            try:
+                corpus = get_canonical_legal_corpus(corpus_key)
+            except Exception as exc:
+                corpora[corpus_key] = {"status": "error", "error": str(exc), "state_shards": []}
+                continue
+            parquet_prefix = corpus.parquet_dir_name.strip("/")
+            jsonld_prefix = corpus.jsonld_dir_name.strip("/")
+            state_shards = []
+            for state in self.states:
+                state_parquet = corpus.state_parquet_filename(state)
+                state_shards.append(
+                    {
+                        "state": state,
+                        "hf_parquet_path": f"{parquet_prefix}/{state_parquet}" if parquet_prefix else state_parquet,
+                        "jsonld_filename": f"STATE-{state}.jsonld",
+                        "jsonld_path": f"{jsonld_prefix}/STATE-{state}.jsonld" if jsonld_prefix else f"STATE-{state}.jsonld",
+                        "parquet_filename": state_parquet,
+                    }
+                )
+            corpora[corpus_key] = {
+                "status": "planned",
+                "hf_dataset_id": corpus.hf_dataset_id,
+                "parquet_dir": corpus.parquet_dir_name,
+                "jsonld_dir": corpus.jsonld_dir_name,
+                "combined_parquet_path": corpus.combined_parquet_path(),
+                "combined_embeddings_path": corpus.combined_embeddings_path(),
+                "state_shard_count": len(state_shards),
+                "state_shards": state_shards,
+            }
+
+        return {
+            "status": "planned",
+            "states": list(self.states),
+            "state_count": len(self.states),
+            "corpora": corpora,
+            "corpus_count": len(corpora),
+            "state_shard_count": sum(int((entry or {}).get("state_shard_count", 0) or 0) for entry in corpora.values()),
+            "combined_artifact_count": len(corpora),
         }
 
     def cache_plan(self) -> Dict[str, Any]:
@@ -574,7 +629,18 @@ class LegalScraperDaemon:
         missing_built_states = [] if not built_states else [state for state in required_states if state not in built_states]
         if not state_refresh:
             missing_built_states = list(required_states)
-        missing_state_refresh_states = sorted(set(scrape_gap_states + build_gap_states + missing_jsonld_states + missing_built_states))
+        state_report_artifact_gaps = []
+        for report in list(build.get("state_reports") or []):
+            if not isinstance(report, dict):
+                continue
+            state = str(report.get("state") or "").upper().strip()
+            if not state:
+                continue
+            parquet_path = str(report.get("parquet_path") or "").strip()
+            merged_count = int(report.get("merged_row_count", 0) or 0)
+            if not parquet_path or not Path(parquet_path).exists() or merged_count <= 0:
+                state_report_artifact_gaps.append(state)
+        missing_state_refresh_states = sorted(set(scrape_gap_states + build_gap_states + missing_jsonld_states + missing_built_states + state_report_artifact_gaps))
 
         agentic_results = agentic.get("corpora") if isinstance(agentic.get("corpora"), dict) else {}
         missing_agentic_corpora = [corpus for corpus in required_corpora if corpus not in agentic_results]
@@ -629,6 +695,7 @@ class LegalScraperDaemon:
             "required_corpora": required_corpora,
             "state_refresh_status": str(state_refresh.get("status") or "disabled"),
             "missing_state_refresh_states": missing_state_refresh_states,
+            "missing_state_refresh_artifact_states": sorted(set(state_report_artifact_gaps)),
             "agentic_status": str(agentic.get("status") or "disabled"),
             "missing_agentic_corpora": missing_agentic_corpora,
             "missing_agentic_states_by_corpus": missing_agentic_states_by_corpus,

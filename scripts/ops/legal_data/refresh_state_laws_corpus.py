@@ -355,7 +355,12 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     jsonld_dir = Path(args.jsonld_dir).expanduser().resolve() if args.jsonld_dir else _CORPUS.jsonld_dir(str(output_root))
     parquet_dir = Path(args.parquet_dir).expanduser().resolve() if args.parquet_dir else _CORPUS.parquet_dir(str(output_root))
     repo_id = str(args.repo_id or _CORPUS.hf_dataset_id).strip()
-    hf_token = _resolve_hf_token(str(args.hf_token or "").strip() or None)
+    needs_hf_token = bool(args.merge_hf_existing or args.publish_to_hf or args.verify)
+    hf_token = (
+        _resolve_hf_token(str(args.hf_token or "").strip() or None)
+        if needs_hf_token
+        else (str(args.hf_token or "").strip() or None)
+    )
 
     plan = {
         "states": states,

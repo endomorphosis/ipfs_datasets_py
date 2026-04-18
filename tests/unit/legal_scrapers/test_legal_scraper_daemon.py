@@ -300,6 +300,27 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
             "--enable-agentic-corpora",
             "--agentic-corpora",
             "laws,admin",
+            "--agentic-per-state-timeout-seconds",
+            "11",
+            "--agentic-scrape-timeout-seconds",
+            "22",
+            "--agentic-admin-max-candidates-per-state",
+            "33",
+            "--agentic-admin-max-fetch-per-state",
+            "34",
+            "--agentic-admin-max-results-per-domain",
+            "35",
+            "--agentic-admin-max-hops",
+            "2",
+            "--agentic-admin-max-pages",
+            "36",
+            "--disable-agentic-admin-parallel-assist",
+            "--agentic-admin-parallel-assist-state-limit",
+            "3",
+            "--agentic-admin-parallel-assist-max-urls-per-domain",
+            "4",
+            "--agentic-admin-parallel-assist-timeout-seconds",
+            "44",
         ]
     )
 
@@ -329,6 +350,17 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
     assert config.cache.mirror_to_ipfs is True
     assert config.agentic_corpora.enabled is True
     assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules"]
+    assert config.agentic_corpora.per_state_timeout_seconds == 11.0
+    assert config.agentic_corpora.scrape_timeout_seconds == 22.0
+    assert config.agentic_corpora.admin_agentic_max_candidates_per_state == 33
+    assert config.agentic_corpora.admin_agentic_max_fetch_per_state == 34
+    assert config.agentic_corpora.admin_agentic_max_results_per_domain == 35
+    assert config.agentic_corpora.admin_agentic_max_hops == 2
+    assert config.agentic_corpora.admin_agentic_max_pages == 36
+    assert config.agentic_corpora.admin_parallel_assist_enabled is False
+    assert config.agentic_corpora.admin_parallel_assist_state_limit == 3
+    assert config.agentic_corpora.admin_parallel_assist_max_urls_per_domain == 4
+    assert config.agentic_corpora.admin_parallel_assist_timeout_seconds == 44.0
 
 
 def test_legal_scraper_daemon_arg_config_allows_state_hydration_controls(tmp_path):
@@ -390,15 +422,27 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert config.agentic_corpora.enabled is True
     assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules", "state_court_rules"]
     assert config.agentic_corpora.max_statutes == 0
+    assert config.agentic_corpora.per_state_timeout_seconds == 86400.0
+    assert config.agentic_corpora.admin_parallel_assist_enabled is True
 
     daemon = LegalScraperDaemon(config)
-    preflight = daemon.build_plan()["preflight"]
+    plan = daemon.build_plan()
+    preflight = plan["preflight"]
+    target_manifest = plan["target_manifest"]
     assert preflight["status"] == "ready"
     assert preflight["target_state_count"] == 51
     assert preflight["missing_state_scrapers"] == []
     assert preflight["invariants"]["state_refresh_unbounded"] is True
     assert preflight["invariants"]["state_refresh_hf_merge_enabled"] is True
     assert preflight["invariants"]["publication_opt_in"] is True
+    assert target_manifest["status"] == "planned"
+    assert target_manifest["state_count"] == 51
+    assert target_manifest["corpus_count"] == 3
+    assert target_manifest["state_shard_count"] == 153
+    assert target_manifest["corpora"]["state_laws"]["hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert target_manifest["corpora"]["state_laws"]["state_shards"][0]["state"] == "AL"
+    assert target_manifest["corpora"]["state_laws"]["state_shards"][-1]["state"] == "DC"
+    assert target_manifest["corpora"]["state_laws"]["state_shards"][-1]["hf_parquet_path"].endswith("STATE-DC.parquet")
 
 
 @pytest.mark.asyncio
@@ -536,6 +580,56 @@ async def test_legal_scraper_daemon_full_corpus_marks_missing_states_partial(tmp
         "state_admin_rules",
         "state_court_rules",
     ]
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_full_corpus_marks_missing_state_artifacts_partial(tmp_path):
+    present_parquet = tmp_path / "STATE-MN.parquet"
+    present_parquet.write_bytes(b"PAR1")
+
+    async def _fake_refresh_runner(args):
+        return {
+            "status": "success",
+            "build": {
+                "states": ["MN", "OR"],
+                "missing_jsonld_states": [],
+                "combined_row_count": 10,
+                "state_reports": [
+                    {
+                        "state": "MN",
+                        "parquet_path": str(present_parquet),
+                        "merged_row_count": 10,
+                    },
+                    {
+                        "state": "OR",
+                        "parquet_path": str(tmp_path / "STATE-OR.parquet"),
+                        "merged_row_count": 0,
+                    },
+                ],
+            },
+            "scrape_gap_states": [],
+            "build_gap_states": [],
+        }
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            states=["MN", "OR"],
+            output_dir=str(tmp_path / "daemon"),
+            bluebook=BluebookDaemonConfig(enabled=False),
+            state_refresh=StateRefreshDaemonConfig(scrape=True),
+            agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+        ),
+        state_refresh_runner=_fake_refresh_runner,
+    )
+
+    result = await daemon.run()
+    completeness = result["cycles"][0]["corpus_completeness"]
+
+    assert result["cycles"][0]["status"] == "partial_success"
+    assert completeness["status"] == "incomplete"
+    assert completeness["missing_state_refresh_artifact_states"] == ["OR"]
+    assert completeness["missing_state_refresh_states"] == ["OR"]
 
 
 @pytest.mark.asyncio

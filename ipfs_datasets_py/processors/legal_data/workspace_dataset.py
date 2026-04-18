@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import hashlib
 from io import BytesIO
 from pathlib import Path
 import json
@@ -22,6 +23,14 @@ from .docket_dataset import (
     _utc_now_isoformat,
 )
 from ..retrieval import bm25_search_documents, embed_query_for_backend, vector_dot
+
+
+def _digest_file(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 @dataclass
@@ -811,6 +820,8 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                 if not include_failed_pdf_documents:
                     continue
 
+            file_stat = path.stat()
+            source_sha256 = _digest_file(path)
             collection_id = _safe_identifier(path.parent.name or "pdfs")
             document_id = _safe_identifier(f"{path.parent.name}-{path.stem}-{index}") or f"pdf_{index}"
             extraction_status = "text_extracted" if text else "metadata_only"
@@ -830,7 +841,14 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                         "source_suffix": path.suffix.lower(),
                         "parent_directory": str(path.parent),
                         "relative_parent": path.parent.name,
-                        "file_size_bytes": path.stat().st_size,
+                        "file_size_bytes": file_stat.st_size,
+                        "sha256": source_sha256,
+                        "content_sha256": source_sha256,
+                        "source_digest": {
+                            "algorithm": "sha256",
+                            "value": source_sha256,
+                            "file_size_bytes": file_stat.st_size,
+                        },
                         "text_extraction": {
                             "source": str(extraction.get("backend") or "pypdf"),
                             "backend": str(extraction.get("backend") or "pypdf"),
