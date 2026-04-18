@@ -11,11 +11,12 @@ import asyncio
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import json
+import multiprocessing as mp
 import os
 from pathlib import Path
 import re
 from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 import importlib
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
@@ -265,6 +266,41 @@ def _env_flag(name: str, *, default: bool = False) -> bool:
     return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _common_crawl_domain_worker(
+    queue: Any,
+    *,
+    domain: str,
+    max_matches: int,
+    query: str,
+    jurisdiction_type: Optional[str],
+    state_code: Optional[str],
+    mode: str,
+    mcp_endpoint: Optional[str],
+    timeout_seconds: float,
+) -> None:
+    try:
+        from ..web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+
+        engine = CommonCrawlSearchEngine(
+            mode=mode,
+            mcp_endpoint=mcp_endpoint,
+            mcp_timeout=timeout_seconds,
+        )
+        if not engine.is_available():
+            queue.put({"results": [], "error": "common_crawl_unavailable"})
+            return
+        rows = engine.search_domain(
+            domain,
+            max_matches=max(1, int(max_matches)),
+            query=query,
+            jurisdiction_type=jurisdiction_type,
+            state_code=state_code,
+        )
+        queue.put({"results": list(rows or []), "error": ""})
+    except Exception as exc:
+        queue.put({"results": [], "error": str(exc)})
+
+
 class _LiveSearcher(Protocol):
     def search(self, query: str, max_results: int = 20, **kwargs: Any) -> Dict[str, Any]:
         ...
@@ -473,6 +509,87 @@ class LegalSourceRecoveryWorkflow:
             )
         )
         return UnifiedWebArchivingAPI(scraper=scraper)
+
+    @staticmethod
+    def _lightweight_fetch_url(url: str, *, title_hint: Optional[str] = None) -> Any:
+        """Fetch candidate evidence with requests-only socket timeouts."""
+        import types
+
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+        except Exception as exc:
+            return types.SimpleNamespace(success=False, document=None, errors=[exc])
+
+        try:
+            response = requests.get(
+                str(url),
+                timeout=max(1.0, float(_FETCH_TIMEOUT_SECONDS)),
+                headers={
+                    "User-Agent": "ipfs-datasets-legal-source-recovery/1.0",
+                    "Accept": "text/html,application/xhtml+xml,application/pdf,text/plain,*/*;q=0.8",
+                },
+                allow_redirects=True,
+            )
+        except Exception as exc:
+            return types.SimpleNamespace(success=False, document=None, errors=[exc])
+
+        content_type = str(response.headers.get("content-type") or "").strip()
+        raw_bytes = bytes(response.content or b"")
+        text = ""
+        html = ""
+        links: List[Dict[str, str]] = []
+        if "text" in content_type or "html" in content_type or not content_type:
+            response.encoding = response.encoding or "utf-8"
+            text = str(response.text or "")
+            if "html" in content_type or "<html" in text.lower():
+                html = text
+                try:
+                    soup = BeautifulSoup(html, "html.parser")
+                    title_node = soup.find("title")
+                    if not title_hint and title_node:
+                        title_hint = title_node.get_text(" ", strip=True)
+                    for anchor in soup.find_all("a", href=True)[:100]:
+                        href = str(anchor.get("href") or "").strip()
+                        if not href:
+                            continue
+                        links.append(
+                            {
+                                "url": urljoin(str(response.url or url), href),
+                                "text": anchor.get_text(" ", strip=True),
+                            }
+                        )
+                except Exception:
+                    pass
+
+        document = types.SimpleNamespace(
+            title=title_hint or "",
+            text=text,
+            html=html,
+            content_type=content_type,
+            metadata={
+                "content_type": content_type,
+                "html": html,
+                "links": links,
+                "raw_bytes": raw_bytes if raw_bytes and "text" not in content_type and "html" not in content_type else b"",
+            },
+            extraction_provenance={"method": "requests_lightweight", "status_code": int(response.status_code)},
+        )
+        return types.SimpleNamespace(success=200 <= int(response.status_code) < 400, document=document, errors=[])
+
+    def _candidate_fetch_response(self, url: str, *, title_hint: Optional[str] = None) -> Any:
+        fetch_factory = getattr(type(self), "_fetch_api_instance", None)
+        fetch_factory_name = str(getattr(fetch_factory, "__name__", ""))
+        if self._fetch_api is not None or fetch_factory_name != "_fetch_api_instance":
+            return self._fetch_api_instance().fetch(
+                url,
+                domain="legal",
+                metadata={
+                    "title_hint": title_hint or "",
+                    "suppress_relocation_search": True,
+                },
+            )
+        return self._lightweight_fetch_url(url, title_hint=title_hint)
 
     def _patch_manager_instance(self, *, manifest_dir: Path) -> Any:
         if self._patch_manager is not None:
@@ -1236,7 +1353,8 @@ class LegalSourceRecoveryWorkflow:
         normalized_url = str(url or "").strip()
         if not normalized_url:
             return
-        if not cls._is_downloadable_legal_file(url=normalized_url, title=title, content_type=content_type):
+        is_downloadable = cls._is_downloadable_legal_file(url=normalized_url, title=title, content_type=content_type)
+        if not is_downloadable and source != "citation_url_hint":
             return
         score = cls._candidate_file_score(
             url=normalized_url,
@@ -1277,7 +1395,6 @@ class LegalSourceRecoveryWorkflow:
         state_code: Optional[str],
     ) -> List[RecoveredCandidateFile]:
         del corpus_key
-        fetch_api = self._fetch_api_instance()
         discovered: Dict[str, RecoveredCandidateFile] = {}
 
         for candidate in list(candidates)[:_MAX_CANDIDATE_DISCOVERY_PAGES]:
@@ -1293,14 +1410,7 @@ class LegalSourceRecoveryWorkflow:
             )
 
             try:
-                fetch_response = fetch_api.fetch(
-                    candidate.url,
-                    domain="legal",
-                    metadata={
-                        "title_hint": candidate.title or "",
-                        "suppress_relocation_search": True,
-                    },
-                )
+                fetch_response = self._candidate_fetch_response(candidate.url, title_hint=candidate.title)
             except Exception:
                 continue
 
@@ -1341,14 +1451,16 @@ class LegalSourceRecoveryWorkflow:
 
         files = list(discovered.values())
         files.sort(key=lambda item: (-item.score, item.url))
-        return files[: max(4, _MAX_CANDIDATE_FETCHES)]
+        return files[:_MAX_CANDIDATE_FETCHES]
 
     @staticmethod
     def _artifact_suffix(*, url: str, content_type: Optional[str], has_bytes: bool) -> str:
         ext = Path(urlparse(url).path).suffix.lower()
-        if ext:
-            return ext
         lowered = str(content_type or "").split(";", 1)[0].strip().lower()
+        if "html" in lowered and (not ext or not ext.lstrip(".").isalpha()):
+            return ".html"
+        if ext and (ext in DOWNLOADABLE_LEGAL_FILE_EXTENSIONS or ext.lstrip(".").isalpha()):
+            return ext
         if lowered in DOWNLOADABLE_CONTENT_TYPE_SUFFIXES:
             return DOWNLOADABLE_CONTENT_TYPE_SUFFIXES[lowered]
         if has_bytes:
@@ -1439,7 +1551,6 @@ class LegalSourceRecoveryWorkflow:
         manifest_dir: Path,
         candidate_files: Iterable[RecoveredCandidateFile],
     ) -> List[RecoveredCandidateFile]:
-        fetch_api = self._fetch_api_instance()
         artifacts_dir = manifest_dir / "candidate_files"
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1448,14 +1559,7 @@ class LegalSourceRecoveryWorkflow:
         for index, item in enumerate(candidate_file_list[:_MAX_CANDIDATE_FETCHES], start=1):
             updated = RecoveredCandidateFile(**asdict(item))
             try:
-                fetch_response = fetch_api.fetch(
-                    updated.url,
-                    domain="legal",
-                    metadata={
-                        "title_hint": updated.title or "",
-                        "suppress_relocation_search": True,
-                    },
-                )
+                fetch_response = self._candidate_fetch_response(updated.url, title_hint=updated.title)
             except Exception as exc:
                 updated.fetch_success = False
                 updated.notes = f"fetch_exception: {exc}"
