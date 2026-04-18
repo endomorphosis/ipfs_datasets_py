@@ -314,6 +314,7 @@ def _blocked_fetch_escalation_worker(
     timeout_seconds: float,
 ) -> None:
     try:
+        errors: List[str] = []
         if "jina_reader" in {str(method or "").strip().lower() for method in list(methods or [])}:
             try:
                 import requests
@@ -351,8 +352,9 @@ def _blocked_fetch_escalation_worker(
                         }
                     )
                     return
-            except Exception:
-                pass
+                errors.append(f"jina_reader_http_status_{int(response.status_code)}")
+            except Exception as exc:
+                errors.append(f"jina_reader_error: {exc}")
 
         from ..web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper
 
@@ -365,7 +367,7 @@ def _blocked_fetch_escalation_worker(
             except Exception:
                 continue
         if not parsed_methods:
-            queue.put({"success": False, "errors": ["no blocked fetch methods configured"]})
+            queue.put({"success": False, "errors": errors or ["no blocked fetch methods configured"]})
             return
 
         scraper = UnifiedWebScraper(
@@ -389,12 +391,15 @@ def _blocked_fetch_escalation_worker(
         )
         result = scraper.scrape_sync(url)
         if result is None or not getattr(result, "success", False):
+            payload_errors = (
+                list(getattr(result, "errors", []) or ["blocked_fetch_escalation_failed"])
+                if result is not None
+                else ["blocked_fetch_escalation_returned_no_result"]
+            )
             queue.put(
                 {
                     "success": False,
-                    "errors": list(getattr(result, "errors", []) or ["blocked_fetch_escalation_failed"])
-                    if result is not None
-                    else ["blocked_fetch_escalation_returned_no_result"],
+                    "errors": errors + payload_errors,
                 }
             )
             return
