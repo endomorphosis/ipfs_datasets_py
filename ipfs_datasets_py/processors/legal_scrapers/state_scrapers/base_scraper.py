@@ -1707,7 +1707,8 @@ class BaseStateScraper(ABC):
 
         bounded_max_sections = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
         if bounded_max_sections > 0:
-            max_sections = max(1, min(int(max_sections or bounded_max_sections), bounded_max_sections))
+            scan_limit = max(bounded_max_sections, min(int(max_sections or bounded_max_sections), bounded_max_sections * 10))
+            max_sections = max(1, scan_limit)
         
         statutes = []
         seen_source_urls = set()
@@ -1869,7 +1870,8 @@ class BaseStateScraper(ABC):
 
         bounded_max_sections = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
         if bounded_max_sections > 0:
-            max_sections = max(1, min(int(max_sections or bounded_max_sections), bounded_max_sections))
+            scan_limit = max(bounded_max_sections, min(int(max_sections or bounded_max_sections), bounded_max_sections * 10))
+            max_sections = max(1, scan_limit)
         
         if not self.has_playwright():
             self.logger.warning(f"Playwright not available, falling back to generic scrape for {code_name}")

@@ -172,6 +172,69 @@ def test_refresh_state_laws_corpus_refuses_incomplete_publish(tmp_path):
     assert result["build_gap_states"] == ["MN"]
 
 
+def test_refresh_state_laws_corpus_uses_shared_hf_token_resolver(tmp_path, monkeypatch):
+    observed = {}
+
+    def _fake_build_state_laws_parquet_artifacts(**kwargs):
+        observed["build_token"] = kwargs.get("token")
+        return {
+            "status": "success",
+            "states": ["MN"],
+            "state_count": 1,
+            "missing_jsonld_states": [],
+            "combined_row_count": 1,
+        }
+
+    def _fake_publish_parquet_dir(**kwargs):
+        observed["publish_token"] = kwargs.get("token")
+        return {"upload_commit": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/keyring"}
+
+    monkeypatch.setattr(refresh_state_laws_corpus, "_resolve_hf_token", lambda token=None: "keyring-refresh-token")
+    monkeypatch.setattr(
+        refresh_state_laws_corpus,
+        "build_state_laws_parquet_artifacts",
+        _fake_build_state_laws_parquet_artifacts,
+    )
+    monkeypatch.setattr(refresh_state_laws_corpus, "_publish_parquet_dir", _fake_publish_parquet_dir)
+
+    args = argparse.Namespace(
+        states="MN",
+        include_dc=False,
+        output_root=str(tmp_path),
+        jsonld_dir="",
+        parquet_dir="",
+        scrape=False,
+        max_statutes=0,
+        rate_limit_delay=0.0,
+        parallel_workers=1,
+        per_state_retry_attempts=0,
+        per_state_timeout_seconds=1.0,
+        strict_full_text=False,
+        min_full_text_chars=300,
+        no_hydrate_statute_text=False,
+        allow_justia_fallback=False,
+        no_merge_existing_local=False,
+        merge_hf_existing=True,
+        publish_to_hf=True,
+        allow_incomplete_publish=False,
+        repo_id="justicedao/ipfs_state_laws",
+        hf_token="",
+        create_repo=False,
+        verify=False,
+        commit_message="test",
+        dry_run=False,
+        json=True,
+    )
+
+    result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
+
+    assert result["status"] == "success"
+    assert observed == {
+        "build_token": "keyring-refresh-token",
+        "publish_token": "keyring-refresh-token",
+    }
+
+
 def test_all_state_jurisdictions_have_registered_scrapers():
     registered = set(StateScraperRegistry.get_all_registered_states())
 

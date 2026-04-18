@@ -446,7 +446,20 @@ async def test_legal_scraper_daemon_full_corpus_completeness_audit(tmp_path):
         }
 
     async def _fake_agentic_runner(**kwargs):
-        return {"status": "success", "summary": {"corpus": kwargs["corpus"]}}
+        return {
+            "status": "success",
+            "summary": {
+                "corpus": kwargs["corpus"],
+                "states": list(kwargs["states"]),
+                "latest_cycle": {
+                    "diagnostics": {
+                        "coverage": {
+                            "coverage_gap_states": [],
+                        },
+                    },
+                },
+            },
+        }
 
     daemon = LegalScraperDaemon(
         LegalScraperDaemonConfig(
@@ -473,6 +486,7 @@ async def test_legal_scraper_daemon_full_corpus_completeness_audit(tmp_path):
     assert completeness["required_state_count"] == 2
     assert completeness["missing_state_refresh_states"] == []
     assert completeness["missing_agentic_corpora"] == []
+    assert completeness["missing_agentic_states_by_corpus"] == {}
 
 
 @pytest.mark.asyncio
@@ -512,6 +526,65 @@ async def test_legal_scraper_daemon_full_corpus_marks_missing_states_partial(tmp
         "state_admin_rules",
         "state_court_rules",
     ]
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_full_corpus_marks_agentic_state_gaps_partial(tmp_path):
+    async def _fake_refresh_runner(args):
+        states = str(args.states).split(",")
+        return {
+            "status": "success",
+            "build": {
+                "states": states,
+                "missing_jsonld_states": [],
+                "combined_row_count": 10,
+            },
+            "scrape_gap_states": [],
+            "build_gap_states": [],
+        }
+
+    async def _fake_agentic_runner(**kwargs):
+        return {
+            "status": "success",
+            "summary": {
+                "corpus": kwargs["corpus"],
+                "states": ["MN"],
+                "latest_cycle": {
+                    "diagnostics": {
+                        "coverage": {
+                            "coverage_gap_states": ["OR"],
+                        },
+                    },
+                },
+            },
+        }
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            states=["MN", "OR"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(enabled=False),
+            state_refresh=StateRefreshDaemonConfig(scrape=True),
+            agentic_corpora=AgenticCorpusDaemonConfig(
+                enabled=True,
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"],
+            ),
+        ),
+        state_refresh_runner=_fake_refresh_runner,
+        agentic_runner=_fake_agentic_runner,
+    )
+
+    result = await daemon.run()
+    completeness = result["cycles"][0]["corpus_completeness"]
+
+    assert result["cycles"][0]["status"] == "partial_success"
+    assert completeness["status"] == "incomplete"
+    assert completeness["missing_agentic_states_by_corpus"] == {
+        "state_admin_rules": ["OR"],
+        "state_court_rules": ["OR"],
+        "state_laws": ["OR"],
+    }
 
 
 def test_legal_scraper_daemon_normalizers():

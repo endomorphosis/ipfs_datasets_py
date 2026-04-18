@@ -30,6 +30,9 @@ _bootstrap_pythonpath()
 from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import (
     get_canonical_legal_corpus,
 )
+from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import (
+    _resolve_hf_token,
+)
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
     US_STATES,
     scrape_state_laws,
@@ -352,6 +355,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     jsonld_dir = Path(args.jsonld_dir).expanduser().resolve() if args.jsonld_dir else _CORPUS.jsonld_dir(str(output_root))
     parquet_dir = Path(args.parquet_dir).expanduser().resolve() if args.parquet_dir else _CORPUS.parquet_dir(str(output_root))
     repo_id = str(args.repo_id or _CORPUS.hf_dataset_id).strip()
+    hf_token = _resolve_hf_token(str(args.hf_token or "").strip() or None)
 
     plan = {
         "states": states,
@@ -395,7 +399,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         merge_existing_local=not bool(args.no_merge_existing_local),
         merge_hf_existing=bool(args.merge_hf_existing),
         repo_id=repo_id,
-        token=str(args.hf_token or "").strip() or None,
+        token=hf_token,
     )
 
     scrape_gaps = []
@@ -423,7 +427,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         publish_result = _publish_parquet_dir(
             parquet_dir=parquet_dir,
             repo_id=repo_id,
-            token=str(args.hf_token or "").strip() or None,
+            token=hf_token,
             create_repo=bool(args.create_repo),
             verify=bool(args.verify),
             commit_message=str(args.commit_message or "Refresh canonical state laws corpus"),

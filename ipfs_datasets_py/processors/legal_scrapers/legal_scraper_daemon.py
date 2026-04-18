@@ -502,14 +502,46 @@ class LegalScraperDaemon:
 
         agentic_results = agentic.get("corpora") if isinstance(agentic.get("corpora"), dict) else {}
         missing_agentic_corpora = [corpus for corpus in required_corpora if corpus not in agentic_results]
+        missing_agentic_states_by_corpus: Dict[str, List[str]] = {}
         errored_agentic_corpora = [
             corpus
             for corpus, result in sorted(agentic_results.items())
             if isinstance(result, dict) and str(result.get("status") or "").lower() == "error"
         ]
+        for corpus in required_corpora:
+            result = agentic_results.get(corpus)
+            if not isinstance(result, dict):
+                continue
+            summary = result.get("summary") if isinstance(result.get("summary"), dict) else {}
+            processed_states = {
+                str(item).upper()
+                for item in list(summary.get("states") or [])
+                if str(item).strip()
+            }
+            latest_cycle = summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
+            diagnostics = latest_cycle.get("diagnostics") if isinstance(latest_cycle.get("diagnostics"), dict) else {}
+            coverage = diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
+            coverage_gap_states = {
+                str(item).upper()
+                for item in list(coverage.get("coverage_gap_states") or [])
+                if str(item).strip()
+            }
+            missing_processed_states = (
+                [state for state in required_states if state not in processed_states]
+                if processed_states
+                else list(required_states)
+            )
+            missing_states = sorted(set(missing_processed_states) | coverage_gap_states)
+            if missing_states:
+                missing_agentic_states_by_corpus[corpus] = missing_states
 
         status = "complete"
-        if missing_state_refresh_states or missing_agentic_corpora or errored_agentic_corpora:
+        if (
+            missing_state_refresh_states
+            or missing_agentic_corpora
+            or missing_agentic_states_by_corpus
+            or errored_agentic_corpora
+        ):
             status = "incomplete"
         if str(state_refresh.get("status") or "").lower() == "error" or str(agentic.get("status") or "").lower() == "error":
             status = "error"
@@ -523,6 +555,7 @@ class LegalScraperDaemon:
             "missing_state_refresh_states": missing_state_refresh_states,
             "agentic_status": str(agentic.get("status") or "disabled"),
             "missing_agentic_corpora": missing_agentic_corpora,
+            "missing_agentic_states_by_corpus": missing_agentic_states_by_corpus,
             "errored_agentic_corpora": errored_agentic_corpora,
         }
 
