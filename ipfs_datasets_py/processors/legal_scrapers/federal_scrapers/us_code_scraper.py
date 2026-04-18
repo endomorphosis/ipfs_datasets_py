@@ -167,6 +167,24 @@ def _govinfo_section_url(year: int, title_num: str, html_name: str) -> str:
     )
 
 
+def build_uscode_section_url(title_num: str, section: str) -> str:
+    """Build the canonical U.S. Code section URL used by recovery fuzzing."""
+    title = str(title_num or "").strip()
+    normalized_section = str(section or "").strip()
+    if not title or not normalized_section:
+        return ""
+    return f"https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title{title}-section{normalized_section}"
+
+
+def build_public_law_url(congress: str, law_number: str) -> str:
+    """Build the Congress.gov public-law URL used by recovery fuzzing."""
+    normalized_congress = str(congress or "").strip()
+    normalized_law_number = str(law_number or "").strip()
+    if not normalized_congress or not normalized_law_number:
+        return ""
+    return f"https://www.congress.gov/public-law/{normalized_congress}th-congress/{normalized_law_number}"
+
+
 def _ushouse_download_page_url() -> str:
     return "https://uscode.house.gov/download/download.shtml"
 
@@ -1679,6 +1697,8 @@ async def scrape_us_code(
 
 
 __all__ = [
+    "build_public_law_url",
+    "build_uscode_section_url",
     "get_us_code_titles",
     "scrape_us_code",
     "search_us_code",

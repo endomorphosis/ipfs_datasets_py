@@ -6,6 +6,29 @@ import pytest
 from ipfs_datasets_py.processors.legal_scrapers import state_laws_scraper as scraper_module
 
 
+def test_state_laws_scraper_builds_recovery_section_urls():
+    assert (
+        scraper_module.build_state_law_section_url("MN", "518.17", code_name="Statutes")
+        == "https://www.revisor.mn.gov/statutes/cite/518.17"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("OR", "801.545")
+        == "https://oregon.public.law/statutes/ors_801.545"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("CA", "3011", code_name="Fam. Code")
+        == "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=FAM&sectionNum=3011"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("NY", "651", code_name="Fam. Ct. Act")
+        == "https://www.nysenate.gov/legislation/laws/FCT/651"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("TX", "153.002", code_name="Fam. Code")
+        == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
+    )
+
+
 @pytest.mark.asyncio
 async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
     captured = {}

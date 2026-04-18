@@ -1,0 +1,672 @@
+{
+  "dataset_id": "docket_dataset_tyler_2024_001",
+  "docket_id": "TYLER-2024-001",
+  "case_name": "Doe v. Example",
+  "court": "State Court",
+  "documents": [
+    {
+      "document_id": "doc_1",
+      "docket_id": "TYLER-2024-001",
+      "title": "Notice of Hearing",
+      "text": "Notice text from a normalized Tyler Host export.",
+      "date_filed": "2024-02-05",
+      "document_number": "12",
+      "source_url": "file:///exports/tyler/notice.pdf",
+      "metadata": {
+        "source_path": "/exports/tyler/notice.pdf",
+        "text_extraction": {
+          "source": "directory_pdf"
+        },
+        "document_type": null,
+        "page_count": null,
+        "classification": {
+          "label": "notice",
+          "backend": "heuristic_legal_document_classifier",
+          "confidence": 0.6
+        },
+        "raw": {
+          "id": "doc_1",
+          "title": "Notice of Hearing",
+          "text": "Notice text from a normalized Tyler Host export.",
+          "date_filed": "2024-02-05",
+          "document_number": "12",
+          "source_url": "file:///exports/tyler/notice.pdf",
+          "metadata": {
+            "source_path": "/exports/tyler/notice.pdf",
+            "text_extraction": {
+              "source": "directory_pdf"
+            }
+          }
+        },
+        "citation_resolution_summary": {
+          "citation_count": 0,
+          "matched_citation_count": 0,
+          "unmatched_citation_count": 0,
+          "all_citations_resolved": false
+        }
+      }
+    }
+  ],
+  "plaintiff_docket": [],
+  "defendant_docket": [],
+  "authorities": [],
+  "knowledge_graph": {
+    "entities": [
+      {
+        "id": "docket_dataset_tyler_2024_001:docket",
+        "type": "docket",
+        "label": "Doe v. Example",
+        "properties": {
+          "docket_id": "TYLER-2024-001",
+          "court": "State Court"
+        },
+        "confidence": 1.0
+      },
+      {
+        "id": "docket_dataset_tyler_2024_001:document:doc_1",
+        "type": "docket_document",
+        "label": "Notice of Hearing",
+        "properties": {
+          "document_id": "doc_1",
+          "docket_id": "TYLER-2024-001",
+          "date_filed": "2024-02-05",
+          "document_number": "12",
+          "source_url": "file:///exports/tyler/notice.pdf"
+        },
+        "confidence": 1.0
+      },
+      {
+        "id": "docket_dataset_tyler_2024_001:doc_1:document",
+        "type": "document",
+        "label": "docket_dataset_tyler_2024_001:doc_1",
+        "properties": {
+          "has_header": false,
+          "court_line_count": 0,
+          "party_line_count": 0,
+          "title_line_count": 0,
+          "section_count": 0,
+          "section_kinds": [],
+          "numbered_paragraph_count": 0,
+          "bullet_count": 0,
+          "code_block_count": 0,
+          "all_caps_heading_count": 0,
+          "title": ""
+        },
+        "confidence": 1.0
+      }
+    ],
+    "relationships": [
+      {
+        "id": "docket_dataset_tyler_2024_001:rel:docket_contains:doc_1",
+        "source": "docket_dataset_tyler_2024_001:docket",
+        "target": "docket_dataset_tyler_2024_001:document:doc_1",
+        "type": "CONTAINS_DOCUMENT",
+        "properties": {},
+        "confidence": 1.0,
+        "bidirectional": false
+      },
+      {
+        "id": "docket_dataset_tyler_2024_001:document:doc_1:rel:describes:docket_dataset_tyler_2024_001_doc_1_document",
+        "source": "docket_dataset_tyler_2024_001:document:doc_1",
+        "target": "docket_dataset_tyler_2024_001:doc_1:document",
+        "type": "DESCRIBES",
+        "properties": {},
+        "confidence": 1.0,
+        "bidirectional": false
+      }
+    ],
+    "properties": {},
+    "source": "docket_dataset_tyler_2024_001",
+    "created_at": "2026-04-17T23:26:27.445083",
+    "schema_version": "1.0"
+  },
+  "deontic_graph": {
+    "metadata": {
+      "created_at": "2026-04-17T23:26:27.445130+00:00",
+      "last_updated": "2026-04-17T23:26:27.445135+00:00",
+      "version": "1.0"
+    },
+    "nodes": {},
+    "rules": {},
+    "summary": {
+      "total_nodes": 0,
+      "total_rules": 0,
+      "active_rule_count": 0,
+      "inactive_rule_count": 0,
+      "node_types": {},
+      "modalities": {},
+      "active_modalities": {},
+      "governed_target_count": 0
+    }
+  },
+  "deontic_triggers": {
+    "summary": {
+      "entry_count": 0,
+      "pending_analysis_count": 0,
+      "parties_requiring_analysis": [],
+      "authority_trigger_count": 0,
+      "analyzed_party_count": 0,
+      "rule_count_by_party": {}
+    },
+    "entries": [],
+    "party_analysis": {}
+  },
+  "proof_assistant": {
+    "dataset_id": "docket_dataset_tyler_2024_001",
+    "docket_id": "TYLER-2024-001",
+    "case_name": "Doe v. Example",
+    "court": "State Court",
+    "agenda": [],
+    "temporal_fol": {
+      "backend": "temporal_deontic_first_order_logic",
+      "docket_id": "TYLER-2024-001",
+      "facts": [
+        "Filed(doc_1, 2024-02-05)."
+      ],
+      "formulas": []
+    },
+    "deontic_temporal_first_order_logic": {
+      "backend": "temporal_deontic_first_order_logic",
+      "docket_id": "TYLER-2024-001",
+      "facts": [
+        "Filed(doc_1, 2024-02-05)."
+      ],
+      "formulas": []
+    },
+    "deontic_cognitive_event_calculus": {
+      "backend": "deontic_cognitive_event_calculus",
+      "docket_id": "TYLER-2024-001",
+      "events": [
+        {
+          "event_id": "filing_doc_1",
+          "kind": "document_filed",
+          "time": "2024-02-05"
+        }
+      ],
+      "formulas": [
+        "Happens(DocumentFiled(doc_1), 2024-02-05)."
+      ]
+    },
+    "knowledge_graph": {
+      "entities": [
+        {
+          "id": "docket_dataset_tyler_2024_001:proof:docket",
+          "type": "docket",
+          "label": "Doe v. Example",
+          "properties": {
+            "docket_id": "TYLER-2024-001",
+            "court": "State Court"
+          },
+          "confidence": 1.0
+        },
+        {
+          "id": "docket_dataset_tyler_2024_001:proof:assistant",
+          "type": "proof_assistant",
+          "label": "Agentic proof assistant",
+          "properties": {
+            "dataset_id": "docket_dataset_tyler_2024_001"
+          },
+          "confidence": 1.0
+        },
+        {
+          "id": "docket_dataset_tyler_2024_001:docket",
+          "type": "docket",
+          "label": "Doe v. Example",
+          "properties": {
+            "docket_id": "TYLER-2024-001",
+            "court": "State Court"
+          },
+          "confidence": 1.0
+        },
+        {
+          "id": "docket_dataset_tyler_2024_001:document:doc_1",
+          "type": "docket_document",
+          "label": "Notice of Hearing",
+          "properties": {
+            "document_id": "doc_1",
+            "docket_id": "TYLER-2024-001",
+            "date_filed": "2024-02-05",
+            "document_number": "12",
+            "source_url": "file:///exports/tyler/notice.pdf"
+          },
+          "confidence": 1.0
+        },
+        {
+          "id": "docket_dataset_tyler_2024_001:doc_1:document",
+          "type": "document",
+          "label": "docket_dataset_tyler_2024_001:doc_1",
+          "properties": {
+            "has_header": false,
+            "court_line_count": 0,
+            "party_line_count": 0,
+            "title_line_count": 0,
+            "section_count": 0,
+            "section_kinds": [],
+            "numbered_paragraph_count": 0,
+            "bullet_count": 0,
+            "code_block_count": 0,
+            "all_caps_heading_count": 0,
+            "title": ""
+          },
+          "confidence": 1.0
+        }
+      ],
+      "relationships": [
+        {
+          "id": "docket_dataset_tyler_2024_001:proof:assistant:monitors",
+          "source": "docket_dataset_tyler_2024_001:proof:assistant",
+          "target": "docket_dataset_tyler_2024_001:proof:docket",
+          "type": "MONITORS",
+          "properties": {},
+          "confidence": 1.0,
+          "bidirectional": false
+        },
+        {
+          "id": "docket_dataset_tyler_2024_001:rel:docket_contains:doc_1",
+          "source": "docket_dataset_tyler_2024_001:docket",
+          "target": "docket_dataset_tyler_2024_001:document:doc_1",
+          "type": "CONTAINS_DOCUMENT",
+          "properties": {},
+          "confidence": 1.0,
+          "bidirectional": false
+        },
+        {
+          "id": "docket_dataset_tyler_2024_001:document:doc_1:rel:describes:docket_dataset_tyler_2024_001_doc_1_document",
+          "source": "docket_dataset_tyler_2024_001:document:doc_1",
+          "target": "docket_dataset_tyler_2024_001:doc_1:document",
+          "type": "DESCRIBES",
+          "properties": {},
+          "confidence": 1.0,
+          "bidirectional": false
+        }
+      ],
+      "properties": {},
+      "source": "docket_dataset_tyler_2024_001:proof_assistant",
+      "created_at": "2026-04-17T23:26:27.446224",
+      "schema_version": "1.0"
+    },
+    "frames": {
+      "docket_dataset_tyler_2024_001:case": {
+        "name": "Docket case",
+        "slots": {
+          "case_name": [
+            {
+              "value": "Doe v. Example",
+              "sources": [
+                "dataset"
+              ]
+            }
+          ],
+          "court": [
+            {
+              "value": "State Court",
+              "sources": [
+                "dataset"
+              ]
+            }
+          ],
+          "docket_id": [
+            {
+              "value": "TYLER-2024-001",
+              "sources": [
+                "dataset"
+              ]
+            }
+          ]
+        }
+      },
+      "docket_dataset_tyler_2024_001:document:doc_1": {
+        "name": "Docket document",
+        "slots": {
+          "date_filed": [
+            {
+              "value": "2024-02-05",
+              "sources": [
+                "document"
+              ]
+            }
+          ],
+          "title": [
+            {
+              "value": "Notice of Hearing",
+              "sources": [
+                "document"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "frame_logic": {
+      "docket_dataset_tyler_2024_001:case": {
+        "name": "Docket case",
+        "slots": {
+          "case_name": [
+            {
+              "value": "Doe v. Example",
+              "sources": [
+                "dataset"
+              ]
+            }
+          ],
+          "court": [
+            {
+              "value": "State Court",
+              "sources": [
+                "dataset"
+              ]
+            }
+          ],
+          "docket_id": [
+            {
+              "value": "TYLER-2024-001",
+              "sources": [
+                "dataset"
+              ]
+            }
+          ]
+        }
+      },
+      "docket_dataset_tyler_2024_001:document:doc_1": {
+        "name": "Docket document",
+        "slots": {
+          "date_filed": [
+            {
+              "value": "2024-02-05",
+              "sources": [
+                "document"
+              ]
+            }
+          ],
+          "title": [
+            {
+              "value": "Notice of Hearing",
+              "sources": [
+                "document"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "extractors": {
+      "deontic_temporal_first_order_logic": {
+        "name": "deontic_temporal_first_order_logic",
+        "status": "ready",
+        "formula_count": 0,
+        "fact_count": 1
+      },
+      "knowledge_graph": {
+        "name": "knowledge_graph",
+        "status": "ready",
+        "entity_count": 5,
+        "relationship_count": 3
+      },
+      "deontic_cognitive_event_calculus": {
+        "name": "deontic_cognitive_event_calculus",
+        "status": "ready",
+        "event_count": 1,
+        "formula_count": 1
+      },
+      "frame_logic": {
+        "name": "frame_logic",
+        "status": "ready",
+        "frame_count": 2
+      },
+      "trigger_monitor": {
+        "name": "trigger_monitor",
+        "status": "ready",
+        "work_item_count": 0,
+        "pending_work_item_count": 0
+      },
+      "proof_tactician": {
+        "name": "proof_tactician",
+        "status": "ready",
+        "plan_count": 0
+      }
+    },
+    "trigger_state": {
+      "summary": {
+        "entry_count": 0,
+        "pending_analysis_count": 0,
+        "parties_requiring_analysis": [],
+        "authority_trigger_count": 0,
+        "analyzed_party_count": 0,
+        "rule_count_by_party": {}
+      },
+      "entries": [],
+      "party_analysis": {}
+    },
+    "tactician": {
+      "dataset_id": "docket_dataset_tyler_2024_001",
+      "docket_id": "TYLER-2024-001",
+      "plan_count": 0,
+      "plans": [],
+      "summary": {
+        "local_first": true,
+        "parser_stage_enabled": true,
+        "search_engine_fallback_enabled": true,
+        "work_item_count": 0,
+        "starting_source_types": []
+      }
+    },
+    "party_analysis": {},
+    "summary": {
+      "work_item_count": 0,
+      "pending_work_item_count": 0,
+      "party_count": 0,
+      "frame_count": 2,
+      "temporal_formula_count": 0,
+      "dcec_formula_count": 1,
+      "tactician_plan_count": 0,
+      "proof_knowledge_graph_entity_count": 5,
+      "proof_knowledge_graph_relationship_count": 3,
+      "extractor_count": 6
+    },
+    "metadata": {
+      "built_at": "2026-04-17T23:26:27.446243+00:00",
+      "artifact_version": "1.1",
+      "agent_kind": "docket_proof_assistant",
+      "agent_mode": "triggered_refresh"
+    }
+  },
+  "bm25_index": {
+    "backend": "local_bm25",
+    "document_count": 1,
+    "documents": [
+      {
+        "id": "doc_1",
+        "document_id": "doc_1",
+        "title": "Notice of Hearing",
+        "text": "Notice text from a normalized Tyler Host export.",
+        "metadata": {
+          "docket_id": "TYLER-2024-001",
+          "title": "Notice of Hearing",
+          "date_filed": "2024-02-05",
+          "document_number": "12"
+        }
+      }
+    ],
+    "stats": {
+      "average_document_tokens": 14.0,
+      "document_count": 1
+    },
+    "index_id": "docket_dataset_tyler_2024_001_bm25"
+  },
+  "vector_index": {
+    "index_id": "docket_dataset_tyler_2024_001_vector",
+    "dimension": 32,
+    "metric": "cosine",
+    "backend": "local_hashed_term_projection",
+    "provider": "local",
+    "model_name": "",
+    "device": "",
+    "batch_size": null,
+    "parallel_batches": null,
+    "chunking_strategy": "",
+    "chunk_size": null,
+    "chunk_overlap": null,
+    "chunk_counts": null,
+    "vector_count": 1,
+    "document_count": 1,
+    "items": [
+      {
+        "document_id": "doc_1",
+        "title": "Notice of Hearing",
+        "date_filed": "2024-02-05",
+        "document_number": "12",
+        "vector": [
+          0.0,
+          0.31622776601683794,
+          0.0,
+          -0.31622776601683794,
+          0.0,
+          -0.31622776601683794,
+          0.0,
+          0.0,
+          0.31622776601683794,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.6324555320336759,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.31622776601683794,
+          -0.31622776601683794,
+          0.0
+        ],
+        "norm": 1.0
+      }
+    ]
+  },
+  "metadata": {
+    "imported_at": "2026-04-17T23:26:27.446257+00:00",
+    "document_count": 1,
+    "artifact_provenance": {
+      "knowledge_graph": {
+        "backend": "parsed_document_structure_graph",
+        "is_mock": false
+      },
+      "bm25_index": {
+        "backend": "local_bm25",
+        "is_mock": false
+      },
+      "vector_index": {
+        "backend": "local_hashed_term_projection",
+        "provider": "local",
+        "model_name": "",
+        "is_mock": false
+      },
+      "formal_logic": {},
+      "router_enrichment": {},
+      "linked_authorities": {
+        "backend": "bluebook_citation_linker",
+        "is_mock": false,
+        "linked_authority_count": 0,
+        "matched_linked_authority_count": 0,
+        "unmatched_linked_authority_count": 0,
+        "citation_recovery_candidate_count": 0,
+        "citation_recovery_candidates": [],
+        "documents_with_linked_citations": 0,
+        "citation_resolution_ratio": 1.0,
+        "document_resolution_ratio": 1.0,
+        "fully_resolved_document_count": 0,
+        "citation_source_audit": {
+          "document_count": 1,
+          "documents_with_citations": 0,
+          "fully_resolved_document_count": 0,
+          "citation_count": 0,
+          "matched_citation_count": 0,
+          "unmatched_citation_count": 0,
+          "error_count": 0,
+          "citation_resolution_ratio": 1.0,
+          "document_resolution_ratio": 1.0,
+          "documents": [
+            {
+              "document_id": "doc_1",
+              "document_title": "Notice of Hearing",
+              "citation_count": 0,
+              "matched_citation_count": 0,
+              "unmatched_citation_count": 0,
+              "all_citations_resolved": false,
+              "citations": []
+            }
+          ],
+          "unresolved_documents": [],
+          "errored_documents": [],
+          "source": "bluebook_citation_resolution_audit"
+        }
+      },
+      "retrieval_index": {
+        "selected_document_count": 1,
+        "excluded_document_count": 0
+      }
+    },
+    "artifact_status": {
+      "knowledge_graph": true,
+      "deontic_graph": false,
+      "deontic_triggers": false,
+      "proof_assistant": false,
+      "bm25_index": true,
+      "vector_index": true,
+      "formal_logic": false,
+      "router_enrichment": false,
+      "linked_authorities": false,
+      "retrieval_index": true
+    },
+    "source_type": "tyler_host",
+    "case_number": "TYLER-2024-001",
+    "linked_authorities": {
+      "linked_authority_count": 0,
+      "matched_linked_authority_count": 0,
+      "unmatched_linked_authority_count": 0,
+      "citation_recovery_candidate_count": 0,
+      "citation_recovery_candidates": [],
+      "documents_with_linked_citations": 0,
+      "citation_resolution_ratio": 1.0,
+      "document_resolution_ratio": 1.0,
+      "fully_resolved_document_count": 0,
+      "citation_source_audit": {
+        "document_count": 1,
+        "documents_with_citations": 0,
+        "fully_resolved_document_count": 0,
+        "citation_count": 0,
+        "matched_citation_count": 0,
+        "unmatched_citation_count": 0,
+        "error_count": 0,
+        "citation_resolution_ratio": 1.0,
+        "document_resolution_ratio": 1.0,
+        "documents": [
+          {
+            "document_id": "doc_1",
+            "document_title": "Notice of Hearing",
+            "citation_count": 0,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 0,
+            "all_citations_resolved": false,
+            "citations": []
+          }
+        ],
+        "unresolved_documents": [],
+        "errored_documents": [],
+        "source": "bluebook_citation_resolution_audit"
+      }
+    },
+    "upstream_source_type": "tyler_host",
+    "source_path": "tests/fixtures/legal_data/normalized_tyler_host_export.json"
+  }
+}

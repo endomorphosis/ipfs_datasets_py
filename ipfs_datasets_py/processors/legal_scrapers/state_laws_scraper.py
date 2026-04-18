@@ -564,6 +564,47 @@ def _get_official_state_url(state_code: str) -> str:
     return official_urls.get(state_code, f"https://legislature.{state_code.lower()}.gov/")
 
 
+def build_state_law_section_url(
+    state_code: str,
+    section: str,
+    *,
+    code_name: Optional[str] = None,
+    preferred_host: Optional[str] = None,
+) -> str:
+    """Build an official section URL for recovery-backed state-law scraping."""
+    state = str(state_code or "").strip().upper()
+    normalized_section = str(section or "").strip().strip(".")
+    code_hint = str(code_name or "").strip()
+    host_hint = str(preferred_host or "").strip().lower()
+    if not state or not normalized_section:
+        return ""
+
+    if state == "MN" or "revisor.mn.gov" in host_hint:
+        return f"https://www.revisor.mn.gov/statutes/cite/{normalized_section}"
+    if state == "OR" or "oregon.public.law" in host_hint:
+        return f"https://oregon.public.law/statutes/ors_{normalized_section}"
+    if state == "CA" or "leginfo.legislature.ca.gov" in host_hint:
+        law_code = "FAM"
+        if re.search(r"\bPenal\s+Code\b", code_hint, re.IGNORECASE):
+            law_code = "PEN"
+        elif re.search(r"\bCiv\.\s+Code\b", code_hint, re.IGNORECASE):
+            law_code = "CIV"
+        return (
+            "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml"
+            f"?lawCode={law_code}&sectionNum={normalized_section}"
+        )
+    if state == "NY" or "nysenate.gov" in host_hint:
+        law_code = "FCT" if re.search(r"\bFam\.\s+Ct\.\s+Act\b", code_hint, re.IGNORECASE) else "DOM"
+        return f"https://www.nysenate.gov/legislation/laws/{law_code}/{normalized_section}"
+    if state == "TX" or "statutes.capitol.texas.gov" in host_hint:
+        law_code = "FA"
+        if re.search(r"\bPenal\s+Code\b", code_hint, re.IGNORECASE):
+            law_code = "PE"
+        chapter = normalized_section.split(".", 1)[0]
+        return f"https://statutes.capitol.texas.gov/Docs/{law_code}/htm/{law_code}.{chapter}.htm#{normalized_section}"
+    return ""
+
+
 def _resolve_state_output_dir(output_dir: Optional[str] = None) -> Path:
     if output_dir:
         return Path(output_dir).expanduser().resolve()
@@ -1291,6 +1332,7 @@ def _identify_legal_area(text: str, legal_areas: Optional[List[str]] = None) -> 
 
 
 __all__ = [
+    "build_state_law_section_url",
     "list_state_jurisdictions",
     "scrape_state_laws",
 ]

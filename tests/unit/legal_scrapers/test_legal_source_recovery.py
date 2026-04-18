@@ -357,6 +357,12 @@ async def test_legal_source_recovery_times_out_multi_engine_search_and_still_wri
 
 
 def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states():
+    mn_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Minnesota Statutes section 518.17",
+        normalized_citation="Minnesota Statutes section 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+    )
     ca_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
         citation_text="Cal. Fam. Code § 3011",
         normalized_citation="Cal. Fam. Code § 3011",
@@ -379,9 +385,10 @@ def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states()
     assert ca_results[0]["url"] == (
         "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=FAM&sectionNum=3011"
     )
+    assert mn_results[0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
     assert ny_results[0]["url"] == "https://www.nysenate.gov/legislation/laws/FCT/651"
     assert tx_results[0]["url"] == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
-    assert all(result["source"] == "citation_url_hint" for result in [ca_results[0], ny_results[0], tx_results[0]])
+    assert all(result["source"] == "citation_url_hint" for result in [mn_results[0], ca_results[0], ny_results[0], tx_results[0]])
 
 
 def test_legal_source_recovery_citation_url_hints_cover_federal_citations():
@@ -728,3 +735,47 @@ async def test_common_crawl_fallback_prioritizes_citation_hint_domains(monkeypat
     assert observed["domain"] == "www.revisor.mn.gov"
     assert backend_status["common_crawl_domains"] == ["www.revisor.mn.gov"]
     assert rows[0]["url"] == "https://www.revisor.mn.gov/statutes/cite/518.17"
+
+
+@pytest.mark.anyio
+async def test_legal_source_recovery_can_skip_live_search_for_common_crawl_fuzz(monkeypatch):
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", "1")
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_COMMON_CRAWL_ALWAYS", "1")
+
+    from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
+
+    class _FailingLiveSearcher:
+        def search(self, **kwargs):
+            raise AssertionError("live search should be skipped")
+
+    class _FakeCommonCrawlSearchEngine:
+        def __init__(self, **kwargs):
+            pass
+
+        def is_available(self):
+            return True
+
+        def search_domain(self, domain, max_matches=100, collection=None, **kwargs):
+            return [{"url": f"https://{domain}/statutes/cite/518.17", "timestamp": "20240101000000"}]
+
+    async def _failing_multi_engine(self, **kwargs):
+        raise AssertionError("multi-engine search should be skipped")
+
+    monkeypatch.setattr(common_crawl_integration, "CommonCrawlSearchEngine", _FakeCommonCrawlSearchEngine)
+    monkeypatch.setattr(LegalSourceRecoveryWorkflow, "_multi_engine_search", _failing_multi_engine)
+
+    workflow = LegalSourceRecoveryWorkflow(live_searcher=_FailingLiveSearcher())
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        archive_top_k=0,
+    )
+
+    assert result.search_backend_status["live_search_skipped"] is True
+    assert result.search_backend_status["live_search_error"] == "live_search_skipped"
+    assert result.search_backend_status["multi_engine_error"] == "multi_engine_skipped"
+    assert result.search_backend_status["common_crawl_used"] is True
+    assert result.search_backend_status["common_crawl_domains"] == ["www.revisor.mn.gov", "revisor.mn.gov", "mncourts.gov"]

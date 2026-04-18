@@ -472,6 +472,20 @@ def test_citation_extractor_extracts_bluebook_admin_and_court_rules():
     assert state_citations[1].section == "5.010"
 
 
+def test_citation_extractor_extracts_long_form_minnesota_statutes():
+    extractor = CitationExtractor()
+    citations = extractor.extract_citations(
+        "The declaration references Minnesota Statutes section 518.17 in prose form."
+    )
+
+    state_citations = [citation for citation in citations if citation.type == "state_statute"]
+    assert len(state_citations) == 1
+    assert state_citations[0].text == "Minnesota Statutes section 518.17"
+    assert state_citations[0].jurisdiction == "MN"
+    assert state_citations[0].metadata["code_name"] == "Statutes"
+    assert state_citations[0].section == "518.17"
+
+
 def test_citation_extractor_extracts_family_code_and_act_state_citations():
     extractor = CitationExtractor()
     citations = extractor.extract_citations(

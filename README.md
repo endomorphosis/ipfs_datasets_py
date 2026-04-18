@@ -181,6 +181,7 @@ For local export folders, the docket CLI can ingest `.txt`, `.md`, `.json`, and 
 Use `--source-type-hint pacer` or `--source-type-hint tyler_host` with `--input-type auto` when a normalized JSON export does not already carry a `source_type` field.
 
 See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
+See `docs/guides/legal_data/DOCKET_SOURCE_TEMPLATE_GUIDE.md` for public PACER and portal-parser template references that can be used when building raw-source adapters.
 
 ### Workspace Dataset Bundles
 

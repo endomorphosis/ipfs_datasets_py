@@ -1887,6 +1887,38 @@ def test_ingest_docket_dataset_dispatches_directory_import(tmp_path, monkeypatch
     assert captured["court"] == "D. Example"
 
 
+def test_ingest_docket_dataset_loads_normalized_pacer_fixture() -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "normalized_pacer_export.json"
+
+    dataset = ingest_docket_dataset(
+        str(fixture_path),
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.docket_id == "1:24-cv-1001"
+    assert dataset.case_name == "Doe v. Example"
+    assert dataset.metadata["source_type"] == "json_file"
+    assert dataset.metadata["case_number"] == "1:24-cv-1001"
+    assert dataset.documents[0].title == "Complaint"
+
+
+def test_builder_loads_normalized_tyler_host_fixture() -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "normalized_tyler_host_export.json"
+
+    dataset = DocketDatasetBuilder().build_from_json_file(
+        fixture_path,
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.docket_id == "TYLER-2024-001"
+    assert dataset.case_name == "Doe v. Example"
+    assert dataset.metadata["source_type"] == "json_file"
+    assert dataset.metadata["case_number"] == "TYLER-2024-001"
+    assert dataset.documents[0].title == "Notice of Hearing"
+
+
 def test_docket_dataset_can_be_packaged_as_linked_parquet_and_car_bundle(tmp_path, monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
     dataset = DocketDatasetBuilder().build_from_docket(

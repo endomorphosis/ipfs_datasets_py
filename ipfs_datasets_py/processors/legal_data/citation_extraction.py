@@ -91,6 +91,7 @@ BLUEBOOK_STATE_TO_CODE = {
     "Me.": "ME",
     "Mich.": "MI",
     "Minn.": "MN",
+    "Minnesota": "MN",
     "Miss.": "MS",
     "Mo.": "MO",
     "Mont.": "MT",
@@ -132,7 +133,7 @@ STATE_STATUTE_PATTERNS = [
     r'Codified\s+Laws|Fam\.\s+Code|Civ\.\s+Code|Penal\s+Code|'
     r'Admin\.\s+Code|Court\s+Rules?|Fam\.\s+Ct\.\s+Act|[A-Z][A-Za-z.\'/-]*\s+Law|'
     r'R\.\s+[A-Za-z.\s]+)'
-    r')\s+§?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
+    r')\s+(?:§|sec\.?|section)?\s*(?P<section>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
     r'(?P<text>(?P<state_shorthand>ORS)\s+(?P<section_shorthand>\d[\w.:\-]*(?:\([a-z0-9]+\))*))',
 ]
 

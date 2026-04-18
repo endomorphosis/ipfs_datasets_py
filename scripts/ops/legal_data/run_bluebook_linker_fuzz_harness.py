@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -57,6 +58,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--sampling-shuffle-seed", type=int, default=0, help="Deterministic shuffle seed for stratified seeded sampling.")
     parser.add_argument("--recovery-max-candidates", type=int, default=8, help="Max live/archive candidates per unresolved citation.")
     parser.add_argument("--recovery-archive-top-k", type=int, default=3, help="How many recovered URLs to archive.")
+    parser.add_argument(
+        "--skip-live-search",
+        action="store_true",
+        help="Skip live web search during recovery so fuzz runs can isolate citation hints/Common Crawl fallback.",
+    )
     parser.add_argument("--max-acceptable-failure-rate", type=float, default=0.10, help="Failure-rate threshold used for corpus-level actionability.")
     parser.add_argument("--min-actionable-failures", type=int, default=2, help="Minimum failing samples before a corpus/cluster becomes actionable.")
     parser.add_argument("--merge-recovered-rows", action="store_true", help="Merge produced recovery manifests into local canonical parquet files.")
@@ -72,6 +78,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     input_candidates = _read_input_candidates(args.input_candidates)
     input_generate = (lambda *_, **__: input_candidates) if input_candidates is not None else None
+    if args.skip_live_search:
+        os.environ["LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"] = "1"
 
     run = asyncio.run(
         run_bluebook_linker_fuzz_harness(

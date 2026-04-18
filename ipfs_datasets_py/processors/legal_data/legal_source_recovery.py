@@ -568,12 +568,14 @@ class LegalSourceRecoveryWorkflow:
         rows: List[Dict[str, Any]] = []
 
         if corpus == "us_code":
+            from ..legal_scrapers.federal_scrapers.us_code_scraper import build_public_law_url, build_uscode_section_url
+
             usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*([0-9A-Za-z][\w\-]*(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
             if usc_match:
                 title, section = usc_match.groups()
                 rows.append(
                     {
-                        "url": f"https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title{title}-section{section}",
+                        "url": build_uscode_section_url(title, section),
                         "title": f"{title} U.S.C. section {section}",
                         "source": "citation_url_hint",
                         "source_type": "current",
@@ -585,7 +587,7 @@ class LegalSourceRecoveryWorkflow:
                 congress, law_number = public_law_match.groups()
                 rows.append(
                     {
-                        "url": f"https://www.congress.gov/public-law/{congress}th-congress/{law_number}",
+                        "url": build_public_law_url(congress, law_number),
                         "title": f"Public Law {congress}-{law_number}",
                         "source": "citation_url_hint",
                         "source_type": "current",
@@ -595,12 +597,17 @@ class LegalSourceRecoveryWorkflow:
             return rows
 
         if corpus == "federal_register":
+            from ..legal_scrapers.federal_scrapers.federal_register_scraper import (
+                build_ecfr_section_url,
+                build_federal_register_citation_url,
+            )
+
             cfr_match = re.search(r"\b([0-9]+)\s+C\.?F\.?R\.?\s+§?\s*([0-9]+(?:\.[0-9]+)?(?:\([a-z0-9]+\))*)", text, re.IGNORECASE)
             if cfr_match:
                 title, section = cfr_match.groups()
                 rows.append(
                     {
-                        "url": f"https://www.ecfr.gov/current/title-{title}/section-{section}",
+                        "url": build_ecfr_section_url(title, section),
                         "title": f"{title} C.F.R. section {section}",
                         "source": "citation_url_hint",
                         "source_type": "current",
@@ -612,7 +619,7 @@ class LegalSourceRecoveryWorkflow:
                 volume, page = fr_match.groups()
                 rows.append(
                     {
-                        "url": f"https://www.federalregister.gov/citation/{volume}-FR-{page}",
+                        "url": build_federal_register_citation_url(volume, page),
                         "title": f"{volume} FR {page}",
                         "source": "citation_url_hint",
                         "source_type": "current",
@@ -625,8 +632,8 @@ class LegalSourceRecoveryWorkflow:
             return []
 
         section_match = re.search(
-            r"\b(?:Minn\.\s+Stat\.|ORS|Cal\.\s+[A-Za-z.\s]+Code|N\.Y\.\s+[A-Za-z.\s]+(?:Law|Act)|Tex\.\s+[A-Za-z.\s]+Code)"
-            r"\s*(?:§|sec\.?|section)?\s*([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
+            r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes|ORS|Cal\.\s+[A-Za-z.\s]+Code|N\.Y\.\s+[A-Za-z.\s]+(?:Law|Act)|Tex\.\s+[A-Za-z.\s]+Code)"
+            r"\s*(?:§|section|sec\.?)?\s*([0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
             text,
             re.IGNORECASE,
         )
@@ -634,10 +641,12 @@ class LegalSourceRecoveryWorkflow:
             return []
 
         section = section_match.group(1).strip(".")
-        if state == "MN" or re.search(r"\bMinn\.\s+Stat\.", text, re.IGNORECASE):
+        from ..legal_scrapers.state_laws_scraper import build_state_law_section_url
+
+        if state == "MN" or re.search(r"\b(?:Minn\.\s+Stat\.|Minnesota\s+Statutes)", text, re.IGNORECASE):
             rows.append(
                 {
-                    "url": f"https://www.revisor.mn.gov/statutes/cite/{section}",
+                    "url": build_state_law_section_url("MN", section, code_name="Stat."),
                     "title": f"Minnesota Statutes section {section}",
                     "source": "citation_url_hint",
                     "source_type": "current",
@@ -649,7 +658,7 @@ class LegalSourceRecoveryWorkflow:
             rows.extend(
                 [
                     {
-                        "url": f"https://oregon.public.law/statutes/ors_{section}",
+                        "url": build_state_law_section_url("OR", section, code_name="ORS"),
                         "title": f"Oregon Revised Statutes {section}",
                         "source": "citation_url_hint",
                         "source_type": "current",
@@ -666,13 +675,16 @@ class LegalSourceRecoveryWorkflow:
             )
         if state == "CA" or re.search(r"\bCal\.", text, re.IGNORECASE):
             law_code = "FAM"
+            code_name = "Fam. Code"
             if re.search(r"\bPenal\s+Code\b", text, re.IGNORECASE):
                 law_code = "PEN"
+                code_name = "Penal Code"
             elif re.search(r"\bCiv\.\s+Code\b", text, re.IGNORECASE):
                 law_code = "CIV"
+                code_name = "Civ. Code"
             rows.append(
                 {
-                    "url": f"https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode={law_code}&sectionNum={section}",
+                    "url": build_state_law_section_url("CA", section, code_name=code_name),
                     "title": f"California {law_code} section {section}",
                     "source": "citation_url_hint",
                     "source_type": "current",
@@ -681,9 +693,10 @@ class LegalSourceRecoveryWorkflow:
             )
         if state == "NY" or re.search(r"\bN\.Y\.", text, re.IGNORECASE):
             law_code = "FCT" if re.search(r"\bFam\.\s+Ct\.\s+Act\b", text, re.IGNORECASE) else "DOM"
+            code_name = "Fam. Ct. Act" if law_code == "FCT" else "Domestic Relations Law"
             rows.append(
                 {
-                    "url": f"https://www.nysenate.gov/legislation/laws/{law_code}/{section}",
+                    "url": build_state_law_section_url("NY", section, code_name=code_name),
                     "title": f"New York {law_code} section {section}",
                     "source": "citation_url_hint",
                     "source_type": "current",
@@ -692,12 +705,13 @@ class LegalSourceRecoveryWorkflow:
             )
         if state == "TX" or re.search(r"\bTex\.", text, re.IGNORECASE):
             law_code = "FA"
+            code_name = "Fam. Code"
             if re.search(r"\bPenal\s+Code\b", text, re.IGNORECASE):
                 law_code = "PE"
-            chapter = section.split(".", 1)[0]
+                code_name = "Penal Code"
             rows.append(
                 {
-                    "url": f"https://statutes.capitol.texas.gov/Docs/{law_code}/htm/{law_code}.{chapter}.htm#{section}",
+                    "url": build_state_law_section_url("TX", section, code_name=code_name),
                     "title": f"Texas {law_code} section {section}",
                     "source": "citation_url_hint",
                     "source_type": "current",
@@ -894,9 +908,14 @@ class LegalSourceRecoveryWorkflow:
         backend_status["multi_engine_used"] = False
         backend_status["common_crawl_used"] = False
         backend_status["engines_attempted"] = []
+        skip_live_search = _env_flag("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", default=False)
+        backend_status["live_search_skipped"] = bool(skip_live_search)
 
         effective_live_searcher = self._live_searcher or getattr(searcher, "legal_searcher", None)
-        if effective_live_searcher is not None:
+        if skip_live_search:
+            backend_status["live_search_error"] = "live_search_skipped"
+            backend_status["multi_engine_error"] = "multi_engine_skipped"
+        elif effective_live_searcher is not None:
             try:
                 live_payload = await self._run_sync_with_timeout(
                     effective_live_searcher.search,
@@ -912,7 +931,7 @@ class LegalSourceRecoveryWorkflow:
                 live_results = []
                 backend_status["live_search_error"] = "live_search_failed"
 
-        if not live_results:
+        if not live_results and not skip_live_search:
             try:
                 engines: List[str] = []
                 # Avoid immediately reusing Brave in the multi-engine fallback if the

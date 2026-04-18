@@ -3,6 +3,24 @@ from ipfs_datasets_py.processors.legal_scrapers.federal_scrapers.federal_law_scr
     _extract_rule_links,
     _extract_rule_number,
 )
+from ipfs_datasets_py.processors.legal_scrapers.federal_scrapers.federal_register_scraper import (
+    build_ecfr_section_url,
+    build_federal_register_citation_url,
+)
+from ipfs_datasets_py.processors.legal_scrapers.federal_scrapers.us_code_scraper import (
+    build_public_law_url,
+    build_uscode_section_url,
+)
+
+
+def test_federal_scrapers_build_recovery_citation_urls():
+    assert (
+        build_uscode_section_url("42", "1983")
+        == "https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1983"
+    )
+    assert build_public_law_url("117", "58") == "https://www.congress.gov/public-law/117th-congress/58"
+    assert build_ecfr_section_url("29", "1601.1") == "https://www.ecfr.gov/current/title-29/section-1601.1"
+    assert build_federal_register_citation_url("88", "12345") == "https://www.federalregister.gov/citation/88-FR-12345"
 
 
 def test_extract_rule_links_filters_and_deduplicates():
