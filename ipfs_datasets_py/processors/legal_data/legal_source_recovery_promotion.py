@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import shlex
 from typing import Any, Dict, List, Mapping, Optional
@@ -25,6 +26,24 @@ _HF_PARQUET_PATH_ALIASES = {
         "uscode_parquet/laws.parquet",
     ),
 }
+
+
+def _resolve_hf_token(hf_token: str | None = None) -> str | None:
+    explicit = str(hf_token or "").strip()
+    if explicit:
+        return explicit
+    for name in (
+        "HF_TOKEN",
+        "HUGGINGFACE_HUB_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HUGGINGFACE_API_TOKEN",
+        "HUGGINGFACE_API_KEY",
+        "IPFS_DATASETS_PY_HF_API_TOKEN",
+    ):
+        value = str(os.environ.get(name) or "").strip()
+        if value:
+            return value
+    return None
 
 
 def _normalize_rows_for_table(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -69,11 +88,12 @@ def _download_huggingface_parquet(
     if not repo_path.strip():
         raise ValueError("Hugging Face parquet path is required to hydrate a canonical parquet.")
 
+    token = _resolve_hf_token(hf_token)
     downloaded_path = hf_hub_download(
         repo_id=repo_id,
         filename=repo_path,
         repo_type="dataset",
-        token=hf_token or None,
+        token=token,
         revision=hf_revision or None,
         cache_dir=str(Path(hf_cache_dir).expanduser().resolve()) if hf_cache_dir else None,
         force_download=bool(force_download),
@@ -134,7 +154,8 @@ def _upload_huggingface_parquet(
     if not repo_path.strip():
         raise ValueError("Hugging Face parquet path is required to publish a merged parquet.")
 
-    api = HfApi(token=hf_token or None)
+    token = _resolve_hf_token(hf_token)
+    api = HfApi(token=token)
     upload_info = api.upload_file(
         path_or_fileobj=str(local_path_obj),
         path_in_repo=repo_path,
@@ -433,9 +454,19 @@ def merge_recovery_manifest_into_canonical_dataset(
                 )
             )
         except Exception as exc:
+            error_text = str(exc)
             return {
                 "status": "error",
-                "error": f"Unable to publish merged parquet to Hugging Face: {exc}",
+                "error": f"Unable to publish merged parquet to Hugging Face: {error_text}",
+                "publish_error": error_text,
+                "publish_error_hint": (
+                    "Hugging Face returned 403/Forbidden. Verify the token resolved from --hf-token, "
+                    "HF_TOKEN, HUGGINGFACE_HUB_TOKEN, HUGGINGFACEHUB_API_TOKEN, HUGGINGFACE_API_TOKEN, "
+                    "HUGGINGFACE_API_KEY, or IPFS_DATASETS_PY_HF_API_TOKEN has write permission to "
+                    f"dataset repo {hf_dataset_id!r}."
+                    if "403" in error_text or "forbidden" in error_text.lower()
+                    else ""
+                ),
                 "manifest_path": str(Path(manifest_path).expanduser().resolve()),
                 "promotion_output_dir": str(bundle.get("promotion_output_dir") or ""),
                 "target_local_parquet_path": str(target_path),

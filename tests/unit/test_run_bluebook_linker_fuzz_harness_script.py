@@ -30,6 +30,18 @@ class _FakeFuzzRun:
         "recovery_count": 1,
         "merged_recovery_count": 0,
         "coverage_by_corpus": {"actionable_corpora": ["state_laws"]},
+        "scraper_family_matrix": {
+            "missing_requested_corpora": ["state_admin_rules"],
+            "unmerged_recovery_corpora": ["us_code"],
+            "fully_merged_recovery_corpora": ["state_laws"],
+            "unpublished_hf_corpora": ["us_code"],
+            "published_hf_corpora": ["state_laws"],
+        },
+        "recovery_merge": {
+            "upload_ready_count": 2,
+            "published_merged_count": 1,
+            "publish_failure_count": 1,
+        },
         "failure_patch_clusters": [
             {
                 "corpus_key": "state_laws",
@@ -106,6 +118,14 @@ def test_run_bluebook_linker_fuzz_harness_script_prints_summary(tmp_path: Path, 
     assert "Executed 1 citation cases" in output
     assert "Recoveries: 1" in output
     assert "Actionable corpora: state_laws" in output
+    assert "Missing requested corpora: state_admin_rules" in output
+    assert "Unmerged recovery corpora: us_code" in output
+    assert "Fully merged recovery corpora: state_laws" in output
+    assert "Unpublished HF corpora: us_code" in output
+    assert "Published HF corpora: state_laws" in output
+    assert "HF upload-ready merges: 2" in output
+    assert "HF published merges: 1" in output
+    assert "HF publish failures: 1" in output
     assert "Top failure cluster: state_laws @ www.revisor.mn.gov" in output
     assert "Patch backlog: /tmp/fuzz-backlog.json" in output
 

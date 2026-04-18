@@ -147,6 +147,9 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     )
 
     assert manifest["pdf_count"] == 3
+    assert manifest["processed_pdf_count"] == 3
+    assert manifest["total_pdf_count"] == 3
+    assert manifest["remaining_pdf_count"] == 0
     assert manifest["matched_pdf_count"] == 2
     assert manifest["candidate_case_count"] == 1
     assert manifest["scan_started_at"].endswith("Z")
@@ -156,6 +159,7 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert manifest["scan_parameters"]["glob_pattern"] == "*.pdf"
     assert manifest["scan_parameters"]["include_bm25"] is True
     assert manifest["skipped_pdf_count"] == 3
+    assert manifest["duplicate_pdf_count"] == 0
     assert Path(manifest["manifest_path"]).exists()
 
     case_payload = manifest["cases"][0]
@@ -276,8 +280,12 @@ def test_manifest_summary_helper_reads_condensed_status(tmp_path: Path) -> None:
                 "output_dir": "/scan/out",
                 "manifest_path": str(manifest_path),
                 "pdf_count": 200,
+                "processed_pdf_count": 200,
+                "total_pdf_count": 250,
+                "remaining_pdf_count": 50,
                 "matched_pdf_count": 3,
                 "skipped_pdf_count": 5,
+                "duplicate_pdf_count": 2,
                 "candidate_case_count": 2,
                 "ocr_available": False,
                 "cases": [
@@ -301,6 +309,42 @@ def test_manifest_summary_helper_reads_condensed_status(tmp_path: Path) -> None:
     summary = summarize_scan_manifest(load_scan_manifest(manifest_path))
 
     assert summary["scan_status"] == "running"
+    assert summary["processed_pdf_count"] == 200
+    assert summary["total_pdf_count"] == 250
+    assert summary["remaining_pdf_count"] == 50
+    assert summary["duplicate_pdf_count"] == 2
     assert summary["candidate_case_count"] == 2
     assert summary["sample_cases"][0]["status"] == "candidate"
     assert summary["sample_cases"][0]["matched_relative_paths"] == ["a.pdf", "b.pdf"]
+
+
+def test_scan_hacc_pdfs_for_dockets_deduplicates_symlinked_pdfs(tmp_path: Path) -> None:
+    scan_root = tmp_path / "hacc"
+    original_pdf = scan_root / "case_a" / "complaint.pdf"
+    _write_pdf(
+        original_pdf,
+        [
+            "IN THE UNITED STATES DISTRICT COURT",
+            "FOR THE DISTRICT OF EXAMPLE",
+            "Case No. 2:25-cv-4004",
+            "Roe v. Example Holdings",
+            "Complaint for damages",
+        ],
+    )
+    duplicate_link = scan_root / "mirror" / "complaint-copy.pdf"
+    duplicate_link.parent.mkdir(parents=True, exist_ok=True)
+    os.symlink(original_pdf, duplicate_link)
+
+    manifest = scan_hacc_pdfs_for_dockets(
+        scan_root,
+        output_dir=tmp_path / "output",
+        include_vector_index=False,
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert manifest["pdf_count"] == 1
+    assert manifest["processed_pdf_count"] == 1
+    assert manifest["total_pdf_count"] == 1
+    assert manifest["duplicate_pdf_count"] == 1
+    assert manifest["matched_pdf_count"] == 1

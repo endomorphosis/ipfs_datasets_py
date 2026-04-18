@@ -10,6 +10,8 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
     NormalizedStatute,
 )
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska import AlaskaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas import ArkansasScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arizona import ArizonaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kentucky import KentuckyScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota import MinnesotaScraper
@@ -353,6 +355,70 @@ async def test_alaska_ajax_fetch_parser_builds_real_sections(monkeypatch) -> Non
     assert statutes[0].official_cite == "Alaska Stat. § 01.05.006"
     assert statutes[0].source_url == "https://www.akleg.gov/basis/statutes.asp#01.05.006"
     assert statutes[0].structured_data["source_kind"] == "official_alaska_statutes_ajax_html"
+
+
+@pytest.mark.anyio
+async def test_arizona_title_detail_parser_fetches_raw_section_docs(monkeypatch) -> None:
+    scraper = ArizonaScraper("AZ", "Arizona")
+
+    async def fake_fetch_html(url: str, timeout_seconds: int = 8) -> str:
+        if "arsDetail" in url:
+            return """
+            <ul>
+              <li class="colleft"><a class="stat" href="/viewdocument/?docName=https://www.azleg.gov/ars/13/00101.htm">13-101</a></li>
+              <li class="colright"> Purposes</li>
+            </ul>
+            <ul>
+              <li class="colleft"><a class="stat" href="/viewdocument/?docName=https://www.azleg.gov/ars/13/00102.htm">13-102</a></li>
+              <li class="colright"> Applicability of title</li>
+            </ul>
+            """
+        return """
+        <HTML><BODY>
+          <p><font color=GREEN>13-101</font>. <font color=PURPLE><u>Purposes</u></font></p>
+          <p>It is declared that the public policy of this state and the general purposes of this title are to give fair warning.</p>
+        </BODY></HTML>
+        """
+
+    monkeypatch.setattr(scraper, "_fetch_official_az_html", fake_fetch_html)
+
+    statutes = await scraper.scrape_code(
+        "Arizona Revised Statutes Title 13",
+        "https://www.azleg.gov/arsDetail/?title=13",
+        max_statutes=1,
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "13-101"
+    assert statutes[0].official_cite == "Ariz. Rev. Stat. § 13-101"
+    assert statutes[0].source_url == "https://www.azleg.gov/ars/13/00101.htm"
+    assert statutes[0].structured_data["source_kind"] == "official_arizona_ars_html"
+
+
+@pytest.mark.anyio
+async def test_arkansas_scrape_code_honors_max_statutes(monkeypatch) -> None:
+    scraper = ArkansasScraper("AR", "Arkansas")
+    observed: dict[str, int] = {}
+
+    async def fake_scrape_justia_titles(code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        observed["max_statutes"] = max_statutes
+        statutes = [_statute(index) for index in range(5)]
+        for index, statute in enumerate(statutes):
+            statute.state_code = "AR"
+            statute.state_name = "Arkansas"
+            statute.source_url = f"https://law.justia.com/codes/arkansas/title-1/chapter-1/section-1-1-{index}/"
+        return statutes
+
+    monkeypatch.setattr(scraper, "_scrape_justia_titles", fake_scrape_justia_titles)
+
+    statutes = await scraper.scrape_code(
+        "Arkansas Code",
+        "https://www.arkleg.state.ar.us/",
+        max_statutes=2,
+    )
+
+    assert observed["max_statutes"] == 2
+    assert len(statutes) == 2
 
 
 @pytest.mark.anyio

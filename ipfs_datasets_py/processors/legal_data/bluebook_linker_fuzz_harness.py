@@ -460,12 +460,52 @@ def _court_rule_section_from_value(value: str) -> str:
     return ""
 
 
+def _admin_rule_section_from_value(value: str, *, field_name: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    lowered_field = str(field_name or "").strip().lower()
+
+    if lowered_field in {"source_url", "url"}:
+        patterns = (
+            r"/regulations/part/(?P<section>\d+(?:-\d+)+)(?:[/?#]|$)",
+            r"[?&]sectionNumbers=(?P<section>\d+(?:\.\d+)+)(?:[&#]|$)",
+            r"/rules/(?P<section>\d{4}-\d{2}(?:-\.\d+)?)(?:[./?#]|$)",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return str(match.group("section")).strip().rstrip(".,;:")
+
+    if lowered_field in {"section", "section_number", "rule_number"}:
+        match = re.search(r"\b(?P<section>\d{3}-\d{3}-\d{4})\b", text)
+        if match:
+            return str(match.group("section")).strip()
+
+    if lowered_field == "text":
+        match = re.match(r"\s*(?P<section>\d{3}-\d{3}-\d{4})\b", text)
+        if match:
+            return str(match.group("section")).strip()
+        match = re.search(r"\b(?P<section>\d{4}-\d{2}-\.\d{2})\b", text)
+        if match:
+            return str(match.group("section")).strip()
+
+    return ""
+
+
 def _state_rule_section_from_row(row: Dict[str, Any], *, corpus_key: str) -> str:
     if corpus_key == "state_court_rules":
         for field in ("rule_number", "name", "title", "text", "source_id", "section", "section_number"):
             section = _court_rule_section_from_value(_first_non_empty_string(row.get(field)))
             if section:
                 return section
+
+    if corpus_key == "state_admin_rules":
+        for field in ("section", "section_number", "rule_number", "source_url", "url", "text"):
+            section = _admin_rule_section_from_value(_first_non_empty_string(row.get(field)), field_name=field)
+            if section and re.search(r"\d", section) and not _synthetic_state_identifier(section):
+                return section
+        return ""
 
     values = [
         _first_non_empty_string(row.get(field))
@@ -1223,6 +1263,12 @@ def _summarize_scraper_family_matrix(
                 "recovery_count": 0,
                 "merge_success_count": 0,
                 "merge_failure_count": 0,
+                "hf_upload_ready_count": 0,
+                "hf_publish_success_count": 0,
+                "hf_publish_failure_count": 0,
+                "hf_dataset_ids": [],
+                "hf_parquet_paths": [],
+                "hf_upload_urls": [],
                 "hosts": [],
                 "target_files": [],
                 "target_local_parquet_paths": [],
@@ -1264,11 +1310,37 @@ def _summarize_scraper_family_matrix(
             target_path = str(merge_report.get("target_local_parquet_path") or "").strip()
             if target_path and target_path not in row["target_local_parquet_paths"]:
                 row["target_local_parquet_paths"].append(target_path)
+            if bool(merge_report.get("upload_ready")):
+                row["hf_upload_ready_count"] += 1
+            if bool(merge_report.get("published_merged_to_hf")):
+                row["hf_publish_success_count"] += 1
+            elif (
+                bool(merge_report.get("publish_report"))
+                or str(merge_report.get("publish_error") or "").strip()
+                or (
+                    bool(merge_report.get("upload_ready"))
+                    and "publish" in str(merge_report.get("error") or "").lower()
+                )
+            ):
+                row["hf_publish_failure_count"] += 1
+            hf_dataset_id = str(merge_report.get("hf_dataset_id") or "").strip()
+            if hf_dataset_id and hf_dataset_id not in row["hf_dataset_ids"]:
+                row["hf_dataset_ids"].append(hf_dataset_id)
+            hf_path = str(merge_report.get("resolved_hf_parquet_path") or merge_report.get("target_parquet_path") or "").strip()
+            if hf_path and hf_path not in row["hf_parquet_paths"]:
+                row["hf_parquet_paths"].append(hf_path)
+            publish_report = merge_report.get("publish_report") if isinstance(merge_report.get("publish_report"), dict) else {}
+            upload_url = str(publish_report.get("upload_commit") or merge_report.get("upload_commit") or "").strip()
+            if upload_url and upload_url not in row["hf_upload_urls"]:
+                row["hf_upload_urls"].append(upload_url)
 
     rows = []
     for row in matrix.values():
         row["hosts"] = sorted(row["hosts"])
         row["target_files"] = sorted(row["target_files"])
+        row["hf_dataset_ids"] = sorted(row["hf_dataset_ids"])
+        row["hf_parquet_paths"] = row["hf_parquet_paths"][:10]
+        row["hf_upload_urls"] = row["hf_upload_urls"][:10]
         row["target_local_parquet_paths"] = row["target_local_parquet_paths"][:10]
         row["sample_citations"] = row["sample_citations"][:10]
         rows.append(row)
@@ -1292,10 +1364,22 @@ def _summarize_scraper_family_matrix(
         "covered_corpora": [row["corpus_key"] for row in rows if int(row["attempt_count"]) > 0],
         "missing_requested_corpora": missing_requested,
         "unmerged_recovery_corpora": unmerged_recoveries,
+        "unpublished_hf_corpora": [
+            row["corpus_key"]
+            for row in rows
+            if bool(row["requested"])
+            and int(row["recovery_count"]) > 0
+            and int(row["hf_publish_success_count"]) <= 0
+        ],
         "fully_merged_recovery_corpora": [
             row["corpus_key"]
             for row in rows
             if int(row["recovery_count"]) > 0 and int(row["merge_success_count"]) > 0 and int(row["merge_failure_count"]) <= 0
+        ],
+        "published_hf_corpora": [
+            row["corpus_key"]
+            for row in rows
+            if int(row["hf_publish_success_count"]) > 0
         ],
         "rows": rows,
     }
@@ -1351,7 +1435,14 @@ def _summarize_recovery_merges(attempts: Sequence[BluebookCitationFuzzAttempt]) 
     status_counts: Counter[str] = Counter()
     target_paths: List[str] = []
     merge_report_paths: List[str] = []
+    hf_dataset_counts: Counter[str] = Counter()
+    hf_parquet_paths: List[str] = []
+    hf_upload_urls: List[str] = []
+    publish_error_counts: Counter[str] = Counter()
     error_counts: Counter[str] = Counter()
+    upload_ready_count = 0
+    published_merged_count = 0
+    publish_failure_count = 0
 
     for attempt in attempts:
         for merge_report in attempt.merge_reports:
@@ -1366,12 +1457,52 @@ def _summarize_recovery_merges(attempts: Sequence[BluebookCitationFuzzAttempt]) 
             error = str(merge_report.get("error") or "").strip()
             if error:
                 error_counts[error] += 1
+            if bool(merge_report.get("upload_ready")):
+                upload_ready_count += 1
+            if bool(merge_report.get("published_merged_to_hf")):
+                published_merged_count += 1
+            publish_report = merge_report.get("publish_report") if isinstance(merge_report.get("publish_report"), dict) else {}
+            publish_error = str(
+                merge_report.get("publish_error")
+                or publish_report.get("error")
+                or ""
+            ).strip()
+            if not publish_error and bool(merge_report.get("upload_ready")):
+                error_text = str(merge_report.get("error") or "").strip()
+                if "publish" in error_text.lower():
+                    publish_error = error_text
+            if publish_error:
+                publish_failure_count += 1
+                publish_error_counts[publish_error] += 1
+            elif bool(merge_report.get("publish_report")) and not bool(merge_report.get("published_merged_to_hf")):
+                publish_failure_count += 1
+                publish_error_counts["publish_report_without_success"] += 1
+            hf_dataset_id = str(merge_report.get("hf_dataset_id") or publish_report.get("repo_id") or "").strip()
+            if hf_dataset_id:
+                hf_dataset_counts[hf_dataset_id] += 1
+            hf_path = str(
+                merge_report.get("resolved_hf_parquet_path")
+                or publish_report.get("path_in_repo")
+                or ""
+            ).strip()
+            if hf_path and hf_path not in hf_parquet_paths:
+                hf_parquet_paths.append(hf_path)
+            upload_url = str(publish_report.get("upload_commit") or merge_report.get("upload_commit") or "").strip()
+            if upload_url and upload_url not in hf_upload_urls:
+                hf_upload_urls.append(upload_url)
 
     success_count = sum(count for status, count in status_counts.items() if status.lower() == "success")
     return {
         "status_counts": dict(sorted(status_counts.items())),
         "success_count": success_count,
         "failure_count": sum(status_counts.values()) - success_count,
+        "upload_ready_count": upload_ready_count,
+        "published_merged_count": published_merged_count,
+        "publish_failure_count": publish_failure_count,
+        "hf_dataset_counts": dict(sorted(hf_dataset_counts.items())),
+        "resolved_hf_parquet_paths": hf_parquet_paths[:25],
+        "sample_upload_urls": hf_upload_urls[:10],
+        "publish_error_counts": dict(sorted(publish_error_counts.items())),
         "target_local_parquet_paths": target_paths[:25],
         "merge_report_paths": merge_report_paths[:25],
         "error_counts": dict(sorted(error_counts.items())),

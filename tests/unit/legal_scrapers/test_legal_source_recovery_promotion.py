@@ -15,6 +15,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery_promotion 
     merge_recovery_manifests_into_canonical_datasets,
     merge_recovery_manifest_into_canonical_dataset,
     promote_recovery_manifest_to_canonical_bundle,
+    _upload_huggingface_parquet,
 )
 
 
@@ -300,6 +301,38 @@ def test_hf_parquet_hydration_uses_known_repo_path_aliases(monkeypatch, tmp_path
     assert downloaded_path == tmp_path / "laws.parquet"
     assert resolved_path == "uscode_parquet/laws.parquet"
     assert downloaded_paths == ["uscode_parquet/uscode.parquet", "uscode_parquet/laws.parquet"]
+
+
+def test_hf_upload_uses_environment_token_alias(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery_promotion as promotion
+
+    local_path = tmp_path / "STATE-MN.parquet"
+    local_path.write_bytes(b"PAR1")
+    captured = {}
+
+    class _FakeHfApi:
+        def __init__(self, token=None):
+            captured["token"] = token
+
+        def upload_file(self, **kwargs):
+            captured["upload"] = dict(kwargs)
+            return "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/env-token"
+
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    monkeypatch.setenv("HUGGINGFACEHUB_API_TOKEN", "env-write-token")
+    monkeypatch.setattr(promotion, "HfApi", _FakeHfApi, raising=False)
+    monkeypatch.setitem(__import__("sys").modules, "huggingface_hub", type("_HF", (), {"HfApi": _FakeHfApi}))
+
+    report = _upload_huggingface_parquet(
+        local_path=local_path,
+        repo_id="justicedao/ipfs_state_laws",
+        repo_path="state_laws_parquet_cid/STATE-MN.parquet",
+    )
+
+    assert report["status"] == "success"
+    assert captured["token"] == "env-write-token"
+    assert captured["upload"]["repo_type"] == "dataset"
+    assert captured["upload"]["path_in_repo"] == "state_laws_parquet_cid/STATE-MN.parquet"
 
 
 @pytest.mark.anyio

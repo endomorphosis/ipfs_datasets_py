@@ -163,6 +163,23 @@ def main(argv: list[str] | None = None) -> int:
         coverage = summary.get("coverage_by_corpus") or {}
         actionable = list(coverage.get("actionable_corpora") or [])
         print(f"Actionable corpora: {', '.join(actionable) if actionable else 'none'}")
+        matrix = summary.get("scraper_family_matrix") if isinstance(summary.get("scraper_family_matrix"), dict) else {}
+        missing = list(matrix.get("missing_requested_corpora") or [])
+        unmerged = list(matrix.get("unmerged_recovery_corpora") or [])
+        fully_merged = list(matrix.get("fully_merged_recovery_corpora") or [])
+        unpublished = list(matrix.get("unpublished_hf_corpora") or [])
+        published = list(matrix.get("published_hf_corpora") or [])
+        if matrix:
+            print(f"Missing requested corpora: {', '.join(missing) if missing else 'none'}")
+            print(f"Unmerged recovery corpora: {', '.join(unmerged) if unmerged else 'none'}")
+            print(f"Fully merged recovery corpora: {', '.join(fully_merged) if fully_merged else 'none'}")
+            print(f"Unpublished HF corpora: {', '.join(unpublished) if unpublished else 'none'}")
+            print(f"Published HF corpora: {', '.join(published) if published else 'none'}")
+        recovery_merge = summary.get("recovery_merge") if isinstance(summary.get("recovery_merge"), dict) else {}
+        if recovery_merge:
+            print(f"HF upload-ready merges: {int(recovery_merge.get('upload_ready_count') or 0)}")
+            print(f"HF published merges: {int(recovery_merge.get('published_merged_count') or 0)}")
+            print(f"HF publish failures: {int(recovery_merge.get('publish_failure_count') or 0)}")
         patch_clusters = list(summary.get("failure_patch_clusters") or [])
         if patch_clusters:
             top = patch_clusters[0]

@@ -348,10 +348,15 @@ async def test_run_bluebook_linker_fuzz_harness_can_publish_merged_parquet_to_hf
         }
         return {
             "status": "success",
+            "upload_ready": True,
+            "hf_dataset_id": "justicedao/ipfs_state_laws",
+            "resolved_hf_parquet_path": "state_laws_parquet_cid/STATE-MN.parquet",
             "published_merged_to_hf": True,
             "publish_report": {
+                "status": "success",
                 "repo_id": "justicedao/ipfs_state_laws",
                 "path_in_repo": "state_laws_parquet_cid/STATE-MN.parquet",
+                "upload_commit": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/abc123",
             },
         }
 
@@ -371,6 +376,102 @@ async def test_run_bluebook_linker_fuzz_harness_can_publish_merged_parquet_to_hf
     assert run.summary["publish_merged_parquet_to_hf"] is True
     assert run.summary["merged_recovery_count"] == 1
     assert run.attempts[0].merge_reports[0]["published_merged_to_hf"] is True
+    assert run.summary["recovery_merge"]["upload_ready_count"] == 1
+    assert run.summary["recovery_merge"]["published_merged_count"] == 1
+    assert run.summary["recovery_merge"]["publish_failure_count"] == 0
+    assert run.summary["recovery_merge"]["hf_dataset_counts"] == {"justicedao/ipfs_state_laws": 1}
+    assert run.summary["recovery_merge"]["resolved_hf_parquet_paths"] == [
+        "state_laws_parquet_cid/STATE-MN.parquet"
+    ]
+    assert run.summary["recovery_merge"]["sample_upload_urls"] == [
+        "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/abc123"
+    ]
+    matrix = run.summary["scraper_family_matrix"]
+    assert matrix["published_hf_corpora"] == ["state_laws"]
+    assert matrix["unpublished_hf_corpora"] == []
+    matrix_row = {row["corpus_key"]: row for row in matrix["rows"]}["state_laws"]
+    assert matrix_row["hf_upload_ready_count"] == 1
+    assert matrix_row["hf_publish_success_count"] == 1
+    assert matrix_row["hf_dataset_ids"] == ["justicedao/ipfs_state_laws"]
+    assert matrix_row["hf_parquet_paths"] == ["state_laws_parquet_cid/STATE-MN.parquet"]
+    assert matrix_row["hf_upload_urls"] == [
+        "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/abc123"
+    ]
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_classifies_hf_publish_failures(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(["Minn. Stat. § 518.17"])
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": "Minn. Stat. § 518.17",
+                    "normalized_citation": "Minn. Stat. § 518.17",
+                    "metadata": {"recovery_corpus_key": "state_laws"},
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "manifest_path": str(tmp_path / "recovery_manifest.json"),
+            "scraper_patch": {
+                "host": "www.revisor.mn.gov",
+                "target_file": "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py",
+            },
+        }
+
+    def fake_merge(path: str, **kwargs):
+        return {
+            "status": "error",
+            "error": "Unable to publish merged parquet to Hugging Face: 403 Forbidden",
+            "upload_ready": True,
+            "published_merged_to_hf": False,
+            "hf_dataset_id": "justicedao/ipfs_state_laws",
+            "resolved_hf_parquet_path": "state_laws_parquet_cid/STATE-MN.parquet",
+            "target_local_parquet_path": str(tmp_path / "STATE-MN.parquet"),
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        merge_manifest_func=fake_merge,
+        merge_recovered_rows=True,
+        publish_merged_parquet_to_hf=True,
+        hf_token="test-token",
+        corpus_keys=["state_laws"],
+        min_actionable_failures=1,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["merged_recovery_count"] == 0
+    assert run.summary["recovery_merge"]["upload_ready_count"] == 1
+    assert run.summary["recovery_merge"]["published_merged_count"] == 0
+    assert run.summary["recovery_merge"]["publish_failure_count"] == 1
+    assert run.summary["recovery_merge"]["publish_error_counts"] == {
+        "Unable to publish merged parquet to Hugging Face: 403 Forbidden": 1
+    }
+    assert run.summary["scraper_family_matrix"]["unpublished_hf_corpora"] == ["state_laws"]
+    row = run.summary["scraper_family_matrix"]["rows"][0]
+    assert row["hf_upload_ready_count"] == 1
+    assert row["hf_publish_failure_count"] == 1
+    assert row["hf_publish_success_count"] == 0
+    assert row["hf_dataset_ids"] == ["justicedao/ipfs_state_laws"]
+    assert row["hf_parquet_paths"] == ["state_laws_parquet_cid/STATE-MN.parquet"]
+    assert run.summary["failure_patch_backlog"]["scraper_family_matrix"]["unpublished_hf_corpora"] == [
+        "state_laws"
+    ]
 
 
 def test_collect_seeded_bluebook_fuzz_candidates_uses_grounded_rows() -> None:
@@ -769,6 +870,75 @@ def test_collect_seeded_bluebook_fuzz_candidates_synthesizes_admin_rule_sections
     assert seeds[0].citation_text == "Or. Admin. Code § 581-022-2055"
     assert seeds[0].state_code == "OR"
     assert seeds[0].corpus_key_hint == "state_admin_rules"
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_synthesizes_admin_rule_sections_from_rule_urls() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_admin_rules":
+                return []
+            return ["memory://ri-admin-rules"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "RI",
+                    "identifier": "RI-AGENTIC-A5",
+                    "source_id": "urn:state-admin:RI:RI-AGENTIC-A5:97382a844f072226",
+                    "name": "Rhode Island - Rhode Island Administrative Rules (Agentic Discovery) - A5",
+                    "text": "An Official Rhode Island State Website. Contact 401-222-0000 for help.",
+                    "source_url": "https://rules.sos.ri.gov/regulations/part/510-00-00-19",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_admin_rules"],
+        state_codes=["RI"],
+        examples_per_corpus=1,
+        sample_count=1,
+    )
+
+    assert len(seeds) == 1
+    assert seeds[0].citation_text == "R.I. Admin. Code § 510-00-00-19"
+    assert seeds[0].state_code == "RI"
+    assert seeds[0].corpus_key_hint == "state_admin_rules"
+
+
+def test_collect_seeded_bluebook_fuzz_candidates_skips_admin_homepage_phone_numbers() -> None:
+    class _FakeResolver:
+        def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
+            if corpus_key != "state_admin_rules":
+                return []
+            return ["memory://mn-admin-homepage"]
+
+        def _materialize_remote_parquet(self, source_ref: str):
+            return source_ref
+
+        def _load_local_parquet_rows(self, source_ref: str):
+            return [
+                {
+                    "state_code": "MN",
+                    "identifier": "MN-ADMIN-homepage",
+                    "source_id": "urn:state-admin:MN:MN-ADMIN-homepage",
+                    "name": "MN Revisor's Office",
+                    "text": "Administrative rules portal. Contact 800-627-3529 for assistance.",
+                    "source_url": "https://www.revisor.mn.gov",
+                }
+            ]
+
+    seeds = collect_seeded_bluebook_fuzz_candidates(
+        resolver=_FakeResolver(),
+        corpus_keys=["state_admin_rules"],
+        state_codes=["MN"],
+        examples_per_corpus=1,
+        sample_count=1,
+    )
+
+    assert seeds == []
 
 
 def test_collect_seeded_bluebook_fuzz_candidates_skips_synthetic_court_rule_identifiers() -> None:

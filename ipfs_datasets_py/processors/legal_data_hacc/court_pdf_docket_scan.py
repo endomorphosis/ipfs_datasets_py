@@ -307,6 +307,29 @@ def _should_skip_pdf_path(scan_root: Path, pdf_path: Path) -> bool:
     return False
 
 
+def _scan_candidate_pdf_paths(scan_root: Path, glob_pattern: str) -> tuple[List[Path], int, int]:
+    candidate_paths: List[Path] = []
+    skipped_pdf_count = 0
+    duplicate_pdf_count = 0
+    seen_resolved_paths: set[str] = set()
+    for pdf_path in sorted(scan_root.rglob(glob_pattern)):
+        if not pdf_path.is_file() or pdf_path.suffix.lower() != ".pdf":
+            continue
+        if _should_skip_pdf_path(scan_root, pdf_path):
+            skipped_pdf_count += 1
+            continue
+        try:
+            resolved_key = str(pdf_path.resolve())
+        except OSError:
+            resolved_key = str(pdf_path.absolute())
+        if resolved_key in seen_resolved_paths:
+            duplicate_pdf_count += 1
+            continue
+        seen_resolved_paths.add(resolved_key)
+        candidate_paths.append(pdf_path)
+    return candidate_paths, skipped_pdf_count, duplicate_pdf_count
+
+
 def load_scan_manifest(path: str | Path) -> Dict[str, Any]:
     manifest_path = Path(path)
     return json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -334,8 +357,12 @@ def summarize_scan_manifest(manifest: Dict[str, Any]) -> Dict[str, Any]:
         "output_dir": str(manifest.get("output_dir") or ""),
         "manifest_path": str(manifest.get("manifest_path") or ""),
         "pdf_count": int(manifest.get("pdf_count") or 0),
+        "processed_pdf_count": int(manifest.get("processed_pdf_count") or manifest.get("pdf_count") or 0),
+        "total_pdf_count": int(manifest.get("total_pdf_count") or 0),
+        "remaining_pdf_count": int(manifest.get("remaining_pdf_count") or 0),
         "matched_pdf_count": int(manifest.get("matched_pdf_count") or 0),
         "skipped_pdf_count": int(manifest.get("skipped_pdf_count") or 0),
+        "duplicate_pdf_count": int(manifest.get("duplicate_pdf_count") or 0),
         "candidate_case_count": int(manifest.get("candidate_case_count") or 0),
         "ocr_available": bool(manifest.get("ocr_available")),
         "sample_cases": sample_cases,
@@ -499,7 +526,7 @@ def scan_hacc_pdfs_for_dockets(
     datasets_root.mkdir(parents=True, exist_ok=True)
     manifest_path = destination_root / "scan_manifest.json"
     scan_started_at = _utc_now_isoformat()
-    skipped_pdf_count = 0
+    candidate_pdf_paths, skipped_pdf_count, duplicate_pdf_count = _scan_candidate_pdf_paths(root, glob_pattern)
     ocr_support = _ocr_support_summary()
 
     all_results: List[HACCCourtPDFScanResult] = []
@@ -530,8 +557,12 @@ def scan_hacc_pdfs_for_dockets(
                 ),
             },
             "pdf_count": len(all_results),
+            "processed_pdf_count": len(all_results),
+            "total_pdf_count": len(candidate_pdf_paths),
+            "remaining_pdf_count": max(len(candidate_pdf_paths) - len(all_results), 0),
             "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
             "skipped_pdf_count": skipped_pdf_count,
+            "duplicate_pdf_count": duplicate_pdf_count,
             "candidate_case_count": len(case_outputs) if status == "completed" else len(grouped),
             "ocr_available": bool(ocr_support.get("available")),
             "ocr_support": dict(ocr_support),
@@ -545,12 +576,7 @@ def scan_hacc_pdfs_for_dockets(
     case_outputs: List[Dict[str, Any]] = []
     _write_manifest(status="running")
 
-    for pdf_path in sorted(root.rglob(glob_pattern)):
-        if not pdf_path.is_file() or pdf_path.suffix.lower() != ".pdf":
-            continue
-        if _should_skip_pdf_path(root, pdf_path):
-            skipped_pdf_count += 1
-            continue
+    for pdf_path in candidate_pdf_paths:
         result = analyze_pdf_for_court_case(pdf_path, max_ocr_pages=max_ocr_pages)
         try:
             result.relative_path = str(pdf_path.relative_to(root))
