@@ -583,8 +583,26 @@ def build_state_law_section_url(
         return [part for part in normalized_section.split(separator) if part]
 
     known_section_urls = {
+        ("AL", "13A-6-2"): "https://alison.legislature.state.al.us/code-of-alabama?section=13A-6-2",
+        ("AR", "5-13-201"): "https://law.justia.com/codes/arkansas/title-5/subtitle-2/chapter-13/subchapter-2/section-5-13-201/",
+        ("CO", "18-3-204"): "https://colorado.public.law/statutes/crs_18-3-204",
+        ("CT", "53a-61"): "https://www.cga.ct.gov/current/pub/chap_952.htm#sec_53a-61",
+        ("DE", "11-601"): "https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
+        ("GA", "16-5-23"): "https://law.justia.com/codes/georgia/title-16/chapter-5/article-2/section-16-5-23/",
+        ("HI", "707-712"): "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-0712.htm",
+        ("KY", "508.030"): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
+        ("LA", "14:35"): "https://legis.la.gov/legis/Law.aspx?d=78452",
+        ("MD", "3-203"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
+        ("MS", "97-3-7"): "https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030007.htm",
+        ("NH", "631:2-a"): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
+        ("NJ", "2C:12-1"): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
+        ("NM", "30-3-4"): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
+        ("ND", "12.1-17-01"): "https://ndlegis.gov/cencode/t12-1c17.pdf",
+        ("OK", "21-644"): "https://www.oklegislature.gov/osstatuestitle.html?title=21",
+        ("TN", "39-13-101"): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
         ("VA", "18.2-57"): "https://law.lis.virginia.gov/vacode/title18.2/chapter4/section18.2-57/",
         ("VT", "13-1023"): "https://legislature.vermont.gov/statutes/section/13/019/01023",
+        ("WY", "6-2-501"): "https://wyoleg.gov/statutes/compress/title06.pdf",
     }
     known_url = known_section_urls.get((state, normalized_section))
     if known_url:

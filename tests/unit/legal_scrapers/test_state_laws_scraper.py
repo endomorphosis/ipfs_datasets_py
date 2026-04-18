@@ -99,6 +99,32 @@ def test_state_laws_scraper_recovery_section_url_edge_cases():
     )
 
 
+def test_state_laws_scraper_builds_unknown_backlog_section_urls():
+    expected_urls = {
+        ("AL", "13A-6-2", "Ala. Code"): "https://alison.legislature.state.al.us/code-of-alabama?section=13A-6-2",
+        ("AR", "5-13-201", "Ark. Code"): "https://law.justia.com/codes/arkansas/title-5/subtitle-2/chapter-13/subchapter-2/section-5-13-201/",
+        ("CO", "18-3-204", "Colo. Rev. Stat."): "https://colorado.public.law/statutes/crs_18-3-204",
+        ("CT", "53a-61", "Conn. Gen. Stat."): "https://www.cga.ct.gov/current/pub/chap_952.htm#sec_53a-61",
+        ("DE", "11-601", "Del. Code"): "https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
+        ("GA", "16-5-23", "Ga. Code"): "https://law.justia.com/codes/georgia/title-16/chapter-5/article-2/section-16-5-23/",
+        ("HI", "707-712", "Haw. Rev. Stat."): "https://www.capitol.hawaii.gov/hrscurrent/Vol14_Ch0701-0853/HRS0707/HRS_0707-0712.htm",
+        ("KY", "508.030", "Ky. Rev. Stat."): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
+        ("LA", "14:35", "La. Rev. Stat."): "https://legis.la.gov/legis/Law.aspx?d=78452",
+        ("MD", "3-203", "Md. Code"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
+        ("MS", "97-3-7", "Miss. Code"): "https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030007.htm",
+        ("NH", "631:2-a", "N.H. Rev. Stat."): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
+        ("NJ", "2C:12-1", "N.J. Stat."): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
+        ("NM", "30-3-4", "N.M. Stat."): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
+        ("ND", "12.1-17-01", "N.D. Cent. Code"): "https://ndlegis.gov/cencode/t12-1c17.pdf",
+        ("OK", "21-644", "Okla. Stat."): "https://www.oklegislature.gov/osstatuestitle.html?title=21",
+        ("TN", "39-13-101", "Tenn. Code"): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
+        ("WY", "6-2-501", "Wyo. Stat."): "https://wyoleg.gov/statutes/compress/title06.pdf",
+    }
+
+    for (state, section, code_name), expected_url in expected_urls.items():
+        assert scraper_module.build_state_law_section_url(state, section, code_name=code_name) == expected_url
+
+
 @pytest.mark.asyncio
 async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
     captured = {}
