@@ -15,7 +15,6 @@ _MERGE_KEY_FIELDS = (
     "corpus_key",
     "normalized_citation",
     "primary_candidate_url",
-    "manifest_path",
 )
 
 

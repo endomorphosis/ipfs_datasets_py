@@ -384,6 +384,13 @@ def test_detect_auto_input_type_uses_tyler_hint_for_normalized_fixture() -> None
     assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
 
 
+def test_detect_auto_input_type_detects_pacer_html_fixture() -> None:
+    module = _load_docket_cli_module()
+    pacer_html_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+
+    assert module._detect_auto_input_type(str(pacer_html_fixture)) == "pacer"
+
+
 def test_detect_auto_input_type_detects_packaged_directory(tmp_path: Path) -> None:
     module = _load_docket_cli_module()
     package_dir = tmp_path / "bundle_dir"
@@ -479,6 +486,32 @@ def test_docket_cli_auto_input_type_uses_source_type_hint_for_tyler_fixture(tmp_
     assert captured["source"] == str(fixture_path)
 
 
+def test_docket_cli_auto_input_type_loads_pacer_html_fixture(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    output_path = tmp_path / "auto_pacer_html_dataset.json"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert Path(payload["output_path"]).exists()
+    assert payload["summary"]["document_count"] == 2
+
+
 def test_docket_cli_main_json_output_from_courtlistener(tmp_path: Path, monkeypatch) -> None:
     module = _load_docket_cli_module()
     output_path = tmp_path / "courtlistener_docket_dataset.json"
@@ -562,6 +595,37 @@ def test_docket_cli_main_json_output_from_pacer_alias(tmp_path: Path, monkeypatc
     assert payload["status"] == "success"
     assert captured["source"] == str(tmp_path / "pacer_export")
     assert Path(payload["output_path"]).exists()
+
+
+def test_docket_cli_main_json_output_from_pacer_html_fixture(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+    output_path = tmp_path / "pacer_html_docket_dataset.json"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "pacer",
+                "--input-path",
+                str(fixture_path),
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    assert Path(payload["output_path"]).exists()
+    written_dataset = json.loads(output_path.read_text(encoding="utf-8"))
+    assert written_dataset["docket_id"] == "1:24-cv-12345"
+    assert written_dataset["metadata"]["source_type"] == "pacer"
+    assert written_dataset["metadata"]["upstream_source_type"] == "pacer"
+    assert written_dataset["metadata"]["source_path"] == str(fixture_path)
+    assert len(written_dataset["documents"]) == 2
 
 
 def test_docket_cli_main_json_output_from_tyler_host_alias(tmp_path: Path, monkeypatch) -> None:

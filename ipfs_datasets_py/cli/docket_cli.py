@@ -27,6 +27,7 @@ Examples:
 - `... --input-type json --input-path /path/to/docket.json --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json`
 - `... --input-type json --input-path /path/to/docket.json --search-backend vector --query injunction --top-k 5 --json`
 - `... --input-type pacer --input-path /path/to/pacer_export_dir --case-name "Doe v. Example" --json`
+- `... --input-type pacer --input-path /path/to/pacer_docket.html --json`
 - `... --input-type tyler_host --input-path /path/to/tyler_export.json --court "State Court" --json`
 """
 
@@ -112,6 +113,9 @@ def _detect_auto_input_type(input_path: str, source_type_hint: str | None = None
                 if source_hint in {"pacer", "tyler_host", "courtlistener"}:
                     return source_hint
             return normalized_hint or "json"
+
+        if suffix in {".html", ".htm"}:
+            return normalized_hint or "pacer"
 
         return normalized_hint or "json"
 
@@ -932,9 +936,9 @@ def create_parser() -> argparse.ArgumentParser:
         "--input-type",
         choices=["auto", "json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"],
         required=True,
-        help="Whether --input-path points to a docket JSON object, a docket directory, a CourtListener docket id/URL, a normalized PACER export, a Tyler Host export, an existing packaged docket manifest/archive, or should be auto-detected.",
+        help="Whether --input-path points to a docket JSON object, a docket directory, a CourtListener docket id/URL, a normalized PACER export, a raw PACER docket HTML file, a Tyler Host export, an existing packaged docket manifest/archive, or should be auto-detected.",
     )
-    parser.add_argument("--input-path", required=True, help="Path to the docket JSON file, docket document directory, CourtListener docket id/URL, PACER export path, Tyler Host export path, packaged manifest/archive, or an auto-detected source path.")
+    parser.add_argument("--input-path", required=True, help="Path to the docket JSON file, docket document directory, CourtListener docket id/URL, PACER export path or raw PACER HTML file, Tyler Host export path, packaged manifest/archive, or an auto-detected source path.")
     parser.add_argument("--output", required=False, help="Path to write the docket dataset artifact JSON.")
     parser.add_argument("--source-type-hint", choices=["json", "directory", "courtlistener", "pacer", "tyler_host", "packaged"], default=None, help="Optional hint for --input-type auto when the path alone is ambiguous. Useful for normalized PACER or Tyler Host JSON exports.")
     parser.add_argument("--docket-id", default=None, help="Optional docket id override for directory imports.")

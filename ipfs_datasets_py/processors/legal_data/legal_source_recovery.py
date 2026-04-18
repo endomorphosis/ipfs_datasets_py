@@ -874,7 +874,7 @@ class LegalSourceRecoveryWorkflow:
         backend_status["common_crawl_domains"] = []
         backend_status["common_crawl_domain_count"] = 0
         backend_status["common_crawl_result_count"] = 0
-        if not _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", default=True):
+        if not _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", default=False):
             backend_status["common_crawl_error"] = "common_crawl_disabled"
             return []
 

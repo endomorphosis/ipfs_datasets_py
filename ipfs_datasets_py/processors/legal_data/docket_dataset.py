@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+import html
 import hashlib
 import json
 import math
@@ -68,6 +69,9 @@ _CASE_NUMBER_LABEL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _CASE_NUMBER_TOKEN_PATTERN = re.compile(r"\b\d{1,4}:\d{2,4}[- ]?[a-z]{1,6}[- ]?\d{1,8}\b", re.IGNORECASE)
+_PACER_DOCKET_ROW_PATTERN = re.compile(r"<tr[^>]*>(.*?)</tr>", re.IGNORECASE | re.DOTALL)
+_PACER_DOCKET_CELL_PATTERN = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.IGNORECASE | re.DOTALL)
+_PACER_DATE_PATTERN = re.compile(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b")
 
 
 def _dedupe_string_sequence(values: Iterable[Any]) -> List[str]:
@@ -108,6 +112,124 @@ def _extract_case_number_from_text(text: str) -> str:
         if token:
             return _normalize_case_number_text(token.group(0))
     return ""
+
+
+def _html_to_text(value: Any) -> str:
+    text = re.sub(r"<br\s*/?>", "\n", str(value or ""), flags=re.IGNORECASE)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = html.unescape(text)
+    return "\n".join(" ".join(line.split()) for line in text.splitlines()).strip()
+
+
+def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
+    raw_html = path.read_text(encoding="utf-8", errors="ignore")
+    html_lower = raw_html.lower()
+    has_court_header = any(
+        marker in html_lower
+        for marker in ("district court", "bankruptcy court", "court of appeals")
+    )
+    has_docket_markers = any(
+        marker in html_lower
+        for marker in ("docket report", "docket sheet", "docket text", "case no.", "civil action no.")
+    )
+    if not has_court_header or not has_docket_markers:
+        raise ValueError(f"HTML file does not appear to be a PACER docket: {path}")
+
+    text = _html_to_text(raw_html)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    case_number = _extract_case_number_from_text(text)
+
+    court = ""
+    case_name = ""
+    for line in lines[:80]:
+        lowered = line.lower()
+        if not court and ("district court" in lowered or "bankruptcy court" in lowered or "court of appeals" in lowered):
+            court = line
+            continue
+        if case_number and case_number in line:
+            continue
+        if not case_name and " v. " in line:
+            case_name = line
+            break
+
+    documents: List[Dict[str, Any]] = []
+    entry_index = 0
+    for row_match in _PACER_DOCKET_ROW_PATTERN.finditer(raw_html):
+        cells = _PACER_DOCKET_CELL_PATTERN.findall(row_match.group(1))
+        if len(cells) < 3:
+            continue
+        cell_texts = [_html_to_text(cell) for cell in cells[:3]]
+        joined = " ".join(cell_texts).strip()
+        if not joined:
+            continue
+        if "date filed" in joined.lower() and "document number" in joined.lower():
+            continue
+        if not _PACER_DATE_PATTERN.search(cell_texts[0]):
+            continue
+
+        entry_index += 1
+        date_filed = _PACER_DATE_PATTERN.search(cell_texts[0]).group(0)
+        document_number = cell_texts[1].strip()
+        description = cell_texts[2].strip()
+        if not description:
+            continue
+
+        documents.append(
+            {
+                "id": f"{path.stem}_entry_{entry_index}",
+                "title": description.split(".", 1)[0][:160].strip() or f"Docket Entry {entry_index}",
+                "text": description,
+                "date_filed": date_filed,
+                "document_number": document_number,
+                "source_url": str(path),
+                "document_type": "pacer_html_entry",
+                "metadata": {
+                    "source_path": str(path),
+                    "source_suffix": path.suffix.lower(),
+                    "text_extraction": {
+                        "source": "pacer_html_docket",
+                        "backend": "regex_html_parser",
+                    },
+                },
+            }
+        )
+
+    if not documents:
+        body_text = text[:20000].strip()
+        if body_text:
+            documents.append(
+                {
+                    "id": f"{path.stem}_html",
+                    "title": case_name or path.stem.replace("_", " ").replace("-", " ").strip() or path.name,
+                    "text": body_text,
+                    "source_url": str(path),
+                    "document_type": "pacer_html_docket",
+                    "metadata": {
+                        "source_path": str(path),
+                        "source_suffix": path.suffix.lower(),
+                        "text_extraction": {
+                            "source": "pacer_html_docket",
+                            "backend": "regex_html_parser",
+                        },
+                    },
+                }
+            )
+
+    return {
+        "docket_id": case_number or path.stem,
+        "case_name": case_name or path.stem.replace("_", " ").replace("-", " ").strip() or path.name,
+        "court": court,
+        "documents": documents,
+        "source_type": "pacer_html_file",
+        "source_path": str(path),
+        "case_number": case_number,
+        "metadata": {
+            "case_number": case_number,
+            "source_path": str(path),
+            "parser": "regex_html_parser",
+            "document_count": len(documents),
+        },
+    }
 
 
 def _extract_text_from_pdf(path: Path) -> str:
@@ -1857,6 +1979,35 @@ class DocketDatasetBuilder:
             raise ValueError("Docket JSON payload must be an object")
         payload.setdefault("source_type", "json_file")
         payload.setdefault("source_path", str(Path(path)))
+        return self.build_from_docket(
+            payload,
+            include_knowledge_graph=include_knowledge_graph,
+            include_bm25=include_bm25,
+            include_vector_index=include_vector_index,
+            include_formal_logic=include_formal_logic,
+            include_router_enrichment=include_router_enrichment,
+        )
+
+    def build_from_html_file(
+        self,
+        path: str | Path,
+        *,
+        docket_id: str | None = None,
+        case_name: str | None = None,
+        court: str | None = None,
+        include_knowledge_graph: bool = True,
+        include_bm25: bool = True,
+        include_vector_index: bool = True,
+        include_formal_logic: bool = True,
+        include_router_enrichment: bool = True,
+    ) -> DocketDatasetObject:
+        payload = _parse_pacer_html_docket(Path(path))
+        if docket_id:
+            payload["docket_id"] = docket_id
+        if case_name:
+            payload["case_name"] = case_name
+        if court:
+            payload["court"] = court
         return self.build_from_docket(
             payload,
             include_knowledge_graph=include_knowledge_graph,

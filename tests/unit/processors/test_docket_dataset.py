@@ -1919,6 +1919,24 @@ def test_builder_loads_normalized_tyler_host_fixture() -> None:
     assert dataset.documents[0].title == "Notice of Hearing"
 
 
+def test_ingest_docket_dataset_loads_pacer_html_fixture() -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+
+    dataset = ingest_docket_dataset(
+        str(fixture_path),
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.docket_id == "1:24-cv-12345"
+    assert dataset.case_name == "Doe v. Acme Corp"
+    assert dataset.metadata["source_type"] == "pacer_html_file"
+    assert dataset.metadata["case_number"] == "1:24-cv-12345"
+    assert len(dataset.documents) == 2
+    assert dataset.documents[0].document_number == "1"
+    assert dataset.documents[0].metadata["text_extraction"]["source"] == "pacer_html_docket"
+
+
 def test_docket_dataset_can_be_packaged_as_linked_parquet_and_car_bundle(tmp_path, monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_SAFE_ROOT", str(tmp_path))
     dataset = DocketDatasetBuilder().build_from_docket(
