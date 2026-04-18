@@ -17,6 +17,7 @@ import argparse
 import asyncio
 import importlib.util
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -145,6 +146,15 @@ class AgenticCorpusDaemonConfig:
 
 
 @dataclass
+class CacheDaemonConfig:
+    enabled: bool = True
+    fetch_cache_enabled: bool = True
+    search_cache_enabled: bool = True
+    cache_dir: str = ""
+    mirror_to_ipfs: bool = False
+
+
+@dataclass
 class LegalScraperDaemonConfig:
     states: List[str] = field(default_factory=lambda: list(STATE_CODES_50))
     include_dc: bool = False
@@ -152,7 +162,9 @@ class LegalScraperDaemonConfig:
     cycle_interval_seconds: float = 3600.0
     max_cycles: int = 1
     dry_run: bool = False
+    resume: bool = True
     hf_token: Optional[str] = None
+    cache: CacheDaemonConfig = field(default_factory=CacheDaemonConfig)
     bluebook: BluebookDaemonConfig = field(default_factory=BluebookDaemonConfig)
     state_refresh: StateRefreshDaemonConfig = field(default_factory=StateRefreshDaemonConfig)
     agentic_corpora: AgenticCorpusDaemonConfig = field(default_factory=AgenticCorpusDaemonConfig)
@@ -203,6 +215,7 @@ class LegalScraperDaemon:
         self.bluebook_runner = bluebook_runner
         self.state_refresh_runner = state_refresh_runner
         self.agentic_runner = agentic_runner
+        self.configure_cache_environment()
 
     def build_plan(self) -> Dict[str, Any]:
         return {
@@ -210,12 +223,59 @@ class LegalScraperDaemon:
             "state_count": len(self.states),
             "output_dir": str(self.output_dir),
             "dry_run": bool(self.config.dry_run),
+            "resume": bool(self.config.resume),
+            "cache": self.cache_plan(),
             "phases": {
                 "bluebook": asdict(self.config.bluebook),
                 "state_refresh": asdict(self.config.state_refresh),
                 "agentic_corpora": asdict(self.config.agentic_corpora),
             },
         }
+
+    def cache_plan(self) -> Dict[str, Any]:
+        config = self.config.cache
+        cache_root = self._cache_root()
+        return {
+            **asdict(config),
+            "cache_dir": str(cache_root),
+            "fetch_cache_dir": str(cache_root / "fetch"),
+            "search_cache_dir": str(cache_root / "search"),
+        }
+
+    def _cache_root(self) -> Path:
+        configured = str(self.config.cache.cache_dir or "").strip()
+        if configured:
+            return Path(configured).expanduser().resolve()
+        return self.output_dir / "cache"
+
+    def configure_cache_environment(self) -> Dict[str, str]:
+        config = self.config.cache
+        cache_root = self._cache_root()
+        fetch_dir = cache_root / "fetch"
+        search_dir = cache_root / "search"
+        cache_root.mkdir(parents=True, exist_ok=True)
+        if config.fetch_cache_enabled:
+            fetch_dir.mkdir(parents=True, exist_ok=True)
+        if config.search_cache_enabled:
+            search_dir.mkdir(parents=True, exist_ok=True)
+
+        bool_text = lambda value: "1" if value else "0"
+        env = {
+            "IPFS_DATASETS_LEGAL_FETCH_CACHE_ENABLED": bool_text(config.enabled and config.fetch_cache_enabled),
+            "LEGAL_SCRAPER_FETCH_CACHE_ENABLED": bool_text(config.enabled and config.fetch_cache_enabled),
+            "IPFS_DATASETS_LEGAL_FETCH_CACHE_DIR": str(fetch_dir),
+            "LEGAL_SCRAPER_FETCH_CACHE_DIR": str(fetch_dir),
+            "IPFS_DATASETS_LEGAL_FETCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
+            "LEGAL_SCRAPER_FETCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
+            "IPFS_DATASETS_SEARCH_CACHE_ENABLED": bool_text(config.enabled and config.search_cache_enabled),
+            "LEGAL_SCRAPER_SEARCH_CACHE_ENABLED": bool_text(config.enabled and config.search_cache_enabled),
+            "IPFS_DATASETS_SEARCH_CACHE_DIR": str(search_dir),
+            "LEGAL_SCRAPER_SEARCH_CACHE_DIR": str(search_dir),
+            "IPFS_DATASETS_SEARCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
+            "LEGAL_SCRAPER_SEARCH_CACHE_IPFS_MIRROR": bool_text(config.enabled and config.mirror_to_ipfs),
+        }
+        os.environ.update(env)
+        return env
 
     async def run(self) -> Dict[str, Any]:
         cycles: List[Dict[str, Any]] = []
@@ -256,15 +316,27 @@ class LegalScraperDaemon:
             return cycle
 
         if self.config.bluebook.enabled:
-            cycle["phases"]["bluebook"] = await self._run_bluebook_phase(cycle_dir)
+            cycle["phases"]["bluebook"] = await self._run_or_resume_phase(
+                "bluebook",
+                cycle_dir,
+                lambda: self._run_bluebook_phase(cycle_dir),
+            )
             self._write_cycle(cycle)
 
         if self.config.state_refresh.enabled:
-            cycle["phases"]["state_refresh"] = await self._run_state_refresh_phase(cycle_dir)
+            cycle["phases"]["state_refresh"] = await self._run_or_resume_phase(
+                "state_refresh",
+                cycle_dir,
+                lambda: self._run_state_refresh_phase(cycle_dir),
+            )
             self._write_cycle(cycle)
 
         if self.config.agentic_corpora.enabled:
-            cycle["phases"]["agentic_corpora"] = await self._run_agentic_corpora_phase(cycle_dir)
+            cycle["phases"]["agentic_corpora"] = await self._run_or_resume_phase(
+                "agentic_corpora",
+                cycle_dir,
+                lambda: self._run_agentic_corpora_phase(cycle_dir),
+            )
             self._write_cycle(cycle)
 
         cycle["status"] = self._cycle_status(cycle["phases"])
@@ -277,6 +349,65 @@ class LegalScraperDaemon:
         cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
         cycle_path.write_text(json.dumps(cycle, indent=2, sort_keys=True, default=str), encoding="utf-8")
         self.latest_path.write_text(json.dumps(cycle, indent=2, sort_keys=True, default=str), encoding="utf-8")
+
+    def _phase_path(self, cycle_dir: Path, phase_name: str) -> Path:
+        return cycle_dir / f"{phase_name}_phase.json"
+
+    def _load_resumable_phase(self, cycle_dir: Path, phase_name: str) -> Optional[Dict[str, Any]]:
+        if not self.config.resume:
+            return None
+        path = self._phase_path(cycle_dir, phase_name)
+        if not path.exists():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        if not isinstance(payload, dict):
+            return None
+        status = str(payload.get("status") or "").lower()
+        if status in {"", "running", "error"}:
+            return None
+        if payload.get("_resume_context") != self._phase_resume_context(phase_name):
+            return None
+        payload = dict(payload)
+        payload["resumed_from"] = str(path)
+        return payload
+
+    def _write_phase_result(self, cycle_dir: Path, phase_name: str, result: Dict[str, Any]) -> None:
+        path = self._phase_path(cycle_dir, phase_name)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = dict(result)
+        payload["_resume_context"] = self._phase_resume_context(phase_name)
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
+
+    def _phase_resume_context(self, phase_name: str) -> Dict[str, Any]:
+        phase_config: Dict[str, Any] = {}
+        if phase_name == "bluebook":
+            phase_config = asdict(self.config.bluebook)
+        elif phase_name == "state_refresh":
+            phase_config = asdict(self.config.state_refresh)
+        elif phase_name == "agentic_corpora":
+            phase_config = asdict(self.config.agentic_corpora)
+        return {
+            "phase": phase_name,
+            "states": list(self.states),
+            "include_dc": bool(self.config.include_dc),
+            "phase_config": phase_config,
+        }
+
+    async def _run_or_resume_phase(
+        self,
+        phase_name: str,
+        cycle_dir: Path,
+        runner: Callable[[], Awaitable[Dict[str, Any]]],
+    ) -> Dict[str, Any]:
+        cached = self._load_resumable_phase(cycle_dir, phase_name)
+        if cached is not None:
+            return cached
+        result = await runner()
+        self._write_phase_result(cycle_dir, phase_name, result)
+        return result
 
     @staticmethod
     def _cycle_status(phases: Dict[str, Any]) -> str:
@@ -430,7 +561,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=3600.0)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--no-resume", action="store_true")
     parser.add_argument("--hf-token", default="")
+    parser.add_argument("--cache-dir", default="")
+    parser.add_argument("--no-cache", action="store_true")
+    parser.add_argument("--no-fetch-cache", action="store_true")
+    parser.add_argument("--no-search-cache", action="store_true")
+    parser.add_argument("--cache-to-ipfs", action="store_true")
 
     parser.add_argument("--disable-bluebook", action="store_true")
     parser.add_argument("--bluebook-samples", type=int, default=50)
@@ -447,6 +584,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--state-refresh-verify", action="store_true")
     parser.add_argument("--allow-incomplete-publish", action="store_true")
     parser.add_argument("--max-statutes", type=int, default=0)
+    parser.add_argument("--parallel-workers", type=int, default=4)
+    parser.add_argument("--per-state-timeout-seconds", type=float, default=900.0)
+    parser.add_argument("--per-state-retry-attempts", type=int, default=1)
 
     parser.add_argument("--enable-agentic-corpora", action="store_true")
     parser.add_argument("--agentic-corpora", default="all")
@@ -464,7 +604,15 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
         cycle_interval_seconds=float(args.cycle_interval_seconds),
         max_cycles=max(1, int(args.max_cycles)),
         dry_run=bool(args.dry_run),
+        resume=not bool(args.no_resume),
         hf_token=str(args.hf_token or "").strip() or None,
+        cache=CacheDaemonConfig(
+            enabled=not bool(args.no_cache),
+            fetch_cache_enabled=not bool(args.no_fetch_cache),
+            search_cache_enabled=not bool(args.no_search_cache),
+            cache_dir=str(args.cache_dir or ""),
+            mirror_to_ipfs=bool(args.cache_to_ipfs),
+        ),
         bluebook=BluebookDaemonConfig(
             enabled=not bool(args.disable_bluebook),
             samples=max(1, int(args.bluebook_samples)),
@@ -482,6 +630,9 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
             verify_publish=bool(args.state_refresh_verify),
             allow_incomplete_publish=bool(args.allow_incomplete_publish),
             max_statutes=max(0, int(args.max_statutes)),
+            parallel_workers=max(1, int(args.parallel_workers)),
+            per_state_timeout_seconds=max(1.0, float(args.per_state_timeout_seconds)),
+            per_state_retry_attempts=max(0, int(args.per_state_retry_attempts)),
         ),
         agentic_corpora=AgenticCorpusDaemonConfig(
             enabled=bool(args.enable_agentic_corpora),

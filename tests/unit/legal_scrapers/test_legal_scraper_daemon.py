@@ -5,6 +5,7 @@ import pytest
 from ipfs_datasets_py.processors.legal_scrapers.legal_scraper_daemon import (
     AgenticCorpusDaemonConfig,
     BluebookDaemonConfig,
+    CacheDaemonConfig,
     LegalScraperDaemon,
     LegalScraperDaemonConfig,
     StateRefreshDaemonConfig,
@@ -59,7 +60,7 @@ async def test_legal_scraper_daemon_runs_bluebook_and_refresh_with_safe_publish_
             states=["MN"],
             output_dir=str(tmp_path),
             bluebook=BluebookDaemonConfig(samples=3, seed_only=True),
-            state_refresh=StateRefreshDaemonConfig(scrape=False, publish_to_hf=False),
+            state_refresh=StateRefreshDaemonConfig(scrape=False, publish_to_hf=False, parallel_workers=7),
             agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
         ),
         bluebook_runner=_fake_bluebook_runner,
@@ -75,7 +76,71 @@ async def test_legal_scraper_daemon_runs_bluebook_and_refresh_with_safe_publish_
     assert calls["bluebook"]["state_codes"] == ["MN"]
     assert calls["bluebook"]["publish_to_hf"] is False
     assert calls["refresh"].publish_to_hf is False
+    assert calls["refresh"].parallel_workers == 7
     assert result["cycles"][0]["phases"]["state_refresh"]["build"]["combined_row_count"] == 10
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_resumes_completed_phase(tmp_path):
+    calls = {"bluebook": 0, "refresh": 0}
+
+    class _FakeBluebookRun:
+        def to_dict(self):
+            return {"summary": {"recovery_count": 1}}
+
+    async def _fake_bluebook_runner(**kwargs):
+        calls["bluebook"] += 1
+        return _FakeBluebookRun()
+
+    async def _fake_refresh_runner(args):
+        calls["refresh"] += 1
+        return {"status": "success", "build": {"combined_row_count": 3}}
+
+    config = LegalScraperDaemonConfig(
+        states=["MN"],
+        output_dir=str(tmp_path),
+        bluebook=BluebookDaemonConfig(samples=1),
+        state_refresh=StateRefreshDaemonConfig(scrape=False),
+        agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+    )
+    first = LegalScraperDaemon(
+        config,
+        bluebook_runner=_fake_bluebook_runner,
+        state_refresh_runner=_fake_refresh_runner,
+    )
+    await first.run()
+
+    second = LegalScraperDaemon(
+        config,
+        bluebook_runner=_fake_bluebook_runner,
+        state_refresh_runner=_fake_refresh_runner,
+    )
+    result = await second.run()
+
+    assert calls == {"bluebook": 1, "refresh": 1}
+    assert result["cycles"][0]["phases"]["bluebook"]["resumed_from"].endswith("bluebook_phase.json")
+    assert result["cycles"][0]["phases"]["state_refresh"]["resumed_from"].endswith("state_refresh_phase.json")
+
+
+def test_legal_scraper_daemon_configures_fetch_and_search_cache_env(tmp_path, monkeypatch):
+    monkeypatch.delenv("IPFS_DATASETS_SEARCH_CACHE_ENABLED", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_LEGAL_FETCH_CACHE_ENABLED", raising=False)
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            states=["MN"],
+            output_dir=str(tmp_path / "daemon"),
+            cache=CacheDaemonConfig(cache_dir=str(tmp_path / "cache"), mirror_to_ipfs=True),
+        )
+    )
+
+    env = daemon.configure_cache_environment()
+
+    assert env["IPFS_DATASETS_SEARCH_CACHE_ENABLED"] == "1"
+    assert env["IPFS_DATASETS_LEGAL_FETCH_CACHE_ENABLED"] == "1"
+    assert env["IPFS_DATASETS_SEARCH_CACHE_IPFS_MIRROR"] == "1"
+    assert (tmp_path / "cache" / "search").exists()
+    assert (tmp_path / "cache" / "fetch").exists()
 
 
 @pytest.mark.asyncio
@@ -117,6 +182,11 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
             "--bluebook-samples",
             "7",
             "--state-refresh-scrape",
+            "--parallel-workers",
+            "8",
+            "--cache-dir",
+            str(tmp_path / "cache"),
+            "--cache-to-ipfs",
             "--enable-agentic-corpora",
             "--agentic-corpora",
             "laws,admin",
@@ -129,7 +199,10 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
     assert config.bluebook.samples == 7
     assert config.bluebook.publish_to_hf is False
     assert config.state_refresh.scrape is True
+    assert config.state_refresh.parallel_workers == 8
     assert config.state_refresh.publish_to_hf is False
+    assert config.cache.cache_dir == str(tmp_path / "cache")
+    assert config.cache.mirror_to_ipfs is True
     assert config.agentic_corpora.enabled is True
     assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules"]
 
