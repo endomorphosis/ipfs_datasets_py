@@ -131,7 +131,7 @@ ipfs-datasets tools execute dataset_tools load_dataset --source squad --split tr
 # Auto-detect a local docket directory, JSON file, packaged bundle, or CourtListener URL/id
 ipfs-datasets docket --input-type auto --input-path /path/to/docket_dir --output /tmp/docket_dataset.json
 
-# Hint auto-detection when a normalized export JSON should be labeled as PACER or Tyler Host
+# Hint auto-detection when an unlabeled export JSON should be labeled as PACER or Tyler Host
 ipfs-datasets docket --input-type auto --input-path /path/to/normalized_export.json --source-type-hint pacer --json
 
 # Import a docket JSON and emit citation audit (including EU/member-state citations)
@@ -145,6 +145,9 @@ ipfs-datasets docket --input-type pacer --input-path /path/to/pacer_docket.html 
 
 # Import a normalized Tyler Host export JSON or directory
 ipfs-datasets docket --input-type tyler_host --input-path /path/to/tyler_export.json --court "State Court" --json
+
+# Import a wrapped PACER or Tyler export JSON without an explicit hint when nested source_type is present
+ipfs-datasets docket --input-type auto --input-path /path/to/wrapped_export.json --json
 
 # Tune EU/member-state citation audit extraction
 ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
@@ -180,9 +183,16 @@ Normalized PACER/Tyler Host input shape:
 }
 ```
 
+Also accepted:
+
+- Wrapped JSON envelopes such as `{"result": {"source_type": "pacer", "case": {...}}}` or `{"result": {"source_type": "tyler_host", "case": {...}}}`.
+- Tyler-style camelCase keys such as `caseNumber`, `caseTitle`, `courtName`, `docketEntries`, `documentTitle`, `filedDate`, `docNumber`, and `documentUrl`.
+- PACER HTML files, including docket tables with extra columns, links, and multiline entry text.
+
 For local export folders, the docket CLI can ingest `.txt`, `.md`, `.json`, and `.pdf` documents. PDF folders are post-processed to extract text and detect case numbers from caption text when available.
 The `pacer` input type also accepts raw PACER docket HTML files and normalizes docket rows into document records.
-Use `--source-type-hint pacer` or `--source-type-hint tyler_host` with `--input-type auto` when a normalized JSON export does not already carry a `source_type` field.
+Wrapped PACER/Tyler JSON can also be auto-detected without `--source-type-hint` when nested `source_type` metadata is present under `result`, `case`, `data`, or `payload`.
+Use `--source-type-hint pacer` or `--source-type-hint tyler_host` with `--input-type auto` when an upstream JSON export does not carry any source label.
 
 See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
 See `docs/guides/legal_data/DOCKET_SOURCE_TEMPLATE_GUIDE.md` for public PACER and portal-parser template references that can be used when building raw-source adapters.

@@ -455,6 +455,44 @@ def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states()
     )
 
 
+def test_legal_source_recovery_citation_url_hints_cover_prose_and_section_variants():
+    florida_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Florida Statutes section 61.13",
+        normalized_citation="Florida Statutes section 61.13",
+        corpus_key="state_laws",
+        state_code="FL",
+    )
+    pa_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="23 Pa.C.S. section 5328",
+        normalized_citation="23 Pa.C.S. section 5328",
+        corpus_key="state_laws",
+        state_code="PA",
+    )
+    ca_penal_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Cal. Penal Code § 1203.4",
+        normalized_citation="Cal. Penal Code § 1203.4",
+        corpus_key="state_laws",
+        state_code="CA",
+    )
+    tx_penal_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="Tex. Penal Code § 31.03",
+        normalized_citation="Tex. Penal Code § 31.03",
+        corpus_key="state_laws",
+        state_code="TX",
+    )
+
+    assert florida_results[0]["url"] == (
+        "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0061/Sections/0061.13.html"
+    )
+    assert pa_results[0]["url"] == (
+        "https://www.palegis.us/statutes/consolidated/view-statute?CHAPTER=053.&DIV=00.&SECTION=028.&SUBSCTN=000.&TTL=23"
+    )
+    assert ca_penal_results[0]["url"] == (
+        "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=PEN&sectionNum=1203.4"
+    )
+    assert tx_penal_results[0]["url"] == "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.31.htm#31.03"
+
+
 def test_legal_source_recovery_citation_url_hints_cover_federal_citations():
     usc_results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
         citation_text="42 U.S.C. § 1983",

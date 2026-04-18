@@ -12,6 +12,7 @@ import pytest
 
 from ipfs_datasets_py.processors.legal_data import (
     DocketDatasetBuilder,
+    DocketDatasetObject,
     load_packaged_courtlistener_fetch_cache,
     load_packaged_docket_dataset,
 )
@@ -384,9 +385,44 @@ def test_detect_auto_input_type_uses_tyler_hint_for_normalized_fixture() -> None
     assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
 
 
+def test_detect_auto_input_type_uses_tyler_hint_for_camel_case_fixture() -> None:
+    module = _load_docket_cli_module()
+    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_camel_case_export.json"
+
+    assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
+
+
+def test_detect_auto_input_type_uses_tyler_hint_for_wrapped_fixture() -> None:
+    module = _load_docket_cli_module()
+    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+
+    assert module._detect_auto_input_type(str(tyler_fixture), "tyler_host") == "tyler_host"
+
+
+def test_detect_auto_input_type_detects_wrapped_tyler_fixture_without_hint() -> None:
+    module = _load_docket_cli_module()
+    tyler_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+
+    assert module._detect_auto_input_type(str(tyler_fixture)) == "tyler_host"
+
+
 def test_detect_auto_input_type_detects_pacer_html_fixture() -> None:
     module = _load_docket_cli_module()
     pacer_html_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_sample.html"
+
+    assert module._detect_auto_input_type(str(pacer_html_fixture)) == "pacer"
+
+
+def test_detect_auto_input_type_detects_wrapped_pacer_fixture_without_hint() -> None:
+    module = _load_docket_cli_module()
+    pacer_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_wrapped_export.json"
+
+    assert module._detect_auto_input_type(str(pacer_fixture)) == "pacer"
+
+
+def test_detect_auto_input_type_detects_complex_pacer_html_fixture() -> None:
+    module = _load_docket_cli_module()
+    pacer_html_fixture = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_complex_sample.html"
 
     assert module._detect_auto_input_type(str(pacer_html_fixture)) == "pacer"
 
@@ -484,6 +520,104 @@ def test_docket_cli_auto_input_type_uses_source_type_hint_for_tyler_fixture(tmp_
     payload = json.loads(output.getvalue())
     assert payload["status"] == "success"
     assert captured["source"] == str(fixture_path)
+
+
+def test_docket_cli_main_json_output_from_tyler_host_camel_case_fixture(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_camel_case_export.json"
+    output_path = tmp_path / "tyler_host_camel_case_dataset.json"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--source-type-hint",
+                "tyler_host",
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    written_dataset = json.loads(output_path.read_text(encoding="utf-8"))
+    assert written_dataset["docket_id"] == "TYLER-2025-042"
+    assert written_dataset["case_name"] == "Smith v. Example County"
+    assert written_dataset["court"] == "Example County Circuit Court"
+    assert written_dataset["metadata"]["source_type"] == "tyler_host"
+    assert written_dataset["metadata"]["upstream_source_type"] == "tyler_host"
+    assert len(written_dataset["documents"]) == 2
+    assert written_dataset["documents"][0]["document_number"] == "18"
+    assert written_dataset["documents"][1]["title"] == "Certificate of Service"
+
+
+def test_docket_cli_main_json_output_from_wrapped_tyler_host_fixture(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+    output_path = tmp_path / "tyler_host_wrapped_dataset.json"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--source-type-hint",
+                "tyler_host",
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    written_dataset = json.loads(output_path.read_text(encoding="utf-8"))
+    assert written_dataset["docket_id"] == "TYLER-2025-099"
+    assert written_dataset["case_name"] == "In re Example Petition"
+    assert written_dataset["court"] == "Example County Probate Court"
+    assert written_dataset["metadata"]["source_type"] == "tyler_host"
+    assert written_dataset["metadata"]["upstream_source_type"] == "tyler_host"
+    assert len(written_dataset["documents"]) == 2
+    assert written_dataset["documents"][0]["title"] == "Petition for Appointment"
+    assert written_dataset["documents"][1]["document_number"] == "5"
+
+
+def test_docket_cli_main_json_output_from_wrapped_tyler_host_fixture_without_hint(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+    output_path = tmp_path / "tyler_host_wrapped_no_hint_dataset.json"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    written_dataset = json.loads(output_path.read_text(encoding="utf-8"))
+    assert written_dataset["docket_id"] == "TYLER-2025-099"
+    assert written_dataset["metadata"]["source_type"] == "tyler_host"
+    assert written_dataset["metadata"]["upstream_source_type"] == "tyler_host"
 
 
 def test_docket_cli_auto_input_type_loads_pacer_html_fixture(tmp_path: Path) -> None:
@@ -626,6 +760,66 @@ def test_docket_cli_main_json_output_from_pacer_html_fixture(tmp_path: Path) -> 
     assert written_dataset["metadata"]["upstream_source_type"] == "pacer"
     assert written_dataset["metadata"]["source_path"] == str(fixture_path)
     assert len(written_dataset["documents"]) == 2
+
+
+def test_docket_cli_main_json_output_from_wrapped_pacer_fixture_without_hint(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_wrapped_export.json"
+    output_path = tmp_path / "wrapped_pacer_dataset.json"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    written_dataset = json.loads(output_path.read_text(encoding="utf-8"))
+    assert written_dataset["docket_id"] == "2:25-cv-2002"
+    assert written_dataset["metadata"]["source_type"] == "pacer"
+    assert written_dataset["metadata"]["upstream_source_type"] == "pacer"
+    assert len(written_dataset["documents"]) == 2
+    assert written_dataset["documents"][0]["title"] == "Notice of Removal"
+
+
+def test_docket_cli_main_json_output_from_complex_pacer_html_fixture(tmp_path: Path) -> None:
+    module = _load_docket_cli_module()
+    fixture_path = Path(__file__).resolve().parents[1] / "fixtures" / "legal_data" / "pacer_docket_complex_sample.html"
+    output_path = tmp_path / "complex_pacer_html_docket_dataset.json"
+
+    output = io.StringIO()
+    with redirect_stdout(output):
+        result = module.main(
+            [
+                "--input-type",
+                "auto",
+                "--input-path",
+                str(fixture_path),
+                "--output",
+                str(output_path),
+                "--json",
+            ]
+        )
+
+    assert result == 0
+    payload = json.loads(output.getvalue())
+    assert payload["status"] == "success"
+    written_dataset = json.loads(output_path.read_text(encoding="utf-8"))
+    assert written_dataset["docket_id"] == "2:25-cv-98765"
+    assert written_dataset["case_name"] == "Smith et al v. Example Industries, Inc."
+    assert len(written_dataset["documents"]) == 2
+    assert written_dataset["documents"][0]["document_number"] == "4"
+    assert written_dataset["documents"][1]["text"] == "Clerk's notice regarding service deadlines."
 
 
 def test_docket_cli_main_json_output_from_tyler_host_alias(tmp_path: Path, monkeypatch) -> None:

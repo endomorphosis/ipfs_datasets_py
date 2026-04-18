@@ -666,6 +666,61 @@ def _cluster_failure_recoveries(attempts: Sequence[BluebookCitationFuzzAttempt])
     return ordered
 
 
+def _summarize_scraper_coverage(attempts: Sequence[BluebookCitationFuzzAttempt]) -> Dict[str, Any]:
+    by_target: Dict[str, Dict[str, Any]] = {}
+    host_counts: Counter[str] = Counter()
+    corpus_counts: Counter[str] = Counter()
+    recovery_count = 0
+
+    for attempt in attempts:
+        corpus_key = _attempt_corpus_key(attempt)
+        for recovery in attempt.recoveries:
+            scraper_patch = recovery.get("scraper_patch") if isinstance(recovery.get("scraper_patch"), dict) else {}
+            target_file = str(scraper_patch.get("target_file") or "").strip() or "unknown"
+            host = str(scraper_patch.get("host") or "").strip() or "unknown"
+            citation_text = str(recovery.get("citation_text") or attempt.candidate.citation_text or "").strip()
+            recovery_count += 1
+            host_counts[host] += 1
+            corpus_counts[corpus_key] += 1
+
+            row = by_target.setdefault(
+                target_file,
+                {
+                    "target_file": target_file,
+                    "recovery_count": 0,
+                    "failure_count": 0,
+                    "hosts": [],
+                    "corpora": [],
+                    "citations": [],
+                },
+            )
+            row["recovery_count"] += 1
+            if not _attempt_succeeded(attempt):
+                row["failure_count"] += 1
+            if host not in row["hosts"]:
+                row["hosts"].append(host)
+            if corpus_key not in row["corpora"]:
+                row["corpora"].append(corpus_key)
+            if citation_text and citation_text not in row["citations"]:
+                row["citations"].append(citation_text)
+
+    targets = sorted(by_target.values(), key=lambda item: (-int(item["recovery_count"]), item["target_file"]))
+    for target in targets:
+        target["hosts"] = sorted(target["hosts"])
+        target["corpora"] = sorted(target["corpora"])
+        target["citations"] = target["citations"][:10]
+
+    return {
+        "recovery_count": recovery_count,
+        "scraper_target_count": len(targets),
+        "host_count": len(host_counts),
+        "corpus_count": len(corpus_counts),
+        "targets": targets,
+        "hosts": dict(sorted(host_counts.items())),
+        "corpora": dict(sorted(corpus_counts.items())),
+    }
+
+
 def _summarize_recovery_publication(attempts: Sequence[BluebookCitationFuzzAttempt]) -> Dict[str, Any]:
     status_counts: Counter[str] = Counter()
     repo_counts: Counter[str] = Counter()
@@ -957,6 +1012,7 @@ async def run_bluebook_linker_fuzz_harness(
     )
     summary["recovery_publication"] = _summarize_recovery_publication(attempts)
     summary["failure_patch_clusters"] = _cluster_failure_recoveries(attempts)
+    summary["scraper_coverage"] = _summarize_scraper_coverage(attempts)
     summary["malformed_repairs"] = _collect_malformed_repairs(candidates)
     summary["sampling"] = {
         "seed_examples_per_corpus": int(seed_examples_per_corpus),

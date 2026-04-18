@@ -41,6 +41,20 @@ def test_state_laws_scraper_builds_recovery_section_urls():
     )
 
 
+def test_state_laws_scraper_recovery_section_url_edge_cases():
+    assert scraper_module.build_state_law_section_url("", "518.17") == ""
+    assert scraper_module.build_state_law_section_url("MN", "") == ""
+    assert scraper_module.build_state_law_section_url("ZZ", "1.2") == ""
+    assert scraper_module.build_state_law_section_url("FL", "abc", code_name="Fla. Stat.") == ""
+    assert scraper_module.build_state_law_section_url("IL", "602.7", code_name="ILCS") == ""
+    assert scraper_module.build_state_law_section_url("PA", "12", code_name="23 Pa.C.S.") == ""
+
+    assert (
+        scraper_module.build_state_law_section_url("TX", "153.002", code_name="Penal Code", preferred_host="statutes.capitol.texas.gov")
+        == "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.153.htm#153.002"
+    )
+
+
 @pytest.mark.asyncio
 async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
     captured = {}

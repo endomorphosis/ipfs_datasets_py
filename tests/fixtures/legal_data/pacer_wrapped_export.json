@@ -1,0 +1,28 @@
+{
+  "result": {
+    "source_type": "pacer",
+    "case": {
+      "case_number": "2:25-cv-2002",
+      "case_name": "Roe v. Example Holdings",
+      "court": "D. Example",
+      "documents": [
+        {
+          "id": "doc_1",
+          "title": "Notice of Removal",
+          "text": "Defendant removes the action to federal court.",
+          "date_filed": "2025-02-02",
+          "document_number": "1",
+          "source_url": "https://ecf.example.gov/doc1"
+        },
+        {
+          "id": "doc_7",
+          "title": "Answer",
+          "text": "Answer and affirmative defenses.",
+          "date_filed": "2025-02-20",
+          "document_number": "7",
+          "source_url": "https://ecf.example.gov/doc7"
+        }
+      ]
+    }
+  }
+}

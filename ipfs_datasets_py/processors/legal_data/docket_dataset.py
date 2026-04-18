@@ -114,11 +114,13 @@ def _extract_case_number_from_text(text: str) -> str:
     return ""
 
 
-def _html_to_text(value: Any) -> str:
+def _html_to_text(value: Any, *, preserve_line_breaks: bool = False) -> str:
     text = re.sub(r"<br\s*/?>", "\n", str(value or ""), flags=re.IGNORECASE)
     text = re.sub(r"<[^>]+>", " ", text)
     text = html.unescape(text)
-    return "\n".join(" ".join(line.split()) for line in text.splitlines()).strip()
+    if preserve_line_breaks:
+        return "\n".join(" ".join(line.split()) for line in text.splitlines() if line.strip()).strip()
+    return " ".join(text.split()).strip()
 
 
 def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
@@ -135,7 +137,7 @@ def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
     if not has_court_header or not has_docket_markers:
         raise ValueError(f"HTML file does not appear to be a PACER docket: {path}")
 
-    text = _html_to_text(raw_html)
+    text = _html_to_text(raw_html, preserve_line_breaks=True)
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     case_number = _extract_case_number_from_text(text)
 
@@ -230,6 +232,50 @@ def _parse_pacer_html_docket(path: Path) -> Dict[str, Any]:
             "document_count": len(documents),
         },
     }
+
+
+def _unwrap_nested_docket_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+    current = dict(payload)
+    inherited_source_type = str(current.get("source_type") or "").strip()
+    inherited_upstream_source_type = str(current.get("upstream_source_type") or "").strip()
+    inherited_metadata = dict(current.get("metadata") or {})
+
+    for key in ("result", "case", "data", "payload"):
+        candidate = current.get(key)
+        if not isinstance(candidate, dict):
+            continue
+        if any(
+            candidate.get(field)
+            for field in (
+                "documents",
+                "entries",
+                "docketEntries",
+                "docket_id",
+                "case_id",
+                "case_number",
+                "caseNumber",
+                "case_name",
+                "caseTitle",
+            )
+        ) or any(isinstance(candidate.get(nested_key), dict) for nested_key in ("case", "result")):
+            current = {
+                **candidate,
+                "metadata": {
+                    **inherited_metadata,
+                    **dict(candidate.get("metadata") or {}),
+                },
+                "source_type": str(candidate.get("source_type") or inherited_source_type or "").strip() or candidate.get("source_type"),
+                "upstream_source_type": str(candidate.get("upstream_source_type") or inherited_upstream_source_type or "").strip() or candidate.get("upstream_source_type"),
+            }
+            return _unwrap_nested_docket_payload(current)
+
+    if inherited_source_type and not current.get("source_type"):
+        current["source_type"] = inherited_source_type
+    if inherited_upstream_source_type and not current.get("upstream_source_type"):
+        current["upstream_source_type"] = inherited_upstream_source_type
+    if inherited_metadata and not current.get("metadata"):
+        current["metadata"] = inherited_metadata
+    return current
 
 
 def _extract_text_from_pdf(path: Path) -> str:
@@ -1774,12 +1820,14 @@ class DocketDatasetBuilder:
         docket_metadata = dict(docket.get("metadata") or {})
         detected_case_number = _normalize_case_number_text(
             docket.get("case_number")
+            or docket.get("caseNumber")
             or docket_metadata.get("case_number")
             or docket.get("docket_number")
+            or docket.get("docketNumber")
         )
-        docket_id = str(docket.get("docket_id") or docket.get("id") or detected_case_number or "docket")
-        case_name = str(docket.get("case_name") or docket.get("title") or docket_id)
-        court = str(docket.get("court") or docket.get("court_full_name") or "")
+        docket_id = str(docket.get("docket_id") or docket.get("case_id") or docket.get("id") or detected_case_number or "docket")
+        case_name = str(docket.get("case_name") or docket.get("caseTitle") or docket.get("title") or docket_id)
+        court = str(docket.get("court") or docket.get("courtName") or docket.get("court_full_name") or "")
         dataset_id = f"docket_dataset_{_safe_identifier(docket_id)}"
         plaintiff_docket = self._normalize_auxiliary_items(docket.get("plaintiff_docket") or docket.get("plaintiffs_docket") or [])
         defendant_docket = self._normalize_auxiliary_items(docket.get("defendant_docket") or docket.get("defendants_docket") or [])
@@ -1977,6 +2025,7 @@ class DocketDatasetBuilder:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("Docket JSON payload must be an object")
+        payload = _unwrap_nested_docket_payload(payload)
         payload.setdefault("source_type", "json_file")
         payload.setdefault("source_path", str(Path(path)))
         return self.build_from_docket(
@@ -2183,8 +2232,8 @@ class DocketDatasetBuilder:
         )
 
     def _normalize_documents(self, docket: Dict[str, Any]) -> List[DocketDocument]:
-        documents_payload = list(docket.get("documents") or docket.get("entries") or [])
-        docket_id = str(docket.get("docket_id") or docket.get("id") or "docket")
+        documents_payload = list(docket.get("documents") or docket.get("entries") or docket.get("docketEntries") or [])
+        docket_id = str(docket.get("docket_id") or docket.get("case_id") or docket.get("id") or docket.get("caseNumber") or "docket")
         normalized: List[DocketDocument] = []
         for index, item in enumerate(documents_payload, start=1):
             if not isinstance(item, dict):
@@ -2192,12 +2241,14 @@ class DocketDatasetBuilder:
             text = str(
                 item.get("text")
                 or item.get("plain_text")
+                or item.get("plainText")
+                or item.get("documentText")
                 or item.get("content")
                 or item.get("description")
                 or ""
             ).strip()
-            title = str(item.get("title") or item.get("description") or f"Docket document {index}").strip()
-            document_id = str(item.get("document_id") or item.get("id") or f"{docket_id}_doc_{index}")
+            title = str(item.get("title") or item.get("documentTitle") or item.get("description") or f"Docket document {index}").strip()
+            document_id = str(item.get("document_id") or item.get("documentId") or item.get("id") or f"{docket_id}_doc_{index}")
             existing_metadata = dict(item.get("metadata") or {})
             classification = self._classify_document(title=title, text=text, item=item)
             text_extraction = dict(existing_metadata.get("text_extraction") or {})
@@ -2212,9 +2263,16 @@ class DocketDatasetBuilder:
                     docket_id=docket_id,
                     title=title,
                     text=text,
-                    date_filed=str(item.get("date_filed") or item.get("filed") or ""),
-                    document_number=str(item.get("document_number") or item.get("entry_number") or ""),
-                    source_url=str(item.get("source_url") or item.get("recap_url") or item.get("docket_url") or ""),
+                    date_filed=str(item.get("date_filed") or item.get("filed") or item.get("filedDate") or ""),
+                    document_number=str(item.get("document_number") or item.get("entry_number") or item.get("docNumber") or ""),
+                    source_url=str(
+                        item.get("source_url")
+                        or item.get("documentUrl")
+                        or item.get("recap_url")
+                        or item.get("docket_url")
+                        or item.get("sourcePath")
+                        or ""
+                    ),
                     metadata={
                         **existing_metadata,
                         "document_type": item.get("document_type"),

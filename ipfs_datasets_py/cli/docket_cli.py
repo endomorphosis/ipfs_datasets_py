@@ -68,6 +68,29 @@ from ipfs_datasets_py.processors.legal_scrapers import recover_citation_audit_fe
 __all__ = ["create_parser", "main"]
 
 
+def _extract_nested_source_type(payload: object, *, max_depth: int = 4) -> str:
+    if max_depth < 0 or not isinstance(payload, dict):
+        return ""
+
+    metadata = dict(payload.get("metadata") or {})
+    source_hint = str(
+        payload.get("source_type")
+        or payload.get("upstream_source_type")
+        or metadata.get("source_type")
+        or metadata.get("upstream_source_type")
+        or ""
+    ).strip().lower()
+    if source_hint in {"pacer", "tyler_host", "courtlistener"}:
+        return source_hint
+
+    for key in ("result", "case", "data", "payload"):
+        candidate = payload.get(key)
+        nested_hint = _extract_nested_source_type(candidate, max_depth=max_depth - 1)
+        if nested_hint:
+            return nested_hint
+    return ""
+
+
 def _detect_auto_input_type(input_path: str, source_type_hint: str | None = None) -> str:
     raw = str(input_path or "").strip()
     if not raw:
@@ -102,14 +125,7 @@ def _detect_auto_input_type(input_path: str, source_type_hint: str | None = None
                 return normalized_hint or "json"
 
             if isinstance(payload, dict):
-                metadata = dict(payload.get("metadata") or {})
-                source_hint = str(
-                    payload.get("source_type")
-                    or payload.get("upstream_source_type")
-                    or metadata.get("source_type")
-                    or metadata.get("upstream_source_type")
-                    or ""
-                ).strip().lower()
+                source_hint = _extract_nested_source_type(payload)
                 if source_hint in {"pacer", "tyler_host", "courtlistener"}:
                     return source_hint
             return normalized_hint or "json"

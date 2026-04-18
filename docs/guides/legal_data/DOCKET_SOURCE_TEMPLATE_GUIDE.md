@@ -4,6 +4,29 @@ This guide summarizes the public parser templates that are most useful for exten
 
 The current `legal_data` ingestion path already accepts normalized PACER- and Tyler Host-labeled JSON or directory inputs, CourtListener dockets, and local folders containing `.txt`, `.md`, `.json`, and `.pdf` files. This guide focuses on the next step: raw-source adapters.
 
+## Currently Accepted Source Shapes
+
+The current `ingest_docket_dataset(...)` flow is now regression-tested against these source shapes:
+
+### PACER
+
+- Normalized flat JSON with top-level docket fields and a `documents` array.
+- Wrapped JSON where the usable docket payload is nested under envelopes such as `result` and `case`.
+- Raw PACER docket HTML files.
+- PACER HTML variants with extra columns, links, and multiline docket text cells.
+
+### Tyler Host
+
+- Normalized flat JSON with top-level docket fields and a `documents` array.
+- Portal-style camelCase JSON using keys such as `caseNumber`, `caseTitle`, `courtName`, and `docketEntries`.
+- Wrapped portal JSON where the usable case payload is nested under envelopes such as `result` and `case`.
+
+### Auto-detection behavior
+
+- `--input-type auto` detects raw PACER HTML by file suffix.
+- `--input-type auto` detects PACER/Tyler wrapped JSON without `--source-type-hint` when nested `source_type` metadata is present under `result`, `case`, `data`, or `payload`.
+- `--source-type-hint` is still useful when upstream JSON omits any source label.
+
 ## Recommended Sources
 
 ### 1. PACER HTML: `freelawproject/juriscraper`
@@ -151,6 +174,33 @@ Recommended minimum shape:
 }
 ```
 
+Also accepted for wrapped portal exports:
+
+```json
+{
+  "result": {
+    "source_type": "tyler_host",
+    "case": {
+      "caseNumber": "TYLER-2025-099",
+      "caseTitle": "In re Example Petition",
+      "courtName": "Example County Probate Court",
+      "docketEntries": [
+        {
+          "documentId": "entry_1",
+          "documentTitle": "Petition for Appointment",
+          "text": "Petition text.",
+          "filedDate": "2025-01-07",
+          "docNumber": "1",
+          "documentUrl": "https://portal.example.gov/documents/1"
+        }
+      ]
+    }
+  }
+}
+```
+
+The JSON importer unwraps envelopes like `result`, `case`, `data`, and `payload` before normalizing the docket.
+
 Suggested mapping rules:
 
 - Prefer `case_number` and `docket_id` to preserve the human docket reference.
@@ -188,4 +238,4 @@ This keeps parser breakage separate from downstream ingestion breakage.
 - Use Juriscraper `DocketReport` as the canonical PACER raw parser template.
 - Use Juriscraper `ACMSDocketReport` as the structural template for Tyler Host and other portal-style JSON exports.
 - Use CourtListener recap factories and merger expectations as the normalization target.
-- Treat Tyler Host field mappings as provisional until a real export sample is available.
+- Treat Tyler Host field mappings as provisional until a real export sample is available, but the current importer already supports normalized, camelCase, and wrapped Tyler-style JSON variants.

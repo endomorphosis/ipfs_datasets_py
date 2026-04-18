@@ -537,6 +537,16 @@ async def test_run_bluebook_linker_fuzz_harness_seed_only_emits_actionable_cover
     assert patch_clusters[0]["corpus_key"] == "us_code"
     assert patch_clusters[0]["host"] == "uscode.house.gov"
     assert patch_clusters[0]["failure_count"] == 1
+    scraper_coverage = run.summary["scraper_coverage"]
+    assert scraper_coverage["recovery_count"] == 1
+    assert scraper_coverage["scraper_target_count"] == 1
+    assert scraper_coverage["host_count"] == 1
+    assert scraper_coverage["hosts"] == {"uscode.house.gov": 1}
+    assert scraper_coverage["corpora"] == {"us_code": 1}
+    assert scraper_coverage["targets"][0]["target_file"].endswith("us_code_scraper.py")
+    assert scraper_coverage["targets"][0]["hosts"] == ["uscode.house.gov"]
+    assert scraper_coverage["targets"][0]["corpora"] == ["us_code"]
+    assert scraper_coverage["targets"][0]["citations"] == ["18 U.S.C. § 242"]
     backlog = run.summary["failure_patch_backlog"]
     assert backlog["actionable_corpora"] == ["us_code"]
     assert backlog["cluster_count"] == 1
@@ -544,6 +554,67 @@ async def test_run_bluebook_linker_fuzz_harness_seed_only_emits_actionable_cover
     assert "malformed_repairs" in backlog
     assert run.summary["failure_patch_backlog_path"]
     assert Path(run.summary["failure_patch_backlog_path"]).exists()
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_summarizes_multiple_scraper_targets(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(["Minn. Stat. § 518.17", "42 U.S.C. § 1983"])
+
+    def fake_resolve_document(text: str, **kwargs):
+        citation_text = "42 U.S.C. § 1983" if "42 U.S.C." in text else "Minn. Stat. § 518.17"
+        corpus_key = "us_code" if "42 U.S.C." in citation_text else "state_laws"
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": citation_text,
+                    "normalized_citation": citation_text,
+                    "metadata": {"recovery_corpus_key": corpus_key, "candidate_corpora": [corpus_key]},
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        corpus_key = kwargs["corpus_key"]
+        is_us_code = corpus_key == "us_code"
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "manifest_path": str(tmp_path / f"{corpus_key}.json"),
+            "scraper_patch": {
+                "host": "uscode.house.gov" if is_us_code else "www.revisor.mn.gov",
+                "target_file": (
+                    "ipfs_datasets_py/processors/legal_scrapers/federal_scrapers/us_code_scraper.py"
+                    if is_us_code
+                    else "ipfs_datasets_py/processors/legal_scrapers/state_laws_scraper.py"
+                ),
+                "patch_path": str(tmp_path / f"{corpus_key}.patch"),
+            },
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=2,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        min_actionable_failures=1,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    scraper_coverage = run.summary["scraper_coverage"]
+    assert scraper_coverage["recovery_count"] == 2
+    assert scraper_coverage["scraper_target_count"] == 2
+    assert scraper_coverage["host_count"] == 2
+    assert scraper_coverage["corpora"] == {"state_laws": 1, "us_code": 1}
+    targets = {Path(item["target_file"]).name: item for item in scraper_coverage["targets"]}
+    assert targets["state_laws_scraper.py"]["hosts"] == ["www.revisor.mn.gov"]
+    assert targets["state_laws_scraper.py"]["citations"] == ["Minn. Stat. § 518.17"]
+    assert targets["us_code_scraper.py"]["hosts"] == ["uscode.house.gov"]
+    assert targets["us_code_scraper.py"]["citations"] == ["42 U.S.C. § 1983"]
 
 
 @pytest.mark.anyio

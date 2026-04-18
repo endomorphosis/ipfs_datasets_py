@@ -14,7 +14,7 @@ Included documents:
 - `HYBRID_LEGAL_REASONING_TODO.md`
 - `HYBRID_LEGAL_REASONING_EXECUTION_PLAYBOOK.md`
 - `HYBRID_LEGAL_REASONING_OPERATIONS_RUNBOOK.md`
-- `DOCKET_SOURCE_TEMPLATE_GUIDE.md` (public parser-template references for PACER, ACMS-style portal JSON, and normalized docket contracts)
+- `DOCKET_SOURCE_TEMPLATE_GUIDE.md` (public parser-template references plus the currently supported PACER HTML, wrapped JSON, and Tyler portal-shape docket inputs)
 
 Templates:
 - `templates/reasoner_query_testset_template.json`

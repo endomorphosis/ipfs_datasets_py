@@ -1,0 +1,27 @@
+{
+  "source_type": "tyler_host",
+  "caseNumber": "TYLER-2025-042",
+  "caseTitle": "Smith v. Example County",
+  "courtName": "Example County Circuit Court",
+  "docketEntries": [
+    {
+      "documentId": "entry_18",
+      "documentTitle": "Motion for Extension of Time",
+      "description": "Motion requesting a 30-day extension of time to respond.",
+      "filedDate": "2025-03-05",
+      "docNumber": "18",
+      "documentUrl": "https://portal.example.gov/documents/18",
+      "metadata": {
+        "source_path": "/exports/tyler/motion_extension.pdf"
+      }
+    },
+    {
+      "documentId": "entry_19",
+      "documentTitle": "Certificate of Service",
+      "text": "Certificate reflecting electronic service on all counsel.",
+      "filedDate": "2025-03-06",
+      "docNumber": "19",
+      "documentUrl": "https://portal.example.gov/documents/19"
+    }
+  ]
+}

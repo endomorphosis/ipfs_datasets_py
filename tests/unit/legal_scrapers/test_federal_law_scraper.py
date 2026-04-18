@@ -23,6 +23,17 @@ def test_federal_scrapers_build_recovery_citation_urls():
     assert build_federal_register_citation_url("88", "12345") == "https://www.federalregister.gov/citation/88-FR-12345"
 
 
+def test_federal_scraper_recovery_url_builders_reject_missing_parts():
+    assert build_uscode_section_url("", "1983") == ""
+    assert build_uscode_section_url("42", "") == ""
+    assert build_public_law_url("", "58") == ""
+    assert build_public_law_url("117", "") == ""
+    assert build_ecfr_section_url("", "1601.1") == ""
+    assert build_ecfr_section_url("29", "") == ""
+    assert build_federal_register_citation_url("", "12345") == ""
+    assert build_federal_register_citation_url("88", "") == ""
+
+
 def test_extract_rule_links_filters_and_deduplicates():
     html = """
     <html>

@@ -1903,6 +1903,25 @@ def test_ingest_docket_dataset_loads_normalized_pacer_fixture() -> None:
     assert dataset.documents[0].title == "Complaint"
 
 
+def test_ingest_docket_dataset_loads_wrapped_pacer_fixture() -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "pacer_wrapped_export.json"
+
+    dataset = ingest_docket_dataset(
+        str(fixture_path),
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.docket_id == "2:25-cv-2002"
+    assert dataset.case_name == "Roe v. Example Holdings"
+    assert dataset.court == "D. Example"
+    assert dataset.metadata["source_type"] == "pacer"
+    assert dataset.metadata["case_number"] == "2:25-cv-2002"
+    assert len(dataset.documents) == 2
+    assert dataset.documents[0].title == "Notice of Removal"
+    assert dataset.documents[1].document_number == "7"
+
+
 def test_builder_loads_normalized_tyler_host_fixture() -> None:
     fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "normalized_tyler_host_export.json"
 
@@ -1917,6 +1936,48 @@ def test_builder_loads_normalized_tyler_host_fixture() -> None:
     assert dataset.metadata["source_type"] == "json_file"
     assert dataset.metadata["case_number"] == "TYLER-2024-001"
     assert dataset.documents[0].title == "Notice of Hearing"
+
+
+def test_builder_loads_tyler_host_camel_case_fixture() -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "tyler_host_camel_case_export.json"
+
+    dataset = DocketDatasetBuilder().build_from_json_file(
+        fixture_path,
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.docket_id == "TYLER-2025-042"
+    assert dataset.case_name == "Smith v. Example County"
+    assert dataset.court == "Example County Circuit Court"
+    assert dataset.metadata["source_type"] == "tyler_host"
+    assert dataset.metadata["case_number"] == "TYLER-2025-042"
+    assert len(dataset.documents) == 2
+    assert dataset.documents[0].title == "Motion for Extension of Time"
+    assert dataset.documents[0].document_number == "18"
+    assert dataset.documents[0].date_filed == "2025-03-05"
+    assert dataset.documents[0].source_url == "https://portal.example.gov/documents/18"
+    assert dataset.documents[1].title == "Certificate of Service"
+
+
+def test_builder_loads_wrapped_tyler_host_fixture() -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "tyler_host_wrapped_export.json"
+
+    dataset = DocketDatasetBuilder().build_from_json_file(
+        fixture_path,
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.docket_id == "TYLER-2025-099"
+    assert dataset.case_name == "In re Example Petition"
+    assert dataset.court == "Example County Probate Court"
+    assert dataset.metadata["source_type"] == "tyler_host"
+    assert dataset.metadata["case_number"] == "TYLER-2025-099"
+    assert len(dataset.documents) == 2
+    assert dataset.documents[0].title == "Petition for Appointment"
+    assert dataset.documents[0].document_number == "1"
+    assert dataset.documents[1].title == "Order Setting Hearing"
 
 
 def test_ingest_docket_dataset_loads_pacer_html_fixture() -> None:
@@ -1935,6 +1996,26 @@ def test_ingest_docket_dataset_loads_pacer_html_fixture() -> None:
     assert len(dataset.documents) == 2
     assert dataset.documents[0].document_number == "1"
     assert dataset.documents[0].metadata["text_extraction"]["source"] == "pacer_html_docket"
+
+
+def test_ingest_docket_dataset_loads_complex_pacer_html_fixture() -> None:
+    fixture_path = Path(__file__).resolve().parents[2] / "fixtures" / "legal_data" / "pacer_docket_complex_sample.html"
+
+    dataset = ingest_docket_dataset(
+        str(fixture_path),
+        include_formal_logic=False,
+        include_router_enrichment=False,
+    )
+
+    assert dataset.docket_id == "2:25-cv-98765"
+    assert dataset.case_name == "Smith et al v. Example Industries, Inc."
+    assert dataset.metadata["source_type"] == "pacer_html_file"
+    assert len(dataset.documents) == 2
+    assert dataset.documents[0].document_number == "4"
+    assert dataset.documents[0].date_filed == "03/14/2025"
+    assert dataset.documents[0].text == "Order granting motion in part and setting hearing."
+    assert dataset.documents[1].document_number == ""
+    assert dataset.documents[1].text == "Clerk's notice regarding service deadlines."
 
 
 def test_docket_dataset_can_be_packaged_as_linked_parquet_and_car_bundle(tmp_path, monkeypatch):
