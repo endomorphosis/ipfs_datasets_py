@@ -5,6 +5,7 @@ This module contains the scraper for Connecticut statutes from the official stat
 
 import json
 import re
+import ssl
 import urllib.parse
 import urllib.request
 from typing import List, Dict
@@ -40,6 +41,10 @@ class ConnecticutScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         return_threshold = self._bounded_return_threshold(30)
+        direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
+        if direct_sections:
+            return direct_sections
+
         live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
 
         archival_stubs = await self._scrape_archived_chapter_stubs(code_name, max_statutes=max(10, return_threshold))
@@ -77,6 +82,53 @@ class ConnecticutScraper(BaseStateScraper):
             best = archival_stubs
 
         return best
+
+    async def _scrape_direct_chapters(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        """Fetch official CGA chapter pages directly, tolerating their TLS chain."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        chapter_urls = [
+            "https://www.cga.ct.gov/current/pub/chap_001.htm",
+            "https://www.cga.ct.gov/current/pub/chap_002.htm",
+        ]
+        out: List[NormalizedStatute] = []
+        context = ssl._create_unverified_context()
+        for source_url in chapter_urls[: max(1, int(max_statutes or 1))]:
+            try:
+                req = urllib.request.Request(source_url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=12, context=context) as resp:
+                    payload = resp.read()
+            except Exception:
+                continue
+            soup = BeautifulSoup(payload, "html.parser")
+            for tag in soup(["script", "style", "nav", "header", "footer"]):
+                tag.decompose()
+            text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+            if len(text) < 280:
+                continue
+            title = text.split(" Table of Contents", 1)[0][:200] or "Connecticut General Statutes"
+            chapter_match = re.search(r"\bChapter\s+([0-9A-Za-z]+)\b", text, re.IGNORECASE)
+            chapter = chapter_match.group(1) if chapter_match else str(len(out) + 1)
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § Chapter {chapter}",
+                    code_name=code_name,
+                    section_number=f"Chapter {chapter}",
+                    section_name=title,
+                    full_text=text[:14000],
+                    source_url=source_url,
+                    legal_area=self._identify_legal_area(title),
+                    official_cite=f"Conn. Gen. Stat. ch. {chapter}",
+                    metadata=StatuteMetadata(),
+                    structured_data={"source_kind": "official_direct_chapter", "skip_hydrate": True},
+                )
+            )
+        return out
 
     async def _scrape_live_title_stubs(self, code_name: str, max_statutes: int = 120) -> List[NormalizedStatute]:
         try:

@@ -51,6 +51,14 @@ class IndianaScraper(BaseStateScraper):
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
         return_threshold = self._bounded_return_threshold(30)
+        if return_threshold < 30:
+            seed_pdfs = await self._scrape_seed_archive_pdfs(
+                code_name=code_name,
+                max_statutes=return_threshold,
+            )
+            if seed_pdfs:
+                return seed_pdfs
+
         justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, return_threshold))
         archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=max(10, return_threshold))
         title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=max(10, return_threshold))
@@ -76,6 +84,21 @@ class IndianaScraper(BaseStateScraper):
 
         # Keep a final generic fallback for resilience.
         return await self._generic_scrape(code_name, code_url, "Ind. Code")
+
+    async def _scrape_seed_archive_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        statutes: List[NormalizedStatute] = []
+        seen_ids = set()
+        for pdf_url in self._ARCHIVE_CHAPTER_PDFS[: max(1, int(max_statutes or 1))]:
+            statute = await self._build_statute_from_pdf_url(
+                code_name=code_name,
+                pdf_url=pdf_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            if statute is None or statute.statute_id in seen_ids:
+                continue
+            seen_ids.add(statute.statute_id)
+            statutes.append(statute)
+        return statutes
 
     async def _scrape_archived_justia_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         try:

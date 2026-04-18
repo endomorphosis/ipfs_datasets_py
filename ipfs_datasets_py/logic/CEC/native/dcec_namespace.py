@@ -34,10 +34,10 @@ class DCECNamespace:
     
     def __init__(self) -> None:
         """Initialize an empty namespace."""
-        self.sorts: Dict[str, Sort] = {}
-        self.variables: Dict[str, Variable] = {}
-        self.functions: Dict[str, Function] = {}
-        self.predicates: Dict[str, Predicate] = {}
+        self.sorts: dict[str, Sort] = {}
+        self.variables: dict[str, Variable] = {}
+        self.functions: dict[str, Function] = {}
+        self.predicates: dict[str, Predicate] = {}
         
         # Initialize built-in sorts
         self._init_builtin_sorts()
@@ -146,7 +146,7 @@ class DCECNamespace:
     def add_function(
         self, 
         name: str, 
-        argument_sort_names: List[str], 
+        argument_sort_names: list[str], 
         return_sort_name: str
     ) -> Function:
         """
@@ -202,7 +202,7 @@ class DCECNamespace:
         return self.functions.get(name)
     
     @beartype  # type: ignore[untyped-decorator]
-    def add_predicate(self, name: str, argument_sort_names: List[str]) -> Predicate:
+    def add_predicate(self, name: str, argument_sort_names: list[str]) -> Predicate:
         """
         Add a predicate to the namespace.
         
@@ -250,7 +250,7 @@ class DCECNamespace:
             pred = self.add_predicate(name, [])
         return pred
     
-    def get_statistics(self) -> Dict[str, int]:
+    def get_statistics(self) -> dict[str, int]:
         """Get statistics about the namespace."""
         return {
             "sorts": len(self.sorts),
@@ -275,10 +275,10 @@ class DCECContainer:
     def __init__(self) -> None:
         """Initialize an empty DCEC container."""
         self.namespace = DCECNamespace()
-        self.statements: List[DCECStatement] = []
-        self.statement_labels: Dict[str, DCECStatement] = {}
-        self.axioms: List[DCECStatement] = []
-        self.theorems: List[DCECStatement] = []
+        self.statements: list[DCECStatement] = []
+        self.statement_labels: dict[str, DCECStatement] = {}
+        self.axioms: list[DCECStatement] = []
+        self.theorems: list[DCECStatement] = []
     
     @beartype  # type: ignore[untyped-decorator]
     def add_statement(
@@ -286,7 +286,7 @@ class DCECContainer:
         formula: Formula, 
         label: Optional[str] = None,
         is_axiom: bool = False,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[dict[str, Any]] = None
     ) -> DCECStatement:
         """
         Add a statement to the container.
@@ -349,19 +349,19 @@ class DCECContainer:
         self.theorems.append(statement)
         return statement
     
-    def add_axiom(self, formula: Formula, label: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> "DCECStatement":
+    def add_axiom(self, formula: Formula, label: Optional[str] = None, metadata: Optional[dict[str, Any]] = None) -> "DCECStatement":
         """Add a statement as an axiom (convenience alias for add_statement with is_axiom=True)."""
         return self.add_statement(formula, label=label, is_axiom=True, metadata=metadata)
 
-    def get_all_statements(self) -> List[DCECStatement]:
+    def get_all_statements(self) -> list[DCECStatement]:
         """Get all statements in the container."""
         return self.statements.copy()
     
-    def get_axioms(self) -> List[DCECStatement]:
+    def get_axioms(self) -> list[DCECStatement]:
         """Get all axioms."""
         return self.axioms.copy()
     
-    def get_theorems(self) -> List[DCECStatement]:
+    def get_theorems(self) -> list[DCECStatement]:
         """Get all theorems."""
         return self.theorems.copy()
     
@@ -373,7 +373,7 @@ class DCECContainer:
         self.theorems.clear()
         logger.debug("Cleared all statements")
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get statistics about the container."""
         return {
             "total_statements": len(self.statements),

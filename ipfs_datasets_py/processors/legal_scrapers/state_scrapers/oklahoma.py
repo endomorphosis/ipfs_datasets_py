@@ -20,6 +20,7 @@ class OklahomaScraper(BaseStateScraper):
     """Scraper for Oklahoma state laws from http://www.oklegislature.gov"""
 
     _SEED_INDEX_URLS = [
+        "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69380",
         "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69782&Title=74",
         "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=438588",
         "https://www.oscn.net/applications/oscn/Index.asp?ftdb=STOKST74",

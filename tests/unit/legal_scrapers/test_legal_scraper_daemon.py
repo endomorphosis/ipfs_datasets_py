@@ -293,6 +293,62 @@ async def test_legal_scraper_daemon_runs_agentic_corpus_phase(tmp_path):
     assert calls[0]["states"] == ["CA"]
 
 
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_shards_state_admin_agentic_runs_by_state(tmp_path, monkeypatch):
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            states=["CT", "NJ"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(enabled=False),
+            state_refresh=StateRefreshDaemonConfig(enabled=False),
+            agentic_corpora=AgenticCorpusDaemonConfig(enabled=True, corpora=["state_admin_rules"]),
+        )
+    )
+    calls = []
+
+    async def _fake_subprocess(*, corpus, output_dir, states):
+        calls.append((corpus, str(output_dir), list(states)))
+        state = list(states)[0]
+        status = "success" if state == "CT" else "error"
+        nonzero = 1 if state == "CT" else 0
+        gaps = [] if state == "CT" else [state]
+        return {
+            "status": status,
+            "summary": {
+                "status": status,
+                "states": [state] if status == "success" else [],
+                "latest_cycle": {
+                    "status": status,
+                    "diagnostics": {
+                        "coverage": {
+                            "states_targeted": 1,
+                            "states_returned": nonzero,
+                            "states_with_nonzero_statutes": nonzero,
+                            "coverage_gap_states": gaps,
+                        },
+                        "etl_readiness": {"total_statutes": 10 if state == "CT" else 0},
+                        "documents": {
+                            "per_state_recovery": {state: {"candidate_urls": 2}},
+                            "candidate_urls_by_state": {state: [f"https://example.test/{state}"]},
+                        },
+                    },
+                },
+            },
+        }
+
+    monkeypatch.setattr(daemon, "_run_agentic_corpus_subprocess", _fake_subprocess)
+
+    result = await daemon._run_agentic_corpus(corpus="state_admin_rules", cycle_dir=tmp_path / "cycle")
+
+    assert result["status"] == "partial_success"
+    assert sorted(call[2][0] for call in calls) == ["CT", "NJ"]
+    summary = result["summary"]
+    assert summary["states"] == ["CT"]
+    coverage = summary["latest_cycle"]["diagnostics"]["coverage"]
+    assert coverage["states_returned"] == 1
+    assert coverage["coverage_gap_states"] == ["NJ"]
+
+
 def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
     args = build_arg_parser().parse_args(
         [

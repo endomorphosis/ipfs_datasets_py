@@ -239,6 +239,10 @@ class MarylandScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         return_threshold = self._bounded_return_threshold(80)
+        direct_statutes = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+        if direct_statutes:
+            return direct_statutes
+
         api_statutes = await self._scrape_api_sections(code_name, max_statutes=max(10, return_threshold))
         if len(api_statutes) >= return_threshold:
             return api_statutes
@@ -301,6 +305,28 @@ class MarylandScraper(BaseStateScraper):
                 return merged
 
         return merged
+
+    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        seeds = [
+            ("State Government", "GSG", "1-101"),
+            ("Criminal Law", "GCR", "1-101"),
+        ]
+        out: List[NormalizedStatute] = []
+        for article_label, article_code, section_code in seeds[: max(1, int(max_statutes or 1))]:
+            section_url = (
+                f"{self.get_base_url()}/mgawebsite/Laws/StatuteText"
+                f"?article={article_code}&section={section_code}&enactments=false"
+            )
+            statute = await self._build_statute_from_section_page(
+                code_name=code_name,
+                article_label=article_label,
+                section_label=section_code,
+                section_number=section_code,
+                section_url=section_url,
+            )
+            if statute is not None:
+                out.append(statute)
+        return out
 
 
 # Register this scraper with the registry

@@ -3,8 +3,9 @@
 This module contains the scraper for Pennsylvania statutes from the official state legislative website.
 """
 
+import re
 from typing import List, Dict
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -46,6 +47,9 @@ class PennsylvaniaScraper(BaseStateScraper):
         merged: List[NormalizedStatute] = []
         merged_keys = set()
         return_threshold = self._bounded_return_threshold(80)
+        direct_statutes = await self._scrape_direct_titles(code_name, max_statutes=return_threshold)
+        if direct_statutes:
+            return direct_statutes
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
@@ -66,6 +70,51 @@ class PennsylvaniaScraper(BaseStateScraper):
                 return merged
 
         return merged
+
+    async def _scrape_direct_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        urls = [
+            "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/01/00.001..HTM",
+            "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/18/18.001..HTM",
+        ]
+        out: List[NormalizedStatute] = []
+        for source_url in urls[: max(1, int(max_statutes or 1))]:
+            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
+            if not payload:
+                continue
+            soup = BeautifulSoup(payload, "html.parser")
+            for tag in soup(["script", "style", "nav", "header", "footer"]):
+                tag.decompose()
+            text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+            if len(text) < 280:
+                continue
+            title_node = soup.find("title")
+            section_name = (
+                title_node.get_text(" ", strip=True) if title_node else text.split(" Sec.", 1)[0]
+            )
+            title_match = re.search(r"Title\s+(\d+)", text, re.IGNORECASE)
+            title_number = title_match.group(1) if title_match else str(len(out) + 1)
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § Title {title_number}",
+                    code_name=code_name,
+                    section_number=f"Title {title_number}",
+                    section_name=section_name[:200],
+                    full_text=text[:14000],
+                    source_url=source_url,
+                    legal_area=self._identify_legal_area(section_name),
+                    official_cite=f"Pa. Cons. Stat. tit. {title_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={"source_kind": "official_direct_title", "skip_hydrate": True},
+                )
+            )
+        return out
 
 
 # Register this scraper with the registry

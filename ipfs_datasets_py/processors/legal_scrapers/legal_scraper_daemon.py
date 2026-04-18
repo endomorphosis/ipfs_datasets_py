@@ -912,9 +912,91 @@ class LegalScraperDaemon:
         output_dir.mkdir(parents=True, exist_ok=True)
         if self.agentic_runner is not None:
             return await self.agentic_runner(corpus=corpus, states=list(self.states), output_dir=str(output_dir))
-        return await self._run_agentic_corpus_subprocess(corpus=corpus, output_dir=output_dir)
+        if corpus == "state_admin_rules" and len(self.states) > 1:
+            return await self._run_agentic_corpus_by_state(corpus=corpus, output_dir=output_dir)
+        return await self._run_agentic_corpus_subprocess(corpus=corpus, output_dir=output_dir, states=list(self.states))
 
-    async def _run_agentic_corpus_subprocess(self, *, corpus: str, output_dir: Path) -> Dict[str, Any]:
+    async def _run_agentic_corpus_by_state(self, *, corpus: str, output_dir: Path) -> Dict[str, Any]:
+        state_results: Dict[str, Dict[str, Any]] = {}
+        semaphore = asyncio.Semaphore(min(4, max(1, len(self.states))))
+
+        async def _run_one(state: str) -> tuple[str, Dict[str, Any]]:
+            async with semaphore:
+                state_output_dir = output_dir / "states" / state
+                result = await self._run_agentic_corpus_subprocess(
+                    corpus=corpus,
+                    output_dir=state_output_dir,
+                    states=[state],
+                )
+                return state, result
+
+        for state, result in await asyncio.gather(*[_run_one(state) for state in self.states]):
+            state_results[state] = result
+
+        successful_states: List[str] = []
+        coverage_gap_states: List[str] = []
+        total_statutes = 0
+        per_state_recovery: Dict[str, Any] = {}
+        candidate_urls_by_state: Dict[str, Any] = {}
+        latest_cycles: Dict[str, Any] = {}
+        for state, result in state_results.items():
+            summary = result.get("summary") if isinstance(result.get("summary"), dict) else {}
+            latest_cycle = summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
+            latest_cycles[state] = latest_cycle
+            diagnostics = latest_cycle.get("diagnostics") if isinstance(latest_cycle.get("diagnostics"), dict) else {}
+            coverage = diagnostics.get("coverage") if isinstance(diagnostics.get("coverage"), dict) else {}
+            etl = diagnostics.get("etl_readiness") if isinstance(diagnostics.get("etl_readiness"), dict) else {}
+            documents = diagnostics.get("documents") if isinstance(diagnostics.get("documents"), dict) else {}
+            if str(result.get("status") or "").lower() == "success" and int(coverage.get("states_with_nonzero_statutes") or 0) > 0:
+                successful_states.append(state)
+                total_statutes += int(etl.get("total_statutes") or 0)
+            else:
+                coverage_gap_states.append(state)
+            recovery = documents.get("per_state_recovery") if isinstance(documents.get("per_state_recovery"), dict) else {}
+            if state in recovery:
+                per_state_recovery[state] = recovery[state]
+            candidate_urls = documents.get("candidate_urls_by_state") if isinstance(documents.get("candidate_urls_by_state"), dict) else {}
+            if state in candidate_urls:
+                candidate_urls_by_state[state] = candidate_urls[state]
+
+        aggregate_status = "success"
+        if coverage_gap_states and successful_states:
+            aggregate_status = "partial_success"
+        elif coverage_gap_states:
+            aggregate_status = "error"
+        summary = {
+            "status": aggregate_status,
+            "corpus": corpus,
+            "states": successful_states,
+            "state_results": state_results,
+            "latest_cycle": {
+                "status": aggregate_status,
+                "diagnostics": {
+                    "coverage": {
+                        "states_targeted": len(self.states),
+                        "states_returned": len(successful_states),
+                        "states_with_nonzero_statutes": len(successful_states),
+                        "coverage_gap_states": coverage_gap_states,
+                    },
+                    "etl_readiness": {
+                        "total_statutes": total_statutes,
+                        "ready_for_kg_etl": False,
+                    },
+                    "documents": {
+                        "per_state_recovery": per_state_recovery,
+                        "candidate_urls_by_state": candidate_urls_by_state,
+                    },
+                },
+                "state_cycles": latest_cycles,
+            },
+        }
+        return {
+            "status": aggregate_status,
+            "output_dir": str(output_dir),
+            "summary": summary,
+        }
+
+    async def _run_agentic_corpus_subprocess(self, *, corpus: str, output_dir: Path, states: Sequence[str]) -> Dict[str, Any]:
         config = self.config.agentic_corpora
         command = [
             sys.executable,
@@ -923,7 +1005,7 @@ class LegalScraperDaemon:
             "--corpus",
             str(corpus),
             "--states",
-            ",".join(self.states),
+            ",".join(states),
             "--output-dir",
             str(output_dir),
             "--max-cycles",

@@ -54,12 +54,12 @@ class InferenceRule(ABC):
         pass
     
     @abstractmethod
-    def can_apply(self, formulas: List[Formula]) -> bool:
+    def can_apply(self, formulas: list[Formula]) -> bool:
         """Check if this rule can be applied to the given formulas."""
         pass
     
     @abstractmethod
-    def apply(self, formulas: List[Formula]) -> List[Formula]:
+    def apply(self, formulas: list[Formula]) -> list[Formula]:
         """Apply this rule and return new formulas."""
         pass
 
@@ -70,7 +70,7 @@ class ModusPonens(InferenceRule):
     def name(self) -> str:
         return "Modus Ponens"
     
-    def can_apply(self, formulas: List[Formula]) -> bool:
+    def can_apply(self, formulas: list[Formula]) -> bool:
         # Check if we have both P and P→Q
         for f1 in formulas:
             for f2 in formulas:
@@ -79,8 +79,8 @@ class ModusPonens(InferenceRule):
                         return True
         return False
     
-    def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results: List[Formula] = []
+    def apply(self, formulas: list[Formula]) -> list[Formula]:
+        results: list[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
@@ -100,14 +100,14 @@ class Simplification(InferenceRule):
     def name(self) -> str:
         return "Simplification"
     
-    def can_apply(self, formulas: List[Formula]) -> bool:
+    def can_apply(self, formulas: list[Formula]) -> bool:
         return any(
             isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND
             for f in formulas
         )
     
-    def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results: List[Formula] = []
+    def apply(self, formulas: list[Formula]) -> list[Formula]:
+        results: list[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
                 # Add each conjunct
@@ -121,12 +121,12 @@ class ConjunctionIntroduction(InferenceRule):
     def name(self) -> str:
         return "Conjunction Introduction"
     
-    def can_apply(self, formulas: List[Formula]) -> bool:
+    def can_apply(self, formulas: list[Formula]) -> bool:
         return len(formulas) >= 2
     
-    def apply(self, formulas: List[Formula]) -> List[Formula]:
+    def apply(self, formulas: list[Formula]) -> list[Formula]:
         # Create conjunctions of pairs of formulas
-        results: List[Formula] = []
+        results: list[Formula] = []
         for i, f1 in enumerate(formulas):
             for f2 in formulas[i+1:]:
                 conjunction = ConnectiveFormula(LogicalConnective.AND, [f1, f2])
@@ -139,7 +139,7 @@ class ProofStep:
     """Represents a single step in a proof."""
     formula: Formula
     rule: str
-    premises: List[int] = field(default_factory=list)  # Indices of premises
+    premises: list[int] = field(default_factory=list)  # Indices of premises
     step_number: int = 0
     
     def __str__(self) -> str:
@@ -151,8 +151,8 @@ class ProofStep:
 class ProofTree:
     """Represents a complete proof."""
     goal: Formula
-    axioms: List[Formula]
-    steps: List[ProofStep]
+    axioms: list[Formula]
+    steps: list[ProofStep]
     result: ProofResult
     
     def __str__(self) -> str:
@@ -177,11 +177,11 @@ class ProofTree:
 class ProofState:
     """Maintains the state during proof search."""
     
-    def __init__(self, goal: Formula, axioms: List[Formula]):
+    def __init__(self, goal: Formula, axioms: list[Formula]):
         self.goal = goal
         self.axioms = axioms
-        self.derived: List[Formula] = list(axioms)
-        self.steps: List[ProofStep] = []
+        self.derived: list[Formula] = list(axioms)
+        self.steps: list[ProofStep] = []
         
         # Add axioms as initial steps
         for i, axiom in enumerate(axioms):
@@ -191,7 +191,7 @@ class ProofState:
                 step_number=i+1
             ))
     
-    def add_formula(self, formula: Formula, rule: str, premises: List[int]) -> None:
+    def add_formula(self, formula: Formula, rule: str, premises: list[int]) -> None:
         """Add a newly derived formula."""
         self.derived.append(formula)
         step = ProofStep(
@@ -233,7 +233,7 @@ class BasicProver:
             max_steps: Maximum number of inference steps
         """
         self.max_steps = max_steps
-        self.rules: List[InferenceRule] = [
+        self.rules: list[InferenceRule] = [
             ModusPonens(),
             Simplification(),
             ConjunctionIntroduction(),
@@ -243,7 +243,7 @@ class BasicProver:
     def prove(
         self,
         goal: Formula,
-        axioms: List[Formula],
+        axioms: list[Formula],
         timeout: Optional[float] = None
     ) -> ProofTree:
         """
@@ -311,7 +311,7 @@ class BasicProver:
 class ProofAttempt:
     """Result of a proof attempt."""
     goal: Formula
-    axioms: List[Formula]
+    axioms: list[Formula]
     proof_tree: Optional[ProofTree] = None
     result: ProofResult = ProofResult.UNKNOWN
     error_message: Optional[str] = None
@@ -331,7 +331,7 @@ class TheoremProver:
     def __init__(self) -> None:
         """Initialize the theorem prover."""
         self.prover = BasicProver()
-        self.proof_attempts: List[ProofAttempt] = []
+        self.proof_attempts: list[ProofAttempt] = []
         self._initialized = True
     
     def initialize(self) -> bool:
@@ -344,7 +344,7 @@ class TheoremProver:
     def prove_theorem(
         self,
         goal: Formula,
-        axioms: Optional[List[Formula]] = None,
+        axioms: Optional[list[Formula]] = None,
         timeout: Optional[float] = None
     ) -> ProofAttempt:
         """
@@ -388,7 +388,7 @@ class TheoremProver:
         self.proof_attempts.append(attempt)
         return attempt
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get statistics about proof attempts."""
         if not self.proof_attempts:
             return {"total_attempts": 0}
@@ -419,21 +419,21 @@ class InferenceEngine:
 
     def __init__(self, max_steps: int = 50):
         self.max_steps = max_steps
-        self._formulas: List[Formula] = []
+        self._formulas: list[Formula] = []
         self._prover = BasicProver(max_steps=max_steps)
 
     def add_assumption(self, formula: Formula) -> None:
         self._formulas.append(formula)
 
-    def apply_all_rules(self) -> List[Formula]:
+    def apply_all_rules(self) -> list[Formula]:
         """Apply all available rules until saturation (or max_steps).
 
         Returns the list of derived formulas including assumptions.
         """
-        derived: List[Formula] = list(self._formulas)
+        derived: list[Formula] = list(self._formulas)
 
         for _ in range(self.max_steps):
-            new_formulas: List[Formula] = []
+            new_formulas: list[Formula] = []
             for rule in self._prover.rules:
                 if rule.can_apply(derived):
                     for candidate in rule.apply(derived):

@@ -10,7 +10,7 @@ import urllib.parse
 from html import unescape
 from typing import List, Dict
 
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -45,6 +45,10 @@ class LouisianaScraper(BaseStateScraper):
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
         return_threshold = self._bounded_return_threshold(30)
+        live = await self._scrape_live_law_pages(code_name=code_name, max_statutes=return_threshold)
+        if live:
+            return live
+
         archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=max(10, return_threshold))
         if archival:
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
@@ -58,6 +62,38 @@ class LouisianaScraper(BaseStateScraper):
             timeout=45000,
             max_sections=max(10, return_threshold),
         )
+
+    async def _scrape_live_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        statutes: List[NormalizedStatute] = []
+        for live_url in [
+            "https://legis.la.gov/Legis/Law.aspx?d=100114",
+            "https://legis.la.gov/Legis/Law.aspx?d=100115",
+        ][: max(1, int(max_statutes or 1))]:
+            law_html = await self._request_text(law_url=live_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=12)
+            if not law_html:
+                continue
+            section_number = self._extract_section_number(law_html)
+            body_html = self._extract_law_body_html(law_html)
+            full_text = self._clean_html_text(body_html)
+            if not section_number or len(full_text) < 280:
+                continue
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=f"RS {section_number}",
+                    full_text=full_text,
+                    legal_area=self._identify_legal_area(full_text),
+                    source_url=live_url,
+                    official_cite=f"La. Rev. Stat. {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={"source_kind": "official_live_law_page", "skip_hydrate": True},
+                )
+            )
+        return statutes
 
     async def _scrape_archived_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}

@@ -3,6 +3,7 @@
 This module contains the scraper for Missouri statutes from the official state legislative website.
 """
 
+import re
 from typing import List, Dict
 from urllib.parse import parse_qs, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -34,8 +35,55 @@ class MissouriScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        direct = await self._scrape_direct_sections(code_name, max_statutes=self._bounded_return_threshold(2))
+        if direct:
+            return direct
+
         # Use custom scraper with Missouri-specific patterns
         return await self._custom_scrape_missouri(code_name, code_url, "Mo. Rev. Stat.")
+
+    async def _scrape_direct_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        section_urls = [
+            f"{self.get_base_url()}/main/OneSection.aspx?section=1.010",
+            f"{self.get_base_url()}/main/OneSection.aspx?section=565.020",
+        ]
+        statutes: List[NormalizedStatute] = []
+        for source_url in section_urls[: max(1, int(max_statutes or 1))]:
+            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
+            if not payload:
+                continue
+            soup = BeautifulSoup(payload, "html.parser")
+            for tag in soup(["script", "style", "nav", "header", "footer"]):
+                tag.decompose()
+            text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+            if len(text) < 280:
+                continue
+            match = re.search(r"\b(\d+\.\d+[A-Za-z]*)\b", text)
+            section_number = match.group(1) if match else source_url.rsplit("section=", 1)[-1]
+            title_match = re.search(rf"{re.escape(section_number)}\.\s*([^—-]+)", text)
+            section_name = title_match.group(1).strip() if title_match else f"Section {section_number}"
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    full_text=text[:14000],
+                    legal_area=self._identify_legal_area(section_name),
+                    source_url=source_url,
+                    official_cite=f"Mo. Rev. Stat. § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={"source_kind": "official_direct_section", "skip_hydrate": True},
+                )
+            )
+        return statutes
     
     async def _custom_scrape_missouri(
         self,

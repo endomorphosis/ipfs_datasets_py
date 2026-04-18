@@ -45,13 +45,13 @@ class TableauNode:
         children: Child nodes
         accessible_worlds: Worlds accessible from this world
     """
-    formulas: Set[str]
+    formulas: set[str]
     world: int
     status: NodeStatus = NodeStatus.OPEN
     parent: Optional['TableauNode'] = None
-    children: List['TableauNode'] = field(default_factory=list)
-    accessible_worlds: Set[int] = field(default_factory=set)
-    expanded_formulas: Set[str] = field(default_factory=set)
+    children: list['TableauNode'] = field(default_factory=list)
+    accessible_worlds: set[int] = field(default_factory=set)
+    expanded_formulas: set[str] = field(default_factory=set)
     
     def add_formula(self, formula: str) -> bool:
         """Add a formula to this node.
@@ -102,7 +102,7 @@ class ModalTableau:
     root: TableauNode
     logic: ModalLogic
     world_counter: int = 0
-    proof_steps: List[ProofStep] = field(default_factory=list)
+    proof_steps: list[ProofStep] = field(default_factory=list)
     
     def is_closed(self) -> bool:
         """Check if entire tableau is closed.
@@ -154,7 +154,7 @@ class TableauProver:
         self.logic = logic
     
     @beartype  # type: ignore[untyped-decorator]
-    def prove(self, goal: str, assumptions: Optional[List[str]] = None) -> Tuple[bool, ModalTableau]:
+    def prove(self, goal: str, assumptions: Optional[list[str]] = None) -> tuple[bool, ModalTableau]:
         """Prove a goal using tableau method.
         
         The tableau method attempts to refute ¬goal. If the refutation
@@ -434,10 +434,10 @@ class ResolutionProver:
     
     def __init__(self) -> None:
         """Initialize resolution prover."""
-        self.clauses: Set[frozenset] = set()
+        self.clauses: set[frozenset] = set()
     
     @beartype  # type: ignore[untyped-decorator]
-    def prove(self, goal: str, assumptions: Optional[List[str]] = None) -> Tuple[bool, List[ProofStep]]:
+    def prove(self, goal: str, assumptions: Optional[list[str]] = None) -> tuple[bool, list[ProofStep]]:
         """Prove a goal using resolution.
         
         Args:
@@ -488,7 +488,7 @@ class ResolutionProver:
         
         return False, proof_steps
     
-    def _resolution_step(self) -> Set[frozenset]:
+    def _resolution_step(self) -> set[frozenset]:
         """Perform one step of resolution.
         
         Returns:
@@ -505,7 +505,7 @@ class ResolutionProver:
         
         return new_clauses
     
-    def _resolve(self, clause1: frozenset, clause2: frozenset) -> Set[frozenset]:
+    def _resolve(self, clause1: frozenset, clause2: frozenset) -> set[frozenset]:
         """Resolve two clauses.
         
         Args:
@@ -541,7 +541,7 @@ class ResolutionProver:
             return literal[1:]
         return f"¬{literal}"
     
-    def _to_clauses(self, formula: str) -> Set[frozenset]:
+    def _to_clauses(self, formula: str) -> set[frozenset]:
         """Convert formula to clausal form (CNF).
         
         This is a simplified implementation. Full implementation
@@ -567,7 +567,7 @@ class ResolutionProver:
             clause = self._parse_clause(formula)
             return {frozenset(clause)}
     
-    def _parse_clause(self, clause_str: str) -> List[str]:
+    def _parse_clause(self, clause_str: str) -> list[str]:
         """Parse a clause string.
         
         Args:

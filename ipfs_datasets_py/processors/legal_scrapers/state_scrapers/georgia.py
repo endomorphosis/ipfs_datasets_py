@@ -82,6 +82,11 @@ class GeorgiaScraper(BaseStateScraper):
         ]
 
         return_threshold = self._bounded_return_threshold(60)
+        if return_threshold < 60:
+            summary_pdf_statutes = await self._scrape_general_statute_summary_pdfs(code_name)
+            if summary_pdf_statutes:
+                return summary_pdf_statutes[:return_threshold]
+
         justia_statutes = await self._scrape_justia_year(
             code_name,
             year="2024",

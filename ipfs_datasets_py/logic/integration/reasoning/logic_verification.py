@@ -84,8 +84,8 @@ class LogicVerifier:
         """
         self.use_symbolic_ai = use_symbolic_ai and SYMBOLIC_AI_AVAILABLE
         self.fallback_enabled = bool(fallback_enabled)
-        self.known_axioms: List[LogicAxiom] = []
-        self.proof_cache: Dict[str, ProofResult] = {}
+        self.known_axioms: list[LogicAxiom] = []
+        self.proof_cache: dict[str, ProofResult] = {}
         
         # Initialize with basic logical axioms
         self._initialize_basic_axioms()
@@ -122,7 +122,7 @@ class LogicVerifier:
         logger.info(f"Added axiom: {axiom.name}")
         return True
     
-    def check_consistency(self, formulas: List[str]) -> ConsistencyCheck:
+    def check_consistency(self, formulas: list[str]) -> ConsistencyCheck:
         """
         Check if a set of formulas is logically consistent.
         
@@ -146,7 +146,7 @@ class LogicVerifier:
         else:
             return self._check_consistency_fallback(formulas)
     
-    def _check_consistency_symbolic(self, formulas: List[str]) -> ConsistencyCheck:
+    def _check_consistency_symbolic(self, formulas: list[str]) -> ConsistencyCheck:
         """Check consistency using SymbolicAI."""
         try:
             # Create a combined symbol representing all formulas
@@ -194,7 +194,7 @@ class LogicVerifier:
             logger.error(f"Error in symbolic consistency check: {e}")
             return self._check_consistency_fallback(formulas)
     
-    def _check_consistency_fallback(self, formulas: List[str]) -> ConsistencyCheck:
+    def _check_consistency_fallback(self, formulas: list[str]) -> ConsistencyCheck:
         """Fallback consistency checking using basic pattern matching."""
         conflicting_pairs = []
         
@@ -220,7 +220,7 @@ class LogicVerifier:
             method_used="pattern_matching"
         )
     
-    def _find_conflicting_pairs_symbolic(self, formulas: List[str]) -> List[Tuple[str, str]]:
+    def _find_conflicting_pairs_symbolic(self, formulas: list[str]) -> list[tuple[str, str]]:
         """Find conflicting pairs using SymbolicAI."""
         conflicting = []
         
@@ -239,7 +239,7 @@ class LogicVerifier:
         
         return conflicting
     
-    def check_entailment(self, premises: List[str], conclusion: str) -> EntailmentResult:
+    def check_entailment(self, premises: list[str], conclusion: str) -> EntailmentResult:
         """
         Check if premises logically entail the conclusion.
         
@@ -270,7 +270,7 @@ class LogicVerifier:
         else:
             return self._check_entailment_fallback(premises, conclusion)
     
-    def _check_entailment_symbolic(self, premises: List[str], conclusion: str) -> EntailmentResult:
+    def _check_entailment_symbolic(self, premises: list[str], conclusion: str) -> EntailmentResult:
         """Check entailment using SymbolicAI."""
         try:
             # Create combined premises
@@ -315,7 +315,7 @@ class LogicVerifier:
             logger.error(f"Error in symbolic entailment check: {e}")
             return self._check_entailment_fallback(premises, conclusion)
     
-    def _check_entailment_fallback(self, premises: List[str], conclusion: str) -> EntailmentResult:
+    def _check_entailment_fallback(self, premises: list[str], conclusion: str) -> EntailmentResult:
         """Fallback entailment checking using basic rules."""
         # Very basic entailment checking using known patterns
         entails = False
@@ -345,7 +345,7 @@ class LogicVerifier:
             explanation=explanation
         )
     
-    def generate_proof(self, premises: List[str], conclusion: str) -> ProofResult:
+    def generate_proof(self, premises: list[str], conclusion: str) -> ProofResult:
         """
         Attempt to generate a proof from premises to conclusion.
         
@@ -384,7 +384,7 @@ class LogicVerifier:
         
         return result
     
-    def _generate_proof_symbolic(self, premises: List[str], conclusion: str) -> ProofResult:
+    def _generate_proof_symbolic(self, premises: list[str], conclusion: str) -> ProofResult:
         """Generate proof using SymbolicAI."""
         try:
             # Create a symbol representing the proof problem
@@ -426,7 +426,7 @@ class LogicVerifier:
             logger.error(f"Error in symbolic proof generation: {e}")
             return self._generate_proof_fallback(premises, conclusion)
     
-    def _generate_proof_fallback(self, premises: List[str], conclusion: str) -> ProofResult:
+    def _generate_proof_fallback(self, premises: list[str], conclusion: str) -> ProofResult:
         """Generate proof using fallback methods."""
         steps = []
         
@@ -475,7 +475,7 @@ class LogicVerifier:
         )
      
     @beartype
-    def verify_formula_syntax(self, formula: str) -> Dict[str, Any]:
+    def verify_formula_syntax(self, formula: str) -> dict[str, Any]:
         """
         Verify the syntax of a logical formula.
 
@@ -485,7 +485,7 @@ class LogicVerifier:
         Returns:
             Dictionary with validation status and details
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "formula": formula,
             "status": "unknown",
             "errors": [],
@@ -526,7 +526,7 @@ class LogicVerifier:
         return result
 
     @beartype
-    def check_satisfiability(self, formula: str) -> Dict[str, Any]:
+    def check_satisfiability(self, formula: str) -> dict[str, Any]:
         """
         Check whether a formula is satisfiable.
 
@@ -536,7 +536,7 @@ class LogicVerifier:
         Returns:
             Dictionary with satisfiability result
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "formula": formula,
             "satisfiable": None,
             "status": "unknown",
@@ -582,7 +582,7 @@ class LogicVerifier:
         return result
 
     @beartype
-    def check_validity(self, formula: str) -> Dict[str, Any]:
+    def check_validity(self, formula: str) -> dict[str, Any]:
         """
         Check whether a formula is logically valid.
 
@@ -592,7 +592,7 @@ class LogicVerifier:
         Returns:
             Dictionary with validity result
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "formula": formula,
             "valid": None,
             "status": "unknown",
@@ -635,7 +635,7 @@ class LogicVerifier:
         result["status"] = "unknown"
         return result
 
-    def _initialize_proof_rules(self) -> List[Dict[str, str]]:
+    def _initialize_proof_rules(self) -> list[dict[str, str]]:
         """Initialize core proof rules for fallback reasoning."""
         # Get basic rules and add additional rules
         rules = get_basic_proof_rules()
@@ -650,7 +650,7 @@ class LogicVerifier:
     # Use utility function for contradiction check (removed _are_contradictory)
     
     @beartype
-    def get_axioms(self, axiom_type: Optional[str] = None) -> List[LogicAxiom]:
+    def get_axioms(self, axiom_type: Optional[str] = None) -> list[LogicAxiom]:
         """
         Get axioms, optionally filtered by type.
         
@@ -670,7 +670,7 @@ class LogicVerifier:
         self.proof_cache.clear()
         logger.info("Proof cache cleared")
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get verifier statistics."""
         return {
             "axiom_count": len(self.known_axioms),
@@ -699,11 +699,11 @@ class LogicVerifier:
         from .logic_verification_utils import are_contradictory
         return are_contradictory(formula1, formula2)
 
-    def verify_consistency(self, formulas: List[str]) -> "ConsistencyCheck":
+    def verify_consistency(self, formulas: list[str]) -> "ConsistencyCheck":
         """Alias for check_consistency (backward compat)."""
         return self.check_consistency(formulas)
 
-    def validate_proof(self, steps: List["ProofStep"]) -> "ProofResult":
+    def validate_proof(self, steps: list["ProofStep"]) -> "ProofResult":
         """Validate a sequence of proof steps.
 
         Args:

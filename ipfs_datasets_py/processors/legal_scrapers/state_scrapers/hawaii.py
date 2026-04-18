@@ -59,6 +59,11 @@ class HawaiiScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         return_threshold = self._bounded_return_threshold(30)
+        if return_threshold < 30:
+            seeded = await self._scrape_seed_sections(code_name, max_statutes=return_threshold)
+            if seeded:
+                return seeded
+
         archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=max(10, return_threshold))
 
         merged: List[NormalizedStatute] = []
@@ -126,6 +131,18 @@ class HawaiiScraper(BaseStateScraper):
         if not best:
             best = self._build_emergency_statute_stubs(code_name, count=40)
         return best
+
+    async def _scrape_seed_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        statutes: List[NormalizedStatute] = []
+        for section_url in self._SEED_SECTION_URLS[: max(1, int(max_statutes or 1))]:
+            statute = await self._build_statute_from_section_url(
+                code_name,
+                section_url,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            if statute is not None:
+                statutes.append(statute)
+        return statutes
 
     def _build_emergency_statute_stubs(self, code_name: str, count: int = 30) -> List[NormalizedStatute]:
         out: List[NormalizedStatute] = []

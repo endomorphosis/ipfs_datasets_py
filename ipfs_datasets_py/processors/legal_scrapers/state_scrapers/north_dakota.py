@@ -66,6 +66,10 @@ class NorthDakotaScraper(BaseStateScraper):
         best: List[NormalizedStatute] = []
         seen = set()
         return_threshold = self._bounded_return_threshold(60)
+        direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(code_name, max_statutes=return_threshold)
+        if direct_pdf_statutes:
+            return direct_pdf_statutes
+
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -84,6 +88,41 @@ class NorthDakotaScraper(BaseStateScraper):
         if pdf_statutes:
             return pdf_statutes
         return best
+
+    async def _scrape_seed_cencode_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        seeds = [
+            "https://www.legis.nd.gov/cencode/t01c01.pdf",
+            "https://www.legis.nd.gov/cencode/t12c01.pdf",
+        ]
+        out: List[NormalizedStatute] = []
+        for pdf_url in seeds[: max(1, int(max_statutes or 1))]:
+            pdf_bytes = await self._request_bytes(pdf_url, timeout=12)
+            full_text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=14000)
+            if len(full_text) < 280:
+                continue
+            file_name = pdf_url.rsplit("/", 1)[-1]
+            m = self._ND_CENCODE_FILE_RE.search(file_name)
+            title_no = m.group(1) if m else ""
+            chapter_no = m.group(2) if m else ""
+            section_number = f"{title_no}-{chapter_no}".strip("-") or file_name.rsplit(".", 1)[0]
+            label = f"Title {title_no} Chapter {chapter_no}".strip() if m else file_name
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=label,
+                    full_text=full_text,
+                    source_url=pdf_url,
+                    legal_area=self._identify_legal_area(label),
+                    official_cite=f"N.D. Cent. Code {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={"source_kind": "official_direct_pdf", "skip_hydrate": True},
+                )
+            )
+        return out
 
     async def _scrape_cencode_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         """Discover and emit Century Code chapter PDF links from legislative homepage."""
