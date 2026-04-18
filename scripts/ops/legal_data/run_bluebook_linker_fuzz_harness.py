@@ -112,44 +112,52 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--publish-merged-parquet-to-hf requires --merge-recovered-rows.")
     if args.publish_merged_parquet_to_hf:
         args.hydrate_merge_from_hf = True
+    previous_skip_live_search = os.environ.get("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH")
     if args.skip_live_search:
         os.environ["LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"] = "1"
 
-    run = asyncio.run(
-        run_bluebook_linker_fuzz_harness(
-            sample_count=max(1, int(args.samples)),
-            provider=args.provider,
-            model_name=args.model_name,
-            temperature=float(args.temperature),
-            corpus_keys=_split_csv(args.corpora),
-            state_codes=_split_csv(args.states),
-            adversarial_ratio=float(args.adversarial_ratio),
-            allow_hf_fallback=not bool(args.disable_hf_fallback),
-            prefer_hf_corpora=bool(args.prefer_hf_corpora),
-            primary_corpora_only=bool(args.primary_corpora_only),
-            exact_state_partitions_only=bool(args.exact_state_partitions_only),
-            materialize_hf_corpora=bool(args.materialize_hf_corpora),
-            exhaustive=not bool(args.disable_exhaustive),
-            enable_recovery=not bool(args.disable_recovery),
-            seed_from_corpora=bool(args.seed_from_corpora),
-            seed_only=bool(args.seed_only),
-            seed_examples_per_corpus=max(1, int(args.seed_examples_per_corpus)),
-            max_seed_examples_per_state=(max(1, int(args.max_seed_examples_per_state)) if int(args.max_seed_examples_per_state) > 0 else None),
-            max_seed_examples_per_source=(max(1, int(args.max_seed_examples_per_source)) if int(args.max_seed_examples_per_source) > 0 else None),
-            sampling_shuffle_seed=int(args.sampling_shuffle_seed),
-            max_acceptable_failure_rate=max(0.0, min(1.0, float(args.max_acceptable_failure_rate))),
-            min_actionable_failures=max(1, int(args.min_actionable_failures)),
-            recovery_max_candidates=max(1, int(args.recovery_max_candidates)),
-            recovery_archive_top_k=max(0, int(args.recovery_archive_top_k)),
-            publish_to_hf=bool(args.publish_to_hf),
-            hf_token=args.hf_token,
-            merge_recovered_rows=bool(args.merge_recovered_rows),
-            hydrate_merge_from_hf=bool(args.hydrate_merge_from_hf),
-            publish_merged_parquet_to_hf=bool(args.publish_merged_parquet_to_hf),
-            output_dir=Path(args.output_dir),
-            llm_generate_func=input_generate,
+    try:
+        run = asyncio.run(
+            run_bluebook_linker_fuzz_harness(
+                sample_count=max(1, int(args.samples)),
+                provider=args.provider,
+                model_name=args.model_name,
+                temperature=float(args.temperature),
+                corpus_keys=_split_csv(args.corpora),
+                state_codes=_split_csv(args.states),
+                adversarial_ratio=float(args.adversarial_ratio),
+                allow_hf_fallback=not bool(args.disable_hf_fallback),
+                prefer_hf_corpora=bool(args.prefer_hf_corpora),
+                primary_corpora_only=bool(args.primary_corpora_only),
+                exact_state_partitions_only=bool(args.exact_state_partitions_only),
+                materialize_hf_corpora=bool(args.materialize_hf_corpora),
+                exhaustive=not bool(args.disable_exhaustive),
+                enable_recovery=not bool(args.disable_recovery),
+                seed_from_corpora=bool(args.seed_from_corpora),
+                seed_only=bool(args.seed_only),
+                seed_examples_per_corpus=max(1, int(args.seed_examples_per_corpus)),
+                max_seed_examples_per_state=(max(1, int(args.max_seed_examples_per_state)) if int(args.max_seed_examples_per_state) > 0 else None),
+                max_seed_examples_per_source=(max(1, int(args.max_seed_examples_per_source)) if int(args.max_seed_examples_per_source) > 0 else None),
+                sampling_shuffle_seed=int(args.sampling_shuffle_seed),
+                max_acceptable_failure_rate=max(0.0, min(1.0, float(args.max_acceptable_failure_rate))),
+                min_actionable_failures=max(1, int(args.min_actionable_failures)),
+                recovery_max_candidates=max(1, int(args.recovery_max_candidates)),
+                recovery_archive_top_k=max(0, int(args.recovery_archive_top_k)),
+                publish_to_hf=bool(args.publish_to_hf),
+                hf_token=args.hf_token,
+                merge_recovered_rows=bool(args.merge_recovered_rows),
+                hydrate_merge_from_hf=bool(args.hydrate_merge_from_hf),
+                publish_merged_parquet_to_hf=bool(args.publish_merged_parquet_to_hf),
+                output_dir=Path(args.output_dir),
+                llm_generate_func=input_generate,
+            )
         )
-    )
+    finally:
+        if args.skip_live_search:
+            if previous_skip_live_search is None:
+                os.environ.pop("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", None)
+            else:
+                os.environ["LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"] = previous_skip_live_search
 
     if args.json:
         print(json.dumps(run.to_dict(), indent=2, sort_keys=True))

@@ -314,6 +314,196 @@ async def test_run_bluebook_linker_fuzz_harness_can_hydrate_merge_from_hf(tmp_pa
 
 
 @pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_batches_hf_hydrated_recovery_merges(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(
+            [
+                {
+                    "citation_text": "R.I. Admin. Code § 510-00-00-9",
+                    "context_text": "The rule cites R.I. Admin. Code § 510-00-00-9.",
+                    "state_code": "RI",
+                    "corpus_key_hint": "state_admin_rules",
+                    "expected_valid": True,
+                },
+                {
+                    "citation_text": "R.I. Admin. Code § 510-00-00-4",
+                    "context_text": "The rule cites R.I. Admin. Code § 510-00-00-4.",
+                    "state_code": "RI",
+                    "corpus_key_hint": "state_admin_rules",
+                    "expected_valid": True,
+                },
+            ]
+        )
+
+    def fake_resolve_document(text: str, **kwargs):
+        citation = "R.I. Admin. Code § 510-00-00-9" if "510-00-00-9" in text else "R.I. Admin. Code § 510-00-00-4"
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": citation,
+                    "normalized_citation": citation,
+                    "metadata": {
+                        "recovery_corpus_key": "state_admin_rules",
+                        "state_code": "RI",
+                    },
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        slug = kwargs["citation_text"].rsplit(" ", 1)[-1].replace("-", "_")
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "corpus_key": "state_admin_rules",
+            "state_code": "RI",
+            "manifest_path": str(tmp_path / f"{slug}.json"),
+        }
+
+    def fake_batch_merge(paths, **kwargs):
+        assert paths == [
+            str(tmp_path / "510_00_00_9.json"),
+            str(tmp_path / "510_00_00_4.json"),
+        ]
+        assert kwargs["hydrate_from_hf"] is True
+        assert kwargs["publish_merged_to_hf"] is False
+        assert kwargs["hf_token"] == "test-token"
+        assert Path(kwargs["output_dir"]).name == "canonical_recovery_merge"
+        return {
+            "status": "success",
+            "manifest_count": 2,
+            "report_path": str(tmp_path / "batch_canonical_merge_report.json"),
+            "targets": [
+                {
+                    "status": "success",
+                    "target_local_parquet_path": str(tmp_path / "STATE-RI.parquet"),
+                    "target_parquet_path": "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-RI.parquet",
+                    "resolved_hf_parquet_path": "US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-RI.parquet",
+                    "hf_dataset_id": "justicedao/ipfs_state_admin_rules",
+                    "existing_rows_source": "huggingface_dataset_parquet",
+                    "incoming_row_count": 2,
+                    "merged_row_count": 23,
+                    "upload_ready": True,
+                }
+            ],
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=2,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        merge_manifests_func=fake_batch_merge,
+        merge_recovered_rows=True,
+        hydrate_merge_from_hf=True,
+        hf_token="test-token",
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["recovery_count"] == 2
+    assert run.summary["merged_recovery_count"] == 2
+    assert run.summary["recovery_merge"]["success_count"] == 1
+    assert run.summary["recovery_merge"]["target_local_parquet_paths"] == [str(tmp_path / "STATE-RI.parquet")]
+    assert run.attempts[0].merge_reports[0]["batch_manifest_count"] == 2
+    assert run.attempts[0].merge_reports[0]["incoming_row_count"] == 2
+
+
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_skips_recovery_merge_when_host_mismatches_seed_url(
+    tmp_path: Path,
+) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(
+            [
+                {
+                    "citation_text": "R.I. Admin. Code § 510-00-00-3",
+                    "context_text": "The rule cites R.I. Admin. Code § 510-00-00-3.",
+                    "state_code": "RI",
+                    "corpus_key_hint": "state_admin_rules",
+                    "expected_valid": True,
+                    "notes": "seeded from state_admin_rules; url=https://rules.sos.ri.gov/regulations/part/510-00-00-3",
+                },
+                {
+                    "citation_text": "R.I. Admin. Code § 510-00-00-1",
+                    "context_text": "The rule cites R.I. Admin. Code § 510-00-00-1.",
+                    "state_code": "RI",
+                    "corpus_key_hint": "state_admin_rules",
+                    "expected_valid": True,
+                    "notes": "seeded from state_admin_rules; url=https://rules.sos.ri.gov/regulations/part/510-00-00-1",
+                },
+            ]
+        )
+
+    def fake_resolve_document(text: str, **kwargs):
+        citation = "R.I. Admin. Code § 510-00-00-3" if "510-00-00-3" in text else "R.I. Admin. Code § 510-00-00-1"
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": citation,
+                    "normalized_citation": citation,
+                    "metadata": {
+                        "recovery_corpus_key": "state_admin_rules",
+                        "state_code": "RI",
+                    },
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        citation = kwargs["citation_text"]
+        suffix = citation.rsplit("-", 1)[-1]
+        host = "rules.sos.ri.gov" if suffix == "3" else "eportal.incometax.gov.in"
+        return {
+            "status": "tracked",
+            "citation_text": citation,
+            "corpus_key": "state_admin_rules",
+            "state_code": "RI",
+            "manifest_path": str(tmp_path / f"{suffix}.json"),
+            "scraper_patch": {"host": host},
+        }
+
+    def fake_batch_merge(paths, **kwargs):
+        assert paths == [str(tmp_path / "3.json")]
+        return {
+            "status": "success",
+            "manifest_count": 1,
+            "targets": [
+                {
+                    "status": "success",
+                    "target_local_parquet_path": str(tmp_path / "STATE-RI.parquet"),
+                    "incoming_row_count": 1,
+                    "merged_row_count": 24,
+                }
+            ],
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=2,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        merge_manifests_func=fake_batch_merge,
+        merge_recovered_rows=True,
+        hydrate_merge_from_hf=True,
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["recovery_count"] == 2
+    assert run.summary["merged_recovery_count"] == 1
+    assert run.attempts[1].recoveries[0]["merge_skipped_reason"] == "recovery_host_mismatch_candidate_url"
+    assert run.attempts[1].recoveries[0]["merge_skipped_candidate_host"] == "rules.sos.ri.gov"
+    assert run.attempts[1].recoveries[0]["merge_skipped_recovery_host"] == "eportal.incometax.gov.in"
+
+
+@pytest.mark.anyio
 async def test_run_bluebook_linker_fuzz_harness_can_publish_merged_parquet_to_hf(tmp_path: Path) -> None:
     def fake_generate(*args, **kwargs) -> str:
         return json.dumps(["Minn. Stat. § 518.17"])

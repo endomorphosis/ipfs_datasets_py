@@ -16,6 +16,7 @@ from pathlib import Path
 import random
 import re
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Sequence
+from urllib.parse import urlparse
 
 from ipfs_datasets_py import llm_router
 from ipfs_datasets_py.processors.legal_data.citation_extraction import CitationExtractor
@@ -40,6 +41,7 @@ from ipfs_datasets_py.processors.legal_data.legal_source_recovery import (
     recover_missing_legal_citation_source,
 )
 from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import (
+    merge_recovery_manifests_into_canonical_datasets,
     merge_recovery_manifest_into_canonical_dataset,
 )
 
@@ -285,6 +287,25 @@ def _candidate_source_ref(candidate: BluebookCitationCandidate) -> str:
     notes = str(candidate.notes or "")
     match = re.search(r"(?:^|;\s*)source_ref=(?P<source_ref>[^;]+)", notes)
     return str(match.group("source_ref") if match else "").strip()
+
+
+def _candidate_note_url_host(candidate: BluebookCitationCandidate) -> str:
+    notes = str(candidate.notes or "")
+    match = re.search(r"(?:^|;\s*)url=(?P<url>[^;]+)", notes)
+    if not match:
+        return ""
+    try:
+        return str(urlparse(str(match.group("url") or "").strip()).hostname or "").strip().lower()
+    except Exception:
+        return ""
+
+
+def _host_matches_or_subdomain(candidate_host: str, recovery_host: str) -> bool:
+    expected = str(candidate_host or "").strip().lower()
+    actual = str(recovery_host or "").strip().lower()
+    if not expected or not actual:
+        return True
+    return actual == expected or actual.endswith(f".{expected}") or expected.endswith(f".{actual}")
 
 
 def _seeded_row_cache_key(corpus_key: str, source_ref: str, citation_text: str) -> tuple[str, str, str]:
@@ -1741,6 +1762,7 @@ async def run_bluebook_linker_fuzz_harness(
     resolve_document_func: Optional[Callable[..., Dict[str, Any]]] = None,
     recovery_func: Optional[Callable[..., Awaitable[Dict[str, Any]]]] = None,
     merge_manifest_func: Optional[Callable[..., Dict[str, Any]]] = None,
+    merge_manifests_func: Optional[Callable[..., Dict[str, Any]]] = None,
 ) -> BluebookCitationFuzzRun:
     active_resolver = resolver or BluebookCitationResolver(
         allow_hf_fallback=allow_hf_fallback,
@@ -1798,12 +1820,14 @@ async def run_bluebook_linker_fuzz_harness(
     active_resolve_document = resolve_document_func or resolve_bluebook_lookup_result_document
     active_recovery = recovery_func or recover_missing_legal_citation_source
     active_merge = merge_manifest_func or merge_recovery_manifest_into_canonical_dataset
+    active_batch_merge = merge_manifests_func or merge_recovery_manifests_into_canonical_datasets
 
     attempts: List[BluebookCitationFuzzAttempt] = []
     matched_attempts = 0
     unmatched_citations = 0
     recovery_count = 0
     merged_count = 0
+    pending_batch_manifest_paths: List[str] = []
 
     for ordinal, candidate in enumerate(candidates, start=1):
         candidate_resolver = active_resolver
@@ -1896,12 +1920,23 @@ async def run_bluebook_linker_fuzz_harness(
                     publish_to_hf=publish_to_hf,
                     hf_token=hf_token,
                 )
-                recoveries.append(dict(recovery))
+                recovery = dict(recovery)
                 recovery_count += 1
+                candidate_host = _candidate_note_url_host(candidate)
+                recovery_host = str((recovery.get("scraper_patch") or {}).get("host") or "").strip().lower()
+                recovery_merge_blocked_reason = ""
+                if candidate_host and recovery_host and not _host_matches_or_subdomain(candidate_host, recovery_host):
+                    recovery_merge_blocked_reason = "recovery_host_mismatch_candidate_url"
+                    recovery["merge_skipped_reason"] = recovery_merge_blocked_reason
+                    recovery["merge_skipped_candidate_host"] = candidate_host
+                    recovery["merge_skipped_recovery_host"] = recovery_host
+                recoveries.append(recovery)
 
                 manifest_path = str(recovery.get("manifest_path") or "").strip()
-                if merge_recovered_rows and manifest_path:
-                    if hydrate_merge_from_hf or publish_merged_parquet_to_hf:
+                if merge_recovered_rows and manifest_path and not recovery_merge_blocked_reason:
+                    if merge_manifest_func is None:
+                        pending_batch_manifest_paths.append(manifest_path)
+                    elif hydrate_merge_from_hf or publish_merged_parquet_to_hf:
                         merge_report = active_merge(
                             manifest_path,
                             hydrate_from_hf=True,
@@ -1910,9 +1945,10 @@ async def run_bluebook_linker_fuzz_harness(
                         )
                     else:
                         merge_report = active_merge(manifest_path)
-                    merge_reports.append(dict(merge_report))
-                    if str(merge_report.get("status") or "").lower() == "success":
-                        merged_count += 1
+                    if merge_manifest_func is not None:
+                        merge_reports.append(dict(merge_report))
+                        if str(merge_report.get("status") or "").lower() == "success":
+                            merged_count += 1
 
         attempts.append(
             BluebookCitationFuzzAttempt(
@@ -1923,6 +1959,35 @@ async def run_bluebook_linker_fuzz_harness(
                 merge_reports=merge_reports,
             )
         )
+
+    if merge_recovered_rows and merge_manifest_func is None and pending_batch_manifest_paths:
+        batch_report = active_batch_merge(
+            pending_batch_manifest_paths,
+            output_dir=Path(output_dir).expanduser().resolve() / "canonical_recovery_merge",
+            hydrate_from_hf=bool(hydrate_merge_from_hf or publish_merged_parquet_to_hf),
+            hf_token=hf_token,
+            publish_merged_to_hf=publish_merged_parquet_to_hf,
+        )
+        target_reports = [dict(item) for item in list(batch_report.get("targets") or []) if isinstance(item, dict)]
+        if not target_reports:
+            target_reports = [dict(batch_report)]
+        batch_report_path = str(batch_report.get("report_path") or "").strip()
+        batch_manifest_count = int(batch_report.get("manifest_count") or len(pending_batch_manifest_paths))
+        normalized_reports: List[Dict[str, Any]] = []
+        for report in target_reports:
+            normalized = dict(report)
+            normalized.setdefault("source", str(batch_report.get("source") or "legal_source_recovery_promotion_batch_merge"))
+            normalized["batch_manifest_count"] = batch_manifest_count
+            if batch_report_path:
+                normalized.setdefault("merge_report_path", batch_report_path)
+            normalized_reports.append(normalized)
+            if str(normalized.get("status") or "").lower() == "success":
+                merged_count += max(1, int(normalized.get("incoming_row_count") or 0))
+
+        for attempt in attempts:
+            if attempt.recoveries:
+                attempt.merge_reports.extend(normalized_reports)
+                break
 
     summary = {
         "sample_count_requested": int(sample_count),

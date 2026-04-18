@@ -955,12 +955,14 @@ async def _run_sync_scrape_on_daemon_thread(
     def _worker() -> None:
         prior_code_timeout = os.environ.get("STATE_SCRAPER_CODE_TIMEOUT_SECONDS")
         prior_fetch_timeout = os.environ.get("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS")
+        prior_max_statutes = os.environ.get("STATE_SCRAPER_MAX_STATUTES")
         bounded_timeout = max(0.0, float(timeout_seconds or 0.0))
         if max_statutes and int(max_statutes) > 0 and bounded_timeout > 0:
             code_timeout = max(0.1, min(bounded_timeout * 0.8, 45.0))
             fetch_timeout = max(0.1, min(code_timeout / 3.0, 12.0))
             os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
             os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
+            os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))
         try:
             result = _scrape_state_once_sync(
                 state_code=state_code,
@@ -987,6 +989,10 @@ async def _run_sync_scrape_on_daemon_thread(
                 os.environ.pop("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", None)
             else:
                 os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = prior_fetch_timeout
+            if prior_max_statutes is None:
+                os.environ.pop("STATE_SCRAPER_MAX_STATUTES", None)
+            else:
+                os.environ["STATE_SCRAPER_MAX_STATUTES"] = prior_max_statutes
 
         try:
             loop.call_soon_threadsafe(_publish_result, result)

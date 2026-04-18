@@ -9,6 +9,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
     BaseStateScraper,
     NormalizedStatute,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama import AlabamaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alaska import AlaskaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas import ArkansasScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arizona import ArizonaScraper
@@ -419,6 +420,52 @@ async def test_arkansas_scrape_code_honors_max_statutes(monkeypatch) -> None:
 
     assert observed["max_statutes"] == 2
     assert len(statutes) == 2
+
+
+@pytest.mark.anyio
+async def test_alabama_graphql_scrape_code_honors_max_statutes(monkeypatch) -> None:
+    scraper = AlabamaScraper("AL", "Alabama")
+
+    async def fake_graphql(query: str, variables: dict | None = None, timeout_seconds: int = 15) -> dict:
+        if "codeOfAlabamaScaffold" in query:
+            return {"scaffold": "†∫codeId†parentId†displayId∫2∫14512†2∫14515†14512†1-1-1∫14528†14512†1-1-2"}
+        assert variables == {"parentId": ["14512"]}
+        return {
+            "codeItems": {
+                "data": [
+                    {
+                        "codeId": "14515",
+                        "parentId": "14512",
+                        "displayId": "1-1-1",
+                        "title": "Section 1-1-1 Meaning of Certain Words and Terms.",
+                        "content": "<p>The following words have meanings in this code and enough text to pass filtering.</p>",
+                        "history": "<p>Acts 2025, No. 3.</p>",
+                        "type": "Section",
+                        "isContentNode": True,
+                    },
+                    {
+                        "codeId": "14528",
+                        "parentId": "14512",
+                        "displayId": "1-1-2",
+                        "title": "Section 1-1-2 Grammar.",
+                        "content": "<p>Words used in this Code include the future, past, present, singular, and plural.</p>",
+                        "history": "",
+                        "type": "Section",
+                        "isContentNode": True,
+                    },
+                ]
+            }
+        }
+
+    monkeypatch.setattr(scraper, "_graphql", fake_graphql)
+
+    statutes = await scraper.scrape_code("Alabama Code", scraper.CODE_URL, max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "1-1-1"
+    assert statutes[0].official_cite == "Ala. Code § 1-1-1"
+    assert statutes[0].source_url == "https://alison.legislature.state.al.us/code-of-alabama?section=1-1-1"
+    assert statutes[0].structured_data["source_kind"] == "official_alison_graphql"
 
 
 @pytest.mark.anyio

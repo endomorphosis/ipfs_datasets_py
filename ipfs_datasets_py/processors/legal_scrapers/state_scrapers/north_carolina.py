@@ -57,6 +57,7 @@ class NorthCarolinaScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
+        return_threshold = self._bounded_return_threshold(30)
         for candidate in candidate_urls:
             if candidate in seen:
                 continue
@@ -75,7 +76,7 @@ class NorthCarolinaScraper(BaseStateScraper):
                     statutes = self._filter_section_level(statutes)
                     if len(statutes) > len(best_statutes):
                         best_statutes = statutes
-                    if len(statutes) >= 30:
+                    if len(statutes) >= return_threshold:
                         return statutes
                 except Exception:
                     pass
@@ -84,7 +85,7 @@ class NorthCarolinaScraper(BaseStateScraper):
             statutes = self._filter_section_level(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
-            if len(statutes) >= 30:
+            if len(statutes) >= return_threshold:
                 return statutes
 
         return best_statutes

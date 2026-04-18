@@ -16,6 +16,7 @@ __all__ = [
     "call_workspace_tool",
     "complaint_manager_interfaces",
     "load_scan_manifest",
+    "package_hacc_case_from_scan_manifest",
     "scan_hacc_pdfs_for_dockets",
     "summarize_scan_manifest",
     "create_workspace_service",
@@ -61,6 +62,7 @@ def __getattr__(name: str) -> Any:
         "HACCCourtPDFScanResult",
         "analyze_pdf_for_court_case",
         "load_scan_manifest",
+        "package_hacc_case_from_scan_manifest",
         "scan_hacc_pdfs_for_dockets",
         "summarize_scan_manifest",
     }:

@@ -75,9 +75,72 @@ async def test_legal_scraper_daemon_runs_bluebook_and_refresh_with_safe_publish_
     assert calls["bluebook"]["sample_count"] == 3
     assert calls["bluebook"]["state_codes"] == ["MN"]
     assert calls["bluebook"]["publish_to_hf"] is False
+    assert calls["bluebook"]["prefer_hf_corpora"] is False
+    assert calls["bluebook"]["publish_merged_parquet_to_hf"] is False
     assert calls["refresh"].publish_to_hf is False
     assert calls["refresh"].parallel_workers == 7
     assert result["cycles"][0]["phases"]["state_refresh"]["build"]["combined_row_count"] == 10
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_passes_bluebook_hf_seeded_merge_controls(tmp_path):
+    calls = {}
+
+    class _FakeBluebookRun:
+        def to_dict(self):
+            return {
+                "summary": {
+                    "recovery_count": 3,
+                    "merged_recovery_count": 3,
+                    "recovery_merge": {"published_merged_count": 1},
+                }
+            }
+
+    async def _fake_bluebook_runner(**kwargs):
+        calls.update(kwargs)
+        return _FakeBluebookRun()
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            states=["RI"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(
+                samples=20,
+                corpora=["state_admin_rules"],
+                seed_from_corpora=True,
+                seed_only=True,
+                seed_examples_per_corpus=20,
+                max_seed_examples_per_state=20,
+                max_seed_examples_per_source=8,
+                sampling_shuffle_seed=211,
+                prefer_hf_corpora=True,
+                primary_corpora_only=True,
+                exact_state_partitions_only=True,
+                merge_recovered_rows=True,
+                publish_merged_parquet_to_hf=True,
+            ),
+            state_refresh=StateRefreshDaemonConfig(enabled=False),
+            agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+        ),
+        bluebook_runner=_fake_bluebook_runner,
+    )
+
+    await daemon.run()
+
+    assert calls["corpus_keys"] == ["state_admin_rules"]
+    assert calls["state_codes"] == ["RI"]
+    assert calls["seed_from_corpora"] is True
+    assert calls["seed_only"] is True
+    assert calls["seed_examples_per_corpus"] == 20
+    assert calls["max_seed_examples_per_state"] == 20
+    assert calls["max_seed_examples_per_source"] == 8
+    assert calls["sampling_shuffle_seed"] == 211
+    assert calls["prefer_hf_corpora"] is True
+    assert calls["primary_corpora_only"] is True
+    assert calls["exact_state_partitions_only"] is True
+    assert calls["merge_recovered_rows"] is True
+    assert calls["hydrate_merge_from_hf"] is True
+    assert calls["publish_merged_parquet_to_hf"] is True
 
 
 @pytest.mark.asyncio
@@ -213,6 +276,21 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
             str(tmp_path),
             "--bluebook-samples",
             "7",
+            "--bluebook-seed-from-corpora",
+            "--bluebook-seed-only",
+            "--bluebook-seed-examples-per-corpus",
+            "17",
+            "--bluebook-max-seed-examples-per-state",
+            "5",
+            "--bluebook-max-seed-examples-per-source",
+            "9",
+            "--bluebook-sampling-shuffle-seed",
+            "123",
+            "--bluebook-prefer-hf-corpora",
+            "--bluebook-primary-corpora-only",
+            "--bluebook-exact-state-partitions-only",
+            "--bluebook-merge-recovered-rows",
+            "--bluebook-publish-merged-parquet-to-hf",
             "--state-refresh-scrape",
             "--parallel-workers",
             "8",
@@ -229,6 +307,18 @@ def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
 
     assert config.states == ["MN", "OR"]
     assert config.bluebook.samples == 7
+    assert config.bluebook.seed_from_corpora is True
+    assert config.bluebook.seed_only is True
+    assert config.bluebook.seed_examples_per_corpus == 17
+    assert config.bluebook.max_seed_examples_per_state == 5
+    assert config.bluebook.max_seed_examples_per_source == 9
+    assert config.bluebook.sampling_shuffle_seed == 123
+    assert config.bluebook.prefer_hf_corpora is True
+    assert config.bluebook.primary_corpora_only is True
+    assert config.bluebook.exact_state_partitions_only is True
+    assert config.bluebook.merge_recovered_rows is True
+    assert config.bluebook.hydrate_merge_from_hf is True
+    assert config.bluebook.publish_merged_parquet_to_hf is True
     assert config.bluebook.publish_to_hf is False
     assert config.state_refresh.scrape is True
     assert config.state_refresh.parallel_workers == 8
@@ -260,6 +350,168 @@ def test_legal_scraper_daemon_arg_config_allows_state_hydration_controls(tmp_pat
     assert config.state_refresh.scrape is True
     assert config.state_refresh.hydrate_statute_text is False
     assert config.state_refresh.hydrate_timeout_seconds == 3.0
+
+
+def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
+    args = build_arg_parser().parse_args(
+        [
+            "--states",
+            "MN",
+            "--output-dir",
+            str(tmp_path),
+            "--full-corpus",
+            "--bluebook-samples",
+            "9",
+        ]
+    )
+
+    config = config_from_args(args)
+
+    assert config.full_corpus is True
+    assert config.states[0] == "AL"
+    assert config.states[-1] == "WY"
+    assert len(config.states) == 50
+    assert config.bluebook.samples == 9
+    assert config.bluebook.corpora == ["state_laws", "state_admin_rules", "state_court_rules"]
+    assert config.bluebook.seed_from_corpora is True
+    assert config.bluebook.prefer_hf_corpora is True
+    assert config.bluebook.primary_corpora_only is True
+    assert config.bluebook.exact_state_partitions_only is True
+    assert config.bluebook.materialize_hf_corpora is True
+    assert config.bluebook.publish_to_hf is False
+    assert config.state_refresh.scrape is True
+    assert config.state_refresh.merge_hf_existing is True
+    assert config.state_refresh.max_statutes == 0
+    assert config.state_refresh.per_state_timeout_seconds == 86400.0
+    assert config.state_refresh.per_state_retry_attempts == 2
+    assert config.state_refresh.hydrate_timeout_seconds == 60.0
+    assert config.state_refresh.publish_to_hf is False
+    assert config.agentic_corpora.enabled is True
+    assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules", "state_court_rules"]
+    assert config.agentic_corpora.max_statutes == 0
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_scopes_bluebook_skip_live_search_env(tmp_path, monkeypatch):
+    monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", raising=False)
+    observed = {}
+
+    class _FakeBluebookRun:
+        def to_dict(self):
+            return {"summary": {"recovery_count": 0}}
+
+    async def _fake_bluebook_runner(**kwargs):
+        observed["skip_live_search_env"] = os.environ.get("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH")
+        return _FakeBluebookRun()
+
+    import os
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            states=["MN"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(samples=1, skip_live_search=True),
+            state_refresh=StateRefreshDaemonConfig(enabled=False),
+            agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+        ),
+        bluebook_runner=_fake_bluebook_runner,
+    )
+
+    await daemon.run()
+
+    assert observed["skip_live_search_env"] == "1"
+    assert "LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH" not in os.environ
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_full_corpus_completeness_audit(tmp_path):
+    class _FakeBluebookRun:
+        def to_dict(self):
+            return {"summary": {"recovery_count": 0}}
+
+    async def _fake_bluebook_runner(**kwargs):
+        return _FakeBluebookRun()
+
+    async def _fake_refresh_runner(args):
+        states = str(args.states).split(",")
+        return {
+            "status": "success",
+            "build": {
+                "states": states,
+                "missing_jsonld_states": [],
+                "combined_row_count": 100,
+            },
+            "scrape_gap_states": [],
+            "build_gap_states": [],
+        }
+
+    async def _fake_agentic_runner(**kwargs):
+        return {"status": "success", "summary": {"corpus": kwargs["corpus"]}}
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            states=["MN", "OR"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(samples=1),
+            state_refresh=StateRefreshDaemonConfig(scrape=True),
+            agentic_corpora=AgenticCorpusDaemonConfig(
+                enabled=True,
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"],
+            ),
+        ),
+        bluebook_runner=_fake_bluebook_runner,
+        state_refresh_runner=_fake_refresh_runner,
+        agentic_runner=_fake_agentic_runner,
+    )
+
+    result = await daemon.run()
+    completeness = result["cycles"][0]["corpus_completeness"]
+
+    assert result["cycles"][0]["status"] == "success"
+    assert completeness["status"] == "complete"
+    assert completeness["required_state_count"] == 2
+    assert completeness["missing_state_refresh_states"] == []
+    assert completeness["missing_agentic_corpora"] == []
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_full_corpus_marks_missing_states_partial(tmp_path):
+    async def _fake_refresh_runner(args):
+        return {
+            "status": "partial_success",
+            "build": {
+                "states": ["MN"],
+                "missing_jsonld_states": ["OR"],
+                "combined_row_count": 10,
+            },
+            "scrape_gap_states": [],
+            "build_gap_states": ["OR"],
+        }
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            states=["MN", "OR"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(enabled=False),
+            state_refresh=StateRefreshDaemonConfig(scrape=True),
+            agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+        ),
+        state_refresh_runner=_fake_refresh_runner,
+    )
+
+    result = await daemon.run()
+    completeness = result["cycles"][0]["corpus_completeness"]
+
+    assert result["cycles"][0]["status"] == "partial_success"
+    assert completeness["status"] == "incomplete"
+    assert completeness["missing_state_refresh_states"] == ["OR"]
+    assert completeness["missing_agentic_corpora"] == [
+        "state_laws",
+        "state_admin_rules",
+        "state_court_rules",
+    ]
 
 
 def test_legal_scraper_daemon_normalizers():

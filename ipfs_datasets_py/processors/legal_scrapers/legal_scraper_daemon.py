@@ -103,13 +103,23 @@ class BluebookDaemonConfig:
     corpora: List[str] = field(default_factory=lambda: ["state_laws"])
     seed_from_corpora: bool = False
     seed_only: bool = False
+    seed_examples_per_corpus: int = 2
+    max_seed_examples_per_state: int = 0
+    max_seed_examples_per_source: int = 0
+    sampling_shuffle_seed: int = 0
     allow_hf_fallback: bool = True
+    prefer_hf_corpora: bool = False
+    primary_corpora_only: bool = False
+    exact_state_partitions_only: bool = False
+    materialize_hf_corpora: bool = False
     exhaustive: bool = False
     enable_recovery: bool = True
     recovery_max_candidates: int = 4
     recovery_archive_top_k: int = 0
     publish_to_hf: bool = False
     merge_recovered_rows: bool = False
+    hydrate_merge_from_hf: bool = False
+    publish_merged_parquet_to_hf: bool = False
     skip_live_search: bool = True
     max_acceptable_failure_rate: float = 0.05
     min_actionable_failures: int = 1
@@ -157,6 +167,7 @@ class CacheDaemonConfig:
 
 @dataclass
 class LegalScraperDaemonConfig:
+    full_corpus: bool = False
     states: List[str] = field(default_factory=lambda: list(STATE_CODES_50))
     include_dc: bool = False
     output_dir: str = str(Path.home() / ".ipfs_datasets" / "legal_scraper_daemon")
@@ -226,6 +237,7 @@ class LegalScraperDaemon:
         return {
             "states": list(self.states),
             "state_count": len(self.states),
+            "full_corpus": bool(self.config.full_corpus),
             "output_dir": str(self.output_dir),
             "dry_run": bool(self.config.dry_run),
             "resume": bool(self.config.resume),
@@ -344,7 +356,10 @@ class LegalScraperDaemon:
             )
             self._write_cycle(cycle)
 
-        cycle["status"] = self._cycle_status(cycle["phases"])
+        if self.config.full_corpus:
+            cycle["corpus_completeness"] = self._full_corpus_completeness(cycle["phases"])
+
+        cycle["status"] = self._cycle_status(cycle["phases"], cycle.get("corpus_completeness"))
         cycle["finished_at"] = _utc_now()
         self._write_cycle(cycle)
         return cycle
@@ -465,9 +480,60 @@ class LegalScraperDaemon:
         self._write_phase_result(cycle_dir, phase_name, result)
         return result
 
+    def _full_corpus_completeness(self, phases: Dict[str, Any]) -> Dict[str, Any]:
+        required_states = list(self.states)
+        required_corpora = list(SUPPORTED_CORPORA)
+        state_refresh = phases.get("state_refresh") if isinstance(phases.get("state_refresh"), dict) else {}
+        agentic = phases.get("agentic_corpora") if isinstance(phases.get("agentic_corpora"), dict) else {}
+
+        scrape_gap_states = sorted(set(str(item).upper() for item in list(state_refresh.get("scrape_gap_states") or []) if str(item).strip()))
+        build_gap_states = sorted(set(str(item).upper() for item in list(state_refresh.get("build_gap_states") or []) if str(item).strip()))
+        build = state_refresh.get("build") if isinstance(state_refresh.get("build"), dict) else {}
+        missing_jsonld_states = sorted(set(str(item).upper() for item in list(build.get("missing_jsonld_states") or []) if str(item).strip()))
+        built_states = {
+            str(item).upper()
+            for item in list(build.get("states") or [])
+            if str(item).strip()
+        }
+        missing_built_states = [] if not built_states else [state for state in required_states if state not in built_states]
+        if not state_refresh:
+            missing_built_states = list(required_states)
+        missing_state_refresh_states = sorted(set(scrape_gap_states + build_gap_states + missing_jsonld_states + missing_built_states))
+
+        agentic_results = agentic.get("corpora") if isinstance(agentic.get("corpora"), dict) else {}
+        missing_agentic_corpora = [corpus for corpus in required_corpora if corpus not in agentic_results]
+        errored_agentic_corpora = [
+            corpus
+            for corpus, result in sorted(agentic_results.items())
+            if isinstance(result, dict) and str(result.get("status") or "").lower() == "error"
+        ]
+
+        status = "complete"
+        if missing_state_refresh_states or missing_agentic_corpora or errored_agentic_corpora:
+            status = "incomplete"
+        if str(state_refresh.get("status") or "").lower() == "error" or str(agentic.get("status") or "").lower() == "error":
+            status = "error"
+
+        return {
+            "status": status,
+            "required_state_count": len(required_states),
+            "required_states": required_states,
+            "required_corpora": required_corpora,
+            "state_refresh_status": str(state_refresh.get("status") or "disabled"),
+            "missing_state_refresh_states": missing_state_refresh_states,
+            "agentic_status": str(agentic.get("status") or "disabled"),
+            "missing_agentic_corpora": missing_agentic_corpora,
+            "errored_agentic_corpora": errored_agentic_corpora,
+        }
+
     @staticmethod
-    def _cycle_status(phases: Dict[str, Any]) -> str:
+    def _cycle_status(phases: Dict[str, Any], corpus_completeness: Optional[Dict[str, Any]] = None) -> str:
         statuses = [str((phase or {}).get("status") or "").lower() for phase in phases.values() if isinstance(phase, dict)]
+        completeness_status = str((corpus_completeness or {}).get("status") or "").lower()
+        if completeness_status == "error":
+            return "error"
+        if completeness_status == "incomplete":
+            return "partial_success"
         if any(status == "error" for status in statuses):
             return "error"
         if any(status == "partial_success" for status in statuses):
@@ -486,9 +552,8 @@ class LegalScraperDaemon:
 
             runner = run_bluebook_linker_fuzz_harness
 
+        previous_skip_live_search = os.environ.get("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH")
         if config.skip_live_search:
-            import os
-
             os.environ["LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"] = "1"
 
         try:
@@ -497,6 +562,10 @@ class LegalScraperDaemon:
                 corpus_keys=list(config.corpora or []),
                 state_codes=list(self.states),
                 allow_hf_fallback=bool(config.allow_hf_fallback),
+                prefer_hf_corpora=bool(config.prefer_hf_corpora),
+                primary_corpora_only=bool(config.primary_corpora_only),
+                exact_state_partitions_only=bool(config.exact_state_partitions_only),
+                materialize_hf_corpora=bool(config.materialize_hf_corpora),
                 exhaustive=bool(config.exhaustive),
                 enable_recovery=bool(config.enable_recovery),
                 recovery_max_candidates=max(1, int(config.recovery_max_candidates)),
@@ -504,8 +573,22 @@ class LegalScraperDaemon:
                 publish_to_hf=bool(config.publish_to_hf),
                 hf_token=self.config.hf_token,
                 merge_recovered_rows=bool(config.merge_recovered_rows),
+                hydrate_merge_from_hf=bool(config.hydrate_merge_from_hf or config.publish_merged_parquet_to_hf),
+                publish_merged_parquet_to_hf=bool(config.publish_merged_parquet_to_hf),
                 seed_from_corpora=bool(config.seed_from_corpora),
                 seed_only=bool(config.seed_only),
+                seed_examples_per_corpus=max(1, int(config.seed_examples_per_corpus)),
+                max_seed_examples_per_state=(
+                    max(1, int(config.max_seed_examples_per_state))
+                    if int(config.max_seed_examples_per_state or 0) > 0
+                    else None
+                ),
+                max_seed_examples_per_source=(
+                    max(1, int(config.max_seed_examples_per_source))
+                    if int(config.max_seed_examples_per_source or 0) > 0
+                    else None
+                ),
+                sampling_shuffle_seed=int(config.sampling_shuffle_seed),
                 max_acceptable_failure_rate=float(config.max_acceptable_failure_rate),
                 min_actionable_failures=max(1, int(config.min_actionable_failures)),
                 output_dir=output_dir,
@@ -520,6 +603,12 @@ class LegalScraperDaemon:
             }
         except Exception as exc:
             return {"status": "error", "error": str(exc), "output_dir": str(output_dir)}
+        finally:
+            if config.skip_live_search:
+                if previous_skip_live_search is None:
+                    os.environ.pop("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", None)
+                else:
+                    os.environ["LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"] = previous_skip_live_search
 
     async def _run_state_refresh_phase(self, cycle_dir: Path) -> Dict[str, Any]:
         config = self.config.state_refresh
@@ -625,6 +714,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cycle-interval-seconds", type=float, default=3600.0)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--no-resume", action="store_true")
+    parser.add_argument(
+        "--full-corpus",
+        action="store_true",
+        help=(
+            "Use overnight/full-corpus retrieval defaults: all states, unbounded state-law scraping, "
+            "HF merge hydration, all supported Bluebook/agentic corpora, and longer per-state budgets. "
+            "Publishing still requires the explicit publish flags."
+        ),
+    )
     parser.add_argument("--hf-token", default="")
     parser.add_argument("--cache-dir", default="")
     parser.add_argument("--no-cache", action="store_true")
@@ -637,6 +735,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--bluebook-corpora", default="state_laws")
     parser.add_argument("--bluebook-seed-from-corpora", action="store_true")
     parser.add_argument("--bluebook-seed-only", action="store_true")
+    parser.add_argument("--bluebook-seed-examples-per-corpus", type=int, default=2)
+    parser.add_argument("--bluebook-max-seed-examples-per-state", type=int, default=0)
+    parser.add_argument("--bluebook-max-seed-examples-per-source", type=int, default=0)
+    parser.add_argument("--bluebook-sampling-shuffle-seed", type=int, default=0)
+    parser.add_argument("--bluebook-prefer-hf-corpora", action="store_true")
+    parser.add_argument("--bluebook-primary-corpora-only", action="store_true")
+    parser.add_argument("--bluebook-exact-state-partitions-only", action="store_true")
+    parser.add_argument("--bluebook-materialize-hf-corpora", action="store_true")
+    parser.add_argument("--bluebook-merge-recovered-rows", action="store_true")
+    parser.add_argument("--bluebook-hydrate-merge-from-hf", action="store_true")
+    parser.add_argument("--bluebook-publish-merged-parquet-to-hf", action="store_true")
     parser.add_argument("--bluebook-publish-to-hf", action="store_true")
     parser.add_argument("--bluebook-live-search", action="store_true")
 
@@ -661,8 +770,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
-    states = _normalize_states(args.states, include_dc=bool(args.include_dc))
+    full_corpus = bool(getattr(args, "full_corpus", False))
+    states = _normalize_states("all" if full_corpus else args.states, include_dc=bool(args.include_dc))
+    bluebook_corpora = _normalize_corpora("all" if full_corpus else args.bluebook_corpora)
+    agentic_corpora = _normalize_corpora("all" if full_corpus else args.agentic_corpora)
     return LegalScraperDaemonConfig(
+        full_corpus=full_corpus,
         states=states,
         include_dc=bool(args.include_dc),
         output_dir=str(args.output_dir),
@@ -681,31 +794,45 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
         bluebook=BluebookDaemonConfig(
             enabled=not bool(args.disable_bluebook),
             samples=max(1, int(args.bluebook_samples)),
-            corpora=_normalize_corpora(args.bluebook_corpora),
-            seed_from_corpora=bool(args.bluebook_seed_from_corpora),
+            corpora=bluebook_corpora,
+            seed_from_corpora=bool(args.bluebook_seed_from_corpora or full_corpus),
             seed_only=bool(args.bluebook_seed_only),
+            seed_examples_per_corpus=max(1, int(args.bluebook_seed_examples_per_corpus)),
+            max_seed_examples_per_state=max(0, int(args.bluebook_max_seed_examples_per_state)),
+            max_seed_examples_per_source=max(0, int(args.bluebook_max_seed_examples_per_source)),
+            sampling_shuffle_seed=int(args.bluebook_sampling_shuffle_seed),
+            prefer_hf_corpora=bool(args.bluebook_prefer_hf_corpora or full_corpus),
+            primary_corpora_only=bool(args.bluebook_primary_corpora_only or full_corpus),
+            exact_state_partitions_only=bool(args.bluebook_exact_state_partitions_only or full_corpus),
+            materialize_hf_corpora=bool(args.bluebook_materialize_hf_corpora or full_corpus),
+            merge_recovered_rows=bool(args.bluebook_merge_recovered_rows),
+            hydrate_merge_from_hf=bool(args.bluebook_hydrate_merge_from_hf or args.bluebook_publish_merged_parquet_to_hf),
+            publish_merged_parquet_to_hf=bool(args.bluebook_publish_merged_parquet_to_hf),
             publish_to_hf=bool(args.bluebook_publish_to_hf),
             skip_live_search=not bool(args.bluebook_live_search),
         ),
         state_refresh=StateRefreshDaemonConfig(
             enabled=not bool(args.disable_state_refresh),
-            scrape=bool(args.state_refresh_scrape),
-            merge_hf_existing=bool(args.state_refresh_merge_hf_existing),
+            scrape=bool(args.state_refresh_scrape or full_corpus),
+            merge_hf_existing=bool(args.state_refresh_merge_hf_existing or full_corpus),
             publish_to_hf=bool(args.state_refresh_publish_to_hf),
             verify_publish=bool(args.state_refresh_verify),
             allow_incomplete_publish=bool(args.allow_incomplete_publish),
-            max_statutes=max(0, int(args.max_statutes)),
+            max_statutes=0 if full_corpus else max(0, int(args.max_statutes)),
             parallel_workers=max(1, int(args.parallel_workers)),
-            per_state_timeout_seconds=max(1.0, float(args.per_state_timeout_seconds)),
-            per_state_retry_attempts=max(0, int(args.per_state_retry_attempts)),
+            per_state_timeout_seconds=max(
+                86400.0 if full_corpus else 1.0,
+                float(args.per_state_timeout_seconds),
+            ),
+            per_state_retry_attempts=max(2 if full_corpus else 0, int(args.per_state_retry_attempts)),
             hydrate_statute_text=not bool(args.no_hydrate_state_text),
-            hydrate_timeout_seconds=max(1.0, float(args.state_refresh_hydrate_timeout_seconds)),
+            hydrate_timeout_seconds=max(60.0 if full_corpus else 1.0, float(args.state_refresh_hydrate_timeout_seconds)),
         ),
         agentic_corpora=AgenticCorpusDaemonConfig(
-            enabled=bool(args.enable_agentic_corpora),
-            corpora=_normalize_corpora(args.agentic_corpora),
+            enabled=bool(args.enable_agentic_corpora or full_corpus),
+            corpora=agentic_corpora,
             max_cycles=max(1, int(args.agentic_max_cycles)),
-            max_statutes=max(0, int(args.max_statutes)),
+            max_statutes=0 if full_corpus else max(0, int(args.max_statutes)),
         ),
     )
 

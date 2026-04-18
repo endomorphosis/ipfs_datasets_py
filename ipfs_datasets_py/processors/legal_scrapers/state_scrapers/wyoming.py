@@ -44,16 +44,27 @@ class WyomingScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        max_sections = self._bounded_return_threshold(60)
         if PLAYWRIGHT_AVAILABLE:
             self.logger.info("Wyoming: Using Playwright for JavaScript rendering")
             try:
-                result = await self._scrape_with_playwright(code_name, code_url, "Wyo. Stat.")
+                result = await self._scrape_with_playwright(
+                    code_name,
+                    code_url,
+                    "Wyo. Stat.",
+                    max_sections=max_sections,
+                )
                 if result:
                     return result
             except Exception as e:
                 self.logger.warning(f"Wyoming Playwright failed: {e}, falling back")
         
-        return await self._custom_scrape_wyoming(code_name, code_url, "Wyo. Stat.")
+        return await self._custom_scrape_wyoming(
+            code_name,
+            code_url,
+            "Wyo. Stat.",
+            max_sections=max_sections,
+        )
     
     async def _scrape_with_playwright(
         self,

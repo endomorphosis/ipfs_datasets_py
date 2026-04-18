@@ -10,6 +10,7 @@ import pyarrow.parquet as pq
 from ipfs_datasets_py.processors.legal_data_hacc import (
     analyze_pdf_for_court_case,
     load_scan_manifest,
+    package_hacc_case_from_scan_manifest,
     scan_hacc_pdfs_for_dockets,
     summarize_scan_manifest,
 )
@@ -348,3 +349,82 @@ def test_scan_hacc_pdfs_for_dockets_deduplicates_symlinked_pdfs(tmp_path: Path) 
     assert manifest["total_pdf_count"] == 1
     assert manifest["duplicate_pdf_count"] == 1
     assert manifest["matched_pdf_count"] == 1
+
+
+def test_package_hacc_case_from_scan_manifest_packages_case(monkeypatch, tmp_path: Path) -> None:
+    scan_root = tmp_path / "hacc"
+    pdf_path = scan_root / "case_a" / "complaint.pdf"
+    _write_pdf(
+        pdf_path,
+        [
+            "IN THE CIRCUIT COURT OF THE STATE OF OREGON",
+            "FOR THE COUNTY OF CLACKAMAS",
+            "PROBATE DEPARTMENT",
+            "In the Matter of:",
+            "Jane Kay Cortez, Protected Person.",
+            "Case No. 26PR00641",
+            "Motion to dismiss",
+        ],
+    )
+    result = analyze_pdf_for_court_case(pdf_path)
+    result.relative_path = str(pdf_path.relative_to(scan_root))
+
+    manifest_path = tmp_path / "scan_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "scan_root": str(scan_root),
+                "scan_started_at": "2025-01-01T00:00:00Z",
+                "scan_parameters": {
+                    "glob_pattern": "*.pdf",
+                    "max_ocr_pages": 5,
+                    "include_knowledge_graph": True,
+                    "include_bm25": True,
+                    "include_vector_index": True,
+                    "include_formal_logic": True,
+                    "include_router_enrichment": True,
+                    "router_timeout_seconds": 1.0,
+                },
+                "pdf_results": [result.to_dict()],
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    def _fake_ingest(payload, **kwargs):
+        captured["payload"] = payload
+        captured["kwargs"] = kwargs
+        captured["router_timeout_env"] = os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS")
+        return {"payload": payload}
+
+    def _fake_export(dataset, output_path):
+        output_path.write_text("stub", encoding="utf-8")
+        return {
+            "parquet_path": str(output_path),
+            "row_count": 1,
+            "section_counts": {"dataset_core": 1, "documents": 1},
+        }
+
+    monkeypatch.setattr(scan_module, "ingest_docket_dataset", _fake_ingest)
+    monkeypatch.setattr(scan_module, "export_docket_dataset_single_parquet", _fake_export)
+
+    case_payload = package_hacc_case_from_scan_manifest(
+        manifest_path,
+        case_number="26PR00641",
+        output_dir=tmp_path / "packaged",
+    )
+
+    assert case_payload["status"] == "completed"
+    assert case_payload["case_number"] == "26PR00641"
+    assert case_payload["dataset_format"] == "parquet"
+    assert Path(case_payload["dataset_path"]).exists()
+    assert case_payload["document_count"] == 1
+    assert captured["kwargs"]["include_router_enrichment"] is True
+    assert captured["payload"]["metadata"]["router_timeout_seconds"] == 1.0
+    assert captured["payload"]["metadata"]["matched_relative_paths"] == ["case_a/complaint.pdf"]
+    assert captured["router_timeout_env"] == "1.0"
+    assert os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS") is None

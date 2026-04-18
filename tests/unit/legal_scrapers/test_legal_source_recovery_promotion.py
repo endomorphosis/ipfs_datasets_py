@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+import importlib.util
 import json
 from pathlib import Path
+import sys
+import types
 
 import pytest
 
@@ -15,6 +18,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery_promotion 
     merge_recovery_manifests_into_canonical_datasets,
     merge_recovery_manifest_into_canonical_dataset,
     promote_recovery_manifest_to_canonical_bundle,
+    _resolve_hf_token,
     _upload_huggingface_parquet,
 )
 
@@ -321,7 +325,7 @@ def test_hf_upload_uses_environment_token_alias(monkeypatch, tmp_path):
     monkeypatch.delenv("HF_TOKEN", raising=False)
     monkeypatch.setenv("HUGGINGFACEHUB_API_TOKEN", "env-write-token")
     monkeypatch.setattr(promotion, "HfApi", _FakeHfApi, raising=False)
-    monkeypatch.setitem(__import__("sys").modules, "huggingface_hub", type("_HF", (), {"HfApi": _FakeHfApi}))
+    monkeypatch.setitem(sys.modules, "huggingface_hub", types.SimpleNamespace(HfApi=_FakeHfApi))
 
     report = _upload_huggingface_parquet(
         local_path=local_path,
@@ -333,6 +337,79 @@ def test_hf_upload_uses_environment_token_alias(monkeypatch, tmp_path):
     assert captured["token"] == "env-write-token"
     assert captured["upload"]["repo_type"] == "dataset"
     assert captured["upload"]["path_in_repo"] == "state_laws_parquet_cid/STATE-MN.parquet"
+
+
+def test_hf_token_resolver_uses_secret_keyring(monkeypatch):
+    token_names = (
+        "HF_TOKEN",
+        "HUGGINGFACE_HUB_TOKEN",
+        "HUGGINGFACEHUB_API_TOKEN",
+        "HUGGINGFACE_API_TOKEN",
+        "HUGGINGFACE_API_KEY",
+        "IPFS_DATASETS_PY_HF_API_TOKEN",
+        "HF_API_TOKEN",
+    )
+    for name in token_names:
+        monkeypatch.delenv(name, raising=False)
+
+    class _EmptyVault:
+        def get(self, name):
+            return ""
+
+    keyring_values = {
+        ("huggingface_hub", "default"): "keyring-write-token",
+    }
+    fake_keyring = types.SimpleNamespace(
+        get_password=lambda service, account: keyring_values.get((service, account), "")
+    )
+    fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _EmptyVault())
+
+    monkeypatch.setitem(sys.modules, "keyring", fake_keyring)
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+
+    assert _resolve_hf_token() == "keyring-write-token"
+
+
+def test_hf_folder_publisher_uses_shared_keyring_resolver(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_data import legal_source_recovery_promotion as promotion
+
+    script_path = Path(__file__).resolve().parents[3] / "scripts" / "repair" / "publish_parquet_to_hf.py"
+    spec = importlib.util.spec_from_file_location("publish_parquet_to_hf_under_test", script_path)
+    assert spec is not None and spec.loader is not None
+    publish_parquet_to_hf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(publish_parquet_to_hf)
+
+    local_dir = tmp_path / "manifest"
+    local_dir.mkdir()
+    (local_dir / "recovery_manifest.json").write_text("{}", encoding="utf-8")
+    captured = {}
+
+    class _FakeHfApi:
+        def __init__(self, token=None):
+            captured["token"] = token
+
+        def upload_folder(self, **kwargs):
+            captured["upload"] = dict(kwargs)
+            return "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/keyring"
+
+    monkeypatch.setattr(promotion, "_resolve_hf_token", lambda token=None: "shared-keyring-token")
+    monkeypatch.setattr(publish_parquet_to_hf, "HfApi", _FakeHfApi)
+
+    report = publish_parquet_to_hf.publish(
+        local_dir=local_dir,
+        repo_id="justicedao/ipfs_state_laws",
+        commit_message="Track missing legal source",
+        create_repo=False,
+        token=None,
+        path_in_repo="source_recovery/test",
+        allow_patterns=["*.json"],
+        do_verify=False,
+        cid_column="cid",
+    )
+
+    assert report["repo_id"] == "justicedao/ipfs_state_laws"
+    assert captured["token"] == "shared-keyring-token"
+    assert captured["upload"]["path_in_repo"] == "source_recovery/test"
 
 
 @pytest.mark.anyio

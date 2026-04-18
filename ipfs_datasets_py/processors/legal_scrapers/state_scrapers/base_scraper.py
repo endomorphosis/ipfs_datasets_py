@@ -116,6 +116,13 @@ def _env_float(name: str, default: float = 0.0) -> float:
         return float(default)
 
 
+def _env_int(name: str, default: int = 0) -> int:
+    try:
+        return int(str(os.getenv(name, "") or default))
+    except Exception:
+        return int(default)
+
+
 @dataclass
 class StatuteMetadata:
     """Metadata for a statute."""
@@ -294,6 +301,19 @@ class BaseStateScraper(ABC):
             return int(raw)
         except Exception:
             return int(default)
+
+    def _bounded_return_threshold(self, default: int) -> int:
+        """Return the success threshold for candidate-loop scrapers.
+
+        Legacy state scrapers often try several candidate URLs and only return
+        early after finding a large number of section links. Bounded daemon
+        probes set STATE_SCRAPER_MAX_STATUTES, so those scrapers should return
+        as soon as they have the requested number of real records.
+        """
+        bounded = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
+        if bounded > 0:
+            return max(1, min(int(default), bounded))
+        return int(default)
 
     def _load_ipfs_page_cache_index(self) -> Dict[str, Dict[str, Any]]:
         if not self._ipfs_page_cache_index_path.exists():
@@ -901,10 +921,49 @@ class BaseStateScraper(ABC):
         if bounded_fetch_timeout > 0:
             timeout_seconds = max(1, int(min(float(timeout_seconds), bounded_fetch_timeout)))
 
+        async def _try_requests_direct() -> bytes:
+            try:
+                from urllib.request import Request, urlopen
+
+                headers = {
+                    "User-Agent": "ipfs-datasets-state-scraper/2.0",
+                    "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+                }
+                for candidate_url in self._wayback_replay_candidates(url):
+                    try:
+                        request = Request(candidate_url, headers=headers)
+                        with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
+                            status_code = int(getattr(response, "status", 200) or 200)
+                            content = bytes(response.read() or b"")
+                        if status_code != 200 or not content:
+                            continue
+                        self._record_fetch_event(provider="requests_direct", success=True)
+                        await self._store_page_bytes_in_ipfs_cache(
+                            url=url,
+                            payload=content,
+                            provider="requests_direct",
+                        )
+                        return content
+                    except Exception:
+                        continue
+
+                self._record_fetch_event(provider="requests_direct", success=False)
+                return b""
+            except Exception as exc:
+                self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
+                return b""
+
         cached_bytes = await self._load_page_bytes_from_ipfs_cache(url)
         if cached_bytes:
             self._record_fetch_event(provider="ipfs_page_cache", success=True)
             return cached_bytes
+
+        # Bounded probes should prefer the live official page before expensive
+        # rescue paths. Full corpus sweeps still keep the archival-first chain.
+        if bounded_fetch_timeout > 0:
+            direct_bytes = await _try_requests_direct()
+            if direct_bytes:
+                return direct_bytes
 
         unified_enabled = str(os.getenv("STATE_SCRAPER_UNIFIED_FETCH_ENABLED", "1")).strip().lower() not in {"0", "false", "no", "off"}
         # Very small hydration timeouts are usually smoke-test budgets. Avoid
@@ -955,36 +1014,7 @@ class BaseStateScraper(ABC):
                 self._record_fetch_event(provider="archival_fallback", success=False, error=str(exc))
                 pass
 
-        try:
-            from urllib.request import Request, urlopen
-
-            headers = {
-                "User-Agent": "ipfs-datasets-state-scraper/2.0",
-                "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
-            }
-            for candidate_url in self._wayback_replay_candidates(url):
-                try:
-                    request = Request(candidate_url, headers=headers)
-                    with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
-                        status_code = int(getattr(response, "status", 200) or 200)
-                        content = bytes(response.read() or b"")
-                    if status_code != 200 or not content:
-                        continue
-                    self._record_fetch_event(provider="requests_direct", success=True)
-                    await self._store_page_bytes_in_ipfs_cache(
-                        url=url,
-                        payload=content,
-                        provider="requests_direct",
-                    )
-                    return content
-                except Exception:
-                    continue
-
-            self._record_fetch_event(provider="requests_direct", success=False)
-            return b""
-        except Exception as exc:
-            self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
-            return b""
+        return await _try_requests_direct()
 
     @staticmethod
     def _is_object_moved_placeholder(payload: bytes) -> bool:
@@ -1674,6 +1704,10 @@ class BaseStateScraper(ABC):
         except ImportError as e:
             self.logger.error(f"Required library not available: {e}")
             return []
+
+        bounded_max_sections = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
+        if bounded_max_sections > 0:
+            max_sections = max(1, min(int(max_sections or bounded_max_sections), bounded_max_sections))
         
         statutes = []
         seen_source_urls = set()
@@ -1832,6 +1866,10 @@ class BaseStateScraper(ABC):
             List of NormalizedStatute objects
         """
         from urllib.parse import urljoin
+
+        bounded_max_sections = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
+        if bounded_max_sections > 0:
+            max_sections = max(1, min(int(max_sections or bounded_max_sections), bounded_max_sections))
         
         if not self.has_playwright():
             self.logger.warning(f"Playwright not available, falling back to generic scrape for {code_name}")

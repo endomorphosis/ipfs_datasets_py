@@ -27,22 +27,62 @@ _HF_PARQUET_PATH_ALIASES = {
     ),
 }
 
+_HF_TOKEN_NAMES = (
+    "HF_TOKEN",
+    "HUGGINGFACE_HUB_TOKEN",
+    "HUGGINGFACEHUB_API_TOKEN",
+    "HUGGINGFACE_API_TOKEN",
+    "HUGGINGFACE_API_KEY",
+    "IPFS_DATASETS_PY_HF_API_TOKEN",
+    "HF_API_TOKEN",
+)
+
 
 def _resolve_hf_token(hf_token: str | None = None) -> str | None:
     explicit = str(hf_token or "").strip()
     if explicit:
         return explicit
-    for name in (
-        "HF_TOKEN",
-        "HUGGINGFACE_HUB_TOKEN",
-        "HUGGINGFACEHUB_API_TOKEN",
-        "HUGGINGFACE_API_TOKEN",
-        "HUGGINGFACE_API_KEY",
-        "IPFS_DATASETS_PY_HF_API_TOKEN",
-    ):
+    for name in _HF_TOKEN_NAMES:
         value = str(os.environ.get(name) or "").strip()
         if value:
             return value
+
+    try:
+        from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
+
+        vault = get_secrets_vault()
+        for name in _HF_TOKEN_NAMES:
+            value = str(vault.get(name) or "").strip()
+            if value:
+                return value
+    except Exception:
+        pass
+
+    try:
+        import keyring  # type: ignore
+
+        keyring_lookups = (
+            ("huggingface_hub", "default"),
+            ("huggingface_hub", "endomorphosis"),
+            ("huggingface_hub", "HF_TOKEN"),
+            ("huggingface_hub", "HUGGINGFACE_HUB_TOKEN"),
+            ("huggingface_hub", "HUGGINGFACEHUB_API_TOKEN"),
+        ) + tuple(("ipfs_datasets_py", name) for name in _HF_TOKEN_NAMES)
+        for service, account in keyring_lookups:
+            value = str(keyring.get_password(service, account) or "").strip()
+            if value:
+                return value
+    except Exception:
+        pass
+
+    try:
+        from huggingface_hub import get_token
+
+        value = str(get_token() or "").strip()
+        if value:
+            return value
+    except Exception:
+        pass
     return None
 
 
@@ -462,8 +502,8 @@ def merge_recovery_manifest_into_canonical_dataset(
                 "publish_error_hint": (
                     "Hugging Face returned 403/Forbidden. Verify the token resolved from --hf-token, "
                     "HF_TOKEN, HUGGINGFACE_HUB_TOKEN, HUGGINGFACEHUB_API_TOKEN, HUGGINGFACE_API_TOKEN, "
-                    "HUGGINGFACE_API_KEY, or IPFS_DATASETS_PY_HF_API_TOKEN has write permission to "
-                    f"dataset repo {hf_dataset_id!r}."
+                    "HUGGINGFACE_API_KEY, IPFS_DATASETS_PY_HF_API_TOKEN, the secrets vault, system "
+                    f"keyring, or Hugging Face local token store has write permission to dataset repo {hf_dataset_id!r}."
                     if "403" in error_text or "forbidden" in error_text.lower()
                     else ""
                 ),

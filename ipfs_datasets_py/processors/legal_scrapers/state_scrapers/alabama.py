@@ -1,29 +1,37 @@
-"""Scraper for Alabama state laws.
+"""Scraper for Alabama state laws."""
 
-This module contains the scraper for Alabama statutes from the official state legislative website.
-"""
+import asyncio
+import re
+from typing import List, Dict, Any
 
-from typing import List, Dict
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
 class AlabamaScraper(BaseStateScraper):
-    """Scraper for Alabama state laws from http://alisondb.legislature.state.al.us"""
+    """Scraper for Alabama state laws from the public ALISON GraphQL API."""
+
+    GRAPHQL_URL = "https://alison.legislature.state.al.us/graphql"
+    CODE_URL = "https://alison.legislature.state.al.us/code-of-alabama"
     
     def get_base_url(self) -> str:
         """Return the base URL for Alabama's legislative website."""
-        return "http://alisondb.legislature.state.al.us"
+        return "https://alison.legislature.state.al.us"
     
     def get_code_list(self) -> List[Dict[str, str]]:
         """Return list of available codes/statutes for Alabama."""
         return [{
             "name": "Alabama Code",
-            "url": f"{self.get_base_url()}/alison/CodeOfAlabama/1975/coatoc.htm",
+            "url": self.CODE_URL,
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: int | None = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Alabama's legislative website.
         
         Args:
@@ -33,8 +41,139 @@ class AlabamaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        # Use custom scraper with Alabama-specific patterns
-        return await self._custom_scrape_alabama(code_name, code_url, "Ala. Code")
+        limit = max(1, int(max_statutes)) if max_statutes else 100
+        return await self._scrape_alison_graphql(code_name, limit)
+
+    async def _graphql(self, query: str, variables: Dict[str, Any] | None = None, timeout_seconds: int = 15) -> Dict[str, Any]:
+        timeout = max(1, int(timeout_seconds or 15))
+
+        def _request() -> Dict[str, Any]:
+            try:
+                import requests
+
+                response = requests.post(
+                    self.GRAPHQL_URL,
+                    json={"query": query, "variables": variables or {}},
+                    headers={
+                        "User-Agent": "ipfs-datasets-alabama-code-scraper/2.0",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
+                    timeout=timeout,
+                )
+                if int(response.status_code or 0) != 200:
+                    return {}
+                payload = response.json()
+                if payload.get("errors"):
+                    return {}
+                return payload.get("data") or {}
+            except Exception:
+                return {}
+
+        try:
+            data = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
+        except asyncio.TimeoutError:
+            data = {}
+        self._record_fetch_event(provider="alison_graphql", success=bool(data))
+        return data
+
+    def _parse_scaffold_section_parent_ids(self, scaffold: str, limit: int) -> List[str]:
+        if not scaffold or len(scaffold) < 3:
+            return []
+        field_sep = scaffold[0]
+        row_sep = scaffold[1]
+        rows = [row.split(field_sep) for row in scaffold[2:].split(row_sep) if row]
+        if not rows:
+            return []
+        headers, data_rows = rows[0], rows[1:]
+        parent_ids: List[str] = []
+        seen = set()
+        for row in data_rows:
+            record = dict(zip(headers, row))
+            display_id = str(record.get("displayId") or "")
+            parent_id = str(record.get("parentId") or "")
+            if not parent_id or not re.match(r"^\d+[A-Za-z]?(?:-\d+[A-Za-z]?){2,}$", display_id):
+                continue
+            if parent_id in seen:
+                continue
+            seen.add(parent_id)
+            parent_ids.append(parent_id)
+            if len(parent_ids) >= max(1, limit):
+                break
+        return parent_ids
+
+    async def _scrape_alison_graphql(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        scaffold_data = await self._graphql("query codeOfAlabamaScaffold { scaffold: codeOfAlabamaScaffold }")
+        parent_ids = self._parse_scaffold_section_parent_ids(str(scaffold_data.get("scaffold") or ""), max_statutes)
+        if not parent_ids:
+            return []
+
+        query = """
+        query codesOfAlabamaByParent($parentId: [ID!]) {
+          codeItems: codesOfAlabama(where: { parentId: { in: $parentId } }) {
+            data {
+              codeId
+              parentId
+              displayId
+              title
+              content
+              history
+              type
+              isContentNode
+            }
+          }
+        }
+        """
+        statutes: List[NormalizedStatute] = []
+        batch_size = 8
+        for offset in range(0, len(parent_ids), batch_size):
+            data = await self._graphql(query, {"parentId": parent_ids[offset : offset + batch_size]})
+            rows = ((data.get("codeItems") or {}).get("data") or [])
+            for row in rows:
+                if len(statutes) >= max_statutes:
+                    return statutes
+                if not row.get("isContentNode") or str(row.get("type") or "").lower() != "section":
+                    continue
+                display_id = str(row.get("displayId") or "").strip()
+                content = str(row.get("content") or "")
+                history = str(row.get("history") or "")
+                text_parts = []
+                if content:
+                    text_parts.append(BeautifulSoup(content, "html.parser").get_text(" ", strip=True))
+                if history:
+                    history_text = BeautifulSoup(history, "html.parser").get_text(" ", strip=True)
+                    if history_text:
+                        text_parts.append(f"History: {history_text}")
+                full_text = re.sub(r"\s+", " ", " ".join(text_parts)).strip()
+                if not display_id or len(full_text) < 80:
+                    continue
+                title = re.sub(r"\s+", " ", str(row.get("title") or f"Section {display_id}")).strip()
+                statute = NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {display_id}",
+                    code_name=code_name,
+                    section_number=display_id,
+                    section_name=title[:200],
+                    full_text=full_text[:14000],
+                    legal_area=self._identify_legal_area(title),
+                    source_url=f"{self.CODE_URL}?section={display_id}",
+                    official_cite=f"Ala. Code § {display_id}",
+                    metadata=StatuteMetadata(),
+                )
+                statute.structured_data = {
+                    "source_kind": "official_alison_graphql",
+                    "skip_hydrate": True,
+                    "code_id": row.get("codeId"),
+                    "parent_id": row.get("parentId"),
+                }
+                statutes.append(statute)
+        return statutes
     
     async def _custom_scrape_alabama(
         self,

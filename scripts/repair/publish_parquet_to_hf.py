@@ -18,6 +18,18 @@ from huggingface_hub import HfApi, hf_hub_url, list_repo_files
 import requests
 
 
+def _resolve_token(token: Optional[str]) -> Optional[str]:
+    explicit = str(token or "").strip()
+    if explicit:
+        return explicit
+    try:
+        from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import _resolve_hf_token
+
+        return _resolve_hf_token()
+    except Exception:
+        return None
+
+
 def _range_magic_check(url: str, timeout: int = 60) -> Dict[str, Any]:
     import time
     for attempt in range(3):
@@ -89,6 +101,7 @@ def publish(
     do_verify: bool,
     cid_column: str,
 ) -> Dict[str, Any]:
+    token = _resolve_token(token)
     api = HfApi(token=token)
 
     if create_repo:

@@ -100,6 +100,28 @@ class HACCCourtPDFScanResult:
         return payload
 
 
+def _scan_result_from_dict(payload: Dict[str, Any]) -> HACCCourtPDFScanResult:
+    return HACCCourtPDFScanResult(
+        path=str(payload.get("path") or ""),
+        relative_path=str(payload.get("relative_path") or ""),
+        is_likely_court_case=bool(payload.get("is_likely_court_case")),
+        case_number=str(payload.get("case_number") or ""),
+        court=str(payload.get("court") or ""),
+        case_name=str(payload.get("case_name") or ""),
+        title=str(payload.get("title") or ""),
+        confidence=float(payload.get("confidence") or 0.0),
+        reasons=[str(item) for item in list(payload.get("reasons") or [])],
+        extraction_method=str(payload.get("extraction_method") or ""),
+        text_length=int(payload.get("text_length") or 0),
+        matched_court_headers=[str(item) for item in list(payload.get("matched_court_headers") or [])],
+        style_lines=[str(item) for item in list(payload.get("style_lines") or [])],
+        document_knowledge_graph=dict(payload.get("document_knowledge_graph") or {}),
+        document_knowledge_graph_summary=dict(payload.get("document_knowledge_graph_summary") or {}),
+        parsed_document=dict(payload.get("parsed_document") or {}),
+        text=str(payload.get("text") or ""),
+    )
+
+
 def _safe_identifier(value: Any) -> str:
     text = "".join(ch.lower() if str(ch).isalnum() else "_" for ch in str(value or "")).strip("_")
     return text or "item"
@@ -437,6 +459,203 @@ def _build_case_preview(results: Sequence[HACCCourtPDFScanResult], *, case_numbe
     }
 
 
+def _package_case_results(
+    *,
+    root: Path,
+    destination_root: Path,
+    scan_started_at: str,
+    case_number: str,
+    results: Sequence[HACCCourtPDFScanResult],
+    glob_pattern: str,
+    max_ocr_pages: int,
+    include_knowledge_graph: bool,
+    include_bm25: bool,
+    include_vector_index: bool,
+    include_formal_logic: bool,
+    include_router_enrichment: bool,
+    router_timeout_seconds: float | None,
+) -> Dict[str, Any]:
+    collected_root = destination_root / "collected_pdfs"
+    datasets_root = destination_root / "docket_datasets"
+    collected_root.mkdir(parents=True, exist_ok=True)
+    datasets_root.mkdir(parents=True, exist_ok=True)
+
+    case_slug = _safe_identifier(case_number)
+    case_collect_root = collected_root / case_slug
+    case_collect_root.mkdir(parents=True, exist_ok=True)
+    court = next((item.court for item in results if item.court), "")
+    case_name = next((item.case_name for item in results if item.case_name), case_number)
+    copied_paths: List[str] = []
+    copied_relative_paths: List[str] = []
+    documents: List[Dict[str, Any]] = []
+    for index, result in enumerate(results, start=1):
+        source_path = Path(result.path)
+        source_file_metadata = _file_metadata(source_path)
+        copied_path = _relative_copy_path(root, source_path, case_collect_root)
+        copied_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, copied_path)
+        copied_paths.append(str(copied_path))
+        copied_relative_paths.append(str(copied_path.relative_to(case_collect_root)))
+        documents.append(
+            {
+                "id": f"{case_slug}_{index}",
+                "title": result.title or source_path.stem,
+                "text": result.text,
+                "source_url": str(source_path),
+                "document_type": "pdf",
+                "case_number": result.case_number,
+                "metadata": {
+                    "source_path": str(source_path),
+                    "relative_path": result.relative_path,
+                    "source_file": source_file_metadata,
+                    "collected_path": str(copied_path),
+                    "collected_relative_path": copied_relative_paths[-1],
+                    "scan_detection": {
+                        "confidence": result.confidence,
+                        "is_likely_court_case": result.is_likely_court_case,
+                        "reasons": list(result.reasons),
+                        "matched_court_headers": list(result.matched_court_headers),
+                        "style_lines": list(result.style_lines),
+                        "text_length": result.text_length,
+                        "header_match_count": len(result.matched_court_headers),
+                        "style_line_count": len(result.style_lines),
+                    },
+                    "text_extraction": {
+                        "source": "hacc_pdf_scan",
+                        "backend": result.extraction_method,
+                        "ocr_attempted": result.extraction_method == "ocr",
+                        "max_ocr_pages": int(max_ocr_pages),
+                    },
+                    "case_detection": {
+                        "case_number": result.case_number,
+                        "court": result.court,
+                        "case_name": result.case_name,
+                    },
+                    "parsed_legal_document": dict(result.parsed_document),
+                    "document_knowledge_graph": dict(result.document_knowledge_graph),
+                    "document_knowledge_graph_summary": dict(result.document_knowledge_graph_summary),
+                },
+            }
+        )
+
+    case_graph_summary = _build_case_graph_summary(results, case_number=case_number, court=court, case_name=case_name)
+    previous_router_timeout = os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS")
+    if router_timeout_seconds is not None:
+        os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = str(max(0.0, float(router_timeout_seconds)))
+    try:
+        dataset = ingest_docket_dataset(
+            {
+                "docket_id": case_number,
+                "case_name": case_name,
+                "court": court,
+                "case_number": case_number,
+                "source_type": "hacc_pdf_scan",
+                "documents": documents,
+                "metadata": {
+                    "scan_root": str(root),
+                    "scan_started_at": scan_started_at,
+                    "case_number": case_number,
+                    "case_slug": case_slug,
+                    "scan_glob_pattern": glob_pattern,
+                    "max_ocr_pages": int(max_ocr_pages),
+                    "scan_status": "completed",
+                    "router_timeout_seconds": (
+                        None if router_timeout_seconds is None else max(0.0, float(router_timeout_seconds))
+                    ),
+                    "collected_pdf_count": len(copied_paths),
+                    "collected_pdf_paths": copied_paths,
+                    "collected_pdf_relative_paths": copied_relative_paths,
+                    "matched_source_paths": [item.path for item in results],
+                    "matched_relative_paths": [item.relative_path for item in results],
+                    "scan_confidence_summary": {
+                        "max_confidence": max(item.confidence for item in results),
+                        "min_confidence": min(item.confidence for item in results),
+                        "average_confidence": sum(item.confidence for item in results) / len(results),
+                    },
+                    "scan_case_graph": case_graph_summary,
+                },
+            },
+            include_knowledge_graph=include_knowledge_graph,
+            include_bm25=include_bm25,
+            include_vector_index=include_vector_index,
+            include_formal_logic=include_formal_logic,
+            include_router_enrichment=include_router_enrichment,
+        )
+    finally:
+        if router_timeout_seconds is None:
+            pass
+        elif previous_router_timeout is None:
+            os.environ.pop("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS", None)
+        else:
+            os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = previous_router_timeout
+    parquet_export = export_docket_dataset_single_parquet(dataset, datasets_root / f"{case_slug}.parquet")
+    return {
+        "status": "completed",
+        "case_number": case_number,
+        "case_name": case_name,
+        "court": court,
+        "document_count": len(results),
+        "dataset_path": str(parquet_export.get("parquet_path") or ""),
+        "dataset_format": "parquet",
+        "dataset_row_count": int(parquet_export.get("row_count") or 0),
+        "dataset_section_counts": dict(parquet_export.get("section_counts") or {}),
+        "collected_pdf_root": str(case_collect_root),
+        "matched_relative_paths": [item.relative_path for item in results],
+        "scan_confidence_summary": {
+            "max_confidence": max(item.confidence for item in results),
+            "min_confidence": min(item.confidence for item in results),
+            "average_confidence": sum(item.confidence for item in results) / len(results),
+        },
+        "scan_case_graph_summary": case_graph_summary.get("summary") or {},
+    }
+
+
+def package_hacc_case_from_scan_manifest(
+    manifest_path: str | Path,
+    *,
+    case_number: str,
+    output_dir: str | Path,
+    include_knowledge_graph: bool | None = None,
+    include_bm25: bool | None = None,
+    include_vector_index: bool | None = None,
+    include_formal_logic: bool | None = None,
+    include_router_enrichment: bool | None = None,
+    router_timeout_seconds: float | None = None,
+) -> Dict[str, Any]:
+    manifest = load_scan_manifest(manifest_path)
+    scan_root = Path(str(manifest.get("scan_root") or "")).expanduser()
+    if not scan_root.exists():
+        raise FileNotFoundError(f"Scan root not found: {scan_root}")
+    params = dict(manifest.get("scan_parameters") or {})
+    scan_results = [
+        _scan_result_from_dict(item)
+        for item in list(manifest.get("pdf_results") or [])
+        if str(item.get("case_number") or "") == case_number and bool(item.get("is_likely_court_case"))
+    ]
+    if not scan_results:
+        raise ValueError(f"No matched HACC scan results found for case {case_number}")
+    destination_root = Path(output_dir)
+    destination_root.mkdir(parents=True, exist_ok=True)
+    effective_router_timeout = router_timeout_seconds
+    if effective_router_timeout is None and params.get("router_timeout_seconds") is not None:
+        effective_router_timeout = float(params.get("router_timeout_seconds"))
+    return _package_case_results(
+        root=scan_root,
+        destination_root=destination_root,
+        scan_started_at=str(manifest.get("scan_started_at") or _utc_now_isoformat()),
+        case_number=case_number,
+        results=scan_results,
+        glob_pattern=str(params.get("glob_pattern") or "*.pdf"),
+        max_ocr_pages=int(params.get("max_ocr_pages") or 5),
+        include_knowledge_graph=bool(params.get("include_knowledge_graph") if include_knowledge_graph is None else include_knowledge_graph),
+        include_bm25=bool(params.get("include_bm25") if include_bm25 is None else include_bm25),
+        include_vector_index=bool(params.get("include_vector_index") if include_vector_index is None else include_vector_index),
+        include_formal_logic=bool(params.get("include_formal_logic") if include_formal_logic is None else include_formal_logic),
+        include_router_enrichment=bool(params.get("include_router_enrichment") if include_router_enrichment is None else include_router_enrichment),
+        router_timeout_seconds=effective_router_timeout,
+    )
+
+
 def analyze_pdf_for_court_case(path: str | Path, *, max_ocr_pages: int = 5) -> HACCCourtPDFScanResult:
     source_path = Path(path)
     text, extraction_method = _extract_text_from_pdf_with_ocr(source_path, max_ocr_pages=max_ocr_pages)
@@ -590,135 +809,22 @@ def scan_hacc_pdfs_for_dockets(
             _write_manifest(status="running")
 
     for case_number, results in sorted(grouped.items()):
-        case_slug = _safe_identifier(case_number)
-        case_collect_root = collected_root / case_slug
-        case_collect_root.mkdir(parents=True, exist_ok=True)
-        court = next((item.court for item in results if item.court), "")
-        case_name = next((item.case_name for item in results if item.case_name), case_number)
-        copied_paths: List[str] = []
-        copied_relative_paths: List[str] = []
-        documents: List[Dict[str, Any]] = []
-        for index, result in enumerate(results, start=1):
-            source_path = Path(result.path)
-            source_file_metadata = _file_metadata(source_path)
-            copied_path = _relative_copy_path(root, source_path, case_collect_root)
-            copied_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source_path, copied_path)
-            copied_paths.append(str(copied_path))
-            copied_relative_paths.append(str(copied_path.relative_to(case_collect_root)))
-            documents.append(
-                {
-                    "id": f"{case_slug}_{index}",
-                    "title": result.title or source_path.stem,
-                    "text": result.text,
-                    "source_url": str(source_path),
-                    "document_type": "pdf",
-                    "case_number": result.case_number,
-                    "metadata": {
-                        "source_path": str(source_path),
-                        "relative_path": result.relative_path,
-                        "source_file": source_file_metadata,
-                        "collected_path": str(copied_path),
-                        "collected_relative_path": copied_relative_paths[-1],
-                        "scan_detection": {
-                            "confidence": result.confidence,
-                            "is_likely_court_case": result.is_likely_court_case,
-                            "reasons": list(result.reasons),
-                            "matched_court_headers": list(result.matched_court_headers),
-                            "style_lines": list(result.style_lines),
-                            "text_length": result.text_length,
-                            "header_match_count": len(result.matched_court_headers),
-                            "style_line_count": len(result.style_lines),
-                        },
-                        "text_extraction": {
-                            "source": "hacc_pdf_scan",
-                            "backend": result.extraction_method,
-                            "ocr_attempted": result.extraction_method == "ocr",
-                            "max_ocr_pages": int(max_ocr_pages),
-                        },
-                        "case_detection": {
-                            "case_number": result.case_number,
-                            "court": result.court,
-                            "case_name": result.case_name,
-                        },
-                        "parsed_legal_document": dict(result.parsed_document),
-                        "document_knowledge_graph": dict(result.document_knowledge_graph),
-                        "document_knowledge_graph_summary": dict(result.document_knowledge_graph_summary),
-                    },
-                }
-            )
-
-        case_graph_summary = _build_case_graph_summary(results, case_number=case_number, court=court, case_name=case_name)
-        previous_router_timeout = os.environ.get("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS")
-        if router_timeout_seconds is not None:
-            os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = str(max(0.0, float(router_timeout_seconds)))
-        try:
-            dataset = ingest_docket_dataset(
-                {
-                    "docket_id": case_number,
-                    "case_name": case_name,
-                    "court": court,
-                    "case_number": case_number,
-                    "source_type": "hacc_pdf_scan",
-                    "documents": documents,
-                    "metadata": {
-                        "scan_root": str(root),
-                        "scan_started_at": scan_started_at,
-                        "case_number": case_number,
-                        "case_slug": case_slug,
-                        "scan_glob_pattern": glob_pattern,
-                        "max_ocr_pages": int(max_ocr_pages),
-                        "scan_status": "completed",
-                        "router_timeout_seconds": (
-                            None if router_timeout_seconds is None else max(0.0, float(router_timeout_seconds))
-                        ),
-                        "collected_pdf_count": len(copied_paths),
-                        "collected_pdf_paths": copied_paths,
-                        "collected_pdf_relative_paths": copied_relative_paths,
-                        "matched_source_paths": [item.path for item in results],
-                        "matched_relative_paths": [item.relative_path for item in results],
-                        "scan_confidence_summary": {
-                            "max_confidence": max(item.confidence for item in results),
-                            "min_confidence": min(item.confidence for item in results),
-                            "average_confidence": sum(item.confidence for item in results) / len(results),
-                        },
-                        "scan_case_graph": case_graph_summary,
-                    },
-                },
+        case_outputs.append(
+            _package_case_results(
+                root=root,
+                destination_root=destination_root,
+                scan_started_at=scan_started_at,
+                case_number=case_number,
+                results=results,
+                glob_pattern=glob_pattern,
+                max_ocr_pages=max_ocr_pages,
                 include_knowledge_graph=include_knowledge_graph,
                 include_bm25=include_bm25,
                 include_vector_index=include_vector_index,
                 include_formal_logic=include_formal_logic,
                 include_router_enrichment=include_router_enrichment,
+                router_timeout_seconds=router_timeout_seconds,
             )
-        finally:
-            if router_timeout_seconds is None:
-                pass
-            elif previous_router_timeout is None:
-                os.environ.pop("IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS", None)
-            else:
-                os.environ["IPFS_DATASETS_PY_ROUTER_TIMEOUT_SECONDS"] = previous_router_timeout
-        parquet_export = export_docket_dataset_single_parquet(dataset, datasets_root / f"{case_slug}.parquet")
-        case_outputs.append(
-            {
-                "status": "completed",
-                "case_number": case_number,
-                "case_name": case_name,
-                "court": court,
-                "document_count": len(results),
-                "dataset_path": str(parquet_export.get("parquet_path") or ""),
-                "dataset_format": "parquet",
-                "dataset_row_count": int(parquet_export.get("row_count") or 0),
-                "dataset_section_counts": dict(parquet_export.get("section_counts") or {}),
-                "collected_pdf_root": str(case_collect_root),
-                "matched_relative_paths": [item.relative_path for item in results],
-                "scan_confidence_summary": {
-                    "max_confidence": max(item.confidence for item in results),
-                    "min_confidence": min(item.confidence for item in results),
-                    "average_confidence": sum(item.confidence for item in results) / len(results),
-                },
-                "scan_case_graph_summary": case_graph_summary.get("summary") or {},
-            }
         )
         _write_manifest(status="running")
 

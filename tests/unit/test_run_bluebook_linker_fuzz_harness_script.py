@@ -65,6 +65,7 @@ def test_run_bluebook_linker_fuzz_harness_script_maps_fast_recovery_flags(tmp_pa
 
     async def _fake_run_bluebook_linker_fuzz_harness(**kwargs):
         captured.update(kwargs)
+        captured["skip_live_search_env_during_run"] = module.os.environ.get("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH")
         return _FakeFuzzRun()
 
     monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH", raising=False)
@@ -100,7 +101,8 @@ def test_run_bluebook_linker_fuzz_harness_script_maps_fast_recovery_flags(tmp_pa
     assert captured["min_actionable_failures"] == 1
     assert captured["output_dir"] == tmp_path / "artifacts"
     assert captured["llm_generate_func"]("", provider=None, model_name=None) == '["Minn. Stat. \\u00a7 518.17"]'
-    assert module.os.environ["LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"] == "1"
+    assert captured["skip_live_search_env_during_run"] == "1"
+    assert "LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH" not in module.os.environ
 
 
 def test_run_bluebook_linker_fuzz_harness_script_prints_summary(tmp_path: Path, monkeypatch, capsys) -> None:
