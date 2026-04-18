@@ -594,7 +594,7 @@ def build_state_law_section_url(
         ("LA", "14:35"): "https://legis.la.gov/legis/Law.aspx?d=78452",
         ("MD", "3-203"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
         ("IN", "35-42-2-1"): "https://law.justia.com/codes/indiana/title-35/article-42/chapter-2/section-35-42-2-1/",
-        ("MS", "97-3-7"): "https://law.justia.com/codes/mississippi/title-97/chapter-3/in-general/section-97-3-7/",
+        ("MS", "97-3-7"): "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
         ("NH", "631:2-a"): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
         ("NJ", "2C:12-1"): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
         ("NM", "30-3-4"): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",

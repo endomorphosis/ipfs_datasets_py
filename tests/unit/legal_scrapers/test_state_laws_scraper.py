@@ -119,7 +119,7 @@ def test_state_laws_scraper_builds_unknown_backlog_section_urls():
         ("KY", "508.030", "Ky. Rev. Stat."): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
         ("LA", "14:35", "La. Rev. Stat."): "https://legis.la.gov/legis/Law.aspx?d=78452",
         ("MD", "3-203", "Md. Code"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
-        ("MS", "97-3-7", "Miss. Code"): "https://law.justia.com/codes/mississippi/title-97/chapter-3/in-general/section-97-3-7/",
+        ("MS", "97-3-7", "Miss. Code"): "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
         ("NH", "631:2-a", "N.H. Rev. Stat."): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
         ("NJ", "2C:12-1", "N.J. Stat."): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
         ("NM", "30-3-4", "N.M. Stat."): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
