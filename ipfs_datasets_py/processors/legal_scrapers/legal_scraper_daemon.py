@@ -154,6 +154,15 @@ class AgenticCorpusDaemonConfig:
     stop_on_target_score: bool = False
     per_state_timeout_seconds: float = 86400.0
     scrape_timeout_seconds: float = 0.0
+    admin_agentic_max_candidates_per_state: int = 1000
+    admin_agentic_max_fetch_per_state: int = 1000
+    admin_agentic_max_results_per_domain: int = 1000
+    admin_agentic_max_hops: int = 4
+    admin_agentic_max_pages: int = 1000
+    admin_parallel_assist_enabled: bool = True
+    admin_parallel_assist_state_limit: int = 6
+    admin_parallel_assist_max_urls_per_domain: int = 20
+    admin_parallel_assist_timeout_seconds: float = 86400.0
 
 
 @dataclass
@@ -242,11 +251,78 @@ class LegalScraperDaemon:
             "dry_run": bool(self.config.dry_run),
             "resume": bool(self.config.resume),
             "cache": self.cache_plan(),
+            "preflight": self.build_preflight_report(),
             "phases": {
                 "bluebook": asdict(self.config.bluebook),
                 "state_refresh": asdict(self.config.state_refresh),
                 "agentic_corpora": asdict(self.config.agentic_corpora),
             },
+        }
+
+    def build_preflight_report(self) -> Dict[str, Any]:
+        """Build cheap local checks that predict whether a full-corpus run can cover every target."""
+        try:
+            from ipfs_datasets_py.processors.legal_data.canonical_legal_corpora import get_canonical_legal_corpus
+            from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import StateScraperRegistry
+
+            registered_states = sorted(str(item).upper() for item in StateScraperRegistry.get_all_registered_states())
+            state_registry_error = ""
+        except Exception as exc:
+            get_canonical_legal_corpus = None  # type: ignore[assignment]
+            registered_states = []
+            state_registry_error = str(exc)
+
+        missing_state_scrapers = [
+            state for state in self.states if registered_states and state not in set(registered_states)
+        ]
+        extra_registered_states = [
+            state for state in registered_states if state not in set(self.states)
+        ]
+
+        hf_datasets: Dict[str, str] = {}
+        if get_canonical_legal_corpus is not None:
+            for corpus in SUPPORTED_CORPORA:
+                try:
+                    hf_datasets[corpus] = get_canonical_legal_corpus(corpus).hf_dataset_id
+                except Exception:
+                    hf_datasets[corpus] = ""
+
+        invariants = {
+            "all_supported_corpora_requested": set(self.config.agentic_corpora.corpora or []) >= set(SUPPORTED_CORPORA)
+            and set(self.config.bluebook.corpora or []) >= set(SUPPORTED_CORPORA),
+            "state_refresh_scrape_enabled": bool(self.config.state_refresh.scrape),
+            "state_refresh_unbounded": int(self.config.state_refresh.max_statutes or 0) == 0,
+            "state_refresh_hf_merge_enabled": bool(self.config.state_refresh.merge_hf_existing),
+            "agentic_corpora_enabled": bool(self.config.agentic_corpora.enabled),
+            "agentic_corpora_unbounded": int(self.config.agentic_corpora.max_statutes or 0) == 0,
+            "publication_opt_in": not bool(self.config.state_refresh.publish_to_hf)
+            and not bool(self.config.bluebook.publish_to_hf)
+            and not bool(self.config.bluebook.publish_merged_parquet_to_hf),
+        }
+        blocking_invariants = {
+            key: value
+            for key, value in invariants.items()
+            if key != "publication_opt_in" and not bool(value)
+        }
+        status = "ready"
+        if state_registry_error or missing_state_scrapers or blocking_invariants:
+            status = "blocked"
+        elif extra_registered_states:
+            status = "partial"
+
+        return {
+            "status": status,
+            "full_corpus": bool(self.config.full_corpus),
+            "target_state_count": len(self.states),
+            "registered_state_count": len(registered_states),
+            "registered_states": registered_states,
+            "missing_state_scrapers": missing_state_scrapers,
+            "extra_registered_states_not_targeted": extra_registered_states,
+            "state_registry_error": state_registry_error,
+            "supported_corpora": list(SUPPORTED_CORPORA),
+            "hf_datasets": hf_datasets,
+            "invariants": invariants,
+            "blocking_invariants": blocking_invariants,
         }
 
     def cache_plan(self) -> Dict[str, Any]:
@@ -730,6 +806,18 @@ class LegalScraperDaemon:
                     stop_on_target_score=bool(config.stop_on_target_score),
                     per_state_timeout_seconds=float(config.per_state_timeout_seconds),
                     scrape_timeout_seconds=float(config.scrape_timeout_seconds),
+                    admin_agentic_max_candidates_per_state=max(1, int(config.admin_agentic_max_candidates_per_state)),
+                    admin_agentic_max_fetch_per_state=max(1, int(config.admin_agentic_max_fetch_per_state)),
+                    admin_agentic_max_results_per_domain=max(1, int(config.admin_agentic_max_results_per_domain)),
+                    admin_agentic_max_hops=max(0, int(config.admin_agentic_max_hops)),
+                    admin_agentic_max_pages=max(1, int(config.admin_agentic_max_pages)),
+                    admin_parallel_assist_enabled=bool(config.admin_parallel_assist_enabled),
+                    admin_parallel_assist_state_limit=max(0, int(config.admin_parallel_assist_state_limit)),
+                    admin_parallel_assist_max_urls_per_domain=max(
+                        1,
+                        int(config.admin_parallel_assist_max_urls_per_domain),
+                    ),
+                    admin_parallel_assist_timeout_seconds=max(1.0, float(config.admin_parallel_assist_timeout_seconds)),
                 )
             )
             summary = await daemon.run()
@@ -798,19 +886,30 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--enable-agentic-corpora", action="store_true")
     parser.add_argument("--agentic-corpora", default="all")
     parser.add_argument("--agentic-max-cycles", type=int, default=1)
+    parser.add_argument("--agentic-per-state-timeout-seconds", type=float, default=86400.0)
+    parser.add_argument("--agentic-scrape-timeout-seconds", type=float, default=0.0)
+    parser.add_argument("--agentic-admin-max-candidates-per-state", type=int, default=1000)
+    parser.add_argument("--agentic-admin-max-fetch-per-state", type=int, default=1000)
+    parser.add_argument("--agentic-admin-max-results-per-domain", type=int, default=1000)
+    parser.add_argument("--agentic-admin-max-hops", type=int, default=4)
+    parser.add_argument("--agentic-admin-max-pages", type=int, default=1000)
+    parser.add_argument("--disable-agentic-admin-parallel-assist", action="store_true")
+    parser.add_argument("--agentic-admin-parallel-assist-state-limit", type=int, default=6)
+    parser.add_argument("--agentic-admin-parallel-assist-max-urls-per-domain", type=int, default=20)
+    parser.add_argument("--agentic-admin-parallel-assist-timeout-seconds", type=float, default=86400.0)
     parser.add_argument("--json", action="store_true")
     return parser
 
 
 def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
     full_corpus = bool(getattr(args, "full_corpus", False))
-    states = _normalize_states("all" if full_corpus else args.states, include_dc=bool(args.include_dc))
+    states = _normalize_states("all" if full_corpus else args.states, include_dc=bool(args.include_dc or full_corpus))
     bluebook_corpora = _normalize_corpora("all" if full_corpus else args.bluebook_corpora)
     agentic_corpora = _normalize_corpora("all" if full_corpus else args.agentic_corpora)
     return LegalScraperDaemonConfig(
         full_corpus=full_corpus,
         states=states,
-        include_dc=bool(args.include_dc),
+        include_dc=bool(args.include_dc or full_corpus),
         output_dir=str(args.output_dir),
         cycle_interval_seconds=float(args.cycle_interval_seconds),
         max_cycles=max(1, int(args.max_cycles)),
@@ -866,6 +965,23 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
             corpora=agentic_corpora,
             max_cycles=max(1, int(args.agentic_max_cycles)),
             max_statutes=0 if full_corpus else max(0, int(args.max_statutes)),
+            per_state_timeout_seconds=max(
+                86400.0 if full_corpus else 1.0,
+                float(args.agentic_per_state_timeout_seconds),
+            ),
+            scrape_timeout_seconds=max(0.0, float(args.agentic_scrape_timeout_seconds)),
+            admin_agentic_max_candidates_per_state=max(1, int(args.agentic_admin_max_candidates_per_state)),
+            admin_agentic_max_fetch_per_state=max(1, int(args.agentic_admin_max_fetch_per_state)),
+            admin_agentic_max_results_per_domain=max(1, int(args.agentic_admin_max_results_per_domain)),
+            admin_agentic_max_hops=max(0, int(args.agentic_admin_max_hops)),
+            admin_agentic_max_pages=max(1, int(args.agentic_admin_max_pages)),
+            admin_parallel_assist_enabled=not bool(args.disable_agentic_admin_parallel_assist),
+            admin_parallel_assist_state_limit=max(0, int(args.agentic_admin_parallel_assist_state_limit)),
+            admin_parallel_assist_max_urls_per_domain=max(
+                1,
+                int(args.agentic_admin_parallel_assist_max_urls_per_domain),
+            ),
+            admin_parallel_assist_timeout_seconds=max(1.0, float(args.agentic_admin_parallel_assist_timeout_seconds)),
         ),
     )
 

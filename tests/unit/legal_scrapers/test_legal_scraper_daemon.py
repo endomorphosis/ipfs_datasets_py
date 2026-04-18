@@ -369,8 +369,9 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
 
     assert config.full_corpus is True
     assert config.states[0] == "AL"
-    assert config.states[-1] == "WY"
-    assert len(config.states) == 50
+    assert config.states[-2:] == ["WY", "DC"]
+    assert "DC" in config.states
+    assert len(config.states) == 51
     assert config.bluebook.samples == 9
     assert config.bluebook.corpora == ["state_laws", "state_admin_rules", "state_court_rules"]
     assert config.bluebook.seed_from_corpora is True
@@ -389,6 +390,15 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert config.agentic_corpora.enabled is True
     assert config.agentic_corpora.corpora == ["state_laws", "state_admin_rules", "state_court_rules"]
     assert config.agentic_corpora.max_statutes == 0
+
+    daemon = LegalScraperDaemon(config)
+    preflight = daemon.build_plan()["preflight"]
+    assert preflight["status"] == "ready"
+    assert preflight["target_state_count"] == 51
+    assert preflight["missing_state_scrapers"] == []
+    assert preflight["invariants"]["state_refresh_unbounded"] is True
+    assert preflight["invariants"]["state_refresh_hf_merge_enabled"] is True
+    assert preflight["invariants"]["publication_opt_in"] is True
 
 
 @pytest.mark.asyncio
