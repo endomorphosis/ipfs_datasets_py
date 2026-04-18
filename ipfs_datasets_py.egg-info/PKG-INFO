@@ -9,6 +9,7 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: numpy<2.0.0,>=1.21.0; python_version < "3.14"
 Requires-Dist: numpy>=2.0.0; python_version >= "3.14"
+Requires-Dist: torch<2.11,>=2.7.0; platform_system == "Linux" and platform_machine == "aarch64"
 Requires-Dist: requests<3.0.0,>=2.25.0
 Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0
 Requires-Dist: ddgs>=9.11.2
@@ -160,13 +161,17 @@ Dynamic: requires-python
 git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 
-# Quick setup (core dependencies)
+# Canonical setup: creates/updates .venv and installs repo dependencies automatically
 python scripts/setup/install.py --quick
 
-# Or install with specific features
-pip install -e ".[all]"  # All features
-pip install -e ".[ml]"   # ML/AI features only
+# The installer re-runs itself inside ./.venv. After that, activate it for normal use.
+source .venv/bin/activate
+
+# If you want a different target environment path
+python scripts/setup/install.py --quick --venv-dir .venv-pacer-test
 ```
+
+The setup installer syncs the repository dependency set from [requirements.txt](requirements.txt) into the target virtual environment and then installs the project in editable mode. That keeps a fresh `.venv` consistent without having to remember separate `pip install` commands.
 
 The base install intentionally excludes the third-party `brave-search` package.
 Its currently installable release depends on an older `httpx` range that

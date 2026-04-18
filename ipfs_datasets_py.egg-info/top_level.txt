@@ -2,6 +2,7 @@ archive
 artifacts
 benchmarks
 bin
+build
 config
 data
 datasets

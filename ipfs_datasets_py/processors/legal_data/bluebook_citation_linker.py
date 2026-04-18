@@ -607,17 +607,26 @@ class BluebookCitationResolver:
         self,
         *,
         allow_hf_fallback: bool = True,
+        prefer_hf_sources: bool = False,
+        primary_corpora_only: bool = False,
+        exact_state_partition_only: bool = False,
+        materialize_remote_sources: bool = False,
         require_exact_anchor: bool = True,
         local_root_overrides: Optional[Dict[str, str]] = None,
         parquet_file_overrides: Optional[Dict[str, Sequence[str] | str]] = None,
         extractor: Optional[CitationExtractor] = None,
     ) -> None:
         self.allow_hf_fallback = allow_hf_fallback
+        self.prefer_hf_sources = bool(prefer_hf_sources)
+        self.primary_corpora_only = bool(primary_corpora_only)
+        self.exact_state_partition_only = bool(exact_state_partition_only)
+        self.materialize_remote_sources = bool(materialize_remote_sources)
         self.require_exact_anchor = bool(require_exact_anchor)
         self.local_root_overrides = dict(local_root_overrides or {})
         self.parquet_file_overrides = dict(parquet_file_overrides or {})
         self.extractor = extractor or CitationExtractor()
         self._hf_source_cache: Dict[tuple[str, Optional[str]], List[str]] = {}
+        self._hf_repo_file_cache: Dict[str, List[str]] = {}
         self._materialized_remote_sources: Dict[str, str] = {}
         self._schema_cache: Dict[str, set[str]] = {}
 
@@ -675,6 +684,8 @@ class BluebookCitationResolver:
     ) -> CitationLink:
         normalized_citation = self._normalized_citation(citation)
         corpora = self._candidate_corpora(citation)
+        if self.primary_corpora_only and corpora:
+            corpora = corpora[:1]
         effective_state = (state_code or citation.jurisdiction or "").strip().upper() or None
         preferred_metadata = self._preferred_resolution_metadata(corpora, effective_state)
         recovery_corpus_key = corpora[0] if corpora else None
@@ -1136,6 +1147,10 @@ class BluebookCitationResolver:
             override_items = [str(override_value)] if isinstance(override_value, str) else [str(item) for item in override_value]
             filtered_items = [item for item in override_items if _is_direct_citation_source(item)]
             return filtered_items
+        if self.prefer_hf_sources and self.allow_hf_fallback and config.dataset_id:
+            hf_sources = self._find_hf_sources(config, state_code=state_code)
+            if hf_sources:
+                return hf_sources
         local_sources = self._find_local_sources(config, state_code=state_code)
         if local_sources:
             return local_sources
@@ -1188,14 +1203,18 @@ class BluebookCitationResolver:
             used_repo_listing = False
             if list_repo_files is not None and hf_hub_url is not None:
                 try:
-                    timeout_raw = str(os.getenv("IPFS_DATASETS_PY_HF_LIST_TIMEOUT_SECONDS", "12")).strip()
-                    try:
-                        timeout_seconds = max(1.0, float(timeout_raw))
-                    except Exception:
-                        timeout_seconds = 12.0
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                        future = executor.submit(list_repo_files, repo_id=repo_id, repo_type="dataset")
-                        repo_files = future.result(timeout=timeout_seconds)
+                    if repo_id in self._hf_repo_file_cache:
+                        repo_files = list(self._hf_repo_file_cache[repo_id])
+                    else:
+                        timeout_raw = str(os.getenv("IPFS_DATASETS_PY_HF_LIST_TIMEOUT_SECONDS", "12")).strip()
+                        try:
+                            timeout_seconds = max(1.0, float(timeout_raw))
+                        except Exception:
+                            timeout_seconds = 12.0
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                            future = executor.submit(list_repo_files, repo_id=repo_id, repo_type="dataset")
+                            repo_files = future.result(timeout=timeout_seconds)
+                        self._hf_repo_file_cache[repo_id] = [str(path) for path in repo_files]
                 except Exception as exc:
                     logger.warning("Failed to list HF files for %s: %s", repo_id, exc)
                     had_listing_error = True
@@ -1208,6 +1227,7 @@ class BluebookCitationResolver:
                     ]
                     if parquet_files:
                         ordered = self._order_hf_parquet_files(config, repo_id, parquet_files, state_code=state_code)
+                        ordered = self._filter_exact_state_partition(config, ordered, state_code=state_code)
                         if ordered:
                             resolved = [hf_hub_url(repo_id=repo_id, repo_type="dataset", filename=filename) for filename in ordered]
                             self._hf_source_cache[cache_key] = list(resolved)
@@ -1217,11 +1237,34 @@ class BluebookCitationResolver:
                 parquet_records = _dataset_server_parquet_records(repo_id)
                 if parquet_records:
                     ordered_urls = _order_dataset_server_parquet_records(config, parquet_records, state_code=state_code)
+                    ordered_urls = self._filter_exact_state_partition(config, ordered_urls, state_code=state_code)
                     if ordered_urls:
                         self._hf_source_cache[cache_key] = list(ordered_urls)
                         return ordered_urls
         self._hf_source_cache[cache_key] = []
         return []
+
+    def _filter_exact_state_partition(
+        self,
+        config: CorpusSourceConfig,
+        sources: Sequence[str],
+        *,
+        state_code: Optional[str],
+    ) -> List[str]:
+        if (
+            not self.exact_state_partition_only
+            or not state_code
+            or not config.state_field
+            or config.key not in {"state_laws", "state_admin_rules", "state_court_rules"}
+        ):
+            return [str(source) for source in sources]
+        expected_name = get_canonical_legal_corpus(config.key).state_parquet_filename(state_code).lower()
+        filtered = [
+            str(source)
+            for source in sources
+            if str(source).lower().rsplit("/", 1)[-1] == expected_name
+        ]
+        return filtered
 
     def _order_hf_parquet_files(
         self,
@@ -1295,6 +1338,10 @@ class BluebookCitationResolver:
         return ordered[:8]
 
     def _query_source(self, source_ref: str, corpus_key: str, citation: Citation, state_code: Optional[str]) -> List[Dict[str, Any]]:
+        if self.materialize_remote_sources and source_ref.startswith(("http://", "https://")):
+            local_source = self._materialize_remote_parquet(source_ref)
+            if local_source:
+                return self._query_source(local_source, corpus_key, citation, state_code)
         if (
             citation.type == "case"
             and str(source_ref).startswith(("http://", "https://"))

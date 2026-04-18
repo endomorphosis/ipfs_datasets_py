@@ -1563,6 +1563,143 @@ def test_bluebook_citation_resolver_prefers_primary_federal_register_hf_parquet(
     ]
 
 
+def test_bluebook_citation_resolver_caches_hf_repo_file_listing(monkeypatch):
+    listed_repo_ids = []
+
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_type == "dataset"
+        listed_repo_ids.append(repo_id)
+        return [
+            "state_laws_parquet_cid/STATE-MN.parquet",
+            "state_laws_parquet_cid/STATE-OR.parquet",
+        ]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+    resolver = BluebookCitationResolver(allow_hf_fallback=True)
+
+    mn_sources = resolver._find_hf_sources(_CORPUS_CONFIGS["state_laws"], state_code="MN")
+    or_sources = resolver._find_hf_sources(_CORPUS_CONFIGS["state_laws"], state_code="OR")
+
+    assert listed_repo_ids == ["justicedao/ipfs_state_laws"]
+    assert mn_sources[0] == "hf://justicedao/ipfs_state_laws/state_laws_parquet_cid/STATE-MN.parquet"
+    assert or_sources[0] == "hf://justicedao/ipfs_state_laws/state_laws_parquet_cid/STATE-OR.parquet"
+
+
+def test_bluebook_citation_resolver_can_limit_hf_sources_to_exact_state_partition(monkeypatch):
+    def fake_list_repo_files(*, repo_id, repo_type):
+        assert repo_id == "justicedao/ipfs_state_laws"
+        assert repo_type == "dataset"
+        return [
+            "state_laws_parquet_cid/STATE-MN.parquet",
+            "state_laws_parquet_cid/state_laws_all_states.parquet",
+            "state_laws_parquet_cid/STATE-OR.parquet",
+        ]
+
+    fake_hf_module = types.SimpleNamespace(
+        list_repo_files=fake_list_repo_files,
+        hf_hub_url=lambda *, repo_id, repo_type, filename: f"hf://{repo_id}/{filename}",
+    )
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_hf_module)
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=True,
+        exact_state_partition_only=True,
+    )
+
+    sources = resolver._find_hf_sources(_CORPUS_CONFIGS["state_laws"], state_code="MN")
+
+    assert sources == ["hf://justicedao/ipfs_state_laws/state_laws_parquet_cid/STATE-MN.parquet"]
+
+
+def test_bluebook_citation_resolver_can_materialize_remote_sources_before_query(monkeypatch):
+    resolver = BluebookCitationResolver(
+        allow_hf_fallback=True,
+        materialize_remote_sources=True,
+    )
+    citation = resolver.extractor.extract_citations("The complaint cites 42 U.S.C. § 1983.")[0]
+    materialized = []
+
+    def fake_materialize(source_ref):
+        materialized.append(source_ref)
+        return "/tmp/local-uscode.parquet"
+
+    monkeypatch.setattr(resolver, "_materialize_remote_parquet", fake_materialize)
+    monkeypatch.setattr(resolver, "_schema_for_source", lambda con, source_ref: set())
+    monkeypatch.setattr(resolver, "_build_where_clause", lambda schema, corpus_key, citation, state_code: ([], []))
+
+    rows = resolver._query_source("https://example.test/uscode.parquet", "us_code", citation, None)
+
+    assert rows == []
+    assert materialized == ["https://example.test/uscode.parquet"]
+
+
+def test_bluebook_citation_resolver_can_prefer_hf_sources_over_local_sources(monkeypatch):
+    calls = []
+    resolver = BluebookCitationResolver(allow_hf_fallback=True, prefer_hf_sources=True)
+
+    def fake_hf_sources(config, *, state_code):
+        calls.append(("hf", config.key, state_code))
+        return [f"hf://{config.key}/{state_code or 'all'}.parquet"]
+
+    def fake_local_sources(config, *, state_code):
+        calls.append(("local", config.key, state_code))
+        return [f"/local/{config.key}/{state_code or 'all'}.parquet"]
+
+    monkeypatch.setattr(resolver, "_find_hf_sources", fake_hf_sources)
+    monkeypatch.setattr(resolver, "_find_local_sources", fake_local_sources)
+
+    sources = resolver._iter_corpus_sources("state_laws", state_code="MN")
+
+    assert sources == ["hf://state_laws/MN.parquet"]
+    assert calls == [("hf", "state_laws", "MN")]
+
+
+def test_bluebook_citation_resolver_prefer_hf_falls_back_to_local_sources(monkeypatch):
+    calls = []
+    resolver = BluebookCitationResolver(allow_hf_fallback=True, prefer_hf_sources=True)
+
+    def fake_hf_sources(config, *, state_code):
+        calls.append(("hf", config.key, state_code))
+        return []
+
+    def fake_local_sources(config, *, state_code):
+        calls.append(("local", config.key, state_code))
+        return [f"/local/{config.key}/{state_code or 'all'}.parquet"]
+
+    monkeypatch.setattr(resolver, "_find_hf_sources", fake_hf_sources)
+    monkeypatch.setattr(resolver, "_find_local_sources", fake_local_sources)
+
+    sources = resolver._iter_corpus_sources("state_laws", state_code="MN")
+
+    assert sources == ["/local/state_laws/MN.parquet"]
+    assert calls == [
+        ("hf", "state_laws", "MN"),
+        ("local", "state_laws", "MN"),
+    ]
+
+
+def test_bluebook_citation_resolver_can_constrain_state_statutes_to_primary_corpus(monkeypatch):
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, primary_corpora_only=True)
+    citation = resolver.extractor.extract_citations("The petition cites Minn. Stat. § 518.17.")[0]
+    attempted_corpora = []
+
+    def fake_iter_sources(corpus_key, *, state_code):
+        attempted_corpora.append(corpus_key)
+        return [f"/fake/{corpus_key}.parquet"]
+
+    monkeypatch.setattr(resolver, "_iter_corpus_sources", fake_iter_sources)
+    monkeypatch.setattr(resolver, "_query_source", lambda *args, **kwargs: [])
+
+    link = resolver.resolve_citation(citation, state_code="MN", exhaustive=False)
+
+    assert link.matched is False
+    assert attempted_corpora == ["state_laws"]
+    assert link.metadata["candidate_corpora"] == ["state_laws"]
+
+
 def test_bluebook_citation_resolver_uses_inventory_to_rank_opaque_hf_parquet_names(monkeypatch):
     listed_repo_ids = []
 

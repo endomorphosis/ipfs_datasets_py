@@ -5,7 +5,12 @@ from pathlib import Path
 
 from reportlab.pdfgen import canvas
 
-from ipfs_datasets_py.processors.legal_data_hacc import analyze_pdf_for_court_case, scan_hacc_pdfs_for_dockets
+from ipfs_datasets_py.processors.legal_data_hacc import (
+    analyze_pdf_for_court_case,
+    load_scan_manifest,
+    scan_hacc_pdfs_for_dockets,
+    summarize_scan_manifest,
+)
 import ipfs_datasets_py.processors.legal_data_hacc.court_pdf_docket_scan as scan_module
 
 
@@ -36,6 +41,47 @@ def test_analyze_pdf_for_court_case_uses_ocr_fallback(monkeypatch, tmp_path: Pat
     assert result.extraction_method == "ocr"
     assert result.case_number == "1:24-cv-9999"
     assert result.matched_court_headers
+
+
+def test_analyze_pdf_for_court_case_detects_state_probate_caption(tmp_path: Path) -> None:
+    pdf_path = tmp_path / "probate_motion.pdf"
+    _write_pdf(
+        pdf_path,
+        [
+            "IN THE CIRCUIT COURT OF THE STATE OF OREGON",
+            "FOR THE COUNTY OF CLACKAMAS",
+            "PROBATE DEPARTMENT",
+            "In the Matter of:",
+            "Jane Kay Cortez, Protected Person.",
+            "Case No. 26PR00641",
+            "Motion to dismiss",
+        ],
+    )
+
+    result = analyze_pdf_for_court_case(pdf_path)
+
+    assert result.is_likely_court_case is True
+    assert result.case_number == "26PR00641"
+    assert result.case_name == "In the Matter of Jane Kay Cortez, Protected Person."
+    assert result.confidence >= 0.85
+    assert any("CIRCUIT COURT" in header.upper() for header in result.matched_court_headers)
+
+
+def test_analyze_pdf_for_court_case_rejects_implausible_case_number(tmp_path: Path) -> None:
+    pdf_path = tmp_path / "memo.pdf"
+    _write_pdf(
+        pdf_path,
+        [
+            "Memorandum of Law",
+            "Case No. Order",
+            "Support: Example v. Example",
+        ],
+    )
+
+    result = analyze_pdf_for_court_case(pdf_path)
+
+    assert result.case_number == ""
+    assert result.is_likely_court_case is False
 
 
 def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: Path) -> None:
@@ -74,6 +120,20 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
             "Case No. 9:99-cv-9999",
         ],
     )
+    _write_pdf(
+        scan_root / "statefiles" / "pytest-of-user" / "pytest-0" / "generated_case.pdf",
+        [
+            "IN THE UNITED STATES DISTRICT COURT",
+            "Case No. 7:77-cv-7777",
+            "Generated v. Artifact",
+        ],
+    )
+    _write_pdf(
+        scan_root / "statefiles" / "complaint-site-playwright-abcd1234" / "formal-complaint.pdf",
+        [
+            "Generated browser artifact",
+        ],
+    )
 
     output_dir = tmp_path / "output"
     manifest = scan_hacc_pdfs_for_dockets(
@@ -89,12 +149,15 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert manifest["candidate_case_count"] == 1
     assert manifest["scan_started_at"].endswith("Z")
     assert manifest["scan_completed_at"].endswith("Z")
+    assert manifest["scan_status"] == "completed"
+    assert manifest["manifest_path"] == str((output_dir / "scan_manifest.json"))
     assert manifest["scan_parameters"]["glob_pattern"] == "*.pdf"
     assert manifest["scan_parameters"]["include_bm25"] is True
-    assert manifest["skipped_pdf_count"] == 1
+    assert manifest["skipped_pdf_count"] == 3
     assert Path(manifest["manifest_path"]).exists()
 
     case_payload = manifest["cases"][0]
+    assert case_payload["status"] == "completed"
     dataset_path = Path(case_payload["dataset_path"])
     assert dataset_path.exists()
     dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
@@ -103,6 +166,7 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert len(dataset["documents"]) == 2
     assert dataset["metadata"]["scan_root"] == str(scan_root)
     assert dataset["metadata"]["scan_started_at"].endswith("Z")
+    assert dataset["metadata"]["scan_status"] == "completed"
     assert dataset["metadata"]["collected_pdf_count"] == 2
     assert len(dataset["metadata"]["collected_pdf_paths"]) == 2
     assert dataset["metadata"]["matched_relative_paths"] == ["case_a/complaint.pdf", "case_a/motion.pdf"]
@@ -111,9 +175,55 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert dataset["documents"][0]["metadata"]["scan_detection"]["confidence"] >= 0.85
     assert dataset["documents"][0]["metadata"]["scan_detection"]["is_likely_court_case"] is True
     assert dataset["documents"][0]["metadata"]["scan_detection"]["text_length"] > 0
+    assert dataset["documents"][0]["metadata"]["scan_detection"]["header_match_count"] >= 1
     assert dataset["documents"][0]["metadata"]["relative_path"] == "case_a/complaint.pdf"
+    assert dataset["documents"][0]["metadata"]["source_file"]["file_size_bytes"] > 0
+    assert dataset["documents"][0]["metadata"]["source_file"]["page_count"] >= 1
     assert dataset["documents"][0]["metadata"]["case_detection"]["case_number"] == "2:25-cv-4004"
     assert dataset["documents"][0]["metadata"]["document_knowledge_graph_summary"]["node_count"] >= 1
+    assert dataset["documents"][0]["metadata"]["text_extraction"]["max_ocr_pages"] == 5
     assert dataset["documents"][0]["metadata"]["document_knowledge_graph"]["summary"]["node_count"] >= 1
     assert Path(case_payload["collected_pdf_root"]).exists()
     assert list((output_dir / "collected_pdfs").rglob("*.pdf"))
+
+
+def test_manifest_summary_helper_reads_condensed_status(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "scan_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "scan_status": "running",
+                "scan_started_at": "2025-01-01T00:00:00Z",
+                "scan_completed_at": "",
+                "scan_root": "/scan/root",
+                "output_dir": "/scan/out",
+                "manifest_path": str(manifest_path),
+                "pdf_count": 200,
+                "matched_pdf_count": 3,
+                "skipped_pdf_count": 5,
+                "candidate_case_count": 2,
+                "ocr_available": False,
+                "cases": [
+                    {
+                        "status": "candidate",
+                        "case_number": "1:24-cv-1111",
+                        "case_name": "Doe v. Example",
+                        "court": "United States District Court",
+                        "document_count": 2,
+                        "matched_relative_paths": ["a.pdf", "b.pdf"],
+                        "dataset_path": "/ignored.json",
+                    }
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
+    summary = summarize_scan_manifest(load_scan_manifest(manifest_path))
+
+    assert summary["scan_status"] == "running"
+    assert summary["candidate_case_count"] == 2
+    assert summary["sample_cases"][0]["status"] == "candidate"
+    assert summary["sample_cases"][0]["matched_relative_paths"] == ["a.pdf", "b.pdf"]

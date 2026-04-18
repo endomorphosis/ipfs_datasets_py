@@ -8369,6 +8369,7 @@ ipfs_datasets_py/processors/legal_scrapers/legal_dataset_api.py
 ipfs_datasets_py/processors/legal_scrapers/legal_graphrag.py
 ipfs_datasets_py/processors/legal_scrapers/legal_graphrag_engine.py
 ipfs_datasets_py/processors/legal_scrapers/legal_report_generator.py
+ipfs_datasets_py/processors/legal_scrapers/legal_scraper_daemon.py
 ipfs_datasets_py/processors/legal_scrapers/legal_source_recovery.py
 ipfs_datasets_py/processors/legal_scrapers/legal_source_recovery_promotion.py
 ipfs_datasets_py/processors/legal_scrapers/legal_web_archive_search.py
@@ -14420,6 +14421,7 @@ scripts/ops/legal_data/extract_us_procedural_rules.py
 scripts/ops/legal_data/generate_decoder_preview.py
 scripts/ops/legal_data/generate_parquet_embeddings_bulk.py
 scripts/ops/legal_data/inventory_justicedao_hf_datasets.py
+scripts/ops/legal_data/merge_recovery_manifests_to_hf_parquets.py
 scripts/ops/legal_data/publish_oregon_admin_rules_to_hf.py
 scripts/ops/legal_data/rebuild_justicedao_dataset_library.py
 scripts/ops/legal_data/refresh_state_jsonld_quality.py
@@ -14434,6 +14436,7 @@ scripts/ops/legal_data/run_bluebook_linker_fuzz_harness.py
 scripts/ops/legal_data/run_email_authority_enrichment.py
 scripts/ops/legal_data/run_formal_logic_corpus_batches.py
 scripts/ops/legal_data/run_hybrid_v2_pipeline.py
+scripts/ops/legal_data/run_legal_scraper_daemon.py
 scripts/ops/legal_data/run_state_procedure_rules_all_states.py
 scripts/ops/legal_data/scrape_procedural_rules_all_jurisdictions.py
 scripts/ops/legal_data/select_formal_logic_canary_mode.py
@@ -15407,6 +15410,7 @@ tests/unit/legal_scrapers/test_federal_law_scraper.py
 tests/unit/legal_scrapers/test_ipfs_storage_integration.py
 tests/unit/legal_scrapers/test_justicedao_dataset_inventory.py
 tests/unit/legal_scrapers/test_legal_dataset_api.py
+tests/unit/legal_scrapers/test_legal_scraper_daemon.py
 tests/unit/legal_scrapers/test_legal_source_recovery.py
 tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py
 tests/unit/legal_scrapers/test_legal_web_archive_search.py
@@ -15417,6 +15421,7 @@ tests/unit/legal_scrapers/test_parallel_web_archiver.py
 tests/unit/legal_scrapers/test_phase11_legal_scrapers.py
 tests/unit/legal_scrapers/test_recap_archive_scraper.py
 tests/unit/legal_scrapers/test_refresh_state_laws_corpus.py
+tests/unit/legal_scrapers/test_search_engine_persistent_cache.py
 tests/unit/legal_scrapers/test_state_admin_rules_direct_agentic_all_states.py
 tests/unit/legal_scrapers/test_state_admin_rules_direct_agentic_states.py
 tests/unit/legal_scrapers/test_state_admin_rules_discovery_blocks.py

@@ -48,6 +48,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--adversarial-ratio", type=float, default=0.35, help="Approximate ratio of adversarial citations.")
     parser.add_argument("--disable-hf-fallback", action="store_true", help="Disable Hugging Face dataset fallback in the linker.")
+    parser.add_argument(
+        "--prefer-hf-corpora",
+        action="store_true",
+        help="Prefer current Hugging Face parquet corpora over local corpus overlays during linker lookup and seeded sampling.",
+    )
+    parser.add_argument(
+        "--primary-corpora-only",
+        action="store_true",
+        help="Constrain broad citation types to their primary corpus during coverage audits, e.g. state statutes only check state_laws.",
+    )
+    parser.add_argument(
+        "--exact-state-partitions-only",
+        action="store_true",
+        help="For state corpora, only query the exact state parquet partition instead of broad fallback shards.",
+    )
+    parser.add_argument(
+        "--materialize-hf-corpora",
+        action="store_true",
+        help="Download each selected Hugging Face parquet once into the local temp cache before querying it.",
+    )
     parser.add_argument("--disable-exhaustive", action="store_true", help="Skip exhaustive canonical corpus lookup before recovery.")
     parser.add_argument("--disable-recovery", action="store_true", help="Skip search/recovery for unresolved citations.")
     parser.add_argument("--seed-from-corpora", action="store_true", help="Sample real corpus rows first and feed seeded examples into the LLM prompt.")
@@ -71,6 +91,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="When merging recovered rows, first download the current target parquet from Hugging Face so the local output is upload-ready.",
     )
+    parser.add_argument(
+        "--publish-merged-parquet-to-hf",
+        action="store_true",
+        help="After an HF-hydrated merge, upload the full merged parquet back to its canonical Hugging Face path.",
+    )
     parser.add_argument("--publish-to-hf", action="store_true", help="Upload recovery manifests to the canonical Hugging Face repo.")
     parser.add_argument("--hf-token", help="Optional Hugging Face token override.")
     parser.add_argument("--output-dir", default="artifacts/bluebook_linker_fuzz", help="Directory for run artifacts.")
@@ -83,6 +108,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     input_candidates = _read_input_candidates(args.input_candidates)
     input_generate = (lambda *_, **__: input_candidates) if input_candidates is not None else None
+    if args.publish_merged_parquet_to_hf and not args.merge_recovered_rows:
+        parser.error("--publish-merged-parquet-to-hf requires --merge-recovered-rows.")
+    if args.publish_merged_parquet_to_hf:
+        args.hydrate_merge_from_hf = True
     if args.skip_live_search:
         os.environ["LEGAL_SOURCE_RECOVERY_SKIP_LIVE_SEARCH"] = "1"
 
@@ -96,6 +125,10 @@ def main(argv: list[str] | None = None) -> int:
             state_codes=_split_csv(args.states),
             adversarial_ratio=float(args.adversarial_ratio),
             allow_hf_fallback=not bool(args.disable_hf_fallback),
+            prefer_hf_corpora=bool(args.prefer_hf_corpora),
+            primary_corpora_only=bool(args.primary_corpora_only),
+            exact_state_partitions_only=bool(args.exact_state_partitions_only),
+            materialize_hf_corpora=bool(args.materialize_hf_corpora),
             exhaustive=not bool(args.disable_exhaustive),
             enable_recovery=not bool(args.disable_recovery),
             seed_from_corpora=bool(args.seed_from_corpora),
@@ -112,6 +145,7 @@ def main(argv: list[str] | None = None) -> int:
             hf_token=args.hf_token,
             merge_recovered_rows=bool(args.merge_recovered_rows),
             hydrate_merge_from_hf=bool(args.hydrate_merge_from_hf),
+            publish_merged_parquet_to_hf=bool(args.publish_merged_parquet_to_hf),
             output_dir=Path(args.output_dir),
             llm_generate_func=input_generate,
         )

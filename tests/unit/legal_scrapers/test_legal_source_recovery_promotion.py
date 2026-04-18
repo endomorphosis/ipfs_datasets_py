@@ -12,6 +12,7 @@ from ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery_promotion 
     build_recovery_manifest_promotion_row,
     build_recovery_manifest_release_plan,
     load_recovery_manifest,
+    merge_recovery_manifests_into_canonical_datasets,
     merge_recovery_manifest_into_canonical_dataset,
     promote_recovery_manifest_to_canonical_bundle,
 )
@@ -189,6 +190,198 @@ async def test_recovery_manifest_merge_can_hydrate_current_hf_parquet(monkeypatc
     merged_rows = pq.read_table(merge_report["target_local_parquet_path"]).to_pylist()
     normalized_citations = {str(row.get("normalized_citation") or "") for row in merged_rows}
     assert normalized_citations == {"Minn. Stat. § 518.17", "Minn. Stat. § 518.175"}
+
+
+@pytest.mark.anyio
+async def test_recovery_manifest_merge_publishes_only_after_hf_hydration(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    workflow = LegalSourceRecoveryWorkflow(
+        live_searcher=_FakeLiveSearcher(),
+        archive_searcher=_FakeArchiveSearcher(),
+        archiver=_FakeArchiver(),
+        now_factory=lambda: datetime(2024, 1, 2, 3, 4, 5),
+    )
+
+    result = await workflow.recover_unresolved_citation(
+        citation_text="Minn. Stat. § 518.17",
+        normalized_citation="Minn. Stat. § 518.17",
+        corpus_key="state_laws",
+        state_code="MN",
+        metadata={"candidate_corpora": ["state_laws"]},
+        publish_to_hf=False,
+    )
+
+    unsafe_report = merge_recovery_manifest_into_canonical_dataset(
+        result.manifest_path or "",
+        publish_merged_to_hf=True,
+    )
+
+    assert unsafe_report["status"] == "error"
+    assert "requires hydrate_from_hf=True" in unsafe_report["error"]
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    remote_hf_parquet = tmp_path / "hf-current" / "STATE-MN.parquet"
+    remote_hf_parquet.parent.mkdir(parents=True)
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_type": "legal_source_recovery_manifest",
+                    "corpus_key": "state_laws",
+                    "hf_dataset_id": "justicedao/ipfs_state_laws",
+                    "normalized_citation": "Minn. Stat. § 518.175",
+                    "primary_candidate_url": "https://www.revisor.mn.gov/statutes/cite/518.175",
+                    "target_parquet_path": "state_laws_parquet_cid/STATE-MN.parquet",
+                }
+            ]
+        ),
+        remote_hf_parquet,
+    )
+
+    def _fake_hf_downloader(**kwargs):
+        return remote_hf_parquet
+
+    def _fake_hf_uploader(**kwargs):
+        assert Path(kwargs["local_path"]).is_file()
+        assert kwargs["repo_id"] == "justicedao/ipfs_state_laws"
+        assert kwargs["repo_path"] == "state_laws_parquet_cid/STATE-MN.parquet"
+        assert kwargs["hf_token"] == "test-token"
+        assert kwargs["commit_message"] == "Merge citation recovery"
+        return {
+            "status": "success",
+            "repo_id": kwargs["repo_id"],
+            "path_in_repo": kwargs["repo_path"],
+            "upload_commit": "https://huggingface.co/datasets/justicedao/ipfs_state_laws/commit/test",
+        }
+
+    safe_report = merge_recovery_manifest_into_canonical_dataset(
+        result.manifest_path or "",
+        hydrate_from_hf=True,
+        publish_merged_to_hf=True,
+        hf_token="test-token",
+        hf_commit_message="Merge citation recovery",
+        hf_downloader=_fake_hf_downloader,
+        hf_uploader=_fake_hf_uploader,
+    )
+
+    assert safe_report["status"] == "success"
+    assert safe_report["upload_ready"] is True
+    assert safe_report["published_merged_to_hf"] is True
+    assert safe_report["publish_report"]["path_in_repo"] == "state_laws_parquet_cid/STATE-MN.parquet"
+
+
+def test_hf_parquet_hydration_uses_known_repo_path_aliases(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import legal_source_recovery_promotion as promotion
+
+    downloaded_paths = []
+
+    def _fake_download(**kwargs):
+        downloaded_paths.append(kwargs["repo_path"])
+        if kwargs["repo_path"] == "uscode_parquet/uscode.parquet":
+            raise FileNotFoundError("missing stale registry path")
+        target = tmp_path / "laws.parquet"
+        target.write_bytes(b"PAR1")
+        return target
+
+    monkeypatch.setattr(promotion, "_download_huggingface_parquet", _fake_download)
+
+    downloaded_path, resolved_path = promotion._download_huggingface_parquet_with_repo_path(
+        repo_id="justicedao/ipfs_uscode",
+        repo_path="uscode_parquet/uscode.parquet",
+    )
+
+    assert downloaded_path == tmp_path / "laws.parquet"
+    assert resolved_path == "uscode_parquet/laws.parquet"
+    assert downloaded_paths == ["uscode_parquet/uscode.parquet", "uscode_parquet/laws.parquet"]
+
+
+@pytest.mark.anyio
+async def test_recovery_manifest_batch_merge_hydrates_once_per_target(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        CanonicalLegalCorpus,
+        "default_local_root",
+        lambda self: Path(tmp_path) / self.local_root_name,
+    )
+
+    manifest_paths = []
+    for citation, url in [
+        ("Minn. Stat. § 518.17", "https://www.revisor.mn.gov/statutes/cite/518.17"),
+        ("Minn. Stat. § 518.175", "https://www.revisor.mn.gov/statutes/cite/518.175"),
+    ]:
+        manifest_dir = tmp_path / citation.replace(" ", "-")
+        manifest_dir.mkdir()
+        manifest_path = manifest_dir / "recovery_manifest.json"
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "corpus_key": "state_laws",
+                    "state_code": "MN",
+                    "hf_dataset_id": "justicedao/ipfs_state_laws",
+                    "citation_text": citation,
+                    "normalized_citation": citation,
+                    "candidates": [{"url": url, "title": citation, "score": 10}],
+                    "archived_sources": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        manifest_paths.append(manifest_path)
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    remote_hf_parquet = tmp_path / "hf-current" / "STATE-MN.parquet"
+    remote_hf_parquet.parent.mkdir(parents=True)
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "source_type": "legal_source_recovery_manifest",
+                    "corpus_key": "state_laws",
+                    "hf_dataset_id": "justicedao/ipfs_state_laws",
+                    "normalized_citation": "Minn. Stat. § 609.02",
+                    "primary_candidate_url": "https://www.revisor.mn.gov/statutes/cite/609.02",
+                    "target_parquet_path": "state_laws_parquet_cid/STATE-MN.parquet",
+                }
+            ]
+        ),
+        remote_hf_parquet,
+    )
+    download_calls = []
+
+    def _fake_hf_downloader(**kwargs):
+        download_calls.append(kwargs)
+        return remote_hf_parquet
+
+    report = merge_recovery_manifests_into_canonical_datasets(
+        manifest_paths,
+        output_dir=tmp_path / "merged",
+        hydrate_from_hf=True,
+        hf_downloader=_fake_hf_downloader,
+    )
+
+    assert report["status"] == "success"
+    assert report["target_count"] == 1
+    assert len(download_calls) == 1
+    target = report["targets"][0]
+    assert target["existing_row_count"] == 1
+    assert target["incoming_row_count"] == 2
+    assert target["merged_row_count"] == 3
+
+    merged_rows = pq.read_table(target["target_local_parquet_path"]).to_pylist()
+    normalized_citations = {str(row.get("normalized_citation") or "") for row in merged_rows}
+    assert normalized_citations == {
+        "Minn. Stat. § 518.17",
+        "Minn. Stat. § 518.175",
+        "Minn. Stat. § 609.02",
+    }
 
 
 @pytest.mark.anyio

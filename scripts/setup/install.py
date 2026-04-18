@@ -12,11 +12,205 @@ import json
 import platform
 from pathlib import Path
 import importlib.util
+import importlib.metadata
+import tempfile
 
 # Platform detection
 IS_WINDOWS = platform.system() == 'Windows'
 IS_LINUX = platform.system() == 'Linux'
 IS_MACOS = platform.system() == 'Darwin'
+
+_VENV_SYNC_MARKER = ".ipfs_datasets_py_venv_sync.json"
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _setup_scripts_dir() -> Path:
+    return Path(__file__).resolve().parent
+
+
+def _venv_python(venv_dir: Path) -> Path:
+    if IS_WINDOWS:
+        return venv_dir / 'Scripts' / 'python.exe'
+    return venv_dir / 'bin' / 'python'
+
+
+def _venv_marker_payload(repo_root: Path) -> dict:
+    tracked_files = [
+        repo_root / 'requirements.txt',
+        repo_root / 'pyproject.toml',
+        repo_root / 'setup.py',
+        repo_root / 'scripts' / 'setup' / 'install.py',
+    ]
+    return {
+        'tracked_files': {
+            str(path.relative_to(repo_root)): path.stat().st_mtime_ns
+            for path in tracked_files
+            if path.exists()
+        },
+        'python': f'{sys.version_info.major}.{sys.version_info.minor}',
+    }
+
+
+def _needs_venv_sync(repo_root: Path, venv_dir: Path) -> bool:
+    marker_path = venv_dir / _VENV_SYNC_MARKER
+    if not marker_path.exists():
+        return True
+    try:
+        current = _venv_marker_payload(repo_root)
+        previous = json.loads(marker_path.read_text(encoding='utf-8'))
+        return previous != current
+    except Exception:
+        return True
+
+
+def _write_venv_sync_marker(repo_root: Path, venv_dir: Path) -> None:
+    marker_path = venv_dir / _VENV_SYNC_MARKER
+    marker_path.write_text(json.dumps(_venv_marker_payload(repo_root), indent=2, sort_keys=True), encoding='utf-8')
+
+
+def _create_or_reuse_venv(venv_dir: Path) -> Path:
+    python_path = _venv_python(venv_dir)
+    if python_path.exists():
+        return python_path
+
+    venv_dir.parent.mkdir(parents=True, exist_ok=True)
+    print(f"📦 Creating virtual environment at {venv_dir}...")
+    subprocess.run([sys.executable, '-m', 'venv', str(venv_dir)], check=True, text=True)
+    return python_path
+
+
+def _local_requirement_overrides(repo_root: Path) -> dict[str, Path]:
+    overrides: dict[str, Path] = {}
+    candidate_paths = {
+        'ipfs_kit_py': repo_root / 'ipfs_kit_py',
+        'ipfs_accelerate_py': repo_root / 'ipfs_accelerate_py',
+    }
+    for package_name, package_path in candidate_paths.items():
+        if not package_path.is_dir():
+            continue
+        if (package_path / 'pyproject.toml').exists() or (package_path / 'setup.py').exists():
+            overrides[package_name] = package_path
+    return overrides
+
+
+def _is_local_package_installed(package_name: str, package_path: Path) -> bool:
+    try:
+        spec = importlib.util.find_spec(package_name)
+        if not spec or not spec.origin:
+            return False
+        origin_path = Path(spec.origin).resolve()
+        return str(package_path.resolve()).lower() in str(origin_path).lower()
+    except Exception:
+        return False
+
+
+def _install_requirements_with_local_overrides(python_path: Path, repo_root: Path, requirements_path: Path) -> None:
+    overrides = _local_requirement_overrides(repo_root)
+    filtered_lines: list[str] = []
+    for raw_line in requirements_path.read_text(encoding='utf-8').splitlines():
+        stripped = raw_line.strip()
+        if overrides.get('ipfs_kit_py') and 'github.com/endomorphosis/ipfs_kit_py.git' in stripped:
+            continue
+        if overrides.get('ipfs_accelerate_py') and 'github.com/endomorphosis/ipfs_accelerate_py.git' in stripped:
+            continue
+        filtered_lines.append(raw_line)
+
+    with tempfile.NamedTemporaryFile('w', encoding='utf-8', suffix='-requirements.txt', delete=False) as handle:
+        handle.write('\n'.join(filtered_lines) + '\n')
+        temp_requirements_path = Path(handle.name)
+
+    try:
+        subprocess.run([str(python_path), '-m', 'pip', 'install', '-r', str(temp_requirements_path)], check=True, text=True)
+        for package_name, package_path in overrides.items():
+            print(f"📦 Installing local {package_name} from {package_path}...")
+            subprocess.run([str(python_path), '-m', 'pip', 'install', '-e', str(package_path)], check=True, text=True)
+    finally:
+        temp_requirements_path.unlink(missing_ok=True)
+
+
+def _prune_stale_torch_cuda_packages(python_path: Path) -> None:
+    script = r'''
+import importlib.metadata as md
+import json
+import platform
+from packaging.requirements import Requirement
+
+installed_nvidia = {}
+for dist in md.distributions():
+    name = dist.metadata.get('Name', '')
+    if name.lower().startswith('nvidia-'):
+        installed_nvidia[name] = dist.version
+
+required = set()
+try:
+    torch = md.distribution('torch')
+except Exception:
+    torch = None
+
+if torch is not None:
+    for raw in torch.requires or []:
+        try:
+            requirement = Requirement(raw)
+        except Exception:
+            continue
+        if not requirement.name.lower().startswith('nvidia-'):
+            continue
+        marker = requirement.marker
+        if marker is not None and not marker.evaluate():
+            continue
+        required.add(requirement.name)
+
+stale = sorted(name for name in installed_nvidia if name not in required)
+print(json.dumps({'stale': stale}))
+'''
+    result = subprocess.run([str(python_path), '-c', script], check=True, text=True, capture_output=True)
+    payload = json.loads(result.stdout.strip() or '{}')
+    stale_packages = list(payload.get('stale') or [])
+    if not stale_packages:
+        return
+    print(f"🧹 Removing stale Torch/CUDA packages: {', '.join(stale_packages)}")
+    subprocess.run([str(python_path), '-m', 'pip', 'uninstall', '-y', *stale_packages], check=True, text=True)
+
+
+def _sync_venv_dependencies(repo_root: Path, venv_dir: Path) -> None:
+    python_path = _create_or_reuse_venv(venv_dir)
+    needs_sync = _needs_venv_sync(repo_root, venv_dir)
+    if not needs_sync:
+        _prune_stale_torch_cuda_packages(python_path)
+        return
+
+    requirements_path = repo_root / 'requirements.txt'
+    editable_target = repo_root
+    print(f"📦 Syncing dependencies into {venv_dir}...")
+    subprocess.run([str(python_path), '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'], check=True, text=True)
+    _install_requirements_with_local_overrides(python_path, repo_root, requirements_path)
+    subprocess.run([str(python_path), '-m', 'pip', 'install', '-e', str(editable_target), '--no-deps'], check=True, text=True)
+    _prune_stale_torch_cuda_packages(python_path)
+    _write_venv_sync_marker(repo_root, venv_dir)
+
+
+def ensure_project_venv(original_argv: list[str], *, venv_dir: Path, disable_bootstrap: bool) -> None:
+    if disable_bootstrap:
+        return
+
+    repo_root = _repo_root()
+    target_python = _venv_python(venv_dir)
+    running_in_target_venv = False
+    try:
+        running_in_target_venv = Path(sys.prefix).resolve() == venv_dir.resolve()
+    except Exception:
+        running_in_target_venv = False
+
+    if running_in_target_venv:
+        _sync_venv_dependencies(repo_root, venv_dir)
+        return
+
+    _sync_venv_dependencies(repo_root, venv_dir)
+    print(f"✅ Re-running setup inside {venv_dir}...")
+    os.execv(str(target_python), [str(target_python), __file__, '--no-venv-bootstrap', *original_argv])
 
 
 def ensure_logic_provers() -> None:
@@ -119,6 +313,9 @@ def ensure_main_ipfs_kit_py() -> None:
 
 def ensure_libp2p_main() -> None:
     """Ensure libp2p is installed from the git main branch."""
+    if importlib.util.find_spec('libp2p') is not None:
+        print("✅ libp2p already installed")
+        return
     try:
         result = subprocess.run(
             [
@@ -127,6 +324,7 @@ def ensure_libp2p_main() -> None:
                 'pip',
                 'install',
                 '--upgrade',
+                '--no-deps',
                 'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
                 '--disable-pip-version-check',
                 '--no-input',
@@ -146,6 +344,39 @@ def ensure_libp2p_main() -> None:
 
 def ensure_ipfs_accelerate_py() -> None:
     """Ensure ipfs_accelerate_py is installed from the main branch."""
+    repo_root = _repo_root()
+    local_path = repo_root / 'ipfs_accelerate_py'
+
+    if local_path.is_dir() and ((local_path / 'pyproject.toml').exists() or (local_path / 'setup.py').exists()):
+        if _is_local_package_installed('ipfs_accelerate_py', local_path):
+            print("✅ ipfs_accelerate_py already installed from local checkout")
+            return
+        try:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    '-m',
+                    'pip',
+                    'install',
+                    '-e',
+                    str(local_path),
+                    '--disable-pip-version-check',
+                    '--no-input',
+                    '--progress-bar',
+                    'off',
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                print("✅ Installed ipfs_accelerate_py from local checkout")
+                return
+            error_msg = result.stderr or result.stdout or "No error details available"
+            print(f"⚠️ Failed to install ipfs_accelerate_py from local checkout: {error_msg.strip()}")
+        except Exception as e:
+            print(f"⚠️ Failed to install ipfs_accelerate_py from local checkout: {e}")
+
     try:
         result = subprocess.run(
             [
@@ -223,7 +454,7 @@ def interactive_setup():
     print("\n🎛️ Running Interactive Setup...")
     
     try:
-        result = subprocess.run([sys.executable, 'dependency_manager.py', 'setup'], 
+        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'setup'], 
                               check=False, text=True)
         return result.returncode
     except Exception as e:
@@ -261,7 +492,7 @@ def profile_setup():
             print(f"\n📦 Installing {profile_name} profile...")
             
             result = subprocess.run([
-                sys.executable, 'dependency_manager.py', 'install', 
+                sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'install', 
                 '--profile', profile_name
             ], check=False, text=True)
             
@@ -279,7 +510,7 @@ def health_check():
     print("\n🏥 Running Health Check...")
     
     try:
-        result = subprocess.run([sys.executable, 'dependency_health_checker.py', 'check'], 
+        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'dependency_health_checker.py'), 'check'], 
                               check=False, text=True)
         return result.returncode
     except Exception as e:
@@ -291,7 +522,7 @@ def full_analysis():
     print("\n📊 Running Full Analysis...")
     
     try:
-        result = subprocess.run([sys.executable, 'dependency_manager.py', 'analyze'], 
+        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'analyze'], 
                               check=False, text=True)
         return result.returncode
     except Exception as e:
@@ -303,7 +534,7 @@ def test_installation():
     print("\n🧪 Testing CLI Functionality...")
     
     try:
-        result = subprocess.run([sys.executable, 'comprehensive_cli_test.py'], 
+        result = subprocess.run([sys.executable, str(_setup_scripts_dir() / 'comprehensive_cli_test.py')], 
                               check=False, text=True)
         return result.returncode
     except Exception as e:
@@ -316,19 +547,26 @@ def show_status():
     print("=" * 35)
     
     # Quick check of critical dependencies
-    critical_deps = ['numpy', 'pandas', 'requests', 'pyyaml', 'tqdm']
+    critical_deps = [
+        ('numpy', 'numpy'),
+        ('pandas', 'pandas'),
+        ('requests', 'requests'),
+        ('pyyaml', 'yaml'),
+        ('tqdm', 'tqdm'),
+    ]
     
-    for dep in critical_deps:
+    for label, module_name in critical_deps:
         try:
-            __import__(dep)
-            print(f"✅ {dep:12s} - Available")
+            __import__(module_name)
+            print(f"✅ {label:12s} - Available")
         except ImportError:
-            print(f"❌ {dep:12s} - Missing")
+            print(f"❌ {label:12s} - Missing")
     
-    print("\nFor detailed status, run: python dependency_health_checker.py check")
+    print(f"\nFor detailed status, run: python {_setup_scripts_dir() / 'dependency_health_checker.py'} check")
 
 def main():
     """Main CLI interface"""
+    repo_root = _repo_root()
     parser = argparse.ArgumentParser(
         description='IPFS Datasets Unified Dependency Installer',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -359,8 +597,18 @@ Examples:
                        help='Show current dependency status')
     parser.add_argument('--enable-auto-install', action='store_true',
                        help='Enable automatic dependency installation')
+    parser.add_argument('--venv-dir', default=str(repo_root / '.venv'),
+                       help='Virtual environment path to create/sync before running setup')
+    parser.add_argument('--no-venv-bootstrap', action='store_true',
+                       help='Skip automatic .venv creation and dependency sync')
     
     args = parser.parse_args()
+
+    ensure_project_venv(
+        sys.argv[1:],
+        venv_dir=Path(args.venv_dir).resolve(),
+        disable_bootstrap=bool(args.no_venv_bootstrap),
+    )
 
     ensure_main_ipfs_kit_py()
     ensure_libp2p_main()
@@ -379,7 +627,7 @@ Examples:
         print(f"📦 Installing {args.profile} profile...")
         try:
             result = subprocess.run([
-                sys.executable, 'dependency_manager.py', 'install',
+                sys.executable, str(_setup_scripts_dir() / 'dependency_manager.py'), 'install',
                 '--profile', args.profile
             ], check=False, text=True)
             return result.returncode

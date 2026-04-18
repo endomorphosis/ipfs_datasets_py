@@ -1017,6 +1017,10 @@ async def run_bluebook_linker_fuzz_harness(
     state_codes: Optional[Sequence[str]] = None,
     adversarial_ratio: float = 0.35,
     allow_hf_fallback: bool = True,
+    prefer_hf_corpora: bool = False,
+    primary_corpora_only: bool = False,
+    exact_state_partitions_only: bool = False,
+    materialize_hf_corpora: bool = False,
     exhaustive: bool = True,
     enable_recovery: bool = True,
     recovery_max_candidates: int = 8,
@@ -1025,6 +1029,7 @@ async def run_bluebook_linker_fuzz_harness(
     hf_token: Optional[str] = None,
     merge_recovered_rows: bool = False,
     hydrate_merge_from_hf: bool = False,
+    publish_merged_parquet_to_hf: bool = False,
     seed_from_corpora: bool = False,
     seed_only: bool = False,
     seed_examples_per_corpus: int = 2,
@@ -1040,7 +1045,13 @@ async def run_bluebook_linker_fuzz_harness(
     recovery_func: Optional[Callable[..., Awaitable[Dict[str, Any]]]] = None,
     merge_manifest_func: Optional[Callable[..., Dict[str, Any]]] = None,
 ) -> BluebookCitationFuzzRun:
-    active_resolver = resolver or BluebookCitationResolver(allow_hf_fallback=allow_hf_fallback)
+    active_resolver = resolver or BluebookCitationResolver(
+        allow_hf_fallback=allow_hf_fallback,
+        prefer_hf_sources=prefer_hf_corpora,
+        primary_corpora_only=primary_corpora_only,
+        exact_state_partition_only=exact_state_partitions_only,
+        materialize_remote_sources=materialize_hf_corpora,
+    )
     seeded_candidates = collect_seeded_bluebook_fuzz_candidates(
         resolver=active_resolver,
         corpus_keys=corpus_keys,
@@ -1103,11 +1114,21 @@ async def run_bluebook_linker_fuzz_harness(
         if enable_recovery:
             for unresolved in unmatched_payloads:
                 metadata = dict(unresolved.get("metadata") or {})
+                recovery_corpus_key = (
+                    str(metadata.get("recovery_corpus_key") or unresolved.get("corpus_key") or "").strip()
+                    or str(candidate.corpus_key_hint or "").strip()
+                    or None
+                )
+                recovery_state_code = (
+                    str(metadata.get("state_code") or "").strip().upper()
+                    or str(candidate.state_code or "").strip().upper()
+                    or None
+                )
                 recovery = await active_recovery(
                     citation_text=str(unresolved.get("citation_text") or ""),
                     normalized_citation=str(unresolved.get("normalized_citation") or unresolved.get("citation_text") or ""),
-                    corpus_key=str(metadata.get("recovery_corpus_key") or unresolved.get("corpus_key") or "") or None,
-                    state_code=str(metadata.get("state_code") or "") or None,
+                    corpus_key=recovery_corpus_key,
+                    state_code=recovery_state_code,
                     metadata={
                         "candidate_corpora": list(metadata.get("candidate_corpora") or []),
                     },
@@ -1121,11 +1142,12 @@ async def run_bluebook_linker_fuzz_harness(
 
                 manifest_path = str(recovery.get("manifest_path") or "").strip()
                 if merge_recovered_rows and manifest_path:
-                    if hydrate_merge_from_hf:
+                    if hydrate_merge_from_hf or publish_merged_parquet_to_hf:
                         merge_report = active_merge(
                             manifest_path,
                             hydrate_from_hf=True,
                             hf_token=hf_token,
+                            publish_merged_to_hf=publish_merged_parquet_to_hf,
                         )
                     else:
                         merge_report = active_merge(manifest_path)
@@ -1154,10 +1176,15 @@ async def run_bluebook_linker_fuzz_harness(
         "provider": provider,
         "model_name": model_name,
         "allow_hf_fallback": bool(allow_hf_fallback),
+        "prefer_hf_corpora": bool(prefer_hf_corpora),
+        "primary_corpora_only": bool(primary_corpora_only),
+        "exact_state_partitions_only": bool(exact_state_partitions_only),
+        "materialize_hf_corpora": bool(materialize_hf_corpora),
         "exhaustive": bool(exhaustive),
         "publish_to_hf": bool(publish_to_hf),
         "merge_recovered_rows": bool(merge_recovered_rows),
         "hydrate_merge_from_hf": bool(hydrate_merge_from_hf),
+        "publish_merged_parquet_to_hf": bool(publish_merged_parquet_to_hf),
         "seed_from_corpora": bool(seed_from_corpora),
         "seed_only": bool(seed_only),
         "seeded_example_count": len(seeded_examples),

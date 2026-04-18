@@ -53,13 +53,17 @@
 git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 
-# Quick setup (core dependencies)
+# Canonical setup: creates/updates .venv and installs repo dependencies automatically
 python scripts/setup/install.py --quick
 
-# Or install with specific features
-pip install -e ".[all]"  # All features
-pip install -e ".[ml]"   # ML/AI features only
+# The installer re-runs itself inside ./.venv. After that, activate it for normal use.
+source .venv/bin/activate
+
+# If you want a different target environment path
+python scripts/setup/install.py --quick --venv-dir .venv-pacer-test
 ```
+
+The setup installer syncs the repository dependency set from [requirements.txt](requirements.txt) into the target virtual environment and then installs the project in editable mode. That keeps a fresh `.venv` consistent without having to remember separate `pip install` commands.
 
 The base install intentionally excludes the third-party `brave-search` package.
 Its currently installable release depends on an older `httpx` range that

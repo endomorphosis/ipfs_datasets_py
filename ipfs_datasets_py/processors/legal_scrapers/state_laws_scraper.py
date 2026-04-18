@@ -593,12 +593,13 @@ def build_state_law_section_url(
         ("KY", "508.030"): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
         ("LA", "14:35"): "https://legis.la.gov/legis/Law.aspx?d=78452",
         ("MD", "3-203"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
-        ("MS", "97-3-7"): "https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030007.htm",
+        ("IN", "35-42-2-1"): "https://law.justia.com/codes/indiana/title-35/article-42/chapter-2/section-35-42-2-1/",
+        ("MS", "97-3-7"): "https://law.justia.com/codes/mississippi/title-97/chapter-3/in-general/section-97-3-7/",
         ("NH", "631:2-a"): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
         ("NJ", "2C:12-1"): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
         ("NM", "30-3-4"): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
         ("ND", "12.1-17-01"): "https://ndlegis.gov/cencode/t12-1c17.pdf",
-        ("OK", "21-644"): "https://www.oklegislature.gov/osstatuestitle.html?title=21",
+        ("OK", "21-644"): "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf",
         ("TN", "39-13-101"): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
         ("VA", "18.2-57"): "https://law.lis.virginia.gov/vacode/title18.2/chapter4/section18.2-57/",
         ("VT", "13-1023"): "https://legislature.vermont.gov/statutes/section/13/019/01023",
@@ -675,7 +676,7 @@ def build_state_law_section_url(
             return f"https://malegislature.gov/Laws/GeneralLaws/PartIV/TitleI/Chapter{chapter}/Section{section.lower()}"
         return ""
     if state == "MI" or "legislature.mi.gov" in host_hint:
-        return f"https://legislature.mi.gov/Laws/MCL?objectName=mcl-{normalized_section}"
+        return f"https://legislature.mi.gov/Laws/MCL?objectName=mcl-{normalized_section.replace('.', '-')}"
     if state == "MO" or "revisor.mo.gov" in host_hint:
         return f"https://revisor.mo.gov/main/OneSection.aspx?section={normalized_section}"
     if state == "MT" or "legmt.gov" in host_hint or "archive.legmt.gov" in host_hint:
@@ -733,7 +734,7 @@ def build_state_law_section_url(
     if state == "WI" or "docs.legis.wisconsin.gov" in host_hint:
         chapter, _, section_tail = normalized_section.partition(".")
         if chapter and section_tail:
-            return f"https://docs.legis.wisconsin.gov/statutes/statutes/{chapter}/{section_tail}"
+            return f"https://docs.legis.wisconsin.gov/statutes/statutes/{chapter}#{normalized_section}"
         return ""
     if state == "WV" or "code.wvlegislature.gov" in host_hint:
         return f"https://code.wvlegislature.gov/{normalized_section}/"
@@ -763,8 +764,8 @@ def build_state_law_section_url(
         chapter = int(normalized_section[:-2])
         section = int(normalized_section[-2:])
         return (
-            "https://www.palegis.us/statutes/consolidated/view-statute"
-            f"?CHAPTER={chapter:03d}.&DIV=00.&SECTION={section:03d}.&SUBSCTN=000.&TTL={title}"
+            "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/"
+            f"{title:02d}/00.{chapter:03d}.{section:03d}.000..HTM"
         )
     return ""
 

@@ -39,6 +39,10 @@ def _reexec_in_repo_venv(logger) -> None:
     """
     if os.environ.get('IPFS_DATASETS_IN_VENV', '').lower() == 'true':
         return
+    if os.environ.get('VIRTUAL_ENV'):
+        return
+    if getattr(sys, 'base_prefix', sys.prefix) != sys.prefix:
+        return
 
     repo_root = _repo_root()
     venv_dir = repo_root / '.venv'

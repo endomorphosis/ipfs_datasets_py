@@ -183,6 +183,59 @@ def test_candidate_file_ranking_prefers_exact_citation_url_over_generic_links():
     assert files[0].url == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
 
 
+def test_candidate_file_ranking_keeps_citation_hint_page_above_generic_pdfs(monkeypatch):
+    def _fake_fetch(self, url, title_hint=None):
+        return SimpleNamespace(
+            success=True,
+            document=SimpleNamespace(
+                title=title_hint or "Delaware Code Online",
+                text="",
+                html="",
+                content_type="text/html",
+                metadata={
+                    "content_type": "text/html",
+                    "links": [
+                        {
+                            "url": "https://delcode.delaware.gov/constitution/constitution.pdf",
+                            "text": "Authenticated PDF",
+                        },
+                        {
+                            "url": "https://delcode.delaware.gov/title1/title1.pdf",
+                            "text": "Authenticated PDF",
+                        },
+                    ],
+                },
+                extraction_provenance={"method": "requests_lightweight"},
+            ),
+            errors=[],
+        )
+
+    monkeypatch.setattr(LegalSourceRecoveryWorkflow, "_candidate_fetch_response", _fake_fetch)
+
+    files = LegalSourceRecoveryWorkflow(enable_candidate_file_fetch=True)._discover_candidate_files(
+        candidates=[
+            LegalSourceCandidate(
+                url="https://delcode.delaware.gov/title11/c005/sc02/index.html#601",
+                title="DE statute section 11-601",
+                source="citation_url_hint",
+                source_type="current",
+                score=25,
+            ),
+            LegalSourceCandidate(
+                url="https://delcode.delaware.gov/",
+                title="Delaware Code Online",
+                source="duckduckgo",
+                source_type="current",
+                score=15,
+            ),
+        ],
+        corpus_key="state_laws",
+        state_code="DE",
+    )
+
+    assert files[0].url == "https://delcode.delaware.gov/title11/c005/sc02/index.html#601"
+
+
 def test_candidate_content_validation_accepts_official_section_page_without_full_bluebook_text():
     validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
         citation_text="Ariz. Code § 13-1203",
@@ -220,6 +273,46 @@ def test_candidate_content_validation_rejects_search_shell_with_only_url_section
     assert validation["legal_body_signal"] is False
 
 
+def test_candidate_content_validation_does_not_treat_legal_phrase_as_no_result():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="S.C. Code § 16-3-600",
+        normalized_citation="S.C. Code § 16-3-600",
+        url="https://www.scstatehouse.gov/code/t16c003.php#16-3-600",
+        title="SC statute section 16-3-600",
+        content_type="text/html",
+        text=(
+            "Section 16-3-600. Assault and battery. "
+            "A respondent resides where the respondent cannot be found. "
+            "A person commits an offense under this section."
+        ),
+        html="",
+    )
+
+    assert validation["no_result_detected"] is False
+    assert validation["confirmed"] is True
+
+
+def test_candidate_content_validation_ignores_embedded_file_not_found_scripts_when_body_matches():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="Md. Code § 3-203",
+        normalized_citation="Md. Code § 3-203",
+        url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
+        title="MD statute section 3-203",
+        content_type="text/html",
+        text=(
+            "Section 3-203. Assault in the second degree. A person may not commit "
+            "an assault. A person who violates this section is subject to penalties "
+            "provided by law, and the court may consider the offense classification. "
+            "<script>alert('File not Found');</script>"
+        ),
+        html="",
+    )
+
+    assert validation["no_result_marker_present"] is True
+    assert validation["no_result_detected"] is False
+    assert validation["confirmed"] is True
+
+
 def test_citation_validation_fragments_ignore_reporter_abbreviation_parts():
     fragments = LegalSourceRecoveryWorkflow._citation_validation_fragments(
         citation_text="18 Pa.C.S. § 2701",
@@ -230,6 +323,23 @@ def test_citation_validation_fragments_ignore_reporter_abbreviation_parts():
     assert "Pa.C.S" not in fragments
     assert "C" not in fragments
     assert "S" not in fragments
+
+
+def test_citation_validation_fragments_ignore_federal_abbreviation_parts():
+    cfr_fragments = LegalSourceRecoveryWorkflow._citation_validation_fragments(
+        citation_text="21 C.F.R. § 314.80",
+        normalized_citation="21 C.F.R. § 314.80",
+    )
+    case_fragments = LegalSourceRecoveryWorkflow._citation_validation_fragments(
+        citation_text="410 U.S. 113",
+        normalized_citation="410 U.S. 113",
+    )
+
+    assert "314.80" in cfr_fragments
+    assert "C.F.R" not in cfr_fragments
+    assert "R" not in cfr_fragments
+    assert "U.S" not in case_fragments
+    assert "S" not in case_fragments
 
 
 def test_scraper_patch_source_prefers_candidate_url_over_unblock_interstitial():
@@ -251,6 +361,138 @@ def test_scraper_patch_source_prefers_candidate_url_over_unblock_interstitial():
     )
 
     assert source_url == "https://www.ecfr.gov/current/title-8/section-214.2"
+
+
+def test_candidate_fetch_response_escalates_blocked_lightweight_fetch(monkeypatch):
+    lightweight_response = SimpleNamespace(
+        success=False,
+        document=None,
+        errors=[SimpleNamespace(message="http_status_403")],
+    )
+    escalated_response = SimpleNamespace(
+        success=True,
+        document=SimpleNamespace(
+            title="Recovered",
+            text="Section 12-1. A person commits assault.",
+            html="",
+            content_type="text/html",
+            metadata={"content_type": "text/html"},
+            extraction_provenance={"method": "blocked_fetch_escalation"},
+        ),
+        errors=[],
+    )
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ESCALATE_BLOCKED_FETCH", "1")
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_lightweight_fetch_url",
+        staticmethod(lambda url, title_hint=None: lightweight_response),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_escalated_fetch_url",
+        classmethod(lambda cls, url, title_hint=None: escalated_response),
+    )
+
+    response = LegalSourceRecoveryWorkflow()._candidate_fetch_response("https://example.test/blocked")
+
+    assert response is escalated_response
+
+
+def test_candidate_fetch_response_preserves_original_failure_when_escalation_fails(monkeypatch):
+    lightweight_response = SimpleNamespace(
+        success=False,
+        document=None,
+        errors=[SimpleNamespace(message="http_status_403")],
+    )
+    escalated_response = SimpleNamespace(
+        success=False,
+        document=None,
+        errors=["playwright error: browser unavailable"],
+    )
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ESCALATE_BLOCKED_FETCH", "1")
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_lightweight_fetch_url",
+        staticmethod(lambda url, title_hint=None: lightweight_response),
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_escalated_fetch_url",
+        classmethod(lambda cls, url, title_hint=None: escalated_response),
+    )
+
+    response = LegalSourceRecoveryWorkflow()._candidate_fetch_response("https://example.test/blocked")
+
+    assert response is lightweight_response
+    assert any("http_status_403" in str(error) for error in response.errors)
+    assert any("playwright error" in str(error) for error in response.errors)
+
+
+def test_candidate_file_materialization_escalates_unconfirmed_success(monkeypatch, tmp_path):
+    shell_response = SimpleNamespace(
+        success=True,
+        document=SimpleNamespace(
+            title="Texas Statutes Shell",
+            text="Texas Constitution and Statutes Search",
+            html="<main id=\"app\"></main>",
+            content_type="text/html",
+            metadata={"content_type": "text/html"},
+            extraction_provenance={"method": "requests_lightweight"},
+        ),
+        errors=[],
+    )
+    escalated_response = SimpleNamespace(
+        success=True,
+        document=SimpleNamespace(
+            title="Texas Penal Code Chapter 22",
+            text=(
+                "Sec. 22.01. ASSAULT. A person commits an offense if the person "
+                "intentionally, knowingly, or recklessly causes bodily injury to another, "
+                "including the person's spouse. The section also describes when a person "
+                "intentionally or knowingly threatens another with imminent bodily injury."
+            ),
+            html="",
+            content_type="text/markdown",
+            metadata={"content_type": "text/markdown"},
+            extraction_provenance={"method": "blocked_fetch_escalation", "scraper_method": "jina_reader"},
+        ),
+        errors=[],
+    )
+
+    monkeypatch.setenv("LEGAL_SOURCE_RECOVERY_ESCALATE_UNCONFIRMED_FETCH", "1")
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_candidate_fetch_response",
+        lambda self, url, title_hint=None: shell_response,
+    )
+    monkeypatch.setattr(
+        LegalSourceRecoveryWorkflow,
+        "_escalated_fetch_url",
+        classmethod(lambda cls, url, title_hint=None: escalated_response),
+    )
+
+    materialized = LegalSourceRecoveryWorkflow()._materialize_candidate_file_artifacts(
+        manifest_dir=tmp_path,
+        candidate_files=[
+            RecoveredCandidateFile(
+                url="https://statutes.capitol.texas.gov/Docs/PE/htm/PE.22.htm#22.01",
+                title="Texas Penal Code 22.01",
+                source="citation_url_hint",
+                source_type="current",
+            )
+        ],
+        citation_text="Tex. Penal Code § 22.01",
+        normalized_citation="Tex. Penal Code § 22.01",
+    )
+
+    assert materialized[0].fetch_success is True
+    assert materialized[0].notes is None
+    metadata = json.loads(Path(materialized[0].metadata_path).read_text(encoding="utf-8"))
+    assert metadata["candidate_validation"]["confirmed"] is True
+    assert metadata["extraction_provenance"]["method"] == "blocked_fetch_escalation"
+    assert "Sec. 22.01. ASSAULT" in Path(materialized[0].artifact_path).read_text(encoding="utf-8")
 
 
 def test_default_publisher_loads_repo_script() -> None:
@@ -539,12 +781,24 @@ def test_legal_source_recovery_citation_url_hints_cover_additional_fuzz_states()
     )
     assert il_results[0]["url"] == "https://www.ilga.gov/documents/legislation/ilcs/documents/075000050K602.7.htm"
     assert pa_results[0]["url"] == (
-        "https://www.palegis.us/statutes/consolidated/view-statute?CHAPTER=053.&DIV=00.&SECTION=028.&SUBSCTN=000.&TTL=23"
+        "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/23/00.053.028.000..HTM"
     )
     assert all(
         result["source"] == "citation_url_hint"
         for result in [mn_results[0], ca_results[0], ny_results[0], tx_results[0], fl_results[0], il_results[0], pa_results[0]]
     )
+
+
+def test_legal_source_recovery_ilcs_url_hint_preserves_hyphenated_section_suffix():
+    results = LegalSourceRecoveryWorkflow._citation_url_hint_results(
+        citation_text="720 ILCS 5/12-1",
+        normalized_citation="720 ILCS 5/12-1",
+        corpus_key="state_laws",
+        state_code="IL",
+    )
+
+    assert results[0]["url"] == "https://www.ilga.gov/documents/legislation/ilcs/documents/072000050K12-1.htm"
+    assert results[0]["title"] == "Illinois Compiled Statutes 720 ILCS 5/12-1"
 
 
 def test_legal_source_recovery_citation_url_hints_cover_prose_and_section_variants():
@@ -577,7 +831,7 @@ def test_legal_source_recovery_citation_url_hints_cover_prose_and_section_varian
         "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0000-0099/0061/Sections/0061.13.html"
     )
     assert pa_results[0]["url"] == (
-        "https://www.palegis.us/statutes/consolidated/view-statute?CHAPTER=053.&DIV=00.&SECTION=028.&SUBSCTN=000.&TTL=23"
+        "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/23/00.053.028.000..HTM"
     )
     assert ca_penal_results[0]["url"] == (
         "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=PEN&sectionNum=1203.4"

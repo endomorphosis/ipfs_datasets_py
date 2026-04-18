@@ -15,7 +15,9 @@ __all__ = [
     "call_workspace_mcp",
     "call_workspace_tool",
     "complaint_manager_interfaces",
+    "load_scan_manifest",
     "scan_hacc_pdfs_for_dockets",
+    "summarize_scan_manifest",
     "create_workspace_service",
     "ensure_complaint_generator_on_path",
     "grounded_pipeline_main",
@@ -55,7 +57,13 @@ def __getattr__(name: str) -> Any:
     if name == "HACCResearchEngine":
         module = import_module(".research_engine", __name__)
         return getattr(module, name)
-    if name in {"HACCCourtPDFScanResult", "analyze_pdf_for_court_case", "scan_hacc_pdfs_for_dockets"}:
+    if name in {
+        "HACCCourtPDFScanResult",
+        "analyze_pdf_for_court_case",
+        "load_scan_manifest",
+        "scan_hacc_pdfs_for_dockets",
+        "summarize_scan_manifest",
+    }:
         module = import_module(".court_pdf_docket_scan", __name__)
         return getattr(module, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

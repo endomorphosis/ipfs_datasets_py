@@ -2338,6 +2338,8 @@ async def merge_recovery_manifest_into_canonical_dataset_from_parameters(
             hf_revision=str(parameters.get("hf_revision") or "") or None,
             hf_cache_dir=hf_cache_dir,
             force_hf_download=bool(parameters.get("force_hf_download", False)),
+            publish_merged_to_hf=bool(parameters.get("publish_merged_to_hf", False)),
+            hf_commit_message=str(parameters.get("hf_commit_message") or "") or None,
         )
     )
     result["status"] = str(result.get("status") or "success")

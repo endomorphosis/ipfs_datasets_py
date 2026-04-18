@@ -39,22 +39,37 @@ _SKIP_DIR_NAMES = {
     ".git",
     ".hg",
     ".svn",
+    ".pytest_cache",
     ".tools",
     ".venv",
     ".venv-pacer-test",
     "__pycache__",
     "node_modules",
     "site-packages",
+    "tmp",
 }
+_SKIP_DIR_PREFIXES = (
+    ".git",
+    ".venv",
+    "complaint-site-playwright-",
+    "pytest-",
+    "pytest-of-",
+    "tmp_live_",
+)
 
 _COURT_HEADER_PATTERNS = [
     re.compile(r"\bIN THE UNITED STATES DISTRICT COURT\b", re.IGNORECASE),
     re.compile(r"\bUNITED STATES DISTRICT COURT\b", re.IGNORECASE),
     re.compile(r"\bUNITED STATES BANKRUPTCY COURT\b", re.IGNORECASE),
     re.compile(r"\bUNITED STATES COURT OF APPEALS\b", re.IGNORECASE),
+    re.compile(r"\bIN THE CIRCUIT COURT OF THE STATE OF [A-Z\s]+\b", re.IGNORECASE),
+    re.compile(r"\bIN THE (?:CIRCUIT|SUPERIOR|PROBATE|DISTRICT|JUVENILE|MUNICIPAL) COURT OF [A-Z\s,]+\b", re.IGNORECASE),
+    re.compile(r"\bFOR THE COUNTY OF [A-Z\s]+\b", re.IGNORECASE),
+    re.compile(r"\bPROBATE DEPARTMENT\b", re.IGNORECASE),
     re.compile(r"\bIN THE [A-Z][A-Z\s]+(?:DISTRICT|CIRCUIT|SUPERIOR|PROBATE|APPEALS|SUPREME) COURT\b", re.IGNORECASE),
 ]
 _STYLE_LINE_PATTERN = re.compile(r"(?:\bv(?:s)?\.?\s+\S+)|(?:\bversus\b)|(?:\bin re\b)", re.IGNORECASE)
+_PROBATE_CAPTION_PATTERN = re.compile(r"^in the matter of:?$", re.IGNORECASE)
 
 
 @dataclass
@@ -176,11 +191,50 @@ def _matched_court_headers(lines: Sequence[str]) -> List[str]:
     return matches
 
 
+def _validated_case_number(value: str) -> str:
+    text = _normalize_case_number_text(value)
+    if not text:
+        return ""
+    lowered = text.lower()
+    if lowered in {"order", "re", "in", "d", "mixes", "relies"}:
+        return ""
+    digit_count = sum(ch.isdigit() for ch in text)
+    alpha_count = sum(ch.isalpha() for ch in text)
+    if digit_count == 0:
+        return ""
+    if ":" in text or "-" in text or "/" in text:
+        return text
+    if alpha_count > 0 and digit_count >= 4:
+        return text
+    if alpha_count == 0 and digit_count >= 4:
+        return text
+    return ""
+
+
+def _matter_of_case_name(lines: Sequence[str]) -> str:
+    cleaned_lines = [str(line or "").strip() for line in lines if str(line or "").strip()]
+    for index, line in enumerate(cleaned_lines):
+        if not _PROBATE_CAPTION_PATTERN.match(line):
+            continue
+        caption_parts = ["In the Matter of"]
+        for next_line in cleaned_lines[index + 1 : index + 4]:
+            if _COURT_HEADER_PATTERNS[0].search(next_line) or next_line.lower().startswith("case no"):
+                break
+            caption_parts.append(next_line.rstrip(","))
+            if next_line.endswith("."):
+                break
+        return " ".join(part.strip(" ,") for part in caption_parts if part).strip()
+    return ""
+
+
 def _style_lines(lines: Sequence[str]) -> List[str]:
     return [str(line).strip() for line in lines if _STYLE_LINE_PATTERN.search(str(line or ""))]
 
 
 def _best_case_name(parsed: Any, lines: Sequence[str], path: Path) -> str:
+    matter_of_name = _matter_of_case_name(lines)
+    if matter_of_name:
+        return matter_of_name
     header = getattr(parsed, "header", None)
     if header:
         for line in list(getattr(header, "party_lines", []) or []):
@@ -213,9 +267,44 @@ def _should_skip_pdf_path(scan_root: Path, pdf_path: Path) -> bool:
     for part in relative_parts:
         if part in _SKIP_DIR_NAMES:
             return True
-        if part.startswith(".git") or part.startswith(".venv"):
+        if any(part.startswith(prefix) for prefix in _SKIP_DIR_PREFIXES):
             return True
     return False
+
+
+def load_scan_manifest(path: str | Path) -> Dict[str, Any]:
+    manifest_path = Path(path)
+    return json.loads(manifest_path.read_text(encoding="utf-8"))
+
+
+def summarize_scan_manifest(manifest: Dict[str, Any]) -> Dict[str, Any]:
+    cases = list(manifest.get("cases") or [])
+    sample_cases: List[Dict[str, Any]] = []
+    for case in cases[:10]:
+        sample_cases.append(
+            {
+                "status": str(case.get("status") or ""),
+                "case_number": str(case.get("case_number") or ""),
+                "case_name": str(case.get("case_name") or ""),
+                "court": str(case.get("court") or ""),
+                "document_count": int(case.get("document_count") or 0),
+                "matched_relative_paths": list(case.get("matched_relative_paths") or []),
+            }
+        )
+    return {
+        "scan_status": str(manifest.get("scan_status") or ""),
+        "scan_started_at": str(manifest.get("scan_started_at") or ""),
+        "scan_completed_at": str(manifest.get("scan_completed_at") or ""),
+        "scan_root": str(manifest.get("scan_root") or ""),
+        "output_dir": str(manifest.get("output_dir") or ""),
+        "manifest_path": str(manifest.get("manifest_path") or ""),
+        "pdf_count": int(manifest.get("pdf_count") or 0),
+        "matched_pdf_count": int(manifest.get("matched_pdf_count") or 0),
+        "skipped_pdf_count": int(manifest.get("skipped_pdf_count") or 0),
+        "candidate_case_count": int(manifest.get("candidate_case_count") or 0),
+        "ocr_available": bool(manifest.get("ocr_available")),
+        "sample_cases": sample_cases,
+    }
 
 
 def _build_case_graph_summary(results: Sequence[HACCCourtPDFScanResult], *, case_number: str, court: str, case_name: str) -> Dict[str, Any]:
@@ -267,13 +356,32 @@ def _build_case_graph_summary(results: Sequence[HACCCourtPDFScanResult], *, case
     }
 
 
+def _build_case_preview(results: Sequence[HACCCourtPDFScanResult], *, case_number: str) -> Dict[str, Any]:
+    court = next((item.court for item in results if item.court), "")
+    case_name = next((item.case_name for item in results if item.case_name), case_number)
+    confidences = [float(item.confidence or 0.0) for item in results]
+    return {
+        "case_number": case_number,
+        "case_name": case_name,
+        "court": court,
+        "document_count": len(results),
+        "matched_relative_paths": [item.relative_path for item in results],
+        "scan_confidence_summary": {
+            "max_confidence": max(confidences) if confidences else 0.0,
+            "min_confidence": min(confidences) if confidences else 0.0,
+            "average_confidence": (sum(confidences) / len(confidences)) if confidences else 0.0,
+        },
+        "status": "candidate",
+    }
+
+
 def analyze_pdf_for_court_case(path: str | Path, *, max_ocr_pages: int = 5) -> HACCCourtPDFScanResult:
     source_path = Path(path)
     text, extraction_method = _extract_text_from_pdf_with_ocr(source_path, max_ocr_pages=max_ocr_pages)
     lines = [line.strip() for line in str(text or "").splitlines() if line.strip()]
     parsed = parse_legal_document(text) if text else None
     parsed_header = getattr(parsed, "header", None)
-    case_number = _normalize_case_number_text(
+    case_number = _validated_case_number(
         (getattr(parsed_header, "case_number", "") if parsed_header else "")
         or _extract_case_number_from_text(text)
     )
@@ -361,6 +469,10 @@ def scan_hacc_pdfs_for_dockets(
     grouped: Dict[str, List[HACCCourtPDFScanResult]] = defaultdict(list)
 
     def _build_manifest(*, status: str) -> Dict[str, Any]:
+        preview_cases = [
+            _build_case_preview(results, case_number=case_number)
+            for case_number, results in sorted(grouped.items())
+        ]
         return {
             "scan_status": status,
             "scan_started_at": scan_started_at,
@@ -380,9 +492,9 @@ def scan_hacc_pdfs_for_dockets(
             "pdf_count": len(all_results),
             "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
             "skipped_pdf_count": skipped_pdf_count,
-            "candidate_case_count": len(case_outputs),
+            "candidate_case_count": len(case_outputs) if status == "completed" else len(grouped),
             "ocr_available": _has_ocr_support(),
-            "cases": case_outputs,
+            "cases": case_outputs if status == "completed" else preview_cases,
             "pdf_results": [item.to_dict() for item in all_results],
         }
 
@@ -508,6 +620,7 @@ def scan_hacc_pdfs_for_dockets(
         dataset_path = dataset.write_json(datasets_root / f"{case_slug}.json")
         case_outputs.append(
             {
+                "status": "completed",
                 "case_number": case_number,
                 "case_name": case_name,
                 "court": court,
@@ -532,8 +645,8 @@ def scan_hacc_pdfs_for_dockets(
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Scan a HACC PDF tree for likely court filings and emit docket datasets.")
-    parser.add_argument("scan_root", help="Directory to scan recursively for PDF files.")
-    parser.add_argument("--output-dir", required=True, help="Directory where collected PDFs, datasets, and the manifest will be written.")
+    parser.add_argument("scan_root", nargs="?", help="Directory to scan recursively for PDF files.")
+    parser.add_argument("--output-dir", help="Directory where collected PDFs, datasets, and the manifest will be written.")
     parser.add_argument("--glob-pattern", default="*.pdf", help="Glob pattern to match PDFs under the scan root.")
     parser.add_argument("--max-ocr-pages", type=int, default=5, help="Maximum number of pages to OCR for weakly extracted PDFs.")
     parser.add_argument("--no-knowledge-graph", action="store_true", help="Disable dataset-level knowledge graph generation.")
@@ -541,12 +654,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--include-vector-index", action="store_true", help="Enable dataset vector index generation.")
     parser.add_argument("--include-formal-logic", action="store_true", help="Enable docket formal-logic enrichment.")
     parser.add_argument("--include-router-enrichment", action="store_true", help="Enable router enrichment.")
+    parser.add_argument("--manifest-path", help="Read an existing scan manifest instead of running a new scan.")
+    parser.add_argument("--summary-only", action="store_true", help="When reading --manifest-path, print only a condensed status summary.")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_arg_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
+    if args.manifest_path:
+        manifest = load_scan_manifest(args.manifest_path)
+        payload = summarize_scan_manifest(manifest) if args.summary_only else manifest
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0
+    if not args.scan_root:
+        parser.error("scan_root is required unless --manifest-path is provided")
+    if not args.output_dir:
+        parser.error("--output-dir is required unless --manifest-path is provided")
     manifest = scan_hacc_pdfs_for_dockets(
         args.scan_root,
         output_dir=args.output_dir,

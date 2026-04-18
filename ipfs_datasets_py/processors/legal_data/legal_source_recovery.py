@@ -8,13 +8,16 @@ candidate official sources and recorded in a canonical recovery manifest.
 from __future__ import annotations
 
 import asyncio
+import anyio
 import io
+import types
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import json
 import multiprocessing as mp
 import os
 from pathlib import Path
+import queue as queue_module
 import re
 from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol
 from urllib.parse import urljoin, urlparse
@@ -302,6 +305,129 @@ def _common_crawl_domain_worker(
         queue.put({"results": [], "error": str(exc)})
 
 
+def _blocked_fetch_escalation_worker(
+    queue: Any,
+    *,
+    url: str,
+    title_hint: Optional[str],
+    methods: List[str],
+    timeout_seconds: float,
+) -> None:
+    try:
+        if "jina_reader" in {str(method or "").strip().lower() for method in list(methods or [])}:
+            try:
+                import requests
+
+                reader_url = f"https://r.jina.ai/http://{url}"
+                response = requests.get(
+                    reader_url,
+                    timeout=max(1.0, float(timeout_seconds)),
+                    headers={
+                        "User-Agent": "ipfs-datasets-legal-source-recovery/1.0",
+                        "Accept": "text/markdown,text/plain,*/*;q=0.8",
+                    },
+                )
+                if 200 <= int(response.status_code) < 400 and str(response.text or "").strip():
+                    queue.put(
+                        {
+                            "success": True,
+                            "document": {
+                                "title": str(title_hint or ""),
+                                "text": str(response.text or ""),
+                                "html": "",
+                                "content_type": str(response.headers.get("content-type") or "text/markdown"),
+                                "metadata": {
+                                    "content_type": str(response.headers.get("content-type") or "text/markdown"),
+                                    "reader_url": reader_url,
+                                    "source_url": url,
+                                },
+                                "extraction_provenance": {
+                                    "method": "blocked_fetch_escalation",
+                                    "scraper_method": "jina_reader",
+                                    "status_code": int(response.status_code),
+                                },
+                            },
+                            "errors": [],
+                        }
+                    )
+                    return
+            except Exception:
+                pass
+
+        from ..web_archiving.unified_web_scraper import ScraperConfig, ScraperMethod, UnifiedWebScraper
+
+        parsed_methods: List[ScraperMethod] = []
+        for method_name in list(methods or []):
+            if str(method_name or "").strip().lower() == "jina_reader":
+                continue
+            try:
+                parsed_methods.append(ScraperMethod(str(method_name).strip().lower()))
+            except Exception:
+                continue
+        if not parsed_methods:
+            queue.put({"success": False, "errors": ["no blocked fetch methods configured"]})
+            return
+
+        scraper = UnifiedWebScraper(
+            ScraperConfig(
+                timeout=max(1, int(timeout_seconds)),
+                max_retries=1,
+                retry_delay=0.1,
+                preferred_methods=parsed_methods,
+                fallback_enabled=True,
+                playwright_hydration_wait_ms=max(
+                    500,
+                    int(os.getenv("LEGAL_SOURCE_RECOVERY_PLAYWRIGHT_HYDRATION_WAIT_MS", "1500")),
+                ),
+                playwright_shell_retry_wait_ms=max(
+                    500,
+                    int(os.getenv("LEGAL_SOURCE_RECOVERY_PLAYWRIGHT_SHELL_RETRY_WAIT_MS", "2500")),
+                ),
+                archive_is_submit_on_miss=False,
+                archive_is_submit_wait=False,
+            )
+        )
+        result = scraper.scrape_sync(url)
+        if result is None or not getattr(result, "success", False):
+            queue.put(
+                {
+                    "success": False,
+                    "errors": list(getattr(result, "errors", []) or ["blocked_fetch_escalation_failed"])
+                    if result is not None
+                    else ["blocked_fetch_escalation_returned_no_result"],
+                }
+            )
+            return
+
+        metadata = dict(getattr(result, "metadata", {}) or {})
+        links = list(getattr(result, "links", []) or [])
+        if links:
+            metadata.setdefault("links", links)
+        queue.put(
+            {
+                "success": True,
+                "document": {
+                    "title": str(getattr(result, "title", "") or title_hint or ""),
+                    "text": str(getattr(result, "text", "") or getattr(result, "content", "") or ""),
+                    "html": str(getattr(result, "html", "") or ""),
+                    "content_type": str(metadata.get("content_type") or ""),
+                    "metadata": metadata,
+                    "extraction_provenance": {
+                        "method": "blocked_fetch_escalation",
+                        "scraper_method": str(
+                            getattr(getattr(result, "method_used", None), "value", getattr(result, "method_used", ""))
+                            or ""
+                        ),
+                        "errors": list(getattr(result, "errors", []) or []),
+                    },
+                },
+                "errors": [],
+            }
+        )
+    except Exception as exc:
+        queue.put({"success": False, "errors": [str(exc)]})
+
+
 class _LiveSearcher(Protocol):
     def search(self, query: str, max_results: int = 20, **kwargs: Any) -> Dict[str, Any]:
         ...
@@ -522,14 +648,14 @@ class LegalSourceRecoveryWorkflow:
     @staticmethod
     def _lightweight_fetch_url(url: str, *, title_hint: Optional[str] = None) -> Any:
         """Fetch candidate evidence with requests-only socket timeouts."""
-        import types
-
         try:
             import requests
             from bs4 import BeautifulSoup
+            from requests.exceptions import SSLError
         except Exception as exc:
             return types.SimpleNamespace(success=False, document=None, errors=[exc])
 
+        tls_verify = True
         try:
             response = requests.get(
                 str(url),
@@ -540,6 +666,23 @@ class LegalSourceRecoveryWorkflow:
                 },
                 allow_redirects=True,
             )
+        except SSLError as exc:
+            if not _env_flag("LEGAL_SOURCE_RECOVERY_RETRY_INSECURE_TLS", default=True):
+                return types.SimpleNamespace(success=False, document=None, errors=[exc])
+            try:
+                response = requests.get(
+                    str(url),
+                    timeout=max(1.0, float(_FETCH_TIMEOUT_SECONDS)),
+                    headers={
+                        "User-Agent": "ipfs-datasets-legal-source-recovery/1.0",
+                        "Accept": "text/html,application/xhtml+xml,application/pdf,text/plain,*/*;q=0.8",
+                    },
+                    allow_redirects=True,
+                    verify=False,
+                )
+                tls_verify = False
+            except Exception as retry_exc:
+                return types.SimpleNamespace(success=False, document=None, errors=[retry_exc])
         except Exception as exc:
             return types.SimpleNamespace(success=False, document=None, errors=[exc])
 
@@ -582,9 +725,143 @@ class LegalSourceRecoveryWorkflow:
                 "links": links,
                 "raw_bytes": raw_bytes if raw_bytes and "text" not in content_type and "html" not in content_type else b"",
             },
-            extraction_provenance={"method": "requests_lightweight", "status_code": int(response.status_code)},
+            extraction_provenance={"method": "requests_lightweight", "status_code": int(response.status_code), "tls_verify": tls_verify},
         )
-        return types.SimpleNamespace(success=200 <= int(response.status_code) < 400, document=document, errors=[])
+        success = 200 <= int(response.status_code) < 400
+        errors = [] if success else [types.SimpleNamespace(message=f"http_status_{int(response.status_code)}")]
+        return types.SimpleNamespace(success=success, document=document, errors=errors)
+
+    @staticmethod
+    def _fetch_response_error_text(fetch_response: Any) -> str:
+        errors = getattr(fetch_response, "errors", None) or []
+        parts: List[str] = []
+        for error in errors:
+            if hasattr(error, "message"):
+                parts.append(str(getattr(error, "message") or ""))
+            else:
+                parts.append(str(error or ""))
+        return " ".join(part for part in parts if part).lower()
+
+    @classmethod
+    def _should_escalate_fetch_response(cls, fetch_response: Any) -> bool:
+        if getattr(fetch_response, "success", False):
+            document = getattr(fetch_response, "document", None)
+            if document is None:
+                return True
+            return cls._looks_like_blocked_page(
+                " ".join(
+                    str(value or "")
+                    for value in (
+                        getattr(document, "title", ""),
+                        getattr(document, "text", ""),
+                        getattr(document, "html", ""),
+                    )
+                ),
+                content_type=str(getattr(document, "content_type", "") or ""),
+            )
+        error_text = cls._fetch_response_error_text(fetch_response)
+        return any(
+            marker in error_text
+            for marker in (
+                "http_status_403",
+                "http_status_429",
+                "http_status_503",
+                "cloudflare",
+                "captcha",
+                "access denied",
+                "remote end closed connection",
+                "connection aborted",
+            )
+        )
+
+    @staticmethod
+    def _blocked_fetch_method_order() -> List[str]:
+        raw = str(os.getenv("LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_METHODS") or "").strip()
+        if not raw:
+            raw = "jina_reader,playwright,common_crawl,cloudflare_browser_rendering,wayback_machine"
+        return [item.strip() for item in raw.split(",") if item.strip()]
+
+    @classmethod
+    def _escalated_fetch_url(cls, url: str, *, title_hint: Optional[str] = None) -> Any:
+        timeout_seconds = max(
+            1.0,
+            float(os.getenv("LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_TIMEOUT_SECONDS", str(max(12.0, float(_FETCH_TIMEOUT_SECONDS))))),
+        )
+        methods = cls._blocked_fetch_method_order()
+
+        def _payload_to_response(payload: Dict[str, Any]) -> Any:
+            if not payload.get("success"):
+                return types.SimpleNamespace(success=False, document=None, errors=list(payload.get("errors") or []))
+            document_payload = dict(payload.get("document") or {})
+            return types.SimpleNamespace(
+                success=True,
+                document=types.SimpleNamespace(
+                    title=str(document_payload.get("title") or ""),
+                    text=str(document_payload.get("text") or ""),
+                    html=str(document_payload.get("html") or ""),
+                    content_type=str(document_payload.get("content_type") or ""),
+                    metadata=dict(document_payload.get("metadata") or {}),
+                    extraction_provenance=dict(document_payload.get("extraction_provenance") or {}),
+                ),
+                errors=list(payload.get("errors") or []),
+            )
+
+        if not _env_flag("LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_USE_PROCESS", default=True):
+            queue: Any = mp.Queue(maxsize=1)
+            _blocked_fetch_escalation_worker(
+                queue,
+                url=url,
+                title_hint=title_hint,
+                methods=methods,
+                timeout_seconds=timeout_seconds,
+            )
+            try:
+                return _payload_to_response(dict(queue.get_nowait()))
+            except Exception as exc:
+                return types.SimpleNamespace(success=False, document=None, errors=[exc])
+
+        start_method = str(os.getenv("LEGAL_SOURCE_RECOVERY_BLOCKED_FETCH_PROCESS_START_METHOD") or "").strip()
+        if start_method:
+            context = mp.get_context(start_method)
+        else:
+            available = set(mp.get_all_start_methods())
+            context = mp.get_context("fork" if "fork" in available else "spawn")
+        queue = context.Queue(maxsize=1)
+        process = context.Process(
+            target=_blocked_fetch_escalation_worker,
+            kwargs={
+                "queue": queue,
+                "url": url,
+                "title_hint": title_hint,
+                "methods": methods,
+                "timeout_seconds": timeout_seconds,
+            },
+        )
+        process.start()
+        deadline = datetime.now().timestamp() + timeout_seconds
+        while datetime.now().timestamp() < deadline:
+            try:
+                payload = dict(queue.get(timeout=min(0.2, max(0.01, deadline - datetime.now().timestamp()))))
+                process.join(1)
+                return _payload_to_response(payload)
+            except queue_module.Empty:
+                if not process.is_alive():
+                    break
+            except Exception:
+                break
+
+        process.join(max(0.0, deadline - datetime.now().timestamp()))
+        if process.is_alive():
+            process.terminate()
+            process.join(1)
+            if process.is_alive():
+                process.kill()
+                process.join(1)
+            return types.SimpleNamespace(success=False, document=None, errors=["blocked_fetch_escalation_timeout"])
+        try:
+            return _payload_to_response(dict(queue.get_nowait()))
+        except Exception:
+            return types.SimpleNamespace(success=False, document=None, errors=[f"blocked_fetch_escalation_exit_{process.exitcode}"])
 
     def _candidate_fetch_response(self, url: str, *, title_hint: Optional[str] = None) -> Any:
         fetch_factory = getattr(type(self), "_fetch_api_instance", None)
@@ -598,7 +875,18 @@ class LegalSourceRecoveryWorkflow:
                     "suppress_relocation_search": True,
                 },
             )
-        return self._lightweight_fetch_url(url, title_hint=title_hint)
+        response = self._lightweight_fetch_url(url, title_hint=title_hint)
+        if (
+            _env_flag("LEGAL_SOURCE_RECOVERY_ESCALATE_BLOCKED_FETCH", default=True)
+            and self._should_escalate_fetch_response(response)
+        ):
+            escalated = self._escalated_fetch_url(url, title_hint=title_hint)
+            if getattr(escalated, "success", False):
+                return escalated
+            original_errors = list(getattr(response, "errors", []) or [])
+            original_errors.extend(getattr(escalated, "errors", []) or [])
+            response.errors = original_errors
+        return response
 
     def _patch_manager_instance(self, *, manifest_dir: Path) -> Any:
         if self._patch_manager is not None:
@@ -805,7 +1093,7 @@ class LegalSourceRecoveryWorkflow:
             ),
             (
                 "ilcs",
-                r"\b(?P<il_title>[0-9]+)\s+ILCS\s+(?P<il_act>[0-9]+)/(?P<section>[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)",
+                r"\b(?P<il_title>[0-9]+)\s+ILCS\s+(?P<il_act>[0-9]+)/(?P<section>[0-9A-Za-z]+(?:[.\-][0-9A-Za-z]+)*)",
             ),
             (
                 "pa_cs",
@@ -1166,10 +1454,17 @@ class LegalSourceRecoveryWorkflow:
         timeout_seconds: float,
         **kwargs: Any,
     ) -> Any:
-        return await asyncio.wait_for(
-            asyncio.to_thread(func, **kwargs),
-            timeout=max(1.0, float(timeout_seconds)),
-        )
+        with anyio.fail_after(max(0.001, float(timeout_seconds))):
+            return await anyio.to_thread.run_sync(lambda: func(**kwargs), abandon_on_cancel=True)
+
+    async def _await_with_timeout(self, awaitable: Any, *, timeout_seconds: float) -> Any:
+        try:
+            with anyio.fail_after(max(0.001, float(timeout_seconds))):
+                return await awaitable
+        except RuntimeError as exc:
+            if "no running event loop" in str(exc):
+                raise TimeoutError("awaitable requires an asyncio event loop") from exc
+            raise
 
     async def recover_unresolved_citation(
         self,
@@ -1244,13 +1539,13 @@ class LegalSourceRecoveryWorkflow:
                     engines.append("duckduckgo")
                 backend_status["engines_attempted"] = list(engines)
                 if engines:
-                    multi_engine_payload = await asyncio.wait_for(
+                    multi_engine_payload = await self._await_with_timeout(
                         self._multi_engine_search(
                             query=query,
                             engines=engines,
                             max_results=max_candidates,
                         ),
-                        timeout=_SEARCH_TIMEOUT_SECONDS,
+                        timeout_seconds=_SEARCH_TIMEOUT_SECONDS,
                     )
                     backend_status["multi_engine_used"] = True
                     if str(multi_engine_payload.get("status") or "").lower() == "success":
@@ -1331,13 +1626,13 @@ class LegalSourceRecoveryWorkflow:
         if candidates and archive_top_k > 0:
             archiver = self._archiver_instance()
             try:
-                archive_results = await asyncio.wait_for(
+                archive_results = await self._await_with_timeout(
                     archiver.archive_urls_parallel(
                         [item.url for item in candidates[:archive_top_k]],
                         jurisdiction=jurisdiction_type,
                         state_code=state_code,
                     ),
-                    timeout=_ARCHIVE_TIMEOUT_SECONDS,
+                    timeout_seconds=_ARCHIVE_TIMEOUT_SECONDS,
                 )
             except asyncio.TimeoutError:
                 backend_status["archive_search_error"] = (
@@ -1559,6 +1854,8 @@ class LegalSourceRecoveryWorkflow:
             state_code=state_code,
             discovered_from_url=discovered_from_url,
         )
+        if source == "citation_url_hint":
+            score += 10
         existing = storage.get(normalized_url)
         if existing is None:
             storage[normalized_url] = RecoveredCandidateFile(
@@ -1736,7 +2033,11 @@ class LegalSourceRecoveryWorkflow:
             cleaned_section = str(section or "").strip().strip(".")
             if cleaned_section and cleaned_section not in fragments:
                 fragments.append(cleaned_section)
-        numeric_sections = re.findall(r"\b[0-9][0-9A-Za-z]*(?:[.:\-][0-9A-Za-z]+)+(?:\([a-z0-9]+\))*\b", text, flags=re.IGNORECASE)
+        numeric_sections = re.findall(
+            r"\b[0-9][0-9A-Za-z]*(?:[.:\-][0-9A-Za-z]*[0-9][0-9A-Za-z]*)+(?:\([a-z0-9]+\))*\b",
+            text,
+            flags=re.IGNORECASE,
+        )
         for section in numeric_sections:
             cleaned_section = str(section or "").strip().strip(".")
             if cleaned_section and cleaned_section not in fragments:
@@ -1810,7 +2111,8 @@ class LegalSourceRecoveryWorkflow:
         no_result_markers = (
             "no matches",
             "no results",
-            "not found",
+            "page not found",
+            "file not found",
             "does not exist",
             "invalid section",
             "unable to locate",
@@ -1818,9 +2120,8 @@ class LegalSourceRecoveryWorkflow:
             "there are no",
             "no law information found",
             "your search did not match",
-            "cannot be found",
         )
-        no_result_detected = any(marker in hay for marker in no_result_markers)
+        no_result_marker_present = any(marker in hay for marker in no_result_markers)
         exact_citation_present = any(
             str(value or "").strip() and cls._fragment_in_text(str(value or ""), hay)
             for value in (citation_text, normalized_citation)
@@ -1833,6 +2134,7 @@ class LegalSourceRecoveryWorkflow:
         )
         multi_fragment_present = len(set(matched_fragments)) >= 2
         legal_body_signal = cls._has_legal_body_signal(source_text)
+        no_result_detected = bool(no_result_marker_present and not (section_fragment_present and legal_body_signal))
         confirmed = bool(
             not no_result_detected
             and (
@@ -1869,6 +2171,7 @@ class LegalSourceRecoveryWorkflow:
             "title_url_section_fragment_present": title_url_section_fragment_present,
             "multi_fragment_present": multi_fragment_present,
             "legal_body_signal": legal_body_signal,
+            "no_result_marker_present": no_result_marker_present,
             "no_result_detected": no_result_detected,
             "content_type": content_type,
             "confirmed": confirmed,
@@ -1885,6 +2188,7 @@ class LegalSourceRecoveryWorkflow:
             "checking your browser",
             "access denied",
             "request blocked",
+            "request access",
             "captcha",
             "please verify you are human",
         )
@@ -1963,6 +2267,7 @@ class LegalSourceRecoveryWorkflow:
         candidate_file_list = list(candidate_files)
         for index, item in enumerate(candidate_file_list[:_MAX_CANDIDATE_FETCHES], start=1):
             updated = RecoveredCandidateFile(**asdict(item))
+            escalation_errors: List[str] = []
             try:
                 fetch_response = self._candidate_fetch_response(updated.url, title_hint=updated.title)
             except Exception as exc:
@@ -1979,23 +2284,32 @@ class LegalSourceRecoveryWorkflow:
                 materialized.append(updated)
                 continue
 
-            metadata = dict(getattr(document, "metadata", {}) or {})
-            content_type = str(getattr(document, "content_type", "") or metadata.get("content_type") or "").strip() or None
-            raw_bytes = metadata.get("raw_bytes")
-            has_bytes = isinstance(raw_bytes, (bytes, bytearray)) and len(raw_bytes) > 0
-            document_text = str(getattr(document, "text", "") or "")
-            document_html = str(getattr(document, "html", "") or metadata.get("html", "") or "")
-            if has_bytes and not document_text and str(content_type or "").split(";", 1)[0].strip().lower() == "application/pdf":
-                document_text = self._extract_pdf_text(raw_bytes)
-            suffix = self._artifact_suffix(url=updated.url, content_type=content_type, has_bytes=has_bytes)
-            artifact_base = f"{index:02d}_{_slugify(updated.title or Path(urlparse(updated.url).path).stem or 'candidate-file', limit=48)}"
-            artifact_path = artifacts_dir / f"{artifact_base}{suffix}"
+            def _unpack_document(candidate_document: Any) -> tuple[Dict[str, Any], Optional[str], Any, bool, str, str]:
+                candidate_metadata = dict(getattr(candidate_document, "metadata", {}) or {})
+                candidate_content_type = (
+                    str(getattr(candidate_document, "content_type", "") or candidate_metadata.get("content_type") or "").strip()
+                    or None
+                )
+                candidate_raw_bytes = candidate_metadata.get("raw_bytes")
+                candidate_has_bytes = isinstance(candidate_raw_bytes, (bytes, bytearray)) and len(candidate_raw_bytes) > 0
+                candidate_text = str(getattr(candidate_document, "text", "") or "")
+                candidate_html = str(getattr(candidate_document, "html", "") or candidate_metadata.get("html", "") or "")
+                if (
+                    candidate_has_bytes
+                    and not candidate_text
+                    and str(candidate_content_type or "").split(";", 1)[0].strip().lower() == "application/pdf"
+                ):
+                    candidate_text = self._extract_pdf_text(candidate_raw_bytes)
+                return (
+                    candidate_metadata,
+                    candidate_content_type,
+                    candidate_raw_bytes,
+                    candidate_has_bytes,
+                    candidate_text,
+                    candidate_html,
+                )
 
-            if has_bytes:
-                artifact_path.write_bytes(bytes(raw_bytes))
-            else:
-                artifact_text = document_text or document_html
-                artifact_path.write_text(artifact_text, encoding="utf-8")
+            metadata, content_type, raw_bytes, has_bytes, document_text, document_html = _unpack_document(document)
 
             extraction_recipe = self._build_extraction_recipe(
                 url=updated.url,
@@ -2014,6 +2328,64 @@ class LegalSourceRecoveryWorkflow:
                 text=document_text,
                 html=document_html,
             )
+            provenance = dict(getattr(document, "extraction_provenance", {}) or {})
+            if (
+                not candidate_validation.get("confirmed")
+                and _env_flag("LEGAL_SOURCE_RECOVERY_ESCALATE_UNCONFIRMED_FETCH", default=True)
+                and provenance.get("method") != "blocked_fetch_escalation"
+            ):
+                escalated_response = self._escalated_fetch_url(updated.url, title_hint=updated.title)
+                escalated_document = getattr(escalated_response, "document", None)
+                if getattr(escalated_response, "success", False) and escalated_document is not None:
+                    (
+                        escalated_metadata,
+                        escalated_content_type,
+                        escalated_raw_bytes,
+                        escalated_has_bytes,
+                        escalated_text,
+                        escalated_html,
+                    ) = _unpack_document(escalated_document)
+                    escalated_validation = self._validate_candidate_content(
+                        citation_text=citation_text,
+                        normalized_citation=normalized_citation,
+                        url=updated.url,
+                        title=updated.title,
+                        content_type=escalated_content_type,
+                        text=escalated_text,
+                        html=escalated_html,
+                    )
+                    if escalated_validation.get("confirmed"):
+                        document = escalated_document
+                        metadata = escalated_metadata
+                        content_type = escalated_content_type
+                        raw_bytes = escalated_raw_bytes
+                        has_bytes = escalated_has_bytes
+                        document_text = escalated_text
+                        document_html = escalated_html
+                        candidate_validation = escalated_validation
+                        extraction_recipe = self._build_extraction_recipe(
+                            url=updated.url,
+                            title=updated.title,
+                            content_type=content_type,
+                            text=document_text,
+                            html=document_html,
+                            has_bytes=has_bytes,
+                        )
+                else:
+                    escalation_errors = [
+                        str(getattr(error, "message", error))
+                        for error in (getattr(escalated_response, "errors", None) or [])
+                    ]
+
+            suffix = self._artifact_suffix(url=updated.url, content_type=content_type, has_bytes=has_bytes)
+            artifact_base = f"{index:02d}_{_slugify(updated.title or Path(urlparse(updated.url).path).stem or 'candidate-file', limit=48)}"
+            artifact_path = artifacts_dir / f"{artifact_base}{suffix}"
+
+            if has_bytes:
+                artifact_path.write_bytes(bytes(raw_bytes))
+            else:
+                artifact_text = document_text or document_html
+                artifact_path.write_text(artifact_text, encoding="utf-8")
 
             metadata_path = artifacts_dir / f"{artifact_base}.json"
             metadata_payload = {
@@ -2030,6 +2402,7 @@ class LegalSourceRecoveryWorkflow:
                 "extraction_provenance": dict(getattr(document, "extraction_provenance", {}) or {}),
                 "extraction_recipe": extraction_recipe,
                 "candidate_validation": candidate_validation,
+                "escalation_errors": escalation_errors,
             }
             metadata_path.write_text(json.dumps(metadata_payload, indent=2, sort_keys=True), encoding="utf-8")
 

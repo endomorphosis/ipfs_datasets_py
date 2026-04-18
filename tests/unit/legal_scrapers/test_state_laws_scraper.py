@@ -37,7 +37,7 @@ def test_state_laws_scraper_builds_recovery_section_urls():
     )
     assert (
         scraper_module.build_state_law_section_url("PA", "5328", code_name="23 Pa.C.S.")
-        == "https://www.palegis.us/statutes/consolidated/view-statute?CHAPTER=053.&DIV=00.&SECTION=028.&SUBSCTN=000.&TTL=23"
+        == "https://www.legis.state.pa.us/WU01/LI/LI/CT/HTM/23/00.053.028.000..HTM"
     )
     assert (
         scraper_module.build_state_law_section_url("AZ", "13-1203", code_name="Ariz. Rev. Stat.")
@@ -45,7 +45,7 @@ def test_state_laws_scraper_builds_recovery_section_urls():
     )
     assert (
         scraper_module.build_state_law_section_url("IN", "35-42-2-1", code_name="Ind. Code")
-        == "https://iga.in.gov/laws/2026/ic/titles/35#35-42-2-1"
+        == "https://law.justia.com/codes/indiana/title-35/article-42/chapter-2/section-35-42-2-1/"
     )
     assert (
         scraper_module.build_state_law_section_url("KS", "21-5413", code_name="Kan. Stat.")
@@ -83,6 +83,14 @@ def test_state_laws_scraper_builds_recovery_section_urls():
         scraper_module.build_state_law_section_url("WA", "9A.36.041", code_name="Wash. Rev. Code")
         == "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.36.041"
     )
+    assert (
+        scraper_module.build_state_law_section_url("MI", "750.81", code_name="Mich. Comp. Laws")
+        == "https://legislature.mi.gov/Laws/MCL?objectName=mcl-750-81"
+    )
+    assert (
+        scraper_module.build_state_law_section_url("WI", "940.19", code_name="Wis. Stat.")
+        == "https://docs.legis.wisconsin.gov/statutes/statutes/940#940.19"
+    )
 
 
 def test_state_laws_scraper_recovery_section_url_edge_cases():
@@ -111,12 +119,12 @@ def test_state_laws_scraper_builds_unknown_backlog_section_urls():
         ("KY", "508.030", "Ky. Rev. Stat."): "https://law.justia.com/codes/kentucky/chapter-508/section-508-030/",
         ("LA", "14:35", "La. Rev. Stat."): "https://legis.la.gov/legis/Law.aspx?d=78452",
         ("MD", "3-203", "Md. Code"): "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gcr&section=3-203",
-        ("MS", "97-3-7", "Miss. Code"): "https://billstatus.ls.state.ms.us/documents/2024/html/code_sections/097/00030007.htm",
+        ("MS", "97-3-7", "Miss. Code"): "https://law.justia.com/codes/mississippi/title-97/chapter-3/in-general/section-97-3-7/",
         ("NH", "631:2-a", "N.H. Rev. Stat."): "https://gc.nh.gov/rsa/html/LXII/631/631-2-a.htm",
         ("NJ", "2C:12-1", "N.J. Stat."): "https://law.justia.com/codes/new-jersey/title-2c/section-2c-12-1/",
         ("NM", "30-3-4", "N.M. Stat."): "https://law.justia.com/codes/new-mexico/chapter-30/article-3/section-30-3-4/",
         ("ND", "12.1-17-01", "N.D. Cent. Code"): "https://ndlegis.gov/cencode/t12-1c17.pdf",
-        ("OK", "21-644", "Okla. Stat."): "https://www.oklegislature.gov/osstatuestitle.html?title=21",
+        ("OK", "21-644", "Okla. Stat."): "https://www.oklegislature.gov/OK_Statutes/CompleteTitles/os21.pdf",
         ("TN", "39-13-101", "Tenn. Code"): "https://law.justia.com/codes/tennessee/title-39/chapter-13/part-1/section-39-13-101/",
         ("WY", "6-2-501", "Wyo. Stat."): "https://wyoleg.gov/statutes/compress/title06.pdf",
     }

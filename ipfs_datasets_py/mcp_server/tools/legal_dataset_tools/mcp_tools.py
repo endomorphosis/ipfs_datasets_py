@@ -958,6 +958,8 @@ CAP_LEGAL_DATASET_TOOL_SPECS: List[Dict[str, Any]] = [
             "hf_revision": {"type": "string", "required": False},
             "hf_cache_dir": {"type": "string", "required": False},
             "force_hf_download": {"type": "boolean", "default": False},
+            "publish_merged_to_hf": {"type": "boolean", "default": False},
+            "hf_commit_message": {"type": "string", "required": False},
         },
         "category": "legal_dataset_tools",
     },
