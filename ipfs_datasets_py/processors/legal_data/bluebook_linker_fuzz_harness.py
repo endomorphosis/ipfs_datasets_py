@@ -1024,6 +1024,7 @@ async def run_bluebook_linker_fuzz_harness(
     publish_to_hf: bool = False,
     hf_token: Optional[str] = None,
     merge_recovered_rows: bool = False,
+    hydrate_merge_from_hf: bool = False,
     seed_from_corpora: bool = False,
     seed_only: bool = False,
     seed_examples_per_corpus: int = 2,
@@ -1120,7 +1121,14 @@ async def run_bluebook_linker_fuzz_harness(
 
                 manifest_path = str(recovery.get("manifest_path") or "").strip()
                 if merge_recovered_rows and manifest_path:
-                    merge_report = active_merge(manifest_path)
+                    if hydrate_merge_from_hf:
+                        merge_report = active_merge(
+                            manifest_path,
+                            hydrate_from_hf=True,
+                            hf_token=hf_token,
+                        )
+                    else:
+                        merge_report = active_merge(manifest_path)
                     merge_reports.append(dict(merge_report))
                     if str(merge_report.get("status") or "").lower() == "success":
                         merged_count += 1
@@ -1149,6 +1157,7 @@ async def run_bluebook_linker_fuzz_harness(
         "exhaustive": bool(exhaustive),
         "publish_to_hf": bool(publish_to_hf),
         "merge_recovered_rows": bool(merge_recovered_rows),
+        "hydrate_merge_from_hf": bool(hydrate_merge_from_hf),
         "seed_from_corpora": bool(seed_from_corpora),
         "seed_only": bool(seed_only),
         "seeded_example_count": len(seeded_examples),

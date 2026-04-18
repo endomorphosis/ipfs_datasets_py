@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from io import BytesIO
 from pathlib import Path
 import json
 import os
@@ -772,6 +773,10 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
         formal_logic_max_documents: Optional[int] = None,
         max_pdf_pages: Optional[int] = None,
         max_pdf_chars: Optional[int] = None,
+        enable_ocr: bool = False,
+        ocr_dpi: int = 200,
+        ocr_lang: str = "eng",
+        include_failed_pdf_documents: bool = True,
     ) -> WorkspaceDatasetObject:
         """Build a workspace dataset from local PDF files."""
 
@@ -783,8 +788,15 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
         for index, path in enumerate(sorted(resolved_paths, key=lambda item: str(item)), start=1):
             if not path.exists() or not path.is_file() or path.suffix.lower() != ".pdf":
                 continue
-            extraction = _extract_pdf_text(path, max_pages=max_pdf_pages)
+            extraction = _extract_pdf_text(
+                path,
+                max_pages=max_pdf_pages,
+                enable_ocr=enable_ocr,
+                ocr_dpi=ocr_dpi,
+                ocr_lang=ocr_lang,
+            )
             text = str(extraction.get("text") or "").strip()
+            original_text_length = len(text)
             if max_pdf_chars is not None and int(max_pdf_chars) > 0:
                 text = text[: int(max_pdf_chars)]
             if not text:
@@ -793,12 +805,15 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                         "path": str(path),
                         "error": str(extraction.get("error") or "no_text_extracted"),
                         "page_count": int(extraction.get("page_count") or 0),
+                        "backend": str(extraction.get("backend") or ""),
                     }
                 )
-                continue
+                if not include_failed_pdf_documents:
+                    continue
 
             collection_id = _safe_identifier(path.parent.name or "pdfs")
             document_id = _safe_identifier(f"{path.parent.name}-{path.stem}-{index}") or f"pdf_{index}"
+            extraction_status = "text_extracted" if text else "metadata_only"
             documents.append(
                 {
                     "id": document_id,
@@ -819,9 +834,15 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
                         "text_extraction": {
                             "source": str(extraction.get("backend") or "pypdf"),
                             "backend": str(extraction.get("backend") or "pypdf"),
+                            "status": extraction_status,
+                            "ocr_enabled": bool(enable_ocr),
+                            "ocr_dpi": int(ocr_dpi or 0) if enable_ocr else 0,
+                            "ocr_lang": str(ocr_lang or "") if enable_ocr else "",
                             "page_count": int(extraction.get("page_count") or 0),
                             "character_count": len(text),
+                            "original_character_count": original_text_length,
                             "truncated": bool(max_pdf_chars is not None and int(max_pdf_chars) > 0 and len(str(extraction.get("text") or "")) > len(text)),
+                            "errors": list(extraction.get("errors") or [])[:10],
                         },
                     },
                 }
@@ -855,10 +876,16 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
         metadata["pdf_ingest"] = {
             "input_pdf_count": len(resolved_paths),
             "ingested_document_count": len(documents),
+            "text_document_count": len([item for item in documents if str(item.get("text") or "").strip()]),
+            "metadata_only_document_count": len([item for item in documents if not str(item.get("text") or "").strip()]),
             "extraction_error_count": len(extraction_errors),
             "extraction_errors": extraction_errors[:25],
             "max_pdf_pages": max_pdf_pages,
             "max_pdf_chars": max_pdf_chars,
+            "ocr_enabled": bool(enable_ocr),
+            "ocr_dpi": int(ocr_dpi or 0) if enable_ocr else 0,
+            "ocr_lang": str(ocr_lang or "") if enable_ocr else "",
+            "include_failed_pdf_documents": bool(include_failed_pdf_documents),
         }
         if include_formal_logic and documents:
             formal_logic = _build_workspace_formal_logic_metadata(
@@ -897,6 +924,10 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
         formal_logic_max_documents: Optional[int] = None,
         max_pdf_pages: Optional[int] = None,
         max_pdf_chars: Optional[int] = None,
+        enable_ocr: bool = False,
+        ocr_dpi: int = 200,
+        ocr_lang: str = "eng",
+        include_failed_pdf_documents: bool = True,
         glob_pattern: str = "*.pdf",
         exclude_dirs: Optional[Sequence[str]] = None,
     ) -> WorkspaceDatasetObject:
@@ -925,6 +956,10 @@ class WorkspaceDatasetBuilder(DocketDatasetBuilder):
             formal_logic_max_documents=formal_logic_max_documents,
             max_pdf_pages=max_pdf_pages,
             max_pdf_chars=max_pdf_chars,
+            enable_ocr=enable_ocr,
+            ocr_dpi=ocr_dpi,
+            ocr_lang=ocr_lang,
+            include_failed_pdf_documents=include_failed_pdf_documents,
         )
 
     def preview_retrieval_index(
@@ -1183,7 +1218,14 @@ def _normalize_workspace_title(title: str | None) -> str:
     return str(title or "").strip().lower()
 
 
-def _extract_pdf_text(path: Path, *, max_pages: Optional[int] = None) -> Dict[str, Any]:
+def _extract_pdf_text(
+    path: Path,
+    *,
+    max_pages: Optional[int] = None,
+    enable_ocr: bool = False,
+    ocr_dpi: int = 200,
+    ocr_lang: str = "eng",
+) -> Dict[str, Any]:
     backends: List[str] = []
     errors: List[str] = []
     page_texts: List[str] = []
@@ -1244,10 +1286,63 @@ def _extract_pdf_text(path: Path, *, max_pages: Optional[int] = None) -> Dict[st
         except Exception as exc:
             errors.append(f"pymupdf:{exc}")
 
+    if enable_ocr and not "".join(page_texts).strip():
+        ocr_result = _ocr_pdf_text(path, max_pages=max_pages, dpi=ocr_dpi, lang=ocr_lang)
+        errors.extend(list(ocr_result.get("errors") or []))
+        page_count = page_count or int(ocr_result.get("page_count") or 0)
+        if str(ocr_result.get("text") or "").strip():
+            return {
+                "text": str(ocr_result.get("text") or "").strip(),
+                "page_count": page_count,
+                "backend": str(ocr_result.get("backend") or "tesseract_ocr"),
+                "errors": errors,
+                "error": "; ".join(errors[-3:]),
+            }
+
     return {
         "text": "\n\n".join(text.strip() for text in page_texts if text and text.strip()).strip(),
         "page_count": page_count,
         "backend": backends[-1] if backends else "",
+        "errors": errors,
+        "error": "; ".join(errors[-3:]),
+    }
+
+
+def _ocr_pdf_text(
+    path: Path,
+    *,
+    max_pages: Optional[int] = None,
+    dpi: int = 200,
+    lang: str = "eng",
+) -> Dict[str, Any]:
+    errors: List[str] = []
+    page_texts: List[str] = []
+    page_count = 0
+    try:
+        import fitz  # type: ignore
+        from PIL import Image  # type: ignore
+        import pytesseract  # type: ignore
+
+        document = fitz.open(str(path))
+        page_count = len(document)
+        rendered_page_count = page_count
+        if max_pages is not None:
+            rendered_page_count = min(page_count, max(0, int(max_pages)))
+        scale = max(72, int(dpi or 200)) / 72
+        matrix = fitz.Matrix(scale, scale)
+        for page_index in range(rendered_page_count):
+            try:
+                pixmap = document[page_index].get_pixmap(matrix=matrix, alpha=False)
+                image = Image.open(BytesIO(pixmap.tobytes("png")))
+                page_texts.append(str(pytesseract.image_to_string(image, lang=str(lang or "eng")) or ""))
+            except Exception as exc:
+                errors.append(f"tesseract_ocr_page_error:{exc}")
+    except Exception as exc:
+        errors.append(f"tesseract_ocr:{exc}")
+    return {
+        "text": "\n\n".join(text.strip() for text in page_texts if text and text.strip()).strip(),
+        "page_count": page_count,
+        "backend": "tesseract_ocr",
         "errors": errors,
         "error": "; ".join(errors[-3:]),
     }
@@ -1654,6 +1749,10 @@ def ingest_workspace_pdf_directory(
     formal_logic_max_documents: Optional[int] = None,
     max_pdf_pages: Optional[int] = None,
     max_pdf_chars: Optional[int] = None,
+    enable_ocr: bool = False,
+    ocr_dpi: int = 200,
+    ocr_lang: str = "eng",
+    include_failed_pdf_documents: bool = True,
     glob_pattern: str = "*.pdf",
     exclude_dirs: Optional[Sequence[str]] = None,
 ) -> Dict[str, Any]:
@@ -1667,6 +1766,10 @@ def ingest_workspace_pdf_directory(
         formal_logic_max_documents=formal_logic_max_documents,
         max_pdf_pages=max_pdf_pages,
         max_pdf_chars=max_pdf_chars,
+        enable_ocr=enable_ocr,
+        ocr_dpi=ocr_dpi,
+        ocr_lang=ocr_lang,
+        include_failed_pdf_documents=include_failed_pdf_documents,
         glob_pattern=glob_pattern,
         exclude_dirs=exclude_dirs,
     )

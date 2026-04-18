@@ -15,6 +15,7 @@ Requires-Dist: ddgs>=9.11.2
 Requires-Dist: google-api-python-client>=2.192.0
 Requires-Dist: cloudscraper>=1.2.71
 Requires-Dist: playwright>=1.40.0
+Requires-Dist: jsonschema>=4.0.0
 Requires-Dist: cfscrape>=2.1.1; python_version < "3.12"
 Requires-Dist: nltk>=3.8.1
 Requires-Dist: pdfplumber>=0.11.7
@@ -56,6 +57,8 @@ Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "vect
 Requires-Dist: scikit-learn<2.0.0,>=1.3.0; extra == "vectors"
 Requires-Dist: qdrant-client>=1.0.0; extra == "vectors"
 Requires-Dist: elasticsearch>=8.0.0; extra == "vectors"
+Provides-Extra: groth16
+Requires-Dist: jsonschema>=4.0.0; extra == "groth16"
 Provides-Extra: scraping
 Requires-Dist: beautifulsoup4<5.0.0,>=4.12.0; extra == "scraping"
 Requires-Dist: selenium<4.16.0,>=4.15.0; extra == "scraping"
@@ -85,6 +88,7 @@ Requires-Dist: plotly>=5.9.0; extra == "all"
 Requires-Dist: rdflib>=6.0.0; extra == "all"
 Requires-Dist: aiohttp>=3.8.0; extra == "all"
 Requires-Dist: python-docx>=1.1.2; extra == "all"
+Requires-Dist: jsonschema>=4.0.0; extra == "all"
 Requires-Dist: sentence-transformers<6.0.0,>=3.0.0; extra == "all"
 Requires-Dist: faiss-cpu>=1.7.0; platform_system == "Windows" and extra == "all"
 Requires-Dist: faiss-cpu>=1.8.0; platform_system != "Windows" and extra == "all"
@@ -164,6 +168,11 @@ pip install -e ".[all]"  # All features
 pip install -e ".[ml]"   # ML/AI features only
 ```
 
+The base install intentionally excludes the third-party `brave-search` package.
+Its currently installable release depends on an older `httpx` range that
+conflicts with the MCP/FastMCP stack used by this workspace. If you need Brave
+Search specifically, install it in a separate optional environment.
+
 ### Basic Usage
 
 ```python
@@ -222,6 +231,95 @@ ipfs-datasets tools run dataset_tools load_dataset --source squad
 # Alternative execution
 ipfs-datasets tools execute dataset_tools load_dataset --source squad --split train
 ```
+
+### Docket Dataset Audit
+
+```bash
+# Auto-detect a local docket directory, JSON file, packaged bundle, or CourtListener URL/id
+ipfs-datasets docket --input-type auto --input-path /path/to/docket_dir --output /tmp/docket_dataset.json
+
+# Hint auto-detection when an unlabeled export JSON should be labeled as PACER or Tyler Host
+ipfs-datasets docket --input-type auto --input-path /path/to/normalized_export.json --source-type-hint pacer --json
+
+# Import a docket JSON and emit citation audit (including EU/member-state citations)
+ipfs-datasets docket --input-type json --input-path /path/to/docket.json --citation-source-audit --json
+
+# Import a normalized PACER export directory or JSON payload
+ipfs-datasets docket --input-type pacer --input-path /path/to/pacer_export --case-name "Doe v. Example" --json
+
+# Import a raw PACER docket HTML file
+ipfs-datasets docket --input-type pacer --input-path /path/to/pacer_docket.html --json
+
+# Import a normalized Tyler Host export JSON or directory
+ipfs-datasets docket --input-type tyler_host --input-path /path/to/tyler_export.json --court "State Court" --json
+
+# Import a wrapped PACER or Tyler export JSON without an explicit hint when nested source_type is present
+ipfs-datasets docket --input-type auto --input-path /path/to/wrapped_export.json --json
+
+# Tune EU/member-state citation audit extraction
+ipfs-datasets docket --input-type json --input-path /path/to/docket.json \
+  --citation-source-audit --eu-citation-language en --eu-citation-max-documents 200 --json
+```
+
+Normalized PACER/Tyler Host input shape:
+
+```json
+{
+  "docket_id": "1:24-cv-1001",
+  "case_name": "Doe v. Example",
+  "court": "D. Example",
+  "source_type": "pacer",
+  "case_number": "1:24-cv-1001",
+  "documents": [
+    {
+      "id": "doc_1",
+      "title": "Complaint",
+      "text": "Complaint text or extracted PDF text.",
+      "date_filed": "2024-01-10",
+      "document_number": "1",
+      "source_url": "file:///exports/complaint.pdf",
+      "metadata": {
+        "source_path": "/exports/complaint.pdf",
+        "text_extraction": {"source": "directory_pdf"}
+      }
+    }
+  ],
+  "plaintiff_docket": [],
+  "defendant_docket": [],
+  "authorities": []
+}
+```
+
+Also accepted:
+
+- Wrapped JSON envelopes such as `{"result": {"source_type": "pacer", "case": {...}}}` or `{"result": {"source_type": "tyler_host", "case": {...}}}`.
+- Tyler-style camelCase keys such as `caseNumber`, `caseTitle`, `courtName`, `docketEntries`, `documentTitle`, `filedDate`, `docNumber`, and `documentUrl`.
+- PACER HTML files, including docket tables with extra columns, links, and multiline entry text.
+
+For local export folders, the docket CLI can ingest `.txt`, `.md`, `.json`, and `.pdf` documents. PDF folders are post-processed to extract text and detect case numbers from caption text when available.
+The `pacer` input type also accepts raw PACER docket HTML files and normalizes docket rows into document records.
+Wrapped PACER/Tyler JSON can also be auto-detected without `--source-type-hint` when nested `source_type` metadata is present under `result`, `case`, `data`, or `payload`.
+Use `--source-type-hint pacer` or `--source-type-hint tyler_host` with `--input-type auto` when an upstream JSON export does not carry any source label.
+
+See `docs/guides/DOCKET_CITATION_AUDIT.md` for audit payload schemas.
+See `docs/guides/legal_data/DOCKET_SOURCE_TEMPLATE_GUIDE.md` for public PACER and portal-parser template references that can be used when building raw-source adapters.
+
+### Workspace Dataset Bundles
+
+```bash
+# Export a workspace dataset bundle (single parquet) from a JSON workspace payload
+ipfs-datasets workspace --action export --input-path /path/to/workspace.json \
+  --output-parquet /tmp/workspace_bundle.parquet --json
+
+# Package a workspace dataset bundle into chain-loadable parquet + optional CAR artifacts
+ipfs-datasets workspace --action package --input-path /path/to/discord_export.json \
+  --output-dir /tmp/workspace_bundle --package-name workspace_bundle --json
+
+# Inspect a packaged workspace bundle summary
+ipfs-datasets workspace --action package-summary --input-path /tmp/workspace_bundle/bundle_manifest.json --json
+```
+
+See `docs/guides/legal_data/WORKSPACE_DATASET_BUNDLES.md` for the full bundle lifecycle guide.
 
 ### VSCode CLI Integration
 

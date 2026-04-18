@@ -183,6 +183,55 @@ def test_candidate_file_ranking_prefers_exact_citation_url_over_generic_links():
     assert files[0].url == "https://statutes.capitol.texas.gov/Docs/FA/htm/FA.153.htm#153.002"
 
 
+def test_candidate_content_validation_accepts_official_section_page_without_full_bluebook_text():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="Ariz. Code § 13-1203",
+        normalized_citation="Ariz. Code § 13-1203",
+        url="https://www.azleg.gov/ars/13/01203.htm",
+        title="13-1203 - Assault; classification",
+        content_type="text/html",
+        text=(
+            "13-1203. Assault; classification. A person commits assault by "
+            "intentionally, knowingly or recklessly causing physical injury."
+        ),
+        html="",
+    )
+
+    assert validation["confirmed"] is True
+    assert validation["section_fragment_present"] is True
+    assert validation["title_url_section_fragment_present"] is True
+    assert validation["legal_body_signal"] is True
+
+
+def test_candidate_content_validation_rejects_search_shell_with_only_url_section():
+    validation = LegalSourceRecoveryWorkflow._validate_candidate_content(
+        citation_text="Cal. Civ. Code § 999999",
+        normalized_citation="Cal. Civ. Code § 999999",
+        url="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CIV&sectionNum=999999",
+        title="California Codes Text Search",
+        content_type="text/html",
+        text="California Codes Text Search Section Number 999999 Search code text.",
+        html="",
+    )
+
+    assert validation["confirmed"] is False
+    assert validation["section_fragment_present"] is True
+    assert validation["title_url_section_fragment_present"] is True
+    assert validation["legal_body_signal"] is False
+
+
+def test_citation_validation_fragments_ignore_reporter_abbreviation_parts():
+    fragments = LegalSourceRecoveryWorkflow._citation_validation_fragments(
+        citation_text="18 Pa.C.S. § 2701",
+        normalized_citation="18 Pa.C.S. § 2701",
+    )
+
+    assert "2701" in fragments
+    assert "Pa.C.S" not in fragments
+    assert "C" not in fragments
+    assert "S" not in fragments
+
+
 def test_scraper_patch_source_prefers_candidate_url_over_unblock_interstitial():
     source_url = LegalSourceRecoveryWorkflow._preferred_scraper_patch_source_url(
         primary_file=RecoveredCandidateFile(

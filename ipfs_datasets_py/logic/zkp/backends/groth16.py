@@ -1,6 +1,7 @@
 """Groth16 backend entrypoint.
 
-This module intentionally remains **fail-closed by default**.
+This module uses the repository's Rust Groth16 backend by default when the
+compiled binary is present.
 
 Current state:
 - The repository includes a Rust-based Groth16 implementation accessed via
@@ -8,12 +9,12 @@ Current state:
 - The high-level `ZKPProver`/`ZKPVerifier` API uses the backend protocol defined
     in `backends/__init__.py` (theorem + private axioms → `ZKPProof`).
 
-To avoid accidental production usage, this backend only enables the Rust FFI
-path when explicitly opted-in via environment variable.
+To avoid falling back to insecure proofs, this backend fails closed when the
+Rust FFI binary or proving artifacts are unavailable.
 
-Opt-in:
-- Set `IPFS_DATASETS_ENABLE_GROTH16=1` to enable proof generation/verification
-    through the Rust binary (if present).
+Opt-out:
+- Set `IPFS_DATASETS_ENABLE_GROTH16=0` to disable proof generation/verification
+    through the Rust binary.
 
 Determinism:
 - Pass `metadata={"seed": <u64>}` to `ZKPProver.generate_proof(...)` (or this backend's
@@ -21,8 +22,9 @@ Determinism:
 - For test vectors, `GROTH16_BACKEND_DETERMINISTIC=1` may also force stable timestamps
     in the Rust CLI output when supported.
 
-When not enabled (default):
-- Backend selection works, but `generate_proof`/`verify_proof` raise `ZKPError`.
+When the Rust binary is missing:
+- Backend selection works, but `generate_proof`/`verify_proof` raise `ZKPError`
+    with installer/build instructions.
 """
 
 from __future__ import annotations
@@ -57,7 +59,7 @@ class Groth16Backend:
     binary_path: Optional[str] = None
 
     def _enabled(self) -> bool:
-        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() in {"1", "true", "TRUE", "yes", "YES"}
+        return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "1").strip().lower() not in {"0", "false", "no", "off", ""}
 
     def _ffi(self):
         # Import lazily to keep imports quiet and lightweight.
@@ -68,9 +70,8 @@ class Groth16Backend:
     def generate_proof(self, theorem: str, private_axioms: list[str], metadata: dict[str, Any]) -> ZKPProof:
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by default. "
-                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving, "
-                "or use the default 'simulated' backend."
+                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
+                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI proving."
             )
 
         if not theorem:
@@ -115,14 +116,18 @@ class Groth16Backend:
             return self._ffi().generate_proof(json.dumps(witness), seed=seed)
         except Exception as e:
             # Convert backend failures to ZKPError (fail-closed).
-            raise ZKPError(f"Groth16 proof generation failed: {e}")
+            raise ZKPError(
+                "Groth16 proof generation failed. Install/build the bundled backend with "
+                "`pip install -e .[groth16]` from the ipfs_datasets_py package, or run "
+                "`ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/build.sh`. "
+                f"Original error: {e}"
+            )
 
     def verify_proof(self, proof: ZKPProof) -> bool:
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by default. "
-                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification, "
-                "or use the default 'simulated' backend."
+                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
+                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI verification."
             )
 
         try:
@@ -154,9 +159,8 @@ class Groth16Backend:
         """
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by default. "
-                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup, "
-                "or use the default 'simulated' backend."
+                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
+                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup."
             )
 
         try:
@@ -183,8 +187,8 @@ class Groth16Backend:
         """
         if not self._enabled():
             raise ZKPError(
-                "Groth16 backend is disabled by default. "
-                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable auto-setup."
+                "Groth16 backend is disabled by IPFS_DATASETS_ENABLE_GROTH16. "
+                "Unset it or set IPFS_DATASETS_ENABLE_GROTH16=1 to enable auto-setup."
             )
 
         ffi = self._ffi()

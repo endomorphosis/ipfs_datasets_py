@@ -2326,12 +2326,18 @@ async def merge_recovery_manifest_into_canonical_dataset_from_parameters(
 
     output_dir = str(parameters.get("output_dir") or "").strip() or None
     target_local_parquet_path = str(parameters.get("target_local_parquet_path") or "").strip() or None
+    hf_cache_dir = str(parameters.get("hf_cache_dir") or "").strip() or None
     result = await anyio.to_thread.run_sync(
         lambda: merge_recovery_manifest_into_canonical_dataset(
             manifest_path,
             output_dir=output_dir,
             target_local_parquet_path=target_local_parquet_path,
             write_promotion_parquet=bool(parameters.get("write_promotion_parquet", True)),
+            hydrate_from_hf=bool(parameters.get("hydrate_from_hf", False)),
+            hf_token=str(parameters.get("hf_token") or "") or None,
+            hf_revision=str(parameters.get("hf_revision") or "") or None,
+            hf_cache_dir=hf_cache_dir,
+            force_hf_download=bool(parameters.get("force_hf_download", False)),
         )
     )
     result["status"] = str(result.get("status") or "success")

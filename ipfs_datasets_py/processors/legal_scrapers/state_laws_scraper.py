@@ -629,6 +629,8 @@ def build_state_law_section_url(
             "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml"
             f"?lawCode={law_code}&sectionNum={normalized_section}"
         )
+    if state == "DC" or "code.dccouncil.gov" in host_hint:
+        return f"https://code.dccouncil.gov/us/dc/council/code/sections/{normalized_section}"
     if state == "NY" or "nysenate.gov" in host_hint:
         law_code = "FCT" if re.search(r"\bFam\.\s+Ct\.\s+Act\b", code_hint, re.IGNORECASE) else "DOM"
         return f"https://www.nysenate.gov/legislation/laws/{law_code}/{normalized_section}"
@@ -664,6 +666,13 @@ def build_state_law_section_url(
         if len(title_section) == 2:
             title, section = title_section
             return f"https://www.mainelegislature.org/legis/statutes/{title}/title{title}sec{section}.html"
+        return ""
+    if state == "MA" or "malegislature.gov" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 2 and parts[0].isdigit():
+            chapter = parts[0]
+            section = "-".join(parts[1:])
+            return f"https://malegislature.gov/Laws/GeneralLaws/PartIV/TitleI/Chapter{chapter}/Section{section.lower()}"
         return ""
     if state == "MI" or "legislature.mi.gov" in host_hint:
         return f"https://legislature.mi.gov/Laws/MCL?objectName=mcl-{normalized_section}"
@@ -703,6 +712,16 @@ def build_state_law_section_url(
         parts = _section_parts("-")
         if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
             return f"https://www.scstatehouse.gov/code/t{int(parts[0]):02d}c{int(parts[1]):03d}.php#{normalized_section}"
+        return ""
+    if state == "RI" or "rilegislature.gov" in host_hint or "rilin.state.ri.us" in host_hint:
+        parts = _section_parts("-")
+        if len(parts) >= 3 and parts[0].isdigit() and parts[1].isdigit():
+            title = int(parts[0])
+            chapter = int(parts[1])
+            return (
+                "https://webserver.rilegislature.gov/Statutes/"
+                f"TITLE{title}/{title}-{chapter}/{normalized_section}.htm"
+            )
         return ""
     if state == "UT" or "le.utah.gov" in host_hint:
         parts = _section_parts("-")

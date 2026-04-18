@@ -4,6 +4,13 @@ from setuptools.command.install import install as _install
 import os
 import sys
 import platform
+import shutil
+import subprocess
+
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+except Exception:  # pragma: no cover - wheel is part of build-system.requires.
+    _bdist_wheel = None
 
 # Platform detection for conditional dependencies
 IS_WINDOWS = platform.system() == 'Windows'
@@ -85,21 +92,102 @@ def _maybe_download_nltk_data() -> None:
             continue
 
 
+def _maybe_build_groth16_backend() -> None:
+    """Best-effort build/setup for the bundled Rust Groth16 backend.
+
+    Controlled via env var:
+    - IPFS_DATASETS_PY_AUTO_GROTH16_BUILD (default: 1)
+    """
+
+    if not _env_truthy("IPFS_DATASETS_PY_AUTO_GROTH16_BUILD", "1"):
+        return
+    backend_dir = os.path.join(os.path.dirname(__file__), "ipfs_datasets_py", "processors", "groth16_backend")
+    platform_name = f"{platform.system().lower()}-{'aarch64' if platform.machine().lower() in {'aarch64', 'arm64'} else 'x86_64' if platform.machine().lower() in {'x86_64', 'amd64'} else platform.machine().lower()}"
+    bundled_binary = os.path.join(backend_dir, "bin", platform_name, "groth16")
+    if os.path.exists(bundled_binary):
+        os.chmod(bundled_binary, os.stat(bundled_binary).st_mode | 0o755)
+        return
+    if shutil.which("cargo") is None:
+        print(
+            "Groth16 backend auto-build skipped: Rust/Cargo is not installed. "
+            "Install Rust with rustup, then run "
+            "ipfs_datasets_py/processors/groth16_backend/build.sh.",
+            file=sys.stderr,
+        )
+        return
+
+    build_script = os.path.join(backend_dir, "build.sh")
+    if not os.path.exists(build_script):
+        return
+
+    try:
+        subprocess.run([build_script], cwd=backend_dir, check=True, timeout=900)
+    except Exception as exc:
+        print(
+            f"Groth16 backend auto-build failed: {exc}. "
+            "The Python package is installed, but real ZKP proofs require the "
+            "bundled Rust backend to build successfully.",
+            file=sys.stderr,
+        )
+
+
 class _PostInstall(_install):
     def run(self):  # type: ignore[override]
         super().run()
         _maybe_download_nltk_data()
+        _maybe_build_groth16_backend()
 
 
 class _PostDevelop(_develop):
     def run(self):  # type: ignore[override]
         super().run()
         _maybe_download_nltk_data()
+        _maybe_build_groth16_backend()
+
+
+if _bdist_wheel is not None:
+    class _PlatformWheel(_bdist_wheel):
+        def finalize_options(self):  # type: ignore[override]
+            super().finalize_options()
+            self.root_is_pure = False
+else:
+    _PlatformWheel = None
+
+
+_cmdclass = {
+    "install": _PostInstall,
+    "develop": _PostDevelop,
+}
+if _PlatformWheel is not None:
+    _cmdclass["bdist_wheel"] = _PlatformWheel
+
 
 setup(
     name="ipfs_datasets_py",
     version='0.2.0',
-    packages=find_packages(),
+    packages=find_packages(
+        exclude=[
+            "ipfs_kit_py*",
+            "ipfs_accelerate_py*",
+            "ipfs_datasets_py.multimedia.convert_to_txt_based_on_mime_type.test*",
+            "ipfs_datasets_py.processors.multimedia.convert_to_txt_based_on_mime_type.test*",
+        ]
+    ),
+    package_data={
+        "ipfs_datasets_py": [
+            "py.typed",
+            "processors/groth16_backend/Cargo.toml",
+            "processors/groth16_backend/Cargo.lock",
+            "processors/groth16_backend/build.sh",
+            "processors/groth16_backend/bin/*/groth16",
+            "processors/groth16_backend/artifacts/v*/proving_key.bin",
+            "processors/groth16_backend/artifacts/v*/verifying_key.bin",
+            "processors/groth16_backend/src/*.rs",
+            "processors/groth16_backend/schemas/*.json",
+            "processors/groth16_backend/contracts/*.sol",
+        ],
+    },
+    include_package_data=True,
     py_modules=["ipfs_datasets_cli"],
     install_requires=[
         # Core dependencies - all from GitHub main branches
@@ -122,6 +210,7 @@ setup(
         "datasets>=2.10.0,<3.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
         "jsonpatch>=1.33",
+        "jsonschema>=4.0.0",
 
         # IPLD components (always available)
         "ipld-car>=0.0.1",
@@ -375,6 +464,8 @@ setup(
             # Logic
             'nltk>=3.8.1',
             'symbolicai>=0.13.1',
+            # ZKP Groth16 FFI wrapper
+            'jsonschema>=4.0.0',
             # IPLD
             'ipld-car>=0.0.1',
             'ipld-dag-pb>=0.0.1',
@@ -443,10 +534,7 @@ setup(
             # Install separately with pip install -e ".[ml]"
         ],
     },
-    cmdclass={
-        "install": _PostInstall,
-        "develop": _PostDevelop,
-    },
+    cmdclass=_cmdclass,
     python_requires='>=3.12',
     description="IPFS Datasets - A unified interface for data processing and distribution across decentralized networks",
     long_description=open("README.md", encoding='utf-8').read(),

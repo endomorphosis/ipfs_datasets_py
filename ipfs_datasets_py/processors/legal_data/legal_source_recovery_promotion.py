@@ -44,6 +44,34 @@ def _read_rows_from_parquet(parquet_path: Path) -> List[Dict[str, Any]]:
     return [dict(item) for item in pq.read_table(parquet_path).to_pylist()]
 
 
+def _download_huggingface_parquet(
+    *,
+    repo_id: str,
+    repo_path: str,
+    hf_token: str | None = None,
+    hf_revision: str | None = None,
+    hf_cache_dir: str | Path | None = None,
+    force_download: bool = False,
+) -> Path:
+    from huggingface_hub import hf_hub_download
+
+    if not repo_id.strip():
+        raise ValueError("Hugging Face dataset id is required to hydrate a canonical parquet.")
+    if not repo_path.strip():
+        raise ValueError("Hugging Face parquet path is required to hydrate a canonical parquet.")
+
+    downloaded_path = hf_hub_download(
+        repo_id=repo_id,
+        filename=repo_path,
+        repo_type="dataset",
+        token=hf_token or None,
+        revision=hf_revision or None,
+        cache_dir=str(Path(hf_cache_dir).expanduser().resolve()) if hf_cache_dir else None,
+        force_download=bool(force_download),
+    )
+    return Path(downloaded_path).expanduser().resolve()
+
+
 def _build_merge_row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
     merge_values = tuple(str(row.get(field) or "").strip() for field in _MERGE_KEY_FIELDS)
     if any(merge_values):
@@ -216,6 +244,12 @@ def merge_recovery_manifest_into_canonical_dataset(
     output_dir: str | Path | None = None,
     target_local_parquet_path: str | Path | None = None,
     write_promotion_parquet: bool = True,
+    hydrate_from_hf: bool = False,
+    hf_token: str | None = None,
+    hf_revision: str | None = None,
+    hf_cache_dir: str | Path | None = None,
+    force_hf_download: bool = False,
+    hf_downloader: Any | None = None,
 ) -> Dict[str, Any]:
     bundle = promote_recovery_manifest_to_canonical_bundle(
         manifest_path,
@@ -246,7 +280,42 @@ def merge_recovery_manifest_into_canonical_dataset(
         }
 
     target_path = Path(target_path_value).expanduser().resolve()
-    existing_rows = _read_rows_from_parquet(target_path)
+    hf_dataset_id = str(rows[0].get("hf_dataset_id") or "").strip()
+    target_parquet_path = str(rows[0].get("target_parquet_path") or "").strip()
+    hf_source_path = ""
+    hf_hydration_error = ""
+    existing_rows_source = "local_canonical_parquet"
+
+    if hydrate_from_hf:
+        downloader = hf_downloader or _download_huggingface_parquet
+        try:
+            hf_source_path_obj = downloader(
+                repo_id=hf_dataset_id,
+                repo_path=target_parquet_path,
+                hf_token=hf_token,
+                hf_revision=hf_revision,
+                hf_cache_dir=hf_cache_dir,
+                force_download=force_hf_download,
+            )
+            hf_source_path = str(Path(hf_source_path_obj).expanduser().resolve())
+            existing_rows = _read_rows_from_parquet(Path(hf_source_path))
+            existing_rows_source = "huggingface_dataset_parquet"
+        except Exception as exc:
+            hf_hydration_error = str(exc)
+            return {
+                "status": "error",
+                "error": f"Unable to hydrate target parquet from Hugging Face before merge: {hf_hydration_error}",
+                "manifest_path": str(Path(manifest_path).expanduser().resolve()),
+                "promotion_output_dir": str(bundle.get("promotion_output_dir") or ""),
+                "target_local_parquet_path": str(target_path),
+                "target_parquet_path": target_parquet_path,
+                "hf_dataset_id": hf_dataset_id,
+                "hf_revision": str(hf_revision or ""),
+                "source": "legal_source_recovery_promotion_merge",
+            }
+    else:
+        existing_rows = _read_rows_from_parquet(target_path)
+
     merged_rows = _merge_row_sets(existing_rows, rows)
     parquet_report = _write_rows_to_parquet(merged_rows, target_path)
     merge_report_path = Path(str(bundle.get("promotion_output_dir") or target_path.parent)).expanduser().resolve() / "canonical_merge_report.json"
@@ -255,7 +324,12 @@ def merge_recovery_manifest_into_canonical_dataset(
         "manifest_path": str(Path(manifest_path).expanduser().resolve()),
         "promotion_output_dir": str(bundle.get("promotion_output_dir") or ""),
         "target_local_parquet_path": str(target_path),
-        "target_parquet_path": str(rows[0].get("target_parquet_path") or ""),
+        "target_parquet_path": target_parquet_path,
+        "hf_dataset_id": hf_dataset_id,
+        "hf_revision": str(hf_revision or ""),
+        "hf_source_path": hf_source_path,
+        "existing_rows_source": existing_rows_source,
+        "upload_ready": bool(hydrate_from_hf),
         "existing_row_count": len(existing_rows),
         "incoming_row_count": len(rows),
         "merged_row_count": len(merged_rows),

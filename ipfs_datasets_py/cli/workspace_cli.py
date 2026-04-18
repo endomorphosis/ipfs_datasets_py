@@ -171,6 +171,10 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-pdf-pages", type=int, default=0, help="For --action ingest-pdf-dir, optional max pages per PDF.")
     parser.add_argument("--max-pdf-chars", type=int, default=0, help="For --action ingest-pdf-dir, optional max extracted characters per PDF.")
     parser.add_argument("--max-logic-documents", type=int, default=0, help="For --action ingest-pdf-dir, optional max documents for formal logic extraction.")
+    parser.add_argument("--enable-ocr", action="store_true", help="For --action ingest-pdf-dir, run Tesseract OCR when PDF text extraction is empty.")
+    parser.add_argument("--ocr-dpi", type=int, default=200, help="For --action ingest-pdf-dir, render DPI used by Tesseract OCR.")
+    parser.add_argument("--ocr-lang", default="eng", help="For --action ingest-pdf-dir, Tesseract language code.")
+    parser.add_argument("--skip-failed-pdf-documents", action="store_true", help="For --action ingest-pdf-dir, omit PDFs that still have no text after extraction/OCR.")
     parser.add_argument("--no-formal-logic", action="store_true", help="For --action ingest-pdf-dir, skip formal logic/theorem extraction metadata.")
     parser.add_argument("--write-normalized-json", default="", help="For --action export, optional path to persist normalized dataset JSON.")
     parser.add_argument("--no-car", action="store_true", help="For --action package, disable CAR emission.")
@@ -218,6 +222,10 @@ def main(args: list[str] | None = None) -> int:
             formal_logic_max_documents=int(parsed.max_logic_documents) if int(parsed.max_logic_documents or 0) > 0 else None,
             max_pdf_pages=int(parsed.max_pdf_pages) if int(parsed.max_pdf_pages or 0) > 0 else None,
             max_pdf_chars=int(parsed.max_pdf_chars) if int(parsed.max_pdf_chars or 0) > 0 else None,
+            enable_ocr=bool(parsed.enable_ocr),
+            ocr_dpi=int(parsed.ocr_dpi or 200),
+            ocr_lang=str(parsed.ocr_lang or "eng"),
+            include_failed_pdf_documents=not bool(parsed.skip_failed_pdf_documents),
             glob_pattern=str(parsed.glob_pattern or "*.pdf"),
             exclude_dirs=list(parsed.exclude_dir or []),
         )

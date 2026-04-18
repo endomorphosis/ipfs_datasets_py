@@ -67,6 +67,13 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
             "This is not a pleading and has no court header.",
         ],
     )
+    _write_pdf(
+        scan_root / ".git" / "ignored.pdf",
+        [
+            "IN THE UNITED STATES DISTRICT COURT",
+            "Case No. 9:99-cv-9999",
+        ],
+    )
 
     output_dir = tmp_path / "output"
     manifest = scan_hacc_pdfs_for_dockets(
@@ -80,6 +87,11 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert manifest["pdf_count"] == 3
     assert manifest["matched_pdf_count"] == 2
     assert manifest["candidate_case_count"] == 1
+    assert manifest["scan_started_at"].endswith("Z")
+    assert manifest["scan_completed_at"].endswith("Z")
+    assert manifest["scan_parameters"]["glob_pattern"] == "*.pdf"
+    assert manifest["scan_parameters"]["include_bm25"] is True
+    assert manifest["skipped_pdf_count"] == 1
     assert Path(manifest["manifest_path"]).exists()
 
     case_payload = manifest["cases"][0]
@@ -89,7 +101,19 @@ def test_scan_hacc_pdfs_for_dockets_collects_court_pdfs_into_dataset(tmp_path: P
     assert dataset["docket_id"] == "2:25-cv-4004"
     assert dataset["case_name"] == "Roe v. Example Holdings"
     assert len(dataset["documents"]) == 2
+    assert dataset["metadata"]["scan_root"] == str(scan_root)
+    assert dataset["metadata"]["scan_started_at"].endswith("Z")
+    assert dataset["metadata"]["collected_pdf_count"] == 2
+    assert len(dataset["metadata"]["collected_pdf_paths"]) == 2
+    assert dataset["metadata"]["matched_relative_paths"] == ["case_a/complaint.pdf", "case_a/motion.pdf"]
+    assert dataset["metadata"]["scan_confidence_summary"]["average_confidence"] >= 0.85
+    assert dataset["metadata"]["scan_case_graph"]["summary"]["entity_count"] >= 1
     assert dataset["documents"][0]["metadata"]["scan_detection"]["confidence"] >= 0.85
+    assert dataset["documents"][0]["metadata"]["scan_detection"]["is_likely_court_case"] is True
+    assert dataset["documents"][0]["metadata"]["scan_detection"]["text_length"] > 0
+    assert dataset["documents"][0]["metadata"]["relative_path"] == "case_a/complaint.pdf"
+    assert dataset["documents"][0]["metadata"]["case_detection"]["case_number"] == "2:25-cv-4004"
+    assert dataset["documents"][0]["metadata"]["document_knowledge_graph_summary"]["node_count"] >= 1
     assert dataset["documents"][0]["metadata"]["document_knowledge_graph"]["summary"]["node_count"] >= 1
     assert Path(case_payload["collected_pdf_root"]).exists()
     assert list((output_dir / "collected_pdfs").rglob("*.pdf"))

@@ -124,8 +124,13 @@ class ZKPProof:
     size_bytes: int
 
     def __post_init__(self) -> None:
-        # Emit once on actual usage (construction), not at import-time.
-        _warn_once()
+        # Emit once on actual simulated proof usage, not for real Groth16 proof
+        # subclasses that share this compatibility dataclass.
+        metadata = self.metadata if isinstance(self.metadata, dict) else {}
+        backend = str(metadata.get("backend") or "").lower()
+        proof_system = str(metadata.get("proof_system") or "").lower()
+        if not backend or "simulated" in backend or "simulated" in proof_system:
+            _warn_once()
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert proof to dictionary format."""
@@ -157,9 +162,7 @@ class ZKPError(Exception):
 def __getattr__(name: str):
     # Only warn on use of the simulated API (not on import).
     if name in {
-        "ZKPProver",
         "SimulatedZKPProver",
-        "ZKPVerifier",
         "SimulatedZKPVerifier",
         "ZKPCircuit",
         "SimulatedZKPCircuit",

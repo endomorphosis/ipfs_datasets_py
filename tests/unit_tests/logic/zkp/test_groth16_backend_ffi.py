@@ -98,6 +98,24 @@ class TestGroth16BackendInitialization:
         # Should not raise even if binary not found
         assert backend is not None
 
+    def test_packaged_binary_preferred_when_available(self):
+        """Packaged bin/<platform>/groth16 should win over Cargo target output."""
+        probe = Groth16FFIBackend()
+        package_root = Path(__file__).resolve().parents[4] / "ipfs_datasets_py"
+        packaged_binary = (
+            package_root
+            / "processors"
+            / "groth16_backend"
+            / "bin"
+            / probe._platform_binary_name()
+            / "groth16"
+        )
+        if not packaged_binary.exists():
+            pytest.skip(f"packaged Groth16 binary not available for {probe._platform_binary_name()}")
+
+        backend = Groth16FFIBackend()
+        assert backend.binary_path == str(packaged_binary)
+
     def test_env_override_binary_path(self, tmp_path, monkeypatch):
         """Test discovery honors IPFS_DATASETS_GROTH16_BINARY when present."""
         override_path = tmp_path / "groth16"

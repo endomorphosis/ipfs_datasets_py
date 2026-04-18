@@ -51,6 +51,17 @@ _FORMAL_SINGLETON_LOCK = threading.Lock()
 _FORMAL_SINGLETONS: Dict[str, Any] | None = None
 
 
+def _formal_zkp_backend_name() -> str:
+    return str(os.getenv("IPFS_DATASETS_FORMAL_ZKP_BACKEND", "groth16") or "groth16").strip() or "groth16"
+
+
+def _create_formal_zkp_prover() -> ZKPProver | None:
+    backend = _formal_zkp_backend_name()
+    if backend.lower() in {"none", "off", "disabled", "false", "0"}:
+        return None
+    return ZKPProver(enable_caching=True, backend=backend)
+
+
 def _get_formal_singletons() -> Dict[str, Any]:
     global _FORMAL_SINGLETONS
     if _FORMAL_SINGLETONS is not None:
@@ -62,7 +73,28 @@ def _get_formal_singletons() -> Dict[str, Any]:
             conflict_detector = ConflictDetector()
             dcec_wrapper = EngDCECWrapper(use_native=True)
             dcec_ready = bool(dcec_wrapper.initialize())
-            zkp_prover = ZKPProver(enable_caching=True, backend="simulated")
+            try:
+                zkp_prover = _create_formal_zkp_prover()
+                backend_info = {}
+                if zkp_prover is not None:
+                    backend_instance = zkp_prover.get_backend_instance()
+                    get_info = getattr(backend_instance, "get_backend_info", None)
+                    if callable(get_info):
+                        backend_info = dict(get_info() or {})
+                zkp_status = {
+                    "backend": _formal_zkp_backend_name(),
+                    "available": bool(zkp_prover)
+                    and bool(backend_info.get("enabled", True))
+                    and bool(backend_info.get("binary_available", True)),
+                    "backend_info": backend_info,
+                }
+            except Exception as exc:
+                zkp_prover = None
+                zkp_status = {
+                    "backend": _formal_zkp_backend_name(),
+                    "available": False,
+                    "error": str(exc),
+                }
             _FORMAL_SINGLETONS = {
                 "extractor": extractor,
                 "deontic_extractor": deontic_extractor,
@@ -70,6 +102,7 @@ def _get_formal_singletons() -> Dict[str, Any]:
                 "dcec_wrapper": dcec_wrapper,
                 "dcec_ready": dcec_ready,
                 "zkp_prover": zkp_prover,
+                "zkp_status": zkp_status,
             }
     return _FORMAL_SINGLETONS or {}
 
@@ -136,7 +169,7 @@ def enrich_docket_documents_with_formal_logic(
     conflict_detector = singletons.get("conflict_detector") or ConflictDetector()
     dcec_wrapper = singletons.get("dcec_wrapper") or EngDCECWrapper(use_native=True)
     dcec_ready = bool(singletons.get("dcec_ready")) if singletons else bool(dcec_wrapper.initialize())
-    zkp_prover = singletons.get("zkp_prover") or ZKPProver(enable_caching=True, backend="simulated")
+    zkp_prover = singletons.get("zkp_prover")
 
     analyses: Dict[str, Dict[str, Any]] = {}
     aggregate_entities: List[Dict[str, Any]] = []
@@ -367,7 +400,7 @@ def enrich_docket_documents_with_formal_logic(
             },
             "metadata": {
                 "backend": "formal_logic_proof_store",
-                "zkp_status": "not_implemented",
+                "zkp_status": dict(singletons.get("zkp_status") or {"backend": _formal_zkp_backend_name(), "available": bool(zkp_prover)}),
             },
         },
         "deontic_conflicts": conflict_payload,
@@ -1304,7 +1337,7 @@ def _proposition_from_statement(statement: DeonticStatement) -> Dict[str, Any]:
     return {"statement": proposition, "assumptions": assumptions}
 
 
-def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp_prover: ZKPProver) -> Dict[str, Any]:
+def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp_prover: ZKPProver | None) -> Dict[str, Any]:
     statement = str(proposition.get("statement") or "").strip()
     assumptions = [str(item) for item in list(proposition.get("assumptions") or []) if str(item).strip()]
     proof_id = f"formal_proof_{_sanitize_symbol(document_id)}_{_sanitize_symbol(statement)[:32]}"
@@ -1312,7 +1345,7 @@ def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp
     try:
         axioms = [_sanitize_symbol(item) for item in assumptions if _sanitize_symbol(item)]
         theorem = _sanitize_symbol(statement)
-        if theorem:
+        if theorem and zkp_prover is not None:
             zkp_proof = zkp_prover.generate_proof(theorem=theorem, private_axioms=axioms or ["document_exists"])
     except Exception:
         zkp_proof = None
@@ -1331,15 +1364,17 @@ def _build_formal_proof(*, document_id: str, proposition: Mapping[str, Any], zkp
         }
     ]
     if zkp_proof is not None:
+        proof_metadata = dict(getattr(zkp_proof, "metadata", {}) or {})
+        proof_backend = str(proof_metadata.get("backend") or proof_metadata.get("proof_system") or "logic.zkp")
+        proof_format = "groth16_zksnark" if "groth16" in proof_backend.lower() and "simulated" not in proof_backend.lower() else "zkp_proof"
         certificates.append(
             {
-                "certificate_id": f"{proof_id}:certificate:zkp_simulated",
-                "backend": "logic.zkp.simulated",
-                "format": "simulated_zkp",
+                "certificate_id": f"{proof_id}:certificate:zkp",
+                "backend": proof_backend,
+                "format": proof_format,
                 "theorem": statement,
                 "assumptions": assumptions,
                 "payload": zkp_proof.to_dict(),
-                "warning": "simulated_only_not_cryptographically_secure",
             }
         )
     return {

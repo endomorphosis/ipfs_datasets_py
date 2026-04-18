@@ -66,6 +66,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-acceptable-failure-rate", type=float, default=0.10, help="Failure-rate threshold used for corpus-level actionability.")
     parser.add_argument("--min-actionable-failures", type=int, default=2, help="Minimum failing samples before a corpus/cluster becomes actionable.")
     parser.add_argument("--merge-recovered-rows", action="store_true", help="Merge produced recovery manifests into local canonical parquet files.")
+    parser.add_argument(
+        "--hydrate-merge-from-hf",
+        action="store_true",
+        help="When merging recovered rows, first download the current target parquet from Hugging Face so the local output is upload-ready.",
+    )
     parser.add_argument("--publish-to-hf", action="store_true", help="Upload recovery manifests to the canonical Hugging Face repo.")
     parser.add_argument("--hf-token", help="Optional Hugging Face token override.")
     parser.add_argument("--output-dir", default="artifacts/bluebook_linker_fuzz", help="Directory for run artifacts.")
@@ -106,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
             publish_to_hf=bool(args.publish_to_hf),
             hf_token=args.hf_token,
             merge_recovered_rows=bool(args.merge_recovered_rows),
+            hydrate_merge_from_hf=bool(args.hydrate_merge_from_hf),
             output_dir=Path(args.output_dir),
             llm_generate_func=input_generate,
         )

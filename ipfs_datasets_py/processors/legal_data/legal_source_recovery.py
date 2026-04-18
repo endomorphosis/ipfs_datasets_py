@@ -8,6 +8,7 @@ candidate official sources and recorded in a canonical recovery manifest.
 from __future__ import annotations
 
 import asyncio
+import io
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 import json
@@ -668,6 +669,7 @@ class LegalSourceRecoveryWorkflow:
             "AK": ["akleg.gov"],
             "AZ": ["azleg.gov"],
             "CA": ["leginfo.legislature.ca.gov", "courts.ca.gov"],
+            "DC": ["code.dccouncil.gov"],
             "ID": ["legislature.idaho.gov"],
             "IA": ["legis.iowa.gov"],
             "KS": ["ksrevisor.gov"],
@@ -688,9 +690,11 @@ class LegalSourceRecoveryWorkflow:
             "FL": ["leg.state.fl.us", "flrules.org", "flcourts.gov"],
             "GA": ["legis.ga.gov", "rules.sos.ga.gov", "georgiacourts.gov"],
             "IL": ["ilga.gov", "ilsos.gov", "illinoiscourts.gov"],
+            "MA": ["malegislature.gov"],
             "MN": ["revisor.mn.gov", "mncourts.gov"],
             "OR": ["oregonlegislature.gov", "oregon.public.law", "courts.oregon.gov"],
             "PA": ["legis.state.pa.us", "pacodeandbulletin.gov", "pacourts.us"],
+            "RI": ["webserver.rilegislature.gov"],
         }
         if corpus in {"state_laws", "state_admin_rules", "state_court_rules"}:
             return list(state_domains.get(state, []))
@@ -768,6 +772,26 @@ class LegalSourceRecoveryWorkflow:
                         "snippet": "Citation-derived Federal Register citation URL.",
                     }
                 )
+            return rows
+
+        if corpus == "caselaw_access_project":
+            try:
+                from .citation_extraction import CitationExtractor
+
+                for citation in CitationExtractor().extract_citations(text):
+                    if citation.type != "case" or not citation.url:
+                        continue
+                    rows.append(
+                        {
+                            "url": citation.url,
+                            "title": citation.text,
+                            "source": "citation_url_hint",
+                            "source_type": "current",
+                            "snippet": "Citation-derived CourtListener-style case URL.",
+                        }
+                    )
+            except Exception:
+                return []
             return rows
 
         if corpus != "state_laws":
@@ -1560,6 +1584,21 @@ class LegalSourceRecoveryWorkflow:
             existing.content_type = content_type
         existing.score = max(existing.score, score)
 
+    @classmethod
+    def _linked_candidate_matches_citation_hint(
+        cls,
+        *,
+        parent_candidate: LegalSourceCandidate,
+        link_url: str,
+        link_title: str,
+    ) -> bool:
+        fragments = cls._citation_validation_fragments(
+            citation_text=str(parent_candidate.title or ""),
+            normalized_citation=str(parent_candidate.title or ""),
+        )
+        hay = f"{link_url or ''} {link_title or ''}"
+        return any(fragment and cls._fragment_in_text(fragment, hay) for fragment in fragments)
+
     def _discover_candidate_files(
         self,
         *,
@@ -1611,10 +1650,21 @@ class LegalSourceRecoveryWorkflow:
             for link in list(document_metadata.get("links") or [])[:12]:
                 if not isinstance(link, dict):
                     continue
+                link_url = str(link.get("url") or "")
+                link_title = str(link.get("text") or "")
+                if (
+                    candidate.source == "citation_url_hint"
+                    and not self._linked_candidate_matches_citation_hint(
+                        parent_candidate=candidate,
+                        link_url=link_url,
+                        link_title=link_title,
+                    )
+                ):
+                    continue
                 self._register_candidate_file(
                     storage=discovered,
-                    url=str(link.get("url") or ""),
-                    title=str(link.get("text") or "") or None,
+                    url=link_url,
+                    title=link_title or None,
                     discovered_from_url=candidate.url,
                     source=candidate.source,
                     source_type=candidate.source_type,
@@ -1646,6 +1696,34 @@ class LegalSourceRecoveryWorkflow:
         return cleaned[:limit]
 
     @staticmethod
+    def _extract_pdf_text(raw_bytes: Any) -> str:
+        if not isinstance(raw_bytes, (bytes, bytearray)) or not raw_bytes:
+            return ""
+        max_pages = max(1, int(os.getenv("LEGAL_SOURCE_RECOVERY_PDF_VALIDATION_MAX_PAGES", "64")))
+        max_chars = max(1000, int(os.getenv("LEGAL_SOURCE_RECOVERY_PDF_VALIDATION_MAX_CHARS", "200000")))
+        try:
+            from pypdf import PdfReader
+        except Exception:
+            try:
+                from PyPDF2 import PdfReader  # type: ignore
+            except Exception:
+                return ""
+
+        try:
+            reader = PdfReader(io.BytesIO(bytes(raw_bytes)))
+            chunks: List[str] = []
+            for page in list(getattr(reader, "pages", []) or [])[:max_pages]:
+                try:
+                    chunks.append(str(page.extract_text() or ""))
+                except Exception:
+                    continue
+                if sum(len(chunk) for chunk in chunks) >= max_chars:
+                    break
+            return "\n".join(chunks)[:max_chars]
+        except Exception:
+            return ""
+
+    @staticmethod
     def _citation_validation_fragments(*, citation_text: str, normalized_citation: str) -> List[str]:
         text = f"{citation_text or ''} {normalized_citation or ''}"
         fragments: List[str] = []
@@ -1658,12 +1736,47 @@ class LegalSourceRecoveryWorkflow:
             cleaned_section = str(section or "").strip().strip(".")
             if cleaned_section and cleaned_section not in fragments:
                 fragments.append(cleaned_section)
+        numeric_sections = re.findall(r"\b[0-9][0-9A-Za-z]*(?:[.:\-][0-9A-Za-z]+)+(?:\([a-z0-9]+\))*\b", text, flags=re.IGNORECASE)
+        for section in numeric_sections:
+            cleaned_section = str(section or "").strip().strip(".")
+            if cleaned_section and cleaned_section not in fragments:
+                fragments.append(cleaned_section)
+            tail = re.split(r"[.:\-]", cleaned_section)[-1]
+            if len(tail) >= 3 and tail != cleaned_section and tail not in fragments:
+                fragments.append(tail)
         usc_match = re.search(r"\b([0-9]+)\s+U\.?S\.?C\.?(?:A\.?)?\s+§?\s*([0-9A-Za-z][\w.\-]*)", text, flags=re.IGNORECASE)
         if usc_match:
             for fragment in (usc_match.group(1), usc_match.group(2), f"{usc_match.group(1)} {usc_match.group(2)}"):
                 if fragment and fragment not in fragments:
                     fragments.append(fragment)
         return fragments[:8]
+
+    @staticmethod
+    def _fragment_in_text(fragment: str, text: str) -> bool:
+        fragment = str(fragment or "").strip().lower()
+        hay = str(text or "").lower()
+        if not fragment or not hay:
+            return False
+        if fragment in hay:
+            return True
+        compact_fragment = re.sub(r"[^a-z0-9]+", "", fragment)
+        if len(compact_fragment) < 3:
+            return False
+        compact_hay = re.sub(r"[^a-z0-9]+", "", hay)
+        return compact_fragment in compact_hay
+
+    @staticmethod
+    def _has_legal_body_signal(text: str) -> bool:
+        cleaned = " ".join(re.sub(r"<[^>]+>", " ", str(text or "")).split()).lower()
+        if len(cleaned) < 120:
+            return False
+        signals = re.findall(
+            r"\b(shall|must|may|means|defined|subsection|paragraph|chapter|article|"
+            r"offense|penalty|violation|commits|guilty|liability|prohibited|"
+            r"effective|amended|enacted|statute|code|section|person|injury)\b",
+            cleaned,
+        )
+        return len(signals) >= 2
 
     @classmethod
     def _validate_candidate_content(
@@ -1677,9 +1790,9 @@ class LegalSourceRecoveryWorkflow:
         text: str,
         html: str,
     ) -> Dict[str, Any]:
-        del url, title
         source_text = " ".join(str(value or "") for value in (text, html))
         hay = re.sub(r"\s+", " ", source_text).lower()
+        title_url_text = f"{title or ''} {url or ''}"
         fragments = cls._citation_validation_fragments(
             citation_text=citation_text,
             normalized_citation=normalized_citation,
@@ -1687,7 +1800,12 @@ class LegalSourceRecoveryWorkflow:
         matched_fragments = [
             fragment
             for fragment in fragments
-            if fragment and str(fragment).lower() in hay
+            if fragment and cls._fragment_in_text(fragment, hay)
+        ]
+        title_url_matched_fragments = [
+            fragment
+            for fragment in fragments
+            if fragment and cls._fragment_in_text(fragment, title_url_text)
         ]
         no_result_markers = (
             "no matches",
@@ -1698,22 +1816,43 @@ class LegalSourceRecoveryWorkflow:
             "unable to locate",
             "search returned no",
             "there are no",
+            "no law information found",
+            "your search did not match",
+            "cannot be found",
         )
         no_result_detected = any(marker in hay for marker in no_result_markers)
         exact_citation_present = any(
-            str(value or "").strip() and str(value or "").strip().lower() in hay
+            str(value or "").strip() and cls._fragment_in_text(str(value or ""), hay)
             for value in (citation_text, normalized_citation)
         )
         section_fragment_present = any(
             fragment for fragment in matched_fragments if re.search(r"\d", fragment)
         )
+        title_url_section_fragment_present = any(
+            fragment for fragment in title_url_matched_fragments if re.search(r"\d", fragment)
+        )
         multi_fragment_present = len(set(matched_fragments)) >= 2
-        confirmed = bool(exact_citation_present or (section_fragment_present and multi_fragment_present and not no_result_detected))
+        legal_body_signal = cls._has_legal_body_signal(source_text)
+        confirmed = bool(
+            not no_result_detected
+            and (
+                exact_citation_present
+                or (
+                    section_fragment_present
+                    and legal_body_signal
+                    and (multi_fragment_present or title_url_section_fragment_present)
+                )
+            )
+        )
         confidence = 0.0
         if exact_citation_present:
             confidence += 0.7
         if section_fragment_present and multi_fragment_present:
             confidence += 0.2
+        if section_fragment_present and title_url_section_fragment_present:
+            confidence += 0.25
+        if legal_body_signal:
+            confidence += 0.15
         if no_result_detected:
             confidence -= 0.6
         if cls._looks_like_blocked_page(source_text, content_type=content_type):
@@ -1724,9 +1863,12 @@ class LegalSourceRecoveryWorkflow:
             "normalized_citation": normalized_citation,
             "checked_fragments": fragments,
             "matched_fragments": matched_fragments,
+            "title_url_matched_fragments": title_url_matched_fragments,
             "exact_citation_present": exact_citation_present,
             "section_fragment_present": section_fragment_present,
+            "title_url_section_fragment_present": title_url_section_fragment_present,
             "multi_fragment_present": multi_fragment_present,
+            "legal_body_signal": legal_body_signal,
             "no_result_detected": no_result_detected,
             "content_type": content_type,
             "confirmed": confirmed,
@@ -1843,6 +1985,8 @@ class LegalSourceRecoveryWorkflow:
             has_bytes = isinstance(raw_bytes, (bytes, bytearray)) and len(raw_bytes) > 0
             document_text = str(getattr(document, "text", "") or "")
             document_html = str(getattr(document, "html", "") or metadata.get("html", "") or "")
+            if has_bytes and not document_text and str(content_type or "").split(";", 1)[0].strip().lower() == "application/pdf":
+                document_text = self._extract_pdf_text(raw_bytes)
             suffix = self._artifact_suffix(url=updated.url, content_type=content_type, has_bytes=has_bytes)
             artifact_base = f"{index:02d}_{_slugify(updated.title or Path(urlparse(updated.url).path).stem or 'candidate-file', limit=48)}"
             artifact_path = artifacts_dir / f"{artifact_base}{suffix}"

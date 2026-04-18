@@ -638,7 +638,7 @@ TOOL_MAPPINGS = {
             "merge_recovery_manifest_into_canonical_dataset": {
                 "name": "merge_recovery_manifest_into_canonical_dataset",
                 "category": "legal_datasets",
-                "description": "Merge promoted recovery rows into the target canonical parquet dataset",
+                "description": "Merge promoted recovery rows into the target canonical parquet dataset, optionally hydrating the current target parquet from Hugging Face first",
                 "tags": ["legal", "citations", "recovery", "promotion", "merge", "parquet"]
             },
             "collect_packaged_docket_citation_recovery_candidates": {

@@ -2004,6 +2004,7 @@ class DocketDatasetBuilder:
             bm25_index=bm25_index,
             vector_index=vector_index,
             metadata={
+                **dict(docket_metadata),
                 "imported_at": _utc_now_isoformat(),
                 "document_count": len(normalized_documents),
                 "artifact_provenance": artifact_provenance,
@@ -2011,7 +2012,6 @@ class DocketDatasetBuilder:
                 "source_type": str(docket.get("source_type") or "docket"),
                 "case_number": detected_case_number,
                 "linked_authorities": linked_authority_summary,
-                **({"detected_case_numbers": docket_metadata.get("detected_case_numbers")} if docket_metadata.get("detected_case_numbers") else {}),
             },
         )
 

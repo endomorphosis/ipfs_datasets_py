@@ -117,6 +117,59 @@ async def test_run_bluebook_linker_fuzz_harness_labels_plain_list_failures_from_
     assert run.summary["failure_patch_clusters"][0]["corpus_key"] == "state_laws"
 
 
+@pytest.mark.anyio
+async def test_run_bluebook_linker_fuzz_harness_can_hydrate_merge_from_hf(tmp_path: Path) -> None:
+    def fake_generate(*args, **kwargs) -> str:
+        return json.dumps(["Minn. Stat. § 518.17"])
+
+    def fake_resolve_document(text: str, **kwargs):
+        return {
+            "citation_count": 1,
+            "matched_citation_count": 0,
+            "unmatched_citation_count": 1,
+            "citations": [],
+            "unresolved_citations": [
+                {
+                    "citation_text": "Minn. Stat. § 518.17",
+                    "normalized_citation": "Minn. Stat. § 518.17",
+                    "metadata": {"recovery_corpus_key": "state_laws"},
+                }
+            ],
+        }
+
+    async def fake_recovery(**kwargs):
+        return {
+            "status": "tracked",
+            "citation_text": kwargs["citation_text"],
+            "manifest_path": str(tmp_path / "recovery_manifest.json"),
+        }
+
+    def fake_merge(path: str, **kwargs):
+        assert path == str(tmp_path / "recovery_manifest.json")
+        assert kwargs == {"hydrate_from_hf": True, "hf_token": "test-token"}
+        return {
+            "status": "success",
+            "existing_rows_source": "huggingface_dataset_parquet",
+            "target_local_parquet_path": str(tmp_path / "STATE-MN.parquet"),
+        }
+
+    run = await run_bluebook_linker_fuzz_harness(
+        sample_count=1,
+        llm_generate_func=fake_generate,
+        resolve_document_func=fake_resolve_document,
+        recovery_func=fake_recovery,
+        merge_manifest_func=fake_merge,
+        merge_recovered_rows=True,
+        hydrate_merge_from_hf=True,
+        hf_token="test-token",
+        output_dir=tmp_path / "artifacts",
+    )
+
+    assert run.summary["hydrate_merge_from_hf"] is True
+    assert run.summary["merged_recovery_count"] == 1
+    assert run.attempts[0].merge_reports[0]["existing_rows_source"] == "huggingface_dataset_parquet"
+
+
 def test_collect_seeded_bluebook_fuzz_candidates_uses_grounded_rows() -> None:
     class _FakeResolver:
         def _iter_corpus_sources(self, corpus_key: str, *, state_code: str | None):
@@ -715,10 +768,12 @@ async def test_run_bluebook_linker_fuzz_harness_summarizes_multiple_scraper_targ
     async def fake_recovery(**kwargs):
         corpus_key = kwargs["corpus_key"]
         is_us_code = corpus_key == "us_code"
+        manifest_path = tmp_path / f"{corpus_key}.json"
+        manifest_path.write_text("{}", encoding="utf-8")
         return {
             "status": "tracked",
             "citation_text": kwargs["citation_text"],
-            "manifest_path": str(tmp_path / f"{corpus_key}.json"),
+            "manifest_path": str(manifest_path),
             "scraper_patch": {
                 "host": "uscode.house.gov" if is_us_code else "www.revisor.mn.gov",
                 "target_file": (
@@ -730,11 +785,27 @@ async def test_run_bluebook_linker_fuzz_harness_summarizes_multiple_scraper_targ
             },
         }
 
+    def fake_merge(manifest_path: str):
+        if Path(manifest_path).name == "state_laws.json":
+            return {
+                "status": "success",
+                "target_local_parquet_path": str(tmp_path / "STATE-MN.parquet"),
+                "merge_report_path": str(tmp_path / "state-laws-merge-report.json"),
+            }
+        return {
+            "status": "failed",
+            "error": "missing canonical us_code target parquet",
+            "target_local_parquet_path": str(tmp_path / "USC-42.parquet"),
+            "merge_report_path": str(tmp_path / "us-code-merge-report.json"),
+        }
+
     run = await run_bluebook_linker_fuzz_harness(
         sample_count=2,
         llm_generate_func=fake_generate,
         resolve_document_func=fake_resolve_document,
         recovery_func=fake_recovery,
+        merge_recovered_rows=True,
+        merge_manifest_func=fake_merge,
         min_actionable_failures=1,
         output_dir=tmp_path / "artifacts",
     )
@@ -747,12 +818,28 @@ async def test_run_bluebook_linker_fuzz_harness_summarizes_multiple_scraper_targ
     targets = {Path(item["target_file"]).name: item for item in scraper_coverage["targets"]}
     assert targets["state_laws_scraper.py"]["hosts"] == ["www.revisor.mn.gov"]
     assert targets["state_laws_scraper.py"]["citations"] == ["Minn. Stat. § 518.17"]
+    assert targets["state_laws_scraper.py"]["merge_status_counts"] == {"success": 1}
+    assert targets["state_laws_scraper.py"]["merge_success_count"] == 1
+    assert targets["state_laws_scraper.py"]["merge_failure_count"] == 0
+    assert targets["state_laws_scraper.py"]["target_local_parquet_paths"] == [str(tmp_path / "STATE-MN.parquet")]
     assert targets["us_code_scraper.py"]["hosts"] == ["uscode.house.gov"]
     assert targets["us_code_scraper.py"]["citations"] == ["42 U.S.C. § 1983"]
+    assert targets["us_code_scraper.py"]["merge_status_counts"] == {"failed": 1}
+    assert targets["us_code_scraper.py"]["merge_success_count"] == 0
+    assert targets["us_code_scraper.py"]["merge_failure_count"] == 1
+    assert targets["us_code_scraper.py"]["target_local_parquet_paths"] == [str(tmp_path / "USC-42.parquet")]
+    assert run.summary["recovery_merge"]["status_counts"] == {"failed": 1, "success": 1}
+    assert run.summary["recovery_merge"]["success_count"] == 1
+    assert run.summary["recovery_merge"]["failure_count"] == 1
+    assert run.summary["recovery_merge"]["error_counts"] == {"missing canonical us_code target parquet": 1}
     assert run.summary["failure_patch_backlog"]["scraper_coverage"]["scraper_target_count"] == 2
     assert run.summary["failure_patch_backlog"]["scraper_coverage"]["hosts"] == {
         "uscode.house.gov": 1,
         "www.revisor.mn.gov": 1,
+    }
+    assert run.summary["failure_patch_backlog"]["recovery_merge"]["status_counts"] == {"failed": 1, "success": 1}
+    assert run.summary["failure_patch_backlog"]["recovery_merge"]["error_counts"] == {
+        "missing canonical us_code target parquet": 1
     }
 
 

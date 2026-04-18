@@ -9,6 +9,7 @@ import re
 import shutil
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence
 
@@ -33,6 +34,18 @@ from ..legal_data.document_structure import build_document_knowledge_graph, pars
 from ..legal_data.docket_dataset import _extract_case_number_from_text, _extract_text_from_pdf, _normalize_case_number_text
 
 logger = logging.getLogger(__name__)
+
+_SKIP_DIR_NAMES = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".tools",
+    ".venv",
+    ".venv-pacer-test",
+    "__pycache__",
+    "node_modules",
+    "site-packages",
+}
 
 _COURT_HEADER_PATTERNS = [
     re.compile(r"\bIN THE UNITED STATES DISTRICT COURT\b", re.IGNORECASE),
@@ -74,6 +87,10 @@ class HACCCourtPDFScanResult:
 def _safe_identifier(value: Any) -> str:
     text = "".join(ch.lower() if str(ch).isalnum() else "_" for ch in str(value or "")).strip("_")
     return text or "item"
+
+
+def _utc_now_isoformat() -> str:
+    return datetime.now(tz=UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _has_ocr_support() -> bool:
@@ -161,6 +178,19 @@ def _relative_copy_path(scan_root: Path, source_path: Path, target_root: Path) -
     except ValueError:
         relative = Path(source_path.name)
     return target_root / relative
+
+
+def _should_skip_pdf_path(scan_root: Path, pdf_path: Path) -> bool:
+    try:
+        relative_parts = pdf_path.relative_to(scan_root).parts[:-1]
+    except ValueError:
+        relative_parts = pdf_path.parts[:-1]
+    for part in relative_parts:
+        if part in _SKIP_DIR_NAMES:
+            return True
+        if part.startswith(".git") or part.startswith(".venv"):
+            return True
+    return False
 
 
 def _build_case_graph_summary(results: Sequence[HACCCourtPDFScanResult], *, case_number: str, court: str, case_name: str) -> Dict[str, Any]:
@@ -298,11 +328,16 @@ def scan_hacc_pdfs_for_dockets(
     datasets_root = destination_root / "docket_datasets"
     collected_root.mkdir(parents=True, exist_ok=True)
     datasets_root.mkdir(parents=True, exist_ok=True)
+    scan_started_at = _utc_now_isoformat()
+    skipped_pdf_count = 0
 
     all_results: List[HACCCourtPDFScanResult] = []
     grouped: Dict[str, List[HACCCourtPDFScanResult]] = defaultdict(list)
     for pdf_path in sorted(root.rglob(glob_pattern)):
         if not pdf_path.is_file() or pdf_path.suffix.lower() != ".pdf":
+            continue
+        if _should_skip_pdf_path(root, pdf_path):
+            skipped_pdf_count += 1
             continue
         result = analyze_pdf_for_court_case(pdf_path, max_ocr_pages=max_ocr_pages)
         try:
@@ -318,10 +353,10 @@ def scan_hacc_pdfs_for_dockets(
         case_slug = _safe_identifier(case_number)
         case_collect_root = collected_root / case_slug
         case_collect_root.mkdir(parents=True, exist_ok=True)
-        primary = results[0]
         court = next((item.court for item in results if item.court), "")
         case_name = next((item.case_name for item in results if item.case_name), case_number)
         copied_paths: List[str] = []
+        copied_relative_paths: List[str] = []
         documents: List[Dict[str, Any]] = []
         for index, result in enumerate(results, start=1):
             source_path = Path(result.path)
@@ -329,6 +364,7 @@ def scan_hacc_pdfs_for_dockets(
             copied_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_path, copied_path)
             copied_paths.append(str(copied_path))
+            copied_relative_paths.append(str(copied_path.relative_to(case_collect_root)))
             documents.append(
                 {
                     "id": f"{case_slug}_{index}",
@@ -339,19 +375,30 @@ def scan_hacc_pdfs_for_dockets(
                     "case_number": result.case_number,
                     "metadata": {
                         "source_path": str(source_path),
+                        "relative_path": result.relative_path,
                         "collected_path": str(copied_path),
+                        "collected_relative_path": copied_relative_paths[-1],
                         "scan_detection": {
                             "confidence": result.confidence,
+                            "is_likely_court_case": result.is_likely_court_case,
                             "reasons": list(result.reasons),
                             "matched_court_headers": list(result.matched_court_headers),
                             "style_lines": list(result.style_lines),
+                            "text_length": result.text_length,
                         },
                         "text_extraction": {
                             "source": "hacc_pdf_scan",
                             "backend": result.extraction_method,
+                            "ocr_attempted": result.extraction_method == "ocr",
+                        },
+                        "case_detection": {
+                            "case_number": result.case_number,
+                            "court": result.court,
+                            "case_name": result.case_name,
                         },
                         "parsed_legal_document": dict(result.parsed_document),
                         "document_knowledge_graph": dict(result.document_knowledge_graph),
+                        "document_knowledge_graph_summary": dict(result.document_knowledge_graph_summary),
                     },
                 }
             )
@@ -367,9 +414,21 @@ def scan_hacc_pdfs_for_dockets(
                 "documents": documents,
                 "metadata": {
                     "scan_root": str(root),
+                    "scan_started_at": scan_started_at,
                     "case_number": case_number,
+                    "case_slug": case_slug,
+                    "scan_glob_pattern": glob_pattern,
+                    "max_ocr_pages": int(max_ocr_pages),
                     "collected_pdf_count": len(copied_paths),
                     "collected_pdf_paths": copied_paths,
+                    "collected_pdf_relative_paths": copied_relative_paths,
+                    "matched_source_paths": [item.path for item in results],
+                    "matched_relative_paths": [item.relative_path for item in results],
+                    "scan_confidence_summary": {
+                        "max_confidence": max(item.confidence for item in results),
+                        "min_confidence": min(item.confidence for item in results),
+                        "average_confidence": sum(item.confidence for item in results) / len(results),
+                    },
                     "scan_case_graph": case_graph_summary,
                 },
             },
@@ -388,15 +447,33 @@ def scan_hacc_pdfs_for_dockets(
                 "document_count": len(results),
                 "dataset_path": str(dataset_path),
                 "collected_pdf_root": str(case_collect_root),
+                "matched_relative_paths": [item.relative_path for item in results],
+                "scan_confidence_summary": {
+                    "max_confidence": max(item.confidence for item in results),
+                    "min_confidence": min(item.confidence for item in results),
+                    "average_confidence": sum(item.confidence for item in results) / len(results),
+                },
                 "scan_case_graph_summary": case_graph_summary.get("summary") or {},
             }
         )
 
     manifest = {
+        "scan_started_at": scan_started_at,
+        "scan_completed_at": _utc_now_isoformat(),
         "scan_root": str(root),
         "output_dir": str(destination_root),
+        "scan_parameters": {
+            "glob_pattern": glob_pattern,
+            "max_ocr_pages": int(max_ocr_pages),
+            "include_knowledge_graph": bool(include_knowledge_graph),
+            "include_bm25": bool(include_bm25),
+            "include_vector_index": bool(include_vector_index),
+            "include_formal_logic": bool(include_formal_logic),
+            "include_router_enrichment": bool(include_router_enrichment),
+        },
         "pdf_count": len(all_results),
         "matched_pdf_count": sum(1 for item in all_results if item.is_likely_court_case and item.case_number),
+        "skipped_pdf_count": skipped_pdf_count,
         "candidate_case_count": len(case_outputs),
         "ocr_available": _has_ocr_support(),
         "cases": case_outputs,

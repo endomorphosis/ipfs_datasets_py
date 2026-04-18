@@ -10,6 +10,7 @@ Status: FFI Integration (Phase 3C.2)
 import json
 import subprocess
 import os
+import platform
 from pathlib import Path
 from typing import Optional, Protocol, runtime_checkable
 from dataclasses import dataclass
@@ -187,10 +188,15 @@ class Groth16Backend(ZKPBackend):
         #   - <repo-root>/groth16_backend/
         python_package_root = Path(__file__).resolve().parents[3]  # .../ipfs_datasets_py/ipfs_datasets_py
         monorepo_root = python_package_root.parent  # .../ipfs_datasets_py
+        backend_root = python_package_root / "processors" / "groth16_backend"
+        platform_binary_name = self._platform_binary_name()
 
         candidates = [
+            # Packaged prebuilt binary. This is the preferred zero-Rust install path.
+            backend_root / "bin" / platform_binary_name / "groth16",
+
             # Canonical monorepo location (preferred for this repo)
-            python_package_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
+            backend_root / "target" / "release" / "groth16",
 
             # Alternate location (some checkouts keep processors/ alongside the Python package)
             monorepo_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
@@ -205,10 +211,29 @@ class Groth16Backend(ZKPBackend):
         
         for path in candidates:
             if path.exists():
+                self._ensure_executable(path)
                 logger.info(f"Found Groth16 binary at {path}")
                 return str(path)
         
         return None
+
+    def _platform_binary_name(self) -> str:
+        system = platform.system().lower()
+        machine = platform.machine().lower()
+        machine_map = {
+            "x86_64": "x86_64",
+            "amd64": "x86_64",
+            "aarch64": "aarch64",
+            "arm64": "aarch64",
+        }
+        return f"{system}-{machine_map.get(machine, machine)}"
+
+    def _ensure_executable(self, path: Path) -> None:
+        try:
+            if os.name != "nt" and not os.access(path, os.X_OK):
+                path.chmod(path.stat().st_mode | 0o755)
+        except Exception:
+            pass
     
     def generate_proof(self, witness_json: str, seed: Optional[int] = None) -> ZKPProof:
         """
@@ -557,4 +582,3 @@ class Groth16BackendFallback(ZKPBackend):
             'status': 'fallback_only',
             'note': 'Using placeholder for testing. Install Rust binary for real proofs.',
         }
-
