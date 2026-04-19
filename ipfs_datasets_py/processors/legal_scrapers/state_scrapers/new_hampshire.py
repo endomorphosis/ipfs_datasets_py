@@ -4,9 +4,10 @@ This module contains the scraper for New Hampshire statutes from the official st
 """
 
 import asyncio
-from typing import List, Dict
+from typing import List, Dict, Optional
 import json
 import re
+import urllib.request
 from urllib.parse import quote, urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -44,7 +45,12 @@ class NewHampshireScraper(BaseStateScraper):
                 filtered.append(statute)
         return filtered
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from New Hampshire's legislative website.
         
         Args:
@@ -66,6 +72,11 @@ class NewHampshireScraper(BaseStateScraper):
             "https://web.archive.org/web/20250101000000/https://gc.nh.gov/rsa/html/NHTOC.htm",
         ]
         return_threshold = self._bounded_return_threshold(40)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        direct = await self._scrape_direct_archived_seed_sections(code_name, max_statutes=return_threshold)
+        if direct:
+            return direct[:return_threshold]
         # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
         for archived in await self._discover_archived_rsa_urls(limit=max(10, return_threshold)):
             if archived not in candidate_urls:
@@ -98,7 +109,7 @@ class NewHampshireScraper(BaseStateScraper):
                 code_name,
                 candidate,
                 "N.H. Rev. Stat.",
-                max_sections=180,
+                max_sections=max(10, return_threshold),
             )
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
@@ -106,6 +117,71 @@ class NewHampshireScraper(BaseStateScraper):
                 return merged
 
         return merged
+
+    async def _scrape_direct_archived_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        seeds = [
+            (
+                "1:1",
+                "https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/I/1/1-1.htm",
+            ),
+            (
+                "1:2",
+                "https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/I/1/1-2.htm",
+            ),
+        ]
+        out: List[NormalizedStatute] = []
+        for section_number, source_url in seeds[: max(1, int(max_statutes or 1))]:
+            html = await self._request_text_direct(source_url, timeout=20)
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            for tag in soup(["script", "style", "nav", "header", "footer"]):
+                tag.decompose()
+            text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+            if len(text) < 160:
+                continue
+            title_match = re.search(rf"\b{re.escape(section_number)}\s+([^–-]{{4,180}})", text)
+            section_name = title_match.group(1).strip() if title_match else f"Section {section_number}"
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    full_text=text[:14000],
+                    legal_area=self._identify_legal_area(section_name),
+                    source_url=source_url,
+                    official_cite=f"N.H. Rev. Stat. § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_new_hampshire_rsa_wayback_html",
+                        "discovery_method": "wayback_seed_section",
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return out
+
+    async def _request_text_direct(self, url: str, timeout: int = 20) -> str:
+        def _request() -> str:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except Exception:
+            return ""
 
     async def _scrape_archived_title_stubs(self, code_name: str, max_statutes: int = 100) -> List[NormalizedStatute]:
         try:

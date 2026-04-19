@@ -649,6 +649,10 @@ class StateLawsAgenticDaemon:
         )
 
         metadata = scrape_result.get("metadata") or {}
+        recovered_row_artifacts = self._write_recovered_row_artifacts(
+            cycle_index=cycle_index,
+            scrape_result=scrape_result,
+        )
         deferred_retry = self._build_deferred_retry_plan(scrape_result)
         if deferred_retry:
             cycle_payload = self._build_deferred_retry_cycle_payload(
@@ -668,11 +672,13 @@ class StateLawsAgenticDaemon:
                     "critic": cycle_payload["critic"],
                     "metadata": metadata,
                     "deferred_retry": deferred_retry,
+                    "recovered_row_artifacts": recovered_row_artifacts,
                     "tactic_selection": tactic_selection["details"],
                 }
             )
             self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
             cycle_payload["tactic_selection"] = tactic_selection["details"]
+            cycle_payload["recovered_row_artifacts"] = recovered_row_artifacts
             self._update_state(tactic=tactic, cycle_payload=cycle_payload)
             cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
             cycle_path.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
@@ -681,6 +687,9 @@ class StateLawsAgenticDaemon:
             return cycle_payload
 
         diagnostics = self._build_diagnostics(scrape_result)
+        if isinstance(recovered_row_artifacts, dict) and isinstance(diagnostics.get("documents"), dict):
+            diagnostics["documents"] = dict(diagnostics["documents"])
+            diagnostics["documents"]["recovered_row_artifacts"] = recovered_row_artifacts
         diagnostics = self._annotate_document_recovery_gate(diagnostics)
         critic_score = self._critic_score(diagnostics)
         passed = self._is_success(diagnostics, critic_score)
@@ -694,6 +703,7 @@ class StateLawsAgenticDaemon:
                 "passed": passed,
                 "critic": critic,
                 "metadata": metadata,
+                "recovered_row_artifacts": recovered_row_artifacts,
                 "tactic_selection": tactic_selection["details"],
             }
         )
@@ -753,10 +763,6 @@ class StateLawsAgenticDaemon:
             cycle_index=cycle_index,
             tactic=tactic,
             document_gap_report=document_gap_report,
-        )
-        recovered_row_artifacts = self._write_recovered_row_artifacts(
-            cycle_index=cycle_index,
-            scrape_result=scrape_result,
         )
         diagnostics = self._merge_document_artifacts_into_diagnostics(
             diagnostics=diagnostics,
@@ -1692,11 +1698,13 @@ class StateLawsAgenticDaemon:
             "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
             "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
             "CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_AGENT_ACCOUNT_ID",
         ]
         token_env_keys = [
             "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
             "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
             "CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_AGENT_API_KEY",
         ]
 
         def _resolve_source(names: List[str], *, provider: str) -> Optional[str]:
@@ -1714,16 +1722,57 @@ class StateLawsAgenticDaemon:
                 try:
                     import keyring  # type: ignore
 
-                    return next(
-                        (
-                            key
-                            for key in names
-                            if str(keyring.get_password("ipfs_datasets_py", key) or "").strip()
-                        ),
-                        None,
+                    timeout_seconds = max(
+                        0.1,
+                        float(os.getenv("IPFS_DATASETS_KEYRING_LOOKUP_TIMEOUT_SECONDS", "1.5") or "1.5"),
                     )
+
+                    class _KeyringLookupTimeout(TimeoutError):
+                        pass
+
+                    def _handle_timeout(_signum: int, _frame: Any) -> None:
+                        raise _KeyringLookupTimeout()
+
+                    for key in names:
+                        if threading.current_thread() is not threading.main_thread():
+                            return None
+                        previous_handler = signal.getsignal(signal.SIGALRM)
+                        try:
+                            signal.signal(signal.SIGALRM, _handle_timeout)
+                            signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                            value = str(keyring.get_password("ipfs_datasets_py", key) or "").strip()
+                        except _KeyringLookupTimeout:
+                            return None
+                        finally:
+                            signal.setitimer(signal.ITIMER_REAL, 0.0)
+                            signal.signal(signal.SIGALRM, previous_handler)
+                        if value:
+                            return key
+                    return None
                 except Exception:
                     return None
+            if provider == "shared_file":
+                candidates = [
+                    str(os.environ.get("IPFS_DATASETS_SECRETS_FILE") or "").strip(),
+                    str(Path.home() / ".config" / "ipfs_datasets_py" / "secrets.json"),
+                    "/etc/github-runner-secrets/secrets.json",
+                    "/var/lib/github-runner/secrets.json",
+                ]
+                seen: set[str] = set()
+                for candidate in candidates:
+                    if not candidate or candidate in seen:
+                        continue
+                    seen.add(candidate)
+                    try:
+                        payload = json.loads(Path(candidate).expanduser().read_text(encoding="utf-8"))
+                    except Exception:
+                        continue
+                    if not isinstance(payload, dict):
+                        continue
+                    for key in names:
+                        if str(payload.get(key) or "").strip():
+                            return key
+                return None
             return None
 
         account_source = _resolve_source(account_env_keys, provider="env")
@@ -1731,6 +1780,9 @@ class StateLawsAgenticDaemon:
         if not account_source:
             account_source = _resolve_source(account_env_keys, provider="vault")
             account_source_kind = "vault" if account_source else None
+        if not account_source:
+            account_source = _resolve_source(account_env_keys, provider="shared_file")
+            account_source_kind = "shared_file" if account_source else None
         if not account_source:
             account_source = _resolve_source(account_env_keys, provider="keyring")
             account_source_kind = "keyring" if account_source else None
@@ -1740,6 +1792,9 @@ class StateLawsAgenticDaemon:
         if not token_source:
             token_source = _resolve_source(token_env_keys, provider="vault")
             token_source_kind = "vault" if token_source else None
+        if not token_source:
+            token_source = _resolve_source(token_env_keys, provider="shared_file")
+            token_source_kind = "shared_file" if token_source else None
         if not token_source:
             token_source = _resolve_source(token_env_keys, provider="keyring")
             token_source_kind = "keyring" if token_source else None
@@ -1768,11 +1823,13 @@ class StateLawsAgenticDaemon:
             "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
             "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
             "CLOUDFLARE_ACCOUNT_ID",
+            "CLOUDFLARE_AGENT_ACCOUNT_ID",
         ]
         token_names = [
             "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
             "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
             "CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_AGENT_API_KEY",
         ]
 
         def _resolve_value(names: List[str]) -> Optional[str]:
@@ -1790,11 +1847,54 @@ class StateLawsAgenticDaemon:
                         return value
             except Exception:
                 pass
+            candidates = [
+                str(os.environ.get("IPFS_DATASETS_SECRETS_FILE") or "").strip(),
+                str(Path.home() / ".config" / "ipfs_datasets_py" / "secrets.json"),
+                "/etc/github-runner-secrets/secrets.json",
+                "/var/lib/github-runner/secrets.json",
+            ]
+            seen: set[str] = set()
+            for candidate in candidates:
+                if not candidate or candidate in seen:
+                    continue
+                seen.add(candidate)
+                try:
+                    payload = json.loads(Path(candidate).expanduser().read_text(encoding="utf-8"))
+                except Exception:
+                    continue
+                if not isinstance(payload, dict):
+                    continue
+                for name in names:
+                    value = str(payload.get(name) or "").strip()
+                    if value:
+                        return value
             try:
                 import keyring  # type: ignore
 
+                timeout_seconds = max(
+                    0.1,
+                    float(os.getenv("IPFS_DATASETS_KEYRING_LOOKUP_TIMEOUT_SECONDS", "1.5") or "1.5"),
+                )
+
+                class _KeyringLookupTimeout(TimeoutError):
+                    pass
+
+                def _handle_timeout(_signum: int, _frame: Any) -> None:
+                    raise _KeyringLookupTimeout()
+
                 for name in names:
-                    value = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+                    if threading.current_thread() is not threading.main_thread():
+                        return None
+                    previous_handler = signal.getsignal(signal.SIGALRM)
+                    try:
+                        signal.signal(signal.SIGALRM, _handle_timeout)
+                        signal.setitimer(signal.ITIMER_REAL, timeout_seconds)
+                        value = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
+                    except _KeyringLookupTimeout:
+                        return None
+                    finally:
+                        signal.setitimer(signal.ITIMER_REAL, 0.0)
+                        signal.signal(signal.SIGALRM, previous_handler)
                     if value:
                         return value
             except Exception:

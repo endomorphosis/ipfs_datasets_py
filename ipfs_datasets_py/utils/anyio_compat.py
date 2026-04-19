@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio as _stdlib_asyncio
 from collections.abc import Awaitable, Callable
+from functools import partial
 import inspect
 import threading
 from typing import Any, Optional, TypeVar
@@ -211,7 +212,12 @@ async def wait_for(awaitable: Awaitable[T], timeout: float) -> T:
 
 
 async def to_thread(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
-    return await anyio.to_thread.run_sync(func, *args, **kwargs)
+    if kwargs:
+        func = partial(func, **kwargs)
+    try:
+        return await anyio.to_thread.run_sync(func, *args, abandon_on_cancel=True)
+    except TypeError:
+        return await anyio.to_thread.run_sync(func, *args)
 
 
 class _CompatFuture(Awaitable[T]):

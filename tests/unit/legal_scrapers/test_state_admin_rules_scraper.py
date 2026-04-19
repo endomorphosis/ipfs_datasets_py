@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 import time
 import types
@@ -188,6 +189,40 @@ def test_cloudflare_availability_detects_vault_credentials(monkeypatch) -> None:
     assert "ltgov.alaska.gov" in ak_allowed_hosts
     assert "www.akleg.gov" in ak_allowed_hosts
     assert "legislature.ak.gov" not in ak_allowed_hosts
+
+
+def test_cloudflare_availability_detects_shared_config_agent_key(monkeypatch, tmp_path) -> None:
+    secrets_path = tmp_path / "secrets.json"
+    secrets_path.write_text(
+        json.dumps(
+            {
+                "CLOUDFLARE_ACCOUNT_ID": "config-acct",
+                "CLOUDFLARE_AGENT_API_KEY": "config-agent-token",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    for name in (
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_AGENT_ACCOUNT_ID",
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_AGENT_API_KEY",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_SECRETS_FILE", str(secrets_path))
+
+    availability = scraper_module._cloudflare_browser_rendering_availability()
+
+    assert availability["available"] is True
+    assert availability["account_id_env"] == "CLOUDFLARE_ACCOUNT_ID"
+    assert availability["api_token_env"] == "CLOUDFLARE_AGENT_API_KEY"
+    assert availability["account_id_source_kind"] == "shared_file"
+    assert availability["api_token_source_kind"] == "shared_file"
     assert "legis.state.ak.us" not in ak_allowed_hosts
 
 
@@ -1766,6 +1801,98 @@ async def test_discover_iowa_rule_document_urls_extracts_agency_pdfs(monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_discover_florida_rule_document_urls_walks_browse_to_rule_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    browse_url = "https://flrules.org/GateWay/Browse.asp"
+    department_url = "https://flrules.org/gateway/Department.asp?toType=&DeptID=1"
+    division_url = "https://flrules.org/gateway/Division.asp?DivID=1"
+    chapter_url = "https://flrules.org/gateway/ChapterHome.asp?Chapter=1A-1"
+
+    class _FakeResponse:
+        def __init__(self, text: str):
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def _fake_get(url: str, *args, **kwargs):
+        if url == browse_url:
+            return _FakeResponse(f'<a href="{department_url}">1</a>')
+        if url == department_url:
+            return _FakeResponse(f'<a href="{division_url}">1A</a>')
+        if url == division_url:
+            return _FakeResponse(f'<a href="{chapter_url}">1A-1</a>')
+        if url == chapter_url:
+            return _FakeResponse(
+                """
+                <a href="/gateway/RuleNo.asp?title=Archives&ID=1A-1.001">1A-1.001</a>
+                <a href="/gateway/RuleNo.asp?title=Archives&ID=1A-1.002">1A-1.002</a>
+                <a href="/gateway/readFile.asp?file=1A-1.doc">Chapter download</a>
+                """
+            )
+        raise AssertionError(f"unexpected url: {url}")
+
+    monkeypatch.setattr(scraper_module.requests.Session, "get", lambda self, url, *args, **kwargs: _fake_get(url, *args, **kwargs))
+
+    urls = await scraper_module._discover_florida_rule_document_urls(
+        seed_urls=["https://www.flrules.org/"],
+        limit=2,
+    )
+
+    assert urls == [
+        "https://flrules.org/gateway/RuleNo.asp?title=Archives&ID=1A-1.001",
+        "https://flrules.org/gateway/RuleNo.asp?title=Archives&ID=1A-1.002",
+    ]
+    assert scraper_module._is_direct_detail_candidate_url(urls[0]) is True
+    assert _url_allowed_for_state(urls[0], _allowed_discovery_hosts_for_state("FL", "Florida")) is True
+
+
+@pytest.mark.asyncio
+async def test_discover_massachusetts_cmr_document_urls_uses_later_curated_inventory_seed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    inventory_seed = "https://www.mass.gov/law-library/310-cmr"
+    detail_url = "https://www.mass.gov/regulations/310-CMR-100-adjudicatory-proceedings-0"
+
+    class _EmptyScraper:
+        async def scrape(self, url: str):
+            return SimpleNamespace(text="", title="", html="")
+
+    class _EmptyAPI:
+        def fetch(self, request):
+            return SimpleNamespace(document=SimpleNamespace(text="", title="", html=""))
+
+    class _FakeResponse:
+        status_code = 200
+        text = f'<a href="{detail_url}">310 CMR 1.00: Adjudicatory proceedings</a>'
+
+    def _fake_get(url: str, *args, **kwargs):
+        if url == inventory_seed:
+            return _FakeResponse()
+        return SimpleNamespace(status_code=200, text="<html></html>")
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    urls = await scraper_module._discover_massachusetts_cmr_document_urls(
+        seed_urls=[
+            "https://www.mass.gov/guides/code-of-massachusetts-regulations-cmr-by-number",
+            "https://www.mass.gov/info-details/code-of-massachusetts-regulations-a-e",
+            "https://www.mass.gov/info-details/code-of-massachusetts-regulations-f-j",
+            "https://www.mass.gov/info-details/code-of-massachusetts-regulations-k-p",
+            "https://www.mass.gov/info-details/code-of-massachusetts-regulations-q-z",
+            inventory_seed,
+        ],
+        live_scraper=_EmptyScraper(),
+        live_fetch_api=_EmptyAPI(),
+        direct_fetch_api=_EmptyAPI(),
+        allowed_hosts=_allowed_discovery_hosts_for_state("MA", "Massachusetts"),
+        limit=2,
+    )
+
+    assert urls == [detail_url]
+    assert scraper_module._is_direct_detail_candidate_url(detail_url) is True
+
+
+@pytest.mark.asyncio
 async def test_discover_new_hampshire_archived_rule_document_urls_recovers_via_cdx_capture(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2282,6 +2409,122 @@ def test_georgia_candidate_url_scoring_prefers_rule_over_subject_and_chapter() -
     assert legislature_score < root_score
 
 
+def test_georgia_subject_url_for_rule_url_points_to_parent_subject() -> None:
+    assert scraper_module._georgia_subject_url_for_rule_url(
+        "https://rules.sos.ga.gov/gac/120-2-3-.01"
+    ) == "https://rules.sos.ga.gov/gac/120-2-3"
+    assert scraper_module._georgia_subject_url_for_rule_url("https://rules.sos.ga.gov/gac/120-2-3") is None
+
+
+def test_extract_georgia_rule_fragment_from_subject_html_selects_single_rule_body() -> None:
+    html = """
+    <html><head><title>GA R&amp;R - GAC - Subject 120-2-3</title></head><body>
+      <h1>Subject 120-2-3 Licensing</h1>
+      <h2>Rule 120-2-3-.01 Authority</h2>
+      <p>This Regulation is adopted and promulgated by the Commissioner of Insurance pursuant to O.C.G.A. §§ 33-2-9 and 33-23-44.</p>
+      <h2>Rule 120-2-3-.02 Purpose and Applicability</h2>
+      <p>The purpose of this Regulation is to set forth procedural requirements.</p>
+    </body></html>
+    """
+
+    fragment_html, text = scraper_module._extract_georgia_rule_fragment_from_subject_html(
+        html=html,
+        rule_path="/gac/120-2-3-.01",
+    )
+
+    assert "Rule 120-2-3-.01 Authority" in fragment_html
+    assert "Commissioner of Insurance" in text
+    assert "Purpose and Applicability" not in text
+
+
+@pytest.mark.asyncio
+async def test_scrape_georgia_rule_detail_via_subject_html(monkeypatch: pytest.MonkeyPatch) -> None:
+    html = """
+    <html><head><title>GA R&amp;R - GAC - Subject 120-2-3</title></head><body>
+      <h1>Subject 120-2-3 Licensing</h1>
+      <h2>Rule 120-2-3-.01 Authority</h2>
+      <p>This Regulation is adopted and promulgated by the Commissioner of Insurance pursuant to O.C.G.A. §§ 33-2-9 and 33-23-44.</p>
+      <h2>Rule 120-2-3-.02 Purpose and Applicability</h2>
+      <p>The purpose of this Regulation is to set forth procedural requirements.</p>
+    </body></html>
+    """
+    requested: list[tuple[str, dict | None]] = []
+
+    class _FakeResponse:
+        text = html
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def fake_get(self, url: str, timeout: int = 25, headers: dict | None = None):
+        requested.append((url, headers))
+        return _FakeResponse()
+
+    monkeypatch.setattr(scraper_module.requests.Session, "get", fake_get)
+
+    scraped = await scraper_module._scrape_georgia_rule_detail_via_ajax(
+        "https://rules.sos.ga.gov/gac/120-2-3-.01"
+    )
+
+    assert scraped is not None
+    assert scraped.method_used == "georgia_rules_subject_html"
+    assert scraped.url == "https://rules.sos.ga.gov/gac/120-2-3-.01"
+    assert scraped.title == "Rule 120-2-3-.01 Authority"
+    assert "Commissioner of Insurance" in scraped.text
+    assert "Purpose and Applicability" not in scraped.text
+    assert requested[0][0] == "https://rules.sos.ga.gov/gac/120-2-3"
+    assert "ipfs-datasets-py legal corpus crawler" in (requested[0][1] or {}).get("User-Agent", "")
+
+
+def test_accepts_short_official_georgia_rule_fragment_as_substantive() -> None:
+    text = (
+        "Rule 40-1-2-.01 Definitions\n"
+        'The following words and terms as used in these rules shall have the meaning hereinafter ascribed to them: '
+        '"Department" means the Department of Agriculture of the State of Georgia. '
+        '"Commissioner" means the Commissioner of Agriculture.'
+    )
+
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Rule 40-1-2-.01 Definitions",
+        url="https://rules.sos.ga.gov/gac/40-1-2-.01",
+        min_chars=120,
+    ) is True
+
+
+@pytest.mark.asyncio
+async def test_discover_georgia_rule_document_urls_uses_crawler_headers(monkeypatch: pytest.MonkeyPatch) -> None:
+    pages = {
+        "https://rules.sos.ga.gov/gac": '<a href="/gac/120">Department 120</a>',
+        "https://rules.sos.ga.gov/gac/120": '<a href="/gac/120-2">Chapter 120-2</a>',
+        "https://rules.sos.ga.gov/gac/120-2": '<a href="/gac/120-2-3">Subject 120-2-3</a>',
+        "https://rules.sos.ga.gov/gac/120-2-3": '<a href="/gac/120-2-3-.01">Rule 120-2-3-.01 Authority</a>',
+    }
+    headers_seen: list[dict | None] = []
+
+    class _FakeResponse:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def fake_get(url: str, timeout: int = 20, headers: dict | None = None):
+        headers_seen.append(headers)
+        return _FakeResponse(pages[url])
+
+    monkeypatch.setattr(scraper_module.requests, "get", fake_get)
+
+    urls = await scraper_module._discover_georgia_rule_document_urls(
+        seed_urls=["https://rules.sos.ga.gov/gac"],
+        limit=1,
+    )
+
+    assert urls == ["https://rules.sos.ga.gov/gac/120-2-3-.01"]
+    assert headers_seen
+    assert all("ipfs-datasets-py legal corpus crawler" in (headers or {}).get("User-Agent", "") for headers in headers_seen)
+
+
 def test_looks_like_rule_inventory_page_recognizes_connecticut_eregulations_browse_pages() -> None:
     root_text = (
         "Connecticut eRegulations System Portal to Connecticut Regulations Browse the Regulations of Connecticut State Agencies "
@@ -2494,6 +2737,27 @@ def test_new_mexico_candidate_url_scoring_prefers_chapter_and_title_over_portal_
     assert legislature_score < home_score
 
 
+def test_accepts_new_mexico_nmac_part_html_as_direct_detail() -> None:
+    url = "https://www.srca.nm.gov/parts/title01/01.024.0001.html"
+    text = (
+        "1.24.1 NMAC TITLE 1 GENERAL GOVERNMENT ADMINISTRATION CHAPTER 24 RULES "
+        "PART 1 GENERAL PROVISIONS 1.24.1.1 ISSUING AGENCY: State Records Administrator. "
+        "1.24.1.3 STATUTORY AUTHORITY: The State Rules Act, Section 14-4-1 et seq. NMSA 1978. "
+        + ("1.24.1.7 DEFINITIONS: Rule agency amendment annotation records center. " * 20)
+    )
+
+    assert scraper_module._is_direct_detail_candidate_url(url) is True
+    assert _score_candidate_url(url) > _score_candidate_url(
+        "https://www.srca.nm.gov/nmac-home/nmac-titles/title-1-general-government-administration/"
+    )
+    assert _is_substantive_rule_text(
+        text=text,
+        title="1.24.1 NMAC",
+        url=url,
+        min_chars=120,
+    ) is True
+
+
 def test_south_dakota_inventory_detection_is_limited_to_index_path() -> None:
     text = (
         "Administrative Rules Rule 01:15 TELECOMMUNICATIONS NETWORK Chapter 1:15 1:15:01 Definitions. "
@@ -2627,6 +2891,59 @@ def test_kansas_agency_listing_page_is_inventory_not_substantive_text() -> None:
         url="https://www.sos.ks.gov/publications/pubs_kar_Regs.aspx?KAR=7&Srch=Y",
         min_chars=160,
     ) is False
+
+
+def test_accepts_kansas_official_volume_pdf_as_substantive_fallback() -> None:
+    text = (
+        "Kansas Administrative Regulations Containing All of the Regulations of Agencies 1 through 27 "
+        "Compiled and Published by the Office of the Secretary of State of Kansas "
+        "UNDER AUTHORITY OF K.S.A. 77-415 "
+        + ("Agency 1 Department of Administration Article 1 General Provisions Section 1. Rule text. " * 120)
+    )
+    url = "https://www.sos.ks.gov/publications/KAR/2022/2022_KAR_Volumes_Book_1.pdf"
+
+    assert scraper_module._is_direct_detail_candidate_url(url) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Administrative",
+        url=url,
+        min_chars=160,
+    ) is True
+
+
+def test_accepts_ohio_administrative_code_rule_page_as_direct_detail() -> None:
+    url = "https://codes.ohio.gov/ohio-administrative-code/rule-5101%3A1-2-01"
+    text = (
+        "Rule 5101:1-2-01 The application process for Ohio works first and refugee cash assistance. "
+        "This website publishes administrative rules on their effective dates. "
+        "The county agency shall determine eligibility in accordance with this rule. "
+        + ("Administrative Code rule section authority application assistance. " * 30)
+    )
+
+    assert scraper_module._is_direct_detail_candidate_url(url) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Rule 5101:1-2-01 | The application process",
+        url=url,
+        min_chars=120,
+    ) is True
+
+
+def test_accepts_oregon_oard_rule_page_as_direct_detail() -> None:
+    url = "https://secure.sos.state.or.us/oard/view.action?ruleNumber=334-010-0005"
+    text = (
+        "Oregon Secretary of State Administrative Rules Board of Massage Therapists Chapter 334 Division 10 "
+        "334-010-0005 Applications. Rule text and authority for licensure applications. "
+        + ("OAR section rule administrative applications license board authority. " * 30)
+    )
+
+    assert scraper_module._is_direct_detail_candidate_url(url) is True
+    assert _is_substantive_rule_text(
+        text=text,
+        title="Oregon Secretary of State",
+        url=url,
+        min_chars=120,
+    ) is True
 
 
 def test_wyoming_search_and_program_results_are_inventory_pages() -> None:
@@ -2898,6 +3215,61 @@ async def test_discover_wyoming_rule_document_urls_expands_seed_inventory_to_vie
         "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225",
         "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=24261",
     ]
+
+
+@pytest.mark.asyncio
+async def test_discover_wyoming_rule_document_urls_falls_back_to_agency_program_ajax(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seed_url = "https://rules.wyo.gov/Search.aspx?mode=7"
+    program_url = "https://rules.wyo.gov/AjaxHandler.ashx?handler=Search_GetProgramRules&PROGRAM_ID=347&MODE=7"
+    posted: list[tuple[str, dict | None, dict | None]] = []
+
+    class FakeResponse:
+        def __init__(self, *, text: str = "") -> None:
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeSession:
+        def get(self, url, timeout=0, headers=None):
+            if url == seed_url:
+                return FakeResponse(text="<html><body>Results (0) No Results Found.</body></html>")
+            raise AssertionError(url)
+
+        def post(self, url, data=None, timeout=0, headers=None):
+            posted.append((url, data, headers))
+            if url.endswith("handler=GetAgencies"):
+                return FakeResponse(text="<option value='63'>Accountants</option>")
+            if url.endswith("handler=GetAgencyPrograms"):
+                assert data == {"AGENCY_ID": "63"}
+                return FakeResponse(text="<option value='347'>General Agency Rules</option>")
+            raise AssertionError(url)
+
+    async def _fake_scrape_wyoming_rule_detail_via_ajax(url: str):
+        if url == program_url:
+            return SimpleNamespace(
+                html='<a href="#" class="search-rule-link" data-whatever="16225">Chapter 1</a>',
+            )
+        raise AssertionError(url)
+
+    monkeypatch.setattr(scraper_module.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(scraper_module, "_scrape_wyoming_rule_detail_via_ajax", _fake_scrape_wyoming_rule_detail_via_ajax)
+
+    discovered = await scraper_module._discover_wyoming_rule_document_urls(
+        seed_urls=[seed_url],
+        limit=1,
+    )
+
+    assert discovered == [
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetRuleVersionHTML&RULE_VERSION_ID=16225"
+    ]
+    assert [call[0] for call in posted] == [
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetAgencies",
+        "https://rules.wyo.gov/AjaxHandler.ashx?handler=GetAgencyPrograms",
+    ]
+    assert all((headers or {}).get("X-Requested-With") == "XMLHttpRequest" for _, _, headers in posted)
 
 
 def test_rejects_wyoming_empty_search_page_as_substantive_rule_text() -> None:
@@ -3196,6 +3568,39 @@ def test_score_candidate_url_prioritizes_michigan_admincode_returnhtml_over_depa
     )
 
     assert document_score > department_score
+
+
+async def test_scrape_michigan_returnhtml_detail_via_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+    url = (
+        "https://ars.apps.lara.state.mi.us/AdminCode/DownloadAdminCodeFile?"
+        "FileName=R%20338.1%20to%20R%20338.13.pdf&ReturnHTML=True"
+    )
+
+    def _fake_get(*args: object, **kwargs: object) -> SimpleNamespace:
+        return SimpleNamespace(
+            status_code=200,
+            text=(
+                "<html><head><title>Michigan Administrative Code</title><style>.x{}</style></head>"
+                "<body><h1>R 338.1 to R 338.13</h1>"
+                "<p>DEPARTMENT OF LICENSING AND REGULATORY AFFAIRS</p>"
+                "<p>Rule 1. Section 1. General provisions and authority under state law.</p>"
+                "</body></html>"
+            ),
+        )
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    scraped = await scraper_module._scrape_michigan_rule_detail_via_requests(url)
+
+    assert scraped is not None
+    assert scraped.method_used == "michigan_returnhtml_requests"
+    assert "Rule 1. Section 1." in scraped.text
+    assert _is_substantive_rule_text(
+        text=scraped.text,
+        title=scraped.title,
+        url=url,
+        min_chars=80,
+    ) is True
 
 
 def test_rejects_michigan_lara_guidance_page_with_site_chrome_as_rule_content() -> None:
@@ -13720,11 +14125,15 @@ async def test_download_text_via_cloudflare_crawl_returns_none_when_not_configur
     monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_CLOUDFLARE_API_TOKEN", raising=False)
 
-    from ipfs_datasets_py.processors.legal_scrapers.state_admin_rules_scraper import (
-        _download_text_via_cloudflare_crawl,
+    from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as _sar
+
+    monkeypatch.setattr(
+        _sar,
+        "_resolve_cloudflare_browser_rendering_credentials",
+        lambda: ("", "", {"available": False}),
     )
 
-    result = await _download_text_via_cloudflare_crawl("https://example.com/rules.pdf")
+    result = await _sar._download_text_via_cloudflare_crawl("https://example.com/rules.pdf")
     assert result is None
 
 
@@ -13787,6 +14196,61 @@ async def test_download_text_via_cloudflare_crawl_returns_text_on_success(
 
 
 @pytest.mark.asyncio
+async def test_download_text_via_cloudflare_crawl_uses_vault_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    class _Vault:
+        def get(self, name):
+            mapping = {
+                "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID": "vault-account",
+                "IPFS_DATASETS_CLOUDFLARE_API_TOKEN": "vault-token",
+            }
+            return mapping.get(name)
+
+    fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _Vault())
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+
+    async def _fake_crawl(url, **kwargs):
+        assert kwargs["account_id"] == "vault-account"
+        assert kwargs["api_token"] == "vault-token"
+        return {
+            "status": "success",
+            "job_status": "success",
+            "records": [
+                {
+                    "url": url,
+                    "status": "completed",
+                    "markdown": "Administrative rules recovered through browser rendering.\n" * 6,
+                    "html": "<p>Administrative rules recovered through browser rendering.</p>",
+                }
+            ],
+        }
+
+    from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as _sar
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine.crawl_with_cloudflare_browser_rendering",
+        _fake_crawl,
+    )
+
+    result = await _sar._download_text_via_cloudflare_crawl("https://example.com/rules.pdf")
+
+    assert result is not None
+    assert result["cloudflare_record_status"] == "completed"
+    assert "Administrative rules recovered" in result["text"]
+
+
+@pytest.mark.asyncio
 async def test_download_text_via_cloudflare_crawl_falls_back_on_challenge_page(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -13830,6 +14294,45 @@ async def test_download_text_via_cloudflare_crawl_falls_back_on_challenge_page(
 
 
 @pytest.mark.asyncio
+async def test_download_text_via_cloudflare_crawl_rejects_chrome_pdf_viewer_shell(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID", "fake-account")
+    monkeypatch.setenv("LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN", "fake-token")
+
+    async def _fake_crawl(url, **kwargs):
+        return {
+            "status": "success",
+            "records": [
+                {
+                    "url": url,
+                    "status": "completed",
+                    "markdown": "",
+                    "html": (
+                        "<!DOCTYPE html><html><head><style>"
+                        "body { height: 100%; width: 100%; overflow: hidden; margin: 0; "
+                        "background-color: rgb(82, 86, 89); }"
+                        "</style></head><body></body></html>"
+                    ),
+                }
+            ],
+        }
+
+    from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as _sar
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.web_archiving.cloudflare_browser_rendering_engine.crawl_with_cloudflare_browser_rendering",
+        _fake_crawl,
+    )
+
+    result = await _sar._download_text_via_cloudflare_crawl(
+        "https://apps.azsos.gov/public_services/Title_02/2-01.pdf"
+    )
+
+    assert result is None
+
+
+@pytest.mark.asyncio
 async def test_scrape_pdf_candidate_uses_cloudflare_fallback_when_playwright_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -13863,6 +14366,11 @@ async def test_scrape_pdf_candidate_uses_cloudflare_fallback_when_playwright_fai
 
     monkeypatch.setattr(_sar, "_download_document_bytes_via_playwright", _fake_playwright_download)
 
+    async def _fake_common_crawl_download(url):
+        return None
+
+    monkeypatch.setattr(_sar, "_download_document_bytes_via_common_crawl", _fake_common_crawl_download)
+
     async def _fake_cf_crawl(url):
         return fake_cf_text
 
@@ -13879,6 +14387,54 @@ async def test_scrape_pdf_candidate_uses_cloudflare_fallback_when_playwright_fai
     assert result.success is True
     assert result.method_used == "pdf_processor_cloudflare_rendering"
     assert "Section 1" in result.text
+
+
+@pytest.mark.asyncio
+async def test_scrape_pdf_candidate_uses_common_crawl_bytes_before_cloudflare_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers import state_admin_rules_scraper as _sar
+
+    monkeypatch.setattr(_sar, "_is_pdf_candidate_url", lambda url: True)
+
+    import requests as _requests_mod
+
+    def _raise(*a, **kw):
+        raise ConnectionError("simulated network error")
+
+    monkeypatch.setattr(_requests_mod, "get", _raise)
+    monkeypatch.setattr(_sar, "_download_document_bytes_via_cloudscraper", lambda url: None)
+
+    async def _fake_playwright_download(url):
+        return None
+
+    async def _fake_common_crawl_download(url):
+        return {
+            "body": b"%PDF-1.4 fake archived pdf bytes",
+            "content_type": "application/pdf",
+            "suggested_filename": "2-01.pdf",
+        }
+
+    async def _unexpected_cf_crawl(url):
+        raise AssertionError("Cloudflare text fallback should not run after Common Crawl bytes recover")
+
+    async def _fake_extract(pdf_bytes: bytes, *, source_url: str):
+        assert pdf_bytes.startswith(b"%PDF-")
+        return "TITLE 2. ADMINISTRATION\nCHAPTER 1. DEPARTMENT RULES\nR2-1-101. Definitions\n" * 3
+
+    monkeypatch.setattr(_sar, "_download_document_bytes_via_playwright", _fake_playwright_download)
+    monkeypatch.setattr(_sar, "_download_document_bytes_via_common_crawl", _fake_common_crawl_download)
+    monkeypatch.setattr(_sar, "_download_text_via_cloudflare_crawl", _unexpected_cf_crawl)
+    monkeypatch.setattr(_sar, "_extract_text_from_pdf_bytes_with_processor", _fake_extract)
+
+    result = await _sar._scrape_pdf_candidate_url_with_processor(
+        "https://apps.azsos.gov/public_services/Title_02/2-01.pdf"
+    )
+
+    assert result is not None
+    assert result.success is True
+    assert result.method_used == "pdf_processor_common_crawl"
+    assert result.extraction_provenance["used_common_crawl"] is True
 
 
 @pytest.mark.asyncio
@@ -13911,6 +14467,11 @@ async def test_scrape_rtf_candidate_uses_cloudflare_fallback_when_playwright_fai
         return None
 
     monkeypatch.setattr(_sar, "_download_document_bytes_via_playwright", _fake_playwright_download)
+
+    async def _fake_common_crawl_download(url):
+        return None
+
+    monkeypatch.setattr(_sar, "_download_document_bytes_via_common_crawl", _fake_common_crawl_download)
 
     async def _fake_cf_crawl(url):
         return fake_cf_text
@@ -13951,6 +14512,11 @@ async def test_scrape_pdf_candidate_cloudflare_fallback_skipped_when_text_too_sh
         return None
 
     monkeypatch.setattr(_sar, "_download_document_bytes_via_playwright", _fake_playwright_download)
+
+    async def _fake_common_crawl_download(url):
+        return None
+
+    monkeypatch.setattr(_sar, "_download_document_bytes_via_common_crawl", _fake_common_crawl_download)
 
     async def _fake_cf_crawl(url):
         # Return text that is too short to be substantive

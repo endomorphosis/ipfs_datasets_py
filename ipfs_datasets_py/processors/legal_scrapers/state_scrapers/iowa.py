@@ -7,7 +7,7 @@ import json
 import re
 import urllib.parse
 import urllib.request
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -27,7 +27,12 @@ class IowaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Iowa's legislative website.
         
         Args:
@@ -38,6 +43,12 @@ class IowaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         return_threshold = self._bounded_return_threshold(30)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+        if direct_sections:
+            return direct_sections[:return_threshold]
+
         live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=max(10, return_threshold))
 
         archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=max(10, return_threshold))
@@ -73,7 +84,7 @@ class IowaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Iowa Code", max_sections=280)
+            statutes = await self._generic_scrape(code_name, candidate, "Iowa Code", max_sections=max(10, return_threshold))
             _merge(statutes)
             if len(statutes) > len(best_statutes):
                 best_statutes = statutes
@@ -86,6 +97,65 @@ class IowaScraper(BaseStateScraper):
             best_statutes = list(merged)
 
         return best_statutes
+
+    async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        seeds = [
+            ("1.1", "https://www.legis.iowa.gov/docs/code/1.1.html"),
+            ("1.2", "https://www.legis.iowa.gov/docs/code/1.2.html"),
+        ]
+        out: List[NormalizedStatute] = []
+        for section_number, source_url in seeds[: max(1, int(max_statutes or 1))]:
+            html = await self._request_text_direct(source_url, timeout=18)
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "html.parser")
+            text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+            if len(text) < 80:
+                continue
+            first_sentence = text.split(".", 2)
+            section_name = first_sentence[1].strip() if len(first_sentence) > 1 else f"Iowa Code {section_number}"
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200] or f"Iowa Code {section_number}",
+                    full_text=text,
+                    source_url=source_url,
+                    legal_area=self._identify_legal_area(text),
+                    official_cite=f"Iowa Code § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_iowa_code_html",
+                        "discovery_method": "official_seed_section",
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return out
+
+    async def _request_text_direct(self, url: str, timeout: int = 18) -> str:
+        def _request() -> str:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            import asyncio
+
+            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except Exception:
+            return ""
 
     async def _scrape_live_code_stubs(self, code_name: str, max_statutes: int = 160) -> List[NormalizedStatute]:
         try:

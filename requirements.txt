@@ -1,16 +1,13 @@
 # Core dependencies only - for initial testing
 # Use this to test if basic setup works, then add more dependencies gradually
 
-# GitHub dependencies - always install from main branch
-ipfs_kit_py[api,ipld,ai_ml] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main
-ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
-
-# Local submodule dependencies
-# -e ./ipfs_kit_py  # Commented out - now using GitHub direct install above
-# -e ./ipfs_accelerate_py  # Commented out - now using GitHub direct install above
+# Local submodule dependencies. These avoid fragile nested GitHub submodule
+# fetches and match the dynamic setup.py resolver used by editable installs.
+-e ./ipfs_kit_py[api,ipld,ai_ml]
+-e ./ipfs_accelerate_py
 
 # Core Python packages
-numpy>=1.21.0,<2.0.0; python_version < '3.14'
+numpy>=1.26.4,<=2.1.3; python_version < '3.14'
 numpy>=2.0.0; python_version >= '3.14'
 pandas>=1.5.0,<3.0.0
 requests>=2.25.0,<3.0.0
@@ -51,7 +48,7 @@ flake8>=6.0.0,<8.0.0
 
 # Data processing
 pyarrow>=15.0.0,<21.0.0; python_version < '3.14'
-datasets>=2.0.0,<4.0.0
+datasets>=4.0.0,<5.0.0
 jsonschema>=4.0.0,<5.0.0
 jsonpatch>=1.33
 pydantic>=2.0.0,<3.0.0
@@ -64,8 +61,10 @@ torch>=2.7.0,<2.11; platform_system == 'Linux' and platform_machine == 'aarch64'
 networkx>=3.1
 scipy>=1.7.0
 matplotlib>=3.5.0
+seaborn>=0.12.0
 plotly>=5.9.0
 rdflib>=6.0.0
+neo4j>=5.20.0
 markitdown>=0.1.0
 python-docx>=1.1.2
 pdfplumber>=0.11.7
@@ -147,6 +146,9 @@ autoscraper>=1.1.14  # Intelligent web scraping
 ipwb>=0.2024.10.24  # InterPlanetary Wayback Machine
 warcio>=1.7.4  # WARC file processing
 beautifulsoup4>=4.12.0  # HTML parsing for scraping
+newspaper3k>=0.2.8,<1.0.0  # Article extraction via `newspaper`
+readability-lxml>=0.8.0,<1.0.0  # Readability extraction via `readability`
+lxml_html_clean>=0.4.0  # Required by newspaper/readability with modern lxml
 playwright>=1.40.0  # Browser rendering for JS-heavy legal portals
 selenium>=4.15.0,<4.16.0  # Keep urllib3 compatibility with ipfshttpclient/ipfs_accelerate_py
 scrapy>=2.11.0  # Advanced web scraping framework
@@ -162,7 +164,7 @@ cfscrape>=2.1.1; python_version < '3.12'  # Legacy Cloudflare fallback; incompat
 # Install it separately only if you need that client in an isolated environment.
 
 # Add these one by one after basic setup works:
-datasets>=2.10.0,<3.0.0
+datasets>=4.0.0,<5.0.0
 huggingface-hub>=0.34.0,<1.0.0
 # Vector store backend
 faiss-cpu>=1.8.0

@@ -10,9 +10,13 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.florida import Fl
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.georgia import GeorgiaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.generic import GenericStateScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii import HawaiiScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois import IllinoisScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana import IndianaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import KansasScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import MaineScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
@@ -222,25 +226,181 @@ async def test_texas_admin_code_landing_page_returns_no_synthetic_section(monkey
 
 @pytest.mark.anyio
 async def test_florida_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
-    async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
-        return b""
-
-    def _fake_get(url: str, *args, **kwargs):
-        html = (
+    async def _fake_fetch_official_fl_html(self, url: str, timeout_seconds: int = 12) -> str:
+        self._record_fetch_event(provider="requests_direct", success=True)
+        if "Display_Index" in url or url.endswith("/statutes"):
+            return (
+                "<html><body>"
+                "<a href='index.cfm?App_mode=Display_Index&Title_Request=I#TitleI'>TITLE I</a>"
+                "<a href='index.cfm?App_mode=Display_Statute&URL=0000-0099/0001/0001ContentsIndex.html'>Chapter 1</a>"
+                "</body></html>"
+            )
+        return (
             "<html><body>"
-            "<a href='/statutes/title1'>Florida statute title 1</a>"
+            "<span class='TitleNumber'>TITLE I</span>"
+            "<span class='TitleName'>CONSTRUCTION OF STATUTES</span>"
+            "<span class='ChapterNumber'>Chapter 1</span>"
+            "<span class='ChapterName'>GENERAL PROVISIONS</span>"
+            "<div class='Section'>"
+            "<span class='SectionNumber'>1.01</span>"
+            "<span class='Catchline'>Definitions.</span>"
+            "<div class='SectionBody'>The word person includes individuals and business entities. "
+            "This test statute has enough words to avoid the short-text filter and exercise parsing.</div>"
+            "</div>"
             "</body></html>"
-        ).encode("utf-8")
-        return _FakeResponse(html)
+        )
 
-    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _make_fake_archival_fetch(_fake_get))
+    monkeypatch.setattr(FloridaScraper, "_fetch_official_fl_html", _fake_fetch_official_fl_html)
 
     scraper = FloridaScraper("FL", "Florida")
     statutes = await scraper.scrape_code("Florida Statutes", "http://example.fl/statutes")
 
     assert len(statutes) >= 1
+    assert statutes[0].official_cite == "Fla. Stat. § 1.01"
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_illinois_scrape_records_official_full_act_sections(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_fetch_official_il_html(self, url: str, timeout_seconds: int = 20) -> str:
+        self._record_fetch_event(provider="requests_direct", success=True)
+        if "Chapters" in url:
+            return (
+                "<html><body>"
+                "<a class='list-group-item' href='/Legislation/ILCS/Acts?ChapterID=2&ChapterNumber=5&Chapter=GENERAL PROVISIONS&MajorTopic=GOVERNMENT'>"
+                "CHAPTER 5 GENERAL PROVISIONS</a>"
+                "</body></html>"
+            )
+        if "Acts?" in url:
+            return (
+                "<html><body>"
+                "<a class='list-group-item' href='/Legislation/ILCS/Articles?ActID=74&ChapterID=2&Chapter=GENERAL PROVISIONS&MajorTopic=GOVERNMENT'>"
+                "5 ILCS 5/ U. S. Constitution Amendment Act.</a>"
+                "</body></html>"
+            )
+        if "Articles?" in url:
+            return (
+                "<html><body>"
+                "<a href='/legislation/ILCS/details?ActID=74&ChapterID=2&SeqStart=&&ChapAct=FullText'>View Entire Act</a>"
+                "</body></html>"
+            )
+        return (
+            "<html><body>"
+            "<code>(5 ILCS 5/0.01)</code><br><code>Sec. 0.01. Short title. "
+            "This Act may be cited as the U. S. Constitution Amendment Act.</code>"
+            "<br><code>(Source: P.A. 86-1324.)</code>"
+            "<code>(5 ILCS 5/1)</code><br><code>Sec. 1. Whenever Congress proposes an amendment, "
+            "the General Assembly may consider the amendment under this section.</code>"
+            "<br><code>(Source: Laws 1961, p. 1983.)</code>"
+            "</body></html>"
+        )
+
+    monkeypatch.setattr(IllinoisScraper, "_fetch_official_il_html", _fake_fetch_official_il_html)
+
+    scraper = IllinoisScraper("IL", "Illinois")
+    statutes = await scraper.scrape_code("Illinois Compiled Statutes", "https://example.il/Legislation/ILCS/Chapters")
+
+    assert len(statutes) == 2
+    assert statutes[0].official_cite == "5 ILCS 5/0.01"
+    assert statutes[0].structured_data["source_kind"] == "official_illinois_ilga_full_act_html"
+    assert statutes[0].structured_data["skip_hydrate"] is True
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_kansas_parse_section_page_uses_statute_paragraphs(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_fetch_official_ks_html(self, url: str, timeout_seconds: int = 18) -> str:
+        self._record_fetch_event(provider="requests_direct", success=True)
+        return (
+            "<html><body>"
+            "<div id='main'></div>"
+            "<p class='p_pt'><span class='stat_5f_number'>1-201.</span> "
+            "<span class='stat_5f_caption'>Membership; appointment; qualifications.</span> "
+            "(a) There is hereby created a board of accountancy for this state.</p>"
+            "<p class='p_pt'>(b) Each member shall serve for a term of three years "
+            "and until a successor is appointed and qualified.</p>"
+            "<p class='p_pt'><span class='t_bold'>History:</span> L. 1951, ch. 1, sec. 1.</p>"
+            "</body></html>"
+        )
+
+    monkeypatch.setattr(KansasScraper, "_fetch_official_ks_html", _fake_fetch_official_ks_html)
+
+    scraper = KansasScraper("KS", "Kansas")
+    statute = await scraper._parse_section_page(
+        code_name="Kansas Statutes",
+        section_url="https://example.ks/001_002_0001_k/",
+        section_label="1-201 - Membership; appointment; qualifications.",
+        chapter_label="Chapter 1. - ACCOUNTANTS, CERTIFIED PUBLIC",
+        article_label="Article 2. - STATE BOARD OF ACCOUNTANCY",
+    )
+
+    assert statute is not None
+    assert statute.official_cite == "K.S.A. 1-201"
+    assert statute.structured_data["source_kind"] == "official_kansas_statutes_html"
+    assert statute.structured_data["skip_hydrate"] is True
+    assert "created a board of accountancy" in statute.full_text
+
+
+@pytest.mark.anyio
+async def test_maine_direct_seed_sections_parse_official_body(monkeypatch: pytest.MonkeyPatch):
+    html = (
+        "<html><body>"
+        "<div class='heading_structure'>Title 1: GENERAL PROVISIONS Chapter 1</div>"
+        "<div class='row section-content'><div class='MRSSection status_current'>"
+        "<h3 class='heading_section'>§1. Extent of sovereignty and jurisdiction</h3>"
+        "<div class='mrs-text indpara MRSIndentedPara status_current IP'>"
+        "The jurisdiction and sovereignty of the State extend to all places within its boundaries, "
+        "subject only to such rights of concurrent jurisdiction as are granted by law. "
+        "This sentence provides enough official body text to pass the statute quality filter.</div>"
+        "<div class='qhistory'>SECTION HISTORY PL 1985, c. 802, §1 (AMD).</div>"
+        "</div></div>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return html
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = MaineScraper("ME", "Maine")
+    statutes = await scraper.scrape_code("Maine Revised Statutes", "https://example.me/statutes", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].official_cite == "Me. Rev. Stat. tit. 1, § 1"
+    assert statutes[0].structured_data["source_kind"] == "official_maine_revised_statutes_html"
+    assert "jurisdiction and sovereignty" in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_montana_jina_seed_sections_parse_mca_body(monkeypatch: pytest.MonkeyPatch):
+    markdown = (
+        "Title: 45-5-102. Deliberate homicide, MCA\n\n"
+        "URL Source: https://leg.mt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html\n\n"
+        "Markdown Content:\n"
+        "## Montana Code Annotated 2025\n\n"
+        "45-5-102. Deliberate homicide. (1) A person commits the offense of deliberate homicide if:\n\n"
+        "(a) the person purposely or knowingly causes the death of another human being;\n\n"
+        "(b) the person attempts to commit robbery and in the course of the offense causes death; or\n\n"
+        "(2) A person convicted of the offense shall be punished as provided by law. "
+        "This sentence provides enough statutory text to pass validation.\n"
+    ).encode("utf-8")
+
+    async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return markdown
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
+
+    scraper = MontanaScraper("MT", "Montana")
+    statutes = await scraper.scrape_code("Montana Code Annotated", "https://example.mt/mca", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].official_cite == "Mont. Code Ann. § 45-5-102"
+    assert statutes[0].structured_data["source_kind"] == "jina_reader_montana_mca_official"
+    assert "Deliberate homicide" in statutes[0].full_text
 
 
 @pytest.mark.anyio

@@ -265,9 +265,114 @@ async def test_playwright_scraper_waits_for_hydrated_dom(monkeypatch: pytest.Mon
     ]
     assert page.goto_wait_until == "domcontentloaded"
     assert page.wait_timeouts == [10, 20]
+    assert browser.context_kwargs["accept_downloads"] is True
     assert browser.context_kwargs["locale"] == "en-US"
     assert browser.context_kwargs["viewport"] == {"width": 1440, "height": 900}
     assert "Mozilla/5.0" in browser.context_kwargs["user_agent"]
+
+
+@pytest.mark.asyncio
+async def test_playwright_scraper_captures_binary_download_after_api_fetch_fails(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    pdf_path = tmp_path / "rules.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 downloaded rules")
+
+    class FakeAPIResponse:
+        ok = False
+
+    class FakeRequest:
+        async def get(self, *_args, **_kwargs):
+            return FakeAPIResponse()
+
+    class FakeDownload:
+        suggested_filename = "rules.pdf"
+
+        async def path(self):
+            return str(pdf_path)
+
+    class FakeDownloadInfo:
+        @property
+        async def value(self):
+            return FakeDownload()
+
+    class FakeExpectDownload:
+        async def __aenter__(self):
+            return FakeDownloadInfo()
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    class FakeDownloadPage:
+        def expect_download(self, **_kwargs):
+            return FakeExpectDownload()
+
+        async def goto(self, *_args, **_kwargs):
+            raise RuntimeError("Page.goto: Download is starting")
+
+        async def close(self):
+            return None
+
+    class FakeDownloadContext:
+        request = FakeRequest()
+
+        async def new_page(self):
+            return FakeDownloadPage()
+
+        async def close(self):
+            return None
+
+    class FakeDownloadBrowser:
+        async def new_context(self, **kwargs):
+            assert kwargs["accept_downloads"] is True
+            return FakeDownloadContext()
+
+        async def close(self):
+            return None
+
+    class FakeDownloadChromium:
+        async def launch(self, **_kwargs):
+            return FakeDownloadBrowser()
+
+    fake_async_api = types.ModuleType("playwright.async_api")
+    fake_async_api.async_playwright = lambda: _FakePlaywrightManager(FakeDownloadChromium())
+    monkeypatch.setitem(sys.modules, "playwright.async_api", fake_async_api)
+
+    async def fake_extract_pdf(pdf_bytes: bytes) -> str:
+        assert pdf_bytes == b"%PDF-1.4 downloaded rules"
+        return "Downloaded administrative rules"
+
+    monkeypatch.setattr(UnifiedWebScraper, "_extract_pdf_text", staticmethod(fake_extract_pdf))
+
+    scraper = UnifiedWebScraper(ScraperConfig(timeout=5))
+    result = await scraper._scrape_playwright("https://apps.azsos.gov/public_services/Title_02/2-01.pdf")
+
+    assert result.success is True
+    assert result.method_used == ScraperMethod.PLAYWRIGHT
+    assert result.text == "Downloaded administrative rules"
+    assert result.metadata["method"] == "playwright_download"
+    assert result.metadata["binary_document"] is True
+    assert result.metadata["raw_bytes"] == b"%PDF-1.4 downloaded rules"
+
+
+@pytest.mark.asyncio
+async def test_extract_pdf_text_prefers_pypdf_native_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakePage:
+        def extract_text(self):
+            return "Native PDF administrative rules"
+
+    class FakePdfReader:
+        def __init__(self, stream):
+            assert stream.read().startswith(b"%PDF-")
+            self.pages = [FakePage()]
+
+    fake_pypdf = types.ModuleType("pypdf")
+    fake_pypdf.PdfReader = FakePdfReader
+    monkeypatch.setitem(sys.modules, "pypdf", fake_pypdf)
+
+    text = await UnifiedWebScraper._extract_pdf_text(b"%PDF-1.4 fake pdf bytes")
+
+    assert text == "Native PDF administrative rules"
 
 
 def test_common_crawl_search_options_autodetect_local_collection_layout(
@@ -311,6 +416,126 @@ def test_common_crawl_search_options_enable_hf_remote_when_no_local_meta(
     assert options["hf_meta_index_dataset"] == "Publicus/common_crawl_pointer_indices"
     assert options["hf_pointer_dataset"] == "Publicus/common_crawl_pointers_by_collection"
     assert options["hf_revision"] == "main"
+
+
+@pytest.mark.anyio
+async def test_common_crawl_exact_url_scrape_rejects_domain_only_match(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_api = SimpleNamespace(
+        search_domain_via_meta_indexes=lambda *_args, **_kwargs: SimpleNamespace(
+            records=[
+                {
+                    "url": "https://apps.azsos.gov/public_services/unrelated.htm",
+                    "warc_filename": "sample.warc.gz",
+                    "warc_offset": 1,
+                    "warc_length": 2,
+                }
+            ]
+        )
+    )
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine", SimpleNamespace())
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex", SimpleNamespace(api=fake_api))
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex.api", fake_api)
+
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            preferred_methods=[ScraperMethod.COMMON_CRAWL],
+            common_crawl_prefer_exact_url=True,
+        )
+    )
+
+    result = await scraper._scrape_common_crawl("https://apps.azsos.gov/public_services/Title_02/2-01.pdf")
+
+    assert result.success is False
+    assert result.method_used == ScraperMethod.COMMON_CRAWL
+    assert result.errors == ["No exact Common Crawl record for requested URL"]
+    assert result.metadata["candidate_urls"] == ["https://apps.azsos.gov/public_services/unrelated.htm"]
+
+
+@pytest.mark.asyncio
+async def test_common_crawl_exact_url_scrape_preserves_binary_document_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import base64
+
+    pdf_body = b"%PDF-1.4 archived pdf bytes"
+
+    def _fake_extract(_gz_bytes, **kwargs):
+        assert kwargs["include_body_base64"] is True
+        return SimpleNamespace(
+            ok=True,
+            http_status=200,
+            http_headers={},
+            body_base64=base64.b64encode(pdf_body).decode("ascii"),
+            body_text_preview="",
+            body_is_html=False,
+            body_mime="application/pdf",
+            body_charset=None,
+            error=None,
+        )
+
+    fake_api = SimpleNamespace(
+        search_domain_via_meta_indexes=lambda *_args, **_kwargs: SimpleNamespace(
+            records=[
+                {
+                    "url": "https://apps.azsos.gov/public_services/Title_02/2-01.pdf",
+                    "warc_filename": "sample.warc.gz",
+                    "warc_offset": 1,
+                    "warc_length": 2,
+                }
+            ]
+        ),
+        fetch_warc_record=lambda **_kwargs: (
+            SimpleNamespace(ok=True, raw_base64=base64.b64encode(b"fake gzip member").decode("ascii")),
+            "range",
+            None,
+        ),
+        extract_http_from_warc_gzip_member=_fake_extract,
+    )
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine", SimpleNamespace())
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex", SimpleNamespace(api=fake_api))
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex.api", fake_api)
+
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            preferred_methods=[ScraperMethod.COMMON_CRAWL],
+            common_crawl_prefer_exact_url=True,
+        )
+    )
+
+    result = await scraper._scrape_common_crawl("https://apps.azsos.gov/public_services/Title_02/2-01.pdf")
+
+    assert result.success is True
+    assert result.metadata["body_base64"] == base64.b64encode(pdf_body).decode("ascii")
+    assert result.metadata["content_type"] == "application/pdf"
+
+
+@pytest.mark.asyncio
+async def test_common_crawl_search_timeout_returns_without_waiting_for_worker(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import time
+
+    fake_api = SimpleNamespace()
+    scraper = UnifiedWebScraper(
+        ScraperConfig(
+            preferred_methods=[ScraperMethod.COMMON_CRAWL],
+            common_crawl_search_timeout_seconds=0.01,
+        )
+    )
+
+    def _slow_search(*_args, **_kwargs):
+        time.sleep(0.2)
+        return SimpleNamespace(records=[]), True
+
+    monkeypatch.setattr(scraper, "_search_common_crawl_records", _slow_search)
+
+    started = time.monotonic()
+    with pytest.raises(TimeoutError):
+        await scraper._search_common_crawl_records_bounded(fake_api, "https://example.com/", max_matches=1)
+
+    assert time.monotonic() - started < 0.15
 
 
 def test_parse_method_names_accepts_cloudflare_alias() -> None:

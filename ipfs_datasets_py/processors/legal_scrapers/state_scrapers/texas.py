@@ -78,7 +78,12 @@ class TexasScraper(BaseStateScraper):
         
         return codes
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific Texas code.
         
         Args:
@@ -99,8 +104,13 @@ class TexasScraper(BaseStateScraper):
         try:
             lower_name = str(code_name or "").lower()
             lower_url = str(code_url or "").lower()
+            limit = self._effective_scrape_limit(max_statutes, default=120)
             if "administrative" in lower_name or "readtac" in lower_url:
-                return await self._scrape_texas_admin_code(code_name=code_name, code_url=code_url)
+                return await self._scrape_texas_admin_code(
+                    code_name=code_name,
+                    code_url=code_url,
+                    max_statutes=limit,
+                )
 
             page_bytes = await self._fetch_page_content_with_archival_fallback(
                 code_url,
@@ -127,7 +137,10 @@ class TexasScraper(BaseStateScraper):
             page_full_text = self._extract_text_from_html(page_html)
             seen_section_numbers = set()
             
-            for i, link in enumerate(section_links[:120]):
+            scan_links = section_links if limit is None else section_links[: max(120, int(limit) * 5)]
+            for i, link in enumerate(scan_links):
+                if limit is not None and len(statutes) >= int(limit):
+                    break
                 section_text = link.get_text(strip=True)
                 section_url = link.get('href', '')
                 
@@ -193,7 +206,12 @@ class TexasScraper(BaseStateScraper):
         
         return statutes
 
-    async def _scrape_texas_admin_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def _scrape_texas_admin_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
             from urllib.parse import urljoin
@@ -245,7 +263,8 @@ class TexasScraper(BaseStateScraper):
                 )
                 return []
 
-            for idx, (link_text, link_url) in enumerate(candidate_links[:180], start=1):
+            limit = max_statutes if max_statutes is not None else len(candidate_links)
+            for idx, (link_text, link_url) in enumerate(candidate_links[: max(1, int(limit))], start=1):
                 if link_url in seen_urls:
                     continue
                 seen_urls.add(link_url)

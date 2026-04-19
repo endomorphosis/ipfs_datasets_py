@@ -50,6 +50,9 @@ class ArkansasScraper(BaseStateScraper):
         return bool(self._AR_CLOUDFLARE_CHALLENGE_RE.search(sample))
 
     async def _fetch_direct_html(self, url: str, timeout_seconds: int = 8) -> bytes:
+        cached = await self._load_page_bytes_from_any_cache(url)
+        if cached:
+            return cached
         timeout = max(1, int(timeout_seconds or 8))
 
         def _request() -> bytes:
@@ -78,6 +81,8 @@ class ArkansasScraper(BaseStateScraper):
             self._record_fetch_event(provider="requests_direct", success=False, error="cloudflare_challenge")
             return b""
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
+        if payload:
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
         return payload
 
     async def _fetch_justia_html(self, url: str, timeout_seconds: int = 18) -> bytes:

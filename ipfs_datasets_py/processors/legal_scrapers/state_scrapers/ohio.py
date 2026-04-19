@@ -4,7 +4,7 @@ This module contains the scraper for Ohio statutes from the official state legis
 """
 
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -24,7 +24,12 @@ class OhioScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Ohio's legislative website.
         
         Args:
@@ -34,12 +39,23 @@ class OhioScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        direct = await self._scrape_direct_sections(code_name)
+        limit = self._effective_scrape_limit(max_statutes, default=2)
+        direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
         if direct:
             return direct
-        return await self._generic_scrape(code_name, code_url, "Ohio Rev. Code Ann.")
+        max_sections = limit if limit is not None else 1000000
+        return await self._generic_scrape(
+            code_name,
+            code_url,
+            "Ohio Rev. Code Ann.",
+            max_sections=max_sections,
+        )
 
-    async def _scrape_direct_sections(self, code_name: str) -> List[NormalizedStatute]:
+    async def _scrape_direct_sections(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -50,7 +66,8 @@ class OhioScraper(BaseStateScraper):
             f"{self.get_base_url()}/ohio-revised-code/section-2903.01",
         ]
         statutes: List[NormalizedStatute] = []
-        for source_url in section_urls[: self._bounded_return_threshold(2)]:
+        limit = max_statutes if max_statutes is not None else len(section_urls)
+        for source_url in section_urls[: max(1, int(limit))]:
             payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
             if not payload:
                 continue

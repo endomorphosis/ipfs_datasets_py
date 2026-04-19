@@ -8,6 +8,10 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper impo
     NormalizedStatute,
     StatuteMetadata,
 )
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.state_archival_fetch import (
+    ArchivalFetchClient,
+    FetchResult,
+)
 from ipfs_datasets_py.processors.legal_scrapers.state_laws_scraper import (
     _aggregate_fetch_analytics,
     _compute_state_quality_metrics,
@@ -280,6 +284,32 @@ def test_fetch_page_content_skips_object_moved_placeholder(monkeypatch):
     analytics = scraper.get_fetch_analytics_snapshot()
     assert "unified_scraper" not in analytics["providers"] or analytics["providers"]["unified_scraper"] == 1
     assert any(name in analytics["providers"] for name in ("requests_direct", "direct", "archival_fallback"))
+
+
+def test_archival_fetch_skips_common_crawl_unless_enabled(monkeypatch):
+    client = ArchivalFetchClient(request_timeout_seconds=1)
+    target_url = "https://example.gov/code/10-1"
+
+    def _unexpected_common_crawl(_url):
+        raise AssertionError("Common Crawl should be opt-in for state scraper archival fallback")
+
+    def _direct_fetch(url):
+        return FetchResult(
+            url=url,
+            content=b"<html><body>direct statute page</body></html>",
+            source="direct",
+            fetched_at="2026-04-19T00:00:00+00:00",
+            status_code=200,
+        )
+
+    monkeypatch.delenv("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", raising=False)
+    monkeypatch.setattr(client, "_fetch_from_common_crawl", _unexpected_common_crawl)
+    monkeypatch.setattr(client, "_fetch_direct", _direct_fetch)
+
+    result = asyncio.run(client.fetch_with_fallback(target_url))
+
+    assert result.source == "direct"
+    assert result.content == b"<html><body>direct statute page</body></html>"
 
 
 def test_write_state_jsonld_files_emits_per_state_jsonld(tmp_path: Path):

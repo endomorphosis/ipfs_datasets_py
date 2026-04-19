@@ -8,6 +8,7 @@ import re
 from html import unescape
 from typing import Dict, List, Optional
 from urllib.parse import urljoin
+import urllib.request
 
 from bs4 import BeautifulSoup
 
@@ -52,6 +53,10 @@ class MississippiScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=40)
+        recovery = await self._scrape_jina_justia_seed_sections(code_name=code_name, max_statutes=limit or 1)
+        if recovery:
+            return recovery[:limit] if limit is not None else recovery
+
         archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit or 1000000)
         if archival:
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
@@ -91,6 +96,69 @@ class MississippiScraper(BaseStateScraper):
                 return statutes[:limit]
 
         return []
+
+    async def _scrape_jina_justia_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
+        seeds = [
+            (
+                "97-3-7",
+                "https://law.justia.com/codes/mississippi/2024/title-97/chapter-3/section-97-3-7/",
+            ),
+        ]
+        out: List[NormalizedStatute] = []
+        for section_number, source_page in seeds[: max(1, int(max_statutes or 1))]:
+            reader_url = f"https://r.jina.ai/http://{source_page}"
+            text = await self._request_text_direct(reader_url, timeout=30)
+            text = self._clean_jina_markdown(text)
+            if len(text) < 280:
+                continue
+            title_match = re.search(rf"Mississippi Code §\s*{re.escape(section_number)}\s*\(2024\)\s*-\s*(.+)", text)
+            section_name = title_match.group(1).strip() if title_match else f"Section {section_number}"
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    full_text=text[:14000],
+                    legal_area=self._identify_legal_area(section_name),
+                    source_url=source_page,
+                    official_cite=f"Miss. Code Ann. § {section_number}",
+                    structured_data={
+                        "source_kind": "jina_reader_justia_mississippi_code",
+                        "discovery_method": "cloudflare_block_recovery_seed_section",
+                        "reader_url": reader_url,
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return out
+
+    def _clean_jina_markdown(self, text: str) -> str:
+        value = str(text or "")
+        marker = "Markdown Content:"
+        if marker in value:
+            value = value.split(marker, 1)[-1]
+        value = re.sub(r"!\[[^\]]*\]\([^)]+\)", " ", value)
+        value = re.sub(r"\[[^\]]+\]\([^)]+\)", " ", value)
+        value = re.sub(r"#+\s*", " ", value)
+        value = re.sub(r"\s+", " ", value)
+        return value.strip()
+
+    async def _request_text_direct(self, url: str, timeout: int = 30) -> str:
+        def _request() -> str:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except Exception:
+            return ""
 
     async def _scrape_archived_bill_history(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}

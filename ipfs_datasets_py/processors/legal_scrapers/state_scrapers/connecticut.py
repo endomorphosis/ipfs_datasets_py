@@ -8,7 +8,7 @@ import re
 import ssl
 import urllib.parse
 import urllib.request
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -30,7 +30,12 @@ class ConnecticutScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Connecticut's legislative website.
         
         Args:
@@ -40,7 +45,8 @@ class ConnecticutScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(30)
+        limit = self._effective_scrape_limit(max_statutes, default=30)
+        return_threshold = limit if limit is not None else 1000000
         direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
         if direct_sections:
             return direct_sections
@@ -63,13 +69,23 @@ class ConnecticutScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._custom_scrape_connecticut(code_name, candidate, "Conn. Gen. Stat.", max_sections=260)
+            statutes = await self._custom_scrape_connecticut(
+                code_name,
+                candidate,
+                "Conn. Gen. Stat.",
+                max_sections=return_threshold if limit is not None else 260,
+            )
             if len(statutes) > len(best):
                 best = statutes
             if len(statutes) >= return_threshold:
                 return statutes
 
-            generic = await self._generic_scrape(code_name, candidate, "Conn. Gen. Stat.", max_sections=260)
+            generic = await self._generic_scrape(
+                code_name,
+                candidate,
+                "Conn. Gen. Stat.",
+                max_sections=return_threshold if limit is not None else 260,
+            )
             if len(generic) > len(best):
                 best = generic
             if len(generic) >= return_threshold:

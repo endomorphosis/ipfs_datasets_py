@@ -6,6 +6,8 @@ import json
 import os
 from pathlib import Path
 import shlex
+import subprocess
+import sys
 from typing import Any, Dict, List, Mapping, Optional
 
 from .canonical_legal_corpora import get_canonical_legal_corpus
@@ -47,6 +49,18 @@ def _resolve_hf_token(hf_token: str | None = None) -> str | None:
         if value:
             return value
 
+    # Prefer the Hugging Face local token store before desktop keyrings or
+    # project vaults. In headless daemon runs, secret-service/keyring backends
+    # can block while waiting for an unlock prompt that will never appear.
+    try:
+        from huggingface_hub import get_token
+
+        value = str(get_token() or "").strip()
+        if value:
+            return value
+    except Exception:
+        pass
+
     try:
         from ipfs_datasets_py.mcp_server.secrets_vault import get_secrets_vault
 
@@ -58,32 +72,58 @@ def _resolve_hf_token(hf_token: str | None = None) -> str | None:
     except Exception:
         pass
 
+    timeout_seconds = 2.0
     try:
-        import keyring  # type: ignore
-
-        keyring_lookups = (
-            ("huggingface_hub", "default"),
-            ("huggingface_hub", "endomorphosis"),
-            ("huggingface_hub", "HF_TOKEN"),
-            ("huggingface_hub", "HUGGINGFACE_HUB_TOKEN"),
-            ("huggingface_hub", "HUGGINGFACEHUB_API_TOKEN"),
-        ) + tuple(("ipfs_datasets_py", name) for name in _HF_TOKEN_NAMES)
-        for service, account in keyring_lookups:
-            value = str(keyring.get_password(service, account) or "").strip()
-            if value:
-                return value
+        timeout_seconds = float(os.getenv("IPFS_DATASETS_PY_KEYRING_TIMEOUT_SECONDS", "2") or "2")
     except Exception:
-        pass
-
-    try:
-        from huggingface_hub import get_token
-
-        value = str(get_token() or "").strip()
+        timeout_seconds = 2.0
+    if timeout_seconds > 0:
+        value = _resolve_hf_token_from_keyring(timeout_seconds=timeout_seconds)
         if value:
             return value
-    except Exception:
-        pass
     return None
+
+
+def _resolve_hf_token_from_keyring(*, timeout_seconds: float = 2.0) -> str | None:
+    keyring_lookups = (
+        ("huggingface_hub", "default"),
+        ("huggingface_hub", "endomorphosis"),
+        ("huggingface_hub", "HF_TOKEN"),
+        ("huggingface_hub", "HUGGINGFACE_HUB_TOKEN"),
+        ("huggingface_hub", "HUGGINGFACEHUB_API_TOKEN"),
+    ) + tuple(("ipfs_datasets_py", name) for name in _HF_TOKEN_NAMES)
+    code = (
+        "import json, keyring; "
+        f"lookups = {keyring_lookups!r}; "
+        "value = ''; "
+        "\nfor service, account in lookups:\n"
+        "    try:\n"
+        "        candidate = str(keyring.get_password(service, account) or '').strip()\n"
+        "    except Exception:\n"
+        "        candidate = ''\n"
+        "    if candidate:\n"
+        "        value = candidate\n"
+        "        break\n"
+        "print(json.dumps({'value': value}))\n"
+    )
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-c", code],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=max(0.1, float(timeout_seconds)),
+        )
+    except Exception:
+        return None
+    if completed.returncode != 0:
+        return None
+    try:
+        payload = json.loads(str(completed.stdout or "{}"))
+    except Exception:
+        return None
+    value = str((payload or {}).get("value") or "").strip()
+    return value or None
 
 
 def _normalize_rows_for_table(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

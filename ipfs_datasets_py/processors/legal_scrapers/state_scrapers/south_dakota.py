@@ -4,10 +4,11 @@ This module contains the scraper for South Dakota statutes from the official
 JSON statute endpoint.
 """
 
+import os
 import re
 import time
 from html import unescape
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
@@ -41,7 +42,12 @@ class SouthDakotaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from South Dakota's legislative website.
         
         Args:
@@ -51,12 +57,23 @@ class SouthDakotaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        api_statutes = await self._scrape_statutes_api(code_name=code_name, max_statutes=20)
+        limit = self._effective_scrape_limit(max_statutes, default=20)
+        max_api_statutes = limit if limit is not None else len(self._SEED_SECTIONS + self._TITLE_START_SECTIONS)
+        api_statutes = await self._scrape_statutes_api(
+            code_name=code_name,
+            max_statutes=max_api_statutes,
+        )
         if api_statutes:
             self.logger.info(f"South Dakota API fallback: Scraped {len(api_statutes)} sections")
             return api_statutes
 
-        return await self._generic_scrape(code_name, code_url, "S.D. Codified Laws")
+        max_sections = limit if limit is not None else 1000000
+        return await self._generic_scrape(
+            code_name,
+            code_url,
+            "S.D. Codified Laws",
+            max_sections=max_sections,
+        )
 
     async def _scrape_statutes_api(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}

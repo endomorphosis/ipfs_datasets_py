@@ -30,6 +30,12 @@ class AlaskaScraper(BaseStateScraper):
         }]
     
     async def _fetch_statute_chunk(self, sec_start: str, timeout_seconds: int = 8) -> Tuple[str, str]:
+        cache_url = f"https://www.akleg.gov/basis/statutes.asp?media=print&type=fetch&secStart={sec_start}"
+        cached = await self._load_page_bytes_from_any_cache(cache_url)
+        if cached:
+            cached_html = cached.decode("cp1252", errors="replace")
+            section_numbers = re.findall(r'name=["\'](\d{2}\.\d{2}\.\d{3})["\']', cached_html)
+            return cached_html, (section_numbers[-1] if section_numbers else "")
         timeout = max(1, int(timeout_seconds or 8))
 
         def _request() -> Tuple[str, str]:
@@ -56,6 +62,12 @@ class AlaskaScraper(BaseStateScraper):
         except asyncio.TimeoutError:
             html, last_sec = "", ""
         self._record_fetch_event(provider="requests_direct", success=bool(html))
+        if html:
+            await self._cache_successful_page_fetch(
+                url=cache_url,
+                payload=html.encode("cp1252", errors="replace"),
+                provider="requests_direct",
+            )
         return html, last_sec
 
     def _parse_statute_chunk(self, *, code_name: str, html: str) -> List[NormalizedStatute]:

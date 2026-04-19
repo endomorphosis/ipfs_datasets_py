@@ -3,7 +3,7 @@
 This module contains the scraper for Connecticut statutes from the official state legislative website.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -23,7 +23,12 @@ class ConnecticutScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Connecticut's legislative website.
         
         Args:
@@ -33,7 +38,13 @@ class ConnecticutScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return await self._custom_scrape_connecticut(code_name, code_url, "Conn. Gen. Stat.")
+        limit = self._effective_scrape_limit(max_statutes, default=100)
+        return await self._custom_scrape_connecticut(
+            code_name,
+            code_url,
+            "Conn. Gen. Stat.",
+            max_sections=limit if limit is not None else 1000000,
+        )
     
     async def _custom_scrape_connecticut(
         self,

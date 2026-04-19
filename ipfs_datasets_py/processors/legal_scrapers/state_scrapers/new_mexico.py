@@ -10,7 +10,7 @@ import re
 import subprocess
 import urllib.parse
 import urllib.request
-from typing import Dict, List
+from typing import Dict, List, Optional
 from urllib.parse import urljoin
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -40,7 +40,12 @@ class NewMexicoScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from New Mexico's legislative website.
         
         Args:
@@ -50,13 +55,18 @@ class NewMexicoScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        nav_sections = await self._scrape_nmonesource_nav_sections(code_name=code_name, max_statutes=120)
+        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(120)
+        direct = await self._scrape_direct_document_pdfs(code_name=code_name, max_statutes=limit)
+        if direct:
+            return direct[:limit]
+
+        nav_sections = await self._scrape_nmonesource_nav_sections(code_name=code_name, max_statutes=limit)
         if nav_sections:
             self.logger.info("New Mexico nav-date fallback: Scraped %s section(s)", len(nav_sections))
             return nav_sections
 
         index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
-        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=8)
+        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=max(1, min(8, limit)))
         if archival:
             if index_fallback:
                 archival.extend(index_fallback)
@@ -67,7 +77,54 @@ class NewMexicoScraper(BaseStateScraper):
             self.logger.info("New Mexico index fallback: Scraped %s section(s)", len(index_fallback))
             return index_fallback
 
-        return await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.")
+        return await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.", max_sections=max(10, limit))
+
+    async def _scrape_direct_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        seeds = [
+            ("24A", "https://nmonesource.com/nmos/nmsa/en/18973/1/document.do"),
+            ("1", "https://nmonesource.com/nmos/nmsa/en/25293/1/document.do"),
+        ]
+        statutes: List[NormalizedStatute] = []
+        for section_number, pdf_url in seeds[: max(1, int(max_statutes or 1))]:
+            pdf_bytes = await self._request_bytes_direct(pdf_url, timeout=24)
+            text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=14000)
+            if len(text) < 280:
+                continue
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § chapter-{section_number}",
+                    code_name=code_name,
+                    section_number=f"chapter-{section_number}",
+                    section_name=f"NMSA chapter {section_number}",
+                    full_text=text,
+                    legal_area=self._identify_legal_area(text[:1200]),
+                    source_url=pdf_url,
+                    official_cite=f"N.M. Stat. Ann. ch. {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_nmonesource_pdf",
+                        "discovery_method": "official_seed_document_pdf",
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return statutes
+
+    async def _request_bytes_direct(self, url: str, timeout: int = 24) -> bytes:
+        def _request() -> bytes:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return bytes(resp.read() or b"")
+            except Exception:
+                return b""
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except Exception:
+            return b""
 
     async def _scrape_nmonesource_nav_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         """Parse NMOneSource nav-by-date pages that expose chapter/item links."""

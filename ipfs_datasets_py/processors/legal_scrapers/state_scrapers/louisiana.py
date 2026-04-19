@@ -8,7 +8,7 @@ import json
 import urllib.request
 import urllib.parse
 from html import unescape
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -38,13 +38,20 @@ class LouisianaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Louisiana's legislative website.
 
         Louisiana live endpoints can be brittle in automation contexts.
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
         return_threshold = self._bounded_return_threshold(30)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
         live = await self._scrape_live_law_pages(code_name=code_name, max_statutes=return_threshold)
         if live:
             return live

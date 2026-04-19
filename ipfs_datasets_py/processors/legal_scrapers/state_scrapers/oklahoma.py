@@ -8,12 +8,12 @@ import json
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import os
 import re
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 from urllib.parse import quote, urljoin
 
 from bs4 import BeautifulSoup
 
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -64,7 +64,12 @@ class OklahomaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Oklahoma's legislative website.
         
         Args:
@@ -74,8 +79,16 @@ class OklahomaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        best_archival: List[NormalizedStatute] = []
         return_threshold = self._bounded_return_threshold(30)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+
+        if not self._full_corpus_enabled():
+            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
+
+        best_archival: List[NormalizedStatute] = []
         for attempt in range(3):
             archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=max(10, return_threshold))
             if len(archival) > len(best_archival):
@@ -104,6 +117,108 @@ class OklahomaScraper(BaseStateScraper):
                 best = statutes
 
         return best
+
+    async def _scrape_direct_seed_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 2,
+    ) -> List[NormalizedStatute]:
+        seeds = [
+            "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=69380",
+            "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=436720",
+        ]
+        headers = {"User-Agent": "Mozilla/5.0"}
+        out: List[NormalizedStatute] = []
+        for url in seeds[: max(1, int(max_statutes or 1))]:
+            statute = await self._build_statute_from_jina_reader(
+                code_name=code_name,
+                document_url=url,
+            )
+            if statute is None:
+                statute = await self._build_statute_from_document_url(
+                    code_name=code_name,
+                    document_url=url,
+                    headers=headers,
+                )
+            if statute is None:
+                continue
+            structured = dict(statute.structured_data or {})
+            structured.setdefault("source_kind", "official_oklahoma_oscn_html")
+            structured.setdefault("discovery_method", "official_seed_document")
+            structured["skip_hydrate"] = True
+            statute.structured_data = structured
+            if statute.metadata is None:
+                statute.metadata = StatuteMetadata()
+            out.append(statute)
+        return out
+
+    async def _build_statute_from_jina_reader(
+        self,
+        code_name: str,
+        document_url: str,
+    ) -> NormalizedStatute | None:
+        reader_url = f"https://r.jina.ai/http://{document_url}"
+
+        def _fetch() -> str:
+            try:
+                import urllib.request
+
+                request = urllib.request.Request(reader_url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(request, timeout=20) as response:
+                    return response.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            markdown = await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=24)
+        except Exception:
+            return None
+        if not markdown:
+            return None
+
+        section_match = re.search(r"Section\s+([0-9A-Za-z.\-]+)\s+-\s*([^\n*]+)", markdown, flags=re.IGNORECASE)
+        cite_match = re.search(r"Cite as:\s*([0-9]+\s+O\.S\.\s*§\s*[0-9A-Za-z.\-]+)", markdown, flags=re.IGNORECASE)
+        body_start = cite_match.end() if cite_match else -1
+        if body_start < 0 and section_match:
+            body_start = section_match.end()
+        if body_start < 0:
+            return None
+
+        tail = markdown[body_start:]
+        end = len(tail)
+        for marker in ("Historical Data", "Citationizer", "Oklahoma Attorney General", "Court of Criminal Appeals"):
+            idx = tail.find(marker)
+            if idx >= 0:
+                end = min(end, idx)
+        body = self._normalize_legal_text(tail[:end])
+        body = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", body)
+        body = self._normalize_legal_text(body)
+        if len(body) < 120:
+            return None
+
+        section_number = section_match.group(1).strip() if section_match else self._extract_cite_id(document_url)
+        section_name = section_match.group(2).strip()[:180] if section_match else f"Section {section_number}"
+        official_cite = cite_match.group(1).strip() if cite_match else f"Okla. Stat. § {section_number}"
+
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            section_number=section_number,
+            section_name=section_name,
+            full_text=body[:14000],
+            legal_area=self._identify_legal_area(body),
+            source_url=document_url,
+            official_cite=official_cite,
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "jina_reader_oklahoma_oscn",
+                "discovery_method": "official_seed_document_reader",
+                "reader_url": reader_url,
+                "skip_hydrate": True,
+            },
+        )
 
     async def _scrape_oscn_documents(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}

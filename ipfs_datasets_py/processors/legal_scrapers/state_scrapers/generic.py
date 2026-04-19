@@ -193,7 +193,12 @@ class GenericStateScraper(BaseStateScraper):
 
         return b""
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code using generic parsing.
         
         Args:
@@ -210,6 +215,7 @@ class GenericStateScraper(BaseStateScraper):
             return []
         
         statutes = []
+        limit = self._effective_scrape_limit(max_statutes, default=100)
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(
@@ -230,7 +236,10 @@ class GenericStateScraper(BaseStateScraper):
             
             links = soup.find_all('a', href=True)
             
-            for link in links[:100]:  # Limit for performance
+            scan_links = links if limit is None else links[: max(100, int(limit) * 5)]
+            for link in scan_links:
+                if limit is not None and len(statutes) >= int(limit):
+                    break
                 text = link.get_text(strip=True)
                 href = link.get('href', '')
                 

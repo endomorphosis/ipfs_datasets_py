@@ -113,20 +113,22 @@ async def test_base_fetch_timeout_is_capped_by_bounded_run_env(monkeypatch) -> N
     scraper = _SlowLegacyScraper("ZZ", "Test")
     observed: dict[str, int] = {}
 
-    async def fake_load(url: str):
-        return None
+    async def fake_load(url: str) -> bytes:
+        return b""
 
     async def fake_unified_fetch(*, url: str, timeout_seconds: int) -> bytes:
         observed["timeout_seconds"] = timeout_seconds
         return b"<html>ok</html>"
 
-    async def fake_store(**kwargs):
+    async def fake_store(**kwargs) -> None:
         return None
 
     monkeypatch.setenv("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", "3")
-    monkeypatch.setattr(scraper, "_load_page_bytes_from_ipfs_cache", fake_load)
+    monkeypatch.setenv("LEGAL_SCRAPER_FETCH_CACHE_ENABLED", "0")
+    monkeypatch.setenv("LEGAL_SCRAPER_IPFS_PAGE_CACHE_ENABLED", "0")
+    monkeypatch.setattr(scraper, "_load_page_bytes_from_any_cache", fake_load)
     monkeypatch.setattr(scraper, "_fetch_page_content_with_unified_api", fake_unified_fetch)
-    monkeypatch.setattr(scraper, "_store_page_bytes_in_ipfs_cache", fake_store)
+    monkeypatch.setattr(scraper, "_cache_successful_page_fetch", fake_store)
 
     payload = await scraper._fetch_page_content_with_archival_fallback("https://example.test/code", timeout_seconds=30)
 

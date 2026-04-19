@@ -5,7 +5,7 @@ This module contains the scraper for Tennessee statutes from the official state 
 
 import re
 import warnings
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -28,7 +28,12 @@ class TennesseeScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Tennessee's legislative website.
         
         Tennessee's site frequently has connection issues.
@@ -44,6 +49,15 @@ class TennesseeScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        return_threshold = self._bounded_return_threshold(30)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+
+        if not self._full_corpus_enabled():
+            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
+
         # Try alternative URLs if main URL fails
         # Note: Tennessee's SSL certificate often has issues, use verify=False in requests
         # Tennessee URLs with extended timeout and SSL verification disabled
@@ -62,10 +76,10 @@ class TennesseeScraper(BaseStateScraper):
                     code_name,
                     url_attempt,
                     "Tenn. Code Ann.",
-                    max_sections=180
+                    max_sections=max(1, return_threshold)
                 )
                 if statutes:
-                    return statutes
+                    return statutes[:return_threshold]
             except Exception as e:
                 self.logger.warning(f"Tennessee custom scrape failed for {url_attempt}: {e}")
         
@@ -76,7 +90,7 @@ class TennesseeScraper(BaseStateScraper):
                 self.logger.info(f"Tennessee: Attempting HTTP scrape with {url_attempt}")
                 result = await self._custom_scrape_tennessee(code_name, url_attempt, "Tenn. Code Ann.")
                 if result:
-                    return result
+                    return result[:return_threshold]
             except Exception as e:
                 self.logger.warning(f"Tennessee: HTTP scrape failed for {url_attempt}: {e}")
                 continue
@@ -89,6 +103,76 @@ class TennesseeScraper(BaseStateScraper):
         self.logger.info("  3. Access via Internet Archive")
         return []
 
+    async def _scrape_direct_seed_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 1,
+    ) -> List[NormalizedStatute]:
+        seeds = [
+            (
+                "39-13-202",
+                "First degree murder",
+                "https://law.justia.com/codes/tennessee/2024/title-39/chapter-13/part-2/section-39-13-202/",
+            ),
+        ]
+        out: List[NormalizedStatute] = []
+        for section_number, section_name, source_url in seeds[: max(1, int(max_statutes or 1))]:
+            reader_url = f"https://r.jina.ai/http://{source_url}"
+            raw = await self._fetch_page_content_with_archival_fallback(reader_url, timeout_seconds=25)
+            if not raw:
+                continue
+            try:
+                markdown = raw.decode("utf-8", errors="replace")
+            except Exception:
+                continue
+            body = self._extract_justia_reader_section(markdown, section_number)
+            if len(body) < 220:
+                continue
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    title_number=section_number.split("-", 1)[0],
+                    section_number=section_number,
+                    section_name=section_name,
+                    full_text=body[:14000],
+                    legal_area=self._identify_legal_area(body[:1200]),
+                    source_url=source_url,
+                    official_cite=f"Tenn. Code Ann. § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "jina_reader_justia_tennessee_code",
+                        "discovery_method": "cloudflare_block_recovery_seed_section",
+                        "reader_url": reader_url,
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return out
+
+    def _extract_justia_reader_section(self, markdown: str, section_number: str) -> str:
+        text = str(markdown or "")
+        start = text.find(f"Section {section_number}")
+        cite_start = text.find(f"TN Code § {section_number}")
+        if cite_start >= 0:
+            start = cite_start
+        if start < 0:
+            start = text.find(f"§ {section_number}")
+        if start < 0:
+            return ""
+        tail = text[start:]
+        end_markers = ["Disclaimer:", "Justia Free Databases", "Newsletter", "Want to receive"]
+        end = len(tail)
+        for marker in end_markers:
+            idx = tail.find(marker)
+            if idx >= 0:
+                end = min(end, idx)
+        body = tail[:end]
+        body = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", body)
+        body = re.sub(r"\*\*([^*]+)\*\*", r"\1", body)
+        return self._normalize_legal_text(body)
 
     async def _custom_scrape_tennessee(
         self,

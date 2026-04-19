@@ -7,7 +7,7 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 from ...playwright_limiter import acquire_playwright_slot
@@ -34,7 +34,12 @@ class WyomingScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Wyoming's legislative website.
         
         Args:
@@ -44,7 +49,19 @@ class WyomingScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        max_sections = self._bounded_return_threshold(60)
+        max_sections = self._effective_scrape_limit(max_statutes, default=60)
+        max_sections_value = int(max_sections or 1000000)
+
+        # The official download catalog has stable title PDFs. Prefer it over
+        # the JS page so full-corpus runs do not depend on rendered link order.
+        deterministic = await self._scrape_deterministic_title_pdfs(
+            code_name,
+            "Wyo. Stat.",
+            max_sections=max_sections_value,
+        )
+        if deterministic:
+            return deterministic[:max_sections_value]
+
         if PLAYWRIGHT_AVAILABLE:
             self.logger.info("Wyoming: Using Playwright for JavaScript rendering")
             try:
@@ -52,10 +69,10 @@ class WyomingScraper(BaseStateScraper):
                     code_name,
                     code_url,
                     "Wyo. Stat.",
-                    max_sections=max_sections,
+                    max_sections=max_sections_value,
                 )
                 if result:
-                    return result
+                    return result[:max_sections_value]
             except Exception as e:
                 self.logger.warning(f"Wyoming Playwright failed: {e}, falling back")
         
@@ -63,8 +80,8 @@ class WyomingScraper(BaseStateScraper):
             code_name,
             code_url,
             "Wyo. Stat.",
-            max_sections=max_sections,
-        )
+            max_sections=max_sections_value,
+        )[:max_sections_value]
     
     async def _scrape_with_playwright(
         self,
@@ -154,7 +171,7 @@ class WyomingScraper(BaseStateScraper):
         
         return statutes
 
-    async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 6000) -> str:
+    async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: Optional[int] = None) -> str:
         """Extract statute text from a PDF using system `pdftotext`.
 
         This keeps Wyoming strict-mode scraping resilient without adding heavy PDF
@@ -173,11 +190,16 @@ class WyomingScraper(BaseStateScraper):
                 txt_path = Path(td) / "output.txt"
                 pdf_path.write_bytes(payload)
 
+                command = ["pdftotext"]
+                if not self._full_corpus_enabled():
+                    command.extend(["-f", "1", "-l", "3"])
+                command.extend([str(pdf_path), str(txt_path)])
+
                 proc = subprocess.run(
-                    ["pdftotext", "-f", "1", "-l", "3", str(pdf_path), str(txt_path)],
+                    command,
                     capture_output=True,
                     text=True,
-                    timeout=60,
+                    timeout=180 if self._full_corpus_enabled() else 60,
                     check=False,
                 )
                 if proc.returncode != 0 or not txt_path.exists():
@@ -185,10 +207,56 @@ class WyomingScraper(BaseStateScraper):
 
                 raw = txt_path.read_text(encoding="utf-8", errors="ignore")
                 text = re.sub(r"\s+", " ", raw).strip()
-                return text[:max_chars]
+                if max_chars is None:
+                    max_chars = 250000 if self._full_corpus_enabled() else 6000
+                return text[: int(max_chars)]
         except Exception as e:
             self.logger.debug(f"Wyoming PDF text extraction failed for {pdf_url}: {e}")
             return ""
+
+    async def _scrape_deterministic_title_pdfs(
+        self,
+        code_name: str,
+        citation_format: str,
+        max_sections: int,
+    ) -> List[NormalizedStatute]:
+        statutes: List[NormalizedStatute] = []
+        for section_number, section_name, full_url in self._build_deterministic_title_catalog()[:max_sections]:
+            # Avoid the constitution pseudo-title for bounded health checks; the
+            # full corpus run still includes it after statutory titles.
+            if not self._full_corpus_enabled() and section_number in {"97", "99"}:
+                continue
+            full_text = await self._extract_pdf_text_summary(full_url)
+            if len(full_text.strip()) < 80:
+                continue
+
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    full_text=full_text,
+                    legal_area=self._identify_legal_area(section_name),
+                    source_url=full_url,
+                    official_cite=f"{citation_format} § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_wyoming_title_pdf",
+                        "discovery_method": "deterministic_title_pdf_catalog",
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+
+        if statutes:
+            self.logger.info(
+                "Wyoming deterministic title PDF scraper: Scraped %s title PDFs",
+                len(statutes),
+            )
+        return statutes
     
     async def _custom_scrape_wyoming(
         self,
@@ -216,34 +284,13 @@ class WyomingScraper(BaseStateScraper):
 
         # Wyoming's statutes download page is JS-rendered, but title PDFs are
         # stable and predictable. Build that catalog directly as a non-JS fallback.
-        deterministic_catalog = self._build_deterministic_title_catalog()
+        deterministic_catalog = await self._scrape_deterministic_title_pdfs(
+            code_name,
+            citation_format,
+            max_sections=max_sections,
+        )
         if deterministic_catalog:
-            for section_number, section_name, full_url in deterministic_catalog[:max_sections]:
-                full_text = await self._extract_pdf_text_summary(full_url)
-                if len(full_text.strip()) < 80:
-                    continue
-
-                statute = NormalizedStatute(
-                    state_code=self.state_code,
-                    state_name=self.state_name,
-                    statute_id=f"{code_name} § {section_number}",
-                    code_name=code_name,
-                    section_number=section_number,
-                    section_name=section_name[:200],
-                    full_text=full_text,
-                    legal_area=self._identify_legal_area(section_name),
-                    source_url=full_url,
-                    official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
-                )
-                statutes.append(statute)
-
-            if statutes:
-                self.logger.info(
-                    "Wyoming deterministic catalog scraper: Scraped %s title PDFs",
-                    len(statutes),
-                )
-                return statutes
+            return deterministic_catalog
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(

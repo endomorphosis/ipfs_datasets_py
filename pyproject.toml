@@ -9,59 +9,9 @@ description = "IPFS-native decentralized AI data platform"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.12"
-
-# Core dependencies — numpy is always installed automatically.
-# Version bounds mirror requirements.txt to keep all installation paths
-# (pip install ., pip install -r requirements.txt, pip install ipfs_datasets_py)
-# consistent. The python_version markers future-proof the bounds: numpy 1.x is
-# used for Python < 3.14 and numpy 2.x for Python >= 3.14 (even though only
-# Python 3.12+ is currently supported, keeping both lines ensures the dep spec
-# remains valid when Python 3.14 support is added).
-dependencies = [
-    "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
-    "numpy>=2.0.0; python_version >= '3.14'",
-    "ipfs_kit_py[api,ipld,ai_ml] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main",
-    "ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main",
-    "torch>=2.7.0,<2.11; platform_system == 'Linux' and platform_machine == 'aarch64'",
-    "requests>=2.25.0,<3.0.0",
-    "beautifulsoup4>=4.12.0,<5.0.0",
-    "ddgs>=9.11.2",
-    "google-api-python-client>=2.192.0",
-    "cloudscraper>=1.2.71",
-    "playwright>=1.40.0",
-    "jsonschema>=4.0.0",
-    "cffi>=1.16.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "python-multipart>=0.0.6",
-    "jinja2>=3.1.0",
-    # IPLD components used by logic storage, GraphRAG, CAR export/import, and proof caching.
-    "libipld>=3.3.2",
-    "ipld-car>=0.0.1",
-    "ipld-dag-pb>=0.0.1",
-    "dag-cbor>=0.3.3",
-    "multiformats>=0.3.0",
-    "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
-    "pymultihash>=0.8.2",
-    "cfscrape>=2.1.1; python_version < '3.12'",
-    "nltk>=3.8.1",
-    "pdfplumber>=0.11.7",
-    "pymupdf>=1.26.3",
-    "pillow>=10.2.0,<11.0.0",
-    "PyPDF2>=3.0.0",
-    "pypdf>=5.0.0",
-    "pytesseract>=0.3.13",
-    "striprtf>=0.0.29",
-    "tiktoken>=0.6.0",
-    "pysbd",
-    "markitdown>=0.1.0",
-    "python-docx>=1.1.2",
-    # Keep OpenCV on the NumPy 1.x-compatible line used by this package.
-    "opencv-python>=4.8.1.78,<4.12.0",
-    # Distributed as `symbolicai`, imported by the logic stack as `symai`.
-    "symbolicai>=1.14.0,<2.0.0",
-    "surya-ocr>=0.14.6; platform_system != 'Windows' and python_version < '3.14'",
-]
+# Dependencies are resolved dynamically from setup.py so editable installs can
+# prefer the vendored ipfs_kit_py/ipfs_accelerate_py checkouts when present.
+dynamic = ["dependencies"]
 
 [project.optional-dependencies]
 # IPLD / CAR format extras
@@ -79,8 +29,10 @@ knowledge_graphs = [
     "transformers>=4.30.0",
     "scipy>=1.7.0",
     "matplotlib>=3.5.0",
+    "seaborn>=0.12.0",
     "plotly>=5.9.0",
     "rdflib>=6.0.0",
+    "neo4j>=5.20.0",
 ]
 logic = [
     "nltk>=3.8.1",
@@ -92,6 +44,8 @@ file_conversion = [
     "playwright>=1.40.0",
     "striprtf>=0.0.29",
     "python-docx>=1.1.2",
+    "yt-dlp>=2025.6.30",
+    "ffmpeg-python>=0.2.0",
 ]
 vectors = [
     "sentence-transformers>=3.0.0,<6.0.0",
@@ -112,6 +66,9 @@ api = [
 ]
 scraping = [
     "beautifulsoup4>=4.12.0,<5.0.0",
+    "newspaper3k>=0.2.8,<1.0.0",
+    "readability-lxml>=0.8.0,<1.0.0",
+    "lxml_html_clean>=0.4.0",
     "selenium>=4.15.0,<4.16.0",
     "scrapy>=2.11.0",
     "autoscraper>=1.1.14",
@@ -137,10 +94,14 @@ all = [
     "transformers>=4.30.0",
     "scipy>=1.7.0",
     "matplotlib>=3.5.0",
+    "seaborn>=0.12.0",
     "plotly>=5.9.0",
     "rdflib>=6.0.0",
+    "neo4j>=5.20.0",
     "aiohttp>=3.8.0",
     "python-docx>=1.1.2",
+    "yt-dlp>=2025.6.30",
+    "ffmpeg-python>=0.2.0",
     "jsonschema>=4.0.0",
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
@@ -153,6 +114,9 @@ all = [
     "qdrant-client>=1.0.0",
     "elasticsearch>=8.0.0",
     "selenium>=4.15.0,<4.16.0",
+    "newspaper3k>=0.2.8,<1.0.0",
+    "readability-lxml>=0.8.0,<1.0.0",
+    "lxml_html_clean>=0.4.0",
     "scrapy>=2.11.0",
     "autoscraper>=1.1.14",
     "cdx-toolkit>=0.9.37",

@@ -8131,6 +8131,7 @@ ipfs_datasets_py/processors/multimodal_processor.py
 ipfs_datasets_py/processors/ocr_engine.py
 ipfs_datasets_py/processors/patent_dataset_api.py
 ipfs_datasets_py/processors/patent_scraper.py
+ipfs_datasets_py/processors/pdf_form_filler.py
 ipfs_datasets_py/processors/pdf_processing.py
 ipfs_datasets_py/processors/pdf_processor.py
 ipfs_datasets_py/processors/playwright_limiter.py
@@ -14422,6 +14423,7 @@ scripts/ops/legal_data/generate_decoder_preview.py
 scripts/ops/legal_data/generate_parquet_embeddings_bulk.py
 scripts/ops/legal_data/inventory_justicedao_hf_datasets.py
 scripts/ops/legal_data/merge_recovery_manifests_to_hf_parquets.py
+scripts/ops/legal_data/merge_state_admin_recovered_rows.py
 scripts/ops/legal_data/publish_oregon_admin_rules_to_hf.py
 scripts/ops/legal_data/rebuild_justicedao_dataset_library.py
 scripts/ops/legal_data/refresh_state_jsonld_quality.py
@@ -15414,6 +15416,7 @@ tests/unit/legal_scrapers/test_legal_scraper_daemon.py
 tests/unit/legal_scrapers/test_legal_source_recovery.py
 tests/unit/legal_scrapers/test_legal_source_recovery_promotion.py
 tests/unit/legal_scrapers/test_legal_web_archive_search.py
+tests/unit/legal_scrapers/test_merge_state_admin_recovered_rows.py
 tests/unit/legal_scrapers/test_minnesota_scraper_bounds.py
 tests/unit/legal_scrapers/test_netherlands_laws_scraper.py
 tests/unit/legal_scrapers/test_oregon_admin_rules_scraper.py
@@ -16110,6 +16113,7 @@ tests/unit/processors/test_legal_frames.py
 tests/unit/processors/test_legal_reasoner_ir_schema_snapshots.py
 tests/unit/processors/test_legal_reasoner_serialization_contracts.py
 tests/unit/processors/test_legal_support_and_requirements.py
+tests/unit/processors/test_pdf_form_filler.py
 tests/unit/processors/test_protocol.py
 tests/unit/processors/test_retrieval_primitives.py
 tests/unit/processors/test_workspace_dataset.py

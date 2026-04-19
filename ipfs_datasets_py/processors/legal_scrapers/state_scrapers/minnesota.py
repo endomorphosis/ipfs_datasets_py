@@ -6,6 +6,7 @@ This module contains the scraper for Minnesota statutes from the official state 
 import asyncio
 from typing import List, Dict
 import re
+import urllib.request
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -77,6 +78,12 @@ class MinnesotaScraper(BaseStateScraper):
                     continue
                 merged_keys.add(key)
                 merged.append(statute)
+
+        direct_seed = await self._build_statute_from_section_page(code_name, code_url)
+        if direct_seed is not None:
+            _merge([direct_seed])
+            if len(merged) >= enough:
+                return merged
 
         chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=limit or 1000000)
         _merge(chapter_statutes)
@@ -274,16 +281,20 @@ class MinnesotaScraper(BaseStateScraper):
         return urls
 
     async def _build_statute_from_section_page(self, code_name: str, section_url: str) -> NormalizedStatute | None:
-        try:
-            payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
-        except Exception:
-            return None
-        if not payload:
+        html_text = await self._request_text_direct(section_url, timeout=18)
+        if not html_text:
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+            except Exception:
+                return None
+            if not payload:
+                return None
+            html_text = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
+        if not html_text:
             return None
 
         match = self._MN_SECTION_NUMBER_RE.search(section_url)
         section_number = match.group(1) if match else section_url.rsplit("/", 1)[-1]
-        html_text = payload.decode("utf-8", errors="replace") if isinstance(payload, bytes) else str(payload)
         text = self._extract_best_content_text(html_text)
         heading_pattern = re.compile(
             rf"\b{re.escape(section_number)}\b\s+[A-Z][A-Z0-9 ,;:'()\-/&]+\.",
@@ -315,7 +326,26 @@ class MinnesotaScraper(BaseStateScraper):
             legal_area=self._identify_legal_area(heading),
             official_cite=f"Minn. Stat. § {section_number}",
             metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_minnesota_statutes_html",
+                "discovery_method": "official_seed_or_section_page",
+                "skip_hydrate": True,
+            },
         )
+
+    async def _request_text_direct(self, url: str, timeout: int = 18) -> str:
+        def _request() -> str:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        try:
+            return await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except Exception:
+            return ""
 
 # Register this scraper with the registry
 StateScraperRegistry.register("MN", MinnesotaScraper)

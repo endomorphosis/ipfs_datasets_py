@@ -1,6 +1,8 @@
 """Scraper for Alabama state laws."""
 
 import asyncio
+import hashlib
+import json
 import re
 import time
 from typing import List, Dict, Any
@@ -47,6 +49,22 @@ class AlabamaScraper(BaseStateScraper):
 
     async def _graphql(self, query: str, variables: Dict[str, Any] | None = None, timeout_seconds: int = 15) -> Dict[str, Any]:
         timeout = max(1, int(timeout_seconds or 15))
+        cache_payload = json.dumps(
+            {"query": query, "variables": variables or {}},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        cache_key = hashlib.sha256(cache_payload.encode("utf-8")).hexdigest()
+        cache_url = f"{self.GRAPHQL_URL}#graphql={cache_key}"
+        cached_bytes = await self._load_page_bytes_from_any_cache(cache_url)
+        if cached_bytes:
+            try:
+                cached_payload = json.loads(cached_bytes.decode("utf-8", errors="ignore") or "{}")
+                data = cached_payload.get("data") or {}
+                if isinstance(data, dict):
+                    return data
+            except Exception:
+                pass
 
         def _request() -> Dict[str, Any]:
             try:
@@ -76,6 +94,12 @@ class AlabamaScraper(BaseStateScraper):
         except asyncio.TimeoutError:
             data = {}
         self._record_fetch_event(provider="alison_graphql", success=bool(data))
+        if data:
+            await self._cache_successful_page_fetch(
+                url=cache_url,
+                payload=json.dumps({"data": data}, sort_keys=True).encode("utf-8"),
+                provider="alison_graphql",
+            )
         return data
 
     def _parse_scaffold_section_parent_ids(self, scaffold: str, limit: int) -> List[str]:

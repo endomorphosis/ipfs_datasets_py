@@ -4,7 +4,7 @@ This module contains the scraper for Utah statutes from the official state legis
 """
 
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional
 from urllib.parse import urljoin
 from urllib.parse import quote
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -30,7 +30,12 @@ class UtahScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Utah's legislative website.
         
         Args:
@@ -41,6 +46,14 @@ class UtahScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         return_threshold = self._bounded_return_threshold(40)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+
+        if not self._full_corpus_enabled():
+            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
+
         live_title_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
         live_chapter_stubs = await self._scrape_live_chapter_stubs(
             code_name,
@@ -88,6 +101,62 @@ class UtahScraper(BaseStateScraper):
                 return merged
 
         return merged
+
+    async def _scrape_direct_seed_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 2,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        seeds = [
+            "https://le.utah.gov/xcode/Title76/Chapter5/C76-5-S203_2025050720250507.html",
+            "https://le.utah.gov/xcode/Title76/Chapter5/C76-5-S202_2025050720250507.html",
+        ]
+        out: List[NormalizedStatute] = []
+        for url in seeds[: max(1, int(max_statutes or 1))]:
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
+            except Exception:
+                payload = b""
+            if not payload:
+                continue
+            soup = BeautifulSoup(payload, "html.parser")
+            content = soup.select_one("#content") or soup.find("body")
+            text = self._normalize_legal_text(content.get_text(" ", strip=True) if content else "")
+            match = re.search(r"\b(\d{1,3}-\d{1,3}-\d+[A-Za-z-]*)\.\s+(.+)", text)
+            if not match or len(text) < 280:
+                continue
+            section_number = match.group(1)
+            section_name = self._normalize_legal_text(match.group(2))[:220]
+            # Drop the global breadcrumb/nav prefix so records start at the section.
+            start_idx = text.find(f"{section_number}.")
+            body = self._normalize_legal_text(text[start_idx:] if start_idx >= 0 else text)
+            out.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    title_number=section_number.split("-", 1)[0],
+                    section_number=section_number,
+                    section_name=section_name,
+                    full_text=body[:14000],
+                    source_url=url,
+                    legal_area=self._identify_legal_area(body[:1200]),
+                    official_cite=f"Utah Code § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_utah_code_section_html",
+                        "discovery_method": "official_seed_current_version",
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return out
 
     async def _scrape_live_chapter_stubs(
         self,

@@ -135,7 +135,7 @@ def test_refresh_state_laws_corpus_dry_run_plans_all_states(tmp_path):
     assert result["plan"]["states"][-1] == "WY"
 
 
-def test_refresh_state_laws_corpus_refuses_incomplete_publish(tmp_path):
+def test_refresh_state_laws_corpus_skips_final_publish_when_incomplete(tmp_path):
     args = argparse.Namespace(
         states="MN",
         include_dc=False,
@@ -167,8 +167,9 @@ def test_refresh_state_laws_corpus_refuses_incomplete_publish(tmp_path):
 
     result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
 
-    assert result["status"] == "error"
-    assert result["publish"] is None
+    assert result["status"] == "partial_success"
+    assert result["publish"]["status"] == "skipped"
+    assert result["publish"]["reason"] == "final_combined_publish_waits_for_complete_corpus"
     assert result["build_gap_states"] == ["MN"]
 
 

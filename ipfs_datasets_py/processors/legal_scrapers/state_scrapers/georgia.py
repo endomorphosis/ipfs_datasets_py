@@ -6,9 +6,11 @@ This module contains the scraper for Georgia statutes from the official state le
 import re
 import subprocess
 import tempfile
+import os
 from urllib.parse import urljoin
-from typing import List, Dict
+from typing import List, Dict, Optional
 
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 from ...playwright_limiter import acquire_playwright_slot
@@ -65,7 +67,12 @@ class GeorgiaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Georgia's legislative website.
         
         Args:
@@ -81,20 +88,31 @@ class GeorgiaScraper(BaseStateScraper):
             "https://law.justia.com/codes/georgia/",
         ]
 
-        return_threshold = self._bounded_return_threshold(60)
+        limit = self._effective_scrape_limit(max_statutes, default=60)
+        return_threshold = limit if limit is not None else 1000000
         if return_threshold < 60:
             summary_pdf_statutes = await self._scrape_general_statute_summary_pdfs(code_name)
             if summary_pdf_statutes:
                 return summary_pdf_statutes[:return_threshold]
 
-        justia_statutes = await self._scrape_justia_year(
-            code_name,
-            year="2024",
-            max_statutes=max(10, return_threshold),
-        )
-        justia_statutes = self._filter_non_code_results(justia_statutes)
-        if len(justia_statutes) >= return_threshold:
-            return justia_statutes
+        justia_statutes: List[NormalizedStatute] = []
+        if self._env_enabled("GEORGIA_JUSTIA_ENABLE", default=False) or self._env_enabled(
+            "LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL",
+            default=False,
+        ):
+            justia_statutes = await self._scrape_justia_year(
+                code_name,
+                year="2024",
+                max_statutes=max(10, return_threshold),
+            )
+            justia_statutes = self._filter_non_code_results(justia_statutes)
+            if len(justia_statutes) >= return_threshold:
+                return justia_statutes
+        else:
+            self.logger.warning(
+                "Georgia Justia scrape disabled for bulk run; enable GEORGIA_JUSTIA_ENABLE=1 "
+                "or LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL=1 to attempt Cloudflare/Common-Crawl recovery"
+            )
 
         best_statutes: List[NormalizedStatute] = []
         if len(justia_statutes) > len(best_statutes):
@@ -105,24 +123,25 @@ class GeorgiaScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            if PLAYWRIGHT_AVAILABLE:
+            if PLAYWRIGHT_AVAILABLE and self._env_enabled("GEORGIA_PLAYWRIGHT_ENABLE", default=False):
                 self.logger.info("Georgia: Using Playwright for JavaScript rendering")
                 try:
                     result = await self._scrape_with_playwright(code_name, candidate, "Ga. Code Ann.")
                     result = self._filter_non_code_results(result)
                     if len(result) > len(best_statutes):
                         best_statutes = result
-                    if len(result) >= self._bounded_return_threshold(30):
-                        return result
+                    if len(result) >= return_threshold:
+                        return result[:return_threshold]
                 except Exception as e:
                     self.logger.warning(f"Georgia Playwright failed: {e}, falling back")
 
-            generic = await self._custom_scrape_georgia(code_name, candidate, "Ga. Code Ann.")
-            generic = self._filter_non_code_results(generic)
-            if len(generic) > len(best_statutes):
-                best_statutes = generic
-            if len(generic) >= self._bounded_return_threshold(30):
-                return generic
+            if self._env_enabled("GEORGIA_GENERIC_FALLBACK", default=False):
+                generic = await self._custom_scrape_georgia(code_name, candidate, "Ga. Code Ann.")
+                generic = self._filter_non_code_results(generic)
+                if len(generic) > len(best_statutes):
+                    best_statutes = generic
+                if len(generic) >= return_threshold:
+                    return generic[:return_threshold]
 
         if best_statutes:
             return best_statutes
@@ -130,9 +149,16 @@ class GeorgiaScraper(BaseStateScraper):
         # Last resort: return summary records so the state is at least represented.
         summary_pdf_statutes = await self._scrape_general_statute_summary_pdfs(code_name)
         if summary_pdf_statutes:
-            return summary_pdf_statutes
+            return summary_pdf_statutes[:return_threshold]
 
         return []
+
+    @staticmethod
+    def _env_enabled(name: str, default: bool = False) -> bool:
+        value = os.getenv(name)
+        if value is None:
+            return default
+        return value.strip().lower() in {"1", "true", "yes", "on"}
 
     async def _scrape_justia_year(self, code_name: str, year: str, max_statutes: int) -> List[NormalizedStatute]:
         try:
@@ -277,14 +303,6 @@ class GeorgiaScraper(BaseStateScraper):
                 "2024",
                 "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/2024-general-statutes-summary-pdf.pdf?sfvrsn=38862f9_8",
             ),
-            (
-                "2025-alt",
-                "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/25sumdoc.pdf",
-            ),
-            (
-                "2024-alt",
-                "https://www.legis.ga.gov/api/document/docs/default-source/legislative-counsel-document-library/2024-general-statutes-summary-pdf.pdf",
-            ),
         ]
 
         statutes: List[NormalizedStatute] = []
@@ -309,6 +327,11 @@ class GeorgiaScraper(BaseStateScraper):
                 source_url=pdf_url,
                 official_cite=f"Ga. Gen. Stat. Summary ({year})",
                 metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_georgia_summary_pdf",
+                    "skip_hydrate": True,
+                    "coverage_note": "summary_fallback_not_full_code_corpus",
+                },
             )
             statutes.append(statute)
 
@@ -319,10 +342,7 @@ class GeorgiaScraper(BaseStateScraper):
     async def _extract_pdf_text_summary(self, pdf_url: str, max_chars: int = 12000) -> str:
         """Download PDF and extract normalized text via pdftotext."""
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(
-                pdf_url,
-                timeout_seconds=60,
-            )
+            payload = await self._fetch_pdf_bytes_direct(pdf_url, timeout_seconds=45)
             if not payload:
                 return ""
         except Exception as exc:
@@ -353,6 +373,44 @@ class GeorgiaScraper(BaseStateScraper):
         except Exception as exc:
             self.logger.debug(f"Georgia PDF extraction failed for {pdf_url}: {exc}")
             return ""
+
+    async def _fetch_pdf_bytes_direct(self, url: str, timeout_seconds: int = 45) -> bytes:
+        cached = await self._load_page_bytes_from_any_cache(url)
+        if cached:
+            return cached
+
+        timeout = max(5, int(timeout_seconds or 45))
+
+        def _request() -> bytes:
+            try:
+                import requests
+
+                response = requests.get(
+                    url,
+                    headers={
+                        "User-Agent": "ipfs-datasets-georgia-code-scraper/2.0",
+                        "Accept": "application/pdf,*/*;q=0.8",
+                    },
+                    timeout=(min(10, timeout), timeout),
+                )
+                if int(response.status_code or 0) != 200:
+                    return b""
+                payload = bytes(response.content or b"")
+                if not payload.startswith(b"%PDF"):
+                    return b""
+                return payload
+            except Exception:
+                return b""
+
+        try:
+            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 2)
+        except TimeoutError:
+            payload = b""
+
+        self._record_fetch_event(provider="requests_direct", success=bool(payload))
+        if payload:
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+        return payload
     
     async def _scrape_with_playwright(
         self,
@@ -515,12 +573,16 @@ class GeorgiaScraper(BaseStateScraper):
                 self.logger.info("  1. Playwright for JavaScript rendering: pip install playwright && playwright install")
                 self.logger.info("  2. Alternative source: Internet Archive")
                 self.logger.info("  3. API access if available from GA General Assembly")
-                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                if self._env_enabled("GEORGIA_GENERIC_FALLBACK", default=False):
+                    return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+                return []
             
         except Exception as e:
             self.logger.error(f"Georgia custom scraper failed: {e}")
             self.logger.info("Note: Georgia's site requires JavaScript. Consider using Playwright.")
-            return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+            if self._env_enabled("GEORGIA_GENERIC_FALLBACK", default=False):
+                return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
+            return []
         
         return statutes
 

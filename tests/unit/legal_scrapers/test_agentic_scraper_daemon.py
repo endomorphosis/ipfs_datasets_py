@@ -1570,6 +1570,7 @@ async def test_state_laws_agentic_daemon_checkpoint_advances_to_router_review(mo
         assert checkpoint_payload["stage"] == "router_review"
         assert checkpoint_payload["status"] == "success"
         assert checkpoint_payload["critic_score"] >= 0.92
+        assert checkpoint_payload["recovered_row_artifacts"]["row_count"] == 1
         return {"status": "skipped", "reason": "test"}
 
     monkeypatch.setattr(daemon_module, "scrape_state_laws", _fake_scrape_state_laws)

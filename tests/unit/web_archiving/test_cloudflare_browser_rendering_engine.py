@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import types
 
@@ -60,11 +61,40 @@ def test_resolve_credentials_falls_back_to_vault(monkeypatch: pytest.MonkeyPatch
     assert api_token == "vault-token"
 
 
+def test_resolve_credentials_falls_back_to_shared_config_agent_key(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
+
+    secrets_path = tmp_path / "secrets.json"
+    secrets_path.write_text(
+        json.dumps(
+            {
+                "CLOUDFLARE_ACCOUNT_ID": "config-acct",
+                "CLOUDFLARE_AGENT_API_KEY": "config-agent-token",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("IPFS_DATASETS_SECRETS_FILE", str(secrets_path))
+    monkeypatch.setattr(engine, "_first_env", lambda *names: None)
+    monkeypatch.setattr(engine, "_first_vault", lambda *names: None)
+    monkeypatch.setattr(engine, "_first_keyring", lambda *names: None)
+
+    account_id, api_token = _resolve_credentials()
+
+    assert account_id == "config-acct"
+    assert api_token == "config-agent-token"
+
+
 def test_resolve_credentials_falls_back_to_keyring(monkeypatch: pytest.MonkeyPatch) -> None:
     from ipfs_datasets_py.processors.web_archiving import cloudflare_browser_rendering_engine as engine
 
     monkeypatch.setattr(engine, "_first_env", lambda *names: None)
     monkeypatch.setattr(engine, "_first_vault", lambda *names: None)
+    monkeypatch.setattr(engine, "_first_shared_secret", lambda *names: None)
     monkeypatch.setattr(
         engine,
         "_first_keyring",

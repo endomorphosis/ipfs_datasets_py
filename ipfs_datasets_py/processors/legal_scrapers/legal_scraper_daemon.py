@@ -1397,7 +1397,7 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
         state_refresh=StateRefreshDaemonConfig(
             enabled=not bool(args.disable_state_refresh),
             scrape=bool(args.state_refresh_scrape or full_corpus),
-            merge_hf_existing=bool(args.state_refresh_merge_hf_existing or full_corpus),
+            merge_hf_existing=bool(args.state_refresh_merge_hf_existing or args.state_refresh_publish_to_hf or full_corpus),
             publish_to_hf=bool(args.state_refresh_publish_to_hf),
             verify_publish=bool(args.state_refresh_verify),
             allow_incomplete_publish=bool(args.allow_incomplete_publish),

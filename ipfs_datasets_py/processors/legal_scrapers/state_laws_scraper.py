@@ -7,8 +7,9 @@ import logging
 import asyncio
 import threading
 from ipfs_datasets_py.utils import anyio_compat as asyncio
+import inspect
 import time
-from typing import Dict, List, Optional, Any
+from typing import Callable, Dict, List, Optional, Any
 from datetime import datetime
 import json
 import os
@@ -194,6 +195,7 @@ async def scrape_state_laws(
     per_state_retry_attempts: int = 1,
     retry_zero_statute_states: bool = True,
     per_state_timeout_seconds: float = 480.0,
+    state_completion_callback: Optional[Callable[[Dict[str, Any]], Any]] = None,
 ) -> Dict[str, Any]:
     """Scrape state statutes and build a structured dataset.
     
@@ -283,7 +285,7 @@ async def scrape_state_laws(
                     os.environ["STATE_SCRAPER_GLOBAL_BOUNDED_ENV"] = "1"
 
                 async def _run_state(state_code: str) -> Dict[str, Any]:
-                    return await _scrape_state_with_retries(
+                    result = await _scrape_state_with_retries(
                         state_code=state_code,
                         legal_areas=legal_areas,
                         rate_limit_delay=rate_limit_delay,
@@ -295,6 +297,11 @@ async def scrape_state_laws(
                         retry_zero_statute_states=retry_zero_statute_states,
                         per_state_timeout_seconds=per_state_timeout_seconds,
                     )
+                    if state_completion_callback is not None:
+                        callback_result = state_completion_callback(result)
+                        if inspect.isawaitable(callback_result):
+                            await callback_result
+                    return result
 
                 if parallel_workers <= 1:
                     state_results = []
@@ -955,6 +962,59 @@ def _scrape_state_once_sync(
     }
 
 
+def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Optional[Dict[str, Any]]:
+    checkpoint_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+    if not checkpoint_dir:
+        return None
+    path = Path(checkpoint_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    statutes = payload.get("statutes") if isinstance(payload, dict) else None
+    if not isinstance(statutes, list) or not statutes:
+        return None
+
+    state_name = US_STATES[state_code]
+    statute_data = {
+        "state_code": state_code,
+        "state_name": state_name,
+        "title": f"{state_name} Laws",
+        "source": "Official State Legislative Website",
+        "source_url": "",
+        "official_url": "",
+        "scraped_at": datetime.now().isoformat(),
+        "statutes": statutes,
+        "schema_version": "1.0",
+        "normalized": True,
+        "partial_checkpoint": True,
+        "partial_checkpoint_path": str(path),
+        "partial_checkpoint_error": error_msg,
+    }
+    quality_metrics = _compute_state_quality_metrics(statutes)
+    quality_flag = _should_flag_quality(quality_metrics)
+    warnings = [
+        f"{state_code} recovered {len(statutes)} statutes from partial checkpoint after timeout/error",
+        error_msg,
+    ]
+    if quality_flag:
+        warnings.append(_format_quality_warning(state_code, quality_metrics))
+    return {
+        "state_code": state_code,
+        "state_name": state_name,
+        "error": error_msg,
+        "statutes_count": len(statutes),
+        "zero_statute": False,
+        "low_quality": quality_flag,
+        "quality_metrics": quality_metrics,
+        "fetch_analytics": {},
+        "warnings": warnings,
+        "statute_data": statute_data,
+    }
+
+
 async def _run_sync_scrape_on_daemon_thread(
     *,
     state_code: str,
@@ -1085,25 +1145,29 @@ async def _scrape_state_with_retries(
                 f"timed out after {per_state_timeout_seconds} seconds"
             )
             logger.error(error_msg)
-            result = {
-                "state_code": state_code,
-                "state_name": state_name,
-                "error": error_msg,
-                "statutes_count": 0,
-                "zero_statute": True,
-                "low_quality": False,
-                "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
-                "warnings": [f"{state_code} timed out while scraping"],
-                "statute_data": {
+            checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
+            if checkpoint_result is not None:
+                result = checkpoint_result
+            else:
+                result = {
                     "state_code": state_code,
                     "state_name": state_name,
-                    "title": f"{state_name} Laws",
-                    "source": "Official State Legislative Website",
                     "error": error_msg,
-                    "scraped_at": datetime.now().isoformat(),
-                    "statutes": [],
-                },
-            }
+                    "statutes_count": 0,
+                    "zero_statute": True,
+                    "low_quality": False,
+                    "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
+                    "warnings": [f"{state_code} timed out while scraping"],
+                    "statute_data": {
+                        "state_code": state_code,
+                        "state_name": state_name,
+                        "title": f"{state_name} Laws",
+                        "source": "Official State Legislative Website",
+                        "error": error_msg,
+                        "scraped_at": datetime.now().isoformat(),
+                        "statutes": [],
+                    },
+                }
         except Exception as e:
             state_name = US_STATES[state_code]
             error_msg = f"Failed to scrape {state_name} using state-specific scraper: {str(e)}"

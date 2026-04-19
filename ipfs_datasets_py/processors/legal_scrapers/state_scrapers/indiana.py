@@ -6,8 +6,11 @@ Indiana General Assembly static-document chapter PDFs.
 
 import re
 import subprocess
+import os
 from urllib.parse import quote
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -44,13 +47,20 @@ class IndianaScraper(BaseStateScraper):
             }
         ]
 
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape Indiana code statutes.
 
         Indiana's live site is currently SPA-only in headless contexts.
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
         return_threshold = self._bounded_return_threshold(30)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
         if return_threshold < 30:
             seed_pdfs = await self._scrape_seed_archive_pdfs(
                 code_name=code_name,
@@ -59,9 +69,13 @@ class IndianaScraper(BaseStateScraper):
             if seed_pdfs:
                 return seed_pdfs
 
-        justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, return_threshold))
         archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=max(10, return_threshold))
-        title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=max(10, return_threshold))
+        justia_titles: List[NormalizedStatute] = []
+        title_page_statutes: List[NormalizedStatute] = []
+        if self._env_flag("INDIANA_JUSTIA_ENABLE"):
+            justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, return_threshold))
+        if self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE"):
+            title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=max(10, return_threshold))
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -82,8 +96,11 @@ class IndianaScraper(BaseStateScraper):
             self.logger.info(f"Indiana archival fallback: Scraped {len(merged)} sections")
             return merged
 
-        # Keep a final generic fallback for resilience.
-        return await self._generic_scrape(code_name, code_url, "Ind. Code")
+        if self._env_flag("INDIANA_GENERIC_FALLBACK"):
+            return await self._generic_scrape(code_name, code_url, "Ind. Code")
+
+        self.logger.warning("Indiana official/archive direct crawl returned no statutes; skipping search/generic recovery fallback")
+        return []
 
     async def _scrape_seed_archive_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
@@ -108,7 +125,7 @@ class IndianaScraper(BaseStateScraper):
 
         root_url = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/"
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
+            payload = await self._request_bytes_direct(root_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=35)
         except Exception:
             return []
         if not payload:
@@ -135,7 +152,7 @@ class IndianaScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         for title_text, title_url in title_links:
             try:
-                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                title_payload = await self._request_bytes_direct(title_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=35)
             except Exception:
                 continue
             if not title_payload:
@@ -203,7 +220,7 @@ class IndianaScraper(BaseStateScraper):
         )
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+            payload = await self._request_bytes_direct(cdx_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=35)
             rows = self._parse_json_rows(payload)
         except Exception:
             return []
@@ -316,6 +333,11 @@ class IndianaScraper(BaseStateScraper):
             source_url=pdf_url,
             official_cite=f"Ind. Code {doc_id}",
             metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_indiana_archived_chapter_pdf",
+                "discovery_method": "wayback_static_document_pdf",
+                "skip_hydrate": True,
+            },
         )
 
     def _extract_doc_id(self, pdf_url: str) -> str:
@@ -345,16 +367,49 @@ class IndianaScraper(BaseStateScraper):
 
         for candidate in candidates:
             try:
-                payload = await self._fetch_page_content_with_archival_fallback(
-                    candidate,
-                    timeout_seconds=timeout,
-                )
+                payload = await self._request_bytes_direct(candidate, headers=headers, timeout=timeout)
                 if payload:
                     return payload
             except Exception:
                 continue
 
         return b""
+
+    @staticmethod
+    def _env_flag(name: str) -> bool:
+        return str(os.getenv(name, "")).strip().lower() in {"1", "true", "yes", "on"}
+
+    async def _request_bytes_direct(self, url: str, headers: Dict[str, str], timeout: int) -> bytes:
+        cached = await self._load_page_bytes_from_any_cache(url)
+        if cached:
+            return cached
+
+        def _request() -> bytes:
+            try:
+                import requests
+
+                response = requests.get(
+                    url,
+                    headers=headers or {"User-Agent": "Mozilla/5.0"},
+                    timeout=(min(5, max(1, timeout)), max(1, timeout)),
+                )
+                if int(response.status_code or 0) != 200:
+                    return b""
+                return bytes(response.content or b"")
+            except Exception:
+                return b""
+
+        try:
+            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=max(2, timeout + 2))
+        except TimeoutError:
+            payload = b""
+        except Exception:
+            payload = b""
+
+        self._record_fetch_event(provider="requests_direct", success=bool(payload))
+        if payload:
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+        return payload
 
     def _to_wayback_iframe_url(self, url: str) -> str:
         if not url or "web.archive.org/web/" not in url:

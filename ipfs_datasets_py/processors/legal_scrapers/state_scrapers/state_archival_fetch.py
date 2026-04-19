@@ -25,6 +25,13 @@ from urllib.request import Request, urlopen
 logger = logging.getLogger(__name__)
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass
 class FetchResult:
     url: str
@@ -113,21 +120,39 @@ class ArchivalFetchClient:
             return _HttpResponse(status_code=int(getattr(exc, "code", 0) or 0), content=payload)
 
     async def fetch_with_fallback(self, url: str) -> FetchResult:
-        common_crawl = await asyncio.to_thread(self._fetch_from_common_crawl, url)
-        if common_crawl is not None:
-            return common_crawl
+        if _env_flag("LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL", default=False):
+            logger.info("archival_fetch stage=common_crawl start url=%s", url)
+            common_crawl = await asyncio.to_thread(self._fetch_from_common_crawl, url)
+            if common_crawl is not None:
+                logger.info("archival_fetch stage=common_crawl done source=%s url=%s", common_crawl.source, url)
+                return common_crawl
+            logger.info("archival_fetch stage=common_crawl miss url=%s", url)
+        else:
+            logger.info(
+                "archival_fetch stage=common_crawl skipped env=LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL url=%s",
+                url,
+            )
 
+        logger.info("archival_fetch stage=direct start url=%s", url)
         direct = await asyncio.to_thread(self._fetch_direct, url)
         if direct is not None:
+            logger.info("archival_fetch stage=direct done source=%s url=%s", direct.source, url)
             return direct
+        logger.info("archival_fetch stage=direct miss url=%s", url)
 
+        logger.info("archival_fetch stage=wayback start url=%s", url)
         wayback = await self._fetch_from_wayback(url)
         if wayback is not None:
+            logger.info("archival_fetch stage=wayback done source=%s url=%s", wayback.source, url)
             return wayback
+        logger.info("archival_fetch stage=wayback miss url=%s", url)
 
+        logger.info("archival_fetch stage=archive_is start url=%s", url)
         archive_is = await self._fetch_from_archive_is(url)
         if archive_is is not None:
+            logger.info("archival_fetch stage=archive_is done source=%s url=%s", archive_is.source, url)
             return archive_is
+        logger.info("archival_fetch stage=archive_is miss url=%s", url)
 
         raise RuntimeError(f"Unable to fetch URL via direct or archival fallback: {url}")
 
@@ -253,7 +278,7 @@ class ArchivalFetchClient:
                 archive_url=candidate_url,
                 archive_timestamp=str(record.get("timestamp") or "") or None,
             )
-        except SSLError:
+        except ssl.SSLError:
             try:
                 response = self._request_with_retries(candidate_url, timeout=self.request_timeout_seconds, verify=False)
                 if response is None or int(response.status_code) != 200:

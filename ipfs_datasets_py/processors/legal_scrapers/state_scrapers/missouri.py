@@ -4,7 +4,7 @@ This module contains the scraper for Missouri statutes from the official state l
 """
 
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional
 from urllib.parse import parse_qs, urljoin, urlparse
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -25,7 +25,12 @@ class MissouriScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Missouri's legislative website.
         
         Args:
@@ -35,12 +40,14 @@ class MissouriScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        direct = await self._scrape_direct_sections(code_name, max_statutes=self._bounded_return_threshold(2))
+        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(2)
+        direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
         if direct:
             return direct
 
         # Use custom scraper with Missouri-specific patterns
-        return await self._custom_scrape_missouri(code_name, code_url, "Mo. Rev. Stat.")
+        fallback = await self._custom_scrape_missouri(code_name, code_url, "Mo. Rev. Stat.")
+        return fallback[:limit]
 
     async def _scrape_direct_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         try:

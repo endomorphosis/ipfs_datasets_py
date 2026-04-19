@@ -259,8 +259,26 @@ class BaseStateScraper(ABC):
             "fallback_count": 0,
             "cache_hits": 0,
             "cache_writes": 0,
+            "fetch_cache_hits": 0,
+            "fetch_cache_writes": 0,
             "last_error": None,
         }
+        self._fetch_cache_enabled = self._env_bool(
+            "LEGAL_SCRAPER_FETCH_CACHE_ENABLED",
+            default=False,
+        )
+        self._fetch_cache_ttl_seconds = self._env_int(
+            "LEGAL_SCRAPER_FETCH_CACHE_TTL_SECONDS",
+            default=60 * 60 * 24 * 30,
+        )
+        self._fetch_cache_dir = Path(
+            os.environ.get("LEGAL_SCRAPER_FETCH_CACHE_DIR")
+            or os.environ.get("IPFS_DATASETS_LEGAL_FETCH_CACHE_DIR")
+            or (Path.home() / ".ipfs_datasets" / "legal_fetch_cache")
+        )
+        if self._fetch_cache_enabled:
+            self._fetch_cache_dir.mkdir(parents=True, exist_ok=True)
+            (self._fetch_cache_dir / "objects").mkdir(parents=True, exist_ok=True)
         self._ipfs_page_cache_enabled = self._env_bool(
             "LEGAL_SCRAPER_IPFS_PAGE_CACHE_ENABLED",
             default=True,
@@ -375,6 +393,85 @@ class BaseStateScraper(ABC):
     def _ipfs_page_cache_key(url: str) -> str:
         normalized = str(url or "").strip()
         return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    def _fetch_cache_paths(self, url: str) -> tuple[Path, Path]:
+        cache_key = self._ipfs_page_cache_key(url)
+        object_path = self._fetch_cache_dir / "objects" / f"{cache_key}.bin"
+        meta_path = self._fetch_cache_dir / "objects" / f"{cache_key}.json"
+        return object_path, meta_path
+
+    async def _load_page_bytes_from_fetch_cache(self, url: str) -> bytes:
+        if not self._fetch_cache_enabled:
+            return b""
+        object_path, meta_path = self._fetch_cache_paths(url)
+        if not object_path.exists() or not meta_path.exists():
+            return b""
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8") or "{}")
+        except Exception:
+            return b""
+        cached_at = float(meta.get("cached_at", 0.0) or 0.0)
+        ttl_seconds = max(0, int(self._fetch_cache_ttl_seconds or 0))
+        if ttl_seconds > 0 and cached_at > 0:
+            age_seconds = max(0.0, datetime.now().timestamp() - cached_at)
+            if age_seconds > float(ttl_seconds):
+                return b""
+        try:
+            data = object_path.read_bytes()
+        except Exception as exc:
+            self.logger.debug("Fetch cache read failed for %s: %s", url, exc)
+            return b""
+        if data:
+            self._fetch_analytics["fetch_cache_hits"] = int(self._fetch_analytics.get("fetch_cache_hits", 0) or 0) + 1
+            self._fetch_analytics["cache_hits"] = int(self._fetch_analytics.get("cache_hits", 0) or 0) + 1
+            return data
+        return b""
+
+    async def _store_page_bytes_in_fetch_cache(self, *, url: str, payload: bytes, provider: str) -> None:
+        if not self._fetch_cache_enabled or not payload:
+            return
+        object_path, meta_path = self._fetch_cache_paths(url)
+        try:
+            object_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = object_path.with_suffix(".bin.tmp")
+            tmp_path.write_bytes(payload)
+            tmp_path.replace(object_path)
+            meta_path.write_text(
+                json.dumps(
+                    {
+                        "url": str(url),
+                        "provider": str(provider or ""),
+                        "size": len(payload),
+                        "sha256": hashlib.sha256(payload).hexdigest(),
+                        "cached_at": datetime.now().timestamp(),
+                        "state_code": self.state_code,
+                    },
+                    sort_keys=True,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self._fetch_analytics["fetch_cache_writes"] = int(self._fetch_analytics.get("fetch_cache_writes", 0) or 0) + 1
+            self._fetch_analytics["cache_writes"] = int(self._fetch_analytics.get("cache_writes", 0) or 0) + 1
+        except Exception as exc:
+            self.logger.debug("Fetch cache write failed for %s: %s", url, exc)
+
+    async def _cache_successful_page_fetch(self, *, url: str, payload: bytes, provider: str) -> None:
+        await self._store_page_bytes_in_fetch_cache(url=url, payload=payload, provider=provider)
+        await self._store_page_bytes_in_ipfs_cache(url=url, payload=payload, provider=provider)
+
+    async def _load_page_bytes_from_any_cache(self, url: str) -> bytes:
+        cached_bytes = await self._load_page_bytes_from_fetch_cache(url)
+        if cached_bytes:
+            self._record_fetch_event(provider="fetch_cache", success=True)
+            return cached_bytes
+        cached_bytes = await self._load_page_bytes_from_ipfs_cache(url)
+        if cached_bytes:
+            self._record_fetch_event(provider="ipfs_page_cache", success=True)
+            await self._store_page_bytes_in_fetch_cache(url=url, payload=cached_bytes, provider="ipfs_page_cache")
+            return cached_bytes
+        return b""
 
     async def _load_page_bytes_from_ipfs_cache(self, url: str) -> bytes:
         if not self._ipfs_page_cache_enabled:
@@ -536,22 +633,22 @@ class BaseStateScraper(ABC):
                     remaining = None
                 scrape_code_params = inspect.signature(self.scrape_code).parameters
                 if remaining is not None and "max_statutes" in scrape_code_params:
-                    statutes = await self.scrape_code(code_name, code_url, max_statutes=remaining)
+                    scrape_task = self.scrape_code(code_name, code_url, max_statutes=remaining)
                 else:
                     scrape_task = self.scrape_code(code_name, code_url)
-                    code_timeout = _env_float("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", 0.0)
-                    if remaining is not None and code_timeout > 0:
-                        try:
-                            statutes = await asyncio.wait_for(scrape_task, timeout=code_timeout)
-                        except TimeoutError:
-                            self.logger.error(
-                                "Timed out scraping %s after %.1f seconds during bounded run",
-                                code_name,
-                                code_timeout,
-                            )
-                            statutes = []
-                    else:
-                        statutes = await scrape_task
+                code_timeout = _env_float("STATE_SCRAPER_CODE_TIMEOUT_SECONDS", 0.0)
+                if code_timeout > 0:
+                    try:
+                        statutes = await asyncio.wait_for(scrape_task, timeout=code_timeout)
+                    except TimeoutError:
+                        self.logger.error(
+                            "Timed out scraping %s after %.1f seconds",
+                            code_name,
+                            code_timeout,
+                        )
+                        statutes = []
+                else:
+                    statutes = await scrape_task
                 if max_statutes:
                     statutes = statutes[:remaining]
                 enriched_statutes: List[NormalizedStatute] = []
@@ -974,7 +1071,7 @@ class BaseStateScraper(ABC):
                         if status_code != 200 or not content:
                             continue
                         self._record_fetch_event(provider="requests_direct", success=True)
-                        await self._store_page_bytes_in_ipfs_cache(
+                        await self._cache_successful_page_fetch(
                             url=url,
                             payload=content,
                             provider="requests_direct",
@@ -989,14 +1086,21 @@ class BaseStateScraper(ABC):
                 self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
                 return b""
 
-        cached_bytes = await self._load_page_bytes_from_ipfs_cache(url)
+        cached_bytes = await self._load_page_bytes_from_any_cache(url)
         if cached_bytes:
-            self._record_fetch_event(provider="ipfs_page_cache", success=True)
             return cached_bytes
 
-        # Bounded probes should prefer the live official page before expensive
-        # rescue paths. Full corpus sweeps still keep the archival-first chain.
-        if bounded_fetch_timeout > 0:
+        # Prefer the live official page before expensive rescue paths. The
+        # archival/search chain is a recovery mechanism; letting it run before
+        # a healthy official fetch makes full-corpus daemon sweeps look stalled
+        # and can multiply RAM/network work across thousands of statute pages.
+        direct_first = str(os.getenv("STATE_SCRAPER_DIRECT_FIRST", "1")).strip().lower() not in {
+            "0",
+            "false",
+            "no",
+            "off",
+        }
+        if direct_first or bounded_fetch_timeout > 0:
             direct_bytes = await _try_requests_direct()
             if direct_bytes:
                 return direct_bytes
@@ -1018,7 +1122,7 @@ class BaseStateScraper(ABC):
                 if self._is_object_moved_placeholder(unified_bytes):
                     unified_bytes = b""
                 if unified_bytes:
-                    await self._store_page_bytes_in_ipfs_cache(
+                    await self._cache_successful_page_fetch(
                         url=url,
                         payload=unified_bytes,
                         provider="unified_api",
@@ -1043,7 +1147,7 @@ class BaseStateScraper(ABC):
                 )
                 content = bytes(fetched.content or b"")
                 if content:
-                    await self._store_page_bytes_in_ipfs_cache(
+                    await self._cache_successful_page_fetch(
                         url=url,
                         payload=content,
                         provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
@@ -1192,6 +1296,8 @@ class BaseStateScraper(ABC):
         fallback_count = int(self._fetch_analytics.get("fallback_count", 0) or 0)
         cache_hits = int(self._fetch_analytics.get("cache_hits", 0) or 0)
         cache_writes = int(self._fetch_analytics.get("cache_writes", 0) or 0)
+        fetch_cache_hits = int(self._fetch_analytics.get("fetch_cache_hits", 0) or 0)
+        fetch_cache_writes = int(self._fetch_analytics.get("fetch_cache_writes", 0) or 0)
         return {
             "attempted": attempted,
             "success": success,
@@ -1200,6 +1306,8 @@ class BaseStateScraper(ABC):
             "fallback_count": fallback_count,
             "cache_hits": cache_hits,
             "cache_writes": cache_writes,
+            "fetch_cache_hits": fetch_cache_hits,
+            "fetch_cache_writes": fetch_cache_writes,
             "last_error": self._fetch_analytics.get("last_error"),
         }
 

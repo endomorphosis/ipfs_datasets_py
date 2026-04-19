@@ -6,9 +6,10 @@ This module contains the scraper for Hawaii statutes from the official state leg
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import re
 import json
+import os
 import urllib.parse
 import urllib.request
-from typing import Dict, List
+from typing import Dict, List, Optional
 from urllib.parse import unquote, urljoin
 from html import unescape
 
@@ -45,7 +46,12 @@ class HawaiiScraper(BaseStateScraper):
             }
         ]
 
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Hawaii's legislative website.
 
         Hawaii live endpoints are frequently blocked in automation contexts,
@@ -58,12 +64,14 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._bounded_return_threshold(30)
+        limit = self._effective_scrape_limit(max_statutes, default=30)
+        return_threshold = limit if limit is not None else 1000000
         if return_threshold < 30:
             seeded = await self._scrape_seed_sections(code_name, max_statutes=return_threshold)
             if seeded:
                 return seeded
 
+        seeded = await self._scrape_seed_sections(code_name, max_statutes=min(8, max(1, return_threshold)))
         archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=max(10, return_threshold))
 
         merged: List[NormalizedStatute] = []
@@ -77,9 +85,19 @@ class HawaiiScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
+        _merge(seeded)
         _merge(archival_stubs)
         if len(merged) >= return_threshold:
-            return merged
+            return merged[:return_threshold]
+
+        if not self._env_enabled("HAWAII_WALK_WAYBACK_FULL", default=False):
+            if merged:
+                self.logger.warning(
+                    "Hawaii full Wayback traversal disabled for bulk run; returning %s seeded/archival rows",
+                    len(merged),
+                )
+                return merged[:return_threshold]
+            return self._build_emergency_statute_stubs(code_name, count=40)[:return_threshold]
 
         try:
             archival = await asyncio.wait_for(
@@ -90,18 +108,19 @@ class HawaiiScraper(BaseStateScraper):
             archival = []
         if archival:
             self.logger.info(f"Hawaii archival fallback: Scraped {len(archival)} sections")
-            return archival
+            return archival[:return_threshold]
 
         # Try Playwright against the live site.
         if self.has_playwright():
             try:
-                return await self._playwright_scrape(
+                statutes = await self._playwright_scrape(
                     code_name,
                     code_url,
                     "Haw. Rev. Stat.",
                     wait_for_selector="a[href*='Vol'], .statute-link, a[href*='hrs']",
                     timeout=45000,
                 )
+                return statutes[:return_threshold]
             except Exception as e:
                 self.logger.warning(f"Hawaii Playwright scraping failed: {e}, falling back to HTTP")
 
@@ -117,20 +136,34 @@ class HawaiiScraper(BaseStateScraper):
             if candidate in seen:
                 continue
             seen.add(candidate)
-            statutes = await self._generic_scrape(code_name, candidate, "Haw. Rev. Stat.", max_sections=260)
+            if not self._env_enabled("HAWAII_GENERIC_FALLBACK", default=False):
+                continue
+            statutes = await self._generic_scrape(
+                code_name,
+                candidate,
+                "Haw. Rev. Stat.",
+                max_sections=return_threshold if limit is not None else 260,
+            )
             _merge(statutes)
             if len(statutes) > len(best):
                 best = statutes
             if len(merged) > len(best):
                 best = list(merged)
             if len(statutes) >= return_threshold:
-                return list(merged) if len(merged) >= return_threshold else statutes
+                return (list(merged) if len(merged) >= return_threshold else statutes)[:return_threshold]
 
         if len(merged) > len(best):
             best = list(merged)
         if not best:
             best = self._build_emergency_statute_stubs(code_name, count=40)
-        return best
+        return best[:return_threshold]
+
+    @staticmethod
+    def _env_enabled(name: str, default: bool = False) -> bool:
+        value = os.getenv(name)
+        if value is None:
+            return default
+        return value.strip().lower() in {"1", "true", "yes", "on"}
 
     async def _scrape_seed_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
@@ -221,21 +254,6 @@ class HawaiiScraper(BaseStateScraper):
         return out
 
     async def _fetch_cdx_rows(self, cdx_url: str, timeout: int = 45) -> List[List[object]]:
-        # First try the shared archival/unified fetch chain so CDX discovery
-        # benefits from the same fallback providers as page fetches.
-        try:
-            payload = await self._fetch_page_content_with_archival_fallback(
-                cdx_url,
-                timeout_seconds=timeout,
-            )
-            if payload:
-                rows = json.loads(payload.decode("utf-8", errors="ignore"))
-                if isinstance(rows, list):
-                    return rows
-        except Exception:
-            pass
-
-        # Keep a direct urllib fallback for environments where unified fetch is unavailable.
         candidates = [str(cdx_url or "")]
         if candidates[0].startswith("https://"):
             candidates.append("http://" + candidates[0][8:])
@@ -251,6 +269,19 @@ class HawaiiScraper(BaseStateScraper):
                     return rows
             except Exception:
                 continue
+
+        if self._env_enabled("HAWAII_ARCHIVAL_FETCH_FALLBACK", default=False):
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(
+                    cdx_url,
+                    timeout_seconds=timeout,
+                )
+                if payload:
+                    rows = json.loads(payload.decode("utf-8", errors="ignore"))
+                    if isinstance(rows, list):
+                        return rows
+            except Exception:
+                pass
         return []
 
     async def _scrape_archived_hrscurrent(self, code_name: str, max_statutes: int = 20) -> List[NormalizedStatute]:
@@ -391,16 +422,44 @@ class HawaiiScraper(BaseStateScraper):
         for candidate in candidates:
             for _ in range(4):
                 try:
-                    payload = await self._fetch_page_content_with_archival_fallback(
-                        candidate,
-                        timeout_seconds=timeout,
-                    )
+                    payload = await self._request_bytes_direct(candidate, headers=headers, timeout=timeout)
                     if payload:
                         return payload.decode("utf-8", errors="replace")
                 except Exception:
                     await asyncio.sleep(0.6)
                     continue
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(candidate, timeout_seconds=timeout)
+                if payload:
+                    return payload.decode("utf-8", errors="replace")
+            except Exception:
+                pass
         return ""
+
+    async def _request_bytes_direct(self, url: str, headers: Dict[str, str], timeout: int) -> bytes:
+        cached = await self._load_page_bytes_from_any_cache(url)
+        if cached:
+            return cached
+
+        def _request() -> bytes:
+            try:
+                req = urllib.request.Request(str(url), headers=headers or {"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=max(1, int(timeout or 45))) as resp:
+                    status = int(getattr(resp, "status", 200) or 200)
+                    if status != 200:
+                        return b""
+                    return bytes(resp.read() or b"")
+            except Exception:
+                return b""
+
+        try:
+            payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=max(2, int(timeout or 45)) + 2)
+        except TimeoutError:
+            payload = b""
+        self._record_fetch_event(provider="requests_direct", success=bool(payload))
+        if payload:
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
+        return payload
 
     async def _build_statute_from_section_url(
         self,
@@ -432,6 +491,10 @@ class HawaiiScraper(BaseStateScraper):
             source_url=section_url,
             official_cite=f"Haw. Rev. Stat. § {section_number}",
             metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_hawaii_wayback_snapshot",
+                "skip_hydrate": True,
+            },
         )
 
 

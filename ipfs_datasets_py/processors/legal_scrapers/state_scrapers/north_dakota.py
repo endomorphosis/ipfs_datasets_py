@@ -3,7 +3,7 @@
 This module contains the scraper for North Dakota statutes from the official state legislative website.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 import json
 import subprocess
 import urllib.request
@@ -46,7 +46,12 @@ class NorthDakotaScraper(BaseStateScraper):
             "type": "Code"
         }]
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from North Dakota's legislative website.
         
         Args:
@@ -66,6 +71,8 @@ class NorthDakotaScraper(BaseStateScraper):
         best: List[NormalizedStatute] = []
         seen = set()
         return_threshold = self._bounded_return_threshold(60)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
         direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(code_name, max_statutes=return_threshold)
         if direct_pdf_statutes:
             return direct_pdf_statutes
@@ -74,7 +81,7 @@ class NorthDakotaScraper(BaseStateScraper):
             if candidate in seen:
                 continue
             seen.add(candidate)
-            statutes = await self._generic_scrape(code_name, candidate, "N.D. Cent. Code", max_sections=520)
+            statutes = await self._generic_scrape(code_name, candidate, "N.D. Cent. Code", max_sections=max(10, return_threshold))
             statutes = self._filter_non_code_results(statutes)
             if len(statutes) > len(best):
                 best = statutes

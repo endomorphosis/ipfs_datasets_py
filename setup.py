@@ -216,7 +216,7 @@ setup(
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
-        "numpy>=1.21.0,<2.0.0; python_version < '3.14'",
+        "numpy>=1.26.4,<=2.1.3; python_version < '3.14'",
         "numpy>=2.0.0; python_version >= '3.14'",
         'urllib3',
         'requests',
@@ -226,7 +226,7 @@ setup(
         "aiosqlite>=0.17.0",  # Async SQLite for metadata/auth
         "pyarrow>=10.0.0; python_version < '3.14'",
         "fsspec>=2023.1.0,<=2024.6.1",
-        "datasets>=2.10.0,<3.0.0",
+        "datasets>=4.0.0,<5.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
         "jsonpatch>=1.33",
         "jsonschema>=4.0.0",
@@ -258,6 +258,7 @@ setup(
         # Data provenance components
         "networkx>=2.8.0",
         "matplotlib>=3.5.0",
+        "seaborn>=0.12.0",
         
         # Async compatibility (anyio for trio/asyncio interop)
         "anyio>=4.0.0",
@@ -267,6 +268,9 @@ setup(
         # Core utilities imported by default modules
         "PyJWT>=2.8.0,<3.0.0",
         "beautifulsoup4>=4.12.0,<5.0.0",
+        "newspaper3k>=0.2.8,<1.0.0",
+        "readability-lxml>=0.8.0,<1.0.0",
+        "lxml_html_clean>=0.4.0",
         "ddgs>=9.11.2",
         "google-api-python-client>=2.192.0",
         "cloudscraper>=1.2.71",
@@ -292,6 +296,8 @@ setup(
         'pysbd',
         'markitdown>=0.1.0',
         'python-docx>=1.1.2',
+        'yt-dlp>=2025.6.30',
+        'ffmpeg-python>=0.2.0',
         # Keep OpenCV on the NumPy 1.x-compatible line used by the rest of this package.
         'opencv-python>=4.8.1.78,<4.12.0',
         # SymbolicAI is imported as `symai`; keep it in base installs so the
@@ -321,8 +327,10 @@ setup(
             'networkx>=2.8.0',         # Required for lineage graph analytics
             'scipy>=1.7.0',            # Required for kamada_kawai_layout (hierarchical viz)
             'matplotlib>=3.5.0',       # Required for render_networkx visualization
+            'seaborn>=0.12.0',         # Required for optimizer/dashboard statistical visualization
             'plotly>=5.9.0',           # Required for render_plotly interactive visualization
             'rdflib>=6.0.0',           # Required for RDF export (export_to_rdf)
+            'neo4j>=5.20.0',           # Required for Neo4j knowledge graph export/import
         ],
         # Optional but recommended dependencies
         'ipld': [
@@ -336,6 +344,9 @@ setup(
             'archivenow==2020.7.18.12.19.44',
             'ipwb>=0.2021.12.16',
             'beautifulsoup4>=4.11.1',
+            'newspaper3k>=0.2.8,<1.0.0',
+            'readability-lxml>=0.8.0,<1.0.0',
+            'lxml_html_clean>=0.4.0',
             'warcio>=1.7.4',
         ],
         'security': [

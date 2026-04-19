@@ -849,7 +849,12 @@ class OregonScraper(BaseStateScraper):
 
         return statutes
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Oregon's legislative website.
         
         Args:
@@ -861,18 +866,23 @@ class OregonScraper(BaseStateScraper):
         """
         lower_name = str(code_name or "").lower()
         lower_url = str(code_url or "").lower()
+        limit = self._effective_scrape_limit(max_statutes, default=250)
+        max_sections = limit if limit is not None else 1000000
 
         if "local court rules" in lower_name or "/rules/pages/slr.aspx" in lower_url:
             self.logger.info("Oregon: using dedicated local-court-rules scraper path")
-            return await self._scrape_local_court_rules(code_name, code_url or LOCAL_RULES_INDEX_URL)
+            statutes = await self._scrape_local_court_rules(code_name, code_url or LOCAL_RULES_INDEX_URL)
+            return statutes[:max_sections]
 
         if "civil procedure" in lower_name or lower_url.endswith("/pages/orcp.aspx") or lower_url.endswith("/siteassets/orcp.html"):
             self.logger.info("Oregon: using dedicated ORCP scraper path")
-            return await self._scrape_civil_procedure_rules(code_name, code_url or ORCP_PRIMARY_URL)
+            statutes = await self._scrape_civil_procedure_rules(code_name, code_url or ORCP_PRIMARY_URL)
+            return statutes[:max_sections]
 
         if "criminal procedure" in lower_name:
             self.logger.info("Oregon: using dedicated ORCrP scraper path")
-            return await self._scrape_criminal_procedure_rules(code_name)
+            statutes = await self._scrape_criminal_procedure_rules(code_name)
+            return statutes[:max_sections]
 
         if "administrative" in lower_name or "displaychapterrules.action" in lower_url:
             self.logger.info("Oregon: using dedicated OAR scraper")
@@ -880,9 +890,9 @@ class OregonScraper(BaseStateScraper):
             oar_statutes = await oar_scraper.scrape(code_name=code_name, code_url=code_url)
             if oar_statutes:
                 self.logger.info(f"Oregon OAR: parsed {len(oar_statutes)} rules")
-                return oar_statutes
+                return oar_statutes[:max_sections]
             self.logger.warning("Oregon OAR scraper produced no rules; falling back to generic parser")
-            return await self._generic_scrape(code_name, code_url, "OAR", max_sections=400)
+            return await self._generic_scrape(code_name, code_url, "OAR", max_sections=max_sections)
 
         citation_format = "Or. Rev. Stat."
         if not REQUESTS_AVAILABLE:
@@ -893,7 +903,7 @@ class OregonScraper(BaseStateScraper):
                 citation_format,
                 wait_for_selector="a[href*='ors']",
                 timeout=45000,
-                max_sections=250,
+                max_sections=max_sections,
             )
 
         legal_area = self._identify_legal_area(code_name)
@@ -922,6 +932,8 @@ class OregonScraper(BaseStateScraper):
             self.logger.info(f"Oregon: discovered {len(chapter_urls)} ORS chapter pages")
 
             for chapter_url in chapter_urls:
+                if len(statutes) >= max_sections:
+                    break
                 try:
                     chapter_bytes = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=90)
                     if not chapter_bytes:
@@ -946,7 +958,7 @@ class OregonScraper(BaseStateScraper):
 
         if statutes:
             self.logger.info(f"Oregon: parsed {len(statutes)} structured ORS sections")
-            return statutes
+            return statutes[:max_sections]
 
         self.logger.warning("Oregon parser produced no structured sections; using Playwright fallback")
         return await self._playwright_scrape(
@@ -955,7 +967,7 @@ class OregonScraper(BaseStateScraper):
             citation_format,
             wait_for_selector="a[href*='ors']",
             timeout=45000,
-            max_sections=250,
+            max_sections=max_sections,
         )
 
 

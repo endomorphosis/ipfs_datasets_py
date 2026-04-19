@@ -44,6 +44,9 @@ class ArizonaScraper(BaseStateScraper):
         ]
     
     async def _fetch_official_az_html(self, url: str, timeout_seconds: int = 8) -> str:
+        cached = await self._load_page_bytes_from_any_cache(url)
+        if cached:
+            return cached.decode("utf-8", errors="replace")
         timeout = max(1, int(timeout_seconds or 8))
 
         def _request() -> str:
@@ -69,6 +72,12 @@ class ArizonaScraper(BaseStateScraper):
         except asyncio.TimeoutError:
             html = ""
         self._record_fetch_event(provider="requests_direct", success=bool(html))
+        if html:
+            await self._cache_successful_page_fetch(
+                url=url,
+                payload=html.encode("utf-8", errors="replace"),
+                provider="requests_direct",
+            )
         return html
 
     def _raw_doc_url_from_href(self, href: str, base_url: str) -> str:

@@ -7,7 +7,7 @@ legislative website.
 import asyncio
 import json
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 import urllib.request
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -226,7 +226,12 @@ class MarylandScraper(BaseStateScraper):
             structured_data={"skip_hydrate": True, "record_type": "maryland_api_section"},
         )
     
-    async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+    async def scrape_code(
+        self,
+        code_name: str,
+        code_url: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
         """Scrape a specific code from Maryland's legislative website.
         
         Maryland uses JavaScript for statute search, so we use Playwright.
@@ -239,6 +244,8 @@ class MarylandScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         return_threshold = self._bounded_return_threshold(80)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
         direct_statutes = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
         if direct_statutes:
             return direct_statutes
@@ -286,7 +293,7 @@ class MarylandScraper(BaseStateScraper):
                     wait_for_selector="a[href*='statute'], a[href*='laws'], .article-link",
                     timeout=45000,
                         wait_until="domcontentloaded",
-                    max_sections=520,
+                    max_sections=max(10, return_threshold),
                 )
             except Exception:
                 statutes = []
@@ -296,7 +303,7 @@ class MarylandScraper(BaseStateScraper):
                 return merged
 
             try:
-                generic = await self._generic_scrape(code_name, candidate, "Md. Code Ann.", max_sections=520)
+                generic = await self._generic_scrape(code_name, candidate, "Md. Code Ann.", max_sections=max(10, return_threshold))
             except Exception:
                 generic = []
 
