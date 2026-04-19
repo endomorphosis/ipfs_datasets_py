@@ -107,6 +107,24 @@ __all__ = [
     'BatchProcessor',
     'ProcessingJob',
     'BatchStatus',
+    'FormAnalysisResult',
+    'FormDependencyEdge',
+    'FormDependencyGraph',
+    'FormFieldSpec',
+    'PDFFormDependencyError',
+    'PDFFormError',
+    'PDFFormFieldError',
+    'PDFFormTextOverflowError',
+    'analyze_pdf_form',
+    'build_form_dependency_graph',
+    'build_tesseract_ocr_provider',
+    'convert_pdf_to_fillable',
+    'estimate_max_chars',
+    'fill_pdf_fields',
+    'infer_field_data_type',
+    'normalize_rect',
+    'slugify_field_name',
+    'validate_text_for_field',
     'parse_legal_document',
     'parse_legal_document_to_graph',
     'build_document_knowledge_graph',
@@ -356,6 +374,27 @@ _LEGAL_DATA_EXPORTS = {
     'justicedao_library_rebuild_result_to_dict',
 }
 
+_PDF_FORM_EXPORTS = {
+    'FormAnalysisResult',
+    'FormDependencyEdge',
+    'FormDependencyGraph',
+    'FormFieldSpec',
+    'PDFFormDependencyError',
+    'PDFFormError',
+    'PDFFormFieldError',
+    'PDFFormTextOverflowError',
+    'analyze_pdf_form',
+    'build_form_dependency_graph',
+    'build_tesseract_ocr_provider',
+    'convert_pdf_to_fillable',
+    'estimate_max_chars',
+    'fill_pdf_fields',
+    'infer_field_data_type',
+    'normalize_rect',
+    'slugify_field_name',
+    'validate_text_for_field',
+}
+
 
 def __getattr__(name: str):
     if name in _PDF_EXPORTS:
@@ -368,8 +407,13 @@ def __getattr__(name: str):
 
         legal_data = import_module('ipfs_datasets_py.processors.legal_data')
         return getattr(legal_data, name)
+    if name in _PDF_FORM_EXPORTS:
+        from importlib import import_module
+
+        pdf_form_filler = import_module('ipfs_datasets_py.processors.pdf_form_filler')
+        return getattr(pdf_form_filler, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__():
-    return sorted(set(globals().keys()) | _PDF_EXPORTS | _LEGAL_DATA_EXPORTS)
+    return sorted(set(globals().keys()) | _PDF_EXPORTS | _LEGAL_DATA_EXPORTS | _PDF_FORM_EXPORTS)

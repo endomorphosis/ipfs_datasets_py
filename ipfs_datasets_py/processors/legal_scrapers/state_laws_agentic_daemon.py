@@ -3553,6 +3553,7 @@ class StateLawsAgenticDaemon:
             "clean_output_dir": str(clean_output_dir),
             "jsonld_dir": str(jsonld_dir),
             "parquet_dir": str(parquet_dir),
+            "daemon_output_dir": str(self.output_dir),
             "combined_parquet": str(parquet_dir / canonical.combined_parquet_filename),
             "combined_embeddings": str(parquet_dir / canonical.combined_embeddings_filename),
             "corpus_key": self.corpus.key,
@@ -3586,6 +3587,7 @@ class StateLawsAgenticDaemon:
             "artifacts": {
                 "merge_output_dir": str(merge_output_dir),
                 "clean_output_dir": str(clean_output_dir) if self.corpus.key == "state_admin_rules" else None,
+                "daemon_output_dir": str(self.output_dir),
                 "jsonld_dir": str(jsonld_dir),
                 "parquet_dir": str(parquet_dir),
                 "combined_parquet": str(parquet_dir / canonical.combined_parquet_filename),
@@ -3621,20 +3623,9 @@ class StateLawsAgenticDaemon:
         if self.corpus.key == "state_admin_rules":
             return [
                 (
-                    "merge",
+                    "merge_recovered_rows",
                     base_prefix
-                    + " scripts/ops/legal_data/merge_state_admin_runs.py"
-                    + f' --input-root {shlex.quote(canonical_local_root)} --input-root artifacts/state_admin_rules --output-dir "{{merge_output_dir}}" --include-corpus-jsonl {{merge_state_args}}',
-                ),
-                (
-                    "clean",
-                    base_prefix
-                    + ' scripts/ops/legal_data/clean_state_admin_canonical.py --input-dir "{merge_output_dir}" --output-dir "{clean_output_dir}"',
-                ),
-                (
-                    "parquet",
-                    base_prefix
-                    + ' scripts/ops/legal_data/convert_state_admin_jsonld_to_parquet_with_cid.py --input-dir "{jsonld_dir}" --output-dir "{parquet_dir}" --combined-filename "state_admin_rules_all_states.parquet"',
+                    + ' scripts/ops/legal_data/merge_state_admin_recovered_rows.py "{daemon_output_dir}" --output-dir "{clean_output_dir}" --parquet-dir "{parquet_dir}"',
                 ),
                 (
                     "embeddings",

@@ -291,6 +291,74 @@ async def test_legal_scraper_daemon_resumes_completed_phase(tmp_path):
     assert result["cycles"][0]["phases"]["state_refresh"]["resumed_from"].endswith("state_refresh_phase.json")
 
 
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_full_corpus_retries_partial_phase_by_default(tmp_path):
+    calls = {"refresh": 0}
+
+    async def _fake_refresh_runner(args):
+        calls["refresh"] += 1
+        if calls["refresh"] == 1:
+            return {
+                "status": "partial_success",
+                "build": {"states": ["MN"], "missing_jsonld_states": ["OR"], "combined_row_count": 3},
+                "scrape_gap_states": [],
+                "build_gap_states": ["OR"],
+            }
+        return {
+            "status": "success",
+            "build": {"states": ["MN", "OR"], "missing_jsonld_states": [], "combined_row_count": 6},
+            "scrape_gap_states": [],
+            "build_gap_states": [],
+        }
+
+    config = LegalScraperDaemonConfig(
+        full_corpus=True,
+        states=["MN", "OR"],
+        output_dir=str(tmp_path),
+        bluebook=BluebookDaemonConfig(enabled=False),
+        state_refresh=StateRefreshDaemonConfig(scrape=True),
+        agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+    )
+
+    await LegalScraperDaemon(config, state_refresh_runner=_fake_refresh_runner).run()
+    result = await LegalScraperDaemon(config, state_refresh_runner=_fake_refresh_runner).run()
+
+    assert calls["refresh"] == 2
+    assert result["cycles"][0]["phases"]["state_refresh"]["status"] == "success"
+    assert "resumed_from" not in result["cycles"][0]["phases"]["state_refresh"]
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_can_resume_partial_phase_when_explicit(tmp_path):
+    calls = {"refresh": 0}
+
+    async def _fake_refresh_runner(args):
+        calls["refresh"] += 1
+        return {
+            "status": "partial_success",
+            "build": {"states": ["MN"], "missing_jsonld_states": ["OR"], "combined_row_count": 3},
+            "scrape_gap_states": [],
+            "build_gap_states": ["OR"],
+        }
+
+    config = LegalScraperDaemonConfig(
+        full_corpus=True,
+        resume_partial_phases=True,
+        states=["MN", "OR"],
+        output_dir=str(tmp_path),
+        bluebook=BluebookDaemonConfig(enabled=False),
+        state_refresh=StateRefreshDaemonConfig(scrape=True),
+        agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+    )
+
+    await LegalScraperDaemon(config, state_refresh_runner=_fake_refresh_runner).run()
+    result = await LegalScraperDaemon(config, state_refresh_runner=_fake_refresh_runner).run()
+
+    assert calls["refresh"] == 1
+    assert result["cycles"][0]["phases"]["state_refresh"]["status"] == "partial_success"
+    assert result["cycles"][0]["phases"]["state_refresh"]["resumed_from"].endswith("state_refresh_phase.json")
+
+
 def test_legal_scraper_daemon_configures_fetch_and_search_cache_env(tmp_path, monkeypatch):
     monkeypatch.delenv("IPFS_DATASETS_SEARCH_CACHE_ENABLED", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_LEGAL_FETCH_CACHE_ENABLED", raising=False)

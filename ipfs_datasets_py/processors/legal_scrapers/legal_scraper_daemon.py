@@ -237,6 +237,7 @@ class LegalScraperDaemonConfig:
     full_corpus: bool = False
     preflight_probe_hf: bool = False
     require_preflight_ready: bool = False
+    resume_partial_phases: bool = False
     states: List[str] = field(default_factory=lambda: list(STATE_CODES_50))
     include_dc: bool = False
     output_dir: str = str(Path.home() / ".ipfs_datasets" / "legal_scraper_daemon")
@@ -689,6 +690,8 @@ class LegalScraperDaemon:
             return None
         status = str(payload.get("status") or "").lower()
         if status in {"", "running", "error"}:
+            return None
+        if status == "partial_success" and self.config.full_corpus and not self.config.resume_partial_phases:
             return None
         if payload.get("_resume_context") != self._phase_resume_context(phase_name):
             return None
@@ -1273,6 +1276,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write preflight artifacts and refuse to start scraper cycles unless preflight status is ready.",
     )
+    parser.add_argument(
+        "--resume-partial-phases",
+        action="store_true",
+        help="Allow full-corpus runs to reuse partial_success phase artifacts instead of retrying them.",
+    )
     parser.add_argument("--no-resume", action="store_true")
     parser.add_argument(
         "--full-corpus",
@@ -1350,6 +1358,7 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
         full_corpus=full_corpus,
         preflight_probe_hf=bool(args.preflight_probe_hf),
         require_preflight_ready=bool(args.require_preflight_ready),
+        resume_partial_phases=bool(args.resume_partial_phases),
         states=states,
         include_dc=bool(args.include_dc or full_corpus),
         output_dir=str(args.output_dir),

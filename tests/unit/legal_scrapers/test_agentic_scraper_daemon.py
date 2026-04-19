@@ -207,16 +207,15 @@ def test_preview_post_cycle_release_plan_builds_without_scraping(tmp_path):
     assert preview["preview"] is True
     assert preview["corpus"] == "state_admin_rules"
     assert preview["critic_score"] == 0.975
-    assert len(preview["commands"]) == 5
-    assert preview["commands"][0]["stage"] == "merge"
-    assert "merge_state_admin_runs.py" in preview["commands"][0]["command"]
-    assert "--state CA" in preview["commands"][0]["command"]
-    assert preview["commands"][1]["stage"] == "clean"
-    assert "clean_state_admin_canonical.py" in preview["commands"][1]["command"]
-    assert preview["commands"][2]["stage"] == "parquet"
-    assert "_cleaned/state_admin_rules_jsonld" in preview["commands"][2]["command"]
-    assert preview["commands"][4]["stage"] == "publish"
-    assert "release state_admin_rules" in preview["commands"][4]["command"]
+    assert len(preview["commands"]) == 3
+    assert preview["commands"][0]["stage"] == "merge_recovered_rows"
+    assert "merge_state_admin_recovered_rows.py" in preview["commands"][0]["command"]
+    assert f'"{tmp_path}"' in preview["commands"][0]["command"]
+    assert "--parquet-dir" in preview["commands"][0]["command"]
+    assert preview["commands"][1]["stage"] == "embeddings"
+    assert "build_state_admin_embeddings_parquet_with_cid.py" in preview["commands"][1]["command"]
+    assert preview["commands"][2]["stage"] == "publish"
+    assert "release state_admin_rules" in preview["commands"][2]["command"]
     assert preview["artifacts"]["clean_output_dir"].endswith("_cleaned")
 
 

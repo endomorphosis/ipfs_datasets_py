@@ -5,7 +5,8 @@ This module contains the scraper for Arkansas statutes from the official state l
 
 import asyncio
 import re
-from typing import List, Dict
+import time
+from typing import List, Dict, Optional
 from urllib.parse import urljoin
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -144,9 +145,10 @@ class ArkansasScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=180)
-        discovery_limit = limit or 1000000
-        justia_statutes = await self._scrape_justia_titles(code_name, max_statutes=discovery_limit)
+        justia_statutes = await self._scrape_justia_titles(code_name, max_statutes=limit)
         justia_statutes = self._filter_non_code_results(justia_statutes)
+        if limit is None and justia_statutes:
+            return justia_statutes
         if (limit is not None and len(justia_statutes) >= limit) or max_statutes:
             return justia_statutes[:limit] if limit is not None else justia_statutes
 
@@ -188,7 +190,7 @@ class ArkansasScraper(BaseStateScraper):
 
         return merged[:limit] if limit is not None else merged
 
-    async def _scrape_justia_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_justia_titles(self, code_name: str, max_statutes: Optional[int]) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -215,6 +217,8 @@ class ArkansasScraper(BaseStateScraper):
             candidate_title_indexes.append(href)
             break
 
+        title_limit = max_statutes if max_statutes is not None else None
+        section_limit = max_statutes if max_statutes is not None else None
         title_urls: List[str] = []
         seen_titles = set()
         for title_index_url in candidate_title_indexes:
@@ -234,10 +238,11 @@ class ArkansasScraper(BaseStateScraper):
                     continue
                 seen_titles.add(href)
                 title_urls.append(href)
-                if len(title_urls) >= 40:
+                if title_limit is not None and len(title_urls) >= title_limit:
                     break
             if title_urls:
                 break
+        self.logger.info("Arkansas Justia: discovered %d title indexes", len(title_urls))
 
         section_urls: List[str] = []
         intermediate_urls: List[str] = []
@@ -261,14 +266,22 @@ class ArkansasScraper(BaseStateScraper):
                 if href not in seen_sections:
                     seen_sections.add(href)
                     section_urls.append(href)
-                if len(section_urls) >= max(1, int(max_statutes * 4)):
+                if section_limit is not None and len(section_urls) >= max(1, int(section_limit * 4)):
                     break
-            if len(intermediate_urls) >= max(1, int(max_statutes * 2)):
+            if section_limit is not None and len(intermediate_urls) >= max(1, int(section_limit * 2)):
                 break
-            if len(section_urls) >= max(1, int(max_statutes * 4)):
+            if section_limit is not None and len(section_urls) >= max(1, int(section_limit * 4)):
                 break
 
-        for page_url in intermediate_urls[: max(1, int(max_statutes * 2))]:
+        intermediate_scan = intermediate_urls[: max(1, int(section_limit * 2))] if section_limit is not None else intermediate_urls
+        self.logger.info(
+            "Arkansas Justia: discovered %d direct section urls and %d intermediate urls",
+            len(section_urls),
+            len(intermediate_urls),
+        )
+        heartbeat_seconds = max(15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60)))
+        last_heartbeat = time.monotonic()
+        for idx, page_url in enumerate(intermediate_scan, start=1):
             try:
                 page_payload = await self._fetch_justia_html(page_url, timeout_seconds=18)
             except Exception:
@@ -284,10 +297,20 @@ class ArkansasScraper(BaseStateScraper):
                     continue
                 seen_sections.add(href)
                 section_urls.append(href)
-                if len(section_urls) >= max(1, int(max_statutes * 4)):
+                if section_limit is not None and len(section_urls) >= max(1, int(section_limit * 4)):
                     break
-            if len(section_urls) >= max(1, int(max_statutes * 4)):
+            now = time.monotonic()
+            if now - last_heartbeat >= heartbeat_seconds:
+                self.logger.info(
+                    "Arkansas Justia: scanned_intermediate=%d/%d section_urls=%d",
+                    idx,
+                    len(intermediate_scan),
+                    len(section_urls),
+                )
+                last_heartbeat = now
+            if section_limit is not None and len(section_urls) >= max(1, int(section_limit * 4)):
                 break
+        self.logger.info("Arkansas Justia: total section urls queued=%d", len(section_urls))
 
         sem = asyncio.Semaphore(2)
 
@@ -296,13 +319,27 @@ class ArkansasScraper(BaseStateScraper):
                 return await self._build_justia_statute(code_name=code_name, section_url=section_url, fallback_number=str(index))
 
         statutes: List[NormalizedStatute] = []
-        jobs = [_fetch_one(section_url, idx) for idx, section_url in enumerate(section_urls[: max(1, int(max_statutes * 4))], start=1)]
-        for result in await asyncio.gather(*jobs, return_exceptions=True):
-            if isinstance(result, Exception) or result is None:
-                continue
-            statutes.append(result)
-            if len(statutes) >= max_statutes:
-                break
+        urls_to_fetch = section_urls[: max(1, int(section_limit * 4))] if section_limit is not None else section_urls
+        batch_size = 24
+        last_heartbeat = time.monotonic()
+        for offset in range(0, len(urls_to_fetch), batch_size):
+            batch = urls_to_fetch[offset : offset + batch_size]
+            jobs = [_fetch_one(section_url, offset + idx) for idx, section_url in enumerate(batch, start=1)]
+            for result in await asyncio.gather(*jobs, return_exceptions=True):
+                if isinstance(result, Exception) or result is None:
+                    continue
+                statutes.append(result)
+                if max_statutes is not None and len(statutes) >= max_statutes:
+                    return statutes
+            now = time.monotonic()
+            if now - last_heartbeat >= heartbeat_seconds:
+                self.logger.info(
+                    "Arkansas Justia: fetched_sections=%d/%d statutes=%d",
+                    min(offset + len(batch), len(urls_to_fetch)),
+                    len(urls_to_fetch),
+                    len(statutes),
+                )
+                last_heartbeat = now
 
         return statutes
 
