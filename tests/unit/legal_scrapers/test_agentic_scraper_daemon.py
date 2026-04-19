@@ -1204,6 +1204,19 @@ async def test_state_laws_agentic_daemon_runs_single_cycle(monkeypatch, tmp_path
     assert state_payload["best_tactic"]["score"] == summary["latest_cycle"]["critic_score"]
     assert state_payload["last_tactic_selection"]["selected_tactic"] == summary["latest_cycle"]["tactic"]["name"]
 
+    artifacts = summary["latest_cycle"]["recovered_row_artifacts"]
+    assert artifacts["status"] == "success"
+    assert artifacts["row_count"] == 1
+    assert artifacts["state_counts"] == {"OR": 1}
+    assert artifacts["target_hf_dataset_id"] == "justicedao/ipfs_state_laws"
+    assert artifacts["target_parquet_paths_by_state"]["OR"] == "state_laws_parquet_cid/STATE-OR.parquet"
+    rows_path = tmp_path / "recovered_rows" / "cycle_0001" / "state_laws_statutes.jsonl"
+    assert artifacts["statutes_jsonl_path"] == str(rows_path)
+    recovered_rows = [json.loads(line) for line in rows_path.read_text(encoding="utf-8").splitlines()]
+    assert recovered_rows[0]["state_code"] == "OR"
+    assert recovered_rows[0]["corpus_key"] == "state_laws"
+    assert recovered_rows[0]["source_url"] == "https://example.org/oregon/statute-1"
+
 
 @pytest.mark.asyncio
 async def test_state_laws_agentic_daemon_schedules_deferred_retry_for_rate_limited_scrape(monkeypatch, tmp_path):

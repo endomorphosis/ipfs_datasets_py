@@ -62,7 +62,7 @@ class WashingtonScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        return_threshold = min(self._bounded_return_threshold(20), int(max_statutes or 20))
+        return_threshold = self._effective_scrape_limit(max_statutes, default=20) or 1000000
         for candidate in candidate_urls:
             if candidate in seen:
                 continue

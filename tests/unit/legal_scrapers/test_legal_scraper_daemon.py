@@ -378,6 +378,14 @@ async def test_legal_scraper_daemon_shards_state_admin_agentic_runs_by_state(tmp
                         "documents": {
                             "per_state_recovery": {state: {"candidate_urls": 2}},
                             "candidate_urls_by_state": {state: [f"https://example.test/{state}"]},
+                            "recovered_row_artifacts": {
+                                "status": "success" if state == "CT" else "empty",
+                                "row_count": 3 if state == "CT" else 0,
+                                "statutes_jsonl_path": f"/tmp/{state}.jsonl",
+                                "target_parquet_paths_by_state": {
+                                    state: f"US_ADMINISTRATIVE_RULES/parsed/parquet/state_admin_rules_cid/STATE-{state}.parquet"
+                                },
+                            },
                         },
                     },
                 },
@@ -395,6 +403,10 @@ async def test_legal_scraper_daemon_shards_state_admin_agentic_runs_by_state(tmp
     coverage = summary["latest_cycle"]["diagnostics"]["coverage"]
     assert coverage["states_returned"] == 1
     assert coverage["coverage_gap_states"] == ["NJ"]
+    recovered_rows = summary["latest_cycle"]["recovered_row_artifacts"]
+    assert recovered_rows["row_count"] == 3
+    assert sorted(recovered_rows["state_artifacts"]) == ["CT", "NJ"]
+    assert summary["latest_cycle"]["diagnostics"]["documents"]["recovered_row_count"] == 3
 
 
 def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
@@ -566,8 +578,10 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert preflight["status"] == "ready"
     assert preflight["target_state_count"] == 51
     assert preflight["missing_state_scrapers"] == []
+    assert preflight["hf_dataset_access"]["enabled"] is False
     assert preflight["invariants"]["state_refresh_unbounded"] is True
     assert preflight["invariants"]["state_refresh_hf_merge_enabled"] is True
+    assert preflight["invariants"]["hf_dataset_access_readable"] is True
     assert preflight["invariants"]["publication_opt_in"] is True
     assert target_manifest["status"] == "planned"
     assert target_manifest["state_count"] == 51
@@ -607,6 +621,48 @@ def test_legal_scraper_daemon_writes_preflight_artifacts(tmp_path):
     assert json.loads(target_manifest_path.read_text(encoding="utf-8"))["state_shard_count"] == 153
 
 
+def test_legal_scraper_daemon_preflight_hf_probe_blocks_unreadable_dataset(tmp_path, monkeypatch):
+    def _fake_probe(self, hf_datasets):
+        return {
+            "enabled": True,
+            "token_resolved": True,
+            "all_readable": False,
+            "datasets": {
+                "state_laws": {
+                    "status": "error",
+                    "readable": False,
+                    "dataset_id": "justicedao/ipfs_state_laws",
+                    "error": "403 Forbidden",
+                },
+            },
+        }
+
+    monkeypatch.setattr(LegalScraperDaemon, "_probe_hf_dataset_access", _fake_probe)
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            preflight_probe_hf=True,
+            include_dc=True,
+            states=["all"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(corpora=["state_laws", "state_admin_rules", "state_court_rules"]),
+            state_refresh=StateRefreshDaemonConfig(scrape=True, merge_hf_existing=True, max_statutes=0),
+            agentic_corpora=AgenticCorpusDaemonConfig(
+                enabled=True,
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"],
+                max_statutes=0,
+            ),
+        )
+    )
+
+    preflight = daemon.build_plan()["preflight"]
+
+    assert preflight["status"] == "blocked"
+    assert preflight["hf_dataset_access"]["enabled"] is True
+    assert preflight["invariants"]["hf_dataset_access_readable"] is False
+    assert preflight["blocking_invariants"] == {"hf_dataset_access_readable": False}
+
+
 @pytest.mark.asyncio
 async def test_legal_scraper_daemon_preflight_only_main_writes_without_cycles(tmp_path, capsys):
     args = build_arg_parser().parse_args(
@@ -628,6 +684,90 @@ async def test_legal_scraper_daemon_preflight_only_main_writes_without_cycles(tm
     assert payload["target_manifest"]["state_shard_count"] == 153
     assert (tmp_path / "preflight_plan.json").exists()
     assert (tmp_path / "target_manifest.json").exists()
+    assert not (tmp_path / "latest_cycle.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_strict_preflight_exits_nonzero_when_blocked(tmp_path, capsys, monkeypatch):
+    def _fake_probe(self, hf_datasets):
+        return {
+            "enabled": True,
+            "token_resolved": True,
+            "all_readable": False,
+            "datasets": {
+                "state_laws": {
+                    "status": "error",
+                    "readable": False,
+                    "dataset_id": "justicedao/ipfs_state_laws",
+                    "error": "403 Forbidden",
+                },
+            },
+        }
+
+    monkeypatch.setattr(LegalScraperDaemon, "_probe_hf_dataset_access", _fake_probe)
+    args = build_arg_parser().parse_args(
+        [
+            "--full-corpus",
+            "--preflight-only",
+            "--preflight-probe-hf",
+            "--strict-preflight",
+            "--output-dir",
+            str(tmp_path),
+            "--json",
+        ]
+    )
+
+    exit_code = await _main_async(args)
+    captured = capsys.readouterr()
+    payload = _decode_json_from_mixed_output(captured.out)
+
+    assert exit_code == 2
+    assert payload["status"] == "blocked"
+    assert payload["preflight"]["blocking_invariants"] == {"hf_dataset_access_readable": False}
+    assert (tmp_path / "preflight_plan.json").exists()
+    assert not (tmp_path / "latest_cycle.json").exists()
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_require_preflight_ready_blocks_cycles(tmp_path, capsys, monkeypatch):
+    def _fake_probe(self, hf_datasets):
+        return {
+            "enabled": True,
+            "token_resolved": True,
+            "all_readable": False,
+            "datasets": {
+                "state_laws": {
+                    "status": "error",
+                    "readable": False,
+                    "dataset_id": "justicedao/ipfs_state_laws",
+                    "error": "403 Forbidden",
+                },
+            },
+        }
+
+    monkeypatch.setattr(LegalScraperDaemon, "_probe_hf_dataset_access", _fake_probe)
+    args = build_arg_parser().parse_args(
+        [
+            "--full-corpus",
+            "--preflight-probe-hf",
+            "--require-preflight-ready",
+            "--output-dir",
+            str(tmp_path),
+            "--json",
+        ]
+    )
+
+    exit_code = await _main_async(args)
+    captured = capsys.readouterr()
+    payload = _decode_json_from_mixed_output(captured.out)
+
+    assert exit_code == 2
+    assert payload["status"] == "blocked"
+    assert payload["cycle_count"] == 0
+    assert payload["latest_cycle_path"] is None
+    assert payload["preflight"]["blocking_invariants"] == {"hf_dataset_access_readable": False}
+    assert (tmp_path / "preflight_plan.json").exists()
+    assert (tmp_path / "daemon_state.json").exists()
     assert not (tmp_path / "latest_cycle.json").exists()
 
 

@@ -313,7 +313,43 @@ class BaseStateScraper(ABC):
         bounded = _env_int("STATE_SCRAPER_MAX_STATUTES", 0)
         if bounded > 0:
             return max(1, min(int(default), bounded))
+        if str(os.getenv("STATE_SCRAPER_FULL_CORPUS", "")).strip().lower() in {"1", "true", "yes", "on"}:
+            return 1000000
         return int(default)
+
+    def _full_corpus_enabled(self) -> bool:
+        return str(os.getenv("STATE_SCRAPER_FULL_CORPUS", "")).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    def _effective_scrape_limit(
+        self,
+        max_statutes: Optional[int],
+        *,
+        default: Optional[int],
+    ) -> Optional[int]:
+        """Resolve a scraper limit without confusing sampling with full corpus.
+
+        Historically many state scrapers treated ``max_statutes=None`` as a
+        small sample default. That is useful for unit tests and probes, but it
+        silently truncates daemon full-corpus runs. Full-corpus mode makes an
+        omitted max genuinely unbounded while bounded runs keep their caps.
+        """
+        if max_statutes is not None:
+            try:
+                value = int(max_statutes)
+            except Exception:
+                value = 0
+            if value > 0:
+                return max(1, value)
+        if self._full_corpus_enabled():
+            return None
+        if default is None:
+            return None
+        return max(1, int(default))
 
     def _load_ipfs_page_cache_index(self) -> Dict[str, Dict[str, Any]]:
         if not self._ipfs_page_cache_index_path.exists():
@@ -1712,6 +1748,8 @@ class BaseStateScraper(ABC):
         if bounded_max_sections > 0:
             scan_limit = max(bounded_max_sections, min(int(max_sections or bounded_max_sections), bounded_max_sections * 10))
             max_sections = max(1, scan_limit)
+        elif self._full_corpus_enabled():
+            max_sections = None
         
         statutes = []
         seen_source_urls = set()
@@ -1722,7 +1760,7 @@ class BaseStateScraper(ABC):
             section_count = 0
 
             for link in section_links:
-                if len(statutes) >= max_sections:
+                if max_sections is not None and len(statutes) >= max_sections:
                     break
 
                 link_text = link.get_text(strip=True)
@@ -1785,7 +1823,7 @@ class BaseStateScraper(ABC):
 
             # If the landing page yields very few statute links, try one-hop discovery
             # pages that look like code/statute indexes.
-            if len(statutes) < min(10, max_sections):
+            if len(statutes) < min(10, max_sections or 10):
                 discovery_urls = []
                 discovery_seen = set()
                 discovery_keywords = (
@@ -1812,7 +1850,7 @@ class BaseStateScraper(ABC):
                     discovery_urls.append(abs_url)
 
                 for discovery_url in discovery_urls:
-                    if len(statutes) >= max_sections:
+                    if max_sections is not None and len(statutes) >= max_sections:
                         break
                     try:
                         discovery_bytes = await self._fetch_page_content_with_archival_fallback(
@@ -1875,6 +1913,8 @@ class BaseStateScraper(ABC):
         if bounded_max_sections > 0:
             scan_limit = max(bounded_max_sections, min(int(max_sections or bounded_max_sections), bounded_max_sections * 10))
             max_sections = max(1, scan_limit)
+        elif self._full_corpus_enabled():
+            max_sections = None
         
         if not self.has_playwright():
             self.logger.warning(f"Playwright not available, falling back to generic scrape for {code_name}")
@@ -1920,7 +1960,7 @@ class BaseStateScraper(ABC):
 
                         section_count = 0
                         for link in section_links:
-                            if section_count >= max_sections:
+                            if max_sections is not None and section_count >= max_sections:
                                 break
 
                             link_text = link.get_text(strip=True)

@@ -65,12 +65,12 @@ class MinnesotaScraper(BaseStateScraper):
         seen = set()
         merged: List[NormalizedStatute] = []
         merged_keys = set()
-        limit = max(1, int(max_statutes or 420))
-        enough = min(80, limit)
+        limit = self._effective_scrape_limit(max_statutes, default=420)
+        enough = min(80, limit or 80)
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
-                if len(merged) >= limit:
+                if limit is not None and len(merged) >= limit:
                     return
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in merged_keys:
@@ -78,7 +78,7 @@ class MinnesotaScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
-        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=limit)
+        chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=limit or 1000000)
         _merge(chapter_statutes)
         if len(merged) >= enough:
             return merged
@@ -94,7 +94,7 @@ class MinnesotaScraper(BaseStateScraper):
                         code_name,
                         candidate,
                         "Minn. Stat.",
-                        max_sections=limit,
+                        max_sections=limit or 1000000,
                         wait_for_selector="a[href*='/statutes/cite/'], a[href*='/statutes/']",
                         timeout=45000,
                     )
@@ -105,7 +105,7 @@ class MinnesotaScraper(BaseStateScraper):
                 except Exception:
                     pass
 
-            statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=limit)
+            statutes = await self._generic_scrape(code_name, candidate, "Minn. Stat.", max_sections=limit or 1000000)
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
             if len(merged) >= enough:

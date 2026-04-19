@@ -42,6 +42,24 @@ def _ipfs_kit_dependency() -> str:
 ipfs_kit_dependency = _ipfs_kit_dependency()
 
 
+def _ipfs_accelerate_dependency() -> str:
+    """Prefer the vendored ipfs_accelerate_py checkout when present."""
+
+    local_path = os.path.join(os.path.dirname(__file__), "ipfs_accelerate_py")
+    local_markers = (
+        os.path.join(local_path, "setup.py"),
+        os.path.join(local_path, "pyproject.toml"),
+        os.path.join(local_path, ".git"),
+    )
+    if os.path.isdir(local_path) and any(os.path.exists(marker) for marker in local_markers):
+        return f"ipfs_accelerate_py @ file://{os.path.abspath(local_path)}"
+
+    return "ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main"
+
+
+ipfs_accelerate_dependency = _ipfs_accelerate_dependency()
+
+
 def _env_truthy(name: str, default: str = "1") -> bool:
     value = os.environ.get(name, default)
     return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
@@ -194,6 +212,7 @@ setup(
         'orbitdb_kit_py',
         # ipfs_kit_py from GitHub main branch
         ipfs_kit_dependency,
+        ipfs_accelerate_dependency,
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
@@ -227,6 +246,8 @@ setup(
         "ipfshttpclient>=0.7.0",
 
         # libp2p crypto/pubsub dependencies (avoid runtime warnings)
+        "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
+        "pymultihash>=0.8.2",
         "protobuf>=3.20.0",
         "eth-hash>=0.3.2",
         "eth-keys>=0.5.0",

@@ -235,6 +235,8 @@ class CacheDaemonConfig:
 @dataclass
 class LegalScraperDaemonConfig:
     full_corpus: bool = False
+    preflight_probe_hf: bool = False
+    require_preflight_ready: bool = False
     states: List[str] = field(default_factory=lambda: list(STATE_CODES_50))
     include_dc: bool = False
     output_dir: str = str(Path.home() / ".ipfs_datasets" / "legal_scraper_daemon")
@@ -375,6 +377,12 @@ class LegalScraperDaemon:
                 except Exception:
                     hf_datasets[corpus] = ""
 
+        hf_dataset_access = self._probe_hf_dataset_access(hf_datasets) if self.config.preflight_probe_hf else {
+            "enabled": False,
+            "all_readable": None,
+            "datasets": {},
+        }
+
         invariants = {
             "all_supported_corpora_requested": set(self.config.agentic_corpora.corpora or []) >= set(SUPPORTED_CORPORA)
             and set(self.config.bluebook.corpora or []) >= set(SUPPORTED_CORPORA),
@@ -383,6 +391,11 @@ class LegalScraperDaemon:
             "state_refresh_hf_merge_enabled": bool(self.config.state_refresh.merge_hf_existing),
             "agentic_corpora_enabled": bool(self.config.agentic_corpora.enabled),
             "agentic_corpora_unbounded": int(self.config.agentic_corpora.max_statutes or 0) == 0,
+            "hf_dataset_access_readable": (
+                bool(hf_dataset_access.get("all_readable"))
+                if bool(hf_dataset_access.get("enabled"))
+                else True
+            ),
             "publication_opt_in": not bool(self.config.state_refresh.publish_to_hf)
             and not bool(self.config.bluebook.publish_to_hf)
             and not bool(self.config.bluebook.publish_merged_parquet_to_hf),
@@ -409,8 +422,61 @@ class LegalScraperDaemon:
             "state_registry_error": state_registry_error,
             "supported_corpora": list(SUPPORTED_CORPORA),
             "hf_datasets": hf_datasets,
+            "hf_dataset_access": hf_dataset_access,
             "invariants": invariants,
             "blocking_invariants": blocking_invariants,
+        }
+
+    def _probe_hf_dataset_access(self, hf_datasets: Mapping[str, str]) -> Dict[str, Any]:
+        datasets: Dict[str, Any] = {}
+        token_resolved = False
+        try:
+            from huggingface_hub import HfApi
+            from ipfs_datasets_py.processors.legal_data.legal_source_recovery_promotion import _resolve_hf_token
+
+            token = _resolve_hf_token(self.config.hf_token)
+            token_resolved = bool(token)
+            api = HfApi(token=token)
+            for corpus, dataset_id in sorted(dict(hf_datasets or {}).items()):
+                dataset_id = str(dataset_id or "").strip()
+                if not dataset_id:
+                    datasets[corpus] = {
+                        "status": "error",
+                        "readable": False,
+                        "error": "missing dataset id",
+                    }
+                    continue
+                try:
+                    info = api.repo_info(repo_id=dataset_id, repo_type="dataset")
+                    siblings = getattr(info, "siblings", None) or []
+                    datasets[corpus] = {
+                        "status": "readable",
+                        "readable": True,
+                        "dataset_id": dataset_id,
+                        "private": bool(getattr(info, "private", False)),
+                        "file_count": len(siblings),
+                    }
+                except Exception as exc:
+                    datasets[corpus] = {
+                        "status": "error",
+                        "readable": False,
+                        "dataset_id": dataset_id,
+                        "error": str(exc),
+                    }
+        except Exception as exc:
+            return {
+                "enabled": True,
+                "token_resolved": token_resolved,
+                "all_readable": False,
+                "error": str(exc),
+                "datasets": datasets,
+            }
+
+        return {
+            "enabled": True,
+            "token_resolved": token_resolved,
+            "all_readable": bool(datasets) and all(bool(item.get("readable")) for item in datasets.values()),
+            "datasets": datasets,
         }
 
     def build_target_manifest(self) -> Dict[str, Any]:
@@ -513,6 +579,24 @@ class LegalScraperDaemon:
         return env
 
     async def run(self) -> Dict[str, Any]:
+        if self.config.require_preflight_ready:
+            preflight_payload = self.write_preflight_artifacts()
+            if str(preflight_payload.get("status") or "").lower() != "ready":
+                summary = {
+                    "status": "blocked",
+                    "started_at": preflight_payload.get("generated_at") or _utc_now(),
+                    "finished_at": _utc_now(),
+                    "cycle_count": 0,
+                    "latest_cycle_path": None,
+                    "preflight_path": preflight_payload.get("preflight_path"),
+                    "target_manifest_path": preflight_payload.get("target_manifest_path"),
+                    "preflight": preflight_payload.get("preflight") or {},
+                    "target_manifest": preflight_payload.get("target_manifest") or {},
+                    "cycles": [],
+                }
+                self.state_path.write_text(json.dumps(summary, indent=2, sort_keys=True, default=str), encoding="utf-8")
+                return summary
+
         cycles: List[Dict[str, Any]] = []
         max_cycles = max(1, int(self.config.max_cycles or 1))
         for cycle_index in range(1, max_cycles + 1):
@@ -968,6 +1052,8 @@ class LegalScraperDaemon:
         total_statutes = 0
         per_state_recovery: Dict[str, Any] = {}
         candidate_urls_by_state: Dict[str, Any] = {}
+        recovered_row_artifacts_by_state: Dict[str, Any] = {}
+        recovered_row_count = 0
         latest_cycles: Dict[str, Any] = {}
         for state, result in state_results.items():
             summary = result.get("summary") if isinstance(result.get("summary"), dict) else {}
@@ -988,6 +1074,12 @@ class LegalScraperDaemon:
             candidate_urls = documents.get("candidate_urls_by_state") if isinstance(documents.get("candidate_urls_by_state"), dict) else {}
             if state in candidate_urls:
                 candidate_urls_by_state[state] = candidate_urls[state]
+            recovered_row_artifacts = latest_cycle.get("recovered_row_artifacts")
+            if not isinstance(recovered_row_artifacts, dict):
+                recovered_row_artifacts = documents.get("recovered_row_artifacts") if isinstance(documents.get("recovered_row_artifacts"), dict) else {}
+            if recovered_row_artifacts:
+                recovered_row_artifacts_by_state[state] = recovered_row_artifacts
+                recovered_row_count += int(recovered_row_artifacts.get("row_count") or 0)
 
         aggregate_status = "success"
         if coverage_gap_states and successful_states:
@@ -1015,7 +1107,14 @@ class LegalScraperDaemon:
                     "documents": {
                         "per_state_recovery": per_state_recovery,
                         "candidate_urls_by_state": candidate_urls_by_state,
+                        "recovered_row_artifacts_by_state": recovered_row_artifacts_by_state,
+                        "recovered_row_count": recovered_row_count,
                     },
+                },
+                "recovered_row_artifacts": {
+                    "status": "success" if recovered_row_artifacts_by_state else "empty",
+                    "row_count": recovered_row_count,
+                    "state_artifacts": recovered_row_artifacts_by_state,
                 },
                 "state_cycles": latest_cycles,
             },
@@ -1159,6 +1258,21 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write the preflight plan and target manifest, then exit without running scraper phases.",
     )
+    parser.add_argument(
+        "--preflight-probe-hf",
+        action="store_true",
+        help="During preflight, verify the resolved Hugging Face token can read every target dataset repo.",
+    )
+    parser.add_argument(
+        "--strict-preflight",
+        action="store_true",
+        help="Return a non-zero exit code when --preflight-only finds a status other than ready.",
+    )
+    parser.add_argument(
+        "--require-preflight-ready",
+        action="store_true",
+        help="Write preflight artifacts and refuse to start scraper cycles unless preflight status is ready.",
+    )
     parser.add_argument("--no-resume", action="store_true")
     parser.add_argument(
         "--full-corpus",
@@ -1234,6 +1348,8 @@ def config_from_args(args: argparse.Namespace) -> LegalScraperDaemonConfig:
     agentic_corpora = _normalize_corpora("all" if full_corpus else args.agentic_corpora)
     return LegalScraperDaemonConfig(
         full_corpus=full_corpus,
+        preflight_probe_hf=bool(args.preflight_probe_hf),
+        require_preflight_ready=bool(args.require_preflight_ready),
         states=states,
         include_dc=bool(args.include_dc or full_corpus),
         output_dir=str(args.output_dir),
@@ -1318,10 +1434,19 @@ async def _main_async(args: argparse.Namespace) -> int:
     result = daemon.write_preflight_artifacts() if bool(getattr(args, "preflight_only", False)) else await daemon.run()
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))
+    elif bool(getattr(args, "preflight_only", False)):
+        print(f"Status: {result.get('status')}")
+        print(f"Preflight: {result.get('preflight_path')}")
+        print(f"Target manifest: {result.get('target_manifest_path')}")
     else:
         print(f"Status: {result.get('status')}")
         print(f"Cycles: {result.get('cycle_count')}")
         print(f"Latest: {result.get('latest_cycle_path')}")
+    status = str(result.get("status") or "").lower()
+    if bool(getattr(args, "preflight_only", False)) and bool(getattr(args, "strict_preflight", False)) and status != "ready":
+        return 2
+    if bool(getattr(args, "require_preflight_ready", False)) and status == "blocked":
+        return 2
     return 0
 
 

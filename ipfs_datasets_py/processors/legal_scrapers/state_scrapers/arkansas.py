@@ -143,11 +143,12 @@ class ArkansasScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes else 180
-        justia_statutes = await self._scrape_justia_titles(code_name, max_statutes=limit)
+        limit = self._effective_scrape_limit(max_statutes, default=180)
+        discovery_limit = limit or 1000000
+        justia_statutes = await self._scrape_justia_titles(code_name, max_statutes=discovery_limit)
         justia_statutes = self._filter_non_code_results(justia_statutes)
-        if len(justia_statutes) >= limit or max_statutes:
-            return justia_statutes[:limit]
+        if (limit is not None and len(justia_statutes) >= limit) or max_statutes:
+            return justia_statutes[:limit] if limit is not None else justia_statutes
 
         candidate_urls = [
             code_url,
@@ -179,13 +180,13 @@ class ArkansasScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=limit)
+            statutes = await self._generic_scrape(code_name, candidate, "Ark. Code Ann.", max_sections=limit or 1000000)
             statutes = self._filter_non_code_results(statutes)
             _merge(statutes)
-            if len(merged) >= limit:
+            if limit is not None and len(merged) >= limit:
                 return merged[:limit]
 
-        return merged[:limit]
+        return merged[:limit] if limit is not None else merged
 
     async def _scrape_justia_titles(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         try:

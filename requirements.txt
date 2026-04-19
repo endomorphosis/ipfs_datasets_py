@@ -3,7 +3,7 @@
 
 # GitHub dependencies - always install from main branch
 ipfs_kit_py[api,ipld,ai_ml] @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main
-git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
+ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
 
 # Local submodule dependencies
 # -e ./ipfs_kit_py  # Commented out - now using GitHub direct install above

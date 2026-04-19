@@ -420,6 +420,8 @@ class StateLawsAgenticDaemon:
         self.cycles_dir.mkdir(parents=True, exist_ok=True)
         self.document_artifacts_dir = self.output_dir / "document_artifacts"
         self.document_artifacts_dir.mkdir(parents=True, exist_ok=True)
+        self.recovered_rows_dir = self.output_dir / "recovered_rows"
+        self.recovered_rows_dir.mkdir(parents=True, exist_ok=True)
         self.state_file = self.output_dir / "daemon_state.json"
         self.latest_file = self.output_dir / "latest_summary.json"
         self.pending_retry_file = self.output_dir / "latest_pending_retry.json"
@@ -752,10 +754,17 @@ class StateLawsAgenticDaemon:
             tactic=tactic,
             document_gap_report=document_gap_report,
         )
+        recovered_row_artifacts = self._write_recovered_row_artifacts(
+            cycle_index=cycle_index,
+            scrape_result=scrape_result,
+        )
         diagnostics = self._merge_document_artifacts_into_diagnostics(
             diagnostics=diagnostics,
             document_artifacts=document_artifacts,
         )
+        if isinstance(recovered_row_artifacts, dict) and isinstance(diagnostics.get("documents"), dict):
+            diagnostics["documents"] = dict(diagnostics["documents"])
+            diagnostics["documents"]["recovered_row_artifacts"] = recovered_row_artifacts
         diagnostics = self._annotate_document_recovery_gate(diagnostics)
         critic_score = self._critic_score(diagnostics)
         passed = self._is_success(diagnostics, score=critic_score)
@@ -770,6 +779,7 @@ class StateLawsAgenticDaemon:
                 "passed": passed,
                 "critic": critic,
                 "document_artifacts": document_artifacts,
+                "recovered_row_artifacts": recovered_row_artifacts,
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
@@ -805,6 +815,7 @@ class StateLawsAgenticDaemon:
             "document_gap_report": document_gap_report,
             "document_gap_report_path": str(document_gap_report_path) if document_gap_report_path else None,
             "document_artifacts": document_artifacts,
+            "recovered_row_artifacts": recovered_row_artifacts,
             "post_cycle_release": post_cycle_release,
             "metadata": metadata,
         }
@@ -2069,6 +2080,147 @@ class StateLawsAgenticDaemon:
             "per_state": per_state,
             "per_state_recovery": per_state_recovery,
             "cloudflare_browser_rendering": dict(metadata.get("cloudflare_browser_rendering") or {}),
+        }
+
+    def _write_recovered_row_artifacts(
+        self,
+        *,
+        cycle_index: int,
+        scrape_result: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Persist recovered rows outside cycle JSON so merge jobs can consume them."""
+        data = [block for block in list(scrape_result.get("data") or []) if isinstance(block, dict)]
+        cycle_dir = self.recovered_rows_dir / f"cycle_{cycle_index:04d}"
+        cycle_dir.mkdir(parents=True, exist_ok=True)
+
+        blocks_path = cycle_dir / f"{self.corpus.key}_blocks.json"
+        rows_path = cycle_dir / f"{self.corpus.key}_statutes.jsonl"
+        manifest_path = cycle_dir / f"{self.corpus.key}_manifest.json"
+        parquet_path = cycle_dir / f"{self.corpus.key}_statutes.parquet"
+
+        rows = self._flatten_recovered_statute_rows(data)
+        state_counts: Dict[str, int] = {}
+        for row in rows:
+            state_code = str(row.get("state_code") or "").upper().strip()
+            if not state_code:
+                continue
+            state_counts[state_code] = int(state_counts.get(state_code, 0) or 0) + 1
+
+        target = self._recovered_row_hf_target_manifest(sorted(state_counts))
+        summary: Dict[str, Any] = {
+            "status": "success" if rows else "empty",
+            "cycle": int(cycle_index),
+            "corpus": self.corpus.key,
+            "row_count": len(rows),
+            "state_counts": state_counts,
+            "blocks_json_path": str(blocks_path),
+            "statutes_jsonl_path": str(rows_path),
+            "statutes_parquet_path": None,
+            "manifest_path": str(manifest_path),
+            "target_hf_dataset_id": target.get("hf_dataset_id"),
+            "target_combined_parquet_path": target.get("combined_parquet_path"),
+            "target_parquet_paths_by_state": target.get("parquet_paths_by_state"),
+        }
+
+        try:
+            blocks_path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+            with rows_path.open("w", encoding="utf-8") as handle:
+                for row in rows:
+                    handle.write(json.dumps(row, sort_keys=True) + "\n")
+        except Exception as exc:
+            summary["status"] = "error"
+            summary["error"] = str(exc)
+            with suppress(Exception):
+                manifest_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+            return summary
+
+        if self.corpus.key == "state_admin_rules":
+            parquet_error = self._write_recovered_rows_parquet(rows=rows, parquet_path=parquet_path)
+            if parquet_error is None and parquet_path.exists():
+                summary["statutes_parquet_path"] = str(parquet_path)
+            elif parquet_error:
+                summary["parquet_error"] = parquet_error
+        else:
+            summary["parquet_status"] = "skipped"
+            summary["parquet_skip_reason"] = "parquet row artifacts are currently emitted for state_admin_rules recovery"
+
+        manifest_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+        return summary
+
+    def _flatten_recovered_statute_rows(self, data: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        for block in data:
+            state_code = str(block.get("state_code") or block.get("state") or "").upper().strip()
+            statutes = block.get("statutes")
+            if not isinstance(statutes, list):
+                continue
+            for index, statute in enumerate(statutes):
+                if not isinstance(statute, dict):
+                    continue
+                row = dict(statute)
+                row.setdefault("state_code", state_code)
+                row.setdefault("corpus_key", self.corpus.key)
+                row.setdefault("recovered_by", "state_laws_agentic_daemon")
+                row.setdefault("recovered_at", datetime.now(timezone.utc).isoformat())
+                row.setdefault("source_block_index", index)
+                rows.append(self._json_safe_row(row))
+        return rows
+
+    @staticmethod
+    def _json_safe_row(row: Dict[str, Any]) -> Dict[str, Any]:
+        safe: Dict[str, Any] = {}
+        for key, value in row.items():
+            key_text = str(key)
+            try:
+                json.dumps(value)
+                safe[key_text] = value
+            except TypeError:
+                safe[key_text] = str(value)
+        return safe
+
+    def _write_recovered_rows_parquet(self, *, rows: Sequence[Dict[str, Any]], parquet_path: Path) -> Optional[str]:
+        if not rows:
+            return "no rows to write"
+        try:
+            import pyarrow as pa  # type: ignore
+            import pyarrow.parquet as pq  # type: ignore
+        except Exception as exc:
+            return f"pyarrow unavailable: {exc}"
+
+        try:
+            normalized_rows = [
+                {
+                    key: (json.dumps(value, sort_keys=True) if isinstance(value, (dict, list)) else value)
+                    for key, value in row.items()
+                }
+                for row in rows
+            ]
+            table = pa.Table.from_pylist(normalized_rows)
+            pq.write_table(table, parquet_path)
+        except Exception as exc:
+            return str(exc)
+        return None
+
+    def _recovered_row_hf_target_manifest(self, states: Sequence[str]) -> Dict[str, Any]:
+        try:
+            canonical = get_canonical_legal_corpus(self.corpus.key)
+        except Exception:
+            return {
+                "hf_dataset_id": None,
+                "combined_parquet_path": None,
+                "parquet_paths_by_state": {},
+            }
+
+        prefix = canonical.parquet_dir_name.strip("/")
+        parquet_paths_by_state = {
+            str(state).upper(): f"{prefix}/{canonical.state_parquet_filename(str(state))}" if prefix else canonical.state_parquet_filename(str(state))
+            for state in states
+            if str(state).strip()
+        }
+        return {
+            "hf_dataset_id": canonical.hf_dataset_id,
+            "combined_parquet_path": canonical.combined_parquet_path(),
+            "parquet_paths_by_state": parquet_paths_by_state,
         }
 
     @staticmethod

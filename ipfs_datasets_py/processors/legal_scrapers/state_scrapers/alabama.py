@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+import time
 from typing import List, Dict, Any
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -41,8 +42,8 @@ class AlabamaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes else 100
-        return await self._scrape_alison_graphql(code_name, limit)
+        limit = self._effective_scrape_limit(max_statutes, default=100)
+        return await self._scrape_alison_graphql(code_name, limit or 1000000)
 
     async def _graphql(self, query: str, variables: Dict[str, Any] | None = None, timeout_seconds: int = 15) -> Dict[str, Any]:
         timeout = max(1, int(timeout_seconds or 15))
@@ -108,8 +109,10 @@ class AlabamaScraper(BaseStateScraper):
         except ImportError:
             return []
 
+        self.logger.info("Alabama GraphQL: fetching scaffold")
         scaffold_data = await self._graphql("query codeOfAlabamaScaffold { scaffold: codeOfAlabamaScaffold }")
         parent_ids = self._parse_scaffold_section_parent_ids(str(scaffold_data.get("scaffold") or ""), max_statutes)
+        self.logger.info("Alabama GraphQL: discovered %d section parent ids", len(parent_ids))
         if not parent_ids:
             return []
 
@@ -130,7 +133,9 @@ class AlabamaScraper(BaseStateScraper):
         }
         """
         statutes: List[NormalizedStatute] = []
-        batch_size = 8
+        batch_size = 64 if self._full_corpus_enabled() else 8
+        heartbeat_seconds = max(15.0, float(self._env_int("STATE_SCRAPER_HEARTBEAT_SECONDS", default=60)))
+        last_heartbeat = time.monotonic()
         for offset in range(0, len(parent_ids), batch_size):
             data = await self._graphql(query, {"parentId": parent_ids[offset : offset + batch_size]})
             rows = ((data.get("codeItems") or {}).get("data") or [])
@@ -173,6 +178,17 @@ class AlabamaScraper(BaseStateScraper):
                     "parent_id": row.get("parentId"),
                 }
                 statutes.append(statute)
+            now = time.monotonic()
+            if now - last_heartbeat >= heartbeat_seconds:
+                self.logger.info(
+                    "Alabama GraphQL: offset=%d/%d rows_last_batch=%d statutes=%d",
+                    min(offset + batch_size, len(parent_ids)),
+                    len(parent_ids),
+                    len(rows),
+                    len(statutes),
+                )
+                last_heartbeat = now
+        self.logger.info("Alabama GraphQL: completed with %d statutes", len(statutes))
         return statutes
     
     async def _custom_scrape_alabama(

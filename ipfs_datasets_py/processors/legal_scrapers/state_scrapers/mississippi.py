@@ -51,11 +51,11 @@ class MississippiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes or 40))
-        archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit)
+        limit = self._effective_scrape_limit(max_statutes, default=40)
+        archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit or 1000000)
         if archival:
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
-            return archival[:limit]
+            return archival[:limit] if limit is not None else archival
 
         candidate_urls = [
             code_url,

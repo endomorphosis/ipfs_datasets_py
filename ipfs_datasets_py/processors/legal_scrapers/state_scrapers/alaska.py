@@ -135,13 +135,13 @@ class AlaskaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes else 240
+        limit = self._effective_scrape_limit(max_statutes, default=240)
         statutes: List[NormalizedStatute] = []
         seen_sections: set[str] = set()
         sec_start: Optional[str] = "1"
 
         for _ in range(80):
-            if not sec_start or len(statutes) >= limit:
+            if not sec_start or (limit is not None and len(statutes) >= limit):
                 break
             html, last_sec = await self._fetch_statute_chunk(sec_start)
             if not html:
@@ -152,14 +152,14 @@ class AlaskaScraper(BaseStateScraper):
                     continue
                 seen_sections.add(key)
                 statutes.append(statute)
-                if len(statutes) >= limit:
+                if limit is not None and len(statutes) >= limit:
                     break
             next_start = self._next_sec_start(last_sec)
             if not next_start or next_start == sec_start:
                 break
             sec_start = next_start
 
-        return statutes[:limit]
+        return statutes[:limit] if limit is not None else statutes
 
 
 # Register this scraper with the registry

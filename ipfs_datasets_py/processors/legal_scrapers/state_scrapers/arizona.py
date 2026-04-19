@@ -170,10 +170,10 @@ class ArizonaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes else 240
+        limit = self._effective_scrape_limit(max_statutes, default=240)
         statutes: List[NormalizedStatute] = []
         for section_url, section_number, section_title in await self._discover_section_links(code_url):
-            if len(statutes) >= limit:
+            if limit is not None and len(statutes) >= limit:
                 break
             statute = await self._build_statute_from_section_page(
                 code_name=code_name,
@@ -183,7 +183,7 @@ class ArizonaScraper(BaseStateScraper):
             )
             if statute is not None:
                 statutes.append(statute)
-        return statutes[:limit]
+        return statutes[:limit] if limit is not None else statutes
 
 
 # Register this scraper with the registry
