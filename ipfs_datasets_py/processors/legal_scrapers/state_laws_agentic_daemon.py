@@ -764,6 +764,18 @@ class StateLawsAgenticDaemon:
             tactic=tactic,
             document_gap_report=document_gap_report,
         )
+        document_artifact_blocks = self._state_admin_blocks_from_document_artifacts(document_artifacts)
+        if document_artifact_blocks:
+            scrape_result = dict(scrape_result)
+            scrape_result["data"] = self._merge_recovered_data_blocks(
+                list(scrape_result.get("data") or []),
+                document_artifact_blocks,
+            )
+            recovered_row_artifacts = self._write_recovered_row_artifacts(
+                cycle_index=cycle_index,
+                scrape_result=scrape_result,
+            )
+            diagnostics = self._build_diagnostics(scrape_result)
         diagnostics = self._merge_document_artifacts_into_diagnostics(
             diagnostics=diagnostics,
             document_artifacts=document_artifacts,
@@ -1496,6 +1508,152 @@ class StateLawsAgenticDaemon:
         updated_documents["artifact_recovery"] = artifact_summary
         diagnostics["documents"] = updated_documents
         return diagnostics
+
+    def _state_admin_blocks_from_document_artifacts(self, document_artifacts: Dict[str, Any]) -> List[Dict[str, Any]]:
+        if self.corpus.key != "state_admin_rules":
+            return []
+        if not isinstance(document_artifacts, dict) or str(document_artifacts.get("status") or "") != "completed":
+            return []
+
+        by_state: Dict[str, List[Dict[str, Any]]] = {}
+        counters: Dict[str, int] = {}
+        for entry in list(document_artifacts.get("entries") or []):
+            if not isinstance(entry, dict) or not bool(entry.get("success")):
+                continue
+            state_code = str(entry.get("state") or "").upper().strip()
+            url = str(entry.get("url") or "").strip()
+            if not state_code or not url:
+                continue
+            text = self._document_artifact_text(entry)
+            if len(text) < 200:
+                continue
+
+            counters[state_code] = int(counters.get(state_code, 0) or 0) + 1
+            section_number = f"A{counters[state_code]}"
+            title = str(entry.get("title") or "").strip() or self._title_from_text(text)
+            state_name = US_STATES.get(state_code, state_code)
+            method_used = str(entry.get("document_processor_method") or entry.get("method_used") or "").strip()
+            statute = {
+                "state_code": state_code,
+                "state_name": state_name,
+                "statute_id": f"{state_code}-DOCUMENT-ARTIFACT-{counters[state_code]:04d}",
+                "code_name": f"{state_name} Administrative Rules (Document Artifact Recovery)",
+                "section_number": section_number,
+                "section_name": title,
+                "short_title": title,
+                "full_text": text,
+                "summary": text[:500],
+                "legal_area": "administrative",
+                "source_url": url,
+                "official_cite": f"{state_code} Admin Rule {section_number}",
+                "structured_data": {
+                    "type": "regulation",
+                    "agentic_discovery": True,
+                    "document_artifact_recovery": True,
+                    "method_used": method_used or None,
+                    "content_type": entry.get("content_type"),
+                    "sha256": entry.get("sha256"),
+                },
+            }
+            by_state.setdefault(state_code, []).append(statute)
+
+        blocks: List[Dict[str, Any]] = []
+        for state_code, statutes in sorted(by_state.items()):
+            state_name = US_STATES.get(state_code, state_code)
+            blocks.append(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Administrative Rules",
+                    "source": "Document artifact recovery",
+                    "source_url": statutes[0].get("source_url") if statutes else None,
+                    "scraped_at": datetime.now(timezone.utc).isoformat(),
+                    "statutes": statutes,
+                    "rules_count": len(statutes),
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            )
+        return blocks
+
+    @staticmethod
+    def _document_artifact_text(entry: Dict[str, Any]) -> str:
+        for value in list(entry.get("saved_files") or []):
+            path = Path(str(value or ""))
+            if path.suffix.lower() != ".txt":
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace").strip()
+            except Exception:
+                continue
+            if text:
+                return text
+        return ""
+
+    @staticmethod
+    def _title_from_text(text: str) -> str:
+        for line in str(text or "").splitlines():
+            candidate = line.strip()
+            if candidate:
+                return candidate[:180]
+        return "Recovered Administrative Rule"
+
+    @staticmethod
+    def _merge_recovered_data_blocks(
+        existing_blocks: Sequence[Dict[str, Any]],
+        recovered_blocks: Sequence[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        merged: List[Dict[str, Any]] = []
+        index_by_state: Dict[str, int] = {}
+        for block in list(existing_blocks or []):
+            if not isinstance(block, dict):
+                continue
+            copied = dict(block)
+            statutes = copied.get("statutes")
+            copied["statutes"] = list(statutes) if isinstance(statutes, list) else []
+            state_code = str(copied.get("state_code") or copied.get("state") or "").upper().strip()
+            if state_code and state_code not in index_by_state:
+                index_by_state[state_code] = len(merged)
+            merged.append(copied)
+
+        for recovered in list(recovered_blocks or []):
+            if not isinstance(recovered, dict):
+                continue
+            state_code = str(recovered.get("state_code") or recovered.get("state") or "").upper().strip()
+            recovered_statutes = [
+                dict(item)
+                for item in list(recovered.get("statutes") or [])
+                if isinstance(item, dict)
+            ]
+            if not state_code or not recovered_statutes:
+                continue
+            if state_code not in index_by_state:
+                copied_recovered = dict(recovered)
+                copied_recovered["statutes"] = recovered_statutes
+                copied_recovered["rules_count"] = len(recovered_statutes)
+                index_by_state[state_code] = len(merged)
+                merged.append(copied_recovered)
+                continue
+
+            target = merged[index_by_state[state_code]]
+            target_statutes = [
+                item for item in list(target.get("statutes") or []) if isinstance(item, dict)
+            ]
+            seen_urls = {
+                str(item.get("source_url") or item.get("url") or "").strip()
+                for item in target_statutes
+                if str(item.get("source_url") or item.get("url") or "").strip()
+            }
+            for statute in recovered_statutes:
+                source_url = str(statute.get("source_url") or statute.get("url") or "").strip()
+                if source_url and source_url in seen_urls:
+                    continue
+                target_statutes.append(statute)
+                if source_url:
+                    seen_urls.add(source_url)
+            target["statutes"] = target_statutes
+            target["rules_count"] = len(target_statutes)
+        return merged
 
     def _write_cycle_checkpoint(self, *, cycle_index: int, payload: Dict[str, Any]) -> Optional[Path]:
         if not isinstance(payload, dict) or not payload:

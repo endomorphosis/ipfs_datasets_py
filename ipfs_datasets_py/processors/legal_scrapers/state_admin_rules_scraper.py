@@ -1092,6 +1092,32 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.nebraska.gov/",
         "https://rules.nebraska.gov/browse-rules",
     ],
+    "NC": [
+        "https://www.oah.nc.gov/rules-division/nc-administrative-code",
+        "https://reports.oah.state.nc.us/ncac.asp",
+        "https://reports.oah.state.nc.us/ncac/title%2001%20-%20administration/chapter%2001%20-%20departmental%20rules/chapter%2001%20rules.pdf",
+        "https://reports.oah.state.nc.us/ncac/title%2010a%20-%20health%20and%20human%20services/title%2010a%20rules.pdf",
+    ],
+    "ND": [
+        "https://ndlegis.gov/information/acdata/html/contents.html",
+        "https://ndlegis.gov/information/acdata/html/1.html",
+        "https://ndlegis.gov/information/acdata/html/4.html",
+        "https://ndlegis.gov/information/acdata/html/33.html",
+        "https://ndlegis.gov/information/acdata/html/75.html",
+    ],
+    "NJ": [
+        "https://www.nj.gov/oal/rules/accessp/",
+        "https://www.nj.gov/oal/rules/accessp/rules/",
+        "https://www.nj.gov/oal/rules/accessp/pdfs/",
+        "https://advance.lexis.com/container?config=014CJAA5YjkyN2JjOC03ZDU0LTQzOTItYWI1MC03MjQ2NDc4YTA2N2YKAFBvZENhdGFsb2eXv0tT-yz8icjoObuO",
+    ],
+    "NV": [
+        "https://www.leg.state.nv.us/NAC/",
+        "https://www.leg.state.nv.us/NAC/NAC-001.html",
+        "https://www.leg.state.nv.us/NAC/NAC-002.html",
+        "https://www.leg.state.nv.us/NAC/NAC-445A.html",
+        "https://www.leg.state.nv.us/Register/",
+    ],
     "MS": [
         "https://sos.ms.gov/regulation-enforcement/administrative-code",
         "https://www.sos.ms.gov/regulation-enforcement/administrative-code",
@@ -1149,6 +1175,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://secure.sos.state.or.us/oard/view.action?ruleNumber=411-050-0720",
         "https://secure.sos.state.or.us/oard/view.action?ruleNumber=437-001-0005",
     ],
+    "PA": [
+        "https://www.pacodeandbulletin.gov/",
+        "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/001/partIItoc.html",
+        "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/001/chapter1/chap1toc.html",
+        "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/025/chapter102/chap102toc.html",
+    ],
     "KS": [
         "https://www.sos.ks.gov/publications/kansas-administrative-regulations.html",
         "https://www.sos.ks.gov/publications/agency-regulation-resources.html",
@@ -1159,6 +1191,13 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ks.gov/publications/KAR/2022/2022_KAR_Volumes_Book_2.pdf",
         "https://www.sos.ks.gov/publications/KAR/2022/2022_KAR_Volumes_Book_3.pdf",
         "https://www.sos.ks.gov/publications/KAR/2022/2022_KAR_Volumes_Book_4.pdf",
+    ],
+    "KY": [
+        "https://apps.legislature.ky.gov/law/kar/",
+        "https://apps.legislature.ky.gov/law/kar/TITLE001.HTM",
+        "https://apps.legislature.ky.gov/law/kar/TITLE201.HTM",
+        "https://apps.legislature.ky.gov/law/kar/001/001/",
+        "https://apps.legislature.ky.gov/law/kar/201/001/",
     ],
     "MT": [
         "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74",
@@ -1191,6 +1230,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.sos.ri.gov/regulations/part/510-00-00-6",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-7",
         "https://rules.sos.ri.gov/regulations/part/510-00-00-20",
+    ],
+    "SC": [
+        "https://www.scstatehouse.gov/coderegs/statmast.php",
+        "https://www.scstatehouse.gov/coderegs/",
+        "https://www.scstatehouse.gov/coderegs/Chapter%201.pdf",
+        "https://www.scstatehouse.gov/coderegs/Chapter%2061.pdf",
     ],
     "SD": [
         "https://rules.sd.gov/",
@@ -1227,6 +1272,12 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://rules.utah.gov/publications/administrative-rules-register/",
         "https://rules.utah.gov/publications/code-updates/",
     ],
+    "VA": [
+        "https://law.lis.virginia.gov/admincode/",
+        "https://law.lis.virginia.gov/admincode/title1/",
+        "https://law.lis.virginia.gov/admincode/title12/",
+        "https://law.lis.virginia.gov/admincode/title12/agency5/chapter90/section10/",
+    ],
     "VT": [
         "https://secure.vermont.gov/SOS/rules/",
         "https://secure.vermont.gov/SOS/rules/index.php",
@@ -1240,6 +1291,24 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/",
         "https://sos.vermont.gov/secretary-of-state-services/apa-rules/notices-of-rulemaking/",
         "https://aoa.vermont.gov/ICAR",
+    ],
+    "WA": [
+        "https://app.leg.wa.gov/wac/",
+        "https://app.leg.wa.gov/WAC/default.aspx",
+        "https://app.leg.wa.gov/WAC/default.aspx?cite=1-06",
+        "https://app.leg.wa.gov/WAC/default.aspx?cite=296-17A",
+    ],
+    "WI": [
+        "https://docs.legis.wisconsin.gov/code/admin_code",
+        "https://docs.legis.wisconsin.gov/code/admin_code/adm/1",
+        "https://docs.legis.wisconsin.gov/code/admin_code/dhs/110",
+        "https://docs.legis.wisconsin.gov/code/register",
+    ],
+    "WV": [
+        "https://apps.sos.wv.gov/adlaw/csr/",
+        "https://apps.sos.wv.gov/adlaw/csr/rule.aspx?rule=1-1",
+        "https://apps.sos.wv.gov/adlaw/csr/rule.aspx?rule=64-64",
+        "https://apps.sos.wv.gov/adlaw/registers/",
     ],
     "TN": [
         "http://web.archive.org/web/20250819093146/https://publications.tnsosfiles.com/rules/",

@@ -189,7 +189,11 @@ def _iter_scrape_code_returns(tree: ast.AST) -> Iterable[ast.Return]:
 
 def _line_has_full_corpus_branch(line: str) -> bool:
     compact = line.replace(" ", "")
-    return "self._full_corpus_enabled()else" in compact or "ifnotself._full_corpus_enabled()" in compact
+    return (
+        "self._full_corpus_enabled()else" in compact
+        or "ifnotself._full_corpus_enabled()" in compact
+        or "iflimitisNoneelse" in compact
+    )
 
 
 def audit_file(*, state: str, path: Path, repo_root: Path) -> list[Finding]:

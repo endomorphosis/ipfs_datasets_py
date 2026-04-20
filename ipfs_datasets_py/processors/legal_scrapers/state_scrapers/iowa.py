@@ -4,6 +4,7 @@ This module contains the scraper for Iowa statutes from the official state legis
 """
 
 import json
+import os
 import re
 import urllib.parse
 import urllib.request
@@ -52,7 +53,13 @@ class IowaScraper(BaseStateScraper):
 
         live_stubs = await self._scrape_live_code_stubs(code_name, max_statutes=max(10, return_threshold))
 
-        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=max(10, return_threshold))
+        archival_limit = max(10, return_threshold)
+        if self._full_corpus_enabled() and max_statutes is None:
+            archival_limit = min(
+                archival_limit,
+                int(os.getenv("IOWA_ARCHIVAL_STUB_LIMIT", "5000") or "5000"),
+            )
+        archival_stubs = await self._scrape_archived_code_stubs(code_name, max_statutes=archival_limit)
 
         merged: List[NormalizedStatute] = []
         merged_keys = set()
@@ -67,6 +74,14 @@ class IowaScraper(BaseStateScraper):
 
         _merge(live_stubs)
         _merge(archival_stubs)
+        if self._full_corpus_enabled() and max_statutes is None:
+            accept_min = max(1, int(os.getenv("IOWA_FULL_CORPUS_ACCEPT_MIN", "500") or "500"))
+            if len(merged) >= accept_min:
+                self.logger.info(
+                    "Iowa full-corpus crawl accepting %s merged official/archive rows before generic fallback",
+                    len(merged),
+                )
+                return merged
         if len(merged) >= return_threshold:
             return merged
 
@@ -272,6 +287,11 @@ class IowaScraper(BaseStateScraper):
                     legal_area=self._identify_legal_area(label),
                     official_cite=f"Iowa Code {label}",
                     metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "iowa_wayback_code_stub",
+                        "discovery_method": "wayback_cdx",
+                        "skip_hydrate": True,
+                    },
                 )
             )
 

@@ -90,6 +90,10 @@ _STATUTE_URL_HINTS = (
 _NON_HTML_DOC_RE = re.compile(r"\.(?:pdf|rtf|docx?|xlsx?|pptx?)(?:$|[?#])", re.IGNORECASE)
 _PDF_HEADER_RE = re.compile(rb"^\s*%PDF-", re.IGNORECASE)
 _RTF_HEADER_RE = re.compile(rb"^\s*\{\\rtf", re.IGNORECASE)
+_HTML_DOC_HEADER_RE = re.compile(
+    rb"^\s*(?:<!doctype\s+html\b|<html\b|<head\b|<body\b|<!--\s*wayback)",
+    re.IGNORECASE,
+)
 _SCAFFOLD_SECTION_TEXT_RE = re.compile(r"^\s*section\s+section-\d+\s*:", re.IGNORECASE)
 _OBJECT_MOVED_HTML_RE = re.compile(
     r"<title>\s*document moved\s*</title>|<h1>\s*object moved\s*</h1>",
@@ -1383,9 +1387,20 @@ class BaseStateScraper(ABC):
             return None
 
         lowered_url = str(source_url or "").strip().lower()
-        pdf_candidate = lowered_url.endswith(".pdf") or ".pdf?" in lowered_url or bool(_PDF_HEADER_RE.search(raw_bytes[:16]))
-        rtf_candidate = lowered_url.endswith(".rtf") or ".rtf?" in lowered_url or bool(_RTF_HEADER_RE.search(raw_bytes[:32]))
+        byte_prefix = raw_bytes[:512]
+        is_html_payload = bool(_HTML_DOC_HEADER_RE.search(byte_prefix))
+        is_pdf_payload = bool(_PDF_HEADER_RE.search(byte_prefix))
+        is_rtf_payload = bool(_RTF_HEADER_RE.search(byte_prefix))
+        pdf_url_candidate = lowered_url.endswith(".pdf") or ".pdf?" in lowered_url
+        rtf_url_candidate = lowered_url.endswith(".rtf") or ".rtf?" in lowered_url
+        pdf_candidate = (pdf_url_candidate or is_pdf_payload) and is_pdf_payload and not is_html_payload
+        rtf_candidate = (rtf_url_candidate or is_rtf_payload) and is_rtf_payload and not is_html_payload
         if not (pdf_candidate or rtf_candidate):
+            if (pdf_url_candidate or rtf_url_candidate) and is_html_payload:
+                self.logger.debug(
+                    "Skipping document extraction for HTML payload served from document-looking URL: %s",
+                    source_url,
+                )
             return None
 
         if pdf_candidate:

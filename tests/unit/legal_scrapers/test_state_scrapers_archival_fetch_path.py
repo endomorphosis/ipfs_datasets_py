@@ -404,6 +404,24 @@ async def test_montana_jina_seed_sections_parse_mca_body(monkeypatch: pytest.Mon
 
 
 @pytest.mark.anyio
+async def test_document_extraction_skips_html_served_from_pdf_url(monkeypatch: pytest.MonkeyPatch):
+    async def _fail_pdf_processor(_raw: bytes) -> str:
+        raise AssertionError("HTML payload should not reach PDF/OCR extraction")
+
+    from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedWebScraper
+
+    monkeypatch.setattr(UnifiedWebScraper, "_extract_pdf_text", staticmethod(_fail_pdf_processor))
+
+    scraper = OklahomaScraper("OK", "Oklahoma")
+    result = await scraper._extract_text_from_document_bytes(
+        source_url="https://web.archive.org/web/20220101000000/https://example.test/code/1.pdf",
+        raw_bytes=b"<!DOCTYPE html><html><body>Wayback replay page, not a PDF</body></html>",
+    )
+
+    assert result is None
+
+
+@pytest.mark.anyio
 async def test_colorado_pdf_summary_fetch_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
         return b""

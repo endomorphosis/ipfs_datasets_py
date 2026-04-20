@@ -2947,6 +2947,53 @@ async def test_state_admin_rules_agentic_daemon_persists_document_artifacts(monk
     assert str(text_path) in manifest["entries"][0]["saved_files"]
 
 
+def test_state_admin_rules_document_artifacts_can_be_written_as_recovered_rows(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    text_path = tmp_path / "ID_01_380404.txt"
+    text_path.write_text(
+        "38.04.04 - Rules Governing Capitol Mall Parking. "
+        "000. Legal Authority. 001. Scope. Administrative code rule text. " * 6,
+        encoding="utf-8",
+    )
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["ID"],
+            output_dir=str(tmp_path / "daemon"),
+            max_cycles=1,
+        )
+    )
+    document_artifacts = {
+        "status": "completed",
+        "entries": [
+            {
+                "state": "ID",
+                "url": "https://adminrules.idaho.gov/rules/current/38/380404.pdf",
+                "success": True,
+                "title": "38.04.04 - Rules Governing Capitol Mall Parking",
+                "content_type": "application/pdf",
+                "sha256": "abc123",
+                "document_processor_method": "pdf_processor",
+                "saved_files": [str(text_path)],
+            }
+        ],
+    }
+
+    blocks = daemon._state_admin_blocks_from_document_artifacts(document_artifacts)
+    scrape_result = {"status": "success", "data": daemon._merge_recovered_data_blocks([], blocks), "metadata": {}}
+    artifacts = daemon._write_recovered_row_artifacts(cycle_index=1, scrape_result=scrape_result)
+
+    assert blocks[0]["state_code"] == "ID"
+    assert blocks[0]["rules_count"] == 1
+    assert blocks[0]["statutes"][0]["structured_data"]["document_artifact_recovery"] is True
+    assert artifacts["row_count"] == 1
+    rows_path = tmp_path / "daemon" / "recovered_rows" / "cycle_0001" / "state_admin_rules_statutes.jsonl"
+    recovered_row = json.loads(rows_path.read_text(encoding="utf-8").strip())
+    assert recovered_row["state_code"] == "ID"
+    assert recovered_row["source_url"] == "https://adminrules.idaho.gov/rules/current/38/380404.pdf"
+
+
 @pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_recovers_rtf_text_with_processor(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module

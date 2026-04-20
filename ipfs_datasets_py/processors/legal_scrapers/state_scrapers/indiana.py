@@ -7,7 +7,7 @@ Indiana General Assembly static-document chapter PDFs.
 import re
 import subprocess
 import os
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 from typing import Dict, List, Optional
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -72,9 +72,12 @@ class IndianaScraper(BaseStateScraper):
         archival = await self._scrape_archived_chapter_pdfs(code_name=code_name, max_statutes=max(10, return_threshold))
         justia_titles: List[NormalizedStatute] = []
         title_page_statutes: List[NormalizedStatute] = []
-        if self._env_flag("INDIANA_JUSTIA_ENABLE"):
+        full_corpus = self._full_corpus_enabled()
+        justia_enabled = full_corpus or self._env_flag("INDIANA_JUSTIA_ENABLE")
+        title_pages_enabled = full_corpus or self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE")
+        if justia_enabled:
             justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, return_threshold))
-        if self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE"):
+        if title_pages_enabled:
             title_page_statutes = await self._scrape_archived_title_pages(code_name=code_name, max_statutes=max(10, return_threshold))
 
         merged: List[NormalizedStatute] = []
@@ -92,12 +95,23 @@ class IndianaScraper(BaseStateScraper):
         _merge(justia_titles)
         _merge(title_page_statutes)
 
-        if merged:
+        min_full_corpus_records = int(os.getenv("INDIANA_FULL_CORPUS_MIN_RECORDS", "30") or "30")
+        if merged and (not full_corpus or len(merged) >= min_full_corpus_records):
             self.logger.info(f"Indiana archival fallback: Scraped {len(merged)} sections")
             return merged
 
-        if self._env_flag("INDIANA_GENERIC_FALLBACK"):
-            return await self._generic_scrape(code_name, code_url, "Ind. Code")
+        if full_corpus and merged:
+            self.logger.warning(
+                "Indiana archive/title recovery found only %s sections in full-corpus mode; trying generic recovery before accepting partial corpus",
+                len(merged),
+            )
+
+        if full_corpus or self._env_flag("INDIANA_GENERIC_FALLBACK"):
+            generic = await self._generic_scrape(code_name, code_url, "Ind. Code")
+            _merge(generic)
+            if merged:
+                self.logger.info(f"Indiana recovery fallback: Scraped {len(merged)} sections")
+                return merged
 
         self.logger.warning("Indiana official/archive direct crawl returned no statutes; skipping search/generic recovery fallback")
         return []
@@ -125,7 +139,7 @@ class IndianaScraper(BaseStateScraper):
 
         root_url = "https://web.archive.org/web/20241203192652/https://law.justia.com/codes/indiana/2010/"
         try:
-            payload = await self._request_bytes_direct(root_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=35)
+            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
         except Exception:
             return []
         if not payload:
@@ -150,17 +164,24 @@ class IndianaScraper(BaseStateScraper):
                 break
 
         statutes: List[NormalizedStatute] = []
+        crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
         for title_text, title_url in title_links:
-            try:
-                title_payload = await self._request_bytes_direct(title_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=35)
-            except Exception:
-                continue
-            if not title_payload:
-                continue
-            title_soup = BeautifulSoup(title_payload, "html.parser")
-            page_text = " ".join(title_soup.get_text(" ", strip=True).split())
-            if len(page_text) < 300:
-                continue
+            if self._full_corpus_enabled() and crawl_limit <= 0:
+                page_text = (
+                    f"{title_text}. Archived Indiana Code title index discovered from the Justia 2010 Indiana Code root. "
+                    "Deep article/chapter traversal is deferred for the targeted Indiana enrichment crawl."
+                )
+            else:
+                try:
+                    title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                except Exception:
+                    continue
+                if not title_payload:
+                    continue
+                title_soup = BeautifulSoup(title_payload, "html.parser")
+                page_text = " ".join(title_soup.get_text(" ", strip=True).split())
+                if len(page_text) < 300:
+                    continue
             match = self._JUSTIA_TITLE_RE.search(title_text)
             title_no = match.group(1) if match else title_text[:40]
             statutes.append(
@@ -176,38 +197,228 @@ class IndianaScraper(BaseStateScraper):
                     source_url=title_url,
                     official_cite=f"Ind. Code Title {title_no}",
                     metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "archived_justia_indiana_title_index",
+                        "discovery_method": "wayback_justia_root",
+                        "record_type": "archived_justia_title_index",
+                        "skip_hydrate": bool(self._full_corpus_enabled() and crawl_limit <= 0),
+                    },
                 )
             )
             if len(statutes) >= max_statutes:
                 break
 
+        if self._full_corpus_enabled() and crawl_limit > 0 and len(statutes) < max_statutes:
+            remaining = max(0, int(max_statutes) - len(statutes))
+            statutes.extend(
+                await self._crawl_archived_justia_link_graph(
+                    code_name=code_name,
+                    seed_urls=[url for _, url in title_links],
+                    max_statutes=remaining,
+                )
+            )
+
         return statutes
+
+    async def _crawl_archived_justia_link_graph(
+        self,
+        *,
+        code_name: str,
+        seed_urls: List[str],
+        max_statutes: int,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        out: List[NormalizedStatute] = []
+        seen_records = set()
+        seen_pages = set()
+        queue = list(seed_urls)
+        crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
+
+        while queue and len(out) < max_statutes and len(seen_pages) < crawl_limit:
+            page_url = queue.pop(0)
+            if page_url in seen_pages:
+                continue
+            seen_pages.add(page_url)
+            if len(seen_pages) == 1 or len(seen_pages) % 25 == 0:
+                self.logger.info(
+                    "Indiana Justia link graph crawl progress: pages=%s queued=%s records=%s cap=%s",
+                    len(seen_pages),
+                    len(queue),
+                    len(out),
+                    crawl_limit,
+                )
+            try:
+                payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+            except Exception:
+                payload = b""
+            if not payload:
+                continue
+
+            soup = BeautifulSoup(payload, "html.parser")
+            for link in soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                label = self._normalize_legal_text(link.get_text(" ", strip=True))
+                if not href or not label:
+                    continue
+
+                abs_url = href if href.startswith("http") else urljoin(page_url, href)
+                abs_url = self._canonicalize_statute_url(abs_url)
+                lower_url = abs_url.lower()
+                lower_label = label.lower()
+                if "accounts.justia.com" in lower_url or "/signin" in lower_url:
+                    continue
+                if "/codes/indiana/2010/" not in lower_url:
+                    continue
+
+                is_index = any(part in lower_url for part in ("/title", "/ar", "/ch")) and (
+                    lower_url.endswith("/")
+                    or lower_url.endswith("/index.html")
+                    or lower_url.endswith(".html")
+                )
+                if is_index and abs_url not in seen_pages and len(seen_pages) + len(queue) < crawl_limit:
+                    queue.append(abs_url)
+
+                looks_statutory = (
+                    self._is_probable_statute_link(label, abs_url, page_url)
+                    or "article" in lower_label
+                    or "chapter" in lower_label
+                    or re.search(r"\b(?:ic|sec\.|section)\s*\d", lower_label, re.IGNORECASE)
+                )
+                if not looks_statutory:
+                    continue
+
+                section_number = self._extract_section_number(label)
+                if not section_number:
+                    section_number = self._derive_section_number_from_url(abs_url)
+                if not section_number:
+                    section_number = f"Justia-{len(out) + 1}"
+
+                key = f"{section_number}|{abs_url}".lower()
+                if key in seen_records:
+                    continue
+                seen_records.add(key)
+                out.append(
+                    NormalizedStatute(
+                        state_code=self.state_code,
+                        state_name=self.state_name,
+                        statute_id=f"{code_name} § {section_number}",
+                        code_name=code_name,
+                        section_number=section_number,
+                        section_name=label[:200],
+                        full_text=f"Section {section_number}: {label}",
+                        legal_area=self._identify_legal_area(label),
+                        source_url=abs_url,
+                        official_cite=f"Ind. Code § {section_number}",
+                        metadata=StatuteMetadata(),
+                        structured_data={
+                            "source_kind": "archived_justia_indiana_code",
+                            "discovery_method": "wayback_justia_link_graph",
+                            "record_type": "archived_justia_link",
+                        },
+                    )
+                )
+                if len(out) >= max_statutes:
+                    break
+
+        return out
 
     async def _scrape_archived_title_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         discovery_limit = 5000 if self._full_corpus_enabled() else 420
         title_urls = await self._discover_archived_title_urls(limit=discovery_limit)
         out: List[NormalizedStatute] = []
         seen = set()
+        queued = set()
+        crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
 
         for title_url in title_urls:
             if len(out) >= max_statutes:
                 break
-            try:
-                scan_limit = max(220, int(max_statutes or 220))
-                statutes = await self._generic_scrape(code_name, title_url, "Ind. Code", max_sections=scan_limit)
-            except Exception:
-                statutes = []
-            for statute in statutes:
-                if self._is_low_quality_statute_record(statute):
+            queue = [title_url]
+            queued.add(title_url)
+            pages_seen = 0
+            while queue and len(out) < max_statutes and pages_seen < crawl_limit:
+                page_url = queue.pop(0)
+                pages_seen += 1
+                try:
+                    payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
+                except Exception:
+                    payload = b""
+                if not payload:
                     continue
-                if isinstance(statute.structured_data, dict):
-                    statute.structured_data["skip_hydrate"] = True
-                    statute.structured_data.setdefault("record_type", "archived_title_stub")
-                key = str(statute.statute_id or statute.source_url or "").strip().lower()
-                if not key or key in seen:
-                    continue
-                seen.add(key)
-                out.append(statute)
+
+                try:
+                    from bs4 import BeautifulSoup
+                except ImportError:
+                    return out
+
+                soup = BeautifulSoup(payload, "html.parser")
+                for link in soup.find_all("a", href=True):
+                    href = str(link.get("href") or "").strip()
+                    label = self._normalize_legal_text(link.get_text(" ", strip=True))
+                    if not href or not label:
+                        continue
+
+                    abs_url = href if href.startswith("http") else urljoin(page_url, href)
+                    abs_url = self._canonicalize_statute_url(abs_url)
+                    lower_url = abs_url.lower()
+                    lower_label = label.lower()
+                    if "accounts.justia.com" in lower_url or "/signin" in lower_url:
+                        continue
+                    if "/codes/indiana/2010/" not in lower_url:
+                        continue
+
+                    is_index = any(part in lower_url for part in ("/title", "/ar", "/ch")) and (
+                        lower_url.endswith("/")
+                        or lower_url.endswith("/index.html")
+                        or lower_url.endswith(".html")
+                    )
+                    if is_index and abs_url not in queued and len(queued) < crawl_limit:
+                        queued.add(abs_url)
+                        queue.append(abs_url)
+
+                    looks_statutory = (
+                        self._is_probable_statute_link(label, abs_url, page_url)
+                        or "article" in lower_label
+                        or "chapter" in lower_label
+                        or re.search(r"\b(?:ic|sec\.|section)\s*\d", lower_label, re.IGNORECASE)
+                    )
+                    if not looks_statutory:
+                        continue
+
+                    section_number = self._extract_section_number(label)
+                    if not section_number:
+                        section_number = self._derive_section_number_from_url(abs_url)
+                    if not section_number:
+                        section_number = f"Justia-{len(out) + 1}"
+
+                    key = f"{section_number}|{abs_url}".lower()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    out.append(
+                        NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=f"{code_name} § {section_number}",
+                            code_name=code_name,
+                            section_number=section_number,
+                            section_name=label[:200],
+                            full_text=f"Section {section_number}: {label}",
+                            legal_area=self._identify_legal_area(label),
+                            source_url=abs_url,
+                            official_cite=f"Ind. Code § {section_number}",
+                            metadata=StatuteMetadata(),
+                            structured_data={
+                                "source_kind": "archived_justia_indiana_code",
+                                "discovery_method": "wayback_justia_link_graph",
+                                "record_type": "archived_justia_link",
+                            },
+                        )
+                    )
                 if len(out) >= max_statutes:
                     break
 
@@ -370,7 +581,7 @@ class IndianaScraper(BaseStateScraper):
         for candidate in candidates:
             try:
                 payload = await self._request_bytes_direct(candidate, headers=headers, timeout=timeout)
-                if payload:
+                if payload and self._looks_like_pdf_bytes(payload):
                     return payload
             except Exception:
                 continue
@@ -422,8 +633,14 @@ class IndianaScraper(BaseStateScraper):
 
         return re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", url, count=1)
 
+    @staticmethod
+    def _looks_like_pdf_bytes(payload: bytes) -> bool:
+        return bool(re.match(rb"^\s*%PDF-", bytes(payload or b"")[:512], re.IGNORECASE))
+
     def _extract_pdf_text(self, pdf_bytes: bytes, max_chars: int) -> str:
         """Extract text using pdftotext if available in the runtime."""
+        if not self._looks_like_pdf_bytes(pdf_bytes):
+            return ""
         try:
             proc = subprocess.run(
                 ["pdftotext", "-layout", "-q", "-", "-"],
