@@ -3408,6 +3408,136 @@ def export_docket_dataset_single_parquet(
     }
 
 
+def export_packaged_docket_hf_records_parquet(
+    manifest_path: str | Path,
+    output_path: str | Path,
+) -> Dict[str, Any]:
+    """Export a packaged docket bundle as one Hugging Face-friendly record table.
+
+    The packaged docket bundle is internally relational: documents, graph nodes,
+    graph edges, proof certificates, formulas, search rows, and reports all have
+    distinct schemas.  This exporter preserves every packaged component as
+    section-tagged records in a single flat Parquet file so it can be uploaded to
+    the Hugging Face Hub and inspected with ordinary dataset/table tooling.
+    """
+
+    packager = DocketDatasetPackager()
+    bundle_dir, manifest = packager._resolve_manifest(manifest_path)
+    rows_by_piece = packager.load_package_components(bundle_dir, manifest=manifest)
+    dataset_id = str(manifest.get("dataset_id") or "")
+    docket_id = str(manifest.get("docket_id") or "")
+    case_name = str(manifest.get("case_name") or "")
+    court = str(manifest.get("court") or "")
+
+    def _pick_row_id(piece_id: str, payload: Mapping[str, Any], index: int) -> str:
+        for key in (
+            "document_id",
+            "attachment_id",
+            "filing_id",
+            "queue_id",
+            "id",
+            "entity_id",
+            "relationship_id",
+            "node_id",
+            "rule_id",
+            "trigger_id",
+            "work_item_id",
+            "plan_id",
+            "proof_id",
+            "certificate_id",
+            "formula_id",
+            "frame_id",
+        ):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return f"{piece_id}_{index}"
+
+    def _pick_parent_id(payload: Mapping[str, Any]) -> str:
+        for key in (
+            "document_id",
+            "source",
+            "target",
+            "source_id",
+            "trigger_id",
+            "work_item_id",
+            "proof_id",
+        ):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    def _pick_title(payload: Mapping[str, Any]) -> str:
+        for key in ("title", "label", "document_title", "theorem", "formula", "objective"):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    def _pick_text(payload: Mapping[str, Any]) -> str:
+        for key in ("text", "report_text", "report_markdown", "formula", "objective", "action"):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    def _pick_source_url(payload: Mapping[str, Any]) -> str:
+        for key in ("source_url", "path_or_url", "acquisition_url", "source_ref"):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    hf_rows: List[Dict[str, Any]] = []
+    section_counts: Dict[str, int] = {}
+    ordered_piece_ids = [
+        str(piece.get("piece_id") or "")
+        for piece in list(manifest.get("pieces") or [])
+        if str(piece.get("piece_id") or "")
+    ]
+    for piece_id in ordered_piece_ids:
+        rows = [dict(row) for row in list(rows_by_piece.get(piece_id) or []) if isinstance(row, Mapping)]
+        section_counts[piece_id] = len(rows)
+        for index, row in enumerate(rows, start=1):
+            metadata = row.get("metadata")
+            metadata_json = metadata if isinstance(metadata, str) else json.dumps(_jsonable(metadata or {}), sort_keys=True)
+            hf_rows.append(
+                {
+                    "dataset_id": dataset_id,
+                    "docket_id": docket_id,
+                    "case_name": case_name,
+                    "court": court,
+                    "record_type": piece_id,
+                    "section": piece_id,
+                    "row_index": index,
+                    "record_id": _pick_row_id(piece_id, row, index),
+                    "row_id": _pick_row_id(piece_id, row, index),
+                    "parent_id": _pick_parent_id(row),
+                    "title": _pick_title(row),
+                    "document_number": str(row.get("document_number") or ""),
+                    "source_url": _pick_source_url(row),
+                    "text": _pick_text(row),
+                    "metadata_json": metadata_json,
+                    "payload_json": json.dumps(_jsonable(row), sort_keys=True),
+                }
+            )
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_meta = _write_rows_to_parquet(hf_rows, output_path)
+    return {
+        "parquet_path": str(output_path),
+        "row_count": int(write_meta["row_count"]),
+        "schema": list(write_meta["schema"]),
+        "sha256": _digest_file(output_path),
+        "section_counts": section_counts,
+        "source_manifest_path": str(manifest_path),
+        "source_bundle_dir": str(bundle_dir),
+        "format": "docket_hf_records_v1",
+    }
+
+
 def load_packaged_docket_dataset(manifest_path: str | Path) -> Dict[str, Any]:
     """Load a packaged docket dataset from its bundle manifest."""
 
@@ -7077,6 +7207,7 @@ __all__ = [
     "export_docket_dataset_single_pdf",
     "prepare_packaged_docket_follow_up_job",
     "export_docket_dataset_single_parquet",
+    "export_packaged_docket_hf_records_parquet",
     "package_docket_dataset",
     "render_packaged_docket_proof_revalidation_report",
     "render_packaged_docket_inspection_report",

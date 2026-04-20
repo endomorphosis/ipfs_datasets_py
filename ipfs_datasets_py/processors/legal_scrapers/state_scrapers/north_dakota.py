@@ -73,9 +73,10 @@ class NorthDakotaScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(60)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(code_name, max_statutes=return_threshold)
-        if direct_pdf_statutes:
-            return direct_pdf_statutes
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(code_name, max_statutes=return_threshold)
+            if direct_pdf_statutes:
+                return direct_pdf_statutes
 
         for candidate in candidate_urls:
             if candidate in seen:

@@ -56,28 +56,40 @@ class NewMexicoScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(120)
-        direct = await self._scrape_direct_document_pdfs(code_name=code_name, max_statutes=limit)
-        if direct:
-            return direct[:limit]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_document_pdfs(code_name=code_name, max_statutes=limit)
+            if direct:
+                return direct[:limit]
 
+        fallback_candidates: List[NormalizedStatute] = []
         nav_sections = await self._scrape_nmonesource_nav_sections(code_name=code_name, max_statutes=limit)
         if nav_sections:
             self.logger.info("New Mexico nav-date fallback: Scraped %s section(s)", len(nav_sections))
-            return nav_sections
+            fallback_candidates.extend(nav_sections)
+            if not self._full_corpus_enabled() or max_statutes is not None:
+                return nav_sections
 
         index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
-        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=max(1, min(8, limit)))
+        archival_limit = limit if self._full_corpus_enabled() else max(1, min(8, limit))
+        archival = await self._scrape_archived_document_pdfs(code_name=code_name, max_statutes=archival_limit)
         if archival:
             if index_fallback:
                 archival.extend(index_fallback)
             self.logger.info(f"New Mexico archival fallback: Scraped {len(archival)} sections")
-            return archival
+            fallback_candidates.extend(archival)
+            if not self._full_corpus_enabled() or max_statutes is not None:
+                return archival
 
         if index_fallback:
             self.logger.info("New Mexico index fallback: Scraped %s section(s)", len(index_fallback))
-            return index_fallback
+            fallback_candidates.extend(index_fallback)
+            if not self._full_corpus_enabled() or max_statutes is not None:
+                return index_fallback
 
-        return await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.", max_sections=max(10, limit))
+        generic = await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.", max_sections=max(10, limit))
+        if generic:
+            return generic
+        return fallback_candidates[:limit]
 
     async def _scrape_direct_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         seeds = [
@@ -151,7 +163,8 @@ class NewMexicoScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen = set()
 
-        for page_url in page_urls[:8]:
+        pages_to_scan = page_urls if self._full_corpus_enabled() else page_urls[:8]
+        for page_url in pages_to_scan:
             if len(statutes) >= max_statutes:
                 break
             page_bytes = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
@@ -243,13 +256,16 @@ class NewMexicoScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen = set()
 
-        archive_candidates = await self._discover_archived_document_urls(limit=8)
+        archive_candidates = await self._discover_archived_document_urls(
+            limit=2000 if self._full_corpus_enabled() else 8
+        )
         candidate_urls = list(self._ARCHIVE_DOCUMENT_PDFS)
         for url in archive_candidates:
             if url not in candidate_urls:
                 candidate_urls.append(url)
 
-        for pdf_url in candidate_urls[:12]:
+        pdf_urls_to_scan = candidate_urls if self._full_corpus_enabled() else candidate_urls[:12]
+        for pdf_url in pdf_urls_to_scan:
             if len(statutes) >= max_statutes:
                 break
 

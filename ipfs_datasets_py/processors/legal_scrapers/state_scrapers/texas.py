@@ -132,7 +132,11 @@ class TexasScraper(BaseStateScraper):
             section_links = soup.find_all('a', href=re.compile(r'.*\.htm', re.IGNORECASE))
             if not section_links:
                 # Try finding any links
-                section_links = soup.find_all('a', href=True, limit=100)
+                section_links = (
+                    soup.find_all('a', href=True)
+                    if limit is None
+                    else soup.find_all('a', href=True, limit=100)
+                )
 
             page_full_text = self._extract_text_from_html(page_html)
             seen_section_numbers = set()

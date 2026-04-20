@@ -90,7 +90,7 @@ class HawaiiScraper(BaseStateScraper):
         if len(merged) >= return_threshold:
             return merged[:return_threshold]
 
-        if not self._env_enabled("HAWAII_WALK_WAYBACK_FULL", default=False):
+        if not self._env_enabled("HAWAII_WALK_WAYBACK_FULL", default=self._full_corpus_enabled()):
             if merged:
                 self.logger.warning(
                     "Hawaii full Wayback traversal disabled for bulk run; returning %s seeded/archival rows",

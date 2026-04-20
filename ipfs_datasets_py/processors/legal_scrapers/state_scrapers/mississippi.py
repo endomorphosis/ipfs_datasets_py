@@ -53,12 +53,13 @@ class MississippiScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=40)
-        recovery = await self._scrape_jina_justia_seed_sections(code_name=code_name, max_statutes=limit or 1)
-        if recovery:
-            return recovery[:limit] if limit is not None else recovery
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            recovery = await self._scrape_jina_justia_seed_sections(code_name=code_name, max_statutes=limit or 1)
+            if recovery:
+                return recovery[:limit] if limit is not None else recovery
 
         archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit or 1000000)
-        if archival:
+        if archival and (not self._full_corpus_enabled() or max_statutes is not None):
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
             return archival[:limit] if limit is not None else archival
 
@@ -95,6 +96,9 @@ class MississippiScraper(BaseStateScraper):
             if statutes:
                 return statutes[:limit]
 
+        if archival:
+            self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
+            return archival[:limit] if limit is not None else archival
         return []
 
     async def _scrape_jina_justia_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:

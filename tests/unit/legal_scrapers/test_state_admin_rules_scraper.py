@@ -54,6 +54,49 @@ def test_rejects_rhode_island_statute_index_as_admin_rule() -> None:
     assert _is_substantive_admin_statute(statute, min_chars=160) is False
 
 
+def test_rejects_state_statutes_leaking_into_admin_rules_filter() -> None:
+    statute = {
+        "code_name": "Alaska Statutes",
+        "section_name": "Airport zoning regulations.",
+        "official_cite": "Alaska Stat. § 02.25.010",
+        "source_url": "https://www.akleg.gov/basis/statutes.asp#02.25.010",
+        "full_text": "Airport zoning regulations. " * 30,
+    }
+
+    assert _is_admin_rule_statute(statute) is False
+
+    filtered, count, zero_states = scraper_module._filter_admin_state_blocks(
+        [
+            {
+                "state_code": "AK",
+                "state_name": "Alaska",
+                "statutes": [statute],
+                "statutes_count": 1,
+            }
+        ],
+        max_rules=None,
+        min_full_text_chars=160,
+        require_substantive_text=True,
+    )
+
+    assert count == 0
+    assert zero_states == ["AK"]
+    assert filtered[0]["rules_count"] == 0
+    assert filtered[0]["statutes"] == []
+
+
+def test_allows_alaska_administrative_code_rules() -> None:
+    statute = {
+        "code_name": "Alaska Administrative Code",
+        "section_name": "1 AAC 05.010. Purpose.",
+        "official_cite": "1 AAC 05.010",
+        "source_url": "https://www.akleg.gov/basis/aac.asp?media=print&secStart=1.05.010&secEnd=1.05.010",
+        "full_text": "Alaska Administrative Code 1 AAC 05.010 Purpose. " * 20,
+    }
+
+    assert _is_admin_rule_statute(statute) is True
+
+
 def test_normalize_admin_rule_payloads_adds_trimmed_generic_aliases() -> None:
     scraped_rules = [
         {
@@ -405,6 +448,28 @@ def test_curated_seeds_include_minnesota_and_missouri_admin_rule_sources() -> No
     assert "MN" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
     assert "MO" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
     assert "NE" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
+
+
+def test_curated_seeds_include_delaware_and_dc_admin_rule_sources() -> None:
+    de_urls = scraper_module._extract_seed_urls_for_state("DE", "Delaware")
+    dc_urls = scraper_module._extract_seed_urls_for_state("DC", "District of Columbia")
+    de_allowed_hosts = _allowed_discovery_hosts_for_state("DE", "Delaware")
+    dc_allowed_hosts = _allowed_discovery_hosts_for_state("DC", "District of Columbia")
+
+    assert "https://regulations.delaware.gov/AdminCode" in de_urls
+    assert "https://www.legis.delaware.gov/Offices/DivisionOfResearch/RegistrarOfRegulations" in de_urls
+    assert "regulations.delaware.gov" in de_allowed_hosts
+    assert "www.legis.delaware.gov" in de_allowed_hosts
+
+    assert "https://dcregs.dc.gov/" in dc_urls
+    assert "https://www.dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=1-1" in dc_urls
+    assert "https://legislature.dc.gov/code-of-regulations" in dc_urls
+    assert "dcregs.dc.gov" in dc_allowed_hosts
+    assert "www.dcregs.dc.gov" in dc_allowed_hosts
+    assert "legislature.dc.gov" in dc_allowed_hosts
+
+    assert "DE" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
+    assert "DC" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
 
 
 def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
@@ -12454,6 +12519,116 @@ async def test_scrape_state_admin_rules_direct_agentic_large_timeout_keeps_full_
 
     assert result["metadata"]["base_scrape_skipped_states"] == ["AZ"]
     assert result["metadata"]["agentic_per_state_budget_seconds"] == 86400.0
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_caps_fast_curated_direct_agentic_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def _fake_scrape_state_laws(**kwargs):
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        assert kwargs["states"] == ["DE"]
+        assert kwargs["per_state_budget_seconds"] == 120.0
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "DE",
+                    "state_name": "Delaware",
+                    "title": "Delaware Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://regulations.delaware.gov/AdminCode",
+                    "scraped_at": "2026-04-20T00:00:00",
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            ],
+            "kg_rows": [],
+            "report": {"DE": {"rules_count": 0}},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["DE"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        per_state_timeout_seconds=86400.0,
+        require_substantive_rule_text=True,
+    )
+
+    assert result["metadata"]["base_scrape_skipped_states"] == ["DE"]
+    assert result["metadata"]["agentic_per_state_budget_seconds"] == 120.0
+
+
+@pytest.mark.anyio
+async def test_scrape_state_admin_rules_explicit_dc_does_not_expand_to_all_states(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scrape_calls = []
+
+    async def _fake_scrape_state_laws(**kwargs):
+        scrape_calls.append(dict(kwargs))
+        return {
+            "status": "success",
+            "data": [],
+            "metadata": {"states_scraped": kwargs.get("states") or []},
+        }
+
+    async def _fake_agentic_discover_admin_state_blocks(**kwargs):
+        assert kwargs["states"] == ["DC"]
+        return {
+            "status": "success",
+            "state_blocks": [
+                {
+                    "state_code": "DC",
+                    "state_name": "District of Columbia",
+                    "title": "District of Columbia Administrative Rules",
+                    "source": "Agentic web-archive discovery",
+                    "source_url": "https://dcregs.dc.gov/",
+                    "scraped_at": "2026-04-20T00:00:00",
+                    "statutes": [],
+                    "rules_count": 0,
+                    "schema_version": "1.0",
+                    "normalized": True,
+                }
+            ],
+            "kg_rows": [],
+            "report": {"DC": {"rules_count": 0}},
+        }
+
+    monkeypatch.setattr(scraper_module, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(scraper_module, "_agentic_discover_admin_state_blocks", _fake_agentic_discover_admin_state_blocks)
+    monkeypatch.setattr(scraper_module, "_collect_admin_source_diagnostics", lambda states: {})
+
+    result = await scrape_state_admin_rules(
+        states=["DC"],
+        output_format="json",
+        include_metadata=True,
+        write_jsonld=False,
+        retry_zero_rule_states=True,
+        agentic_fallback_enabled=True,
+        per_state_timeout_seconds=240.0,
+        require_substantive_rule_text=True,
+    )
+
+    assert scrape_calls == []
+    assert result["metadata"]["states_count"] == 1
+    assert result["metadata"]["base_scrape_skipped_states"] == ["DC"]
+    assert result["metadata"]["agentic_attempted_states"] == ["DC"]
 
 
 @pytest.mark.anyio

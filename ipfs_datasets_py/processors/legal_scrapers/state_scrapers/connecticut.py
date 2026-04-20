@@ -47,9 +47,10 @@ class ConnecticutScraper(BaseStateScraper):
         """
         limit = self._effective_scrape_limit(max_statutes, default=30)
         return_threshold = limit if limit is not None else 1000000
-        direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
-        if direct_sections:
-            return direct_sections
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
+            if direct_sections:
+                return direct_sections
 
         live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
 
@@ -73,7 +74,7 @@ class ConnecticutScraper(BaseStateScraper):
                 code_name,
                 candidate,
                 "Conn. Gen. Stat.",
-                max_sections=return_threshold if limit is not None else 260,
+                max_sections=return_threshold,
             )
             if len(statutes) > len(best):
                 best = statutes

@@ -52,16 +52,17 @@ class LouisianaScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(30)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        live = await self._scrape_live_law_pages(code_name=code_name, max_statutes=return_threshold)
-        if live:
-            return live
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            live = await self._scrape_live_law_pages(code_name=code_name, max_statutes=return_threshold)
+            if live:
+                return live
 
         archival = await self._scrape_archived_law_pages(code_name=code_name, max_statutes=max(10, return_threshold))
-        if archival:
+        if archival and (not self._full_corpus_enabled() or max_statutes is not None):
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
             return archival
 
-        return await self._playwright_scrape(
+        playwright = await self._playwright_scrape(
             code_name,
             code_url,
             "La. Rev. Stat.",
@@ -69,6 +70,12 @@ class LouisianaScraper(BaseStateScraper):
             timeout=45000,
             max_sections=max(10, return_threshold),
         )
+        if playwright:
+            return playwright
+        if archival:
+            self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
+            return archival
+        return []
 
     async def _scrape_live_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         statutes: List[NormalizedStatute] = []
@@ -108,7 +115,9 @@ class LouisianaScraper(BaseStateScraper):
         seen_sections = set()
 
         candidate_urls = list(self._ARCHIVE_LAW_URLS)
-        discovered = await self._discover_archived_law_urls(limit=160)
+        discovered = await self._discover_archived_law_urls(
+            limit=2000 if self._full_corpus_enabled() else 160
+        )
         for url in discovered:
             if url not in candidate_urls:
                 candidate_urls.append(url)

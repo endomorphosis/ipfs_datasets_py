@@ -130,7 +130,7 @@ class VermontScraper(BaseStateScraper):
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
-            href = urljoin(index_url, str(anchor.get("href") or "").strip())
+            href = urljoin(f"{self.get_base_url()}/", str(anchor.get("href") or "").strip())
             if not re.search(r"/statutes/title/[0-9A-Za-z]+/?$", href):
                 continue
             normalized = href.rstrip("/")
@@ -153,7 +153,7 @@ class VermontScraper(BaseStateScraper):
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
-            href = urljoin(title_url, str(anchor.get("href") or "").strip())
+            href = urljoin(f"{self.get_base_url()}/", str(anchor.get("href") or "").strip())
             if not re.search(r"/statutes/chapter/[0-9A-Za-z]+/[0-9A-Za-z]+/?$", href):
                 continue
             normalized = href.rstrip("/")
@@ -176,7 +176,7 @@ class VermontScraper(BaseStateScraper):
         out: List[Tuple[str, str]] = []
         seen: set[str] = set()
         for anchor in soup.find_all("a", href=True):
-            href = urljoin(chapter_url, str(anchor.get("href") or "").strip())
+            href = urljoin(f"{self.get_base_url()}/", str(anchor.get("href") or "").strip())
             if not re.search(r"/statutes/section/[0-9A-Za-z]+/[0-9A-Za-z]+/[0-9A-Za-z]+/?$", href):
                 continue
             normalized = href.rstrip("/")

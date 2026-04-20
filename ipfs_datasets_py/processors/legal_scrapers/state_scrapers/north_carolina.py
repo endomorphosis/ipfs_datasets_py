@@ -66,9 +66,10 @@ class NorthCarolinaScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(30)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
-        if direct:
-            return direct[:return_threshold]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
         for candidate in candidate_urls:
             if candidate in seen:
                 continue

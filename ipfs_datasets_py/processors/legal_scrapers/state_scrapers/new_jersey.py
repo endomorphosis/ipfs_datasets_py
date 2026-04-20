@@ -53,9 +53,10 @@ class NewJerseyScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(20)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        direct = await self._scrape_direct_public_law_pdfs(code_name, max_statutes=return_threshold)
-        if direct:
-            return direct[:return_threshold]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_public_law_pdfs(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
         statutes = await self._scrape_via_xhitlist(code_name, max_sections=max(10, return_threshold))
         if len(statutes) >= return_threshold:
             return statutes

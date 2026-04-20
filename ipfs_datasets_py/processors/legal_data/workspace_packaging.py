@@ -617,3 +617,121 @@ def package_workspace_dataset(
         package_name=package_name,
         include_car=include_car,
     )
+
+
+def export_packaged_workspace_hf_records_parquet(
+    manifest_path: str | Path,
+    output_path: str | Path,
+) -> Dict[str, Any]:
+    """Export a packaged workspace bundle as one flat, portable record table.
+
+    Workspace packages are internally relational: documents, collections,
+    graph rows, search rows, vectors, and ZKP certificates each have distinct
+    schemas. This exporter preserves every packaged component as section-tagged
+    rows in a single Parquet file that can be queried lazily or shared as one
+    Hugging Face-friendly dataset artifact.
+    """
+
+    packager = WorkspaceDatasetPackager()
+    bundle_dir, manifest = packager._resolve_manifest(manifest_path)
+    rows_by_piece = packager.load_package_components(bundle_dir, manifest=manifest)
+    dataset_id = str(manifest.get("dataset_id") or "")
+    workspace_id = str(manifest.get("workspace_id") or "")
+    workspace_name = str(manifest.get("workspace_name") or "")
+    source_type = str(manifest.get("source_type") or "workspace")
+
+    def _pick_row_id(piece_id: str, payload: Mapping[str, Any], index: int) -> str:
+        for key in (
+            "document_id",
+            "id",
+            "entity_id",
+            "relationship_id",
+            "certificate_id",
+        ):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return f"{piece_id}_{index}"
+
+    def _pick_parent_id(payload: Mapping[str, Any]) -> str:
+        for key in (
+            "parent_document_id",
+            "document_id",
+            "source",
+            "target",
+            "source_id",
+            "collection_id",
+        ):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    def _pick_title(payload: Mapping[str, Any]) -> str:
+        for key in ("title", "label", "workspace_name", "theorem"):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    def _pick_text(payload: Mapping[str, Any]) -> str:
+        for key in ("text", "content", "body", "description", "theorem"):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    def _pick_source_url(payload: Mapping[str, Any]) -> str:
+        for key in ("source_url", "path_or_url", "source_path", "source_ref"):
+            value = payload.get(key)
+            if value not in (None, ""):
+                return str(value)
+        return ""
+
+    hf_rows: List[Dict[str, Any]] = []
+    section_counts: Dict[str, int] = {}
+    ordered_piece_ids = [
+        str(piece.get("piece_id") or "")
+        for piece in list(manifest.get("pieces") or [])
+        if str(piece.get("piece_id") or "")
+    ]
+    for piece_id in ordered_piece_ids:
+        rows = [dict(row) for row in list(rows_by_piece.get(piece_id) or []) if isinstance(row, Mapping)]
+        section_counts[piece_id] = len(rows)
+        for index, row in enumerate(rows, start=1):
+            metadata = row.get("metadata")
+            metadata_json = metadata if isinstance(metadata, str) else json.dumps(_jsonable(metadata or {}), sort_keys=True)
+            hf_rows.append(
+                {
+                    "dataset_id": dataset_id,
+                    "workspace_id": workspace_id,
+                    "workspace_name": workspace_name,
+                    "source_type": source_type,
+                    "record_type": piece_id,
+                    "section": piece_id,
+                    "row_index": index,
+                    "record_id": _pick_row_id(piece_id, row, index),
+                    "row_id": _pick_row_id(piece_id, row, index),
+                    "parent_id": _pick_parent_id(row),
+                    "title": _pick_title(row),
+                    "document_number": str(row.get("document_number") or ""),
+                    "source_url": _pick_source_url(row),
+                    "text": _pick_text(row),
+                    "metadata_json": metadata_json,
+                    "payload_json": json.dumps(_jsonable(row), sort_keys=True),
+                }
+            )
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_meta = _write_rows_to_parquet(hf_rows, output_path)
+    return {
+        "parquet_path": str(output_path),
+        "row_count": int(write_meta["row_count"]),
+        "schema": list(write_meta["schema"]),
+        "sha256": _digest_file(output_path),
+        "section_counts": section_counts,
+        "source_manifest_path": str(manifest_path),
+        "source_bundle_dir": str(bundle_dir),
+        "format": "workspace_hf_records_v1",
+    }

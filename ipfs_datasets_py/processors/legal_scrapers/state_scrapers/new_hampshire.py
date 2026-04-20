@@ -74,9 +74,10 @@ class NewHampshireScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(40)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        direct = await self._scrape_direct_archived_seed_sections(code_name, max_statutes=return_threshold)
-        if direct:
-            return direct[:return_threshold]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_archived_seed_sections(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
         # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
         for archived in await self._discover_archived_rsa_urls(limit=max(10, return_threshold)):
             if archived not in candidate_urls:
@@ -357,10 +358,11 @@ class NewHampshireScraper(BaseStateScraper):
             async with sem:
                 return await _fetch_chapter_sections(chapter_id, chapter_name, chapter_url)
 
+        chapters_to_fetch = chapter_urls if self._full_corpus_enabled() else chapter_urls[:8]
         for section_batch in await asyncio.gather(
             *[
                 _bounded_fetch(chapter_id, chapter_name, chapter_url)
-                for chapter_id, chapter_name, chapter_url in chapter_urls[:8]
+                for chapter_id, chapter_name, chapter_url in chapters_to_fetch
             ],
             return_exceptions=True,
         ):

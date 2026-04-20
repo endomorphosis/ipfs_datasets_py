@@ -493,7 +493,12 @@ class OregonScraper(BaseStateScraper):
         candidate_urls = _dedupe_keep_order(candidate_urls)
 
         for candidate in candidate_urls:
-            parsed = await self._generic_scrape(code_name, candidate, "ORCP", max_sections=700)
+            parsed = await self._generic_scrape(
+                code_name,
+                candidate,
+                "ORCP",
+                max_sections=(self._effective_scrape_limit(None, default=700) or 1000000),
+            )
             statutes.extend(parsed)
 
         if not statutes:
@@ -503,7 +508,7 @@ class OregonScraper(BaseStateScraper):
                 "ORCP",
                 wait_for_selector="a[href*='ORCP'], a[href*='orcp'], a[href*='.pdf']",
                 timeout=50000,
-                max_sections=700,
+                max_sections=(self._effective_scrape_limit(None, default=700) or 1000000),
             )
 
         return self._finalize_rule_statutes(
@@ -549,7 +554,12 @@ class OregonScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
 
         for row in discovered:
-            parsed = await self._generic_scrape(code_name, row["url"], "ORCrP", max_sections=500)
+            parsed = await self._generic_scrape(
+                code_name,
+                row["url"],
+                "ORCrP",
+                max_sections=(self._effective_scrape_limit(None, default=500) or 1000000),
+            )
             statutes.extend(parsed)
 
         if not statutes:
@@ -633,7 +643,7 @@ class OregonScraper(BaseStateScraper):
                 county_code_name,
                 county_url,
                 "OR Local Rule",
-                max_sections=240,
+                max_sections=(self._effective_scrape_limit(None, default=240) or 1000000),
             )
             page_bytes = await self._fetch_page_content_with_archival_fallback(county_url, timeout_seconds=90)
             if page_bytes:
@@ -665,7 +675,7 @@ class OregonScraper(BaseStateScraper):
             "OR Local Rule",
             wait_for_selector="a[href*='/courts/'][href*='rules']",
             timeout=50000,
-            max_sections=500,
+            max_sections=(self._effective_scrape_limit(None, default=500) or 1000000),
         )
         return self._finalize_rule_statutes(
             fallback,

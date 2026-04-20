@@ -48,6 +48,7 @@ from ipfs_datasets_py.processors.legal_data import (
     DocketDatasetObject,
     DocketDatasetPackager,
     enrich_packaged_docket_with_tactician,
+    export_packaged_docket_hf_records_parquet,
     fetch_courtlistener_docket,
     get_courtlistener_recap_fetch_request,
     ingest_docket_dataset,
@@ -1017,6 +1018,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fields", default=None, help="Comma-separated field subset for the active packaged read mode.")
     parser.add_argument("--export-packaged-report", default=None, help="For packaged inputs, write a provenance/inspection report to this path.")
     parser.add_argument("--export-operator-dashboard-report", default=None, help="For packaged inputs, write the archived operator dashboard report to this path.")
+    parser.add_argument("--export-hf-records-parquet", default=None, help="Write a single Hugging Face-friendly row-oriented Parquet export. For packaged inputs, this flattens every bundle component into one record table.")
     parser.add_argument("--report-format", choices=["json", "markdown", "text", "parsed", "row"], default="markdown", help="Format used with packaged report load/export.")
     parser.add_argument("--json", action="store_true", help="Print a JSON summary instead of text.")
     return parser
@@ -1059,6 +1061,7 @@ def main(args: list[str] | None = None) -> int:
         and not packaged_modes
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
+        and not parsed.export_hf_records_parquet
     )
     citation_recovery_only = bool(
         parsed.recover_citation_sources
@@ -1068,6 +1071,7 @@ def main(args: list[str] | None = None) -> int:
         and not packaged_modes
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
+        and not parsed.export_hf_records_parquet
     )
     recap_fetch_status_only = bool(
         parsed.recap_fetch_request_id
@@ -1077,6 +1081,7 @@ def main(args: list[str] | None = None) -> int:
         and not packaged_modes
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
+        and not parsed.export_hf_records_parquet
     )
     search_only = bool(
         parsed.search_backend
@@ -1086,6 +1091,7 @@ def main(args: list[str] | None = None) -> int:
         and not packaged_modes
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
+        and not parsed.export_hf_records_parquet
     )
     packaged_manifest_audit_or_recovery = bool(
         parsed.input_type == "packaged"
@@ -1097,9 +1103,25 @@ def main(args: list[str] | None = None) -> int:
         and not packaged_modes
         and not parsed.export_packaged_report
         and not parsed.export_operator_dashboard_report
+        and not parsed.export_hf_records_parquet
         and not parsed.search_backend
     )
-    if not parsed.output and not packaged_read_only and not citation_audit_only and not citation_recovery_only and not recap_fetch_status_only and not search_only:
+    hf_records_export_only = bool(
+        parsed.export_hf_records_parquet
+        and parsed.input_type == "packaged"
+        and not parsed.output
+        and not parsed.package_dir
+        and not parsed.parquet_dir
+        and not parsed.courtlistener_cache_package_dir
+        and not parsed.search_backend
+        and not parsed.citation_source_audit
+        and not parsed.recover_citation_sources
+        and not parsed.recap_fetch_request_id
+        and not packaged_modes
+        and not parsed.export_packaged_report
+        and not parsed.export_operator_dashboard_report
+    )
+    if not parsed.output and not packaged_read_only and not citation_audit_only and not citation_recovery_only and not recap_fetch_status_only and not search_only and not hf_records_export_only:
         parser.error("--output is required unless you are only inspecting or loading a packaged report.")
     if citation_audit_fields and not parsed.citation_source_audit:
         parser.error("--citation-audit-fields is only valid with --citation-source-audit.")
@@ -1246,6 +1268,18 @@ def main(args: list[str] | None = None) -> int:
                     package_name=parsed.package_name,
                     include_car=include_car,
                 )
+        hf_records_export = None
+        if parsed.export_hf_records_parquet:
+            if parsed.input_type == "packaged":
+                hf_records_manifest_path = parsed.input_path
+            elif package_payload is not None:
+                hf_records_manifest_path = str(package_payload.get("manifest_json_path") or "")
+            else:
+                parser.error("--export-hf-records-parquet for source imports requires --parquet-dir or --package-dir so the full component bundle can be flattened.")
+            hf_records_export = export_packaged_docket_hf_records_parquet(
+                hf_records_manifest_path,
+                parsed.export_hf_records_parquet,
+            )
         search_payload = None
         if parsed.search_backend:
             assert dataset is not None
@@ -1268,7 +1302,8 @@ def main(args: list[str] | None = None) -> int:
         elif recap_fetch_status_only:
             summary = _build_recap_fetch_status_summary(parsed)
         else:
-            assert packaged_read_packager is not None
+            if packaged_read_packager is None:
+                packaged_read_packager = DocketDatasetPackager()
             summary = _build_packaged_read_only_summary(packaged_read_packager, parsed.input_path)
         payload = {
             "status": "success",
@@ -1278,6 +1313,8 @@ def main(args: list[str] | None = None) -> int:
             payload["search_results"] = search_payload
         if output_path is not None:
             payload["output_path"] = str(output_path)
+        if hf_records_export is not None:
+            payload["hf_records_parquet"] = hf_records_export
         if parsed.citation_source_audit:
             if dataset is not None:
                 citation_audit = _call_citation_source_audit_builder(

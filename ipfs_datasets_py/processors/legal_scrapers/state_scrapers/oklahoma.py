@@ -27,11 +27,6 @@ class OklahomaScraper(BaseStateScraper):
         "https://www.oscn.net/applications/oscn/Index.asp?ftdb=STOKST74",
         "https://www.oscn.net/applications/oscn/index.asp?level=1&ftdb=STOKST",
     ]
-    _CDX_DISCOVERY_URL = (
-        "https://web.archive.org/cdx/search/cdx"
-        "?url=www.oscn.net/applications/oscn/DeliverDocument.asp*"
-        "&output=json&filter=statuscode:200&limit=1200"
-    )
     _ANTI_BOT_RE = re.compile(
         r"why am i seeing this\?|verify (?:you are|you're) human|automated traffic|cf-browser-verification|just a moment",
         re.IGNORECASE,
@@ -99,7 +94,8 @@ class OklahomaScraper(BaseStateScraper):
                     len(best_archival),
                     attempt + 1,
                 )
-                return best_archival
+                if not self._full_corpus_enabled() or max_statutes is not None:
+                    return best_archival
             await asyncio.sleep(0.4 * (attempt + 1))
 
         # If OSCN blocks automated access, use a broader fallback index to avoid zero-state output.
@@ -110,13 +106,18 @@ class OklahomaScraper(BaseStateScraper):
         best: List[NormalizedStatute] = []
         for candidate in fallback_urls:
             try:
-                statutes = await self._generic_scrape(code_name, candidate, "Okla. Stat.")
+                statutes = await self._generic_scrape(
+                    code_name,
+                    candidate,
+                    "Okla. Stat.",
+                    max_sections=max(10, return_threshold),
+                )
             except Exception:
                 statutes = []
             if len(statutes) > len(best):
                 best = statutes
 
-        return best
+        return best if len(best) > len(best_archival) else best_archival
 
     async def _scrape_direct_seed_sections(
         self,
@@ -302,11 +303,12 @@ class OklahomaScraper(BaseStateScraper):
         if not seed_citeid:
             return []
 
+        capture_limit = 50 if self._full_corpus_enabled() else 8
         cdx_url = (
             "https://web.archive.org/cdx/search/cdx"
             "?url=www.oscn.net/applications/oscn/DeliverDocument.asp"
             f"?CiteID={seed_citeid}&output=json"
-            "&fl=timestamp,original,statuscode&filter=statuscode:200&limit=8"
+            f"&fl=timestamp,original,statuscode&filter=statuscode:200&limit={capture_limit}"
         )
         try:
             payload = await self._fetch_page_content_with_archival_fallback(
@@ -337,15 +339,22 @@ class OklahomaScraper(BaseStateScraper):
                 continue
             for link in self._extract_deliver_document_links(seed_url=replay_url, html=html):
                 discovered.append(link)
-            if len(discovered) >= 400:
+            discovery_limit = 5000 if self._full_corpus_enabled() else 400
+            if len(discovered) >= discovery_limit:
                 break
 
         return discovered
 
     async def _discover_oscn_document_urls_via_cdx(self, headers: Dict[str, str]) -> List[str]:
+        cdx_limit = 10000 if self._full_corpus_enabled() else 1200
+        cdx_url = (
+            "https://web.archive.org/cdx/search/cdx"
+            "?url=www.oscn.net/applications/oscn/DeliverDocument.asp*"
+            f"&output=json&filter=statuscode:200&limit={cdx_limit}"
+        )
         try:
             raw = await self._fetch_page_content_with_archival_fallback(
-                self._CDX_DISCOVERY_URL,
+                cdx_url,
                 timeout_seconds=35,
             )
             if not raw:

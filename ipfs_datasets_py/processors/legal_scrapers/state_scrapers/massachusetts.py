@@ -77,9 +77,10 @@ class MassachusettsScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
-        direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
-        if direct_sections:
-            return direct_sections[:return_threshold]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            if direct_sections:
+                return direct_sections[:return_threshold]
 
         for candidate in candidate_urls:
             if candidate in seen:

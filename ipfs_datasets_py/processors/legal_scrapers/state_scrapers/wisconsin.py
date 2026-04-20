@@ -3,8 +3,9 @@
 This module contains the scraper for Wisconsin statutes from the official state legislative website.
 """
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 import re
+from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
@@ -49,17 +50,22 @@ class WisconsinScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
+        limit = self._effective_scrape_limit(max_statutes, default=40)
+        if limit is not None:
+            direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            if direct:
+                return direct[:limit]
+
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
+        if official:
+            return official[:limit] if limit is not None else official
+
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/statutes/statutes",
             f"{self.get_base_url()}/document/statutes/940",
             f"{self.get_base_url()}/document/statutes/939.50",
         ]
-
-        limit = self._effective_scrape_limit(max_statutes, default=40)
-        direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
-        if direct:
-            return direct
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
@@ -116,12 +122,111 @@ class WisconsinScraper(BaseStateScraper):
             ("939.50", f"{self.get_base_url()}/document/statutes/939.50"),
             ("940.01", f"{self.get_base_url()}/document/statutes/940.01"),
         ]
-        limit = max_statutes if max_statutes is not None else len(section_urls)
+        return await self._scrape_section_urls(code_name, [(url, section_number) for section_number, url in section_urls], max_statutes=max_statutes)
+
+    async def _scrape_official_index(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        chapter_links = await self._discover_chapter_links()
+        self.logger.info("Wisconsin official index: discovered %s chapter links", len(chapter_links))
         statutes: List[NormalizedStatute] = []
-        for section_number, source_url in section_urls[: max(1, int(limit))]:
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        for chapter_index, (chapter_url, chapter_label) in enumerate(chapter_links, start=1):
+            if limit is not None and len(statutes) >= limit:
+                break
+            section_links = await self._discover_section_links(chapter_url)
+            if chapter_index == 1 or chapter_index % 25 == 0 or chapter_index == len(chapter_links):
+                self.logger.info(
+                    "Wisconsin official index: chapter=%s index=%s/%s sections=%s statutes_so_far=%s",
+                    chapter_label or chapter_url,
+                    chapter_index,
+                    len(chapter_links),
+                    len(section_links),
+                    len(statutes),
+                )
+            parsed = await self._scrape_section_urls(
+                code_name,
+                section_links,
+                max_statutes=(None if limit is None else max(0, limit - len(statutes))),
+            )
+            statutes.extend(parsed)
+        return statutes[:limit] if limit is not None else statutes
+
+    async def _discover_chapter_links(self) -> List[Tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        index_url = f"{self.get_base_url()}/statutes/statutes"
+        payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=20)
+        if not payload:
+            return []
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            href = urljoin(index_url, str(anchor.get("href") or "").strip())
+            if not re.search(r"/document/statutes/[0-9]+/?$", href, re.IGNORECASE):
+                continue
+            normalized = href.rstrip("/")
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            out.append((normalized, self._normalize_legal_text(anchor.get_text(" ", strip=True))))
+        return out
+
+    async def _discover_section_links(self, chapter_url: str) -> List[Tuple[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        chapter_match = re.search(r"/document/statutes/([0-9]+)/?$", chapter_url, re.IGNORECASE)
+        chapter_number = chapter_match.group(1) if chapter_match else ""
+        payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=20)
+        if not payload:
+            return []
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[Tuple[str, str]] = []
+        seen: set[str] = set()
+        for anchor in soup.find_all("a", href=True):
+            href = urljoin(chapter_url, str(anchor.get("href") or "").strip())
+            if not self._WI_SECTION_URL_RE.search(href):
+                continue
+            normalized = href.rstrip("/")
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            label = self._normalize_legal_text(anchor.get_text(" ", strip=True))
+            section_number = normalized.rsplit("/", 1)[-1]
+            if chapter_number and section_number.split(".", 1)[0] != chapter_number:
+                continue
+            out.append((normalized, label or section_number))
+        return out
+
+    async def _scrape_section_urls(
+        self,
+        code_name: str,
+        section_urls: List[Tuple[str, str]],
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        limit = max(1, int(max_statutes)) if max_statutes is not None else None
+        statutes: List[NormalizedStatute] = []
+        for source_url, section_number in section_urls:
+            if limit is not None and len(statutes) >= limit:
+                break
             payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=15)
             if not payload:
                 continue
+            section_number = str(section_number or source_url.rsplit("/", 1)[-1]).strip()
             soup = BeautifulSoup(payload, "html.parser")
             section_nodes = soup.select(f'[data-section="{section_number}"]')
             if not section_nodes:

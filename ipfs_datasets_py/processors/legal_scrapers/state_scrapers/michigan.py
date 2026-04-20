@@ -40,9 +40,10 @@ class MichiganScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(2)
-        direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
-        if direct:
-            return direct
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            if direct:
+                return direct
         return await self._generic_scrape(code_name, code_url, "Mich. Comp. Laws", max_sections=max(10, limit))
 
     async def _scrape_direct_sections(self, code_name: str, max_statutes: int | None = None) -> List[NormalizedStatute]:

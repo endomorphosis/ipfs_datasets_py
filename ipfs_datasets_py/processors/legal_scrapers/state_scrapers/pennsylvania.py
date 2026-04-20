@@ -53,14 +53,15 @@ class PennsylvaniaScraper(BaseStateScraper):
         merged_keys = set()
         limit = self._effective_scrape_limit(max_statutes, default=80)
         return_threshold = limit if limit is not None else 1000000
-        direct_statutes = await self._scrape_direct_titles(
-            code_name,
-            max_statutes=min(return_threshold, 80),
-        )
-        if direct_statutes:
-            if limit is not None:
-                return direct_statutes[:limit]
-            return direct_statutes
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_statutes = await self._scrape_direct_titles(
+                code_name,
+                max_statutes=min(return_threshold, 80),
+            )
+            if direct_statutes:
+                if limit is not None:
+                    return direct_statutes[:limit]
+                return direct_statutes
 
         def _merge(items: List[NormalizedStatute]) -> None:
             for statute in items:
@@ -79,7 +80,7 @@ class PennsylvaniaScraper(BaseStateScraper):
                 code_name,
                 candidate,
                 "Pa. Cons. Stat.",
-                max_sections=return_threshold if limit is not None else 900,
+                max_sections=return_threshold,
             )
             _merge(statutes)
             if len(merged) >= return_threshold:

@@ -41,9 +41,10 @@ class NebraskaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(40)
-        direct = await self._scrape_direct_seed_sections(code_name, max_statutes=limit)
-        if direct:
-            return direct[:limit]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=limit)
+            if direct:
+                return direct[:limit]
         return await self._generic_scrape(code_name, code_url, "Neb. Rev. Stat.", max_sections=max(10, limit))
 
     async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:

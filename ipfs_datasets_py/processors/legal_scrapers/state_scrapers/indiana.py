@@ -184,7 +184,8 @@ class IndianaScraper(BaseStateScraper):
         return statutes
 
     async def _scrape_archived_title_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
-        title_urls = await self._discover_archived_title_urls(limit=420)
+        discovery_limit = 5000 if self._full_corpus_enabled() else 420
+        title_urls = await self._discover_archived_title_urls(limit=discovery_limit)
         out: List[NormalizedStatute] = []
         seen = set()
 
@@ -192,7 +193,8 @@ class IndianaScraper(BaseStateScraper):
             if len(out) >= max_statutes:
                 break
             try:
-                statutes = await self._generic_scrape(code_name, title_url, "Ind. Code", max_sections=220)
+                scan_limit = max(220, int(max_statutes or 220))
+                statutes = await self._generic_scrape(code_name, title_url, "Ind. Code", max_sections=scan_limit)
             except Exception:
                 statutes = []
             for statute in statutes:

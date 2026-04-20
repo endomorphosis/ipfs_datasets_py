@@ -98,7 +98,7 @@ _LEGAL_CONTENT_SIGNAL_RE = re.compile(
 )
 
 _NON_ADMIN_CODE_NAME_RE = re.compile(
-    r"\b(general\s+laws|revised\s+statutes|compiled\s+laws|codified\s+laws|session\s+laws|constitution)\b",
+    r"\b(general\s+laws|revised\s+statutes|compiled\s+laws|codified\s+laws|session\s+laws|statutes?|constitution)\b",
     re.IGNORECASE,
 )
 
@@ -953,6 +953,14 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://regulations.delaware.gov/",
         "https://www.legis.delaware.gov/Offices/DivisionOfResearch/RegistrarOfRegulations",
     ],
+    "DC": [
+        "https://dcregs.dc.gov/",
+        "https://www.dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=1-1",
+        "https://code.dccouncil.gov",
+        "https://legislature.dc.gov/regulations",
+        "https://legislature.dc.gov/administrative-code",
+        "https://legislature.dc.gov/code-of-regulations",
+    ],
     "FL": [
         "https://www.flrules.org/",
         "https://flrules.org/",
@@ -1274,7 +1282,15 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "FL", "GA", "HI", "IA", "ID", "KS", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "NM", "NY", "OH", "OK", "OR", "TN", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "KS", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "NM", "NY", "OH", "OK", "OR", "TN", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_BUDGET_CAP_SECONDS_BY_STATE = {
+    # These have enough curated seeds to recover quickly, but the daemon runs
+    # them in single-state subprocesses; keeping their fallback budget bounded
+    # prevents the outer scrape supervisor from killing the run before results
+    # are emitted.
+    "DC": 120.0,
+    "DE": 120.0,
+}
 
 
 def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
@@ -14644,6 +14660,11 @@ async def _agentic_discover_admin_state_blocks(
                 preloop_budget_deadline,
                 state_start + max(45.0, min(70.0, per_state_budget_s - 0.5)),
             )
+        if state_code == "AK" and not state_budget_is_unbounded:
+            preloop_budget_deadline = max(
+                preloop_budget_deadline,
+                state_start + max(75.0, min(110.0, per_state_budget_s - 0.5)),
+            )
 
         async def _append_document_if_rule(
             doc_url: str,
@@ -17705,13 +17726,20 @@ async def scrape_state_admin_rules(
     filters the normalized output to administrative-rule records only.
     """
     try:
-        allowed_state_codes = set(US_STATES.keys() if include_dc else US_50_STATE_CODES)
-        selected_states = [
-            s.upper()
+        requested_state_codes = [
+            str(s or "").upper()
             for s in (states or [])
-            if s and str(s).upper() in allowed_state_codes
+            if str(s or "").strip()
         ]
-        if not selected_states or "ALL" in selected_states:
+        explicit_dc_requested = "DC" in requested_state_codes
+        all_states_requested = not requested_state_codes or "ALL" in requested_state_codes
+        allowed_state_codes = set(US_STATES.keys() if (include_dc or explicit_dc_requested) else US_50_STATE_CODES)
+        selected_states = [
+            state_code
+            for state_code in requested_state_codes
+            if state_code in allowed_state_codes
+        ]
+        if all_states_requested:
             selected_states = list(US_STATES.keys() if include_dc else US_50_STATE_CODES)
 
         source_diagnostics = _collect_admin_source_diagnostics(selected_states)
@@ -17760,6 +17788,16 @@ async def scrape_state_admin_rules(
                 agentic_per_state_budget_seconds,
                 delegated_state_laws_timeout_seconds,
             )
+            direct_budget_caps = [
+                float(_DIRECT_AGENTIC_BUDGET_CAP_SECONDS_BY_STATE[state_code])
+                for state_code in direct_agentic_states
+                if state_code in _DIRECT_AGENTIC_BUDGET_CAP_SECONDS_BY_STATE
+            ]
+            if direct_budget_caps and len(direct_budget_caps) == len(direct_agentic_states):
+                agentic_per_state_budget_seconds = min(
+                    agentic_per_state_budget_seconds,
+                    max(direct_budget_caps),
+                )
 
         base_started_at = time.time()
         if delegated_base_states:

@@ -246,9 +246,10 @@ class MarylandScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(80)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        direct_statutes = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
-        if direct_statutes:
-            return direct_statutes
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct_statutes = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            if direct_statutes:
+                return direct_statutes
 
         api_statutes = await self._scrape_api_sections(code_name, max_statutes=max(10, return_threshold))
         if len(api_statutes) >= return_threshold:

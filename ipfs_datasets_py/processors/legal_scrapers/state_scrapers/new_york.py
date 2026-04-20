@@ -58,9 +58,10 @@ class NewYorkScraper(BaseStateScraper):
         
         statutes = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(120)
-        direct = await self._scrape_jina_senate_seed_sections(code_name, max_statutes=limit)
-        if direct:
-            return direct[:limit]
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_jina_senate_seed_sections(code_name, max_statutes=limit)
+            if direct:
+                return direct[:limit]
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(

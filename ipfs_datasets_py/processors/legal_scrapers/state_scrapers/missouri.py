@@ -41,12 +41,13 @@ class MissouriScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(2)
-        direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
-        if direct:
-            return direct
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            if direct:
+                return direct
 
         # Use custom scraper with Missouri-specific patterns
-        fallback = await self._custom_scrape_missouri(code_name, code_url, "Mo. Rev. Stat.")
+        fallback = await self._custom_scrape_missouri(code_name, code_url, "Mo. Rev. Stat.", max_sections=limit)
         return fallback[:limit]
 
     async def _scrape_direct_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
@@ -138,8 +139,10 @@ class MissouriScraper(BaseStateScraper):
             if full not in chapter_urls:
                 chapter_urls.append(full)
 
-        # Keep crawl bounded to avoid state-level timeout.
-        chapter_urls = chapter_urls[:28]
+        # Keep non-full-corpus probes bounded, but allow daemon full-corpus
+        # runs to walk every chapter exposed by the official index.
+        if not self._full_corpus_enabled():
+            chapter_urls = chapter_urls[:28]
         seen_sections = set()
 
         for chapter_url in chapter_urls:

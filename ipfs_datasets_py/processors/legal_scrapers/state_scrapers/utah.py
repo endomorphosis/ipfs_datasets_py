@@ -95,7 +95,7 @@ class UtahScraper(BaseStateScraper):
                 continue
             seen.add(candidate)
 
-            statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=260)
+            statutes = await self._generic_scrape(code_name, candidate, "Utah Code Ann.", max_sections=return_threshold)
             _merge(statutes)
             if len(merged) >= return_threshold:
                 return merged

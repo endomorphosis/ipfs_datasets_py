@@ -58,14 +58,15 @@ class SouthDakotaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=20)
-        max_api_statutes = limit if limit is not None else len(self._SEED_SECTIONS + self._TITLE_START_SECTIONS)
-        api_statutes = await self._scrape_statutes_api(
-            code_name=code_name,
-            max_statutes=max_api_statutes,
-        )
-        if api_statutes:
-            self.logger.info(f"South Dakota API fallback: Scraped {len(api_statutes)} sections")
-            return api_statutes
+        if not self._full_corpus_enabled() or max_statutes is not None:
+            max_api_statutes = limit if limit is not None else len(self._SEED_SECTIONS + self._TITLE_START_SECTIONS)
+            api_statutes = await self._scrape_statutes_api(
+                code_name=code_name,
+                max_statutes=max_api_statutes,
+            )
+            if api_statutes:
+                self.logger.info(f"South Dakota API fallback: Scraped {len(api_statutes)} sections")
+                return api_statutes
 
         max_sections = limit if limit is not None else 1000000
         return await self._generic_scrape(

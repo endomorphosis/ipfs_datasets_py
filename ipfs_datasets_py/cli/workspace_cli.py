@@ -21,6 +21,7 @@ from ipfs_datasets_py.processors.legal_data import (
     load_workspace_dataset_single_parquet,
     load_workspace_dataset_single_parquet_summary,
     inspect_packaged_workspace_bundle,
+    export_packaged_workspace_hf_records_parquet,
     ingest_workspace_pdf_directory,
     iter_packaged_workspace_chain,
     load_packaged_workspace_dataset,
@@ -120,6 +121,7 @@ def create_parser() -> argparse.ArgumentParser:
             "package-inspect",
             "package-load",
             "package-report",
+            "package-export-hf-records",
             "package-search-bm25",
             "package-search-vector",
             "chain",
@@ -152,6 +154,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-parquet", default="", help="For --action export, path to the output parquet bundle.")
     parser.add_argument("--output-dir", default="", help="For --action package, directory to write a packaged bundle.")
+    parser.add_argument("--output-hf-records-parquet", default="", help="For --action package-export-hf-records, path to the single flat records parquet.")
     parser.add_argument("--package-name", default="", help="For --action package, optional package name.")
     parser.add_argument("--workspace-id", default="", help="For --action export or --action package directory imports, optional workspace id override.")
     parser.add_argument("--workspace-name", default="", help="For --action export or --action package directory imports, optional workspace name override.")
@@ -400,6 +403,12 @@ def main(args: list[str] | None = None) -> int:
         )
         print(rendered, end="")
         return 0
+    elif parsed.action == "package-export-hf-records":
+        output_path = str(parsed.output_hf_records_parquet or "").strip()
+        if not output_path:
+            parser.error("--output-hf-records-parquet is required for --action package-export-hf-records.")
+        payload = export_packaged_workspace_hf_records_parquet(bundle_path, output_path)
+        title = "Packaged Workspace HF Records Export"
     elif parsed.action == "chain":
         payload = iter_packaged_workspace_chain(bundle_path)
         title = "Packaged Workspace Chain"
