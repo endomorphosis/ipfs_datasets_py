@@ -34,20 +34,32 @@ try:
     from symai import Symbol, Expression
     SYMBOLIC_AI_AVAILABLE = True
 except (ImportError, SystemExit):
-    SYMBOLIC_AI_AVAILABLE = False
-    logger.warning("SymbolicAI not available. Modal logic features will be limited.")
+    try:
+        from ipfs_datasets_py.auto_installer import ensure_module, get_installer
+        from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+        if get_installer().auto_install and ensure_module("symai", "symbolicai>=1.14.0,<2.0.0") is not None:
+            ensure_symai_config_for_import()
+            from symai import Symbol, Expression
+
+            SYMBOLIC_AI_AVAILABLE = True
+        else:
+            raise ImportError("SymbolicAI auto-install disabled")
+    except (ImportError, SystemExit, Exception):
+        SYMBOLIC_AI_AVAILABLE = False
+        logger.warning("SymbolicAI not available. Modal logic features will be limited.")
     
-    # Create mock classes for development/testing without SymbolicAI
-    class Symbol:
-        def __init__(self, value: str, semantic: bool = False):
-            self.value = value
-            self._semantic = semantic
-            
-        def query(self, prompt: str) -> str:
-            return f"Mock response for: {prompt}"
-    
-    class Expression:
-        pass
+        # Create mock classes for development/testing without SymbolicAI
+        class Symbol:
+            def __init__(self, value: str, semantic: bool = False):
+                self.value = value
+                self._semantic = semantic
+
+            def query(self, prompt: str) -> str:
+                return f"Mock response for: {prompt}"
+
+        class Expression:
+            pass
 
 
 @dataclass

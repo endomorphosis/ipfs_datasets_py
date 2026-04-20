@@ -120,8 +120,20 @@ except ImportError:
         from multiformats import CID, multihash, multicodec
         MULTIFORMATS_AVAILABLE = True
     except ImportError:
-        MULTIFORMATS_AVAILABLE = False
-        logging.warning("ipfs_multiformats not available, using SHA256 hashing")
+        try:
+            from ipfs_datasets_py.auto_installer import ensure_module, get_installer
+
+            if get_installer().auto_install and ensure_module("multiformats", "multiformats>=0.3.0") is not None:
+                from multiformats import CID, multihash, multicodec
+
+                MULTIFORMATS_AVAILABLE = True
+            else:
+                MULTIFORMATS_AVAILABLE = False
+        except Exception:
+            MULTIFORMATS_AVAILABLE = False
+
+        if not MULTIFORMATS_AVAILABLE:
+            logging.warning("ipfs_multiformats not available, using SHA256 hashing")
 
 
 logger = logging.getLogger(__name__)

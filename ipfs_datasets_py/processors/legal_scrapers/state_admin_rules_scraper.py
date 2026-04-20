@@ -3095,6 +3095,28 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return True
     if host == "www.sos.ms.gov" and re.search(r"^/adminsearch/ACCode/[\w.-]+\.pdf$", path, re.IGNORECASE):
         return True
+    if host == "reports.oah.state.nc.us" and re.search(r"^/ncac/.+\.pdf$", path, re.IGNORECASE):
+        return True
+    if host == "ndlegis.gov" and re.search(r"^/information/acdata/html/\d+\.html$", path, re.IGNORECASE):
+        return True
+    if host == "www.leg.state.nv.us" and re.search(r"^/NAC/NAC-[\w-]+\.html$", path, re.IGNORECASE):
+        return True
+    if host == "www.pacodeandbulletin.gov" and normalized_path.lower() == "/display/pacode":
+        file_value = str((parse_qs(parsed.query or "").get("file") or [""])[0]).strip()
+        if file_value.lower().endswith((".html", ".htm")) and "/pacode/data/" in file_value.lower():
+            return True
+    if host == "www.scstatehouse.gov" and re.search(r"^/coderegs/Chapter%20\d+\.pdf$", path, re.IGNORECASE):
+        return True
+    if host == "app.leg.wa.gov" and normalized_path.lower() == "/wac/default.aspx":
+        cite_value = str((parse_qs(parsed.query or "").get("cite") or [""])[0]).strip()
+        if cite_value:
+            return True
+    if host == "docs.legis.wisconsin.gov" and re.search(r"^/code/admin_code/[\w-]+/\d+", path, re.IGNORECASE):
+        return True
+    if host == "apps.sos.wv.gov" and normalized_path.lower() == "/adlaw/csr/rule.aspx":
+        rule_value = str((parse_qs(parsed.query or "").get("rule") or [""])[0]).strip()
+        if re.fullmatch(r"\d+[A-Za-z]?(?:-\d+[A-Za-z]?)?", rule_value):
+            return True
     if host == "iar.iga.in.gov" and re.search(r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?", path, re.IGNORECASE):
         return True
     if host in {"www.legis.iowa.gov", "legis.iowa.gov"} and _IA_OFFICIAL_AGENCY_PDF_PATH_RE.fullmatch(path):
@@ -3150,6 +3172,12 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         rule_version = str((query_params.get("ruleVrsnRsn") or [""])[0]).strip()
         if re.fullmatch(r"\d{3}-\d{3}-\d{4}", rule_number) or rule_version.isdigit():
             return True
+    if host == "law.lis.virginia.gov" and re.search(
+        r"^/admincode/title\d+/agency\d+/chapter\d+/section\d+/",
+        path,
+        re.IGNORECASE,
+    ):
+        return True
     if host == "govt.westlaw.com" and normalized_path.lower().startswith("/calregs/document/"):
         return True
     if host in {"www.mass.gov", "mass.gov"} and _MA_CMR_DETAIL_PATH_RE.search(path):
@@ -10887,6 +10915,31 @@ async def _scrape_official_html_rule_detail_via_requests(url: str) -> Optional[A
     elif host in {"www.mass.gov", "mass.gov"}:
         if not _MA_CMR_DETAIL_PATH_RE.search(path):
             return None
+    elif host == "law.lis.virginia.gov":
+        if not re.search(
+            r"^/admincode/title\d+/agency\d+/chapter\d+/section\d+/",
+            path,
+            re.IGNORECASE,
+        ):
+            return None
+    elif host == "ndlegis.gov":
+        if not re.search(r"^/information/acdata/html/\d+\.html$", path, re.IGNORECASE):
+            return None
+    elif host == "www.leg.state.nv.us":
+        if not re.search(r"^/NAC/NAC-[\w-]+\.html$", path, re.IGNORECASE):
+            return None
+    elif host == "www.pacodeandbulletin.gov":
+        if normalized_path.lower() != "/display/pacode":
+            return None
+    elif host == "app.leg.wa.gov":
+        if normalized_path.lower() != "/wac/default.aspx" or not parse_qs(parsed.query or "").get("cite"):
+            return None
+    elif host == "docs.legis.wisconsin.gov":
+        if not re.search(r"^/code/admin_code/[\w-]+/\d+", path, re.IGNORECASE):
+            return None
+    elif host == "apps.sos.wv.gov":
+        if normalized_path.lower() != "/adlaw/csr/rule.aspx" or not parse_qs(parsed.query or "").get("rule"):
+            return None
     else:
         return None
 
@@ -16020,7 +16073,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_oklahoma_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
-                elif state_code in {"CT", "FL", "MA", "NM", "OH", "OR"}:
+                elif state_code in {"CT", "FL", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     direct_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(fetch_document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -16727,7 +16780,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_south_dakota_rule_detail_via_api(document_url),
                         timeout=direct_timeout_s,
                     )
-                elif state_code in {"CT", "FL", "MA", "NM", "OH", "OR"}:
+                elif state_code in {"CT", "FL", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     direct_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -16975,7 +17028,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_michigan_rule_detail_via_requests(fetch_document_url),
                         timeout=min(20.0, direct_timeout_s),
                     )
-                elif state_code in {"CT", "FL", "MA", "NM", "OH", "OR"}:
+                elif state_code in {"CT", "FL", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     expanded_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(fetch_document_url),
                         timeout=min(12.0, direct_timeout_s),

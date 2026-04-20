@@ -1,6 +1,47 @@
 import types
 
 
+def test_dependency_installer_honors_legacy_auto_install_truthy(monkeypatch):
+    import ipfs_datasets_py.auto_installer as auto_installer
+
+    monkeypatch.delenv("IPFS_DATASETS_AUTO_INSTALL", raising=False)
+    monkeypatch.setenv("IPFS_AUTO_INSTALL", "yes")
+
+    installer = auto_installer.DependencyInstaller(auto_install=None)
+
+    assert installer.auto_install is True
+
+
+def test_get_installer_uses_shared_truthy_env_parser(monkeypatch):
+    import ipfs_datasets_py.auto_installer as auto_installer
+
+    monkeypatch.setattr(auto_installer, "_installer", None)
+    monkeypatch.setenv("IPFS_DATASETS_AUTO_INSTALL", "1")
+    monkeypatch.setenv("IPFS_INSTALL_VERBOSE", "on")
+
+    installer = auto_installer.get_installer()
+
+    assert installer.auto_install is True
+    assert installer.verbose is True
+
+
+def test_web_scraper_packages_install_lxml_clean_companion(monkeypatch):
+    import ipfs_datasets_py.auto_installer as auto_installer
+
+    installer = auto_installer.DependencyInstaller(auto_install=True)
+    installed_specs: list[str] = []
+    monkeypatch.setattr(
+        installer,
+        "_pip_install",
+        lambda package_spec: installed_specs.append(package_spec) or True,
+    )
+
+    assert installer.install_python_dependency("newspaper3k") is True
+
+    assert "newspaper3k>=0.2.8,<1.0.0" in installed_specs
+    assert "lxml_html_clean>=0.4.0" in installed_specs
+
+
 def test_runtime_installer_runs_when_marker_missing(monkeypatch, tmp_path):
     import ipfs_datasets_py.auto_installer as auto_installer
 

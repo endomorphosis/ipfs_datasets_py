@@ -89,9 +89,10 @@ class DependencyInstaller:
     """Cross-platform dependency installer that replaces mock implementations"""
     
     def __init__(self, auto_install: bool = None, verbose: bool = False):
-        # Check environment variable first, then parameter, default to False
         if auto_install is None:
-            auto_install = os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
+            auto_install = _truthy_env_value(os.getenv('IPFS_DATASETS_AUTO_INSTALL')) or _truthy_env_value(
+                os.getenv('IPFS_AUTO_INSTALL')
+            )
         self.auto_install = auto_install
         self.verbose = verbose
         self.system = platform.system().lower()
@@ -238,6 +239,7 @@ class DependencyInstaller:
             'beautifulsoup4': ['beautifulsoup4>=4.10.0,<5.0.0'],
             'newspaper3k': ['newspaper3k>=0.2.8,<1.0.0'],
             'readability-lxml': ['readability-lxml>=0.8.0,<1.0.0'],
+            'lxml_html_clean': ['lxml_html_clean>=0.4.0'],
             
             # Development
             'pytest': ['pytest>=8.0.0,<9.0.0'],
@@ -251,6 +253,13 @@ class DependencyInstaller:
             'imageio-ffmpeg': ['imageio-ffmpeg>=0.6.0'],
             # Copilot SDK
             'github-copilot-sdk': ['github-copilot-sdk>=0.1.0'],
+        }
+
+        self.python_package_companions = {
+            # newspaper3k imports lxml.html.clean at runtime, which modern lxml
+            # exposes through this separate package.
+            'newspaper3k': ['lxml_html_clean'],
+            'readability-lxml': ['lxml_html_clean'],
         }
 
         # Node CLI packages used by the SyMAI router (npm install -g)
@@ -970,6 +979,14 @@ exec "$BIN" "$@"
         
         for package_spec in packages_to_try:
             if self._pip_install(package_spec):
+                for companion_package in self.python_package_companions.get(package_name, []):
+                    if not self.install_python_dependency(companion_package, force_reinstall=force_reinstall):
+                        logger.error(
+                            "Failed to install companion dependency %s for %s",
+                            companion_package,
+                            package_name,
+                        )
+                        return False
                 self.installed_packages.add(package_name)
                 return True
                 
@@ -1361,10 +1378,10 @@ def get_installer() -> DependencyInstaller:
     """Get global installer instance"""
     global _installer
     if _installer is None:
-        # Check environment variables for configuration - use consistent variable names
-        auto_install = os.getenv('IPFS_DATASETS_AUTO_INSTALL', 
-                               os.getenv('IPFS_AUTO_INSTALL', 'false')).lower() == 'true'
-        verbose = os.getenv('IPFS_INSTALL_VERBOSE', 'false').lower() == 'true'
+        auto_install = _truthy_env_value(os.getenv('IPFS_DATASETS_AUTO_INSTALL')) or _truthy_env_value(
+            os.getenv('IPFS_AUTO_INSTALL')
+        )
+        verbose = _truthy_env_value(os.getenv('IPFS_INSTALL_VERBOSE'))
         _installer = DependencyInstaller(auto_install=auto_install, verbose=verbose)
     return _installer
 

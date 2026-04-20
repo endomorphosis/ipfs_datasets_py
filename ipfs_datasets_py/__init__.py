@@ -486,8 +486,7 @@ def _lazy_import_pdf_symbol(name: str):
     if (
         (not _MINIMAL_IMPORTS)
         and installer.auto_install
-        and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
-        and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').lower() == 'true'
+        and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').strip().lower() in {'1', 'true', 'yes', 'on'}
     ):
         try:
             from .auto_installer import install_for_component

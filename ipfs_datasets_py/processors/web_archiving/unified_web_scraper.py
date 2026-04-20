@@ -526,19 +526,36 @@ class UnifiedWebScraper:
         
         # Check Newspaper
         try:
-            import newspaper
+            import newspaper  # noqa: F401
             self.available_methods[ScraperMethod.NEWSPAPER] = True
         except ImportError:
-            self.available_methods[ScraperMethod.NEWSPAPER] = False
-            logger.debug("Newspaper3k not available")
+            try:
+                from ipfs_datasets_py.auto_installer import ensure_module
+
+                self.available_methods[ScraperMethod.NEWSPAPER] = (
+                    ensure_module("newspaper", "newspaper3k") is not None
+                )
+            except Exception as exc:
+                self.available_methods[ScraperMethod.NEWSPAPER] = False
+                logger.debug("Newspaper3k not available: %s", exc)
         
         # Check Readability
         try:
-            from readability import Document
+            from readability import Document  # noqa: F401
             self.available_methods[ScraperMethod.READABILITY] = True
         except ImportError:
-            self.available_methods[ScraperMethod.READABILITY] = False
-            logger.debug("Readability not available")
+            try:
+                from ipfs_datasets_py.auto_installer import ensure_module
+
+                if ensure_module("readability", "readability-lxml") is not None:
+                    from readability import Document  # noqa: F401
+
+                    self.available_methods[ScraperMethod.READABILITY] = True
+                else:
+                    self.available_methods[ScraperMethod.READABILITY] = False
+            except Exception as exc:
+                self.available_methods[ScraperMethod.READABILITY] = False
+                logger.debug("Readability not available: %s", exc)
         
         # Requests-only is always available if requests is available
         try:
