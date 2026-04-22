@@ -151,6 +151,28 @@ def test_state_laws_scraper_trims_max_statutes_per_state() -> None:
     assert total == 4
 
 
+def test_state_laws_scraper_compacts_streamed_state_result_for_retention() -> None:
+    result = {
+        "state_code": "KY",
+        "statutes_count": 2,
+        "statute_data": {
+            "state_code": "KY",
+            "statutes": [{"id": "ky-1"}, {"id": "ky-2"}],
+        },
+    }
+
+    compact = scraper_module._compact_state_result_for_retention(result)
+
+    assert compact["statute_data"]["statutes"] == []
+    assert compact["statute_data"]["statutes_count"] == 2
+    assert compact["statute_data"]["streamed_to_state_completion_callback"] is True
+    assert scraper_module._compute_coverage_summary(
+        selected_states=["KY"],
+        scraped_statutes=[compact["statute_data"]],
+        errors=[],
+    )["full_coverage"] is True
+
+
 @pytest.mark.asyncio
 async def test_state_laws_scraper_timeout_uses_daemon_thread(monkeypatch):
     captured = {}

@@ -667,12 +667,14 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     if args.scrape:
         scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
         previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
+        previous_checkpoint_dir_env = os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR")
         if scrape_max_statutes is None:
             # Several state scrapers intentionally keep normal probes bounded
             # unless this flag is set.  Treat an uncapped refresh as an
             # explicit full-corpus scrape so the daemon cannot silently publish
             # sample-sized state shards.
             os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
+            os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
         try:
             scrape_result = await scrape_state_laws(
                 states=states,
@@ -693,6 +695,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 retry_zero_statute_states=True,
                 per_state_timeout_seconds=float(args.per_state_timeout_seconds),
                 state_completion_callback=_on_state_complete if (publish_to_hf and incremental_state_publish) else None,
+                retain_state_data=not bool(publish_to_hf and incremental_state_publish),
             )
         finally:
             if scrape_max_statutes is None:
@@ -700,6 +703,10 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     os.environ.pop("STATE_SCRAPER_FULL_CORPUS", None)
                 else:
                     os.environ["STATE_SCRAPER_FULL_CORPUS"] = previous_full_corpus_env
+                if previous_checkpoint_dir_env is None:
+                    os.environ.pop("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", None)
+                else:
+                    os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = previous_checkpoint_dir_env
 
     build_result = build_state_laws_parquet_artifacts(
         states=states,

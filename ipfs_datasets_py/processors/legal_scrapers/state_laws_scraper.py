@@ -196,6 +196,7 @@ async def scrape_state_laws(
     retry_zero_statute_states: bool = True,
     per_state_timeout_seconds: float = 480.0,
     state_completion_callback: Optional[Callable[[Dict[str, Any]], Any]] = None,
+    retain_state_data: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Scrape state statutes and build a structured dataset.
     
@@ -262,6 +263,13 @@ async def scrape_state_laws(
 
         parallel_workers = max(1, int(parallel_workers or 1))
         per_state_retry_attempts = max(0, int(per_state_retry_attempts or 0))
+        if retain_state_data is None:
+            retain_state_data = str(os.getenv("STATE_SCRAPER_RETAIN_STATE_DATA", "1")).strip().lower() not in {
+                "0",
+                "false",
+                "no",
+                "off",
+            }
         
         # Try to use state-specific scrapers if enabled
         if use_state_specific_scrapers:
@@ -301,6 +309,8 @@ async def scrape_state_laws(
                         callback_result = state_completion_callback(result)
                         if inspect.isawaitable(callback_result):
                             await callback_result
+                    if not retain_state_data:
+                        result = _compact_state_result_for_retention(result)
                     return result
 
                 if parallel_workers <= 1:
@@ -1259,6 +1269,25 @@ def _trim_scraped_statutes_to_max(
     return trimmed, total
 
 
+def _compact_state_result_for_retention(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Drop bulky statute rows after a completion callback has persisted them.
+
+    Long full-corpus daemon runs write/build/publish each completed state
+    incrementally. Keeping the same large statute list in the final
+    ``scrape_state_laws`` return value doubles memory pressure and can retain
+    hundreds of thousands of rows until the last state completes.
+    """
+    compact = dict(result or {})
+    statute_data = dict(compact.get("statute_data") or {})
+    statutes = statute_data.get("statutes") or []
+    statute_count = int(compact.get("statutes_count") or len(statutes) or 0)
+    statute_data["statutes"] = []
+    statute_data["statutes_count"] = statute_count
+    statute_data["streamed_to_state_completion_callback"] = True
+    compact["statute_data"] = statute_data
+    return compact
+
+
 def _compute_coverage_summary(
     *,
     selected_states: List[str],
@@ -1278,7 +1307,8 @@ def _compute_coverage_summary(
             continue
         present_states.add(state_code)
         statutes = block.get("statutes") or []
-        if len(statutes) == 0:
+        retained_count = int(block.get("statutes_count") or 0)
+        if len(statutes) == 0 and retained_count <= 0:
             zero_states.append(state_code)
         if block.get("error"):
             error_states.append(state_code)
@@ -1354,7 +1384,8 @@ def _compute_etl_readiness_summary(scraped_statutes: List[Dict[str, Any]]) -> Di
             continue
         state_count += 1
         statutes = state_block.get("statutes") or []
-        if not statutes:
+        retained_count = int(state_block.get("statutes_count") or 0)
+        if not statutes and retained_count <= 0:
             states_with_zero += 1
 
         state_jsonld_hits = 0

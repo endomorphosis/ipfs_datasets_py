@@ -1,3 +1,6 @@
+import io
+import zipfile
+
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama import AlabamaScraper
@@ -222,6 +225,45 @@ async def test_texas_admin_code_landing_page_returns_no_synthetic_section(monkey
     )
 
     assert statutes == []
+
+
+@pytest.mark.anyio
+async def test_texas_statutory_code_uses_official_html_zip(monkeypatch: pytest.MonkeyPatch):
+    downloads_json = b'{"StatuteCode":[{"code":"PE","CodeName":"Penal Code","Html":"/Zips/PE.htm.zip"}]}'
+    chapter_html = (
+        "<html><body><pre>"
+        "<p class='center'>PENAL CODE</p>"
+        "<p class='center'>TITLE 1. INTRODUCTORY PROVISIONS</p>"
+        "<p class='center'>CHAPTER 1. GENERAL PROVISIONS</p>"
+        "<p><a name='1.01'></a></p>"
+        "<p><a>Sec. 1.01. SHORT TITLE.</a> This code shall be known and may be cited as the Penal Code.</p>"
+        "<p>Acts 1973, 63rd Leg., p. 883, ch. 399.</p>"
+        "<p><a name='1.02'></a></p>"
+        "<p><a>Sec. 1.02. OBJECTIVES OF CODE.</a> The general purposes of this code are to establish a system of prohibitions. "
+        + ("More statutory substance. " * 20)
+        + "</p></pre></body></html>"
+    ).encode("utf-8")
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("pe.1.htm", chapter_html)
+    zip_bytes = zip_buffer.getvalue()
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if url.endswith("StatuteCodeDownloads.json"):
+            return downloads_json
+        if url.endswith("/Zips/PE.htm.zip"):
+            return zip_bytes
+        return b"<html><body>Angular shell should not be parsed as statutes.</body></html>"
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = TexasScraper("TX", "Texas")
+    statutes = await scraper.scrape_code("Penal Code", "https://statutes.capitol.texas.gov/Docs/PE/htm/PE.1.htm", max_statutes=2)
+
+    assert [statute.section_number for statute in statutes] == ["1.01", "1.02"]
+    assert statutes[0].structured_data["source_kind"] == "official_texas_statutes_html_zip"
+    assert "SHORT TITLE" in statutes[0].section_name
 
 
 @pytest.mark.anyio
@@ -509,6 +551,44 @@ async def test_south_dakota_request_json_records_fetch_analytics(monkeypatch: py
     assert data.get("Statute") == "1-1-1"
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_south_dakota_full_corpus_uses_api_next_links(monkeypatch: pytest.MonkeyPatch):
+    payloads = {
+        "1-1-1": {
+            "Statute": "1-1-1",
+            "CatchLine": "First section",
+            "Next": "1-1-2",
+            "Html": "<p>1-1-1. First section. " + ("Long legal text. " * 30) + "</p>",
+        },
+        "1-1-2": {
+            "Statute": "1-1-2",
+            "CatchLine": "Second section",
+            "Next": "",
+            "Html": "<p>1-1-2. Second section. " + ("More legal text. " * 30) + "</p>",
+        },
+    }
+    requested: list[str] = []
+
+    async def _fake_request_json(url: str, headers: dict, timeout: int) -> dict:
+        section = url.rstrip("/").rsplit("/", 1)[-1]
+        requested.append(section)
+        return payloads.get(section, {})
+
+    async def _fail_generic(*args, **kwargs):
+        raise AssertionError("full-corpus South Dakota should use the official JSON API")
+
+    scraper = SouthDakotaScraper("SD", "South Dakota")
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(scraper, "_request_json", _fake_request_json)
+    monkeypatch.setattr(scraper, "_generic_scrape", _fail_generic)
+
+    statutes = await scraper.scrape_code("South Dakota Codified Laws", "https://sdlegislature.gov/", max_statutes=2)
+
+    assert [statute.section_number for statute in statutes] == ["1-1-1", "1-1-2"]
+    assert requested[:2] == ["1-1-1", "1-1-2"]
+    assert "1-1-2" in requested
 
 
 @pytest.mark.anyio

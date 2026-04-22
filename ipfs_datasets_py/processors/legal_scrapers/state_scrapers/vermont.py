@@ -3,7 +3,11 @@
 This module contains the scraper for Vermont statutes from the official state legislative website.
 """
 
+import json
+import os
 import re
+import time
+from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -82,6 +86,7 @@ class VermontScraper(BaseStateScraper):
         title_links = await self._discover_title_links()
         self.logger.info("Vermont official index: discovered %s title links", len(title_links))
         statutes: List[NormalizedStatute] = []
+        checkpoint = _VermontCheckpoint(self.state_code)
         limit = max(1, int(max_statutes)) if max_statutes is not None else None
         for title_index, (title_url, title_label) in enumerate(title_links, start=1):
             if limit is not None and len(statutes) >= limit:
@@ -114,6 +119,8 @@ class VermontScraper(BaseStateScraper):
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
                 )
                 statutes.extend(parsed)
+                checkpoint.maybe_write(statutes, title_label=title_label or title_url, chapter_label=chapter_label or chapter_url)
+        checkpoint.write(statutes, title_label="complete", chapter_label="complete")
         return statutes[:limit] if limit is not None else statutes
 
     async def _discover_title_links(self) -> List[Tuple[str, str]]:
@@ -242,3 +249,44 @@ class VermontScraper(BaseStateScraper):
 
 # Register this scraper with the registry
 StateScraperRegistry.register("VT", VermontScraper)
+
+
+class _VermontCheckpoint:
+    """Best-effort partial progress checkpoint for Vermont's long corpus crawl."""
+
+    def __init__(self, state_code: str) -> None:
+        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        if not raw_dir:
+            self.path: Optional[Path] = None
+        else:
+            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.state_code = state_code.upper()
+        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.last_count = 0
+        self.last_write_ts = 0.0
+
+    def maybe_write(self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str) -> None:
+        count = len(statutes)
+        if not self.path or count <= 0:
+            return
+        if count - self.last_count < self.interval and time.time() - self.last_write_ts < 120:
+            return
+        self.write(statutes, title_label=title_label, chapter_label=chapter_label)
+
+    def write(self, statutes: List[NormalizedStatute], *, title_label: str, chapter_label: str) -> None:
+        if not self.path or not statutes:
+            return
+        payload = {
+            "state_code": self.state_code,
+            "updated_at": time.time(),
+            "statutes_count": len(statutes),
+            "title_label": title_label,
+            "chapter_label": chapter_label,
+            "statutes": [statute.to_dict() for statute in statutes],
+        }
+        tmp_path = self.path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
+        tmp_path.replace(self.path)
+        self.last_count = len(statutes)
+        self.last_write_ts = time.time()
