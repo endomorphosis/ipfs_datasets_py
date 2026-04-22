@@ -26,6 +26,17 @@ def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _enable_default_auto_install() -> None:
+    """Enable runtime dependency installation unless the caller opted out."""
+    if not os.environ.get("IPFS_DATASETS_AUTO_INSTALL"):
+        os.environ["IPFS_DATASETS_AUTO_INSTALL"] = "true"
+    if not os.environ.get("IPFS_KIT_AUTO_INSTALL_DEPS"):
+        os.environ["IPFS_KIT_AUTO_INSTALL_DEPS"] = "1"
+
+
+_enable_default_auto_install()
+
+
 # In benchmark/CI contexts we want imports to be as hermetic as possible.
 # This prevents package import-time side effects from optional subsystems
 # (FastAPI services, vector stores, search integrations) that are unrelated to

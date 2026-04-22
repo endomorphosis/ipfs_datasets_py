@@ -98,7 +98,9 @@ class MississippiScraper(BaseStateScraper):
 
         if archival:
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
-            return archival[:limit] if limit is not None else archival
+            if limit is not None:
+                return archival[:limit]
+            return list(archival)
         return []
 
     async def _scrape_jina_justia_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:

@@ -13,6 +13,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
@@ -664,26 +665,41 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
     scrape_result: Dict[str, Any] | None = None
     if args.scrape:
-        scrape_result = await scrape_state_laws(
-            states=states,
-            legal_areas=None,
-            output_format="json",
-            include_metadata=True,
-            rate_limit_delay=float(args.rate_limit_delay),
-            max_statutes=int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None,
-            use_state_specific_scrapers=True,
-            allow_justia_fallback=bool(args.allow_justia_fallback),
-            output_dir=str(output_root),
-            write_jsonld=True,
-            strict_full_text=bool(args.strict_full_text),
-            min_full_text_chars=int(args.min_full_text_chars),
-            hydrate_statute_text=not bool(args.no_hydrate_statute_text),
-            parallel_workers=int(args.parallel_workers),
-            per_state_retry_attempts=int(args.per_state_retry_attempts),
-            retry_zero_statute_states=True,
-            per_state_timeout_seconds=float(args.per_state_timeout_seconds),
-            state_completion_callback=_on_state_complete if (publish_to_hf and incremental_state_publish) else None,
-        )
+        scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
+        previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
+        if scrape_max_statutes is None:
+            # Several state scrapers intentionally keep normal probes bounded
+            # unless this flag is set.  Treat an uncapped refresh as an
+            # explicit full-corpus scrape so the daemon cannot silently publish
+            # sample-sized state shards.
+            os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
+        try:
+            scrape_result = await scrape_state_laws(
+                states=states,
+                legal_areas=None,
+                output_format="json",
+                include_metadata=True,
+                rate_limit_delay=float(args.rate_limit_delay),
+                max_statutes=scrape_max_statutes,
+                use_state_specific_scrapers=True,
+                allow_justia_fallback=bool(args.allow_justia_fallback),
+                output_dir=str(output_root),
+                write_jsonld=True,
+                strict_full_text=bool(args.strict_full_text),
+                min_full_text_chars=int(args.min_full_text_chars),
+                hydrate_statute_text=not bool(args.no_hydrate_statute_text),
+                parallel_workers=int(args.parallel_workers),
+                per_state_retry_attempts=int(args.per_state_retry_attempts),
+                retry_zero_statute_states=True,
+                per_state_timeout_seconds=float(args.per_state_timeout_seconds),
+                state_completion_callback=_on_state_complete if (publish_to_hf and incremental_state_publish) else None,
+            )
+        finally:
+            if scrape_max_statutes is None:
+                if previous_full_corpus_env is None:
+                    os.environ.pop("STATE_SCRAPER_FULL_CORPUS", None)
+                else:
+                    os.environ["STATE_SCRAPER_FULL_CORPUS"] = previous_full_corpus_env
 
     build_result = build_state_laws_parquet_artifacts(
         states=states,

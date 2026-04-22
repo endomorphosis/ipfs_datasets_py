@@ -4,7 +4,9 @@ This module contains the scraper for Kentucky statutes from the official state l
 """
 
 from typing import List, Dict, Optional, Tuple
+import os
 import re
+import time
 from urllib.parse import urljoin
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
@@ -57,6 +59,9 @@ class KentuckyScraper(BaseStateScraper):
         corpus path direct and bounded.
         """
         timeout = max(1, int(timeout_seconds or 5))
+        cached = await self._load_page_bytes_from_any_cache(url)
+        if cached:
+            return cached
 
         def _request() -> bytes:
             try:
@@ -79,9 +84,12 @@ class KentuckyScraper(BaseStateScraper):
         try:
             payload = await asyncio.wait_for(asyncio.to_thread(_request), timeout=timeout + 1)
         except asyncio.TimeoutError:
+            self.logger.warning("Kentucky KRS direct fetch timed out after %ss: %s", timeout, url)
             payload = b""
 
         self._record_fetch_event(provider="requests_direct", success=bool(payload))
+        if payload:
+            await self._cache_successful_page_fetch(url=url, payload=payload, provider="requests_direct")
         return payload
 
     async def _fetch_html(self, url: str, timeout_seconds: int = 5) -> str:
@@ -285,33 +293,116 @@ class KentuckyScraper(BaseStateScraper):
         limit = max(1, int(max_statutes)) if max_statutes else None
         statutes: List[NormalizedStatute] = []
 
-        for chapter_url, chapter_label, chapter_number in await self._discover_chapter_links():
+        chapter_links = await self._discover_chapter_links()
+        chapter_cap_raw = str(os.getenv("KENTUCKY_FULL_CORPUS_MAX_CHAPTERS", "") or "").strip()
+        chapter_cap = 0
+        if chapter_cap_raw:
+            try:
+                chapter_cap = max(0, int(chapter_cap_raw))
+            except Exception:
+                chapter_cap = 0
+        if chapter_cap > 0:
+            chapter_links = chapter_links[:chapter_cap]
+
+        total_chapters = len(chapter_links)
+        self.logger.info(
+            "Kentucky official KRS discovery: chapters=%s limit=%s fetch_cache=%s",
+            total_chapters,
+            limit or "unbounded",
+            "on" if getattr(self, "_fetch_cache_enabled", False) else "off",
+        )
+        heartbeat_seconds = max(
+            1,
+            int(os.getenv("KENTUCKY_SCRAPER_HEARTBEAT_SECONDS", "30") or "30"),
+        )
+        section_heartbeat_every = max(
+            1,
+            int(os.getenv("KENTUCKY_SCRAPER_SECTION_HEARTBEAT_EVERY", "100") or "100"),
+        )
+        last_heartbeat = time.monotonic()
+        total_sections_seen = 0
+
+        for chapter_index, (chapter_url, chapter_label, chapter_number) in enumerate(chapter_links, start=1):
             if limit is not None and len(statutes) >= limit:
                 break
 
+            chapter_started_at = time.monotonic()
+            self.logger.info(
+                "Kentucky KRS chapter start: index=%s/%s chapter=%s statutes_so_far=%s url=%s",
+                chapter_index,
+                total_chapters,
+                chapter_label,
+                len(statutes),
+                chapter_url,
+            )
             section_links = await self._discover_section_links(
                 chapter_url=chapter_url,
                 chapter_label=chapter_label,
                 chapter_number=chapter_number,
             )
-            for section_url, section_label, section_number, discovered_chapter_label in section_links:
+            self.logger.info(
+                "Kentucky KRS chapter discovered sections: index=%s/%s chapter=%s sections=%s",
+                chapter_index,
+                total_chapters,
+                chapter_label,
+                len(section_links),
+            )
+            for section_index, (section_url, section_label, section_number, discovered_chapter_label) in enumerate(section_links, start=1):
                 if limit is not None and len(statutes) >= limit:
                     break
-                statute = await self._build_statute_from_section_page(
-                    code_name=code_name,
-                    section_url=section_url,
-                    section_label=section_label,
-                    section_number=section_number,
-                    chapter_url=chapter_url,
-                    chapter_label=discovered_chapter_label,
-                    chapter_number=chapter_number,
-                )
+                total_sections_seen += 1
+                now = time.monotonic()
+                if (
+                    section_index == 1
+                    or section_index % section_heartbeat_every == 0
+                    or now - last_heartbeat >= heartbeat_seconds
+                ):
+                    self.logger.info(
+                        "Kentucky KRS section progress: chapter_index=%s/%s chapter=%s section_index=%s/%s total_sections_seen=%s statutes_so_far=%s section=%s",
+                        chapter_index,
+                        total_chapters,
+                        chapter_label,
+                        section_index,
+                        len(section_links),
+                        total_sections_seen,
+                        len(statutes),
+                        section_number,
+                    )
+                    last_heartbeat = now
+                try:
+                    statute = await self._build_statute_from_section_page(
+                        code_name=code_name,
+                        section_url=section_url,
+                        section_label=section_label,
+                        section_number=section_number,
+                        chapter_url=chapter_url,
+                        chapter_label=discovered_chapter_label,
+                        chapter_number=chapter_number,
+                    )
+                except Exception as exc:
+                    self.logger.warning(
+                        "Kentucky KRS section failed: chapter=%s section=%s url=%s error=%s",
+                        chapter_label,
+                        section_number,
+                        section_url,
+                        exc,
+                    )
+                    continue
                 if statute is not None and self._KY_SECTION_URL_RE.search(str(statute.source_url or "")):
                     statute.structured_data = {
                         **(statute.structured_data or {}),
                         "chapter_url": chapter_url,
                     }
                     statutes.append(statute)
+            self.logger.info(
+                "Kentucky KRS chapter done: index=%s/%s chapter=%s sections=%s statutes_so_far=%s elapsed=%.2fs",
+                chapter_index,
+                total_chapters,
+                chapter_label,
+                len(section_links),
+                len(statutes),
+                time.monotonic() - chapter_started_at,
+            )
 
         if statutes:
             return statutes[:limit] if limit is not None else statutes

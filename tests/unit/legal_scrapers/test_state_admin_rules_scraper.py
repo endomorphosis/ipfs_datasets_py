@@ -5318,6 +5318,130 @@ def test_arizona_code_landing_page_is_late_direct_detail_candidate() -> None:
     assert scraper_module._is_immediate_direct_detail_candidate_url(url) is False
 
 
+def test_remaining_frontier_official_html_urls_are_immediate_direct_detail_candidates() -> None:
+    urls = [
+        "https://apps.legislature.ky.gov/law/kar/TITLE001.HTM",
+        "https://ndlegis.gov/information/acdata/html/1.html",
+        "https://ndlegis.gov/information/acdata/html/33.1-03.html",
+        "https://www.leg.state.nv.us/NAC/NAC-001.html",
+        "https://nj.gov/dca/codes/codreg/pdf_regs/njac_5_23.pdf",
+        "https://oklahomarules.blob.core.windows.net/titlepdf/Title_730.pdf",
+        "https://www.pacodeandbulletin.gov/Display/pacode?file=/secure/pacode/data/001/chapter1/chap1toc.html",
+        "https://app.leg.wa.gov/WAC/default.aspx?cite=296",
+        "https://app.leg.wa.gov/WAC/default.aspx?cite=1-06",
+        "https://docs.legis.wisconsin.gov/code/admin_code/adm/1",
+        "https://apps.sos.wv.gov/adlaw/csr/rule.aspx?rule=1-1",
+    ]
+
+    for url in urls:
+        assert scraper_module._is_direct_detail_candidate_url(url) is True
+        assert scraper_module._is_immediate_direct_detail_candidate_url(url) is True
+
+
+def test_oklahoma_title_pdf_seed_is_allowed_direct_document() -> None:
+    url = "https://oklahomarules.blob.core.windows.net/titlepdf/Title_730.pdf"
+    allowed_hosts = scraper_module._allowed_discovery_hosts_for_state("OK", "Oklahoma")
+
+    assert "oklahomarules.blob.core.windows.net" in allowed_hosts
+    assert scraper_module._url_allowed_for_state(url, allowed_hosts) is True
+    assert scraper_module._score_candidate_url(url) > scraper_module._score_candidate_url("https://rules.ok.gov/code")
+    assert scraper_module._is_substantive_rule_text(
+        text=(
+            "TITLE 730. DEPARTMENT OF TRANSPORTATION\n"
+            "CHAPTER 1. ADMINISTRATIVE OPERATIONS\n"
+            "730:1-1-1. Purpose\n"
+            "The rules of this chapter describe agency procedures.\n"
+            "730:1-1-2. Definitions\n"
+            "Words and terms shall have the following meaning unless the context clearly indicates otherwise. "
+            * 80
+        ),
+        title="TITLE 730. DEPARTMENT OF TRANSPORTATION",
+        url=url,
+        min_chars=300,
+    ) is True
+
+
+def test_new_jersey_njac_pdf_seed_is_allowed_direct_document() -> None:
+    url = "https://nj.gov/dca/codes/codreg/pdf_regs/njac_5_23.pdf"
+    allowed_hosts = scraper_module._allowed_discovery_hosts_for_state("NJ", "New Jersey")
+
+    assert "nj.gov" in allowed_hosts
+    assert scraper_module._url_allowed_for_state(url, allowed_hosts) is True
+    assert scraper_module._is_substantive_rule_text(
+        text=(
+            "N.J.A.C. 5:23-1.1 This file includes all Regulations adopted and published through the New Jersey Register.\n"
+            "NEW JERSEY ADMINISTRATIVE CODE\n"
+            "5:23-1.1 Title; division into subchapters\n"
+            "5:23-1.2 Authority\n"
+            "5:23-1.3 Intent and purpose "
+            * 80
+        ),
+        title="N.J.A.C. 5:23-1.1",
+        url=url,
+        min_chars=300,
+    ) is True
+
+
+def test_north_carolina_agency_rule_pages_are_direct_documents() -> None:
+    urls = [
+        "https://nccpaboard.gov/resources/nc-cpa-administrative-code-rules/",
+        "https://www.ncswboard.gov/administrative-codes/",
+        "https://www.ic.nc.gov/abtrules.html",
+    ]
+    allowed_hosts = scraper_module._allowed_discovery_hosts_for_state("NC", "North Carolina")
+
+    for url in urls:
+        assert scraper_module._is_direct_detail_candidate_url(url) is True
+        assert scraper_module._is_immediate_direct_detail_candidate_url(url) is True
+        assert scraper_module._url_allowed_for_state(url, allowed_hosts) is True
+
+
+def test_north_dakota_official_html_title_skips_navigation_header() -> None:
+    soup = scraper_module.BeautifulSoup(
+        """
+        <html>
+          <head><title>North Dakota Administrative Code | North Dakota Legislative Branch</title></head>
+          <body>
+            <h2>Header</h2>
+            <h2>Main navigation</h2>
+            <h3>Current Legislator Information</h3>
+            <h3>Historical Legislator Information</h3>
+            <h3>Contact Information</h3>
+            <h3>Other Assemblies</h3>
+            <h3>Session Home</h3>
+            <h3>Orientation and Organization</h3>
+            <h3>Session Information</h3>
+            <h3>Presession Information</h3>
+            <h3>Bill Information</h3>
+            <h3>Postsession Information</h3>
+            <h3>Calendar & Hearing Schedules</h3>
+            <h3>Committees</h3>
+            <h3>Legislator Information</h3>
+            <h3>Interim Information</h3>
+            <h3>Additional Information</h3>
+            <h3>Interim Summaries</h3>
+            <h3>Interims</h3>
+            <h3>State Budget Summaries</h3>
+            <h3>State Budget Details</h3>
+            <h3>Revenues and Other Items</h3>
+            <main>
+              <h1>North Dakota Administrative Code</h1>
+              <div class="view-content"><h1>Article 33.1-03</h1></div>
+              <article><h3>Water Works and Sewerage Systems</h3></article>
+            </main>
+          </body>
+        </html>
+        """,
+        "html.parser",
+    )
+
+    assert scraper_module._title_from_official_html_soup(
+        soup=soup,
+        url="https://ndlegis.gov/information/acdata/html/33.1-03.html",
+        fallback_title="North Dakota Administrative Code | North Dakota Legislative Branch",
+    ) == "Article 33.1-03 - Water Works and Sewerage Systems"
+
+
 def test_arizona_code_landing_page_is_prioritized_in_direct_detail_queue() -> None:
     urls = scraper_module._prioritized_direct_detail_urls_from_candidates(
         [

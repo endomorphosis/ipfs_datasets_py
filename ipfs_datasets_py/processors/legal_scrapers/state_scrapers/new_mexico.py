@@ -86,10 +86,17 @@ class NewMexicoScraper(BaseStateScraper):
             if not self._full_corpus_enabled() or max_statutes is not None:
                 return index_fallback
 
-        generic = await self._generic_scrape(code_name, code_url, "N.M. Stat. Ann.", max_sections=max(10, limit))
+        generic = await self._generic_scrape(
+            code_name,
+            code_url,
+            "N.M. Stat. Ann.",
+            max_sections=max(10, limit or 1000000),
+        )
         if generic:
             return generic
-        return fallback_candidates[:limit]
+        if limit is not None:
+            return fallback_candidates[:limit]
+        return list(fallback_candidates)
 
     async def _scrape_direct_document_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         seeds = [

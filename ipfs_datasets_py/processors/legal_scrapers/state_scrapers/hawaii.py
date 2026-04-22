@@ -88,6 +88,8 @@ class HawaiiScraper(BaseStateScraper):
         _merge(seeded)
         _merge(archival_stubs)
         if len(merged) >= return_threshold:
+            if limit is None:
+                return merged
             return merged[:return_threshold]
 
         if not self._env_enabled("HAWAII_WALK_WAYBACK_FULL", default=self._full_corpus_enabled()):
@@ -108,7 +110,9 @@ class HawaiiScraper(BaseStateScraper):
             archival = []
         if archival:
             self.logger.info(f"Hawaii archival fallback: Scraped {len(archival)} sections")
-            return archival[:return_threshold]
+            if limit is not None:
+                return archival[:return_threshold]
+            return list(archival)
 
         # Try Playwright against the live site.
         if self.has_playwright():
@@ -120,6 +124,8 @@ class HawaiiScraper(BaseStateScraper):
                     wait_for_selector="a[href*='Vol'], .statute-link, a[href*='hrs']",
                     timeout=45000,
                 )
+                if limit is None:
+                    return list(statutes)
                 return statutes[:return_threshold]
             except Exception as e:
                 self.logger.warning(f"Hawaii Playwright scraping failed: {e}, falling back to HTTP")

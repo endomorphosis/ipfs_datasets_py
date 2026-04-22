@@ -162,6 +162,8 @@ def _is_full_corpus_guard(source: str, node: ast.AST) -> bool:
         or "self._full_corpus_enabled()else" in text
         or "max_statutesisnotNone" in text
         or "limitisnotNone" in text
+        or "max_statutesisNone" in text
+        or "limitisNone" in text
         or "return_threshold<" in text
         or "len(" in text and ">=return_threshold" in text
     )

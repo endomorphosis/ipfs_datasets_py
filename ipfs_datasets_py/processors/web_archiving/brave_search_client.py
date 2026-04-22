@@ -30,6 +30,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Literal
 
+from ipfs_datasets_py.utils.secrets import resolve_secret
+
 logger = logging.getLogger(__name__)
 
 # Try to import IPFS cache module
@@ -49,7 +51,7 @@ def _brave_ipfs_cache_enabled() -> bool:
     explicit = os.environ.get("BRAVE_SEARCH_IPFS_CACHE")
     if explicit is not None:
         return _truthy_env(explicit) and HAVE_IPFS_CACHE
-    return HAVE_IPFS_CACHE
+    return False
 
 
 def brave_web_search_max_count() -> int:
@@ -311,7 +313,8 @@ def brave_web_search(
     
     Args:
         query: Search query string
-        api_key: Brave Search API key (defaults to BRAVE_SEARCH_API_KEY or BRAVE_API_KEY env var)
+        api_key: Brave Search API key. If omitted, resolves BRAVE_SEARCH_API_KEY
+            or BRAVE_API_KEY from env, config secrets, vault, or keyring.
         count: Number of results to return (1-20, default 10)
         offset: Pagination offset (default 0)
         country: Country code for search results (default "us")
@@ -331,9 +334,12 @@ def brave_web_search(
         BRAVE_SEARCH_CACHE_MAX_ENTRIES: Max cache entries (default: 1000)
         BRAVE_SEARCH_CACHE_PATH: Custom cache file path
     """
-    token = (api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or os.environ.get("BRAVE_API_KEY") or "").strip()
+    token = resolve_secret("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", explicit=api_key)
     if not token:
-        raise RuntimeError("Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY (set env var or pass api_key)")
+        raise RuntimeError(
+            "Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY "
+            "(set env var, ~/.config/ipfs_datasets_py/secrets.json, keyring, or pass api_key)"
+        )
     
     q = (query or "").strip()
     if not q:
@@ -527,9 +533,12 @@ def brave_web_search_page(
                 - cached: Whether results came from cache
                 - cache_age_s: Age of cached data in seconds (if cached)
     """
-    token = (api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or "").strip()
+    token = resolve_secret("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", explicit=api_key)
     if not token:
-        raise RuntimeError("Missing BRAVE_SEARCH_API_KEY (set env var or pass api_key)")
+        raise RuntimeError(
+            "Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY "
+            "(set env var, ~/.config/ipfs_datasets_py/secrets.json, keyring, or pass api_key)"
+        )
     
     q = (query or "").strip()
     if not q:
@@ -701,9 +710,10 @@ class BraveSearchClient:
         """Initialize Brave Search client.
         
         Args:
-            api_key: Brave Search API key (can use BRAVE_SEARCH_API_KEY or BRAVE_API_KEY env var)
+            api_key: Brave Search API key. If omitted, resolves BRAVE_SEARCH_API_KEY
+                or BRAVE_API_KEY from env, config secrets, vault, or keyring.
         """
-        self.api_key = api_key or os.environ.get("BRAVE_SEARCH_API_KEY") or os.environ.get("BRAVE_API_KEY")
+        self.api_key = resolve_secret("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", explicit=api_key)
         self.config = {
             "country": "us",
             "safesearch": "moderate",

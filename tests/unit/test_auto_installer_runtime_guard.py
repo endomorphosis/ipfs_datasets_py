@@ -42,6 +42,26 @@ def test_web_scraper_packages_install_lxml_clean_companion(monkeypatch):
     assert "lxml_html_clean>=0.4.0" in installed_specs
 
 
+def test_test_component_installs_pytest_extras(monkeypatch):
+    import ipfs_datasets_py.auto_installer as auto_installer
+
+    installer = auto_installer.DependencyInstaller(auto_install=True)
+    ensured: list[tuple[str, str | None, tuple[str, ...]]] = []
+    monkeypatch.setattr(auto_installer, "_installer", installer)
+
+    def _fake_ensure_dependency(module_name, package_name=None, system_deps=None):
+        ensured.append((module_name, package_name, tuple(system_deps or ())))
+        return True, object()
+
+    monkeypatch.setattr(installer, "ensure_dependency", _fake_ensure_dependency)
+
+    assert auto_installer.install_for_component("test") is True
+
+    assert ("pytest_asyncio", "pytest-asyncio", ()) in ensured
+    assert ("pytest_mock", "pytest-mock", ()) in ensured
+    assert ("hypothesis", "hypothesis", ()) in ensured
+
+
 def test_runtime_installer_runs_when_marker_missing(monkeypatch, tmp_path):
     import ipfs_datasets_py.auto_installer as auto_installer
 

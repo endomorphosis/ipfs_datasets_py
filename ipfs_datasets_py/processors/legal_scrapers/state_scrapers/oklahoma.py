@@ -117,7 +117,9 @@ class OklahomaScraper(BaseStateScraper):
             if len(statutes) > len(best):
                 best = statutes
 
-        return best if len(best) > len(best_archival) else best_archival
+        if len(best) > len(best_archival):
+            return best
+        return list(best_archival)
 
     async def _scrape_direct_seed_sections(
         self,

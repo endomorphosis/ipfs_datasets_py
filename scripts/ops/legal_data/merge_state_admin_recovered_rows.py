@@ -369,6 +369,11 @@ def build_state_admin_recovered_parquet_artifacts(
             }
         )
 
+    all_state_rows: List[Dict[str, Any]] = []
+    for state_parquet_path in sorted(parquet_dir.glob("STATE-*.parquet")):
+        all_state_rows.extend(_read_parquet_rows(state_parquet_path))
+    if all_state_rows:
+        combined_rows = all_state_rows
     combined_rows = merge_canonical_rows([], combined_rows)
     combined_path = parquet_dir / _CORPUS.combined_parquet_filename
     if combined_rows:
@@ -388,6 +393,7 @@ def build_state_admin_recovered_parquet_artifacts(
         "combined_parquet_path": str(combined_path),
         "target_hf_combined_parquet_path": _CORPUS.combined_parquet_path(),
         "combined_row_count": len(combined_rows),
+        "combined_state_shard_count": len(list(parquet_dir.glob("STATE-*.parquet"))),
         "merge_existing_local": bool(merge_existing_local),
         "merge_hf_existing": bool(merge_hf_existing),
         "state_reports": state_reports,

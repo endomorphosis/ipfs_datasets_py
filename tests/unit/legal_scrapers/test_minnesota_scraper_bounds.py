@@ -215,6 +215,34 @@ async def test_kentucky_discovers_official_chapters_and_sections(monkeypatch) ->
 
 
 @pytest.mark.anyio
+async def test_kentucky_direct_fetch_uses_shared_fetch_cache(tmp_path, monkeypatch) -> None:
+    scraper = KentuckyScraper("KY", "Kentucky")
+    scraper._fetch_cache_enabled = True
+    scraper._fetch_cache_dir = tmp_path
+    (tmp_path / "objects").mkdir(parents=True, exist_ok=True)
+    url = "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=50298"
+    await scraper._store_page_bytes_in_fetch_cache(
+        url=url,
+        payload=b"cached KRS payload",
+        provider="test",
+    )
+
+    import requests
+
+    def fail_get(*args, **kwargs):
+        raise AssertionError("network fetch should not run when shared cache has the page")
+
+    monkeypatch.setattr(requests, "get", fail_get)
+
+    payload = await scraper._fetch_official_ky_bytes(url, timeout_seconds=1)
+
+    assert payload == b"cached KRS payload"
+    analytics = scraper.get_fetch_analytics_snapshot()
+    assert analytics["fetch_cache_hits"] == 1
+    assert analytics["providers"]["fetch_cache"] == 1
+
+
+@pytest.mark.anyio
 async def test_kentucky_section_builder_rejects_failed_pdf_extraction(monkeypatch) -> None:
     scraper = KentuckyScraper("KY", "Kentucky")
 

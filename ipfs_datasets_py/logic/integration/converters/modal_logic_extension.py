@@ -29,23 +29,23 @@ logger = logging.getLogger(__name__)
 # Fallback imports when SymbolicAI is not available
 try:
     from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
-
     ensure_symai_config_for_import()
     from symai import Symbol, Expression
     SYMBOLIC_AI_AVAILABLE = True
-except (ImportError, SystemExit):
+except (ImportError, SystemExit, PermissionError):
     try:
-        from ipfs_datasets_py.auto_installer import ensure_module, get_installer
+        from ipfs_datasets_py.auto_installer import get_installer
         from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
 
-        if get_installer().auto_install and ensure_module("symai", "symbolicai>=1.14.0,<2.0.0") is not None:
+        installer = get_installer()
+        if installer.auto_install and installer.install_python_dependency("symbolicai>=1.14.0,<2.0.0"):
             ensure_symai_config_for_import()
             from symai import Symbol, Expression
 
             SYMBOLIC_AI_AVAILABLE = True
         else:
             raise ImportError("SymbolicAI auto-install disabled")
-    except (ImportError, SystemExit, Exception):
+    except (ImportError, SystemExit, PermissionError, Exception):
         SYMBOLIC_AI_AVAILABLE = False
         logger.warning("SymbolicAI not available. Modal logic features will be limited.")
     

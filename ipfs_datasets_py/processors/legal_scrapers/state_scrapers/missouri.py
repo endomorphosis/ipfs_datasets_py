@@ -40,15 +40,22 @@ class MissouriScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(2)
+        limit = self._effective_scrape_limit(max_statutes, default=2)
         if not self._full_corpus_enabled() or max_statutes is not None:
-            direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
+            direct = await self._scrape_direct_sections(code_name, max_statutes=limit or 2)
             if direct:
                 return direct
 
         # Use custom scraper with Missouri-specific patterns
-        fallback = await self._custom_scrape_missouri(code_name, code_url, "Mo. Rev. Stat.", max_sections=limit)
-        return fallback[:limit]
+        fallback = await self._custom_scrape_missouri(
+            code_name,
+            code_url,
+            "Mo. Rev. Stat.",
+            max_sections=limit or 1000000,
+        )
+        if limit is not None:
+            return fallback[:limit]
+        return list(fallback)
 
     async def _scrape_direct_sections(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         try:

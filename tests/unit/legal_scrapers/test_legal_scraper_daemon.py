@@ -1027,6 +1027,156 @@ async def test_legal_scraper_daemon_full_corpus_marks_missing_state_artifacts_pa
 
 
 @pytest.mark.asyncio
+async def test_legal_scraper_daemon_writes_full_corpus_retry_manifest(tmp_path):
+    async def _fake_refresh_runner(args):
+        return {
+            "status": "partial_success",
+            "build": {
+                "states": ["MN"],
+                "missing_jsonld_states": ["OR"],
+                "combined_row_count": 10,
+            },
+            "scrape_gap_states": [],
+            "build_gap_states": ["OR"],
+        }
+
+    async def _fake_agentic_runner(**kwargs):
+        corpus = kwargs["corpus"]
+        if corpus == "state_laws":
+            return {
+                "status": "success",
+                "summary": {
+                    "corpus": corpus,
+                    "states": ["MN"],
+                    "latest_cycle": {
+                        "diagnostics": {
+                            "coverage": {
+                                "coverage_gap_states": ["OR"],
+                            },
+                        },
+                    },
+                },
+            }
+        return {
+            "status": "error",
+            "summary": {
+                "corpus": corpus,
+                "states": [],
+                "latest_cycle": {
+                    "diagnostics": {
+                        "coverage": {
+                            "coverage_gap_states": ["MN", "OR"],
+                        },
+                    },
+                },
+            },
+        }
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            states=["MN", "OR"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(enabled=False),
+            state_refresh=StateRefreshDaemonConfig(scrape=True),
+            agentic_corpora=AgenticCorpusDaemonConfig(
+                enabled=True,
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"],
+            ),
+        ),
+        state_refresh_runner=_fake_refresh_runner,
+        agentic_runner=_fake_agentic_runner,
+    )
+
+    result = await daemon.run()
+    retry_summary = result["cycles"][0]["full_corpus_retry"]
+    latest_retry_path = tmp_path / "latest_full_corpus_retry.json"
+    cycle_retry_path = tmp_path / "cycles" / "cycle_0001_full_corpus_retry.json"
+    retry_payload = json.loads(latest_retry_path.read_text(encoding="utf-8"))
+
+    assert retry_summary["status"] == "needs_retry"
+    assert retry_summary["retry_state_count"] == 2
+    assert latest_retry_path.exists()
+    assert cycle_retry_path.exists()
+    assert retry_payload["missing_state_refresh_states"] == ["OR"]
+    assert retry_payload["missing_agentic_states_by_corpus"] == {
+        "state_admin_rules": ["MN", "OR"],
+        "state_court_rules": ["MN", "OR"],
+        "state_laws": ["OR"],
+    }
+    assert retry_payload["retry_phases"][0]["phase"] == "state_refresh"
+    assert {
+        (phase.get("phase"), phase.get("corpus"))
+        for phase in retry_payload["retry_phases"]
+    } >= {
+        ("agentic_corpora", "state_laws"),
+        ("agentic_corpora", "state_admin_rules"),
+        ("agentic_corpora", "state_court_rules"),
+    }
+
+
+@pytest.mark.asyncio
+async def test_legal_scraper_daemon_clears_full_corpus_retry_manifest_after_complete_cycle(tmp_path):
+    latest_retry_path = tmp_path / "latest_full_corpus_retry.json"
+    latest_retry_path.write_text(json.dumps({"status": "needs_retry"}), encoding="utf-8")
+
+    async def _fake_refresh_runner(args):
+        states = str(args.states).split(",")
+        return {
+            "status": "success",
+            "build": {
+                "states": states,
+                "missing_jsonld_states": [],
+                "combined_row_count": 10,
+            },
+            "scrape_gap_states": [],
+            "build_gap_states": [],
+        }
+
+    async def _fake_agentic_runner(**kwargs):
+        return {
+            "status": "success",
+            "summary": {
+                "corpus": kwargs["corpus"],
+                "states": list(kwargs["states"]),
+                "latest_cycle": {
+                    "diagnostics": {
+                        "coverage": {
+                            "coverage_gap_states": [],
+                        },
+                    },
+                },
+            },
+        }
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            states=["MN", "OR"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(enabled=False),
+            state_refresh=StateRefreshDaemonConfig(scrape=True),
+            agentic_corpora=AgenticCorpusDaemonConfig(
+                enabled=True,
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"],
+            ),
+        ),
+        state_refresh_runner=_fake_refresh_runner,
+        agentic_runner=_fake_agentic_runner,
+    )
+
+    result = await daemon.run()
+    retry_summary = result["cycles"][0]["full_corpus_retry"]
+    cycle_retry_path = tmp_path / "cycles" / "cycle_0001_full_corpus_retry.json"
+    cycle_retry_payload = json.loads(cycle_retry_path.read_text(encoding="utf-8"))
+
+    assert result["cycles"][0]["status"] == "success"
+    assert retry_summary["status"] == "complete"
+    assert cycle_retry_payload["status"] == "complete"
+    assert not latest_retry_path.exists()
+
+
+@pytest.mark.asyncio
 async def test_legal_scraper_daemon_full_corpus_marks_agentic_state_gaps_partial(tmp_path):
     async def _fake_refresh_runner(args):
         states = str(args.states).split(",")

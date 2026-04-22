@@ -298,6 +298,7 @@ class LegalScraperDaemon:
         self.cycles_dir.mkdir(parents=True, exist_ok=True)
         self.state_path = self.output_dir / "daemon_state.json"
         self.latest_path = self.output_dir / "latest_cycle.json"
+        self.latest_full_corpus_retry_path = self.output_dir / "latest_full_corpus_retry.json"
         self.bluebook_runner = bluebook_runner
         self.state_refresh_runner = state_refresh_runner
         self.agentic_runner = agentic_runner
@@ -661,8 +662,10 @@ class LegalScraperDaemon:
 
         if self.config.full_corpus:
             cycle["corpus_completeness"] = self._full_corpus_completeness(cycle["phases"])
-
-        cycle["status"] = self._cycle_status(cycle["phases"], cycle.get("corpus_completeness"))
+            cycle["status"] = self._cycle_status(cycle["phases"], cycle.get("corpus_completeness"))
+            cycle["full_corpus_retry"] = self._write_full_corpus_retry_artifact(cycle)
+        else:
+            cycle["status"] = self._cycle_status(cycle["phases"], cycle.get("corpus_completeness"))
         cycle["finished_at"] = _utc_now()
         self._write_cycle(cycle)
         return cycle
@@ -874,6 +877,135 @@ class LegalScraperDaemon:
             "missing_agentic_corpora": missing_agentic_corpora,
             "missing_agentic_states_by_corpus": missing_agentic_states_by_corpus,
             "errored_agentic_corpora": errored_agentic_corpora,
+        }
+
+    def _build_full_corpus_retry_manifest(self, cycle: Dict[str, Any]) -> Dict[str, Any]:
+        completeness = cycle.get("corpus_completeness") if isinstance(cycle.get("corpus_completeness"), dict) else {}
+        required_states = [
+            str(item).upper()
+            for item in list(completeness.get("required_states") or self.states)
+            if str(item).strip()
+        ]
+        required_corpora = [
+            str(item)
+            for item in list(completeness.get("required_corpora") or SUPPORTED_CORPORA)
+            if str(item).strip()
+        ]
+        state_refresh_states = sorted(
+            {
+                str(item).upper()
+                for item in list(completeness.get("missing_state_refresh_states") or [])
+                if str(item).strip()
+            }
+        )
+        missing_agentic_corpora = [
+            str(item)
+            for item in list(completeness.get("missing_agentic_corpora") or [])
+            if str(item).strip()
+        ]
+        errored_agentic_corpora = [
+            str(item)
+            for item in list(completeness.get("errored_agentic_corpora") or [])
+            if str(item).strip()
+        ]
+        missing_agentic_by_corpus = {
+            str(corpus): sorted(
+                {
+                    str(state).upper()
+                    for state in list(states or [])
+                    if str(state).strip()
+                }
+            )
+            for corpus, states in dict(completeness.get("missing_agentic_states_by_corpus") or {}).items()
+        }
+        for corpus in missing_agentic_corpora + errored_agentic_corpora:
+            missing_agentic_by_corpus.setdefault(corpus, list(required_states))
+
+        retry_phases: List[Dict[str, Any]] = []
+        if state_refresh_states:
+            retry_phases.append(
+                {
+                    "phase": "state_refresh",
+                    "states": state_refresh_states,
+                    "reason": "state refresh scrape/build artifacts are missing or empty for these states",
+                    "recommended_args": [
+                        "--state-refresh-scrape",
+                        "--states",
+                        ",".join(state_refresh_states),
+                    ],
+                }
+            )
+        for corpus in required_corpora:
+            states = list(missing_agentic_by_corpus.get(corpus) or [])
+            if not states:
+                continue
+            retry_phases.append(
+                {
+                    "phase": "agentic_corpora",
+                    "corpus": corpus,
+                    "states": states,
+                    "reason": "agentic corpus coverage is missing, zero-row, or errored for these states",
+                    "recommended_args": [
+                        "--enable-agentic-corpora",
+                        "--agentic-corpora",
+                        corpus,
+                        "--states",
+                        ",".join(states),
+                    ],
+                }
+            )
+
+        retry_states = sorted(
+            {
+                state
+                for phase in retry_phases
+                for state in list(phase.get("states") or [])
+                if str(state).strip()
+            }
+        )
+        status = "needs_retry" if retry_phases else "complete"
+        return {
+            "status": status,
+            "generated_at": _utc_now(),
+            "cycle": int(cycle.get("cycle") or 0),
+            "cycle_status": str(cycle.get("status") or ""),
+            "completeness_status": str(completeness.get("status") or "unknown"),
+            "output_dir": str(self.output_dir),
+            "latest_cycle_path": str(self.latest_path),
+            "required_state_count": len(required_states),
+            "required_states": required_states,
+            "required_corpora": required_corpora,
+            "retry_state_count": len(retry_states),
+            "retry_states": retry_states,
+            "retry_phase_count": len(retry_phases),
+            "retry_phases": retry_phases,
+            "missing_state_refresh_states": state_refresh_states,
+            "missing_agentic_corpora": missing_agentic_corpora,
+            "missing_agentic_states_by_corpus": missing_agentic_by_corpus,
+            "errored_agentic_corpora": errored_agentic_corpora,
+        }
+
+    def _write_full_corpus_retry_artifact(self, cycle: Dict[str, Any]) -> Dict[str, Any]:
+        manifest = self._build_full_corpus_retry_manifest(cycle)
+        cycle_index = int(cycle.get("cycle") or 0)
+        cycle_retry_path = self.cycles_dir / f"cycle_{cycle_index:04d}_full_corpus_retry.json"
+        payload = dict(manifest)
+        payload["cycle_retry_path"] = str(cycle_retry_path)
+        payload["latest_retry_path"] = str(self.latest_full_corpus_retry_path)
+        cycle_retry_path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str), encoding="utf-8")
+        if str(payload.get("status") or "") == "needs_retry":
+            self.latest_full_corpus_retry_path.write_text(
+                json.dumps(payload, indent=2, sort_keys=True, default=str),
+                encoding="utf-8",
+            )
+        else:
+            self.latest_full_corpus_retry_path.unlink(missing_ok=True)
+        return {
+            "status": payload["status"],
+            "retry_state_count": payload["retry_state_count"],
+            "retry_phase_count": payload["retry_phase_count"],
+            "cycle_retry_path": str(cycle_retry_path),
+            "latest_retry_path": str(self.latest_full_corpus_retry_path),
         }
 
     @staticmethod

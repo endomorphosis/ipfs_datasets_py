@@ -236,6 +236,122 @@ def test_refresh_state_laws_corpus_uses_shared_hf_token_resolver(tmp_path, monke
     }
 
 
+def test_refresh_state_laws_corpus_sets_full_corpus_env_for_uncapped_scrape(tmp_path, monkeypatch):
+    observed = {}
+
+    async def _fake_scrape_state_laws(**kwargs):
+        observed["full_corpus_env"] = __import__("os").environ.get("STATE_SCRAPER_FULL_CORPUS")
+        observed["max_statutes"] = kwargs.get("max_statutes")
+        return {"status": "success", "data": [], "metadata": {"coverage_summary": {}}}
+
+    monkeypatch.delenv("STATE_SCRAPER_FULL_CORPUS", raising=False)
+    monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        refresh_state_laws_corpus,
+        "build_state_laws_parquet_artifacts",
+        lambda **kwargs: {
+            "status": "success",
+            "states": ["MN"],
+            "state_count": 1,
+            "missing_jsonld_states": [],
+            "combined_row_count": 0,
+        },
+    )
+
+    args = argparse.Namespace(
+        states="MN",
+        include_dc=False,
+        output_root=str(tmp_path),
+        jsonld_dir="",
+        parquet_dir="",
+        scrape=True,
+        max_statutes=0,
+        rate_limit_delay=0.0,
+        parallel_workers=1,
+        per_state_retry_attempts=0,
+        per_state_timeout_seconds=1.0,
+        strict_full_text=False,
+        min_full_text_chars=300,
+        no_hydrate_statute_text=False,
+        allow_justia_fallback=False,
+        no_merge_existing_local=False,
+        merge_hf_existing=False,
+        publish_to_hf=False,
+        allow_incomplete_publish=False,
+        repo_id="justicedao/ipfs_state_laws",
+        hf_token="",
+        create_repo=False,
+        verify=False,
+        commit_message="test",
+        dry_run=False,
+        json=True,
+    )
+
+    result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
+
+    assert result["status"] == "success"
+    assert observed == {"full_corpus_env": "1", "max_statutes": None}
+    assert __import__("os").environ.get("STATE_SCRAPER_FULL_CORPUS") is None
+
+
+def test_refresh_state_laws_corpus_preserves_bounded_scrape_env(tmp_path, monkeypatch):
+    observed = {}
+
+    async def _fake_scrape_state_laws(**kwargs):
+        observed["full_corpus_env"] = __import__("os").environ.get("STATE_SCRAPER_FULL_CORPUS")
+        observed["max_statutes"] = kwargs.get("max_statutes")
+        return {"status": "success", "data": [], "metadata": {"coverage_summary": {}}}
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "0")
+    monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        refresh_state_laws_corpus,
+        "build_state_laws_parquet_artifacts",
+        lambda **kwargs: {
+            "status": "success",
+            "states": ["MN"],
+            "state_count": 1,
+            "missing_jsonld_states": [],
+            "combined_row_count": 0,
+        },
+    )
+
+    args = argparse.Namespace(
+        states="MN",
+        include_dc=False,
+        output_root=str(tmp_path),
+        jsonld_dir="",
+        parquet_dir="",
+        scrape=True,
+        max_statutes=3,
+        rate_limit_delay=0.0,
+        parallel_workers=1,
+        per_state_retry_attempts=0,
+        per_state_timeout_seconds=1.0,
+        strict_full_text=False,
+        min_full_text_chars=300,
+        no_hydrate_statute_text=False,
+        allow_justia_fallback=False,
+        no_merge_existing_local=False,
+        merge_hf_existing=False,
+        publish_to_hf=False,
+        allow_incomplete_publish=False,
+        repo_id="justicedao/ipfs_state_laws",
+        hf_token="",
+        create_repo=False,
+        verify=False,
+        commit_message="test",
+        dry_run=False,
+        json=True,
+    )
+
+    result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
+
+    assert result["status"] == "success"
+    assert observed == {"full_corpus_env": "0", "max_statutes": 3}
+    assert __import__("os").environ.get("STATE_SCRAPER_FULL_CORPUS") == "0"
+
+
 def test_all_state_jurisdictions_have_registered_scrapers():
     registered = set(StateScraperRegistry.get_all_registered_states())
 

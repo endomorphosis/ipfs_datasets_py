@@ -49,9 +49,8 @@ class LouisianaScraper(BaseStateScraper):
         Louisiana live endpoints can be brittle in automation contexts.
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
-        return_threshold = self._bounded_return_threshold(30)
-        if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        limit = self._effective_scrape_limit(max_statutes, default=30)
+        return_threshold = limit if limit is not None else 1000000
         if not self._full_corpus_enabled() or max_statutes is not None:
             live = await self._scrape_live_law_pages(code_name=code_name, max_statutes=return_threshold)
             if live:
@@ -74,7 +73,9 @@ class LouisianaScraper(BaseStateScraper):
             return playwright
         if archival:
             self.logger.info(f"Louisiana archival fallback: Scraped {len(archival)} sections")
-            return archival
+            if limit is None:
+                return list(archival)
+            return list(archival)
         return []
 
     async def _scrape_live_law_pages(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:

@@ -32,8 +32,27 @@ except Exception:  # pragma: no cover
     _deps_set = None  # type: ignore
 
 
-# libp2p is optional; we resolve it lazily (and allow injection) to avoid
-# import-time side effects and to support sharing one module instance via deps.
+try:
+    from multiformats import CID, multihash, multicodec
+    MULTIFORMATS_AVAILABLE = True
+except ImportError:
+    try:
+        from ipfs_datasets_py.auto_installer import ensure_module
+
+        ensure_module('multiformats', 'multiformats')
+        from multiformats import CID, multihash, multicodec
+        MULTIFORMATS_AVAILABLE = True
+    except ImportError:
+        try:
+            import sys
+
+            sys.path.insert(0, str(Path(__file__).parent.parent / "ipfs_multiformats_py"))
+            from multiformats import CID, multihash, multicodec
+            MULTIFORMATS_AVAILABLE = True
+        except ImportError:
+            MULTIFORMATS_AVAILABLE = False
+            logging.warning("ipfs_multiformats not available, using SHA256 hashing")
+
 LIBP2P_AVAILABLE = False
 new_host = None
 create_new_key_pair = None

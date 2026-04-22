@@ -243,6 +243,13 @@ class DependencyInstaller:
             
             # Development
             'pytest': ['pytest>=8.0.0,<9.0.0'],
+            'pytest-asyncio': ['pytest-asyncio>=0.21.0'],
+            'pytest-cov': ['pytest-cov>=4.1.0'],
+            'pytest-timeout': ['pytest-timeout>=2.0.2'],
+            'pytest-xdist': ['pytest-xdist>=3.8.0'],
+            'pytest-benchmark': ['pytest-benchmark>=4.0.0'],
+            'pytest-mock': ['pytest-mock>=3.12.0'],
+            'hypothesis': ['hypothesis>=6.0.0'],
             'anyio': ['anyio>=4.0.0,<5.0.0'],
             'coverage': ['coverage>=7.0.0,<8.0.0'],
 
@@ -1502,6 +1509,17 @@ def install_for_component(component: str) -> bool:
             ('bs4', 'beautifulsoup4'),
             ('newspaper', 'newspaper3k'),
             ('readability', 'readability-lxml'),
+        ]
+    elif component == 'test':
+        dependencies = [
+            ('pytest', 'pytest'),
+            ('pytest_asyncio', 'pytest-asyncio'),
+            ('pytest_cov', 'pytest-cov'),
+            ('pytest_timeout', 'pytest-timeout'),
+            ('xdist', 'pytest-xdist'),
+            ('pytest_benchmark', 'pytest-benchmark'),
+            ('pytest_mock', 'pytest-mock'),
+            ('hypothesis', 'hypothesis'),
         ]
     elif component == 'symai_router':
         dependencies = [

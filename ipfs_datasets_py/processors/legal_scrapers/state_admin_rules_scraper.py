@@ -1097,9 +1097,16 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://reports.oah.state.nc.us/ncac.asp",
         "https://reports.oah.state.nc.us/ncac/title%2001%20-%20administration/chapter%2001%20-%20departmental%20rules/chapter%2001%20rules.pdf",
         "https://reports.oah.state.nc.us/ncac/title%2010a%20-%20health%20and%20human%20services/title%2010a%20rules.pdf",
+        "https://nccpaboard.gov/resources/nc-cpa-administrative-code-rules/",
+        "https://www.ncswboard.gov/administrative-codes/",
+        "https://www.ic.nc.gov/abtrules.html",
     ],
     "ND": [
         "https://ndlegis.gov/information/acdata/html/contents.html",
+        "https://ndlegis.gov/information/acdata/html/33.1-03.html",
+        "https://ndlegis.gov/information/acdata/html/33.1-10.html",
+        "https://ndlegis.gov/information/acdata/html/4-01.html",
+        "https://ndlegis.gov/information/acdata/html/75-01.html",
         "https://ndlegis.gov/information/acdata/html/1.html",
         "https://ndlegis.gov/information/acdata/html/4.html",
         "https://ndlegis.gov/information/acdata/html/33.html",
@@ -1109,6 +1116,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.nj.gov/oal/rules/accessp/",
         "https://www.nj.gov/oal/rules/accessp/rules/",
         "https://www.nj.gov/oal/rules/accessp/pdfs/",
+        "https://nj.gov/dca/codes/codreg/pdf_regs/njac_5_23.pdf",
+        "https://nj.gov/dca/codes/codreg/pdf_regs/njac_5_21.pdf",
+        "https://nj.gov/dca/codes/codreg/pdf_regs/njac_5_17.pdf",
         "https://advance.lexis.com/container?config=014CJAA5YjkyN2JjOC03ZDU0LTQzOTItYWI1MC03MjQ2NDc4YTA2N2YKAFBvZENhdGFsb2eXv0tT-yz8icjoObuO",
     ],
     "NV": [
@@ -1160,6 +1170,9 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.sos.ok.gov/rules/",
         "https://rules.ok.gov/",
         "https://rules.ok.gov/code",
+        "https://oklahomarules.blob.core.windows.net/titlepdf/Title_730.pdf",
+        "https://oklahomarules.blob.core.windows.net/titlepdf/Title_210.pdf",
+        "https://oklahomarules.blob.core.windows.net/titlepdf/Title_1.pdf",
     ],
     "OH": [
         "https://codes.ohio.gov/ohio-administrative-code",
@@ -1295,6 +1308,7 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
     "WA": [
         "https://app.leg.wa.gov/wac/",
         "https://app.leg.wa.gov/WAC/default.aspx",
+        "https://app.leg.wa.gov/WAC/default.aspx?cite=296",
         "https://app.leg.wa.gov/WAC/default.aspx?cite=1-06",
         "https://app.leg.wa.gov/WAC/default.aspx?cite=296-17A",
     ],
@@ -1351,7 +1365,59 @@ _RECOVERY_RELAXED_STATES = {"AL", "AZ", "HI", "MS", "MT", "NH", "SD", "TN"}
 # These states are better served by direct admin-rule discovery than by the
 # delegated state-laws scrape, which can consume the bounded budget on
 # statute-specific work before admin-rule recovery starts.
-_DIRECT_AGENTIC_RECOVERY_STATES = {"AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "KS", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "NE", "NM", "NY", "OH", "OK", "OR", "TN", "UT", "VT", "WY"}
+_DIRECT_AGENTIC_RECOVERY_STATES = {
+    "AK",
+    "AL",
+    "AR",
+    "AZ",
+    "CA",
+    "CO",
+    "CT",
+    "DC",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "IA",
+    "ID",
+    "IL",
+    "IN",
+    "KS",
+    "KY",
+    "LA",
+    "MA",
+    "MD",
+    "ME",
+    "MI",
+    "MN",
+    "MO",
+    "MS",
+    "MT",
+    "NC",
+    "ND",
+    "NE",
+    "NH",
+    "NJ",
+    "NM",
+    "NV",
+    "NY",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VA",
+    "VT",
+    "WA",
+    "WI",
+    "WV",
+    "WY",
+}
 _DIRECT_AGENTIC_BUDGET_CAP_SECONDS_BY_STATE = {
     # These have enough curated seeds to recover quickly, but the daemon runs
     # them in single-state subprocesses; keeping their fallback budget bounded
@@ -2472,6 +2538,24 @@ def _score_candidate_url(url: str) -> int:
             score += 6
         else:
             score += 4
+    if host == "oklahomarules.blob.core.windows.net" and re.search(
+        r"^/titlepdf/Title_\d+\.pdf$",
+        path,
+        re.IGNORECASE,
+    ):
+        score += 13
+    if host in {"nj.gov", "www.nj.gov"} and re.search(
+        r"^/dca/codes/codreg/pdf_regs/njac_[\w.-]+\.pdf$",
+        path,
+        re.IGNORECASE,
+    ):
+        score += 13
+    if (
+        (host == "nccpaboard.gov" and normalized_path.lower() == "/resources/nc-cpa-administrative-code-rules")
+        or (host == "www.ncswboard.gov" and normalized_path.lower() == "/administrative-codes")
+        or (host == "www.ic.nc.gov" and normalized_path.lower() == "/abtrules.html")
+    ):
+        score += 13
     if host == "legislature.ok.gov" and _OK_NON_SUBSTANTIVE_LEGISLATURE_PATH_RE.fullmatch(path):
         score -= 8
     if host in {"lexisnexis.com", "www.lexisnexis.com"} and _VT_LEXIS_TOC_PATH_RE.fullmatch(path):
@@ -3063,6 +3147,24 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         section_num = str((query_params.get("sectionNum") or [""])[0]).strip()
         if title_num and (not section_num or _OK_RULE_SECTION_NUM_RE.fullmatch(section_num)):
             return True
+    if host == "oklahomarules.blob.core.windows.net" and re.search(
+        r"^/titlepdf/Title_\d+\.pdf$",
+        path,
+        re.IGNORECASE,
+    ):
+        return True
+    if host in {"nj.gov", "www.nj.gov"} and re.search(
+        r"^/dca/codes/codreg/pdf_regs/njac_[\w.-]+\.pdf$",
+        path,
+        re.IGNORECASE,
+    ):
+        return True
+    if host == "nccpaboard.gov" and normalized_path.lower() == "/resources/nc-cpa-administrative-code-rules":
+        return True
+    if host == "www.ncswboard.gov" and normalized_path.lower() == "/administrative-codes":
+        return True
+    if host == "www.ic.nc.gov" and normalized_path.lower() == "/abtrules.html":
+        return True
     if host == "texas-sos.appianportalsgov.com" and normalized_path.lower() == "/rules-and-meetings":
         query_params = parse_qs(parsed.query or "")
         interface = str((query_params.get("interface") or [""])[0]).strip().upper()
@@ -3097,7 +3199,7 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         return True
     if host == "reports.oah.state.nc.us" and re.search(r"^/ncac/.+\.pdf$", path, re.IGNORECASE):
         return True
-    if host == "ndlegis.gov" and re.search(r"^/information/acdata/html/\d+\.html$", path, re.IGNORECASE):
+    if host == "ndlegis.gov" and re.search(r"^/information/acdata/html/\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?)?\.html$", path, re.IGNORECASE):
         return True
     if host == "www.leg.state.nv.us" and re.search(r"^/NAC/NAC-[\w-]+\.html$", path, re.IGNORECASE):
         return True
@@ -3117,6 +3219,8 @@ def _is_direct_detail_candidate_url(url: str) -> bool:
         rule_value = str((parse_qs(parsed.query or "").get("rule") or [""])[0]).strip()
         if re.fullmatch(r"\d+[A-Za-z]?(?:-\d+[A-Za-z]?)?", rule_value):
             return True
+    if host == "apps.legislature.ky.gov" and re.search(r"^/law/kar/TITLE\d+\.HTM$", path, re.IGNORECASE):
+        return True
     if host == "iar.iga.in.gov" and re.search(r"/code/(?:current|2006|2024)/\d+/\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?", path, re.IGNORECASE):
         return True
     if host in {"www.legis.iowa.gov", "legis.iowa.gov"} and _IA_OFFICIAL_AGENCY_PDF_PATH_RE.fullmatch(path):
@@ -3533,6 +3637,31 @@ def _has_admin_signal(*, text: str, title: str, url: str) -> bool:
             section_hits = len(re.findall(r"\b\d{1,3}:\d+(?:-\d+)+(?:\.\d+)?\b", ok_hay))
             if section_hits >= 2 and _LEGAL_CONTENT_SIGNAL_RE.search(ok_hay):
                 return True
+
+    if host == "oklahomarules.blob.core.windows.net" and re.search(
+        r"^/titlepdf/Title_\d+\.pdf$",
+        path,
+        re.IGNORECASE,
+    ):
+        ok_hay = " ".join([title_value, body])
+        section_hits = len(re.findall(r"\b\d{1,3}:\d+(?:-\d+)+(?:\.\d+)?\b", ok_hay))
+        if section_hits >= 2 and (
+            "oklahoma administrative code" in ok_hay.lower()
+            or re.search(r"\bOAC\b", ok_hay)
+            or re.search(r"\bTitle\s+\d+\.", ok_hay, re.IGNORECASE)
+        ):
+            return True
+
+    if host in {"nj.gov", "www.nj.gov"} and re.search(
+        r"^/dca/codes/codreg/pdf_regs/njac_[\w.-]+\.pdf$",
+        path,
+        re.IGNORECASE,
+    ):
+        nj_hay = " ".join([title_value, body])
+        njac_hits = len(re.findall(r"\bN\.?J\.?A\.?C\.?\s+\d+[A-Za-z]?:\d+", nj_hay, re.IGNORECASE))
+        section_hits = len(re.findall(r"\b\d+[A-Za-z]?:\d+(?:-\d+[A-Za-z]?)?(?:\.\d+)?\b", nj_hay))
+        if njac_hits >= 1 or section_hits >= 3:
+            return True
 
     return False
 
@@ -9374,6 +9503,65 @@ def _document_format_for_url(url: str) -> str:
     return "html"
 
 
+_OFFICIAL_HTML_GENERIC_HEADING_RE = re.compile(
+    r"^(?:header|main navigation|footer|related resources(?:\s+for\s+this\s+section.*)?|"
+    r"constitution left column|constitution right column|skip to main content)$",
+    re.IGNORECASE,
+)
+
+
+def _title_from_official_html_soup(*, soup: BeautifulSoup, url: str, fallback_title: str = "") -> str:
+    """Pick a content title from official rule HTML without accepting site chrome."""
+    parsed = urlparse(str(url or "").strip())
+    host = parsed.netloc.lower()
+
+    def _clean(value: Any) -> str:
+        return re.sub(r"\s+", " ", str(value or "")).strip()
+
+    headings = [
+        _clean(node.get_text(" ", strip=True))
+        for node in soup.find_all(["h1", "h2", "h3"], limit=160)
+    ]
+    headings = [
+        heading
+        for heading in headings
+        if heading and not _OFFICIAL_HTML_GENERIC_HEADING_RE.match(heading)
+    ]
+
+    if host == "ndlegis.gov":
+        article_index = next(
+            (
+                index
+                for index, heading in enumerate(headings)
+                if re.match(r"^Article\s+\d+(?:\.\d+)?-\d+", heading, re.IGNORECASE)
+            ),
+            -1,
+        )
+        article_heading = headings[article_index] if article_index >= 0 else ""
+        subject_heading = ""
+        if article_index >= 0:
+            subject_heading = next(
+                (
+                    heading
+                    for heading in headings[article_index + 1 :]
+                    if heading
+                    and heading != article_heading
+                    and not re.match(r"^North\s+Dakota\s+Administrative\s+Code$", heading, re.IGNORECASE)
+                ),
+                "",
+            )
+        if article_heading and subject_heading:
+            return f"{article_heading} - {subject_heading}"
+        if article_heading:
+            return article_heading
+        if subject_heading:
+            return subject_heading
+
+    for heading in headings:
+        return heading
+    return _clean(fallback_title)
+
+
 def _extract_text_from_pdf_bytes_natively(pdf_bytes: bytes) -> str:
     if not pdf_bytes:
         return ""
@@ -9432,13 +9620,17 @@ async def _extract_text_from_pdf_bytes_with_processor(pdf_bytes: bytes, *, sourc
     if not pdf_bytes:
         return ""
 
-    extracted_text = _extract_text_from_pdf_bytes_natively(pdf_bytes)
-    if extracted_text:
-        return extracted_text
-
+    # Prefer the bounded subprocess path first. Some large state-code PDFs can
+    # make pypdf spend minutes in native extraction without an enforceable async
+    # timeout, while pdftotext has its own subprocess timeout.
     extracted_text = _extract_text_from_pdf_bytes_with_pdftotext(pdf_bytes)
     if extracted_text:
         return extracted_text
+
+    if len(pdf_bytes) <= 15_000_000:
+        extracted_text = _extract_text_from_pdf_bytes_natively(pdf_bytes)
+        if extracted_text:
+            return extracted_text
 
     try:
         from ipfs_datasets_py.processors.specialized.pdf import PDFProcessor
@@ -10299,6 +10491,18 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and "kansas administrative regulations" in body[:4000].lower()
         and "compiled and published by the office of the secretary of state" in body[:4000].lower()
     )
+    oklahoma_official_title_pdf = (
+        host == "oklahomarules.blob.core.windows.net"
+        and re.search(r"^/titlepdf/Title_\d+\.pdf$", path, re.IGNORECASE) is not None
+        and len(body) >= max(8000, int(min_chars))
+        and _has_admin_signal(text=body, title=title_value, url=url_value)
+    )
+    new_jersey_state_njac_pdf = (
+        host in {"nj.gov", "www.nj.gov"}
+        and re.search(r"^/dca/codes/codreg/pdf_regs/njac_[\w.-]+\.pdf$", path, re.IGNORECASE) is not None
+        and len(body) >= max(8000, int(min_chars))
+        and _has_admin_signal(text=body, title=title_value, url=url_value)
+    )
     wyoming_official_ajax_viewer = False
     if host == "rules.wyo.gov" and path.lower() == "/ajaxhandler.ashx":
         handler = str((query.get("handler") or [""])[0]).strip().lower()
@@ -10331,6 +10535,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and not tennessee_official_rule_pdf
         and not iowa_official_rule_document
         and not kansas_official_volume_pdf
+        and not oklahoma_official_title_pdf
+        and not new_jersey_state_njac_pdf
         and not wyoming_official_ajax_viewer
     ):
         return False
@@ -10339,6 +10545,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and not official_index_can_be_substantive
         and not tennessee_official_rule_pdf
         and not kansas_official_volume_pdf
+        and not oklahoma_official_title_pdf
+        and not new_jersey_state_njac_pdf
         and not wyoming_official_ajax_viewer
     ):
         return False
@@ -10367,6 +10575,10 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         return False
 
     if wyoming_official_ajax_viewer:
+        return True
+    if oklahoma_official_title_pdf:
+        return True
+    if new_jersey_state_njac_pdf:
         return True
 
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
@@ -10897,6 +11109,7 @@ async def _scrape_official_html_rule_detail_via_requests(url: str) -> Optional[A
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
     path = parsed.path or ""
+    normalized_path = path.rstrip("/") or "/"
     if host in {"flrules.org", "www.flrules.org"}:
         if not (_FL_RULE_DETAIL_PATH_RE.fullmatch(path) and parse_qs(parsed.query or "").get("ID")):
             return None
@@ -10923,7 +11136,7 @@ async def _scrape_official_html_rule_detail_via_requests(url: str) -> Optional[A
         ):
             return None
     elif host == "ndlegis.gov":
-        if not re.search(r"^/information/acdata/html/\d+\.html$", path, re.IGNORECASE):
+        if not re.search(r"^/information/acdata/html/\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?)?\.html$", path, re.IGNORECASE):
             return None
     elif host == "www.leg.state.nv.us":
         if not re.search(r"^/NAC/NAC-[\w-]+\.html$", path, re.IGNORECASE):
@@ -10939,6 +11152,9 @@ async def _scrape_official_html_rule_detail_via_requests(url: str) -> Optional[A
             return None
     elif host == "apps.sos.wv.gov":
         if normalized_path.lower() != "/adlaw/csr/rule.aspx" or not parse_qs(parsed.query or "").get("rule"):
+            return None
+    elif host == "apps.legislature.ky.gov":
+        if not re.search(r"^/law/kar/TITLE\d+\.HTM$", path, re.IGNORECASE):
             return None
     else:
         return None
@@ -10966,11 +11182,7 @@ async def _scrape_official_html_rule_detail_via_requests(url: str) -> Optional[A
         title = ""
         if soup.title is not None:
             title = str(soup.title.get_text(" ", strip=True) or "").strip()
-        heading = soup.find(["h1", "h2"])
-        if heading is not None:
-            heading_text = str(heading.get_text(" ", strip=True) or "").strip()
-            if heading_text:
-                title = heading_text
+        title = _title_from_official_html_soup(soup=soup, url=url, fallback_title=title)
         text = " ".join(str(soup.get_text(" ", strip=True) or "").split())
         if not text:
             return None
@@ -14445,11 +14657,140 @@ async def _agentic_discover_admin_state_blocks(
             max_fetch=max_fetch,
         )
 
+        prioritized_seed_document_urls: List[str] = []
+        seen_seed_document_keys: set[str] = set()
+        seed_document_limit = min(max(max_fetch * 3, max_fetch + 2), 12)
+        for seed_url in ordered_seed_urls:
+            if not _is_immediate_direct_detail_candidate_url(seed_url):
+                continue
+            seed_candidates = [seed_url]
+            for candidate_url in seed_candidates:
+                doc_key = _url_key(candidate_url)
+                if not doc_key or doc_key in seen_seed_document_keys:
+                    continue
+                seen_seed_document_keys.add(doc_key)
+                prioritized_seed_document_urls.append(candidate_url)
+                if len(prioritized_seed_document_urls) >= seed_document_limit:
+                    break
+            if len(prioritized_seed_document_urls) >= seed_document_limit:
+                break
+
+        if state_code == "AZ":
+            prioritized_seed_document_urls = _prioritize_arizona_seed_document_urls(
+                prioritized_seed_document_urls,
+                limit=6,
+            )
+        else:
+            prioritized_seed_document_urls = [
+                *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
+                *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
+            ]
+
+        official_html_states = {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}
+        preseed_min_text_chars = max(140, int(min_full_text_chars // 2))
+        if require_substantive_text:
+            preseed_min_text_chars = max(220, int(min_full_text_chars))
+        preseed_direct_documents: List[tuple[str, str, str, Any]] = []
+        preseed_direct_document_keys: set[str] = set()
+
+        async def _scrape_prioritized_seed_document_direct(
+            document_url: str,
+            *,
+            timeout_s: float,
+        ) -> Optional[tuple[str, str, str, Any]]:
+            lower_document_url = str(document_url or "").lower()
+            seed_scraped = None
+            try:
+                if lower_document_url.endswith(".pdf") or ".pdf?" in lower_document_url:
+                    seed_scraped = await asyncio.wait_for(
+                        _scrape_pdf_candidate_url_with_processor(document_url),
+                        timeout=timeout_s,
+                    )
+                elif lower_document_url.endswith(".rtf") or ".rtf?" in lower_document_url:
+                    seed_scraped = await asyncio.wait_for(
+                        _scrape_rtf_candidate_url_with_processor(document_url),
+                        timeout=timeout_s,
+                    )
+                elif _is_docx_candidate_url(document_url):
+                    seed_scraped = await asyncio.wait_for(
+                        _scrape_docx_candidate_url_with_processor(document_url),
+                        timeout=timeout_s,
+                    )
+                elif state_code in official_html_states:
+                    seed_scraped = await asyncio.wait_for(
+                        _scrape_official_html_rule_detail_via_requests(document_url),
+                        timeout=timeout_s,
+                    )
+                else:
+                    seed_scraped = await asyncio.wait_for(
+                        live_scraper.scrape(document_url),
+                        timeout=timeout_s,
+                    )
+            except Exception:
+                seed_scraped = None
+            if seed_scraped is None:
+                return None
+
+            seed_text = str(getattr(seed_scraped, "text", "") or "").strip()
+            seed_title = str(getattr(seed_scraped, "title", "") or "").strip()
+            seed_title, seed_text = await _normalize_candidate_document_content(
+                url=document_url,
+                title=seed_title,
+                text=seed_text,
+            )
+            seed_is_substantive = _is_substantive_rule_text(
+                text=seed_text,
+                title=seed_title,
+                url=document_url,
+                min_chars=preseed_min_text_chars,
+            )
+            seed_is_relaxed = relaxed_recovery and _is_relaxed_recovery_text(
+                text=seed_text,
+                title=seed_title,
+                url=document_url,
+            )
+            if not (seed_is_substantive or seed_is_relaxed):
+                return None
+            if seed_is_relaxed and not _should_emit_relaxed_recovery_statute(
+                text=seed_text,
+                title=seed_title,
+                url=document_url,
+            ):
+                return None
+
+            seed_provenance = getattr(seed_scraped, "extraction_provenance", None) or {}
+            seed_method_value = None
+            if isinstance(seed_provenance, dict):
+                seed_method_value = seed_provenance.get("method")
+            if seed_method_value is None:
+                seed_method_value = getattr(seed_scraped, "method_used", None)
+            return (document_url, seed_title, seed_text, seed_method_value)
+
         # Curated seeds often already expose substantive rule pages or article/part
         # links. Prefetch them before broad agentic discovery so states like Indiana
         # and Rhode Island can short-circuit expensive exploration when the official
         # entrypoints are already sufficient.
         preseed_signal = direct_detail_ready
+        if state_code != "AZ" and prioritized_seed_document_urls:
+            for document_url in prioritized_seed_document_urls[: min(max_fetch, 8)]:
+                remaining_budget_s = max(0.0, presearch_budget_deadline - time.monotonic())
+                if remaining_budget_s <= 1.0:
+                    break
+                document_key = _url_key(document_url)
+                if not document_key or document_key in preseed_direct_document_keys:
+                    continue
+                scraped_seed_document = await _scrape_prioritized_seed_document_direct(
+                    document_url,
+                    timeout_s=max(1.0, min(12.0, remaining_budget_s)),
+                )
+                if scraped_seed_document is None:
+                    continue
+                preseed_direct_document_keys.add(document_key)
+                preseed_direct_documents.append(scraped_seed_document)
+                preseed_signal = True
+                if len(preseed_direct_documents) >= max_fetch:
+                    break
+
         if not direct_detail_ready:
             for seed_url in ordered_seed_urls[:6]:
                 remaining_budget_s = max(0.0, presearch_budget_deadline - time.monotonic())
@@ -14961,6 +15302,29 @@ async def _agentic_discover_admin_state_blocks(
                     )
             return True
 
+        official_seed_direct_recovered_rules = False
+        official_seed_direct_satisfied = False
+        if preseed_direct_documents:
+            for document_url, seed_title, seed_text, seed_method_value in preseed_direct_documents:
+                if len(statutes) >= max_fetch:
+                    break
+                inspected_urls += 1
+                accepted_seed = await _append_document_if_rule(
+                    document_url,
+                    seed_title,
+                    seed_text,
+                    seed_method_value,
+                    source_phase="official_seed_direct",
+                )
+                if accepted_seed:
+                    official_seed_direct_recovered_rules = True
+                    preseed_signal = True
+                    source_breakdown["official_seed_direct"] = int(source_breakdown.get("official_seed_direct", 0)) + 1
+            official_seed_direct_satisfied = (
+                official_seed_direct_recovered_rules
+                and len(statutes) >= min(max_fetch, max(1, len(preseed_direct_documents)))
+            )
+
         prefetch_candidates: List[str] = []
         if not direct_detail_ready:
             prefetch_candidates = [
@@ -15024,35 +15388,6 @@ async def _agentic_discover_admin_state_blocks(
                             candidate_urls.append(link_url)
                         seed_expansion_candidates.append((link_url, link_score + 1))
                         expanded_urls += 1
-
-        prioritized_seed_document_urls: List[str] = []
-        seen_seed_document_keys: set[str] = set()
-        seed_document_limit = min(max(max_fetch * 3, max_fetch + 2), 12)
-        for seed_url in ordered_seed_urls:
-            if not _is_immediate_direct_detail_candidate_url(seed_url):
-                continue
-            seed_candidates = [seed_url]
-            for candidate_url in seed_candidates:
-                doc_key = _url_key(candidate_url)
-                if not doc_key or doc_key in seen_seed_document_keys:
-                    continue
-                seen_seed_document_keys.add(doc_key)
-                prioritized_seed_document_urls.append(candidate_url)
-                if len(prioritized_seed_document_urls) >= seed_document_limit:
-                    break
-            if len(prioritized_seed_document_urls) >= seed_document_limit:
-                break
-
-        if state_code == "AZ":
-            prioritized_seed_document_urls = _prioritize_arizona_seed_document_urls(
-                prioritized_seed_document_urls,
-                limit=6,
-            )
-        else:
-            prioritized_seed_document_urls = [
-                *[value for value in prioritized_seed_document_urls if _is_rtf_candidate_url(value)],
-                *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
-            ]
 
         az_prefetched_seed_url_keys: set[str] = set()
         az_failed_seed_retry_urls: List[str] = []
@@ -15840,6 +16175,8 @@ async def _agentic_discover_admin_state_blocks(
             ranked_direct_exclude_urls = ranked_direct_exclude_urls | {
                 url for url in prioritized_maine_seed_rule_urls if _url_key(url)
             }
+        if official_seed_direct_satisfied:
+            seed_expansion_candidates = []
 
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
             ranked_urls,
@@ -15852,6 +16189,8 @@ async def _agentic_discover_admin_state_blocks(
             ),
             exclude_urls=ranked_direct_exclude_urls,
         )
+        if official_seed_direct_satisfied:
+            prioritized_ranked_document_urls = []
         _record_co_progress(
             "direct_detail_queue_ready",
             ranked=len(ranked_urls),
@@ -16073,7 +16412,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_oklahoma_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
-                elif state_code in {"CT", "FL", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
+                elif state_code in {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     direct_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(fetch_document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -16780,7 +17119,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_south_dakota_rule_detail_via_api(document_url),
                         timeout=direct_timeout_s,
                     )
-                elif state_code in {"CT", "FL", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
+                elif state_code in {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     direct_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -16852,7 +17191,7 @@ async def _agentic_discover_admin_state_blocks(
                     seed_expansion_candidates.append((link_url, link_score + 3))
 
         # Give curated/official entrypoints one deterministic direct fetch pass.
-        for seed_url in ordered_seed_urls[:6]:
+        for seed_url in ([] if official_seed_direct_satisfied else ordered_seed_urls[:6]):
             if len(statutes) >= max(1, int(max_fetch_per_state)):
                 break
             if time.monotonic() >= preloop_budget_deadline:
@@ -17028,7 +17367,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_michigan_rule_detail_via_requests(fetch_document_url),
                         timeout=min(20.0, direct_timeout_s),
                     )
-                elif state_code in {"CT", "FL", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
+                elif state_code in {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     expanded_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(fetch_document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -17153,7 +17492,7 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         max_candidates = max(1, int(max_candidates_per_state))
-        pending = [] if (utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules or kansas_official_bootstrap_recovered_rules or new_york_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
+        pending = [] if (official_seed_direct_satisfied or utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules or kansas_official_bootstrap_recovered_rules or new_york_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
             ranked_urls=ranked_urls,
             seed_expansion_candidates=seed_expansion_candidates,
             max_candidates=max_candidates,
