@@ -15,9 +15,9 @@
 ## Quick Links
 
 📚 **Documentation:**
-- [API Reference](../../docs/logic/API_REFERENCE.md) - Complete API documentation
+- [API Reference](../../docs/logic/logic_API_REFERENCE.md) - Complete API documentation
 - [User Guide](../../docs/logic/UNIFIED_CONVERTER_GUIDE.md) - Getting started guide
-- [Architecture](../../docs/logic/ARCHITECTURE.md) - System architecture
+- [Architecture](../../docs/logic/logic_ARCHITECTURE.md) - System architecture
 
 🚀 **Getting Started:**
 - [Installation](#installation) - Setup instructions
@@ -273,9 +273,9 @@ The logic module consists of several integrated components working together:
 - **Converters** - FOL and Deontic converters with caching
 - **External Provers** - Z3, Lean, Coq integration
 
-**📊 For detailed architecture diagrams and component interactions, see [ARCHITECTURE.md](../../docs/logic/ARCHITECTURE.md)**
+**📊 For detailed architecture diagrams and component interactions, see [logic_ARCHITECTURE.md](../../docs/logic/logic_ARCHITECTURE.md)**
 
-**📚 For complete API documentation, see [API_REFERENCE.md](../../docs/logic/API_REFERENCE.md)**
+**📚 For complete API documentation, see [logic_API_REFERENCE.md](../../docs/logic/logic_API_REFERENCE.md)**
 
 ### Quick Component Overview
 
@@ -459,13 +459,11 @@ print(f"Grammar available: {caps['grammar_available']}")  # True
 
 ## Complete Examples
 
-See [`examples/neurosymbolic/`](./examples/neurosymbolic/) for 5 complete examples:
+See these executable references for neurosymbolic usage patterns:
 
-1. **example1_basic_reasoning.py** - Basic theorem proving
-2. **example2_temporal_reasoning.py** - Temporal logic (□, ◊, X, U)
-3. **example3_deontic_reasoning.py** - Legal/normative reasoning
-4. **example4_multiformat_parsing.py** - Multi-format support
-5. **example5_combined_reasoning.py** - Temporal-deontic combinations
+1. [`scripts/cli/neurosymbolic_cli.py`](../../scripts/cli/neurosymbolic_cli.py) - CLI proving and interactive workflows
+2. [`scripts/benchmarks/neurosymbolic_benchmark.py`](../../scripts/benchmarks/neurosymbolic_benchmark.py) - performance benchmark usage
+3. [`tests/unit_tests/logic/integration/`](../../tests/unit_tests/logic/integration/) - concrete reasoning and bridge test examples
 
 ---
 
