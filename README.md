@@ -22,6 +22,8 @@
 - [MCP Dashboard](#-mcp-dashboard)
 - [Core Modules](#-core-modules)
 - [Functional Modules](#-functional-modules)
+  - [Logic & Reasoning](#10-logic)
+  - [Zero-Knowledge Proofs](#12-zero-knowledge-proofs-logiczkp)
 - [Documentation](#-documentation)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -30,6 +32,7 @@
 
 - 🗄️ **IPLD Vector Database** - Production-ready distributed vector search with sharding and replication
 - 🔬 **Mathematical Theorem Proving** - Convert legal text to verified formal logic (Z3, CVC5, Lean 4, Coq)
+- 🔐 **Zero-Knowledge Proofs** - Privacy-preserving theorem verification with simulated backend and Groth16 Rust FFI (BN254 curve), plus Ethereum on-chain verification
 - 🧬 **GraphRAG Ontology Optimizer** - AI-powered multi-agent system for knowledge graph optimization
 - 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs
 - 🕸️ **Knowledge Graph Intelligence** - Modular extraction package with cross-document reasoning
@@ -652,7 +655,7 @@ K-Nearest Neighbors indexing for IPFS content.
 
 ## 🎯 Functional Modules
 
-The package includes 12 functional modules providing specialized capabilities.
+The package includes 13 functional modules providing specialized capabilities.
 
 ### 1. dashboards/
 
@@ -855,26 +858,62 @@ accelerator.setup_distributed()
 - GitHub API
 - VSCode remote development
 
-### 10. reasoning/
+### 10. logic/
 
-Logic and reasoning systems.
+Complete neurosymbolic reasoning system (790+ tests, 94% coverage).
 
-**Components:**
-- **deontological_reasoning.py** - Deontic logic
-- **theorem_proving.py** - Formal verification
+**Sub-modules:**
+
+- **logic/fol/** - First-Order Logic (FOL) converter with 174 tests, 14× cache speedup
+- **logic/deontic/** - Deontic logic (obligations, permissions, prohibitions) for legal text analysis
+- **logic/TDFOL/** - Temporal Deontic First-Order Logic (TDFOL) core — unified logic representation
+- **logic/CEC/** - Cognitive Event Calculus (CEC) framework, native Python 3 (81% submodule coverage, 418+ tests)
+- **logic/zkp/** - Zero-Knowledge Proof system (simulated + Groth16 Rust FFI backend)
+- **logic/ErgoAI/** - ErgoAI integration *(planned — placeholder)*
+- **logic/flogic/** - Functional logic utilities
+- **logic/integration/** - Bridge adapters (TDFOL↔CEC, UCAN policy, neurosymbolic GraphRAG)
+- **logic/external_provers/** - Z3, CVC5, Lean 4, Coq router
+
+**Canonical API:**
 
 ```python
-from ipfs_datasets_py.reasoning import TheoremProver
+from ipfs_datasets_py.logic.api import FOLConverter, DeonticConverter
 
-prover = TheoremProver(backend="z3")
-result = prover.prove(formal_logic)
+# Convert natural language to First-Order Logic
+fol = FOLConverter()
+result = fol.convert("All humans are mortal. Socrates is human.")
+
+# Convert legal text to deontic formulas
+deontic = DeonticConverter()
+formula = deontic.convert("The agent must report within 30 days.")
+```
+
+**CEC Framework (Cognitive Event Calculus):**
+
+```python
+from ipfs_datasets_py.logic.CEC import CECFramework
+
+framework = CECFramework()
+framework.initialize()
+
+# Full pipeline: NL → Logic → Prove
+task = framework.reason_about(
+    "The agent is obligated to perform action X",
+    prove=True,
+    axioms=["rule1", "rule2"]
+)
+print(f"Formula: {task.dcec_formula}")
+print(f"Proof: {task.proof_result}")
 ```
 
 **Features:**
-- Deontic logic
-- Theorem proving (Z3, CVC5, Lean 4, Coq)
-- Legal text → formal logic
-- Formal verification
+- 128 inference rules (41 TDFOL + 87 CEC)
+- 5 modal logic provers (K, S4, S5, D, Cognitive)
+- Grammar-based NL processing (100+ lexicon entries)
+- Legal text → formal deontic logic
+- Theorem proving (Z3, CVC5, Lean 4, Coq, SPASS)
+- ZKP privacy-preserving proof verification
+- IPFS-backed proof caching
 
 ### 11. optimizers/
 
@@ -921,7 +960,111 @@ dashboard = visualizer.create_dashboard(metrics)
 - Comprehensive metrics and visualization
 - Production-ready with 305+ tests
 
-### 12. ipfs_formats/
+### 12. Zero-Knowledge Proofs (logic/zkp/)
+
+Privacy-preserving theorem verification — prove that a theorem follows from private axioms without revealing those axioms.
+
+**Backends:**
+
+| Backend | Status | Notes |
+|---------|--------|-------|
+| `simulated` | ✅ Default | Hash-based mock proofs — educational/demo only, **not cryptographically secure** |
+| `groth16` | ⚙️ Opt-in | Real Groth16 zkSNARKs (BN254 curve) via Rust FFI — requires building the bundled Rust binary |
+
+**Quick start (simulation):**
+
+```python
+from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+
+# ⚠️ WARNING: simulation backend — NOT cryptographically secure
+prover = ZKPProver()                          # defaults to "simulated"
+proof = prover.generate_proof(
+    theorem="Company is compliant with regulation X",
+    private_axioms=[
+        "Internal policy A",
+        "Internal policy B",
+        "Policies A and B satisfy regulation X",
+    ],
+)
+
+verifier = ZKPVerifier()
+assert verifier.verify_proof(proof)
+print(f"Proof size: {proof.size_bytes} bytes (~160 bytes)")
+```
+
+**Groth16 Rust FFI backend (opt-in):**
+
+```bash
+# Build the Rust binary first
+cd ipfs_datasets_py/processors/groth16_backend
+bash build.sh
+# or: pip install -e ".[groth16]"
+
+# Then enable via environment variable (default: 1)
+export IPFS_DATASETS_ENABLE_GROTH16=1
+```
+
+```python
+from ipfs_datasets_py.logic.zkp.backends import get_backend
+
+backend = get_backend("groth16")
+backend.ensure_setup(version=1)          # run trusted setup once
+proof = backend.generate_proof(
+    theorem="Q",
+    private_axioms=["P", "P -> Q"],
+    metadata={"circuit_version": 1, "ruleset_id": "TDFOL_v1"},
+)
+assert backend.verify_proof(proof)
+```
+
+**On-chain Ethereum verification:**
+
+```python
+from ipfs_datasets_py.logic.zkp.eth_integration import EthereumProofClient, EthereumConfig
+
+config = EthereumConfig(
+    rpc_url="https://sepolia.infura.io/v3/YOUR_KEY",
+    network_id=11155111,
+    network_name="sepolia",
+    verifier_contract_address="0x...",    # deployed GrothVerifier.sol
+    registry_contract_address="0x...",   # deployed ComplaintRegistry.sol
+)
+client = EthereumProofClient(config)
+result = client.submit_and_verify(proof)
+```
+
+**UCAN delegation bridge:**
+
+```python
+from ipfs_datasets_py.logic.zkp.ucan_zkp_bridge import ZKPToUCANBridge
+
+bridge = ZKPToUCANBridge()
+result = bridge.prove_and_delegate(
+    theorem="P → Q",
+    actor="did:key:alice",
+    resource="logic/proof",
+    ability="proof/invoke",
+)
+```
+
+**Smart contracts (Solidity):**
+- `processors/groth16_backend/contracts/GrothVerifier.sol` — on-chain Groth16 proof verifier
+- `processors/groth16_backend/contracts/VKHashRegistry.sol` — verifying-key hash registry
+
+**Features:**
+- Pluggable backend protocol (swap simulation for real Groth16 without API change)
+- Circuit builder (`ZKPCircuit`) with AND/OR/NOT/IMPLIES gates
+- Proof caching with SHA-256 keyed by canonical theorem + axioms
+- Deterministic proving (`metadata={"seed": N}`)
+- IPFS proof storage (`proof.to_dict()` / `ZKPProof.from_dict(...)`)
+- On-chain verification pipeline (EVM, off-chain precheck, gas estimation)
+- UCAN delegation caveat embedding
+
+> **Security note:** The `simulated` backend is for prototyping and education only.
+> For real zero-knowledge security, build and enable the `groth16` Rust FFI backend.
+> See `ipfs_datasets_py/logic/zkp/PRODUCTION_UPGRADE_PATH.md` for the upgrade path.
+
+### 13. ipfs_formats/
 
 IPFS format handling and operations.
 
