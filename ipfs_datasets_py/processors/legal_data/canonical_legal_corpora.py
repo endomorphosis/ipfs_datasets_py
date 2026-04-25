@@ -137,6 +137,18 @@ _CORPORA: Dict[str, CanonicalLegalCorpus] = {
         combined_parquet_filename="state_laws_all_states.parquet",
         combined_embeddings_filename="state_laws_all_states_embeddings.parquet",
     ),
+    "municipal_laws": CanonicalLegalCorpus(
+        key="municipal_laws",
+        display_name="American Municipal Law",
+        hf_dataset_id="justicedao/american_municipal_law",
+        legal_branch="us",
+        country_codes=("US",),
+        local_root_name="american_municipal_law",
+        jsonld_dir_name="municipal_laws_jsonld",
+        parquet_dir_name="municipal_laws_parquet_cid",
+        combined_parquet_filename="municipal_laws_all_states.parquet",
+        combined_embeddings_filename="municipal_laws_all_states_embeddings.parquet",
+    ),
     "state_admin_rules": CanonicalLegalCorpus(
         key="state_admin_rules",
         display_name="State Administrative Rules",
@@ -244,7 +256,7 @@ def infer_canonical_legal_corpus_for_dataset_id(dataset_id: str) -> CanonicalLeg
     }:
         return get_canonical_legal_corpus("caselaw_access_project")
     if normalized == "justicedao/american_municipal_law":
-        return get_canonical_legal_corpus("state_laws")
+        return get_canonical_legal_corpus("municipal_laws")
     if normalized.startswith("justicedao/ipfs_france_laws"):
         return get_canonical_legal_corpus("france_laws")
     if normalized.startswith("justicedao/ipfs_spain_laws"):

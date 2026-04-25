@@ -34,7 +34,7 @@ def test_canonical_registry_can_resolve_by_hf_dataset_id_case_insensitively():
 def test_canonical_registry_can_infer_alias_and_sidecar_dataset_ids():
     assert infer_canonical_legal_corpus_for_dataset_id("justicedao/caselaw_access_project").key == "caselaw_access_project"
     assert infer_canonical_legal_corpus_for_dataset_id("justicedao/dedup_ipfs_caselaw_access_project").key == "caselaw_access_project"
-    assert infer_canonical_legal_corpus_for_dataset_id("justicedao/american_municipal_law").key == "state_laws"
+    assert infer_canonical_legal_corpus_for_dataset_id("justicedao/american_municipal_law").key == "municipal_laws"
     assert infer_canonical_legal_corpus_for_dataset_id("justicedao/ipfs_france_laws_bm25_index").key == "france_laws"
     assert infer_canonical_legal_corpus_for_dataset_id("justicedao/ipfs_spain_laws_bm25_index").key == "spain_laws"
     assert infer_canonical_legal_corpus_for_dataset_id("justicedao/ipfs_germany_laws_bm25_index").key == "germany_laws"
@@ -67,6 +67,7 @@ def test_canonical_legal_corpora_are_partitioned_by_us_and_eu_branch():
 
     assert any(corpus.key == "us_code" for corpus in us_corpora)
     assert any(corpus.key == "state_laws" for corpus in us_corpora)
+    assert any(corpus.key == "municipal_laws" for corpus in us_corpora)
     assert [corpus.key for corpus in eu_corpora] == ["france_laws", "germany_laws", "netherlands_laws", "spain_laws"]
 
 
@@ -79,6 +80,7 @@ def test_canonical_legal_corpora_can_be_listed_by_country_code():
 
     assert "caselaw_access_project" in us_keys
     assert "federal_register" in us_keys
+    assert "municipal_laws" in us_keys
     assert fr_keys == ["france_laws"]
     assert es_keys == ["spain_laws"]
     assert de_keys == ["germany_laws"]

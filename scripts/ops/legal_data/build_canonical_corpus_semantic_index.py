@@ -26,6 +26,7 @@ def _parse_args() -> argparse.Namespace:
             "us_code",
             "federal_register",
             "state_laws",
+            "municipal_laws",
             "state_admin_rules",
             "state_court_rules",
             "netherlands_laws",
