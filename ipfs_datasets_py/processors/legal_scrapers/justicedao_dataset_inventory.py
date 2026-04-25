@@ -3159,6 +3159,7 @@ def build_canonical_corpus_semantic_index(
             "semantic_text": semantic_text,
             "embedding_backend": metadata.get("backend") or "local_hashed_term_projection",
             "embedding_model": metadata.get("model_name") or "",
+            "embedding_device": metadata.get("device") or device or "",
             "embedding": [float(item) for item in vector],
         }
         if "state_code" in row:
@@ -3576,6 +3577,7 @@ def build_canonical_corpus_artifacts(
     recovery_archive_top_k: int = 3,
     recovery_publish_to_hf: bool = False,
     build_faiss: bool = True,
+    build_semantic_index: bool = True,
     publish_to_hf: bool = False,
     hf_token: Optional[str] = None,
     repo_id: Optional[str] = None,
@@ -3708,21 +3710,25 @@ def build_canonical_corpus_artifacts(
     pq.write_table(pa.Table.from_pylist(_normalize_rows_for_parquet(kg_relationships)), kg_relationships_path)
     Path(kg_summary_path).write_text(json.dumps(kg_summary, indent=2, sort_keys=True), encoding="utf-8")
 
-    semantic_index = build_canonical_corpus_semantic_index(
-        normalized_corpus,
-        canonical_parquet_path=effective_canonical_path,
-        state_code=normalized_state,
-        embeddings_output_path=embeddings_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "embeddings.parquet"),
-        faiss_index_output_path=faiss_index_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, ".faiss"),
-        faiss_metadata_output_path=faiss_metadata_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "faiss_metadata.parquet"),
-        provider=provider,
-        model_name=model_name,
-        device=device,
-        build_faiss=build_faiss,
-    )
+    semantic_index: Optional[CanonicalCorpusIndexBuildResult] = None
+    if build_semantic_index:
+        semantic_index = build_canonical_corpus_semantic_index(
+            normalized_corpus,
+            canonical_parquet_path=effective_canonical_path,
+            state_code=normalized_state,
+            embeddings_output_path=embeddings_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "embeddings.parquet"),
+            faiss_index_output_path=faiss_index_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, ".faiss"),
+            faiss_metadata_output_path=faiss_metadata_output_path or _artifact_output_path(artifact_base_dir, effective_canonical_path, "faiss_metadata.parquet"),
+            provider=provider,
+            model_name=model_name,
+            device=device,
+            build_faiss=build_faiss,
+        )
 
     publish_payload: Optional[Dict[str, Any]] = None
     if publish_to_hf:
+        if semantic_index is None:
+            raise ValueError("publish_to_hf requires build_semantic_index=True")
         from huggingface_hub import HfApi
 
         api = HfApi(token=hf_token) if hf_token else HfApi()
@@ -3787,7 +3793,7 @@ def build_canonical_corpus_artifacts(
         recovery_manifest_draft=recovery_manifest_draft,
         recovery_execution=recovery_execution,
         llm_knowledge_graph_summary=llm_kg_summary,
-        semantic_index=canonical_corpus_index_build_result_to_dict(semantic_index),
+        semantic_index=canonical_corpus_index_build_result_to_dict(semantic_index) if semantic_index is not None else None,
         publish_result=publish_payload,
     )
 

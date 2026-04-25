@@ -90,6 +90,34 @@ def test_load_agentic_latest_summary_wraps_cycle_shaped_summary(tmp_path):
     assert payload["latest_cycle"]["diagnostics"]["coverage"]["states_with_nonzero_statutes"] == 1
 
 
+def test_load_agentic_latest_summary_recovers_terminal_checkpoint(tmp_path):
+    summary_dir = tmp_path / "agentic"
+    summary_dir.mkdir()
+    (summary_dir / "latest_in_progress.json").write_text(
+        json.dumps(
+            {
+                "status": "success",
+                "states": ["AL"],
+                "cycle_state_order": ["AL"],
+                "diagnostics": {
+                    "coverage": {
+                        "states_returned": 1,
+                        "states_with_nonzero_statutes": 1,
+                        "coverage_gap_states": [],
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    payload = _load_agentic_latest_summary(summary_dir)
+
+    assert payload["recovered_from_checkpoint"] is True
+    assert payload["states"] == ["AL"]
+    assert _agentic_subprocess_status(returncode=0, summary=payload) == "success"
+
+
 @pytest.mark.asyncio
 async def test_legal_scraper_daemon_dry_run_writes_plan(tmp_path):
     daemon = LegalScraperDaemon(

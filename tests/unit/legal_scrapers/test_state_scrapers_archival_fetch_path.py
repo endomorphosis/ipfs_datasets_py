@@ -25,10 +25,12 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import O
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_admin_rules import OregonAdministrativeRulesScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import RhodeIslandScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_carolina import SouthCarolinaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import SouthDakotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.tennessee import TennesseeScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas import TexasScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire import NewHampshireScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_mexico import NewMexicoScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wyoming import WyomingScraper
 
@@ -264,6 +266,77 @@ async def test_texas_statutory_code_uses_official_html_zip(monkeypatch: pytest.M
     assert [statute.section_number for statute in statutes] == ["1.01", "1.02"]
     assert statutes[0].structured_data["source_kind"] == "official_texas_statutes_html_zip"
     assert "SHORT TITLE" in statutes[0].section_name
+
+
+@pytest.mark.anyio
+async def test_new_hampshire_full_corpus_discovers_more_than_twelve_titles(monkeypatch: pytest.MonkeyPatch):
+    title_links = "".join(
+        f"<a href='NHTOC/title{i}.htm'>TITLE {i}: Title {i}</a>"
+        for i in range(1, 15)
+    )
+    root_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
+    title_pages = {
+        f"https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/title{i}.htm": (
+            f"<html><body><a href='chapter{i}.htm'>CHAPTER {i}: Chapter {i}</a></body></html>"
+        ).encode("utf-8")
+        for i in range(1, 15)
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if url == root_url:
+            return f"<html><body>{title_links}</body></html>".encode("utf-8")
+        if url in title_pages:
+            return title_pages[url]
+        return b""
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    statutes = await scraper._scrape_archived_title_stubs("New Hampshire Revised Statutes", max_statutes=None)
+
+    assert statutes == []
+
+
+@pytest.mark.anyio
+async def test_new_hampshire_full_corpus_prefers_section_text_over_index_stubs(monkeypatch: pytest.MonkeyPatch):
+    root_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
+    title_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I.htm"
+    chapter_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-I-1.htm"
+    section_url = "https://web.archive.org/web/20100306184310/http://www.gencourt.state.nh.us/rsa/html/I/1/1-1.htm"
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if url == root_url:
+            return b"<html><body><a href='NHTOC/NHTOC-I.htm'>TITLE I: THE STATE AND ITS GOVERNMENT</a></body></html>"
+        if url == title_url:
+            return b"<html><body><a href='NHTOC-I-1.htm'>CHAPTER 1: STATE BOUNDARIES</a></body></html>"
+        if url == chapter_url:
+            return (
+                b"<html><body>"
+                b"<a href='/web/20100306184310/http://www.gencourt.state.nh.us/rsa/html/I/1/1-1.htm'>"
+                b"Section 1:1 Perambulation of the New Hampshire Line."
+                b"</a></body></html>"
+            )
+        if url == section_url:
+            return (
+                b"<html><body>Section 1:1 Perambulation of the New Hampshire Line. "
+                + (b"Boundary text " * 40)
+                + b"Source. 1901, 1:1.</body></html>"
+            )
+        return b""
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    statutes = await scraper._scrape_archived_title_stubs("New Hampshire Revised Statutes", max_statutes=5)
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "1:1"
+    assert statutes[0].official_cite == "N.H. Rev. Stat. § 1:1"
+    assert "Boundary text" in statutes[0].full_text
 
 
 @pytest.mark.anyio
@@ -589,6 +662,52 @@ async def test_south_dakota_full_corpus_uses_api_next_links(monkeypatch: pytest.
     assert [statute.section_number for statute in statutes] == ["1-1-1", "1-1-2"]
     assert requested[:2] == ["1-1-1", "1-1-2"]
     assert "1-1-2" in requested
+
+
+@pytest.mark.anyio
+async def test_south_carolina_full_corpus_uses_official_title_and_chapter_pages(monkeypatch: pytest.MonkeyPatch):
+    pages = {
+        "https://www.scstatehouse.gov/code/statmast.php": (
+            "<html><body>"
+            "<a href='/code/title16.php'>Title 16 - Crimes and Offenses</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://www.scstatehouse.gov/code/title16.php": (
+            "<html><body>"
+            "<table><tr><td><a href='/code/t16c003.php'>HTML</a></td></tr></table>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://www.scstatehouse.gov/code/t16c003.php": (
+            "<html><body>"
+            "<span style='font-weight: bold;'> SECTION 16-3-10.</span> Murder defined.<br /><br />"
+            "Murder is the killing of any person with malice aforethought. "
+            "This section has substantial statutory body text for parsing.<br /><br />"
+            "HISTORY: 1962 Code SECTION 16-51.<br /><br />"
+            "<span style='font-weight: bold;'> SECTION 16-3-20.</span> Punishment for murder.<br /><br />"
+            "Punishment for murder includes detailed text and conditions. "
+            "This section also contains enough body text to be retained.<br /><br />"
+            "HISTORY: 1962 Code SECTION 16-52.<br /><br />"
+            "</body></html>"
+        ).encode("utf-8"),
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return pages.get(url, b"")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = SouthCarolinaScraper("SC", "South Carolina")
+    statutes = await scraper.scrape_code(
+        "South Carolina Code of Laws",
+        "https://www.scstatehouse.gov/code/statmast.php",
+        max_statutes=None,
+    )
+
+    assert [statute.section_number for statute in statutes] == ["16-3-10", "16-3-20"]
+    assert statutes[0].structured_data["source_kind"] == "official_south_carolina_code_html"
+    assert "Murder defined" in statutes[0].section_name
 
 
 @pytest.mark.anyio

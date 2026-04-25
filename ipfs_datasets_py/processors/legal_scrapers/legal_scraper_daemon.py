@@ -135,7 +135,21 @@ def _agentic_subprocess_status(*, returncode: Optional[int], summary: Dict[str, 
 def _load_agentic_latest_summary(output_dir: Path) -> Dict[str, Any]:
     summary_path = output_dir / "latest_summary.json"
     if not summary_path.exists():
-        return {}
+        checkpoint_path = output_dir / "latest_in_progress.json"
+        if not checkpoint_path.exists():
+            return {}
+        try:
+            checkpoint_payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+        if not isinstance(checkpoint_payload, dict):
+            return {}
+        return {
+            "status": checkpoint_payload.get("status"),
+            "states": checkpoint_payload.get("states") or checkpoint_payload.get("cycle_state_order") or [],
+            "latest_cycle": checkpoint_payload,
+            "recovered_from_checkpoint": True,
+        }
     try:
         payload = json.loads(summary_path.read_text(encoding="utf-8"))
     except Exception:
@@ -1316,35 +1330,70 @@ class LegalScraperDaemon:
         supervisor_timeout = 0.0
         if timeout > 0:
             supervisor_timeout = timeout + min(60.0, max(10.0, timeout * 0.25))
+        checkpoint_poll_seconds = 30.0
+        communicate_task = asyncio.create_task(process.communicate())
+
+        async def _terminate_with_recovered_summary(reason: str) -> Optional[Dict[str, Any]]:
+            recovered_summary = _load_agentic_latest_summary(output_dir)
+            if not recovered_summary:
+                return None
+            status = _agentic_subprocess_status(returncode=0, summary=recovered_summary)
+            if process.returncode is None:
+                process.terminate()
+                try:
+                    stdout, stderr = await asyncio.wait_for(asyncio.shield(communicate_task), timeout=10.0)
+                except asyncio.TimeoutError:
+                    process.kill()
+                    stdout, stderr = await communicate_task
+            else:
+                stdout, stderr = await communicate_task
+            return {
+                "status": status,
+                "error": None if status != "error" else f"agentic corpus subprocess ended via recovered checkpoint: {reason}",
+                "exception_type": None if status != "error" else "RecoveredCheckpointError",
+                "output_dir": str(output_dir),
+                "command": command,
+                "summary": recovered_summary,
+                "returncode": process.returncode,
+                "scrape_timeout_seconds": timeout,
+                "supervisor_timeout_seconds": supervisor_timeout,
+                "recovered_latest_summary_after_timeout": reason == "timeout",
+                "recovered_latest_summary_from_checkpoint": bool(recovered_summary.get("recovered_from_checkpoint")),
+                "recovered_checkpoint_reason": reason,
+                "stdout_tail": stdout.decode("utf-8", errors="replace")[-4000:],
+                "stderr_tail": stderr.decode("utf-8", errors="replace")[-4000:],
+            }
+
         try:
             if timeout > 0:
-                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=supervisor_timeout)
+                stdout, stderr = await asyncio.wait_for(asyncio.shield(communicate_task), timeout=supervisor_timeout)
             else:
-                stdout, stderr = await process.communicate()
+                while True:
+                    try:
+                        stdout, stderr = await asyncio.wait_for(
+                            asyncio.shield(communicate_task),
+                            timeout=checkpoint_poll_seconds,
+                        )
+                        break
+                    except asyncio.TimeoutError:
+                        recovered_summary = _load_agentic_latest_summary(output_dir)
+                        latest_cycle = recovered_summary.get("latest_cycle") if isinstance(recovered_summary, dict) else {}
+                        latest_status = str((latest_cycle or {}).get("status") or recovered_summary.get("status") or "").lower()
+                        if latest_status in {"success", "partial_success", "error"}:
+                            recovered = await _terminate_with_recovered_summary("terminal_checkpoint")
+                            if recovered is not None:
+                                return recovered
         except asyncio.TimeoutError:
-            process.terminate()
-            try:
-                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=10.0)
-            except asyncio.TimeoutError:
-                process.kill()
-                stdout, stderr = await process.communicate()
-            recovered_summary = _load_agentic_latest_summary(output_dir)
-            if recovered_summary:
-                status = _agentic_subprocess_status(returncode=0, summary=recovered_summary)
-                return {
-                    "status": status,
-                    "error": None if status != "error" else f"agentic corpus subprocess exceeded supervisor timeout after {supervisor_timeout:.1f}s",
-                    "exception_type": "TimeoutError" if status == "error" else None,
-                    "output_dir": str(output_dir),
-                    "command": command,
-                    "summary": recovered_summary,
-                    "returncode": process.returncode,
-                    "scrape_timeout_seconds": timeout,
-                    "supervisor_timeout_seconds": supervisor_timeout,
-                    "recovered_latest_summary_after_timeout": True,
-                    "stdout_tail": stdout.decode("utf-8", errors="replace")[-4000:],
-                    "stderr_tail": stderr.decode("utf-8", errors="replace")[-4000:],
-                }
+            recovered = await _terminate_with_recovered_summary("timeout")
+            if recovered is not None:
+                return recovered
+            if process.returncode is None:
+                process.terminate()
+                try:
+                    await asyncio.wait_for(asyncio.shield(communicate_task), timeout=10.0)
+                except asyncio.TimeoutError:
+                    process.kill()
+                    await communicate_task
             return {
                 "status": "error",
                 "error": f"agentic corpus subprocess exceeded supervisor timeout after {supervisor_timeout:.1f}s",
@@ -1353,8 +1402,8 @@ class LegalScraperDaemon:
                 "command": command,
                 "scrape_timeout_seconds": timeout,
                 "supervisor_timeout_seconds": supervisor_timeout,
-                "stdout_tail": stdout.decode("utf-8", errors="replace")[-4000:],
-                "stderr_tail": stderr.decode("utf-8", errors="replace")[-4000:],
+                "stdout_tail": "",
+                "stderr_tail": "",
             }
         except Exception as exc:
             return {"status": "error", "error": str(exc), "output_dir": str(output_dir)}

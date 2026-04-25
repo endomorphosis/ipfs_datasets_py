@@ -74,16 +74,22 @@ class NewHampshireScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(40)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None
+
         if not self._full_corpus_enabled() or max_statutes is not None:
             direct = await self._scrape_direct_archived_seed_sections(code_name, max_statutes=return_threshold)
             if direct:
                 return direct[:return_threshold]
         # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
-        for archived in await self._discover_archived_rsa_urls(limit=max(10, return_threshold)):
+        discovery_limit = max(400, return_threshold * 10) if full_corpus_unbounded else max(10, return_threshold)
+        for archived in await self._discover_archived_rsa_urls(limit=discovery_limit):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
 
-        archived_title_stubs = await self._scrape_archived_title_stubs(code_name, max_statutes=max(10, return_threshold))
+        archived_title_stubs = await self._scrape_archived_title_stubs(
+            code_name,
+            max_statutes=None if full_corpus_unbounded else max(10, return_threshold),
+        )
 
         seen = set()
         merged: List[NormalizedStatute] = []
@@ -98,7 +104,7 @@ class NewHampshireScraper(BaseStateScraper):
                 merged.append(statute)
 
         _merge(archived_title_stubs)
-        if len(merged) >= return_threshold:
+        if not full_corpus_unbounded and len(merged) >= return_threshold:
             return merged
 
         for candidate in candidate_urls:
@@ -114,7 +120,7 @@ class NewHampshireScraper(BaseStateScraper):
             )
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
-            if len(merged) >= return_threshold:
+            if not full_corpus_unbounded and len(merged) >= return_threshold:
                 return merged
 
         return merged
@@ -184,7 +190,21 @@ class NewHampshireScraper(BaseStateScraper):
         except Exception:
             return ""
 
-    async def _scrape_archived_title_stubs(self, code_name: str, max_statutes: int = 100) -> List[NormalizedStatute]:
+    async def _fetch_known_rsa_page(self, url: str, timeout_seconds: int = 35) -> bytes:
+        # Known official/Wayback RSA pages should be fetched directly before invoking
+        # the heavier archival/search fallback stack.
+        lower_url = str(url or "").lower()
+        if "gencourt.state.nh.us/rsa/html/" in lower_url or "gc.nh.gov/rsa/html/" in lower_url:
+            direct = await self._request_text_direct(url, timeout=max(5, timeout_seconds))
+            if direct:
+                return direct.encode("utf-8", errors="replace")
+        return await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+
+    async def _scrape_archived_title_stubs(
+        self,
+        code_name: str,
+        max_statutes: Optional[int] = 100,
+    ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
         except ImportError:
@@ -193,16 +213,24 @@ class NewHampshireScraper(BaseStateScraper):
         root_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
+            payload = await self._fetch_known_rsa_page(root_url, timeout_seconds=35)
             if not payload:
                 return []
         except Exception:
             return []
 
         soup = BeautifulSoup(payload, "html.parser")
+        full_corpus_mode = self._full_corpus_enabled()
+
+        def _limit_reached(size: int) -> bool:
+            return max_statutes is not None and size >= max_statutes
+
         title_urls: List[str] = []
         seen_titles = set()
         title_stubs: List[NormalizedStatute] = []
+        title_url_limit = max_statutes if max_statutes is not None else None
+        if not full_corpus_mode and title_url_limit is not None:
+            title_url_limit = min(title_url_limit, 12)
         for a in soup.find_all("a", href=True):
             text = str(a.get_text(" ", strip=True) or "").strip()
             title_match = self._NH_TITLE_TEXT_RE.match(text)
@@ -214,7 +242,7 @@ class NewHampshireScraper(BaseStateScraper):
                 continue
             seen_titles.add(full_url)
             title_urls.append(full_url)
-            if title_match and len(title_stubs) < max_statutes:
+            if title_match and not full_corpus_mode and not _limit_reached(len(title_stubs)):
                 title_no = title_match.group(1).upper()
                 title_name = title_match.group(2).strip()
                 title_stubs.append(
@@ -233,18 +261,34 @@ class NewHampshireScraper(BaseStateScraper):
                         structured_data={"skip_hydrate": True, "record_type": "archived_title_stub"},
                     )
                 )
-            if len(title_urls) >= 12:
+            if title_url_limit is not None and len(title_urls) >= title_url_limit:
                 break
+
+        if title_urls:
+            self.logger.info(
+                "New Hampshire archived index: discovered_titles=%s full_corpus=%s",
+                len(title_urls),
+                self._full_corpus_enabled(),
+            )
 
         out: List[NormalizedStatute] = list(title_stubs)
-        seen_sections = set()
+        seen_output_keys = {
+            str(statute.statute_id or statute.source_url or "").strip().lower()
+            for statute in out
+            if str(statute.statute_id or statute.source_url or "").strip()
+        }
+        seen_chapters = set()
         chapter_urls: List[tuple[str, str, str]] = []
 
+        chapter_fetch_limit = None if max_statutes is None else max(8, int(max_statutes) * 4)
+
         for title_url in title_urls:
-            if len(out) >= max_statutes:
+            if _limit_reached(len(out)):
+                break
+            if chapter_fetch_limit is not None and len(chapter_urls) >= chapter_fetch_limit:
                 break
             try:
-                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
+                title_payload = await self._fetch_known_rsa_page(title_url, timeout_seconds=35)
                 if not title_payload:
                     continue
             except Exception:
@@ -252,7 +296,7 @@ class NewHampshireScraper(BaseStateScraper):
 
             title_soup = BeautifulSoup(title_payload, "html.parser")
             for a in title_soup.find_all("a", href=True):
-                if len(out) >= max_statutes:
+                if _limit_reached(len(out)):
                     break
                 href = str(a.get("href") or "").strip()
                 text = str(a.get_text(" ", strip=True) or "").strip()
@@ -263,36 +307,37 @@ class NewHampshireScraper(BaseStateScraper):
                     continue
                 chapter_id = match.group(1).upper()
                 key = chapter_id.lower()
-                if key in seen_sections:
+                if key in seen_chapters:
                     continue
-                seen_sections.add(key)
+                seen_chapters.add(key)
 
                 source_url = self._normalize_wayback_like_url(urljoin(title_url, href))
                 chapter_name = text[:200] if text else f"Chapter {chapter_id}"
                 chapter_urls.append((chapter_id, chapter_name, source_url))
-                out.append(
-                    NormalizedStatute(
-                        state_code=self.state_code,
-                        state_name=self.state_name,
-                        statute_id=f"{code_name} § Chapter {chapter_id}",
-                        code_name=code_name,
-                        section_number=f"Chapter {chapter_id}",
-                        section_name=chapter_name,
-                        full_text=f"New Hampshire Revised Statutes {chapter_name}: {source_url}",
-                        source_url=source_url,
-                        legal_area=self._identify_legal_area(chapter_name),
-                        official_cite=f"N.H. Rev. Stat. ch. {chapter_id}",
-                        metadata=StatuteMetadata(),
-                        structured_data={"skip_hydrate": True, "record_type": "archived_chapter_stub"},
+                if not full_corpus_mode:
+                    out.append(
+                        NormalizedStatute(
+                            state_code=self.state_code,
+                            state_name=self.state_name,
+                            statute_id=f"{code_name} § Chapter {chapter_id}",
+                            code_name=code_name,
+                            section_number=f"Chapter {chapter_id}",
+                            section_name=chapter_name,
+                            full_text=f"New Hampshire Revised Statutes {chapter_name}: {source_url}",
+                            source_url=source_url,
+                            legal_area=self._identify_legal_area(chapter_name),
+                            official_cite=f"N.H. Rev. Stat. ch. {chapter_id}",
+                            metadata=StatuteMetadata(),
+                            structured_data={"skip_hydrate": True, "record_type": "archived_chapter_stub"},
+                        )
                     )
-                )
 
-        if len(out) >= max_statutes:
+        if _limit_reached(len(out)):
             return out[:max_statutes]
 
         async def _fetch_chapter_sections(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
             try:
-                chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=35)
+                chapter_payload = await self._fetch_known_rsa_page(chapter_url, timeout_seconds=35)
                 if not chapter_payload:
                     return []
             except Exception:
@@ -326,7 +371,7 @@ class NewHampshireScraper(BaseStateScraper):
             section_statutes: List[NormalizedStatute] = []
             for section_number, section_title, section_url in section_links:
                 try:
-                    section_payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
+                    section_payload = await self._fetch_known_rsa_page(section_url, timeout_seconds=35)
                 except Exception:
                     continue
                 section_text = self._extract_statute_text(section_payload)
@@ -348,7 +393,7 @@ class NewHampshireScraper(BaseStateScraper):
                         metadata=StatuteMetadata(),
                     )
                 )
-                if len(section_statutes) >= max_statutes:
+                if _limit_reached(len(section_statutes)):
                     break
             return section_statutes
 
@@ -358,7 +403,16 @@ class NewHampshireScraper(BaseStateScraper):
             async with sem:
                 return await _fetch_chapter_sections(chapter_id, chapter_name, chapter_url)
 
-        chapters_to_fetch = chapter_urls if self._full_corpus_enabled() else chapter_urls[:8]
+        if self._full_corpus_enabled():
+            chapters_to_fetch = chapter_urls if max_statutes is None else chapter_urls[: chapter_fetch_limit or len(chapter_urls)]
+        else:
+            chapters_to_fetch = chapter_urls[:8]
+        if chapter_urls:
+            self.logger.info(
+                "New Hampshire archived index: discovered_chapters=%s fetched_chapters=%s",
+                len(chapter_urls),
+                len(chapters_to_fetch),
+            )
         for section_batch in await asyncio.gather(
             *[
                 _bounded_fetch(chapter_id, chapter_name, chapter_url)
@@ -370,11 +424,11 @@ class NewHampshireScraper(BaseStateScraper):
                 continue
             for statute in section_batch:
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
-                if not key or key in merged_keys:
+                if not key or key in seen_output_keys:
                     continue
-                merged_keys.add(key)
+                seen_output_keys.add(key)
                 out.append(statute)
-                if len(out) >= max_statutes:
+                if _limit_reached(len(out)):
                     return out[:max_statutes]
 
         return out
@@ -407,7 +461,9 @@ class NewHampshireScraper(BaseStateScraper):
         )
 
         try:
-            payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
+            payload = await self._request_text_direct(cdx_url, timeout=35)
+            if not payload:
+                payload = await self._fetch_page_content_with_archival_fallback(cdx_url, timeout_seconds=35)
             rows = self._parse_json_rows(payload)
         except Exception:
             return []

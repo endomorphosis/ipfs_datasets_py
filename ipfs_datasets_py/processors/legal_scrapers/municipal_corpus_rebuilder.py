@@ -24,6 +24,18 @@ from ...utils.cid_utils import cid_for_obj
 _CORPUS = get_canonical_legal_corpus("municipal_laws")
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
 _WHITESPACE_RE = re.compile(r"\s+")
+_MOJIBAKE_MARKERS = ("\u00c2", "\u00c3", "\u00e2\u20ac", "\ufffd")
+_MOJIBAKE_REPLACEMENTS = {
+    "\u00c2\u00a7": "\u00a7",
+    "\u00c2\u00b6": "\u00b6",
+    "\u00c2\u00a0": " ",
+    "\u00e2\u20ac\u201d": "\u2014",
+    "\u00e2\u20ac\u201c": "\u201c",
+    "\u00e2\u20ac\u009d": "\u201d",
+    "\u00e2\u20ac\u2122": "\u2019",
+    "\u00e2\u20ac\u02dc": "\u2018",
+    "\u00e2\u20ac\u00a6": "\u2026",
+}
 
 
 @dataclass(frozen=True)
@@ -71,6 +83,20 @@ def _write_parquet_rows(rows: Sequence[Mapping[str, Any]], path: Path) -> None:
     pq.write_table(pa.Table.from_pylist(normalized_rows), path, compression="snappy")
 
 
+def _default_embeddings_path(canonical_parquet_path: str | Path) -> str:
+    path = Path(canonical_parquet_path)
+    return str(path.with_name(f"{path.stem}_embeddings.parquet"))
+
+
+def _default_faiss_path(canonical_parquet_path: str | Path) -> str:
+    return str(Path(canonical_parquet_path).with_suffix(".faiss"))
+
+
+def _default_faiss_metadata_path(canonical_parquet_path: str | Path) -> str:
+    path = Path(canonical_parquet_path)
+    return str(path.with_name(f"{path.stem}_faiss_metadata.parquet"))
+
+
 def _normalize_rows_for_parquet(rows: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
     if not rows:
         return [{"_empty": True}]
@@ -89,10 +115,27 @@ def _first_text(payload: Mapping[str, Any], keys: Sequence[str]) -> str:
     for key in keys:
         value = payload.get(key)
         if isinstance(value, str) and value.strip():
-            return value.strip()
+            return _repair_text_encoding(value.strip())
         if value is not None and str(value).strip():
-            return str(value).strip()
+            return _repair_text_encoding(str(value).strip())
     return ""
+
+
+def _repair_text_encoding(value: Any) -> str:
+    text = str(value or "")
+    if not text:
+        return ""
+    for bad, replacement in _MOJIBAKE_REPLACEMENTS.items():
+        text = text.replace(bad, replacement)
+    original_score = sum(text.count(marker) for marker in _MOJIBAKE_MARKERS)
+    if original_score <= 0:
+        return text
+    try:
+        repaired = text.encode("latin-1").decode("utf-8")
+    except UnicodeError:
+        return text
+    repaired_score = sum(repaired.count(marker) for marker in _MOJIBAKE_MARKERS)
+    return repaired if repaired_score < original_score else text
 
 
 def _clean_html_to_text(value: Any) -> str:
@@ -101,7 +144,11 @@ def _clean_html_to_text(value: Any) -> str:
         return ""
     text = _HTML_TAG_RE.sub(" ", html)
     text = unescape(text)
-    return _WHITESPACE_RE.sub(" ", text).strip()
+    return _repair_text_encoding(_WHITESPACE_RE.sub(" ", text).strip())
+
+
+def _clean_inline_html(value: Any) -> str:
+    return _clean_html_to_text(value)
 
 
 def _municipal_source_id(citation_row: Mapping[str, Any], html_row: Mapping[str, Any]) -> str:
@@ -126,7 +173,13 @@ def _municipal_identifier(citation_row: Mapping[str, Any], html_row: Mapping[str
 
 
 def _municipal_name(citation_row: Mapping[str, Any], html_row: Mapping[str, Any]) -> str:
-    return _first_text({**dict(html_row), **dict(citation_row)}, ("title", "html_title", "chapter", "identifier"))
+    title = _first_text(citation_row, ("title",))
+    if title:
+        return title
+    html_title = _clean_inline_html(html_row.get("html_title"))
+    if html_title:
+        return html_title
+    return _first_text({**dict(html_row), **dict(citation_row)}, ("chapter", "identifier"))
 
 
 def _municipal_source_url(citation_row: Mapping[str, Any], html_row: Mapping[str, Any]) -> str:
@@ -208,7 +261,7 @@ def municipal_rows_to_canonical_row(
         "source_url": source_url,
         "official_cite": _first_text(citation_payload, ("bluebook_citation",)),
         "bluebook_citation": _first_text(citation_payload, ("bluebook_citation",)),
-        "html_title": _first_text(html_payload, ("html_title",)),
+        "html_title": _clean_inline_html(html_payload.get("html_title")),
         "title": _first_text(citation_payload, ("title",)),
         "chapter": _first_text(citation_payload, ("chapter",)),
         "gnis": _first_text({**html_payload, **citation_payload}, ("gnis",)),
@@ -288,6 +341,149 @@ def _dedupe_rows(rows: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
     return [merged[key] for key in order]
 
 
+def _coerce_embedding_vector(value: Any) -> List[float]:
+    if value is None:
+        return []
+    if hasattr(value, "tolist"):
+        value = value.tolist()
+    if isinstance(value, (list, tuple)):
+        return [float(item) for item in value]
+    return []
+
+
+def _metadata_rows_for_embeddings(rows: Sequence[Mapping[str, Any]], *, vector_id_start: int) -> List[Dict[str, Any]]:
+    metadata_rows: List[Dict[str, Any]] = []
+    for offset, row in enumerate(rows):
+        metadata_row = {
+            "vector_id": vector_id_start + offset,
+            "ipfs_cid": row.get("ipfs_cid"),
+            "semantic_text": row.get("semantic_text"),
+        }
+        for field in ("identifier", "name", "source_id", "state_code"):
+            if field in row:
+                metadata_row[field] = row.get(field)
+        metadata_rows.append(metadata_row)
+    return metadata_rows
+
+
+def _combine_state_semantic_artifacts(
+    state_artifact_results: Sequence[Mapping[str, Any]],
+    *,
+    combined_parquet_path: str,
+    build_faiss: bool,
+) -> Dict[str, Any]:
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    semantic_indexes = [
+        dict(result.get("semantic_index") or {})
+        for result in state_artifact_results
+        if result.get("state_code") and result.get("semantic_index")
+    ]
+    if not semantic_indexes:
+        raise ValueError("No state semantic indexes were available to combine")
+
+    embeddings_output = _default_embeddings_path(combined_parquet_path)
+    faiss_index_output = _default_faiss_path(combined_parquet_path)
+    faiss_metadata_output = _default_faiss_metadata_path(combined_parquet_path)
+    Path(embeddings_output).parent.mkdir(parents=True, exist_ok=True)
+    Path(faiss_metadata_output).parent.mkdir(parents=True, exist_ok=True)
+
+    embeddings_writer: Any = None
+    metadata_writer: Any = None
+    faiss_index: Any = None
+    row_count = 0
+    vector_dimension = 0
+    backend = ""
+    provider = ""
+    model_name = ""
+    join_field = "ipfs_cid"
+
+    try:
+        if build_faiss:
+            import faiss
+        else:
+            faiss = None  # type: ignore[assignment]
+        import numpy as np
+
+        for semantic_index in sorted(semantic_indexes, key=lambda item: str(item.get("state_code") or "")):
+            embeddings_path = Path(str(semantic_index.get("embeddings_parquet_path") or ""))
+            if not embeddings_path.exists():
+                continue
+            embeddings_table = pq.read_table(embeddings_path)
+            if embeddings_writer is None:
+                embeddings_writer = pq.ParquetWriter(embeddings_output, embeddings_table.schema, compression="snappy")
+            embeddings_writer.write_table(embeddings_table)
+
+            if not backend:
+                backend = str(semantic_index.get("backend") or "")
+                provider = str(semantic_index.get("provider") or "")
+                model_name = str(semantic_index.get("model_name") or "")
+                join_field = str(semantic_index.get("join_field") or "ipfs_cid")
+
+            embedding_rows = embeddings_table.to_pylist()
+            vectors = [_coerce_embedding_vector(row.get("embedding")) for row in embedding_rows]
+            vectors = [vector for vector in vectors if vector]
+            if vectors and vector_dimension <= 0:
+                vector_dimension = len(vectors[0])
+            if vectors and build_faiss and faiss is not None:
+                if faiss_index is None:
+                    if hasattr(faiss, "IndexFlatIP"):
+                        faiss_index = faiss.IndexFlatIP(len(vectors[0]))
+                    elif hasattr(faiss, "IndexFlatL2"):
+                        faiss_index = faiss.IndexFlatL2(len(vectors[0]))
+                    else:
+                        faiss_index = faiss.index_factory(len(vectors[0]), "Flat", getattr(faiss, "METRIC_INNER_PRODUCT", 0))
+                faiss_index.add(np.asarray(vectors, dtype="float32"))
+
+            metadata_path = Path(str(semantic_index.get("faiss_metadata_path") or ""))
+            if metadata_path.exists():
+                metadata_rows = pq.read_table(metadata_path).to_pylist()
+                for offset, row in enumerate(metadata_rows):
+                    row["vector_id"] = row_count + offset
+            else:
+                metadata_rows = _metadata_rows_for_embeddings(embedding_rows, vector_id_start=row_count)
+            metadata_rows = _normalize_rows_for_parquet(metadata_rows)
+            metadata_table = pa.Table.from_pylist(metadata_rows)
+            if metadata_writer is None:
+                metadata_writer = pq.ParquetWriter(faiss_metadata_output, metadata_table.schema, compression="snappy")
+            else:
+                metadata_table = metadata_table.cast(metadata_writer.schema)
+            metadata_writer.write_table(metadata_table)
+            row_count += len(embedding_rows)
+    finally:
+        if embeddings_writer is not None:
+            embeddings_writer.close()
+        if metadata_writer is not None:
+            metadata_writer.close()
+
+    faiss_index_written: Optional[str] = None
+    faiss_metadata_written: Optional[str] = None
+    if build_faiss and faiss_index is not None:
+        import faiss
+
+        Path(faiss_index_output).parent.mkdir(parents=True, exist_ok=True)
+        faiss.write_index(faiss_index, faiss_index_output)
+        faiss_index_written = faiss_index_output
+        faiss_metadata_written = faiss_metadata_output
+
+    return {
+        "corpus_key": _CORPUS.key,
+        "dataset_id": _CORPUS.hf_dataset_id,
+        "canonical_parquet_path": str(combined_parquet_path),
+        "embeddings_parquet_path": str(embeddings_output),
+        "faiss_index_path": faiss_index_written,
+        "faiss_metadata_path": faiss_metadata_written,
+        "row_count": row_count,
+        "vector_dimension": vector_dimension,
+        "backend": backend,
+        "provider": provider,
+        "model_name": model_name,
+        "join_field": join_field,
+        "state_code": "",
+    }
+
+
 def write_municipal_canonical_parquets(
     rows: Sequence[Mapping[str, Any]],
     *,
@@ -347,6 +543,11 @@ def rebuild_municipal_laws_corpus(
     artifact_results: List[Dict[str, Any]] = []
     resolved_repo_id = str(repo_id or _CORPUS.hf_dataset_id)
     resolved_hf_token = _resolve_hf_token(hf_token)
+    if publish_to_hf:
+        raise ValueError(
+            "Publishing municipal artifacts after combined semantic reuse is not enabled yet; "
+            "rerun without --publish-to-hf and upload the generated artifacts after validation."
+        )
     for state_code in sorted(state_paths):
         artifact_results.append(
             canonical_corpus_artifact_build_result_to_dict(
@@ -366,23 +567,29 @@ def rebuild_municipal_laws_corpus(
                 )
             )
         )
-    artifact_results.append(
-        canonical_corpus_artifact_build_result_to_dict(
-            build_canonical_corpus_artifacts(
-                "municipal_laws",
-                canonical_parquet_path=combined_path,
-                output_root=str(Path(combined_path).parent),
-                provider=provider,
-                model_name=model_name,
-                device=device,
-                build_faiss=build_faiss,
-                publish_to_hf=publish_to_hf,
-                hf_token=resolved_hf_token,
-                repo_id=resolved_repo_id,
-                include_canonical_parquet=include_canonical_parquet,
-            )
+    combined_artifact = canonical_corpus_artifact_build_result_to_dict(
+        build_canonical_corpus_artifacts(
+            "municipal_laws",
+            canonical_parquet_path=combined_path,
+            output_root=str(Path(combined_path).parent),
+            provider=provider,
+            model_name=model_name,
+            device=device,
+            build_faiss=build_faiss,
+            build_semantic_index=False,
+            publish_to_hf=False,
+            hf_token=resolved_hf_token,
+            repo_id=resolved_repo_id,
+            include_canonical_parquet=include_canonical_parquet,
         )
     )
+    if any(result.get("semantic_index") for result in artifact_results):
+        combined_artifact["semantic_index"] = _combine_state_semantic_artifacts(
+            artifact_results,
+            combined_parquet_path=combined_path,
+            build_faiss=build_faiss,
+        )
+    artifact_results.append(combined_artifact)
 
     return MunicipalCorpusRebuildResult(
         input_root=str(source_root),

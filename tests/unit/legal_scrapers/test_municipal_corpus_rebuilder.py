@@ -30,7 +30,7 @@ def test_rebuild_municipal_laws_corpus_normalizes_raw_parquet_pairs(tmp_path, mo
                 "title": "Sec. 10-66. - Organization of department of permits and inspections",
                 "chapter": "Chapter 10 - BUILDINGS AND BUILDING REGULATIONS",
                 "state_code": "NC",
-                "history_note": "Ord. No. 21-05-06, § 1(Exh. A), 5-4-21",
+                "history_note": "Ord. No. 21-05-06, \u00c2\u00a7 1(Exh. A), 5-4-21",
             },
             {
                 "cid": shared_cid,
@@ -39,7 +39,7 @@ def test_rebuild_municipal_laws_corpus_normalizes_raw_parquet_pairs(tmp_path, mo
                 "title": "Sec. 10-66. - Organization of department of permits and inspections",
                 "chapter": "Chapter 10 - BUILDINGS AND BUILDING REGULATIONS",
                 "state_code": "NC",
-                "history_note": "Ord. No. 21-05-06, § 1(Exh. A), 5-4-21",
+                "history_note": "Ord. No. 21-05-06, \u00c2\u00a7 1(Exh. A), 5-4-21",
             },
         ],
     )
@@ -51,7 +51,7 @@ def test_rebuild_municipal_laws_corpus_normalizes_raw_parquet_pairs(tmp_path, mo
                 "doc_id": "DOC-10-66",
                 "doc_order": 83,
                 "html_title": "<div class=\"chunk-title\">Sec. 10-66. - Organization of department of permits and inspections.</div>",
-                "html": "<div><p>The department is hereby established pursuant to G.S. 160D-402(b).</p></div>",
+                "html": "<div><p>The department is hereby established pursuant to G.S. 160D-402(b).</p><p>Editor\u00e2\u20ac\u201d note \u00c2\u00a7 10-66.</p></div>",
             }
         ],
     )
@@ -88,6 +88,7 @@ def test_rebuild_municipal_laws_corpus_normalizes_raw_parquet_pairs(tmp_path, mo
     assert row["identifier"] == "Buncombe, N.C., County Code, §10-66 (2021)"
     assert row["name"].startswith("Sec. 10-66.")
     assert "department is hereby established" in row["text"].lower()
+    assert "Editor\u2014 note § 10-66" in row["text"]
 
     jsonld_payload = json.loads(row["jsonld"])
     assert jsonld_payload["@id"] == f"ipfs://{shared_cid}"

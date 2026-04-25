@@ -84,6 +84,20 @@ def _resolve_embeddings_device(device: str | None) -> str | None:
     return device
 
 
+def _ensure_requested_cuda_available(device: str | None) -> None:
+    if not str(device or "").strip().lower().startswith("cuda"):
+        return
+    try:
+        import torch
+    except Exception as exc:
+        raise RuntimeError("CUDA embeddings were requested, but torch is not importable") from exc
+    if not torch.backends.cuda.is_built() or not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA embeddings were requested, but the active torch build cannot use CUDA "
+            f"(torch={getattr(torch, '__version__', 'unknown')}, torch.version.cuda={torch.version.cuda!r})"
+        )
+
+
 def embed_texts_with_router_or_local(
     texts: Sequence[str],
     *,
@@ -108,6 +122,7 @@ def embed_texts_with_router_or_local(
     resolved_batch_size = _resolve_batch_size(batch_size)
     resolved_parallel_batches = _resolve_parallel_batches(parallel_batches)
     resolved_device = _resolve_embeddings_device(device)
+    _ensure_requested_cuda_available(resolved_device)
 
     try:
         from ..embeddings_router import embed_texts_batched as router_embed_texts_batched
@@ -132,6 +147,8 @@ def embed_texts_with_router_or_local(
                 "is_mock": False,
             }
     except Exception:
+        if str(resolved_device or "").strip().lower().startswith("cuda"):
+            raise
         pass
 
     return (
