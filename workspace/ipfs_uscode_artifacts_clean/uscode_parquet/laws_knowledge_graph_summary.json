@@ -1,0 +1,23 @@
+{
+  "bm25_document_count": 60068,
+  "cid_index_row_count": 60068,
+  "document_count": 60068,
+  "entity_count": 180257,
+  "entity_type_counts": {
+    "document": 60068,
+    "legal_document": 60068,
+    "section": 60068,
+    "usc_title": 53
+  },
+  "note": "BM25 built from section text plus citation/title metadata only; raw_json intentionally excluded.",
+  "ontology": {},
+  "ontology_version": "generic-legal-document-kg-v1",
+  "relationship_count": 120136,
+  "relationship_type_counts": {
+    "HAS_SECTION": 60068,
+    "IN_TITLE": 60068
+  },
+  "schema_version": "uscode-kg-v1",
+  "source_dataset": "justicedao/ipfs_uscode",
+  "source_rows": 60077
+}

@@ -450,6 +450,26 @@ def test_curated_seeds_include_minnesota_and_missouri_admin_rule_sources() -> No
     assert "NE" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
 
 
+def test_full_corpus_mode_disables_default_state_fetch_safety_caps(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LEGAL_ADMIN_RULES_MAX_FETCH_PER_STATE", raising=False)
+    monkeypatch.delenv("LEGAL_ADMIN_RULES_MAX_FETCH_PER_STATE_JSON", raising=False)
+
+    assert scraper_module._max_fetch_cap_for_state("NY") == 4
+
+    monkeypatch.setenv("LEGAL_ADMIN_RULES_FULL_CORPUS_MODE", "1")
+
+    assert scraper_module._max_fetch_cap_for_state("NY") is None
+    assert (
+        scraper_module._bounded_discovery_limit(
+            max_fetch=100,
+            multiplier=4,
+            default_cap=24,
+            full_corpus_cap=1000,
+        )
+        == 400
+    )
+
+
 def test_curated_seeds_include_delaware_and_dc_admin_rule_sources() -> None:
     de_urls = scraper_module._extract_seed_urls_for_state("DE", "Delaware")
     dc_urls = scraper_module._extract_seed_urls_for_state("DC", "District of Columbia")
@@ -661,6 +681,8 @@ def test_is_direct_detail_candidate_url_recognizes_colorado_ccr_pdf_pages() -> N
 def test_is_direct_detail_candidate_url_recognizes_minnesota_and_missouri_rule_documents() -> None:
     assert scraper_module._is_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/1400/") is True
     assert scraper_module._is_immediate_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/1400/") is True
+    assert scraper_module._is_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/1400.0200/") is True
+    assert scraper_module._is_immediate_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/1400.0200/") is True
     assert scraper_module._is_direct_detail_candidate_url("https://www.revisor.mn.gov/rules/") is False
 
     assert scraper_module._is_direct_detail_candidate_url(
@@ -687,12 +709,14 @@ def test_is_direct_detail_candidate_url_recognizes_minnesota_and_missouri_rule_d
 def test_score_candidate_url_prefers_minnesota_and_missouri_detail_pages_over_indexes() -> None:
     mn_index = "https://www.revisor.mn.gov/rules/"
     mn_detail = "https://www.revisor.mn.gov/rules/1400/"
+    mn_part_detail = "https://www.revisor.mn.gov/rules/1400.0200/"
     mo_index = "https://www.sos.mo.gov/adrules/csr/csr"
     mo_title = "https://www.sos.mo.gov/adrules/csr/current/19csr/19csr"
     mo_pdf = "https://www.sos.mo.gov/cmsimages/adrules/csr/current/19csr/19c10-5.010.pdf"
 
     assert _score_candidate_url(mn_index) > 0
     assert _score_candidate_url(mn_detail) > _score_candidate_url(mn_index)
+    assert _score_candidate_url(mn_part_detail) > _score_candidate_url(mn_index)
     assert _score_candidate_url(mo_index) > 0
     assert _score_candidate_url(mo_title) > _score_candidate_url(mo_index)
     assert _score_candidate_url(mo_pdf) > _score_candidate_url(mo_title)
@@ -704,6 +728,50 @@ def test_score_candidate_url_prefers_minnesota_and_missouri_detail_pages_over_in
     assert _score_candidate_url(ne_browse) > 0
     assert _score_candidate_url(ne_title) > _score_candidate_url(ne_browse)
     assert _score_candidate_url(ne_pdf) > _score_candidate_url(ne_title)
+
+
+def test_discover_minnesota_rule_document_urls_expands_numerical_chapters(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _Response:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+        def raise_for_status(self) -> None:
+            return None
+
+    pages = {
+        "https://www.revisor.mn.gov/rules/numerical/": """
+            <a href="/rules/1400/">1400</a>
+            <a href="/rules/7000/">7000</a>
+        """,
+        "https://www.revisor.mn.gov/rules/1400/": """
+            <table>
+                <tr><td><a href="/rules/1400.0200">1400.0200</a></td><td>Definitions.</td></tr>
+                <tr><td><a href="/rules/1400.0300">1400.0300</a></td><td>[Repealed, 20 SR 2058]</td></tr>
+            </table>
+        """,
+        "https://www.revisor.mn.gov/rules/7000/": """
+            <table>
+                <tr><td><a href="/rules/7000.0100">7000.0100</a></td><td>Scope.</td></tr>
+            </table>
+        """,
+    }
+
+    def _fake_get(url: str, timeout: int = 20, headers: dict | None = None) -> _Response:
+        return _Response(pages[url])
+
+    monkeypatch.setattr(scraper_module.requests, "get", _fake_get)
+
+    urls = asyncio.run(
+        scraper_module._discover_minnesota_rule_document_urls(
+            seed_urls=["https://www.revisor.mn.gov/rules/numerical/"],
+            limit=10,
+        )
+    )
+
+    assert urls == [
+        "https://www.revisor.mn.gov/rules/1400.0200/",
+        "https://www.revisor.mn.gov/rules/7000.0100/",
+    ]
 
 
 def test_discover_nebraska_rule_document_urls_uses_public_api(monkeypatch: pytest.MonkeyPatch) -> None:

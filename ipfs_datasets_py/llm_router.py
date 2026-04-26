@@ -16,6 +16,17 @@ Environment variables:
 - `IPFS_DATASETS_PY_LLM_MODEL`: default HF model name for local fallback
 
 Additional optional providers (opt-in by selecting provider):
+- `p2p_task_queue`: submit text-generation work to a local/remote TaskQueue
+    worker and wait for completion
+    - `IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR` /
+      `IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR` for explicit remote peers
+    - `IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID` /
+      `IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID` when the multiaddr does not
+      include a peer id
+    - `IPFS_DATASETS_PY_TASK_QUEUE_PATH` / `IPFS_ACCELERATE_PY_TASK_QUEUE_PATH`
+      for local DuckDB queue fallback
+    - `IPFS_DATASETS_PY_TASK_QUEUE_WAIT_TIMEOUT_S` /
+      `IPFS_ACCELERATE_PY_TASK_QUEUE_WAIT_TIMEOUT_S` for default wait timeout
 - `openai`: OpenAI chat completions
     - `OPENAI_API_KEY` / `OPENAI_KEY` / `OPENAI_TOKEN`
     - `IPFS_DATASETS_PY_OPENAI_MODEL` / `OPENAI_MODEL`
@@ -73,6 +84,8 @@ from html import unescape
 import hashlib
 import importlib
 import importlib.util
+import base64
+import mimetypes
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
 
 from .router_deps import RouterDeps, get_default_router_deps
@@ -234,7 +247,10 @@ def submit_task(
     except Exception as exc:
         raise LLMRouterError("Task delegation helpers not available") from exc
 
-    payload: Dict[str, object] = {"prompt": str(prompt or "")}
+    explicit_payload = kwargs.pop("payload", None)
+    payload: Dict[str, object] = dict(explicit_payload) if isinstance(explicit_payload, dict) else {"prompt": str(prompt or "")}
+    if "prompt" not in payload:
+        payload["prompt"] = str(prompt or "")
     for k in ("max_new_tokens", "max_tokens", "temperature"):
         if k in kwargs:
             payload[k] = kwargs[k]
@@ -809,6 +825,82 @@ def get_accelerate_status() -> dict:
         backend_available = False
 
     return {"available": backend_available, "enabled": True, "env_disabled": False, "env_var": env_value}
+
+
+def _extract_generated_text_from_task_result(result: object) -> Optional[str]:
+    """Best-effort extraction of generated text from queue worker payloads."""
+
+    if isinstance(result, str) and result.strip():
+        return result
+    if isinstance(result, dict):
+        for key in ("text", "generated_text", "output_text", "completion", "content"):
+            value = result.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+        for key in ("result", "data", "output", "response", "payload"):
+            nested = _extract_generated_text_from_task_result(result.get(key))
+            if nested:
+                return nested
+        choices = result.get("choices")
+        if isinstance(choices, list) and choices:
+            first = choices[0]
+            if isinstance(first, dict):
+                message = first.get("message")
+                if isinstance(message, dict):
+                    content = message.get("content")
+                    if isinstance(content, str) and content.strip():
+                        return content
+                text = first.get("text")
+                if isinstance(text, str) and text.strip():
+                    return text
+    if isinstance(result, list):
+        for item in result:
+            nested = _extract_generated_text_from_task_result(item)
+            if nested:
+                return nested
+    return None
+
+
+def _default_task_queue_wait_timeout_s() -> float:
+    raw = (
+        os.getenv("IPFS_DATASETS_PY_TASK_QUEUE_WAIT_TIMEOUT_S")
+        or os.getenv("IPFS_ACCELERATE_PY_TASK_QUEUE_WAIT_TIMEOUT_S")
+        or os.getenv("IPFS_DATASETS_PY_TASK_P2P_WAIT_TIMEOUT_S")
+        or os.getenv("IPFS_ACCELERATE_PY_TASK_P2P_WAIT_TIMEOUT_S")
+        or "120"
+    )
+    try:
+        return max(0.1, float(str(raw).strip()))
+    except Exception:
+        return 120.0
+
+
+def _default_task_queue_path() -> str:
+    return (
+        os.getenv("IPFS_DATASETS_PY_TASK_QUEUE_PATH")
+        or os.getenv("IPFS_ACCELERATE_PY_TASK_QUEUE_PATH")
+        or ""
+    ).strip()
+
+
+def _image_path_to_data_url(path: object) -> str:
+    from pathlib import Path
+
+    image_path = Path(str(path))
+    raw = image_path.read_bytes()
+    mime_type, _ = mimetypes.guess_type(str(image_path))
+    encoded = base64.b64encode(raw).decode("ascii")
+    return f"data:{mime_type or 'application/octet-stream'};base64,{encoded}"
+
+
+def _coerce_text_sequence(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, (list, tuple, set)):
+        return [str(item) for item in value if str(item or "").strip()]
+    return [str(value)]
 
 
 def _resolve_transformers_module(*, deps: Optional[RouterDeps] = None, module_override: object | None = None) -> object | None:
@@ -1803,6 +1895,116 @@ def _run_cli_command(
     return (proc.stdout or "").strip()
 
 
+def _get_p2p_task_queue_provider() -> LLMProvider:
+    def _queue_options(call_options: dict[str, object]) -> tuple[str, float]:
+        queue_path = str(
+            call_options.pop("queue_path", None)
+            or call_options.pop("task_queue_path", None)
+            or _default_task_queue_path()
+            or ""
+        ).strip()
+        wait_timeout_s = call_options.pop("wait_timeout_s", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = call_options.pop("task_timeout_s", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = call_options.pop("timeout_s", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = call_options.pop("timeout", None)
+        if wait_timeout_s is None:
+            wait_timeout_s = _default_task_queue_wait_timeout_s()
+        return queue_path, float(wait_timeout_s)
+
+    def _wait_for_text(task_id: str, *, queue_path: str, wait_timeout_s: float) -> str:
+        task = wait_task(str(task_id), queue_path=queue_path or None, timeout_s=float(wait_timeout_s))
+        if not isinstance(task, dict):
+            raise LLMRouterError(f"TaskQueue task did not complete before timeout: {task_id}")
+
+        status = str(task.get("status") or "").strip().lower()
+        if status != "completed":
+            error = str(task.get("error") or task.get("message") or status or "unknown error")
+            raise LLMRouterError(f"TaskQueue task failed: {error}")
+
+        text = _extract_generated_text_from_task_result(task.get("result"))
+        if isinstance(text, str) and text.strip():
+            return text
+        raise LLMRouterError("TaskQueue task completed without generated text")
+
+    class _P2PTaskQueueProvider:
+        def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+            call_options = dict(kwargs)
+            queue_path, wait_timeout_s = _queue_options(call_options)
+
+            task_type = str(call_options.pop("task_type", None) or "text-generation").strip() or "text-generation"
+            task_id = submit_task(
+                prompt=str(prompt or ""),
+                model_name=model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "gpt2"),
+                task_type=task_type,
+                queue_path=queue_path or None,
+                **call_options,
+            )
+            return _wait_for_text(str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s)
+
+        def generate_multimodal(
+            self,
+            prompt: str,
+            *,
+            model_name: Optional[str] = None,
+            image_paths: Sequence[str] | None = None,
+            image_urls: Sequence[str] | None = None,
+            system_prompt: Optional[str] = None,
+            additional_text_blocks: Sequence[str] | None = None,
+            messages: Sequence[dict] | None = None,
+            **kwargs: object,
+        ) -> str:
+            call_options = dict(kwargs)
+            queue_path, wait_timeout_s = _queue_options(call_options)
+
+            payload: dict[str, object] = {
+                "prompt": str(prompt or ""),
+                "image_urls": [str(url) for url in image_urls or () if str(url or "").strip()],
+                "image_data_urls": [_image_path_to_data_url(path) for path in image_paths or ()],
+                "system_prompt": system_prompt,
+                "additional_text_blocks": _coerce_text_sequence(additional_text_blocks),
+            }
+            if messages is not None:
+                payload["messages"] = list(messages)
+
+            remote_provider = (
+                call_options.pop("remote_provider", None)
+                or call_options.pop("multimodal_provider", None)
+                or call_options.pop("target_provider", None)
+            )
+            if remote_provider is not None:
+                payload["provider"] = str(remote_provider)
+
+            for key in (
+                "max_tokens",
+                "max_new_tokens",
+                "temperature",
+                "top_p",
+                "timeout",
+                "image_detail",
+            ):
+                if key in call_options:
+                    payload[key] = call_options.pop(key)
+
+            # Preserve small JSON-safe knobs for worker-side multimodal providers.
+            for key, value in list(call_options.items()):
+                if isinstance(value, (str, int, float, bool)) or value is None:
+                    payload[str(key)] = value
+
+            task_id = submit_task(
+                prompt=str(prompt or ""),
+                model_name=model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", ""),
+                task_type="multimodal-generation",
+                queue_path=queue_path or None,
+                payload=payload,
+            )
+            return _wait_for_text(str(task_id), queue_path=queue_path, wait_timeout_s=wait_timeout_s)
+
+    return _P2PTaskQueueProvider()
+
+
 def _get_openrouter_provider() -> Optional[LLMProvider]:
     api_key = _coalesce_env("IPFS_DATASETS_PY_OPENROUTER_API_KEY", "OPENROUTER_API_KEY")
     if not api_key:
@@ -2400,6 +2602,16 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                     stderr_text=str(stderr or ""),
                     metadata=diagnostics_metadata,
                 )
+
+            if proc.returncode != 0 and not text_out:
+                kind = _classify_codex_error_kind(stdout=stdout or "", stderr=stderr or "")
+                resets = _extract_resets_in_seconds_from_codex_jsonl(stdout or "")
+                if kind == "quota_exceeded":
+                    raise LLMRouterError("Codex quota exceeded (billing/plan hard limit)")
+                if kind == "usage_limit":
+                    suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
+                    raise LLMRouterError(f"Codex usage limit reached{suffix}")
+                raise LLMRouterError(proc.stderr.strip() or "codex exec failed")
 
             if proc.returncode == 0 or text_out or (stdout and stdout.strip()):
                 if text_out:
@@ -3127,6 +3339,8 @@ def _builtin_provider_by_name(name: str) -> Optional[LLMProvider]:
         return None
     if key in {"mock", "dry_run", "dry-run"}:
         return _get_mock_provider()
+    if key in {"p2p", "p2p_task", "p2p_task_queue", "remote_queue", "task_queue"}:
+        return _get_p2p_task_queue_provider()
     if key in {"openai", "openai_api"}:
         return _get_openai_provider()
     if key == "openrouter":

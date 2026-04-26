@@ -8,6 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 import asyncio
 import hashlib
+import os
 import re
 import json
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
@@ -29,6 +30,13 @@ from .legal_source_recovery_promotion import (
     build_recovery_manifest_release_plan,
 )
 from .legal_source_recovery import recover_missing_legal_citation_source
+from .municipal_law_ontology import (
+    BASE_ACTOR_LEXICON,
+    BASE_SUBJECT_LEXICON,
+    NORM_PATTERNS,
+    ONTOLOGY_VERSION as MUNICIPAL_ONTOLOGY_VERSION,
+    build_base_municipal_ontology,
+)
 from ..legal_data.document_structure import build_document_knowledge_graph, parse_legal_document
 from ..retrieval import (
     bm25_search_documents,
@@ -2051,64 +2059,48 @@ def _build_bm25_rows(
     return list(build_bm25_index(documents).get("documents") or [])
 
 
-_MUNICIPAL_ACTOR_TERMS: Dict[str, str] = {
-    "applicant": "legal_actor",
-    "auditor": "municipal_official",
-    "bureau": "municipal_agency",
-    "business": "regulated_entity",
-    "city": "municipality",
-    "city administrator": "municipal_official",
-    "city attorney": "municipal_official",
-    "city council": "legislative_body",
-    "city official": "municipal_official",
-    "contractor": "regulated_entity",
-    "director": "municipal_official",
-    "employee": "worker",
-    "employer": "regulated_entity",
-    "enforcement officer": "municipal_official",
-    "fire marshal": "municipal_official",
-    "landlord": "regulated_entity",
-    "licensee": "regulated_entity",
-    "manager": "municipal_official",
-    "officer": "municipal_official",
-    "owner": "property_actor",
-    "permittee": "regulated_entity",
-    "person": "legal_person",
-    "property owner": "property_actor",
-    "tenant": "resident",
-    "worker": "worker",
-}
-
-_MUNICIPAL_SUBJECT_TERMS: Dict[str, str] = {
-    "appeal": "administrative_process",
-    "application": "administrative_process",
-    "building": "regulated_subject",
-    "business license": "license",
-    "city code": "legal_code",
-    "construction": "regulated_activity",
-    "demolition": "regulated_activity",
-    "development": "regulated_activity",
-    "emergency": "public_safety",
-    "fee": "financial_obligation",
-    "hearing": "administrative_process",
-    "license": "license",
-    "nuisance": "regulated_condition",
-    "penalty": "sanction",
-    "permit": "permit",
-    "property": "regulated_subject",
-    "public works": "municipal_service",
-    "right-of-way": "public_property",
-    "tax": "financial_obligation",
-    "violation": "legal_violation",
-    "zoning": "land_use_control",
-}
-
-_MUNICIPAL_NORM_PATTERNS: Sequence[tuple[str, str, str]] = (
-    (r"\bshall\s+not\b|\bmust\s+not\b|\bmay\s+not\b|\bis\s+prohibited\b|\bare\s+prohibited\b", "prohibition", "PROHIBITS"),
-    (r"\bshall\b|\bmust\b|\bis\s+required\b|\bare\s+required\b", "obligation", "IMPOSES_DUTY"),
-    (r"\bmay\b|\bis\s+authorized\b|\bare\s+authorized\b|\bhas\s+authority\b", "permission_or_power", "GRANTS_AUTHORITY"),
-    (r"\bmeans\b|\bmeans the\b|\bis defined as\b", "definition", "DEFINES"),
+_MUNICIPAL_ACTOR_TERMS: Dict[str, str] = dict(BASE_ACTOR_LEXICON)
+_MUNICIPAL_SUBJECT_TERMS: Dict[str, str] = dict(BASE_SUBJECT_LEXICON)
+_MUNICIPAL_NORM_PATTERNS: Sequence[tuple[str, str, str, str]] = tuple(
+    (str(item["regex"]), str(item["id"]), str(item["predicate"]), str(item["class"]))
+    for item in NORM_PATTERNS
 )
+
+
+@lru_cache(maxsize=4)
+def _active_municipal_ontology(path_hint: str = "") -> Dict[str, Any]:
+    """Load the municipal ontology used by KG generation.
+
+    If ``IPFS_DATASETS_MUNICIPAL_ONTOLOGY_PATH`` is set, that JSON artifact is
+    used; otherwise the checked-in base ontology is used.
+    """
+
+    path = str(path_hint or os.getenv("IPFS_DATASETS_MUNICIPAL_ONTOLOGY_PATH") or "").strip()
+    if path:
+        try:
+            with Path(path).expanduser().open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            if isinstance(payload, dict) and payload.get("classes"):
+                return payload
+        except Exception:
+            pass
+    return build_base_municipal_ontology()
+
+
+def _ontology_actor_lexicon() -> Dict[str, str]:
+    return dict(_active_municipal_ontology().get("actor_lexicon") or _MUNICIPAL_ACTOR_TERMS)
+
+
+def _ontology_subject_lexicon() -> Dict[str, str]:
+    return dict(_active_municipal_ontology().get("subject_lexicon") or _MUNICIPAL_SUBJECT_TERMS)
+
+
+def _ontology_norm_patterns() -> Sequence[tuple[str, str, str, str]]:
+    patterns = []
+    for item in list(_active_municipal_ontology().get("norm_patterns") or []):
+        if isinstance(item, Mapping):
+            patterns.append((str(item.get("regex") or ""), str(item.get("id") or ""), str(item.get("predicate") or ""), str(item.get("class") or "LegalNorm")))
+    return tuple(patterns) or _MUNICIPAL_NORM_PATTERNS
 
 
 def _slug_token(value: str) -> str:
@@ -2231,10 +2223,10 @@ def _add_municipal_law_ontology(
     title_number = _municipal_title_number(section_number)
     add_entity(
         join_value,
-        "municipal_code_section",
+        "MunicipalCodeSection",
         title or section_number or join_value,
         {
-            "ontology_version": "municipal-law-kg-v2",
+            "ontology_version": MUNICIPAL_ONTOLOGY_VERSION,
             "section_number": section_number,
             "chapter_number": chapter_number,
             "title_number": title_number,
@@ -2245,44 +2237,45 @@ def _add_municipal_law_ontology(
     )
     if title_number:
         title_id = f"portland_code_title:{title_number}"
-        add_entity(title_id, "municipal_code_title", f"Portland City Code Title {title_number}", {"title_number": title_number})
+        add_entity(title_id, "MunicipalCodeTitle", f"Portland City Code Title {title_number}", {"title_number": title_number})
         add_relationship(join_value, "PART_OF_TITLE", title_id)
     if chapter_number:
         chapter_id = f"portland_code_chapter:{chapter_number}"
-        add_entity(chapter_id, "municipal_code_chapter", f"Portland City Code Chapter {chapter_number}", {"chapter_number": chapter_number, "title_number": title_number})
+        add_entity(chapter_id, "MunicipalCodeChapter", f"Portland City Code Chapter {chapter_number}", {"chapter_number": chapter_number, "title_number": title_number})
         add_relationship(join_value, "PART_OF_CHAPTER", chapter_id)
         if title_number:
             add_relationship(chapter_id, "PART_OF_TITLE", f"portland_code_title:{title_number}")
 
     semantic_text = _municipal_body_text(text)
     lowered = f" {title} {semantic_text} ".lower()
-    for term, actor_type in _MUNICIPAL_ACTOR_TERMS.items():
+    norm_patterns = _ontology_norm_patterns()
+    for term, actor_type in _ontology_actor_lexicon().items():
         if re.search(rf"\b{re.escape(term)}s?\b", lowered):
             actor_id = f"municipal_actor:{_slug_token(term)}"
-            add_entity(actor_id, actor_type, term, {"canonical_term": term, "ontology_version": "municipal-law-kg-v2"})
+            add_entity(actor_id, actor_type, term, {"canonical_term": term, "ontology_version": MUNICIPAL_ONTOLOGY_VERSION})
             add_relationship(join_value, "MENTIONS_ACTOR", actor_id, {"evidence": _municipal_sentence_window(semantic_text, rf"\b{re.escape(term)}s?\b")})
-            if any(re.search(pattern, lowered) and rel_type == "IMPOSES_DUTY" for pattern, _, rel_type in _MUNICIPAL_NORM_PATTERNS):
+            if any(re.search(pattern, lowered) and rel_type == "IMPOSES_DUTY" for pattern, _, rel_type, _ in norm_patterns):
                 add_relationship(join_value, "IMPOSES_DUTY_ON", actor_id)
-            if any(re.search(pattern, lowered) and rel_type == "GRANTS_AUTHORITY" for pattern, _, rel_type in _MUNICIPAL_NORM_PATTERNS):
+            if any(re.search(pattern, lowered) and rel_type == "GRANTS_AUTHORITY" for pattern, _, rel_type, _ in norm_patterns):
                 add_relationship(join_value, "GRANTS_AUTHORITY_TO", actor_id)
 
-    for term, subject_type in _MUNICIPAL_SUBJECT_TERMS.items():
+    for term, subject_type in _ontology_subject_lexicon().items():
         if re.search(rf"\b{re.escape(term)}s?\b", lowered):
             subject_id = f"municipal_subject:{_slug_token(term)}"
-            add_entity(subject_id, subject_type, term, {"canonical_term": term, "ontology_version": "municipal-law-kg-v2"})
+            add_entity(subject_id, subject_type, term, {"canonical_term": term, "ontology_version": MUNICIPAL_ONTOLOGY_VERSION})
             add_relationship(join_value, "REGULATES_SUBJECT", subject_id, {"evidence": _municipal_sentence_window(semantic_text, rf"\b{re.escape(term)}s?\b")})
             if term in {"permit", "license", "business license"}:
                 add_relationship(join_value, "GOVERNS_AUTHORIZATION", subject_id)
 
-    for pattern, norm_type, rel_type in _MUNICIPAL_NORM_PATTERNS:
+    for pattern, norm_type, rel_type, norm_class in norm_patterns:
         if re.search(pattern, lowered):
             norm_id = f"{join_value}:norm:{norm_type}"
-            add_entity(norm_id, "legal_norm", norm_type, {"norm_type": norm_type, "evidence": _municipal_sentence_window(semantic_text, pattern)})
+            add_entity(norm_id, norm_class, norm_type, {"norm_type": norm_type, "evidence": _municipal_sentence_window(semantic_text, pattern)})
             add_relationship(join_value, rel_type, norm_id)
 
     for defined_term in _extract_municipal_defined_terms(semantic_text):
         term_id = f"defined_term:{_slug_token(defined_term)}"
-        add_entity(term_id, "defined_term", defined_term, {"defined_term": defined_term})
+        add_entity(term_id, "DefinedTerm", defined_term, {"defined_term": defined_term})
         add_relationship(join_value, "DEFINES_TERM", term_id, {"evidence": _municipal_sentence_window(semantic_text, re.escape(defined_term))})
 
     for ref in _extract_municipal_references(text):
@@ -2297,7 +2290,15 @@ def _add_municipal_law_ontology(
             "oregon_admin_rule": "OAR",
             "ordinance": "Ordinance",
         }.get(ref_type, ref_type)
-        add_entity(ref_id, ref_type, f"{label_prefix} {value}", {"reference_type": ref_type, "reference_value": value})
+        ref_entity_type = {
+            "portland_code_section": "LegalAuthority",
+            "portland_code_chapter": "MunicipalCodeChapter",
+            "portland_code_title": "MunicipalCodeTitle",
+            "oregon_revised_statute": "StateStatute",
+            "oregon_admin_rule": "AdministrativeRule",
+            "ordinance": "Ordinance",
+        }.get(ref_type, "LegalAuthority")
+        add_entity(ref_id, ref_entity_type, f"{label_prefix} {value}", {"reference_type": ref_type, "reference_value": value})
         add_relationship(join_value, "REFERENCES_LEGAL_AUTHORITY", ref_id, {"reference_type": ref_type})
         if ref_type == "portland_code_section":
             add_relationship(join_value, "REFERENCES_CODE_SECTION", ref_id)
@@ -2389,7 +2390,7 @@ def _build_generic_knowledge_graph_rows(
                 _add_relationship(dict(rel))
         document_entity = {
             "id": join_value,
-            "type": "legal_document" if corpus_key != "municipal_laws" else "municipal_code_section",
+            "type": "legal_document" if corpus_key != "municipal_laws" else "MunicipalCodeSection",
             "label": title,
             "properties": {
                 "corpus_key": corpus_key,
@@ -2546,8 +2547,9 @@ def _build_generic_knowledge_graph_rows(
     summary = {
         "entity_count": len(entities),
         "relationship_count": len(relationships),
-        "document_count": len([entity for entity in entities if entity.get("type") in {"legal_document", "municipal_code_section"}]),
-        "ontology_version": "municipal-law-kg-v2" if corpus_key == "municipal_laws" else "generic-legal-document-kg-v1",
+        "document_count": len([entity for entity in entities if entity.get("type") in {"legal_document", "MunicipalCodeSection"}]),
+        "ontology_version": MUNICIPAL_ONTOLOGY_VERSION if corpus_key == "municipal_laws" else "generic-legal-document-kg-v1",
+        "ontology": _active_municipal_ontology() if corpus_key == "municipal_laws" else {},
         "entity_type_counts": entity_type_counts,
         "relationship_type_counts": relationship_type_counts,
     }

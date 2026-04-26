@@ -650,7 +650,7 @@ _MN_RULE_AGENCY_PATH_RE = re.compile(
 )
 
 _MN_RULE_DETAIL_PATH_RE = re.compile(
-    r"^/rules/\d{4}/?$",
+    r"^/rules/\d{4}(?:\.\d{4})?/?$",
     re.IGNORECASE,
 )
 
@@ -1076,8 +1076,11 @@ _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
         "https://www.revisor.mn.gov/rules/",
         "https://www.revisor.mn.gov/rules/numerical/",
         "https://www.revisor.mn.gov/rules/1400/",
+        "https://www.revisor.mn.gov/rules/1400.0200/",
         "https://www.revisor.mn.gov/rules/7000/",
+        "https://www.revisor.mn.gov/rules/7000.0100/",
         "https://www.revisor.mn.gov/rules/8500/",
+        "https://www.revisor.mn.gov/rules/8500.0100/",
     ],
     "MO": [
         "https://www.sos.mo.gov/adrules/csr/csr",
@@ -1930,6 +1933,30 @@ def _query_target_terms_for_state(state_code: str) -> List[str]:
     return target_terms[:12]
 
 
+def _full_corpus_mode_enabled() -> bool:
+    return str(os.getenv("LEGAL_ADMIN_RULES_FULL_CORPUS_MODE") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _bounded_discovery_limit(
+    *,
+    max_fetch: int,
+    multiplier: int,
+    default_cap: int,
+    full_corpus_cap: Optional[int] = None,
+) -> int:
+    requested = max(1, int(max_fetch)) * max(1, int(multiplier))
+    if _full_corpus_mode_enabled():
+        if full_corpus_cap is None or int(full_corpus_cap) <= 0:
+            return requested
+        return min(requested, int(full_corpus_cap))
+    return min(requested, int(default_cap))
+
+
 def _max_fetch_cap_for_state(state_code: str) -> Optional[int]:
     state_key = str(state_code or "").strip().upper()
     if not state_key:
@@ -1952,6 +1979,8 @@ def _max_fetch_cap_for_state(state_code: str) -> Optional[int]:
                 pass
 
     raw_default = str(os.getenv("LEGAL_ADMIN_RULES_MAX_FETCH_PER_STATE") or "").strip()
+    if _full_corpus_mode_enabled() and not raw_default:
+        return None
     if not raw_default:
         default_caps = {
             # NYCRR Westlaw documents are reliable but slower than most direct
@@ -10503,6 +10532,15 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and len(body) >= max(8000, int(min_chars))
         and _has_admin_signal(text=body, title=title_value, url=url_value)
     )
+    minnesota_official_rule_part = (
+        host == "www.revisor.mn.gov"
+        and re.search(r"^/rules/\d{4}\.\d{4}/?$", path, re.IGNORECASE) is not None
+        and len(body) >= max(200, int(min_chars))
+        and "minnesota administrative rules" in " ".join([title_value, body]).lower()
+        and re.search(r"\b\d{4}\.\d{4}\b", " ".join([title_value, body])) is not None
+        and re.search(r"\b(?:subpart|subp\.|part|scope|definitions?|authority)\b", body, re.IGNORECASE) is not None
+        and "page not found" not in body[:2000].lower()
+    )
     wyoming_official_ajax_viewer = False
     if host == "rules.wyo.gov" and path.lower() == "/ajaxhandler.ashx":
         handler = str((query.get("handler") or [""])[0]).strip().lower()
@@ -10538,6 +10576,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and not oklahoma_official_title_pdf
         and not new_jersey_state_njac_pdf
         and not wyoming_official_ajax_viewer
+        and not minnesota_official_rule_part
     ):
         return False
     if (
@@ -10548,6 +10587,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and not oklahoma_official_title_pdf
         and not new_jersey_state_njac_pdf
         and not wyoming_official_ajax_viewer
+        and not minnesota_official_rule_part
     ):
         return False
     if _looks_like_shallow_montana_inventory_page(text=body, title=title_value, url=url_value):
@@ -10579,6 +10619,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     if oklahoma_official_title_pdf:
         return True
     if new_jersey_state_njac_pdf:
+        return True
+    if minnesota_official_rule_part:
         return True
 
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
@@ -11155,6 +11197,9 @@ async def _scrape_official_html_rule_detail_via_requests(url: str) -> Optional[A
             return None
     elif host == "apps.legislature.ky.gov":
         if not re.search(r"^/law/kar/TITLE\d+\.HTM$", path, re.IGNORECASE):
+            return None
+    elif host == "www.revisor.mn.gov":
+        if not _MN_RULE_DETAIL_PATH_RE.fullmatch(path):
             return None
     else:
         return None
@@ -11920,6 +11965,12 @@ async def _discover_new_york_westlaw_document_urls(
     document_urls: List[str] = []
     seen_pages: set[str] = set()
     seen_documents: set[str] = set()
+    per_page_link_limit = _bounded_discovery_limit(
+        max_fetch=limit,
+        multiplier=1,
+        default_cap=24,
+        full_corpus_cap=200,
+    )
 
     async def _fetch_links(page_url: str, *, link_limit: int) -> List[str]:
         page_key = _url_key(page_url)
@@ -12108,6 +12159,125 @@ async def _discover_connecticut_rule_document_urls(
             if _CT_EREGS_SECTION_PATH_RE.fullmatch(urlparse(link_url).path or ""):
                 if _record(link_url):
                     return discovered_urls
+
+    return discovered_urls
+
+
+async def _discover_minnesota_rule_document_urls(*, seed_urls: List[str], limit: int = 8) -> List[str]:
+    discovered_urls: List[str] = []
+    seen_document_keys: set[str] = set()
+    seen_chapter_keys: set[str] = set()
+    headers = {"User-Agent": "ipfs-datasets-py legal corpus crawler (+https://github.com/endomorphosis/ipfs_datasets_py)"}
+    limit_n = max(1, int(limit))
+
+    def _record_document(url: str) -> bool:
+        parsed = urlparse(str(url or "").strip())
+        if parsed.netloc.lower() != "www.revisor.mn.gov":
+            return False
+        if not re.fullmatch(r"/rules/\d{4}\.\d{4}/?", parsed.path or "", re.IGNORECASE):
+            return False
+        normalized_url = urlunparse(("https", parsed.netloc, (parsed.path or "").rstrip("/") + "/", "", "", ""))
+        key = _url_key(normalized_url)
+        if not key or key in seen_document_keys:
+            return False
+        seen_document_keys.add(key)
+        discovered_urls.append(normalized_url)
+        return len(discovered_urls) >= limit_n
+
+    def _fetch_html(page_url: str) -> str:
+        try:
+            response = requests.get(page_url, timeout=20, headers=headers)
+            response.raise_for_status()
+        except Exception:
+            return ""
+        return str(response.text or "")
+
+    def _chapter_urls_from_html(*, html: str, page_url: str) -> List[str]:
+        chapter_urls: List[str] = []
+        for match in re.finditer(r'href=["\']([^"\']*/rules/\d{4}/?[^"\']*)["\']', html, re.IGNORECASE):
+            chapter_url = urljoin(page_url, unescape(str(match.group(1) or "").strip()))
+            parsed = urlparse(chapter_url)
+            if parsed.netloc.lower() != "www.revisor.mn.gov":
+                continue
+            if not re.fullmatch(r"/rules/\d{4}/?", parsed.path or "", re.IGNORECASE):
+                continue
+            normalized_url = urlunparse(("https", parsed.netloc, (parsed.path or "").rstrip("/") + "/", "", "", ""))
+            key = _url_key(normalized_url)
+            if not key or key in seen_chapter_keys:
+                continue
+            seen_chapter_keys.add(key)
+            chapter_urls.append(normalized_url)
+        return chapter_urls
+
+    def _part_urls_from_html(*, html: str, page_url: str) -> List[str]:
+        part_urls: List[str] = []
+        soup = BeautifulSoup(str(html or ""), "html.parser")
+        for anchor in soup.find_all("a", href=True):
+            href = str(anchor.get("href") or "").strip()
+            if not href:
+                continue
+            absolute_url = urljoin(page_url, href)
+            parsed = urlparse(absolute_url)
+            if parsed.netloc.lower() != "www.revisor.mn.gov":
+                continue
+            if not re.fullmatch(r"/rules/\d{4}\.\d{4}/?", parsed.path or "", re.IGNORECASE):
+                continue
+            row_text = ""
+            row = anchor.find_parent("tr")
+            if row is not None:
+                row_text = row.get_text(" ", strip=True)
+            if re.search(r"\brepealed\b", row_text, re.IGNORECASE):
+                continue
+            normalized_url = urlunparse(("https", parsed.netloc, (parsed.path or "").rstrip("/") + "/", "", "", ""))
+            part_urls.append(normalized_url)
+        return part_urls
+
+    seed_values = [str(url or "").strip() for url in seed_urls if str(url or "").strip()]
+    chapter_urls: List[str] = []
+    for seed_url in seed_values:
+        parsed = urlparse(seed_url)
+        if parsed.netloc.lower() != "www.revisor.mn.gov":
+            continue
+        if re.fullmatch(r"/rules/\d{4}\.\d{4}/?", parsed.path or "", re.IGNORECASE):
+            if _record_document(seed_url):
+                return discovered_urls
+            continue
+        if re.fullmatch(r"/rules/\d{4}/?", parsed.path or "", re.IGNORECASE):
+            normalized_chapter = urlunparse(("https", parsed.netloc, (parsed.path or "").rstrip("/") + "/", "", "", ""))
+            key = _url_key(normalized_chapter)
+            if key and key not in seen_chapter_keys:
+                seen_chapter_keys.add(key)
+                chapter_urls.append(normalized_chapter)
+
+    numerical_url = "https://www.revisor.mn.gov/rules/numerical/"
+    for seed_url in seed_values:
+        parsed = urlparse(seed_url)
+        if parsed.netloc.lower() == "www.revisor.mn.gov" and (parsed.path or "").rstrip("/").lower() == "/rules/numerical":
+            numerical_url = seed_url
+            break
+
+    numerical_html = await asyncio.to_thread(_fetch_html, numerical_url)
+    if numerical_html:
+        chapter_urls.extend(_chapter_urls_from_html(html=numerical_html, page_url=numerical_url))
+
+    deduped_chapter_urls: List[str] = []
+    seen_chapter_order: set[str] = set()
+    for chapter_url in chapter_urls:
+        key = _url_key(chapter_url)
+        if not key or key in seen_chapter_order:
+            continue
+        seen_chapter_order.add(key)
+        deduped_chapter_urls.append(chapter_url)
+
+    for chapter_url in deduped_chapter_urls:
+        if len(discovered_urls) >= limit_n:
+            break
+        chapter_html = await asyncio.to_thread(_fetch_html, chapter_url)
+        if not chapter_html:
+            continue
+        for part_url in _part_urls_from_html(html=chapter_html, page_url=chapter_url):
+            if _record_document(part_url):
+                return discovered_urls
 
     return discovered_urls
 
@@ -13037,7 +13207,7 @@ async def _discover_california_westlaw_document_urls(
                 html,
                 base_host="govt.westlaw.com",
                 page_url=page_url,
-                limit=24,
+                limit=per_page_link_limit,
                 allowed_hosts=allowed_hosts,
             )
             if scraped is not None:
@@ -13045,7 +13215,7 @@ async def _discover_california_westlaw_document_urls(
                     scraped,
                     base_host="govt.westlaw.com",
                     page_url=page_url,
-                    limit=24,
+                    limit=per_page_link_limit,
                     allowed_hosts=allowed_hosts,
                 ):
                     if link_url not in links:
@@ -13077,14 +13247,14 @@ async def _discover_california_westlaw_document_urls(
                         request_only_html,
                         base_host="govt.westlaw.com",
                         page_url=page_url,
-                        limit=24,
+                        limit=per_page_link_limit,
                         allowed_hosts=allowed_hosts,
                     )
                     for link_url in _candidate_links_from_scrape(
                         request_only_scraped,
                         base_host="govt.westlaw.com",
                         page_url=page_url,
-                        limit=24,
+                        limit=per_page_link_limit,
                         allowed_hosts=allowed_hosts,
                     ):
                         if link_url not in request_only_links:
@@ -13837,6 +14007,7 @@ async def _agentic_discover_admin_state_blocks(
         tennessee_bootstrap_document_urls: List[str] = []
         maryland_bootstrap_document_urls: List[str] = []
         maine_bootstrap_document_urls: List[str] = []
+        minnesota_bootstrap_document_urls: List[str] = []
         preseed_substantive_url_keys: set[str] = set()
 
         # Utah's public search API already exposes canonical detail-page URLs.
@@ -13908,7 +14079,12 @@ async def _agentic_discover_admin_state_blocks(
                         live_scraper=live_scraper,
                         live_fetch_api=live_fetch_api,
                         direct_fetch_api=direct_fetch_api,
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=20.0,
                 )
@@ -13920,7 +14096,18 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["arizona_public_services_bootstrap"] = len(arizona_bootstrap_document_urls)
 
         if state_code == "AR":
-            arkansas_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 8))
+            arkansas_seed_limit = max(
+                2,
+                min(
+                    _bounded_discovery_limit(
+                        max_fetch=max_fetch_per_state,
+                        multiplier=3,
+                        default_cap=8,
+                        full_corpus_cap=1000,
+                    ),
+                    int(max_candidates_per_state),
+                ),
+            )
             arkansas_bootstrap_document_urls = await _discover_arkansas_rule_document_urls(
                 seed_urls=ordered_seed_urls[:6],
                 limit=arkansas_seed_limit,
@@ -13931,7 +14118,18 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["arkansas_sos_search_bootstrap"] = len(arkansas_bootstrap_document_urls)
 
         if state_code == "TX":
-            texas_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 12))
+            texas_seed_limit = max(
+                2,
+                min(
+                    _bounded_discovery_limit(
+                        max_fetch=max_fetch_per_state,
+                        multiplier=3,
+                        default_cap=12,
+                        full_corpus_cap=1000,
+                    ),
+                    int(max_candidates_per_state),
+                ),
+            )
             try:
                 texas_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_texas_rule_document_urls(
@@ -13948,7 +14146,18 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["texas_appian_bootstrap"] = len(texas_bootstrap_document_urls)
 
         if state_code == "OK":
-            oklahoma_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 12))
+            oklahoma_seed_limit = max(
+                2,
+                min(
+                    _bounded_discovery_limit(
+                        max_fetch=max_fetch_per_state,
+                        multiplier=3,
+                        default_cap=12,
+                        full_corpus_cap=1000,
+                    ),
+                    int(max_candidates_per_state),
+                ),
+            )
             try:
                 oklahoma_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_oklahoma_rule_document_urls(limit=oklahoma_seed_limit),
@@ -13964,7 +14173,15 @@ async def _agentic_discover_admin_state_blocks(
         seeded_direct_detail_urls = [url for url in seed_urls if _is_immediate_direct_detail_candidate_url(url)]
 
         if state_code == "MD" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
-            maryland_seed_limit = max(4, min(max(1, int(max_fetch_per_state)) * 3, 16))
+            maryland_seed_limit = max(
+                4,
+                _bounded_discovery_limit(
+                    max_fetch=max_fetch_per_state,
+                    multiplier=3,
+                    default_cap=16,
+                    full_corpus_cap=1000,
+                ),
+            )
             try:
                 maryland_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_maryland_rule_document_urls(
@@ -13981,7 +14198,15 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["maryland_comar_bootstrap"] = len(maryland_bootstrap_document_urls)
 
         if state_code == "ME" and not seeded_direct_detail_urls:
-            maine_seed_limit = max(4, min(max(1, int(max_fetch_per_state)) * 4, 20))
+            maine_seed_limit = max(
+                4,
+                _bounded_discovery_limit(
+                    max_fetch=max_fetch_per_state,
+                    multiplier=4,
+                    default_cap=20,
+                    full_corpus_cap=1000,
+                ),
+            )
             try:
                 maine_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_maine_rule_document_urls(
@@ -13997,13 +14222,40 @@ async def _agentic_discover_admin_state_blocks(
             if maine_bootstrap_document_urls:
                 source_breakdown["maine_sos_rules_bootstrap"] = len(maine_bootstrap_document_urls)
 
+        if state_code == "MN":
+            minnesota_seed_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=4,
+                default_cap=24,
+                full_corpus_cap=1000,
+            )
+            try:
+                minnesota_bootstrap_document_urls = await asyncio.wait_for(
+                    _discover_minnesota_rule_document_urls(
+                        seed_urls=ordered_seed_urls[:12],
+                        limit=minnesota_seed_limit,
+                    ),
+                    timeout=45.0 if _full_corpus_mode_enabled() else 20.0,
+                )
+            except Exception:
+                minnesota_bootstrap_document_urls = []
+            for document_url in minnesota_bootstrap_document_urls:
+                candidate_urls.append(document_url)
+            if minnesota_bootstrap_document_urls:
+                source_breakdown["minnesota_revisor_bootstrap"] = len(minnesota_bootstrap_document_urls)
+
         vermont_bootstrap_document_urls: List[str] = []
         if state_code == "VT" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
             try:
                 vermont_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_vermont_rule_document_urls(
                         seed_urls=ordered_seed_urls[:8],
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=20.0,
                 )
@@ -14019,7 +14271,12 @@ async def _agentic_discover_admin_state_blocks(
                 tennessee_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_tennessee_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14036,7 +14293,12 @@ async def _agentic_discover_admin_state_blocks(
                 hawaii_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_hawaii_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14053,7 +14315,12 @@ async def _agentic_discover_admin_state_blocks(
                 louisiana_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_louisiana_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14070,7 +14337,12 @@ async def _agentic_discover_admin_state_blocks(
                 rhode_island_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_rhode_island_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max(max_fetch_per_state * 4, 12), 24),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=24,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=20.0,
                 )
@@ -14087,7 +14359,12 @@ async def _agentic_discover_admin_state_blocks(
                 iowa_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_iowa_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14104,7 +14381,12 @@ async def _agentic_discover_admin_state_blocks(
                 florida_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_florida_rule_document_urls(
                         seed_urls=ordered_seed_urls[:8],
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14125,7 +14407,12 @@ async def _agentic_discover_admin_state_blocks(
                         live_fetch_api=live_fetch_api,
                         direct_fetch_api=direct_fetch_api,
                         allowed_hosts=allowed_hosts,
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14153,7 +14440,14 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "AL" and not seeded_direct_detail_urls:
             try:
                 alabama_bootstrap_document_urls = await asyncio.wait_for(
-                    _discover_alabama_rule_document_urls(limit=min(max_fetch_per_state * 3, 32)),
+                    _discover_alabama_rule_document_urls(
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=3,
+                            default_cap=32,
+                            full_corpus_cap=1000,
+                        )
+                    ),
                     timeout=25.0,
                 )
             except Exception:
@@ -14166,7 +14460,14 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "MS" and not seeded_direct_detail_urls:
             try:
                 mississippi_bootstrap_document_urls = await asyncio.wait_for(
-                    _discover_mississippi_rule_document_urls(limit=min(max_fetch_per_state * 3, 12)),
+                    _discover_mississippi_rule_document_urls(
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=3,
+                            default_cap=12,
+                            full_corpus_cap=1000,
+                        )
+                    ),
                     timeout=25.0,
                 )
             except Exception:
@@ -14179,7 +14480,14 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "NE" and not seeded_direct_detail_urls:
             try:
                 nebraska_bootstrap_document_urls = await asyncio.wait_for(
-                    _discover_nebraska_rule_document_urls(limit=min(max(max_fetch_per_state * 4, 8), 20)),
+                    _discover_nebraska_rule_document_urls(
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=20,
+                            full_corpus_cap=1000,
+                        )
+                    ),
                     timeout=25.0,
                 )
             except Exception:
@@ -14194,7 +14502,12 @@ async def _agentic_discover_admin_state_blocks(
                 michigan_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_michigan_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max_fetch_per_state * 4, 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14210,7 +14523,12 @@ async def _agentic_discover_admin_state_blocks(
                 alaska_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_alaska_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                            limit=min(max(1, int(max_fetch_per_state)) * 3, 20),
+                            limit=_bounded_discovery_limit(
+                                max_fetch=max_fetch_per_state,
+                                multiplier=3,
+                                default_cap=20,
+                                full_corpus_cap=1000,
+                            ),
                     ),
                     timeout=25.0,
                 )
@@ -14226,7 +14544,12 @@ async def _agentic_discover_admin_state_blocks(
                 wyoming_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_wyoming_rule_document_urls(
                         seed_urls=ordered_seed_urls[:6],
-                        limit=min(max_fetch_per_state * 4, 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14281,9 +14604,19 @@ async def _agentic_discover_admin_state_blocks(
                                 continue
                             seen_wyoming_document_keys.add(viewer_key)
                             wyoming_bootstrap_document_urls.append(viewer_url)
-                            if len(wyoming_bootstrap_document_urls) >= min(max_fetch_per_state * 4, 16):
+                            if len(wyoming_bootstrap_document_urls) >= _bounded_discovery_limit(
+                                max_fetch=max_fetch_per_state,
+                                multiplier=4,
+                                default_cap=16,
+                                full_corpus_cap=1000,
+                            ):
                                 break
-                        if len(wyoming_bootstrap_document_urls) >= min(max_fetch_per_state * 4, 16):
+                        if len(wyoming_bootstrap_document_urls) >= _bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ):
                             break
                     if wyoming_bootstrap_document_urls:
                         break
@@ -14295,7 +14628,14 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "SD":
             try:
                 south_dakota_bootstrap_document_urls = await asyncio.wait_for(
-                    _discover_south_dakota_rule_document_urls(limit=min(max(max_fetch_per_state * 4, 8), 16)),
+                    _discover_south_dakota_rule_document_urls(
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        )
+                    ),
                     timeout=25.0,
                 )
             except Exception:
@@ -14306,7 +14646,18 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["south_dakota_rules_api_bootstrap"] = len(south_dakota_bootstrap_document_urls)
 
         if state_code == "MT" and not seeded_direct_detail_urls:
-            montana_seed_limit = max(2, min(max(1, int(max_fetch_per_state)) * 3, int(max_candidates_per_state), 12))
+            montana_seed_limit = max(
+                2,
+                min(
+                    _bounded_discovery_limit(
+                        max_fetch=max_fetch_per_state,
+                        multiplier=3,
+                        default_cap=12,
+                        full_corpus_cap=1000,
+                    ),
+                    int(max_candidates_per_state),
+                ),
+            )
             seen_montana_document_keys: set[str] = set()
             for seed_url in ordered_seed_urls[:8]:
                 if not _montana_collection_uuid_from_url(seed_url):
@@ -14336,7 +14687,12 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["montana_public_api_bootstrap"] = len(montana_bootstrap_document_urls)
 
         if state_code == "CO" and not seeded_direct_detail_urls:
-            colorado_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
+            colorado_bootstrap_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=1,
+                default_cap=8,
+                full_corpus_cap=1000,
+            )
             try:
                 from ..web_archiving.unified_web_scraper import (
                     ScraperConfig as _ScraperConfig,
@@ -14386,7 +14742,12 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["colorado_ccr_bootstrap"] = len(colorado_bootstrap_document_urls)
 
         if state_code == "CT" and not seeded_direct_detail_urls:
-            connecticut_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
+            connecticut_bootstrap_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=1,
+                default_cap=8,
+                full_corpus_cap=1000,
+            )
             try:
                 from ..web_archiving.unified_web_scraper import (
                     ScraperConfig as _ScraperConfig,
@@ -14431,7 +14792,12 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["connecticut_eregulations_bootstrap"] = len(connecticut_bootstrap_document_urls)
 
         if state_code == "NY" and not seeded_direct_detail_urls:
-            new_york_bootstrap_limit = min(max(1, int(max_fetch)), 8)
+            new_york_bootstrap_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch,
+                multiplier=1,
+                default_cap=8,
+                full_corpus_cap=1000,
+            )
             try:
                 from ..web_archiving.unified_web_scraper import (
                     ScraperConfig as _ScraperConfig,
@@ -14495,7 +14861,12 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown[new_york_bootstrap_source] = len(new_york_bootstrap_document_urls)
 
         if state_code == "CA" and not seeded_direct_detail_urls:
-            california_bootstrap_limit = min(max(1, int(max_fetch_per_state)), 8)
+            california_bootstrap_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=1,
+                default_cap=8,
+                full_corpus_cap=1000,
+            )
             try:
                 from ..web_archiving.unified_api import UnifiedWebArchivingAPI as _UnifiedWebArchivingAPI
                 from ..web_archiving.unified_web_scraper import (
@@ -14554,7 +14925,12 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["california_westlaw_document_bootstrap"] = len(california_bootstrap_document_urls)
 
         if state_code == "NH":
-            nh_seed_limit = min(max(1, int(max_fetch_per_state)) * 2, 8)
+            nh_seed_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=2,
+                default_cap=8,
+                full_corpus_cap=1000,
+            )
             try:
                 new_hampshire_bootstrap_result = await asyncio.wait_for(
                     _discover_new_hampshire_archived_rule_document_urls_with_diagnostics(
@@ -14597,7 +14973,12 @@ async def _agentic_discover_admin_state_blocks(
                     _discover_kansas_rule_document_urls(
                         seed_urls=ordered_seed_urls,
                         live_scraper=live_scraper,
-                        limit=min(max(max_fetch_per_state * 4, 8), 16),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=16,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=25.0,
                 )
@@ -14614,7 +14995,12 @@ async def _agentic_discover_admin_state_blocks(
                     _discover_idaho_rule_document_urls(
                         seed_urls=ordered_seed_urls,
                         live_scraper=live_scraper,
-                        limit=min(max(max_fetch_per_state * 4, 8), 24),
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch_per_state,
+                            multiplier=4,
+                            default_cap=24,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=20.0,
                 )
@@ -14651,6 +15037,7 @@ async def _agentic_discover_admin_state_blocks(
             or georgia_bootstrap_document_urls
             or kansas_bootstrap_document_urls
             or idaho_bootstrap_document_urls
+            or minnesota_bootstrap_document_urls
             or (state_code in {"FL", "IA", "MA"} and bool(candidate_urls))
         ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
@@ -14686,7 +15073,7 @@ async def _agentic_discover_admin_state_blocks(
                 *[value for value in prioritized_seed_document_urls if not _is_rtf_candidate_url(value)],
             ]
 
-        official_html_states = {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}
+        official_html_states = {"CT", "FL", "KY", "MA", "MN", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}
         preseed_min_text_chars = max(140, int(min_full_text_chars // 2))
         if require_substantive_text:
             preseed_min_text_chars = max(220, int(min_full_text_chars))
@@ -14841,6 +15228,12 @@ async def _agentic_discover_admin_state_blocks(
                     if inventory_seed:
                         preseed_signal = True
                         source_breakdown["seed_prefetch"] = int(source_breakdown.get("seed_prefetch", 0)) + 1
+                        seed_prefetch_expansion_limit = _bounded_discovery_limit(
+                            max_fetch=max_fetch,
+                            multiplier=3,
+                            default_cap=24,
+                            full_corpus_cap=1000,
+                        )
                         if state_code == "VT":
                             # Vermont's public SOS/ICAR pages are discovery/inventory surfaces,
                             # not substantive rule text. Once we've confirmed that shape, stop
@@ -14849,27 +15242,27 @@ async def _agentic_discover_admin_state_blocks(
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=fetched_text,
                             url=seed_url,
-                            limit=24,
+                            limit=seed_prefetch_expansion_limit,
                         ):
                             candidate_urls.append(rule_url)
                         for link_url in _candidate_links_from_html(
                             fetched_html,
                             base_host=host,
                             page_url=seed_url,
-                            limit=24,
+                            limit=seed_prefetch_expansion_limit,
                             allowed_hosts=allowed_hosts,
                         ):
                             if _score_candidate_url(link_url) > 0:
                                 candidate_urls.append(link_url)
                         for rule_url in _candidate_utah_rule_urls_from_public_api(
                             url=seed_url,
-                            limit=24,
+                            limit=seed_prefetch_expansion_limit,
                         ):
                             candidate_urls.append(rule_url)
                         if state_code == "MT":
                             try:
                                 montana_rule_urls = await asyncio.wait_for(
-                                    _discover_montana_rule_document_urls(seed_url, limit=24),
+                                    _discover_montana_rule_document_urls(seed_url, limit=seed_prefetch_expansion_limit),
                                     timeout=20.0,
                                 )
                             except Exception:
@@ -15322,7 +15715,11 @@ async def _agentic_discover_admin_state_blocks(
                     source_breakdown["official_seed_direct"] = int(source_breakdown.get("official_seed_direct", 0)) + 1
             official_seed_direct_satisfied = (
                 official_seed_direct_recovered_rules
-                and len(statutes) >= min(max_fetch, max(1, len(preseed_direct_documents)))
+                and len(statutes) >= (
+                    max_fetch
+                    if _full_corpus_mode_enabled()
+                    else min(max_fetch, max(1, len(preseed_direct_documents)))
+                )
             )
 
         prefetch_candidates: List[str] = []
@@ -15525,7 +15922,12 @@ async def _agentic_discover_admin_state_blocks(
             seen_arizona_rule_keys: set[str] = set()
             for rule_url in _prioritize_arizona_seed_document_urls(
                 arizona_bootstrap_document_urls,
-                limit=min(max_fetch * 2, 12),
+                limit=_bounded_discovery_limit(
+                    max_fetch=max_fetch,
+                    multiplier=2,
+                    default_cap=12,
+                    full_corpus_cap=1000,
+                ),
             ):
                 rule_key = _url_key(rule_url)
                 if not rule_key or rule_key in seen_arizona_rule_keys:
@@ -15599,7 +16001,12 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_kansas_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                if len(prioritized_kansas_seed_rule_urls) >= _bounded_discovery_limit(
+                    max_fetch=max_fetch,
+                    multiplier=2,
+                    default_cap=16,
+                    full_corpus_cap=1000,
+                ):
                     break
 
         prioritized_maryland_seed_rule_urls: List[str] = []
@@ -15616,7 +16023,12 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_maryland_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                if len(prioritized_maryland_seed_rule_urls) >= _bounded_discovery_limit(
+                    max_fetch=max_fetch,
+                    multiplier=2,
+                    default_cap=16,
+                    full_corpus_cap=1000,
+                ):
                     break
 
         official_bootstrap_rule_hit = False
@@ -15635,7 +16047,12 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_maine_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                if len(prioritized_maine_seed_rule_urls) >= _bounded_discovery_limit(
+                    max_fetch=max_fetch,
+                    multiplier=2,
+                    default_cap=16,
+                    full_corpus_cap=1000,
+                ):
                     break
 
         for rule_url in prioritized_california_bootstrap_document_urls:
@@ -15913,7 +16330,12 @@ async def _agentic_discover_admin_state_blocks(
                     if len(statutes) >= max_fetch:
                         break
 
-        if state_code in {"MD", "ME"} and official_bootstrap_rule_hit and statutes:
+        if (
+            state_code in {"MD", "ME"}
+            and official_bootstrap_rule_hit
+            and statutes
+            and not _full_corpus_mode_enabled()
+        ):
             max_fetch = len(statutes)
 
         if state_code == "LA" and prioritized_louisiana_seed_rule_urls:
@@ -16181,11 +16603,11 @@ async def _agentic_discover_admin_state_blocks(
         prioritized_ranked_document_urls = _prioritized_direct_detail_urls_from_candidates(
             ranked_urls,
             limit=(
-                min(max_fetch * 5, 24)
+                _bounded_discovery_limit(max_fetch=max_fetch, multiplier=5, default_cap=24, full_corpus_cap=1000)
                 if state_code == "AZ"
-                else min(max_fetch * 4, 24)
+                else _bounded_discovery_limit(max_fetch=max_fetch, multiplier=4, default_cap=24, full_corpus_cap=1000)
                 if state_code == "AR"
-                else min(max_fetch * 3, 12)
+                else _bounded_discovery_limit(max_fetch=max_fetch, multiplier=3, default_cap=12, full_corpus_cap=1000)
             ),
             exclude_urls=ranked_direct_exclude_urls,
         )
@@ -16412,7 +16834,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_oklahoma_rule_detail_via_api(fetch_document_url),
                         timeout=direct_timeout_s,
                     )
-                elif state_code in {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
+                elif state_code in {"CT", "FL", "KY", "MA", "MN", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     direct_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(fetch_document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -16514,7 +16936,12 @@ async def _agentic_discover_admin_state_blocks(
                     direct_html,
                     base_host=document_host,
                     page_url=document_url,
-                    limit=24,
+                    limit=_bounded_discovery_limit(
+                        max_fetch=max_fetch,
+                        multiplier=3,
+                        default_cap=24,
+                        full_corpus_cap=1000,
+                    ),
                     allowed_hosts=allowed_hosts,
                 ):
                     link_score = _score_candidate_url(link_url)
@@ -16695,7 +17122,14 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "IN":
             try:
                 indiana_api_rule_urls = await asyncio.wait_for(
-                    _discover_indiana_rule_document_urls(limit=min(max_fetch * 3, 12)),
+                    _discover_indiana_rule_document_urls(
+                        limit=_bounded_discovery_limit(
+                            max_fetch=max_fetch,
+                            multiplier=3,
+                            default_cap=12,
+                            full_corpus_cap=1000,
+                        )
+                    ),
                     timeout=25.0,
                 )
             except Exception:
@@ -16712,7 +17146,9 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
-                if len(prioritized_indiana_seed_rule_urls) >= min(max_fetch, 8):
+                if len(prioritized_indiana_seed_rule_urls) >= (
+                    max_fetch if _full_corpus_mode_enabled() else min(max_fetch, 8)
+                ):
                     break
             if prioritized_indiana_seed_rule_urls:
                 source_breakdown["indiana_api_bootstrap"] = len(prioritized_indiana_seed_rule_urls)
@@ -17119,7 +17555,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_south_dakota_rule_detail_via_api(document_url),
                         timeout=direct_timeout_s,
                     )
-                elif state_code in {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
+                elif state_code in {"CT", "FL", "KY", "MA", "MN", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     direct_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -17182,7 +17618,12 @@ async def _agentic_discover_admin_state_blocks(
                     direct_html,
                     base_host=document_host,
                     page_url=document_url,
-                    limit=24,
+                    limit=_bounded_discovery_limit(
+                        max_fetch=max_fetch,
+                        multiplier=3,
+                        default_cap=24,
+                        full_corpus_cap=1000,
+                    ),
                     allowed_hosts=allowed_hosts,
                 ):
                     link_score = _score_candidate_url(link_url)
@@ -17231,17 +17672,23 @@ async def _agentic_discover_admin_state_blocks(
                 accepted_seed = await _append_document_if_rule(seed_url, fetched_title, fetched_text, method_value, source_phase="seed_fetch")
                 inventory_seed = _looks_like_rule_inventory_page(text=fetched_text, title=fetched_title, url=seed_url)
                 if inventory_seed:
+                    seed_expansion_limit = _bounded_discovery_limit(
+                        max_fetch=max_fetch,
+                        multiplier=3,
+                        default_cap=24,
+                        full_corpus_cap=1000,
+                    )
                     for rule_url in _candidate_montana_rule_urls_from_text(
                         text=fetched_html or fetched_text,
                         url=seed_url,
-                        limit=24,
+                        limit=seed_expansion_limit,
                     ):
                         seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
                     for link_url in _candidate_links_from_html(
                         fetched_html,
                         base_host=host,
                         page_url=seed_url,
-                        limit=24,
+                        limit=seed_expansion_limit,
                     ):
                         link_score = _score_candidate_url(link_url)
                         if link_score <= 0:
@@ -17249,7 +17696,7 @@ async def _agentic_discover_admin_state_blocks(
                         seed_expansion_candidates.append((link_url, link_score + 2))
                     for rule_url in _candidate_utah_rule_urls_from_public_api(
                         url=seed_url,
-                        limit=24,
+                        limit=seed_expansion_limit,
                     ):
                         seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
 
@@ -17268,17 +17715,23 @@ async def _agentic_discover_admin_state_blocks(
                         if isinstance(seed_scrape_provenance, dict):
                             live_method_value = seed_scrape_provenance.get("method")
                         await _append_document_if_rule(seed_url, seed_scrape_title, seed_scrape_text, live_method_value, source_phase="seed_live_scrape")
+                        seed_live_expansion_limit = _bounded_discovery_limit(
+                            max_fetch=max_fetch,
+                            multiplier=3,
+                            default_cap=24,
+                            full_corpus_cap=1000,
+                        )
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=seed_scrape_html or seed_scrape_text,
                             url=seed_url,
-                            limit=24,
+                            limit=seed_live_expansion_limit,
                         ):
                             seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
                         for link_url in _candidate_links_from_scrape(
                             seed_scrape,
                             base_host=host,
                             page_url=seed_url,
-                            limit=24,
+                            limit=seed_live_expansion_limit,
                             allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
@@ -17289,7 +17742,7 @@ async def _agentic_discover_admin_state_blocks(
                             seed_scrape_html,
                             base_host=host,
                             page_url=seed_url,
-                            limit=24,
+                            limit=seed_live_expansion_limit,
                             allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
@@ -17298,7 +17751,7 @@ async def _agentic_discover_admin_state_blocks(
                             seed_expansion_candidates.append((link_url, link_score + 2))
                         for rule_url in _candidate_utah_rule_urls_from_public_api(
                             url=seed_url,
-                            limit=24,
+                            limit=seed_live_expansion_limit,
                         ):
                             seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
                     except Exception:
@@ -17314,7 +17767,12 @@ async def _agentic_discover_admin_state_blocks(
 
         prioritized_seed_expansion_document_urls = _prioritized_direct_detail_urls_from_candidates(
             seed_expansion_candidates,
-            limit=min(max_fetch * 3, 12),
+            limit=_bounded_discovery_limit(
+                max_fetch=max_fetch,
+                multiplier=3,
+                default_cap=12,
+                full_corpus_cap=1000,
+            ),
             exclude_urls=direct_doc_urls,
         )
 
@@ -17367,7 +17825,7 @@ async def _agentic_discover_admin_state_blocks(
                         _scrape_michigan_rule_detail_via_requests(fetch_document_url),
                         timeout=min(20.0, direct_timeout_s),
                     )
-                elif state_code in {"CT", "FL", "KY", "MA", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
+                elif state_code in {"CT", "FL", "KY", "MA", "MN", "ND", "NM", "NV", "OH", "OR", "PA", "VA", "WA", "WI", "WV"}:
                     expanded_scraped = await asyncio.wait_for(
                         _scrape_official_html_rule_detail_via_requests(fetch_document_url),
                         timeout=min(12.0, direct_timeout_s),
@@ -17421,13 +17879,23 @@ async def _agentic_discover_admin_state_blocks(
         if (
             state_code == "MT"
             and not montana_bootstrap_document_urls
-            and len(statutes) < min(max(1, int(max_fetch_per_state)), 12)
+            and len(statutes) < _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=1,
+                default_cap=12,
+                full_corpus_cap=1000,
+            )
         ):
             try:
                 cc_domain_results = await asyncio.wait_for(
                     scraper.scrape_domain(
                         "https://rules.mt.gov/",
-                        max_pages=min(max(24, max_candidates_per_state), 48),
+                        max_pages=_bounded_discovery_limit(
+                            max_fetch=max_candidates_per_state,
+                            multiplier=1,
+                            default_cap=48,
+                            full_corpus_cap=1000,
+                        ),
                     ),
                     timeout=80.0,
                 )
@@ -17757,17 +18225,23 @@ async def _agentic_discover_admin_state_blocks(
                             inventory_html_bonus = 2 if inventory_page else 1
                             inventory_rule_bonus = 4 if inventory_page else 3
                             inventory_utah_bonus = 5 if inventory_page else 4
+                            pending_expansion_limit = _bounded_discovery_limit(
+                                max_fetch=max_fetch,
+                                multiplier=3,
+                                default_cap=24,
+                                full_corpus_cap=1000,
+                            )
                             for rule_url in _candidate_montana_rule_urls_from_text(
                                 text=fetched_html or text,
                                 url=url,
-                                limit=24,
+                                limit=pending_expansion_limit,
                             ):
                                 if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + inventory_rule_bonus):
                                     expanded_urls += 1
                             if state_code == "MT":
                                 try:
                                     montana_rule_urls = await asyncio.wait_for(
-                                        _discover_montana_rule_document_urls(url, limit=24),
+                                        _discover_montana_rule_document_urls(url, limit=pending_expansion_limit),
                                         timeout=20.0,
                                     )
                                 except Exception:
@@ -17811,7 +18285,7 @@ async def _agentic_discover_admin_state_blocks(
                                     expanded_urls += 1
                             for rule_url in _candidate_utah_rule_urls_from_public_api(
                                 url=url,
-                                limit=24,
+                                limit=pending_expansion_limit,
                             ):
                                 if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + inventory_utah_bonus):
                                     expanded_urls += 1
@@ -17876,17 +18350,23 @@ async def _agentic_discover_admin_state_blocks(
                     # from statewide/title indexes into deeper rule pages.
                     if inventory_page and not official_index_can_be_substantive:
                         same_host = host if host in base_hosts else urlparse(url).netloc
+                        accepted_inventory_expansion_limit = _bounded_discovery_limit(
+                            max_fetch=max_fetch,
+                            multiplier=3,
+                            default_cap=24,
+                            full_corpus_cap=1000,
+                        )
                         for rule_url in _candidate_montana_rule_urls_from_text(
                             text=fetched_html or text,
                             url=url,
-                            limit=24,
+                            limit=accepted_inventory_expansion_limit,
                         ):
                             if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + 4):
                                 expanded_urls += 1
                         if state_code == "MT":
                             try:
                                 montana_rule_urls = await asyncio.wait_for(
-                                    _discover_montana_rule_document_urls(url, limit=24),
+                                    _discover_montana_rule_document_urls(url, limit=accepted_inventory_expansion_limit),
                                     timeout=20.0,
                                 )
                             except Exception:
@@ -17901,7 +18381,7 @@ async def _agentic_discover_admin_state_blocks(
                             scraped,
                             base_host=same_host,
                             page_url=url,
-                            limit=24,
+                            limit=accepted_inventory_expansion_limit,
                             allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
@@ -17913,7 +18393,7 @@ async def _agentic_discover_admin_state_blocks(
                             fetched_html,
                             base_host=same_host,
                             page_url=url,
-                            limit=24,
+                            limit=accepted_inventory_expansion_limit,
                             allowed_hosts=allowed_hosts,
                         ):
                             link_score = _score_candidate_url(link_url)
@@ -17923,7 +18403,7 @@ async def _agentic_discover_admin_state_blocks(
                                 expanded_urls += 1
                         for rule_url in _candidate_utah_rule_urls_from_public_api(
                             url=url,
-                            limit=24,
+                            limit=accepted_inventory_expansion_limit,
                         ):
                             if _enqueue_pending_candidate(rule_url, _score_candidate_url(rule_url) + 5):
                                 expanded_urls += 1

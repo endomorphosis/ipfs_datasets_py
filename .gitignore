@@ -121,3 +121,4 @@ nl_test_output_docs/
 ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/
 ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets
 workspace/municipal_common_crawl_laws/
+workspace/logs/

@@ -4,14 +4,14 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from datetime import datetime, timezone
 from enum import Enum
 import json
 from pathlib import Path
 import re
 import sys
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 import warnings
 
 
@@ -38,6 +38,62 @@ from ipfs_datasets_py.utils.cid_utils import cid_for_obj  # noqa: E402
 
 _WS_RE = re.compile(r"\s+")
 _IDENT_RE = re.compile(r"[^A-Za-z0-9_]+")
+_STOP_TERMS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "for",
+    "from",
+    "in",
+    "is",
+    "it",
+    "may",
+    "of",
+    "or",
+    "s",
+    "shall",
+    "that",
+    "the",
+    "this",
+    "to",
+    "will",
+    "with",
+}
+_RELATION_METHODS = {
+    "PART_OF_TITLE": "partOfTitle",
+    "PART_OF_CHAPTER": "partOfChapter",
+    "REFERENCES_LEGAL_AUTHORITY": "referencesAuthority",
+    "REFERENCES_CODE_SECTION": "referencesCodeSection",
+    "REFERENCES_SECTION_CID": "referencesSection",
+    "AMENDED_BY": "amendedBy",
+    "MENTIONS_ACTOR": "mentionsActor",
+    "IMPOSES_DUTY_ON": "imposesDutyOn",
+    "GRANTS_AUTHORITY_TO": "grantsAuthorityTo",
+    "REGULATES_SUBJECT": "regulatesSubject",
+    "GOVERNS_AUTHORIZATION": "governsAuthorization",
+    "IMPOSES_DUTY": "imposesDuty",
+    "GRANTS_AUTHORITY": "grantsAuthority",
+    "PROHIBITS": "prohibits",
+    "DEFINES": "defines",
+    "DEFINES_TERM": "definesTerm",
+}
+_NORM_RELATIONS = {"IMPOSES_DUTY", "GRANTS_AUTHORITY", "PROHIBITS", "DEFINES"}
+
+
+@dataclass
+class LogicContextArtifacts:
+    """External KG/BM25/ontology context used to ground formal exports."""
+
+    entity_by_id: Dict[str, Dict[str, Any]]
+    relationships_by_source: Dict[str, List[Dict[str, Any]]]
+    bm25_by_cid: Dict[str, Dict[str, Any]]
+    ontology: Dict[str, Any]
+    existing_logic_by_cid: Dict[str, Dict[str, Any]]
 
 
 def _compact(value: Any) -> str:
@@ -81,6 +137,142 @@ def _symbol(value: str, *, prefix: str = "section") -> str:
     if cleaned[0].isdigit():
         cleaned = f"{prefix}_{cleaned}"
     return cleaned[:120]
+
+
+def _class_symbol(value: str, *, fallback: str = "Thing") -> str:
+    cleaned = _IDENT_RE.sub("", str(value or "")).strip()
+    return cleaned or fallback
+
+
+def _parse_properties(value: Any) -> Dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if value is None:
+        return {}
+    text = str(value or "").strip()
+    if not text:
+        return {}
+    try:
+        parsed = json.loads(text)
+        return dict(parsed) if isinstance(parsed, Mapping) else {}
+    except Exception:
+        return {}
+
+
+def _unique_preserve(values: Iterable[Any]) -> List[str]:
+    seen: set[str] = set()
+    out: List[str] = []
+    for value in values:
+        text = _compact(value)
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out
+
+
+def _entity_summary(entity_id: str, artifacts: Optional[LogicContextArtifacts]) -> Dict[str, Any]:
+    entity = dict((artifacts.entity_by_id if artifacts else {}).get(entity_id) or {})
+    props = _parse_properties(entity.get("properties_json"))
+    label = _compact(entity.get("label")) or entity_id.rsplit(":", 1)[-1].replace("_", " ")
+    entity_type = _compact(entity.get("type")) or "Thing"
+    return {
+        "id": entity_id,
+        "symbol": _symbol(entity_id, prefix="entity"),
+        "type": entity_type,
+        "class": _class_symbol(entity_type),
+        "label": label,
+        "properties": props,
+    }
+
+
+def _top_bm25_terms(row: Mapping[str, Any], *, limit: int = 20) -> List[Dict[str, Any]]:
+    freqs = row.get("term_frequencies")
+    pairs: List[Dict[str, Any]] = []
+    if freqs is None:
+        return pairs
+    try:
+        iterable = freqs.tolist() if hasattr(freqs, "tolist") else list(freqs)
+    except Exception:
+        iterable = []
+    for item in iterable:
+        if isinstance(item, Mapping):
+            term = _compact(item.get("term")).lower()
+            tf = int(item.get("tf") or item.get("count") or 0)
+        else:
+            term = _compact(item).lower()
+            tf = 1
+        if not term or term in _STOP_TERMS or len(term) < 3 or term.isdigit():
+            continue
+        pairs.append({"term": term, "tf": tf})
+    pairs.sort(key=lambda item: (-int(item.get("tf") or 0), str(item.get("term") or "")))
+    return pairs[:limit]
+
+
+def _logic_context_for_row(
+    row: Mapping[str, Any],
+    artifacts: Optional[LogicContextArtifacts],
+) -> Dict[str, Any]:
+    source_cid = _compact(row.get("ipfs_cid"))
+    rels = list((artifacts.relationships_by_source if artifacts else {}).get(source_cid) or [])
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for rel in rels:
+        rel_type = _compact(rel.get("type"))
+        target = _compact(rel.get("target"))
+        if not rel_type or not target:
+            continue
+        grouped.setdefault(rel_type, []).append(
+            {
+                "id": _compact(rel.get("id")),
+                "target": target,
+                "target_symbol": _symbol(target, prefix="entity"),
+                "target_entity": _entity_summary(target, artifacts),
+                "properties": _parse_properties(rel.get("properties_json")),
+            }
+        )
+
+    bm25_row = dict((artifacts.bm25_by_cid if artifacts else {}).get(source_cid) or {})
+    section_entity = _entity_summary(source_cid, artifacts)
+    context = {
+        "source_ipfs_cid": source_cid,
+        "ontology_version": _compact((artifacts.ontology if artifacts else {}).get("ontology_version"))
+        or "unknown",
+        "section_entity": section_entity,
+        "relationships": grouped,
+        "actors": _unique_preserve(
+            item["target"] for key in ("MENTIONS_ACTOR", "IMPOSES_DUTY_ON", "GRANTS_AUTHORITY_TO") for item in grouped.get(key, [])
+        ),
+        "duty_actors": _unique_preserve(item["target"] for item in grouped.get("IMPOSES_DUTY_ON", [])),
+        "authority_actors": _unique_preserve(item["target"] for item in grouped.get("GRANTS_AUTHORITY_TO", [])),
+        "subjects": _unique_preserve(
+            item["target"] for key in ("REGULATES_SUBJECT", "GOVERNS_AUTHORIZATION") for item in grouped.get(key, [])
+        ),
+        "referenced_sections": _unique_preserve(
+            item["target"] for key in ("REFERENCES_SECTION_CID", "REFERENCES_CODE_SECTION") for item in grouped.get(key, [])
+        ),
+        "legal_authorities": _unique_preserve(item["target"] for item in grouped.get("REFERENCES_LEGAL_AUTHORITY", [])),
+        "amendments": _unique_preserve(item["target"] for item in grouped.get("AMENDED_BY", [])),
+        "norm_relations": {
+            key: [item["target"] for item in grouped.get(key, [])]
+            for key in sorted(_NORM_RELATIONS)
+            if grouped.get(key)
+        },
+        "bm25": {
+            "document_length": int(bm25_row.get("document_length") or 0),
+            "unique_term_count": int(bm25_row.get("unique_term_count") or 0),
+            "top_terms": _top_bm25_terms(bm25_row, limit=25),
+            "k1": float(bm25_row.get("bm25_k1") or 0.0),
+            "b": float(bm25_row.get("bm25_b") or 0.0),
+            "avgdl": float(bm25_row.get("bm25_avgdl") or 0.0),
+            "document_count": int(bm25_row.get("bm25_document_count") or 0),
+        },
+    }
+    return context
+
+
+def _relationship_targets(context: Mapping[str, Any], rel_type: str, *, limit: int = 8) -> List[str]:
+    rels = ((context.get("relationships") or {}).get(rel_type) or [])[:limit]
+    return [_compact(item.get("target_symbol")) for item in rels if _compact(item.get("target_symbol"))]
 
 
 def _norm_operator(text: str) -> str:
@@ -230,23 +422,78 @@ def _llm_assist_tdfol(
     return result
 
 
-def _make_tdfol(row: Mapping[str, Any], op: str) -> str:
+def _make_tdfol(
+    row: Mapping[str, Any],
+    op: str,
+    context: Optional[Mapping[str, Any]] = None,
+    base_formula: str = "",
+) -> str:
     section = _symbol(_section_ref(row))
-    return (
-        f"∀a:Agent (SubjectTo(a,{section}) → "
-        f"{op}(□(ComplyWith(a,{section}))))"
-    )
+    clauses: List[str] = [f"MunicipalCodeSection({section})"]
+    if base_formula and not base_formula.startswith("∀a:Agent (SubjectTo"):
+        clauses.append(f"PriorLLMFormalization({section})")
+
+    if context:
+        for actor in [_symbol(item, prefix="actor") for item in context.get("actors", [])[:8]]:
+            clauses.append(f"LegalActor({actor}) ∧ MentionedIn({actor},{section})")
+        for actor in [_symbol(item, prefix="actor") for item in context.get("duty_actors", [])[:8]]:
+            clauses.append(f"DutyAppliesTo({section},{actor})")
+        for actor in [_symbol(item, prefix="actor") for item in context.get("authority_actors", [])[:8]]:
+            clauses.append(f"AuthorityGrantedTo({section},{actor})")
+        for subject in [_symbol(item, prefix="subject") for item in context.get("subjects", [])[:8]]:
+            clauses.append(f"RegulatesSubject({section},{subject})")
+        for ref in [_symbol(item, prefix="ref") for item in context.get("referenced_sections", [])[:8]]:
+            clauses.append(f"DependsOn({section},{ref})")
+        for authority in [_symbol(item, prefix="authority") for item in context.get("legal_authorities", [])[:6]]:
+            clauses.append(f"ReferencesAuthority({section},{authority})")
+        for amendment in [_symbol(item, prefix="amendment") for item in context.get("amendments", [])[:6]]:
+            clauses.append(f"AmendedBy({section},{amendment})")
+        for term in (context.get("bm25") or {}).get("top_terms", [])[:10]:
+            clauses.append(f"HasBagTerm({section},{_symbol(term.get('term'), prefix='term')})")
+
+    if context and context.get("duty_actors"):
+        clauses.append(f"∀a((LegalActor(a) ∧ DutyAppliesTo({section},a)) → O(□ComplyWith(a,{section})))")
+    elif op == "O":
+        clauses.append(f"∀a:Agent (SubjectTo(a,{section}) → O(□(ComplyWith(a,{section}))))")
+    if context and context.get("authority_actors"):
+        clauses.append(f"∀a((LegalActor(a) ∧ AuthorityGrantedTo({section},a)) → P(◇ExerciseAuthority(a,{section})))")
+    elif op == "P":
+        clauses.append(f"∀a:Agent (SubjectTo(a,{section}) → P(□(ComplyWith(a,{section}))))")
+    if context and (context.get("norm_relations") or {}).get("PROHIBITS"):
+        clauses.append(f"∀a((LegalActor(a) ∧ SubjectTo(a,{section})) → F(◇Violate(a,{section})))")
+    elif op == "F":
+        clauses.append(f"∀a:Agent (SubjectTo(a,{section}) → F(□(ComplyWith(a,{section}))))")
+    return "(" + " ∧ ".join(_unique_preserve(clauses)) + ")"
 
 
-def _make_dcec(row: Mapping[str, Any], op: str) -> str:
+def _make_dcec(row: Mapping[str, Any], op: str, context: Optional[Mapping[str, Any]] = None) -> str:
     section = _symbol(_section_ref(row))
-    return (
-        f"(forall agent (implies (subject_to agent {section}) "
-        f"({op} (always (comply_with agent {section})))))"
+    statements: List[str] = [f"(section {section})"]
+    if context:
+        for actor in [_symbol(item, prefix="actor") for item in context.get("actors", [])[:8]]:
+            statements.append(f"(actor_mentioned_in {actor} {section})")
+        for subject in [_symbol(item, prefix="subject") for item in context.get("subjects", [])[:8]]:
+            statements.append(f"(regulates_subject {section} {subject})")
+        for ref in [_symbol(item, prefix="ref") for item in context.get("referenced_sections", [])[:8]]:
+            statements.append(f"(depends_on {section} {ref})")
+        for term in (context.get("bm25") or {}).get("top_terms", [])[:10]:
+            statements.append(f"(salient_term {section} {_symbol(term.get('term'), prefix='term')})")
+        for actor in [_symbol(item, prefix="actor") for item in context.get("duty_actors", [])[:8]]:
+            statements.append(f"(O (always (holds_at (duty_to_comply {actor} {section}) t)))")
+        for actor in [_symbol(item, prefix="actor") for item in context.get("authority_actors", [])[:8]]:
+            statements.append(f"(P (eventually (happens (exercise_authority {actor} {section}) t)))")
+    statements.append(
+        f"(forall agent (implies (subject_to agent {section}) ({op} (always (comply_with agent {section})))))"
     )
+    return "(and " + " ".join(_unique_preserve(statements)) + ")"
 
 
-def _make_flogic(row: Mapping[str, Any], op: str) -> Dict[str, Any]:
+def _make_flogic(
+    row: Mapping[str, Any],
+    op: str,
+    context: Optional[Mapping[str, Any]] = None,
+    ontology_payload: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, Any]:
     section_ref = _section_ref(row)
     object_id = _symbol(section_ref, prefix="portland_code_section")
     scalar_methods = {
@@ -259,18 +506,74 @@ def _make_flogic(row: Mapping[str, Any], op: str) -> Dict[str, Any]:
         "norm_operator": json.dumps(op, ensure_ascii=False),
         "norm_type": json.dumps(_operator_label(op), ensure_ascii=False),
     }
-    frame = FLogicFrame(object_id=object_id, scalar_methods=scalar_methods, isa="PortlandCityCodeSection")
+    set_methods: Dict[str, List[str]] = {}
+    frames: List[FLogicFrame] = []
+    classes_by_id: Dict[str, FLogicClass] = {
+        "LegalNorm": FLogicClass("LegalNorm"),
+        "MunicipalLaw": FLogicClass("MunicipalLaw", superclasses=["LegalNorm"]),
+        "CityCodeSection": FLogicClass("CityCodeSection", superclasses=["MunicipalLaw"]),
+        "PortlandCityCodeSection": FLogicClass("PortlandCityCodeSection", superclasses=["CityCodeSection"]),
+    }
+    if ontology_payload:
+        for cls in ontology_payload.get("classes") or []:
+            if not isinstance(cls, Mapping):
+                continue
+            class_id = _class_symbol(cls.get("id"))
+            parent = _class_symbol(cls.get("parent") or "")
+            supers = [parent] if parent and parent != class_id else []
+            classes_by_id[class_id] = FLogicClass(class_id, superclasses=supers)
+
+    if context:
+        relationship_groups = context.get("relationships") or {}
+        for rel_type, method in _RELATION_METHODS.items():
+            values = [
+                _symbol(item.get("target"), prefix="entity")
+                for item in relationship_groups.get(rel_type, [])[:16]
+                if _compact(item.get("target"))
+            ]
+            if values:
+                set_methods[method] = _unique_preserve(values)
+        term_values = [
+            json.dumps(item.get("term"), ensure_ascii=False)
+            for item in (context.get("bm25") or {}).get("top_terms", [])[:20]
+        ]
+        if term_values:
+            set_methods["hasBagTerm"] = _unique_preserve(term_values)
+        for rels in relationship_groups.values():
+            for item in rels[:12]:
+                entity = item.get("target_entity") or {}
+                entity_id = _compact(entity.get("id"))
+                if not entity_id:
+                    continue
+                entity_symbol = _symbol(entity_id, prefix="entity")
+                entity_class = _class_symbol(entity.get("class") or entity.get("type"))
+                frames.append(
+                    FLogicFrame(
+                        object_id=entity_symbol,
+                        scalar_methods={
+                            "label": json.dumps(_compact(entity.get("label")) or entity_id, ensure_ascii=False),
+                            "kg_id": json.dumps(entity_id, ensure_ascii=False),
+                        },
+                        isa=entity_class,
+                    )
+                )
+
+    frame = FLogicFrame(
+        object_id=object_id,
+        scalar_methods=scalar_methods,
+        set_methods=set_methods,
+        isa="PortlandCityCodeSection",
+    )
     ontology = FLogicOntology(
         name=f"Portland City Code {section_ref}",
-        classes=[
-            FLogicClass("LegalNorm"),
-            FLogicClass("MunicipalLaw", superclasses=["LegalNorm"]),
-            FLogicClass("CityCodeSection", superclasses=["MunicipalLaw"]),
-            FLogicClass("PortlandCityCodeSection", superclasses=["CityCodeSection"]),
-        ],
-        frames=[frame],
+        classes=list(classes_by_id.values()),
+        frames=[frame] + frames,
         rules=[
-            "requires_compliance(?Agent, ?Section) :- ?Section : PortlandCityCodeSection, subject_to(?Agent, ?Section)."
+            "requires_compliance(?Agent, ?Section) :- ?Section : PortlandCityCodeSection, ?Section[imposesDutyOn ->> ?Agent].",
+            "authority_available(?Agent, ?Section) :- ?Section : PortlandCityCodeSection, ?Section[grantsAuthorityTo ->> ?Agent].",
+            "regulated_entity(?Entity, ?Section) :- ?Section : PortlandCityCodeSection, ?Section[mentionsActor ->> ?Entity].",
+            "regulated_entity(?Entity, ?Section) :- ?Section : PortlandCityCodeSection, ?Section[regulatesSubject ->> ?Entity].",
+            "legal_dependency(?Section, ?Dependency) :- ?Section : PortlandCityCodeSection, ?Section[referencesSection ->> ?Dependency].",
         ],
     )
     return {
@@ -278,6 +581,9 @@ def _make_flogic(row: Mapping[str, Any], op: str) -> Dict[str, Any]:
         "object_id": object_id,
         "classes": [_json_safe(cls) for cls in ontology.classes],
         "frame": _json_safe(frame),
+        "context_frames": [_json_safe(item) for item in frames],
+        "ontology_version": _compact((context or {}).get("ontology_version")),
+        "bm25_top_terms": (context or {}).get("bm25", {}).get("top_terms", []),
         "ergo_program": ontology.to_ergo_program(),
     }
 
@@ -287,6 +593,57 @@ def _conversion_output(result: Any) -> Dict[str, Any]:
     if getattr(result, "output", None) is not None:
         payload["output_structured"] = _json_safe(result.output)
     return _json_safe(payload)
+
+
+def _read_parquet_rows(path: str) -> List[Dict[str, Any]]:
+    if not path:
+        return []
+    import pyarrow.parquet as pq
+
+    candidate = Path(path).expanduser().resolve()
+    if not candidate.exists():
+        raise FileNotFoundError(str(candidate))
+    return pq.read_table(candidate).to_pylist()
+
+
+def _load_context_artifacts(args: argparse.Namespace) -> LogicContextArtifacts:
+    entity_by_id: Dict[str, Dict[str, Any]] = {}
+    relationships_by_source: Dict[str, List[Dict[str, Any]]] = {}
+    bm25_by_cid: Dict[str, Dict[str, Any]] = {}
+    existing_logic_by_cid: Dict[str, Dict[str, Any]] = {}
+    ontology: Dict[str, Any] = {}
+
+    for row in _read_parquet_rows(str(args.knowledge_graph_entities or "")):
+        entity_id = _compact(row.get("id"))
+        if entity_id:
+            entity_by_id[entity_id] = dict(row)
+    for row in _read_parquet_rows(str(args.knowledge_graph_relationships or "")):
+        source = _compact(row.get("source"))
+        if source:
+            relationships_by_source.setdefault(source, []).append(dict(row))
+    for row in _read_parquet_rows(str(args.bm25_index or "")):
+        cid = _compact(row.get("document_id")) or _compact(row.get("id"))
+        if cid:
+            bm25_by_cid[cid] = dict(row)
+    for row in _read_parquet_rows(str(args.existing_logic_artifacts or "")):
+        cid = _compact(row.get("ipfs_cid"))
+        if cid:
+            existing_logic_by_cid[cid] = dict(row)
+
+    ontology_path = _compact(args.ontology)
+    if ontology_path:
+        candidate = Path(ontology_path).expanduser().resolve()
+        if not candidate.exists():
+            raise FileNotFoundError(str(candidate))
+        ontology = json.loads(candidate.read_text(encoding="utf-8"))
+
+    return LogicContextArtifacts(
+        entity_by_id=entity_by_id,
+        relationships_by_source=relationships_by_source,
+        bm25_by_cid=bm25_by_cid,
+        ontology=ontology,
+        existing_logic_by_cid=existing_logic_by_cid,
+    )
 
 
 def _build_row(
@@ -304,6 +661,7 @@ def _build_row(
     llm_model: str = "",
     llm_max_chars: int = 1800,
     llm_timeout: float = 30.0,
+    context_artifacts: Optional[LogicContextArtifacts] = None,
 ) -> Dict[str, Any]:
     text = _compact(row.get("text"))
     section_ref = _section_ref(row)
@@ -326,8 +684,20 @@ def _build_row(
         deontic_status = "error"
         deontic_payload = {"success": False, "errors": [f"{type(exc).__name__}: {exc}"]}
 
-    tdfol_formula = _make_tdfol(row, op)
+    logic_context = _logic_context_for_row(row, context_artifacts)
+    existing_logic = dict((context_artifacts.existing_logic_by_cid if context_artifacts else {}).get(source_cid) or {})
+    existing_tdfol = _compact(existing_logic.get("deontic_temporal_fol"))
+    tdfol_formula = existing_tdfol if existing_logic.get("llm_assisted_accepted") and existing_tdfol else _make_tdfol(row, op)
     llm_payload: Dict[str, Any] = {"enabled": False, "accepted": False}
+    if existing_logic:
+        llm_payload = {
+            "enabled": bool(existing_logic.get("llm_assisted_enabled")),
+            "accepted": bool(existing_logic.get("llm_assisted_accepted")),
+            "provider": str(existing_logic.get("llm_assisted_provider") or ""),
+            "model": str(existing_logic.get("llm_assisted_model") or ""),
+            "formula": str(existing_logic.get("llm_assisted_formula") or ""),
+            "reused_from_existing_logic_artifact": True,
+        }
     if llm_assisted:
         llm_payload = _llm_assist_tdfol(
             input_text,
@@ -338,19 +708,32 @@ def _build_row(
         )
         if llm_payload.get("accepted") and llm_payload.get("formula"):
             tdfol_formula = str(llm_payload["formula"])
-    dcec_formula = _make_dcec(row, op)
-    flogic_payload = _make_flogic(row, op)
+    enhanced_tdfol_formula = _make_tdfol(row, op, context=logic_context, base_formula=tdfol_formula)
+    dcec_formula = _make_dcec(row, op, context=logic_context)
+    flogic_payload = _make_flogic(
+        row,
+        op,
+        context=logic_context,
+        ontology_payload=(context_artifacts.ontology if context_artifacts else {}),
+    )
 
     logic_bundle = {
-        "schema_version": "portland-logic-proof-artifacts-v1",
+        "schema_version": "portland-logic-proof-artifacts-v2",
         "source_ipfs_cid": source_cid,
         "identifier": section_ref,
         "formalization_scope": "machine_generated_candidate",
         "fol": fol_payload,
-        "deontic_temporal_fol": tdfol_formula,
+        "base_deontic_temporal_fol": tdfol_formula,
+        "deontic_temporal_fol": enhanced_tdfol_formula,
         "llm_assisted_tdfol": llm_payload,
         "deontic_cognitive_event_calculus": dcec_formula,
         "frame_logic": flogic_payload,
+        "kg_context": logic_context,
+        "ontology": {
+            "version": logic_context.get("ontology_version"),
+            "class_count": len((context_artifacts.ontology if context_artifacts else {}).get("classes") or []),
+            "predicate_count": len((context_artifacts.ontology if context_artifacts else {}).get("predicates") or []),
+        },
     }
     logic_bundle_cid = cid_for_obj(logic_bundle)
 
@@ -358,9 +741,10 @@ def _build_row(
     private_axioms = [
         f"source_text_cid={_compact(row.get('text_cid'))}",
         f"fol={_json_dumps(fol_payload)[:8000]}",
-        f"tdfol={tdfol_formula}",
+        f"tdfol={enhanced_tdfol_formula}",
         f"dcec={dcec_formula}",
         f"flogic={flogic_payload['object_id']}",
+        f"kg_context_cid={cid_for_obj(logic_context)}",
     ]
     proof = zkp_prover.generate_proof(
         theorem=theorem,
@@ -394,7 +778,13 @@ def _build_row(
         "fol_json": _json_dumps(fol_payload),
         "deontic_status": deontic_status,
         "deontic_json": _json_dumps(deontic_payload),
-        "deontic_temporal_fol": tdfol_formula,
+        "ontology_version": logic_context.get("ontology_version", ""),
+        "kg_context_json": _json_dumps(logic_context),
+        "kg_context_cid": cid_for_obj(logic_context),
+        "bm25_logic_terms_json": _json_dumps((logic_context.get("bm25") or {}).get("top_terms") or []),
+        "base_deontic_temporal_fol": tdfol_formula,
+        "deontic_temporal_fol": enhanced_tdfol_formula,
+        "enhanced_tdfol_formula": enhanced_tdfol_formula,
         "llm_assisted_enabled": bool(llm_payload.get("enabled")),
         "llm_assisted_accepted": bool(llm_payload.get("accepted")),
         "llm_assisted_provider": str(llm_payload.get("provider") or ""),
@@ -402,7 +792,9 @@ def _build_row(
         "llm_assisted_formula": str(llm_payload.get("formula") or ""),
         "llm_assisted_json": _json_dumps(llm_payload),
         "deontic_cognitive_event_calculus": dcec_formula,
+        "enhanced_dcec_formula": dcec_formula,
         "frame_logic_json": _json_dumps(flogic_payload),
+        "enhanced_frame_logic_json": _json_dumps(flogic_payload),
         "frame_logic_ergo": flogic_payload["ergo_program"],
         "norm_operator": op,
         "norm_type": _operator_label(op),
@@ -447,6 +839,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--no-resume", action="store_true", help="Ignore existing output parquet instead of resuming by ipfs_cid.")
     parser.add_argument("--zkp-backend", default="simulated", choices=["simulated", "groth16"], help="ZKP backend used for proof certificates.")
     parser.add_argument("--zkp-circuit-version", type=int, default=1, help="ZKP circuit version for the selected backend.")
+    parser.add_argument("--knowledge-graph-entities", default="", help="Optional municipal KG entities parquet.")
+    parser.add_argument("--knowledge-graph-relationships", default="", help="Optional municipal KG relationships parquet.")
+    parser.add_argument("--bm25-index", default="", help="Optional BM25 bag-of-words parquet.")
+    parser.add_argument("--ontology", default="", help="Optional municipal law ontology JSON.")
+    parser.add_argument("--existing-logic-artifacts", default="", help="Optional existing logic parquet whose accepted LLM formulas should be reused as the base formula.")
     parser.add_argument("--json", action="store_true", help="Print manifest JSON.")
     return parser.parse_args()
 
@@ -464,6 +861,7 @@ def main() -> int:
     rows = pq.read_table(input_path).to_pylist()
     if args.limit and args.limit > 0:
         rows = rows[: int(args.limit)]
+    context_artifacts = _load_context_artifacts(args)
 
     fol_converter = FOLConverter(
         use_cache=True,
@@ -509,7 +907,7 @@ def main() -> int:
 
     def _manifest(status: str) -> Dict[str, Any]:
         return {
-            "schema_version": "portland-logic-proof-artifacts-v1",
+            "schema_version": "portland-logic-proof-artifacts-v2",
             "input": str(input_path),
             "output_root": str(output_root),
             "logic_proof_artifacts": str(logic_path),
@@ -520,6 +918,11 @@ def main() -> int:
             "failure_count": len(failures),
             "failures": failures[:50],
             "formalization_scope": "machine_generated_candidate",
+            "ontology_version": _compact(context_artifacts.ontology.get("ontology_version")) or "unknown",
+            "kg_entity_count": len(context_artifacts.entity_by_id),
+            "kg_relationship_count": sum(len(values) for values in context_artifacts.relationships_by_source.values()),
+            "bm25_document_count": len(context_artifacts.bm25_by_cid),
+            "existing_logic_artifact_count": len(context_artifacts.existing_logic_by_cid),
             "llm_assisted": bool(args.llm_assisted),
             "llm_provider": str(args.llm_provider or ""),
             "llm_model": str(args.llm_model or ""),
@@ -557,6 +960,7 @@ def main() -> int:
                 llm_model=str(args.llm_model or ""),
                 llm_max_chars=int(args.llm_max_chars),
                 llm_timeout=float(args.llm_timeout),
+                context_artifacts=context_artifacts,
             )
             out_rows.append(built)
             if source_cid:

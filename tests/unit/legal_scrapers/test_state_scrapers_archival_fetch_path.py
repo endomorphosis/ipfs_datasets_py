@@ -19,11 +19,13 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import Kan
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import MassachusettsScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import MaineScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan import MichiganScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota import NorthDakotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio import OhioScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_admin_rules import OregonAdministrativeRulesScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import RhodeIslandScraper
@@ -34,6 +36,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.texas import Texa
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.delaware import DelawareScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_hampshire import NewHampshireScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_mexico import NewMexicoScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.utah import UtahScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.wyoming import WyomingScraper
 
 
@@ -246,6 +249,42 @@ async def test_new_york_fallback_records_fetch_analytics(monkeypatch: pytest.Mon
     assert len(statutes) >= 1
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_new_york_structured_public_law_crawl(monkeypatch: pytest.MonkeyPatch):
+    payloads = {
+        "https://r.jina.ai/http://https://newyork.public.law/laws": (
+            "[Civil Practice Law & Rules](https://newyork.public.law/laws/n.y._civil_practice_law_&_rules)"
+        ),
+        "https://r.jina.ai/http://https://newyork.public.law/laws/n.y._civil_practice_law_&_rules": (
+            "[1 Short Title Sections 101-102](https://newyork.public.law/laws/n.y._civil_practice_law_&_rules_article_1)"
+        ),
+        "https://r.jina.ai/http://https://newyork.public.law/laws/n.y._civil_practice_law_&_rules_article_1": (
+            "[101 Short title](https://newyork.public.law/laws/n.y._civil_practice_law_&_rules_section_101)"
+            "[102 Amendment](https://newyork.public.law/laws/n.y._civil_practice_law_&_rules_section_102)"
+        ),
+        "https://r.jina.ai/http://https://newyork.public.law/laws/n.y._civil_practice_law_&_rules_section_101": (
+            "# N.Y. Civil Practice Law & Rules § 101 Short title\n\n"
+            + ("Section 101 body text. " * 20)
+        ),
+        "https://r.jina.ai/http://https://newyork.public.law/laws/n.y._civil_practice_law_&_rules_section_102": (
+            "# N.Y. Civil Practice Law & Rules § 102 Amendment\n\n"
+            + ("Section 102 body text. " * 20)
+        ),
+    }
+
+    async def _fake_request_text_direct(self, url: str, timeout: int = 24) -> str:
+        return payloads.get(url, "")
+
+    scraper = NewYorkScraper("NY", "New York")
+    monkeypatch.setattr(NewYorkScraper, "_request_text_direct", _fake_request_text_direct)
+
+    statutes = await scraper._scrape_public_law_structured("New York Consolidated Laws", max_sections=2)
+
+    assert [row.section_number for row in statutes] == ["101", "102"]
+    assert statutes[0].structured_data["source_kind"] == "public_law_structured_markdown"
+    assert statutes[0].structured_data["discovery_method"] == "public_law_hierarchical_crawl"
 
 
 @pytest.mark.anyio
@@ -557,6 +596,159 @@ async def test_massachusetts_full_corpus_uses_ajax_title_chapter_section_tree(mo
 
 
 @pytest.mark.anyio
+async def test_ohio_full_corpus_uses_official_title_chapter_section_tree(monkeypatch: pytest.MonkeyPatch):
+    pages = {
+        "https://codes.ohio.gov/ohio-revised-code": (
+            "<html><body>"
+            "<a href='ohio-revised-code/title-1'>Title 1 | State Government</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://codes.ohio.gov/ohio-revised-code/title-1": (
+            "<html><body>"
+            "<a href='chapter-101'>Chapter 101 | General Assembly</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://codes.ohio.gov/ohio-revised-code/chapter-101": (
+            "<html><body>"
+            "<a href='section-101.01'>Section 101.01 | Example one.</a>"
+            "<a href='section-101.02'>Section 101.02 | Example two.</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://codes.ohio.gov/ohio-revised-code/section-101.01": (
+            "<html><body><main>"
+            "<h1>Section 101.01 | Example one.</h1>"
+            "<p>Section 101.01 Example one. " + ("Ohio text one. " * 20) + "</p>"
+            "</main></body></html>"
+        ).encode("utf-8"),
+        "https://codes.ohio.gov/ohio-revised-code/section-101.02": (
+            "<html><body><main>"
+            "<h1>Section 101.02 | Example two.</h1>"
+            "<p>Section 101.02 Example two. " + ("Ohio text two. " * 20) + "</p>"
+            "</main></body></html>"
+        ).encode("utf-8"),
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return pages.get(url, b"")
+
+    async def _fail_generic(*args, **kwargs):
+        raise AssertionError("Ohio full-corpus path should use the official title/chapter/section tree before generic scraping")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = OhioScraper("OH", "Ohio")
+    monkeypatch.setattr(scraper, "_generic_scrape", _fail_generic)
+
+    statutes = await scraper.scrape_code(
+        "Ohio Revised Code",
+        "https://codes.ohio.gov/ohio-revised-code",
+        max_statutes=2,
+    )
+
+    assert [statute.section_number for statute in statutes] == ["101.01", "101.02"]
+    assert statutes[0].structured_data["source_kind"] == "official_ohio_revised_code_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_title_chapter_section"
+
+
+@pytest.mark.anyio
+async def test_utah_full_corpus_uses_versioned_title_chapter_part_section_tree(monkeypatch: pytest.MonkeyPatch):
+    pages = {
+        "https://le.utah.gov/xcode/Title1/1.html": (
+            "<html><body><script>"
+            'var versionDefault="C1_1800010118000101";'
+            "</script></body></html>"
+        ).encode("utf-8"),
+        "https://le.utah.gov/xcode/Title1/C1_1800010118000101.html": (
+            "<html><body><div id='content'><table id='childtbl'>"
+            "<tr><td><a href='../Title1/Chapter1/1-1.html?v=C1-1_1800010118000101'>Chapter 1</a></td><td>General Provisions</td></tr>"
+            "</table></div></body></html>"
+        ).encode("utf-8"),
+        "https://le.utah.gov/xcode/Title1/Chapter1/C1-1_1800010118000101.html": (
+            "<html><body><div id='content'><table id='childtbl'>"
+            "<tr><td><a href='../../Title1/Chapter1/1-1-P1.html?v=C1-1-P1_1800010118000101'>Part 1</a></td><td>Intro Part</td></tr>"
+            "</table></div></body></html>"
+        ).encode("utf-8"),
+        "https://le.utah.gov/xcode/Title1/Chapter1/C1-1-P1_1800010118000101.html": (
+            "<html><body><div id='content'><table id='childtbl'>"
+            "<tr><td><a href='../../Title1/Chapter1/1-1-S101.html?v=C1-1-S101_2025050720250507'>Section 101</a></td><td>Definitions.</td></tr>"
+            "<tr><td><a href='../../Title1/Chapter1/1-1-S102.html?v=C1-1-S102_2025050720250507'>Section 102</a></td><td>Applicability.</td></tr>"
+            "</table></div></body></html>"
+        ).encode("utf-8"),
+        "https://le.utah.gov/xcode/Title1/Chapter1/C1-1-S101_2025050720250507.html": (
+            "<html><body><div id='content'>"
+            "<h3 class='heading'>Title 1 Chapter 1 Section 1-1-101 Definitions.</h3>"
+            "<p>1-1-101. " + ("Utah section one text. " * 20) + "</p>"
+            "</div></body></html>"
+        ).encode("utf-8"),
+        "https://le.utah.gov/xcode/Title1/Chapter1/C1-1-S102_2025050720250507.html": (
+            "<html><body><div id='content'>"
+            "<h3 class='heading'>Title 1 Chapter 1 Section 1-1-102 Applicability.</h3>"
+            "<p>1-1-102. " + ("Utah section two text. " * 20) + "</p>"
+            "</div></body></html>"
+        ).encode("utf-8"),
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return pages.get(url, b"")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = UtahScraper("UT", "Utah")
+    statutes = await scraper.scrape_code("Utah Code", "https://le.utah.gov/xcode/code.html", max_statutes=2)
+
+    assert [statute.section_number for statute in statutes] == ["1-1-101", "1-1-102"]
+    assert statutes[0].structured_data["source_kind"] == "official_utah_code_versioned_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_title_chapter_part_section"
+
+
+@pytest.mark.anyio
+async def test_utah_full_corpus_prefers_root_xml_code_tree(monkeypatch: pytest.MonkeyPatch):
+    pages = {
+        "https://le.utah.gov/xcode/code.html": (
+            "<html><body><script>"
+            'var versionDefault="C_1800010118000101";'
+            "</script></body></html>"
+        ).encode("utf-8"),
+        "https://le.utah.gov/xcode/C_1800010118000101.xml": (
+            "<code>"
+            "<title number='3'>"
+            "<catchline>Uniform Agricultural Cooperative Association Act</catchline>"
+            "<chapter number='3-1'>"
+            "<catchline>General Provisions</catchline>"
+            "<section number='3-1-1'>"
+            "<catchline>Declaration of policy.</catchline>"
+            + ("Utah XML section one text. " * 20)
+            + "</section>"
+            "<section number='3-1-2'>"
+            "<catchline>Definitions.</catchline>"
+            + ("Utah XML section two text. " * 20)
+            + "</section>"
+            "</chapter>"
+            "</title>"
+            "</code>"
+        ).encode("utf-8"),
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return pages.get(url, b"")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = UtahScraper("UT", "Utah")
+    statutes = await scraper.scrape_code("Utah Code", "https://le.utah.gov/xcode/code.html", max_statutes=2)
+
+    assert [statute.section_number for statute in statutes] == ["3-1-1", "3-1-2"]
+    assert statutes[0].structured_data["source_kind"] == "official_utah_code_xml"
+    assert statutes[0].structured_data["discovery_method"] == "official_root_xml_title_chapter_section"
+
+
+@pytest.mark.anyio
 async def test_florida_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_fetch_official_fl_html(self, url: str, timeout_seconds: int = 12) -> str:
         self._record_fetch_event(provider="requests_direct", success=True)
@@ -707,6 +899,104 @@ async def test_maine_direct_seed_sections_parse_official_body(monkeypatch: pytes
 
 
 @pytest.mark.anyio
+async def test_maine_official_hierarchy_uses_title_chapter_section_tree(monkeypatch: pytest.MonkeyPatch):
+    pages = {
+        "https://legislature.maine.gov/statutes/": (
+            "<html><body>"
+            "<a href='1/title1ch0sec0.html'>TITLE 1</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://legislature.maine.gov/statutes/1/title1ch0sec0.html": (
+            "<html><body>"
+            "<a href='./title1ch1sec0.html'>Chapter 1</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://legislature.maine.gov/statutes/1/title1ch1sec0.html": (
+            "<html><body>"
+            "<a href='./title1sec1.html'>1 §1. Extent of sovereignty and jurisdiction</a>"
+            "<a href='./title1sec2.html'>1 §2. Offshore waters and submerged land</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://legislature.maine.gov/statutes/1/title1sec1.html": (
+            "<html><body>"
+            "<div class='heading_section'>§1. Extent of sovereignty and jurisdiction</div>"
+            "<div class='row section-content'>" + ("Maine section one text. " * 20) + "</div>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://legislature.maine.gov/statutes/1/title1sec2.html": (
+            "<html><body>"
+            "<div class='heading_section'>§2. Offshore waters and submerged land</div>"
+            "<div class='row section-content'>" + ("Maine section two text. " * 20) + "</div>"
+            "</body></html>"
+        ).encode("utf-8"),
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return pages.get(url, b"")
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = MaineScraper("ME", "Maine")
+    statutes = await scraper._scrape_official_title_chapter_section_tree("Maine Revised Statutes", max_statutes=2)
+
+    assert [row.section_number for row in statutes] == ["1", "2"]
+    assert statutes[0].structured_data["source_kind"] == "official_maine_revised_statutes_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_title_chapter_section"
+
+
+@pytest.mark.anyio
+async def test_michigan_full_corpus_uses_chapter_index_act_section_tree(monkeypatch: pytest.MonkeyPatch):
+    pages = {
+        "https://www.legislature.mi.gov/Laws/ChapterIndex": (
+            "<html><body>"
+            "<a href='/Home/GetObject?objectName=mcl-chap750'>Chapter 750</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-chap750": (
+            "<html><body>"
+            "<a href='/Laws/MCL?objectName=mcl-Act-328-of-1931'>Act 328 of 1931</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-Act-328-of-1931": (
+            "<html><body>"
+            "<a href='/Laws/MCL?objectName=mcl-750-1'>Section 750.1</a>"
+            "<a href='/Laws/MCL?objectName=mcl-750-2'>Section 750.2</a>"
+            "</body></html>"
+        ).encode("utf-8"),
+        "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-750-1": (
+            "<html><body><main>"
+            "<h1>750.1 Short title.</h1>"
+            "<p>" + ("Michigan section one text. " * 20) + "</p>"
+            "</main></body></html>"
+        ).encode("utf-8"),
+        "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-750-2": (
+            "<html><body><main>"
+            "<h1>750.2 Definitions.</h1>"
+            "<p>" + ("Michigan section two text. " * 20) + "</p>"
+            "</main></body></html>"
+        ).encode("utf-8"),
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return pages.get(url, b"")
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = MichiganScraper("MI", "Michigan")
+    statutes = await scraper.scrape_code(
+        "Michigan Compiled Laws",
+        "https://www.legislature.mi.gov/Laws/ChapterIndex",
+        max_statutes=2,
+    )
+
+    assert [row.section_number for row in statutes] == ["750.1", "750.2"]
+    assert statutes[0].structured_data["source_kind"] == "official_michigan_compiled_laws_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_chapter_index_act_section"
+
+
+@pytest.mark.anyio
 async def test_montana_jina_seed_sections_parse_mca_body(monkeypatch: pytest.MonkeyPatch):
     markdown = (
         "Title: 45-5-102. Deliberate homicide, MCA\n\n"
@@ -733,6 +1023,45 @@ async def test_montana_jina_seed_sections_parse_mca_body(monkeypatch: pytest.Mon
     assert statutes[0].official_cite == "Mont. Code Ann. § 45-5-102"
     assert statutes[0].structured_data["source_kind"] == "jina_reader_montana_mca_official"
     assert "Deliberate homicide" in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_montana_official_hierarchy_uses_title_chapter_part_section_tree(monkeypatch: pytest.MonkeyPatch):
+    payloads = {
+        "https://r.jina.ai/http://https://leg.mt.gov/bills/mca/": (
+            "[TITLE 45. CRIMES](https://mca.legmt.gov/bills/mca/title_0450/chapters_index.html)"
+        ).encode("utf-8"),
+        "https://r.jina.ai/http://https://mca.legmt.gov/bills/mca/title_0450/chapters_index.html": (
+            "[CHAPTER 5. OFFENSES AGAINST THE PERSON](https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/parts_index.html)"
+        ).encode("utf-8"),
+        "https://r.jina.ai/http://https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/parts_index.html": (
+            "[Part 1. Homicide](https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/sections_index.html)"
+        ).encode("utf-8"),
+        "https://r.jina.ai/http://https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/sections_index.html": (
+            "[45-5-101 Repealed](https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0010/0450-0050-0010-0010.html)"
+            "[45-5-102 Deliberate homicide](https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html)"
+        ).encode("utf-8"),
+        "https://r.jina.ai/http://https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0010/0450-0050-0010-0010.html": (
+            "Title: 45-5-101. Repealed, MCA\n\nMarkdown Content:\n45-5-101. Repealed. " + ("Repealed text. " * 20)
+        ).encode("utf-8"),
+        "https://r.jina.ai/http://https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html": (
+            "Title: 45-5-102. Deliberate homicide, MCA\n\nMarkdown Content:\n45-5-102. Deliberate homicide. "
+            + ("Montana homicide text. " * 20)
+        ).encode("utf-8"),
+    }
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        return payloads.get(url, b"")
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = MontanaScraper("MT", "Montana")
+    statutes = await scraper._scrape_official_mca_tree("Montana Code Annotated", max_statutes=2)
+
+    assert [row.section_number for row in statutes] == ["45-5-101", "45-5-102"]
+    assert statutes[0].structured_data["source_kind"] == "jina_reader_montana_mca_hierarchical"
+    assert statutes[0].structured_data["discovery_method"] == "official_mca_title_chapter_part_section"
 
 
 @pytest.mark.anyio
@@ -1011,6 +1340,54 @@ async def test_new_mexico_request_bytes_records_fetch_analytics(monkeypatch: pyt
     assert payload.startswith(b"%PDF")
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_new_mexico_nav_date_chapter_pdf_splits_into_sections(monkeypatch: pytest.MonkeyPatch):
+    nav_page = (
+        "<html><body>"
+        "<a href='/nmos/nmsa/en/item/4351/index.do'>Chapter 1 - Elections</a>"
+        "<a href='/nmos/nmsa/en/4351/1/document.do'></a>"
+        "</body></html>"
+    ).encode("utf-8")
+    chapter_text = (
+        "CHAPTER 1\nElections\n"
+        "1-1-1. Election Code.\n"
+        + ("Election code text. " * 20)
+        + "\n\n1-1-2. Headings.\n"
+        + ("Heading text. " * 20)
+        + "\n\n1-1-3. Shall and may.\n"
+        + ("Shall and may text. " * 20)
+    )
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if "nav_date.do" in url:
+            return nav_page
+        return b""
+
+    async def _fake_request_bytes(self, pdf_url: str, headers, timeout: int) -> bytes:
+        return b"%PDF-1.4 fake chapter bytes"
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(NewMexicoScraper, "_request_bytes", _fake_request_bytes)
+    monkeypatch.setattr(
+        NewMexicoScraper,
+        "_extract_pdf_text_preserve_layout",
+        lambda self, pdf_bytes, max_chars: chapter_text[:max_chars],
+    )
+
+    scraper = NewMexicoScraper("NM", "New Mexico")
+    statutes = await scraper.scrape_code(
+        "New Mexico Statutes",
+        "https://www.nmlegis.gov",
+        max_statutes=3,
+    )
+
+    assert [row.section_number for row in statutes] == ["1-1-1", "1-1-2", "1-1-3"]
+    assert statutes[0].structured_data["source_kind"] == "official_nmonesource_chapter_pdf"
+    assert statutes[0].structured_data["discovery_method"] == "official_nav_date_chapter_pdf_sections"
+    assert "Election code text." in statutes[0].full_text
 
 
 @pytest.mark.anyio

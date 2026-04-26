@@ -5,6 +5,7 @@ This module contains the scraper for Montana statutes from the official state le
 
 from typing import List, Dict, Optional
 import re
+from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .base_scraper import StatuteMetadata
 from .registry import StateScraperRegistry
@@ -14,6 +15,10 @@ class MontanaScraper(BaseStateScraper):
     """Scraper for Montana state laws from https://leg.mt.gov"""
 
     _MT_SECTION_URL_RE = re.compile(r"/\d{4}-\d{4}-\d{4}-\d{4}\.html$", re.IGNORECASE)
+    _MT_TITLE_INDEX_RE = re.compile(r"https://mca\.legmt\.gov/bills/mca/title_\d{4}/chapters_index\.html", re.IGNORECASE)
+    _MT_CHAPTER_INDEX_RE = re.compile(r"https://mca\.legmt\.gov/bills/mca/title_\d{4}/chapter_\d{4}/parts_index\.html", re.IGNORECASE)
+    _MT_PART_INDEX_RE = re.compile(r"https://mca\.legmt\.gov/bills/mca/title_\d{4}/chapter_\d{4}/part_\d{4}/sections_index\.html", re.IGNORECASE)
+    _MT_MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https://mca\.legmt\.gov[^)]+)\)", re.IGNORECASE)
 
     def _filter_section_level(self, statutes: List[NormalizedStatute]) -> List[NormalizedStatute]:
         filtered: List[NormalizedStatute] = []
@@ -58,6 +63,10 @@ class MontanaScraper(BaseStateScraper):
         if direct and not self._full_corpus_enabled():
             return direct[: max(1, int(direct_limit or len(direct)))]
 
+        official = await self._scrape_official_mca_tree(code_name, max_statutes=max(10, int(direct_limit or 10)))
+        if official:
+            return official[: max(1, int(direct_limit or len(official)))]
+
         candidate_urls = [
             code_url,
             f"{self.get_base_url()}/bills/mca/",
@@ -101,6 +110,108 @@ class MontanaScraper(BaseStateScraper):
                 return statutes
 
         return best_statutes
+
+    async def _scrape_official_mca_tree(
+        self,
+        code_name: str,
+        max_statutes: int,
+    ) -> List[NormalizedStatute]:
+        root_reader = "https://r.jina.ai/http://https://leg.mt.gov/bills/mca/"
+        root_text = await self._fetch_reader_markdown(root_reader)
+        if not root_text:
+            return []
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections = set()
+        title_links = self._extract_mca_links(root_text, self._MT_TITLE_INDEX_RE)
+        for _, title_url in title_links:
+            if len(statutes) >= max_statutes:
+                break
+            title_text = await self._fetch_reader_markdown(f"https://r.jina.ai/http://{title_url}")
+            if not title_text:
+                continue
+            chapter_links = self._extract_mca_links(title_text, self._MT_CHAPTER_INDEX_RE)
+            for _, chapter_url in chapter_links:
+                if len(statutes) >= max_statutes:
+                    break
+                chapter_text = await self._fetch_reader_markdown(f"https://r.jina.ai/http://{chapter_url}")
+                if not chapter_text:
+                    continue
+                part_links = self._extract_mca_links(chapter_text, self._MT_PART_INDEX_RE)
+                for _, part_url in part_links:
+                    if len(statutes) >= max_statutes:
+                        break
+                    part_text = await self._fetch_reader_markdown(f"https://r.jina.ai/http://{part_url}")
+                    if not part_text:
+                        continue
+                    section_links = self._extract_mca_links(part_text, self._MT_SECTION_URL_RE)
+                    for section_label, section_url in section_links:
+                        if len(statutes) >= max_statutes:
+                            break
+                        if section_url in seen_sections:
+                            continue
+                        seen_sections.add(section_url)
+                        statute = await self._build_official_section_statute(code_name, section_label, section_url)
+                        if statute is not None:
+                            statutes.append(statute)
+        return statutes
+
+    async def _build_official_section_statute(
+        self,
+        code_name: str,
+        section_label: str,
+        section_url: str,
+    ) -> Optional[NormalizedStatute]:
+        markdown = await self._fetch_reader_markdown(f"https://r.jina.ai/http://{section_url}")
+        if not markdown:
+            return None
+        section_number = self._section_number_from_mca_url(section_url)
+        text = self._extract_reader_statute_text(markdown, section_number)
+        if len(text) < 220:
+            return None
+        heading = self._normalize_legal_text(section_label)[:220] or self._extract_reader_heading(markdown, section_number)
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            title_number=(section_number.split("-", 1)[0] if section_number else None),
+            section_number=section_number,
+            section_name=heading,
+            full_text=text,
+            legal_area=self._identify_legal_area(text[:1200]),
+            source_url=section_url,
+            official_cite=f"Mont. Code Ann. § {section_number}",
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "jina_reader_montana_mca_hierarchical",
+                "discovery_method": "official_mca_title_chapter_part_section",
+                "reader_url": f"https://r.jina.ai/http://{section_url}",
+                "skip_hydrate": True,
+            },
+        )
+
+    async def _fetch_reader_markdown(self, reader_url: str) -> str:
+        raw = await self._fetch_page_content_with_archival_fallback(reader_url, timeout_seconds=25)
+        if not raw:
+            return ""
+        if isinstance(raw, bytes):
+            return raw.decode("utf-8", errors="replace")
+        return str(raw)
+
+    def _extract_mca_links(self, markdown: str, target_pattern: re.Pattern) -> List[tuple[str, str]]:
+        links: List[tuple[str, str]] = []
+        seen = set()
+        for label, url in self._MT_MARKDOWN_LINK_RE.findall(str(markdown or "")):
+            clean_url = str(url or "").strip().rstrip("`").split('"', 1)[0].strip()
+            if not clean_url or clean_url in seen:
+                continue
+            if isinstance(target_pattern, re.Pattern):
+                if not target_pattern.search(clean_url):
+                    continue
+            seen.add(clean_url)
+            links.append((self._normalize_legal_text(label), clean_url))
+        return links
 
     async def _scrape_direct_seed_sections(
         self,

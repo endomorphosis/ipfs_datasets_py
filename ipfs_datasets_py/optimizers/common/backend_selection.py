@@ -28,6 +28,11 @@ _PROVIDER_ALIASES: Dict[str, str] = {
     "local": "local",
     "accelerate": "accelerate",
     "ipfs_accelerate": "accelerate",
+    "p2p": "p2p_task_queue",
+    "p2p_task": "p2p_task_queue",
+    "p2p_task_queue": "p2p_task_queue",
+    "remote_queue": "p2p_task_queue",
+    "task_queue": "p2p_task_queue",
     "auto": "auto",
 }
 
@@ -41,6 +46,7 @@ _DEFAULT_MODEL_BY_PROVIDER: Dict[str, str] = {
     "local": "local-default",
     "codex": "codex",
     "copilot": "copilot",
+    "p2p_task_queue": "gpt2",
 }
 
 

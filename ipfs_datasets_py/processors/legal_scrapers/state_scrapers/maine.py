@@ -5,6 +5,7 @@ This module contains the scraper for Maine statutes from the official state legi
 
 from typing import List, Dict, Optional
 import re
+from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .base_scraper import StatuteMetadata
 from .registry import StateScraperRegistry
@@ -63,6 +64,13 @@ class MaineScraper(BaseStateScraper):
         if direct and not self._full_corpus_enabled():
             return direct[: max(1, int(direct_limit or len(direct)))]
 
+        official = await self._scrape_official_title_chapter_section_tree(
+            code_name,
+            max_statutes=max(10, int(direct_limit or 10)),
+        )
+        if official:
+            return official[: max(1, int(direct_limit or len(official)))]
+
         candidate_urls = [
             "https://legislature.maine.gov/statutes/1/title1ch1sec0.html",
             "https://legislature.maine.gov/statutes/17-A/title17-Ach1sec0.html",
@@ -106,6 +114,136 @@ class MaineScraper(BaseStateScraper):
                 return statutes
 
         return best_statutes
+
+    async def _scrape_official_title_chapter_section_tree(
+        self,
+        code_name: str,
+        max_statutes: int,
+    ) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        root_url = "https://legislature.maine.gov/statutes/"
+        root_raw = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=25)
+        if not root_raw:
+            return []
+        root_html = root_raw.decode("utf-8", errors="replace") if isinstance(root_raw, bytes) else str(root_raw)
+        root_soup = BeautifulSoup(root_html, "html.parser")
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections = set()
+        title_urls = []
+        seen_titles = set()
+        for link in root_soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not re.search(r"/?statutes/[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$|^[0-9A-Za-z\-]+/title[0-9A-Za-z\-]+ch0sec0\.html$", href, re.IGNORECASE):
+                continue
+            full_url = urljoin(root_url, href)
+            if full_url in seen_titles:
+                continue
+            seen_titles.add(full_url)
+            title_urls.append(full_url)
+
+        for title_url in title_urls:
+            if len(statutes) >= max_statutes:
+                break
+            title_raw = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=25)
+            if not title_raw:
+                continue
+            title_html = title_raw.decode("utf-8", errors="replace") if isinstance(title_raw, bytes) else str(title_raw)
+            title_soup = BeautifulSoup(title_html, "html.parser")
+            chapter_urls = []
+            seen_chapters = set()
+            for link in title_soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                if not re.search(r"title[0-9A-Za-z\-]+ch[0-9A-Za-z\-]+sec0\.html$", href, re.IGNORECASE):
+                    continue
+                full_url = urljoin(title_url, href)
+                if full_url in seen_chapters or full_url.endswith("ch0sec0.html"):
+                    continue
+                seen_chapters.add(full_url)
+                chapter_urls.append(full_url)
+
+            for chapter_url in chapter_urls:
+                if len(statutes) >= max_statutes:
+                    break
+                chapter_raw = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=25)
+                if not chapter_raw:
+                    continue
+                chapter_html = chapter_raw.decode("utf-8", errors="replace") if isinstance(chapter_raw, bytes) else str(chapter_raw)
+                chapter_soup = BeautifulSoup(chapter_html, "html.parser")
+                for link in chapter_soup.find_all("a", href=True):
+                    href = str(link.get("href") or "").strip()
+                    if not re.search(r"title[0-9A-Za-z\-]+sec[0-9A-Za-z\-]+\.html$", href, re.IGNORECASE):
+                        continue
+                    section_url = urljoin(chapter_url, href)
+                    if section_url in seen_sections or section_url.endswith("sec0.html"):
+                        continue
+                    seen_sections.add(section_url)
+                    statute = await self._build_official_section_statute(code_name, section_url)
+                    if statute is not None:
+                        statutes.append(statute)
+                        if len(statutes) >= max_statutes:
+                            break
+
+        return statutes
+
+    async def _build_official_section_statute(
+        self,
+        code_name: str,
+        url: str,
+    ) -> Optional[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        raw = await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=25)
+        if not raw:
+            return None
+        html = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else str(raw)
+        soup = BeautifulSoup(html, "html.parser")
+        heading = self._normalize_legal_text(
+            (soup.select_one(".heading_section") or soup.find("title") or soup).get_text(" ", strip=True)
+        )
+        body_node = soup.select_one("div.row.section-content") or soup.select_one("div.MRSSection")
+        body = self._normalize_legal_text(body_node.get_text(" ", strip=True) if body_node else "")
+        if len(body) < 160:
+            text_nodes = [
+                self._normalize_legal_text(node.get_text(" ", strip=True))
+                for node in soup.select("div.mrs-text, div.qhistory")
+            ]
+            body = self._normalize_legal_text(" ".join(text_nodes))
+        if len(body) < 160:
+            return None
+
+        title_match = re.search(r"/title([0-9A-Za-z\-]+)sec", url, flags=re.IGNORECASE)
+        section_match = re.search(r"sec([0-9A-Za-z\-]+)\.html$", url, flags=re.IGNORECASE)
+        title_number = title_match.group(1) if title_match else None
+        section_number = section_match.group(1) if section_match else (self._extract_section_number(heading) or "")
+        section_name = re.sub(r"^§\s*[\w\-]+\.?\s*", "", heading).strip() or heading
+        official_cite = f"Me. Rev. Stat. tit. {title_number}, § {section_number}" if title_number else f"Me. Rev. Stat. § {section_number}"
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} {official_cite}",
+            code_name=code_name,
+            title_number=title_number,
+            section_number=section_number,
+            section_name=section_name,
+            full_text=body,
+            legal_area=self._identify_legal_area(body[:1200]),
+            source_url=url,
+            official_cite=official_cite,
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_maine_revised_statutes_html",
+                "discovery_method": "official_title_chapter_section",
+                "skip_hydrate": True,
+            },
+        )
 
     async def _scrape_direct_seed_sections(
         self,
