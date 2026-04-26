@@ -38,6 +38,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -593,6 +594,36 @@ class LegalWebArchiveSearch:
                     logger.info("Loading state Common Crawl index (local first, HF fallback)...")
                 index_data = self.index_loader.load_state_index(state_code=state_code)
             elif jurisdiction_type == 'municipal':
+                place_name = self._guess_municipal_place_name(query, intent)
+                query_fn = getattr(self.index_loader, "query_municipal_index", None)
+                if callable(query_fn):
+                    records = query_fn(
+                        place_name=place_name or None,
+                        state_code=state_code,
+                        url_terms=[],
+                        max_results=max_results,
+                    )
+                    query_error = getattr(self.index_loader, "last_query_error", None)
+                    results = self._municipal_index_records_to_results(records)
+                    return {
+                        'status': 'success' if results or not query_error else 'error',
+                        'error': query_error if query_error and not results else None,
+                        'query': query,
+                        'query_intent': intent.__dict__ if intent else None,
+                        'jurisdiction_type': jurisdiction_type,
+                        'state_code': state_code,
+                        'results': results,
+                        'total_results': len(results),
+                        'source': 'common_crawl_indexes',
+                        'metadata': {
+                            'timestamp': datetime.now().isoformat(),
+                            'index_type': jurisdiction_type,
+                            'place_name': place_name,
+                            'query_mode': 'municipal_hf_duckdb',
+                            'used_local_index': self.index_loader._check_local_index(jurisdiction_type) is not None
+                        }
+                    }
+
                 logger.info("Loading municipal Common Crawl index (local first, HF fallback)...")
                 index_data = self.index_loader.load_municipal_index()
             
@@ -691,9 +722,9 @@ class LegalWebArchiveSearch:
             for _, row in matches.iterrows():
                 result = {
                     'url': row.get('url', ''),
-                    'title': row.get('title', ''),
+                    'title': row.get('title', '') or row.get('place_name', ''),
                     'timestamp': row.get('timestamp', ''),
-                    'mime_type': row.get('mime_type', ''),
+                    'mime_type': row.get('mime_type', '') or row.get('mime', ''),
                 }
                 
                 # Add optional fields if present
@@ -703,6 +734,9 @@ class LegalWebArchiveSearch:
                     result['warc_offset'] = row['warc_offset']
                 if 'digest' in row:
                     result['digest'] = row['digest']
+                for field in ('domain', 'status', 'collection', 'gnis', 'place_name', 'state_code', 'warc_length'):
+                    if field in row:
+                        result[field] = row[field]
                     
                 results.append(result)
             
@@ -712,6 +746,39 @@ class LegalWebArchiveSearch:
         except Exception as e:
             logger.error(f"Error searching within index: {e}")
             return []
+
+    @staticmethod
+    def _guess_municipal_place_name(query: str, intent: Optional[Any]) -> str:
+        municipalities = list(getattr(intent, "municipalities", []) or []) if intent else []
+        if municipalities:
+            return str(municipalities[0] or "").strip()
+        text = str(query or "")
+        text = re.sub(r"\b(municipal|municipality|code|codes|law|laws|ordinance|ordinances|charter|city|county|town|village)\b", " ", text, flags=re.I)
+        text = re.sub(r"\b[A-Z]{2}\b", " ", text)
+        text = re.sub(r"\s+", " ", text).strip(" ,")
+        return text
+
+    @staticmethod
+    def _municipal_index_records_to_results(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        results: List[Dict[str, Any]] = []
+        for row in records:
+            result = {
+                "url": row.get("url", ""),
+                "title": row.get("place_name", ""),
+                "timestamp": row.get("timestamp", ""),
+                "mime_type": row.get("mime") or row.get("mime_type", ""),
+                "domain": row.get("domain", ""),
+                "status": row.get("status"),
+                "gnis": row.get("gnis"),
+                "place_name": row.get("place_name"),
+                "state_code": row.get("state_code"),
+                "collection": row.get("collection"),
+            }
+            for field in ("warc_filename", "warc_offset", "warc_length", "digest"):
+                if field in row:
+                    result[field] = row.get(field)
+            results.append(result)
+        return results
     
     def get_index_info(self) -> Dict[str, Any]:
         """Get information about available Common Crawl indexes.

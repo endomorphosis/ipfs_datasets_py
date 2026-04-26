@@ -32,6 +32,9 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 import json
+import time
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +54,23 @@ DATASET_REPOS = {
     "municipal": "endomorphosis/common_crawl_municipal_index",
     "pointers": "endomorphosis/common_crawl_pointers_by_collection",
     "meta": "endomorphosis/common_crawl_meta_indexes"
+}
+
+DATASET_REPO_CANDIDATES = {
+    "federal": ["endomorphosis/common_crawl_federal_index"],
+    "state": ["endomorphosis/common_crawl_state_index"],
+    "municipal": [
+        "endomorphosis/common_crawl_municipal_index",
+        "Publicus/common_crawl_municipal_index",
+    ],
+    "pointers": [
+        "endomorphosis/common_crawl_pointers_by_collection",
+        "Publicus/common_crawl_pointers_by_collection",
+    ],
+    "meta": [
+        "endomorphosis/common_crawl_meta_indexes",
+        "Publicus/common_crawl_meta_indexes",
+    ],
 }
 
 # Default local paths
@@ -110,6 +130,7 @@ class CommonCrawlIndexLoader:
         
         # Track what's been loaded to avoid redundant operations
         self._loaded_indexes: Dict[str, Any] = {}
+        self.last_query_error: Optional[str] = None
         
         # Check if datasets library is available
         self._have_datasets = self._check_datasets_available()
@@ -156,8 +177,11 @@ class CommonCrawlIndexLoader:
             return None
         
         # Check if directory has any parquet or index files
-        parquet_files = list(local_path.glob("*.parquet"))
-        index_files = list(local_path.glob("*.index")) + list(local_path.glob("*.jsonl"))
+        parquet_files = list(local_path.rglob("*.parquet"))
+        index_files = (
+            list(local_path.rglob("*.index"))
+            + list(local_path.rglob("*.jsonl"))
+        )
         
         if parquet_files or index_files:
             logger.info(f"Found local index at {local_path}: {len(parquet_files)} parquet, {len(index_files)} index files")
@@ -213,6 +237,133 @@ class CommonCrawlIndexLoader:
             logger.warning(f"Failed to load from HuggingFace: {e}")
             logger.warning(f"Note: Dataset may still be uploading to HuggingFace")
             return None
+
+    def _get_hf_parquet_urls(self, index_type: str) -> List[str]:
+        """Return converted parquet URLs for a hosted Common Crawl index."""
+        if not self.use_hf_fallback:
+            return []
+        candidates = DATASET_REPO_CANDIDATES.get(index_type) or [DATASET_REPOS[index_type]]
+        last_error: Optional[Exception] = None
+        for repo_name in candidates:
+            try:
+                query = urlencode({"dataset": repo_name})
+                with urlopen(f"https://datasets-server.huggingface.co/parquet?{query}", timeout=30) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                urls = [
+                    str(item.get("url") or "")
+                    for item in payload.get("parquet_files", [])
+                    if item.get("url")
+                ]
+                if urls:
+                    return urls
+            except Exception as exc:
+                last_error = exc
+                logger.debug("Failed to resolve parquet URLs for %s: %s", repo_name, exc)
+        if last_error is not None:
+            logger.warning("Failed to resolve HF parquet URLs for %s: %s", index_type, last_error)
+        return []
+
+    @staticmethod
+    def _sql_literal(value: Any) -> str:
+        return "'" + str(value or "").replace("'", "''") + "'"
+
+    def _duckdb_relation_for_index(self, index_type: str) -> Optional[str]:
+        """Build a DuckDB read_parquet relation for local or HF parquet files."""
+        local_path = self._check_local_index(index_type)
+        if local_path is not None:
+            parquet_files = sorted(local_path.rglob("*.parquet"))
+            if parquet_files:
+                if len(parquet_files) == 1:
+                    return f"read_parquet({self._sql_literal(str(parquet_files[0]))})"
+                values = ", ".join(self._sql_literal(str(path)) for path in parquet_files)
+                return f"read_parquet([{values}])"
+
+        urls = self._get_hf_parquet_urls(index_type)
+        if not urls:
+            return None
+        if len(urls) == 1:
+            return f"read_parquet({self._sql_literal(urls[0])})"
+        values = ", ".join(self._sql_literal(url) for url in urls)
+        return f"read_parquet([{values}])"
+
+    def query_municipal_index(
+        self,
+        *,
+        place_name: Optional[str] = None,
+        state_code: Optional[str] = None,
+        gnis: Optional[str] = None,
+        url_terms: Optional[List[str]] = None,
+        mime_terms: Optional[List[str]] = None,
+        max_results: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """Query municipal Common Crawl pointers without loading the full index.
+
+        The hosted municipal index is multi-GB, so this method uses DuckDB over
+        local/HF parquet files and pushes place/state/url filters down to parquet.
+        """
+        try:
+            import duckdb
+        except Exception as exc:
+            self.last_query_error = f"DuckDB is required for remote municipal index queries: {exc}"
+            logger.warning("%s", self.last_query_error)
+            return []
+
+        self.last_query_error = None
+        relation = self._duckdb_relation_for_index("municipal")
+        if not relation:
+            self.last_query_error = "No municipal Common Crawl parquet relation was available"
+            return []
+
+        filters: List[str] = []
+        if state_code:
+            filters.append(f"upper(state_code) = upper({self._sql_literal(state_code)})")
+        if gnis:
+            filters.append(f"gnis = {self._sql_literal(gnis)}")
+        if place_name:
+            place = str(place_name).strip().lower()
+            place = place.removeprefix("city of ").removeprefix("town of ").removeprefix("county of ").strip()
+            filters.append(f"lower(place_name) LIKE {self._sql_literal('%' + place + '%')}")
+        term_filters: List[str] = []
+        for term in list(url_terms or []):
+            normalized = str(term or "").strip().lower()
+            if normalized:
+                term_filters.append(f"lower(url) LIKE {self._sql_literal('%' + normalized + '%')}")
+        if term_filters:
+            filters.append("(" + " OR ".join(term_filters) + ")")
+        mime_filters: List[str] = []
+        for term in list(mime_terms or []):
+            normalized = str(term or "").strip().lower()
+            if normalized:
+                mime_filters.append(f"lower(mime) LIKE {self._sql_literal('%' + normalized + '%')}")
+        if mime_filters:
+            filters.append("(" + " OR ".join(mime_filters) + ")")
+
+        where_clause = " AND ".join(filters) if filters else "TRUE"
+        limit = max(1, int(max_results or 100))
+        sql = f"""
+            SELECT domain, url, collection, timestamp, mime, status,
+                   warc_filename, warc_offset, warc_length, gnis, place_name, state_code
+            FROM {relation}
+            WHERE {where_clause}
+            ORDER BY
+                CASE WHEN status = 200 THEN 0 ELSE 1 END,
+                CASE WHEN lower(mime) LIKE '%html%' THEN 0 ELSE 1 END,
+                timestamp DESC
+            LIMIT {limit}
+        """
+        attempts = 3
+        backoff_seconds = 5.0
+        for attempt in range(attempts):
+            try:
+                return [dict(row) for row in duckdb.connect().execute(sql).fetchdf().to_dict("records")]
+            except Exception as exc:
+                self.last_query_error = str(exc)
+                is_rate_limited = "429" in str(exc) or "Too Many Requests" in str(exc)
+                if attempt + 1 >= attempts or not is_rate_limited:
+                    logger.warning("Municipal Common Crawl index query failed: %s", exc)
+                    return []
+                time.sleep(backoff_seconds * (attempt + 1))
+        return []
     
     def _cache_dataset_locally(self, dataset: Any, index_type: str):
         """Cache a HuggingFace dataset to local filesystem.

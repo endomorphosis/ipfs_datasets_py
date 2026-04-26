@@ -16,10 +16,34 @@ Reusable by:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+import re
+from urllib.parse import urljoin
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+
+_STATE_RE = re.compile(r"\b([A-Z]{2})\b")
+
+
+def _parse_jurisdiction_hint(jurisdiction: str) -> Tuple[Optional[str], Optional[str]]:
+    """Best-effort extraction of place/state from labels like "Portland, OR"."""
+    text = str(jurisdiction or "").strip()
+    if not text:
+        return None, None
+
+    state_code = None
+    match = _STATE_RE.search(text)
+    if match:
+        state_code = match.group(1).upper()
+
+    place = text
+    if "," in place:
+        place = place.split(",", 1)[0]
+    place = re.sub(r"\b(city|town|village|county)\s+of\b", "", place, flags=re.IGNORECASE)
+    place = re.sub(r"\b[A-Z]{2}\b", "", place).strip(" ,")
+    return place or None, state_code
 
 class MunicipalScraperFallbacks:
     """
@@ -146,22 +170,229 @@ class MunicipalScraperFallbacks:
             Scraping result dictionary
         """
         logger.info(f"Querying Common Crawl for {url}")
-        
-        # Placeholder implementation
-        # TODO: Implement actual Common Crawl API integration
-        # - Query Common Crawl Index API (https://index.commoncrawl.org/)
-        # - Find captures of the municipal code URL
-        # - Download WARC records containing the pages
-        # - Extract legal text from HTML
-        
+
+        place_name, state_code = _parse_jurisdiction_hint(jurisdiction)
+        place_name = kwargs.get("place_name") or place_name
+        state_code = (kwargs.get("state_code") or state_code or "").upper() or None
+        gnis = kwargs.get("gnis")
+        max_results = int(kwargs.get("max_results") or kwargs.get("common_crawl_max_results") or 25)
+        max_pages = int(kwargs.get("max_pages") or kwargs.get("common_crawl_max_pages") or min(max_results, 10))
+        url_terms = kwargs.get("url_terms")
+        if url_terms is None:
+            url_terms = ["code", "ordinance", "charter", "municipal"]
+        mime_terms = kwargs.get("mime_terms")
+
+        try:
+            index_loader = kwargs.get("index_loader")
+            if index_loader is None:
+                from .common_crawl_index_loader import CommonCrawlIndexLoader
+
+                index_loader = CommonCrawlIndexLoader(
+                    local_base_dir=kwargs.get("common_crawl_index_dir"),
+                    use_hf_fallback=kwargs.get("use_hf_fallback", True),
+                )
+
+            records = index_loader.query_municipal_index(
+                place_name=place_name,
+                state_code=state_code,
+                gnis=gnis,
+                url_terms=url_terms,
+                mime_terms=mime_terms,
+                max_results=max_results,
+            )
+        except Exception as exc:
+            return {
+                "success": False,
+                "message": f"Common Crawl municipal index query failed: {type(exc).__name__}: {exc}",
+                "data": None,
+                "metadata": {
+                    "method": "common_crawl",
+                    "url": url,
+                    "jurisdiction": jurisdiction,
+                    "place_name": place_name,
+                    "state_code": state_code,
+                },
+            }
+
+        if not records:
+            last_error = str(getattr(index_loader, "last_query_error", "") or "")
+            return {
+                "success": False,
+                "message": last_error or "No Common Crawl municipal index records found",
+                "data": None,
+                "metadata": {
+                    "method": "common_crawl",
+                    "url": url,
+                    "jurisdiction": jurisdiction,
+                    "place_name": place_name,
+                    "state_code": state_code,
+                    "gnis": gnis,
+                    "url_terms": list(url_terms or []),
+                },
+            }
+
+        ccapi = kwargs.get("ccapi")
+        if ccapi is None:
+            try:
+                try:
+                    from ..web_archiving.common_crawl_integration import _ensure_common_crawl_import_path
+
+                    _ensure_common_crawl_import_path()
+                except Exception:
+                    pass
+                from common_crawl_search_engine.ccindex import api as ccapi
+            except Exception as exc:
+                return {
+                    "success": False,
+                    "message": f"common_crawl_search_engine unavailable: {type(exc).__name__}: {exc}",
+                    "data": None,
+                    "metadata": {
+                        "method": "common_crawl",
+                        "url": url,
+                        "jurisdiction": jurisdiction,
+                        "candidate_records": records[: min(len(records), 25)],
+                    },
+                }
+
+        pages: List[Dict[str, Any]] = []
+        errors: List[Dict[str, Any]] = []
+        prefix = str(kwargs.get("common_crawl_prefix") or "https://data.commoncrawl.org/")
+        timeout_s = float(kwargs.get("timeout") or kwargs.get("common_crawl_timeout") or 30)
+        max_bytes = int(kwargs.get("common_crawl_fetch_max_bytes") or 2_000_000)
+        cache_mode = str(kwargs.get("common_crawl_cache_mode") or "range")
+
+        for record in records[:max_pages]:
+            page_url = str(record.get("url") or url)
+            wf = record.get("warc_filename")
+            off = record.get("warc_offset")
+            ln = record.get("warc_length")
+            if not wf or off is None or ln is None:
+                errors.append({"url": page_url, "error": "Common Crawl pointer missing warc_filename/offset/length"})
+                continue
+
+            try:
+                fetch, source, local_path = ccapi.fetch_warc_record(
+                    warc_filename=str(wf),
+                    warc_offset=int(off),
+                    warc_length=int(ln),
+                    prefix=prefix,
+                    timeout_s=timeout_s,
+                    max_bytes=max_bytes,
+                    decode_gzip_text=False,
+                    cache_mode=cache_mode,
+                )
+                if not getattr(fetch, "ok", False) or not getattr(fetch, "raw_base64", None):
+                    errors.append({"url": page_url, "error": str(getattr(fetch, "error", None) or "fetch_warc_record failed")})
+                    continue
+
+                import base64
+
+                gz_bytes = base64.b64decode(fetch.raw_base64)
+                http = ccapi.extract_http_from_warc_gzip_member(
+                    gz_bytes,
+                    max_body_bytes=max_bytes,
+                    max_preview_chars=200_000,
+                    include_body_base64=True,
+                )
+                body_mime = str(getattr(http, "body_mime", "") or "")
+                is_html = bool(getattr(http, "body_is_html", False)) or body_mime.lower().startswith("text/html")
+                html = str(getattr(http, "body_text_preview", "") or "") if is_html else ""
+                text = ""
+                title = ""
+                links: List[Dict[str, str]] = []
+                body_base64 = getattr(http, "body_base64", None)
+                body_text = ""
+                if html:
+                    try:
+                        from bs4 import BeautifulSoup
+
+                        soup = BeautifulSoup(html, "html.parser")
+                        title_tag = soup.find("title")
+                        title = title_tag.get_text(strip=True) if title_tag else ""
+                        for script in soup(["script", "style"]):
+                            script.decompose()
+                        text = soup.get_text(separator="\n", strip=True)
+                        for link in soup.find_all("a", href=True):
+                            href = str(link.get("href") or "")
+                            if href.startswith("/"):
+                                href = urljoin(page_url, href)
+                            links.append({"url": href, "text": link.get_text(strip=True)})
+                    except Exception:
+                        text = html
+                elif body_base64 and "pdf" in body_mime.lower():
+                    try:
+                        import base64
+                        from io import BytesIO
+
+                        pdf_bytes = base64.b64decode(body_base64)
+                        try:
+                            from pypdf import PdfReader
+                        except Exception:
+                            from PyPDF2 import PdfReader  # type: ignore
+
+                        reader = PdfReader(BytesIO(pdf_bytes))
+                        body_text = "\n".join((page.extract_text() or "") for page in reader.pages)
+                    except Exception as exc:
+                        errors.append({"url": page_url, "error": f"PDF text extraction failed: {type(exc).__name__}: {exc}"})
+
+                if html or text or body_base64:
+                    pages.append(
+                        {
+                            "url": page_url,
+                            "title": title,
+                            "text": text or body_text,
+                            "html": html,
+                            "body_base64": body_base64,
+                            "body_mime": body_mime,
+                            "links": links,
+                            "metadata": {
+                                "cc_record": record,
+                                "cc_source": source,
+                                "cc_local_warc_path": local_path,
+                                "http_status": getattr(http, "http_status", None),
+                                "http_mime": getattr(http, "body_mime", None),
+                                "http_charset": getattr(http, "body_charset", None),
+                                "ok": getattr(http, "ok", None),
+                                "error": getattr(http, "error", None),
+                            },
+                        }
+                    )
+                else:
+                    errors.append({"url": page_url, "error": str(getattr(http, "error", None) or "empty extracted body")})
+            except Exception as exc:
+                errors.append({"url": page_url, "error": f"{type(exc).__name__}: {exc}"})
+
+        if pages:
+            return {
+                "success": True,
+                "message": f"Extracted {len(pages)} Common Crawl municipal page(s)",
+                "data": {
+                    "pages": pages,
+                    "records_considered": len(records),
+                },
+                "metadata": {
+                    "method": "common_crawl",
+                    "url": url,
+                    "jurisdiction": jurisdiction,
+                    "place_name": place_name,
+                    "state_code": state_code,
+                    "gnis": gnis,
+                    "errors": errors,
+                },
+            }
+
         return {
             "success": False,
-            "message": "Common Crawl integration not yet implemented",
+            "message": "Common Crawl records were found, but no pages could be extracted",
             "data": None,
             "metadata": {
                 "method": "common_crawl",
                 "url": url,
-                "note": "Will query Common Crawl Index API for archived municipal code pages"
+                "jurisdiction": jurisdiction,
+                "place_name": place_name,
+                "state_code": state_code,
+                "candidate_records": records[: min(len(records), 25)],
+                "errors": errors,
             }
         }
     

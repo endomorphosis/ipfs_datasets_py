@@ -34,6 +34,7 @@ ipfs_datasets_py/processors/groth16_backend/target/
 ipfs_datasets_py/artifacts/
 deprecated/
 configs.yaml
+
 bin/
 tmp/
 !ipfs_datasets_py/processors/groth16_backend/bin/

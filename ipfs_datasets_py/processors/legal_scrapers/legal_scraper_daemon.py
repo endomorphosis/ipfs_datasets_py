@@ -134,8 +134,22 @@ def _agentic_subprocess_status(*, returncode: Optional[int], summary: Dict[str, 
 
 def _load_agentic_latest_summary(output_dir: Path) -> Dict[str, Any]:
     summary_path = output_dir / "latest_summary.json"
+    checkpoint_path = output_dir / "latest_in_progress.json"
+    if checkpoint_path.exists():
+        try:
+            checkpoint_payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        except Exception:
+            checkpoint_payload = {}
+        if isinstance(checkpoint_payload, dict):
+            checkpoint_status = str(checkpoint_payload.get("status") or "").lower()
+            if checkpoint_status in {"success", "partial_success", "error"}:
+                return {
+                    "status": checkpoint_payload.get("status"),
+                    "states": checkpoint_payload.get("states") or checkpoint_payload.get("cycle_state_order") or [],
+                    "latest_cycle": checkpoint_payload,
+                    "recovered_from_checkpoint": True,
+                }
     if not summary_path.exists():
-        checkpoint_path = output_dir / "latest_in_progress.json"
         if not checkpoint_path.exists():
             return {}
         try:
@@ -1419,6 +1433,21 @@ class LegalScraperDaemon:
                 "stdout_tail": stdout_text[-4000:],
                 "stderr_tail": stderr_text[-4000:],
             }
+        if int(process.returncode or 0) != 0:
+            recovered_summary = _load_agentic_latest_summary(output_dir)
+            if recovered_summary:
+                recovered_status = _agentic_subprocess_status(returncode=0, summary=recovered_summary)
+                latest_cycle = recovered_summary.get("latest_cycle") if isinstance(recovered_summary.get("latest_cycle"), dict) else {}
+                latest_status = str(latest_cycle.get("status") or recovered_summary.get("status") or "").lower()
+                if latest_status in {"success", "partial_success"}:
+                    return {
+                        "status": recovered_status,
+                        "output_dir": str(output_dir),
+                        "summary": recovered_summary,
+                        "returncode": process.returncode,
+                        "stderr_tail": stderr_text[-4000:],
+                        "recovered_latest_summary_after_nonzero_exit": True,
+                    }
         status = _agentic_subprocess_status(returncode=process.returncode, summary=summary)
         return {
             "status": status,

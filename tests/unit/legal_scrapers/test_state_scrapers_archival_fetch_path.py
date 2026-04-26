@@ -21,6 +21,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import Main
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota import NorthDakotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_admin_rules import OregonAdministrativeRulesScraper
@@ -165,6 +166,65 @@ async def test_louisiana_archival_request_records_fetch_analytics(monkeypatch: p
 
 
 @pytest.mark.anyio
+async def test_louisiana_live_toc_discovers_law_pages(monkeypatch: pytest.MonkeyPatch):
+    toc_html = (
+        "<html><body><form action='./Laws_Toc.aspx?folder=75&level=Parent'>"
+        "<input type='hidden' name='__VIEWSTATE' value='abc' />"
+        "<input type='hidden' name='__EVENTVALIDATION' value='def' />"
+        "<a href=\"javascript:__doPostBack('ctl00$ctl00$PageBody$PageContent$ListViewTOC1$ctrl0$LinkButton1a','')\">TITLE 1</a>"
+        "</form></body></html>"
+    )
+    title_response_html = (
+        "<html><body>"
+        "<a href='Law.aspx?d=74079'>RS 1:1</a>"
+        "<a href='Law.aspx?d=74089'>RS 1:2</a>"
+        "</body></html>"
+    )
+
+    class _Resp:
+        def __init__(self, text: str):
+            self.status_code = 200
+            self.text = text
+
+        def raise_for_status(self):
+            return None
+
+    class _Session:
+        def get(self, url, timeout=30, headers=None):
+            return _Resp(toc_html)
+
+        def post(self, url, data=None, timeout=45, headers=None):
+            return _Resp(title_response_html)
+
+    async def _fake_request_text(self, law_url: str, headers, timeout: int) -> str:
+        if law_url.endswith("74079"):
+            return (
+                "<html><body>"
+                "<span id='ctl00_PageBody_LabelName'>RS 1:1</span>"
+                "<span id='ctl00_PageBody_LabelDocument'>"
+                + ("Louisiana statute text one. " * 20)
+                + "</span></body></html>"
+            )
+        return (
+            "<html><body>"
+            "<span id='ctl00_PageBody_LabelName'>RS 1:2</span>"
+            "<span id='ctl00_PageBody_LabelDocument'>"
+            + ("Louisiana statute text two. " * 20)
+            + "</span></body></html>"
+        )
+
+    monkeypatch.setattr("requests.Session", _Session)
+    monkeypatch.setattr(LouisianaScraper, "_request_text", _fake_request_text)
+
+    scraper = LouisianaScraper("LA", "Louisiana")
+    statutes = await scraper.scrape_code("Louisiana Revised Statutes", "https://legis.la.gov/legis/Laws_Toc.aspx", max_statutes=2)
+
+    assert [row.section_number for row in statutes] == ["RS 1:1", "RS 1:2"]
+    assert statutes[0].structured_data["discovery_method"] == "live_toc_postback"
+    assert "Louisiana statute text one." in statutes[0].full_text
+
+
+@pytest.mark.anyio
 async def test_new_york_fallback_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
         return b""
@@ -269,6 +329,66 @@ async def test_texas_statutory_code_uses_official_html_zip(monkeypatch: pytest.M
 
 
 @pytest.mark.anyio
+async def test_tennessee_full_corpus_uses_justia_listing_and_section_markdown(monkeypatch: pytest.MonkeyPatch):
+    index_html = (
+        "<html><body>"
+        "<a href='/codes/tennessee/2024/'>2024 Tennessee Code</a>"
+        "</body></html>"
+    ).encode("utf-8")
+    year_html = (
+        "<html><body>"
+        "<a href='/codes/tennessee/title-1/'>Title 1 - CODE AND STATUTES</a>"
+        "</body></html>"
+    ).encode("utf-8")
+    title_html = (
+        "<html><body>"
+        "<a href='/codes/tennessee/title-1/chapter-2/'>Chapter 2 - ENACTMENT OF CODE</a>"
+        "</body></html>"
+    ).encode("utf-8")
+    chapter_html = (
+        "<html><body>"
+        "<a href='/codes/tennessee/title-1/chapter-2/section-1-2-101/'>Section 1-2-101 - Designation of code</a>"
+        "<a href='/codes/tennessee/title-1/chapter-2/section-1-2-102/'>Section 1-2-102 - Preservation of enrolled draft</a>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_listing(self, url: str, timeout_seconds: int = 30) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if url == "https://law.justia.com/codes/tennessee/":
+            return index_html
+        if url == "https://law.justia.com/codes/tennessee/2024/":
+            return year_html
+        if url == "https://law.justia.com/codes/tennessee/title-1/":
+            return title_html
+        if url == "https://law.justia.com/codes/tennessee/title-1/chapter-2/":
+            return chapter_html
+        return b""
+
+    async def _fake_section_markdown(self, url: str, timeout_seconds: int = 25) -> str:
+        self._record_fetch_event(provider="test_fake", success=True)
+        section_number = "1-2-101" if url.endswith("1-2-101/") else "1-2-102"
+        caption = "Designation of code" if section_number == "1-2-101" else "Preservation of enrolled draft"
+        return (
+            f"# Tennessee Code § {section_number} (2024) - {caption} :: 2024 Tennessee Code\n\n"
+            f"Section {section_number} - {caption}\n"
+            f"TN Code § {section_number} (2024)\n"
+            + ("Statutory text for testing. " * 25)
+            + "\nDisclaimer: footer"
+        )
+
+    monkeypatch.setattr(TennesseeScraper, "_fetch_justia_listing_html", _fake_listing)
+    monkeypatch.setattr(TennesseeScraper, "_fetch_justia_section_markdown", _fake_section_markdown)
+
+    scraper = TennesseeScraper("TN", "Tennessee")
+    statutes = await scraper.scrape_code("Tennessee Code Annotated", "https://law.justia.com/codes/tennessee/2024/", max_statutes=2)
+
+    assert [statute.section_number for statute in statutes] == ["1-2-101", "1-2-102"]
+    assert statutes[0].official_cite == "Tenn. Code Ann. § 1-2-101"
+    assert statutes[0].structured_data["discovery_method"] == "justia_tennessee_code_tree"
+    assert "Statutory text for testing." in statutes[0].full_text
+
+
+@pytest.mark.anyio
 async def test_new_hampshire_full_corpus_discovers_more_than_twelve_titles(monkeypatch: pytest.MonkeyPatch):
     title_links = "".join(
         f"<a href='NHTOC/title{i}.htm'>TITLE {i}: Title {i}</a>"
@@ -337,6 +457,39 @@ async def test_new_hampshire_full_corpus_prefers_section_text_over_index_stubs(m
     assert statutes[0].section_number == "1:1"
     assert statutes[0].official_cite == "N.H. Rev. Stat. § 1:1"
     assert "Boundary text" in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_north_dakota_official_index_discovers_cencode_pdfs(monkeypatch: pytest.MonkeyPatch):
+    index_html = (
+        "<html><body>"
+        "<a href='/cencode/t01c01.pdf#nameddest=1-01-01'>1-01-01</a>"
+        "<a href='/cencode/t01c02.pdf#nameddest=1-02-01'>1-02-01</a>"
+        "</body></html>"
+    ).encode("utf-8")
+    pdf_payload = b"%PDF-1.4 fake pdf bytes"
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if url.endswith("/general-information/north-dakota-century-code/index.html"):
+            return index_html
+        if url.endswith("/cencode/t01c01.pdf") or url.endswith("/cencode/t01c02.pdf"):
+            return pdf_payload
+        return b""
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(
+        NorthDakotaScraper,
+        "_extract_pdf_text",
+        lambda self, pdf_bytes, max_chars: ("North Dakota Century Code chapter text. " * 20)[:max_chars],
+    )
+
+    scraper = NorthDakotaScraper("ND", "North Dakota")
+    statutes = await scraper._scrape_official_index_pdfs("North Dakota Century Code", max_statutes=2)
+
+    assert [row.section_number for row in statutes] == ["01-01", "01-02"]
+    assert statutes[0].structured_data["source_kind"] == "official_modern_index_pdf"
+    assert "chapter text" in statutes[0].full_text.lower()
 
 
 @pytest.mark.anyio

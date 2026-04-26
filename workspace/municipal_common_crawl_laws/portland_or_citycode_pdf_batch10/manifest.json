@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "message": "Extracted 10 Common Crawl municipal page(s)",
+  "jurisdiction": "Portland, OR",
+  "url": "https://www.portlandoregon.gov/citycode/",
+  "index_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/data/common_crawl_indexes",
+  "downloaded_index": null,
+  "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_citycode_pdf_batch10",
+  "pages_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_citycode_pdf_batch10/pages.parquet",
+  "pointers_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_citycode_pdf_batch10/pointers.parquet",
+  "pages_extracted": 10,
+  "metadata": {
+    "method": "common_crawl",
+    "url": "https://www.portlandoregon.gov/citycode/",
+    "jurisdiction": "Portland, OR",
+    "place_name": "Portland",
+    "state_code": "OR",
+    "gnis": null,
+    "errors": [
+      {
+        "url": "https://www.portlandoregon.gov/citycode/article/272094",
+        "error": "PDF text extraction failed: PdfStreamError: Stream has ended unexpectedly"
+      },
+      {
+        "url": "https://www.portlandoregon.gov/citycode/article/692331",
+        "error": "PDF text extraction failed: PdfReadError: Invalid object in /Pages"
+      }
+    ]
+  }
+}

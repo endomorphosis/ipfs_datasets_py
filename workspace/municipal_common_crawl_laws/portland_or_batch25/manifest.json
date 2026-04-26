@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "message": "Extracted 25 Common Crawl municipal page(s)",
+  "jurisdiction": "Portland, OR",
+  "url": "https://www.portlandoregon.gov/",
+  "index_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/data/common_crawl_indexes",
+  "downloaded_index": null,
+  "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_batch25",
+  "pages_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_batch25/pages.parquet",
+  "pointers_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_or_batch25/pointers.parquet",
+  "pages_extracted": 25,
+  "metadata": {
+    "method": "common_crawl",
+    "url": "https://www.portlandoregon.gov/",
+    "jurisdiction": "Portland, OR",
+    "place_name": "Portland",
+    "state_code": "OR",
+    "gnis": null,
+    "errors": []
+  }
+}

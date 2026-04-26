@@ -76,7 +76,14 @@ class NorthDakotaScraper(BaseStateScraper):
         if not self._full_corpus_enabled() or max_statutes is not None:
             direct_pdf_statutes = await self._scrape_seed_cencode_pdfs(code_name, max_statutes=return_threshold)
             if direct_pdf_statutes:
-                return direct_pdf_statutes
+                best = list(direct_pdf_statutes)
+
+        official_pdf_statutes = await self._scrape_official_index_pdfs(
+            code_name,
+            max_statutes=max(10, return_threshold),
+        )
+        if official_pdf_statutes:
+            return official_pdf_statutes[:return_threshold]
 
         for candidate in candidate_urls:
             if candidate in seen:
@@ -96,6 +103,48 @@ class NorthDakotaScraper(BaseStateScraper):
         if pdf_statutes:
             return pdf_statutes
         return best
+
+    async def _scrape_official_index_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        discovered = await self._discover_official_cencode_pdfs(limit=max(200, max_statutes * 6))
+        if not discovered:
+            return []
+
+        statutes: List[NormalizedStatute] = []
+        seen = set()
+        for pdf_url in discovered:
+            if len(statutes) >= max_statutes:
+                break
+            base_pdf_url = pdf_url.split("#", 1)[0]
+            if base_pdf_url in seen:
+                continue
+            seen.add(base_pdf_url)
+            pdf_bytes = await self._request_bytes(base_pdf_url, timeout=45)
+            full_text = self._extract_pdf_text(pdf_bytes=pdf_bytes, max_chars=14000)
+            if len(full_text) < 280:
+                continue
+            file_name = base_pdf_url.rsplit("/", 1)[-1]
+            m = self._ND_CENCODE_FILE_RE.search(file_name)
+            title_no = m.group(1) if m else ""
+            chapter_no = m.group(2) if m else ""
+            label = f"Title {title_no} Chapter {chapter_no}".strip() if m else file_name
+            section_number = f"{title_no}-{chapter_no}".strip("-") or file_name.rsplit(".", 1)[0]
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=label,
+                    full_text=full_text,
+                    source_url=base_pdf_url,
+                    legal_area=self._identify_legal_area(label),
+                    official_cite=f"N.D. Cent. Code {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={"source_kind": "official_modern_index_pdf", "skip_hydrate": True},
+                )
+            )
+        return statutes
 
     async def _scrape_seed_cencode_pdfs(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
         seeds = [
@@ -142,6 +191,9 @@ class NorthDakotaScraper(BaseStateScraper):
         statutes: List[NormalizedStatute] = []
         seen = set()
         candidate_links = []
+
+        official_modern_links = await self._discover_official_cencode_pdfs(limit=max(600, max_statutes * 6))
+        candidate_links.extend(official_modern_links)
 
         for homepage in [f"{self.get_base_url()}/cencode/", "https://www.ndlegis.gov/cencode/", f"{self.get_base_url()}/"]:
             try:
@@ -199,6 +251,37 @@ class NorthDakotaScraper(BaseStateScraper):
             )
 
         return statutes
+
+    async def _discover_official_cencode_pdfs(self, limit: int = 600) -> List[str]:
+        """Discover Century Code chapter PDFs from the modern official ND index page."""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        index_url = f"{self.get_base_url()}/general-information/north-dakota-century-code/index.html"
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(index_url, timeout_seconds=35)
+        except Exception:
+            return []
+        if not payload:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        out: List[str] = []
+        seen = set()
+        for link in soup.find_all("a", href=True):
+            href = urljoin(index_url, str(link.get("href") or "").strip())
+            if "/cencode/" not in href.lower() or ".pdf" not in href.lower():
+                continue
+            pdf_url = href.split("#", 1)[0]
+            if pdf_url in seen:
+                continue
+            seen.add(pdf_url)
+            out.append(pdf_url)
+            if len(out) >= limit:
+                break
+        return out
 
     async def _discover_archived_cencode_pdfs(self, limit: int = 320) -> List[str]:
         """Discover archived ND Century Code chapter PDFs from Wayback CDX."""
