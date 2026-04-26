@@ -24,6 +24,8 @@ Set a Hugging Face token in the environment before upload. Do not commit token v
 export HF_TOKEN="<token with write access to justicedao>"
 ```
 
+The package-managed default raw source is `datasets/raw/nl_discovery_medium_100`, the latest validated 100-law medium scrape. It is intentionally not described as the full Dutch corpus.
+
 Scrape the two current Netherlands law documents into the package-managed raw output directory:
 
 ```bash
@@ -45,6 +47,21 @@ python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape \
   --rate-limit-delay 0.2 \
   --skip-existing
 ```
+
+Latest validated medium run:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape \
+  --output-dir ipfs_datasets_py/processors/legal_scrapers/netherlands_laws/datasets/raw/nl_discovery_medium_100 \
+  --use_default_seeds true \
+  --max_seed_pages 25 \
+  --crawl_depth 1 \
+  --max_documents 100 \
+  --rate_limit_delay 0.2 \
+  --skip_existing true
+```
+
+The April 26, 2026 medium run is not a full corpus. It visited 25 seed pages, found 607 candidate links, accepted 593 unique official law documents, selected/fetched/parsed 100 laws, and had 0 document failures. The raw run produced 100 law records, 7,247 article records, and 7,347 search records. Two parsed law documents did not expose article-level rows in the current extractor, so article rows cover 98 distinct law identifiers.
 
 After checking metadata and spot-checking records, increase to 500 laws:
 

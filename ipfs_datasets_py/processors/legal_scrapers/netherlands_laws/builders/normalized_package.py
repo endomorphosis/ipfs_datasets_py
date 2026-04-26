@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .common import file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from .common import count_jsonl, file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
 from ..paths import DEFAULT_HF_REPO_IDS, HF_DATA_DIR, NORMALIZED_DATASET_NAME, PACKAGE_RAW_OUTPUT_DIR
 
 
@@ -124,8 +124,16 @@ def normalize_articles(raw_articles: list[dict[str, Any]]) -> list[dict[str, Any
     return rows
 
 
-def write_dataset_card(out_dir: Path, repo_id: str = DEFAULT_REPO_ID) -> None:
-    readme = """---
+def write_dataset_card(
+    out_dir: Path,
+    repo_id: str = DEFAULT_REPO_ID,
+    *,
+    run_metadata: dict[str, Any] | None = None,
+    record_counts: dict[str, int] | None = None,
+) -> None:
+    run_metadata = run_metadata or {}
+    record_counts = record_counts or {}
+    readme = f"""---
 pretty_name: Netherlands Laws (Dutch, Normalized)
 language:
 - nl
@@ -156,6 +164,24 @@ configs:
 Hugging Face target: `{repo_id}`.
 
 This package is a normalized version of the Netherlands laws scrape output.
+
+This is a 100-law medium scrape from official Netherlands sources, not the full Netherlands corpus.
+
+Scrape command:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape --use_default_seeds true --max_seed_pages 25 --crawl_depth 1 --max_documents 100 --rate_limit_delay 0.2 --skip_existing true
+```
+
+Current package counts:
+
+- Laws: {record_counts.get("laws", 0)}
+- Articles: {record_counts.get("articles", 0)}
+- Search records in raw run: {run_metadata.get("search_records_count", "unknown")}
+- Unique laws discovered before the 100-law cap: {run_metadata.get("unique_laws_discovered", "unknown")}
+- Documents failed: {run_metadata.get("documents_failed", "unknown")}
+
+Remaining limitations before a full corpus release: increase/remove `max_documents`, validate larger-run packaging/upload behavior, and spot-check laws that expose no article-level rows.
 """
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
@@ -206,7 +232,7 @@ def build_normalized_package(
     out_dir = out_dir or DEFAULT_OUT_DIR
     raw_laws = read_jsonl(raw_dir / "netherlands_laws_index_latest.jsonl")
     raw_articles = read_jsonl(raw_dir / "netherlands_laws_articles_index_latest.jsonl")
-    raw_search = read_jsonl(raw_dir / "netherlands_laws_search_index_latest.jsonl")
+    raw_search_rows = count_jsonl(raw_dir / "netherlands_laws_search_index_latest.jsonl")
     run_metadata = json.loads((raw_dir / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8"))
 
     laws = normalize_laws(raw_laws)
@@ -233,17 +259,18 @@ def build_normalized_package(
         "raw": {
             "laws_rows": len(raw_laws),
             "articles_rows": len(raw_articles),
-            "search_rows": len(raw_search),
+            "search_rows": raw_search_rows,
             "article_jsonl_bytes": raw_article_bytes,
             "article_top_fields": top_field_report(raw_articles),
-            "search_top_fields": top_field_report(raw_search),
         },
         "normalized": {
             "laws_rows": len(laws),
             "articles_rows": len(articles),
             "article_jsonl_bytes": normalized_article_bytes,
             "article_reduction_bytes": raw_article_bytes - normalized_article_bytes,
-            "article_reduction_pct": round(100 * (raw_article_bytes - normalized_article_bytes) / raw_article_bytes, 2),
+            "article_reduction_pct": round(100 * (raw_article_bytes - normalized_article_bytes) / raw_article_bytes, 2)
+            if raw_article_bytes
+            else 0.0,
         },
         "scrape_trace": {
             "max_documents": run_metadata.get("max_documents"),
@@ -272,10 +299,11 @@ def build_normalized_package(
         "language": "nl",
         "jurisdiction": "Netherlands",
         "join_key": {"articles": "law_identifier", "laws": "law_identifier"},
+        "records": {"laws": len(laws), "articles": len(articles)},
         "notes": [
             "Law-level metadata is stored in the laws table.",
             "Repeated law-level fields were removed from article rows.",
-            "This package was derived from a scrape run capped at max_documents=2.",
+            f"This package was derived from a scrape run capped at max_documents={run_metadata.get('max_documents')}.",
         ],
         "files": {},
     }
@@ -296,7 +324,12 @@ def build_normalized_package(
         manifest["files"][rel] = file_manifest_entry(path, records)
     write_json(out_dir / "dataset_manifest.json", manifest)
 
-    write_dataset_card(out_dir, repo_id)
+    write_dataset_card(
+        out_dir,
+        repo_id,
+        run_metadata=run_metadata,
+        record_counts={"laws": len(laws), "articles": len(articles)},
+    )
     write_gitattributes(out_dir)
     write_upload_script(out_dir)
     return out_dir

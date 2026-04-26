@@ -148,7 +148,20 @@ def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[
     return laws, articles, cid_index
 
 
-def write_readme(out_dir: Path, repo_id: str = DEFAULT_REPO_ID) -> None:
+def write_readme(
+    out_dir: Path,
+    repo_id: str = DEFAULT_REPO_ID,
+    *,
+    run_metadata: dict[str, Any] | None = None,
+    record_counts: dict[str, int] | None = None,
+) -> None:
+    run_metadata = run_metadata or {}
+    record_counts = record_counts or {}
+    scrape_command = (
+        "python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape "
+        "--use_default_seeds true --max_seed_pages 25 --crawl_depth 1 "
+        "--max_documents 100 --rate_limit_delay 0.2 --skip_existing true"
+    )
     readme = f"""---
 pretty_name: IPFS Netherlands Laws
 language:
@@ -186,6 +199,24 @@ configs:
 Hugging Face target: `{repo_id}`.
 
 This dataset packages Netherlands law records with deterministic IPFS Content IDs. Each row includes a `cid` and `content_address`; article rows also include the parent `law_cid`.
+
+This is a 100-law medium scrape from official Netherlands sources, not the full Netherlands corpus.
+
+Scrape command:
+
+```bash
+{scrape_command}
+```
+
+Current package counts:
+
+- Laws: {record_counts.get("laws", 0)}
+- Articles: {record_counts.get("articles", 0)}
+- CID index rows: {record_counts.get("cid_index", 0)}
+- Unique laws discovered before the 100-law cap: {run_metadata.get("unique_laws_discovered", "unknown")}
+- Documents failed: {run_metadata.get("documents_failed", "unknown")}
+
+Remaining limitations before a full corpus release: increase/remove `max_documents`, validate shard/streaming behavior on larger runs, and spot-check laws that expose no article-level rows.
 """
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
@@ -261,7 +292,12 @@ def build_ipfs_cid_package(
     write_parquet(out_dir / "parquet/articles/train-00000-of-00001.parquet", articles)
     write_parquet(out_dir / "parquet/cid_index/train-00000-of-00001.parquet", cid_index)
 
-    write_readme(out_dir, repo_id)
+    write_readme(
+        out_dir,
+        repo_id,
+        run_metadata=run_metadata,
+        record_counts={"laws": len(laws), "articles": len(articles), "cid_index": len(cid_index)},
+    )
     write_gitattributes(out_dir)
     build_manifest(laws, articles, cid_index, out_dir, repo_id)
     return out_dir

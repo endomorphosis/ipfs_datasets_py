@@ -25,6 +25,52 @@ def _print(obj: Any, as_json: bool = True) -> None:
         print(obj)
 
 
+def _summarize_scrape_result(result: dict[str, Any]) -> dict[str, Any]:
+    metadata = dict(result.get("metadata") or {})
+    summary_keys = [
+        "seed_pages_visited",
+        "seed_pages_failed",
+        "candidate_links_found",
+        "candidate_links_unique",
+        "official_law_documents_accepted",
+        "unique_laws_discovered",
+        "documents_selected_for_fetch",
+        "documents_fetched",
+        "documents_parsed",
+        "documents_skipped",
+        "documents_failed",
+        "records_count",
+        "article_records_count",
+        "search_records_count",
+        "persisted_records_count",
+        "persisted_article_records_count",
+        "error_count",
+        "elapsed_time_seconds",
+    ]
+    compact_metadata = {key: metadata[key] for key in summary_keys if key in metadata}
+    for key in [
+        "output_dir",
+        "index_path",
+        "article_index_path",
+        "search_index_path",
+        "run_metadata_path",
+        "max_documents",
+        "max_seed_pages",
+        "crawl_depth",
+        "rate_limit_delay",
+        "skip_existing",
+        "resume",
+    ]:
+        if key in metadata:
+            compact_metadata[key] = metadata[key]
+    if metadata.get("errors"):
+        compact_metadata["errors"] = list(metadata.get("errors") or [])[:20]
+    return {
+        "status": result.get("status"),
+        "metadata": compact_metadata,
+    }
+
+
 def _parse_bool(value: str | bool) -> bool:
     if isinstance(value, bool):
         return value
@@ -115,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
                 resume=args.resume,
             )
         )
-        _print(result)
+        _print(_summarize_scrape_result(result))
         return 0
 
     if args.command == "build-normalized":

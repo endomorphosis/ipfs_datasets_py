@@ -128,6 +128,36 @@ def test_extract_info_metadata_captures_dates_aliases_and_versions():
     assert any("overheid.nl" in url for url in metadata["authority_sources"])
 
 
+def test_extract_info_metadata_rejects_greedy_title_fallbacks():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _extract_info_metadata,
+    )
+
+    metadata = _extract_info_metadata(
+        """
+        <html>
+          <body>
+            <h1>Wetboek van Burgerlijke Rechtsvordering</h1>
+            <table>
+              <tr><th>Niet officiële titel</th><td>Wetboek van Burgerlijke Rechtsvordering</td></tr>
+              <tr><th>Citeertitel</th><td>De citeertitel is door de redactie vastgesteld.</td></tr>
+              <tr><th>Soort regeling</th><td>Wet</td></tr>
+              <tr><th>Identificatienummer</th><td>BWBR0001827</td></tr>
+              <tr><th>Datum van inwerkingtreding</th><td>01-01-2026</td></tr>
+            </table>
+            <section>Opschrift Wetboek van Burgerlijke Rechtsvordering Citeertitel Soort regeling Identificatienummer BWBR0001827 Rechtsgebied Procesrecht</section>
+          </body>
+        </html>
+        """,
+        info_url="https://wetten.overheid.nl/BWBR0001827/informatie",
+    )
+
+    assert metadata["canonical_title"] == "Wetboek van Burgerlijke Rechtsvordering"
+    assert metadata["aliases"] == []
+    assert metadata["effective_date"] == "2026-01-01"
+    assert len(metadata["canonical_title"]) < 100
+
+
 def test_fixture_document_parsing_builds_full_hierarchy_and_citations():
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
         _build_article_records,

@@ -13,14 +13,28 @@ import pyarrow.parquet as pq
 from ipfs_datasets_py.utils.cid_utils import cid_for_bytes
 
 
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
+def iter_jsonl(path: Path):
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if line:
-                rows.append(json.loads(line))
+                yield json.loads(line)
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in iter_jsonl(path):
+        rows.append(row)
     return rows
+
+
+def count_jsonl(path: Path) -> int:
+    count = 0
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if line.strip():
+                count += 1
+    return count
 
 
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:

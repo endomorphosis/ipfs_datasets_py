@@ -137,6 +137,8 @@ _DEFAULT_SOURCE_CONFIGS: List[Dict[str, Any]] = [
 ]
 _SRU_BWB_ENDPOINT = "https://zoekservice.overheid.nl/sru/Search"
 _DEFAULT_SRU_MAXIMUM_RECORDS = 100
+_MAX_METADATA_TITLE_CHARS = 300
+_MAX_AUTHORITY_SOURCES = 50
 
 
 def _build_sru_seed_url(query: str, *, start_record: int = 1, maximum_records: int = _DEFAULT_SRU_MAXIMUM_RECORDS) -> str:
@@ -729,6 +731,32 @@ def _match_info_label(text: str, key: str) -> str:
     return ""
 
 
+def _metadata_value_is_reasonable(value: str, *, max_chars: int = _MAX_METADATA_TITLE_CHARS) -> bool:
+    normalized = _normalize_space(value)
+    if not normalized or len(normalized) > max_chars:
+        return False
+    lowered = normalized.lower()
+    if lowered.startswith("de citeertitel is"):
+        return False
+    repeated_labels = [
+        "soort regeling",
+        "identificatienummer",
+        "rechtsgebied",
+        "overheidsthema",
+        "wetsfamilie",
+        "wetstechnische informatie",
+    ]
+    return sum(1 for label in repeated_labels if label in lowered) <= 1
+
+
+def _first_reasonable_metadata_value(*values: str, max_chars: int = _MAX_METADATA_TITLE_CHARS) -> str:
+    for value in values:
+        normalized = _normalize_space(value)
+        if _metadata_value_is_reasonable(normalized, max_chars=max_chars):
+            return normalized
+    return ""
+
+
 def _discover_authoritative_source_urls(soup: Any, info_url: str) -> List[str]:
     discovered: List[str] = []
     seen: Set[str] = set()
@@ -751,6 +779,8 @@ def _discover_authoritative_source_urls(soup: Any, info_url: str) -> List[str]:
             continue
         seen.add(absolute)
         discovered.append(absolute)
+        if len(discovered) >= _MAX_AUTHORITY_SOURCES:
+            break
 
     return discovered
 
@@ -804,22 +834,26 @@ def _extract_info_metadata(html: str, *, info_url: str = "") -> Dict[str, Any]:
         next(iter(labeled_values.get("identificatienummer", [])), "")
         or _match_info_label(text, "identifier")
     ).upper()
-    official_title = (
-        next(iter(labeled_values.get("officiële titel", [])), "")
-        or next(iter(labeled_values.get("officiele titel", [])), "")
-        or next(iter(labeled_values.get("opschrift", [])), "")
-        or _match_info_label(text, "official_title")
-        or title
+    official_title = _first_reasonable_metadata_value(
+        next(iter(labeled_values.get("officiële titel", [])), ""),
+        next(iter(labeled_values.get("officiele titel", [])), ""),
+        next(iter(labeled_values.get("opschrift", [])), ""),
+        next(iter(labeled_values.get("niet officiële titel", [])), ""),
+        next(iter(labeled_values.get("niet officiele titel", [])), ""),
+        _match_info_label(text, "official_title"),
+        title,
     )
-    cite_title = (
-        next(iter(labeled_values.get("citeertitel", [])), "")
-        or _match_info_label(text, "cite_title")
+    cite_title = _first_reasonable_metadata_value(
+        next(iter(labeled_values.get("citeertitel", [])), ""),
+        _match_info_label(text, "cite_title"),
+        max_chars=200,
     )
     aliases = [_normalize_space(value) for value in [cite_title, title] if _normalize_space(value)]
     aliases = list(dict.fromkeys(alias for alias in aliases if alias and alias != official_title))
 
     effective_date = _parse_dutch_date(
         next(iter(labeled_values.get("datum inwerkingtreding", [])), "")
+        or next(iter(labeled_values.get("datum van inwerkingtreding", [])), "")
         or next(iter(labeled_values.get("inwerkingtreding", [])), "")
         or next(iter(labeled_values.get("geldig van", [])), "")
         or _match_info_label(text, "effective_date")
@@ -934,7 +968,7 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
                 "is_current": bool(document_row.get("is_current", False)),
                 "publication_date": document_row.get("publication_date", ""),
                 "last_modified_date": document_row.get("last_modified_date", ""),
-                "historical_versions": list(document_row.get("historical_versions") or []),
+                "historical_version_count": len(list(document_row.get("historical_versions") or [])),
                 "article_number": article_number,
                 "article_heading": article.get("heading") or "",
                 "citation": article_citation,
@@ -1379,8 +1413,7 @@ async def scrape_netherlands_laws(
                         **source_verification,
                     ),
                 }
-            row["article_records"] = _build_article_records(row)
-            article_records.extend(row["article_records"])
+            article_records.extend(_build_article_records(row))
             records.append(row)
             successful_parses += 1
         except Exception as exc:

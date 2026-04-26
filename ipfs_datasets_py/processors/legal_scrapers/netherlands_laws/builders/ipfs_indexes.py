@@ -210,7 +210,11 @@ def build_vector_index(
         "IPFS Netherlands Laws Vector Index",
         repo_id,
         ["mapping"],
-        "Dense vector mapping keyed by source CID, with FAISS and TF-IDF/SVD artifacts.",
+        (
+            "Dense vector mapping keyed by source CID, with FAISS and TF-IDF/SVD artifacts.\n\n"
+            f"This index covers {len(mapping_rows)} rows from the paired CID dataset. "
+            "The current source dataset is a 100-law medium scrape, not the full Netherlands corpus."
+        ),
     )
     _write_gitattributes(out_dir)
     _write_manifest(out_dir, VECTOR_INDEX_DATASET_NAME, repo_id, {"mapping": len(mapping_rows)}, extra=metadata)
@@ -303,7 +307,11 @@ def build_bm25_index(
         "IPFS Netherlands Laws BM25 Index",
         repo_id,
         ["documents", "terms"],
-        "Sparse BM25 document and postings tables keyed by source CID.",
+        (
+            "Sparse BM25 document and postings tables keyed by source CID.\n\n"
+            f"This index covers {len(doc_rows)} documents and {len(term_rows)} terms from the paired CID dataset. "
+            "The current source dataset is a 100-law medium scrape, not the full Netherlands corpus."
+        ),
     )
     _write_gitattributes(out_dir)
     _write_manifest(out_dir, BM25_INDEX_DATASET_NAME, repo_id, {"documents": len(doc_rows), "terms": len(term_rows)}, extra=metadata)
@@ -425,7 +433,11 @@ def build_knowledge_graph(
         "IPFS Netherlands Laws Knowledge Graph",
         repo_id,
         ["nodes", "edges"],
-        "JSON-LD graph and node/edge tables whose identities are IPFS content addresses.",
+        (
+            "JSON-LD graph and node/edge tables whose identities are IPFS content addresses.\n\n"
+            f"This graph currently has {len(graph_nodes)} nodes and {len(graph_edges)} edges from the paired CID dataset. "
+            "The current source dataset is a 100-law medium scrape, not the full Netherlands corpus."
+        ),
     )
     _write_gitattributes(out_dir)
     _write_manifest(out_dir, KNOWLEDGE_GRAPH_DATASET_NAME, repo_id, {"nodes": len(graph_nodes), "edges": len(graph_edges)}, extra=metadata)
