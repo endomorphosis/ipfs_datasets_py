@@ -17153,6 +17153,61 @@ async def _agentic_discover_admin_state_blocks(
             if prioritized_indiana_seed_rule_urls:
                 source_breakdown["indiana_api_bootstrap"] = len(prioritized_indiana_seed_rule_urls)
 
+            indiana_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 6))
+            for batch_start in range(0, len(prioritized_indiana_seed_rule_urls), indiana_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = [
+                    rule_url
+                    for rule_url in prioritized_indiana_seed_rule_urls[batch_start : batch_start + indiana_batch_size]
+                    if _url_key(rule_url) not in direct_doc_urls
+                ][:remaining_slots]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                indiana_timeout_s = max(
+                    1.0,
+                    min(12.0, per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                indiana_results = await asyncio.gather(
+                    *[
+                        asyncio.wait_for(
+                            _scrape_indiana_rule_detail_via_api(rule_url),
+                            timeout=indiana_timeout_s,
+                        )
+                        for rule_url in batch_rule_urls
+                    ],
+                    return_exceptions=True,
+                )
+
+                for rule_url, indiana_scraped in zip(batch_rule_urls, indiana_results):
+                    if isinstance(indiana_scraped, Exception) or indiana_scraped is None:
+                        continue
+
+                    indiana_text = str(getattr(indiana_scraped, "text", "") or "").strip()
+                    indiana_title = str(getattr(indiana_scraped, "title", "") or "").strip()
+                    indiana_provenance = getattr(indiana_scraped, "extraction_provenance", None) or {}
+                    indiana_method_value = None
+                    if isinstance(indiana_provenance, dict):
+                        indiana_method_value = indiana_provenance.get("method")
+                    if indiana_method_value is None:
+                        indiana_method_value = getattr(indiana_scraped, "method_used", None)
+                    accepted_indiana_bootstrap = await _append_document_if_rule(
+                        rule_url,
+                        indiana_title,
+                        indiana_text,
+                        indiana_method_value,
+                        source_phase="bootstrap_batch",
+                    )
+                    official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_indiana_bootstrap)
+                    if len(statutes) >= max_fetch:
+                        break
+
         if state_code == "SD":
             seen_south_dakota_rule_keys: set[str] = set()
             for rule_url in south_dakota_bootstrap_document_urls:

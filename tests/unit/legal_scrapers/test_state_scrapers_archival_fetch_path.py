@@ -29,6 +29,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import O
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio import OhioScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon_admin_rules import OregonAdministrativeRulesScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.pennsylvania import PennsylvaniaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.rhode_island import RhodeIslandScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_carolina import SouthCarolinaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.south_dakota import SouthDakotaScraper
@@ -1124,6 +1125,54 @@ async def test_connecticut_custom_scrape_records_fetch_analytics(monkeypatch: py
 
 
 @pytest.mark.anyio
+async def test_pennsylvania_bounded_run_prefers_consolidated_title_pdfs(monkeypatch: pytest.MonkeyPatch):
+    index_html = (
+        "<html><body>"
+        "<a href='/statutes/consolidated/view-statute?txtType=HTM&ttl=01'>GENERAL PROVISIONS</a>"
+        "<a href='/statutes/consolidated/view-statute?txtType=PDF&ttl=01'>PDF</a>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if url == "https://www.palegis.us/statutes/consolidated":
+            return index_html
+        return b""
+
+    async def _fake_request_pdf_bytes(self, url: str, timeout: int = 45) -> bytes:
+        return b"%PDF-1.4 fake"
+
+    def _fake_extract_pdf_text(self, pdf_bytes: bytes, max_chars: int) -> str:
+        return (
+            "TABLE OF CONTENTS\n"
+            "§ 101. Short title.\n"
+            "§ 102. Citation of Pennsylvania Consolidated Statutes.\n"
+            "\f"
+            "Chapter 1. Short Title\n"
+            "§ 101. Short title.\n"
+            + ("This title shall be known and may be cited as the Pennsylvania Consolidated Statutes. " * 4)
+            + "\n§ 102. Citation of Pennsylvania Consolidated Statutes.\n"
+            + ("The Pennsylvania Consolidated Statutes may be cited by title and section. " * 4)
+        )[:max_chars]
+
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(PennsylvaniaScraper, "_request_pdf_bytes", _fake_request_pdf_bytes)
+    monkeypatch.setattr(PennsylvaniaScraper, "_extract_pdf_text_preserve_layout", _fake_extract_pdf_text)
+
+    scraper = PennsylvaniaScraper("PA", "Pennsylvania")
+    statutes = await scraper.scrape_code(
+        "Pennsylvania Consolidated Statutes",
+        "https://www.palegis.us/statutes/consolidated",
+        max_statutes=2,
+    )
+
+    assert [statute.section_number for statute in statutes] == ["101", "102"]
+    assert statutes[0].official_cite == "Pa. Cons. Stat. tit. 01 § 101"
+    assert statutes[0].structured_data["source_kind"] == "official_pennsylvania_title_pdf"
+    assert statutes[0].structured_data["discovery_method"] == "official_consolidated_title_pdf_index"
+
+
+@pytest.mark.anyio
 async def test_connecticut_full_corpus_bounded_run_does_not_short_circuit_to_direct_chapters(monkeypatch: pytest.MonkeyPatch):
     async def _fake_live_titles(self, code_name: str, max_statutes: int = 120):
         return []
@@ -1183,6 +1232,61 @@ async def test_connecticut_full_corpus_bounded_run_does_not_short_circuit_to_dir
 
     assert [row.section_number for row in statutes] == ["1-1", "1-2"]
     assert statutes[0].structured_data["source_kind"] == "official_connecticut_section_html"
+
+
+@pytest.mark.anyio
+async def test_connecticut_custom_scrape_extracts_real_chapter_sections(monkeypatch: pytest.MonkeyPatch):
+    title_html = (
+        "<html><body>"
+        "<a href='chap_001.htm'>Chapter 1</a>"
+        "<a href='chap_002.htm'>Chapter 2</a>"
+        "</body></html>"
+    ).encode("utf-8")
+    chapter_html = (
+        "<html><head><title>Chapter 1 - Construction of Statutes</title></head><body>"
+        "<h4 id='TOC'>Table of Contents</h4>"
+        "<p class='toc_catchln'><a href='#sec_1-1'>Sec. 1-1. Words and phrases. Construction of statutes.</a></p>"
+        "<p class='toc_catchln'><a href='#sec_1-2'>Sec. 1-2. Legal notices.</a></p>"
+        "<hr class='chaps_pg_bar'/>"
+        "<p><span class='catchln' id='sec_1-1'>Sec. 1-1. Words and phrases. Construction of statutes.</span> "
+        + ("Statutory text one. " * 20)
+        + "</p>"
+        "<p class='source-first'>(1949 Rev.)</p>"
+        "<table class='nav_tbl'><tr><td>nav</td></tr></table>"
+        "<p><span class='catchln' id='sec_1-2'>Sec. 1-2. Legal notices.</span> "
+        + ("Statutory text two. " * 20)
+        + "</p>"
+        "<p class='history-first'>History text.</p>"
+        "<table class='nav_tbl'><tr><td>nav</td></tr></table>"
+        "</body></html>"
+    ).encode("utf-8")
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if url.endswith("titles.htm"):
+            return title_html
+        if url.endswith("chap_001.htm"):
+            return chapter_html
+        if url.endswith("chap_002.htm"):
+            return b"<html><body></body></html>"
+        return b""
+
+    monkeypatch.setattr(ConnecticutScraper, "_fetch_connecticut_page", _fake_fetch)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    statutes = await scraper._custom_scrape_connecticut(
+        "Connecticut General Statutes",
+        "https://www.cga.ct.gov/current/pub/titles.htm",
+        "Conn. Gen. Stat.",
+        max_sections=2,
+    )
+
+    assert [statute.section_number for statute in statutes] == ["1-1", "1-2"]
+    assert statutes[0].structured_data["source_kind"] == "official_connecticut_chapter_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_title_chapter_section_html"
+    assert "Statutory text one." in statutes[0].full_text
+    assert statutes[1].section_name == "Legal notices"
 
 
 @pytest.mark.anyio

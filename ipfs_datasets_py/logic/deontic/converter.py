@@ -202,15 +202,16 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             elements = extract_normative_elements(text, self.document_type)
             
             if not elements:
-                # No normative elements found - create empty formula with minimal valid data
-                from ..integration.converters.deontic_logic_core import LegalAgent
+                # The deterministic parser did not find a norm.  Emit an
+                # explicit low-confidence scaffold rather than fabricating a
+                # normal obligation from arbitrary legal text.
                 formula = DeonticFormula(
                     operator=DeonticOperator.OBLIGATION,
-                    proposition="",
+                    proposition="UnparsedNonNormativeOrAmbiguousText",
                     agent=None,
                     beneficiary=None,
                     conditions=[],
-                    confidence=0.3,
+                    confidence=0.05,
                     source_text=text
                 )
                 return formula
@@ -227,8 +228,10 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "obligation": DeonticOperator.OBLIGATION,
                 "permission": DeonticOperator.PERMISSION,
                 "prohibition": DeonticOperator.PROHIBITION,
+                "definition": DeonticOperator.POWER,
             }
             operator = operator_map.get(element.get("norm_type"), DeonticOperator.OBLIGATION)
+            proposition = self._strip_outer_deontic_operator(formula_string, operator.value)
             
             # Extract agent from subject
             from ..integration.deontic_logic_core import LegalAgent
@@ -246,7 +249,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             # Create DeonticFormula object with correct constructor
             formula = DeonticFormula(
                 operator=operator,
-                proposition=formula_string,
+                proposition=proposition,
                 agent=agent,
                 beneficiary=None,
                 conditions=element.get("conditions", []),
@@ -284,6 +287,14 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                     error=str(e)
                 )
             raise ConversionError(f"Failed to convert legal text to deontic logic: {e}")
+
+    @staticmethod
+    def _strip_outer_deontic_operator(formula: str, operator_value: str) -> str:
+        text = str(formula or "").strip()
+        prefix = f"{operator_value}("
+        if text.startswith(prefix) and text.endswith(")"):
+            return text[len(prefix) : -1].strip()
+        return text
     
     def _calculate_confidence(self, text: str, formula: str, element: Dict[str, Any]) -> float:
         """
@@ -316,7 +327,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 logger.debug(f"ML confidence scoring failed, using heuristic: {e}")
         
         # Heuristic confidence calculation
-        confidence = 0.5  # Base confidence
+        confidence = float(element.get("confidence_floor") or 0.35)
         
         # Boost confidence based on element completeness
         if element.get("deontic_operator"):
@@ -327,6 +338,10 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             confidence += 0.15
         if len(formula) > 10:
             confidence += 0.05
+        if element.get("norm_type") == "definition":
+            confidence = min(confidence, 0.45)
+        if element.get("extraction_method", "").startswith("deterministic_"):
+            confidence = min(confidence, 0.82)
         
         return min(confidence, 1.0)
     
@@ -448,6 +463,15 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         """
         import re as _re
         text_lower = text.lower()
+        # Prohibition must be checked before bare "shall"/"must"/"may".
+        if _re.search(r'\b(must\s+not|shall\s+not|may\s+not|cannot|can\s+not|forbidden|prohibited)\b', text_lower):
+            action = _re.sub(
+                r'\b(must\s+not|shall\s+not|may\s+not|cannot|can\s+not|is\s+forbidden\s+to|is\s+prohibited\s+from|are\s+prohibited\s+from)\b',
+                '',
+                text_lower,
+            ).strip()
+            action = action.replace(' ', '_')
+            return f"F({action})"
         # Obligation: "must", "shall", "obligatory", "required"
         if _re.search(r'\b(must|shall|obligator|obliged|required)\b', text_lower):
             action = _re.sub(r'\b(it\s+is\s+obligatory\s+that|must|shall|is\s+obliged\s+to|is\s+required\s+to)\b', '', text_lower).strip()
@@ -458,10 +482,5 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             action = _re.sub(r'\b(may|is\s+permitted\s+to|is\s+allowed\s+to|can)\b', '', text_lower).strip()
             action = action.replace(' ', '_')
             return f"P({action})"
-        # Prohibition: "must not", "shall not", "forbidden"
-        if _re.search(r'\b(must\s+not|shall\s+not|forbidden|prohibited)\b', text_lower):
-            action = _re.sub(r'\b(must\s+not|shall\s+not|is\s+forbidden\s+to|is\s+prohibited\s+from)\b', '', text_lower).strip()
-            action = action.replace(' ', '_')
-            return f"F({action})"
         # Default: obligation
         return f"Obligation({text.replace(' ', '_')})"

@@ -82,6 +82,134 @@ class TestDeonticConverter:
         # THEN: Should successfully convert with prohibition operator
         assert result.success
         assert result.output is not None
+        assert result.output.operator.value == "F"
+
+    def test_shall_not_is_not_misclassified_as_obligation(self):
+        """Regression: 'shall not' must be parsed as prohibition before bare 'shall'."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+        result = converter.convert("The contractor shall not subcontract without approval")
+
+        assert result.success
+        assert result.output is not None
+        assert result.output.operator.value == "F"
+        assert result.output.proposition == "∀x (Contractor(x) ∧ ¬Approval(x) → Subcontract(x))"
+        assert result.output.formula == "F[contractor](∀x (Contractor(x) ∧ ¬Approval(x) → Subcontract(x)))"
+
+    def test_structured_modal_clause_extraction_preserves_condition_and_exception(self):
+        """The deterministic scaffold should expose useful legal clause structure."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "The Secretary shall submit a report to Congress within 30 days unless disclosure is classified."
+        )
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["deontic_operator"] == "O"
+        assert element["subject"] == ["Secretary"]
+        assert element["action"] == ["submit a report to Congress"]
+        assert element["temporal_constraints"] == [{"type": "deadline", "value": "30 days"}]
+        assert element["exceptions"] == ["disclosure is classified"]
+
+    def test_non_normative_text_gets_low_confidence_unparsed_scaffold(self):
+        """Do not pretend arbitrary descriptive text is a high-quality obligation."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+        result = converter.convert("This section contains historical notes and editorial references.")
+
+        assert result.success
+        assert result.output is not None
+        assert result.output.proposition == "UnparsedNonNormativeOrAmbiguousText"
+        assert result.output.confidence <= 0.1
+
+    def test_without_clause_is_exception_not_action_tail(self):
+        """'Without approval' should qualify the norm instead of becoming the action."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("The contractor shall not subcontract without written approval.")
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "F"
+        assert elements[0]["action"] == ["subcontract"]
+        assert elements[0]["exceptions"] == ["written approval"]
+
+    def test_not_later_than_deadline_with_anchor(self):
+        """Federal statutes often express deadlines as 'not later than N days after ...'."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "The Secretary shall issue regulations not later than 180 days after enactment."
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["action"] == ["issue regulations"]
+        assert elements[0]["temporal_constraints"] == [
+            {"type": "deadline", "value": "180 days after enactment"}
+        ]
+
+    def test_subject_to_condition_is_preserved(self):
+        """'Subject to' clauses should appear as conditions for downstream review."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "Subject to appropriations, the Administrator may award grants to eligible entities."
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "P"
+        assert elements[0]["subject"] == ["Administrator"]
+        assert elements[0]["conditions"] == ["appropriations"]
+
+    def test_no_person_shall_is_prohibition(self):
+        """'No person shall' is a prohibition even without an explicit 'not' after shall."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("No person shall knowingly make a false statement.")
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "F"
+        assert elements[0]["subject"] == ["person"]
+        assert elements[0]["action"] == ["knowingly make a false statement"]
+        assert elements[0]["mental_state"] == "knowingly"
+        assert elements[0]["action_verb"] == "make"
+        assert elements[0]["action_object"] == "a false statement"
+
+    def test_implicit_repeated_subject_modal_clause(self):
+        """A second modal joined by 'and shall' should inherit the prior subject."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "The Secretary may award grants and shall submit an annual report to Congress."
+        )
+
+        assert [element["deontic_operator"] for element in elements] == ["P", "O"]
+        assert [element["subject"] for element in elements] == [["Secretary"], ["Secretary"]]
+        assert [element["action"] for element in elements] == [
+            ["award grants"],
+            ["submit an annual report to Congress"],
+        ]
+
+    def test_passive_by_agent_clause_normalizes_actor_and_action(self):
+        """Passive duties should not make the object look like the regulated actor."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("A report shall be submitted by the Secretary within 90 days.")
+
+        assert len(elements) == 1
+        assert elements[0]["subject"] == ["Secretary"]
+        assert elements[0]["action"] == ["submit report"]
+        assert elements[0]["temporal_constraints"] == [{"type": "deadline", "value": "90 days"}]
+
+    def test_quoted_defined_term_extraction(self):
+        """Quoted statutory terms should become the definition subject."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            'In this section, the term "covered entity" means a provider of covered services.'
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "DEF"
+        assert elements[0]["subject"] == ["covered entity"]
     
     def test_empty_input_validation(self):
         """Test that empty input is handled properly."""

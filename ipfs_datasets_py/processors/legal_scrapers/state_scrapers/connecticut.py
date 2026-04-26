@@ -3,11 +3,13 @@
 This module contains the scraper for Connecticut statutes from the official state legislative website.
 """
 
+from ipfs_datasets_py.utils import anyio_compat as asyncio
 import json
 import re
 import ssl
 import urllib.parse
 import urllib.request
+from bs4 import BeautifulSoup, Tag
 from typing import List, Dict, Optional
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
@@ -15,6 +17,9 @@ from .registry import StateScraperRegistry
 
 class ConnecticutScraper(BaseStateScraper):
     """Scraper for Connecticut state laws from https://www.cga.ct.gov"""
+
+    _CHAPTER_LINK_RE = re.compile(r"chap_[0-9a-z]+\.htm$", re.IGNORECASE)
+    _TITLE_LINK_RE = re.compile(r"title_[0-9a-z]+\.htm$", re.IGNORECASE)
     
     def get_base_url(self) -> str:
         """Return the base URL for Connecticut's legislative website."""
@@ -47,10 +52,9 @@ class ConnecticutScraper(BaseStateScraper):
         """
         limit = self._effective_scrape_limit(max_statutes, default=30)
         return_threshold = limit if limit is not None else 1000000
+        direct_sections: List[NormalizedStatute] = []
         if not self._full_corpus_enabled():
             direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
-            if direct_sections:
-                return direct_sections
 
         live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
 
@@ -97,6 +101,9 @@ class ConnecticutScraper(BaseStateScraper):
 
         if len(archival_stubs) > len(best):
             best = archival_stubs
+
+        if direct_sections and len(direct_sections) > len(best):
+            best = direct_sections
 
         return best
 
@@ -268,71 +275,26 @@ class ConnecticutScraper(BaseStateScraper):
         Connecticut organizes statutes by titles with chapters underneath.
         """
         try:
-            from bs4 import BeautifulSoup
-            from urllib.parse import urljoin
-        except ImportError as e:
-            self.logger.error(f"Required library not available: {e}")
-            return []
-        
-        statutes = []
-        
-        try:
-            page_bytes = await self._fetch_page_content_with_archival_fallback(
-                code_url,
-                timeout_seconds=30,
-            )
-            if not page_bytes:
-                raise RuntimeError(f"empty response for {code_url}")
-
-            soup = BeautifulSoup(page_bytes, 'html.parser')
-            
-            # Find all links to titles/chapters
-            links = soup.find_all('a', href=True)
-            
-            section_count = 0
-            for link in links:
-                if section_count >= max_sections:
+            chapter_urls = await self._discover_chapter_urls(code_url, limit=max(max_sections * 3, 20))
+            statutes: List[NormalizedStatute] = []
+            seen_sections: set[str] = set()
+            for chapter_url in chapter_urls:
+                if len(statutes) >= max_sections:
                     break
-                
-                link_text = link.get_text(strip=True)
-                link_href = link.get('href', '')
-                
-                # Look for title or chapter patterns in Connecticut's format
-                if not link_text or len(link_text) < 5:
-                    continue
-                
-                # Connecticut - very permissive matching to catch statute links
-                # Accept links with numbers or common statute terms
-                if not any(char.isdigit() for char in link_text):
-                    keywords_ct = ['title', 'chapter', 'sec', '§', 'part', 'article', 'statute', 'cgs', 'law']
-                    if not any(keyword in link_text.lower() for keyword in keywords_ct):
-                        continue
-                
-                full_url = urljoin(code_url, link_href)
-                
-                section_number = self._extract_section_number(link_text)
-                if not section_number:
-                    section_number = f"Section-{section_count + 1}"
-                
-                legal_area = self._identify_legal_area(link_text)
-                
-                statute = NormalizedStatute(
-                    state_code=self.state_code,
-                    state_name=self.state_name,
-                    statute_id=f"{code_name} § {section_number}",
+                chapter_statutes = await self._extract_chapter_sections(
                     code_name=code_name,
-                    section_number=section_number,
-                    section_name=link_text[:200],
-                    full_text=f"Section {section_number}: {link_text}",
-                    legal_area=legal_area,
-                    source_url=full_url,
-                    official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
+                    chapter_url=chapter_url,
+                    citation_format=citation_format,
                 )
-                
-                statutes.append(statute)
-                section_count += 1
-            
+                for statute in chapter_statutes:
+                    section_number = str(statute.section_number or "").strip().lower()
+                    if not section_number or section_number in seen_sections:
+                        continue
+                    seen_sections.add(section_number)
+                    statutes.append(statute)
+                    if len(statutes) >= max_sections:
+                        break
+
             self.logger.info(f"Connecticut custom scraper: Scraped {len(statutes)} sections")
             
             # Fallback to generic scraper if no data found
@@ -345,6 +307,151 @@ class ConnecticutScraper(BaseStateScraper):
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
         
         return statutes
+
+    async def _discover_chapter_urls(self, code_url: str, limit: int = 120) -> List[str]:
+        payload = await self._fetch_connecticut_page(code_url, timeout_seconds=35)
+        if not payload:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        seen: set[str] = set()
+        title_urls: List[str] = []
+        out: List[str] = []
+
+        for link in soup.find_all("a", href=True):
+            href = str(link.get("href") or "").strip()
+            if not href:
+                continue
+            absolute = urllib.parse.urljoin(code_url, href)
+            parsed = urllib.parse.urlparse(absolute)
+            if self._CHAPTER_LINK_RE.search(parsed.path):
+                if absolute in seen:
+                    continue
+                seen.add(absolute)
+                out.append(absolute)
+                if len(out) >= limit:
+                    break
+            elif self._TITLE_LINK_RE.search(parsed.path):
+                if absolute not in title_urls:
+                    title_urls.append(absolute)
+
+        for title_url in title_urls:
+            if len(out) >= limit:
+                break
+            title_payload = await self._fetch_connecticut_page(title_url, timeout_seconds=35)
+            if not title_payload:
+                continue
+            title_soup = BeautifulSoup(title_payload, "html.parser")
+            for link in title_soup.find_all("a", href=True):
+                href = str(link.get("href") or "").strip()
+                if not href:
+                    continue
+                absolute = urllib.parse.urljoin(title_url, href)
+                parsed = urllib.parse.urlparse(absolute)
+                if not self._CHAPTER_LINK_RE.search(parsed.path):
+                    continue
+                if absolute in seen:
+                    continue
+                seen.add(absolute)
+                out.append(absolute)
+                if len(out) >= limit:
+                    break
+        return out
+
+    async def _extract_chapter_sections(
+        self,
+        code_name: str,
+        chapter_url: str,
+        citation_format: str,
+    ) -> List[NormalizedStatute]:
+        payload = await self._fetch_connecticut_page(chapter_url, timeout_seconds=35)
+        if not payload:
+            return []
+
+        soup = BeautifulSoup(payload, "html.parser")
+        chapter_title = ""
+        title_node = soup.find("title")
+        if title_node:
+            chapter_title = re.sub(r"\s+", " ", title_node.get_text(" ", strip=True)).strip()
+
+        sections: List[NormalizedStatute] = []
+        for catchln in soup.select("span.catchln[id^='sec_']"):
+            section_number = self._extract_section_number(catchln.get_text(" ", strip=True))
+            if not section_number:
+                continue
+            section_name = self._extract_connecticut_section_name(catchln.get_text(" ", strip=True), section_number)
+            full_text = self._collect_connecticut_section_text(catchln)
+            normalized = self._normalize_legal_text(full_text)
+            if len(normalized) < 120:
+                continue
+            sections.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=(section_name or chapter_title or f"Section {section_number}")[:240],
+                    full_text=normalized[:24000],
+                    legal_area=self._identify_legal_area(f"{chapter_title} {section_name}"),
+                    source_url=f"{chapter_url}#sec_{section_number.lower()}",
+                    official_cite=f"{citation_format} § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_connecticut_chapter_html",
+                        "discovery_method": "official_title_chapter_section_html",
+                        "chapter_url": chapter_url,
+                    },
+                )
+            )
+        return sections
+
+    def _extract_connecticut_section_name(self, heading: str, section_number: str) -> str:
+        heading_text = re.sub(r"\s+", " ", str(heading or "").strip())
+        match = re.match(
+            rf"Sec\.\s*{re.escape(section_number)}\.\s*(.+)$",
+            heading_text,
+            flags=re.IGNORECASE,
+        )
+        if match:
+            return match.group(1).strip(" .")
+        return heading_text[:240]
+
+    def _collect_connecticut_section_text(self, catchln: Tag) -> str:
+        parent = catchln.parent
+        if parent is None:
+            return catchln.get_text(" ", strip=True)
+
+        pieces: List[str] = []
+        node = parent
+        while isinstance(node, Tag):
+            if node.name == "table" and "nav_tbl" in (node.get("class") or []):
+                break
+            if node.name == "hr":
+                break
+            text = node.get_text(" ", strip=True)
+            if text:
+                pieces.append(text)
+            node = node.find_next_sibling()
+        return "\n".join(pieces)
+
+    async def _fetch_connecticut_page(self, url: str, timeout_seconds: int = 35) -> bytes:
+        def _direct_fetch() -> bytes:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                context = ssl._create_unverified_context()
+                with urllib.request.urlopen(req, timeout=timeout_seconds, context=context) as resp:
+                    return bytes(resp.read() or b"")
+            except Exception:
+                return b""
+
+        try:
+            direct = await asyncio.wait_for(asyncio.to_thread(_direct_fetch), timeout=timeout_seconds + 2)
+        except Exception:
+            direct = b""
+        if direct:
+            return direct
+        return await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
 
 
 # Register this scraper with the registry

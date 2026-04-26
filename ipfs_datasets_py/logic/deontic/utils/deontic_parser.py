@@ -1,61 +1,313 @@
-"""Deontic logic parsing and formula generation utilities."""
+"""Deontic logic parsing and formula generation utilities.
+
+This module is intentionally conservative.  It is a deterministic scaffold for
+indexing, triage, and LLM prompting, not a substitute for an LLM/legal review
+formalization pass.
+"""
 
 import re
 from typing import Any, Dict, List, Optional
 
 
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9(])")
+_MODAL_RE = re.compile(
+    r"""
+    (?P<subject>
+        (?:the\s+)?
+        [A-Za-z][A-Za-z0-9'’\-]*
+        (?:\s+(?!shall\b|must\b|may\b|cannot\b|can\b|is\b|are\b|will\b|should\b)
+            [A-Za-z][A-Za-z0-9'’\-]*){0,10}
+    )
+    \s+
+    (?P<modal>
+        shall\s+not|must\s+not|may\s+not|cannot|can\s+not|
+        is\s+prohibited\s+from|are\s+prohibited\s+from|
+        is\s+forbidden\s+to|are\s+forbidden\s+to|
+        shall|must|required\s+to|is\s+required\s+to|are\s+required\s+to|
+        has\s+a\s+duty\s+to|have\s+a\s+duty\s+to|
+        may|is\s+authorized\s+to|are\s+authorized\s+to|
+        is\s+permitted\s+to|are\s+permitted\s+to|
+        is\s+entitled\s+to|are\s+entitled\s+to
+    )
+    \s+
+    (?P<action>.+?)
+    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than)\b)|[.;:]|$)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_IMPLICIT_MODAL_RE = re.compile(
+    r"""
+    \b(?:and|or)\s+
+    (?P<modal>
+        shall\s+not|must\s+not|may\s+not|cannot|can\s+not|
+        shall|must|required\s+to|may|
+        is\s+authorized\s+to|are\s+authorized\s+to|
+        is\s+permitted\s+to|are\s+permitted\s+to
+    )
+    \s+
+    (?P<action>.+?)
+    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than)\b)|[.;:]|$)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_DEFINITION_RE = re.compile(
+    r"\b(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
+    re.IGNORECASE,
+)
+_DEFINED_TERM_RE = re.compile(
+    r"\b(?:the\s+)?(?:term|terms|word|words)\s+['\"“”]?([A-Za-z][A-Za-z0-9'’\-\s]{0,80}?)[\"'“”]?\s+"
+    r"(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
+    re.IGNORECASE,
+)
+_LEADING_DETERMINERS_RE = re.compile(r"^(?:the|a|an|any|each|every|such|no)\s+", re.IGNORECASE)
+_TRAILING_NOISE_RE = re.compile(
+    r"\s+(?:in accordance with|pursuant to|under|as provided in)\s+.+$",
+    re.IGNORECASE,
+)
+_PASSIVE_BY_RE = re.compile(r"^be\s+([A-Za-z][A-Za-z0-9'’\-]*)\s+by\s+(.+)$", re.IGNORECASE)
+_PAST_PARTICIPLE_BASE = {
+    "adopted": "adopt",
+    "awarded": "award",
+    "filed": "file",
+    "issued": "issue",
+    "maintained": "maintain",
+    "prepared": "prepare",
+    "provided": "provide",
+    "submitted": "submit",
+}
+_MENTAL_STATE_TERMS = {
+    "intentionally",
+    "knowingly",
+    "negligently",
+    "recklessly",
+    "willfully",
+    "wilfully",
+}
+
+
 def extract_normative_elements(text: str, document_type: str = "statute") -> List[Dict[str, Any]]:
     elements: List[Dict[str, Any]] = []
-    sentences = re.split(r"[.!?]+", text)
+    sentences = _split_legal_sentences(text)
     for sentence in sentences:
         sentence = sentence.strip()
         if not sentence:
             continue
-        element = analyze_normative_sentence(sentence, document_type)
-        if element:
-            elements.append(element)
+        elements.extend(analyze_normative_sentence(sentence, document_type))
     return elements
 
 
-def analyze_normative_sentence(sentence: str, document_type: str) -> Optional[Dict[str, Any]]:
+def _split_legal_sentences(text: str) -> List[str]:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not normalized:
+        return []
+    # Avoid splitting common legal abbreviations such as U.S.C. and Pub. L.
+    protected = (
+        normalized.replace("U.S.C.", "USC")
+        .replace("U.S.", "US")
+        .replace("Pub. L.", "Pub L")
+        .replace("Sec.", "Sec")
+    )
+    return [part.strip(" .") for part in _SENTENCE_SPLIT_RE.split(protected) if part.strip(" .")]
+
+
+def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[str, Any]]:
+    sentence = sentence.strip()
     sentence_lower = sentence.lower()
+    elements: List[Dict[str, Any]] = []
 
-    obligation_indicators = ["must", "shall", "required to", "obligated to", "duty to"]
-    permission_indicators = ["may", "can", "allowed to", "permitted to", "entitled to"]
-    prohibition_indicators = ["must not", "shall not", "forbidden to", "prohibited from", "cannot"]
+    for match in _MODAL_RE.finditer(sentence):
+        modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
+        norm_type, deontic_operator = classify_modal(modal)
+        raw_subject = match.group("subject")
+        if deontic_operator == "O" and re.match(r"\s*(?:no|none)\b", raw_subject or "", flags=re.IGNORECASE):
+            norm_type, deontic_operator = "prohibition", "F"
+        subject_text = _clean_phrase(raw_subject)
+        if subject_text.lower() in {"and", "or"}:
+            continue
+        action_text = _clean_action(match.group("action"))
+        subject_text, action_text = _normalize_passive_clause(subject_text, action_text)
+        if not action_text:
+            continue
+        elements.append(
+            _build_element(
+                sentence=sentence,
+                document_type=document_type,
+                norm_type=norm_type,
+                deontic_operator=deontic_operator,
+                modal=modal,
+                subject_text=subject_text,
+                action_text=action_text,
+                support_span=match.span(),
+                extraction_method="deterministic_modal_clause_v2",
+            )
+        )
 
-    norm_type = None
-    deontic_operator = None
+    if elements:
+        first_subject = (elements[0].get("subject") or [""])[0]
+        occupied_spans = [tuple(item.get("support_span") or []) for item in elements]
+        for match in _IMPLICIT_MODAL_RE.finditer(sentence):
+            if any(len(span) == 2 and match.start() >= span[0] and match.end() <= span[1] for span in occupied_spans):
+                continue
+            modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
+            norm_type, deontic_operator = classify_modal(modal)
+            action_text = _clean_action(match.group("action"))
+            subject_text, action_text = _normalize_passive_clause(first_subject, action_text)
+            if not action_text:
+                continue
+            elements.append(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type=norm_type,
+                    deontic_operator=deontic_operator,
+                    modal=modal,
+                    subject_text=subject_text or first_subject,
+                    action_text=action_text,
+                    support_span=match.span(),
+                    extraction_method="deterministic_implicit_modal_clause_v2",
+                )
+            )
+        return elements
 
-    if any(indicator in sentence_lower for indicator in obligation_indicators):
-        norm_type = "obligation"
-        deontic_operator = "O"
-    elif any(indicator in sentence_lower for indicator in permission_indicators):
-        norm_type = "permission"
-        deontic_operator = "P"
-    elif any(indicator in sentence_lower for indicator in prohibition_indicators):
-        norm_type = "prohibition"
-        deontic_operator = "F"
-    else:
-        return None
+    if _DEFINITION_RE.search(sentence_lower):
+        defined_term_match = _DEFINED_TERM_RE.search(sentence)
+        defined_terms = [_clean_phrase(defined_term_match.group(1))] if defined_term_match else extract_legal_subject(sentence)
+        return [
+            {
+                "text": sentence,
+                "support_text": sentence,
+                "support_span": [0, len(sentence)],
+                "norm_type": "definition",
+                "deontic_operator": "DEF",
+                "modal": "definition",
+                "subject": defined_terms,
+                "action": [sentence],
+                "conditions": extract_conditions(sentence),
+                "temporal_constraints": extract_temporal_constraints(sentence),
+                "exceptions": extract_exceptions(sentence),
+                "document_type": document_type,
+                "extraction_method": "deterministic_definition_v2",
+                "confidence_floor": 0.25,
+            }
+        ]
 
-    subject = extract_legal_subject(sentence)
-    action = extract_legal_action(sentence)
-    conditions = extract_conditions(sentence)
-    temporal_constraints = extract_temporal_constraints(sentence)
-    exceptions = extract_exceptions(sentence)
+    return []
 
+
+def _build_element(
+    *,
+    sentence: str,
+    document_type: str,
+    norm_type: str,
+    deontic_operator: str,
+    modal: str,
+    subject_text: str,
+    action_text: str,
+    support_span: tuple[int, int],
+    extraction_method: str,
+) -> Dict[str, Any]:
     return {
         "text": sentence,
+        "support_text": sentence[support_span[0] : support_span[1]].strip(),
+        "support_span": list(support_span),
         "norm_type": norm_type,
         "deontic_operator": deontic_operator,
-        "subject": subject,
-        "action": action,
-        "conditions": conditions,
-        "temporal_constraints": temporal_constraints,
-        "exceptions": exceptions,
+        "modal": modal,
+        "subject": [subject_text] if subject_text else extract_legal_subject(sentence),
+                "action": [action_text],
+                "mental_state": _mental_state(action_text),
+                "action_verb": _first_verb(action_text),
+                "action_object": _action_object(action_text),
+        "conditions": extract_conditions(sentence),
+        "temporal_constraints": extract_temporal_constraints(sentence),
+        "exceptions": extract_exceptions(sentence),
         "document_type": document_type,
+        "extraction_method": extraction_method,
+        "confidence_floor": 0.35,
     }
+
+
+def classify_modal(modal: str) -> tuple[str, str]:
+    modal = re.sub(r"\s+", " ", str(modal or "").lower()).strip()
+    # Prohibitions must be checked before bare "shall"/"must"/"may".
+    if modal in {
+        "shall not",
+        "must not",
+        "may not",
+        "cannot",
+        "can not",
+        "is prohibited from",
+        "are prohibited from",
+        "is forbidden to",
+        "are forbidden to",
+    }:
+        return "prohibition", "F"
+    if modal in {
+        "may",
+        "is authorized to",
+        "are authorized to",
+        "is permitted to",
+        "are permitted to",
+        "is entitled to",
+        "are entitled to",
+    }:
+        return "permission", "P"
+    return "obligation", "O"
+
+
+def _clean_phrase(value: str) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:")
+    text = _LEADING_DETERMINERS_RE.sub("", text).strip()
+    return text
+
+
+def _clean_action(value: str) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip(" ,;:")
+    text = _TRAILING_NOISE_RE.sub("", text).strip()
+    return text
+
+
+def _first_verb(action: str) -> str:
+    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
+    while words and words[0].lower() in _MENTAL_STATE_TERMS:
+        words = words[1:]
+    return words[0].lower() if words else ""
+
+
+def _action_object(action: str) -> str:
+    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
+    while words and words[0].lower() in _MENTAL_STATE_TERMS:
+        words = words[1:]
+    return " ".join(words[1:]).strip() if len(words) > 1 else ""
+
+
+def _mental_state(action: str) -> str:
+    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
+    if words and words[0].lower() in _MENTAL_STATE_TERMS:
+        return words[0].lower()
+    return ""
+
+
+def _action_without_mental_state(action: str) -> str:
+    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
+    if words and words[0].lower() in _MENTAL_STATE_TERMS:
+        return " ".join(words[1:]).strip()
+    return action
+
+
+def _normalize_passive_clause(subject_text: str, action_text: str) -> tuple[str, str]:
+    match = _PASSIVE_BY_RE.match(action_text or "")
+    if not match:
+        return subject_text, action_text
+    participle = match.group(1).lower()
+    agent = _clean_phrase(match.group(2))
+    verb = _PAST_PARTICIPLE_BASE.get(participle)
+    if not verb:
+        verb = re.sub(r"ied$", "y", participle)
+        verb = re.sub(r"ed$", "", verb)
+    object_text = _clean_phrase(subject_text)
+    normalized_action = f"{verb} {object_text}".strip()
+    return agent or subject_text, normalized_action
 
 
 def extract_legal_subject(sentence: str) -> List[str]:
@@ -114,11 +366,12 @@ def extract_legal_action(sentence: str) -> List[str]:
 def extract_conditions(sentence: str) -> List[str]:
     conditions: List[str] = []
     condition_patterns = [
-        r"\bif\s+([^,]+?)(?:,|\s+then)",
-        r"\bwhen\s+([^,]+?)(?:,|\.)",
-        r"\bwhere\s+([^,]+?)(?:,|\.)",
-        r"\bprovided that\s+([^,]+?)(?:,|\.)",
-        r"\bin case\s+([^,]+?)(?:,|\.)",
+        r"\bif\s+([^,]+?)(?:,|\s+then|$)",
+        r"\bwhen\s+([^,]+?)(?:,|\.|$)",
+        r"\bwhere\s+([^,]+?)(?:,|\.|$)",
+        r"\bprovided that\s+([^,]+?)(?:,|\.|$)",
+        r"\bsubject to\s+([^,]+?)(?:,|\.|$)",
+        r"\bin case\s+([^,]+?)(?:,|\.|$)",
     ]
     for pattern in condition_patterns:
         conditions.extend([m.strip() for m in re.findall(pattern, sentence.lower())])
@@ -133,6 +386,7 @@ def extract_temporal_constraints(sentence: str) -> List[Dict[str, str]]:
         r"\bby\s+(\d{1,2}/\d{1,2}/\d{2,4})",
         r"\bby\s+(\d{1,2}-\d{1,2}-\d{2,4})",
         r"\bwithin\s+(\d+\s+(?:days?|weeks?|months?|years?))",
+        r"\bnot\s+later\s+than\s+(\d+\s+(?:days?|weeks?|months?|years?)(?:\s+after\s+[^,.;]+)?)",
         r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})",
         r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})",
         r"\bannually\b",
@@ -144,7 +398,13 @@ def extract_temporal_constraints(sentence: str) -> List[Dict[str, str]]:
     for pattern in date_patterns:
         for match in re.findall(pattern, sentence.lower()):
             if isinstance(match, str):
-                constraints.append({"type": "deadline" if "by" in pattern else "period", "value": match.strip()})
+                if "\\bwithin" in pattern:
+                    constraint_type = "deadline"
+                elif "\\bby" in pattern or "\\bbefore" in pattern or "not\\s+later\\s+than" in pattern:
+                    constraint_type = "deadline"
+                else:
+                    constraint_type = "period"
+                constraints.append({"type": constraint_type, "value": match.strip()})
 
     duration_pattern = r"\bfor\s+(\d+\s+(?:days?|weeks?|months?|years?))"
     for match in re.findall(duration_pattern, sentence.lower()):
@@ -156,11 +416,13 @@ def extract_temporal_constraints(sentence: str) -> List[Dict[str, str]]:
 def extract_exceptions(sentence: str) -> List[str]:
     exceptions: List[str] = []
     exception_patterns = [
-        r"\bunless\s+([^,]+?)(?:,|\.)",
-        r"\bexcept\s+(?:for\s+)?([^,]+?)(?:,|\.)",
-        r"\bwith the exception of\s+([^,]+?)(?:,|\.)",
-        r"\bother than\s+([^,]+?)(?:,|\.)",
-        r"\bexcluding\s+([^,]+?)(?:,|\.)",
+        r"\bunless\s+([^,]+?)(?:,|\.|$)",
+        r"\bexcept\s+(?:for\s+)?([^,]+?)(?:,|\.|$)",
+        r"\bwithout\s+([^,]+?)(?:,|\.|$)",
+        r"\babsent\s+([^,]+?)(?:,|\.|$)",
+        r"\bwith the exception of\s+([^,]+?)(?:,|\.|$)",
+        r"\bother than\s+([^,]+?)(?:,|\.|$)",
+        r"\bexcluding\s+([^,]+?)(?:,|\.|$)",
     ]
     for pattern in exception_patterns:
         exceptions.extend([m.strip() for m in re.findall(pattern, sentence.lower())])
@@ -169,18 +431,42 @@ def extract_exceptions(sentence: str) -> List[str]:
 
 def build_deontic_formula(element: Dict[str, Any]) -> str:
     operator = element["deontic_operator"]
+    if operator == "DEF":
+        subject = normalize_predicate_name((element.get("subject") or ["DefinedTerm"])[0])
+        return f"Definition({subject})"
     subject = element.get("subject", ["X"])
     action = element.get("action", ["Action"])
     conditions = element.get("conditions", [])
 
-    action_pred = normalize_predicate_name(action[0]) if action else "Action"
+    action_text = _action_without_mental_state(action[0]) if action else "Action"
+    action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     subject_pred = normalize_predicate_name(subject[0]) if subject else "Agent"
+    exception_preds = [normalize_predicate_name(item) for item in element.get("exceptions", [])[:3]]
+    mental_state_pred = normalize_predicate_name(element.get("mental_state", ""))
+    temporal_preds = [
+        normalize_predicate_name(f"{item.get('type', 'Temporal')} {item.get('value', '')}")
+        for item in element.get("temporal_constraints", [])[:3]
+        if isinstance(item, dict)
+    ]
+    modifiers = temporal_preds
+    if mental_state_pred and mental_state_pred != "P":
+        modifiers.append(mental_state_pred)
 
     if conditions:
         condition_pred = normalize_predicate_name(conditions[0])
-        return f"{operator}(∀x ({subject_pred}(x) ∧ {condition_pred}(x) → {action_pred}(x)))"
+        inner = f"{subject_pred}(x) ∧ {condition_pred}(x)"
+        if modifiers:
+            inner += " ∧ " + " ∧ ".join(f"{pred}(x)" for pred in modifiers)
+        if exception_preds:
+            inner += " ∧ " + " ∧ ".join(f"¬{pred}(x)" for pred in exception_preds)
+        return f"{operator}(∀x ({inner} → {action_pred}(x)))"
 
-    return f"{operator}(∀x ({subject_pred}(x) → {action_pred}(x)))"
+    inner = f"{subject_pred}(x)"
+    if modifiers:
+        inner += " ∧ " + " ∧ ".join(f"{pred}(x)" for pred in modifiers)
+    if exception_preds:
+        inner += " ∧ " + " ∧ ".join(f"¬{pred}(x)" for pred in exception_preds)
+    return f"{operator}(∀x ({inner} → {action_pred}(x)))"
 
 
 def normalize_predicate_name(name: str) -> str:
