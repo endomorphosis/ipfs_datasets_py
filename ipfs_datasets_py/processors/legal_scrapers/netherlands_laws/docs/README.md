@@ -33,6 +33,42 @@ python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape \
   --max-documents 2
 ```
 
+Run discovery from official sources without explicit document URLs. Start with a 50-law validation run:
+The scrape CLI also accepts underscore aliases such as `--use_default_seeds true` and `--max_seed_pages 10`.
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape \
+  --use-default-seeds \
+  --max-seed-pages 10 \
+  --crawl-depth 1 \
+  --max-documents 50 \
+  --rate-limit-delay 0.2 \
+  --skip-existing
+```
+
+After checking metadata and spot-checking records, increase to 500 laws:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape \
+  --use-default-seeds \
+  --max-seed-pages 75 \
+  --crawl-depth 1 \
+  --max-documents 500 \
+  --rate-limit-delay 0.25 \
+  --resume
+```
+
+Only after the 50-law and 500-law runs validate cleanly, run an uncapped discovery scrape. Keep a rate limit and use resume:
+
+```bash
+python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape \
+  --use-default-seeds \
+  --max-seed-pages 1000 \
+  --crawl-depth 1 \
+  --rate-limit-delay 0.35 \
+  --resume
+```
+
 Build the normalized package and CID-addressed base dataset:
 
 ```bash

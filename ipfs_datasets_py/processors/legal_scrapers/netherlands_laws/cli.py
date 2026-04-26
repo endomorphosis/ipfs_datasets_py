@@ -25,6 +25,17 @@ def _print(obj: Any, as_json: bool = True) -> None:
         print(obj)
 
 
+def _parse_bool(value: str | bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "t", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "f", "no", "n", "off"}:
+        return False
+    raise argparse.ArgumentTypeError(f"Expected a boolean value, got {value!r}.")
+
+
 def _add_common_build_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--source-dir", type=Path, help="Override source package directory.")
     parser.add_argument("--out-dir", type=Path, help="Override output directory.")
@@ -40,12 +51,14 @@ def build_parser() -> argparse.ArgumentParser:
     scrape_parser.add_argument("--output-dir", type=Path, default=PACKAGE_RAW_OUTPUT_DIR)
     scrape_parser.add_argument("--document-url", action="append", dest="document_urls", default=[])
     scrape_parser.add_argument("--seed-url", action="append", dest="seed_urls", default=[])
-    scrape_parser.add_argument("--use-default-seeds", action="store_true")
-    scrape_parser.add_argument("--max-documents", type=int)
-    scrape_parser.add_argument("--max-seed-pages", type=int)
-    scrape_parser.add_argument("--crawl-depth", type=int, default=1)
-    scrape_parser.add_argument("--rate-limit-delay", type=float, default=0.5)
-    scrape_parser.add_argument("--no-skip-existing", action="store_true")
+    scrape_parser.add_argument("--use-default-seeds", "--use_default_seeds", nargs="?", const=True, default=False, type=_parse_bool)
+    scrape_parser.add_argument("--max-documents", "--max_documents", type=int)
+    scrape_parser.add_argument("--max-seed-pages", "--max_seed_pages", type=int)
+    scrape_parser.add_argument("--crawl-depth", "--crawl_depth", type=int, default=1)
+    scrape_parser.add_argument("--rate-limit-delay", "--rate_limit_delay", type=float, default=0.5)
+    scrape_parser.add_argument("--skip-existing", "--skip_existing", nargs="?", const=True, default=False, type=_parse_bool)
+    scrape_parser.add_argument("--resume", nargs="?", const=True, default=False, type=_parse_bool)
+    scrape_parser.add_argument("--no-skip-existing", "--no_skip_existing", nargs="?", const=True, default=False, type=_parse_bool)
 
     build_normalized = sub.add_parser("build-normalized", help="Build the normalized package.")
     build_normalized.add_argument("--raw-dir", type=Path)
@@ -98,7 +111,8 @@ def main(argv: list[str] | None = None) -> int:
                 max_seed_pages=args.max_seed_pages,
                 crawl_depth=args.crawl_depth,
                 rate_limit_delay=args.rate_limit_delay,
-                skip_existing=not args.no_skip_existing,
+                skip_existing=(args.skip_existing or args.resume) and not args.no_skip_existing,
+                resume=args.resume,
             )
         )
         _print(result)

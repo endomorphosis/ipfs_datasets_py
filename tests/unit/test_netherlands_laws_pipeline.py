@@ -120,6 +120,35 @@ def test_compatibility_wrappers_import_package_builder_mains():
     assert _load_script(wrappers / "build_ipfs_netherlands_laws_indexes.py").main is ipfs_indexes.main
 
 
+def test_scrape_cli_accepts_underscore_boolean_aliases():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli import build_parser
+
+    args = build_parser().parse_args(
+        [
+            "scrape",
+            "--use_default_seeds",
+            "true",
+            "--max_seed_pages",
+            "3",
+            "--crawl_depth",
+            "2",
+            "--max_documents",
+            "10",
+            "--rate_limit_delay",
+            "0.1",
+            "--resume",
+            "true",
+        ]
+    )
+
+    assert args.use_default_seeds is True
+    assert args.max_seed_pages == 3
+    assert args.crawl_depth == 2
+    assert args.max_documents == 10
+    assert args.rate_limit_delay == 0.1
+    assert args.resume is True
+
+
 def test_ipfs_package_manifest_has_cids_hashes_counts_and_upload_target(tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.builders.ipfs_package import build_ipfs_cid_package
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.upload import DatasetUploadTarget, assert_local_upload_ready

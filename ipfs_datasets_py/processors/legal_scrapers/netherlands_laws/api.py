@@ -21,7 +21,8 @@ async def scrape(
     max_seed_pages: int | None = None,
     crawl_depth: int = 1,
     rate_limit_delay: float = 0.5,
-    skip_existing: bool = True,
+    skip_existing: bool = False,
+    resume: bool = False,
 ) -> dict[str, Any]:
     from ipfs_datasets_py.processors.legal_scrapers.legal_dataset_api import scrape_netherlands_laws_from_parameters
 
@@ -35,6 +36,7 @@ async def scrape(
         "crawl_depth": crawl_depth,
         "rate_limit_delay": rate_limit_delay,
         "skip_existing": skip_existing,
+        "resume": resume,
     }
     return await scrape_netherlands_laws_from_parameters(params)
 

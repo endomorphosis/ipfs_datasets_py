@@ -16,11 +16,12 @@ import json
 import logging
 import re
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict, deque
 from typing import Any, Dict, Iterable, List, Optional, Set
-from urllib.parse import urljoin, urlparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
 try:
     import requests
@@ -48,7 +49,9 @@ USER_AGENT = "ipfs-datasets-netherlands-law-scraper/1.0"
 
 _WS_RE = re.compile(r"\s+")
 _WETTEN_HOST_RE = re.compile(r"(^|\.)wetten\.overheid\.nl$", re.IGNORECASE)
+_ZOEK_SERVICE_HOST_RE = re.compile(r"(^|\.)zoekservice\.overheid\.nl$", re.IGNORECASE)
 _BWB_ID_RE = re.compile(r"/(BWBR[0-9A-Z]+)(?:/|$)", re.IGNORECASE)
+_BWB_IDENTIFIER_RE = re.compile(r"\b(BWBR[0-9A-Z]+)\b", re.IGNORECASE)
 _ARTICLE_HEADING_RE = re.compile(
     r"^artikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b(?:\s*(?:(?:[:.\-])\s*|\s+)(.*))?$",
     re.IGNORECASE,
@@ -132,7 +135,27 @@ _DEFAULT_SOURCE_CONFIGS: List[Dict[str, Any]] = [
         "jurisdiction": "NL",
     },
 ]
+_SRU_BWB_ENDPOINT = "https://zoekservice.overheid.nl/sru/Search"
+_DEFAULT_SRU_MAXIMUM_RECORDS = 100
+
+
+def _build_sru_seed_url(query: str, *, start_record: int = 1, maximum_records: int = _DEFAULT_SRU_MAXIMUM_RECORDS) -> str:
+    params = {
+        "operation": "searchRetrieve",
+        "version": "2.0",
+        "x-connection": "BWB",
+        "query": query,
+        "startRecord": str(max(1, int(start_record))),
+        "maximumRecords": str(max(1, int(maximum_records))),
+    }
+    return f"{_SRU_BWB_ENDPOINT}?{urlencode(params)}"
+
+
 _DEFAULT_DISCOVERY_SEED_URLS: List[str] = [
+    _build_sru_seed_url("dcterms.type==wet"),
+    _build_sru_seed_url("dcterms.type==rijkswet"),
+    _build_sru_seed_url("dcterms.type==AMvB"),
+    _build_sru_seed_url("dcterms.type==ministeriele-regeling"),
     "https://wetten.overheid.nl/zoeken",
     "https://wetten.overheid.nl/uitgebreid_zoeken",
 ]
@@ -153,7 +176,7 @@ def _make_session() -> "requests.Session":
     session.headers.update(
         {
             "User-Agent": USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept": "application/xml,text/html,application/xhtml+xml,*/*;q=0.8",
         }
     )
     return session
@@ -199,11 +222,34 @@ def _is_supported_seed_url(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
     if parsed.scheme not in {"http", "https"}:
         return False
-    if not _WETTEN_HOST_RE.search(parsed.netloc or ""):
-        return False
     if _extract_bwb_id(url):
         return False
-    return True
+    if _WETTEN_HOST_RE.search(parsed.netloc or ""):
+        return True
+    if _is_sru_bwb_seed_url(url):
+        return True
+    return False
+
+
+def _is_sru_bwb_seed_url(url: str) -> bool:
+    parsed = urlparse(str(url or "").strip())
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    if not _ZOEK_SERVICE_HOST_RE.search(parsed.netloc or ""):
+        return False
+    if parsed.path.rstrip("/") != "/sru/Search":
+        return False
+    qs = parse_qs(parsed.query)
+    operation = str((qs.get("operation") or [""])[0]).lower()
+    connection = str((qs.get("x-connection") or [""])[0]).upper()
+    return operation == "searchretrieve" and connection == "BWB"
+
+
+def _canonical_law_url_from_identifier(identifier: str) -> str:
+    bwb_id = _normalize_space(identifier).upper()
+    if not _BWB_IDENTIFIER_RE.fullmatch(bwb_id):
+        return ""
+    return f"https://wetten.overheid.nl/{bwb_id}/"
 
 
 def _extract_document_links(index_html: str, index_url: str) -> List[str]:
@@ -245,6 +291,74 @@ def _extract_discovery_links(index_html: str, index_url: str) -> List[str]:
         links.append(absolute)
 
     return links
+
+
+def _xml_local_name(tag: str) -> str:
+    return str(tag or "").rsplit("}", 1)[-1]
+
+
+def _seed_response_is_usable(response: Any, seed_url: str) -> bool:
+    status = int(getattr(response, "status_code", 0) or 0)
+    if status == 200:
+        return True
+    content_type = str(getattr(response, "headers", {}).get("content-type") or "").lower()
+    text = str(getattr(response, "text", "") or "").lstrip()
+    return _is_sru_bwb_seed_url(seed_url) and status == 406 and ("xml" in content_type or text.startswith("<?xml"))
+
+
+def _sru_next_page_url(seed_url: str, next_record_position: int) -> str:
+    parsed = urlparse(seed_url)
+    pairs = parse_qs(parsed.query)
+    pairs["startRecord"] = [str(max(1, int(next_record_position)))]
+    if "maximumRecords" not in pairs:
+        pairs["maximumRecords"] = [str(_DEFAULT_SRU_MAXIMUM_RECORDS)]
+    query = urlencode({key: values[-1] for key, values in pairs.items()})
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, query, ""))
+
+
+def _extract_sru_document_links(sru_xml: str, seed_url: str) -> tuple[List[str], Optional[str], Dict[str, Any]]:
+    """Extract canonical wetten.nl document URLs from official SRU BWB XML."""
+    links: List[str] = []
+    seen: Set[str] = set()
+    metadata: Dict[str, Any] = {
+        "number_of_records": None,
+        "next_record_position": None,
+        "record_positions_seen": 0,
+        "identifiers_seen": 0,
+    }
+
+    root = ET.fromstring(sru_xml.encode("utf-8") if isinstance(sru_xml, str) else sru_xml)
+    for elem in root.iter():
+        local_name = _xml_local_name(elem.tag)
+        text = _normalize_space(elem.text or "")
+        if local_name == "numberOfRecords" and text.isdigit():
+            metadata["number_of_records"] = int(text)
+            continue
+        if local_name == "nextRecordPosition" and text.isdigit():
+            metadata["next_record_position"] = int(text)
+            continue
+        if local_name == "recordPosition":
+            metadata["record_positions_seen"] += 1
+            continue
+        if local_name != "identifier":
+            continue
+        match = _BWB_IDENTIFIER_RE.search(text)
+        if not match:
+            continue
+        metadata["identifiers_seen"] += 1
+        law_url = _canonical_law_url_from_identifier(match.group(1))
+        if not law_url or law_url in seen:
+            continue
+        seen.add(law_url)
+        links.append(law_url)
+
+    next_url = None
+    next_position = metadata.get("next_record_position")
+    total_records = metadata.get("number_of_records")
+    if isinstance(next_position, int) and (not isinstance(total_records, int) or next_position <= total_records):
+        next_url = _sru_next_page_url(seed_url, next_position)
+
+    return links, next_url, metadata
 
 
 def _classify_structure_heading(text: str) -> tuple[Optional[str], Optional[str]]:
@@ -970,6 +1084,11 @@ async def list_netherlands_law_sources() -> Dict[str, Any]:
         "sources": list(_DEFAULT_SOURCE_CONFIGS),
         "verification_sources": [
             {
+                "name": "koop_overheid_sru_bwb",
+                "url": "https://zoekservice.overheid.nl/sru/Search?operation=searchRetrieve&version=2.0&x-connection=BWB&query=dcterms.type==wet",
+                "note": "Official KOOP/Overheid SRU endpoint for the Basiswettenbestand; supports pagination with startRecord and maximumRecords.",
+            },
+            {
                 "name": "koop_overheid_rijksoverheid_page",
                 "url": "https://www.koopoverheid.nl/voor-overheden/rijksoverheid",
                 "note": "KOOP describes Overheid.nl as the publication channel for laws and regulations.",
@@ -1065,6 +1184,8 @@ async def scrape_netherlands_laws(
     skipped_documents: List[str] = []
     discovered_document_urls: Set[str] = set()
     candidate_document_links: Set[str] = set()
+    candidate_link_total = 0
+    seed_page_details: List[Dict[str, Any]] = []
     session = _make_session()
     seed_visit_count = 0
     successful_document_fetches = 0
@@ -1090,18 +1211,39 @@ async def scrape_netherlands_laws(
         seen_seed_urls.add(index_url)
         try:
             response = session.get(index_url, timeout=40)
-            if int(response.status_code) != 200:
+            if not _seed_response_is_usable(response, index_url):
                 raise RuntimeError(f"HTTP {response.status_code} for {index_url}")
             crawled_index_pages.append(index_url)
             seed_visit_count += 1
-            document_links = _extract_document_links(response.text or "", index_url)
+
+            document_links: List[str] = []
+            discovery_links: List[str] = []
+            seed_detail: Dict[str, Any] = {
+                "url": index_url,
+                "depth": depth,
+                "status_code": int(response.status_code),
+                "source_type": "sru_bwb" if _is_sru_bwb_seed_url(index_url) else "html",
+            }
+            if _is_sru_bwb_seed_url(index_url):
+                document_links, next_sru_url, sru_metadata = _extract_sru_document_links(response.text or "", index_url)
+                seed_detail.update(sru_metadata)
+                if next_sru_url and next_sru_url not in seen_seed_urls:
+                    seed_queue.append((next_sru_url, depth))
+            else:
+                document_links = _extract_document_links(response.text or "", index_url)
+                if depth < max(0, int(crawl_depth or 0)):
+                    discovery_links = _extract_discovery_links(response.text or "", index_url)
+
+            seed_detail["document_links_found"] = len(document_links)
+            seed_detail["discovery_links_found"] = len(discovery_links)
+            seed_page_details.append(seed_detail)
             for discovered in document_links:
+                candidate_link_total += 1
                 candidate_document_links.add(discovered)
                 discovered_document_urls.add(discovered)
-            if depth < max(0, int(crawl_depth or 0)):
-                for linked_seed_url in _extract_discovery_links(response.text or "", index_url):
-                    if linked_seed_url not in seen_seed_urls:
-                        seed_queue.append((linked_seed_url, depth + 1))
+            for linked_seed_url in discovery_links:
+                if linked_seed_url not in seen_seed_urls:
+                    seed_queue.append((linked_seed_url, depth + 1))
         except Exception as exc:
             failed_seed_pages += 1
             errors.append(f"{index_url}: {exc}")
@@ -1110,12 +1252,15 @@ async def scrape_netherlands_laws(
     for url in selected_document_urls:
         if _is_supported_law_url(url):
             normalized_url = _normalize_official_url(url)
+            candidate_link_total += 1
             candidate_document_links.add(normalized_url)
             discovered_document_urls.add(normalized_url)
         else:
             errors.append(f"{url}: unsupported Netherlands law URL")
 
-    ordered_document_urls = sorted(discovered_document_urls)
+    all_discovered_document_urls = sorted(discovered_document_urls, key=lambda value: (_extract_bwb_id(value), value))
+    discovered_law_identifiers = sorted({_extract_bwb_id(url) for url in all_discovered_document_urls if _extract_bwb_id(url)})
+    ordered_document_urls = list(all_discovered_document_urls)
     if max_documents and max_documents > 0:
         ordered_document_urls = ordered_document_urls[: int(max_documents)]
 
@@ -1279,12 +1424,17 @@ async def scrape_netherlands_laws(
         "seed_urls": normalized_seed_urls,
         "seed_url_count": len(normalized_seed_urls),
         "crawled_index_pages": crawled_index_pages,
+        "seed_page_details": seed_page_details,
         "seed_pages_visited": seed_visit_count,
         "seed_pages_failed": failed_seed_pages,
         "explicit_document_urls": selected_document_urls,
-        "candidate_links_found": len(candidate_document_links),
-        "official_law_documents_accepted": len(ordered_document_urls),
-        "discovered_document_count": len(ordered_document_urls),
+        "candidate_links_found": candidate_link_total,
+        "candidate_links_unique": len(candidate_document_links),
+        "official_law_documents_accepted": len(all_discovered_document_urls),
+        "unique_laws_discovered": len(discovered_law_identifiers),
+        "discovered_law_identifiers": discovered_law_identifiers,
+        "discovered_document_count": len(all_discovered_document_urls),
+        "documents_selected_for_fetch": len(ordered_document_urls),
         "documents_fetched": successful_document_fetches,
         "documents_parsed": successful_parses,
         "documents_skipped": len(skipped_documents),
@@ -1353,5 +1503,6 @@ __all__ = [
     "list_netherlands_law_sources",
     "scrape_netherlands_laws",
     "_extract_document_links",
+    "_extract_sru_document_links",
     "_extract_title_and_text",
 ]
