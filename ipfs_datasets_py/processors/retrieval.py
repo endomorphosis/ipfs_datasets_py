@@ -393,13 +393,11 @@ def bm25_search_documents(
         metadata = dict(document.get("metadata") or {})
         title = str(document.get("title") or metadata.get("title") or "")
         text = str(document.get("text") or "")
-        title_tokens = tokenize_lexical_text(title)
-        body_tokens = tokenize_lexical_text(text)
-        combined_tokens = list(title_tokens) + list(title_tokens) + list(body_tokens)
-        if not combined_tokens:
+        term_counts = _document_term_counts(document, title=title, text=text)
+        if not term_counts:
             continue
-        term_counts = Counter(combined_tokens)
-        total_length += len(combined_tokens)
+        document_length = _document_length(document, term_counts)
+        total_length += document_length
         prepared_rows.append(
             {
                 "id": document.get("id") or document.get("document_id") or f"doc_{index}",
@@ -407,7 +405,7 @@ def bm25_search_documents(
                 "title": title,
                 "text": text,
                 "metadata": metadata,
-                "tokens": combined_tokens,
+                "document_length": document_length,
                 "term_counts": term_counts,
             }
         )
@@ -423,7 +421,7 @@ def bm25_search_documents(
         score = _bm25_score(
             query_terms,
             row["term_counts"],
-            len(row["tokens"]),
+            int(row["document_length"]),
             document_frequency=document_frequency,
             total_documents=total_documents,
             average_length=average_length,
@@ -453,6 +451,9 @@ def build_bm25_index(documents: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
 
     normalized_documents: List[Dict[str, Any]] = []
     total_token_count = 0
+    document_frequency: Counter[str] = Counter()
+    k1 = 1.5
+    b = 0.75
 
     for index, document in enumerate(documents, start=1):
         metadata = dict(document.get("metadata") or {})
@@ -463,7 +464,10 @@ def build_bm25_index(documents: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
         combined_tokens = list(title_tokens) + list(title_tokens) + list(body_tokens)
         if not combined_tokens:
             continue
-        total_token_count += len(combined_tokens)
+        term_counts = Counter(combined_tokens)
+        document_length = len(combined_tokens)
+        total_token_count += document_length
+        document_frequency.update(term_counts.keys())
         normalized_documents.append(
             {
                 "id": document.get("id") or document.get("document_id") or f"doc_{index}",
@@ -471,16 +475,32 @@ def build_bm25_index(documents: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
                 "title": title,
                 "text": text,
                 "metadata": metadata,
+                "document_length": document_length,
+                "unique_term_count": len(term_counts),
+                "terms": sorted(term_counts.keys()),
+                "term_frequencies": [
+                    {"term": term, "tf": int(frequency)}
+                    for term, frequency in sorted(term_counts.items())
+                ],
             }
         )
 
     document_count = len(normalized_documents)
+    average_document_tokens = total_token_count / max(1, document_count)
+    for row in normalized_documents:
+        row["bm25_k1"] = k1
+        row["bm25_b"] = b
+        row["bm25_avgdl"] = average_document_tokens
+        row["bm25_document_count"] = document_count
     return {
         "backend": "local_bm25",
         "document_count": document_count,
         "documents": normalized_documents,
         "stats": {
-            "average_document_tokens": (total_token_count / max(1, document_count)),
+            "average_document_tokens": average_document_tokens,
+            "unique_term_count": len(document_frequency),
+            "k1": k1,
+            "b": b,
         },
     }
 
@@ -494,6 +514,58 @@ def search_bm25_index(
     """Search a local BM25 index payload produced by :func:`build_bm25_index`."""
 
     return bm25_search_documents(query, list(bm25_index.get("documents") or []), top_k=top_k)
+
+
+def _document_term_counts(document: Mapping[str, Any], *, title: str, text: str) -> Counter[str]:
+    """Return precomputed document term counts, falling back to tokenization."""
+
+    raw_term_frequencies = document.get("term_frequencies")
+    counts: Counter[str] = Counter()
+    if isinstance(raw_term_frequencies, Mapping):
+        for term, frequency in raw_term_frequencies.items():
+            normalized = str(term or "").strip().lower()
+            if not normalized:
+                continue
+            try:
+                value = int(frequency)
+            except Exception:
+                value = 0
+            if value > 0:
+                counts[normalized] = value
+        if counts:
+            return counts
+
+    if isinstance(raw_term_frequencies, Sequence) and not isinstance(raw_term_frequencies, (str, bytes, bytearray)):
+        for item in raw_term_frequencies:
+            if not isinstance(item, Mapping):
+                continue
+            normalized = str(item.get("term") or "").strip().lower()
+            if not normalized:
+                continue
+            try:
+                value = int(item.get("tf") or item.get("frequency") or 0)
+            except Exception:
+                value = 0
+            if value > 0:
+                counts[normalized] += value
+        if counts:
+            return counts
+
+    title_tokens = tokenize_lexical_text(title)
+    body_tokens = tokenize_lexical_text(text)
+    return Counter(list(title_tokens) + list(title_tokens) + list(body_tokens))
+
+
+def _document_length(document: Mapping[str, Any], term_counts: Mapping[str, int]) -> int:
+    """Return precomputed BM25 document length, falling back to summed TF."""
+
+    try:
+        document_length = int(document.get("document_length") or document.get("doc_length") or 0)
+    except Exception:
+        document_length = 0
+    if document_length > 0:
+        return document_length
+    return int(sum(int(value) for value in term_counts.values()))
 
 
 def _bm25_score(

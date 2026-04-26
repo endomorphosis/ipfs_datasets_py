@@ -2051,6 +2051,268 @@ def _build_bm25_rows(
     return list(build_bm25_index(documents).get("documents") or [])
 
 
+_MUNICIPAL_ACTOR_TERMS: Dict[str, str] = {
+    "applicant": "legal_actor",
+    "auditor": "municipal_official",
+    "bureau": "municipal_agency",
+    "business": "regulated_entity",
+    "city": "municipality",
+    "city administrator": "municipal_official",
+    "city attorney": "municipal_official",
+    "city council": "legislative_body",
+    "city official": "municipal_official",
+    "contractor": "regulated_entity",
+    "director": "municipal_official",
+    "employee": "worker",
+    "employer": "regulated_entity",
+    "enforcement officer": "municipal_official",
+    "fire marshal": "municipal_official",
+    "landlord": "regulated_entity",
+    "licensee": "regulated_entity",
+    "manager": "municipal_official",
+    "officer": "municipal_official",
+    "owner": "property_actor",
+    "permittee": "regulated_entity",
+    "person": "legal_person",
+    "property owner": "property_actor",
+    "tenant": "resident",
+    "worker": "worker",
+}
+
+_MUNICIPAL_SUBJECT_TERMS: Dict[str, str] = {
+    "appeal": "administrative_process",
+    "application": "administrative_process",
+    "building": "regulated_subject",
+    "business license": "license",
+    "city code": "legal_code",
+    "construction": "regulated_activity",
+    "demolition": "regulated_activity",
+    "development": "regulated_activity",
+    "emergency": "public_safety",
+    "fee": "financial_obligation",
+    "hearing": "administrative_process",
+    "license": "license",
+    "nuisance": "regulated_condition",
+    "penalty": "sanction",
+    "permit": "permit",
+    "property": "regulated_subject",
+    "public works": "municipal_service",
+    "right-of-way": "public_property",
+    "tax": "financial_obligation",
+    "violation": "legal_violation",
+    "zoning": "land_use_control",
+}
+
+_MUNICIPAL_NORM_PATTERNS: Sequence[tuple[str, str, str]] = (
+    (r"\bshall\s+not\b|\bmust\s+not\b|\bmay\s+not\b|\bis\s+prohibited\b|\bare\s+prohibited\b", "prohibition", "PROHIBITS"),
+    (r"\bshall\b|\bmust\b|\bis\s+required\b|\bare\s+required\b", "obligation", "IMPOSES_DUTY"),
+    (r"\bmay\b|\bis\s+authorized\b|\bare\s+authorized\b|\bhas\s+authority\b", "permission_or_power", "GRANTS_AUTHORITY"),
+    (r"\bmeans\b|\bmeans the\b|\bis defined as\b", "definition", "DEFINES"),
+)
+
+
+def _slug_token(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", str(value or "").strip().lower()).strip("_")
+    return slug or "unknown"
+
+
+def _municipal_section_number(row: Mapping[str, Any]) -> str:
+    for key in ("official_cite", "identifier", "title", "source_url"):
+        text = str(row.get(key) or "")
+        match = re.search(r"(\d{1,3}\.\d{2,3}\.\d{3})", text)
+        if match:
+            return match.group(1)
+    return ""
+
+
+def _municipal_chapter_number(section_number: str) -> str:
+    parts = str(section_number or "").split(".")
+    return ".".join(parts[:2]) if len(parts) >= 2 else ""
+
+
+def _municipal_title_number(section_number: str) -> str:
+    parts = str(section_number or "").split(".")
+    return parts[0] if parts else ""
+
+
+def _municipal_sentence_window(text: str, pattern: str) -> str:
+    match = re.search(pattern, text, flags=re.IGNORECASE)
+    if not match:
+        return ""
+    start = max(0, text.rfind(".", 0, match.start()) + 1)
+    end = text.find(".", match.end())
+    if end < 0:
+        end = min(len(text), match.end() + 240)
+    return " ".join(text[start : end + 1].split())[:500]
+
+
+def _municipal_body_text(text: str) -> str:
+    """Remove Portland page-label boilerplate before semantic mention extraction."""
+
+    return re.sub(r"^\s*Label:\s*City code section\s*(?:\([^)]*\))?\s*", "", str(text or ""), flags=re.IGNORECASE)
+
+
+def _extract_municipal_defined_terms(text: str) -> List[str]:
+    terms: set[str] = set()
+    patterns = [
+        r"[“\"]([^”\"]{2,80})[”\"]\s+means\b",
+        r"\b([A-Z][A-Za-z][A-Za-z\s,\-/]{1,80})\s+means\b",
+    ]
+    for pattern in patterns:
+        for match in re.finditer(pattern, text or ""):
+            term = " ".join(match.group(1).strip(" ,;:.").split())
+            if 2 <= len(term) <= 80:
+                terms.add(term)
+    return sorted(terms)
+
+
+def _extract_municipal_references(text: str) -> List[Dict[str, str]]:
+    refs: Dict[tuple[str, str], Dict[str, str]] = {}
+    patterns = [
+        ("portland_code_section", r"\b(?:Section|Subsection|Chapter)?\s*(\d{1,3}\.\d{2,3}\.\d{3})\b"),
+        ("portland_code_chapter", r"\bChapter\s+(\d{1,3}\.\d{2,3})\b"),
+        ("portland_code_title", r"\bTitle\s+(\d{1,3})\b"),
+        ("oregon_revised_statute", r"\bORS\s+(\d+[A-Z]?(?:\.\d+)?)\b"),
+        ("oregon_admin_rule", r"\bOAR\s+(\d{3}-\d{3}-\d{4})\b"),
+        ("ordinance", r"\bOrdinance(?:s)?\s+((?:\d{5,6})(?:\s*,\s*(?:and\s*)?\d{5,6})*)"),
+    ]
+    for ref_type, pattern in patterns:
+        for match in re.finditer(pattern, text or "", flags=re.IGNORECASE):
+            raw = match.group(1)
+            if ref_type == "ordinance":
+                values = re.findall(r"\d{5,6}", raw)
+            else:
+                values = [raw]
+            for value in values:
+                key = (ref_type, value)
+                refs[key] = {"type": ref_type, "value": value}
+    return sorted(refs.values(), key=lambda item: (item["type"], item["value"]))
+
+
+def _add_municipal_law_ontology(
+    row_dict: Mapping[str, Any],
+    *,
+    join_value: str,
+    title: str,
+    text: str,
+    section_lookup: Mapping[str, str],
+    entities_by_id: Dict[str, Dict[str, Any]],
+    relationships_by_id: Dict[str, Dict[str, Any]],
+) -> None:
+    def add_entity(entity_id: str, entity_type: str, label: str, properties: Optional[Dict[str, Any]] = None) -> None:
+        if not entity_id:
+            return
+        existing = entities_by_id.get(entity_id)
+        if existing:
+            return
+        entities_by_id[entity_id] = {
+            "id": entity_id,
+            "type": entity_type,
+            "label": label,
+            "properties": dict(properties or {}),
+        }
+
+    def add_relationship(source: str, rel_type: str, target: str, properties: Optional[Dict[str, Any]] = None) -> None:
+        if not source or not target:
+            return
+        rel_id = f"{source}->{rel_type}->{target}"
+        if rel_id in relationships_by_id:
+            return
+        relationships_by_id[rel_id] = {
+            "id": rel_id,
+            "source": source,
+            "target": target,
+            "type": rel_type,
+            "properties": dict(properties or {}),
+        }
+
+    section_number = _municipal_section_number(row_dict)
+    chapter_number = _municipal_chapter_number(section_number)
+    title_number = _municipal_title_number(section_number)
+    add_entity(
+        join_value,
+        "municipal_code_section",
+        title or section_number or join_value,
+        {
+            "ontology_version": "municipal-law-kg-v2",
+            "section_number": section_number,
+            "chapter_number": chapter_number,
+            "title_number": title_number,
+            "official_cite": row_dict.get("official_cite"),
+            "source_url": row_dict.get("source_url"),
+            "ipfs_cid": join_value,
+        },
+    )
+    if title_number:
+        title_id = f"portland_code_title:{title_number}"
+        add_entity(title_id, "municipal_code_title", f"Portland City Code Title {title_number}", {"title_number": title_number})
+        add_relationship(join_value, "PART_OF_TITLE", title_id)
+    if chapter_number:
+        chapter_id = f"portland_code_chapter:{chapter_number}"
+        add_entity(chapter_id, "municipal_code_chapter", f"Portland City Code Chapter {chapter_number}", {"chapter_number": chapter_number, "title_number": title_number})
+        add_relationship(join_value, "PART_OF_CHAPTER", chapter_id)
+        if title_number:
+            add_relationship(chapter_id, "PART_OF_TITLE", f"portland_code_title:{title_number}")
+
+    semantic_text = _municipal_body_text(text)
+    lowered = f" {title} {semantic_text} ".lower()
+    for term, actor_type in _MUNICIPAL_ACTOR_TERMS.items():
+        if re.search(rf"\b{re.escape(term)}s?\b", lowered):
+            actor_id = f"municipal_actor:{_slug_token(term)}"
+            add_entity(actor_id, actor_type, term, {"canonical_term": term, "ontology_version": "municipal-law-kg-v2"})
+            add_relationship(join_value, "MENTIONS_ACTOR", actor_id, {"evidence": _municipal_sentence_window(semantic_text, rf"\b{re.escape(term)}s?\b")})
+            if any(re.search(pattern, lowered) and rel_type == "IMPOSES_DUTY" for pattern, _, rel_type in _MUNICIPAL_NORM_PATTERNS):
+                add_relationship(join_value, "IMPOSES_DUTY_ON", actor_id)
+            if any(re.search(pattern, lowered) and rel_type == "GRANTS_AUTHORITY" for pattern, _, rel_type in _MUNICIPAL_NORM_PATTERNS):
+                add_relationship(join_value, "GRANTS_AUTHORITY_TO", actor_id)
+
+    for term, subject_type in _MUNICIPAL_SUBJECT_TERMS.items():
+        if re.search(rf"\b{re.escape(term)}s?\b", lowered):
+            subject_id = f"municipal_subject:{_slug_token(term)}"
+            add_entity(subject_id, subject_type, term, {"canonical_term": term, "ontology_version": "municipal-law-kg-v2"})
+            add_relationship(join_value, "REGULATES_SUBJECT", subject_id, {"evidence": _municipal_sentence_window(semantic_text, rf"\b{re.escape(term)}s?\b")})
+            if term in {"permit", "license", "business license"}:
+                add_relationship(join_value, "GOVERNS_AUTHORIZATION", subject_id)
+
+    for pattern, norm_type, rel_type in _MUNICIPAL_NORM_PATTERNS:
+        if re.search(pattern, lowered):
+            norm_id = f"{join_value}:norm:{norm_type}"
+            add_entity(norm_id, "legal_norm", norm_type, {"norm_type": norm_type, "evidence": _municipal_sentence_window(semantic_text, pattern)})
+            add_relationship(join_value, rel_type, norm_id)
+
+    for defined_term in _extract_municipal_defined_terms(semantic_text):
+        term_id = f"defined_term:{_slug_token(defined_term)}"
+        add_entity(term_id, "defined_term", defined_term, {"defined_term": defined_term})
+        add_relationship(join_value, "DEFINES_TERM", term_id, {"evidence": _municipal_sentence_window(semantic_text, re.escape(defined_term))})
+
+    for ref in _extract_municipal_references(text):
+        ref_type = ref["type"]
+        value = ref["value"]
+        ref_id = f"{ref_type}:{_slug_token(value)}"
+        label_prefix = {
+            "portland_code_section": "Portland City Code",
+            "portland_code_chapter": "Portland City Code Chapter",
+            "portland_code_title": "Portland City Code Title",
+            "oregon_revised_statute": "ORS",
+            "oregon_admin_rule": "OAR",
+            "ordinance": "Ordinance",
+        }.get(ref_type, ref_type)
+        add_entity(ref_id, ref_type, f"{label_prefix} {value}", {"reference_type": ref_type, "reference_value": value})
+        add_relationship(join_value, "REFERENCES_LEGAL_AUTHORITY", ref_id, {"reference_type": ref_type})
+        if ref_type == "portland_code_section":
+            add_relationship(join_value, "REFERENCES_CODE_SECTION", ref_id)
+            target_cid = str(section_lookup.get(value) or "").strip()
+            if target_cid and target_cid != join_value:
+                add_relationship(
+                    join_value,
+                    "REFERENCES_SECTION_CID",
+                    target_cid,
+                    {"reference_type": ref_type, "reference_value": value},
+                )
+        if ref_type == "ordinance" and re.search(r"\bamended by ordinance", text, flags=re.IGNORECASE):
+            add_relationship(join_value, "AMENDED_BY", ref_id)
+
+
 def _build_generic_knowledge_graph_rows(
     rows: Sequence[Mapping[str, Any]],
     *,
@@ -2061,8 +2323,18 @@ def _build_generic_knowledge_graph_rows(
 ) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], Dict[str, Any]]:
     entities: List[Dict[str, Any]] = []
     relationships: List[Dict[str, Any]] = []
+    entities_by_id: Dict[str, Dict[str, Any]] = {}
+    relationships_by_id: Dict[str, Dict[str, Any]] = {}
     entity_ids: set[str] = set()
     relationship_ids: set[str] = set()
+    municipal_section_lookup: Dict[str, str] = {}
+    if corpus_key == "municipal_laws":
+        for row in rows:
+            row_dict = dict(row)
+            join_value = str(row_dict.get(join_field) or "").strip()
+            section_number = _municipal_section_number(row_dict)
+            if join_value and section_number:
+                municipal_section_lookup[section_number] = join_value
 
     def _add_entity(entity: Dict[str, Any]) -> None:
         entity_id = str(entity.get("id") or "").strip()
@@ -2075,6 +2347,7 @@ def _build_generic_knowledge_graph_rows(
             entity["properties_json"] = str(properties)
         entity.pop("properties", None)
         entity_ids.add(entity_id)
+        entities_by_id[entity_id] = dict(entity)
         entities.append(entity)
 
     def _add_relationship(rel: Dict[str, Any]) -> None:
@@ -2088,6 +2361,7 @@ def _build_generic_knowledge_graph_rows(
             rel["properties_json"] = str(properties)
         rel.pop("properties", None)
         relationship_ids.add(rel_id)
+        relationships_by_id[rel_id] = dict(rel)
         relationships.append(rel)
 
     for row in rows:
@@ -2097,9 +2371,25 @@ def _build_generic_knowledge_graph_rows(
             continue
         title = _row_title(row_dict, title_fields) or join_value
         text = _row_text(row_dict, text_fields)
+        if corpus_key == "municipal_laws":
+            pending_entities: Dict[str, Dict[str, Any]] = {}
+            pending_relationships: Dict[str, Dict[str, Any]] = {}
+            _add_municipal_law_ontology(
+                row_dict,
+                join_value=join_value,
+                title=title,
+                text=text,
+                section_lookup=municipal_section_lookup,
+                entities_by_id=pending_entities,
+                relationships_by_id=pending_relationships,
+            )
+            for entity in pending_entities.values():
+                _add_entity(dict(entity))
+            for rel in pending_relationships.values():
+                _add_relationship(dict(rel))
         document_entity = {
             "id": join_value,
-            "type": "legal_document",
+            "type": "legal_document" if corpus_key != "municipal_laws" else "municipal_code_section",
             "label": title,
             "properties": {
                 "corpus_key": corpus_key,
@@ -2239,10 +2529,27 @@ def _build_generic_knowledge_graph_rows(
                 }
             )
 
+    for entity in entities_by_id.values():
+        _add_entity(dict(entity))
+    for rel in relationships_by_id.values():
+        _add_relationship(dict(rel))
+
+    entity_type_counts: Dict[str, int] = {}
+    relationship_type_counts: Dict[str, int] = {}
+    for entity in entities:
+        entity_type = str(entity.get("type") or "")
+        entity_type_counts[entity_type] = entity_type_counts.get(entity_type, 0) + 1
+    for rel in relationships:
+        rel_type = str(rel.get("type") or "")
+        relationship_type_counts[rel_type] = relationship_type_counts.get(rel_type, 0) + 1
+
     summary = {
         "entity_count": len(entities),
         "relationship_count": len(relationships),
-        "document_count": len([entity for entity in entities if entity.get("type") == "legal_document"]),
+        "document_count": len([entity for entity in entities if entity.get("type") in {"legal_document", "municipal_code_section"}]),
+        "ontology_version": "municipal-law-kg-v2" if corpus_key == "municipal_laws" else "generic-legal-document-kg-v1",
+        "entity_type_counts": entity_type_counts,
+        "relationship_type_counts": relationship_type_counts,
     }
     return entities, relationships, summary
 
