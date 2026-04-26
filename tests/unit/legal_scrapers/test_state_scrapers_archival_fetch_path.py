@@ -4,7 +4,7 @@ import zipfile
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama import AlabamaScraper
-from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import BaseStateScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.california import CaliforniaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado import ColoradoScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.connecticut import ConnecticutScraper
@@ -19,6 +19,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import Kan
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import MassachusettsScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import MaineScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland import MarylandScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan import MichiganScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
@@ -1120,6 +1121,125 @@ async def test_connecticut_custom_scrape_records_fetch_analytics(monkeypatch: py
     assert len(statutes) >= 1
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_connecticut_full_corpus_bounded_run_does_not_short_circuit_to_direct_chapters(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_live_titles(self, code_name: str, max_statutes: int = 120):
+        return []
+
+    async def _fake_archived_titles(self, code_name: str, max_statutes: int = 120):
+        return []
+
+    async def _fake_custom(self, code_name: str, code_url: str, citation_format: str, max_sections: int = 100):
+        return [
+            NormalizedStatute(
+                state_code="CT",
+                state_name="Connecticut",
+                statute_id="CT-1-1",
+                code_name=code_name,
+                section_number="1-1",
+                section_name="Definitions",
+                full_text="Connecticut section one text " * 20,
+                source_url="https://www.cga.ct.gov/current/pub/chap_001.htm#sec_1-1",
+                official_cite="Conn. Gen. Stat. § 1-1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_connecticut_section_html",
+                    "discovery_method": "official_custom_section_parse",
+                    "skip_hydrate": True,
+                },
+            ),
+            NormalizedStatute(
+                state_code="CT",
+                state_name="Connecticut",
+                statute_id="CT-1-2",
+                code_name=code_name,
+                section_number="1-2",
+                section_name="Rules of construction",
+                full_text="Connecticut section two text " * 20,
+                source_url="https://www.cga.ct.gov/current/pub/chap_001.htm#sec_1-2",
+                official_cite="Conn. Gen. Stat. § 1-2",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_connecticut_section_html",
+                    "discovery_method": "official_custom_section_parse",
+                    "skip_hydrate": True,
+                },
+            ),
+        ]
+
+    async def _fail_generic(*args, **kwargs):
+        raise AssertionError("Connecticut bounded full-corpus run should stay on the richer custom path before generic scraping")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(ConnecticutScraper, "_scrape_live_title_stubs", _fake_live_titles)
+    monkeypatch.setattr(ConnecticutScraper, "_scrape_archived_chapter_stubs", _fake_archived_titles)
+    monkeypatch.setattr(ConnecticutScraper, "_custom_scrape_connecticut", _fake_custom)
+
+    scraper = ConnecticutScraper("CT", "Connecticut")
+    monkeypatch.setattr(scraper, "_generic_scrape", _fail_generic)
+    statutes = await scraper.scrape_code("Connecticut General Statutes", "https://www.cga.ct.gov/current/pub/titles.htm", max_statutes=2)
+
+    assert [row.section_number for row in statutes] == ["1-1", "1-2"]
+    assert statutes[0].structured_data["source_kind"] == "official_connecticut_section_html"
+
+
+@pytest.mark.anyio
+async def test_maryland_full_corpus_bounded_run_prefers_api_sections(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_api_sections(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="MD",
+                state_name="Maryland",
+                statute_id="MD-1-101",
+                code_name=code_name,
+                section_number="1-101",
+                section_name="State Government § 1-101",
+                full_text="Maryland section one text " * 20,
+                source_url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+                official_cite="Md. Code § 1-101",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "record_type": "maryland_api_section",
+                    "source_kind": "official_maryland_api_section_html",
+                    "discovery_method": "official_articles_sections_api",
+                    "skip_hydrate": True,
+                },
+            ),
+            NormalizedStatute(
+                state_code="MD",
+                state_name="Maryland",
+                statute_id="MD-1-102",
+                code_name=code_name,
+                section_number="1-102",
+                section_name="State Government § 1-102",
+                full_text="Maryland section two text " * 20,
+                source_url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-102&enactments=false",
+                official_cite="Md. Code § 1-102",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "record_type": "maryland_api_section",
+                    "source_kind": "official_maryland_api_section_html",
+                    "discovery_method": "official_articles_sections_api",
+                    "skip_hydrate": True,
+                },
+            ),
+        ]
+
+    async def _fail_generic(*args, **kwargs):
+        raise AssertionError("Maryland bounded full-corpus run should prefer API-backed sections before generic scraping")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+    monkeypatch.setattr(MarylandScraper, "_scrape_api_sections", _fake_api_sections)
+
+    scraper = MarylandScraper("MD", "Maryland")
+    monkeypatch.setattr(scraper, "_generic_scrape", _fail_generic)
+    monkeypatch.setattr(scraper, "_playwright_scrape", _fail_generic)
+    statutes = await scraper.scrape_code("Maryland Code", "https://mgaleg.maryland.gov/mgawebsite/Laws/Statutes", max_statutes=2)
+
+    assert [row.section_number for row in statutes] == ["1-101", "1-102"]
+    assert statutes[0].structured_data["source_kind"] == "official_maryland_api_section_html"
 
 
 @pytest.mark.anyio

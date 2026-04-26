@@ -223,7 +223,12 @@ class MarylandScraper(BaseStateScraper):
             legal_area=self._identify_legal_area(article_name),
             official_cite=f"Md. Code § {normalized_section}",
             metadata=StatuteMetadata(),
-            structured_data={"skip_hydrate": True, "record_type": "maryland_api_section"},
+            structured_data={
+                "skip_hydrate": True,
+                "record_type": "maryland_api_section",
+                "source_kind": "official_maryland_api_section_html",
+                "discovery_method": "official_articles_sections_api",
+            },
         )
     
     async def scrape_code(
@@ -246,7 +251,7 @@ class MarylandScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(80)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        if not self._full_corpus_enabled() or max_statutes is not None:
+        if not self._full_corpus_enabled():
             direct_statutes = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct_statutes:
                 return direct_statutes

@@ -47,7 +47,7 @@ class ConnecticutScraper(BaseStateScraper):
         """
         limit = self._effective_scrape_limit(max_statutes, default=30)
         return_threshold = limit if limit is not None else 1000000
-        if not self._full_corpus_enabled() or max_statutes is not None:
+        if not self._full_corpus_enabled():
             direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
             if direct_sections:
                 return direct_sections
