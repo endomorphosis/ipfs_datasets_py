@@ -44,6 +44,14 @@ def _summarize_scrape_result(result: dict[str, Any]) -> dict[str, Any]:
         "search_records_count",
         "persisted_records_count",
         "persisted_article_records_count",
+        "output_records_count",
+        "output_article_records_count",
+        "output_search_records_count",
+        "distinct_law_identifiers_in_outputs",
+        "article_producing_laws_count",
+        "non_article_producing_laws_count",
+        "article_extraction_missing_count",
+        "genuine_non_article_laws_count",
         "error_count",
         "elapsed_time_seconds",
     ]
@@ -60,11 +68,14 @@ def _summarize_scrape_result(result: dict[str, Any]) -> dict[str, Any]:
         "rate_limit_delay",
         "skip_existing",
         "resume",
+        "scrape_command",
     ]:
         if key in metadata:
             compact_metadata[key] = metadata[key]
     if metadata.get("errors"):
         compact_metadata["errors"] = list(metadata.get("errors") or [])[:20]
+    if metadata.get("non_article_producing_laws"):
+        compact_metadata["non_article_producing_laws"] = list(metadata.get("non_article_producing_laws") or [])[:20]
     return {
         "status": result.get("status"),
         "metadata": compact_metadata,

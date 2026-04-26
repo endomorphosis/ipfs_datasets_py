@@ -92,6 +92,31 @@ def test_extract_title_and_text_captures_articles_and_chapters():
     assert parsed["structure"]["articles"][0]["hierarchy_path"][-1]["label"] == "Artikel 1"
 
 
+def test_extract_title_and_text_captures_french_article_headings():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _extract_title_and_text,
+    )
+
+    parsed = _extract_title_and_text(
+        """
+        <main>
+          <h1>Loi concernant les Mines, les Minières et les Carrières</h1>
+          <h2>Titre I.er Des Mines, Minières et Carrières</h2>
+          <h3>Article I.er</h3>
+          <p>Les masses de substances minérales ou fossiles renfermées dans le sein de la terre.</p>
+          <h3>Article 2</h3>
+          <p>Seront considérées comme mines celles connues pour contenir en filons.</p>
+        </main>
+        """
+    )
+
+    assert len(parsed["structure"]["articles"]) == 2
+    assert parsed["structure"]["articles"][0]["number"] == "I.er"
+    assert parsed["structure"]["articles"][0]["citation"] == "Article I.er"
+    assert parsed["structure"]["articles"][1]["number"] == "2"
+    assert "Titre I.er" in parsed["structure"]["articles"][0]["hierarchy_path_text"]
+
+
 def test_extract_info_metadata_captures_dates_aliases_and_versions():
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
         _extract_info_metadata,
@@ -156,6 +181,25 @@ def test_extract_info_metadata_rejects_greedy_title_fallbacks():
     assert metadata["aliases"] == []
     assert metadata["effective_date"] == "2026-01-01"
     assert len(metadata["canonical_title"]) < 100
+
+
+def test_article_missing_diagnostics_flag_likely_parser_misses():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _diagnose_article_extraction,
+    )
+
+    diagnostic = _diagnose_article_extraction(
+        {
+            "law_identifier": "BWBRTESTMISS",
+            "title": "Legacy article headings",
+            "text": "Aanhef. Article 1 Eerste bepaling. Article 2 Tweede bepaling.",
+            "article_count": 0,
+        },
+        [],
+    )
+
+    assert diagnostic["status"] == "article_extraction_missing"
+    assert diagnostic["likely_article_heading_matches"] == 2
 
 
 def test_fixture_document_parsing_builds_full_hierarchy_and_citations():
@@ -300,6 +344,70 @@ async def test_scrape_netherlands_laws_with_explicit_document_urls(monkeypatch, 
 
 
 @pytest.mark.anyio
+async def test_scrape_netherlands_laws_reports_non_article_documents(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
+
+    document_html = """
+    <html>
+      <main>
+        <h1>Muziekauteursrecht</h1>
+        <p>De Minister van Justitie;</p>
+        <p>Gelet op art. 30a der Auteurswet 1912.</p>
+        <p>Heeft goedgevonden en verstaan:</p>
+        <p>De toestemming wordt verleend met ingang van 13 april 1933.</p>
+      </main>
+    </html>
+    """
+    info_html = """
+    <html>
+      <body>
+        <h1>Muziekauteursrecht</h1>
+        <dl>
+          <dt>Identificatienummer</dt><dd>BWBR0001958</dd>
+          <dt>Soort regeling</dt><dd>Ministeriële regeling</dd>
+          <dt>Niet officiële titel</dt><dd>Muziekauteursrecht</dd>
+          <dt>Datum van inwerkingtreding</dt><dd>13-04-1933</dd>
+        </dl>
+      </body>
+    </html>
+    """
+
+    class _Response:
+        def __init__(self, text: str, status_code: int = 200):
+            self.text = text
+            self.status_code = status_code
+
+    class _Session:
+        headers = {}
+
+        def get(self, url, timeout=40):  # noqa: ARG002
+            if url == "https://wetten.overheid.nl/BWBR0001958/":
+                return _Response(document_html)
+            if url == "https://wetten.overheid.nl/BWBR0001958/informatie":
+                return _Response(info_html)
+            raise AssertionError(f"Unexpected URL fetched: {url}")
+
+    monkeypatch.setattr(scraper, "_make_session", lambda: _Session())
+    monkeypatch.setattr(scraper.time, "sleep", lambda _seconds: None)
+
+    result = await scraper.scrape_netherlands_laws(
+        document_urls=["https://wetten.overheid.nl/BWBR0001958/"],
+        output_dir=str(tmp_path),
+    )
+
+    assert result["status"] == "success"
+    assert result["metadata"]["records_count"] == 1
+    assert result["metadata"]["article_records_count"] == 0
+    assert result["metadata"]["article_producing_laws_count"] == 0
+    assert result["metadata"]["non_article_producing_laws_count"] == 1
+    assert result["metadata"]["genuine_non_article_laws_count"] == 1
+    assert result["metadata"]["article_extraction_missing_count"] == 0
+    assert result["metadata"]["non_article_producing_laws"][0]["law_identifier"] == "BWBR0001958"
+    assert result["data"][0]["article_extraction_status"] == "non_article_document"
+    assert "unnumbered or non-article" in result["data"][0]["article_extraction_note"]
+
+
+@pytest.mark.anyio
 async def test_scrape_netherlands_laws_crawls_seed_pages_and_writes_run_metadata(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
 
@@ -380,6 +488,79 @@ async def test_scrape_netherlands_laws_crawls_seed_pages_and_writes_run_metadata
     assert Path(result["metadata"]["search_index_path"]).exists()
     assert Path(result["metadata"]["jsonld_files"][0]).exists()
     assert Path(result["metadata"]["run_metadata_path"]).exists()
+
+
+@pytest.mark.anyio
+async def test_scrape_netherlands_laws_resume_skip_existing_preserves_and_extends_outputs(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import netherlands_laws_scraper as scraper
+
+    document_fixture = _fixture_text("netherlands_wetten_document.html")
+    info_fixture = _fixture_text("netherlands_wetten_informatie.html")
+    bw_fixture = document_fixture.replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
+    bw_info_fixture = (
+        info_fixture
+        .replace("BWBR0001854", "BWBR0002656")
+        .replace("Wetboek van Strafrecht", "Burgerlijk Wetboek Boek 1")
+        .replace(">Sr<", ">BW Boek 1<")
+    )
+    seed_html = """
+    <html>
+      <body>
+        <a href="/BWBR0001854/">Wetboek van Strafrecht</a>
+        <a href="/BWBR0002656/">Burgerlijk Wetboek Boek 1</a>
+      </body>
+    </html>
+    """
+
+    class _Response:
+        def __init__(self, text: str, status_code: int = 200):
+            self.text = text
+            self.status_code = status_code
+
+    class _Session:
+        headers = {}
+
+        def get(self, url, timeout=40):  # noqa: ARG002
+            if url == "https://wetten.overheid.nl/zoeken/":
+                return _Response(seed_html)
+            if url == "https://wetten.overheid.nl/BWBR0001854/informatie":
+                return _Response(info_fixture)
+            if url == "https://wetten.overheid.nl/BWBR0002656/informatie":
+                return _Response(bw_info_fixture)
+            if url == "https://wetten.overheid.nl/BWBR0001854/":
+                return _Response(document_fixture)
+            if url == "https://wetten.overheid.nl/BWBR0002656/":
+                return _Response(bw_fixture)
+            if "overheid.nl/documenten/BWBR0001854" in url:
+                return _Response("<html><body>BWBR0001854 Wetboek van Strafrecht</body></html>")
+            if "overheid.nl/documenten/BWBR0002656" in url:
+                return _Response("<html><body>BWBR0002656 Burgerlijk Wetboek Boek 1</body></html>")
+            raise AssertionError(f"Unexpected URL fetched: {url}")
+
+    monkeypatch.setattr(scraper, "_make_session", lambda: _Session())
+    monkeypatch.setattr(scraper.time, "sleep", lambda _seconds: None)
+
+    first = await scraper.scrape_netherlands_laws(
+        document_urls=["https://wetten.overheid.nl/BWBR0001854/"],
+        output_dir=str(tmp_path),
+    )
+    second = await scraper.scrape_netherlands_laws(
+        seed_urls=["https://wetten.overheid.nl/zoeken"],
+        output_dir=str(tmp_path),
+        crawl_depth=0,
+        max_seed_pages=1,
+        max_documents=2,
+        skip_existing=True,
+    )
+
+    assert first["metadata"]["records_count"] == 1
+    assert second["metadata"]["documents_skipped"] == 1
+    assert second["metadata"]["documents_fetched"] == 1
+    assert second["metadata"]["documents_parsed"] == 1
+    assert second["metadata"]["output_records_count"] == 2
+    assert second["metadata"]["distinct_law_identifiers_in_outputs"] == 2
+    assert second["metadata"]["article_producing_laws_count"] == 2
+    assert sorted(row["law_identifier"] for row in second["data"]) == ["BWBR0002656"]
 
 
 @pytest.mark.anyio

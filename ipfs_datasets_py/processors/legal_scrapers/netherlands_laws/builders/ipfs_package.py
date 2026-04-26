@@ -22,6 +22,26 @@ DEFAULT_RAW_DIR = PACKAGE_RAW_OUTPUT_DIR
 DEFAULT_OUT_DIR = HF_DATA_DIR / IPFS_DATASET_NAME
 
 
+def coverage_note(run_metadata: dict[str, Any], record_counts: dict[str, int]) -> str:
+    max_documents = run_metadata.get("max_documents")
+    parsed = run_metadata.get("output_records_count") or run_metadata.get("documents_parsed") or record_counts.get("laws", 0)
+    discovered = run_metadata.get("total_unique_laws_discovered") or run_metadata.get("unique_laws_discovered") or "unknown"
+    failed = run_metadata.get("documents_failed", "unknown")
+    if max_documents:
+        return (
+            f"This is a capped Netherlands scrape, not the full Dutch corpus. "
+            f"The scrape used max_documents={max_documents}, parsed {parsed} law record(s), "
+            f"and discovered {discovered} unique official BWBR law document(s) before applying the cap. "
+            f"Documents failed: {failed}."
+        )
+    return (
+        "This is an uncapped discovered-corpus Netherlands scrape from the configured official discovery sources, "
+        "but it should not be described as the full Dutch corpus unless the run metadata confirms discovery covered "
+        f"the complete intended BWBR population. Parsed law records: {parsed}; discovered: {discovered}; "
+        f"documents failed: {failed}."
+    )
+
+
 def law_payload(row: dict[str, Any]) -> dict[str, Any]:
     keep = [
         "record_type",
@@ -54,6 +74,10 @@ def law_payload(row: dict[str, Any]) -> dict[str, Any]:
         "last_modified_date",
         "historical_versions",
         "article_count",
+        "article_rows_count",
+        "article_extraction_status",
+        "article_extraction_note",
+        "article_extraction_diagnostics",
         "chapter_count",
         "scraped_at",
         "metadata",
@@ -157,11 +181,12 @@ def write_readme(
 ) -> None:
     run_metadata = run_metadata or {}
     record_counts = record_counts or {}
-    scrape_command = (
+    scrape_command = run_metadata.get("scrape_command") or (
         "python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape "
-        "--use_default_seeds true --max_seed_pages 25 --crawl_depth 1 "
-        "--max_documents 100 --rate_limit_delay 0.2 --skip_existing true"
+        "--use_default_seeds true --max_seed_pages <pages> --crawl_depth 1 "
+        "--max_documents <cap> --rate_limit_delay <delay> --resume"
     )
+    coverage = coverage_note(run_metadata, record_counts)
     readme = f"""---
 pretty_name: IPFS Netherlands Laws
 language:
@@ -200,7 +225,7 @@ Hugging Face target: `{repo_id}`.
 
 This dataset packages Netherlands law records with deterministic IPFS Content IDs. Each row includes a `cid` and `content_address`; article rows also include the parent `law_cid`.
 
-This is a 100-law medium scrape from official Netherlands sources, not the full Netherlands corpus.
+{coverage}
 
 Scrape command:
 
@@ -213,8 +238,10 @@ Current package counts:
 - Laws: {record_counts.get("laws", 0)}
 - Articles: {record_counts.get("articles", 0)}
 - CID index rows: {record_counts.get("cid_index", 0)}
-- Unique laws discovered before the 100-law cap: {run_metadata.get("unique_laws_discovered", "unknown")}
+- Unique laws discovered before any document cap: {run_metadata.get("unique_laws_discovered", "unknown")}
 - Documents failed: {run_metadata.get("documents_failed", "unknown")}
+- Article-producing laws: {run_metadata.get("article_producing_laws_count", "unknown")}
+- Non-article-producing laws: {run_metadata.get("non_article_producing_laws_count", "unknown")}
 
 Remaining limitations before a full corpus release: increase/remove `max_documents`, validate shard/streaming behavior on larger runs, and spot-check laws that expose no article-level rows.
 """

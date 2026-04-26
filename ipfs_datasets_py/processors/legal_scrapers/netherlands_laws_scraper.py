@@ -53,14 +53,19 @@ _ZOEK_SERVICE_HOST_RE = re.compile(r"(^|\.)zoekservice\.overheid\.nl$", re.IGNOR
 _BWB_ID_RE = re.compile(r"/(BWBR[0-9A-Z]+)(?:/|$)", re.IGNORECASE)
 _BWB_IDENTIFIER_RE = re.compile(r"\b(BWBR[0-9A-Z]+)\b", re.IGNORECASE)
 _ARTICLE_HEADING_RE = re.compile(
-    r"^artikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?)\b(?:\s*(?:(?:[:.\-])\s*|\s+)(.*))?$",
+    r"^(artikel|article)\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?|[ivxlcdm]+(?:\.?er|e)?)(?:\b|\.)"
+    r"(?:\s*(?:(?:[:.\-])\s*|\s+)(.*))?$",
+    re.IGNORECASE,
+)
+_LIKELY_ARTICLE_HEADING_RE = re.compile(
+    r"\b(?:artikel|article)\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?|[ivxlcdm]+(?:\.?er|e)?)\b",
     re.IGNORECASE,
 )
 _STRUCTURE_KIND_PATTERNS: List[tuple[str, re.Pattern[str]]] = [
     ("boek", re.compile(r"^boek\s+([0-9ivxlcdm]+)\b", re.IGNORECASE)),
-    ("titel", re.compile(r"^titel\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
-    ("hoofdstuk", re.compile(r"^hoofdstuk\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
-    ("afdeling", re.compile(r"^afdeling\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
+    ("titel", re.compile(r"^(?:titel|titre)\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
+    ("hoofdstuk", re.compile(r"^(?:hoofdstuk|chapitre)\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
+    ("afdeling", re.compile(r"^(?:afdeling|section)\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
     ("paragraaf", re.compile(r"^paragraaf\s+([0-9a-zivxlcdm.\-]+)\b", re.IGNORECASE)),
     ("artikel", _ARTICLE_HEADING_RE),
 ]
@@ -368,6 +373,8 @@ def _classify_structure_heading(text: str) -> tuple[Optional[str], Optional[str]
     for kind, pattern in _STRUCTURE_KIND_PATTERNS:
         match = pattern.match(label)
         if match:
+            if kind == "artikel" and len(match.groups()) >= 2:
+                return kind, _normalize_space(match.group(2))
             return kind, _normalize_space(match.group(1))
     return None, None
 
@@ -640,12 +647,13 @@ def _extract_document_structure(content_root: Any) -> Dict[str, Any]:
             else:
                 article_match = _ARTICLE_HEADING_RE.match(text)
                 path_items = _hierarchy_path_items(dict(hierarchy), article_number=number or "", article_label=text)
+                article_prefix = _normalize_space(article_match.group(1)) if article_match else "Artikel"
                 current_part = {
                     "kind": kind,
                     "label": text,
                     "number": number,
-                    "citation": f"Artikel {number}" if number else "Artikel",
-                    "heading": _normalize_space(article_match.group(2)) if article_match and article_match.group(2) else "",
+                    "citation": f"{article_prefix} {number}" if number else article_prefix,
+                    "heading": _normalize_space(article_match.group(3)) if article_match and article_match.group(3) else "",
                     "hierarchy": dict(hierarchy),
                     "hierarchy_path": path_items,
                     "hierarchy_path_text": _hierarchy_path_string(path_items),
@@ -660,7 +668,7 @@ def _extract_document_structure(content_root: Any) -> Dict[str, Any]:
     if not any(str(part.get("kind")) == "artikel" for part in finalized_parts):
         fallback_text = _normalize_space(content_root.get_text(" ", strip=True))
         fallback_match = re.search(
-            r"\b(artikel\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?))\b(.*)$",
+            r"\b((?:artikel|article)\s+([0-9]+(?:[.:][0-9]+)*(?:[a-z])?|[ivxlcdm]+(?:\.?er|e)?))\b(.*)$",
             fallback_text,
             re.IGNORECASE,
         )
@@ -982,6 +990,88 @@ def _build_article_records(document_row: Dict[str, Any]) -> List[Dict[str, Any]]
         )
 
     return article_records
+
+
+def _diagnose_article_extraction(document_row: Dict[str, Any], article_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    text = _normalize_space(document_row.get("text") or "")
+    likely_headings = len(_LIKELY_ARTICLE_HEADING_RE.findall(text))
+    article_count = int(document_row.get("article_count") or len(document_row.get("articles") or []) or 0)
+    if article_rows:
+        status = "articles_extracted"
+        note = f"Extracted {len(article_rows)} article row(s) from {article_count or len(article_rows)} parsed article section(s)."
+    elif article_count or likely_headings:
+        status = "article_extraction_missing"
+        note = (
+            "The document text appears to contain article headings, but no article rows were produced. "
+            "This should be treated as a parser coverage issue."
+        )
+    else:
+        status = "non_article_document"
+        note = (
+            "No numbered article headings were detected. The source appears to be an unnumbered or non-article regulation "
+            "document rather than an article-structured law."
+        )
+    return {
+        "status": status,
+        "note": note,
+        "article_rows_count": len(article_rows),
+        "parsed_article_sections_count": article_count,
+        "likely_article_heading_matches": likely_headings,
+    }
+
+
+def _article_coverage_summary(
+    document_rows: List[Dict[str, Any]],
+    article_rows: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    document_identifiers = [
+        _normalize_space(row.get("law_identifier") or row.get("identifier") or "")
+        for row in document_rows
+        if _normalize_space(row.get("law_identifier") or row.get("identifier") or "")
+    ]
+    article_identifiers = {
+        _normalize_space(row.get("law_identifier") or row.get("identifier") or "")
+        for row in article_rows
+        if _normalize_space(row.get("law_identifier") or row.get("identifier") or "")
+    }
+    article_producing_identifiers = sorted(set(document_identifiers) & article_identifiers)
+    non_article_rows: List[Dict[str, Any]] = []
+    for row in document_rows:
+        identifier = _normalize_space(row.get("law_identifier") or row.get("identifier") or "")
+        if not identifier or identifier in article_identifiers:
+            continue
+        diagnostic = _diagnose_article_extraction(row, [])
+        non_article_rows.append(
+            {
+                "law_identifier": identifier,
+                "title": row.get("canonical_title") or row.get("title") or identifier,
+                "source_url": row.get("source_url"),
+                "article_extraction_status": row.get("article_extraction_status") or diagnostic["status"],
+                "article_extraction_note": row.get("article_extraction_note") or diagnostic["note"],
+                "article_count": int(row.get("article_count") or 0),
+                "chapter_count": int(row.get("chapter_count") or 0),
+                "text_length": len(_normalize_space(row.get("text") or "")),
+                "likely_article_heading_matches": diagnostic["likely_article_heading_matches"],
+            }
+        )
+
+    missing_rows = [
+        row for row in non_article_rows if row.get("article_extraction_status") == "article_extraction_missing"
+    ]
+    genuine_non_article_rows = [
+        row for row in non_article_rows if row.get("article_extraction_status") == "non_article_document"
+    ]
+    return {
+        "distinct_law_identifiers_in_outputs": len(set(document_identifiers)),
+        "article_producing_laws_count": len(article_producing_identifiers),
+        "article_producing_law_identifiers": article_producing_identifiers,
+        "non_article_producing_laws_count": len(non_article_rows),
+        "non_article_producing_laws": non_article_rows,
+        "article_extraction_missing_count": len(missing_rows),
+        "article_extraction_missing_laws": missing_rows,
+        "genuine_non_article_laws_count": len(genuine_non_article_rows),
+        "genuine_non_article_laws": genuine_non_article_rows,
+    }
 
 
 def _verify_cross_sources(
@@ -1413,7 +1503,13 @@ async def scrape_netherlands_laws(
                         **source_verification,
                     ),
                 }
-            article_records.extend(_build_article_records(row))
+            document_article_records = _build_article_records(row)
+            article_diagnostic = _diagnose_article_extraction(row, document_article_records)
+            row["article_rows_count"] = article_diagnostic["article_rows_count"]
+            row["article_extraction_status"] = article_diagnostic["status"]
+            row["article_extraction_note"] = article_diagnostic["note"]
+            row["article_extraction_diagnostics"] = article_diagnostic
+            article_records.extend(document_article_records)
             records.append(row)
             successful_parses += 1
         except Exception as exc:
@@ -1440,6 +1536,7 @@ async def scrape_netherlands_laws(
         if str(row.get("record_type") or "") != "document":
             continue
         persisted_article_records.extend(list(row.get("article_records") or _build_article_records(row)))
+    coverage_summary = _article_coverage_summary(persisted_records, persisted_article_records)
 
     _write_index_jsonl(persisted_records, index_path=output_root / DEFAULT_NETHERLANDS_LAWS_INDEX_PATH.name)
     _write_optional_index(
@@ -1453,6 +1550,20 @@ async def scrape_netherlands_laws(
     jsonld_path = _write_jsonld(persisted_records, output_root=output_root)
 
     elapsed = time.time() - start
+    scrape_command = (
+        "python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape "
+        f"--output-dir {output_root} "
+        f"--max_seed_pages {max_seed_pages} --crawl_depth {crawl_depth} "
+        f"--rate_limit_delay {rate_limit_delay}"
+    )
+    if use_default_seeds:
+        scrape_command += " --use_default_seeds true"
+    if max_documents:
+        scrape_command += f" --max_documents {max_documents}"
+    if skip_existing:
+        scrape_command += " --skip_existing true"
+    if resume:
+        scrape_command += " --resume true"
     metadata = {
         "seed_urls": normalized_seed_urls,
         "seed_url_count": len(normalized_seed_urls),
@@ -1465,17 +1576,26 @@ async def scrape_netherlands_laws(
         "candidate_links_unique": len(candidate_document_links),
         "official_law_documents_accepted": len(all_discovered_document_urls),
         "unique_laws_discovered": len(discovered_law_identifiers),
+        "total_unique_laws_discovered": len(discovered_law_identifiers),
         "discovered_law_identifiers": discovered_law_identifiers,
         "discovered_document_count": len(all_discovered_document_urls),
         "documents_selected_for_fetch": len(ordered_document_urls),
         "documents_fetched": successful_document_fetches,
+        "total_fetched": successful_document_fetches,
         "documents_parsed": successful_parses,
+        "total_parsed": successful_parses,
         "documents_skipped": len(skipped_documents),
+        "total_skipped": len(skipped_documents),
         "documents_failed": failed_documents,
+        "total_failed": failed_documents,
         "skipped_document_urls": skipped_documents,
         "records_count": len(records),
         "article_records_count": len(article_records),
         "search_records_count": len(records) + len(article_records),
+        "output_records_count": len(persisted_records),
+        "output_article_records_count": len(persisted_article_records),
+        "output_search_records_count": len(persisted_records) + len(persisted_article_records),
+        **coverage_summary,
         "errors": errors,
         "error_count": len(errors),
         "elapsed_time_seconds": elapsed,
@@ -1493,6 +1613,7 @@ async def scrape_netherlands_laws(
         "rate_limit_delay": rate_limit_delay,
         "skip_existing": skip_existing,
         "resume": bool(resume),
+        "scrape_command": scrape_command,
         "persisted_records_count": len(persisted_records),
         "persisted_article_records_count": len(persisted_article_records),
     }
@@ -1538,4 +1659,6 @@ __all__ = [
     "_extract_document_links",
     "_extract_sru_document_links",
     "_extract_title_and_text",
+    "_diagnose_article_extraction",
+    "_article_coverage_summary",
 ]

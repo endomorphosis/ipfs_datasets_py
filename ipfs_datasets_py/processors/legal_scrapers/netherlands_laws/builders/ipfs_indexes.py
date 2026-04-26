@@ -213,7 +213,8 @@ def build_vector_index(
         (
             "Dense vector mapping keyed by source CID, with FAISS and TF-IDF/SVD artifacts.\n\n"
             f"This index covers {len(mapping_rows)} rows from the paired CID dataset. "
-            "The current source dataset is a 100-law medium scrape, not the full Netherlands corpus."
+            "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
+            "the paired base dataset manifest/run metadata proves full discovery coverage."
         ),
     )
     _write_gitattributes(out_dir)
@@ -310,7 +311,8 @@ def build_bm25_index(
         (
             "Sparse BM25 document and postings tables keyed by source CID.\n\n"
             f"This index covers {len(doc_rows)} documents and {len(term_rows)} terms from the paired CID dataset. "
-            "The current source dataset is a 100-law medium scrape, not the full Netherlands corpus."
+            "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
+            "the paired base dataset manifest/run metadata proves full discovery coverage."
         ),
     )
     _write_gitattributes(out_dir)
@@ -436,7 +438,8 @@ def build_knowledge_graph(
         (
             "JSON-LD graph and node/edge tables whose identities are IPFS content addresses.\n\n"
             f"This graph currently has {len(graph_nodes)} nodes and {len(graph_edges)} edges from the paired CID dataset. "
-            "The current source dataset is a 100-law medium scrape, not the full Netherlands corpus."
+            "The current source dataset may be capped; do not describe it as the full Dutch corpus unless "
+            "the paired base dataset manifest/run metadata proves full discovery coverage."
         ),
     )
     _write_gitattributes(out_dir)
