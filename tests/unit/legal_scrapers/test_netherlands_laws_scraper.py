@@ -183,6 +183,31 @@ def test_extract_info_metadata_rejects_greedy_title_fallbacks():
     assert len(metadata["canonical_title"]) < 100
 
 
+def test_extract_info_metadata_rejects_geen_title_placeholders():
+    from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
+        _extract_info_metadata,
+    )
+
+    metadata = _extract_info_metadata(
+        """
+        <html>
+          <body>
+            <h1>Muziekauteursrecht</h1>
+            <table>
+              <tr><th>Niet officiële titel</th><td>Geen</td></tr>
+              <tr><th>Citeertitel</th><td>Geen</td></tr>
+              <tr><th>Identificatienummer</th><td>BWBR0001958</td></tr>
+            </table>
+          </body>
+        </html>
+        """,
+        info_url="https://wetten.overheid.nl/BWBR0001958/informatie",
+    )
+
+    assert metadata["canonical_title"] == "Muziekauteursrecht"
+    assert metadata["aliases"] == []
+
+
 def test_article_missing_diagnostics_flag_likely_parser_misses():
     from ipfs_datasets_py.processors.legal_scrapers.netherlands_laws_scraper import (
         _diagnose_article_extraction,

@@ -158,6 +158,11 @@ def write_dataset_card(
     run_metadata = run_metadata or {}
     record_counts = record_counts or {}
     coverage = coverage_note(run_metadata, record_counts)
+    scrape_command = run_metadata.get("scrape_command") or (
+        "python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape "
+        "--use_default_seeds true --max_seed_pages <pages> --crawl_depth 1 "
+        "--max_documents <cap> --rate_limit_delay <delay> --resume"
+    )
     readme = f"""---
 pretty_name: Netherlands Laws (Dutch, Normalized)
 language:
@@ -192,10 +197,14 @@ This package is a normalized version of the Netherlands laws scrape output.
 
 {coverage}
 
+This refresh includes parser coverage improvements for older/French heading styles such as `Article I.er`,
+plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
+and genuinely unnumbered/non-article documents.
+
 Scrape command:
 
 ```bash
-python -m ipfs_datasets_py.processors.legal_scrapers.netherlands_laws scrape --use_default_seeds true --max_seed_pages 25 --crawl_depth 1 --max_documents 100 --rate_limit_delay 0.2 --skip_existing true
+{scrape_command}
 ```
 
 Current package counts:

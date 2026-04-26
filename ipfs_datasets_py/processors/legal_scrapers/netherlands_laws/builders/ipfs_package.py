@@ -227,6 +227,10 @@ This dataset packages Netherlands law records with deterministic IPFS Content ID
 
 {coverage}
 
+This refresh includes parser coverage improvements for older/French heading styles such as `Article I.er`,
+plus run metadata diagnostics that distinguish article-producing laws, parser-missing article cases,
+and genuinely unnumbered/non-article documents.
+
 Scrape command:
 
 ```bash

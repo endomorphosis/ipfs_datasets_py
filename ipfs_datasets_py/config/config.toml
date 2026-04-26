@@ -12,8 +12,8 @@ orbitdb = "/orbitdb/zdpuB31L6gJz49erikZSQT3A1erJbid8oUTBrjLtBwjjXe3R5"
 
 [HF]
 account_name = "endomorphosis"
-user_key = "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"
-org_key = "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"
+user_key = ""
+org_key = ""
 org_name = "publicus"
 
 [IPFS]

@@ -744,9 +744,12 @@ def _metadata_value_is_reasonable(value: str, *, max_chars: int = _MAX_METADATA_
     if not normalized or len(normalized) > max_chars:
         return False
     lowered = normalized.lower()
+    if lowered in {"geen", "n.v.t.", "nvt", "niet van toepassing"} or lowered.startswith("geen "):
+        return False
     if lowered.startswith("de citeertitel is"):
         return False
     repeated_labels = [
+        "citeertitel",
         "soort regeling",
         "identificatienummer",
         "rechtsgebied",
