@@ -1,0 +1,12 @@
+{
+  "source": "https://www.portland.gov/code",
+  "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current",
+  "pages_parquet": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current/pages.parquet",
+  "title_count": 34,
+  "chapter_count": 404,
+  "section_count": 3052,
+  "target_count": 3052,
+  "row_count": 3052,
+  "error_count": 0,
+  "errors": []
+}

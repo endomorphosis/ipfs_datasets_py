@@ -17,6 +17,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois import I
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana import IndianaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import KansasScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import MassachusettsScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import MaineScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
@@ -490,6 +491,69 @@ async def test_north_dakota_official_index_discovers_cencode_pdfs(monkeypatch: p
     assert [row.section_number for row in statutes] == ["01-01", "01-02"]
     assert statutes[0].structured_data["source_kind"] == "official_modern_index_pdf"
     assert "chapter text" in statutes[0].full_text.lower()
+
+
+@pytest.mark.anyio
+async def test_massachusetts_full_corpus_uses_ajax_title_chapter_section_tree(monkeypatch: pytest.MonkeyPatch):
+    pages = {
+        "https://malegislature.gov/Laws/GeneralLaws": (
+            "<html><body>"
+            "<a href='/Laws/GeneralLaws/PartI'>Part I</a>"
+            "</body></html>"
+        ),
+        "https://malegislature.gov/Laws/GeneralLaws/PartI": (
+            "<html><body>"
+            "<a onclick=\"accordionAjaxLoad('1', '1', 'I')\">Title I</a>"
+            "</body></html>"
+        ),
+        "https://malegislature.gov/Laws/GeneralLaws/GetChaptersForTitle?partId=1&titleId=1&code=I": (
+            "<div id='titleI'>"
+            "<ul>"
+            "<li><a href='/Laws/GeneralLaws/PartI/TitleI/Chapter1'>Chapter 1</a></li>"
+            "</ul>"
+            "</div>"
+        ),
+        "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleI/Chapter1": (
+            "<html><body>"
+            "<a href='/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section1'>Section 1</a>"
+            "<a href='/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section2'>Section 2</a>"
+            "</body></html>"
+        ),
+        "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section1": (
+            "<html><body>"
+            "<h2 class='genLawHeading'>Citizens of commonwealth defined</h2>"
+            "<p>Section 1. " + ("Massachusetts section one text. " * 12) + "</p>"
+            "</body></html>"
+        ),
+        "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleI/Chapter1/Section2": (
+            "<html><body>"
+            "<h2 class='genLawHeading'>Jurisdiction</h2>"
+            "<p>Section 2. " + ("Massachusetts section two text. " * 12) + "</p>"
+            "</body></html>"
+        ),
+    }
+
+    async def _fake_request_text_direct(self, url: str, timeout: int = 18) -> str:
+        return pages.get(url, "")
+
+    async def _fail_generic(*args, **kwargs):
+        raise AssertionError("Massachusetts full-corpus path should use the official AJAX tree before generic scraping")
+
+    monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "1")
+
+    scraper = MassachusettsScraper("MA", "Massachusetts")
+    monkeypatch.setattr(MassachusettsScraper, "_request_text_direct", _fake_request_text_direct)
+    monkeypatch.setattr(scraper, "_generic_scrape", _fail_generic)
+
+    statutes = await scraper.scrape_code(
+        "Massachusetts General Laws",
+        "https://malegislature.gov/Laws/GeneralLaws",
+        max_statutes=2,
+    )
+
+    assert [statute.section_number for statute in statutes] == ["1", "2"]
+    assert statutes[0].structured_data["source_kind"] == "official_massachusetts_general_laws_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_part_title_chapter_section"
 
 
 @pytest.mark.anyio

@@ -253,6 +253,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--max-results", type=int, default=100, help="Maximum index pointers to consider.")
     parser.add_argument("--max-pages", type=int, default=25, help="Maximum WARC pages to fetch/extract.")
     parser.add_argument("--max-body-bytes", type=int, default=2_000_000, help="Maximum extracted HTTP body bytes per WARC record.")
+    parser.add_argument("--dedupe-urls", action="store_true", help="Fetch only one latest/best WARC pointer per unique URL.")
     parser.add_argument("--index-root", default="data/common_crawl_indexes", help="Local Common Crawl index root.")
     parser.add_argument("--download-index", action="store_true", help="Download the municipal index parquet first.")
     parser.add_argument("--repo-id", default=DEFAULT_REPO_ID, help="HF dataset repo containing the municipal index.")
@@ -313,6 +314,7 @@ async def _run(args: argparse.Namespace) -> Dict[str, Any]:
         max_results=int(args.max_results),
         max_pages=int(args.max_pages),
         common_crawl_fetch_max_bytes=int(args.max_body_bytes),
+        dedupe_urls=bool(args.dedupe_urls),
     )
 
     pages = _pages_for_parquet(result, output_root=output_root, include_html=bool(args.include_html))

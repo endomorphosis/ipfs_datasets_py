@@ -1,11 +1,13 @@
 """Scraper for Massachusetts state laws.
 
-This module contains the scraper for Massachusetts statutes from the official state legislative website.
+This module contains the scraper for Massachusetts statutes from the official state
+legislative website.
 """
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 import urllib.request
 import re
+from urllib.parse import urljoin
 from .base_scraper import BaseStateScraper, NormalizedStatute
 from .registry import StateScraperRegistry
 
@@ -13,6 +15,12 @@ from .registry import StateScraperRegistry
 class MassachusettsScraper(BaseStateScraper):
     """Scraper for Massachusetts state laws from https://malegislature.gov"""
 
+    _MA_TITLE_LOAD_RE = re.compile(
+        r"accordionAjaxLoad\(\s*'(?P<part>\d+)'\s*,\s*'(?P<title>\d+)'\s*,\s*'(?P<code>[^']*)'\s*\)",
+        re.IGNORECASE,
+    )
+    _MA_CHAPTER_NUMBER_RE = re.compile(r"/chapter(?P<chapter>[a-z0-9.]+)$", re.IGNORECASE)
+    _MA_SECTION_NUMBER_RE = re.compile(r"/section(?P<section>[a-z0-9.]+)$", re.IGNORECASE)
     _MA_SECTION_URL_RE = re.compile(
         r"/laws/generallaws/(?:part[a-z0-9-]*|title[a-z0-9-]*|chapter[a-z0-9-]*|section[a-z0-9-]*)(?:/|$)",
         re.IGNORECASE,
@@ -80,7 +88,14 @@ class MassachusettsScraper(BaseStateScraper):
         if not self._full_corpus_enabled() or max_statutes is not None:
             direct_sections = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct_sections:
-                return direct_sections[:return_threshold]
+                _merge(direct_sections)
+
+        official_statutes = await self._scrape_official_general_laws_tree(
+            code_name,
+            max_statutes=max(10, return_threshold),
+        )
+        if official_statutes:
+            return official_statutes[:return_threshold]
 
         for candidate in candidate_urls:
             if candidate in seen:
@@ -99,6 +114,163 @@ class MassachusettsScraper(BaseStateScraper):
                 return merged
 
         return merged
+
+    async def _scrape_official_general_laws_tree(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        root_html = await self._request_text_direct(f"{self.get_base_url()}/Laws/GeneralLaws", timeout=20)
+        if not root_html:
+            return []
+
+        root_soup = BeautifulSoup(root_html, "html.parser")
+        part_links: List[str] = []
+        seen_parts = set()
+        for link in root_soup.find_all("a", href=True):
+            href = str(link.get("href", "")).strip()
+            if "/Laws/GeneralLaws/Part" not in href:
+                continue
+            abs_url = urljoin(self.get_base_url(), href)
+            if abs_url in seen_parts:
+                continue
+            seen_parts.add(abs_url)
+            part_links.append(abs_url)
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections = set()
+        for part_url in part_links:
+            if len(statutes) >= max_statutes:
+                break
+            section_links = await self._discover_section_links_from_part(part_url, max_sections=max_statutes * 4)
+            for section_url in section_links:
+                if len(statutes) >= max_statutes:
+                    break
+                if section_url in seen_sections:
+                    continue
+                seen_sections.add(section_url)
+                statute = await self._build_section_statute(code_name, section_url)
+                if statute is not None:
+                    statutes.append(statute)
+        return statutes
+
+    async def _discover_section_links_from_part(self, part_url: str, max_sections: int) -> List[str]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        part_html = await self._request_text_direct(part_url, timeout=20)
+        if not part_html:
+            return []
+
+        title_specs = self._extract_title_specs(part_html)
+        section_links: List[str] = []
+        seen_chapters = set()
+        seen_sections = set()
+        for part_id, title_id, title_code in title_specs:
+            if len(section_links) >= max_sections:
+                break
+            chapter_fragment = await self._request_text_direct(
+                f"{self.get_base_url()}/Laws/GeneralLaws/GetChaptersForTitle?partId={part_id}&titleId={title_id}&code={title_code}",
+                timeout=20,
+            )
+            if not chapter_fragment:
+                continue
+            chapter_soup = BeautifulSoup(chapter_fragment, "html.parser")
+            for link in chapter_soup.find_all("a", href=True):
+                href = str(link.get("href", "")).strip()
+                if "/Laws/GeneralLaws/" not in href or "/Chapter" not in href:
+                    continue
+                chapter_url = urljoin(self.get_base_url(), href)
+                if chapter_url in seen_chapters:
+                    continue
+                seen_chapters.add(chapter_url)
+                chapter_html = await self._request_text_direct(chapter_url, timeout=20)
+                if not chapter_html:
+                    continue
+                chapter_page = BeautifulSoup(chapter_html, "html.parser")
+                for section_link in chapter_page.find_all("a", href=True):
+                    raw_section_href = str(section_link.get("href", "")).strip()
+                    if "/Laws/GeneralLaws/" not in raw_section_href or "/Section" not in raw_section_href:
+                        continue
+                    abs_section = urljoin(self.get_base_url(), raw_section_href)
+                    if abs_section in seen_sections:
+                        continue
+                    seen_sections.add(abs_section)
+                    section_links.append(abs_section)
+                    if len(section_links) >= max_sections:
+                        break
+                if len(section_links) >= max_sections:
+                    break
+        return section_links
+
+    def _extract_title_specs(self, html: str) -> List[Tuple[str, str, str]]:
+        specs: List[Tuple[str, str, str]] = []
+        seen = set()
+        for match in self._MA_TITLE_LOAD_RE.finditer(html):
+            item = (
+                str(match.group("part") or "").strip(),
+                str(match.group("title") or "").strip(),
+                str(match.group("code") or "").strip(),
+            )
+            if not all(item) or item in seen:
+                continue
+            seen.add(item)
+            specs.append(item)
+        return specs
+
+    async def _build_section_statute(self, code_name: str, section_url: str) -> Optional[NormalizedStatute]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        html = await self._request_text_direct(section_url, timeout=20)
+        if not html:
+            return None
+        soup = BeautifulSoup(html, "html.parser")
+
+        heading = soup.select_one("h2.genLawHeading")
+        section_name = self._normalize_legal_text(heading.get_text(" ", strip=True)) if heading else ""
+        body_chunks: List[str] = []
+        for para in soup.find_all("p"):
+            text = self._normalize_legal_text(para.get_text(" ", strip=True))
+            if text:
+                body_chunks.append(text)
+        if not body_chunks:
+            main = soup.select_one("main") or soup
+            text = self._normalize_legal_text(main.get_text(" ", strip=True))
+            if text:
+                body_chunks.append(text)
+        body = "\n".join(chunk for chunk in body_chunks if chunk)
+        if len(body) < 80:
+            return None
+
+        chapter_match = self._MA_CHAPTER_NUMBER_RE.search(section_url)
+        section_match = self._MA_SECTION_NUMBER_RE.search(section_url)
+        chapter_number = chapter_match.group("chapter") if chapter_match else ""
+        section_number = section_match.group("section") if section_match else ""
+        statute_id = f"{code_name} ch. {chapter_number} § {section_number}".strip()
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=statute_id,
+            code_name=code_name,
+            chapter_number=chapter_number,
+            section_number=section_number,
+            section_name=section_name[:200] if section_name else f"Section {section_number}",
+            full_text=body,
+            legal_area=self._identify_legal_area(section_name or body),
+            source_url=section_url,
+            official_cite=f"Mass. Gen. Laws ch. {chapter_number}, § {section_number}",
+            structured_data={
+                "source_kind": "official_massachusetts_general_laws_html",
+                "discovery_method": "official_part_title_chapter_section",
+                "skip_hydrate": True,
+            },
+        )
 
     async def _scrape_direct_seed_sections(self, code_name: str, max_statutes: int = 2) -> List[NormalizedStatute]:
         try:

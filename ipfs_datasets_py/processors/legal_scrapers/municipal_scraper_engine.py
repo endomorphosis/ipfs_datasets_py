@@ -200,6 +200,23 @@ class MunicipalScraperFallbacks:
                 mime_terms=mime_terms,
                 max_results=max_results,
             )
+            if kwargs.get("dedupe_urls"):
+                deduped: Dict[str, Dict[str, Any]] = {}
+                for record in records:
+                    record_url = str(record.get("url") or "").strip()
+                    if not record_url:
+                        continue
+                    current = deduped.get(record_url)
+                    if current is None or str(record.get("timestamp") or "") > str(current.get("timestamp") or ""):
+                        deduped[record_url] = record
+                records = sorted(
+                    deduped.values(),
+                    key=lambda item: (
+                        0 if int(item.get("status") or 0) == 200 else 1,
+                        str(item.get("timestamp") or ""),
+                    ),
+                    reverse=True,
+                )
         except Exception as exc:
             return {
                 "success": False,
@@ -320,6 +337,7 @@ class MunicipalScraperFallbacks:
                     except Exception:
                         text = html
                 elif body_base64 and "pdf" in body_mime.lower():
+                    pdf_bytes = b""
                     try:
                         import base64
                         from io import BytesIO
@@ -334,6 +352,25 @@ class MunicipalScraperFallbacks:
                         body_text = "\n".join((page.extract_text() or "") for page in reader.pages)
                     except Exception as exc:
                         errors.append({"url": page_url, "error": f"PDF text extraction failed: {type(exc).__name__}: {exc}"})
+                    if not body_text.strip() and pdf_bytes:
+                        try:
+                            import subprocess
+                            from tempfile import NamedTemporaryFile
+
+                            with NamedTemporaryFile(suffix=".pdf") as handle:
+                                handle.write(pdf_bytes)
+                                handle.flush()
+                                completed = subprocess.run(
+                                    ["pdftotext", handle.name, "-"],
+                                    capture_output=True,
+                                    timeout=30,
+                                    check=False,
+                                )
+                            fallback_text = completed.stdout.decode("utf-8", errors="ignore").strip()
+                            if fallback_text:
+                                body_text = fallback_text
+                        except Exception as exc:
+                            errors.append({"url": page_url, "error": f"pdftotext fallback failed: {type(exc).__name__}: {exc}"})
 
                 if html or text or body_base64:
                     pages.append(

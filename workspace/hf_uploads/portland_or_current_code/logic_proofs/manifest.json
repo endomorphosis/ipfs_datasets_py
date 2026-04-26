@@ -1,0 +1,14 @@
+{
+  "schema_version": "portland-logic-proof-artifacts-v1",
+  "input": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_canonical_artifacts/STATE-OR.parquet",
+  "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_logic_proof_artifacts",
+  "logic_proof_artifacts": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/municipal_common_crawl_laws/portland_gov_code_current_logic_proof_artifacts/STATE-OR_logic_proof_artifacts.parquet",
+  "source_row_count": 3052,
+  "artifact_row_count": 3052,
+  "failure_count": 0,
+  "failures": [],
+  "formalization_scope": "machine_generated_candidate",
+  "zkp_backend": "simulated",
+  "zkp_security_note": "simulated educational certificates; not cryptographically secure",
+  "created_at": "2026-04-26T04:21:56.155199+00:00"
+}
