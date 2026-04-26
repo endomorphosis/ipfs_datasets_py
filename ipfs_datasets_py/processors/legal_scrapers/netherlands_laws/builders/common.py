@@ -10,6 +10,8 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from ipfs_datasets_py.utils.cid_utils import cid_for_bytes
+
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
@@ -28,9 +30,19 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def _parquet_safe(value: Any) -> Any:
+    if value == {}:
+        return None
+    if isinstance(value, dict):
+        return {key: _parquet_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_parquet_safe(item) for item in value]
+    return value
+
+
 def write_parquet(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    table = pa.Table.from_pylist(rows)
+    table = pa.Table.from_pylist([{key: _parquet_safe(value) for key, value in row.items()} for row in rows])
     pq.write_table(table, path, compression="zstd")
 
 
@@ -40,3 +52,23 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def file_cid(path: Path) -> str:
+    return cid_for_bytes(path.read_bytes())
+
+
+def file_manifest_entry(path: Path, records: int | None = None) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "bytes": path.stat().st_size,
+        "sha256": sha256(path),
+        "file_cid": file_cid(path),
+    }
+    if records is not None:
+        entry["records"] = records
+    return entry
+
+
+def write_json(path: Path, obj: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(obj, indent=2, ensure_ascii=False), encoding="utf-8")

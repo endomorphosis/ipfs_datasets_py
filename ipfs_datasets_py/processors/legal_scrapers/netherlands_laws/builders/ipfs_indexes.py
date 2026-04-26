@@ -10,32 +10,34 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-import faiss
-from sklearn.decomposition import TruncatedSVD
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import normalize
+from ipfs_datasets_py.utils.cid_utils import cid_for_obj
 
-from ipfs_datasets_py.utils.cid_utils import cid_for_bytes, cid_for_obj
+from .common import file_cid, file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from ..paths import (
+    BM25_INDEX_DATASET_NAME,
+    DEFAULT_HF_REPO_IDS,
+    HF_DATA_DIR,
+    IPFS_DATASET_NAME,
+    KNOWLEDGE_GRAPH_DATASET_NAME,
+    VECTOR_INDEX_DATASET_NAME,
+)
 
-from .common import read_jsonl, sha256, write_jsonl, write_parquet
-from ..paths import HF_DATA_DIR
 
-
-SOURCE_DIR = HF_DATA_DIR / "ipfs_netherlands_laws"
+DEFAULT_SOURCE_DIR = HF_DATA_DIR / IPFS_DATASET_NAME
+DEFAULT_VECTOR_OUT_DIR = HF_DATA_DIR / VECTOR_INDEX_DATASET_NAME
+DEFAULT_BM25_OUT_DIR = HF_DATA_DIR / BM25_INDEX_DATASET_NAME
+DEFAULT_KG_OUT_DIR = HF_DATA_DIR / KNOWLEDGE_GRAPH_DATASET_NAME
 TOKENIZER_RE = re.compile(r"[0-9A-Za-zÀ-ÿ_]+", re.UNICODE)
-
-
-def file_cid(path: Path) -> str:
-    return cid_for_bytes(path.read_bytes())
 
 
 def tokenise(text: str) -> list[str]:
     return [match.group(0).lower() for match in TOKENIZER_RE.finditer(text or "")]
 
 
-def load_source_rows() -> list[dict[str, Any]]:
-    laws = read_jsonl(SOURCE_DIR / "data/laws/ipfs_netherlands_laws.jsonl")
-    articles = read_jsonl(SOURCE_DIR / "data/articles/ipfs_netherlands_laws_articles.jsonl")
+def load_source_rows(source_dir: Path | None = None) -> list[dict[str, Any]]:
+    source_dir = source_dir or DEFAULT_SOURCE_DIR
+    laws = read_jsonl(source_dir / "data/laws/ipfs_netherlands_laws.jsonl")
+    articles = read_jsonl(source_dir / "data/articles/ipfs_netherlands_laws_articles.jsonl")
     corpus: list[dict[str, Any]] = []
     for row in laws:
         corpus.append(
@@ -70,8 +72,88 @@ def load_source_rows() -> list[dict[str, Any]]:
     return corpus
 
 
-def build_vector_package(corpus: list[dict[str, Any]]) -> Path:
-    out_dir = HF_DATA_DIR / "ipfs_netherlands_laws_vector_index"
+def _write_dataset_card(out_dir: Path, title: str, repo_id: str, configs: list[str], body: str) -> None:
+    config_yaml = "\n".join(
+        [
+            f"- config_name: {config}\n  data_files:\n  - split: train\n    path: parquet/{config}/*.parquet"
+            for config in configs
+        ]
+    )
+    readme = f"""---
+pretty_name: {title}
+language:
+- nl
+tags:
+- ipfs
+- cid
+- legal
+license: other
+configs:
+{config_yaml}
+---
+
+# {title}
+
+Hugging Face target: `{repo_id}`.
+
+{body}
+"""
+    (out_dir / "README.md").write_text(readme, encoding="utf-8")
+
+
+def _write_gitattributes(out_dir: Path) -> None:
+    (out_dir / ".gitattributes").write_text(
+        "parquet/**/*.parquet filter=lfs diff=lfs merge=lfs -text\n"
+        "artifacts/* filter=lfs diff=lfs merge=lfs -text\n"
+        "data/**/*.jsonl filter=lfs diff=lfs merge=lfs -text\n"
+        "data/**/*.jsonld filter=lfs diff=lfs merge=lfs -text\n",
+        encoding="utf-8",
+    )
+
+
+def _write_manifest(
+    out_dir: Path,
+    dataset_name: str,
+    repo_id: str,
+    record_counts: dict[str, int],
+    source_dataset: str = DEFAULT_HF_REPO_IDS["base"],
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    manifest: dict[str, Any] = {
+        "dataset_name": dataset_name,
+        "source_dataset": source_dataset,
+        "repo_target": repo_id,
+        "upload_target": repo_id,
+        "records": record_counts,
+        "files": {},
+    }
+    if extra:
+        manifest["index_metadata"] = extra
+    for path in sorted(p for p in out_dir.rglob("*") if p.is_file() and p.name != "dataset_manifest.json"):
+        rel = path.relative_to(out_dir).as_posix()
+        records = None
+        for key, count in record_counts.items():
+            if f"/{key}/" in f"/{rel}/" or rel.startswith(f"parquet/{key}/") or rel.startswith(f"data/{key}/"):
+                records = count
+                break
+        manifest["files"][rel] = file_manifest_entry(path, records)
+    write_json(out_dir / "dataset_manifest.json", manifest)
+    return manifest
+
+
+def build_vector_index(
+    corpus: list[dict[str, Any]] | None = None,
+    source_dir: Path | None = None,
+    out_dir: Path | None = None,
+    repo_id: str = DEFAULT_HF_REPO_IDS["vector"],
+) -> Path:
+    import faiss
+    from sklearn.decomposition import TruncatedSVD
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.preprocessing import normalize
+
+    corpus = corpus or load_source_rows(source_dir)
+    out_dir = out_dir or DEFAULT_VECTOR_OUT_DIR
     docs: list[dict[str, Any]] = []
     texts: list[str] = []
     for row in corpus:
@@ -107,29 +189,42 @@ def build_vector_package(corpus: list[dict[str, Any]]) -> Path:
         payload["index_row_cid"] = cid_for_obj(payload)
         mapping_rows.append(payload)
 
-    metadata = {
-        "dataset_name": "ipfs_netherlands_laws_vector_index",
-        "source_dataset": "justicedao/ipfs_netherlands_laws",
-        "records": len(mapping_rows),
-        "embedding_method": "tfidf_plus_truncated_svd",
-        "embedding_dim": int(dense.shape[1]),
-        "faiss_metric": "inner_product_on_l2_normalized_vectors",
-        "index_key": "source_cid",
-    }
-
     write_parquet(out_dir / "parquet/mapping/train-00000-of-00001.parquet", mapping_rows)
     write_jsonl(out_dir / "data/mapping/ipfs_netherlands_laws_vector_mapping.jsonl", mapping_rows)
     (out_dir / "artifacts").mkdir(parents=True, exist_ok=True)
     (out_dir / "artifacts/faiss.index").write_bytes(faiss.serialize_index(index).tobytes())
     (out_dir / "artifacts/vectorizer.pkl").write_bytes(pickle.dumps(vectorizer))
     (out_dir / "artifacts/svd.pkl").write_bytes(pickle.dumps(svd))
-    (out_dir / "artifacts/metadata.json").write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+    metadata = {
+        "dataset_name": VECTOR_INDEX_DATASET_NAME,
+        "source_dataset": DEFAULT_HF_REPO_IDS["base"],
+        "records": len(mapping_rows),
+        "embedding_method": "tfidf_plus_truncated_svd",
+        "embedding_dim": int(dense.shape[1]),
+        "faiss_metric": "inner_product_on_l2_normalized_vectors",
+        "index_key": "source_cid",
+    }
+    write_json(out_dir / "artifacts/metadata.json", metadata)
+    _write_dataset_card(
+        out_dir,
+        "IPFS Netherlands Laws Vector Index",
+        repo_id,
+        ["mapping"],
+        "Dense vector mapping keyed by source CID, with FAISS and TF-IDF/SVD artifacts.",
+    )
+    _write_gitattributes(out_dir)
+    _write_manifest(out_dir, VECTOR_INDEX_DATASET_NAME, repo_id, {"mapping": len(mapping_rows)}, extra=metadata)
     return out_dir
 
 
-def build_bm25_package(corpus: list[dict[str, Any]]) -> Path:
-    out_dir = HF_DATA_DIR / "ipfs_netherlands_laws_bm25_index"
-    doc_tokens: dict[str, list[str]] = {}
+def build_bm25_index(
+    corpus: list[dict[str, Any]] | None = None,
+    source_dir: Path | None = None,
+    out_dir: Path | None = None,
+    repo_id: str = DEFAULT_HF_REPO_IDS["bm25"],
+) -> Path:
+    corpus = corpus or load_source_rows(source_dir)
+    out_dir = out_dir or DEFAULT_BM25_OUT_DIR
     doc_lengths: dict[str, int] = {}
     tf_by_doc: dict[str, Counter[str]] = {}
     doc_rows: list[dict[str, Any]] = []
@@ -139,7 +234,6 @@ def build_bm25_package(corpus: list[dict[str, Any]]) -> Path:
         text = f"{row.get('title') or ''} {row.get('citation') or ''} {row.get('text') or ''}".strip()
         source_cid = row["source_cid"]
         tokens = tokenise(text)
-        doc_tokens[source_cid] = tokens
         doc_lengths[source_cid] = len(tokens)
         tf_by_doc[source_cid] = Counter(tokens)
         payload = {
@@ -160,11 +254,11 @@ def build_bm25_package(corpus: list[dict[str, Any]]) -> Path:
         doc_rows.append(payload)
         row_by_cid[source_cid] = payload
 
-    n_docs = len(doc_tokens)
+    n_docs = len(doc_lengths)
     avgdl = sum(doc_lengths.values()) / max(1, n_docs)
     doc_freq: Counter[str] = Counter()
-    for tokens in doc_tokens.values():
-        doc_freq.update(set(tokens))
+    for tf_counter in tf_by_doc.values():
+        doc_freq.update(tf_counter.keys())
 
     k1 = 1.5
     b = 0.75
@@ -196,26 +290,34 @@ def build_bm25_package(corpus: list[dict[str, Any]]) -> Path:
     write_parquet(out_dir / "parquet/terms/train-00000-of-00001.parquet", term_rows)
     write_jsonl(out_dir / "data/documents/ipfs_netherlands_laws_bm25_documents.jsonl", doc_rows)
     write_jsonl(out_dir / "data/terms/ipfs_netherlands_laws_bm25_terms.jsonl", term_rows)
-    (out_dir / "artifacts").mkdir(parents=True, exist_ok=True)
-    (out_dir / "artifacts/metadata.json").write_text(
-        json.dumps(
-            {
-                "dataset_name": "ipfs_netherlands_laws_bm25_index",
-                "source_dataset": "justicedao/ipfs_netherlands_laws",
-                "records": {"documents": len(doc_rows), "terms": len(term_rows)},
-                "bm25": {"k1": k1, "b": b, "avgdl": avgdl},
-                "index_key": "source_cid",
-            },
-            indent=2,
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
+    metadata = {
+        "dataset_name": BM25_INDEX_DATASET_NAME,
+        "source_dataset": DEFAULT_HF_REPO_IDS["base"],
+        "records": {"documents": len(doc_rows), "terms": len(term_rows)},
+        "bm25": {"k1": k1, "b": b, "avgdl": avgdl},
+        "index_key": "source_cid",
+    }
+    write_json(out_dir / "artifacts/metadata.json", metadata)
+    _write_dataset_card(
+        out_dir,
+        "IPFS Netherlands Laws BM25 Index",
+        repo_id,
+        ["documents", "terms"],
+        "Sparse BM25 document and postings tables keyed by source CID.",
     )
+    _write_gitattributes(out_dir)
+    _write_manifest(out_dir, BM25_INDEX_DATASET_NAME, repo_id, {"documents": len(doc_rows), "terms": len(term_rows)}, extra=metadata)
     return out_dir
 
 
-def build_knowledge_graph_package(corpus: list[dict[str, Any]]) -> Path:
-    out_dir = HF_DATA_DIR / "ipfs_netherlands_laws_knowledge_graph"
+def build_knowledge_graph(
+    corpus: list[dict[str, Any]] | None = None,
+    source_dir: Path | None = None,
+    out_dir: Path | None = None,
+    repo_id: str = DEFAULT_HF_REPO_IDS["knowledge-graph"],
+) -> Path:
+    corpus = corpus or load_source_rows(source_dir)
+    out_dir = out_dir or DEFAULT_KG_OUT_DIR
     laws = [row for row in corpus if row["record_type"] == "law"]
     articles = [row for row in corpus if row["record_type"] == "article"]
     graph_nodes: list[dict[str, Any]] = []
@@ -310,38 +412,49 @@ def build_knowledge_graph_package(corpus: list[dict[str, Any]]) -> Path:
     (out_dir / "data/graph/ipfs_netherlands_laws_kg.jsonld").write_text(json.dumps(jsonld_doc, ensure_ascii=False, indent=2), encoding="utf-8")
     write_parquet(out_dir / "parquet/nodes/train-00000-of-00001.parquet", graph_nodes)
     write_parquet(out_dir / "parquet/edges/train-00000-of-00001.parquet", graph_edges)
-    (out_dir / "artifacts").mkdir(parents=True, exist_ok=True)
-    (out_dir / "artifacts/metadata.json").write_text(
-        json.dumps(
-            {
-                "dataset_name": "ipfs_netherlands_laws_knowledge_graph",
-                "source_dataset": "justicedao/ipfs_netherlands_laws",
-                "records": {"nodes": len(graph_nodes), "edges": len(graph_edges)},
-                "graph_root_cid": cid_for_obj(jsonld_doc),
-                "index_key": "source_cid",
-            },
-            indent=2,
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
+    metadata = {
+        "dataset_name": KNOWLEDGE_GRAPH_DATASET_NAME,
+        "source_dataset": DEFAULT_HF_REPO_IDS["base"],
+        "records": {"nodes": len(graph_nodes), "edges": len(graph_edges)},
+        "graph_root_cid": cid_for_obj(jsonld_doc),
+        "index_key": "source_cid",
+    }
+    write_json(out_dir / "artifacts/metadata.json", metadata)
+    _write_dataset_card(
+        out_dir,
+        "IPFS Netherlands Laws Knowledge Graph",
+        repo_id,
+        ["nodes", "edges"],
+        "JSON-LD graph and node/edge tables whose identities are IPFS content addresses.",
     )
+    _write_gitattributes(out_dir)
+    _write_manifest(out_dir, KNOWLEDGE_GRAPH_DATASET_NAME, repo_id, {"nodes": len(graph_nodes), "edges": len(graph_edges)}, extra=metadata)
     return out_dir
 
 
-def write_manifest(out_dir: Path) -> None:
-    files = [path for path in out_dir.rglob("*") if path.is_file() and path.name != "dataset_manifest.json"]
-    manifest: dict[str, Any] = {"dataset_name": out_dir.name, "source_dataset": "justicedao/ipfs_netherlands_laws", "files": {}}
-    for path in sorted(files):
-        rel = path.relative_to(out_dir).as_posix()
-        manifest["files"][rel] = {"bytes": path.stat().st_size, "sha256": sha256(path), "file_cid": file_cid(path)}
-    (out_dir / "dataset_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+def build_vector_package(*args: Any, **kwargs: Any) -> Path:
+    return build_vector_index(*args, **kwargs)
+
+
+def build_bm25_package(*args: Any, **kwargs: Any) -> Path:
+    return build_bm25_index(*args, **kwargs)
+
+
+def build_knowledge_graph_package(*args: Any, **kwargs: Any) -> Path:
+    return build_knowledge_graph(*args, **kwargs)
+
+
+def build_all_indexes(source_dir: Path | None = None) -> list[Path]:
+    corpus = load_source_rows(source_dir)
+    return [
+        build_vector_index(corpus=corpus),
+        build_bm25_index(corpus=corpus),
+        build_knowledge_graph(corpus=corpus),
+    ]
 
 
 def main() -> None:
-    corpus = load_source_rows()
-    built = [build_vector_package(corpus), build_bm25_package(corpus), build_knowledge_graph_package(corpus)]
-    for out_dir in built:
-        write_manifest(out_dir)
+    built = build_all_indexes()
     print(json.dumps([str(path) for path in built], indent=2))
 
 

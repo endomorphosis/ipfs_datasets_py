@@ -6,7 +6,9 @@ repo-root standalone folders.
 """
 
 from .paths import (
+    DEFAULT_HF_REPO_IDS,
     NETHERLANDS_LAWS_DIR,
+    PACKAGE_RAW_OUTPUT_DIR,
     RAW_DATA_DIR,
     HF_DATA_DIR,
     LEGACY_HF_READY_DIR,
@@ -15,7 +17,9 @@ from .paths import (
 )
 
 __all__ = [
+    "DEFAULT_HF_REPO_IDS",
     "NETHERLANDS_LAWS_DIR",
+    "PACKAGE_RAW_OUTPUT_DIR",
     "RAW_DATA_DIR",
     "HF_DATA_DIR",
     "LEGACY_HF_READY_DIR",

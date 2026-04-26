@@ -349,6 +349,13 @@ setup(
             'lxml_html_clean>=0.4.0',
             'warcio>=1.7.4',
         ],
+        'legal_netherlands': [
+            'pyarrow>=10.0.0',
+            'huggingface-hub>=0.34.0',
+            'datasets>=2.10.0',
+            'faiss-cpu>=1.7.0' if IS_WINDOWS else 'faiss-cpu>=1.8.0',
+            'scikit-learn>=1.3.0,<2.0.0',
+        ],
         'security': [
             'cryptography>=41.0.0',
             'keyring>=24.0.0',
@@ -583,6 +590,8 @@ setup(
         'console_scripts': [
             'ipfs-datasets=ipfs_datasets_cli:cli_main',
             'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
+            'netherlands-laws=ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main',
+            'ipfs-netherlands-laws=ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main',
             # File converter CLI (Phase 6.4)
             'file-converter=ipfs_datasets_py.processors.file_converter.cli:main',
             'fc=ipfs_datasets_py.processors.file_converter.cli:main',

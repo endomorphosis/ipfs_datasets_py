@@ -6,18 +6,20 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ipfs_datasets_py.utils.cid_utils import cid_for_bytes, cid_for_obj
+from ipfs_datasets_py.utils.cid_utils import cid_for_obj
 
-from .common import read_jsonl, sha256, write_jsonl, write_parquet
-from ..paths import HF_DATA_DIR, RAW_DATA_DIR
+from .common import file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from ..paths import (
+    DEFAULT_HF_REPO_IDS,
+    HF_DATA_DIR,
+    IPFS_DATASET_NAME,
+    PACKAGE_RAW_OUTPUT_DIR,
+)
 
 
-RAW_DIR = RAW_DATA_DIR / "nl_test_output_docs"
-OUT_DIR = HF_DATA_DIR / "ipfs_netherlands_laws"
-
-
-def file_cid(path: Path) -> str:
-    return cid_for_bytes(path.read_bytes())
+DEFAULT_REPO_ID = DEFAULT_HF_REPO_IDS["base"]
+DEFAULT_RAW_DIR = PACKAGE_RAW_OUTPUT_DIR
+DEFAULT_OUT_DIR = HF_DATA_DIR / IPFS_DATASET_NAME
 
 
 def law_payload(row: dict[str, Any]) -> dict[str, Any]:
@@ -96,9 +98,10 @@ def article_payload(row: dict[str, Any]) -> dict[str, Any]:
     return {key: row.get(key) for key in keep}
 
 
-def build_rows() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
-    raw_laws = read_jsonl(RAW_DIR / "netherlands_laws_index_latest.jsonl")
-    raw_articles = read_jsonl(RAW_DIR / "netherlands_laws_articles_index_latest.jsonl")
+def build_rows(raw_dir: Path | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    raw_dir = raw_dir or DEFAULT_RAW_DIR
+    raw_laws = read_jsonl(raw_dir / "netherlands_laws_index_latest.jsonl")
+    raw_articles = read_jsonl(raw_dir / "netherlands_laws_articles_index_latest.jsonl")
 
     laws: list[dict[str, Any]] = []
     law_cid_by_id: dict[str, str] = {}
@@ -145,11 +148,24 @@ def build_rows() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[
     return laws, articles, cid_index
 
 
-def write_readme() -> None:
-    readme = """---
+def write_readme(out_dir: Path, repo_id: str = DEFAULT_REPO_ID) -> None:
+    readme = f"""---
 pretty_name: IPFS Netherlands Laws
 language:
 - nl
+task_categories:
+- text-retrieval
+- question-answering
+- text-classification
+tags:
+- law
+- legal
+- legislation
+- netherlands
+- dutch
+- ipfs
+- cid
+license: other
 configs:
 - config_name: laws
   data_files:
@@ -164,12 +180,18 @@ configs:
   - split: train
     path: parquet/cid_index/*.parquet
 ---
+
+# IPFS Netherlands Laws
+
+Hugging Face target: `{repo_id}`.
+
+This dataset packages Netherlands law records with deterministic IPFS Content IDs. Each row includes a `cid` and `content_address`; article rows also include the parent `law_cid`.
 """
-    (OUT_DIR / "README.md").write_text(readme, encoding="utf-8")
+    (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
 
-def write_gitattributes() -> None:
-    (OUT_DIR / ".gitattributes").write_text(
+def write_gitattributes(out_dir: Path) -> None:
+    (out_dir / ".gitattributes").write_text(
         "data/**/*.jsonl filter=lfs diff=lfs merge=lfs -text\n"
         "data/**/*.json filter=lfs diff=lfs merge=lfs -text\n"
         "parquet/**/*.parquet filter=lfs diff=lfs merge=lfs -text\n",
@@ -177,41 +199,48 @@ def write_gitattributes() -> None:
     )
 
 
-def build_manifest(laws: list[dict[str, Any]], articles: list[dict[str, Any]], cid_index: list[dict[str, Any]]) -> None:
+def build_manifest(
+    laws: list[dict[str, Any]],
+    articles: list[dict[str, Any]],
+    cid_index: list[dict[str, Any]],
+    out_dir: Path,
+    repo_id: str = DEFAULT_REPO_ID,
+) -> dict[str, Any]:
     manifest: dict[str, Any] = {
-        "dataset_name": "ipfs_netherlands_laws",
+        "dataset_name": IPFS_DATASET_NAME,
         "snapshot_date": "2026-04-11",
-        "repo_target": "justicedao/ipfs_netherlands_laws",
+        "repo_target": repo_id,
+        "upload_target": repo_id,
         "jurisdiction": "Netherlands",
         "language": "nl",
         "cid_format": {"version": 1, "codec": "raw", "multihash": "sha2-256", "base": "base32"},
         "records": {"laws": len(laws), "articles": len(articles), "cid_index": len(cid_index)},
         "files": {},
     }
-    for rel in [
-        "data/laws/ipfs_netherlands_laws.jsonl",
-        "data/articles/ipfs_netherlands_laws_articles.jsonl",
-        "data/cid_index/ipfs_netherlands_laws_cid_index.jsonl",
-        "data/metadata/netherlands_laws_run_metadata_latest.json",
-        "parquet/laws/train-00000-of-00001.parquet",
-        "parquet/articles/train-00000-of-00001.parquet",
-        "parquet/cid_index/train-00000-of-00001.parquet",
-    ]:
-        path = OUT_DIR / rel
-        info: dict[str, Any] = {"bytes": path.stat().st_size, "sha256": sha256(path), "file_cid": file_cid(path)}
-        if rel.startswith("data/laws") or rel.startswith("parquet/laws"):
-            info["records"] = len(laws)
-        elif rel.startswith("data/articles") or rel.startswith("parquet/articles"):
-            info["records"] = len(articles)
-        elif rel.startswith("data/cid_index") or rel.startswith("parquet/cid_index"):
-            info["records"] = len(cid_index)
-        manifest["files"][rel] = info
-    (OUT_DIR / "dataset_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    files: list[tuple[str, int | None]] = [
+        ("data/laws/ipfs_netherlands_laws.jsonl", len(laws)),
+        ("data/articles/ipfs_netherlands_laws_articles.jsonl", len(articles)),
+        ("data/cid_index/ipfs_netherlands_laws_cid_index.jsonl", len(cid_index)),
+        ("data/metadata/netherlands_laws_run_metadata_latest.json", None),
+        ("parquet/laws/train-00000-of-00001.parquet", len(laws)),
+        ("parquet/articles/train-00000-of-00001.parquet", len(articles)),
+        ("parquet/cid_index/train-00000-of-00001.parquet", len(cid_index)),
+    ]
+    for rel, records in files:
+        manifest["files"][rel] = file_manifest_entry(out_dir / rel, records)
+    write_json(out_dir / "dataset_manifest.json", manifest)
+    return manifest
 
 
-def main() -> None:
-    laws, articles, cid_index = build_rows()
-    run_metadata = json.loads((RAW_DIR / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8"))
+def build_ipfs_cid_package(
+    raw_dir: Path | None = None,
+    out_dir: Path | None = None,
+    repo_id: str = DEFAULT_REPO_ID,
+) -> Path:
+    raw_dir = raw_dir or DEFAULT_RAW_DIR
+    out_dir = out_dir or DEFAULT_OUT_DIR
+    laws, articles, cid_index = build_rows(raw_dir)
+    run_metadata = json.loads((raw_dir / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8"))
 
     for rel in [
         "data/laws",
@@ -222,23 +251,26 @@ def main() -> None:
         "parquet/articles",
         "parquet/cid_index",
     ]:
-        (OUT_DIR / rel).mkdir(parents=True, exist_ok=True)
+        (out_dir / rel).mkdir(parents=True, exist_ok=True)
 
-    write_jsonl(OUT_DIR / "data/laws/ipfs_netherlands_laws.jsonl", laws)
-    write_jsonl(OUT_DIR / "data/articles/ipfs_netherlands_laws_articles.jsonl", articles)
-    write_jsonl(OUT_DIR / "data/cid_index/ipfs_netherlands_laws_cid_index.jsonl", cid_index)
-    (OUT_DIR / "data/metadata/netherlands_laws_run_metadata_latest.json").write_text(
-        json.dumps(run_metadata, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-    write_parquet(OUT_DIR / "parquet/laws/train-00000-of-00001.parquet", laws)
-    write_parquet(OUT_DIR / "parquet/articles/train-00000-of-00001.parquet", articles)
-    write_parquet(OUT_DIR / "parquet/cid_index/train-00000-of-00001.parquet", cid_index)
+    write_jsonl(out_dir / "data/laws/ipfs_netherlands_laws.jsonl", laws)
+    write_jsonl(out_dir / "data/articles/ipfs_netherlands_laws_articles.jsonl", articles)
+    write_jsonl(out_dir / "data/cid_index/ipfs_netherlands_laws_cid_index.jsonl", cid_index)
+    write_json(out_dir / "data/metadata/netherlands_laws_run_metadata_latest.json", run_metadata)
+    write_parquet(out_dir / "parquet/laws/train-00000-of-00001.parquet", laws)
+    write_parquet(out_dir / "parquet/articles/train-00000-of-00001.parquet", articles)
+    write_parquet(out_dir / "parquet/cid_index/train-00000-of-00001.parquet", cid_index)
 
-    write_readme()
-    write_gitattributes()
-    build_manifest(laws, articles, cid_index)
-    print(json.dumps({"laws": len(laws), "articles": len(articles), "cid_index": len(cid_index)}, indent=2))
+    write_readme(out_dir, repo_id)
+    write_gitattributes(out_dir)
+    build_manifest(laws, articles, cid_index, out_dir, repo_id)
+    return out_dir
+
+
+def main() -> None:
+    out_dir = build_ipfs_cid_package()
+    manifest = json.loads((out_dir / "dataset_manifest.json").read_text(encoding="utf-8"))
+    print(json.dumps({"out_dir": str(out_dir), "records": manifest["records"]}, indent=2))
 
 
 if __name__ == "__main__":

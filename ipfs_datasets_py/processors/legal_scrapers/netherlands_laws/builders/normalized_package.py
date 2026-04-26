@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from pathlib import Path
 from typing import Any
 
-from .common import read_jsonl, sha256, write_jsonl, write_parquet
-from ..paths import HF_DATA_DIR, RAW_DATA_DIR
+from .common import file_manifest_entry, read_jsonl, write_json, write_jsonl, write_parquet
+from ..paths import DEFAULT_HF_REPO_IDS, HF_DATA_DIR, NORMALIZED_DATASET_NAME, PACKAGE_RAW_OUTPUT_DIR
 
 
-RAW_DIR = RAW_DATA_DIR / "nl_test_output_docs"
-OUT_DIR = HF_DATA_DIR / "netherlands-laws-nl-normalized"
+DEFAULT_REPO_ID = DEFAULT_HF_REPO_IDS["normalized"]
+DEFAULT_RAW_DIR = PACKAGE_RAW_OUTPUT_DIR
+DEFAULT_OUT_DIR = HF_DATA_DIR / NORMALIZED_DATASET_NAME
 
 
 def measured_size(value: Any) -> int:
@@ -122,7 +124,7 @@ def normalize_articles(raw_articles: list[dict[str, Any]]) -> list[dict[str, Any
     return rows
 
 
-def write_dataset_card() -> None:
+def write_dataset_card(out_dir: Path, repo_id: str = DEFAULT_REPO_ID) -> None:
     readme = """---
 pretty_name: Netherlands Laws (Dutch, Normalized)
 language:
@@ -151,21 +153,23 @@ configs:
 
 # Netherlands Laws (Dutch, Normalized)
 
+Hugging Face target: `{repo_id}`.
+
 This package is a normalized version of the Netherlands laws scrape output.
 """
-    (OUT_DIR / "README.md").write_text(readme, encoding="utf-8")
+    (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
 
-def write_gitattributes() -> None:
+def write_gitattributes(out_dir: Path) -> None:
     text = """data/**/*.jsonl filter=lfs diff=lfs merge=lfs -text
 data/**/*.json filter=lfs diff=lfs merge=lfs -text
 parquet/**/*.parquet filter=lfs diff=lfs merge=lfs -text
 analysis/**/*.json filter=lfs diff=lfs merge=lfs -text
 """
-    (OUT_DIR / ".gitattributes").write_text(text, encoding="utf-8")
+    (out_dir / ".gitattributes").write_text(text, encoding="utf-8")
 
 
-def write_upload_script() -> None:
+def write_upload_script(out_dir: Path) -> None:
     text = """#!/usr/bin/env bash
 set -euo pipefail
 
@@ -188,36 +192,42 @@ git branch -M main
 git push origin main
 EOF
 """
-    path = OUT_DIR / "upload_to_hf.sh"
+    path = out_dir / "upload_to_hf.sh"
     path.write_text(text, encoding="utf-8")
     path.chmod(0o755)
 
 
-def main() -> None:
-    raw_laws = read_jsonl(RAW_DIR / "netherlands_laws_index_latest.jsonl")
-    raw_articles = read_jsonl(RAW_DIR / "netherlands_laws_articles_index_latest.jsonl")
-    raw_search = read_jsonl(RAW_DIR / "netherlands_laws_search_index_latest.jsonl")
-    run_metadata = json.loads((RAW_DIR / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8"))
+def build_normalized_package(
+    raw_dir: Path | None = None,
+    out_dir: Path | None = None,
+    repo_id: str = DEFAULT_REPO_ID,
+) -> Path:
+    raw_dir = raw_dir or DEFAULT_RAW_DIR
+    out_dir = out_dir or DEFAULT_OUT_DIR
+    raw_laws = read_jsonl(raw_dir / "netherlands_laws_index_latest.jsonl")
+    raw_articles = read_jsonl(raw_dir / "netherlands_laws_articles_index_latest.jsonl")
+    raw_search = read_jsonl(raw_dir / "netherlands_laws_search_index_latest.jsonl")
+    run_metadata = json.loads((raw_dir / "netherlands_laws_run_metadata_latest.json").read_text(encoding="utf-8"))
 
     laws = normalize_laws(raw_laws)
     articles = normalize_articles(raw_articles)
 
-    (OUT_DIR / "data" / "laws").mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "data" / "articles").mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "data" / "metadata").mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "analysis").mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "parquet" / "laws").mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "parquet" / "articles").mkdir(parents=True, exist_ok=True)
+    (out_dir / "data" / "laws").mkdir(parents=True, exist_ok=True)
+    (out_dir / "data" / "articles").mkdir(parents=True, exist_ok=True)
+    (out_dir / "data" / "metadata").mkdir(parents=True, exist_ok=True)
+    (out_dir / "analysis").mkdir(parents=True, exist_ok=True)
+    (out_dir / "parquet" / "laws").mkdir(parents=True, exist_ok=True)
+    (out_dir / "parquet" / "articles").mkdir(parents=True, exist_ok=True)
 
-    laws_jsonl = OUT_DIR / "data" / "laws" / "netherlands_laws_normalized.jsonl"
-    articles_jsonl = OUT_DIR / "data" / "articles" / "netherlands_laws_articles_normalized.jsonl"
+    laws_jsonl = out_dir / "data" / "laws" / "netherlands_laws_normalized.jsonl"
+    articles_jsonl = out_dir / "data" / "articles" / "netherlands_laws_articles_normalized.jsonl"
 
     write_jsonl(laws_jsonl, laws)
     write_jsonl(articles_jsonl, articles)
-    write_parquet(OUT_DIR / "parquet" / "laws" / "train-00000-of-00001.parquet", laws)
-    write_parquet(OUT_DIR / "parquet" / "articles" / "train-00000-of-00001.parquet", articles)
+    write_parquet(out_dir / "parquet" / "laws" / "train-00000-of-00001.parquet", laws)
+    write_parquet(out_dir / "parquet" / "articles" / "train-00000-of-00001.parquet", articles)
 
-    raw_article_bytes = (RAW_DIR / "netherlands_laws_articles_index_latest.jsonl").stat().st_size
+    raw_article_bytes = (raw_dir / "netherlands_laws_articles_index_latest.jsonl").stat().st_size
     normalized_article_bytes = articles_jsonl.stat().st_size
     report = {
         "raw": {
@@ -248,18 +258,17 @@ def main() -> None:
         },
     }
 
-    (OUT_DIR / "analysis" / "size_inflation_report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    (OUT_DIR / "data" / "metadata" / "netherlands_laws_run_metadata_latest.json").write_text(
-        json.dumps(run_metadata, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    write_json(out_dir / "analysis" / "size_inflation_report.json", report)
+    write_json(out_dir / "data" / "metadata" / "netherlands_laws_run_metadata_latest.json", run_metadata)
 
     manifest = {
-        "dataset_name": "netherlands-laws-nl-normalized",
+        "dataset_name": NORMALIZED_DATASET_NAME,
         "snapshot_date": "2026-04-11",
         "package_variant": "normalized",
-        "source_directory": str(RAW_DIR),
+        "source_directory": str(raw_dir),
         "source_url": "https://wetten.overheid.nl/",
+        "repo_target": repo_id,
+        "upload_target": repo_id,
         "language": "nl",
         "jurisdiction": "Netherlands",
         "join_key": {"articles": "law_identifier", "laws": "law_identifier"},
@@ -278,18 +287,24 @@ def main() -> None:
         "parquet/laws/train-00000-of-00001.parquet",
         "parquet/articles/train-00000-of-00001.parquet",
     ]:
-        path = OUT_DIR / rel
-        info: dict[str, Any] = {"bytes": path.stat().st_size, "sha256": sha256(path)}
+        path = out_dir / rel
+        records: int | None = None
         if rel.startswith("data/laws") or rel.startswith("parquet/laws"):
-            info["records"] = len(laws)
+            records = len(laws)
         elif rel.startswith("data/articles") or rel.startswith("parquet/articles"):
-            info["records"] = len(articles)
-        manifest["files"][rel] = info
-    (OUT_DIR / "dataset_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+            records = len(articles)
+        manifest["files"][rel] = file_manifest_entry(path, records)
+    write_json(out_dir / "dataset_manifest.json", manifest)
 
-    write_dataset_card()
-    write_gitattributes()
-    write_upload_script()
+    write_dataset_card(out_dir, repo_id)
+    write_gitattributes(out_dir)
+    write_upload_script(out_dir)
+    return out_dir
+
+
+def main() -> None:
+    out_dir = build_normalized_package()
+    report = json.loads((out_dir / "analysis" / "size_inflation_report.json").read_text(encoding="utf-8"))
     print(json.dumps(report, indent=2, ensure_ascii=False))
 
 
