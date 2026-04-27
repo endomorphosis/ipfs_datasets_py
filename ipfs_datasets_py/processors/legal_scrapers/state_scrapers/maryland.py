@@ -8,6 +8,7 @@ import asyncio
 import json
 import re
 from typing import Dict, List, Optional
+import urllib.parse
 import urllib.request
 
 from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
@@ -208,10 +209,15 @@ class MarylandScraper(BaseStateScraper):
         if not normalized_section:
             return None
         article_name = str(article_label or "").split(" - ", 1)[0].strip() or "Maryland Code"
+        article_name = re.sub(r"\s*\([A-Za-z0-9]+\)\s*$", "", article_name).strip() or article_name
         article_code = ""
         article_match = re.search(r"\(([A-Za-z0-9]+)\)\s*$", str(article_label or ""))
         if article_match:
             article_code = article_match.group(1).upper()
+        if not article_code:
+            query = urllib.parse.urlparse(section_url).query
+            article_param = urllib.parse.parse_qs(query).get("article", [""])
+            article_code = str(article_param[0] or "").strip().upper()
         display_label = str(section_label or normalized_section).strip()
         section_name = f"{article_name} § {display_label}"
         statute_id = f"{code_name} [{article_code or article_name}] § {normalized_section}"

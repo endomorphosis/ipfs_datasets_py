@@ -21,8 +21,11 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts imp
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maine import MaineScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.maryland import MarylandScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.michigan import MichiganScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.minnesota import MinnesotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import MissouriScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nebraska import NebraskaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nevada import NevadaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota import NorthDakotaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
@@ -1102,6 +1105,54 @@ async def test_colorado_pdf_summary_fetch_records_fetch_analytics(monkeypatch: p
 
 
 @pytest.mark.anyio
+async def test_colorado_publication_detail_pages_yield_statutes(monkeypatch: pytest.MonkeyPatch):
+    search_html = (
+        "<html><body>"
+        "<div class='views-row'>"
+        "<a href='/publications/section-14-10-114-crs-pre-2014'>Section 14-10-114, C.R.S., pre-2014</a>"
+        "<a href='/sites/default/files/14-10-114pre20140101.pdf'>Download File</a>"
+        "</div>"
+        "<div class='views-row'>"
+        "<a href='/publications/source-note-2-3-1203-crs-pre-2016'>Source Note for 2-3-1203, C.R.S. (pre 2016)</a>"
+        "</div>"
+        "</body></html>"
+    ).encode("utf-8")
+    detail_html = (
+        "<html><body><article>"
+        "Staff Publications Section 14-10-114, C.R.S., pre-2014 Published: November 3, 2016 "
+        + ("This version of section 14-10-114, C.R.S., was effective until January 1, 2014. " * 10)
+        + "View Document"
+        "</article></body></html>"
+    ).encode("utf-8")
+    source_note_html = (
+        "<html><body><article>"
+        "Source Note for 2-3-1203, C.R.S. (pre 2016) "
+        + ("Historical source note text. " * 20)
+        + "</article></body></html>"
+    ).encode("utf-8")
+
+    async def _fake_request(self, url: str, timeout_seconds: int = 45) -> bytes:
+        self._record_fetch_event(provider="test_fake", success=True)
+        if "publication-search" in url:
+            return search_html
+        if url.endswith("/publications/section-14-10-114-crs-pre-2014"):
+            return detail_html
+        if url.endswith("/publications/source-note-2-3-1203-crs-pre-2016"):
+            return source_note_html
+        return b""
+
+    monkeypatch.setattr(ColoradoScraper, "_request_bytes_direct", _fake_request)
+
+    scraper = ColoradoScraper("CO", "Colorado")
+    statutes = await scraper.scrape_code("Colorado Revised Statutes", "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs", max_statutes=2)
+
+    assert [row.section_number for row in statutes] == ["14-10-114", "2-3-1203"]
+    assert statutes[0].structured_data["source_kind"] == "official_colorado_publication_html"
+    assert "effective until January 1, 2014" in statutes[0].full_text
+    assert "Historical source note text." in statutes[1].full_text
+
+
+@pytest.mark.anyio
 async def test_connecticut_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
         return b""
@@ -1681,6 +1732,92 @@ async def test_new_mexico_nav_date_chapter_pdf_splits_into_sections(monkeypatch:
     assert statutes[0].structured_data["source_kind"] == "official_nmonesource_chapter_pdf"
     assert statutes[0].structured_data["discovery_method"] == "official_nav_date_chapter_pdf_sections"
     assert "Election code text." in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_nevada_bounded_run_prefers_official_inline_sections(monkeypatch: pytest.MonkeyPatch):
+    index_html = (
+        "<html><body>"
+        "<a href='NRS-001.html'>Chapter 1</a>"
+        "</body></html>"
+    )
+    chapter_html = (
+        "<html><body>"
+        "<p class='COLeadline'><a href='#NRS001Sec010'>NRS 1.010</a> Courts of justice.</p>"
+        "<p class='COLeadline'><a href='#NRS001Sec020'>NRS 1.020</a> Courts of record.</p>"
+        "<p class='DocHeading'>GENERAL PROVISIONS</p>"
+        "<p class='SectBody'><span class='Empty'><a name='NRS001Sec010'></a>NRS </span><span class='Section'>1.010</span><span class='Leadline'>Courts of justice.</span> The following shall be the courts of justice for this State:</p>"
+        "<p class='SectBody'>1. The Supreme Court.</p>"
+        "<p class='SectBody'>2. The Court of Appeals.</p>"
+        "<p class='SectBody'><span class='Empty'><a name='NRS001Sec020'></a>NRS </span><span class='Section'>1.020</span><span class='Leadline'>Courts of record.</span> Every court of record shall keep records.</p>"
+        "<p class='SectBody'>The clerk shall preserve all papers.</p>"
+        "</body></html>"
+    )
+
+    async def _fake_request_text_direct(self, url: str, timeout: int = 18) -> str:
+        if url.endswith("/NRS/"):
+            return index_html
+        return chapter_html
+
+    monkeypatch.setattr(NevadaScraper, "_request_text_direct", _fake_request_text_direct)
+
+    scraper = NevadaScraper("NV", "Nevada")
+    statutes = await scraper.scrape_code(
+        "Nevada Revised Statutes",
+        "https://www.leg.state.nv.us/NRS/",
+        max_statutes=2,
+    )
+
+    assert len(statutes) >= 1
+    assert statutes[0].section_number == "1.010"
+    assert statutes[0].structured_data["source_kind"] == "official_nevada_revised_statutes_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_title_chapter_inline_sections"
+    assert statutes[0].source_url.endswith("#NRS001Sec010")
+    assert "The Supreme Court." in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_nebraska_bounded_run_prefers_official_chapter_index_sections(monkeypatch: pytest.MonkeyPatch):
+    browse_html = (
+        "<html><body>"
+        "<a href='/laws/browse-chapters.php?chapter=01'>Chapter 1</a>"
+        "</body></html>"
+    )
+    chapter_html = (
+        "<html><body>"
+        "<a href='/laws/statutes.php?statute=1-101'>View Statute 1-101</a>"
+        "<a href='/laws/statutes.php?statute=1-102'>View Statute 1-102</a>"
+        "</body></html>"
+    )
+    section_html = (
+        "<html><body>"
+        "<div class='card-body'><div class='statute'><h2>1-101.</h2><h3>General powers and duties.</h3>"
+        + ("Nebraska statutory text. " * 20)
+        + "</div></div>"
+        "</body></html>"
+    )
+
+    async def _fake_request_text_direct(self, url: str, timeout: int = 18) -> str:
+        if url.endswith("browse-statutes.php"):
+            return browse_html
+        if "browse-chapters.php" in url:
+            return chapter_html
+        return section_html
+
+    monkeypatch.setattr(NebraskaScraper, "_request_text_direct", _fake_request_text_direct)
+
+    scraper = NebraskaScraper("NE", "Nebraska")
+    statutes = await scraper.scrape_code(
+        "Nebraska Revised Statutes",
+        "https://nebraskalegislature.gov/laws/browse-statutes.php",
+        max_statutes=2,
+    )
+
+    assert len(statutes) >= 1
+    assert statutes[0].section_number == "1-101"
+    assert statutes[0].structured_data["source_kind"] == "official_nebraska_statutes_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_chapter_index_sections"
+    assert "Nebraska statutory text." in statutes[0].full_text
 
 
 @pytest.mark.anyio

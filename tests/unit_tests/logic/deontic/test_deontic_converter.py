@@ -308,6 +308,266 @@ class TestDeonticConverter:
         assert elements[0]["defined_term"] == "covered entity"
         assert elements[0]["definition_body"] == "a provider of covered services"
         assert elements[0]["slot_coverage"] == 1.0
+
+    def test_parser_schema_contract_is_validated(self):
+        """Every extracted norm should satisfy the stable downstream schema."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            PARSER_SCHEMA_VERSION,
+            extract_normative_elements,
+            validate_parser_element,
+        )
+
+        elements = extract_normative_elements("The tenant must pay rent monthly.")
+
+        assert len(elements) == 1
+        assert elements[0]["schema_version"] == PARSER_SCHEMA_VERSION
+        assert elements[0]["schema_valid"] is True
+        assert validate_parser_element(elements[0])["valid"] is True
+
+    def test_field_level_condition_exception_temporal_and_ref_details(self):
+        """Detailed slots should preserve normalized text, raw text, spans, and types."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        text = (
+            "Subject to approval, the Director shall issue a permit within 10 days after application "
+            "unless the application is incomplete except as provided in section 5.01.020."
+        )
+        element = extract_normative_elements(text)[0]
+
+        assert element["condition_details"] == [
+            {
+                "type": "condition",
+                "clause_type": "subject_to",
+                "raw_text": "approval",
+                "normalized_text": "approval",
+                "span": [11, 19],
+                "clause_span": [0, 20],
+            }
+        ]
+        assert element["temporal_constraint_details"] == [
+            {
+                "type": "deadline",
+                "temporal_kind": "within_duration",
+                "value": "10 days after application",
+                "anchor": "application",
+                "raw_text": "within 10 days after application",
+                "normalized_text": "10 days after application",
+                "span": [55, 87],
+            }
+        ]
+        assert element["exception_details"] == [
+            {
+                "type": "exception",
+                "clause_type": "unless",
+                "raw_text": "the application is incomplete except as provided in section 5.01.020",
+                "normalized_text": "the application is incomplete except as provided in section 5.01.020",
+                "span": [95, 163],
+                "clause_span": [88, 163],
+            },
+            {
+                "type": "exception",
+                "clause_type": "except",
+                "raw_text": "as provided in section 5.01.020",
+                "normalized_text": "as provided in section 5.01.020",
+                "span": [132, 163],
+                "clause_span": [125, 163],
+            },
+        ]
+        assert element["cross_reference_details"] == [
+            {
+                "type": "section",
+                "value": "5.01.020",
+                "raw_text": "section 5.01.020",
+                "normalized_text": "section 5.01.020",
+                "span": [147, 163],
+            }
+        ]
+
+    def test_override_and_money_details_are_schema_fields(self):
+        """Override and money details should be available for LLM repair prompts."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements(
+            "Notwithstanding section 5.01.020, a violation is punishable by a fine of $1,000."
+        )[0]
+
+        assert element["override_clause_details"] == [
+            {
+                "type": "override",
+                "clause_type": "notwithstanding",
+                "raw_text": "section 5.01.020",
+                "normalized_text": "section 5.01.020",
+                "span": [16, 32],
+                "clause_span": [0, 33],
+            }
+        ]
+        assert element["monetary_amount_details"] == [
+            {
+                "type": "money",
+                "raw_text": "$1,000",
+                "normalized_text": "$1,000",
+                "numeric_value": "1000",
+                "currency": "USD",
+                "span": [73, 79],
+            }
+        ]
+
+    def test_statute_segmentation_preserves_section_context(self):
+        """Section headings should be carried into each extracted norm."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        text = """5.01.010 Permits required.
+The applicant shall file an application with the Bureau."""
+        elements = extract_normative_elements(text)
+
+        assert len(elements) == 1
+        assert elements[0]["section_context"] == {
+            "section": "5.01.010",
+            "heading": "Permits required",
+        }
+        assert "section:5.01.010" in elements[0]["hierarchy_path"]
+
+    def test_standalone_enumerated_segments_preserve_hierarchy(self):
+        """Standalone municipal list items should expose paragraph hierarchy."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import segment_legal_text
+
+        segments = segment_legal_text(
+            """5.01.010 Duties.
+(1) The applicant shall file an application.
+(2) The applicant shall pay the fee."""
+        )
+
+        assert [segment["hierarchy_path"][-1] for segment in segments] == [
+            "paragraph:1",
+            "paragraph:2",
+        ]
+        assert segments[0]["section_context"]["section"] == "5.01.010"
+
+    def test_implicit_unlawful_clause_is_prohibition(self):
+        """Municipal codes often say 'It is unlawful to' instead of 'shall not'."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("It is unlawful for any person to block a sidewalk.")
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "F"
+        assert elements[0]["subject"] == ["person"]
+        assert elements[0]["action"] == ["block a sidewalk"]
+
+    def test_required_permit_clause_is_structured(self):
+        """Permit/license required clauses should not disappear as descriptive text."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("A permit is required to operate a food cart.")
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "O"
+        assert elements[0]["subject"] == ["permit"]
+        assert elements[0]["entity_type"] == "legal_instrument"
+        assert elements[0]["action"] == ["operate a food cart"]
+        assert elements[0]["legal_frame"]["category"] == "permit_or_license"
+        assert {
+            "subject": "operate a food cart",
+            "predicate": "requiresLegalInstrument",
+            "object": "permit",
+        } in elements[0]["kg_relationship_hints"]
+
+    def test_no_person_may_is_prohibition(self):
+        """'No person may' is a prohibition even though may is usually permission."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("No person may discharge pollutants into the sewer.")
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "F"
+        assert elements[0]["subject"] == ["person"]
+
+    def test_failure_to_clause_becomes_violation_frame(self):
+        """Violation clauses should be explicit KG/formal-logic hooks."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("Failure to comply with this section is a violation.")
+
+        assert len(elements) == 1
+        assert elements[0]["norm_type"] == "violation"
+        assert elements[0]["deontic_operator"] == "F"
+        assert elements[0]["legal_frame"]["category"] == "violation"
+        assert elements[0]["action"] == ["fail to comply with this section"]
+        assert {
+            "subject": "law",
+            "predicate": "definesViolationFor",
+            "object": "person",
+        } in elements[0]["kg_relationship_hints"]
+
+    def test_penalty_clause_extracts_money_and_sanction_frame(self):
+        """Fines/penalties need structured amounts and review warnings."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("A violation is punishable by a fine of $500.")
+
+        assert len(elements) == 1
+        assert elements[0]["norm_type"] == "penalty"
+        assert elements[0]["legal_frame"]["category"] == "penalty"
+        assert elements[0]["entity_type"] == "legal_event"
+        assert elements[0]["monetary_amounts"] == [{"raw_text": "$500", "span": [39, 43]}]
+        assert elements[0]["penalty"]["has_fine"] is True
+        assert {"subject": "law", "predicate": "mentionsAmount", "object": "$500"} in elements[0]["kg_relationship_hints"]
+
+    def test_appeal_clause_gets_procedure_frame_and_timeline_warning(self):
+        """Appeal windows are procedural event chains, not just generic permissions."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("An appeal may be filed within 10 days after the decision.")
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "P"
+        assert elements[0]["legal_frame"]["category"] == "procedure"
+        assert "appeal" in elements[0]["procedure"]["events"]
+        assert elements[0]["temporal_constraints"] == [
+            {"type": "deadline", "value": "10 days after the decision"}
+        ]
+        assert "procedure_timeline_requires_event_order_review" in elements[0]["parser_warnings"]
+
+    def test_notice_hearing_decision_appeal_chain_is_ordered(self):
+        """Procedural clauses should expose an ordered municipal workflow chain."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "The Director shall provide notice of the hearing and issue a decision that may be appealed."
+        )
+
+        assert len(elements) == 1
+        first = elements[0]
+        assert first["legal_frame"]["category"] == "procedure"
+        assert [item["event"] for item in first["procedure"]["event_chain"]] == ["notice", "hearing", "decision", "issuance", "appeal"]
+        assert first["procedure"]["trigger_event"] == "notice"
+        assert first["procedure"]["terminal_event"] == "appeal"
+        assert {"subject": "Director", "predicate": "providesNoticeTo", "object": "provide notice of the hearing and issue a decision that may be appealed"} in first["kg_relationship_hints"]
+        assert {"subject": "Director", "predicate": "holdsHearingFor", "object": "provide notice of the hearing and issue a decision that may be appealed"} in first["kg_relationship_hints"]
+        assert {"subject": "Director", "predicate": "issuesDecision", "object": "provide notice of the hearing and issue a decision that may be appealed"} in first["kg_relationship_hints"]
+
+    def test_revocation_and_suspension_emit_instrument_relationships(self):
+        """Permit enforcement workflows should become KG hints."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("The Director may revoke or suspend the permit after notice.")
+
+        assert len(elements) == 1
+        assert elements[0]["legal_frame"]["category"] == "procedure"
+        assert elements[0]["procedure"]["events"] == ["notice", "suspension", "revocation"]
+        assert {"subject": "Director", "predicate": "mayRevokeInstrument", "object": "permit"} in elements[0]["kg_relationship_hints"]
+        assert {"subject": "Director", "predicate": "maySuspendInstrument", "object": "permit"} in elements[0]["kg_relationship_hints"]
+
+    def test_inspection_clause_emits_property_relationship(self):
+        """Inspection powers are central to municipal enforcement."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("The Bureau may inspect the premises during business hours.")
+
+        assert len(elements) == 1
+        assert elements[0]["legal_frame"]["category"] == "procedure"
+        assert elements[0]["procedure"]["events"] == ["inspection"]
+        assert {"subject": "Bureau", "predicate": "mayInspect", "object": "the premises during business hours"} in elements[0]["kg_relationship_hints"]
     
     def test_empty_input_validation(self):
         """Test that empty input is handled properly."""

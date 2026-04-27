@@ -470,6 +470,31 @@ def test_full_corpus_mode_disables_default_state_fetch_safety_caps(monkeypatch: 
     )
 
 
+def test_bootstrap_offsets_window_deterministic_state_batches(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET", raising=False)
+    monkeypatch.delenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET_NE", raising=False)
+    monkeypatch.delenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET_PER_STATE_JSON", raising=False)
+
+    urls = [f"https://rules.nebraska.gov/rules/{index}.pdf" for index in range(10)]
+
+    assert scraper_module._bootstrap_offset_for_state("NE") == 0
+    assert scraper_module._bootstrap_window_limit_for_state("NE", 3) == 3
+    assert scraper_module._slice_bootstrap_urls_for_state("NE", urls, 3) == urls[:3]
+
+    monkeypatch.setenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET", "2")
+    assert scraper_module._bootstrap_offset_for_state("NE") == 2
+    assert scraper_module._bootstrap_window_limit_for_state("NE", 3) == 5
+    assert scraper_module._slice_bootstrap_urls_for_state("NE", urls, 3) == urls[2:5]
+
+    monkeypatch.setenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET_PER_STATE_JSON", '{"NE": 4}')
+    assert scraper_module._bootstrap_offset_for_state("NE") == 4
+    assert scraper_module._slice_bootstrap_urls_for_state("NE", urls, 3) == urls[4:7]
+
+    monkeypatch.setenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET_NE", "6")
+    assert scraper_module._bootstrap_offset_for_state("NE") == 6
+    assert scraper_module._slice_bootstrap_urls_for_state("NE", urls, 3) == urls[6:9]
+
+
 def test_curated_seeds_include_delaware_and_dc_admin_rule_sources() -> None:
     de_urls = scraper_module._extract_seed_urls_for_state("DE", "Delaware")
     dc_urls = scraper_module._extract_seed_urls_for_state("DC", "District of Columbia")

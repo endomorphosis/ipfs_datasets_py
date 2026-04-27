@@ -16,6 +16,8 @@ from .registry import StateScraperRegistry
 
 class ColoradoScraper(BaseStateScraper):
     """Scraper for Colorado state laws from https://leg.colorado.gov"""
+
+    _CO_SECTION_NUMBER_RE = re.compile(r"\b(\d{1,2}-\d{1,3}-\d{1,4})\b")
     
     def get_base_url(self) -> str:
         """Return the base URL for Colorado's legislative website."""
@@ -55,63 +57,153 @@ class ColoradoScraper(BaseStateScraper):
         code_name: str,
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
-        """Scrape CRS section PDFs discoverable from the official publication search."""
-        search_url = "https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs"
-
-        try:
-            self.logger.info("Colorado CRS: fetching publication search page directly")
-            page_bytes = await self._request_bytes_direct(
-                search_url,
-                timeout_seconds=45,
-            )
-            if not page_bytes:
-                raise RuntimeError("empty response")
-        except Exception as exc:
-            self.logger.warning(f"Colorado CRS PDF discovery failed: {exc}")
+        """Scrape CRS-related publications discoverable from the official publication search."""
+        limit = self._effective_scrape_limit(max_statutes, default=20)
+        discovered = await self._discover_crs_publications(limit=max(8, int(limit or 20) * 3))
+        if not discovered:
             return []
 
-        page_text = page_bytes.decode("utf-8", errors="replace")
-        pdf_paths = re.findall(r"/sites/default/files/[^\" ]+\.pdf", page_text, flags=re.IGNORECASE)
-        seen: set[str] = set()
         statutes: List[NormalizedStatute] = []
-        limit = self._effective_scrape_limit(max_statutes, default=20)
+        seen_sections: set[str] = set()
 
-        for path in pdf_paths:
+        for publication in discovered:
             if limit is not None and len(statutes) >= int(limit):
                 break
-            if path in seen:
-                continue
-            seen.add(path)
-
-            pdf_url = urljoin("https://content.leg.colorado.gov", path)
-            section_number = self._extract_section_number_from_pdf_path(path)
+            title = str(publication.get("title") or "").strip()
+            detail_url = str(publication.get("detail_url") or "").strip()
+            pdf_url = str(publication.get("pdf_url") or "").strip()
+            section_number = self._extract_section_number(title) or self._extract_section_number_from_pdf_path(pdf_url)
             if not section_number:
                 continue
-            section_name = f"Section {section_number}" if section_number else "Colorado Revised Statutes section"
-            full_text = await self._extract_pdf_text_summary(pdf_url)
-            if len(full_text or "") < 300:
+            if section_number in seen_sections:
+                continue
+            seen_sections.add(section_number)
+
+            section_name = title or f"Section {section_number}"
+            full_text = ""
+            source_kind = "official_colorado_pdf"
+
+            if detail_url:
+                detail_text = await self._extract_publication_detail_text(detail_url)
+                if len(detail_text or "") >= 220:
+                    full_text = detail_text
+                    source_kind = "official_colorado_publication_html"
+
+            if len(full_text or "") < 220 and pdf_url:
+                pdf_text = await self._extract_pdf_text_summary(pdf_url)
+                if len(pdf_text or "") >= len(full_text or ""):
+                    full_text = pdf_text
+                    source_kind = "official_colorado_pdf"
+
+            if len(full_text or "") < 220:
                 continue
 
             statute = NormalizedStatute(
                 state_code=self.state_code,
                 state_name=self.state_name,
-                statute_id=f"{code_name} § {section_number}" if section_number else f"{code_name} § PDF-{len(statutes)+1}",
+                statute_id=f"{code_name} § {section_number}",
                 code_name=code_name,
                 section_number=section_number,
                 section_name=section_name,
-                full_text=full_text or section_name,
-                source_url=pdf_url,
+                full_text=full_text,
+                source_url=detail_url or pdf_url,
                 legal_area=self._identify_legal_area(code_name),
-                official_cite=f"Colo. Rev. Stat. § {section_number}" if section_number else None,
+                official_cite=f"Colo. Rev. Stat. § {section_number}",
             )
             statute.structured_data = {
-                "source_kind": "official_colorado_pdf",
+                "source_kind": source_kind,
+                "detail_url": detail_url or None,
+                "pdf_url": pdf_url or None,
                 "skip_hydrate": True,
             }
             statutes.append(statute)
 
         self.logger.info(f"Scraped {len(statutes)} Colorado CRS PDF statutes")
         return statutes
+
+    async def _discover_crs_publications(self, limit: int = 60) -> List[Dict[str, str]]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return []
+
+        out: List[Dict[str, str]] = []
+        seen: set[str] = set()
+
+        for page in range(0, 8):
+            search_url = f"https://content.leg.colorado.gov/publication-search?search_api_fulltext=crs&page={page}"
+            try:
+                page_bytes = await self._request_bytes_direct(search_url, timeout_seconds=45)
+            except Exception:
+                continue
+            if not page_bytes:
+                continue
+
+            soup = BeautifulSoup(page_bytes, "html.parser")
+            rows = soup.select(".views-row")
+            if not rows:
+                break
+
+            for row in rows:
+                row_text = " ".join(row.get_text(" ", strip=True).split())
+                if "C.R.S." not in row_text and "Colorado Revised Statutes" not in row_text:
+                    continue
+                detail_url = ""
+                pdf_url = ""
+                title = ""
+                for link in row.select("a[href]"):
+                    href = str(link.get("href") or "").strip()
+                    text = " ".join(link.get_text(" ", strip=True).split())
+                    if not href:
+                        continue
+                    absolute = urljoin(search_url, href)
+                    if "/publications/" in href and not title:
+                        detail_url = absolute
+                        title = text or row_text[:240]
+                    if href.lower().endswith(".pdf"):
+                        pdf_url = absolute
+                if not detail_url and not pdf_url:
+                    continue
+                section_number = self._extract_section_number(title or row_text) or self._extract_section_number_from_pdf_path(pdf_url)
+                if not section_number:
+                    continue
+                key = detail_url or pdf_url
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(
+                    {
+                        "title": title or row_text[:240],
+                        "detail_url": detail_url,
+                        "pdf_url": pdf_url,
+                        "section_number": section_number,
+                    }
+                )
+                if len(out) >= limit:
+                    return out
+        return out
+
+    async def _extract_publication_detail_text(self, detail_url: str, max_chars: int = 16000) -> str:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return ""
+
+        payload = await self._request_bytes_direct(detail_url, timeout_seconds=45)
+        if not payload:
+            return ""
+        html_text = payload.decode("utf-8", errors="replace")
+        soup = BeautifulSoup(html_text, "html.parser")
+        article = soup.select_one("article")
+        if article is None:
+            return ""
+        text = " ".join(article.get_text(" ", strip=True).split())
+        text = re.sub(r"\bShare:\b.*$", "", text, flags=re.IGNORECASE).strip()
+        return text[:max_chars]
+
+    def _extract_section_number(self, text: str) -> str:
+        match = self._CO_SECTION_NUMBER_RE.search(str(text or ""))
+        return match.group(1) if match else ""
 
     def _extract_section_number_from_pdf_path(self, path: str) -> str:
         """Extract section number from CRS-style PDF filenames."""

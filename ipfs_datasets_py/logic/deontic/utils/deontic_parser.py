@@ -9,7 +9,56 @@ import re
 from typing import Any, Dict, List, Optional
 
 
+PARSER_SCHEMA_VERSION = "deterministic_deontic_v5"
+PARSER_REQUIRED_FIELDS = [
+    "schema_version",
+    "text",
+    "support_text",
+    "support_span",
+    "norm_type",
+    "deontic_operator",
+    "modal",
+    "subject",
+    "actor_type",
+    "entity_type",
+    "action",
+    "action_verb",
+    "action_object",
+    "action_recipient",
+    "conditions",
+    "condition_details",
+    "temporal_constraints",
+    "temporal_constraint_details",
+    "exceptions",
+    "exception_details",
+    "override_clauses",
+    "override_clause_details",
+    "cross_references",
+    "cross_reference_details",
+    "enumerated_items",
+    "legal_frame",
+    "kg_relationship_hints",
+    "monetary_amounts",
+    "monetary_amount_details",
+    "penalty",
+    "procedure",
+    "section_context",
+    "hierarchy_path",
+    "document_type",
+    "extraction_method",
+    "confidence_floor",
+    "slot_coverage",
+    "scaffold_quality",
+    "quality_label",
+    "parser_warnings",
+    "promotable_to_theorem",
+]
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9(])")
+_SECTION_HEADER_RE = re.compile(
+    r"^\s*(?:(?:sec(?:tion)?\.?|§)\s*)?([0-9]+(?:\.[0-9]+)*(?:[A-Za-z])?)\.?\s*(.*)$",
+    re.IGNORECASE,
+)
+_ENUM_LABEL_RE = re.compile(r"\(([A-Za-z0-9]+)\)")
 _MODAL_RE = re.compile(
     r"""
     (?P<subject>
@@ -50,6 +99,68 @@ _IMPLICIT_MODAL_RE = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+_IMPERSONAL_NORM_RE = re.compile(
+    r"""
+    (?:
+        (?P<unlawful>it\s+is\s+(?:unlawful|illegal|prohibited)\s+(?:for\s+(?P<unlawful_subject>.+?)\s+)?to\s+(?P<unlawful_action>.+?))
+        |
+        (?P<license>(?:a|an|the)\s+(?P<license_subject>license|permit|certificate|registration|approval)\s+is\s+required\s+to\s+(?P<license_action>.+?))
+        |
+        (?P<duty>(?:a|an|the)\s+duty\s+is\s+imposed\s+on\s+(?P<duty_subject>.+?)\s+to\s+(?P<duty_action>.+?))
+    )
+    (?=(?:\s+(?:if|when|where|provided\s+that|unless|except|without|absent|before|after|within|not\s+later\s+than)\b)|[.;:]|$)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+_VIOLATION_RE = re.compile(
+    r"\bfailure\s+to\s+(.+?)\s+is\s+(?:a\s+)?(?:violation|offense|infraction)\b",
+    re.IGNORECASE,
+)
+_PENALTY_RE = re.compile(
+    r"\b(?:a\s+)?(?:violation|offense|infraction)\s+(?:is|shall\s+be)\s+"
+    r"(?:punishable\s+by|subject\s+to)\s+(.+?)(?:[.;:]|$)",
+    re.IGNORECASE,
+)
+_MONEY_RE = re.compile(
+    r"(?:\$\s?\d[\d,]*(?:\.\d{2})?|\b\d[\d,]*\s+dollars?\b)",
+    re.IGNORECASE,
+)
+_CLAUSE_END_RE = r"(?:,|[.]\s|[.]$|$)"
+_CONDITION_PATTERNS = [
+    ("if", rf"\bif\s+(.+?)(?:,|\s+then|[.]$|$)"),
+    ("when", rf"\bwhen\s+(.+?){_CLAUSE_END_RE}"),
+    ("where", rf"\bwhere\s+(.+?){_CLAUSE_END_RE}"),
+    ("provided_that", rf"\bprovided that\s+(.+?){_CLAUSE_END_RE}"),
+    ("subject_to", rf"\bsubject to\s+(.+?){_CLAUSE_END_RE}"),
+    ("in_case", rf"\bin case\s+(.+?){_CLAUSE_END_RE}"),
+]
+_EXCEPTION_PATTERNS = [
+    ("unless", rf"\bunless\s+(.+?){_CLAUSE_END_RE}"),
+    ("except", rf"\bexcept\s+(?:for\s+)?(.+?){_CLAUSE_END_RE}"),
+    ("without", rf"\bwithout\s+(.+?){_CLAUSE_END_RE}"),
+    ("absent", rf"\babsent\s+(.+?){_CLAUSE_END_RE}"),
+    ("with_exception_of", rf"\bwith the exception of\s+(.+?){_CLAUSE_END_RE}"),
+    ("other_than", rf"\bother than\s+(.+?){_CLAUSE_END_RE}"),
+    ("excluding", rf"\bexcluding\s+(.+?){_CLAUSE_END_RE}"),
+]
+_OVERRIDE_PATTERNS = [
+    ("notwithstanding", rf"\bnotwithstanding\s+(.+?)(?:,|[.]$|$)"),
+    ("without_regard_to", rf"\bwithout regard to\s+(.+?)(?:,|[.]$|$)"),
+]
+_TEMPORAL_PATTERNS = [
+    ("deadline", "by_date", r"\bby\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)"),
+    ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}/\d{1,2}/\d{2,4})"),
+    ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}-\d{1,2}-\d{2,4})"),
+    ("deadline", "within_duration", r"\bwithin\s+(\d+\s+(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
+    ("deadline", "not_later_than", r"\bnot\s+later\s+than\s+(\d+\s+(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
+    ("deadline", "before_date", r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
+    ("deadline", "after_date", r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
+    ("period", "annually", r"\b(annually)\b"),
+    ("period", "monthly", r"\b(monthly)\b"),
+    ("period", "weekly", r"\b(weekly)\b"),
+    ("period", "daily", r"\b(daily)\b"),
+    ("duration", "for_duration", r"\bfor\s+(\d+\s+(?:days?|weeks?|months?|years?))"),
+]
 _DEFINITION_RE = re.compile(
     r"\b(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
     re.IGNORECASE,
@@ -84,7 +195,7 @@ _MENTAL_STATE_TERMS = {
     "wilfully",
 }
 _RECIPIENT_RE = re.compile(
-    r"\b(?:to|for|with)\s+((?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})$",
+    r"\b(?:to|for|with|of)\s+((?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})$",
     re.IGNORECASE,
 )
 _DEFINITION_BODY_RE = re.compile(
@@ -132,16 +243,71 @@ _ORGANIZATION_ACTORS = {
     "organization",
     "provider",
 }
+_LEGAL_INSTRUMENT_ENTITIES = {
+    "approval",
+    "certificate",
+    "license",
+    "permit",
+    "registration",
+}
+_LEGAL_EVENT_ENTITIES = {
+    "appeal",
+    "fee",
+    "hearing",
+    "notice",
+    "offense",
+    "penalty",
+    "violation",
+}
+_PROPERTY_ENTITIES = {
+    "building",
+    "facility",
+    "property",
+    "sidewalk",
+    "street",
+    "vehicle",
+}
+_PROCEDURE_EVENT_ORDER = [
+    "application",
+    "inspection",
+    "review",
+    "notice",
+    "hearing",
+    "decision",
+    "issuance",
+    "renewal",
+    "suspension",
+    "revocation",
+    "appeal",
+]
+_PROCEDURE_EVENT_PATTERNS = {
+    "application": r"\b(?:apply|applies|application|applicant)\b",
+    "inspection": r"\b(?:inspect|inspection)\b",
+    "review": r"\b(?:review|investigate|investigation)\b",
+    "notice": r"\b(?:notice|notify|notification)\b",
+    "hearing": r"\b(?:hearing)\b",
+    "decision": r"\b(?:decision|decide|determination|order)\b",
+    "issuance": r"\b(?:issue|issued|issuance|grant|approve|approval)\b",
+    "renewal": r"\b(?:renew|renewal)\b",
+    "suspension": r"\b(?:suspend|suspension)\b",
+    "revocation": r"\b(?:revoke|revocation)\b",
+    "appeal": r"\b(?:appeal\w*)\b",
+}
 
 
 def extract_normative_elements(text: str, document_type: str = "statute") -> List[Dict[str, Any]]:
     elements: List[Dict[str, Any]] = []
-    sentences = _split_legal_sentences(text)
-    for sentence in sentences:
-        sentence = sentence.strip()
-        if not sentence:
+    segments = segment_legal_text(text)
+    for segment in segments:
+        segment_text = segment["text"].strip()
+        if not segment_text:
             continue
-        elements.extend(analyze_normative_sentence(sentence, document_type))
+        for element in analyze_normative_sentence(segment_text, document_type):
+            element["source_span"] = segment["span"]
+            element["section_context"] = segment["section_context"]
+            element["hierarchy_path"] = segment["hierarchy_path"]
+            _finalize_element(element)
+            elements.append(element)
     return elements
 
 
@@ -159,6 +325,92 @@ def _split_legal_sentences(text: str) -> List[str]:
     return [part.strip(" .") for part in _SENTENCE_SPLIT_RE.split(protected) if part.strip(" .")]
 
 
+def segment_legal_text(text: str) -> List[Dict[str, Any]]:
+    """Split legal text into statute-aware segments with hierarchy metadata."""
+    source = str(text or "")
+    if not source.strip():
+        return []
+
+    segments: List[Dict[str, Any]] = []
+    section_context: Dict[str, str] = {}
+    hierarchy: List[str] = []
+    cursor = 0
+
+    for raw_line in source.splitlines() or [source]:
+        line_start = cursor
+        cursor += len(raw_line) + 1
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        header = _SECTION_HEADER_RE.match(line)
+        if header and _looks_like_section_header(line, header):
+            section_context = {
+                "section": header.group(1),
+                "heading": header.group(2).strip(" ."),
+            }
+            hierarchy = [f"section:{section_context['section']}"]
+            if section_context["heading"]:
+                hierarchy.append(f"heading:{section_context['heading']}")
+            continue
+
+        for start, end, segment_text, label_path in _split_segment_fragments(line):
+            absolute_start = line_start + raw_line.find(line) + start
+            segment_hierarchy = [*hierarchy, *label_path]
+            for sentence in _split_legal_sentences(segment_text):
+                sentence_offset = segment_text.find(sentence)
+                if sentence_offset < 0:
+                    sentence_offset = 0
+                sentence_start = absolute_start + sentence_offset
+                segments.append(
+                    {
+                        "text": sentence,
+                        "span": [sentence_start, sentence_start + len(sentence)],
+                        "section_context": dict(section_context),
+                        "hierarchy_path": segment_hierarchy,
+                    }
+                )
+
+    if not segments:
+        normalized = re.sub(r"\s+", " ", source).strip()
+        return [
+            {
+                "text": normalized,
+                "span": [0, len(normalized)],
+                "section_context": {},
+                "hierarchy_path": [],
+            }
+        ]
+    return segments
+
+
+def _looks_like_section_header(line: str, match: re.Match[str]) -> bool:
+    marker = match.group(0)
+    if re.match(r"^\s*(?:sec(?:tion)?\.?|§)\b", line, re.IGNORECASE):
+        return True
+    heading = match.group(2).strip()
+    return bool(heading and len(line) < 140 and not re.search(r"\b(?:shall|must|may|means|includes?)\b", line, re.IGNORECASE))
+
+
+def _split_segment_fragments(line: str) -> List[tuple[int, int, str, List[str]]]:
+    matches = list(_ENUM_LABEL_RE.finditer(line))
+    if not matches:
+        return [(0, len(line), line, [])]
+
+    prefix = line[: matches[0].start()].strip()
+    if prefix:
+        return [(0, len(line), line, [])]
+    fragments: List[tuple[int, int, str, List[str]]] = []
+    for index, match in enumerate(matches):
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(line)
+        body = line[start:end].strip(" ;,.")
+        if not body:
+            continue
+        fragments.append((match.start(), end, body, [f"paragraph:{match.group(1)}"]))
+    return fragments
+
+
 def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[str, Any]]:
     sentence = sentence.strip()
     sentence_lower = sentence.lower()
@@ -168,7 +420,7 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         modal = re.sub(r"\s+", " ", match.group("modal").lower()).strip()
         norm_type, deontic_operator = classify_modal(modal)
         raw_subject = match.group("subject")
-        if deontic_operator == "O" and re.match(r"\s*(?:no|none)\b", raw_subject or "", flags=re.IGNORECASE):
+        if deontic_operator in {"O", "P"} and re.match(r"\s*(?:no|none)\b", raw_subject or "", flags=re.IGNORECASE):
             norm_type, deontic_operator = "prohibition", "F"
         subject_text = _clean_phrase(raw_subject)
         if subject_text.lower() in {"and", "or"}:
@@ -222,12 +474,87 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             )
         return elements
 
+    for match in _IMPERSONAL_NORM_RE.finditer(sentence):
+        if match.group("unlawful"):
+            subject_text = _clean_phrase(match.group("unlawful_subject") or "person")
+            action_text = _clean_action(match.group("unlawful_action"))
+            norm_type, deontic_operator = "prohibition", "F"
+            modal = "unlawful"
+        elif match.group("license"):
+            subject_text = _clean_phrase(match.group("license_subject"))
+            action_text = f"authorize {match.group('license_action')}"
+            norm_type, deontic_operator = "obligation", "O"
+            modal = "is required to"
+        else:
+            subject_text = _clean_phrase(match.group("duty_subject"))
+            action_text = _clean_action(match.group("duty_action"))
+            norm_type, deontic_operator = "obligation", "O"
+            modal = "duty is imposed"
+        if not action_text:
+            continue
+        elements.append(
+            _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type=norm_type,
+                    deontic_operator=deontic_operator,
+                    modal=modal,
+                    subject_text=subject_text,
+                    action_text=action_text,
+                    support_span=match.span(),
+                    extraction_method="deterministic_impersonal_norm_v3",
+                )
+            )
+        )
+    if elements:
+        return elements
+
+    violation_match = _VIOLATION_RE.search(sentence)
+    if violation_match:
+        action_text = f"fail to {violation_match.group(1).strip()}"
+        return [
+            _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type="violation",
+                    deontic_operator="F",
+                    modal="violation",
+                    subject_text="person",
+                    action_text=action_text,
+                    support_span=violation_match.span(),
+                    extraction_method="deterministic_violation_clause_v4",
+                )
+            )
+        ]
+
+    penalty_match = _PENALTY_RE.search(sentence)
+    if penalty_match:
+        penalty_text = penalty_match.group(1).strip()
+        return [
+            _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type="penalty",
+                    deontic_operator="O",
+                    modal="penalty",
+                    subject_text="violation",
+                    action_text=f"incur {penalty_text}",
+                    support_span=penalty_match.span(),
+                    extraction_method="deterministic_penalty_clause_v4",
+                )
+            )
+        ]
+
     if _DEFINITION_RE.search(sentence_lower):
         defined_term_match = _DEFINED_TERM_RE.search(sentence)
         defined_terms = [_clean_phrase(defined_term_match.group(1))] if defined_term_match else extract_legal_subject(sentence)
         return [
             _finalize_element(
                 {
+                "schema_version": PARSER_SCHEMA_VERSION,
                 "text": sentence,
                 "support_text": sentence,
                 "support_span": [0, len(sentence)],
@@ -239,11 +566,29 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 "defined_term": defined_terms[0] if defined_terms else "",
                 "definition_body": extract_definition_body(sentence),
                 "conditions": extract_conditions(sentence),
+                "condition_details": extract_condition_details(sentence),
                 "temporal_constraints": extract_temporal_constraints(sentence),
+                "temporal_constraint_details": extract_temporal_constraint_details(sentence),
                 "exceptions": extract_exceptions(sentence),
+                "exception_details": extract_exception_details(sentence),
                 "override_clauses": extract_override_clauses(sentence),
+                "override_clause_details": extract_override_clause_details(sentence),
                 "cross_references": extract_cross_references(sentence),
+                "cross_reference_details": extract_cross_reference_details(sentence),
                 "enumerated_items": extract_enumerated_items(sentence),
+                "legal_frame": {},
+                "kg_relationship_hints": [],
+                "monetary_amounts": extract_monetary_amounts(sentence),
+                "monetary_amount_details": extract_monetary_amount_details(sentence),
+                "penalty": {},
+                "procedure": {},
+                "actor_type": classify_legal_entity(defined_terms[0] if defined_terms else ""),
+                "entity_type": classify_legal_entity(defined_terms[0] if defined_terms else ""),
+                "action_verb": "",
+                "action_object": "",
+                "action_recipient": "",
+                "section_context": {},
+                "hierarchy_path": [],
                 "document_type": document_type,
                 "extraction_method": "deterministic_definition_v2",
                 "confidence_floor": 0.25,
@@ -272,6 +617,7 @@ def _build_element(
     subject = [subject_text] if subject_text else extract_legal_subject(sentence)
     action = [action_text]
     return {
+        "schema_version": PARSER_SCHEMA_VERSION,
         "text": sentence,
         "support_text": sentence[support_span[0] : support_span[1]].strip(),
         "support_span": list(support_span),
@@ -287,11 +633,24 @@ def _build_element(
         "action_object": _action_object(action_text),
         "action_recipient": extract_action_recipient(action_text),
         "conditions": extract_conditions(sentence),
+        "condition_details": extract_condition_details(sentence),
         "temporal_constraints": extract_temporal_constraints(sentence),
+        "temporal_constraint_details": extract_temporal_constraint_details(sentence),
         "exceptions": extract_exceptions(sentence),
+        "exception_details": extract_exception_details(sentence),
         "override_clauses": extract_override_clauses(sentence),
+        "override_clause_details": extract_override_clause_details(sentence),
         "cross_references": extract_cross_references(sentence),
+        "cross_reference_details": extract_cross_reference_details(sentence),
         "enumerated_items": enumerated_items,
+        "legal_frame": {},
+        "kg_relationship_hints": [],
+        "monetary_amounts": extract_monetary_amounts(sentence),
+        "monetary_amount_details": extract_monetary_amount_details(sentence),
+        "penalty": {},
+        "procedure": {},
+        "section_context": {},
+        "hierarchy_path": [],
         "document_type": document_type,
         "extraction_method": extraction_method,
         "confidence_floor": 0.35,
@@ -299,13 +658,222 @@ def _build_element(
 
 
 def _finalize_element(element: Dict[str, Any]) -> Dict[str, Any]:
+    element.setdefault("schema_version", PARSER_SCHEMA_VERSION)
+    element.setdefault("section_context", {})
+    element.setdefault("hierarchy_path", [])
+    _enrich_legal_frame(element)
     quality = score_scaffold_quality(element)
     element["slot_coverage"] = quality["slot_coverage"]
     element["scaffold_quality"] = quality["score"]
     element["quality_label"] = quality["label"]
     element["parser_warnings"] = quality["warnings"]
     element["promotable_to_theorem"] = quality["promotable_to_theorem"]
+    schema_validation = validate_parser_element(element)
+    element["schema_valid"] = schema_validation["valid"]
+    if not schema_validation["valid"]:
+        element["parser_warnings"] = [
+            *element["parser_warnings"],
+            *[f"schema_{field}_missing" for field in schema_validation["missing_fields"]],
+        ]
+        element["promotable_to_theorem"] = False
     return element
+
+
+def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate the stable deterministic parser element contract."""
+    missing = [field for field in PARSER_REQUIRED_FIELDS if field not in element]
+    type_errors: List[str] = []
+    list_fields = [
+        "support_span",
+        "subject",
+        "action",
+        "conditions",
+        "condition_details",
+        "temporal_constraints",
+        "temporal_constraint_details",
+        "exceptions",
+        "exception_details",
+        "override_clauses",
+        "override_clause_details",
+        "cross_references",
+        "cross_reference_details",
+        "enumerated_items",
+        "kg_relationship_hints",
+        "monetary_amounts",
+        "monetary_amount_details",
+        "hierarchy_path",
+        "parser_warnings",
+    ]
+    for field in list_fields:
+        if field in element and not isinstance(element[field], list):
+            type_errors.append(field)
+    if "section_context" in element and not isinstance(element["section_context"], dict):
+        type_errors.append("section_context")
+    for field in ["legal_frame", "penalty", "procedure"]:
+        if field in element and not isinstance(element[field], dict):
+            type_errors.append(field)
+    if "support_span" in element and len(element["support_span"]) != 2:
+        type_errors.append("support_span")
+    return {
+        "valid": not missing and not type_errors,
+        "missing_fields": missing,
+        "type_errors": type_errors,
+        "schema_version": element.get("schema_version", PARSER_SCHEMA_VERSION),
+    }
+
+
+def _enrich_legal_frame(element: Dict[str, Any]) -> None:
+    text = str(element.get("text") or "")
+    action = (element.get("action") or [""])[0]
+    subject = (element.get("subject") or [""])[0]
+    category = classify_legal_frame(element)
+    element["legal_frame"] = {
+        "category": category,
+        "actor": subject,
+        "actor_type": element.get("actor_type", "unknown"),
+        "action": action,
+        "object": element.get("action_object", ""),
+        "recipient": element.get("action_recipient", ""),
+        "norm_type": element.get("norm_type", ""),
+        "deontic_operator": element.get("deontic_operator", ""),
+    }
+    element["monetary_amounts"] = extract_monetary_amounts(text)
+    element["monetary_amount_details"] = extract_monetary_amount_details(text)
+    element["penalty"] = extract_penalty_details(text, action)
+    element["procedure"] = extract_procedure_details(text, action)
+    element["kg_relationship_hints"] = build_kg_relationship_hints(element)
+
+
+def classify_legal_frame(element: Dict[str, Any]) -> str:
+    text = str(element.get("text") or "").lower()
+    action = " ".join(element.get("action", [])).lower()
+    norm_type = element.get("norm_type")
+    subject = " ".join(element.get("subject", [])).lower()
+    if norm_type == "definition":
+        return "definition"
+    if norm_type == "penalty" or "punishable" in text or "fine" in text or "penalty" in text:
+        return "penalty"
+    if norm_type == "violation" or "violation" in text or "offense" in text or "infraction" in text:
+        return "violation"
+    if any(term in text for term in ["appeal", "hearing", "notice", "decision", "inspect", "revoke", "suspend"]):
+        return "procedure"
+    if subject in _LEGAL_INSTRUMENT_ENTITIES or any(term in text for term in ["permit", "license", "certificate", "registration"]):
+        return "permit_or_license"
+    if "fee" in text or element.get("monetary_amounts"):
+        return "fee"
+    if action.startswith(("file", "submit", "apply", "provide")):
+        return "filing_requirement"
+    return "norm"
+
+
+def extract_monetary_amounts(text: str) -> List[Dict[str, str]]:
+    amounts: List[Dict[str, str]] = []
+    for match in _MONEY_RE.finditer(str(text or "")):
+        amounts.append({"raw_text": match.group(0).strip(), "span": [match.start(), match.end()]})
+    return amounts
+
+
+def extract_monetary_amount_details(text: str) -> List[Dict[str, Any]]:
+    details: List[Dict[str, Any]] = []
+    for match in _MONEY_RE.finditer(str(text or "")):
+        raw_text = match.group(0).strip()
+        numeric = re.sub(r"[^\d.]", "", raw_text)
+        details.append(
+            {
+                "type": "money",
+                "raw_text": raw_text,
+                "normalized_text": raw_text.lower(),
+                "numeric_value": numeric,
+                "currency": "USD" if "$" in raw_text or "dollar" in raw_text.lower() else "",
+                "span": [match.start(), match.end()],
+            }
+        )
+    return details
+
+
+def extract_penalty_details(text: str, action: str = "") -> Dict[str, Any]:
+    combined = f"{text} {action}".strip()
+    lower = combined.lower()
+    if not any(term in lower for term in ["fine", "penalty", "punishable", "imprison", "violation", "offense", "infraction"]):
+        return {}
+    return {
+        "raw_text": combined,
+        "monetary_amounts": extract_monetary_amounts(combined),
+        "has_imprisonment": bool(re.search(r"\b(?:jail|imprison|imprisonment|custody)\b", lower)),
+        "has_fine": "fine" in lower or bool(extract_monetary_amounts(combined)),
+    }
+
+
+def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
+    combined = f"{text} {action}".strip()
+    lower = combined.lower()
+    events = [
+        event
+        for event in _PROCEDURE_EVENT_ORDER
+        if re.search(_PROCEDURE_EVENT_PATTERNS[event], lower)
+    ]
+    if not events:
+        return {}
+    return {
+        "events": events,
+        "event_chain": [{"event": event, "order": index + 1} for index, event in enumerate(events)],
+        "trigger_event": events[0],
+        "terminal_event": events[-1],
+        "raw_text": combined,
+    }
+
+
+def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]:
+    subject = (element.get("subject") or [""])[0]
+    action = (element.get("action") or [""])[0]
+    category = (element.get("legal_frame") or {}).get("category", "")
+    instrument_target = extract_legal_instrument_target(action)
+    relationships: List[Dict[str, str]] = []
+    if subject and action:
+        predicate = {
+            "obligation": "imposesDutyOn",
+            "permission": "authorizes",
+            "prohibition": "prohibits",
+            "violation": "definesViolationFor",
+            "penalty": "createsPenaltyFor",
+            "definition": "definesTerm",
+        }.get(element.get("norm_type"), "regulates")
+        relationships.append({"subject": "law", "predicate": predicate, "object": subject})
+        relationships.append({"subject": subject, "predicate": "performsAction", "object": action})
+    if category == "permit_or_license" and action:
+        relationships.append({"subject": action, "predicate": "requiresLegalInstrument", "object": subject})
+    if element.get("action_recipient"):
+        relationships.append({"subject": subject, "predicate": "directedTo", "object": element["action_recipient"]})
+    procedure = element.get("procedure") or {}
+    events = set(procedure.get("events") or [])
+    if "notice" in events:
+        relationships.append({"subject": subject, "predicate": "providesNoticeTo", "object": element.get("action_recipient") or action})
+    if "hearing" in events:
+        relationships.append({"subject": subject, "predicate": "holdsHearingFor", "object": element.get("action_recipient") or action})
+    if "decision" in events:
+        relationships.append({"subject": subject, "predicate": "issuesDecision", "object": action})
+    if "appeal" in events:
+        relationships.append({"subject": action or subject, "predicate": "mayAppealDecision", "object": subject})
+    if "inspection" in events:
+        relationships.append({"subject": subject, "predicate": "mayInspect", "object": element.get("action_object") or action})
+    if "revocation" in events:
+        relationships.append({"subject": subject, "predicate": "mayRevokeInstrument", "object": instrument_target or element.get("action_object") or action})
+    if "suspension" in events:
+        relationships.append({"subject": subject, "predicate": "maySuspendInstrument", "object": instrument_target or element.get("action_object") or action})
+    for ref in element.get("cross_references", []):
+        relationships.append({"subject": "law", "predicate": "references", "object": f"{ref.get('type')}:{ref.get('value')}"})
+    for amount in element.get("monetary_amounts", []):
+        relationships.append({"subject": "law", "predicate": "mentionsAmount", "object": amount.get("raw_text", "")})
+    return relationships
+
+
+def extract_legal_instrument_target(action: str) -> str:
+    match = re.search(
+        r"\b(?:permit|license|certificate|registration|approval)\b",
+        str(action or ""),
+        flags=re.IGNORECASE,
+    )
+    return match.group(0).lower() if match else ""
 
 
 def classify_modal(modal: str) -> tuple[str, str]:
@@ -403,6 +971,12 @@ def classify_legal_entity(text: str) -> str:
         return "organization"
     if tokens & _LEGAL_PERSON_ACTORS:
         return "legal_person"
+    if tokens & _LEGAL_INSTRUMENT_ENTITIES:
+        return "legal_instrument"
+    if tokens & _LEGAL_EVENT_ENTITIES:
+        return "legal_event"
+    if tokens & _PROPERTY_ENTITIES:
+        return "regulated_property"
     if any(token.endswith("office") or token.endswith("board") for token in tokens):
         return "government_actor"
     return "legal_entity"
@@ -414,7 +988,16 @@ def extract_action_recipient(action: str) -> str:
     if not match:
         return ""
     recipient = _clean_phrase(match.group(1))
-    if recipient.lower() in {"law", "regulation", "section", "chapter", "title"}:
+    if recipient.lower() in {
+        "law",
+        "regulation",
+        "section",
+        "chapter",
+        "title",
+        "this section",
+        "this chapter",
+        "this title",
+    }:
         return ""
     return recipient
 
@@ -474,6 +1057,12 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     if element.get("override_clauses"):
         warnings.append("override_clause_requires_precedence_review")
         score -= 0.05
+    if (element.get("legal_frame") or {}).get("category") == "penalty" and not element.get("penalty"):
+        warnings.append("penalty_requires_amount_or_sanction_review")
+        score -= 0.05
+    if (element.get("legal_frame") or {}).get("category") == "procedure" and element.get("temporal_constraints"):
+        warnings.append("procedure_timeline_requires_event_order_review")
+        score -= 0.04
     if len(re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action_text)) > 18:
         warnings.append("overlong_action_span")
         score -= 0.10
@@ -555,35 +1144,29 @@ def extract_legal_action(sentence: str) -> List[str]:
 
 
 def extract_conditions(sentence: str) -> List[str]:
-    conditions: List[str] = []
-    condition_patterns = [
-        r"\bif\s+([^,]+?)(?:,|\s+then|$)",
-        r"\bwhen\s+([^,]+?)(?:,|\.|$)",
-        r"\bwhere\s+([^,]+?)(?:,|\.|$)",
-        r"\bprovided that\s+([^,]+?)(?:,|\.|$)",
-        r"\bsubject to\s+([^,]+?)(?:,|\.|$)",
-        r"\bin case\s+([^,]+?)(?:,|\.|$)",
-    ]
-    for pattern in condition_patterns:
-        conditions.extend([m.strip() for m in re.findall(pattern, sentence.lower())])
-    return conditions
+    return [item["normalized_text"] for item in extract_condition_details(sentence)]
+
+
+def extract_condition_details(sentence: str) -> List[Dict[str, Any]]:
+    return _extract_clause_details(sentence, _CONDITION_PATTERNS, "condition")
 
 
 def extract_override_clauses(sentence: str) -> List[str]:
-    overrides: List[str] = []
-    patterns = [
-        r"\bnotwithstanding\s+([^,.;]+)",
-        r"\bwithout regard to\s+([^,.;]+)",
-    ]
-    for pattern in patterns:
-        overrides.extend([m.strip() for m in re.findall(pattern, sentence.lower())])
-    return overrides
+    return [item["normalized_text"] for item in extract_override_clause_details(sentence)]
+
+
+def extract_override_clause_details(sentence: str) -> List[Dict[str, Any]]:
+    return _extract_clause_details(sentence, _OVERRIDE_PATTERNS, "override")
 
 
 def extract_cross_references(sentence: str) -> List[Dict[str, str]]:
-    refs: List[Dict[str, str]] = []
+    return [{"type": item["type"], "value": item["value"]} for item in extract_cross_reference_details(sentence)]
+
+
+def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
+    refs: List[Dict[str, Any]] = []
     patterns = [
-        ("section", r"\bsection\s+([0-9A-Za-z][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
+        ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("subsection", r"\bsubsection\s+\(([a-z0-9]+)\)"),
         ("paragraph", r"\bparagraph\s+\(([a-z0-9]+)\)"),
         ("chapter", r"\bchapter\s+([0-9A-Za-z][0-9A-Za-z.\-]*)"),
@@ -592,18 +1175,26 @@ def extract_cross_references(sentence: str) -> List[Dict[str, str]]:
     ]
     seen: set[tuple[str, str]] = set()
     for ref_type, pattern in patterns:
-        for match in re.findall(pattern, sentence.lower()):
-            if isinstance(match, tuple):
-                value = " ".join(part for part in match if part).strip()
+        for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
+            if len(match.groups()) > 1:
+                value = " ".join(part for part in match.groups() if part).strip().lower()
             else:
-                value = str(match or "").strip()
+                value = str(match.group(1) or "").strip().lower()
             if not value:
                 continue
             key = (ref_type, value)
             if key in seen:
                 continue
             seen.add(key)
-            refs.append({"type": ref_type, "value": value})
+            refs.append(
+                {
+                    "type": ref_type,
+                    "value": value,
+                    "raw_text": match.group(0).strip(),
+                    "normalized_text": f"{ref_type} {value}",
+                    "span": [match.start(), match.end()],
+                }
+            )
     return refs
 
 
@@ -621,54 +1212,75 @@ def extract_enumerated_items(sentence: str) -> List[Dict[str, str]]:
 
 
 def extract_temporal_constraints(sentence: str) -> List[Dict[str, str]]:
-    constraints: List[Dict[str, str]] = []
-
-    date_patterns = [
-        r"\bby\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)",
-        r"\bby\s+(\d{1,2}/\d{1,2}/\d{2,4})",
-        r"\bby\s+(\d{1,2}-\d{1,2}-\d{2,4})",
-        r"\bwithin\s+(\d+\s+(?:days?|weeks?|months?|years?))",
-        r"\bnot\s+later\s+than\s+(\d+\s+(?:days?|weeks?|months?|years?)(?:\s+after\s+[^,.;]+)?)",
-        r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})",
-        r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})",
-        r"\bannually\b",
-        r"\bmonthly\b",
-        r"\bweekly\b",
-        r"\bdaily\b",
+    return [
+        {"type": item["type"], "value": item["value"]}
+        for item in extract_temporal_constraint_details(sentence)
     ]
 
-    for pattern in date_patterns:
-        for match in re.findall(pattern, sentence.lower()):
-            if isinstance(match, str):
-                if "\\bwithin" in pattern:
-                    constraint_type = "deadline"
-                elif "\\bby" in pattern or "\\bbefore" in pattern or "not\\s+later\\s+than" in pattern:
-                    constraint_type = "deadline"
-                else:
-                    constraint_type = "period"
-                constraints.append({"type": constraint_type, "value": match.strip()})
 
-    duration_pattern = r"\bfor\s+(\d+\s+(?:days?|weeks?|months?|years?))"
-    for match in re.findall(duration_pattern, sentence.lower()):
-        constraints.append({"type": "duration", "value": match.strip()})
-
-    return constraints
+def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
+    details: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str, int, int]] = set()
+    for constraint_type, temporal_kind, pattern in _TEMPORAL_PATTERNS:
+        for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
+            value = match.group(1).strip().lower()
+            anchor = ""
+            if " after " in value:
+                value_part, anchor_part = value.split(" after ", 1)
+                anchor = anchor_part.strip()
+                value = f"{value_part.strip()} after {anchor}"
+            key = (constraint_type, value, match.start(), match.end())
+            if key in seen:
+                continue
+            seen.add(key)
+            details.append(
+                {
+                    "type": constraint_type,
+                    "temporal_kind": temporal_kind,
+                    "value": value,
+                    "anchor": anchor,
+                    "raw_text": match.group(0).strip(),
+                    "normalized_text": value,
+                    "span": [match.start(), match.end()],
+                }
+            )
+    return details
 
 
 def extract_exceptions(sentence: str) -> List[str]:
-    exceptions: List[str] = []
-    exception_patterns = [
-        r"\bunless\s+([^,]+?)(?:,|\.|$)",
-        r"\bexcept\s+(?:for\s+)?([^,]+?)(?:,|\.|$)",
-        r"\bwithout\s+([^,]+?)(?:,|\.|$)",
-        r"\babsent\s+([^,]+?)(?:,|\.|$)",
-        r"\bwith the exception of\s+([^,]+?)(?:,|\.|$)",
-        r"\bother than\s+([^,]+?)(?:,|\.|$)",
-        r"\bexcluding\s+([^,]+?)(?:,|\.|$)",
-    ]
-    for pattern in exception_patterns:
-        exceptions.extend([m.strip() for m in re.findall(pattern, sentence.lower())])
-    return exceptions
+    return [item["normalized_text"] for item in extract_exception_details(sentence)]
+
+
+def extract_exception_details(sentence: str) -> List[Dict[str, Any]]:
+    return _extract_clause_details(sentence, _EXCEPTION_PATTERNS, "exception")
+
+
+def _extract_clause_details(
+    sentence: str,
+    patterns: List[tuple[str, str]],
+    slot_type: str,
+) -> List[Dict[str, Any]]:
+    details: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str, int, int]] = set()
+    for clause_type, pattern in patterns:
+        for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
+            value = match.group(1).strip()
+            normalized = value.lower()
+            key = (clause_type, normalized, match.start(1), match.end(1))
+            if key in seen:
+                continue
+            seen.add(key)
+            details.append(
+                {
+                    "type": slot_type,
+                    "clause_type": clause_type,
+                    "raw_text": value,
+                    "normalized_text": normalized,
+                    "span": [match.start(1), match.end(1)],
+                    "clause_span": [match.start(), match.end()],
+                }
+            )
+    return details
 
 
 def build_deontic_formula(element: Dict[str, Any]) -> str:

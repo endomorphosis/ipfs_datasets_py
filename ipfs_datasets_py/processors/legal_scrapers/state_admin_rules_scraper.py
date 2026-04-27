@@ -30,7 +30,7 @@ from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 from urllib.parse import parse_qs, quote, unquote, urldefrag, urlencode, urljoin, urlparse, urlunparse
 import xml.etree.ElementTree as ET
 
@@ -1955,6 +1955,50 @@ def _bounded_discovery_limit(
             return requested
         return min(requested, int(full_corpus_cap))
     return min(requested, int(default_cap))
+
+
+def _bootstrap_offset_for_state(state_code: str) -> int:
+    """Return how many deterministic bootstrap candidates to skip for a state."""
+    state_key = str(state_code or "").strip().upper()
+    if not state_key:
+        return 0
+
+    raw_state = str(os.getenv(f"LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET_{state_key}") or "").strip()
+    if raw_state:
+        try:
+            return max(0, int(raw_state))
+        except Exception:
+            return 0
+
+    raw_json = str(os.getenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET_PER_STATE_JSON") or "").strip()
+    if raw_json:
+        try:
+            payload = json.loads(raw_json)
+        except Exception:
+            payload = None
+        if isinstance(payload, dict):
+            try:
+                return max(0, int(payload.get(state_key) or 0))
+            except Exception:
+                return 0
+
+    raw_default = str(os.getenv("LEGAL_ADMIN_RULES_BOOTSTRAP_OFFSET") or "").strip()
+    if raw_default:
+        try:
+            return max(0, int(raw_default))
+        except Exception:
+            return 0
+    return 0
+
+
+def _bootstrap_window_limit_for_state(state_code: str, desired_limit: int) -> int:
+    return max(1, int(desired_limit)) + _bootstrap_offset_for_state(state_code)
+
+
+def _slice_bootstrap_urls_for_state(state_code: str, urls: Sequence[str], desired_limit: int) -> List[str]:
+    offset = _bootstrap_offset_for_state(state_code)
+    limit = max(1, int(desired_limit))
+    return [str(url) for url in list(urls)[offset : offset + limit]]
 
 
 def _max_fetch_cap_for_state(state_code: str) -> Optional[int]:
@@ -14478,17 +14522,23 @@ async def _agentic_discover_admin_state_blocks(
                 source_breakdown["mississippi_adminsearch_bootstrap"] = len(mississippi_bootstrap_document_urls)
 
         if state_code == "NE" and not seeded_direct_detail_urls:
+            nebraska_seed_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=1,
+                default_cap=20,
+                full_corpus_cap=1000,
+            )
             try:
                 nebraska_bootstrap_document_urls = await asyncio.wait_for(
                     _discover_nebraska_rule_document_urls(
-                        limit=_bounded_discovery_limit(
-                            max_fetch=max_fetch_per_state,
-                            multiplier=4,
-                            default_cap=20,
-                            full_corpus_cap=1000,
-                        )
+                        limit=_bootstrap_window_limit_for_state("NE", nebraska_seed_limit)
                     ),
                     timeout=25.0,
+                )
+                nebraska_bootstrap_document_urls = _slice_bootstrap_urls_for_state(
+                    "NE",
+                    nebraska_bootstrap_document_urls,
+                    nebraska_seed_limit,
                 )
             except Exception:
                 nebraska_bootstrap_document_urls = []
@@ -14496,6 +14546,9 @@ async def _agentic_discover_admin_state_blocks(
                 candidate_urls.append(document_url)
             if nebraska_bootstrap_document_urls:
                 source_breakdown["nebraska_rules_api_bootstrap"] = len(nebraska_bootstrap_document_urls)
+                nebraska_offset = _bootstrap_offset_for_state("NE")
+                if nebraska_offset:
+                    source_breakdown["nebraska_rules_api_bootstrap_offset"] = nebraska_offset
 
         if state_code == "MI" and not seeded_direct_detail_urls:
             try:
@@ -17198,17 +17251,23 @@ async def _agentic_discover_admin_state_blocks(
         prioritized_south_dakota_seed_rule_urls: List[str] = []
         prioritized_indiana_seed_rule_urls: List[str] = []
         if state_code == "IN":
+            indiana_seed_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch,
+                multiplier=1,
+                default_cap=12,
+                full_corpus_cap=1000,
+            )
             try:
                 indiana_api_rule_urls = await asyncio.wait_for(
                     _discover_indiana_rule_document_urls(
-                        limit=_bounded_discovery_limit(
-                            max_fetch=max_fetch,
-                            multiplier=3,
-                            default_cap=12,
-                            full_corpus_cap=1000,
-                        )
+                        limit=_bootstrap_window_limit_for_state("IN", indiana_seed_limit)
                     ),
                     timeout=25.0,
+                )
+                indiana_api_rule_urls = _slice_bootstrap_urls_for_state(
+                    "IN",
+                    indiana_api_rule_urls,
+                    indiana_seed_limit,
                 )
             except Exception:
                 indiana_api_rule_urls = []
@@ -17230,6 +17289,9 @@ async def _agentic_discover_admin_state_blocks(
                     break
             if prioritized_indiana_seed_rule_urls:
                 source_breakdown["indiana_api_bootstrap"] = len(prioritized_indiana_seed_rule_urls)
+                indiana_offset = _bootstrap_offset_for_state("IN")
+                if indiana_offset:
+                    source_breakdown["indiana_api_bootstrap_offset"] = indiana_offset
 
             indiana_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 6))
             for batch_start in range(0, len(prioritized_indiana_seed_rule_urls), indiana_batch_size):
