@@ -208,26 +208,38 @@ class MarylandScraper(BaseStateScraper):
         if not normalized_section:
             return None
         article_name = str(article_label or "").split(" - ", 1)[0].strip() or "Maryland Code"
+        article_code = ""
+        article_match = re.search(r"\(([A-Za-z0-9]+)\)\s*$", str(article_label or ""))
+        if article_match:
+            article_code = article_match.group(1).upper()
         display_label = str(section_label or normalized_section).strip()
         section_name = f"{article_name} § {display_label}"
+        statute_id = f"{code_name} [{article_code or article_name}] § {normalized_section}"
+        official_cite = (
+            f"Md. Code, {article_name} § {normalized_section}"
+            if article_name
+            else f"Md. Code § {normalized_section}"
+        )
 
         return NormalizedStatute(
             state_code=self.state_code,
             state_name=self.state_name,
-            statute_id=f"{code_name} § {normalized_section}",
+            statute_id=statute_id,
             code_name=code_name,
             section_number=normalized_section,
             section_name=section_name[:200],
             full_text=text[:14000],
             source_url=section_url,
             legal_area=self._identify_legal_area(article_name),
-            official_cite=f"Md. Code § {normalized_section}",
+            official_cite=official_cite,
             metadata=StatuteMetadata(),
             structured_data={
                 "skip_hydrate": True,
                 "record_type": "maryland_api_section",
                 "source_kind": "official_maryland_api_section_html",
                 "discovery_method": "official_articles_sections_api",
+                "article_name": article_name,
+                "article_code": article_code,
             },
         )
     

@@ -242,7 +242,16 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 agent = LegalAgent(
                     identifier=subject_name.lower().replace(" ", "_"),
                     name=subject_name,
-                    agent_type="person",  # Simplified
+                    agent_type=element.get("actor_type") or "legal_entity",
+                    properties={}
+                )
+            beneficiary = None
+            recipient_name = element.get("action_recipient")
+            if recipient_name:
+                beneficiary = LegalAgent(
+                    identifier=recipient_name.lower().replace(" ", "_"),
+                    name=recipient_name,
+                    agent_type="beneficiary",
                     properties={}
                 )
             
@@ -251,7 +260,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 operator=operator,
                 proposition=proposition,
                 agent=agent,
-                beneficiary=None,
+                beneficiary=beneficiary,
                 conditions=element.get("conditions", []),
                 temporal_conditions=[],  # Would need to convert from element format
                 confidence=0.8,  # Will be recalculated below
@@ -320,6 +329,8 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                     "has_subject": len(element.get("subject", [])) > 0,
                     "has_action": len(element.get("action", [])) > 0,
                     "has_conditions": len(element.get("conditions", [])) > 0,
+                    "scaffold_quality": element.get("scaffold_quality", 0),
+                    "parser_warning_count": len(element.get("parser_warnings", [])),
                     "norm_type": element.get("norm_type", "unknown"),
                 }
                 return self.ml_scorer.predict_confidence(features)
@@ -338,6 +349,10 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             confidence += 0.15
         if len(formula) > 10:
             confidence += 0.05
+        confidence += min(float(element.get("scaffold_quality") or 0.0), 1.0) * 0.10
+        confidence -= min(len(element.get("parser_warnings", [])), 5) * 0.03
+        if element.get("promotable_to_theorem") is False:
+            confidence = min(confidence, 0.68)
         if element.get("norm_type") == "definition":
             confidence = min(confidence, 0.45)
         if element.get("extraction_method", "").startswith("deterministic_"):

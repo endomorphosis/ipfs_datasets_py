@@ -16009,6 +16009,28 @@ async def _agentic_discover_admin_state_blocks(
                 ):
                     break
 
+        prioritized_nebraska_seed_rule_urls: List[str] = []
+        if state_code == "NE" and nebraska_bootstrap_document_urls:
+            seen_nebraska_rule_keys: set[str] = set()
+            for rule_url in nebraska_bootstrap_document_urls:
+                rule_key = _url_key(rule_url)
+                if not rule_key or rule_key in seen_nebraska_rule_keys:
+                    continue
+                if not _url_allowed_for_state(rule_url, allowed_hosts):
+                    continue
+                seen_nebraska_rule_keys.add(rule_key)
+                prioritized_nebraska_seed_rule_urls.append(rule_url)
+                if rule_url not in candidate_urls:
+                    candidate_urls.append(rule_url)
+                seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
+                if len(prioritized_nebraska_seed_rule_urls) >= _bounded_discovery_limit(
+                    max_fetch=max_fetch,
+                    multiplier=2,
+                    default_cap=16,
+                    full_corpus_cap=1000,
+                ):
+                    break
+
         prioritized_maryland_seed_rule_urls: List[str] = []
         if state_code == "MD" and maryland_bootstrap_document_urls:
             seen_maryland_rule_keys: set[str] = set()
@@ -16054,6 +16076,62 @@ async def _agentic_discover_admin_state_blocks(
                     full_corpus_cap=1000,
                 ):
                     break
+
+        if state_code == "NE" and prioritized_nebraska_seed_rule_urls:
+            nebraska_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
+            for batch_start in range(0, len(prioritized_nebraska_seed_rule_urls), nebraska_batch_size):
+                if len(statutes) >= max_fetch:
+                    break
+                if (time.monotonic() - state_start) >= per_state_budget_s:
+                    break
+
+                remaining_slots = max_fetch - len(statutes)
+                batch_rule_urls = [
+                    rule_url
+                    for rule_url in prioritized_nebraska_seed_rule_urls[batch_start : batch_start + nebraska_batch_size]
+                    if _url_key(rule_url) not in direct_doc_urls
+                ][:remaining_slots]
+                if not batch_rule_urls:
+                    continue
+
+                inspected_urls += len(batch_rule_urls)
+                nebraska_timeout_s = max(
+                    1.0,
+                    min(20.0, per_state_budget_s - (time.monotonic() - state_start)),
+                )
+                nebraska_results = await asyncio.gather(
+                    *[
+                        asyncio.wait_for(
+                            _scrape_pdf_candidate_url_with_processor(rule_url),
+                            timeout=nebraska_timeout_s,
+                        )
+                        for rule_url in batch_rule_urls
+                    ],
+                    return_exceptions=True,
+                )
+
+                for rule_url, nebraska_scraped in zip(batch_rule_urls, nebraska_results):
+                    if isinstance(nebraska_scraped, Exception) or nebraska_scraped is None:
+                        continue
+
+                    nebraska_text = str(getattr(nebraska_scraped, "text", "") or "").strip()
+                    nebraska_title = str(getattr(nebraska_scraped, "title", "") or "").strip()
+                    nebraska_provenance = getattr(nebraska_scraped, "extraction_provenance", None) or {}
+                    nebraska_method_value = None
+                    if isinstance(nebraska_provenance, dict):
+                        nebraska_method_value = nebraska_provenance.get("method")
+                    if nebraska_method_value is None:
+                        nebraska_method_value = getattr(nebraska_scraped, "method_used", None)
+                    accepted_nebraska_bootstrap = await _append_document_if_rule(
+                        rule_url,
+                        nebraska_title,
+                        nebraska_text,
+                        nebraska_method_value,
+                        source_phase="bootstrap_batch",
+                    )
+                    official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_nebraska_bootstrap)
+                    if len(statutes) >= max_fetch:
+                        break
 
         for rule_url in prioritized_california_bootstrap_document_urls:
             if len(statutes) >= max_fetch:

@@ -79,11 +79,12 @@ class MinnesotaScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
-        direct_seed = await self._build_statute_from_section_page(code_name, code_url)
-        if direct_seed is not None:
-            _merge([direct_seed])
-            if len(merged) >= enough:
-                return merged
+        if self._MN_SECTION_URL_RE.search(str(code_url or "")):
+            direct_seed = await self._build_statute_from_section_page(code_name, code_url)
+            if direct_seed is not None:
+                _merge([direct_seed])
+                if len(merged) >= enough:
+                    return merged
 
         chapter_statutes = await self._scrape_chapter_sections(code_name, max_statutes=limit or 1000000)
         _merge(chapter_statutes)

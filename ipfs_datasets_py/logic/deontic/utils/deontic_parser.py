@@ -61,7 +61,7 @@ _DEFINED_TERM_RE = re.compile(
 )
 _LEADING_DETERMINERS_RE = re.compile(r"^(?:the|a|an|any|each|every|such|no)\s+", re.IGNORECASE)
 _TRAILING_NOISE_RE = re.compile(
-    r"\s+(?:in accordance with|pursuant to|under|as provided in)\s+.+$",
+    r"\s+(?:in accordance with|pursuant to|under|as provided in|except as provided in)\s+.+$",
     re.IGNORECASE,
 )
 _PASSIVE_BY_RE = re.compile(r"^be\s+([A-Za-z][A-Za-z0-9'’\-]*)\s+by\s+(.+)$", re.IGNORECASE)
@@ -82,6 +82,55 @@ _MENTAL_STATE_TERMS = {
     "recklessly",
     "willfully",
     "wilfully",
+}
+_RECIPIENT_RE = re.compile(
+    r"\b(?:to|for|with)\s+((?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})$",
+    re.IGNORECASE,
+)
+_DEFINITION_BODY_RE = re.compile(
+    r"\b(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b\s+(.+)$",
+    re.IGNORECASE,
+)
+_GOVERNMENT_ACTORS = {
+    "administrator",
+    "agency",
+    "bureau",
+    "city",
+    "commission",
+    "commissioner",
+    "council",
+    "department",
+    "director",
+    "mayor",
+    "secretary",
+    "state",
+}
+_LEGAL_PERSON_ACTORS = {
+    "applicant",
+    "borrower",
+    "contractor",
+    "defendant",
+    "employee",
+    "employer",
+    "individual",
+    "landlord",
+    "lessee",
+    "owner",
+    "party",
+    "person",
+    "plaintiff",
+    "resident",
+    "tenant",
+    "worker",
+}
+_ORGANIZATION_ACTORS = {
+    "business",
+    "company",
+    "corporation",
+    "entity",
+    "institution",
+    "organization",
+    "provider",
 }
 
 
@@ -129,16 +178,18 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         if not action_text:
             continue
         elements.append(
-            _build_element(
-                sentence=sentence,
-                document_type=document_type,
-                norm_type=norm_type,
-                deontic_operator=deontic_operator,
-                modal=modal,
-                subject_text=subject_text,
-                action_text=action_text,
-                support_span=match.span(),
-                extraction_method="deterministic_modal_clause_v2",
+            _finalize_element(
+                _build_element(
+                    sentence=sentence,
+                    document_type=document_type,
+                    norm_type=norm_type,
+                    deontic_operator=deontic_operator,
+                    modal=modal,
+                    subject_text=subject_text,
+                    action_text=action_text,
+                    support_span=match.span(),
+                    extraction_method="deterministic_modal_clause_v2",
+                )
             )
         )
 
@@ -155,16 +206,18 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
             if not action_text:
                 continue
             elements.append(
-                _build_element(
-                    sentence=sentence,
-                    document_type=document_type,
-                    norm_type=norm_type,
-                    deontic_operator=deontic_operator,
-                    modal=modal,
-                    subject_text=subject_text or first_subject,
-                    action_text=action_text,
-                    support_span=match.span(),
-                    extraction_method="deterministic_implicit_modal_clause_v2",
+                _finalize_element(
+                    _build_element(
+                        sentence=sentence,
+                        document_type=document_type,
+                        norm_type=norm_type,
+                        deontic_operator=deontic_operator,
+                        modal=modal,
+                        subject_text=subject_text or first_subject,
+                        action_text=action_text,
+                        support_span=match.span(),
+                        extraction_method="deterministic_implicit_modal_clause_v2",
+                    )
                 )
             )
         return elements
@@ -173,7 +226,8 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         defined_term_match = _DEFINED_TERM_RE.search(sentence)
         defined_terms = [_clean_phrase(defined_term_match.group(1))] if defined_term_match else extract_legal_subject(sentence)
         return [
-            {
+            _finalize_element(
+                {
                 "text": sentence,
                 "support_text": sentence,
                 "support_span": [0, len(sentence)],
@@ -182,13 +236,19 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 "modal": "definition",
                 "subject": defined_terms,
                 "action": [sentence],
+                "defined_term": defined_terms[0] if defined_terms else "",
+                "definition_body": extract_definition_body(sentence),
                 "conditions": extract_conditions(sentence),
                 "temporal_constraints": extract_temporal_constraints(sentence),
                 "exceptions": extract_exceptions(sentence),
+                "override_clauses": extract_override_clauses(sentence),
+                "cross_references": extract_cross_references(sentence),
+                "enumerated_items": extract_enumerated_items(sentence),
                 "document_type": document_type,
                 "extraction_method": "deterministic_definition_v2",
                 "confidence_floor": 0.25,
-            }
+                }
+            )
         ]
 
     return []
@@ -206,6 +266,11 @@ def _build_element(
     support_span: tuple[int, int],
     extraction_method: str,
 ) -> Dict[str, Any]:
+    enumerated_items = extract_enumerated_items(sentence)
+    if enumerated_items and re.match(r"^\([A-Za-z0-9]+\)\s+", action_text or ""):
+        action_text = enumerated_items[0]["text"]
+    subject = [subject_text] if subject_text else extract_legal_subject(sentence)
+    action = [action_text]
     return {
         "text": sentence,
         "support_text": sentence[support_span[0] : support_span[1]].strip(),
@@ -213,18 +278,34 @@ def _build_element(
         "norm_type": norm_type,
         "deontic_operator": deontic_operator,
         "modal": modal,
-        "subject": [subject_text] if subject_text else extract_legal_subject(sentence),
-                "action": [action_text],
-                "mental_state": _mental_state(action_text),
-                "action_verb": _first_verb(action_text),
-                "action_object": _action_object(action_text),
+        "subject": subject,
+        "actor_type": classify_legal_entity(subject[0] if subject else ""),
+        "entity_type": classify_legal_entity(subject[0] if subject else ""),
+        "action": action,
+        "mental_state": _mental_state(action_text),
+        "action_verb": _first_verb(action_text),
+        "action_object": _action_object(action_text),
+        "action_recipient": extract_action_recipient(action_text),
         "conditions": extract_conditions(sentence),
         "temporal_constraints": extract_temporal_constraints(sentence),
         "exceptions": extract_exceptions(sentence),
+        "override_clauses": extract_override_clauses(sentence),
+        "cross_references": extract_cross_references(sentence),
+        "enumerated_items": enumerated_items,
         "document_type": document_type,
         "extraction_method": extraction_method,
         "confidence_floor": 0.35,
     }
+
+
+def _finalize_element(element: Dict[str, Any]) -> Dict[str, Any]:
+    quality = score_scaffold_quality(element)
+    element["slot_coverage"] = quality["slot_coverage"]
+    element["scaffold_quality"] = quality["score"]
+    element["quality_label"] = quality["label"]
+    element["parser_warnings"] = quality["warnings"]
+    element["promotable_to_theorem"] = quality["promotable_to_theorem"]
+    return element
 
 
 def classify_modal(modal: str) -> tuple[str, str]:
@@ -310,6 +391,116 @@ def _normalize_passive_clause(subject_text: str, action_text: str) -> tuple[str,
     return agent or subject_text, normalized_action
 
 
+def classify_legal_entity(text: str) -> str:
+    """Return a coarse actor/entity type for KG and frame-logic scaffolds."""
+    normalized = re.sub(r"[^A-Za-z0-9\s]", " ", str(text or "").lower())
+    tokens = set(normalized.split())
+    if not tokens:
+        return "unknown"
+    if tokens & _GOVERNMENT_ACTORS:
+        return "government_actor"
+    if tokens & _ORGANIZATION_ACTORS:
+        return "organization"
+    if tokens & _LEGAL_PERSON_ACTORS:
+        return "legal_person"
+    if any(token.endswith("office") or token.endswith("board") for token in tokens):
+        return "government_actor"
+    return "legal_entity"
+
+
+def extract_action_recipient(action: str) -> str:
+    """Extract a likely beneficiary/recipient from an action phrase."""
+    match = _RECIPIENT_RE.search(str(action or "").strip())
+    if not match:
+        return ""
+    recipient = _clean_phrase(match.group(1))
+    if recipient.lower() in {"law", "regulation", "section", "chapter", "title"}:
+        return ""
+    return recipient
+
+
+def extract_definition_body(sentence: str) -> str:
+    match = _DEFINITION_BODY_RE.search(str(sentence or "").strip())
+    if not match:
+        return ""
+    return match.group(1).strip(" .;:")
+
+
+def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Score whether a deterministic parse is safe to promote without LLM repair."""
+    warnings: List[str] = []
+    norm_type = element.get("norm_type")
+    subjects = [item for item in element.get("subject", []) if item]
+    actions = [item for item in element.get("action", []) if item]
+    action_text = actions[0] if actions else ""
+
+    required_slots = ["deontic_operator", "subject", "action"]
+    if norm_type == "definition":
+        required_slots = ["defined_term", "definition_body"]
+
+    filled_slots = 0
+    for slot in required_slots:
+        value = element.get(slot)
+        if slot == "subject":
+            value = subjects
+        elif slot == "action":
+            value = actions
+        if value:
+            filled_slots += 1
+        else:
+            warnings.append(f"missing_{slot}")
+
+    slot_coverage = filled_slots / len(required_slots) if required_slots else 0.0
+    score = 0.25 + (0.55 * slot_coverage)
+
+    if element.get("conditions"):
+        score += 0.04
+    if element.get("temporal_constraints"):
+        score += 0.04
+    if element.get("action_recipient"):
+        score += 0.03
+    if element.get("actor_type") in {"government_actor", "legal_person", "organization"}:
+        score += 0.03
+
+    if element.get("enumerated_items"):
+        warnings.append("enumerated_clause_requires_item_level_review")
+        score -= 0.10
+    if element.get("cross_references"):
+        warnings.append("cross_reference_requires_resolution")
+        score -= 0.04
+    if element.get("exceptions"):
+        warnings.append("exception_requires_scope_review")
+        score -= 0.05
+    if element.get("override_clauses"):
+        warnings.append("override_clause_requires_precedence_review")
+        score -= 0.05
+    if len(re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action_text)) > 18:
+        warnings.append("overlong_action_span")
+        score -= 0.10
+    if norm_type == "definition" and not element.get("defined_term"):
+        warnings.append("definition_term_uncertain")
+        score -= 0.10
+
+    score = max(0.0, min(score, 0.95))
+    # Promotion here means "safe to use as a deterministic theorem scaffold
+    # without LLM repair"; any warning should keep it in the review lane.
+    promotable = score >= 0.70 and not warnings
+    if score >= 0.75:
+        label = "high"
+    elif score >= 0.50:
+        label = "medium"
+    else:
+        label = "low"
+
+    return {
+        "score": round(score, 3),
+        "label": label,
+        "slot_coverage": round(slot_coverage, 3),
+        "warnings": warnings,
+        "promotable_to_theorem": promotable,
+    }
+
+
 def extract_legal_subject(sentence: str) -> List[str]:
     subjects: List[str] = []
 
@@ -378,6 +569,57 @@ def extract_conditions(sentence: str) -> List[str]:
     return conditions
 
 
+def extract_override_clauses(sentence: str) -> List[str]:
+    overrides: List[str] = []
+    patterns = [
+        r"\bnotwithstanding\s+([^,.;]+)",
+        r"\bwithout regard to\s+([^,.;]+)",
+    ]
+    for pattern in patterns:
+        overrides.extend([m.strip() for m in re.findall(pattern, sentence.lower())])
+    return overrides
+
+
+def extract_cross_references(sentence: str) -> List[Dict[str, str]]:
+    refs: List[Dict[str, str]] = []
+    patterns = [
+        ("section", r"\bsection\s+([0-9A-Za-z][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
+        ("subsection", r"\bsubsection\s+\(([a-z0-9]+)\)"),
+        ("paragraph", r"\bparagraph\s+\(([a-z0-9]+)\)"),
+        ("chapter", r"\bchapter\s+([0-9A-Za-z][0-9A-Za-z.\-]*)"),
+        ("title", r"\btitle\s+([0-9A-Za-z]+)"),
+        ("usc", r"\b(\d+)\s+u\.?s\.?c\.?\s+(?:§|sec(?:tion)?\.?)?\s*([0-9A-Za-z.\-]+)"),
+    ]
+    seen: set[tuple[str, str]] = set()
+    for ref_type, pattern in patterns:
+        for match in re.findall(pattern, sentence.lower()):
+            if isinstance(match, tuple):
+                value = " ".join(part for part in match if part).strip()
+            else:
+                value = str(match or "").strip()
+            if not value:
+                continue
+            key = (ref_type, value)
+            if key in seen:
+                continue
+            seen.add(key)
+            refs.append({"type": ref_type, "value": value})
+    return refs
+
+
+def extract_enumerated_items(sentence: str) -> List[Dict[str, str]]:
+    items: List[Dict[str, str]] = []
+    matches = list(re.finditer(r"(?:^|\s)\(([A-Za-z0-9]+)\)\s+", sentence))
+    for index, match in enumerate(matches):
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(sentence)
+        text = sentence[start:end].strip(" ;,.")
+        text = re.sub(r"\s+(?:and|or)$", "", text, flags=re.IGNORECASE).strip(" ;,.")
+        if text:
+            items.append({"label": match.group(1), "text": text})
+    return items
+
+
 def extract_temporal_constraints(sentence: str) -> List[Dict[str, str]]:
     constraints: List[Dict[str, str]] = []
 
@@ -442,6 +684,7 @@ def build_deontic_formula(element: Dict[str, Any]) -> str:
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     subject_pred = normalize_predicate_name(subject[0]) if subject else "Agent"
     exception_preds = [normalize_predicate_name(item) for item in element.get("exceptions", [])[:3]]
+    override_preds = [normalize_predicate_name(item) for item in element.get("override_clauses", [])[:3]]
     mental_state_pred = normalize_predicate_name(element.get("mental_state", ""))
     temporal_preds = [
         normalize_predicate_name(f"{item.get('type', 'Temporal')} {item.get('value', '')}")
@@ -451,6 +694,7 @@ def build_deontic_formula(element: Dict[str, Any]) -> str:
     modifiers = temporal_preds
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
+    modifiers.extend(override_preds)
 
     if conditions:
         condition_pred = normalize_predicate_name(conditions[0])

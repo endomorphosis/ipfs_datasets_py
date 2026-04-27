@@ -1347,6 +1347,75 @@ async def test_maryland_full_corpus_bounded_run_prefers_api_sections(monkeypatch
 
 
 @pytest.mark.anyio
+async def test_maryland_section_identity_includes_article_context(monkeypatch: pytest.MonkeyPatch):
+    html_payload = (
+        "<html><body><div id='StatuteText'>"
+        "§ 1-101. Maryland section text. "
+        + ("Substantive text. " * 20)
+        + "</div></body></html>"
+    )
+
+    async def _fake_fetch_text(self, url: str, timeout: int = 45) -> str:
+        return html_payload
+
+    monkeypatch.setattr(MarylandScraper, "_fetch_text_direct", _fake_fetch_text)
+
+    scraper = MarylandScraper("MD", "Maryland")
+    statute = await scraper._build_statute_from_section_page(
+        code_name="Maryland Code",
+        article_label="State Government (GSG)",
+        section_label="1-101",
+        section_number="1-101",
+        section_url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+    )
+
+    assert statute is not None
+    assert statute.statute_id == "Maryland Code [GSG] § 1-101"
+    assert statute.official_cite == "Md. Code, State Government § 1-101"
+    assert statute.structured_data["article_name"] == "State Government"
+    assert statute.structured_data["article_code"] == "GSG"
+
+
+@pytest.mark.anyio
+async def test_minnesota_root_index_does_not_become_a_synthetic_section(monkeypatch: pytest.MonkeyPatch):
+    async def _fail_build(*args, **kwargs):
+        raise AssertionError("Minnesota scraper should not try to build a direct section from the root statutes index")
+
+    async def _fake_chapter_sections(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="MN",
+                state_name="Minnesota",
+                statute_id="Minnesota Statutes § 1.01",
+                code_name=code_name,
+                section_number="1.01",
+                section_name="1.01 Extent",
+                full_text="Minnesota section text " * 20,
+                source_url="https://www.revisor.mn.gov/statutes/cite/1.01",
+                official_cite="Minn. Stat. § 1.01",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_minnesota_statutes_html",
+                    "discovery_method": "official_seed_or_section_page",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(MinnesotaScraper, "_build_statute_from_section_page", _fail_build)
+    monkeypatch.setattr(MinnesotaScraper, "_scrape_chapter_sections", _fake_chapter_sections)
+
+    scraper = MinnesotaScraper("MN", "Minnesota")
+    statutes = await scraper.scrape_code(
+        "Minnesota Statutes",
+        "https://www.revisor.mn.gov/statutes/",
+        max_statutes=1,
+    )
+
+    assert [row.section_number for row in statutes] == ["1.01"]
+
+
+@pytest.mark.anyio
 async def test_rhode_island_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
         self._record_fetch_event(provider="test_fetch", success=True)

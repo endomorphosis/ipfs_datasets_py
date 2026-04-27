@@ -210,6 +210,104 @@ class TestDeonticConverter:
         assert len(elements) == 1
         assert elements[0]["deontic_operator"] == "DEF"
         assert elements[0]["subject"] == ["covered entity"]
+
+    def test_cross_reference_exception_is_structured(self):
+        """Cross-reference exceptions should be available as KG/provenance hooks."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["action"] == ["publish the notice"]
+        assert elements[0]["exceptions"] == ["as provided in section 552"]
+        assert {"type": "section", "value": "552"} in elements[0]["cross_references"]
+
+    def test_notwithstanding_override_and_usc_reference(self):
+        """Override clauses and U.S.C. references should be explicit metadata."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "Notwithstanding section 301, the Secretary may waive requirements under 10 U.S.C. 123."
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["deontic_operator"] == "P"
+        assert elements[0]["override_clauses"] == ["section 301"]
+        assert {"type": "section", "value": "301"} in elements[0]["cross_references"]
+        assert {"type": "usc", "value": "10 123"} in elements[0]["cross_references"]
+
+    def test_enumerated_items_are_preserved(self):
+        """Enumeration text is noisy for regex logic but useful for LLM repair prompts."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records."
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["action"] == ["establish procedures"]
+        assert elements[0]["enumerated_items"] == [
+            {"label": "1", "text": "establish procedures"},
+            {"label": "2", "text": "submit a report"},
+            {"label": "3", "text": "maintain records"},
+        ]
+
+    def test_scaffold_quality_metadata_guides_theorem_promotion(self):
+        """Deterministic parses should expose quality gates for downstream provers."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("The tenant must pay rent monthly.")
+
+        assert len(elements) == 1
+        assert elements[0]["slot_coverage"] == 1.0
+        assert elements[0]["quality_label"] == "high"
+        assert elements[0]["scaffold_quality"] >= 0.75
+        assert elements[0]["promotable_to_theorem"] is True
+        assert elements[0]["parser_warnings"] == []
+        assert elements[0]["actor_type"] == "legal_person"
+
+    def test_complex_scaffold_warns_before_theorem_promotion(self):
+        """Cross refs/exceptions/enumerations should route to LLM repair/review first."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            "The Secretary shall (1) establish procedures; (2) submit reports except as provided in section 552."
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["actor_type"] == "government_actor"
+        assert "enumerated_clause_requires_item_level_review" in elements[0]["parser_warnings"]
+        assert "cross_reference_requires_resolution" in elements[0]["parser_warnings"]
+        assert "exception_requires_scope_review" in elements[0]["parser_warnings"]
+        assert elements[0]["promotable_to_theorem"] is False
+
+    def test_action_recipient_becomes_beneficiary_agent(self):
+        """Recipients like Congress are useful KG edges and deontic beneficiaries."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+        elements = extract_normative_elements("The Secretary shall submit a report to Congress.")
+        result = converter.convert("The Secretary shall submit a report to Congress.")
+
+        assert elements[0]["action_recipient"] == "Congress"
+        assert result.success
+        assert result.output.beneficiary is not None
+        assert result.output.beneficiary.name == "Congress"
+
+    def test_definition_body_and_quality_are_structured(self):
+        """Definitions need the term and body for ontology/frame-logic generation."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            'In this section, the term "covered entity" means a provider of covered services.'
+        )
+
+        assert len(elements) == 1
+        assert elements[0]["defined_term"] == "covered entity"
+        assert elements[0]["definition_body"] == "a provider of covered services"
+        assert elements[0]["slot_coverage"] == 1.0
     
     def test_empty_input_validation(self):
         """Test that empty input is handled properly."""
