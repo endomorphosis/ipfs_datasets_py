@@ -50,7 +50,18 @@ def resolve_brave_search_api_key(api_key: Optional[str] = None) -> str:
     Paid/pro-specific names are checked before legacy generic names so an
     upgraded token can be added without changing daemon configs.
     """
-    return resolve_secret(*BRAVE_SEARCH_SECRET_NAMES, explicit=api_key)
+    explicit_value = str(api_key or "").strip()
+    if explicit_value:
+        return explicit_value
+
+    # Resolve each name through the full secret chain before falling back to the
+    # next alias. This lets a paid/pro key in keyring or vault beat an older
+    # free-plan BRAVE_API_KEY in secrets.json.
+    for secret_name in BRAVE_SEARCH_SECRET_NAMES:
+        token = resolve_secret(secret_name)
+        if token:
+            return token
+    return ""
 
 # Try to import IPFS cache module
 try:

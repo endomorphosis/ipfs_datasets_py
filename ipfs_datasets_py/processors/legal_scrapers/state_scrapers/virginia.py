@@ -51,14 +51,14 @@ class VirginiaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=30)
+        official = await self._scrape_official_index(code_name, max_statutes=limit)
+        if official:
+            return official[:limit] if limit is not None else official
+
         if limit is not None:
             direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
             if direct:
                 return direct[:limit]
-
-        official = await self._scrape_official_index(code_name, max_statutes=limit)
-        if official:
-            return official[:limit] if limit is not None else official
 
         candidate_urls = [
             "https://law.lis.virginia.gov/vacode/title1/chapter1/",

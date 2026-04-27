@@ -53,17 +53,17 @@ class MississippiScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=40)
-        if not self._full_corpus_enabled() or max_statutes is not None:
-            recovery = await self._scrape_jina_justia_seed_sections(code_name=code_name, max_statutes=limit or 1)
-            if recovery:
-                return recovery[:limit] if limit is not None else recovery
-
+        if not self._full_corpus_enabled():
             common_crawl = await self._scrape_common_crawl_code_sections(
                 code_name=code_name,
                 max_statutes=limit or 5,
             )
             if common_crawl:
                 return common_crawl[:limit] if limit is not None else common_crawl
+
+            recovery = await self._scrape_jina_justia_seed_sections(code_name=code_name, max_statutes=limit or 1)
+            if recovery:
+                return recovery[:limit] if limit is not None else recovery
 
         archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit or 1000000)
         if archival and (not self._full_corpus_enabled() or max_statutes is not None):

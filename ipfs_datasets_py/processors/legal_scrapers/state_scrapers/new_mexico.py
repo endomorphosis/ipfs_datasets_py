@@ -65,17 +65,12 @@ class NewMexicoScraper(BaseStateScraper):
             self.logger.info("New Mexico chapter PDF extraction: Scraped %s section(s)", len(chapter_sections))
             return chapter_sections[:limit]
 
-        if not self._full_corpus_enabled() or max_statutes is not None:
-            direct = await self._scrape_direct_document_pdfs(code_name=code_name, max_statutes=limit)
-            if direct:
-                return direct[:limit]
-
         fallback_candidates: List[NormalizedStatute] = []
         nav_sections = await self._scrape_nmonesource_nav_sections(code_name=code_name, max_statutes=limit)
         if nav_sections:
             self.logger.info("New Mexico nav-date fallback: Scraped %s section(s)", len(nav_sections))
             fallback_candidates.extend(nav_sections)
-            if not self._full_corpus_enabled() or max_statutes is not None:
+            if not self._full_corpus_enabled():
                 return nav_sections
 
         index_fallback = await self._scrape_nmonesource_index(code_name=code_name)
@@ -86,14 +81,19 @@ class NewMexicoScraper(BaseStateScraper):
                 archival.extend(index_fallback)
             self.logger.info(f"New Mexico archival fallback: Scraped {len(archival)} sections")
             fallback_candidates.extend(archival)
-            if not self._full_corpus_enabled() or max_statutes is not None:
+            if not self._full_corpus_enabled():
                 return archival
 
         if index_fallback:
             self.logger.info("New Mexico index fallback: Scraped %s section(s)", len(index_fallback))
             fallback_candidates.extend(index_fallback)
-            if not self._full_corpus_enabled() or max_statutes is not None:
+            if not self._full_corpus_enabled():
                 return index_fallback
+
+        if not self._full_corpus_enabled():
+            direct = await self._scrape_direct_document_pdfs(code_name=code_name, max_statutes=limit)
+            if direct:
+                return direct[:limit]
 
         generic = await self._generic_scrape(
             code_name,

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import json
 import os
+import signal
+import threading
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional
 
@@ -116,12 +118,34 @@ def _value_from_keyring(names: tuple[str, ...]) -> str:
     for service_name in service_names:
         for name in names:
             try:
-                value = str(keyring.get_password(service_name, name) or "").strip()
+                value = str(_keyring_get_password(keyring, service_name, name) or "").strip()
             except Exception:
                 continue
             if value:
                 return value
     return ""
+
+
+def _keyring_get_password(keyring_module: Any, service_name: str, name: str) -> Optional[str]:
+    timeout = float(os.getenv("IPFS_DATASETS_KEYRING_TIMEOUT_SECONDS") or "0.25")
+    if timeout <= 0:
+        return keyring_module.get_password(service_name, name)
+
+    if threading.current_thread() is not threading.main_thread() or not hasattr(signal, "setitimer"):
+        return keyring_module.get_password(service_name, name)
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+
+    def _raise_timeout(_signum: int, _frame: Any) -> None:
+        raise TimeoutError(f"Timed out reading keyring secret {name}")
+
+    try:
+        signal.signal(signal.SIGALRM, _raise_timeout)
+        signal.setitimer(signal.ITIMER_REAL, timeout)
+        return keyring_module.get_password(service_name, name)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0.0)
+        signal.signal(signal.SIGALRM, previous_handler)
 
 
 def resolve_secret(*names: str, explicit: Optional[str] = None) -> str:

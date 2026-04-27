@@ -53,8 +53,6 @@ class ConnecticutScraper(BaseStateScraper):
         limit = self._effective_scrape_limit(max_statutes, default=30)
         return_threshold = limit if limit is not None else 1000000
         direct_sections: List[NormalizedStatute] = []
-        if not self._full_corpus_enabled():
-            direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
 
         live_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
 
@@ -95,6 +93,9 @@ class ConnecticutScraper(BaseStateScraper):
                 best = generic
             if len(generic) >= return_threshold:
                 return generic
+
+        if not self._full_corpus_enabled():
+            direct_sections = await self._scrape_direct_chapters(code_name, max_statutes=return_threshold)
 
         if len(live_stubs) > len(best):
             best = live_stubs
