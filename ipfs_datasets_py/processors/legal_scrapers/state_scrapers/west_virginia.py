@@ -46,7 +46,7 @@ class WestVirginiaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         return_threshold = self._effective_scrape_limit(max_statutes, default=15) or 1000000
-        if not self._full_corpus_enabled():
+        if not self._full_corpus_enabled() and max_statutes is None:
             direct = await self._scrape_direct_seed_sections(code_name, max_statutes=int(return_threshold))
             if direct:
                 return direct[: int(return_threshold)]
@@ -115,7 +115,12 @@ class WestVirginiaScraper(BaseStateScraper):
         seeds = [
             ("61-2-1", "https://code.wvlegislature.gov/61-2-1/"),
         ]
-        return await self._scrape_section_urls(code_name, [(url, section_number) for section_number, url in seeds], max_statutes=max_statutes)
+        return await self._scrape_section_urls(
+            code_name,
+            [(url, section_number) for section_number, url in seeds],
+            max_statutes=max_statutes,
+            discovery_method="official_seed_section",
+        )
 
     async def _scrape_official_index(
         self,
@@ -155,6 +160,7 @@ class WestVirginiaScraper(BaseStateScraper):
                     code_name,
                     section_links,
                     max_statutes=(None if limit is None else max(0, limit - len(statutes))),
+                    discovery_method="official_chapter_article_section_index",
                 )
                 statutes.extend(parsed)
         return statutes[:limit] if limit is not None else statutes
@@ -235,6 +241,7 @@ class WestVirginiaScraper(BaseStateScraper):
         code_name: str,
         section_urls: List[Tuple[str, str]],
         max_statutes: Optional[int] = None,
+        discovery_method: str = "official_seed_section",
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
@@ -278,7 +285,7 @@ class WestVirginiaScraper(BaseStateScraper):
                     metadata=StatuteMetadata(),
                     structured_data={
                         "source_kind": "official_west_virginia_code_html",
-                        "discovery_method": "official_seed_section",
+                        "discovery_method": discovery_method,
                         "skip_hydrate": True,
                     },
                 )

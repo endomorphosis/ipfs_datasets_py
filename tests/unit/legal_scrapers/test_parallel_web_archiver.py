@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys
+import types
+
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.parallel_web_archiver import (
@@ -215,6 +218,90 @@ async def test_get_warc_pointer_uses_passed_state_context(monkeypatch: pytest.Mo
     assert observed["jurisdiction"] == "state"
     assert observed["state_code"] == "TX"
     assert observed["max_results"] == 1
+    assert result["warc_file"] == "crawl.warc.gz"
+
+
+@pytest.mark.anyio
+async def test_get_warc_pointer_normalizes_state_index_pointer_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _FakeSearch:
+        def search(self, **kwargs):
+            return [
+                {
+                    "url": kwargs["query"],
+                    "warc_filename": "crawl-data/state.warc.gz",
+                    "warc_offset": "10",
+                    "warc_length": "20",
+                    "state_code": "TX",
+                }
+            ]
+
+    archiver = ParallelWebArchiver(use_warc_pointers=False)
+    archiver._hf_search = _FakeSearch()
+
+    result = await archiver.get_warc_pointer("https://rules.example.gov/title-1", jurisdiction="state", state_code="TX")
+
+    assert result is not None
+    assert result["warc_file"] == "crawl-data/state.warc.gz"
+    assert result["warc_filename"] == "crawl-data/state.warc.gz"
+    assert result["warc_offset"] == 10
+    assert result["warc_length"] == 20
+
+
+@pytest.mark.anyio
+async def test_archive_via_warc_fetches_body_from_state_index_pointer(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _FakeSearch:
+        def search(self, **kwargs):
+            return [
+                {
+                    "url": kwargs["query"],
+                    "warc_filename": "crawl-data/state.warc.gz",
+                    "warc_offset": 10,
+                    "warc_length": 20,
+                    "state_code": "TX",
+                }
+            ]
+
+    class _FakeCommonCrawlSearchEngine:
+        def __init__(self, mode="local"):
+            self.mode = mode
+
+        def fetch_warc_record(self, warc_filename, warc_offset, warc_length):
+            assert warc_filename == "crawl-data/state.warc.gz"
+            assert warc_offset == 10
+            assert warc_length == 20
+            return b"fake gz member"
+
+    fake_integration = types.ModuleType("ipfs_datasets_py.processors.web_archiving.common_crawl_integration")
+    fake_integration.CommonCrawlSearchEngine = _FakeCommonCrawlSearchEngine
+    fake_integration._ensure_common_crawl_import_path = lambda: None
+
+    fake_ccapi = types.SimpleNamespace(
+        extract_http_from_warc_gzip_member=lambda raw, **kwargs: types.SimpleNamespace(
+            ok=True,
+            body_text_preview="Recovered administrative rule text",
+        )
+    )
+
+    monkeypatch.setitem(sys.modules, "ipfs_datasets_py.processors.web_archiving.common_crawl_integration", fake_integration)
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine", types.ModuleType("common_crawl_search_engine"))
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex", types.SimpleNamespace(api=fake_ccapi))
+    monkeypatch.setitem(sys.modules, "common_crawl_search_engine.ccindex.api", fake_ccapi)
+
+    archiver = ParallelWebArchiver(use_warc_pointers=False)
+    archiver._hf_search = _FakeSearch()
+
+    result = await archiver._archive_via_warc(
+        "https://rules.example.gov/title-1",
+        jurisdiction="state",
+        state_code="TX",
+    )
+
+    assert result is not None
+    assert result.success is True
+    assert result.source == "warc"
+    assert result.content == "Recovered administrative rule text"
+    assert result.warc_pointer is not None
+    assert result.warc_pointer["warc_file"] == "crawl-data/state.warc.gz"
 
 
 @pytest.mark.anyio

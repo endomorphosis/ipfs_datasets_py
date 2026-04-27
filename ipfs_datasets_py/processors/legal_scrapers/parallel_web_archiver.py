@@ -382,19 +382,51 @@ class ParallelWebArchiver:
                 return None
             
             # Extract WARC file info
-            warc_file = pointer_data.get("warc_file")
-            warc_offset = pointer_data.get("warc_offset")
-            warc_length = pointer_data.get("warc_length")
+            warc_file = pointer_data.get("warc_file") or pointer_data.get("warc_filename") or pointer_data.get("filename")
+            warc_offset = pointer_data.get("warc_offset") or pointer_data.get("offset")
+            warc_length = pointer_data.get("warc_length") or pointer_data.get("length")
             
             if not all([warc_file, warc_offset, warc_length]):
                 return None
-            
-            # For now, return pointer info (actual WARC retrieval would require more infrastructure)
-            # In production, you'd fetch from Common Crawl S3 using the pointer
+
+            try:
+                from ipfs_datasets_py.processors.web_archiving.common_crawl_integration import (
+                    CommonCrawlSearchEngine,
+                    _ensure_common_crawl_import_path,
+                )
+
+                _ensure_common_crawl_import_path()
+                from common_crawl_search_engine.ccindex import api as ccapi
+
+                engine = CommonCrawlSearchEngine(mode="local")
+                raw_record = await anyio.to_thread.run_sync(
+                    engine.fetch_warc_record,
+                    str(warc_file),
+                    int(warc_offset),
+                    int(warc_length),
+                )
+                http = await anyio.to_thread.run_sync(
+                    lambda: ccapi.extract_http_from_warc_gzip_member(
+                        raw_record,
+                        max_body_bytes=2_000_000,
+                        max_preview_chars=80_000,
+                    )
+                )
+                content = str(getattr(http, "body_text_preview", "") or "").strip()
+                if not getattr(http, "ok", False) or not content:
+                    return None
+            except Exception as exc:
+                logger.debug("Common Crawl WARC body extraction failed for %s: %s", url, exc)
+                return None
+
+            pointer_data.setdefault("warc_file", str(warc_file))
+            pointer_data.setdefault("warc_filename", str(warc_file))
+            pointer_data["warc_offset"] = int(warc_offset)
+            pointer_data["warc_length"] = int(warc_length)
             return ArchiveResult(
                 url=url,
                 success=True,
-                content=None,  # Would contain actual content in production
+                content=content,
                 source="warc",
                 warc_pointer=pointer_data
             )
@@ -495,7 +527,18 @@ class ParallelWebArchiver:
             )
             
             if results and len(results) > 0:
-                return results[0]
+                pointer = dict(results[0])
+                warc_file = pointer.get("warc_file") or pointer.get("warc_filename") or pointer.get("filename")
+                warc_offset = pointer.get("warc_offset") or pointer.get("offset")
+                warc_length = pointer.get("warc_length") or pointer.get("length")
+                if warc_file:
+                    pointer.setdefault("warc_file", str(warc_file))
+                    pointer.setdefault("warc_filename", str(warc_file))
+                if warc_offset is not None:
+                    pointer["warc_offset"] = int(warc_offset)
+                if warc_length is not None:
+                    pointer["warc_length"] = int(warc_length)
+                return pointer
             
             return None
             

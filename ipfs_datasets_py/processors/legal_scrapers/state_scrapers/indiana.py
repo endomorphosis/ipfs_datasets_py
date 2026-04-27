@@ -61,7 +61,7 @@ class IndianaScraper(BaseStateScraper):
         return_threshold = self._bounded_return_threshold(30)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
-        if return_threshold < 30:
+        if return_threshold < 30 and max_statutes is None:
             seed_pdfs = await self._scrape_seed_archive_pdfs(
                 code_name=code_name,
                 max_statutes=return_threshold,

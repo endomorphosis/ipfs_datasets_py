@@ -875,6 +875,30 @@ async def test_kansas_parse_section_page_uses_statute_paragraphs(monkeypatch: py
 
 
 @pytest.mark.anyio
+async def test_kansas_discover_chapter_links_uses_live_laws_root(monkeypatch: pytest.MonkeyPatch):
+    html = """
+    <html><body>
+      <a href="001_000_0000_chapter/">Chapter 1. - ACCOUNTANTS, CERTIFIED PUBLIC</a>
+      <a href="002_000_0000_chapter/">Chapter 2. - AGRICULTURE</a>
+      <a href="/search/">Search</a>
+    </body></html>
+    """
+
+    async def _fake_fetch_official_ks_html(self, url: str, timeout_seconds: int = 18) -> str:
+        assert url == "https://www.kslegislature.gov/laws/"
+        return html
+
+    monkeypatch.setattr(KansasScraper, "_fetch_official_ks_html", _fake_fetch_official_ks_html)
+
+    scraper = KansasScraper("KS", "Kansas")
+    links = await scraper._discover_chapter_links("https://www.kslegislature.gov/laws/")
+
+    assert len(links) == 2
+    assert links[0][0] == "https://www.kslegislature.gov/laws/001_000_0000_chapter/"
+    assert links[0][1].startswith("Chapter 1.")
+
+
+@pytest.mark.anyio
 async def test_maine_direct_seed_sections_parse_official_body(monkeypatch: pytest.MonkeyPatch):
     html = (
         "<html><body>"

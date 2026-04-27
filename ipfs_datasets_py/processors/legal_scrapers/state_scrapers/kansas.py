@@ -13,7 +13,7 @@ from .registry import StateScraperRegistry
 class KansasScraper(BaseStateScraper):
     """Scraper for Kansas state laws from https://www.kslegislature.gov."""
 
-    _CHAPTER_RE = re.compile(r"/statute/[0-9a-z]{3,4}_000_0000_chapter/?$", re.IGNORECASE)
+    _CHAPTER_RE = re.compile(r"/laws/[0-9a-z]{3,4}_000_0000_chapter/?$", re.IGNORECASE)
     _ARTICLE_RE = re.compile(r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/?$", re.IGNORECASE)
     _SECTION_RE = re.compile(
         r"/[0-9a-z]{3,4}_000_0000_chapter/[0-9a-z]{3,4}_[0-9a-z]{3,4}_0000_article/"
@@ -30,7 +30,7 @@ class KansasScraper(BaseStateScraper):
         return [
             {
                 "name": "Kansas Statutes",
-                "url": f"{self.get_base_url()}/li/b2025_26/statute/",
+                "url": f"{self.get_base_url()}/laws/",
                 "type": "Code",
             }
         ]

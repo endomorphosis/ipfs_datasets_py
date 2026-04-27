@@ -260,7 +260,7 @@ class HuggingFaceAPISearch:
         if state_code:
             if not filters:
                 filters = {}
-            filters["state"] = state_code.upper()
+            filters["state_code"] = state_code.upper()
         
         return self._search_dataset(
             DATASET_REPOS["state"],

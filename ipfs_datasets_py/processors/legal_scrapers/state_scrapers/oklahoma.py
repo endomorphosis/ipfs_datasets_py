@@ -78,7 +78,7 @@ class OklahomaScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
-        if not self._full_corpus_enabled():
+        if not self._full_corpus_enabled() and max_statutes is None:
             direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct:
                 return direct[:return_threshold]

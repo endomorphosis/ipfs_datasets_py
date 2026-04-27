@@ -212,6 +212,109 @@ def test_query_state_index_falls_back_when_local_state_code_is_null(tmp_path) ->
     assert "code_sections" in rows[0]["url"]
 
 
+def test_materialize_state_query_sidecar_builds_filtered_local_cache(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_PY_COMMON_CRAWL_USE_STATE_QUERY_SIDECAR", "1")
+    index_dir = tmp_path / "state"
+    index_dir.mkdir()
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "domain": "billstatus.ls.state.ms.us",
+                    "url": "https://billstatus.ls.state.ms.us/2026/pdf/code_sections/097/00030007.xml",
+                    "collection": "CC-MAIN-2024-10",
+                    "timestamp": "20240101000000",
+                    "mime": "text/html",
+                    "status": 200,
+                    "warc_filename": "crawl-data/ms.warc.gz",
+                    "warc_offset": 100,
+                    "warc_length": 200,
+                    "gnis": None,
+                    "place_name": None,
+                    "state_code": None,
+                },
+                {
+                    "domain": "www.ncleg.gov",
+                    "url": "https://www.ncleg.gov/Laws/GeneralStatutesTOC",
+                    "collection": "CC-MAIN-2024-10",
+                    "timestamp": "20240103000000",
+                    "mime": "text/html",
+                    "status": 200,
+                    "warc_filename": "crawl-data/nc.warc.gz",
+                    "warc_offset": 500,
+                    "warc_length": 600,
+                    "gnis": None,
+                    "place_name": None,
+                    "state_code": None,
+                },
+            ]
+        ),
+        index_dir / "state.parquet",
+    )
+
+    loader = CommonCrawlIndexLoader(local_base_dir=tmp_path, use_hf_fallback=False)
+    sidecar = loader.materialize_state_query_sidecar(
+        state_code="MS",
+        domain_terms=["ls.state.ms.us"],
+        url_terms=["code_sections"],
+        mime_terms=["html"],
+    )
+
+    assert sidecar is not None
+    assert sidecar.exists()
+
+    cached_rows = pq.read_table(sidecar).to_pylist()
+    assert len(cached_rows) == 1
+    assert cached_rows[0]["domain"] == "billstatus.ls.state.ms.us"
+    assert "code_sections" in cached_rows[0]["url"]
+
+
+def test_query_state_index_uses_state_query_sidecar_cache(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_PY_COMMON_CRAWL_USE_STATE_QUERY_SIDECAR", "1")
+    index_dir = tmp_path / "state"
+    index_dir.mkdir()
+    pq.write_table(
+        pa.Table.from_pylist(
+            [
+                {
+                    "domain": "billstatus.ls.state.ms.us",
+                    "url": "https://billstatus.ls.state.ms.us/2026/pdf/code_sections/097/00030007.xml",
+                    "collection": "CC-MAIN-2024-10",
+                    "timestamp": "20240101000000",
+                    "mime": "text/html",
+                    "status": 200,
+                    "warc_filename": "crawl-data/ms.warc.gz",
+                    "warc_offset": 100,
+                    "warc_length": 200,
+                    "gnis": None,
+                    "place_name": None,
+                    "state_code": None,
+                }
+            ]
+        ),
+        index_dir / "state.parquet",
+    )
+
+    loader = CommonCrawlIndexLoader(local_base_dir=tmp_path, use_hf_fallback=False)
+    rows = loader.query_state_index(
+        state_code="MS",
+        domain_terms=["ls.state.ms.us"],
+        url_terms=["code_sections"],
+        mime_terms=["html"],
+        max_results=5,
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["state_code"] == "MS"
+    assert rows[0]["domain"] == "billstatus.ls.state.ms.us"
+    assert loader._state_query_sidecar_path(
+        state_code="MS",
+        domain_terms=["ls.state.ms.us"],
+        url_terms=["code_sections"],
+        mime_terms=["html"],
+    ).exists()
+
+
 def test_materialize_state_index_locally_downloads_parquet_and_queries_it(tmp_path, monkeypatch) -> None:
     source_dir = tmp_path / "source"
     source_dir.mkdir()

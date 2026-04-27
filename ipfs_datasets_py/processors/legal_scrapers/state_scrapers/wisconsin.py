@@ -51,7 +51,7 @@ class WisconsinScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=40)
-        if limit is not None:
+        if limit is not None and max_statutes is None:
             direct = await self._scrape_direct_sections(code_name, max_statutes=limit)
             if direct:
                 return direct[:limit]

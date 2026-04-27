@@ -34,6 +34,7 @@ from typing import Dict, List, Optional, Any, Union
 import json
 import time
 import shutil
+import hashlib
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
@@ -308,6 +309,142 @@ class CommonCrawlIndexLoader:
     def _sql_literal(value: Any) -> str:
         return "'" + str(value or "").replace("'", "''") + "'"
 
+    def _state_query_sidecar_dir(self) -> Path:
+        configured = str(
+            os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_STATE_QUERY_SIDECAR_DIR", "") or ""
+        ).strip()
+        if configured:
+            return Path(configured)
+        return self.local_base_dir / "state_query_sidecars"
+
+    def _state_query_sidecar_enabled(self) -> bool:
+        raw = str(os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_USE_STATE_QUERY_SIDECAR", "") or "").strip().lower()
+        if raw in {"0", "false", "no", "off"}:
+            return False
+        return True
+
+    def _state_query_sidecar_path(
+        self,
+        *,
+        state_code: Optional[str] = None,
+        domain_terms: Optional[List[str]] = None,
+        url_terms: Optional[List[str]] = None,
+        mime_terms: Optional[List[str]] = None,
+        status_code: Optional[int] = 200,
+    ) -> Path:
+        payload = {
+            "state_code": str(state_code or "").strip().upper(),
+            "domain_terms": sorted(str(term or "").strip().lower() for term in list(domain_terms or []) if str(term or "").strip()),
+            "url_terms": sorted(str(term or "").strip().lower() for term in list(url_terms or []) if str(term or "").strip()),
+            "mime_terms": sorted(str(term or "").strip().lower() for term in list(mime_terms or []) if str(term or "").strip()),
+            "status_code": status_code,
+        }
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+        state_label = payload["state_code"] or "ALL"
+        return self._state_query_sidecar_dir() / f"state_query_{state_label}_{digest}.parquet"
+
+    def materialize_state_query_sidecar(
+        self,
+        *,
+        state_code: Optional[str] = None,
+        domain_terms: Optional[List[str]] = None,
+        url_terms: Optional[List[str]] = None,
+        mime_terms: Optional[List[str]] = None,
+        status_code: Optional[int] = 200,
+        force_refresh: bool = False,
+    ) -> Optional[Path]:
+        """Build a small local parquet sidecar for a state query signature.
+
+        The source state parquet is very large, and some hosted/local shards have
+        sparse ``state_code`` values. This sidecar intentionally filters by the
+        caller's domain/url/mime hints and can be reused across repeated daemon
+        passes.
+        """
+        if not self._state_query_sidecar_enabled():
+            return None
+
+        try:
+            import duckdb
+        except Exception as exc:
+            self.last_query_error = f"DuckDB is required for state query sidecars: {exc}"
+            logger.warning("%s", self.last_query_error)
+            return None
+
+        local_path = self._check_local_index("state")
+        if local_path is None:
+            return None
+        relation = self._duckdb_relation_for_index("state")
+        if not relation:
+            return None
+
+        target = self._state_query_sidecar_path(
+            state_code=state_code,
+            domain_terms=domain_terms,
+            url_terms=url_terms,
+            mime_terms=mime_terms,
+            status_code=status_code,
+        )
+        if target.exists() and not force_refresh and target.stat().st_size > 0:
+            return target
+
+        filters: List[str] = []
+        if status_code is not None:
+            filters.append(f"status = {int(status_code)}")
+
+        domain_filters: List[str] = []
+        for term in list(domain_terms or []):
+            normalized = str(term or "").strip().lower()
+            if normalized:
+                domain_filters.append(f"lower(domain) LIKE {self._sql_literal('%' + normalized + '%')}")
+        if domain_filters:
+            filters.append("(" + " OR ".join(domain_filters) + ")")
+
+        url_filters: List[str] = []
+        for term in list(url_terms or []):
+            normalized = str(term or "").strip().lower()
+            if normalized:
+                url_filters.append(f"lower(url) LIKE {self._sql_literal('%' + normalized + '%')}")
+        if url_filters:
+            filters.append("(" + " OR ".join(url_filters) + ")")
+
+        mime_filters: List[str] = []
+        for term in list(mime_terms or []):
+            normalized = str(term or "").strip().lower()
+            if normalized:
+                mime_filters.append(f"lower(mime) LIKE {self._sql_literal('%' + normalized + '%')}")
+        if mime_filters:
+            filters.append("(" + " OR ".join(mime_filters) + ")")
+
+        where_clause = " AND ".join(filters) if filters else "TRUE"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp_target = target.with_suffix(".tmp.parquet")
+        if tmp_target.exists():
+            tmp_target.unlink()
+        sql = f"""
+            COPY (
+                SELECT domain, url, collection, timestamp, mime, status,
+                       warc_filename, warc_offset, warc_length, gnis, place_name, state_code
+                FROM {relation}
+                WHERE {where_clause}
+            ) TO {self._sql_literal(str(tmp_target))} (FORMAT PARQUET)
+        """
+        try:
+            duckdb.connect().execute(sql)
+            if tmp_target.exists() and tmp_target.stat().st_size > 0:
+                tmp_target.replace(target)
+                logger.info("Materialized state query sidecar at %s", target)
+                return target
+        except Exception as exc:
+            self.last_query_error = str(exc)
+            logger.warning("Failed to materialize state query sidecar: %s", exc)
+        finally:
+            if tmp_target.exists():
+                try:
+                    tmp_target.unlink()
+                except Exception:
+                    pass
+        return None
+
     def _duckdb_relation_for_index(self, index_type: str) -> Optional[str]:
         """Build a DuckDB read_parquet relation for local or HF parquet files."""
         local_path = self._check_local_index(index_type)
@@ -425,7 +562,18 @@ class CommonCrawlIndexLoader:
             return []
 
         self.last_query_error = None
-        relation = self._duckdb_relation_for_index("state")
+        sidecar_path = self.materialize_state_query_sidecar(
+            state_code=state_code,
+            domain_terms=domain_terms,
+            url_terms=url_terms,
+            mime_terms=mime_terms,
+            status_code=status_code,
+        )
+        relation = None
+        if sidecar_path is not None and sidecar_path.exists():
+            relation = f"read_parquet({self._sql_literal(str(sidecar_path))})"
+        if relation is None:
+            relation = self._duckdb_relation_for_index("state")
         if not relation:
             self.last_query_error = "No state Common Crawl parquet relation was available"
             return []
@@ -435,7 +583,9 @@ class CommonCrawlIndexLoader:
         def _build_query(include_state_code: bool) -> str:
             filters: List[str] = []
             if include_state_code and state_code:
-                filters.append(f"upper(state_code) = upper({self._sql_literal(state_code)})")
+                filters.append(
+                    f"upper(CAST(state_code AS VARCHAR)) = upper({self._sql_literal(state_code)})"
+                )
             if status_code is not None:
                 filters.append(f"status = {int(status_code)}")
 

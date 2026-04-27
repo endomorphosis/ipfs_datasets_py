@@ -90,13 +90,13 @@ class GeorgiaScraper(BaseStateScraper):
 
         limit = self._effective_scrape_limit(max_statutes, default=60)
         return_threshold = limit if limit is not None else 1000000
-        if return_threshold < 60:
+        if return_threshold < 60 and max_statutes is None:
             summary_pdf_statutes = await self._scrape_general_statute_summary_pdfs(code_name)
             if summary_pdf_statutes:
                 return summary_pdf_statutes[:return_threshold]
 
         justia_statutes: List[NormalizedStatute] = []
-        if self._env_enabled("GEORGIA_JUSTIA_ENABLE", default=False) or self._env_enabled(
+        if max_statutes is not None or self._env_enabled("GEORGIA_JUSTIA_ENABLE", default=False) or self._env_enabled(
             "LEGAL_SOURCE_RECOVERY_ENABLE_COMMON_CRAWL",
             default=False,
         ):
@@ -177,6 +177,7 @@ class GeorgiaScraper(BaseStateScraper):
         soup = BeautifulSoup(payload, "html.parser")
         title_urls: List[str] = []
         seen_titles = set()
+        title_cap = max(2, min(40, int(max_statutes or 1)))
         for anchor in soup.find_all("a", href=True):
             href = urljoin(year_url, str(anchor.get("href") or "").strip())
             if not self._GA_JUSTIA_TITLE_RE.search(href):
@@ -185,13 +186,15 @@ class GeorgiaScraper(BaseStateScraper):
                 continue
             seen_titles.add(href)
             title_urls.append(href)
-            if len(title_urls) >= 40:
+            if len(title_urls) >= title_cap:
                 break
 
         section_urls: List[str] = []
         intermediate_urls: List[str] = []
         seen_intermediate = set()
         seen_sections = set()
+        section_cap = max(1, int(max_statutes * 4))
+        intermediate_cap = max(2, int(max_statutes * 2))
         for title_url in title_urls:
             try:
                 title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
@@ -203,19 +206,24 @@ class GeorgiaScraper(BaseStateScraper):
             for anchor in title_soup.find_all("a", href=True):
                 href = urljoin(title_url, str(anchor.get("href") or "").strip())
                 if not self._GA_JUSTIA_SECTION_RE.search(href):
-                    if self._GA_JUSTIA_INTERMEDIATE_RE.search(href) and href not in seen_intermediate and href != title_url:
+                    if (
+                        self._GA_JUSTIA_INTERMEDIATE_RE.search(href)
+                        and href not in seen_intermediate
+                        and href != title_url
+                        and len(intermediate_urls) < intermediate_cap
+                    ):
                         seen_intermediate.add(href)
                         intermediate_urls.append(href)
                     continue
                 if href not in seen_sections:
                     seen_sections.add(href)
                     section_urls.append(href)
-                if len(section_urls) >= max(1, int(max_statutes * 4)):
+                if len(section_urls) >= section_cap:
                     break
-            if len(section_urls) >= max(1, int(max_statutes * 4)):
+            if len(section_urls) >= section_cap:
                 break
 
-        for page_url in intermediate_urls[: max(1, int(max_statutes * 2))]:
+        for page_url in intermediate_urls[:intermediate_cap]:
             try:
                 page_payload = await self._fetch_page_content_with_archival_fallback(page_url, timeout_seconds=35)
             except Exception:
@@ -231,13 +239,13 @@ class GeorgiaScraper(BaseStateScraper):
                     continue
                 seen_sections.add(href)
                 section_urls.append(href)
-                if len(section_urls) >= max(1, int(max_statutes * 4)):
+                if len(section_urls) >= section_cap:
                     break
-            if len(section_urls) >= max(1, int(max_statutes * 4)):
+            if len(section_urls) >= section_cap:
                 break
 
         statutes: List[NormalizedStatute] = []
-        for index, section_url in enumerate(section_urls[: max(1, int(max_statutes * 4))], start=1):
+        for index, section_url in enumerate(section_urls[:section_cap], start=1):
             statute = await self._build_justia_statute(code_name=code_name, section_url=section_url, fallback_number=str(index))
             if statute is None:
                 continue
