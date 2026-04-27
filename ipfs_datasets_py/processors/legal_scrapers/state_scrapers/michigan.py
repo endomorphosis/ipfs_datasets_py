@@ -40,7 +40,7 @@ class MichiganScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(120)
+        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
         official = await self._scrape_official_chapter_index(code_name, max_statutes=limit)
         if official:
             return official[:limit]
@@ -200,7 +200,7 @@ class MichiganScraper(BaseStateScraper):
             f"{self.get_base_url()}/Laws/MCL?objectName=mcl-600-101",
         ]
         statutes: List[NormalizedStatute] = []
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(2)
+        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
         for source_url in section_urls[:limit]:
             payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
             if not payload:

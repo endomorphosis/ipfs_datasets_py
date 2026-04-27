@@ -71,7 +71,7 @@ class NewHampshireScraper(BaseStateScraper):
             "https://web.archive.org/web/20250101000000/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm",
             "https://web.archive.org/web/20250101000000/https://gc.nh.gov/rsa/html/NHTOC.htm",
         ]
-        return_threshold = self._bounded_return_threshold(40)
+        return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
         full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None

@@ -88,7 +88,7 @@ class GeorgiaScraper(BaseStateScraper):
             "https://law.justia.com/codes/georgia/",
         ]
 
-        limit = self._effective_scrape_limit(max_statutes, default=60)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
         if return_threshold < 60 and max_statutes is None:
             summary_pdf_statutes = await self._scrape_general_statute_summary_pdfs(code_name)

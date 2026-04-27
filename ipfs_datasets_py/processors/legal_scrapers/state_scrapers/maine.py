@@ -56,8 +56,8 @@ class MaineScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        direct_limit = self._effective_scrape_limit(max_statutes, default=2)
-        return_threshold = self._bounded_return_threshold(30)
+        direct_limit = self._effective_scrape_limit(max_statutes, default=160)
+        return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
         official = await self._scrape_official_title_chapter_section_tree(

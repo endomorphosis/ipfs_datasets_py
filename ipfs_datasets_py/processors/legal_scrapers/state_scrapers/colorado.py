@@ -58,7 +58,7 @@ class ColoradoScraper(BaseStateScraper):
         max_statutes: Optional[int] = None,
     ) -> List[NormalizedStatute]:
         """Scrape CRS-related publications discoverable from the official publication search."""
-        limit = self._effective_scrape_limit(max_statutes, default=20)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         discovered = await self._discover_crs_publications(limit=max(8, int(limit or 20) * 3))
         if not discovered:
             return []

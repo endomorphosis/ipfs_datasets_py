@@ -58,7 +58,7 @@ class IndianaScraper(BaseStateScraper):
         Indiana's live site is currently SPA-only in headless contexts.
         We prefer stable Wayback chapter PDFs that contain substantial text.
         """
-        return_threshold = self._bounded_return_threshold(30)
+        return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
         if return_threshold < 30 and max_statutes is None:

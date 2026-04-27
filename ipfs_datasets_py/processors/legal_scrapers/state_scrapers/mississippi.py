@@ -52,7 +52,7 @@ class MississippiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=40)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         if not self._full_corpus_enabled():
             common_crawl = await self._scrape_common_crawl_code_sections(
                 code_name=code_name,

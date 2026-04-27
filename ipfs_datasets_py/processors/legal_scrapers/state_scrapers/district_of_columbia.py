@@ -68,7 +68,7 @@ class DistrictOfColumbiaScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        limit = self._effective_scrape_limit(max_statutes, default=40)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
         scan_limit = return_threshold if limit is not None else 1000
         for candidate in candidate_urls:

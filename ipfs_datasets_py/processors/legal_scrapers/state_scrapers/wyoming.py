@@ -53,7 +53,7 @@ class WyomingScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        max_sections = self._effective_scrape_limit(max_statutes, default=60)
+        max_sections = self._effective_scrape_limit(max_statutes, default=160)
         max_sections_value = int(max_sections or 1000000)
 
         # The official download catalog has stable title PDFs. Prefer it over
@@ -80,12 +80,13 @@ class WyomingScraper(BaseStateScraper):
             except Exception as e:
                 self.logger.warning(f"Wyoming Playwright failed: {e}, falling back")
         
-        return await self._custom_scrape_wyoming(
+        result = await self._custom_scrape_wyoming(
             code_name,
             code_url,
             "Wyo. Stat.",
             max_sections=max_sections_value,
-        )[:max_sections_value]
+        )
+        return result[:max_sections_value]
     
     async def _scrape_with_playwright(
         self,

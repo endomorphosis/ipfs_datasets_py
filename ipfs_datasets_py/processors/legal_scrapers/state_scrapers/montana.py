@@ -55,7 +55,7 @@ class MontanaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        direct_limit = self._effective_scrape_limit(max_statutes, default=2)
+        direct_limit = self._effective_scrape_limit(max_statutes, default=160)
         official = await self._scrape_official_mca_tree(code_name, max_statutes=max(10, int(direct_limit or 10)))
         if official:
             return official[: max(1, int(direct_limit or len(official)))]
@@ -76,7 +76,7 @@ class MontanaScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        return_threshold = self._bounded_return_threshold(20)
+        return_threshold = self._bounded_return_threshold(160)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
         for candidate in candidate_urls:

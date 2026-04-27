@@ -46,7 +46,7 @@ class PennsylvaniaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=80)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
 
         official_pdf_sections = await self._scrape_consolidated_title_pdfs(
@@ -70,7 +70,7 @@ class PennsylvaniaScraper(BaseStateScraper):
         if not self._full_corpus_enabled():
             direct_statutes = await self._scrape_direct_titles(
                 code_name,
-                max_statutes=min(return_threshold, 80),
+                max_statutes=return_threshold,
             )
             if direct_statutes:
                 if limit is not None:
