@@ -154,7 +154,7 @@ class ArkansasScraper(BaseStateScraper):
         justia_statutes = self._filter_non_code_results(justia_statutes)
         if limit is None and justia_statutes:
             return justia_statutes
-        if (limit is not None and len(justia_statutes) >= limit) or max_statutes:
+        if limit is not None and len(justia_statutes) >= limit:
             return justia_statutes[:limit] if limit is not None else justia_statutes
 
         candidate_urls = [

@@ -128,7 +128,8 @@ class MinnesotaScraper(BaseStateScraper):
             return []
 
         limit = max(1, int(max_statutes or 1))
-        chapter_urls = await self._discover_chapter_urls(max_chapters=max(1, min(5, limit)))
+        chapter_budget = min(limit, 320 if self._full_corpus_enabled() else 24)
+        chapter_urls = await self._discover_chapter_urls(max_chapters=max(1, chapter_budget))
         if not chapter_urls:
             chapter_urls = [
                 f"{self.get_base_url()}/statutes/cite/609",

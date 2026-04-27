@@ -21,6 +21,10 @@ except ImportError:
 
 class WyomingScraper(BaseStateScraper):
     """Scraper for Wyoming state laws from https://www.wyoleg.gov"""
+
+    _SECTION_HEADER_RE = re.compile(
+        r"(?m)^\s*(\d{1,2}-\d{1,2}-\d{2,4}(?:\.[0-9A-Za-z]+)?)\.\s+(.+)$"
+    )
     
     def get_base_url(self) -> str:
         """Return the base URL for Wyoming's legislative website."""
@@ -214,6 +218,109 @@ class WyomingScraper(BaseStateScraper):
             self.logger.debug(f"Wyoming PDF text extraction failed for {pdf_url}: {e}")
             return ""
 
+    async def _extract_pdf_text_layout(self, pdf_url: str, max_chars: Optional[int] = None) -> str:
+        """Extract layout-preserving PDF text so section headers survive splitting."""
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(
+                pdf_url,
+                timeout_seconds=45,
+            )
+            if not payload:
+                return ""
+
+            with tempfile.TemporaryDirectory(prefix="wy_statute_pdf_layout_") as td:
+                pdf_path = Path(td) / "input.pdf"
+                txt_path = Path(td) / "output.txt"
+                pdf_path.write_bytes(payload)
+
+                command = ["pdftotext", "-layout"]
+                if not self._full_corpus_enabled():
+                    command.extend(["-f", "1", "-l", "12"])
+                command.extend([str(pdf_path), str(txt_path)])
+
+                proc = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    timeout=300 if self._full_corpus_enabled() else 90,
+                    check=False,
+                )
+                if proc.returncode != 0 or not txt_path.exists():
+                    return ""
+
+                raw = txt_path.read_text(encoding="utf-8", errors="ignore")
+                if max_chars is None:
+                    max_chars = 900000 if self._full_corpus_enabled() else 90000
+                return raw[: int(max_chars)]
+        except Exception as e:
+            self.logger.debug(f"Wyoming layout PDF extraction failed for {pdf_url}: {e}")
+            return ""
+
+    def _split_title_pdf_into_sections(
+        self,
+        *,
+        code_name: str,
+        title_number: str,
+        title_name: str,
+        title_text: str,
+        source_url: str,
+        citation_format: str,
+    ) -> List[NormalizedStatute]:
+        matches = list(self._SECTION_HEADER_RE.finditer(title_text or ""))
+        if not matches:
+            return []
+
+        starts_by_section: dict[str, list[re.Match[str]]] = {}
+        for match in matches:
+            starts_by_section.setdefault(match.group(1), []).append(match)
+
+        body_start = 0
+        for match in matches:
+            repeats = starts_by_section.get(match.group(1)) or []
+            if len(repeats) >= 2:
+                body_start = repeats[1].start()
+                break
+
+        body_matches = [match for match in matches if match.start() >= body_start] or matches
+
+        statutes: List[NormalizedStatute] = []
+        seen_sections: set[str] = set()
+        for index, match in enumerate(body_matches):
+            section_number = str(match.group(1) or "").strip()
+            if not section_number or section_number in seen_sections:
+                continue
+            seen_sections.add(section_number)
+            section_name = re.sub(r"\s+", " ", str(match.group(2) or "").strip()).strip(" .")
+            end = body_matches[index + 1].start() if index + 1 < len(body_matches) else len(title_text)
+            raw_block = title_text[match.start():end]
+            normalized = self._normalize_legal_text(raw_block)
+            if len(normalized) < 40:
+                continue
+
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:240] or f"Section {section_number}",
+                    full_text=normalized[:24000],
+                    legal_area=self._identify_legal_area(f"{title_name} {section_name}"),
+                    source_url=source_url,
+                    official_cite=f"{citation_format} § {section_number}",
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_wyoming_title_pdf",
+                        "discovery_method": "deterministic_title_pdf_catalog_sections",
+                        "title_number": title_number,
+                        "title_name": title_name,
+                        "skip_hydrate": True,
+                    },
+                )
+            )
+        return statutes
+
     async def _scrape_deterministic_title_pdfs(
         self,
         code_name: str,
@@ -226,6 +333,24 @@ class WyomingScraper(BaseStateScraper):
             # full corpus run still includes it after statutory titles.
             if not self._full_corpus_enabled() and section_number in {"97", "99"}:
                 continue
+            layout_text = await self._extract_pdf_text_layout(full_url)
+            split_sections = self._split_title_pdf_into_sections(
+                code_name=code_name,
+                title_number=section_number,
+                title_name=section_name,
+                title_text=layout_text,
+                source_url=full_url,
+                citation_format=citation_format,
+            )
+            for statute in split_sections:
+                statutes.append(statute)
+                if len(statutes) >= max_sections:
+                    break
+            if len(statutes) >= max_sections:
+                break
+            if split_sections:
+                continue
+
             full_text = await self._extract_pdf_text_summary(full_url)
             if len(full_text.strip()) < 80:
                 continue

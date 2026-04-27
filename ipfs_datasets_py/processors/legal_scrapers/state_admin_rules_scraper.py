@@ -873,6 +873,9 @@ _PDF_BINARY_TOKEN_RE = re.compile(
     r"\b\d+\s+\d+\s+obj\b|endobj|xref|trailer|startxref|/Filter\b|/Length\b",
     re.IGNORECASE,
 )
+_DCREGS_RULELIST_PATH_RE = re.compile(r"^/Common/DCMR/RuleList\.aspx$", re.IGNORECASE)
+_DCREGS_SECTIONLIST_PATH_RE = re.compile(r"^/Common/DCMR/SectionList\.aspx$", re.IGNORECASE)
+_ASPNET_POSTBACK_RE = re.compile(r"__doPostBack\('([^']+)'\s*,\s*'([^']*)'\)", re.IGNORECASE)
 
 # Curated admin-rules entrypoints for states that remain hard to recover via generic discovery.
 _STATE_ADMIN_SOURCE_MAP: Dict[str, List[str]] = {
@@ -3178,11 +3181,202 @@ def _state_seed_expansion_backlog_is_ready(
     return len(california_detail_keys) >= min(2, max(1, int(max_fetch)))
 
 
+def _candidate_dc_dcmr_section_postbacks_from_html(
+    html: str,
+    *,
+    page_url: str,
+    limit: int,
+) -> List[Dict[str, str]]:
+    """Extract DCMR ASP.NET postback targets for section detail pages."""
+    soup = BeautifulSoup(str(html or ""), "html.parser")
+    out: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    limit_n = max(1, int(limit))
+
+    for link in soup.find_all("a"):
+        href = str(link.get("href") or "").strip()
+        text = " ".join(link.get_text(" ", strip=True).split())
+        direct_url = urljoin(page_url, href) if href else ""
+        direct_parsed = urlparse(direct_url)
+        if direct_url and direct_parsed.netloc.lower() in {"www.dcregs.dc.gov", "dcregs.dc.gov"}:
+            if _DCREGS_SECTIONLIST_PATH_RE.fullmatch(direct_parsed.path or ""):
+                key = _url_key(direct_url)
+                if key and key not in seen:
+                    seen.add(key)
+                    out.append({"url": direct_url, "title": text, "event_target": "", "event_argument": ""})
+                    if len(out) >= limit_n:
+                        break
+                continue
+
+        match = _ASPNET_POSTBACK_RE.search(href)
+        if match is None:
+            continue
+        event_target = unescape(match.group(1)).strip()
+        event_argument = unescape(match.group(2)).strip()
+        if not event_target:
+            continue
+        row_text = ""
+        parent = link.find_parent("tr")
+        if parent is not None:
+            row_text = " ".join(parent.get_text(" ", strip=True).split())
+        target_lc = event_target.lower()
+        row_has_section = re.search(r"\b\d{1,3}-\d{1,4}[A-Za-z]?\b", row_text or text) is not None
+        if "rpt_rulelist" not in target_lc:
+            continue
+        if "lnkfile" not in target_lc and not (row_has_section and "label" in target_lc):
+            continue
+        title = text or row_text
+        key = f"{event_target}\0{event_argument}"
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            {
+                "url": "",
+                "title": title,
+                "event_target": event_target,
+                "event_argument": event_argument,
+            }
+        )
+        if len(out) >= limit_n:
+            break
+
+    return out
+
+
+def _aspnet_form_payload_for_event(html: str, *, event_target: str, event_argument: str = "") -> Dict[str, str]:
+    soup = BeautifulSoup(str(html or ""), "html.parser")
+    payload: Dict[str, str] = {}
+    for field in soup.find_all("input"):
+        name = str(field.get("name") or "").strip()
+        if not name:
+            continue
+        payload[name] = str(field.get("value") or "")
+    payload["__EVENTTARGET"] = str(event_target or "").strip()
+    payload["__EVENTARGUMENT"] = str(event_argument or "").strip()
+    return payload
+
+
+def _title_from_dc_dcmr_section_html(*, soup: BeautifulSoup, url: str, fallback_title: str = "") -> str:
+    page_text = " ".join((soup.body or soup).get_text(" ", strip=True).split())
+    text_section_match = re.search(r"\bSection:\s*([0-9A-Za-z-]+)\b", page_text, re.IGNORECASE)
+    if text_section_match is not None:
+        return f"DCMR Section {text_section_match.group(1)}"
+    for selector in ("h1", "h2", "h3", ".section-title", "#MainContent_lblSectionTitle"):
+        node = soup.select_one(selector)
+        if node is None:
+            continue
+        title = " ".join(node.get_text(" ", strip=True).split())
+        if title and title.lower() not in {"search - dcregs", "dc regulations"}:
+            return title
+    title_node = soup.find("title")
+    if title_node is not None:
+        title = " ".join(title_node.get_text(" ", strip=True).split())
+        if title and title.lower() != "dc regulations":
+            return title
+    section_number = str((parse_qs(urlparse(url).query or "").get("SectionNumber") or [""])[0]).strip()
+    if section_number:
+        return f"DCMR Section {section_number}"
+    return str(fallback_title or "District of Columbia Municipal Regulations").strip()
+
+
+async def _discover_dc_dcmr_section_documents(
+    *,
+    seed_urls: Sequence[str],
+    limit: int,
+) -> List[tuple[str, str, str, str]]:
+    """Recover DCMR section pages that are exposed through ASP.NET postbacks."""
+    out: List[tuple[str, str, str, str]] = []
+    seen: set[str] = set()
+    limit_n = max(1, int(limit))
+    session = requests.Session()
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; ipfs-datasets-legal-scraper/1.0)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+
+    for seed_url in seed_urls:
+        parsed_seed = urlparse(str(seed_url or "").strip())
+        if parsed_seed.netloc.lower() not in {"www.dcregs.dc.gov", "dcregs.dc.gov"}:
+            continue
+        if not _DCREGS_RULELIST_PATH_RE.fullmatch(parsed_seed.path or ""):
+            continue
+        try:
+            response = await asyncio.to_thread(session.get, seed_url, headers=headers, timeout=20)
+            if int(getattr(response, "status_code", 0) or 0) >= 400:
+                continue
+            html = str(getattr(response, "text", "") or "")
+            candidates = _candidate_dc_dcmr_section_postbacks_from_html(
+                html,
+                page_url=seed_url,
+                limit=limit_n * 3,
+            )
+        except Exception:
+            continue
+
+        for candidate in candidates:
+            if len(out) >= limit_n:
+                return out
+            section_url = str(candidate.get("url") or "").strip()
+            section_response = None
+            try:
+                if section_url:
+                    section_response = await asyncio.to_thread(session.get, section_url, headers=headers, timeout=20)
+                else:
+                    payload = _aspnet_form_payload_for_event(
+                        html,
+                        event_target=str(candidate.get("event_target") or ""),
+                        event_argument=str(candidate.get("event_argument") or ""),
+                    )
+                    section_response = await asyncio.to_thread(
+                        session.post,
+                        seed_url,
+                        data=payload,
+                        headers={**headers, "Referer": seed_url},
+                        timeout=20,
+                        allow_redirects=True,
+                    )
+            except Exception:
+                continue
+            if section_response is None or int(getattr(section_response, "status_code", 0) or 0) >= 400:
+                continue
+            final_url = str(getattr(section_response, "url", "") or section_url or seed_url).strip()
+            if not final_url:
+                continue
+            final_parsed = urlparse(final_url)
+            if final_parsed.netloc.lower() not in {"www.dcregs.dc.gov", "dcregs.dc.gov"}:
+                continue
+            if not _DCREGS_SECTIONLIST_PATH_RE.fullmatch(final_parsed.path or ""):
+                continue
+            key = _url_key(final_url)
+            if not key or key in seen:
+                continue
+            section_html = str(getattr(section_response, "text", "") or "")
+            section_soup = BeautifulSoup(section_html, "html.parser")
+            section_body = section_soup.body or section_soup
+            section_text = " ".join(section_body.get_text(" ", strip=True).split())
+            title = _title_from_dc_dcmr_section_html(
+                soup=section_soup,
+                url=final_url,
+                fallback_title=str(candidate.get("title") or ""),
+            )
+            if not section_text:
+                continue
+            seen.add(key)
+            out.append((final_url, title, section_text, "dcregs_aspnet_postback"))
+            if len(out) >= limit_n:
+                return out
+
+    return out
+
+
 def _is_direct_detail_candidate_url(url: str) -> bool:
     parsed = urlparse(str(url or "").strip())
     host = parsed.netloc.lower()
     path = parsed.path or ""
     normalized_path = path.rstrip("/") or "/"
+    if host in {"www.dcregs.dc.gov", "dcregs.dc.gov"} and _DCREGS_SECTIONLIST_PATH_RE.fullmatch(path):
+        return bool(str((parse_qs(parsed.query or "").get("SectionNumber") or [""])[0]).strip())
     if host == "admincode.legislature.state.al.us" and normalized_path.lower() == "/administrative-code":
         return bool(_AL_RULE_NUMBER_RE.fullmatch(_alabama_public_code_number_from_url(url)))
     if host == "eregulations.ct.gov" and _CT_EREGS_SECTION_PATH_RE.fullmatch(path):
@@ -10595,6 +10789,14 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and re.search(r"\b(?:subpart|subp\.|part|scope|definitions?|authority)\b", body, re.IGNORECASE) is not None
         and "page not found" not in body[:2000].lower()
     )
+    dc_official_dcmr_section = (
+        host in {"www.dcregs.dc.gov", "dcregs.dc.gov"}
+        and _DCREGS_SECTIONLIST_PATH_RE.fullmatch(path) is not None
+        and bool(str((query.get("SectionNumber") or [""])[0]).strip())
+        and len(body) >= max(160, int(min_chars))
+        and re.search(r"\bSection:\s*[0-9A-Za-z-]+\b", body, re.IGNORECASE) is not None
+        and re.search(r"\b(?:authority|effective|chapter|title|section|rule|regulation|code)\b", body, re.IGNORECASE) is not None
+    )
     wyoming_official_ajax_viewer = False
     if host == "rules.wyo.gov" and path.lower() == "/ajaxhandler.ashx":
         handler = str((query.get("handler") or [""])[0]).strip().lower()
@@ -10631,6 +10833,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and not new_jersey_state_njac_pdf
         and not wyoming_official_ajax_viewer
         and not minnesota_official_rule_part
+        and not dc_official_dcmr_section
     ):
         return False
     if (
@@ -10642,6 +10845,7 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
         and not new_jersey_state_njac_pdf
         and not wyoming_official_ajax_viewer
         and not minnesota_official_rule_part
+        and not dc_official_dcmr_section
     ):
         return False
     if _looks_like_shallow_montana_inventory_page(text=body, title=title_value, url=url_value):
@@ -10675,6 +10879,8 @@ def _is_substantive_rule_text(*, text: str, title: str, url: str, min_chars: int
     if new_jersey_state_njac_pdf:
         return True
     if minnesota_official_rule_part:
+        return True
+    if dc_official_dcmr_section:
         return True
 
     if host == "adminrules.utah.gov" and _UT_RULE_DETAIL_PATH_RE.search(path):
@@ -14062,6 +14268,7 @@ async def _agentic_discover_admin_state_blocks(
         maryland_bootstrap_document_urls: List[str] = []
         maine_bootstrap_document_urls: List[str] = []
         minnesota_bootstrap_document_urls: List[str] = []
+        dc_bootstrap_section_documents: List[tuple[str, str, str, str]] = []
         preseed_substantive_url_keys: set[str] = set()
 
         # Utah's public search API already exposes canonical detail-page URLs.
@@ -14297,6 +14504,28 @@ async def _agentic_discover_admin_state_blocks(
                 candidate_urls.append(document_url)
             if minnesota_bootstrap_document_urls:
                 source_breakdown["minnesota_revisor_bootstrap"] = len(minnesota_bootstrap_document_urls)
+
+        if state_code == "DC":
+            dc_seed_limit = _bounded_discovery_limit(
+                max_fetch=max_fetch_per_state,
+                multiplier=3,
+                default_cap=12,
+                full_corpus_cap=1000,
+            )
+            try:
+                dc_bootstrap_section_documents = await asyncio.wait_for(
+                    _discover_dc_dcmr_section_documents(
+                        seed_urls=ordered_seed_urls[:8],
+                        limit=dc_seed_limit,
+                    ),
+                    timeout=30.0 if _full_corpus_mode_enabled() else 18.0,
+                )
+            except Exception:
+                dc_bootstrap_section_documents = []
+            for document_url, _title, _text, _method in dc_bootstrap_section_documents:
+                candidate_urls.append(document_url)
+            if dc_bootstrap_section_documents:
+                source_breakdown["dc_dcmr_postback_bootstrap"] = len(dc_bootstrap_section_documents)
 
         vermont_bootstrap_document_urls: List[str] = []
         if state_code == "VT" and len(seeded_direct_detail_urls) < max(2, int(max_fetch_per_state)):
@@ -15102,6 +15331,7 @@ async def _agentic_discover_admin_state_blocks(
             or nebraska_bootstrap_document_urls
             or idaho_bootstrap_document_urls
             or minnesota_bootstrap_document_urls
+            or dc_bootstrap_section_documents
             or (state_code in {"FL", "IA", "MA"} and bool(candidate_urls))
         ) or _direct_detail_candidate_backlog_is_ready(
             candidate_urls,
@@ -16122,6 +16352,20 @@ async def _agentic_discover_admin_state_blocks(
                     break
 
         official_bootstrap_rule_hit = False
+
+        if state_code == "DC" and dc_bootstrap_section_documents:
+            for document_url, dc_title, dc_text, dc_method_value in dc_bootstrap_section_documents:
+                if len(statutes) >= max_fetch:
+                    break
+                inspected_urls += 1
+                accepted_dc_section = await _append_document_if_rule(
+                    document_url,
+                    dc_title,
+                    dc_text,
+                    dc_method_value,
+                    source_phase="dc_dcmr_postback_bootstrap",
+                )
+                official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_dc_section)
 
         prioritized_maine_seed_rule_urls: List[str] = []
         if state_code == "ME" and maine_bootstrap_document_urls:

@@ -4,6 +4,7 @@ import zipfile
 import pytest
 
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.alabama import AlabamaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.arkansas import ArkansasScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.california import CaliforniaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.colorado import ColoradoScraper
@@ -2218,6 +2219,121 @@ async def test_minnesota_root_index_does_not_become_a_synthetic_section(monkeypa
 
 
 @pytest.mark.anyio
+async def test_minnesota_full_corpus_chapter_scrape_does_not_cap_discovery_at_five(monkeypatch: pytest.MonkeyPatch):
+    requested = {}
+
+    monkeypatch.setattr(MinnesotaScraper, "_full_corpus_enabled", lambda self: True)
+
+    async def _fake_discover(self, max_chapters: int):
+        requested["max_chapters"] = max_chapters
+        return [
+            "https://www.revisor.mn.gov/statutes/cite/1",
+            "https://www.revisor.mn.gov/statutes/cite/2",
+            "https://www.revisor.mn.gov/statutes/cite/3",
+            "https://www.revisor.mn.gov/statutes/cite/4",
+            "https://www.revisor.mn.gov/statutes/cite/5",
+            "https://www.revisor.mn.gov/statutes/cite/6",
+        ]
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 35) -> bytes:
+        return (
+            "<html><body><table>"
+            "<tr><td>1.01 Extent</td></tr>"
+            "<tr><td>1.02 Scope</td></tr>"
+            "</table></body></html>"
+        ).encode("utf-8")
+
+    async def _fake_build(self, code_name: str, section_url: str):
+        section_number = section_url.rsplit("/", 1)[-1]
+        return NormalizedStatute(
+            state_code="MN",
+            state_name="Minnesota",
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            section_number=section_number,
+            section_name=f"{section_number} Heading",
+            full_text="Minnesota section text " * 20,
+            source_url=section_url,
+            official_cite=f"Minn. Stat. § {section_number}",
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "official_minnesota_statutes_html",
+                "discovery_method": "official_seed_or_section_page",
+                "skip_hydrate": True,
+            },
+        )
+
+    monkeypatch.setattr(MinnesotaScraper, "_discover_chapter_urls", _fake_discover)
+    monkeypatch.setattr(MinnesotaScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(MinnesotaScraper, "_build_statute_from_section_page", _fake_build)
+
+    scraper = MinnesotaScraper("MN", "Minnesota")
+    statutes = await scraper._scrape_chapter_sections("Minnesota Statutes", max_statutes=20)
+
+    assert requested["max_chapters"] > 5
+    assert len(statutes) >= 2
+
+
+@pytest.mark.anyio
+async def test_arkansas_bounded_probe_does_not_short_circuit_to_partial_justia(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_justia(self, code_name: str, max_statutes):
+        return [
+            NormalizedStatute(
+                state_code="AR",
+                state_name="Arkansas",
+                statute_id=f"{code_name} § 1-1-101",
+                code_name=code_name,
+                section_number="1-1-101",
+                section_name="Justia row",
+                full_text="Arkansas Justia text. " * 20,
+                source_url="https://law.justia.com/codes/arkansas/title-1/chapter-1/section-1-1-101/",
+                official_cite="Ark. Code Ann. § 1-1-101",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "justia_section_html",
+                    "discovery_method": "justia_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_generic(self, code_name: str, candidate: str, citation_format: str, max_sections: int):
+        if "arkleg.state.ar.us" not in str(candidate):
+            return []
+        return [
+            NormalizedStatute(
+                state_code="AR",
+                state_name="Arkansas",
+                statute_id=f"{code_name} § 1-1-102",
+                code_name=code_name,
+                section_number="1-1-102",
+                section_name="Official row",
+                full_text="Arkansas official text. " * 20,
+                source_url="https://www.arkleg.state.ar.us/ArkansasCode/1-1-102",
+                official_cite="Ark. Code Ann. § 1-1-102",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_arkansas_code_html",
+                    "discovery_method": "generic_official_fallback",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(ArkansasScraper, "_scrape_justia_titles", _fake_justia)
+    monkeypatch.setattr(ArkansasScraper, "_generic_scrape", _fake_generic)
+
+    scraper = ArkansasScraper("AR", "Arkansas")
+    statutes = await scraper.scrape_code(
+        "Arkansas Code",
+        "https://www.arkleg.state.ar.us/",
+        max_statutes=5,
+    )
+
+    assert [row.section_number for row in statutes] == ["1-1-101", "1-1-102"]
+
+
+@pytest.mark.anyio
 async def test_rhode_island_custom_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
         self._record_fetch_event(provider="test_fetch", success=True)
@@ -2465,6 +2581,33 @@ async def test_wyoming_custom_scrape_records_fetch_analytics(monkeypatch: pytest
     assert len(statutes) >= 1
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+def test_wyoming_title_pdf_is_split_into_section_rows():
+    scraper = WyomingScraper("WY", "Wyoming")
+    title_text = """
+    TITLE 1
+    1-1-101. Definitions.
+    (a) "Person" means an individual.
+    (b) "State" means Wyoming.
+
+    1-1-102. Applicability.
+    This act applies to all proceedings under this title.
+    """
+
+    statutes = scraper._split_title_pdf_into_sections(
+        code_name="Wyoming Statutes",
+        title_number="1",
+        title_name="Title 1",
+        title_text=title_text,
+        source_url="https://www.wyoleg.gov/statutes/compress/title01.pdf",
+        citation_format="Wyo. Stat.",
+    )
+
+    assert [s.section_number for s in statutes] == ["1-1-101", "1-1-102"]
+    assert statutes[0].structured_data["discovery_method"] == "deterministic_title_pdf_catalog_sections"
+    assert "Definitions" in statutes[0].section_name
+    assert "Person" in statutes[0].full_text
 
 
 @pytest.mark.anyio

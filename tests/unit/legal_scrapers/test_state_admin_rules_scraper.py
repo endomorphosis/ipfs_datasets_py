@@ -517,6 +517,86 @@ def test_curated_seeds_include_delaware_and_dc_admin_rule_sources() -> None:
     assert "DC" in scraper_module._DIRECT_AGENTIC_RECOVERY_STATES
 
 
+def test_dc_dcmr_rulelist_postbacks_are_extracted_as_section_candidates() -> None:
+    html = """
+    <form>
+      <input type="hidden" name="__VIEWSTATE" value="view-state-value" />
+      <table>
+        <tr><td>1-100</td><td>Applicability</td>
+        <td><a href="javascript:__doPostBack('ctl00$MainContent$rpt_ruleList$ctl01$lnkFile','')">View</a></td></tr>
+      </table>
+    </form>
+    """
+
+    candidates = scraper_module._candidate_dc_dcmr_section_postbacks_from_html(
+        html,
+        page_url="https://www.dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=1-1",
+        limit=5,
+    )
+    payload = scraper_module._aspnet_form_payload_for_event(
+        html,
+        event_target=candidates[0]["event_target"],
+    )
+
+    assert candidates == [
+        {
+            "url": "",
+            "title": "View",
+            "event_target": "ctl00$MainContent$rpt_ruleList$ctl01$lnkFile",
+            "event_argument": "",
+        }
+    ]
+    assert payload["__VIEWSTATE"] == "view-state-value"
+    assert payload["__EVENTTARGET"] == "ctl00$MainContent$rpt_ruleList$ctl01$lnkFile"
+
+
+@pytest.mark.asyncio
+async def test_dc_dcmr_postback_bootstrap_recovers_section_documents(monkeypatch: pytest.MonkeyPatch) -> None:
+    rulelist_url = "https://www.dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=1-1"
+    section_url = "https://www.dcregs.dc.gov/Common/DCMR/SectionList.aspx?SectionNumber=1-100"
+    rulelist_html = """
+    <form>
+      <input type="hidden" name="__VIEWSTATE" value="view-state-value" />
+      <a href="javascript:__doPostBack('ctl00$MainContent$rpt_ruleList$ctl01$lnkFile','')">1-100 Applicability</a>
+    </form>
+    """
+    section_html = """
+    <html><head><title>DC Regulations</title></head><body>
+      <h1>1-100 Applicability</h1>
+      <p>District of Columbia Municipal Regulations administrative rule section.</p>
+      <p>Authority, effective date, chapter, title, section, rule, regulation, and code body text.</p>
+    </body></html>
+    """
+
+    class _FakeSession:
+        def get(self, url, **kwargs):
+            assert url == rulelist_url
+            return SimpleNamespace(status_code=200, text=rulelist_html, url=url)
+
+        def post(self, url, data=None, **kwargs):
+            assert url == rulelist_url
+            assert data["__EVENTTARGET"] == "ctl00$MainContent$rpt_ruleList$ctl01$lnkFile"
+            return SimpleNamespace(status_code=200, text=section_html, url=section_url)
+
+    monkeypatch.setattr(scraper_module.requests, "Session", lambda: _FakeSession())
+
+    rows = await scraper_module._discover_dc_dcmr_section_documents(
+        seed_urls=[rulelist_url],
+        limit=1,
+    )
+
+    assert rows == [
+        (
+            section_url,
+            "1-100 Applicability",
+            "1-100 Applicability District of Columbia Municipal Regulations administrative rule section. "
+            "Authority, effective date, chapter, title, section, rule, regulation, and code body text.",
+            "dcregs_aspnet_postback",
+        )
+    ]
+    assert scraper_module._is_direct_detail_candidate_url(section_url) is True
+
+
 def test_curated_seeds_include_massachusetts_cmr_sources() -> None:
     ma_urls = scraper_module._extract_seed_urls_for_state("MA", "Massachusetts")
     ma_allowed_hosts = _allowed_discovery_hosts_for_state("MA", "Massachusetts")

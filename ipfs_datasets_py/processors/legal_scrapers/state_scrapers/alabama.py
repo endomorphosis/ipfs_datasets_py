@@ -45,7 +45,19 @@ class AlabamaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         limit = self._effective_scrape_limit(max_statutes, default=100)
-        return await self._scrape_alison_graphql(code_name, limit or 1000000)
+        statutes = await self._scrape_alison_graphql(code_name, limit or 1000000)
+        if statutes:
+            return statutes
+
+        self.logger.warning(
+            "Alabama GraphQL returned no statutes; falling back to archival/custom scrape path"
+        )
+        return await self._custom_scrape_alabama(
+            code_name,
+            code_url or self.CODE_URL,
+            "Ala. Code",
+            max_sections=limit or 1000000,
+        )
 
     async def _graphql(self, query: str, variables: Dict[str, Any] | None = None, timeout_seconds: int = 15) -> Dict[str, Any]:
         timeout = max(1, int(timeout_seconds or 15))
