@@ -8865,6 +8865,13 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
                 if fetched is not None:
                     return fetched
 
+            # Direct document endpoints often trigger browser downloads instead
+            # of navigation. Fetching bytes from within the browser context first
+            # avoids noisy Playwright download futures when callers cancel a batch.
+            fetched = await _download_document_bytes_via_page_fetch(page, url)
+            if fetched is not None:
+                return fetched
+
             link_selector = f'a[href="{url}"]'
             try:
                 locator = page.locator(link_selector).first
@@ -8884,9 +8891,6 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
                     download = None
 
             if download is None:
-                fetched = await _download_document_bytes_via_page_fetch(page, url)
-                if fetched is not None:
-                    return fetched
                 return None
 
             download_path = await download.path()
@@ -8908,9 +8912,15 @@ async def _download_document_bytes_via_playwright(url: str) -> Optional[Dict[str
                 "suggested_filename": suggested_filename,
             }
         finally:
-            await context.close()
+            try:
+                await context.close()
+            except Exception:
+                pass
             if browser is not None:
-                await browser.close()
+                try:
+                    await browser.close()
+                except Exception:
+                    pass
 
     try:
         async with async_playwright() as p:
@@ -13616,7 +13626,7 @@ async def _agentic_discover_admin_state_blocks(
     fetch_concurrency: int,
     per_state_budget_seconds: float = 120.0,
     output_dir: Optional[str] = None,
-    checkpoint_interval: int = 100,
+    checkpoint_interval: int = 10,
     _force_asyncio_backend: bool = False,
 ) -> Dict[str, Any]:
     if not _force_asyncio_backend:
@@ -15089,6 +15099,7 @@ async def _agentic_discover_admin_state_blocks(
             or new_hampshire_bootstrap_document_urls
             or georgia_bootstrap_document_urls
             or kansas_bootstrap_document_urls
+            or nebraska_bootstrap_document_urls
             or idaho_bootstrap_document_urls
             or minnesota_bootstrap_document_urls
             or (state_code in {"FL", "IA", "MA"} and bool(candidate_urls))
@@ -15728,6 +15739,10 @@ async def _agentic_discover_admin_state_blocks(
                     with _checkpoint_path.open("w", encoding="utf-8") as _chk_fh:
                         for _row in kg_rows:
                             _chk_fh.write(json.dumps(_row, ensure_ascii=False) + "\n")
+                    _statutes_path = _checkpoint_dir / f"STATE-{state_code}_statutes.jsonl"
+                    with _statutes_path.open("w", encoding="utf-8") as _stat_fh:
+                        for _s in statutes:
+                            _stat_fh.write(json.dumps(_s, ensure_ascii=False) + "\n")
                 except Exception:
                     pass
             if state_code == "AZ":
@@ -18853,6 +18868,7 @@ async def scrape_state_admin_rules(
     agentic_max_hops: int = 4,
     agentic_max_pages: int = 1000,
     agentic_fetch_concurrency: int = 6,
+    agentic_checkpoint_interval: int = 10,
     write_agentic_kg_corpus: bool = True,
     require_substantive_rule_text: bool = True,
 ) -> Dict[str, Any]:
@@ -18886,6 +18902,170 @@ async def scrape_state_admin_rules(
             phase_timings[phase_name] = round(max(0.0, time.time() - started_at), 4)
 
         start = time.time()
+        if selected_states == ["NE"]:
+            fast_started_at = time.time()
+            fast_limit = max(1, int(max_rules or agentic_max_fetch_per_state or 50))
+            candidate_urls = await _discover_nebraska_rule_document_urls(
+                limit=_bootstrap_window_limit_for_state("NE", fast_limit)
+            )
+            candidate_urls = _slice_bootstrap_urls_for_state("NE", candidate_urls, fast_limit)
+            statutes: List[Dict[str, Any]] = []
+            diagnostics: List[Dict[str, Any]] = []
+            seen_doc_keys: set[str] = set()
+            checkpoint_every = max(1, int(agentic_checkpoint_interval or 1))
+            output_root = _resolve_admin_output_dir(output_dir) if output_dir else None
+            checkpoint_dir = output_root / "agentic_checkpoints" if output_root else None
+
+            def _write_nebraska_checkpoint() -> None:
+                if checkpoint_dir is None or not statutes:
+                    return
+                try:
+                    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+                    statutes_path = checkpoint_dir / "STATE-NE_statutes.jsonl"
+                    with statutes_path.open("w", encoding="utf-8") as handle:
+                        for row in statutes:
+                            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+                except Exception:
+                    pass
+
+            async def _scrape_nebraska_url(index: int, document_url: str) -> Dict[str, Any]:
+                try:
+                    scraped = await asyncio.wait_for(
+                        _scrape_pdf_candidate_url_with_processor(document_url),
+                        timeout=max(5.0, min(30.0, float(per_state_timeout_seconds or 30.0))),
+                    )
+                except Exception as exc:
+                    return {"url": document_url, "ok": False, "error": type(exc).__name__}
+                if scraped is None:
+                    return {"url": document_url, "ok": False, "error": "empty"}
+                text = str(getattr(scraped, "text", "") or "").strip()
+                title = str(getattr(scraped, "title", "") or "").strip() or f"Nebraska Administrative Rules (source {index})"
+                method_value = getattr(scraped, "method_used", None)
+                method_value = getattr(method_value, "value", method_value)
+                if not _is_substantive_rule_text(
+                    text=text,
+                    title=title,
+                    url=document_url,
+                    min_chars=max(220, int(min_full_text_chars or 200)),
+                ):
+                    return {"url": document_url, "ok": False, "error": "not_substantive", "chars": len(text)}
+                return {
+                    "url": document_url,
+                    "ok": True,
+                    "title": title,
+                    "text": text,
+                    "method": str(method_value or ""),
+                    "chars": len(text),
+                }
+
+            semaphore = asyncio.Semaphore(max(1, int(agentic_fetch_concurrency or 1)))
+
+            async def _guarded_scrape(index: int, document_url: str) -> Dict[str, Any]:
+                async with semaphore:
+                    return await _scrape_nebraska_url(index, document_url)
+
+            scrape_results = await asyncio.gather(
+                *[_guarded_scrape(index + 1, url) for index, url in enumerate(candidate_urls)],
+                return_exceptions=True,
+            )
+            for index, result in enumerate(scrape_results, start=1):
+                if isinstance(result, BaseException):
+                    diagnostics.append({"ok": False, "error": type(result).__name__})
+                    continue
+                diagnostics.append({key: value for key, value in result.items() if key not in {"text"}})
+                if not result.get("ok"):
+                    continue
+                document_url = str(result.get("url") or "")
+                doc_key = _url_key(document_url)
+                if not doc_key or doc_key in seen_doc_keys:
+                    continue
+                seen_doc_keys.add(doc_key)
+                title = str(result.get("title") or f"Nebraska Administrative Rules (source {index})")
+                text = str(result.get("text") or "")
+                method = str(result.get("method") or "")
+                section_number = f"A{len(statutes) + 1}"
+                statute = {
+                    "state_code": "NE",
+                    "state_name": "Nebraska",
+                    "statute_id": f"NE-AGENTIC-{section_number}",
+                    "code_name": "Nebraska Administrative Rules (Agentic Discovery)",
+                    "section_number": section_number,
+                    "section_name": title,
+                    "short_title": title,
+                    "full_text": text,
+                    "summary": text[:500],
+                    "legal_area": "administrative",
+                    "source_url": document_url,
+                    "official_cite": f"NE Admin Rule {section_number}",
+                    "structured_data": {
+                        "type": "regulation",
+                        "agentic_discovery": True,
+                        "nebraska_fast_path": True,
+                        "bootstrap_offset": _bootstrap_offset_for_state("NE"),
+                        "method_used": method,
+                        "source_domain": urlparse(document_url).netloc,
+                    },
+                }
+                statutes.append(statute)
+                if len(statutes) % checkpoint_every == 0:
+                    _write_nebraska_checkpoint()
+                if len(statutes) >= fast_limit:
+                    break
+            _write_nebraska_checkpoint()
+
+            block = {
+                "state_code": "NE",
+                "state_name": "Nebraska",
+                "title": "Nebraska Administrative Rules",
+                "source": "Nebraska Rules API fast path",
+                "source_url": "https://rules.nebraska.gov/",
+                "scraped_at": datetime.now().isoformat(),
+                "statutes": statutes,
+                "rules_count": len(statutes),
+                "schema_version": "1.0",
+                "normalized": True,
+            }
+            elapsed = time.time() - start
+            metadata = {
+                "states_scraped": selected_states,
+                "states_count": 1,
+                "target_jurisdictions": "50_states" + ("+DC" if include_dc else ""),
+                "include_dc": bool(include_dc),
+                "rules_count": len(statutes),
+                "canonical_dataset": get_canonical_legal_corpus("state_admin_rules").key,
+                "canonical_hf_dataset_id": get_canonical_legal_corpus("state_admin_rules").hf_dataset_id,
+                "elapsed_time_seconds": elapsed,
+                "scraped_at": datetime.now().isoformat(),
+                "source_diagnostics": source_diagnostics,
+                "cloudflare_browser_rendering": cloudflare_browser_rendering,
+                "phase_timings": {
+                    "nebraska_fast_path_seconds": round(max(0.0, time.time() - fast_started_at), 4),
+                    "total_seconds": round(max(0.0, elapsed), 4),
+                },
+                "agentic_report": {
+                    "status": "success" if statutes else "empty",
+                    "per_state": {
+                        "NE": {
+                            "candidate_urls": len(candidate_urls),
+                            "inspected_urls": len(candidate_urls),
+                            "processed_method_counts": {
+                                "pdf_processor": len(statutes),
+                            },
+                            "source_breakdown": {
+                                "nebraska_rules_api_fast_path": len(candidate_urls),
+                                "nebraska_rules_api_bootstrap_offset": _bootstrap_offset_for_state("NE"),
+                            },
+                            "diagnostics": diagnostics[:50],
+                        }
+                    },
+                },
+            }
+            return {
+                "status": "success" if statutes else "partial_success",
+                "data": [block],
+                "metadata": metadata,
+            }
+
         effective_max_base_statutes = max_base_statutes
         if effective_max_base_statutes is None and max_rules and int(max_rules) > 0:
             effective_max_base_statutes = int(max_rules)
@@ -19066,6 +19246,7 @@ async def scrape_state_admin_rules(
                 fetch_concurrency=int(agentic_fetch_concurrency),
                 per_state_budget_seconds=agentic_per_state_budget_seconds,
                 output_dir=output_dir,
+                checkpoint_interval=max(1, int(agentic_checkpoint_interval or 1)),
             )
             _record_phase("agentic_discovery_seconds", agentic_started_at)
             agentic_report = {

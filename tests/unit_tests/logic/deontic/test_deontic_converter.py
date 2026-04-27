@@ -309,6 +309,133 @@ class TestDeonticConverter:
         assert elements[0]["definition_body"] == "a provider of covered services"
         assert elements[0]["slot_coverage"] == 1.0
 
+    def test_defined_terms_resolve_against_later_norms(self):
+        """Defined statutory terms should become reusable ontology/KG anchors."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements(
+            'In this section, the term "food cart" means a mobile food vending unit. '
+            "A food cart shall obtain a permit."
+        )
+
+        assert len(elements) == 2
+        definition, norm = elements
+        assert definition["norm_type"] == "definition"
+        assert definition["definition_scope"] == {"scope_type": "section", "raw_text": "in this section"}
+        assert norm["defined_term_refs"] == [
+            {
+                "term": "food cart",
+                "definition_body": "a mobile food vending unit",
+                "definition_text": 'In this section, the term "food cart" means a mobile food vending unit',
+                "definition_scope": {"scope_type": "section", "raw_text": "in this section"},
+                "span": [2, 11],
+            }
+        ]
+        assert {
+            "subject": "food cart",
+            "predicate": "definedBy",
+            "object": "a mobile food vending unit",
+        } in norm["kg_relationship_hints"]
+        assert {
+            "subject": "obtain a permit",
+            "predicate": "requiresLegalInstrument",
+            "object": "permit",
+        } in norm["kg_relationship_hints"]
+        assert {
+            "term": "food cart",
+            "type": "defined_term",
+            "definition_body": "a mobile food vending unit",
+            "span": [2, 11],
+        } in norm["ontology_terms"]
+
+    def test_ontology_terms_capture_municipal_entities(self):
+        """Ontology hints should expose common municipal actors and instruments."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements("The Director may issue a permit after inspection of the premises.")[0]
+
+        assert {"term": "Director", "type": "government_actor", "span": [4, 12]} in element["ontology_terms"]
+        assert {"term": "permit", "type": "legal_instrument", "span": [25, 31]} in element["ontology_terms"]
+        assert {"term": "inspection", "type": "legal_event", "span": [38, 48]} in element["ontology_terms"]
+        assert {"term": "premises", "type": "regulated_property", "span": [56, 64]} in element["ontology_terms"]
+
+    def test_clean_clause_has_non_required_llm_repair_payload(self):
+        """Clean deterministic scaffolds should still carry a stable repair payload."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements("The tenant must pay rent monthly.")[0]
+
+        assert element["llm_repair"]["required"] is False
+        assert element["llm_repair"]["reasons"] == []
+        assert element["llm_repair"]["target_schema_version"] == element["schema_version"]
+        assert len(element["llm_repair"]["prompt_hash"]) == 64
+        assert element["llm_repair"]["prompt_context"]["source_text"] == "The tenant must pay rent monthly"
+
+    def test_warning_clause_routes_to_llm_repair_with_context(self):
+        """Warnings should become actionable llm_router repair metadata."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements(
+            "The Secretary shall (1) establish procedures; (2) submit reports except as provided in section 552."
+        )[0]
+
+        assert element["llm_repair"]["required"] is True
+        assert "enumerated_clause_requires_item_level_review" in element["llm_repair"]["reasons"]
+        assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+        assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+        assert element["llm_repair"]["suggested_router"] == "llm_router"
+        assert element["llm_repair"]["prompt_template"] == "legal_deontic_parser_repair_v1"
+        context = element["llm_repair"]["prompt_context"]
+        assert context["legal_frame"]["actor"] == "Secretary"
+        assert context["cross_references"] == [{"type": "section", "value": "552", "raw_text": "section 552", "normalized_text": "section 552", "span": [87, 98]}]
+        assert context["parser_warnings"] == element["llm_repair"]["reasons"]
+
+    def test_clean_clause_export_readiness_allows_proof_candidate(self):
+        """Clean deterministic parses may become proof candidates."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements("The tenant must pay rent.")[0]
+
+        readiness = element["export_readiness"]
+        assert readiness["kg_ready"] is True
+        assert readiness["logic_ready"] is True
+        assert readiness["proof_ready"] is True
+        assert readiness["theorem_promotable"] is True
+        assert "formal_logic_scaffold" in readiness["allowed_exports"]
+        assert "proof_candidate" in readiness["allowed_exports"]
+        assert readiness["formal_logic_targets"] == ["deontic", "fol", "frame_logic"]
+        assert readiness["blockers"] == []
+
+    def test_temporal_clause_export_readiness_adds_temporal_targets(self):
+        """Temporal/procedural clauses should advertise temporal/event-calculus exports."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements("An appeal may be filed within 10 days after the decision.")[0]
+
+        readiness = element["export_readiness"]
+        assert readiness["kg_ready"] is True
+        assert readiness["proof_ready"] is False
+        assert "llm_repair_queue" in readiness["allowed_exports"]
+        assert "procedure_timeline_requires_event_order_review" in readiness["blockers"]
+        assert "llm_router_repair" in readiness["requires_validation"]
+
+    def test_warning_clause_export_readiness_blocks_proof_candidate(self):
+        """Warned clauses should stay KG/index-ready but not proof-ready."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements(
+            "The Secretary shall (1) establish procedures; (2) submit reports except as provided in section 552."
+        )[0]
+
+        readiness = element["export_readiness"]
+        assert readiness["kg_ready"] is True
+        assert readiness["logic_ready"] is False
+        assert readiness["proof_ready"] is False
+        assert "knowledge_graph" in readiness["allowed_exports"]
+        assert "llm_repair_queue" in readiness["allowed_exports"]
+        assert "proof_candidate" not in readiness["allowed_exports"]
+        assert "llm_repair_required" in readiness["blockers"]
+
     def test_parser_schema_contract_is_validated(self):
         """Every extracted norm should satisfy the stable downstream schema."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
@@ -323,6 +450,68 @@ class TestDeonticConverter:
         assert elements[0]["schema_version"] == PARSER_SCHEMA_VERSION
         assert elements[0]["schema_valid"] is True
         assert validate_parser_element(elements[0])["valid"] is True
+
+    def test_legacy_parser_element_migrates_to_current_schema(self):
+        """Older parser artifacts should be upgraded before exporter use."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            PARSER_SCHEMA_VERSION,
+            migrate_parser_element,
+            validate_parser_element,
+        )
+
+        migrated = migrate_parser_element(
+            {
+                "schema_version": "deterministic_deontic_v4",
+                "text": "The tenant must pay rent monthly",
+                "norm_type": "obligation",
+                "deontic_operator": "O",
+                "modal": "must",
+                "subject": ["tenant"],
+                "action": ["pay rent monthly"],
+                "conditions": ["lease is active"],
+                "temporal_constraints": [{"type": "period", "value": "monthly"}],
+            }
+        )
+
+        assert migrated["schema_version"] == PARSER_SCHEMA_VERSION
+        assert migrated["previous_schema_version"] == "deterministic_deontic_v4"
+        assert migrated["schema_valid"] is True
+        assert validate_parser_element(migrated)["valid"] is True
+        assert migrated["condition_details"][0]["normalized_text"] == "lease is active"
+        assert migrated["temporal_constraint_details"][0]["temporal_kind"] == "legacy"
+        assert migrated["logic_frame"]["action_predicate"] == "PayRentMonthly"
+        assert migrated["export_readiness"]["kg_ready"] is True
+
+    def test_core_field_spans_and_logic_frame_are_present(self):
+        """Core slots should carry spans and a formal-export bridge frame."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements("The tenant must pay rent.")[0]
+
+        assert element["field_spans"]["subject"] == [4, 10]
+        assert element["field_spans"]["modal"] == [11, 15]
+        assert element["field_spans"]["action"] == [16, 24]
+        assert element["field_spans"]["action_verb"] == [16, 19]
+        assert element["field_spans"]["action_object"] == [20, 24]
+        assert element["logic_frame"]["actor"] == "tenant"
+        assert element["logic_frame"]["modality"] == "O"
+        assert element["logic_frame"]["action_predicate"] == "PayRent"
+        assert element["logic_frame"]["field_spans"] == element["field_spans"]
+        assert element["logic_frame"]["readiness"]["schema_valid"] is True
+        assert element["logic_frame"]["readiness"]["promotable_to_theorem"] is True
+
+    def test_definition_field_spans_feed_logic_frame(self):
+        """Definition terms and bodies should be span-addressable."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements(
+            'In this section, the term "food cart" means a mobile food vending unit.'
+        )[0]
+
+        assert element["field_spans"]["defined_term"] == [27, 36]
+        assert element["field_spans"]["definition_body"] == [44, 70]
+        assert element["logic_frame"]["norm_type"] == "definition"
+        assert element["logic_frame"]["actor"] == "food cart"
 
     def test_field_level_condition_exception_temporal_and_ref_details(self):
         """Detailed slots should preserve normalized text, raw text, spans, and types."""
@@ -443,6 +632,29 @@ The applicant shall file an application with the Bureau."""
         ]
         assert segments[0]["section_context"]["section"] == "5.01.010"
 
+    def test_title_chapter_section_hierarchy_details_are_preserved(self):
+        """Municipal hierarchy should include title/chapter/section details with spans."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        text = """Title 5 Business Licenses
+Chapter 5.01 Food Carts
+5.01.010 Permits required.
+The applicant shall obtain a permit."""
+        element = extract_normative_elements(text)[0]
+
+        assert element["hierarchy_path"] == [
+            "title:5",
+            "chapter:5.01",
+            "section:5.01.010",
+            "heading:Permits required",
+        ]
+        assert element["section_context"] == {"section": "5.01.010", "heading": "Permits required"}
+        assert element["hierarchy_details"] == [
+            {"level": "title", "value": "5", "heading": "Business Licenses", "span": [0, 25]},
+            {"level": "chapter", "value": "5.01", "heading": "Food Carts", "span": [26, 49]},
+            {"level": "section", "value": "5.01.010", "heading": "Permits required", "span": [50, 76]},
+        ]
+
     def test_implicit_unlawful_clause_is_prohibition(self):
         """Municipal codes often say 'It is unlawful to' instead of 'shall not'."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
@@ -512,6 +724,25 @@ The applicant shall file an application with the Bureau."""
         assert elements[0]["monetary_amounts"] == [{"raw_text": "$500", "span": [39, 43]}]
         assert elements[0]["penalty"]["has_fine"] is True
         assert {"subject": "law", "predicate": "mentionsAmount", "object": "$500"} in elements[0]["kg_relationship_hints"]
+
+    def test_penalty_bounds_and_recurrence_are_normalized(self):
+        """Municipal penalty ranges and recurring violations should be structured."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements(
+            "A violation is punishable by a fine of not less than $100 and not more than $1,000. "
+            "Each day constitutes a separate violation."
+        )[0]
+
+        assert element["penalty"]["minimum_amount"]["raw_text"] == "$100"
+        assert element["penalty"]["minimum_amount"]["numeric_value"] == "100"
+        assert element["penalty"]["maximum_amount"]["raw_text"] == "$1,000"
+        assert element["penalty"]["maximum_amount"]["numeric_value"] == "1000"
+        assert element["penalty"]["recurrence"] == {
+            "type": "per_day",
+            "raw_text": "Each day constitutes a separate violation",
+            "span": [84, 125],
+        }
 
     def test_appeal_clause_gets_procedure_frame_and_timeline_warning(self):
         """Appeal windows are procedural event chains, not just generic permissions."""

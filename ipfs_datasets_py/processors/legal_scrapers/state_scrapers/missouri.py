@@ -72,16 +72,11 @@ class MissouriScraper(BaseStateScraper):
             payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=12)
             if not payload:
                 continue
-            soup = BeautifulSoup(payload, "html.parser")
-            for tag in soup(["script", "style", "nav", "header", "footer"]):
-                tag.decompose()
-            text = self._normalize_legal_text(soup.get_text(" ", strip=True))
+            text, section_name = self._extract_section_text_and_name(payload)
             if len(text) < 280:
                 continue
             match = re.search(r"\b(\d+\.\d+[A-Za-z]*)\b", text)
             section_number = match.group(1) if match else source_url.rsplit("section=", 1)[-1]
-            title_match = re.search(rf"{re.escape(section_number)}\.\s*([^—-]+)", text)
-            section_name = title_match.group(1).strip() if title_match else f"Section {section_number}"
             statutes.append(
                 NormalizedStatute(
                     state_code=self.state_code,
@@ -95,7 +90,11 @@ class MissouriScraper(BaseStateScraper):
                     source_url=source_url,
                     official_cite=f"Mo. Rev. Stat. § {section_number}",
                     metadata=StatuteMetadata(),
-                    structured_data={"source_kind": "official_direct_section", "skip_hydrate": True},
+                    structured_data={
+                        "source_kind": "official_missouri_section_html",
+                        "discovery_method": "official_direct_section",
+                        "skip_hydrate": True,
+                    },
                 )
             )
         return statutes
@@ -186,9 +185,14 @@ class MissouriScraper(BaseStateScraper):
                 seen_sections.add(section_number)
 
                 link_text = link.get_text(' ', strip=True) or f"Section {section_number}"
-                section_name = link_text[:200]
-                if section_number not in section_name:
-                    section_name = f"Section {section_number}: {section_name}"[:200]
+                section_payload = await self._fetch_page_content_with_archival_fallback(
+                    full_url,
+                    timeout_seconds=20,
+                )
+                full_text, extracted_name = self._extract_section_text_and_name(section_payload or b"")
+                section_name = (extracted_name or link_text or f"Section {section_number}")[:200]
+                if not full_text:
+                    full_text = f"Section {section_number}: {link_text}"
 
                 legal_area = self._identify_legal_area(link_text or code_name)
                 statute = NormalizedStatute(
@@ -198,11 +202,15 @@ class MissouriScraper(BaseStateScraper):
                     code_name=code_name,
                     section_number=section_number,
                     section_name=section_name,
-                    full_text=f"Section {section_number}: {link_text}",
+                    full_text=full_text[:14000],
                     legal_area=legal_area,
                     source_url=full_url,
                     official_cite=f"{citation_format} § {section_number}",
-                    metadata=StatuteMetadata()
+                    metadata=StatuteMetadata(),
+                    structured_data={
+                        "source_kind": "official_missouri_section_html",
+                        "discovery_method": "official_chapter_index_sections",
+                    },
                 )
                 statutes.append(statute)
 
@@ -240,6 +248,47 @@ class MissouriScraper(BaseStateScraper):
             return []
         
         return statutes
+
+    def _extract_section_text_and_name(self, payload: bytes) -> tuple[str, str]:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return "", ""
+
+        soup = BeautifulSoup(payload, "html.parser")
+        for tag in soup(["script", "style", "nav", "header", "footer"]):
+            tag.decompose()
+
+        section_node = soup.select_one("div.norm")
+        history_nodes = soup.select("div.foot p")
+        body_parts: List[str] = []
+
+        if section_node is not None:
+            body_parts.append(self._normalize_legal_text(section_node.get_text(" ", strip=True)))
+        for node in history_nodes:
+            text = self._normalize_legal_text(node.get_text(" ", strip=True))
+            if text:
+                body_parts.append(text)
+
+        if not body_parts:
+            body_parts.append(self._normalize_legal_text(soup.get_text(" ", strip=True)))
+
+        full_text = " ".join(part for part in body_parts if part).strip()
+        section_name = ""
+        heading_match = re.search(r"\b\d+\.\d+[A-Za-z]*\.\s*(.+?)\s+[—-]\s+", full_text)
+        if heading_match:
+            section_name = heading_match.group(1).strip()
+        if not section_name:
+            title_match = re.search(
+                r"<meta\s+property=\"og:description\"\s+content=\"([^\"]+)\"",
+                payload.decode("utf-8", errors="replace"),
+                re.IGNORECASE,
+            )
+            if title_match:
+                section_name = self._normalize_legal_text(title_match.group(1))
+        if not section_name:
+            section_name = "Section"
+        return full_text, section_name
 
 
 # Register this scraper with the registry

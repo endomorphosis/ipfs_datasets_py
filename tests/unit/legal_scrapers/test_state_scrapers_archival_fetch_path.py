@@ -26,8 +26,10 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.missouri import M
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.montana import MontanaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nebraska import NebraskaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.nevada import NevadaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_jersey import NewJerseyScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.new_york import NewYorkScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_dakota import NorthDakotaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.north_carolina import NorthCarolinaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oklahoma import OklahomaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.ohio import OhioScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.oregon import OregonScraper
@@ -1483,6 +1485,15 @@ async def test_rhode_island_custom_scrape_records_fetch_analytics(monkeypatch: p
                 "<a href='/Statutes/TITLE1/1-1/1-1-1.htm'>§ 1-1-1. General law.</a>"
                 "</body></html>"
             ).encode("utf-8")
+        if normalized.endswith("/title1/1-1/1-1-1.htm"):
+            return (
+                "<html><body>"
+                "<h3>R.I. Gen. Laws § 1-1-1</h3>"
+                "<p><b>§ 1-1-1. General law.</b></p>"
+                "<div><p>The official Rhode Island statute text appears here.</p>"
+                "<p>History of Section. P.L. 1939, ch. 660.</p></div>"
+                "</body></html>"
+            ).encode("utf-8")
         return b""
 
     monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
@@ -1493,6 +1504,9 @@ async def test_rhode_island_custom_scrape_records_fetch_analytics(monkeypatch: p
     assert len(statutes) >= 1
     assert statutes[0].section_number == "1-1-1"
     assert statutes[0].chapter_number == "1-1"
+    assert statutes[0].section_name == "General law."
+    assert "official Rhode Island statute text" in statutes[0].full_text
+    assert statutes[0].structured_data["source_kind"] == "official_rhode_island_section_html"
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
 
@@ -1821,6 +1835,93 @@ async def test_nebraska_bounded_run_prefers_official_chapter_index_sections(monk
 
 
 @pytest.mark.anyio
+async def test_north_carolina_bounded_run_prefers_official_toc_chapter_sections(monkeypatch: pytest.MonkeyPatch):
+    toc_html = (
+        "<html><body>"
+        "<a href='/Laws/GeneralStatuteSections/Chapter1'>Chapter 1</a>"
+        "</body></html>"
+    )
+    chapter_html = (
+        "<html><body>"
+        "<a href='/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-1.html'>Section 1-1</a>"
+        "<a href='/EnactedLegislation/Statutes/HTML/BySection/Chapter_1/GS_1-2.html'>Section 1-2</a>"
+        "</body></html>"
+    )
+    section_html = (
+        "<html><body>"
+        "<h3>Chapter 1.</h3><h4>SUBCHAPTER I.</h4>"
+        "<p>Article 1.</p>"
+        "<p>Definitions.</p>"
+        "<p>&sect; 1-1. Remedies.</p>"
+        "<p>Remedies in the courts of justice are divided into actions and special proceedings.</p>"
+        "</body></html>"
+    )
+
+    async def _fake_request_text_direct(self, url: str, timeout: int = 18) -> str:
+        if url.endswith("/Laws/GeneralStatutesTOC"):
+            return toc_html
+        if url.endswith("/Laws/GeneralStatuteSections/Chapter1"):
+            return chapter_html
+        return section_html
+
+    monkeypatch.setattr(NorthCarolinaScraper, "_request_text_direct", _fake_request_text_direct)
+
+    scraper = NorthCarolinaScraper("NC", "North Carolina")
+    statutes = await scraper.scrape_code(
+        "North Carolina General Statutes",
+        "https://www.ncleg.gov/Laws/GeneralStatutes",
+        max_statutes=2,
+    )
+
+    assert len(statutes) >= 1
+    assert statutes[0].section_number == "1-1"
+    assert statutes[0].structured_data["source_kind"] == "official_north_carolina_general_statutes_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_toc_chapter_section_html"
+    assert "Remedies in the courts of justice" in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_new_jersey_bounded_run_prefers_official_xmlcontents_toc(monkeypatch: pytest.MonkeyPatch):
+    root_xml = """<?xml version="1.0" encoding="UTF-8" ?><toc><nodes>
+    <n ct="application/folder" hc="y" id="statutes/1/2" n="2" t="TITLE 1 ACTS, LAWS AND STATUTES"/>
+    </nodes></toc>"""
+    title_xml = """<?xml version="1.0" encoding="UTF-8" ?><toc><nodes>
+    <n ct="text/xml" id="statutes/1/2/3" n="3" t="1:1-1. General rules of construction"/>
+    <n ct="text/xml" id="statutes/1/2/4" n="4" t="1:1-2. Words and phrases defined."/>
+    </nodes></toc>"""
+    doc_html = (
+        "<html><body>"
+        "<div class='Headnotes'><div>1:1-1. General rules of construction</div></div>"
+        "<div class='Normal-Level'><div>"
+        + ("In the construction of the laws and statutes of this state. " * 20)
+        + "</div></div>"
+        "</body></html>"
+    )
+
+    async def _fake_request_bytes_direct(self, url: str, timeout: int = 20) -> bytes:
+        if "f=xmlcontents" in url and "basepathid=statutes%2F1%2F2" in url:
+            return title_xml.encode("utf-8")
+        if "f=xmlcontents" in url and "basepathid=statutes" in url:
+            return root_xml.encode("utf-8")
+        return doc_html.encode("utf-8")
+
+    monkeypatch.setattr(NewJerseyScraper, "_request_bytes_direct", _fake_request_bytes_direct)
+
+    scraper = NewJerseyScraper("NJ", "New Jersey")
+    statutes = await scraper.scrape_code(
+        "New Jersey Statutes",
+        "https://lis.njleg.state.nj.us/nxt/gateway.dll/statutes/1?f=templates&fn=default.htm&vid=Publish:10.1048/Enu",
+        max_statutes=2,
+    )
+
+    assert len(statutes) >= 1
+    assert statutes[0].section_number == "1-1"
+    assert statutes[0].structured_data["source_kind"] == "official_new_jersey_gateway_html"
+    assert statutes[0].structured_data["discovery_method"] == "official_xmlcontents_toc"
+    assert "construction of the laws and statutes" in statutes[0].full_text.lower()
+
+
+@pytest.mark.anyio
 async def test_mississippi_request_text_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:
         return b""
@@ -1889,11 +1990,24 @@ async def test_missouri_custom_scrape_records_fetch_analytics(monkeypatch: pytes
         "<a href='/main/OneSection.aspx?section=1.010'>Section 1.010</a>"
         "</body></html>"
     ).encode("utf-8")
+    section_html = (
+        "<html><head>"
+        '<meta property=\"og:description\" content=\"Common law in force.\" />'
+        "</head><body>"
+        "<div class='norm'>"
+        "<p class='norm'><span class='bold'>1.010. Common law in force. — </span>"
+        "The official Missouri section body appears here.</p>"
+        "</div>"
+        "<div class='foot'><p class='norm'>(RSMo 1939 § 645)</p></div>"
+        "</body></html>"
+    ).encode("utf-8")
 
     async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
         self._record_fetch_event(provider="test_fake", success=True)
         if "OneChapter.aspx" in url:
             return chapter_html
+        if "OneSection.aspx" in url:
+            return section_html
         return home_html
 
     monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch_with_archival)
@@ -1902,6 +2016,10 @@ async def test_missouri_custom_scrape_records_fetch_analytics(monkeypatch: pytes
     statutes = await scraper._custom_scrape_missouri("Missouri Revised Statutes", "https://example.mo/home", "Mo. Rev. Stat.")
 
     assert len(statutes) >= 1
+    assert statutes[0].section_number == "1.010"
+    assert statutes[0].section_name == "Common law in force."
+    assert "official Missouri section body appears here" in statutes[0].full_text
+    assert statutes[0].structured_data["source_kind"] == "official_missouri_section_html"
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
 

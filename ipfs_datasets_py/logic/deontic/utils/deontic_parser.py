@@ -6,15 +6,18 @@ formalization pass.
 """
 
 import re
+import hashlib
+import json
 from typing import Any, Dict, List, Optional
 
 
-PARSER_SCHEMA_VERSION = "deterministic_deontic_v5"
+PARSER_SCHEMA_VERSION = "deterministic_deontic_v9"
 PARSER_REQUIRED_FIELDS = [
     "schema_version",
     "text",
     "support_text",
     "support_span",
+    "field_spans",
     "norm_type",
     "deontic_operator",
     "modal",
@@ -35,7 +38,14 @@ PARSER_REQUIRED_FIELDS = [
     "override_clause_details",
     "cross_references",
     "cross_reference_details",
+    "resolved_cross_references",
     "enumerated_items",
+    "defined_term_refs",
+    "definition_scope",
+    "ontology_terms",
+    "llm_repair",
+    "export_readiness",
+    "logic_frame",
     "legal_frame",
     "kg_relationship_hints",
     "monetary_amounts",
@@ -44,6 +54,7 @@ PARSER_REQUIRED_FIELDS = [
     "procedure",
     "section_context",
     "hierarchy_path",
+    "hierarchy_details",
     "document_type",
     "extraction_method",
     "confidence_floor",
@@ -53,9 +64,37 @@ PARSER_REQUIRED_FIELDS = [
     "parser_warnings",
     "promotable_to_theorem",
 ]
+LEGACY_SCHEMA_DEFAULTS: Dict[str, Any] = {
+    "field_spans": {},
+    "condition_details": [],
+    "temporal_constraint_details": [],
+    "exception_details": [],
+    "override_clause_details": [],
+    "cross_reference_details": [],
+    "resolved_cross_references": [],
+    "defined_term_refs": [],
+    "definition_scope": {},
+    "ontology_terms": [],
+    "llm_repair": {},
+    "export_readiness": {},
+    "logic_frame": {},
+    "legal_frame": {},
+    "kg_relationship_hints": [],
+    "monetary_amounts": [],
+    "monetary_amount_details": [],
+    "penalty": {},
+    "procedure": {},
+    "section_context": {},
+    "hierarchy_path": [],
+    "hierarchy_details": [],
+}
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9(])")
 _SECTION_HEADER_RE = re.compile(
     r"^\s*(?:(?:sec(?:tion)?\.?|§)\s*)?([0-9]+(?:\.[0-9]+)*(?:[A-Za-z])?)\.?\s*(.*)$",
+    re.IGNORECASE,
+)
+_HIERARCHY_HEADER_RE = re.compile(
+    r"^\s*(title|chapter|article|part|division)\s+([0-9A-Za-z][0-9A-Za-z.\-]*)\.?\s*(.*)$",
     re.IGNORECASE,
 )
 _ENUM_LABEL_RE = re.compile(r"\(([A-Za-z0-9]+)\)")
@@ -306,8 +345,12 @@ def extract_normative_elements(text: str, document_type: str = "statute") -> Lis
             element["source_span"] = segment["span"]
             element["section_context"] = segment["section_context"]
             element["hierarchy_path"] = segment["hierarchy_path"]
+            element["hierarchy_details"] = segment.get("hierarchy_details", [])
             _finalize_element(element)
             elements.append(element)
+    _apply_definition_context(elements)
+    _apply_cross_reference_context(elements)
+    _apply_document_penalty_context(elements, str(text or ""))
     return elements
 
 
@@ -334,6 +377,7 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
     segments: List[Dict[str, Any]] = []
     section_context: Dict[str, str] = {}
     hierarchy: List[str] = []
+    hierarchy_details: List[Dict[str, Any]] = []
     cursor = 0
 
     for raw_line in source.splitlines() or [source]:
@@ -343,20 +387,73 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
         if not line:
             continue
 
+        hierarchy_header = _HIERARCHY_HEADER_RE.match(line)
+        if hierarchy_header:
+            level = hierarchy_header.group(1).lower()
+            value = hierarchy_header.group(2)
+            heading = hierarchy_header.group(3).strip(" .")
+            hierarchy = [item for item in hierarchy if not _hierarchy_path_replaced_by(level, item)]
+            hierarchy.append(f"{level}:{value}")
+            detail_start = line_start + raw_line.find(line)
+            hierarchy_details = [
+                item for item in hierarchy_details if not _hierarchy_detail_replaced_by(level, item)
+            ]
+            hierarchy_details.append(
+                {
+                    "level": level,
+                    "value": value,
+                    "heading": heading,
+                    "span": [detail_start + hierarchy_header.start(), detail_start + hierarchy_header.end()],
+                }
+            )
+            continue
+
         header = _SECTION_HEADER_RE.match(line)
         if header and _looks_like_section_header(line, header):
             section_context = {
                 "section": header.group(1),
                 "heading": header.group(2).strip(" ."),
             }
-            hierarchy = [f"section:{section_context['section']}"]
+            hierarchy = [
+                item
+                for item in hierarchy
+                if not item.startswith(("section:", "paragraph:", "subsection:"))
+            ]
+            hierarchy.append(f"section:{section_context['section']}")
             if section_context["heading"]:
                 hierarchy.append(f"heading:{section_context['heading']}")
+            detail_start = line_start + raw_line.find(line)
+            hierarchy_details = [
+                item
+                for item in hierarchy_details
+                if item.get("level") not in {"section", "paragraph", "subsection"}
+            ]
+            hierarchy_details.append(
+                {
+                    "level": "section",
+                    "value": section_context["section"],
+                    "heading": section_context["heading"],
+                    "span": [detail_start + header.start(), detail_start + header.end()],
+                }
+            )
             continue
 
         for start, end, segment_text, label_path in _split_segment_fragments(line):
             absolute_start = line_start + raw_line.find(line) + start
             segment_hierarchy = [*hierarchy, *label_path]
+            segment_hierarchy_details = [
+                *hierarchy_details,
+                *[
+                    {
+                        "level": "paragraph",
+                        "value": label.split(":", 1)[1],
+                        "heading": "",
+                        "span": [absolute_start, absolute_start + len(label.split(":", 1)[1]) + 2],
+                    }
+                    for label in label_path
+                    if label.startswith("paragraph:")
+                ],
+            ]
             for sentence in _split_legal_sentences(segment_text):
                 sentence_offset = segment_text.find(sentence)
                 if sentence_offset < 0:
@@ -368,6 +465,7 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
                         "span": [sentence_start, sentence_start + len(sentence)],
                         "section_context": dict(section_context),
                         "hierarchy_path": segment_hierarchy,
+                        "hierarchy_details": segment_hierarchy_details,
                     }
                 )
 
@@ -379,9 +477,24 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
                 "span": [0, len(normalized)],
                 "section_context": {},
                 "hierarchy_path": [],
+                "hierarchy_details": [],
             }
         ]
     return segments
+
+
+def _hierarchy_path_replaced_by(level: str, item: str) -> bool:
+    order = ["title", "division", "chapter", "article", "part"]
+    if ":" not in item or level not in order:
+        return False
+    item_level = item.split(":", 1)[0]
+    return item_level in order and order.index(item_level) >= order.index(level)
+
+
+def _hierarchy_detail_replaced_by(level: str, item: Dict[str, Any]) -> bool:
+    order = ["title", "division", "chapter", "article", "part"]
+    item_level = item.get("level")
+    return bool(item_level in order and level in order and order.index(item_level) >= order.index(level))
 
 
 def _looks_like_section_header(line: str, match: re.Match[str]) -> bool:
@@ -440,6 +553,11 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     subject_text=subject_text,
                     action_text=action_text,
                     support_span=match.span(),
+                    field_spans={
+                        "subject": list(match.span("subject")),
+                        "modal": list(match.span("modal")),
+                        "action": list(match.span("action")),
+                    },
                     extraction_method="deterministic_modal_clause_v2",
                 )
             )
@@ -468,6 +586,11 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                         subject_text=subject_text or first_subject,
                         action_text=action_text,
                         support_span=match.span(),
+                        field_spans={
+                            "subject": [],
+                            "modal": list(match.span("modal")),
+                            "action": list(match.span("action")),
+                        },
                         extraction_method="deterministic_implicit_modal_clause_v2",
                     )
                 )
@@ -503,6 +626,7 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     subject_text=subject_text,
                     action_text=action_text,
                     support_span=match.span(),
+                    field_spans=_impersonal_field_spans(match),
                     extraction_method="deterministic_impersonal_norm_v3",
                 )
             )
@@ -524,6 +648,11 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     subject_text="person",
                     action_text=action_text,
                     support_span=violation_match.span(),
+                    field_spans={
+                        "subject": [],
+                        "modal": list(violation_match.span()),
+                        "action": list(violation_match.span(1)),
+                    },
                     extraction_method="deterministic_violation_clause_v4",
                 )
             )
@@ -543,6 +672,11 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                     subject_text="violation",
                     action_text=f"incur {penalty_text}",
                     support_span=penalty_match.span(),
+                    field_spans={
+                        "subject": list(penalty_match.span()),
+                        "modal": list(penalty_match.span()),
+                        "action": list(penalty_match.span(1)),
+                    },
                     extraction_method="deterministic_penalty_clause_v4",
                 )
             )
@@ -558,6 +692,16 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 "text": sentence,
                 "support_text": sentence,
                 "support_span": [0, len(sentence)],
+                "field_spans": {
+                    "defined_term": list(defined_term_match.span(1)) if defined_term_match else [],
+                    "definition_body": _definition_body_span(sentence),
+                    "subject": list(defined_term_match.span(1)) if defined_term_match else [],
+                    "modal": [],
+                    "action": [0, len(sentence)],
+                    "action_verb": [],
+                    "action_object": [],
+                    "action_recipient": [],
+                },
                 "norm_type": "definition",
                 "deontic_operator": "DEF",
                 "modal": "definition",
@@ -575,7 +719,14 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 "override_clause_details": extract_override_clause_details(sentence),
                 "cross_references": extract_cross_references(sentence),
                 "cross_reference_details": extract_cross_reference_details(sentence),
+                "resolved_cross_references": [],
                 "enumerated_items": extract_enumerated_items(sentence),
+                "defined_term_refs": [],
+                "definition_scope": infer_definition_scope(sentence),
+                "ontology_terms": extract_ontology_terms(sentence),
+                "llm_repair": {},
+                "export_readiness": {},
+                "logic_frame": {},
                 "legal_frame": {},
                 "kg_relationship_hints": [],
                 "monetary_amounts": extract_monetary_amounts(sentence),
@@ -589,6 +740,7 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 "action_recipient": "",
                 "section_context": {},
                 "hierarchy_path": [],
+                "hierarchy_details": [],
                 "document_type": document_type,
                 "extraction_method": "deterministic_definition_v2",
                 "confidence_floor": 0.25,
@@ -610,17 +762,20 @@ def _build_element(
     action_text: str,
     support_span: tuple[int, int],
     extraction_method: str,
+    field_spans: Optional[Dict[str, List[int]]] = None,
 ) -> Dict[str, Any]:
     enumerated_items = extract_enumerated_items(sentence)
     if enumerated_items and re.match(r"^\([A-Za-z0-9]+\)\s+", action_text or ""):
         action_text = enumerated_items[0]["text"]
     subject = [subject_text] if subject_text else extract_legal_subject(sentence)
     action = [action_text]
+    spans = _complete_field_spans(sentence, subject_text, action_text, field_spans or {})
     return {
         "schema_version": PARSER_SCHEMA_VERSION,
         "text": sentence,
         "support_text": sentence[support_span[0] : support_span[1]].strip(),
         "support_span": list(support_span),
+        "field_spans": spans,
         "norm_type": norm_type,
         "deontic_operator": deontic_operator,
         "modal": modal,
@@ -642,7 +797,14 @@ def _build_element(
         "override_clause_details": extract_override_clause_details(sentence),
         "cross_references": extract_cross_references(sentence),
         "cross_reference_details": extract_cross_reference_details(sentence),
+        "resolved_cross_references": [],
         "enumerated_items": enumerated_items,
+        "defined_term_refs": [],
+        "definition_scope": {},
+        "ontology_terms": extract_ontology_terms(sentence),
+        "llm_repair": {},
+        "export_readiness": {},
+        "logic_frame": {},
         "legal_frame": {},
         "kg_relationship_hints": [],
         "monetary_amounts": extract_monetary_amounts(sentence),
@@ -651,9 +813,78 @@ def _build_element(
         "procedure": {},
         "section_context": {},
         "hierarchy_path": [],
+        "hierarchy_details": [],
         "document_type": document_type,
         "extraction_method": extraction_method,
         "confidence_floor": 0.35,
+    }
+
+
+def _complete_field_spans(
+    sentence: str,
+    subject_text: str,
+    action_text: str,
+    field_spans: Dict[str, List[int]],
+) -> Dict[str, List[int]]:
+    raw_subject_span = list(field_spans.get("subject") or [])
+    if len(raw_subject_span) == 2:
+        raw_subject = sentence[raw_subject_span[0] : raw_subject_span[1]]
+        subject_span = raw_subject_span if raw_subject.strip().lower() == subject_text.lower() else _find_span(sentence, subject_text, start=raw_subject_span[0])
+    else:
+        subject_span = _find_span(sentence, subject_text)
+    spans = {
+        "subject": subject_span,
+        "modal": list(field_spans.get("modal") or []),
+        "action": list(field_spans.get("action") or _find_span(sentence, action_text)),
+        "action_verb": [],
+        "action_object": [],
+        "action_recipient": [],
+        "defined_term": [],
+        "definition_body": [],
+    }
+    action_start = spans["action"][0] if len(spans["action"]) == 2 else 0
+    action_verb = _first_verb(action_text)
+    action_object = _action_object(action_text)
+    action_recipient = extract_action_recipient(action_text)
+    spans["action_verb"] = _find_span(sentence, action_verb, start=action_start)
+    spans["action_object"] = _find_span(sentence, action_object, start=action_start)
+    spans["action_recipient"] = _find_span(sentence, action_recipient, start=action_start)
+    return spans
+
+
+def _find_span(text: str, value: str, start: int = 0) -> List[int]:
+    if not value:
+        return []
+    match = re.search(re.escape(str(value)), str(text or "")[start:], flags=re.IGNORECASE)
+    if not match:
+        return []
+    return [start + match.start(), start + match.end()]
+
+
+def _definition_body_span(sentence: str) -> List[int]:
+    match = _DEFINITION_BODY_RE.search(str(sentence or ""))
+    if not match:
+        return []
+    return [match.start(1), match.end(1)]
+
+
+def _impersonal_field_spans(match: re.Match[str]) -> Dict[str, List[int]]:
+    if match.group("unlawful"):
+        return {
+            "subject": list(match.span("unlawful_subject")) if match.group("unlawful_subject") else [],
+            "modal": list(match.span("unlawful")),
+            "action": list(match.span("unlawful_action")),
+        }
+    if match.group("license"):
+        return {
+            "subject": list(match.span("license_subject")),
+            "modal": list(match.span("license")),
+            "action": list(match.span("license_action")),
+        }
+    return {
+        "subject": list(match.span("duty_subject")),
+        "modal": list(match.span("duty")),
+        "action": list(match.span("duty_action")),
     }
 
 
@@ -661,6 +892,14 @@ def _finalize_element(element: Dict[str, Any]) -> Dict[str, Any]:
     element.setdefault("schema_version", PARSER_SCHEMA_VERSION)
     element.setdefault("section_context", {})
     element.setdefault("hierarchy_path", [])
+    element.setdefault("hierarchy_details", [])
+    element.setdefault("defined_term_refs", [])
+    element.setdefault("resolved_cross_references", [])
+    element.setdefault("definition_scope", {})
+    element.setdefault("ontology_terms", extract_ontology_terms(element.get("text", "")))
+    element.setdefault("llm_repair", {})
+    element.setdefault("export_readiness", {})
+    element.setdefault("logic_frame", {})
     _enrich_legal_frame(element)
     quality = score_scaffold_quality(element)
     element["slot_coverage"] = quality["slot_coverage"]
@@ -676,7 +915,169 @@ def _finalize_element(element: Dict[str, Any]) -> Dict[str, Any]:
             *[f"schema_{field}_missing" for field in schema_validation["missing_fields"]],
         ]
         element["promotable_to_theorem"] = False
+    element["logic_frame"] = build_logic_frame(element)
+    element["llm_repair"] = build_llm_repair_payload(element)
+    element["export_readiness"] = build_export_readiness(element)
     return element
+
+
+def _apply_definition_context(elements: List[Dict[str, Any]]) -> None:
+    definitions = [
+        element
+        for element in elements
+        if element.get("norm_type") == "definition" and element.get("defined_term")
+    ]
+    if not definitions:
+        return
+    for element in elements:
+        if element.get("norm_type") == "definition":
+            continue
+        refs: List[Dict[str, Any]] = []
+        text = str(element.get("text") or "")
+        for definition in definitions:
+            if not _definition_applies_to_element(definition, element):
+                continue
+            term = str(definition.get("defined_term") or "").strip()
+            if not term:
+                continue
+            for match in re.finditer(rf"\b{re.escape(term)}s?\b", text, flags=re.IGNORECASE):
+                refs.append(
+                    {
+                        "term": term,
+                        "definition_body": definition.get("definition_body", ""),
+                        "definition_text": definition.get("text", ""),
+                        "definition_scope": definition.get("definition_scope", {}),
+                        "span": [match.start(), match.end()],
+                    }
+                )
+        element["defined_term_refs"] = refs
+        if refs:
+            existing = element.get("kg_relationship_hints", [])
+            for ref in refs:
+                existing.append(
+                    {
+                        "subject": ref["term"],
+                        "predicate": "definedBy",
+                        "object": ref["definition_body"] or ref["definition_text"],
+                    }
+                )
+            element["kg_relationship_hints"] = existing
+            element["ontology_terms"] = merge_ontology_terms(element.get("ontology_terms", []), refs)
+            _finalize_element(element)
+
+
+def _definition_applies_to_element(definition: Dict[str, Any], element: Dict[str, Any]) -> bool:
+    scope = definition.get("definition_scope") or {}
+    scope_type = scope.get("scope_type", "document")
+    if scope_type == "section":
+        definition_section = (definition.get("section_context") or {}).get("section")
+        element_section = (element.get("section_context") or {}).get("section")
+        return bool(definition_section and definition_section == element_section) or not definition_section
+    if scope_type in {"title", "chapter"}:
+        return _same_hierarchy_scope(definition, element, scope_type)
+    return True
+
+
+def _same_hierarchy_scope(definition: Dict[str, Any], element: Dict[str, Any], level: str) -> bool:
+    definition_value = _hierarchy_value(definition, level)
+    element_value = _hierarchy_value(element, level)
+    return bool(definition_value and definition_value == element_value) or not definition_value
+
+
+def _hierarchy_value(element: Dict[str, Any], level: str) -> str:
+    for detail in element.get("hierarchy_details") or []:
+        if detail.get("level") == level:
+            return str(detail.get("value") or "")
+    prefix = f"{level}:"
+    for item in element.get("hierarchy_path") or []:
+        if str(item).startswith(prefix):
+            return str(item).split(":", 1)[1]
+    return ""
+
+
+def _apply_cross_reference_context(elements: List[Dict[str, Any]]) -> None:
+    section_index = _build_section_index(elements)
+    for element in elements:
+        resolved_refs = resolve_cross_references(element, section_index)
+        element["resolved_cross_references"] = resolved_refs
+        if resolved_refs:
+            _finalize_element(element)
+
+
+def _build_section_index(elements: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    index: Dict[str, Dict[str, Any]] = {}
+    for element in elements:
+        section = (element.get("section_context") or {}).get("section")
+        if not section:
+            continue
+        index.setdefault(
+            _normalize_section_ref(section),
+            {
+                "section": section,
+                "heading": (element.get("section_context") or {}).get("heading", ""),
+                "hierarchy_path": list(element.get("hierarchy_path") or []),
+                "hierarchy_details": list(element.get("hierarchy_details") or []),
+                "source_span": list(element.get("source_span") or []),
+            },
+        )
+    return index
+
+
+def resolve_cross_references(
+    element: Dict[str, Any],
+    section_index: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    """Resolve extracted cross references against known in-document sections."""
+    section_index = section_index or {}
+    resolved: List[Dict[str, Any]] = []
+    for ref in element.get("cross_reference_details") or []:
+        detail = dict(ref)
+        ref_type = str(detail.get("type") or "")
+        value = str(detail.get("value") or "")
+        detail["resolution_status"] = "external"
+        detail["target_exists"] = False
+        detail["target_section"] = ""
+        detail["target_heading"] = ""
+        detail["target_hierarchy_path"] = []
+        if ref_type == "section":
+            target = section_index.get(_normalize_section_ref(value))
+            detail["resolution_status"] = "resolved" if target else "unresolved"
+            detail["target_exists"] = bool(target)
+            if target:
+                detail["target_section"] = target.get("section", "")
+                detail["target_heading"] = target.get("heading", "")
+                detail["target_hierarchy_path"] = list(target.get("hierarchy_path") or [])
+        resolved.append(detail)
+    return resolved
+
+
+def _normalize_section_ref(value: str) -> str:
+    return re.sub(r"[^0-9a-z]+", ".", str(value or "").lower()).strip(".")
+
+
+def _unresolved_cross_references(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    resolved = element.get("resolved_cross_references") or []
+    if resolved:
+        return [
+            ref
+            for ref in resolved
+            if ref.get("type") == "section" and ref.get("resolution_status") == "unresolved"
+        ]
+    return [ref for ref in element.get("cross_reference_details") or [] if ref.get("type") == "section"]
+
+
+def _apply_document_penalty_context(elements: List[Dict[str, Any]], source_text: str) -> None:
+    recurrence = extract_penalty_recurrence(source_text)
+    if not recurrence:
+        return
+    for element in elements:
+        if (element.get("legal_frame") or {}).get("category") != "penalty":
+            continue
+        penalty = dict(element.get("penalty") or {})
+        if not penalty.get("recurrence"):
+            penalty["recurrence"] = recurrence
+            element["penalty"] = penalty
+            _finalize_element(element)
 
 
 def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
@@ -697,11 +1098,15 @@ def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
         "override_clause_details",
         "cross_references",
         "cross_reference_details",
+        "resolved_cross_references",
         "enumerated_items",
+        "defined_term_refs",
+        "ontology_terms",
         "kg_relationship_hints",
         "monetary_amounts",
         "monetary_amount_details",
         "hierarchy_path",
+        "hierarchy_details",
         "parser_warnings",
     ]
     for field in list_fields:
@@ -709,7 +1114,7 @@ def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
             type_errors.append(field)
     if "section_context" in element and not isinstance(element["section_context"], dict):
         type_errors.append("section_context")
-    for field in ["legal_frame", "penalty", "procedure"]:
+    for field in ["definition_scope", "export_readiness", "field_spans", "legal_frame", "logic_frame", "llm_repair", "penalty", "procedure"]:
         if field in element and not isinstance(element[field], dict):
             type_errors.append(field)
     if "support_span" in element and len(element["support_span"]) != 2:
@@ -720,6 +1125,279 @@ def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
         "type_errors": type_errors,
         "schema_version": element.get("schema_version", PARSER_SCHEMA_VERSION),
     }
+
+
+def migrate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Upgrade an older deterministic parser element to the current schema."""
+    migrated = dict(element or {})
+    migrated["previous_schema_version"] = migrated.get("schema_version", "unknown")
+    migrated["schema_version"] = PARSER_SCHEMA_VERSION
+    text = str(migrated.get("text") or migrated.get("source_text") or "")
+    support_text = str(migrated.get("support_text") or text)
+    migrated.setdefault("text", text)
+    migrated.setdefault("support_text", support_text)
+    migrated.setdefault("support_span", [0, len(support_text)])
+    migrated.setdefault("subject", [])
+    migrated.setdefault("action", [])
+    migrated.setdefault("modal", "")
+    migrated.setdefault("norm_type", "unknown")
+    migrated.setdefault("deontic_operator", "")
+    migrated.setdefault("document_type", "statute")
+    migrated.setdefault("extraction_method", "migrated_legacy_parser_element")
+    migrated.setdefault("confidence_floor", 0.1)
+    migrated.setdefault("conditions", [])
+    migrated.setdefault("exceptions", [])
+    migrated.setdefault("override_clauses", [])
+    migrated.setdefault("cross_references", [])
+    migrated.setdefault("enumerated_items", [])
+    for field, default in LEGACY_SCHEMA_DEFAULTS.items():
+        migrated.setdefault(field, list(default) if isinstance(default, list) else dict(default))
+    migrated["condition_details"] = migrated["condition_details"] or _legacy_clause_details(migrated.get("conditions", []), "condition")
+    migrated["exception_details"] = migrated["exception_details"] or _legacy_clause_details(migrated.get("exceptions", []), "exception")
+    migrated["override_clause_details"] = migrated["override_clause_details"] or _legacy_clause_details(migrated.get("override_clauses", []), "override")
+    migrated["cross_reference_details"] = migrated["cross_reference_details"] or _legacy_cross_reference_details(migrated.get("cross_references", []))
+    migrated["temporal_constraint_details"] = migrated["temporal_constraint_details"] or _legacy_temporal_details(migrated.get("temporal_constraints", []))
+    migrated.setdefault("temporal_constraints", [])
+    migrated["actor_type"] = migrated.get("actor_type") or classify_legal_entity((migrated.get("subject") or [""])[0] if migrated.get("subject") else "")
+    migrated["entity_type"] = migrated.get("entity_type") or migrated["actor_type"]
+    action_text = (migrated.get("action") or [""])[0] if migrated.get("action") else ""
+    migrated["action_verb"] = migrated.get("action_verb") or _first_verb(action_text)
+    migrated["action_object"] = migrated.get("action_object") or _action_object(action_text)
+    migrated["action_recipient"] = migrated.get("action_recipient") or extract_action_recipient(action_text)
+    if not migrated.get("field_spans"):
+        migrated["field_spans"] = _complete_field_spans(text, (migrated.get("subject") or [""])[0] if migrated.get("subject") else "", action_text, {})
+    return _finalize_element(migrated)
+
+
+def _legacy_clause_details(values: List[str], slot_type: str) -> List[Dict[str, Any]]:
+    return [
+        {
+            "type": slot_type,
+            "clause_type": "legacy",
+            "raw_text": str(value),
+            "normalized_text": str(value).lower(),
+            "span": [],
+            "clause_span": [],
+        }
+        for value in values or []
+    ]
+
+
+def _legacy_cross_reference_details(refs: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    return [
+        {
+            "type": ref.get("type", "reference"),
+            "value": ref.get("value", ""),
+            "raw_text": f"{ref.get('type', 'reference')} {ref.get('value', '')}".strip(),
+            "normalized_text": f"{ref.get('type', 'reference')} {ref.get('value', '')}".strip().lower(),
+            "span": [],
+        }
+        for ref in refs or []
+        if isinstance(ref, dict)
+    ]
+
+
+def _legacy_temporal_details(items: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    return [
+        {
+            "type": item.get("type", "temporal"),
+            "temporal_kind": "legacy",
+            "value": item.get("value", ""),
+            "anchor": "",
+            "raw_text": item.get("value", ""),
+            "normalized_text": item.get("value", "").lower(),
+            "span": [],
+        }
+        for item in items or []
+        if isinstance(item, dict)
+    ]
+
+
+def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a deterministic handoff payload for optional llm_router repair."""
+    reasons = list(element.get("parser_warnings", []))
+    if element.get("schema_valid") is False:
+        reasons.append("schema_validation_failed")
+    if element.get("quality_label") == "low":
+        reasons.append("low_scaffold_quality")
+    if element.get("promotable_to_theorem") is False and not reasons:
+        reasons.append("not_promotable_to_theorem")
+
+    required = bool(reasons)
+    prompt_context = {
+        "source_text": element.get("text", ""),
+        "support_text": element.get("support_text", ""),
+        "support_span": element.get("support_span", []),
+        "source_span": element.get("source_span", []),
+        "section_context": element.get("section_context", {}),
+        "hierarchy_path": element.get("hierarchy_path", []),
+        "hierarchy_details": element.get("hierarchy_details", []),
+        "legal_frame": element.get("legal_frame", {}),
+        "deontic_operator": element.get("deontic_operator", ""),
+        "norm_type": element.get("norm_type", ""),
+        "subject": element.get("subject", []),
+        "action": element.get("action", []),
+        "conditions": element.get("condition_details", []),
+        "exceptions": element.get("exception_details", []),
+        "temporal_constraints": element.get("temporal_constraint_details", []),
+        "cross_references": element.get("cross_reference_details", []),
+        "resolved_cross_references": element.get("resolved_cross_references", []),
+        "defined_term_refs": element.get("defined_term_refs", []),
+        "kg_relationship_hints": element.get("kg_relationship_hints", []),
+        "ontology_terms": element.get("ontology_terms", []),
+        "parser_warnings": reasons,
+    }
+    prompt_hash = hashlib.sha256(
+        json.dumps(prompt_context, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    return {
+        "required": required,
+        "reasons": reasons,
+        "target_schema_version": PARSER_SCHEMA_VERSION,
+        "suggested_router": "llm_router",
+        "prompt_template": "legal_deontic_parser_repair_v1",
+        "prompt_hash": prompt_hash,
+        "prompt_context": prompt_context,
+    }
+
+
+def build_logic_frame(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Build an intermediate representation for formal-logic exporters."""
+    action_text = (element.get("action") or [""])[0]
+    return {
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "actor": (element.get("subject") or [""])[0],
+        "actor_type": element.get("actor_type", "unknown"),
+        "modality": element.get("deontic_operator", ""),
+        "norm_type": element.get("norm_type", ""),
+        "action_text": action_text,
+        "action_predicate": normalize_predicate_name(_action_without_mental_state(action_text)),
+        "object": element.get("action_object", ""),
+        "recipient": element.get("action_recipient", ""),
+        "conditions": element.get("condition_details", []),
+        "exceptions": element.get("exception_details", []),
+        "temporal_constraints": element.get("temporal_constraint_details", []),
+        "cross_references": element.get("cross_reference_details", []),
+        "resolved_cross_references": element.get("resolved_cross_references", []),
+        "defined_terms": element.get("defined_term_refs", []),
+        "violation": element.get("legal_frame", {}).get("category") == "violation",
+        "penalty": element.get("penalty", {}),
+        "procedure": element.get("procedure", {}),
+        "field_spans": element.get("field_spans", {}),
+        "source_text": element.get("text", ""),
+        "readiness": {
+            "schema_valid": element.get("schema_valid"),
+            "parser_warnings": element.get("parser_warnings", []),
+            "promotable_to_theorem": element.get("promotable_to_theorem", False),
+        },
+    }
+
+
+def build_export_readiness(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Declare which downstream artifacts are safe from this parser element."""
+    blockers = list(element.get("parser_warnings", []))
+    if element.get("schema_valid") is False:
+        blockers.append("schema_validation_failed")
+    if element.get("llm_repair", {}).get("required"):
+        blockers.append("llm_repair_required")
+    blockers = list(dict.fromkeys(blockers))
+
+    allowed_exports = ["canonical_parquet", "bm25", "embeddings", "knowledge_graph"]
+    formal_logic_targets: List[str] = []
+    requires_validation: List[str] = []
+
+    if element.get("schema_valid") is False:
+        allowed_exports = []
+        requires_validation.append("schema_repair")
+    elif blockers:
+        allowed_exports.append("llm_repair_queue")
+        requires_validation.extend(["llm_router_repair", "human_or_llm_semantic_review"])
+    else:
+        formal_logic_targets = ["deontic", "fol", "frame_logic"]
+        if element.get("temporal_constraint_details") or element.get("procedure"):
+            formal_logic_targets.append("temporal_logic")
+            formal_logic_targets.append("event_calculus")
+        allowed_exports.extend(["formal_logic_scaffold", "proof_candidate"])
+
+    theorem_promotable = bool(
+        element.get("promotable_to_theorem")
+        and not blockers
+        and element.get("schema_valid") is True
+    )
+    if not theorem_promotable and "human_or_llm_semantic_review" not in requires_validation:
+        requires_validation.append("human_or_llm_semantic_review")
+
+    return {
+        "kg_ready": element.get("schema_valid") is True,
+        "logic_ready": bool(formal_logic_targets),
+        "proof_ready": theorem_promotable,
+        "theorem_promotable": theorem_promotable,
+        "allowed_exports": allowed_exports,
+        "formal_logic_targets": formal_logic_targets,
+        "blockers": blockers,
+        "requires_validation": requires_validation,
+        "source": "deterministic_parser",
+    }
+
+
+def infer_definition_scope(sentence: str) -> Dict[str, str]:
+    text = str(sentence or "")
+    lowered = text.lower()
+    if re.search(r"\bin this section\b", lowered):
+        return {"scope_type": "section", "raw_text": "in this section"}
+    if re.search(r"\bin this chapter\b", lowered):
+        return {"scope_type": "chapter", "raw_text": "in this chapter"}
+    if re.search(r"\bin this title\b", lowered):
+        return {"scope_type": "title", "raw_text": "in this title"}
+    if re.search(r"\bfor purposes of this (section|chapter|title)\b", lowered):
+        match = re.search(r"\bfor purposes of this (section|chapter|title)\b", lowered)
+        return {"scope_type": match.group(1), "raw_text": match.group(0)}
+    return {"scope_type": "unknown", "raw_text": ""}
+
+
+def extract_ontology_terms(text: str) -> List[Dict[str, str]]:
+    raw = str(text or "")
+    terms: List[Dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    patterns = [
+        ("government_actor", r"\b(?:Director|Bureau|City|Administrator|Commission|Council|Mayor|Department)\b"),
+        ("legal_person", r"\b(?:applicant|person|owner|tenant|employee|contractor|resident)\b"),
+        ("legal_instrument", r"\b(?:permit|license|certificate|registration|approval)\b"),
+        ("legal_event", r"\b(?:notice|hearing|decision|appeal|inspection|violation|penalty|fee)\b"),
+        ("regulated_property", r"\b(?:premises|sidewalk|street|vehicle|building|facility|property)\b"),
+        ("regulated_activity", r"\b(?:operate|file|submit|inspect|revoke|suspend|issue|appeal)\b"),
+    ]
+    for term_type, pattern in patterns:
+        for match in re.finditer(pattern, raw, flags=re.IGNORECASE):
+            value = match.group(0)
+            key = (term_type, value.lower())
+            if key in seen:
+                continue
+            seen.add(key)
+            terms.append({"term": value, "type": term_type, "span": [match.start(), match.end()]})
+    return terms
+
+
+def merge_ontology_terms(
+    existing_terms: List[Dict[str, Any]],
+    defined_refs: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    merged = list(existing_terms or [])
+    seen = {(str(item.get("term", "")).lower(), str(item.get("type", ""))) for item in merged}
+    for ref in defined_refs:
+        key = (str(ref.get("term", "")).lower(), "defined_term")
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(
+            {
+                "term": ref.get("term", ""),
+                "type": "defined_term",
+                "definition_body": ref.get("definition_body", ""),
+                "span": ref.get("span", []),
+            }
+        )
+    return merged
 
 
 def _enrich_legal_frame(element: Dict[str, Any]) -> None:
@@ -739,7 +1417,11 @@ def _enrich_legal_frame(element: Dict[str, Any]) -> None:
     }
     element["monetary_amounts"] = extract_monetary_amounts(text)
     element["monetary_amount_details"] = extract_monetary_amount_details(text)
-    element["penalty"] = extract_penalty_details(text, action)
+    existing_penalty = element.get("penalty") or {}
+    penalty = extract_penalty_details(text, action)
+    if existing_penalty.get("recurrence") and not penalty.get("recurrence"):
+        penalty["recurrence"] = existing_penalty["recurrence"]
+    element["penalty"] = penalty
     element["procedure"] = extract_procedure_details(text, action)
     element["kg_relationship_hints"] = build_kg_relationship_hints(element)
 
@@ -796,12 +1478,51 @@ def extract_penalty_details(text: str, action: str = "") -> Dict[str, Any]:
     lower = combined.lower()
     if not any(term in lower for term in ["fine", "penalty", "punishable", "imprison", "violation", "offense", "infraction"]):
         return {}
+    amounts = extract_monetary_amount_details(combined)
     return {
         "raw_text": combined,
         "monetary_amounts": extract_monetary_amounts(combined),
+        "monetary_amount_details": amounts,
+        "minimum_amount": _penalty_bound(combined, "minimum"),
+        "maximum_amount": _penalty_bound(combined, "maximum"),
+        "recurrence": extract_penalty_recurrence(combined),
         "has_imprisonment": bool(re.search(r"\b(?:jail|imprison|imprisonment|custody)\b", lower)),
-        "has_fine": "fine" in lower or bool(extract_monetary_amounts(combined)),
+        "has_fine": "fine" in lower or bool(amounts),
     }
+
+
+def _penalty_bound(text: str, bound: str) -> Dict[str, Any]:
+    if bound == "minimum":
+        pattern = r"\b(?:not\s+less\s+than|minimum(?:\s+of)?)\s+(\$\s?\d[\d,]*(?:\.\d{2})?|\d[\d,]*\s+dollars?)"
+    else:
+        pattern = r"\b(?:not\s+more\s+than|maximum(?:\s+of)?|up\s+to)\s+(\$\s?\d[\d,]*(?:\.\d{2})?|\d[\d,]*\s+dollars?)"
+    match = re.search(pattern, text, flags=re.IGNORECASE)
+    if not match:
+        return {}
+    raw_text = match.group(1).strip()
+    return {
+        "raw_text": raw_text,
+        "numeric_value": re.sub(r"[^\d.]", "", raw_text),
+        "currency": "USD" if "$" in raw_text or "dollar" in raw_text.lower() else "",
+        "span": [match.start(1), match.end(1)],
+    }
+
+
+def extract_penalty_recurrence(text: str) -> Dict[str, Any]:
+    patterns = [
+        ("per_day", r"\b(?:each|every)\s+day\s+(?:constitutes|is)\s+(?:a\s+)?separate\s+violation\b"),
+        ("per_violation", r"\b(?:per|for each)\s+violation\b"),
+        ("per_offense", r"\b(?:per|for each)\s+offense\b"),
+    ]
+    for recurrence_type, pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return {
+                "type": recurrence_type,
+                "raw_text": match.group(0),
+                "span": [match.start(), match.end()],
+            }
+    return {}
 
 
 def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
@@ -841,7 +1562,13 @@ def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]
         relationships.append({"subject": "law", "predicate": predicate, "object": subject})
         relationships.append({"subject": subject, "predicate": "performsAction", "object": action})
     if category == "permit_or_license" and action:
-        relationships.append({"subject": action, "predicate": "requiresLegalInstrument", "object": subject})
+        relationships.append(
+            {
+                "subject": action,
+                "predicate": "requiresLegalInstrument",
+                "object": instrument_target or subject,
+            }
+        )
     if element.get("action_recipient"):
         relationships.append({"subject": subject, "predicate": "directedTo", "object": element["action_recipient"]})
     procedure = element.get("procedure") or {}
@@ -860,8 +1587,23 @@ def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]
         relationships.append({"subject": subject, "predicate": "mayRevokeInstrument", "object": instrument_target or element.get("action_object") or action})
     if "suspension" in events:
         relationships.append({"subject": subject, "predicate": "maySuspendInstrument", "object": instrument_target or element.get("action_object") or action})
-    for ref in element.get("cross_references", []):
-        relationships.append({"subject": "law", "predicate": "references", "object": f"{ref.get('type')}:{ref.get('value')}"})
+    for ref in element.get("defined_term_refs", []):
+        relationships.append(
+            {
+                "subject": ref.get("term", ""),
+                "predicate": "definedBy",
+                "object": ref.get("definition_body") or ref.get("definition_text", ""),
+            }
+        )
+    resolved_refs = element.get("resolved_cross_references") or []
+    if resolved_refs:
+        for ref in resolved_refs:
+            target = ref.get("target_section") or ref.get("value", "")
+            predicate = "referencesResolvedSection" if ref.get("resolution_status") == "resolved" else "referencesUnresolvedSection"
+            relationships.append({"subject": "law", "predicate": predicate, "object": f"{ref.get('type')}:{target}"})
+    else:
+        for ref in element.get("cross_references", []):
+            relationships.append({"subject": "law", "predicate": "references", "object": f"{ref.get('type')}:{ref.get('value')}"})
     for amount in element.get("monetary_amounts", []):
         relationships.append({"subject": "law", "predicate": "mentionsAmount", "object": amount.get("raw_text", "")})
     return relationships
@@ -1048,7 +1790,7 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     if element.get("enumerated_items"):
         warnings.append("enumerated_clause_requires_item_level_review")
         score -= 0.10
-    if element.get("cross_references"):
+    if _unresolved_cross_references(element):
         warnings.append("cross_reference_requires_resolution")
         score -= 0.04
     if element.get("exceptions"):

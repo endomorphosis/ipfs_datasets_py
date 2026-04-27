@@ -1895,6 +1895,58 @@ async def test_state_admin_rules_agentic_daemon_timeout_preserves_cloudflare_ava
 
 
 @pytest.mark.asyncio
+async def test_state_admin_rules_agentic_daemon_salvages_checkpoint_rows_on_timeout(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _slow_checkpointing_scrape_state_admin_rules(**kwargs):
+        assert kwargs["output_dir"] == str(tmp_path)
+        assert kwargs["agentic_checkpoint_interval"] <= 10
+        checkpoint_dir = tmp_path / "agentic_checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        row = {
+            "state_code": "NE",
+            "section_number": "001",
+            "section_name": "Nebraska Rule 001",
+            "full_text": "Nebraska administrative rule text " * 20,
+            "source_url": "https://rules.nebraska.gov/rules/001.pdf",
+        }
+        (checkpoint_dir / "STATE-NE_statutes.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+        await asyncio.sleep(0.2)
+        return {"status": "success", "data": [], "metadata": {}}
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _slow_checkpointing_scrape_state_admin_rules)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["NE"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            max_statutes=50,
+            archive_warmup_urls=0,
+            scrape_timeout_seconds=0.05,
+            random_seed=7,
+        )
+    )
+    tactic = daemon._select_tactic()
+
+    scrape_result = await daemon._run_scrape_with_tactic(tactic)
+
+    assert scrape_result["status"] == "partial_success"
+    assert scrape_result["metadata"]["scrape_timed_out"] is True
+    assert scrape_result["metadata"]["checkpoint_recovered"] is True
+    assert scrape_result["metadata"]["checkpoint_recovered_rows"] == 1
+    assert scrape_result["data"][0]["state_code"] == "NE"
+    assert scrape_result["data"][0]["rules_count"] == 1
+    assert scrape_result["data"][0]["statutes"][0]["source_url"] == "https://rules.nebraska.gov/rules/001.pdf"
+
+    artifacts = daemon._write_recovered_row_artifacts(cycle_index=1, scrape_result=scrape_result)
+    assert artifacts["status"] == "success"
+    assert artifacts["row_count"] == 1
+    assert artifacts["state_counts"] == {"NE": 1}
+
+
+@pytest.mark.asyncio
 async def test_state_admin_rules_agentic_daemon_uses_filtered_corpus_diagnostics(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 

@@ -1734,6 +1734,8 @@ class StateLawsAgenticDaemon:
             kwargs["strict_full_text"] = False
             kwargs["min_full_text_chars"] = 200
             kwargs["parallel_workers"] = 1
+            kwargs["output_dir"] = str(self.output_dir)
+            kwargs["agentic_checkpoint_interval"] = max(1, min(10, int(self.config.max_statutes or 10) or 10))
             admin_budget_kwargs = {
                 "agentic_max_candidates_per_state": self.config.admin_agentic_max_candidates_per_state,
                 "agentic_max_fetch_per_state": self.config.admin_agentic_max_fetch_per_state,
@@ -1766,6 +1768,12 @@ class StateLawsAgenticDaemon:
                 }
                 if self.corpus.key == "state_admin_rules":
                     timeout_metadata["cloudflare_browser_rendering"] = self._cloudflare_browser_rendering_availability()
+                    salvaged_result = self._state_admin_scrape_result_from_agentic_checkpoints(
+                        metadata=timeout_metadata,
+                        error=f"Corpus scrape timed out after {scrape_timeout_seconds} seconds",
+                    )
+                    if salvaged_result is not None:
+                        return salvaged_result
                 return {
                     "status": "error",
                     "error": f"Corpus scrape timed out after {scrape_timeout_seconds} seconds",
@@ -2404,6 +2412,86 @@ class StateLawsAgenticDaemon:
 
         manifest_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
         return summary
+
+    def _state_admin_scrape_result_from_agentic_checkpoints(
+        self,
+        *,
+        metadata: Dict[str, Any],
+        error: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Build a scrape result from partial admin-rule checkpoints after timeout."""
+        if self.corpus.key != "state_admin_rules":
+            return None
+
+        checkpoint_dir = self.output_dir / "agentic_checkpoints"
+        if not checkpoint_dir.exists():
+            return None
+
+        blocks: List[Dict[str, Any]] = []
+        total_rows = 0
+        for statutes_path in sorted(checkpoint_dir.glob("STATE-*_statutes.jsonl")):
+            match = re.match(r"STATE-([A-Z]{2})_statutes\.jsonl$", statutes_path.name)
+            if not match:
+                continue
+            state_code = match.group(1)
+            statutes: List[Dict[str, Any]] = []
+            try:
+                with statutes_path.open("r", encoding="utf-8", errors="ignore") as handle:
+                    for line in handle:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            row = json.loads(line)
+                        except Exception:
+                            continue
+                        if not isinstance(row, dict):
+                            continue
+                        row.setdefault("state_code", state_code)
+                        statutes.append(self._json_safe_row(row))
+            except Exception:
+                continue
+            if not statutes:
+                continue
+
+            total_rows += len(statutes)
+            state_name = US_STATES.get(state_code, state_code)
+            blocks.append(
+                {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "title": f"{state_name} Administrative Rules",
+                    "source": "Agentic checkpoint recovery",
+                    "source_url": statutes[0].get("source_url"),
+                    "scraped_at": datetime.now(timezone.utc).isoformat(),
+                    "statutes": statutes,
+                    "rules_count": len(statutes),
+                    "schema_version": "1.0",
+                    "normalized": True,
+                    "checkpoint_recovered": True,
+                    "checkpoint_path": str(statutes_path),
+                }
+            )
+
+        if not blocks:
+            return None
+
+        checkpoint_metadata = dict(metadata)
+        checkpoint_metadata.update(
+            {
+                "checkpoint_recovered": True,
+                "checkpoint_recovered_rows": total_rows,
+                "checkpoint_recovered_states": [block["state_code"] for block in blocks],
+                "agentic_checkpoint_dir": str(checkpoint_dir),
+                "rules_count": total_rows,
+            }
+        )
+        return {
+            "status": "partial_success",
+            "error": error,
+            "data": blocks,
+            "metadata": checkpoint_metadata,
+        }
 
     def _flatten_recovered_statute_rows(self, data: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
         rows: List[Dict[str, Any]] = []

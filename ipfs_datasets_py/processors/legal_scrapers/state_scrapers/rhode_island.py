@@ -13,6 +13,7 @@ _TITLE_INDEX_URL_TEMPLATE = "https://webserver.rilegislature.gov/Statutes/TITLE{
 _TITLE_LINK_RE = re.compile(r"/Statutes/TITLE(\d+)/(\d+(?:-\d+)+)/INDEX\.htm$", re.IGNORECASE)
 _SECTION_LINK_RE = re.compile(r"/Statutes/TITLE(\d+)/(\d+(?:-\d+)+)/([\dA-Za-z._-]+)\.htm$", re.IGNORECASE)
 _SECTION_NUMBER_RE = re.compile(r"§\s*([0-9A-Za-z.-]+)")
+_SECTION_HEADING_RE = re.compile(r"§\s*([0-9A-Za-z.-]+)\.\s*(.+)")
 
 
 class RhodeIslandScraper(BaseStateScraper):
@@ -119,6 +120,12 @@ class RhodeIslandScraper(BaseStateScraper):
                         section_number = self._extract_ri_section_number(section_label, section_url)
                         if not section_number:
                             continue
+                        section_bytes = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=30)
+                        section_html = section_bytes.decode("utf-8", errors="replace") if section_bytes else ""
+                        full_text, extracted_name = self._extract_ri_section_text_and_name(section_html)
+                        section_name = (extracted_name or section_label or f"Section {section_number}")[:200]
+                        if not full_text:
+                            full_text = f"Section {section_number}: {section_name}"
 
                         statute = NormalizedStatute(
                             state_code=self.state_code,
@@ -129,12 +136,16 @@ class RhodeIslandScraper(BaseStateScraper):
                             chapter_number=self._extract_ri_chapter_number(chapter_url),
                             chapter_name=chapter_name[:200] or None,
                             section_number=section_number,
-                            section_name=section_label[:200],
-                            full_text=f"Section {section_number}: {section_label}",
+                            section_name=section_name,
+                            full_text=full_text,
                             legal_area=legal_area,
                             source_url=section_url,
                             official_cite=f"{citation_format} § {section_number}",
                             metadata=StatuteMetadata(),
+                            structured_data={
+                                "source_kind": "official_rhode_island_section_html",
+                                "discovery_method": "official_title_chapter_section_html",
+                            },
                         )
                         statutes.append(statute)
                         seen_urls.add(section_url)
@@ -164,6 +175,42 @@ class RhodeIslandScraper(BaseStateScraper):
         if not match:
             return None
         return match.group(2)
+
+    def _extract_ri_section_text_and_name(self, html: str) -> tuple[str, str]:
+        if not html:
+            return "", ""
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return "", ""
+
+        soup = BeautifulSoup(html, "html.parser")
+        body = soup.find("body")
+        if body is None:
+            return "", ""
+
+        for tag in body.find_all(["script", "style"]):
+            tag.decompose()
+
+        content_node = None
+        for bold in body.find_all("b"):
+            bold_text = self._normalize_legal_text(bold.get_text(" ", strip=True))
+            if bold_text.startswith("§"):
+                content_node = bold.parent
+                break
+
+        text = self._normalize_legal_text(body.get_text("\n", strip=True))
+        if len(text) < 20:
+            return "", ""
+
+        section_name = ""
+        if content_node is not None:
+            heading = self._normalize_legal_text(content_node.get_text(" ", strip=True))
+            heading_match = _SECTION_HEADING_RE.match(heading)
+            if heading_match:
+                section_name = heading_match.group(2).strip()
+
+        return text[:14000], section_name
 
 
 # Register this scraper with the registry
