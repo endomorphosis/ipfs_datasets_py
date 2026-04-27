@@ -85,6 +85,35 @@ def test_rejects_state_statutes_leaking_into_admin_rules_filter() -> None:
     assert filtered[0]["statutes"] == []
 
 
+def test_rejects_law_library_state_regulation_directory_as_admin_rule() -> None:
+    directory_text = (
+        "State Legislatures, State Laws, and State Regulations: Websites / Telephone Numbers "
+        "LLSDC Membership Law Library Lights Legislative Source Book Academic Law Libraries "
+        "Member Login Search "
+    ) * 8
+    statute = {
+        "code_name": "",
+        "section_name": "State Legislatures, State Laws, and State Regulations: Websites / Telephone Numbers",
+        "source_url": "https://legislature.va.gov/regulations",
+        "full_text": directory_text,
+    }
+
+    assert scraper_module._looks_like_non_rule_admin_page(
+        text=directory_text,
+        title=statute["section_name"],
+        url=statute["source_url"],
+    ) is True
+    assert _is_admin_rule_statute(statute) is False
+    assert _is_substantive_admin_statute(statute, min_chars=160) is False
+
+
+def test_generic_legislature_admin_guess_urls_are_non_admin_seeds() -> None:
+    assert scraper_module._is_non_admin_seed_url("https://legislature.va.gov/regulations") is True
+    assert scraper_module._is_non_admin_seed_url("https://legislature.co.gov/administrative-code") is True
+    assert scraper_module._is_non_admin_seed_url("https://legislature.ky.gov/code-of-regulations") is True
+    assert scraper_module._is_non_admin_seed_url("https://legislature.dc.gov/code-of-regulations") is False
+
+
 def test_allows_alaska_administrative_code_rules() -> None:
     statute = {
         "code_name": "Alaska Administrative Code",

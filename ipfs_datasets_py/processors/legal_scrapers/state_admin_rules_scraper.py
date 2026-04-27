@@ -535,11 +535,14 @@ _OK_NON_SUBSTANTIVE_LEGISLATURE_PATH_RE = re.compile(
     r"^/(?:regulations|administrative-code|code-of-regulations|rules|agency-rules|policies|departments)?/?$",
     re.IGNORECASE,
 )
-_OK_LLSDC_TEXT_RE = re.compile(
+_LAW_LIBRARY_STATE_REGULATION_DIRECTORY_TEXT_RE = re.compile(
     r"law\s+librarians'?\s+society\s+of\s+washington|legislative\s+source\s+book|"
-    r"state\s+legislatures,?\s+state\s+laws,?\s+and\s+state\s+regulations",
+    r"state\s+legislatures,?\s+state\s+laws,?\s+and\s+state\s+regulations|"
+    r"state\s+legislatures,?\s+state\s+laws,?\s+and\s+state\s+regulations:\s+websites|"
+    r"\bLLSDC\b|law\s+library\s+lights|academic\s+law\s+libraries",
     re.IGNORECASE,
 )
+_OK_LLSDC_TEXT_RE = _LAW_LIBRARY_STATE_REGULATION_DIRECTORY_TEXT_RE
 _OK_RULES_PORTAL_SHELL_TEXT_RE = re.compile(
     r"oklahoma\s+administrative\s+code.*administrative\s+code\s+search.*"
     r"title\s+1\.\s*executive\s+orders",
@@ -1440,13 +1443,16 @@ def _is_admin_rule_statute(statute: Dict[str, Any]) -> bool:
     section_name = str(statute.get("section_name") or statute.get("short_title") or "")
     official_cite = str(statute.get("official_cite") or "")
     source_url = str(statute.get("source_url") or "")
+    full_text = str(statute.get("full_text") or "")
 
     if _NON_ADMIN_CODE_NAME_RE.search(code_name):
         return False
     if source_url and _NON_ADMIN_SOURCE_URL_RE.search(source_url):
         return False
 
-    haystack = " ".join([legal_area, code_name, section_name, official_cite, source_url])
+    haystack = " ".join([legal_area, code_name, section_name, official_cite, source_url, full_text[:2000]])
+    if _LAW_LIBRARY_STATE_REGULATION_DIRECTORY_TEXT_RE.search(haystack):
+        return False
     if _ADMIN_RULE_TEXT_RE.search(haystack):
         return True
 
@@ -2154,7 +2160,24 @@ def _is_non_admin_seed_url(url: str) -> bool:
     host = parsed.netloc.lower()
     path = parsed.path or "/"
     normalized_path = path.rstrip("/") or "/"
+    normalized_path_lower = normalized_path.lower()
     query = parsed.query or ""
+    if (
+        host != "legislature.dc.gov"
+        and re.fullmatch(r"legislature\.[a-z]{2}\.gov", host)
+        and normalized_path_lower
+        in {
+            "/",
+            "/rules",
+            "/regulations",
+            "/administrative-code",
+            "/code-of-regulations",
+            "/agency-rules",
+            "/policies",
+            "/departments",
+        }
+    ):
+        return True
     if host == "legislature.az.gov":
         return True
     if host == "www.azleg.gov" and _AZLEG_NON_ADMIN_SEED_PATH_RE.fullmatch(normalized_path):
@@ -4021,6 +4044,8 @@ def _looks_like_non_rule_admin_page(*, text: str, title: str, url: str) -> bool:
     if _OFF_TOPIC_HISTORY_PAGE_RE.search(hay) and not arizona_official_rule_document:
         return True
     if _SEO_MIRROR_PAGE_RE.search(hay):
+        return True
+    if _LAW_LIBRARY_STATE_REGULATION_DIRECTORY_TEXT_RE.search(hay):
         return True
     if host == "azsos.gov" and normalized_path_lower.startswith("/rules") and _AZSOS_RULES_PORTAL_NAV_TEXT_RE.search(hay):
         return True

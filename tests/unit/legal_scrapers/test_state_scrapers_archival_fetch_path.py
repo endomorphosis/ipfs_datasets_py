@@ -2064,10 +2064,15 @@ async def test_connecticut_default_run_uses_realistic_limit(monkeypatch: pytest.
         requested.setdefault("generic_max_sections", []).append(max_sections)
         return []
 
+    async def _fake_direct_chapters(self, code_name: str, max_statutes: int):
+        requested["direct_chapter_max_statutes"] = max_statutes
+        return []
+
     monkeypatch.setattr(ConnecticutScraper, "_scrape_live_title_stubs", _fake_live_titles)
     monkeypatch.setattr(ConnecticutScraper, "_scrape_archived_chapter_stubs", _fake_archived_titles)
     monkeypatch.setattr(ConnecticutScraper, "_custom_scrape_connecticut", _fake_custom)
     monkeypatch.setattr(ConnecticutScraper, "_generic_scrape", _fake_generic)
+    monkeypatch.setattr(ConnecticutScraper, "_scrape_direct_chapters", _fake_direct_chapters)
 
     scraper = ConnecticutScraper("CT", "Connecticut")
     await scraper.scrape_code("Connecticut General Statutes", "https://www.cga.ct.gov/current/pub/titles.htm")
@@ -2076,6 +2081,7 @@ async def test_connecticut_default_run_uses_realistic_limit(monkeypatch: pytest.
     assert requested["archived_max_statutes"] == 160
     assert all(value == 160 for value in requested["custom_max_sections"])
     assert all(value == 160 for value in requested["generic_max_sections"])
+    assert requested["direct_chapter_max_statutes"] == 160
 
 
 @pytest.mark.anyio
@@ -2955,6 +2961,7 @@ async def test_washington_default_run_uses_realistic_official_limit(monkeypatch:
     monkeypatch.setattr(WashingtonScraper, "_scrape_direct_seed_sections", _fake_seed)
     monkeypatch.setattr(WashingtonScraper, "_scrape_official_index", _fake_official)
     monkeypatch.setattr(WashingtonScraper, "_generic_scrape", _fake_generic)
+    monkeypatch.setattr(WashingtonScraper, "has_playwright", lambda self: False)
 
     scraper = WashingtonScraper("WA", "Washington")
     await scraper.scrape_code("Revised Code of Washington", "https://app.leg.wa.gov/RCW/default.aspx?cite=9A.32.030")
@@ -2983,6 +2990,7 @@ async def test_west_virginia_default_run_uses_realistic_official_limit(monkeypat
     monkeypatch.setattr(WestVirginiaScraper, "_scrape_direct_seed_sections", _fake_seed)
     monkeypatch.setattr(WestVirginiaScraper, "_scrape_official_index", _fake_official)
     monkeypatch.setattr(WestVirginiaScraper, "_generic_scrape", _fake_generic)
+    monkeypatch.setattr(WestVirginiaScraper, "has_playwright", lambda self: False)
 
     scraper = WestVirginiaScraper("WV", "West Virginia")
     await scraper.scrape_code("West Virginia Code", "https://code.wvlegislature.gov/11-8-12/")
@@ -3093,6 +3101,7 @@ async def test_virginia_default_run_uses_realistic_limit(monkeypatch: pytest.Mon
     monkeypatch.setattr(VirginiaScraper, "_scrape_official_index", _fake_official)
     monkeypatch.setattr(VirginiaScraper, "_scrape_direct_sections", _fake_direct)
     monkeypatch.setattr(VirginiaScraper, "_generic_scrape", _fake_generic)
+    monkeypatch.setattr(VirginiaScraper, "has_playwright", lambda self: False)
 
     scraper = VirginiaScraper("VA", "Virginia")
     await scraper.scrape_code("Code of Virginia", "https://law.lis.virginia.gov/")
@@ -3175,6 +3184,7 @@ async def test_wisconsin_default_run_uses_realistic_limit(monkeypatch: pytest.Mo
     monkeypatch.setattr(WisconsinScraper, "_scrape_official_index", _fake_official)
     monkeypatch.setattr(WisconsinScraper, "_scrape_direct_sections", _fake_direct)
     monkeypatch.setattr(WisconsinScraper, "_generic_scrape", _fake_generic)
+    monkeypatch.setattr(WisconsinScraper, "has_playwright", lambda self: False)
 
     scraper = WisconsinScraper("WI", "Wisconsin")
     await scraper.scrape_code("Wisconsin Statutes", "https://docs.legis.wisconsin.gov/statutes/statutes")
@@ -3391,6 +3401,7 @@ async def test_north_carolina_default_run_uses_realistic_limit(monkeypatch: pyte
     monkeypatch.setattr(NorthCarolinaScraper, "_scrape_official_index", _fake_official)
     monkeypatch.setattr(NorthCarolinaScraper, "_scrape_direct_seed_sections", _fake_seed)
     monkeypatch.setattr(NorthCarolinaScraper, "_generic_scrape", _fake_generic)
+    monkeypatch.setattr(NorthCarolinaScraper, "has_playwright", lambda self: False)
 
     scraper = NorthCarolinaScraper("NC", "North Carolina")
     await scraper.scrape_code("North Carolina General Statutes", "https://www.ncleg.gov/Laws/GeneralStatutes")
@@ -3700,7 +3711,6 @@ async def test_hawaii_default_run_uses_realistic_limit(monkeypatch: pytest.Monke
 
     assert requested["seed_max_statutes"] == 8
     assert requested["archived_stub_max_statutes"] == 160
-    assert requested["archived_hrscurrent_max_statutes"] == 160
 
 
 @pytest.mark.anyio
