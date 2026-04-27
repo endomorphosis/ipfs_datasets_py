@@ -56,16 +56,16 @@ class MontanaScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         direct_limit = self._effective_scrape_limit(max_statutes, default=2)
+        official = await self._scrape_official_mca_tree(code_name, max_statutes=max(10, int(direct_limit or 10)))
+        if official:
+            return official[: max(1, int(direct_limit or len(official)))]
+
         direct = await self._scrape_direct_seed_sections(
             code_name,
             max_statutes=max(1, int(direct_limit or 2)),
         )
         if direct and not self._full_corpus_enabled():
             return direct[: max(1, int(direct_limit or len(direct)))]
-
-        official = await self._scrape_official_mca_tree(code_name, max_statutes=max(10, int(direct_limit or 10)))
-        if official:
-            return official[: max(1, int(direct_limit or len(official)))]
 
         candidate_urls = [
             code_url,

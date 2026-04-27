@@ -76,10 +76,6 @@ class NewHampshireScraper(BaseStateScraper):
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
         full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None
 
-        if not self._full_corpus_enabled() or max_statutes is not None:
-            direct = await self._scrape_direct_archived_seed_sections(code_name, max_statutes=return_threshold)
-            if direct:
-                return direct[:return_threshold]
         # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
         discovery_limit = max(400, return_threshold * 10) if full_corpus_unbounded else max(10, return_threshold)
         for archived in await self._discover_archived_rsa_urls(limit=discovery_limit):
@@ -106,6 +102,11 @@ class NewHampshireScraper(BaseStateScraper):
         _merge(archived_title_stubs)
         if not full_corpus_unbounded and len(merged) >= return_threshold:
             return merged
+
+        if not self._full_corpus_enabled():
+            direct = await self._scrape_direct_archived_seed_sections(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
 
         for candidate in candidate_urls:
             if candidate in seen:

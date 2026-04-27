@@ -34,6 +34,24 @@ from ipfs_datasets_py.utils.secrets import resolve_secret
 
 logger = logging.getLogger(__name__)
 
+BRAVE_SEARCH_SECRET_NAMES = (
+    "BRAVE_SEARCH_PAID_API_KEY",
+    "BRAVE_SEARCH_PRO_API_KEY",
+    "BRAVE_SEARCH_API_KEY_PAID",
+    "BRAVE_SEARCH_API_KEY_PRO",
+    "BRAVE_SEARCH_API_KEY",
+    "BRAVE_API_KEY",
+)
+
+
+def resolve_brave_search_api_key(api_key: Optional[str] = None) -> str:
+    """Resolve the best available Brave Search API key.
+
+    Paid/pro-specific names are checked before legacy generic names so an
+    upgraded token can be added without changing daemon configs.
+    """
+    return resolve_secret(*BRAVE_SEARCH_SECRET_NAMES, explicit=api_key)
+
 # Try to import IPFS cache module
 try:
     from .brave_search_ipfs_cache import BraveSearchIPFSCache
@@ -327,14 +345,15 @@ def brave_web_search(
         RuntimeError: If API key is missing or API request fails
         
     Environment Variables:
-        BRAVE_SEARCH_API_KEY: Preferred API key env var
-        BRAVE_API_KEY: Backward-compatible Brave API key env var
+        BRAVE_SEARCH_PAID_API_KEY/BRAVE_SEARCH_PRO_API_KEY: Preferred paid/pro API keys
+        BRAVE_SEARCH_API_KEY: General Brave Search API key
+        BRAVE_API_KEY: Backward-compatible Brave API key
         BRAVE_SEARCH_CACHE_DISABLE: Set to "1"/"true" to disable caching
         BRAVE_SEARCH_CACHE_TTL_S: Cache TTL in seconds (default: 86400)
         BRAVE_SEARCH_CACHE_MAX_ENTRIES: Max cache entries (default: 1000)
         BRAVE_SEARCH_CACHE_PATH: Custom cache file path
     """
-    token = resolve_secret("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", explicit=api_key)
+    token = resolve_brave_search_api_key(api_key)
     if not token:
         raise RuntimeError(
             "Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY "
@@ -533,7 +552,7 @@ def brave_web_search_page(
                 - cached: Whether results came from cache
                 - cache_age_s: Age of cached data in seconds (if cached)
     """
-    token = resolve_secret("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", explicit=api_key)
+    token = resolve_brave_search_api_key(api_key)
     if not token:
         raise RuntimeError(
             "Missing BRAVE_SEARCH_API_KEY/BRAVE_API_KEY "
@@ -713,7 +732,7 @@ class BraveSearchClient:
             api_key: Brave Search API key. If omitted, resolves BRAVE_SEARCH_API_KEY
                 or BRAVE_API_KEY from env, config secrets, vault, or keyring.
         """
-        self.api_key = resolve_secret("BRAVE_SEARCH_API_KEY", "BRAVE_API_KEY", explicit=api_key)
+        self.api_key = resolve_brave_search_api_key(api_key)
         self.config = {
             "country": "us",
             "safesearch": "moderate",

@@ -73,8 +73,9 @@ class IndianaScraper(BaseStateScraper):
         justia_titles: List[NormalizedStatute] = []
         title_page_statutes: List[NormalizedStatute] = []
         full_corpus = self._full_corpus_enabled()
-        justia_enabled = full_corpus or self._env_flag("INDIANA_JUSTIA_ENABLE")
-        title_pages_enabled = full_corpus or self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE")
+        bounded_probe = max_statutes is not None
+        justia_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_JUSTIA_ENABLE")
+        title_pages_enabled = full_corpus or bounded_probe or self._env_flag("INDIANA_ARCHIVED_TITLE_PAGES_ENABLE")
         if justia_enabled:
             justia_titles = await self._scrape_archived_justia_titles(code_name=code_name, max_statutes=max(10, return_threshold))
         if title_pages_enabled:
@@ -162,6 +163,15 @@ class IndianaScraper(BaseStateScraper):
             title_links.append((text, full_url))
             if len(title_links) >= max_statutes:
                 break
+
+        if title_links:
+            link_graph_rows = await self._crawl_archived_justia_link_graph(
+                code_name=code_name,
+                seed_urls=[url for _, url in title_links],
+                max_statutes=max_statutes,
+            )
+            if link_graph_rows:
+                return link_graph_rows[:max_statutes]
 
         statutes: List[NormalizedStatute] = []
         crawl_limit = int(os.getenv("INDIANA_JUSTIA_CRAWL_PAGE_LIMIT", "2000") or "2000")
@@ -270,6 +280,8 @@ class IndianaScraper(BaseStateScraper):
                 lower_url = abs_url.lower()
                 lower_label = label.lower()
                 if "accounts.justia.com" in lower_url or "/signin" in lower_url:
+                    continue
+                if "*" in abs_url:
                     continue
                 if "/codes/indiana/2010/" not in lower_url:
                     continue
@@ -386,43 +398,88 @@ class IndianaScraper(BaseStateScraper):
                         or "chapter" in lower_label
                         or re.search(r"\b(?:ic|sec\.|section)\s*\d", lower_label, re.IGNORECASE)
                     )
-                    if not looks_statutory:
-                        continue
+                if not looks_statutory:
+                    continue
 
-                    section_number = self._extract_section_number(label)
-                    if not section_number:
-                        section_number = self._derive_section_number_from_url(abs_url)
-                    if not section_number:
-                        section_number = f"Justia-{len(out) + 1}"
+                section_number = self._extract_section_number(label)
+                if not section_number:
+                    section_number = self._derive_section_number_from_url(abs_url)
+                if not section_number:
+                    continue
 
-                    key = f"{section_number}|{abs_url}".lower()
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    out.append(
-                        NormalizedStatute(
-                            state_code=self.state_code,
-                            state_name=self.state_name,
-                            statute_id=f"{code_name} § {section_number}",
-                            code_name=code_name,
-                            section_number=section_number,
-                            section_name=label[:200],
-                            full_text=f"Section {section_number}: {label}",
-                            legal_area=self._identify_legal_area(label),
-                            source_url=abs_url,
-                            official_cite=f"Ind. Code § {section_number}",
-                            metadata=StatuteMetadata(),
-                            structured_data={
-                                "source_kind": "archived_justia_indiana_code",
-                                "discovery_method": "wayback_justia_link_graph",
-                                "record_type": "archived_justia_link",
-                            },
-                        )
-                    )
+                if lower_label.startswith("article ") or lower_label.startswith("title "):
+                    continue
+
+                key = f"{section_number}|{abs_url}".lower()
+                if key in seen:
+                    continue
+                statute = await self._build_archived_justia_link_statute(
+                    code_name=code_name,
+                    section_number=section_number,
+                    label=label,
+                    source_url=abs_url,
+                )
+                if statute is None:
+                    continue
+                seen.add(key)
+                out.append(statute)
                 if len(out) >= max_statutes:
                     break
 
         return out
+
+    async def _build_archived_justia_link_statute(
+        self,
+        *,
+        code_name: str,
+        section_number: str,
+        label: str,
+        source_url: str,
+    ) -> NormalizedStatute | None:
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+
+        try:
+            payload = await self._fetch_page_content_with_archival_fallback(source_url, timeout_seconds=35)
+        except Exception:
+            payload = b""
+        if not payload:
+            return None
+
+        soup = BeautifulSoup(payload, "html.parser")
+        content_text = self._normalize_legal_text(self._extract_best_content_text(str(soup)))
+        content_text = re.split(r"\bDisclaimer:\b", content_text, maxsplit=1)[0].strip()
+        content_text = re.split(r"\bAsk a Lawyer\b", content_text, maxsplit=1)[0].strip()
+        content_text = re.sub(r"\s+", " ", content_text).strip()
+        if len(content_text) < 240:
+            return None
+
+        heading = ""
+        heading_node = soup.select_one("h1") or soup.select_one("title")
+        if heading_node is not None:
+            heading = self._normalize_legal_text(heading_node.get_text(" ", strip=True))
+
+        return NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=f"{code_name} § {section_number}",
+            code_name=code_name,
+            section_number=section_number,
+            section_name=(heading or label or f"Section {section_number}")[:200],
+            full_text=content_text[:14000],
+            legal_area=self._identify_legal_area(heading or label),
+            source_url=source_url,
+            official_cite=f"Ind. Code § {section_number}",
+            metadata=StatuteMetadata(),
+            structured_data={
+                "source_kind": "archived_justia_indiana_code",
+                "discovery_method": "wayback_justia_link_graph",
+                "record_type": "archived_justia_link",
+                "skip_hydrate": True,
+            },
+        )
 
     async def _discover_archived_title_urls(self, limit: int = 160) -> List[str]:
         cdx_url = (

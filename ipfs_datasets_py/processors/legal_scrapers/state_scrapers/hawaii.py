@@ -66,11 +66,6 @@ class HawaiiScraper(BaseStateScraper):
         """
         limit = self._effective_scrape_limit(max_statutes, default=30)
         return_threshold = limit if limit is not None else 1000000
-        if return_threshold < 30:
-            seeded = await self._scrape_seed_sections(code_name, max_statutes=return_threshold)
-            if seeded:
-                return seeded
-
         seeded = await self._scrape_seed_sections(code_name, max_statutes=min(8, max(1, return_threshold)))
         archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=max(10, return_threshold))
 
@@ -88,6 +83,11 @@ class HawaiiScraper(BaseStateScraper):
         _merge(seeded)
         _merge(archival_stubs)
         if len(merged) >= return_threshold:
+            archival = await self._scrape_archived_hrscurrent(code_name, max_statutes=max(10, return_threshold))
+            if archival:
+                if limit is None:
+                    return archival
+                return archival[:return_threshold]
             if limit is None:
                 return merged
             return merged[:return_threshold]

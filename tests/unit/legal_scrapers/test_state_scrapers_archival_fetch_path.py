@@ -15,6 +15,7 @@ from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.generic import Ge
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.hawaii import HawaiiScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.illinois import IllinoisScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.indiana import IndianaScraper
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.iowa import IowaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.kansas import KansasScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.louisiana import LouisianaScraper
 from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.massachusetts import MassachusettsScraper
@@ -127,6 +128,116 @@ async def test_indiana_pdf_fetch_records_fetch_analytics(monkeypatch: pytest.Mon
 
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_iowa_bounded_probe_prefers_live_or_archival_rows_over_direct_seed(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_live(self, code_name: str, max_statutes: int = 160):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 1.10",
+                code_name=code_name,
+                section_number="1.10",
+                section_name="Live Iowa row",
+                full_text="Live Iowa row body text. " * 20,
+                source_url="https://www.legis.iowa.gov/docs/code/1.10.html",
+                official_cite="Iowa Code § 1.10",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_iowa_code_html",
+                    "discovery_method": "official_live_index",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_archival(self, code_name: str, max_statutes: int = 120):
+        return []
+
+    async def _fake_direct(self, code_name: str, max_statutes: int = 2):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 1.1",
+                code_name=code_name,
+                section_number="1.1",
+                section_name="Seed Iowa row",
+                full_text="Seed Iowa row body text. " * 20,
+                source_url="https://www.legis.iowa.gov/docs/code/1.1.html",
+                official_cite="Iowa Code § 1.1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_iowa_code_html",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(IowaScraper, "_scrape_live_code_stubs", _fake_live)
+    monkeypatch.setattr(IowaScraper, "_scrape_archived_code_stubs", _fake_archival)
+    monkeypatch.setattr(IowaScraper, "_scrape_direct_seed_sections", _fake_direct)
+
+    scraper = IowaScraper("IA", "Iowa")
+    statutes = await scraper.scrape_code("Iowa Code", "https://www.legis.iowa.gov/", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "official_live_index"
+
+
+@pytest.mark.anyio
+async def test_indiana_archived_justia_titles_prefers_link_graph_rows(monkeypatch: pytest.MonkeyPatch):
+    root_html = """
+    <html><body>
+      <a href="/codes/indiana/2010/title1/title1.html">TITLE 1. GENERAL PROVISIONS</a>
+      <a href="/codes/indiana/2010/title2/title2.html">TITLE 2. GENERAL ASSEMBLY</a>
+    </body></html>
+    """
+
+    async def _fake_fetch_page_content_with_archival_fallback(self, url: str, timeout_seconds: int = 35):
+        return root_html.encode("utf-8")
+
+    async def _fake_crawl_archived_justia_link_graph(self, *, code_name: str, seed_urls: list[str], max_statutes: int):
+        assert seed_urls
+        return [
+            NormalizedStatute(
+                state_code="IN",
+                state_name="Indiana",
+                statute_id=f"{code_name} § 1-1-1-1",
+                code_name=code_name,
+                section_number="1-1-1-1",
+                section_name="Section sample",
+                full_text="Indiana sample section text",
+                source_url=seed_urls[0],
+                official_cite="Ind. Code § 1-1-1-1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "archived_justia_indiana_code",
+                    "discovery_method": "wayback_justia_link_graph",
+                },
+            )
+        ]
+
+    monkeypatch.setattr(
+        IndianaScraper,
+        "_fetch_page_content_with_archival_fallback",
+        _fake_fetch_page_content_with_archival_fallback,
+    )
+    monkeypatch.setattr(
+        IndianaScraper,
+        "_crawl_archived_justia_link_graph",
+        _fake_crawl_archived_justia_link_graph,
+    )
+
+    scraper = IndianaScraper("IN", "Indiana")
+    statutes = await scraper._scrape_archived_justia_titles("Indiana Code", max_statutes=5)
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "1-1-1-1"
+    assert statutes[0].structured_data["discovery_method"] == "wayback_justia_link_graph"
 
 
 @pytest.mark.anyio
@@ -291,6 +402,60 @@ async def test_new_york_structured_public_law_crawl(monkeypatch: pytest.MonkeyPa
 
     assert [row.section_number for row in statutes] == ["101", "102"]
     assert statutes[0].structured_data["source_kind"] == "public_law_structured_markdown"
+    assert statutes[0].structured_data["discovery_method"] == "public_law_hierarchical_crawl"
+
+
+@pytest.mark.anyio
+async def test_new_york_bounded_probe_prefers_structured_public_law_over_seed_sections(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_structured(self, code_name: str, max_sections: int = 100):
+        return [
+            NormalizedStatute(
+                state_code="NY",
+                state_name="New York",
+                statute_id=f"{code_name} § 101",
+                code_name=code_name,
+                section_number="101",
+                section_name="Structured section",
+                full_text="Structured New York section text. " * 20,
+                source_url="https://newyork.public.law/laws/n.y._civil_practice_law_&_rules_section_101",
+                official_cite="NY New York Consolidated Laws § 101",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "public_law_structured_markdown",
+                    "discovery_method": "public_law_hierarchical_crawl",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_seed(self, code_name: str, max_statutes: int = 1):
+        return [
+            NormalizedStatute(
+                state_code="NY",
+                state_name="New York",
+                statute_id=f"{code_name} § PEN 125.25",
+                code_name=code_name,
+                section_number="PEN 125.25",
+                section_name="Seed section",
+                full_text="Seed New York section text. " * 20,
+                source_url="https://www.nysenate.gov/legislation/laws/PEN/125.25",
+                official_cite="NY New York Consolidated Laws § PEN 125.25",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "jina_senate_seed_markdown",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(NewYorkScraper, "_scrape_public_law_structured", _fake_structured)
+    monkeypatch.setattr(NewYorkScraper, "_scrape_jina_senate_seed_sections", _fake_seed)
+
+    scraper = NewYorkScraper("NY", "New York")
+    statutes = await scraper.scrape_code("New York Consolidated Laws", "https://www.nysenate.gov/legislation/laws", max_statutes=1)
+
+    assert len(statutes) == 1
     assert statutes[0].structured_data["discovery_method"] == "public_law_hierarchical_crawl"
 
 
@@ -507,6 +672,64 @@ async def test_new_hampshire_full_corpus_prefers_section_text_over_index_stubs(m
 
 
 @pytest.mark.anyio
+async def test_new_hampshire_bounded_probe_prefers_archived_title_stubs_over_direct_seed(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_discover(self, limit: int = 10):
+        return []
+
+    async def _fake_archived_titles(self, code_name: str, max_statutes=None):
+        return [
+            NormalizedStatute(
+                state_code="NH",
+                state_name="New Hampshire",
+                statute_id=f"{code_name} § 1:1",
+                code_name=code_name,
+                section_number="1:1",
+                section_name="Archived hierarchy row",
+                full_text="Archived hierarchy text. " * 20,
+                source_url="https://www.gencourt.state.nh.us/rsa/html/I/1/1-1.htm",
+                official_cite="N.H. Rev. Stat. § 1:1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "archived_new_hampshire_rsa_section_html",
+                    "discovery_method": "archived_title_chapter_section_tree",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_direct(self, code_name: str, max_statutes: int = 1):
+        return [
+            NormalizedStatute(
+                state_code="NH",
+                state_name="New Hampshire",
+                statute_id=f"{code_name} § seed",
+                code_name=code_name,
+                section_number="seed",
+                section_name="Seed row",
+                full_text="Seed row text. " * 20,
+                source_url="https://www.gencourt.state.nh.us/rsa/html/seed.htm",
+                official_cite="N.H. Rev. Stat. § seed",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "archived_new_hampshire_rsa_section_html",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(NewHampshireScraper, "_discover_archived_rsa_urls", _fake_discover)
+    monkeypatch.setattr(NewHampshireScraper, "_scrape_archived_title_stubs", _fake_archived_titles)
+    monkeypatch.setattr(NewHampshireScraper, "_scrape_direct_archived_seed_sections", _fake_direct)
+
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    statutes = await scraper.scrape_code("New Hampshire Revised Statutes", "https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "archived_title_chapter_section_tree"
+
+
+@pytest.mark.anyio
 async def test_north_dakota_official_index_discovers_cencode_pdfs(monkeypatch: pytest.MonkeyPatch):
     index_html = (
         "<html><body>"
@@ -537,6 +760,60 @@ async def test_north_dakota_official_index_discovers_cencode_pdfs(monkeypatch: p
     assert [row.section_number for row in statutes] == ["01-01", "01-02"]
     assert statutes[0].structured_data["source_kind"] == "official_modern_index_pdf"
     assert "chapter text" in statutes[0].full_text.lower()
+
+
+@pytest.mark.anyio
+async def test_north_dakota_bounded_probe_prefers_official_index_over_seed_pdf(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_official(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="ND",
+                state_name="North Dakota",
+                statute_id=f"{code_name} § 01-01",
+                code_name=code_name,
+                section_number="01-01",
+                section_name="Official PDF row",
+                full_text="North Dakota official PDF text. " * 20,
+                source_url="https://www.ndlegis.gov/cencode/t01c01.pdf",
+                official_cite="N.D. Cent. Code § 01-01",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_modern_index_pdf",
+                    "discovery_method": "official_century_code_index_pdf",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_seed(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="ND",
+                state_name="North Dakota",
+                statute_id=f"{code_name} § seed",
+                code_name=code_name,
+                section_number="seed",
+                section_name="Seed PDF row",
+                full_text="North Dakota seed PDF text. " * 20,
+                source_url="https://www.legis.nd.gov/cencode/seed.pdf",
+                official_cite="N.D. Cent. Code § seed",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_seed_pdf",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(NorthDakotaScraper, "_scrape_official_index_pdfs", _fake_official)
+    monkeypatch.setattr(NorthDakotaScraper, "_scrape_seed_cencode_pdfs", _fake_seed)
+
+    scraper = NorthDakotaScraper("ND", "North Dakota")
+    statutes = await scraper.scrape_code("North Dakota Century Code", "https://www.legis.nd.gov/", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "official_century_code_index_pdf"
 
 
 @pytest.mark.anyio
@@ -756,6 +1033,64 @@ async def test_utah_full_corpus_prefers_root_xml_code_tree(monkeypatch: pytest.M
 
 
 @pytest.mark.anyio
+async def test_utah_bounded_probe_prefers_official_xml_over_direct_seed(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_xml(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 3-1-1",
+                code_name=code_name,
+                section_number="3-1-1",
+                section_name="Declaration of policy",
+                full_text="Utah XML bounded row body text. " * 20,
+                source_url="https://le.utah.gov/xcode/C_1800010118000101.xml",
+                official_cite="Utah Code § 3-1-1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_utah_code_xml",
+                    "discovery_method": "official_root_xml_title_chapter_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_versioned(self, code_name: str, max_statutes: int):
+        return []
+
+    async def _fake_direct(self, code_name: str, max_statutes: int = 2):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 1-1-101",
+                code_name=code_name,
+                section_number="1-1-101",
+                section_name="Seed section",
+                full_text="Utah seed row body text. " * 20,
+                source_url="https://le.utah.gov/xcode/Title1/1-1-S101.html",
+                official_cite="Utah Code § 1-1-101",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_utah_code_versioned_html",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(UtahScraper, "_scrape_official_xml_code_tree", _fake_xml)
+    monkeypatch.setattr(UtahScraper, "_scrape_official_versioned_tree", _fake_versioned)
+    monkeypatch.setattr(UtahScraper, "_scrape_direct_seed_sections", _fake_direct)
+
+    scraper = UtahScraper("UT", "Utah")
+    statutes = await scraper.scrape_code("Utah Code", "https://le.utah.gov/xcode/code.html", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "official_root_xml_title_chapter_section"
+
+
+@pytest.mark.anyio
 async def test_florida_scrape_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_fetch_official_fl_html(self, url: str, timeout_seconds: int = 12) -> str:
         self._record_fetch_event(provider="requests_direct", success=True)
@@ -930,6 +1265,60 @@ async def test_maine_direct_seed_sections_parse_official_body(monkeypatch: pytes
 
 
 @pytest.mark.anyio
+async def test_maine_bounded_probe_prefers_official_hierarchy_over_seed_sections(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_official_tree(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 1",
+                code_name=code_name,
+                section_number="1",
+                section_name="Official hierarchy section",
+                full_text="Official hierarchy body text " * 20,
+                source_url="https://legislature.maine.gov/statutes/1/title1sec1.html",
+                official_cite="Me. Rev. Stat. tit. 1, § 1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_maine_revised_statutes_html",
+                    "discovery_method": "official_title_chapter_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_seed_sections(self, code_name: str, max_statutes: int = 2):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § seed",
+                code_name=code_name,
+                section_number="seed",
+                section_name="Seed section",
+                full_text="Seed section body text " * 20,
+                source_url="https://legislature.maine.gov/statutes/1/title1sec999.html",
+                official_cite="Me. Rev. Stat. tit. 1, § seed",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_maine_revised_statutes_html",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(MaineScraper, "_scrape_official_title_chapter_section_tree", _fake_official_tree)
+    monkeypatch.setattr(MaineScraper, "_scrape_direct_seed_sections", _fake_seed_sections)
+
+    scraper = MaineScraper("ME", "Maine")
+    statutes = await scraper.scrape_code("Maine Revised Statutes", "https://example.me/statutes", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "official_title_chapter_section"
+
+
+@pytest.mark.anyio
 async def test_maine_official_hierarchy_uses_title_chapter_section_tree(monkeypatch: pytest.MonkeyPatch):
     pages = {
         "https://legislature.maine.gov/statutes/": (
@@ -1054,6 +1443,60 @@ async def test_montana_jina_seed_sections_parse_mca_body(monkeypatch: pytest.Mon
     assert statutes[0].official_cite == "Mont. Code Ann. § 45-5-102"
     assert statutes[0].structured_data["source_kind"] == "jina_reader_montana_mca_official"
     assert "Deliberate homicide" in statutes[0].full_text
+
+
+@pytest.mark.anyio
+async def test_montana_bounded_probe_prefers_official_hierarchy_over_seed_section(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_official(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="MT",
+                state_name="Montana",
+                statute_id=f"{code_name} § 45-5-102",
+                code_name=code_name,
+                section_number="45-5-102",
+                section_name="Official hierarchy row",
+                full_text="Montana official hierarchy text. " * 20,
+                source_url="https://mca.legmt.gov/bills/mca/title_0450/chapter_0050/part_0010/section_0020/0450-0050-0010-0020.html",
+                official_cite="Mont. Code Ann. § 45-5-102",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "jina_reader_montana_mca_hierarchical",
+                    "discovery_method": "official_mca_title_chapter_part_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_seed(self, code_name: str, max_statutes: int = 2):
+        return [
+            NormalizedStatute(
+                state_code="MT",
+                state_name="Montana",
+                statute_id=f"{code_name} § seed",
+                code_name=code_name,
+                section_number="seed",
+                section_name="Seed row",
+                full_text="Montana seed text. " * 20,
+                source_url="https://example.mt/seed",
+                official_cite="Mont. Code Ann. § seed",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "jina_reader_montana_mca_official",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(MontanaScraper, "_scrape_official_mca_tree", _fake_official)
+    monkeypatch.setattr(MontanaScraper, "_scrape_direct_seed_sections", _fake_seed)
+
+    scraper = MontanaScraper("MT", "Montana")
+    statutes = await scraper.scrape_code("Montana Code Annotated", "https://example.mt/mca", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "official_mca_title_chapter_part_section"
 
 
 @pytest.mark.anyio
@@ -1424,6 +1867,61 @@ async def test_maryland_full_corpus_bounded_run_prefers_api_sections(monkeypatch
 
 
 @pytest.mark.anyio
+async def test_maryland_bounded_probe_prefers_api_sections_over_direct_seed(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_api_sections(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="MD",
+                state_name="Maryland",
+                statute_id="MD-1-101",
+                code_name=code_name,
+                section_number="1-101",
+                section_name="State Government § 1-101",
+                full_text="Maryland API section text " * 20,
+                source_url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=1-101&enactments=false",
+                official_cite="Md. Code § 1-101",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "record_type": "maryland_api_section",
+                    "source_kind": "official_maryland_api_section_html",
+                    "discovery_method": "official_articles_sections_api",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_direct(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code="MD",
+                state_name="Maryland",
+                statute_id="MD-seed",
+                code_name=code_name,
+                section_number="seed",
+                section_name="Seed section",
+                full_text="Maryland seed section text " * 20,
+                source_url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=GSG&section=seed&enactments=false",
+                official_cite="Md. Code § seed",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_maryland_api_section_html",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(MarylandScraper, "_scrape_api_sections", _fake_api_sections)
+    monkeypatch.setattr(MarylandScraper, "_scrape_direct_seed_sections", _fake_direct)
+
+    scraper = MarylandScraper("MD", "Maryland")
+    statutes = await scraper.scrape_code("Maryland Code", "https://mgaleg.maryland.gov/mgawebsite/Laws/Statutes", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "official_articles_sections_api"
+
+
+@pytest.mark.anyio
 async def test_maryland_section_identity_includes_article_context(monkeypatch: pytest.MonkeyPatch):
     html_payload = (
         "<html><body><div id='StatuteText'>"
@@ -1636,6 +2134,64 @@ async def test_south_carolina_full_corpus_uses_official_title_and_chapter_pages(
     assert [statute.section_number for statute in statutes] == ["16-3-10", "16-3-20"]
     assert statutes[0].structured_data["source_kind"] == "official_south_carolina_code_html"
     assert "Murder defined" in statutes[0].section_name
+
+
+@pytest.mark.anyio
+async def test_south_carolina_bounded_probe_prefers_official_index_over_direct_seed(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_official(self, code_name: str, max_statutes=None):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 16-3-10",
+                code_name=code_name,
+                section_number="16-3-10",
+                section_name="Murder defined",
+                full_text="Official South Carolina section body text. " * 20,
+                source_url="https://www.scstatehouse.gov/code/t16c003.php#16-3-10",
+                official_cite="S.C. Code Ann. § 16-3-10",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_south_carolina_code_html",
+                    "discovery_method": "official_title_chapter_section_html",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_direct(self, code_name: str, max_statutes: int = 1):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § seed",
+                code_name=code_name,
+                section_number="seed",
+                section_name="Seed row",
+                full_text="Seed row body text. " * 20,
+                source_url="https://www.scstatehouse.gov/code/seed",
+                official_cite="S.C. Code Ann. § seed",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_south_carolina_code_html",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(SouthCarolinaScraper, "_scrape_official_code_tree", _fake_official)
+    monkeypatch.setattr(SouthCarolinaScraper, "_scrape_direct_seed_sections", _fake_direct)
+
+    scraper = SouthCarolinaScraper("SC", "South Carolina")
+    statutes = await scraper.scrape_code(
+        "South Carolina Code of Laws",
+        "https://www.scstatehouse.gov/code/statmast.php",
+        max_statutes=1,
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].structured_data["discovery_method"] == "official_title_chapter_section_html"
 
 
 @pytest.mark.anyio
@@ -2013,6 +2569,77 @@ async def test_hawaii_request_text_records_fetch_analytics(monkeypatch: pytest.M
     assert "Hawaii statute" in text
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_hawaii_bounded_probe_prefers_archived_hrscurrent_over_seed_merge(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_seed_sections(self, code_name: str, max_statutes: int):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 1-1",
+                code_name=code_name,
+                section_number="1-1",
+                section_name="Seed section 1-1",
+                full_text="Seed section body text " * 20,
+                source_url="https://example.hi/seed",
+                official_cite="Haw. Rev. Stat. § 1-1",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_hawaii_wayback_snapshot",
+                    "discovery_method": "official_seed_section",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    async def _fake_archived_stubs(self, code_name: str, max_statutes: int = 120):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 1-2",
+                code_name=code_name,
+                section_number="1-2",
+                section_name="Stub section 1-2",
+                full_text="Stub section body text " * 5,
+                source_url="https://example.hi/stub",
+                official_cite="Haw. Rev. Stat. § 1-2",
+                metadata=StatuteMetadata(),
+            )
+        ]
+
+    async def _fake_archived_hrscurrent(self, code_name: str, max_statutes: int = 20):
+        return [
+            NormalizedStatute(
+                state_code=self.state_code,
+                state_name=self.state_name,
+                statute_id=f"{code_name} § 1-3",
+                code_name=code_name,
+                section_number="1-3",
+                section_name="Archived section 1-3",
+                full_text="Archived section body text " * 20,
+                source_url="https://example.hi/archive",
+                official_cite="Haw. Rev. Stat. § 1-3",
+                metadata=StatuteMetadata(),
+                structured_data={
+                    "source_kind": "official_hawaii_wayback_snapshot",
+                    "skip_hydrate": True,
+                },
+            )
+        ]
+
+    monkeypatch.setattr(HawaiiScraper, "_scrape_seed_sections", _fake_seed_sections)
+    monkeypatch.setattr(HawaiiScraper, "_scrape_archived_section_stubs", _fake_archived_stubs)
+    monkeypatch.setattr(HawaiiScraper, "_scrape_archived_hrscurrent", _fake_archived_hrscurrent)
+
+    scraper = HawaiiScraper("HI", "Hawaii")
+    statutes = await scraper.scrape_code("Hawaii Revised Statutes", "https://example.hi/hrs", max_statutes=1)
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "1-3"
+    assert statutes[0].structured_data["source_kind"] == "official_hawaii_wayback_snapshot"
 
 
 @pytest.mark.anyio

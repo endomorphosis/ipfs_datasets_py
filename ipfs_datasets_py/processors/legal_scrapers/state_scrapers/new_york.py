@@ -61,14 +61,13 @@ class NewYorkScraper(BaseStateScraper):
         
         statutes = []
         limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(120)
-        if not self._full_corpus_enabled() or max_statutes is not None:
-            direct = await self._scrape_jina_senate_seed_sections(code_name, max_statutes=limit)
-            if direct:
-                statutes.extend(direct[:limit])
-
         public_law_structured = await self._scrape_public_law_structured(code_name, max_sections=max(10, limit))
         if public_law_structured:
             return public_law_structured[:limit]
+        if not self._full_corpus_enabled():
+            direct = await self._scrape_jina_senate_seed_sections(code_name, max_statutes=limit)
+            if direct:
+                statutes.extend(direct[:limit])
         if statutes:
             return statutes[:limit]
         

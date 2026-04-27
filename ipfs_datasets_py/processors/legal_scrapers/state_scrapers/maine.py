@@ -57,19 +57,22 @@ class MaineScraper(BaseStateScraper):
             List of NormalizedStatute objects
         """
         direct_limit = self._effective_scrape_limit(max_statutes, default=2)
+        return_threshold = self._bounded_return_threshold(30)
+        if max_statutes is not None:
+            return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        official = await self._scrape_official_title_chapter_section_tree(
+            code_name,
+            max_statutes=max(10, return_threshold),
+        )
+        if official:
+            return official[:return_threshold]
+
         direct = await self._scrape_direct_seed_sections(
             code_name,
             max_statutes=max(1, int(direct_limit or 2)),
         )
         if direct and not self._full_corpus_enabled():
             return direct[: max(1, int(direct_limit or len(direct)))]
-
-        official = await self._scrape_official_title_chapter_section_tree(
-            code_name,
-            max_statutes=max(10, int(direct_limit or 10)),
-        )
-        if official:
-            return official[: max(1, int(direct_limit or len(official)))]
 
         candidate_urls = [
             "https://legislature.maine.gov/statutes/1/title1ch1sec0.html",
@@ -80,9 +83,6 @@ class MaineScraper(BaseStateScraper):
 
         seen = set()
         best_statutes: List[NormalizedStatute] = []
-        return_threshold = self._bounded_return_threshold(30)
-        if max_statutes is not None:
-            return_threshold = max(1, min(return_threshold, int(max_statutes)))
         for candidate in candidate_urls:
             if candidate in seen:
                 continue

@@ -64,18 +64,21 @@ def _value_from_json_file(path: Path, names: tuple[str, ...]) -> str:
     except Exception:
         return ""
 
-    exact_names = {str(name) for name in names if str(name or "").strip()}
-    normalized_names = {_normalized_name(name) for name in exact_names}
-    for key, value in _iter_json_values(payload):
-        key_leaf = str(key).rsplit(".", 1)[-1]
-        if key not in exact_names and key_leaf not in exact_names:
-            if _normalized_name(key) not in normalized_names and _normalized_name(key_leaf) not in normalized_names:
-                continue
-        if isinstance(value, (Mapping, list)) or value is None:
-            continue
-        text = str(value).strip()
-        if text:
-            return text
+    values = [
+        (key, value)
+        for key, value in _iter_json_values(payload)
+        if not isinstance(value, (Mapping, list)) and value is not None
+    ]
+    for name in (str(item) for item in names if str(item or "").strip()):
+        normalized_name = _normalized_name(name)
+        for key, value in values:
+            key_leaf = str(key).rsplit(".", 1)[-1]
+            if key != name and key_leaf != name:
+                if _normalized_name(key) != normalized_name and _normalized_name(key_leaf) != normalized_name:
+                    continue
+            text = str(value).strip()
+            if text:
+                return text
     return ""
 
 
@@ -148,4 +151,3 @@ def resolve_secret(*names: str, explicit: Optional[str] = None) -> str:
 def has_secret(*names: str, explicit: Optional[str] = None) -> bool:
     """Return whether a secret can be resolved without exposing its value."""
     return bool(resolve_secret(*names, explicit=explicit))
-

@@ -56,11 +56,6 @@ class UtahScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
 
-        if not self._full_corpus_enabled():
-            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
-            if direct:
-                return direct[:return_threshold]
-
         xml_sections = await self._scrape_official_xml_code_tree(
             code_name,
             max_statutes=max(10, return_threshold),
@@ -74,6 +69,11 @@ class UtahScraper(BaseStateScraper):
         )
         if official_sections:
             return official_sections[:return_threshold]
+
+        if not self._full_corpus_enabled():
+            direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
+            if direct:
+                return direct[:return_threshold]
 
         live_title_stubs = await self._scrape_live_title_stubs(code_name, max_statutes=max(10, return_threshold))
         live_chapter_stubs = await self._scrape_live_chapter_stubs(

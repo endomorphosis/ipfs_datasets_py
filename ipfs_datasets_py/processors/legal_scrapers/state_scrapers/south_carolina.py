@@ -44,14 +44,15 @@ class SouthCarolinaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        if self._full_corpus_enabled() and max_statutes is None:
-            official = await self._scrape_official_code_tree(code_name)
-            if official:
-                return official
-
         return_threshold = self._bounded_return_threshold(30)
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
+        official = await self._scrape_official_code_tree(
+            code_name,
+            max_statutes=None if self._full_corpus_enabled() and max_statutes is None else return_threshold,
+        )
+        if official:
+            return official if self._full_corpus_enabled() and max_statutes is None else official[:return_threshold]
         if not self._full_corpus_enabled():
             direct = await self._scrape_direct_seed_sections(code_name, max_statutes=return_threshold)
             if direct:
