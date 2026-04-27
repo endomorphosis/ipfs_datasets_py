@@ -214,6 +214,7 @@ async def _run_corpus(
     min_document_recovery_ratio: float,
     stop_after_recovered_rows: bool,
     search_engines: Optional[List[str]],
+    tactic: Optional[str],
     skip_passed: bool,
 ) -> Dict[str, Any]:
     corpus_output_dir = output_root / corpus
@@ -246,6 +247,7 @@ async def _run_corpus(
         min_document_recovery_ratio=min_document_recovery_ratio,
         stop_after_recovered_rows=stop_after_recovered_rows,
         search_engines_override=search_engines,
+        forced_tactic_name=tactic,
         target_score=target_score,
         stop_on_target_score=stop_on_target_score,
         admin_agentic_max_candidates_per_state=1000,
@@ -298,6 +300,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--min-document-recovery-ratio", type=float, default=0.0, help="Optional minimum processed-document recovery ratio gate.")
     parser.add_argument("--stop-after-recovered-rows", action="store_true", help="Finalize each daemon cycle immediately after recovered row artifacts are written.")
     parser.add_argument("--search-engines", default=None, help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.")
+    parser.add_argument("--tactic", default=None, help="Force one tactic profile for each corpus daemon, e.g. document_first.")
     parser.add_argument("--skip-passed", action="store_true", help="Skip corpora whose existing latest summary already passed.")
     parser.add_argument("--cache-to-ipfs", action=argparse.BooleanOptionalAction, default=True, help="Mirror the shared fetch cache to IPFS.")
     parser.add_argument("--pin-ipfs-pages", action=argparse.BooleanOptionalAction, default=False, help="Pin per-page IPFS cache entries.")
@@ -352,6 +355,7 @@ async def _main_async(args: argparse.Namespace) -> int:
             min_document_recovery_ratio=float(args.min_document_recovery_ratio),
             stop_after_recovered_rows=bool(args.stop_after_recovered_rows),
             search_engines=_parse_csv(args.search_engines),
+            tactic=args.tactic,
             skip_passed=bool(args.skip_passed),
         )
         aggregated["runs"][corpus] = result

@@ -54,7 +54,7 @@ class NewJerseyScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._effective_scrape_limit(max_statutes, default=20) or 1000000
+        return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
         official = await self._scrape_official_index(
             code_name,
             max_statutes=None if return_threshold == 1000000 else int(return_threshold),

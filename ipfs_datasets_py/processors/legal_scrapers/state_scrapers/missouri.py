@@ -40,7 +40,7 @@ class MissouriScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=2)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         # Use custom scraper with Missouri-specific patterns
         fallback = await self._custom_scrape_missouri(
             code_name,

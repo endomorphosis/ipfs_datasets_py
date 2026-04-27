@@ -50,7 +50,7 @@ class VirginiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=30)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         official = await self._scrape_official_index(code_name, max_statutes=limit)
         if official:
             return official[:limit] if limit is not None else official

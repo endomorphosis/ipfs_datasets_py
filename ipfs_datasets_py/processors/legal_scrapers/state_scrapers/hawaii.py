@@ -64,7 +64,7 @@ class HawaiiScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=30)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
         seeded = await self._scrape_seed_sections(code_name, max_statutes=min(8, max(1, return_threshold)))
         archival_stubs = await self._scrape_archived_section_stubs(code_name, max_statutes=max(10, return_threshold))

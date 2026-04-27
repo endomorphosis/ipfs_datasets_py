@@ -59,7 +59,7 @@ class SouthDakotaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=20)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         max_api_statutes = limit if limit is not None else None
         api_statutes = await self._scrape_statutes_api(
             code_name=code_name,

@@ -50,7 +50,7 @@ class ConnecticutScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=30)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
         direct_sections: List[NormalizedStatute] = []
 

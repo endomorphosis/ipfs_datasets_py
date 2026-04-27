@@ -414,6 +414,26 @@ def test_state_admin_rules_agentic_daemon_select_tactic_biases_priority_state_re
     assert selected.name == "document_first"
 
 
+def test_state_admin_rules_agentic_daemon_forced_tactic_overrides_untried_order(tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["DE"],
+            output_dir=str(tmp_path),
+            explore_probability=0.0,
+            forced_tactic_name="document_first",
+        )
+    )
+
+    selection = daemon._select_tactic_with_context()
+
+    assert selection["profile"].name == "document_first"
+    assert selection["details"]["mode"] == "forced"
+    assert selection["details"]["score_breakdown"]["document_first"]["forced"] is True
+
+
 def test_state_admin_rules_agentic_daemon_untried_selection_honors_priority_action_plan(tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 

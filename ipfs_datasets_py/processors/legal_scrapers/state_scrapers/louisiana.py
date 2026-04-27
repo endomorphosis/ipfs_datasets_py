@@ -56,7 +56,7 @@ class LouisianaScraper(BaseStateScraper):
         Louisiana live endpoints can be brittle in automation contexts.
         Prefer archived Law.aspx pages with direct statute body HTML.
         """
-        limit = self._effective_scrape_limit(max_statutes, default=30)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         return_threshold = limit if limit is not None else 1000000
         toc = await self._scrape_live_toc_pages(code_name=code_name, max_statutes=return_threshold)
         if toc:

@@ -387,6 +387,7 @@ class StateLawsAgenticDaemonConfig:
     admin_parallel_assist_timeout_seconds: float = 86400.0
     stop_after_recovered_rows: bool = False
     search_engines_override: Optional[List[str]] = None
+    forced_tactic_name: Optional[str] = None
     router_llm_timeout_seconds: float = 20.0
     router_embeddings_timeout_seconds: float = 10.0
     router_ipfs_timeout_seconds: float = 10.0
@@ -4106,6 +4107,27 @@ class StateLawsAgenticDaemon:
 
     def _select_tactic_with_context(self) -> Dict[str, Any]:
         profiles = self.config.tactic_profiles
+        forced_tactic_name = str(self.config.forced_tactic_name or "").strip()
+        if forced_tactic_name and forced_tactic_name in profiles:
+            recent_issue_counts = self._recent_issue_counts()
+            return {
+                "profile": profiles[forced_tactic_name],
+                "details": {
+                    "mode": "forced",
+                    "selected_tactic": forced_tactic_name,
+                    "priority_recommended_tactics": self._priority_recommended_tactics(profiles),
+                    "recommended_tactics": [
+                        name for name in list(self._state.get("recommended_tactics") or []) if name in profiles
+                    ],
+                    "priority_states": list(self._state.get("priority_states") or []),
+                    "recent_issue_counts": recent_issue_counts,
+                    "score_breakdown": {
+                        forced_tactic_name: {
+                            "forced": True,
+                        }
+                    },
+                },
+            }
         recommended = [name for name in list(self._state.get("recommended_tactics") or []) if name in profiles]
         priority_recommended = self._priority_recommended_tactics(profiles)
         ordered_names = priority_recommended + recommended + [name for name in profiles if name not in priority_recommended and name not in recommended]
@@ -5351,6 +5373,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--admin-parallel-assist-timeout-seconds", type=float, default=86400.0, help="Per-state timeout budget for the parallel state-admin assist pass.")
     parser.add_argument("--stop-after-recovered-rows", action="store_true", help="Finalize the daemon cycle immediately after recovered row artifacts are written.")
     parser.add_argument("--search-engines", default=None, help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.")
+    parser.add_argument("--tactic", default=None, help="Force one tactic profile for every daemon cycle, e.g. document_first.")
     parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold for convergence.")
     parser.add_argument("--stop-on-target-score", action="store_true", help="Stop once the daemon reaches the target critic score.")
     parser.add_argument("--random-seed", type=int, default=None, help="Optional deterministic seed for tactic selection.")
@@ -5426,6 +5449,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     if item.strip()
                 ]
                 or None,
+                forced_tactic_name=args.tactic,
                 target_score=float(args.target_score),
                 stop_on_target_score=bool(args.stop_on_target_score),
                 random_seed=args.random_seed,

@@ -38,7 +38,7 @@ class OhioScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=2)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         merged: List[NormalizedStatute] = []
         seen_keys = set()
 

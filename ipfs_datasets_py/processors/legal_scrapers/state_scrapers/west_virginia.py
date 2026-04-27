@@ -45,7 +45,7 @@ class WestVirginiaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        return_threshold = self._effective_scrape_limit(max_statutes, default=15) or 1000000
+        return_threshold = self._effective_scrape_limit(max_statutes, default=160) or 1000000
         if not self._full_corpus_enabled() and max_statutes is None:
             direct = await self._scrape_direct_seed_sections(code_name, max_statutes=int(return_threshold))
             if direct:
