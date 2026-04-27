@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphRAG Processing Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <style>
+        .processing-card { border-left: 4px solid #007bff; }
+        .completed-card { border-left: 4px solid #28a745; }
+        .failed-card { border-left: 4px solid #dc3545; }
+        .progress-section { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .session-card { transition: all 0.3s ease; }
+        .session-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="/mcp">← Back to MCP Dashboard</a>
+        <span class="navbar-text ml-auto">GraphRAG Processing Dashboard</span>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Processing Stats -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card progress-section">
+                    <div class="card-body">
+                        <h5><i class="fas fa-brain"></i> GraphRAG Processing Statistics</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h3>{{ processing_stats.total_sessions }}</h3>
+                                    <small>Total Sessions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h3>{{ processing_stats.active_sessions }}</h3>
+                                    <small>Active Sessions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h3>{{ "%.1f"|format(processing_stats.success_rate) }}%</h3>
+                                    <small>Success Rate</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h3>{{ "%.1f"|format(processing_stats.average_processing_time) }}s</h3>
+                                    <small>Avg. Processing Time</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Processing Session -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-plus"></i> Start New GraphRAG Processing</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="graphragForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Website URL:</label>
+                                        <input type="url" class="form-control" id="websiteUrl" required placeholder="https://example.com">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Processing Mode:</label>
+                                        <select class="form-control" id="processingMode">
+                                            <option value="fast">Fast</option>
+                                            <option value="balanced" selected>Balanced</option>
+                                            <option value="quality">Quality</option>
+                                            <option value="comprehensive">Comprehensive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary btn-block">
+                                            <i class="fas fa-play"></i> Start Processing
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Sessions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tasks"></i> Processing Sessions</h5>
+                        <button class="btn btn-sm btn-outline-primary float-right" onclick="refreshSessions()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body" id="sessionsContainer">
+                        <!-- Sessions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            loadSessions();
+            
+            $('#graphragForm').submit(function(e) {
+                e.preventDefault();
+                startProcessing();
+            });
+            
+            // Auto-refresh every 5 seconds
+            setInterval(loadSessions, 5000);
+        });
+
+        function startProcessing() {
+            const url = $('#websiteUrl').val();
+            const mode = $('#processingMode').val();
+            
+            $.ajax({
+                url: '/api/mcp/graphrag/process',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    url: url,
+                    mode: mode
+                }),
+                success: function(data) {
+                    alert('Processing started! Session ID: ' + data.session_id);
+                    $('#websiteUrl').val('');
+                    loadSessions();
+                },
+                error: function(xhr) {
+                    alert('Failed to start processing: ' + xhr.responseJSON.error);
+                }
+            });
+        }
+
+        function loadSessions() {
+            $.get('/api/mcp/graphrag/sessions', function(data) {
+                const container = $('#sessionsContainer');
+                container.empty();
+                
+                if (data.sessions.length === 0) {
+                    container.html('<p class="text-muted">No processing sessions found.</p>');
+                    return;
+                }
+                
+                data.sessions.forEach(function(session) {
+                    const card = createSessionCard(session);
+                    container.append(card);
+                });
+            });
+        }
+
+        function createSessionCard(session) {
+            const statusClass = session.status === 'completed' ? 'completed-card' : 
+                               session.status === 'failed' ? 'failed-card' : 'processing-card';
+            
+            const progressBar = session.status === 'processing' ? 
+                `<div class="progress mt-2">
+                    <div class="progress-bar" style="width: ${session.progress * 100}%"></div>
+                 </div>` : '';
+            
+            return `
+                <div class="card session-card mb-3 ${statusClass}">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>${session.url}</h6>
+                                <small class="text-muted">Started: ${session.start_time}</small>
+                                ${progressBar}
+                            </div>
+                            <div class="col-md-4 text-right">
+                                <span class="badge badge-${getStatusBadgeClass(session.status)}">${session.status}</span>
+                                <br><small>Mode: ${session.config ? session.config.processing_mode : 'N/A'}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'completed': return 'success';
+                case 'failed': return 'danger';
+                case 'processing': return 'warning';
+                default: return 'secondary';
+            }
+        }
+
+        function refreshSessions() {
+            loadSessions();
+        }
+    </script>
+</body>
+</html>
