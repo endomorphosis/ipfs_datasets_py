@@ -58,6 +58,13 @@ class MississippiScraper(BaseStateScraper):
             if recovery:
                 return recovery[:limit] if limit is not None else recovery
 
+            common_crawl = await self._scrape_common_crawl_code_sections(
+                code_name=code_name,
+                max_statutes=limit or 5,
+            )
+            if common_crawl:
+                return common_crawl[:limit] if limit is not None else common_crawl
+
         archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit or 1000000)
         if archival and (not self._full_corpus_enabled() or max_statutes is not None):
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
@@ -215,6 +222,83 @@ class MississippiScraper(BaseStateScraper):
                 break
 
         return statutes
+
+    async def _scrape_common_crawl_code_sections(
+        self,
+        code_name: str,
+        max_statutes: int = 5,
+    ) -> List[NormalizedStatute]:
+        candidates = await self._scrape_state_common_crawl_candidates(
+            domain_terms=["legislature.ms.gov", "billstatus.ls.state.ms.us"],
+            url_terms=["/code_sections/", "/legislation/", "/statutes/", "/code/"],
+            mime_terms=["html"],
+            max_results=max(10, int(max_statutes or 5) * 4),
+        )
+        statutes: List[NormalizedStatute] = []
+        seen_sections: set[str] = set()
+        for candidate in candidates:
+            if len(statutes) >= max_statutes:
+                break
+            source_url = str(candidate.get("url") or "")
+            text = self._normalize_legal_text(candidate.get("text") or "")
+            if len(text) < 120:
+                continue
+            section_number = self._extract_ms_common_crawl_section_number(source_url, text)
+            if not section_number or section_number in seen_sections:
+                continue
+            seen_sections.add(section_number)
+            section_name = self._extract_ms_common_crawl_section_name(text, section_number)
+            statutes.append(
+                NormalizedStatute(
+                    state_code=self.state_code,
+                    state_name=self.state_name,
+                    statute_id=f"{code_name} § {section_number}",
+                    code_name=code_name,
+                    section_number=section_number,
+                    section_name=section_name[:200],
+                    full_text=text[:14000],
+                    legal_area=self._identify_legal_area(section_name or text[:600]),
+                    source_url=source_url,
+                    official_cite=f"Miss. Code Ann. § {section_number}",
+                    structured_data={
+                        "source_kind": "common_crawl_state_index_warc",
+                        "discovery_method": "hf_state_index_warc_backup",
+                        "collection": candidate.get("collection"),
+                        "timestamp": candidate.get("timestamp"),
+                    },
+                )
+            )
+        return statutes
+
+    def _extract_ms_common_crawl_section_number(self, source_url: str, text: str) -> str:
+        text_value = str(text or "")
+        url_match = re.search(r"/code_sections/\d+/(\d{3})-(\d{4})-(\d{4}(?:_\d+)?)", source_url, re.IGNORECASE)
+        if not url_match:
+            url_match = re.search(r"/code_sections/\d+/(\d{3})/(\d{4})(\d{4}(?:_\d+)?)\.(?:xml|htm|html)$", source_url, re.IGNORECASE)
+        if url_match:
+            if len(url_match.groups()) == 3:
+                title, chapter, section = url_match.groups()
+                section = section.replace("_", ".")
+                return f"{int(title)}-{int(chapter)}-{section.lstrip('0') or '0'}"
+
+        text_match = re.search(r"Code Section\s+(\d{3})[- ](\d{4})[- ](\d{4}(?:_\d+)?)", text_value, re.IGNORECASE)
+        if text_match:
+            title, chapter, section = text_match.groups()
+            section = section.replace("_", ".")
+            return f"{int(title)}-{int(chapter)}-{section.lstrip('0') or '0'}"
+
+        generic = self._extract_section_number(text_value)
+        return generic or ""
+
+    def _extract_ms_common_crawl_section_name(self, text: str, section_number: str) -> str:
+        text_value = str(text or "")
+        title_match = re.search(r"HB\s+\d+\s+(.+?)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+\d{2}/\d{2}", text_value)
+        if title_match:
+            return self._normalize_legal_text(title_match.group(1))[:200]
+        section_match = re.search(rf"{re.escape(section_number)}\s*[-.:]\s*(.+)", text_value)
+        if section_match:
+            return self._normalize_legal_text(section_match.group(1))[:200]
+        return f"Section {section_number}"
 
     async def _build_statute_from_history_url(
         self,

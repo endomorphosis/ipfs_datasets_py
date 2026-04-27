@@ -1334,6 +1334,36 @@
     ],
     "ts": 1774084585.1979604
   },
+  "3e622c75dc9ea641a595be414b9d6901c7abbaaf2d8328fc320d4ee6f1f00b71": {
+    "items": [
+      {
+        "description": "Wisconsin State Capitol 2 East Main St. | Madison, Wisconsin Contact the Legislature | Wisconsin.gov",
+        "title": "Wisconsin State Legislature Home Page",
+        "url": "https://legis.wisconsin.gov"
+      },
+      {
+        "description": "LegiScan legislative dashboard for Wisconsin, details on the most recent legislation, popular bills, sponsors and committees. With weekly downloadable snapshots of session data.",
+        "title": "Wisconsin Legislature | 2025-2026 | Regular Session | Adjourned Sine Die | LegiScan",
+        "url": "https://legiscan.com/WI"
+      },
+      {
+        "description": "Documents from the Wisconsin Legislature",
+        "title": "Wisconsin Legislative Documents",
+        "url": "https://docs.legis.wisconsin.gov/"
+      },
+      {
+        "description": "Administrative Rules related documents from the Wisconsin Legislature",
+        "title": "Wisconsin Legislative Documents - Administrative Rules Related",
+        "url": "https://docs.legis.wisconsin.gov/code"
+      },
+      {
+        "description": "If the Governor signs the bill, it passes into law, but if the Governor vetoes the bill, it will return to the legislature. It is possible for the legislature to override a veto and pass the bill into law itself, but this requires a two-thirds majority vote in both the Senate and the State Assembly. State law is contained in the Wisconsin Constitution and the various statutes enacted by the legislature.",
+        "title": "Wisconsin State Legislature - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Wisconsin_Legislature"
+      }
+    ],
+    "ts": 1777253019.874644
+  },
   "3ed41b371e8d0459e11710720a298273ef97f717c93bbf4fc250a2695ccd420f": {
     "items": [
       {
@@ -1819,6 +1849,36 @@
     ],
     "ts": 1774082563.4929569
   },
+  "5657fc2e5485cee00d0e2490ab81b367a19cd6ea28d4612a49c1365e8c65df86": {
+    "items": [
+      {
+        "description": "You need to enable JavaScript to run this app",
+        "title": "LIS",
+        "url": "https://lis.virginia.gov/"
+      },
+      {
+        "description": "Your Portal to the Commonwealth&#x27;s State Legislature",
+        "title": "Virginia General Assembly | Your Portal to the Commonwealth's State Legislature",
+        "url": "https://virginiageneralassembly.gov/"
+      },
+      {
+        "description": "LegiScan legislative dashboard for Virginia, details on the most recent legislation, popular bills, sponsors and committees. With weekly downloadable snapshots of session data.",
+        "title": "Virginia Legislature | 2026 | 1st Special Session | LegiScan",
+        "url": "https://legiscan.com/VA"
+      },
+      {
+        "description": "The Code Commission, staffed by the Division, serves as the central repository for all regulations adopted by state agencies, publishes the Virginia Register of Regulations, and coordinates publication of the Code of Virginia and the Virginia Administrative Code.",
+        "title": "Division of Legislative Services",
+        "url": "https://dls.virginia.gov/"
+      },
+      {
+        "description": "Check the status of bills, look at recent legislation, search the Code and legislation, etc. Includes House and Senate documents and reports. 1994 to present. Old site available at http://leg1.state.va.us/.",
+        "title": "Virginia Legislative Resources - Virginia Government - LibGuides at UVa Library",
+        "url": "https://guides.lib.virginia.edu/c.php?g=514860&p=3519990"
+      }
+    ],
+    "ts": 1777253042.2236505
+  },
   "56cb5411f48ee55b266e43ad365ff92eb9666c74eb1b9772496dbb4cdf3232df": {
     "items": [
       {
@@ -1848,6 +1908,36 @@
       }
     ],
     "ts": 1774084232.3150055
+  },
+  "59b404cae6beb1d2e55c31b2d6dc107b5bcd07c4020e59c5d52e0fcd6965fff4": {
+    "items": [
+      {
+        "description": "Pursuant to <strong>KRS 13A.050(1)</strong>, the Kentucky Administrative Regulations Service shall constitute the official state publication of administrative regulations.",
+        "title": "Kentucky Administrative Regulations - Legislative Research Commission",
+        "url": "https://legislature.ky.gov/Law/kar/Pages/default.aspx"
+      },
+      {
+        "description": "KRS Chapter 13A to implement this code. ... The commission may preapprove leases or contracts pursuant to <strong>KRS 6.741.</strong> (10) The commission shall compile and maintain a current index organized \u00b7 alphabetically by name of legislative agent and name of employer of all reports and \u00b7 statements ...",
+        "title": "Authority to promulgate administrative regulations -- Lists of ...",
+        "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=350"
+      },
+      {
+        "description": "Includes enactments through the 2025 Regular Session \u00b7 Chapter titles, centered headings, section catchlines, and explanatory notes are for informational purposes only and do not constitute any part of the law. For general laws governing construction of statutes, see <strong>KRS Chapter 446</strong>",
+        "title": "Kentucky Revised Statutes",
+        "url": "https://apps.legislature.ky.gov/law/statutes/"
+      },
+      {
+        "description": "<strong>318.130 Kentucky State Plumbing Code</strong> -- Administrative regulations.",
+        "title": "318.130 Kentucky State Plumbing Code -- Administrative regulations.",
+        "url": "https://apps.legislature.ky.gov/law/statutes/statute.aspx?id=47006"
+      },
+      {
+        "description": "This search option will search the Kentucky Administrative Regulations, the Kentucky Constitution, all legislative sessions from 1986 to present, all web pages, MSWord (*.doc) and pdf files excluding the Kentucky Revised Statutes for the search phrase.",
+        "title": "Kentucky Legislative Research Commission Search Options",
+        "url": "https://apps.legislature.ky.gov/lrcsearch"
+      }
+    ],
+    "ts": 1777253166.216265
   },
   "5ab6f24e7b327fec495ba1c5b0a15955ad7b2e8f84b8fdbc3720cd4a07333c07": {
     "items": [
@@ -3328,6 +3418,36 @@
       }
     ],
     "ts": 1774082438.5962276
+  },
+  "a4eee34512ba82e04ab586f2e4b63ebd275ae375d3b8040f8f185a49b7b76704": {
+    "items": [
+      {
+        "description": "Administrative regulations will appear as follows: \u00b7 There may be a delay between when a regulation is filed and when it is available online. Administrative regulations are updated approximately once a month, usually on or before the first of each month",
+        "title": "Kentucky Administrative Regulations - Legislative Research Commission",
+        "url": "https://legislature.ky.gov/Law/kar/Pages/default.aspx"
+      },
+      {
+        "description": "Regulations have the same force and effect as any law passed by the legislature. Kentucky administrative regulations can be found in the Kentucky Administrative Regulations (KAR). A citation to the KAR will have one of the following formats: ... Title Ky. Admin. Regs.",
+        "title": "Administrative - Kentucky Law - UofL Libraries at University of Louisville",
+        "url": "https://library.louisville.edu/law/kentucky/executive"
+      },
+      {
+        "description": "Kentucky General Assembly \u00b7 Search \u00b7 Titles \u00b7 About \u00b7 Contact Us \u00b7 Career Opportunities \u00b7 Site Map \u00b7 Calendars \u00b7 Legislative Calendar \u00b7 Regular Session Calendar",
+        "title": "Titles \u2022 Kentucky Administrative Regulations \u2022 Legislative Research Commission",
+        "url": "https://apps.legislature.ky.gov/law/kar/titles/"
+      },
+      {
+        "description": "Chapters contain sections of the KRS, the individual laws.",
+        "title": "Kentucky Revised Statutes - Legislative Research Commission",
+        "url": "https://legislature.ky.gov/Law/Statutes/Pages/default.aspx"
+      },
+      {
+        "description": "For example, if you wanted to find the regulations dealing with the issuance of coupons under the food stamp program, the index would lead you to <strong>921 KAR 3:045.</strong>",
+        "title": "Administrative Sources - Kentucky Legal Research Guide - Research Guides at University of Cincinnati",
+        "url": "https://guides.libraries.uc.edu/c.php?g=222519&p=1472703"
+      }
+    ],
+    "ts": 1777253182.1459267
   },
   "a581f19acb129513cd16d1eddf2184fdb09bd1fe1a455897909575f95b1bec33": {
     "items": [

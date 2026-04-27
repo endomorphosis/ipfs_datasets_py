@@ -123,6 +123,25 @@ def test_state_admin_rules_daemon_clears_generic_method_order_overrides(monkeypa
         assert "LEGAL_SCRAPER_METHOD_ORDER" not in daemon_module.os.environ
 
 
+def test_state_laws_daemon_applies_search_engine_override(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["SC"],
+            output_dir=str(tmp_path),
+            search_engines_override=["duckduckgo"],
+        )
+    )
+
+    tactic = daemon.config.tactic_profiles["archival_first"]
+
+    with daemon._tactic_env(tactic):
+        assert daemon_module.os.environ["IPFS_DATASETS_SEARCH_ENGINES"] == "duckduckgo"
+        assert daemon_module.os.environ["LEGAL_SCRAPER_SEARCH_ENGINES"] == "duckduckgo"
+
+
 def test_state_laws_daemon_injects_cloudflare_method_into_env_order(monkeypatch, tmp_path):
     from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
 
@@ -1215,6 +1234,62 @@ async def test_state_laws_agentic_daemon_runs_single_cycle(monkeypatch, tmp_path
     assert recovered_rows[0]["state_code"] == "OR"
     assert recovered_rows[0]["corpus_key"] == "state_laws"
     assert recovered_rows[0]["source_url"] == "https://example.org/oregon/statute-1"
+
+
+@pytest.mark.asyncio
+async def test_agentic_daemon_can_stop_after_recovered_rows(monkeypatch, tmp_path):
+    from ipfs_datasets_py.processors.legal_scrapers import state_laws_agentic_daemon as daemon_module
+
+    async def _fake_scrape_state_admin_rules(**kwargs):
+        return {
+            "status": "success",
+            "data": [
+                {
+                    "state_code": "NE",
+                    "statutes": [
+                        {
+                            "title": "Nebraska Administrative Code Title 1",
+                            "section": "001",
+                            "text": "Recovered Nebraska administrative rule text.",
+                            "source_url": "https://rules.nebraska.gov/rules/title-1.pdf",
+                            "method_used": "nebraska_rules_api_fast_path",
+                        }
+                    ],
+                    "rules_count": 1,
+                }
+            ],
+            "metadata": {"agentic_report": {"per_state": {"NE": {"fetched_rules": 1}}}},
+        }
+
+    async def _should_not_run_router(*args, **kwargs):
+        raise AssertionError("router assist should not run when stop_after_recovered_rows is enabled")
+
+    monkeypatch.setattr(daemon_module, "scrape_state_admin_rules", _fake_scrape_state_admin_rules)
+    monkeypatch.setattr(daemon_module.StateLawsAgenticDaemon, "_build_router_assist_report", _should_not_run_router)
+
+    daemon = daemon_module.StateLawsAgenticDaemon(
+        daemon_module.StateLawsAgenticDaemonConfig(
+            corpus_key="state_admin_rules",
+            states=["NE"],
+            output_dir=str(tmp_path),
+            max_cycles=1,
+            archive_warmup_urls=0,
+            stop_after_recovered_rows=True,
+            random_seed=7,
+        )
+    )
+
+    summary = await daemon.run()
+
+    latest_cycle = summary["latest_cycle"]
+    assert latest_cycle["stop_after_recovered_rows"] is True
+    assert latest_cycle["recovered_row_artifacts"]["row_count"] == 1
+    assert latest_cycle["router_assist"]["reason"] == "stop-after-recovered-rows"
+    assert latest_cycle["parallel_admin_assist"]["reason"] == "stop-after-recovered-rows"
+    assert latest_cycle["archive_warmup"]["reason"] == "stop-after-recovered-rows"
+    assert (tmp_path / "recovered_rows" / "cycle_0001" / "state_admin_rules_statutes.jsonl").exists()
+    assert (tmp_path / "cycles" / "cycle_0001.json").exists()
+    assert not (tmp_path / "cycles" / "cycle_0001.in_progress.json").exists()
 
 
 @pytest.mark.asyncio

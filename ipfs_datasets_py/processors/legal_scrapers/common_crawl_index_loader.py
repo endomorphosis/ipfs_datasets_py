@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 import json
 import time
+import shutil
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
@@ -123,7 +124,9 @@ class CommonCrawlIndexLoader:
             use_hf_fallback: Whether to fall back to HuggingFace if local not found
             verify_integrity: Whether to verify downloaded index integrity
         """
-        self.local_base_dir = Path(local_base_dir) if local_base_dir else Path.cwd() / "data" / "common_crawl_indexes"
+        env_local_base_dir = str(os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_INDEX_ROOT", "") or "").strip()
+        chosen_local_base_dir = local_base_dir or env_local_base_dir or (Path.cwd() / "data" / "common_crawl_indexes")
+        self.local_base_dir = Path(chosen_local_base_dir)
         self.cache_dir = Path(cache_dir) if cache_dir else Path.home() / ".cache" / "huggingface" / "datasets"
         self.use_hf_fallback = use_hf_fallback
         self.verify_integrity = verify_integrity
@@ -263,6 +266,44 @@ class CommonCrawlIndexLoader:
             logger.warning("Failed to resolve HF parquet URLs for %s: %s", index_type, last_error)
         return []
 
+    def materialize_index_locally(self, index_type: str, force_refresh: bool = False) -> List[Path]:
+        """Download hosted parquet shards into the local index directory.
+
+        This makes subsequent DuckDB queries hit the local fast-path instead of
+        remote HF parquet URLs.
+        """
+        local_path = self._get_local_path(index_type)
+        if local_path.exists() and not force_refresh:
+            existing = sorted(local_path.rglob("*.parquet"))
+            if existing:
+                logger.info("Using existing local %s parquet shards at %s", index_type, local_path)
+                return existing
+
+        urls = self._get_hf_parquet_urls(index_type)
+        if not urls:
+            logger.warning("No Hugging Face parquet URLs were available for %s", index_type)
+            return []
+
+        local_path.mkdir(parents=True, exist_ok=True)
+        downloaded: List[Path] = []
+        for index, url in enumerate(urls, start=1):
+            filename = Path(str(url).split("?", 1)[0]).name or f"{index_type}_{index:04d}.parquet"
+            target = local_path / filename
+            if target.exists() and not force_refresh and target.stat().st_size > 0:
+                downloaded.append(target)
+                continue
+            try:
+                with urlopen(url, timeout=120) as response, target.open("wb") as fh:
+                    shutil.copyfileobj(response, fh)
+                downloaded.append(target)
+            except Exception as exc:
+                logger.warning("Failed to download %s parquet shard %s: %s", index_type, url, exc)
+        return downloaded
+
+    def materialize_state_index_locally(self, force_refresh: bool = False) -> List[Path]:
+        """Download the state Common Crawl index parquet shards locally."""
+        return self.materialize_index_locally("state", force_refresh=force_refresh)
+
     @staticmethod
     def _sql_literal(value: Any) -> str:
         return "'" + str(value or "").replace("'", "''") + "'"
@@ -361,6 +402,105 @@ class CommonCrawlIndexLoader:
                 is_rate_limited = "429" in str(exc) or "Too Many Requests" in str(exc)
                 if attempt + 1 >= attempts or not is_rate_limited:
                     logger.warning("Municipal Common Crawl index query failed: %s", exc)
+                    return []
+                time.sleep(backoff_seconds * (attempt + 1))
+        return []
+
+    def query_state_index(
+        self,
+        *,
+        state_code: Optional[str] = None,
+        domain_terms: Optional[List[str]] = None,
+        url_terms: Optional[List[str]] = None,
+        mime_terms: Optional[List[str]] = None,
+        status_code: Optional[int] = 200,
+        max_results: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """Query state Common Crawl records without loading the full index."""
+        try:
+            import duckdb
+        except Exception as exc:
+            self.last_query_error = f"DuckDB is required for remote state index queries: {exc}"
+            logger.warning("%s", self.last_query_error)
+            return []
+
+        self.last_query_error = None
+        relation = self._duckdb_relation_for_index("state")
+        if not relation:
+            self.last_query_error = "No state Common Crawl parquet relation was available"
+            return []
+
+        limit = max(1, int(max_results or 100))
+
+        def _build_query(include_state_code: bool) -> str:
+            filters: List[str] = []
+            if include_state_code and state_code:
+                filters.append(f"upper(state_code) = upper({self._sql_literal(state_code)})")
+            if status_code is not None:
+                filters.append(f"status = {int(status_code)}")
+
+            domain_filters: List[str] = []
+            for term in list(domain_terms or []):
+                normalized = str(term or "").strip().lower()
+                if normalized:
+                    domain_filters.append(f"lower(domain) LIKE {self._sql_literal('%' + normalized + '%')}")
+            if domain_filters:
+                filters.append("(" + " OR ".join(domain_filters) + ")")
+
+            url_filters: List[str] = []
+            for term in list(url_terms or []):
+                normalized = str(term or "").strip().lower()
+                if normalized:
+                    url_filters.append(f"lower(url) LIKE {self._sql_literal('%' + normalized + '%')}")
+            if url_filters:
+                filters.append("(" + " OR ".join(url_filters) + ")")
+
+            mime_filters: List[str] = []
+            for term in list(mime_terms or []):
+                normalized = str(term or "").strip().lower()
+                if normalized:
+                    mime_filters.append(f"lower(mime) LIKE {self._sql_literal('%' + normalized + '%')}")
+            if mime_filters:
+                filters.append("(" + " OR ".join(mime_filters) + ")")
+
+            where_clause = " AND ".join(filters) if filters else "TRUE"
+            return f"""
+                SELECT domain, url, collection, timestamp, mime, status,
+                       warc_filename, warc_offset, warc_length, gnis, place_name, state_code
+                FROM {relation}
+                WHERE {where_clause}
+                ORDER BY
+                    CASE WHEN status = 200 THEN 0 ELSE 1 END,
+                    CASE WHEN lower(mime) LIKE '%html%' THEN 0 ELSE 1 END,
+                    timestamp DESC
+                LIMIT {limit}
+            """
+
+        def _execute(sql: str) -> List[Dict[str, Any]]:
+            return [dict(row) for row in duckdb.connect().execute(sql).fetchdf().to_dict("records")]
+
+        attempts = 3
+        backoff_seconds = 5.0
+        for attempt in range(attempts):
+            try:
+                rows = _execute(_build_query(include_state_code=bool(state_code)))
+                if rows or not state_code:
+                    return rows
+                logger.info(
+                    "State Common Crawl query returned no rows for state_code=%s; retrying without state filter",
+                    state_code,
+                )
+                fallback_rows = _execute(_build_query(include_state_code=False))
+                if fallback_rows:
+                    for row in fallback_rows:
+                        if not row.get("state_code"):
+                            row["state_code"] = state_code
+                return fallback_rows
+            except Exception as exc:
+                self.last_query_error = str(exc)
+                is_rate_limited = "429" in str(exc) or "Too Many Requests" in str(exc)
+                if attempt + 1 >= attempts or not is_rate_limited:
+                    logger.warning("State Common Crawl index query failed: %s", exc)
                     return []
                 time.sleep(backoff_seconds * (attempt + 1))
         return []

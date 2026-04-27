@@ -385,6 +385,8 @@ class StateLawsAgenticDaemonConfig:
     admin_parallel_assist_state_limit: int = 6
     admin_parallel_assist_max_urls_per_domain: int = 20
     admin_parallel_assist_timeout_seconds: float = 86400.0
+    stop_after_recovered_rows: bool = False
+    search_engines_override: Optional[List[str]] = None
     router_llm_timeout_seconds: float = 20.0
     router_embeddings_timeout_seconds: float = 10.0
     router_ipfs_timeout_seconds: float = 10.0
@@ -708,6 +710,56 @@ class StateLawsAgenticDaemon:
             }
         )
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+        if bool(self.config.stop_after_recovered_rows):
+            router_assist = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            parallel_admin_assist = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            archive_warmup = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            document_gap_report = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            document_gap_report_path = None
+            document_artifacts = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            post_cycle_release = {"status": "skipped", "reason": "stop-after-recovered-rows"}
+            checkpoint_payload.update(
+                {
+                    "stage": "finalize_after_recovered_rows",
+                    "router_assist": router_assist,
+                    "parallel_admin_assist": parallel_admin_assist,
+                    "archive_warmup": archive_warmup,
+                    "document_gap_report": document_gap_report,
+                    "document_artifacts": document_artifacts,
+                    "post_cycle_release": post_cycle_release,
+                }
+            )
+            self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
+            cycle_payload = {
+                "cycle": cycle_index,
+                "timestamp": datetime.now().isoformat(),
+                "corpus": self.corpus.key,
+                "states": list(self.states),
+                "cycle_state_order": cycle_states,
+                "status": str(scrape_result.get("status") or "unknown"),
+                "tactic": self._effective_tactic_payload(tactic),
+                "tactic_selection": tactic_selection["details"],
+                "critic_score": critic_score,
+                "passed": passed,
+                "diagnostics": diagnostics,
+                "critic": critic,
+                "router_assist": router_assist,
+                "parallel_admin_assist": parallel_admin_assist,
+                "archive_warmup": archive_warmup,
+                "document_gap_report": document_gap_report,
+                "document_gap_report_path": document_gap_report_path,
+                "document_artifacts": document_artifacts,
+                "recovered_row_artifacts": recovered_row_artifacts,
+                "post_cycle_release": post_cycle_release,
+                "metadata": metadata,
+                "stop_after_recovered_rows": True,
+            }
+            self._update_state(tactic=tactic, cycle_payload=cycle_payload)
+            cycle_path = self.cycles_dir / f"cycle_{cycle_index:04d}.json"
+            cycle_path.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
+            self.latest_file.write_text(json.dumps(cycle_payload, indent=2), encoding="utf-8")
+            self._clear_cycle_checkpoint(cycle_index=cycle_index)
+            return cycle_payload
         checkpoint_payload.update({"stage": "router_review"})
         self._write_cycle_checkpoint(cycle_index=cycle_index, payload=checkpoint_payload)
         router_assist = await self._build_router_assist_report(
@@ -4968,9 +5020,10 @@ class StateLawsAgenticDaemon:
             "IPFS_DATASETS_SCRAPER_METHOD_ORDER",
             "LEGAL_SCRAPER_METHOD_ORDER",
         ]
+        search_engines = list(self.config.search_engines_override or tactic.search_engines)
         overrides = {
-            "IPFS_DATASETS_SEARCH_ENGINES": ",".join(tactic.search_engines),
-            "LEGAL_SCRAPER_SEARCH_ENGINES": ",".join(tactic.search_engines),
+            "IPFS_DATASETS_SEARCH_ENGINES": ",".join(search_engines),
+            "LEGAL_SCRAPER_SEARCH_ENGINES": ",".join(search_engines),
             "IPFS_DATASETS_SCRAPER_FALLBACK_ENABLED": "1",
             "LEGAL_SCRAPER_FALLBACK_ENABLED": "1",
             "IPFS_DATASETS_SEARCH_PARALLEL_ENABLED": "1" if tactic.search_parallel_enabled else "0",
@@ -5075,6 +5128,7 @@ async def run_state_laws_agentic_daemon(
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
     min_document_recovery_ratio: float = 0.0,
+    stop_after_recovered_rows: bool = False,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -5103,6 +5157,7 @@ async def run_state_laws_agentic_daemon(
             router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
             router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
             min_document_recovery_ratio=min_document_recovery_ratio,
+            stop_after_recovered_rows=stop_after_recovered_rows,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -5145,6 +5200,7 @@ async def run_state_admin_rules_agentic_daemon(
     admin_parallel_assist_state_limit: int = 6,
     admin_parallel_assist_max_urls_per_domain: int = 20,
     admin_parallel_assist_timeout_seconds: float = 86400.0,
+    stop_after_recovered_rows: bool = False,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -5182,6 +5238,7 @@ async def run_state_admin_rules_agentic_daemon(
             admin_parallel_assist_state_limit=admin_parallel_assist_state_limit,
             admin_parallel_assist_max_urls_per_domain=admin_parallel_assist_max_urls_per_domain,
             admin_parallel_assist_timeout_seconds=admin_parallel_assist_timeout_seconds,
+            stop_after_recovered_rows=stop_after_recovered_rows,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -5214,6 +5271,7 @@ async def run_state_court_rules_agentic_daemon(
     router_embeddings_timeout_seconds: float = 10.0,
     router_ipfs_timeout_seconds: float = 10.0,
     min_document_recovery_ratio: float = 0.0,
+    stop_after_recovered_rows: bool = False,
     target_score: float = 0.92,
     stop_on_target_score: bool = False,
     random_seed: Optional[int] = None,
@@ -5241,6 +5299,7 @@ async def run_state_court_rules_agentic_daemon(
             router_embeddings_timeout_seconds=router_embeddings_timeout_seconds,
             router_ipfs_timeout_seconds=router_ipfs_timeout_seconds,
             min_document_recovery_ratio=min_document_recovery_ratio,
+            stop_after_recovered_rows=stop_after_recovered_rows,
             target_score=target_score,
             stop_on_target_score=stop_on_target_score,
             random_seed=random_seed,
@@ -5290,6 +5349,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--admin-parallel-assist-state-limit", type=int, default=6, help="Maximum number of weak state-admin targets to send through the parallel assist pass each cycle.")
     parser.add_argument("--admin-parallel-assist-max-urls-per-domain", type=int, default=20, help="Maximum URLs per domain evaluated by the parallel state-admin assist pass.")
     parser.add_argument("--admin-parallel-assist-timeout-seconds", type=float, default=86400.0, help="Per-state timeout budget for the parallel state-admin assist pass.")
+    parser.add_argument("--stop-after-recovered-rows", action="store_true", help="Finalize the daemon cycle immediately after recovered row artifacts are written.")
+    parser.add_argument("--search-engines", default=None, help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.")
     parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold for convergence.")
     parser.add_argument("--stop-on-target-score", action="store_true", help="Stop once the daemon reaches the target critic score.")
     parser.add_argument("--random-seed", type=int, default=None, help="Optional deterministic seed for tactic selection.")
@@ -5358,6 +5419,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 admin_parallel_assist_state_limit=int(args.admin_parallel_assist_state_limit),
                 admin_parallel_assist_max_urls_per_domain=int(args.admin_parallel_assist_max_urls_per_domain),
                 admin_parallel_assist_timeout_seconds=float(args.admin_parallel_assist_timeout_seconds),
+                stop_after_recovered_rows=bool(args.stop_after_recovered_rows),
+                search_engines_override=[
+                    item.strip()
+                    for item in str(args.search_engines or "").split(",")
+                    if item.strip()
+                ]
+                or None,
                 target_score=float(args.target_score),
                 stop_on_target_score=bool(args.stop_on_target_score),
                 random_seed=args.random_seed,

@@ -8,12 +8,15 @@ formalization pass.
 import re
 import hashlib
 import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-PARSER_SCHEMA_VERSION = "deterministic_deontic_v9"
+PARSER_SCHEMA_VERSION = "deterministic_deontic_v12"
 PARSER_REQUIRED_FIELDS = [
     "schema_version",
+    "source_id",
+    "canonical_citation",
     "text",
     "support_text",
     "support_span",
@@ -39,10 +42,13 @@ PARSER_REQUIRED_FIELDS = [
     "cross_references",
     "cross_reference_details",
     "resolved_cross_references",
+    "enforcement_links",
+    "conflict_links",
     "enumerated_items",
     "defined_term_refs",
     "definition_scope",
     "ontology_terms",
+    "formal_terms",
     "llm_repair",
     "export_readiness",
     "logic_frame",
@@ -65,6 +71,8 @@ PARSER_REQUIRED_FIELDS = [
     "promotable_to_theorem",
 ]
 LEGACY_SCHEMA_DEFAULTS: Dict[str, Any] = {
+    "source_id": "",
+    "canonical_citation": "",
     "field_spans": {},
     "condition_details": [],
     "temporal_constraint_details": [],
@@ -72,9 +80,12 @@ LEGACY_SCHEMA_DEFAULTS: Dict[str, Any] = {
     "override_clause_details": [],
     "cross_reference_details": [],
     "resolved_cross_references": [],
+    "enforcement_links": [],
+    "conflict_links": [],
     "defined_term_refs": [],
     "definition_scope": {},
     "ontology_terms": [],
+    "formal_terms": {},
     "llm_repair": {},
     "export_readiness": {},
     "logic_frame": {},
@@ -87,6 +98,18 @@ LEGACY_SCHEMA_DEFAULTS: Dict[str, Any] = {
     "section_context": {},
     "hierarchy_path": [],
     "hierarchy_details": [],
+}
+EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
+    "canonical": {"primary_key": "source_id", "requires_source_id": True},
+    "formal_logic": {"primary_key": "formula_id", "requires_source_id": True},
+    "proof_obligations": {"primary_key": "proof_obligation_id", "requires_source_id": True},
+    "knowledge_graph_triples": {"primary_key": "triple_id", "requires_source_id": True},
+    "clause_records": {"primary_key": "clause_id", "requires_source_id": True},
+    "reference_records": {"primary_key": "reference_id", "requires_source_id": True},
+    "procedure_event_records": {"primary_key": "event_id", "requires_source_id": True},
+    "sanction_records": {"primary_key": "sanction_id", "requires_source_id": True},
+    "ontology_entities": {"primary_key": "entity_id", "requires_source_id": True},
+    "repair_queue": {"primary_key": "repair_id", "requires_source_id": True},
 }
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9(])")
 _SECTION_HEADER_RE = re.compile(
@@ -156,7 +179,7 @@ _VIOLATION_RE = re.compile(
     re.IGNORECASE,
 )
 _PENALTY_RE = re.compile(
-    r"\b(?:a\s+)?(?:violation|offense|infraction)\s+(?:is|shall\s+be)\s+"
+    r"\b(?:a\s+)?(?:violation|offense|infraction)(?:\s+of\s+(?:this\s+section|section\s+[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*))?\s+(?:is|shall\s+be)\s+"
     r"(?:punishable\s+by|subject\s+to)\s+(.+?)(?:[.;:]|$)",
     re.IGNORECASE,
 )
@@ -190,15 +213,15 @@ _TEMPORAL_PATTERNS = [
     ("deadline", "by_date", r"\bby\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)"),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}/\d{1,2}/\d{2,4})"),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}-\d{1,2}-\d{2,4})"),
-    ("deadline", "within_duration", r"\bwithin\s+(\d+\s+(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
-    ("deadline", "not_later_than", r"\bnot\s+later\s+than\s+(\d+\s+(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
+    ("deadline", "within_duration", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
+    ("deadline", "not_later_than", r"\bnot\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
     ("deadline", "before_date", r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
     ("deadline", "after_date", r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
     ("period", "annually", r"\b(annually)\b"),
     ("period", "monthly", r"\b(monthly)\b"),
     ("period", "weekly", r"\b(weekly)\b"),
     ("period", "daily", r"\b(daily)\b"),
-    ("duration", "for_duration", r"\bfor\s+(\d+\s+(?:days?|weeks?|months?|years?))"),
+    ("duration", "for_duration", r"\bfor\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?))"),
 ]
 _DEFINITION_RE = re.compile(
     r"\b(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
@@ -206,6 +229,12 @@ _DEFINITION_RE = re.compile(
 )
 _DEFINED_TERM_RE = re.compile(
     r"\b(?:the\s+)?(?:term|terms|word|words)\s+['\"“”]?([A-Za-z][A-Za-z0-9'’\-\s]{0,80}?)[\"'“”]?\s+"
+    r"(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
+    re.IGNORECASE,
+)
+_UNQUOTED_DEFINED_TERM_RE = re.compile(
+    r"^\s*(?:(?:(?:in|as\s+used\s+in)\s+this\s+(?:section|chapter|title)|for\s+purposes\s+of\s+this\s+(?:section|chapter|title)),?\s+)?"
+    r"(?:the\s+)?([A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,8}?)\s+"
     r"(?:means|includes?|defined\s+as|has\s+the\s+meaning\s+given|refers\s+to)\b",
     re.IGNORECASE,
 )
@@ -251,9 +280,14 @@ _GOVERNMENT_ACTORS = {
     "council",
     "department",
     "director",
+    "engineer",
+    "examiner",
+    "hearings",
     "mayor",
+    "officer",
     "secretary",
     "state",
+    "auditor",
 }
 _LEGAL_PERSON_ACTORS = {
     "applicant",
@@ -265,8 +299,10 @@ _LEGAL_PERSON_ACTORS = {
     "individual",
     "landlord",
     "lessee",
+    "licensee",
     "owner",
     "party",
+    "permittee",
     "person",
     "plaintiff",
     "resident",
@@ -285,25 +321,38 @@ _ORGANIZATION_ACTORS = {
 _LEGAL_INSTRUMENT_ENTITIES = {
     "approval",
     "certificate",
+    "easement",
+    "franchise",
     "license",
     "permit",
     "registration",
+    "variance",
 }
 _LEGAL_EVENT_ENTITIES = {
     "appeal",
+    "citation",
+    "complaint",
     "fee",
     "hearing",
+    "inspection",
     "notice",
     "offense",
+    "order",
     "penalty",
+    "review",
     "violation",
 }
 _PROPERTY_ENTITIES = {
     "building",
     "facility",
+    "park",
+    "premises",
     "property",
+    "right-of-way",
+    "sewer",
     "sidewalk",
     "street",
+    "tree",
     "vehicle",
 }
 _PROCEDURE_EVENT_ORDER = [
@@ -351,6 +400,8 @@ def extract_normative_elements(text: str, document_type: str = "statute") -> Lis
     _apply_definition_context(elements)
     _apply_cross_reference_context(elements)
     _apply_document_penalty_context(elements, str(text or ""))
+    _apply_enforcement_context(elements)
+    _apply_conflict_context(elements)
     return elements
 
 
@@ -417,7 +468,7 @@ def segment_legal_text(text: str) -> List[Dict[str, Any]]:
             hierarchy = [
                 item
                 for item in hierarchy
-                if not item.startswith(("section:", "paragraph:", "subsection:"))
+                if not item.startswith(("section:", "heading:", "paragraph:", "subsection:"))
             ]
             hierarchy.append(f"section:{section_context['section']}")
             if section_context["heading"]:
@@ -683,12 +734,14 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
         ]
 
     if _DEFINITION_RE.search(sentence_lower):
-        defined_term_match = _DEFINED_TERM_RE.search(sentence)
+        defined_term_match = _DEFINED_TERM_RE.search(sentence) or _UNQUOTED_DEFINED_TERM_RE.search(sentence)
         defined_terms = [_clean_phrase(defined_term_match.group(1))] if defined_term_match else extract_legal_subject(sentence)
         return [
             _finalize_element(
                 {
                 "schema_version": PARSER_SCHEMA_VERSION,
+                "source_id": "",
+                "canonical_citation": "",
                 "text": sentence,
                 "support_text": sentence,
                 "support_span": [0, len(sentence)],
@@ -720,10 +773,13 @@ def analyze_normative_sentence(sentence: str, document_type: str) -> List[Dict[s
                 "cross_references": extract_cross_references(sentence),
                 "cross_reference_details": extract_cross_reference_details(sentence),
                 "resolved_cross_references": [],
+                "enforcement_links": [],
+                "conflict_links": [],
                 "enumerated_items": extract_enumerated_items(sentence),
                 "defined_term_refs": [],
                 "definition_scope": infer_definition_scope(sentence),
                 "ontology_terms": extract_ontology_terms(sentence),
+                "formal_terms": {},
                 "llm_repair": {},
                 "export_readiness": {},
                 "logic_frame": {},
@@ -772,6 +828,8 @@ def _build_element(
     spans = _complete_field_spans(sentence, subject_text, action_text, field_spans or {})
     return {
         "schema_version": PARSER_SCHEMA_VERSION,
+        "source_id": "",
+        "canonical_citation": "",
         "text": sentence,
         "support_text": sentence[support_span[0] : support_span[1]].strip(),
         "support_span": list(support_span),
@@ -798,10 +856,13 @@ def _build_element(
         "cross_references": extract_cross_references(sentence),
         "cross_reference_details": extract_cross_reference_details(sentence),
         "resolved_cross_references": [],
+        "enforcement_links": [],
+        "conflict_links": [],
         "enumerated_items": enumerated_items,
         "defined_term_refs": [],
         "definition_scope": {},
         "ontology_terms": extract_ontology_terms(sentence),
+        "formal_terms": {},
         "llm_repair": {},
         "export_readiness": {},
         "logic_frame": {},
@@ -895,12 +956,17 @@ def _finalize_element(element: Dict[str, Any]) -> Dict[str, Any]:
     element.setdefault("hierarchy_details", [])
     element.setdefault("defined_term_refs", [])
     element.setdefault("resolved_cross_references", [])
+    element.setdefault("enforcement_links", [])
+    element.setdefault("conflict_links", [])
     element.setdefault("definition_scope", {})
     element.setdefault("ontology_terms", extract_ontology_terms(element.get("text", "")))
+    element["canonical_citation"] = build_canonical_citation(element)
+    element["source_id"] = build_source_id(element)
     element.setdefault("llm_repair", {})
     element.setdefault("export_readiness", {})
     element.setdefault("logic_frame", {})
     _enrich_legal_frame(element)
+    element["formal_terms"] = build_formal_terms(element)
     quality = score_scaffold_quality(element)
     element["slot_coverage"] = quality["slot_coverage"]
     element["scaffold_quality"] = quality["score"]
@@ -964,6 +1030,61 @@ def _apply_definition_context(elements: List[Dict[str, Any]]) -> None:
             element["kg_relationship_hints"] = existing
             element["ontology_terms"] = merge_ontology_terms(element.get("ontology_terms", []), refs)
             _finalize_element(element)
+
+
+def build_canonical_citation(element: Dict[str, Any]) -> str:
+    """Build a deterministic citation-like label from available hierarchy metadata."""
+    parts: List[str] = []
+    for level in ["title", "division", "chapter", "article", "part"]:
+        value = _hierarchy_value(element, level)
+        if value:
+            parts.append(f"{level} {value}")
+    section = (element.get("section_context") or {}).get("section")
+    if section:
+        parts.append(f"section {section}")
+    paragraph = _hierarchy_value(element, "paragraph")
+    if paragraph:
+        parts.append(f"paragraph ({paragraph})")
+    return " / ".join(parts)
+
+
+def build_source_id(element: Dict[str, Any]) -> str:
+    """Create a stable deterministic ID for joins across parquet/KG/proof exports."""
+    identity = {
+        "citation": element.get("canonical_citation") or build_canonical_citation(element),
+        "source_span": element.get("source_span", []),
+        "support_span": element.get("support_span", []),
+        "norm_type": element.get("norm_type", ""),
+        "operator": element.get("deontic_operator", ""),
+        "text": element.get("text", ""),
+    }
+    digest = hashlib.sha256(json.dumps(identity, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+    return f"deontic:{digest[:24]}"
+
+
+def build_formal_terms(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize parser slots into symbols shared by KG and formal exporters."""
+    action_text = (element.get("action") or [""])[0]
+    actor = (element.get("subject") or [""])[0]
+    section = (element.get("section_context") or {}).get("section", "")
+    return {
+        "source_id": element.get("source_id", ""),
+        "citation_id": normalize_symbol(element.get("canonical_citation", "")),
+        "section_id": normalize_symbol(section),
+        "actor_id": normalize_symbol(actor),
+        "actor_predicate": normalize_predicate_name(actor),
+        "action_predicate": normalize_predicate_name(_action_without_mental_state(action_text)),
+        "object_predicate": normalize_predicate_name(element.get("action_object", "")),
+        "recipient_id": normalize_symbol(element.get("action_recipient", "")),
+        "norm_predicate": normalize_predicate_name(element.get("norm_type", "")),
+        "category_predicate": normalize_predicate_name((element.get("legal_frame") or {}).get("category", "")),
+        "defined_term_id": normalize_symbol(element.get("defined_term", "")),
+    }
+
+
+def normalize_symbol(value: str) -> str:
+    normalized = re.sub(r"[^0-9A-Za-z]+", "_", str(value or "").strip().lower()).strip("_")
+    return normalized or "unknown"
 
 
 def _definition_applies_to_element(definition: Dict[str, Any], element: Dict[str, Any]) -> bool:
@@ -1039,8 +1160,24 @@ def resolve_cross_references(
         detail["target_section"] = ""
         detail["target_heading"] = ""
         detail["target_hierarchy_path"] = []
+        if ref_type == "section_range":
+            targets = _resolve_section_range(detail, section_index)
+            detail["resolution_status"] = "resolved" if targets else "unresolved"
+            detail["target_exists"] = bool(targets)
+            detail["target_sections"] = targets
+            resolved.append(detail)
+            continue
         if ref_type == "section":
-            target = section_index.get(_normalize_section_ref(value))
+            target = (
+                _relative_reference_target(element, "section")
+                if _is_relative_reference(value)
+                else section_index.get(_normalize_section_ref(value))
+            )
+        elif ref_type in {"subsection", "paragraph", "chapter", "title"}:
+            target = _hierarchy_reference_target(element, ref_type, value)
+        else:
+            target = {}
+        if ref_type in {"section", "subsection", "paragraph", "chapter", "title"}:
             detail["resolution_status"] = "resolved" if target else "unresolved"
             detail["target_exists"] = bool(target)
             if target:
@@ -1051,19 +1188,131 @@ def resolve_cross_references(
     return resolved
 
 
+def _hierarchy_reference_target(element: Dict[str, Any], ref_type: str, value: str) -> Dict[str, Any]:
+    if _is_relative_reference(value):
+        return _relative_reference_target(element, ref_type)
+    if ref_type in {"chapter", "title"}:
+        current_value = _hierarchy_value(element, ref_type)
+        return _relative_reference_target(element, ref_type) if current_value and current_value.lower() == value.lower() else {}
+    normalized_value = str(value or "").strip().lower()
+    candidates = [f"{ref_type}:{normalized_value}"]
+    if ref_type == "subsection":
+        candidates.append(f"paragraph:{normalized_value}")
+    matched_path = [
+        item for item in element.get("hierarchy_path") or [] if str(item).lower() in candidates
+    ]
+    if not matched_path:
+        return {}
+    section_context = element.get("section_context") or {}
+    return {
+        "section": section_context.get("section", ""),
+        "heading": section_context.get("heading", ""),
+        "hierarchy_path": matched_path,
+        "hierarchy_details": [
+            item
+            for item in element.get("hierarchy_details") or []
+            if item.get("level") in {ref_type, "paragraph"} and str(item.get("value") or "").lower() == normalized_value
+        ],
+        "source_span": list(element.get("source_span") or []),
+    }
+
+
+def _resolve_section_range(
+    ref: Dict[str, Any],
+    section_index: Dict[str, Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    start = _section_sort_key(ref.get("start_section", ""))
+    end = _section_sort_key(ref.get("end_section", ""))
+    if not start or not end:
+        return []
+    if start > end:
+        start, end = end, start
+    targets: List[Dict[str, Any]] = []
+    for target in section_index.values():
+        key = _section_sort_key(target.get("section", ""))
+        if key and start <= key <= end:
+            targets.append(
+                {
+                    "section": target.get("section", ""),
+                    "heading": target.get("heading", ""),
+                    "hierarchy_path": list(target.get("hierarchy_path") or []),
+                }
+            )
+    return sorted(targets, key=lambda item: _section_sort_key(item.get("section", "")))
+
+
+def _section_sort_key(value: str) -> tuple[int, ...]:
+    parts = re.findall(r"\d+", str(value or ""))
+    return tuple(int(part) for part in parts)
+
+
+def _relative_reference_target(element: Dict[str, Any], ref_type: str) -> Dict[str, Any]:
+    if ref_type == "section":
+        section_context = element.get("section_context") or {}
+        section = section_context.get("section", "")
+        if not section:
+            return {}
+        return {
+            "section": section,
+            "heading": section_context.get("heading", ""),
+            "hierarchy_path": list(element.get("hierarchy_path") or []),
+            "hierarchy_details": list(element.get("hierarchy_details") or []),
+            "source_span": list(element.get("source_span") or []),
+        }
+    if ref_type in {"subsection", "paragraph"}:
+        prefix = f"{ref_type}:"
+        path = [item for item in element.get("hierarchy_path") or [] if str(item).startswith(prefix)]
+        if ref_type == "subsection" and not path:
+            path = [item for item in element.get("hierarchy_path") or [] if str(item).startswith("paragraph:")]
+        if not path:
+            return {}
+        section_context = element.get("section_context") or {}
+        return {
+            "section": section_context.get("section", ""),
+            "heading": section_context.get("heading", ""),
+            "hierarchy_path": path,
+            "hierarchy_details": [
+                item
+                for item in element.get("hierarchy_details") or []
+                if item.get("level") in {ref_type, "paragraph"}
+            ],
+            "source_span": list(element.get("source_span") or []),
+        }
+    value = _hierarchy_value(element, ref_type)
+    if not value:
+        return {}
+    detail = next(
+        (item for item in element.get("hierarchy_details") or [] if item.get("level") == ref_type),
+        {},
+    )
+    prefix = f"{ref_type}:{value}"
+    return {
+        "section": "",
+        "heading": detail.get("heading", ""),
+        "hierarchy_path": [item for item in element.get("hierarchy_path") or [] if str(item).startswith(prefix)],
+        "hierarchy_details": [detail] if detail else [],
+        "source_span": list(detail.get("span") or []),
+    }
+
+
+def _is_relative_reference(value: str) -> bool:
+    return bool(re.match(r"^this\s+(?:section|subsection|paragraph|chapter|title)$", str(value or ""), flags=re.IGNORECASE))
+
+
 def _normalize_section_ref(value: str) -> str:
     return re.sub(r"[^0-9a-z]+", ".", str(value or "").lower()).strip(".")
 
 
 def _unresolved_cross_references(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    internal_ref_types = {"section", "section_range", "subsection", "paragraph", "chapter", "title"}
     resolved = element.get("resolved_cross_references") or []
     if resolved:
         return [
             ref
             for ref in resolved
-            if ref.get("type") == "section" and ref.get("resolution_status") == "unresolved"
+            if ref.get("type") in internal_ref_types and ref.get("resolution_status") == "unresolved"
         ]
-    return [ref for ref in element.get("cross_reference_details") or [] if ref.get("type") == "section"]
+    return [ref for ref in element.get("cross_reference_details") or [] if ref.get("type") in internal_ref_types]
 
 
 def _apply_document_penalty_context(elements: List[Dict[str, Any]], source_text: str) -> None:
@@ -1078,6 +1327,140 @@ def _apply_document_penalty_context(elements: List[Dict[str, Any]], source_text:
             penalty["recurrence"] = recurrence
             element["penalty"] = penalty
             _finalize_element(element)
+
+
+def _apply_enforcement_context(elements: List[Dict[str, Any]]) -> None:
+    section_violation_index = _build_section_violation_index(elements)
+    for element in elements:
+        links = extract_enforcement_links(element, section_violation_index)
+        element["enforcement_links"] = links
+        if links:
+            _finalize_element(element)
+
+
+def _apply_conflict_context(elements: List[Dict[str, Any]]) -> None:
+    conflicts = detect_normative_conflicts(elements)
+    if not conflicts:
+        return
+    for conflict in conflicts:
+        indices = conflict.get("element_indices") or []
+        for index in indices:
+            if not isinstance(index, int) or index >= len(elements):
+                continue
+            other_indices = [item for item in indices if item != index]
+            link = {
+                "type": conflict.get("type", ""),
+                "severity": conflict.get("severity", ""),
+                "description": conflict.get("description", ""),
+                "element_indices": indices,
+                "other_element_indices": other_indices,
+                "resolution_strategies": conflict.get("resolution_strategies", []),
+            }
+            existing = elements[index].setdefault("conflict_links", [])
+            if link not in existing:
+                existing.append(link)
+            _finalize_element(elements[index])
+
+
+def _build_section_violation_index(elements: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    index: Dict[str, Dict[str, Any]] = {}
+    for element in elements:
+        if (element.get("legal_frame") or {}).get("category") != "violation":
+            continue
+        section = (element.get("section_context") or {}).get("section")
+        if not section:
+            continue
+        index.setdefault(
+            _normalize_section_ref(section),
+            {
+                "section": section,
+                "heading": (element.get("section_context") or {}).get("heading", ""),
+                "source_span": list(element.get("source_span") or []),
+                "text": element.get("text", ""),
+            },
+        )
+    return index
+
+
+def extract_enforcement_links(
+    element: Dict[str, Any],
+    section_violation_index: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    """Infer enforcement targets for violation and penalty formalization."""
+    category = (element.get("legal_frame") or {}).get("category", "")
+    if category not in {"violation", "penalty"}:
+        return []
+    section_violation_index = section_violation_index or {}
+    targets = _enforcement_target_sections(element)
+    links: List[Dict[str, Any]] = []
+    link_type = "defines_violation_of" if category == "violation" else "penalizes_violation_of"
+    if not targets and category == "penalty":
+        section = (element.get("section_context") or {}).get("section", "")
+        if section and _normalize_section_ref(section) in section_violation_index:
+            targets.append(
+                {
+                    "target_type": "section",
+                    "target_section": section,
+                    "target_heading": (element.get("section_context") or {}).get("heading", ""),
+                    "target_hierarchy_path": list(element.get("hierarchy_path") or []),
+                    "resolution_status": "inferred",
+                    "source": "same_section_violation",
+                }
+            )
+    for target in targets:
+        link = {
+            "type": link_type,
+            "target_type": target.get("target_type", "section"),
+            "target_section": target.get("target_section", ""),
+            "target_heading": target.get("target_heading", ""),
+            "target_hierarchy_path": target.get("target_hierarchy_path", []),
+            "resolution_status": target.get("resolution_status", "unresolved"),
+            "source": target.get("source", "cross_reference"),
+        }
+        violation = section_violation_index.get(_normalize_section_ref(link["target_section"]))
+        if category == "penalty" and violation:
+            link["target_violation_text"] = violation.get("text", "")
+            link["target_violation_span"] = violation.get("source_span", [])
+        links.append(link)
+    return links
+
+
+def _enforcement_target_sections(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    targets: List[Dict[str, Any]] = []
+    for ref in element.get("resolved_cross_references") or []:
+        if ref.get("type") != "section":
+            continue
+        target_section = ref.get("target_section") or ""
+        if not target_section and _is_relative_reference(ref.get("value", "")):
+            target_section = (element.get("section_context") or {}).get("section", "")
+        targets.append(
+            {
+                "target_type": "section",
+                "target_section": target_section,
+                "target_heading": ref.get("target_heading", ""),
+                "target_hierarchy_path": list(ref.get("target_hierarchy_path") or []),
+                "resolution_status": ref.get("resolution_status", "unresolved"),
+                "source": "cross_reference",
+            }
+        )
+    if targets:
+        return targets
+    text = str(element.get("text") or "").lower()
+    if re.search(r"\b(?:this|the)\s+section\b", text):
+        section_context = element.get("section_context") or {}
+        section = section_context.get("section", "")
+        if section:
+            targets.append(
+                {
+                    "target_type": "section",
+                    "target_section": section,
+                    "target_heading": section_context.get("heading", ""),
+                    "target_hierarchy_path": list(element.get("hierarchy_path") or []),
+                    "resolution_status": "resolved",
+                    "source": "local_section_phrase",
+                }
+            )
+    return targets
 
 
 def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
@@ -1099,6 +1482,8 @@ def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
         "cross_references",
         "cross_reference_details",
         "resolved_cross_references",
+        "enforcement_links",
+        "conflict_links",
         "enumerated_items",
         "defined_term_refs",
         "ontology_terms",
@@ -1114,7 +1499,7 @@ def validate_parser_element(element: Dict[str, Any]) -> Dict[str, Any]:
             type_errors.append(field)
     if "section_context" in element and not isinstance(element["section_context"], dict):
         type_errors.append("section_context")
-    for field in ["definition_scope", "export_readiness", "field_spans", "legal_frame", "logic_frame", "llm_repair", "penalty", "procedure"]:
+    for field in ["definition_scope", "export_readiness", "field_spans", "formal_terms", "legal_frame", "logic_frame", "llm_repair", "penalty", "procedure"]:
         if field in element and not isinstance(element[field], dict):
             type_errors.append(field)
     if "support_span" in element and len(element["support_span"]) != 2:
@@ -1226,6 +1611,8 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
     required = bool(reasons)
     prompt_context = {
         "source_text": element.get("text", ""),
+        "source_id": element.get("source_id", ""),
+        "canonical_citation": element.get("canonical_citation", ""),
         "support_text": element.get("support_text", ""),
         "support_span": element.get("support_span", []),
         "source_span": element.get("source_span", []),
@@ -1233,6 +1620,7 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
         "hierarchy_path": element.get("hierarchy_path", []),
         "hierarchy_details": element.get("hierarchy_details", []),
         "legal_frame": element.get("legal_frame", {}),
+        "formal_terms": element.get("formal_terms", {}),
         "deontic_operator": element.get("deontic_operator", ""),
         "norm_type": element.get("norm_type", ""),
         "subject": element.get("subject", []),
@@ -1242,6 +1630,8 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
         "temporal_constraints": element.get("temporal_constraint_details", []),
         "cross_references": element.get("cross_reference_details", []),
         "resolved_cross_references": element.get("resolved_cross_references", []),
+        "enforcement_links": element.get("enforcement_links", []),
+        "conflict_links": element.get("conflict_links", []),
         "defined_term_refs": element.get("defined_term_refs", []),
         "kg_relationship_hints": element.get("kg_relationship_hints", []),
         "ontology_terms": element.get("ontology_terms", []),
@@ -1266,6 +1656,8 @@ def build_logic_frame(element: Dict[str, Any]) -> Dict[str, Any]:
     action_text = (element.get("action") or [""])[0]
     return {
         "schema_version": PARSER_SCHEMA_VERSION,
+        "source_id": element.get("source_id", ""),
+        "canonical_citation": element.get("canonical_citation", ""),
         "actor": (element.get("subject") or [""])[0],
         "actor_type": element.get("actor_type", "unknown"),
         "modality": element.get("deontic_operator", ""),
@@ -1279,10 +1671,13 @@ def build_logic_frame(element: Dict[str, Any]) -> Dict[str, Any]:
         "temporal_constraints": element.get("temporal_constraint_details", []),
         "cross_references": element.get("cross_reference_details", []),
         "resolved_cross_references": element.get("resolved_cross_references", []),
+        "enforcement_links": element.get("enforcement_links", []),
+        "conflict_links": element.get("conflict_links", []),
         "defined_terms": element.get("defined_term_refs", []),
         "violation": element.get("legal_frame", {}).get("category") == "violation",
         "penalty": element.get("penalty", {}),
         "procedure": element.get("procedure", {}),
+        "formal_terms": element.get("formal_terms", {}),
         "field_spans": element.get("field_spans", {}),
         "source_text": element.get("text", ""),
         "readiness": {
@@ -1305,16 +1700,19 @@ def build_export_readiness(element: Dict[str, Any]) -> Dict[str, Any]:
     allowed_exports = ["canonical_parquet", "bm25", "embeddings", "knowledge_graph"]
     formal_logic_targets: List[str] = []
     requires_validation: List[str] = []
+    has_temporal_or_procedure = bool(element.get("temporal_constraint_details") or element.get("procedure"))
 
     if element.get("schema_valid") is False:
         allowed_exports = []
         requires_validation.append("schema_repair")
     elif blockers:
+        if has_temporal_or_procedure:
+            formal_logic_targets = ["deontic", "fol", "frame_logic", "temporal_logic", "event_calculus"]
         allowed_exports.append("llm_repair_queue")
         requires_validation.extend(["llm_router_repair", "human_or_llm_semantic_review"])
     else:
         formal_logic_targets = ["deontic", "fol", "frame_logic"]
-        if element.get("temporal_constraint_details") or element.get("procedure"):
+        if has_temporal_or_procedure:
             formal_logic_targets.append("temporal_logic")
             formal_logic_targets.append("event_calculus")
         allowed_exports.extend(["formal_logic_scaffold", "proof_candidate"])
@@ -1343,6 +1741,9 @@ def build_export_readiness(element: Dict[str, Any]) -> Dict[str, Any]:
 def infer_definition_scope(sentence: str) -> Dict[str, str]:
     text = str(sentence or "")
     lowered = text.lower()
+    if re.search(r"\bas used in this (section|chapter|title)\b", lowered):
+        match = re.search(r"\bas used in this (section|chapter|title)\b", lowered)
+        return {"scope_type": match.group(1), "raw_text": match.group(0)}
     if re.search(r"\bin this section\b", lowered):
         return {"scope_type": "section", "raw_text": "in this section"}
     if re.search(r"\bin this chapter\b", lowered):
@@ -1360,12 +1761,30 @@ def extract_ontology_terms(text: str) -> List[Dict[str, str]]:
     terms: List[Dict[str, str]] = []
     seen: set[tuple[str, str]] = set()
     patterns = [
-        ("government_actor", r"\b(?:Director|Bureau|City|Administrator|Commission|Council|Mayor|Department)\b"),
-        ("legal_person", r"\b(?:applicant|person|owner|tenant|employee|contractor|resident)\b"),
-        ("legal_instrument", r"\b(?:permit|license|certificate|registration|approval)\b"),
-        ("legal_event", r"\b(?:notice|hearing|decision|appeal|inspection|violation|penalty|fee)\b"),
-        ("regulated_property", r"\b(?:premises|sidewalk|street|vehicle|building|facility|property)\b"),
-        ("regulated_activity", r"\b(?:operate|file|submit|inspect|revoke|suspend|issue|appeal)\b"),
+        (
+            "government_actor",
+            r"\b(?:Director|Bureau|City|Administrator|Commission|Council|Mayor|Department|Auditor|City\s+Attorney|City\s+Engineer|Code\s+Hearings\s+Officer|Hearings\s+Officer)\b",
+        ),
+        (
+            "legal_person",
+            r"\b(?:applicant|person|owner|tenant|employee|contractor|resident|permittee|licensee|operator|vendor)\b",
+        ),
+        (
+            "legal_instrument",
+            r"\b(?:permit|license|certificate|registration|approval|variance|franchise|easement|order)\b",
+        ),
+        (
+            "legal_event",
+            r"\b(?:notice|hearing|decision|appeal|inspection|violation|penalty|fee|citation|complaint|review|revocation|suspension)\b",
+        ),
+        (
+            "regulated_property",
+            r"\b(?:premises|sidewalk|street|vehicle|building|facility|property|right-of-way|right\s+of\s+way|sewer|tree|park)\b",
+        ),
+        (
+            "regulated_activity",
+            r"\b(?:operate|file|submit|inspect|revoke|suspend|issue|appeal|maintain|remove|install|construct)\b",
+        ),
     ]
     for term_type, pattern in patterns:
         for match in re.finditer(pattern, raw, flags=re.IGNORECASE):
@@ -1406,10 +1825,14 @@ def _enrich_legal_frame(element: Dict[str, Any]) -> None:
     subject = (element.get("subject") or [""])[0]
     category = classify_legal_frame(element)
     element["legal_frame"] = {
+        "source_id": element.get("source_id", ""),
+        "canonical_citation": element.get("canonical_citation", ""),
         "category": category,
         "actor": subject,
+        "actor_id": normalize_symbol(subject),
         "actor_type": element.get("actor_type", "unknown"),
         "action": action,
+        "action_predicate": normalize_predicate_name(_action_without_mental_state(action)),
         "object": element.get("action_object", ""),
         "recipient": element.get("action_recipient", ""),
         "norm_type": element.get("norm_type", ""),
@@ -1437,9 +1860,13 @@ def classify_legal_frame(element: Dict[str, Any]) -> str:
         return "penalty"
     if norm_type == "violation" or "violation" in text or "offense" in text or "infraction" in text:
         return "violation"
-    if any(term in text for term in ["appeal", "hearing", "notice", "decision", "inspect", "revoke", "suspend"]):
+    if element.get("entity_type") == "legal_event" and subject in _LEGAL_EVENT_ENTITIES:
+        return "procedure"
+    if re.search(r"\b(?:appeal|appealed|hearing|notice|decision|inspect|inspection|revoke|revocation|suspend|suspension)\b", action):
         return "procedure"
     if subject in _LEGAL_INSTRUMENT_ENTITIES or any(term in text for term in ["permit", "license", "certificate", "registration"]):
+        return "permit_or_license"
+    if extract_legal_instrument_target(action):
         return "permit_or_license"
     if "fee" in text or element.get("monetary_amounts"):
         return "fee"
@@ -1486,6 +1913,7 @@ def extract_penalty_details(text: str, action: str = "") -> Dict[str, Any]:
         "minimum_amount": _penalty_bound(combined, "minimum"),
         "maximum_amount": _penalty_bound(combined, "maximum"),
         "recurrence": extract_penalty_recurrence(combined),
+        "imprisonment_duration": extract_imprisonment_duration(combined),
         "has_imprisonment": bool(re.search(r"\b(?:jail|imprison|imprisonment|custody)\b", lower)),
         "has_fine": "fine" in lower or bool(amounts),
     }
@@ -1523,6 +1951,19 @@ def extract_penalty_recurrence(text: str) -> Dict[str, Any]:
                 "span": [match.start(), match.end()],
             }
     return {}
+
+
+def extract_imprisonment_duration(text: str) -> Dict[str, Any]:
+    pattern = r"\b(?:imprisonment|jail|custody)\s+(?:for\s+)?(?:a\s+term\s+of\s+)?(?:not\s+more\s+than|up\s+to|for)?\s*(\d+)\s+(days?|months?|years?)\b"
+    match = re.search(pattern, str(text or ""), flags=re.IGNORECASE)
+    if not match:
+        return {}
+    return {
+        "raw_text": match.group(0).strip(),
+        "quantity": int(match.group(1)),
+        "unit": match.group(2).lower().rstrip("s"),
+        "span": [match.start(), match.end()],
+    }
 
 
 def extract_procedure_details(text: str, action: str = "") -> Dict[str, Any]:
@@ -1587,6 +2028,23 @@ def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]
         relationships.append({"subject": subject, "predicate": "mayRevokeInstrument", "object": instrument_target or element.get("action_object") or action})
     if "suspension" in events:
         relationships.append({"subject": subject, "predicate": "maySuspendInstrument", "object": instrument_target or element.get("action_object") or action})
+    for link in element.get("enforcement_links", []):
+        if link.get("type") == "defines_violation_of":
+            relationships.append(
+                {
+                    "subject": "violation",
+                    "predicate": "violatesSection",
+                    "object": link.get("target_section", ""),
+                }
+            )
+        if link.get("type") == "penalizes_violation_of":
+            relationships.append(
+                {
+                    "subject": "penalty",
+                    "predicate": "penalizesViolationOf",
+                    "object": link.get("target_section", ""),
+                }
+            )
     for ref in element.get("defined_term_refs", []):
         relationships.append(
             {
@@ -1598,6 +2056,10 @@ def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]
     resolved_refs = element.get("resolved_cross_references") or []
     if resolved_refs:
         for ref in resolved_refs:
+            if ref.get("type") == "section_range":
+                predicate = "referencesResolvedSectionRange" if ref.get("resolution_status") == "resolved" else "referencesUnresolvedSectionRange"
+                relationships.append({"subject": "law", "predicate": predicate, "object": ref.get("value", "")})
+                continue
             target = ref.get("target_section") or ref.get("value", "")
             predicate = "referencesResolvedSection" if ref.get("resolution_status") == "resolved" else "referencesUnresolvedSection"
             relationships.append({"subject": "law", "predicate": predicate, "object": f"{ref.get('type')}:{target}"})
@@ -1609,9 +2071,53 @@ def build_kg_relationship_hints(element: Dict[str, Any]) -> List[Dict[str, str]]
     return relationships
 
 
+def build_kg_triples(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Convert KG relationship hints into parquet-friendly triple rows."""
+    triples: List[Dict[str, Any]] = []
+    source_id = element.get("source_id") or build_source_id(element)
+    citation = element.get("canonical_citation") or build_canonical_citation(element)
+    for index, relationship in enumerate(element.get("kg_relationship_hints") or []):
+        subject = relationship.get("subject", "")
+        predicate = relationship.get("predicate", "")
+        object_value = relationship.get("object", "")
+        triple_identity = {
+            "source_id": source_id,
+            "index": index,
+            "subject": subject,
+            "predicate": predicate,
+            "object": object_value,
+        }
+        triple_hash = hashlib.sha256(
+            json.dumps(triple_identity, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+        triples.append(
+            {
+                "triple_id": f"kg:{triple_hash[:24]}",
+                "source_id": source_id,
+                "canonical_citation": citation,
+                "subject": subject,
+                "subject_id": normalize_symbol(subject),
+                "predicate": predicate,
+                "predicate_id": normalize_symbol(predicate),
+                "object": object_value,
+                "object_id": normalize_symbol(object_value),
+                "norm_type": element.get("norm_type", ""),
+                "legal_category": (element.get("legal_frame") or {}).get("category", ""),
+                "confidence_floor": element.get("confidence_floor", 0.0),
+                "provenance": {
+                    "text": element.get("text", ""),
+                    "source_span": element.get("source_span", []),
+                    "support_span": element.get("support_span", []),
+                    "field_spans": element.get("field_spans", {}),
+                },
+            }
+        )
+    return triples
+
+
 def extract_legal_instrument_target(action: str) -> str:
     match = re.search(
-        r"\b(?:permit|license|certificate|registration|approval)\b",
+        r"\b(?:permit|license|certificate|registration|approval|variance|franchise|easement|order)\b",
         str(action or ""),
         flags=re.IGNORECASE,
     )
@@ -1793,6 +2299,9 @@ def score_scaffold_quality(element: Dict[str, Any]) -> Dict[str, Any]:
     if _unresolved_cross_references(element):
         warnings.append("cross_reference_requires_resolution")
         score -= 0.04
+    if element.get("conflict_links"):
+        warnings.append("normative_conflict_requires_resolution")
+        score -= 0.12
     if element.get("exceptions"):
         warnings.append("exception_requires_scope_review")
         score -= 0.05
@@ -1908,17 +2417,29 @@ def extract_cross_references(sentence: str) -> List[Dict[str, str]]:
 def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
     refs: List[Dict[str, Any]] = []
     patterns = [
+        ("section_range", r"\bsections?\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\s+(?:through|thru|to|-)\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
+        ("section", r"\b(this\s+section)\b"),
         ("subsection", r"\bsubsection\s+\(([a-z0-9]+)\)"),
+        ("subsection", r"\b(this\s+subsection)\b"),
         ("paragraph", r"\bparagraph\s+\(([a-z0-9]+)\)"),
+        ("paragraph", r"\b(this\s+paragraph)\b"),
         ("chapter", r"\bchapter\s+([0-9A-Za-z][0-9A-Za-z.\-]*)"),
+        ("chapter", r"\b(this\s+chapter)\b"),
         ("title", r"\btitle\s+([0-9A-Za-z]+)"),
+        ("title", r"\b(this\s+title)\b"),
         ("usc", r"\b(\d+)\s+u\.?s\.?c\.?\s+(?:§|sec(?:tion)?\.?)?\s*([0-9A-Za-z.\-]+)"),
     ]
     seen: set[tuple[str, str]] = set()
     for ref_type, pattern in patterns:
         for match in re.finditer(pattern, sentence, flags=re.IGNORECASE):
-            if len(match.groups()) > 1:
+            if _is_definition_scope_marker(sentence, match):
+                continue
+            if ref_type == "section_range":
+                start_section = str(match.group(1) or "").strip().lower()
+                end_section = str(match.group(2) or "").strip().lower()
+                value = f"{start_section}-{end_section}"
+            elif len(match.groups()) > 1:
                 value = " ".join(part for part in match.groups() if part).strip().lower()
             else:
                 value = str(match.group(1) or "").strip().lower()
@@ -1937,7 +2458,18 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
                     "span": [match.start(), match.end()],
                 }
             )
+            if ref_type == "section_range":
+                refs[-1]["start_section"] = start_section
+                refs[-1]["end_section"] = end_section
     return refs
+
+
+def _is_definition_scope_marker(sentence: str, match: re.Match[str]) -> bool:
+    raw = match.group(0).lower()
+    if not raw.startswith("this "):
+        return False
+    prefix = str(sentence or "")[: match.start()].lower()
+    return bool(re.search(r"(?:\bin\s+|\bfor\s+purposes\s+of\s+)$", prefix))
 
 
 def extract_enumerated_items(sentence: str) -> List[Dict[str, str]]:
@@ -1981,12 +2513,43 @@ def extract_temporal_constraint_details(sentence: str) -> List[Dict[str, Any]]:
                     "temporal_kind": temporal_kind,
                     "value": value,
                     "anchor": anchor,
+                    **normalize_temporal_value(value),
                     "raw_text": match.group(0).strip(),
                     "normalized_text": value,
                     "span": [match.start(), match.end()],
                 }
             )
     return details
+
+
+def normalize_temporal_value(value: str) -> Dict[str, Any]:
+    """Normalize a temporal phrase into atoms useful for temporal logic export."""
+    normalized = str(value or "").strip().lower()
+    duration = normalized.split(" after ", 1)[0].split(" before ", 1)[0].strip()
+    match = re.match(r"(?P<quantity>\d+)\s+(?:(?P<calendar>business|calendar)\s+)?(?P<unit>days?|weeks?|months?|years?)\b", duration)
+    anchor_event = ""
+    direction = ""
+    if " after " in normalized:
+        anchor_event = normalized.split(" after ", 1)[1].strip()
+        direction = "after"
+    elif " before " in normalized:
+        anchor_event = normalized.split(" before ", 1)[1].strip()
+        direction = "before"
+    if not match:
+        return {
+            "quantity": None,
+            "unit": "",
+            "calendar": "",
+            "anchor_event": anchor_event,
+            "direction": direction,
+        }
+    return {
+        "quantity": int(match.group("quantity")),
+        "unit": match.group("unit").rstrip("s"),
+        "calendar": match.group("calendar") or "calendar",
+        "anchor_event": anchor_event,
+        "direction": direction,
+    }
 
 
 def extract_exceptions(sentence: str) -> List[str]:
@@ -2023,6 +2586,533 @@ def _extract_clause_details(
                 }
             )
     return details
+
+
+def build_formal_logic_record(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a single parquet-friendly row for formal-logic/proof pipelines."""
+    source_id = element.get("source_id") or build_source_id(element)
+    formula = build_deontic_formula(element)
+    identity = {
+        "source_id": source_id,
+        "formula": formula,
+        "schema": PARSER_SCHEMA_VERSION,
+    }
+    formula_hash = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    readiness = element.get("export_readiness") or build_export_readiness(element)
+    return {
+        "formula_id": f"formula:{formula_hash[:24]}",
+        "source_id": source_id,
+        "canonical_citation": element.get("canonical_citation", ""),
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "logic_family": "deontic",
+        "formula": formula,
+        "formal_terms": element.get("formal_terms", {}),
+        "logic_frame": element.get("logic_frame", {}),
+        "legal_frame": element.get("legal_frame", {}),
+        "proof_candidate": bool(readiness.get("proof_ready")),
+        "formal_logic_targets": readiness.get("formal_logic_targets", []),
+        "requires_validation": readiness.get("requires_validation", []),
+        "parser_warnings": element.get("parser_warnings", []),
+        "conflict_links": element.get("conflict_links", []),
+        "enforcement_links": element.get("enforcement_links", []),
+        "provenance": {
+            "text": element.get("text", ""),
+            "source_span": element.get("source_span", []),
+            "support_text": element.get("support_text", ""),
+            "support_span": element.get("support_span", []),
+        },
+    }
+
+
+def build_procedure_event_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flatten procedure event chains into event-calculus friendly rows."""
+    procedure = element.get("procedure") or {}
+    event_chain = procedure.get("event_chain") or []
+    records: List[Dict[str, Any]] = []
+    source_id = element.get("source_id") or build_source_id(element)
+    temporal_details = element.get("temporal_constraint_details") or []
+    for item in event_chain:
+        event = item.get("event", "")
+        order = item.get("order", 0)
+        identity = {
+            "source_id": source_id,
+            "event": event,
+            "order": order,
+        }
+        event_hash = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+        anchors = [
+            detail
+            for detail in temporal_details
+            if detail.get("anchor_event") == event or detail.get("anchor") == event
+        ]
+        records.append(
+            {
+                "event_id": f"event:{event_hash[:24]}",
+                "source_id": source_id,
+                "canonical_citation": element.get("canonical_citation", ""),
+                "event": event,
+                "event_symbol": normalize_predicate_name(event),
+                "event_order": order,
+                "is_trigger": event == procedure.get("trigger_event"),
+                "is_terminal": event == procedure.get("terminal_event"),
+                "temporal_anchors": anchors,
+                "actor_id": (element.get("formal_terms") or {}).get("actor_id", ""),
+                "action_predicate": (element.get("formal_terms") or {}).get("action_predicate", ""),
+                "provenance": {
+                    "text": element.get("text", ""),
+                    "source_span": element.get("source_span", []),
+                },
+            }
+        )
+    return records
+
+
+def build_proof_obligation_record(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a deterministic proof-queue row for theorem/proof backends."""
+    formal_record = build_formal_logic_record(element)
+    readiness = element.get("export_readiness") or build_export_readiness(element)
+    identity = {
+        "source_id": formal_record["source_id"],
+        "formula_id": formal_record["formula_id"],
+        "schema": PARSER_SCHEMA_VERSION,
+    }
+    proof_hash = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    proof_systems = ["deontic_tableau", "fol_resolution", "frame_logic"]
+    if "temporal_logic" in readiness.get("formal_logic_targets", []):
+        proof_systems.extend(["temporal_logic", "event_calculus"])
+    return {
+        "proof_obligation_id": f"proof:{proof_hash[:24]}",
+        "source_id": formal_record["source_id"],
+        "formula_id": formal_record["formula_id"],
+        "canonical_citation": formal_record["canonical_citation"],
+        "formula": formal_record["formula"],
+        "proof_candidate": formal_record["proof_candidate"],
+        "proof_systems": proof_systems,
+        "blocked": not formal_record["proof_candidate"],
+        "blockers": readiness.get("blockers", []),
+        "requires_validation": readiness.get("requires_validation", []),
+        "conflict_links": element.get("conflict_links", []),
+        "enforcement_links": element.get("enforcement_links", []),
+        "provenance": formal_record["provenance"],
+    }
+
+
+def build_clause_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flatten conditions/exceptions/overrides into parquet-friendly clause rows."""
+    records: List[Dict[str, Any]] = []
+    source_id = element.get("source_id") or build_source_id(element)
+    clause_groups = [
+        ("condition", element.get("condition_details") or []),
+        ("exception", element.get("exception_details") or []),
+        ("override", element.get("override_clause_details") or []),
+    ]
+    for slot_type, clauses in clause_groups:
+        for index, clause in enumerate(clauses):
+            text = clause.get("normalized_text") or clause.get("raw_text", "")
+            identity = {
+                "source_id": source_id,
+                "slot_type": slot_type,
+                "index": index,
+                "text": text,
+                "span": clause.get("span", []),
+            }
+            clause_hash = hashlib.sha256(
+                json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+            ).hexdigest()
+            records.append(
+                {
+                    "clause_id": f"clause:{clause_hash[:24]}",
+                    "source_id": source_id,
+                    "canonical_citation": element.get("canonical_citation", ""),
+                    "slot_type": slot_type,
+                    "clause_type": clause.get("clause_type", ""),
+                    "raw_text": clause.get("raw_text", ""),
+                    "normalized_text": text,
+                    "predicate": normalize_predicate_name(text),
+                    "span": clause.get("span", []),
+                    "clause_span": clause.get("clause_span", []),
+                    "effect": {
+                        "condition": "antecedent",
+                        "exception": "negated_antecedent",
+                        "override": "precedence_modifier",
+                    }.get(slot_type, "modifier"),
+                    "provenance": {
+                        "text": element.get("text", ""),
+                        "source_span": element.get("source_span", []),
+                    },
+                }
+            )
+    return records
+
+
+def build_reference_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flatten cross-reference resolution into citation graph rows."""
+    records: List[Dict[str, Any]] = []
+    source_id = element.get("source_id") or build_source_id(element)
+    refs = element.get("resolved_cross_references") or element.get("cross_reference_details") or []
+    for index, ref in enumerate(refs):
+        target_sections = ref.get("target_sections") or []
+        if target_sections:
+            targets = target_sections
+        else:
+            targets = [
+                {
+                    "section": ref.get("target_section", ""),
+                    "heading": ref.get("target_heading", ""),
+                    "hierarchy_path": ref.get("target_hierarchy_path", []),
+                }
+            ]
+        for target_index, target in enumerate(targets):
+            target_section = target.get("section", "") if isinstance(target, dict) else ""
+            identity = {
+                "source_id": source_id,
+                "index": index,
+                "target_index": target_index,
+                "type": ref.get("type", ""),
+                "value": ref.get("value", ""),
+                "target_section": target_section,
+            }
+            ref_hash = hashlib.sha256(
+                json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+            ).hexdigest()
+            records.append(
+                {
+                    "reference_id": f"ref:{ref_hash[:24]}",
+                    "source_id": source_id,
+                    "canonical_citation": element.get("canonical_citation", ""),
+                    "reference_type": ref.get("type", ""),
+                    "reference_value": ref.get("value", ""),
+                    "raw_text": ref.get("raw_text", ""),
+                    "normalized_text": ref.get("normalized_text", ""),
+                    "resolution_status": ref.get("resolution_status", "unresolved"),
+                    "target_exists": bool(ref.get("target_exists")),
+                    "target_section": target_section,
+                    "target_heading": target.get("heading", "") if isinstance(target, dict) else "",
+                    "target_hierarchy_path": target.get("hierarchy_path", []) if isinstance(target, dict) else [],
+                    "span": ref.get("span", []),
+                    "provenance": {
+                        "text": element.get("text", ""),
+                        "source_span": element.get("source_span", []),
+                    },
+                }
+            )
+    return records
+
+
+def build_sanction_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flatten penalty details into sanction rows for proof/certificate layers."""
+    penalty = element.get("penalty") or {}
+    if not penalty:
+        return []
+    source_id = element.get("source_id") or build_source_id(element)
+    records: List[Dict[str, Any]] = []
+
+    def add_record(sanction_type: str, detail: Dict[str, Any], role: str = "") -> None:
+        identity = {
+            "source_id": source_id,
+            "sanction_type": sanction_type,
+            "role": role,
+            "detail": detail,
+        }
+        sanction_hash = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+        records.append(
+            {
+                "sanction_id": f"sanction:{sanction_hash[:24]}",
+                "source_id": source_id,
+                "canonical_citation": element.get("canonical_citation", ""),
+                "sanction_type": sanction_type,
+                "role": role,
+                "detail": detail,
+                "enforcement_links": element.get("enforcement_links", []),
+                "provenance": {
+                    "text": element.get("text", ""),
+                    "source_span": element.get("source_span", []),
+                },
+            }
+        )
+
+    seen_amounts: set[tuple[str, str, str]] = set()
+    for amount in penalty.get("monetary_amount_details") or []:
+        amount_key = (
+            str(amount.get("raw_text", "")),
+            str(amount.get("numeric_value", "")),
+            str(amount.get("currency", "")),
+        )
+        if amount_key in seen_amounts:
+            continue
+        seen_amounts.add(amount_key)
+        add_record("fine", amount, "amount")
+    if penalty.get("minimum_amount"):
+        add_record("fine", penalty["minimum_amount"], "minimum")
+    if penalty.get("maximum_amount"):
+        add_record("fine", penalty["maximum_amount"], "maximum")
+    if penalty.get("imprisonment_duration"):
+        add_record("imprisonment", penalty["imprisonment_duration"], "duration")
+    if penalty.get("recurrence"):
+        add_record("recurrence", penalty["recurrence"], "recurrence")
+    return records
+
+
+def build_ontology_entity_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Flatten ontology terms into entity rows for KG/entity parquet tables."""
+    source_id = element.get("source_id") or build_source_id(element)
+    records: List[Dict[str, Any]] = []
+    seen: set[tuple[str, str, tuple[int, ...]]] = set()
+    for term in element.get("ontology_terms") or []:
+        value = str(term.get("term", ""))
+        entity_type = str(term.get("type", ""))
+        span = tuple(term.get("span") or [])
+        key = (value.lower(), entity_type, span)
+        if key in seen:
+            continue
+        seen.add(key)
+        identity = {
+            "source_id": source_id,
+            "entity": value,
+            "type": entity_type,
+            "span": list(span),
+        }
+        entity_hash = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+        records.append(
+            {
+                "entity_id": f"entity:{entity_hash[:24]}",
+                "source_id": source_id,
+                "canonical_citation": element.get("canonical_citation", ""),
+                "term": value,
+                "term_id": normalize_symbol(value),
+                "entity_type": entity_type,
+                "definition_body": term.get("definition_body", ""),
+                "span": list(span),
+                "provenance": {
+                    "text": element.get("text", ""),
+                    "source_span": element.get("source_span", []),
+                },
+            }
+        )
+    return records
+
+
+def build_repair_queue_record(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a deterministic llm_router repair queue row when repair is needed."""
+    repair = element.get("llm_repair") or build_llm_repair_payload(element)
+    source_id = element.get("source_id") or build_source_id(element)
+    identity = {
+        "source_id": source_id,
+        "prompt_hash": repair.get("prompt_hash", ""),
+        "reasons": repair.get("reasons", []),
+    }
+    repair_hash = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    return {
+        "repair_id": f"repair:{repair_hash[:24]}",
+        "source_id": source_id,
+        "canonical_citation": element.get("canonical_citation", ""),
+        "required": bool(repair.get("required")),
+        "reasons": repair.get("reasons", []),
+        "suggested_router": repair.get("suggested_router", "llm_router"),
+        "prompt_template": repair.get("prompt_template", ""),
+        "prompt_hash": repair.get("prompt_hash", ""),
+        "prompt_context": repair.get("prompt_context", {}),
+        "schema_version": element.get("schema_version", PARSER_SCHEMA_VERSION),
+        "quality_label": element.get("quality_label", ""),
+        "scaffold_quality": element.get("scaffold_quality", 0.0),
+    }
+
+
+def build_export_record_bundle(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Build all deterministic parquet-oriented export rows for one element."""
+    return {
+        "source_id": element.get("source_id") or build_source_id(element),
+        "canonical": dict(element),
+        "formal_logic": [build_formal_logic_record(element)],
+        "proof_obligations": [build_proof_obligation_record(element)],
+        "knowledge_graph_triples": build_kg_triples(element),
+        "clause_records": build_clause_records(element),
+        "reference_records": build_reference_records(element),
+        "procedure_event_records": build_procedure_event_records(element),
+        "sanction_records": build_sanction_records(element),
+        "ontology_entities": build_ontology_entity_records(element),
+        "repair_queue": [build_repair_queue_record(element)] if (element.get("llm_repair") or {}).get("required") else [],
+    }
+
+
+def build_document_export_tables(elements: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
+    """Aggregate parser elements into named parquet-style export tables."""
+    tables: Dict[str, List[Any]] = {
+        "canonical": [],
+        "formal_logic": [],
+        "proof_obligations": [],
+        "knowledge_graph_triples": [],
+        "clause_records": [],
+        "reference_records": [],
+        "procedure_event_records": [],
+        "sanction_records": [],
+        "ontology_entities": [],
+        "repair_queue": [],
+    }
+    for element in elements or []:
+        bundle = build_export_record_bundle(element)
+        tables["canonical"].append(bundle["canonical"])
+        for table_name in tables:
+            if table_name == "canonical":
+                continue
+            tables[table_name].extend(bundle.get(table_name, []))
+    return tables
+
+
+def build_document_export_manifest(
+    elements: List[Dict[str, Any]],
+    tables: Optional[Dict[str, List[Any]]] = None,
+) -> Dict[str, Any]:
+    """Build deterministic metadata for a parsed document export."""
+    tables = tables or build_document_export_tables(elements)
+    source_ids = [element.get("source_id") or build_source_id(element) for element in elements or []]
+    table_counts = {name: len(rows or []) for name, rows in tables.items()}
+    identity = {
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "source_ids": source_ids,
+        "table_counts": table_counts,
+    }
+    manifest_hash = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
+    return {
+        "manifest_id": f"manifest:{manifest_hash[:24]}",
+        "schema_version": PARSER_SCHEMA_VERSION,
+        "element_count": len(elements or []),
+        "source_ids": source_ids,
+        "table_counts": table_counts,
+        "quality": {
+            "proof_candidates": sum(1 for element in elements or [] if (element.get("export_readiness") or {}).get("proof_ready")),
+            "repair_required": sum(1 for element in elements or [] if (element.get("llm_repair") or {}).get("required")),
+            "schema_valid": sum(1 for element in elements or [] if element.get("schema_valid") is True),
+        },
+    }
+
+
+def validate_document_export_tables(tables: Dict[str, List[Any]]) -> Dict[str, Any]:
+    """Validate basic integrity constraints for deterministic export tables."""
+    required_tables = set(EXPORT_TABLE_SPECS)
+    missing_tables = sorted(required_tables - set((tables or {}).keys()))
+    errors: List[str] = []
+    warnings: List[str] = []
+    if missing_tables:
+        errors.extend([f"missing_table:{name}" for name in missing_tables])
+    canonical = list((tables or {}).get("canonical") or [])
+    canonical_source_ids = {row.get("source_id") for row in canonical if isinstance(row, dict)}
+    if any(not source_id for source_id in canonical_source_ids) or len(canonical_source_ids) != len(canonical):
+        errors.append("canonical_source_ids_missing_or_not_unique")
+    for table_name, rows in (tables or {}).items():
+        spec = EXPORT_TABLE_SPECS.get(table_name, {})
+        primary_key = spec.get("primary_key", "")
+        primary_values: List[Any] = []
+        for index, row in enumerate(rows or []):
+            if not isinstance(row, dict):
+                errors.append(f"{table_name}[{index}]_row_not_dict")
+                continue
+            if primary_key:
+                primary_value = row.get(primary_key)
+                primary_values.append(primary_value)
+                if not primary_value:
+                    errors.append(f"{table_name}[{index}]_missing_{primary_key}")
+            if spec.get("requires_source_id") and not row.get("source_id"):
+                errors.append(f"{table_name}[{index}]_missing_source_id")
+            if table_name != "canonical" and row.get("source_id") and row.get("source_id") not in canonical_source_ids:
+                warnings.append(f"{table_name}[{index}]_source_id_not_in_canonical")
+        if primary_key and len(set(primary_values)) != len(primary_values):
+            errors.append(f"{table_name}_{primary_key}_not_unique")
+    if len((tables or {}).get("formal_logic") or []) != len(canonical):
+        errors.append("formal_logic_count_mismatch")
+    if len((tables or {}).get("proof_obligations") or []) != len(canonical):
+        errors.append("proof_obligations_count_mismatch")
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "table_counts": {name: len(rows or []) for name, rows in (tables or {}).items()},
+    }
+
+
+def get_export_table_specs() -> Dict[str, Dict[str, Any]]:
+    """Return the deterministic export table primary-key contract."""
+    return {name: dict(spec) for name, spec in EXPORT_TABLE_SPECS.items()}
+
+
+def serialize_export_tables_for_parquet(
+    tables: Dict[str, List[Any]],
+    *,
+    stringify_nested: bool = True,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Make export tables deterministic and safe for simple parquet writers."""
+    serialized: Dict[str, List[Dict[str, Any]]] = {}
+    for table_name, rows in (tables or {}).items():
+        serialized_rows: List[Dict[str, Any]] = []
+        for row in rows or []:
+            if not isinstance(row, dict):
+                continue
+            serialized_rows.append(
+                {
+                    key: _parquet_cell(value, stringify_nested=stringify_nested)
+                    for key, value in row.items()
+                }
+            )
+        serialized[table_name] = serialized_rows
+    return serialized
+
+
+def write_document_export_parquet(
+    elements: List[Dict[str, Any]],
+    output_dir: str,
+    *,
+    stringify_nested: bool = True,
+) -> Dict[str, Any]:
+    """Write deterministic document export tables to parquet files using pandas."""
+    try:
+        import pandas as pd  # type: ignore
+    except ImportError as exc:  # pragma: no cover - exercised only without pandas
+        raise RuntimeError("pandas is required to write parquet export tables") from exc
+
+    tables = build_document_export_tables(elements)
+    validation = validate_document_export_tables(tables)
+    if not validation["valid"]:
+        raise ValueError(f"invalid export tables: {validation['errors']}")
+    serialized = serialize_export_tables_for_parquet(tables, stringify_nested=stringify_nested)
+    target_dir = Path(output_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    parquet_paths: Dict[str, str] = {}
+    for table_name, rows in serialized.items():
+        parquet_path = target_dir / f"{table_name}.parquet"
+        pd.DataFrame(rows).to_parquet(parquet_path, index=False)
+        parquet_paths[table_name] = str(parquet_path)
+    manifest = build_document_export_manifest(elements, tables)
+    manifest_path = target_dir / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True, indent=2), encoding="utf-8")
+    return {
+        "output_dir": str(target_dir),
+        "parquet_paths": parquet_paths,
+        "manifest_path": str(manifest_path),
+        "manifest": manifest,
+        "validation": validation,
+    }
+
+
+def _parquet_cell(value: Any, *, stringify_nested: bool) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if stringify_nested:
+        return json.dumps(value, sort_keys=True, default=str)
+    return value
 
 
 def build_deontic_formula(element: Dict[str, Any]) -> str:
@@ -2070,7 +3160,8 @@ def build_deontic_formula(element: Dict[str, Any]) -> str:
 def normalize_predicate_name(name: str) -> str:
     if not name:
         return "P"
-    name = re.sub(r"[^\w\s]", "", name)
+    name = re.sub(r"[_\-]+", " ", name)
+    name = re.sub(r"[^0-9A-Za-z\s]", "", name)
     words = name.strip().split()
     filtered_words = [
         w
@@ -2155,10 +3246,10 @@ def _check_conflict_pair(elem1: Dict[str, Any], elem2: Dict[str, Any]) -> Option
     # Extract relevant fields
     norm1_type = elem1.get("norm_type")
     norm2_type = elem2.get("norm_type")
-    action1 = elem1.get("action", "").lower().strip()
-    action2 = elem2.get("action", "").lower().strip()
-    subject1 = elem1.get("subject", "").lower().strip()
-    subject2 = elem2.get("subject", "").lower().strip()
+    action1 = _first_text(elem1.get("action")).lower().strip()
+    action2 = _first_text(elem2.get("action")).lower().strip()
+    subject1 = _first_text(elem1.get("subject")).lower().strip()
+    subject2 = _first_text(elem2.get("subject")).lower().strip()
     
     # Skip if missing critical information
     if not all([norm1_type, norm2_type, action1, action2]):
@@ -2231,6 +3322,12 @@ def _actions_similar(action1: str, action2: str) -> bool:
         return overlap > 0.5
     
     return False
+
+
+def _first_text(value: Any) -> str:
+    if isinstance(value, list):
+        return str(value[0]) if value else ""
+    return str(value or "")
 
 
 def _subjects_similar(subject1: str, subject2: str) -> bool:

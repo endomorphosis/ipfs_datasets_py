@@ -86,6 +86,14 @@ def _parse_corpora(value: str) -> List[str]:
     return ordered
 
 
+def _parse_csv(value: Optional[str]) -> Optional[List[str]]:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    items = [item.strip() for item in raw.split(",") if item.strip()]
+    return items or None
+
+
 def _state_code_to_scraper_file(state_code: str) -> Optional[str]:
     state_name = US_STATES.get(str(state_code or "").upper())
     if not state_name:
@@ -204,6 +212,8 @@ async def _run_corpus(
     target_score: float,
     stop_on_target_score: bool,
     min_document_recovery_ratio: float,
+    stop_after_recovered_rows: bool,
+    search_engines: Optional[List[str]],
     skip_passed: bool,
 ) -> Dict[str, Any]:
     corpus_output_dir = output_root / corpus
@@ -234,6 +244,8 @@ async def _run_corpus(
         router_embeddings_timeout_seconds=10.0,
         router_ipfs_timeout_seconds=10.0,
         min_document_recovery_ratio=min_document_recovery_ratio,
+        stop_after_recovered_rows=stop_after_recovered_rows,
+        search_engines_override=search_engines,
         target_score=target_score,
         stop_on_target_score=stop_on_target_score,
         admin_agentic_max_candidates_per_state=1000,
@@ -284,6 +296,8 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--target-score", type=float, default=0.92, help="Critic score threshold used by each daemon.")
     parser.add_argument("--stop-on-target-score", action="store_true", help="Stop a corpus daemon early when it passes.")
     parser.add_argument("--min-document-recovery-ratio", type=float, default=0.0, help="Optional minimum processed-document recovery ratio gate.")
+    parser.add_argument("--stop-after-recovered-rows", action="store_true", help="Finalize each daemon cycle immediately after recovered row artifacts are written.")
+    parser.add_argument("--search-engines", default=None, help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.")
     parser.add_argument("--skip-passed", action="store_true", help="Skip corpora whose existing latest summary already passed.")
     parser.add_argument("--cache-to-ipfs", action=argparse.BooleanOptionalAction, default=True, help="Mirror the shared fetch cache to IPFS.")
     parser.add_argument("--pin-ipfs-pages", action=argparse.BooleanOptionalAction, default=False, help="Pin per-page IPFS cache entries.")
@@ -336,6 +350,8 @@ async def _main_async(args: argparse.Namespace) -> int:
             target_score=float(args.target_score),
             stop_on_target_score=bool(args.stop_on_target_score),
             min_document_recovery_ratio=float(args.min_document_recovery_ratio),
+            stop_after_recovered_rows=bool(args.stop_after_recovered_rows),
+            search_engines=_parse_csv(args.search_engines),
             skip_passed=bool(args.skip_passed),
         )
         aggregated["runs"][corpus] = result

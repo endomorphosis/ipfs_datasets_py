@@ -1941,6 +1941,41 @@ async def test_mississippi_request_text_records_fetch_analytics(monkeypatch: pyt
 
 
 @pytest.mark.anyio
+async def test_mississippi_bounded_run_uses_common_crawl_state_backup(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_seed(self, code_name: str, max_statutes: int = 1):
+        return []
+
+    async def _fake_candidates(self, **kwargs):
+        return [
+            {
+                "url": "https://billstatus.ls.state.ms.us/2026/pdf/code_sections/097/00030007.xml",
+                "text": (
+                    "Mississippi Legislature 2026 Regular Session Code Section 097-0003-0007 "
+                    "As of 04/24/2026 at 05:53 HB 540 Amiya Braxton; revise penalties when "
+                    "driver injures child who is exiting a school bus. Thompson 02/03 (H) Died In Committee"
+                ),
+                "collection": "CC-MAIN-2026-17",
+                "timestamp": "20260425000000",
+            }
+        ]
+
+    monkeypatch.setattr(MississippiScraper, "_scrape_jina_justia_seed_sections", _fake_seed)
+    monkeypatch.setattr(MississippiScraper, "_scrape_state_common_crawl_candidates", _fake_candidates)
+
+    scraper = MississippiScraper("MS", "Mississippi")
+    statutes = await scraper.scrape_code(
+        "Mississippi Code",
+        "https://www.legislature.ms.gov/legislation/",
+        max_statutes=1,
+    )
+
+    assert len(statutes) == 1
+    assert statutes[0].section_number == "97-3-7"
+    assert statutes[0].structured_data["source_kind"] == "common_crawl_state_index_warc"
+    assert statutes[0].structured_data["discovery_method"] == "hf_state_index_warc_backup"
+
+
+@pytest.mark.anyio
 async def test_hawaii_request_text_records_fetch_analytics(monkeypatch: pytest.MonkeyPatch):
     async def _fake_fetch_with_archival(self, url: str, timeout_seconds: int = 25) -> bytes:
         self._record_fetch_event(provider="test_fake", success=True)

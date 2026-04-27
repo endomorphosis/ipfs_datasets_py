@@ -2197,6 +2197,118 @@ class BaseStateScraper(ABC):
         except Exception as e:
             self.logger.error(f"Error scraping from Common Crawl: {e}")
             return None
+
+    async def _search_state_common_crawl_records(
+        self,
+        *,
+        domain_terms: Optional[List[str]] = None,
+        url_terms: Optional[List[str]] = None,
+        mime_terms: Optional[List[str]] = None,
+        max_results: int = 20,
+    ) -> List[Dict[str, Any]]:
+        """Query the state Common Crawl HF index for this scraper's state."""
+        try:
+            from ..common_crawl_index_loader import CommonCrawlIndexLoader
+        except Exception as e:
+            self.logger.warning("State Common Crawl index loader unavailable: %s", e)
+            return []
+
+        local_index_root = str(
+            os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_INDEX_ROOT", "")
+            or (Path.cwd() / "data" / "common_crawl_indexes")
+        ).strip()
+        loader = CommonCrawlIndexLoader(
+            local_base_dir=local_index_root,
+            use_hf_fallback=True,
+        )
+        try:
+            materialize_local = str(
+                os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_MATERIALIZE_LOCAL", "")
+            ).strip().lower() in {"1", "true", "yes", "on"}
+            if materialize_local:
+                await asyncio.to_thread(loader.materialize_state_index_locally, False)
+            return await asyncio.to_thread(
+                loader.query_state_index,
+                state_code=self.state_code,
+                domain_terms=list(domain_terms or []),
+                url_terms=list(url_terms or []),
+                mime_terms=list(mime_terms or ["html"]),
+                max_results=max_results,
+            )
+        except Exception as e:
+            self.logger.warning("State Common Crawl index query failed for %s: %s", self.state_code, e)
+            return []
+
+    async def _scrape_state_common_crawl_candidates(
+        self,
+        *,
+        domain_terms: Optional[List[str]] = None,
+        url_terms: Optional[List[str]] = None,
+        mime_terms: Optional[List[str]] = None,
+        max_results: int = 10,
+    ) -> List[Dict[str, Any]]:
+        """Fetch candidate archived pages from the state Common Crawl index."""
+        records = await self._search_state_common_crawl_records(
+            domain_terms=domain_terms,
+            url_terms=url_terms,
+            mime_terms=mime_terms,
+            max_results=max_results,
+        )
+        if not records:
+            return []
+
+        try:
+            from ...web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+            from ...web_archiving.common_crawl_search_engine.ccindex.api import (
+                extract_http_from_warc_gzip_member,
+            )
+        except Exception as e:
+            self.logger.warning("Common Crawl WARC fetch helpers unavailable: %s", e)
+            return []
+
+        try:
+            engine = CommonCrawlSearchEngine(mode="local")
+        except Exception as e:
+            self.logger.warning("Common Crawl search engine unavailable: %s", e)
+            return []
+
+        out: List[Dict[str, Any]] = []
+        for record in records:
+            warc_filename = str(record.get("warc_filename") or "").strip()
+            warc_offset = record.get("warc_offset")
+            warc_length = record.get("warc_length")
+            if not warc_filename or warc_offset is None or warc_length is None:
+                continue
+            try:
+                raw = await asyncio.to_thread(
+                    engine.fetch_warc_record,
+                    warc_filename,
+                    int(warc_offset),
+                    int(warc_length),
+                )
+                extract = await asyncio.to_thread(extract_http_from_warc_gzip_member, raw)
+                if not getattr(extract, "ok", False):
+                    continue
+                text = self._normalize_legal_text(getattr(extract, "body_text_preview", "") or "")
+                if len(text) < 80:
+                    continue
+                out.append(
+                    {
+                        "url": str(record.get("url") or ""),
+                        "domain": str(record.get("domain") or ""),
+                        "timestamp": str(record.get("timestamp") or ""),
+                        "text": text,
+                        "mime": str(record.get("mime") or ""),
+                        "collection": str(record.get("collection") or ""),
+                        "warc_filename": warc_filename,
+                        "warc_offset": int(warc_offset),
+                        "warc_length": int(warc_length),
+                    }
+                )
+            except Exception as e:
+                self.logger.debug("Common Crawl state candidate fetch failed for %s: %s", record.get("url"), e)
+                continue
+        return out
     
     async def query_warc_file(
         self,
