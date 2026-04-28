@@ -30,6 +30,45 @@ The Secretary shall publish the notice except as provided in section 9.99.999.""
     assert summary["cross_reference_resolution_rate"] == 0.0
 
 
+def test_summarize_parser_elements_uses_ir_formula_repair_clearance() -> None:
+    elements = [
+        extract_normative_elements("This section applies to food carts.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+
+    assert [element["promotable_to_theorem"] for element in elements] == [
+        False,
+        False,
+        False,
+        False,
+    ]
+    assert [element["llm_repair"]["required"] for element in elements] == [
+        True,
+        True,
+        True,
+        True,
+    ]
+
+    summary = summarize_parser_elements(elements)
+
+    assert summary["element_count"] == 4
+    assert summary["proof_ready_count"] == 3
+    assert summary["proof_ready_rate"] == 0.75
+    assert summary["repair_required_count"] == 1
+    assert summary["repair_required_rate"] == 0.25
+    assert summary["warning_distribution"]["cross_reference_requires_resolution"] == 3
+    assert summary["warning_distribution"]["exception_requires_scope_review"] == 2
+    assert summary["warning_distribution"]["override_clause_requires_precedence_review"] == 1
+
+
 def test_summarize_parser_elements_handles_empty_input() -> None:
     summary = summarize_parser_elements([])
 

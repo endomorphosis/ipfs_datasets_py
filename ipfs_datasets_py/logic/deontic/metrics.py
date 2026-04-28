@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Dict, Iterable, List
 
+from .exports import parser_elements_for_metrics
+
 
 def _valid_span(text: str, span: Any) -> bool:
     if not isinstance(span, (list, tuple)) or len(span) != 2:
@@ -20,7 +22,8 @@ def _valid_span(text: str, span: Any) -> bool:
 def summarize_parser_elements(elements: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
     """Return deterministic quality metrics for parser elements."""
 
-    rows: List[Dict[str, Any]] = [item for item in elements or [] if isinstance(item, dict)]
+    input_rows: List[Dict[str, Any]] = [item for item in elements or [] if isinstance(item, dict)]
+    rows: List[Dict[str, Any]] = parser_elements_for_metrics(input_rows)
     element_count = len(rows)
     if element_count == 0:
         return {
@@ -49,7 +52,13 @@ def summarize_parser_elements(elements: Iterable[Dict[str, Any]]) -> Dict[str, A
         1 for row in rows if (row.get("export_readiness") or {}).get("proof_ready") is True
     )
     repair_required_count = sum(
-        1 for row in rows if (row.get("llm_repair") or {}).get("required") is True
+        1
+        for row in rows
+        if (row.get("export_readiness") or {}).get(
+            "export_repair_required",
+            (row.get("llm_repair") or {}).get("required") is True,
+        )
+        is True
     )
 
     warnings: Counter[str] = Counter()

@@ -158,6 +158,20 @@ def parser_elements_to_export_tables(elements: Iterable[Mapping[str, Any]]) -> D
     )
 
 
+def parser_elements_for_metrics(
+    elements: Iterable[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Return parser elements with deterministic readiness for metrics.
+
+    Metrics should report active deterministic repair work, not stale parser
+    repair flags that the IR/formula layer has already resolved. This wrapper
+    keeps the metric contract explicit while reusing the same no-LLM readiness
+    projection used by converter/export callers.
+    """
+
+    return parser_elements_with_ir_export_readiness(elements)
+
+
 def parser_elements_with_ir_export_readiness(
     elements: Iterable[Mapping[str, Any]],
 ) -> List[Dict[str, Any]]:
