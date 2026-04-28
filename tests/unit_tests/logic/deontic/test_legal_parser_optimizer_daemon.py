@@ -125,6 +125,45 @@ def test_daemon_cycle_writes_artifacts_in_patch_only_mode(tmp_path):
     assert (repo_root / "out/cycles/cycle_0001/cycle_started.json").exists()
     assert (repo_root / "out/latest_summary.json").exists()
     assert (repo_root / "out/progress_summary.json").exists()
+    status = json.loads((repo_root / "out/current_status.json").read_text(encoding="utf-8"))
+    assert status["phase"] == "cycle_completed"
+    assert status["cycle_index"] == 1
+    assert status["apply_result"]["reason"] == "apply_patches_disabled"
+
+
+def test_daemon_reports_invalid_patch_as_patch_check_failed(tmp_path):
+    __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "Malformed patch for test.",
+                "requirements_addressed": ["daemon"],
+                "acceptance_criteria": ["invalid diff is reported precisely"],
+                "expected_metric_gain": {},
+                "tests_to_run": [],
+                "unified_diff": "not a diff",
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=True,
+        run_tests=False,
+        require_production_and_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert cycle["patch_check"]["valid"] is False
+    assert cycle["proposal_quality"]["valid"] is True
+    assert cycle["apply_result"]["reason"] == "patch_check_failed"
+    assert cycle["tests"]["reason"] == "patch_not_applied"
+    status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    assert status["phase"] == "cycle_completed"
+    assert status["apply_result"]["reason"] == "patch_check_failed"
 
 
 def test_daemon_records_cycle_exception_instead_of_exiting(tmp_path):
@@ -146,6 +185,9 @@ def test_daemon_records_cycle_exception_instead_of_exiting(tmp_path):
     assert "boom before proposal" in cycle["exception"]["message"]
     assert (tmp_path / "out/cycles/cycle_0001/cycle_summary.json").exists()
     assert (tmp_path / "out/latest_summary.json").exists()
+    status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    assert status["phase"] == "cycle_error_recorded"
+    assert status["exception"]["type"] == "RuntimeError"
 
 
 def test_daemon_rejects_valid_patch_without_production_and_test_files(tmp_path):

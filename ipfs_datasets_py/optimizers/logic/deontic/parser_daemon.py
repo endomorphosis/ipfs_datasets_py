@@ -453,6 +453,7 @@ class LegalParserOptimizerDaemon:
         self.cycles_dir.mkdir(parents=True, exist_ok=True)
         self.latest_file = self.output_dir / "latest_summary.json"
         self.state_file = self.output_dir / "daemon_state.json"
+        self.status_file = self.output_dir / "current_status.json"
         self.optimizer = optimizer or LegalParserParityOptimizer(daemon_config=self.config)
         self._state = self._load_state()
         self.run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -497,6 +498,13 @@ class LegalParserOptimizerDaemon:
         cycle_dir = self.cycles_dir / f"cycle_{cycle_index:04d}"
         cycle_dir.mkdir(parents=True, exist_ok=True)
         self._write_cycle_started(cycle_dir=cycle_dir, cycle_index=cycle_index, started=started)
+        self._write_current_status(
+            status="running",
+            phase="evaluating_parser",
+            cycle_index=cycle_index,
+            cycle_dir=cycle_dir,
+            started_at=started,
+        )
 
         context = OptimizationContext(
             session_id=f"legal-parser-daemon-{cycle_index:04d}",
@@ -506,6 +514,15 @@ class LegalParserOptimizerDaemon:
         )
         evaluation = self.optimizer.generate({}, context)
         score, feedback = self.optimizer.critique(evaluation, context)
+        self._write_current_status(
+            status="running",
+            phase="requesting_llm_patch",
+            cycle_index=cycle_index,
+            cycle_dir=cycle_dir,
+            started_at=started,
+            score=score,
+            feedback=feedback,
+        )
         try:
             proposal = self.optimizer.optimize(evaluation, score, feedback, context)
         except Exception as exc:
@@ -519,6 +536,15 @@ class LegalParserOptimizerDaemon:
         proposal_path.write_text(json.dumps(asdict(proposal), indent=2, default=str), encoding="utf-8")
         patch_path = cycle_dir / "proposal.patch"
         patch_path.write_text(proposal.unified_diff, encoding="utf-8")
+        self._write_current_status(
+            status="running",
+            phase="checking_patch",
+            cycle_index=cycle_index,
+            cycle_dir=cycle_dir,
+            started_at=started,
+            proposal_path=proposal_path,
+            patch_path=patch_path,
+        )
 
         patch_check = self.optimizer.check_patch(proposal.unified_diff)
         changed_files = _paths_from_unified_diff(proposal.unified_diff)
@@ -542,8 +568,14 @@ class LegalParserOptimizerDaemon:
                 + ("\n" if patch_check.get("stderr") else "")
                 + "; ".join(proposal_quality.get("reasons", [])),
             }
-        apply_result: Dict[str, Any] = {"applied": False, "reason": "apply_patches_disabled"}
-        tests_result: Dict[str, Any] = {"valid": True, "skipped": True}
+        if not self.config.apply_patches:
+            apply_result: Dict[str, Any] = {"applied": False, "reason": "apply_patches_disabled"}
+        elif not patch_check.get("valid"):
+            reason = "proposal_quality_failed" if proposal_quality.get("valid") is False else "patch_check_failed"
+            apply_result = {"applied": False, "reason": reason, "check": patch_check}
+        else:
+            apply_result = {"applied": False, "reason": "not_applied_yet"}
+        tests_result: Dict[str, Any] = {"valid": True, "skipped": True, "reason": "patch_not_applied"}
         post_evaluation: Dict[str, Any] = {}
         retained_change: Dict[str, Any] = {
             "has_retained_changes": False,
@@ -553,12 +585,36 @@ class LegalParserOptimizerDaemon:
         commit_result: Dict[str, Any] = {"committed": False, "reason": "commit_accepted_patches_disabled"}
 
         if self.config.apply_patches and patch_check.get("valid"):
+            self._write_current_status(
+                status="running",
+                phase="applying_patch",
+                cycle_index=cycle_index,
+                cycle_dir=cycle_dir,
+                started_at=started,
+                changed_files=changed_files,
+            )
             pre_apply_diff = self._working_tree_diff()
             pre_apply_files = self._snapshot_patch_paths(proposal.unified_diff)
             apply_result = self.optimizer.apply_patch(proposal.unified_diff)
             if apply_result.get("applied"):
+                self._write_current_status(
+                    status="running",
+                    phase="running_tests",
+                    cycle_index=cycle_index,
+                    cycle_dir=cycle_dir,
+                    started_at=started,
+                    changed_files=changed_files,
+                )
                 tests_result = self.optimizer.run_tests()
                 if tests_result.get("valid"):
+                    self._write_current_status(
+                        status="running",
+                        phase="evaluating_retained_change",
+                        cycle_index=cycle_index,
+                        cycle_dir=cycle_dir,
+                        started_at=started,
+                        changed_files=changed_files,
+                    )
                     post_evaluation = self.optimizer.evaluate_current_parser()
                     retained_change = self._retained_change_summary(pre_apply_files)
                     retained_patch_path = cycle_dir / "retained.patch"
@@ -581,6 +637,13 @@ class LegalParserOptimizerDaemon:
                         "reason": "rolled_back_after_failed_tests",
                     }
         elif self.config.run_tests and not self.config.apply_patches:
+            self._write_current_status(
+                status="running",
+                phase="running_tests_patch_only",
+                cycle_index=cycle_index,
+                cycle_dir=cycle_dir,
+                started_at=started,
+            )
             tests_result = self.optimizer.run_tests()
 
         finished = _utc_now()
@@ -624,6 +687,19 @@ class LegalParserOptimizerDaemon:
         self.state_file.write_text(json.dumps(self._state, indent=2, default=str), encoding="utf-8")
         self.latest_file.write_text(json.dumps(cycle_payload, indent=2, default=str), encoding="utf-8")
         self._record_progress(cycle_payload)
+        self._write_current_status(
+            status="running",
+            phase="cycle_completed",
+            cycle_index=cycle_index,
+            cycle_dir=cycle_dir,
+            started_at=started,
+            finished_at=finished,
+            patch_valid=patch_check.get("valid"),
+            apply_result=apply_result,
+            tests_result=tests_result,
+            retained_change=retained_change,
+            commit_result=commit_result,
+        )
         return cycle_payload
 
     def _write_cycle_started(self, *, cycle_dir: Path, cycle_index: int, started: str) -> None:
@@ -640,6 +716,34 @@ class LegalParserOptimizerDaemon:
             json.dumps(marker, indent=2, default=str),
             encoding="utf-8",
         )
+
+    def _write_current_status(
+        self,
+        *,
+        status: str,
+        phase: str,
+        cycle_index: int,
+        cycle_dir: Path,
+        started_at: str,
+        **details: Any,
+    ) -> None:
+        payload = {
+            "status": status,
+            "phase": phase,
+            "cycle_index": cycle_index,
+            "cycle_dir": str(cycle_dir),
+            "started_at": started_at,
+            "updated_at": _utc_now(),
+            "pid": os.getpid(),
+            "run_id": self.run_id,
+            "baseline_head": self.run_baseline_head,
+            "model_name": self.config.model_name,
+            "provider": self.config.provider,
+            "apply_patches": self.config.apply_patches,
+            "commit_accepted_patches": self.config.commit_accepted_patches,
+            **{key: _json_safe(value) for key, value in details.items()},
+        }
+        self.status_file.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
     def _record_cycle_exception(self, *, cycle_index: int, exc: Exception) -> Dict[str, Any]:
         finished = _utc_now()
@@ -682,6 +786,15 @@ class LegalParserOptimizerDaemon:
         self.state_file.write_text(json.dumps(self._state, indent=2, default=str), encoding="utf-8")
         self.latest_file.write_text(json.dumps(cycle_payload, indent=2, default=str), encoding="utf-8")
         self._record_progress(cycle_payload)
+        self._write_current_status(
+            status="running",
+            phase="cycle_error_recorded",
+            cycle_index=cycle_index,
+            cycle_dir=cycle_dir,
+            started_at=finished,
+            finished_at=finished,
+            exception=cycle_payload["exception"],
+        )
         return cycle_payload
 
     def _assess_proposal_quality(
@@ -1217,6 +1330,16 @@ def _read_text(path: Path, *, limit: int) -> str:
     head = text[: limit // 2]
     tail = text[-(limit // 2) :]
     return f"{head}\n\n[... truncated ...]\n\n{tail}"
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
 
 
 def _run_command(
