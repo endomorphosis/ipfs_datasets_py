@@ -482,6 +482,55 @@ def test_file_edit_mode_rejects_noop_file_replacements(tmp_path):
     assert "made no content changes" in result["artifact"]["errors"][0]
 
 
+def test_task_board_blocks_repeated_same_failure_kind(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Add stubborn fixture\n- [ ] Next task\n", encoding="utf-8")
+    status.write_text("| parity | partial |\n", encoding="utf-8")
+    previous = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Add stubborn fixture",
+            "summary": "failed",
+            "failure_kind": "apply_check",
+            "errors": ["Patch failed git apply --check."],
+        },
+    }
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": [previous]}) + "\n", encoding="utf-8")
+    latest = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Add stubborn fixture",
+            "summary": "failed again",
+            "failure_kind": "apply_check",
+            "errors": ["Patch failed git apply --check."],
+        },
+    }
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        max_task_failure_rounds=2,
+    )
+
+    LogicPortDaemonOptimizer(config)._update_task_board([latest])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "- [!] Add stubborn fixture" in updated
+    assert "Failure kind: `apply_check`" in updated
+
+
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):
     plan = tmp_path / "plan.md"
     status = tmp_path / "status.md"

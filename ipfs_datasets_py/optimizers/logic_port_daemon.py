@@ -167,6 +167,7 @@ class LogicPortDaemonConfig:
     llm_timeout_seconds: int = 900
     retry_interval_seconds: float = 300.0
     max_failure_cycles: int = 0
+    max_task_failure_rounds: int = 3
     result_log_path: Optional[Path] = None
     accepted_work_log_path: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md")
     codex_trace_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/codex-runs")
@@ -196,6 +197,7 @@ class LogicPortArtifact:
     validation_results: List[CommandResult] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
     changed_files: List[str] = field(default_factory=list)
+    failure_kind: str = ""
 
     @property
     def validation_passed(self) -> bool:
@@ -215,6 +217,7 @@ class LogicPortArtifact:
             "validation_results": [result.compact() for result in self.validation_results],
             "errors": self.errors,
             "changed_files": self.changed_files,
+            "failure_kind": self.failure_kind,
         }
 
 
@@ -344,6 +347,39 @@ def _replace_checkbox_mark(markdown: str, task: PlanTask, mark: str) -> str:
             lines[index] = re.sub(r"^(\s*-\s+\[)[ xX~!](\]\s+)", rf"\g<1>{mark}\2", line, count=1)
             break
     return "".join(lines)
+
+
+def _read_daemon_results(path: Path) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+    if not path.exists():
+        return []
+    rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        for result in record.get("results", []) or []:
+            if isinstance(result, dict):
+                artifact = result.get("artifact", {})
+                if isinstance(artifact, dict):
+                    rows.append((result, artifact))
+    return rows
+
+
+def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str, failure_kind: str) -> int:
+    count = 0
+    for result, artifact in reversed(rows):
+        if artifact.get("target_task") != task_label:
+            continue
+        if result.get("valid"):
+            break
+        if artifact.get("failure_kind") == failure_kind:
+            count += 1
+            continue
+        break
+    return count
 
 
 def _patch_changed_files(patch: str) -> List[str]:
@@ -517,6 +553,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         preflight_errors = self._preflight_artifact(artifact, selected_task=self._current_plan_task())
         if preflight_errors:
             artifact.errors.extend(preflight_errors)
+            artifact.failure_kind = "preflight"
             return artifact
 
         if artifact.files:
@@ -528,8 +565,10 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             if not artifact.applied:
                 if not changed_files and all(result.ok for result in artifact.validation_results):
                     artifact.errors.append("File edits made no content changes.")
+                    artifact.failure_kind = "no_change"
                 else:
                     artifact.errors.append("File edits failed validation and were rolled back.")
+                    artifact.failure_kind = "validation"
             else:
                 artifact.changed_files = changed_files
             return artifact
@@ -558,6 +597,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                     self._persist_failed_patch(artifact.patch, check, context=context)
             if not check.ok:
                 artifact.errors.append("Patch failed git apply --check.")
+                artifact.failure_kind = "apply_check"
                 artifact.validation_results.append(check)
                 return artifact
 
@@ -571,6 +611,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         artifact.applied = applied.ok
         if not applied.ok:
             artifact.errors.append("Patch failed git apply.")
+            artifact.failure_kind = "apply"
             return artifact
 
         artifact.validation_results.extend(self._run_validation())
@@ -580,8 +621,10 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             if all(result.ok for result in rolled_back):
                 artifact.applied = False
                 artifact.errors.append("Patch failed validation and was rolled back.")
+                artifact.failure_kind = "validation"
             else:
                 artifact.errors.append("Patch failed validation and automatic rollback failed.")
+                artifact.failure_kind = "rollback"
         else:
             artifact.changed_files = _patch_changed_files(artifact.patch)
         return artifact
@@ -809,12 +852,28 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         latest_target = self._select_next_plan_task(tasks_before)
         if latest_valid and latest_target is not None:
             task_text = _replace_checkbox_mark(task_text, latest_target, "x")
+        elif latest_target is not None and self._should_block_task(latest_target, latest):
+            task_text = _replace_checkbox_mark(task_text, latest_target, "!")
 
         tasks_after = extract_plan_tasks(task_text)
         current_target = self._select_next_plan_task(tasks_after)
         board = self._render_task_board(tasks_after, current_target=current_target, latest_target=latest_target, results=results)
         updated = task_text.rstrip() + "\n\n" + board + "\n"
         path.write_text(updated, encoding="utf-8")
+
+    def _should_block_task(self, task: PlanTask, latest: Dict[str, Any]) -> bool:
+        if self.daemon_config.max_task_failure_rounds <= 0:
+            return False
+        artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
+        failure_kind = str(artifact.get("failure_kind") or "")
+        if not failure_kind:
+            return False
+        if self.daemon_config.result_log_path is None:
+            return False
+        rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+        # The current result is appended after the board update, so include it.
+        rows = [*rows, (latest, artifact)]
+        return _recent_failure_count(rows, task.label, failure_kind) >= self.daemon_config.max_task_failure_rounds
 
     def _select_next_plan_task(self, tasks: List[PlanTask]) -> Optional[PlanTask]:
         for status in ("needed", "in-progress", "blocked"):
@@ -889,6 +948,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             lines.append(f"- Accepted changed files: {', '.join(f'`{path}`' for path in latest_changed_files)}")
         if latest_errors:
             lines.append(f"- Errors: {'; '.join(str(error) for error in latest_errors[:3])}")
+        if latest_artifact.get("failure_kind"):
+            lines.append(f"- Failure kind: `{latest_artifact.get('failure_kind')}`")
 
         lines.extend(
             [
