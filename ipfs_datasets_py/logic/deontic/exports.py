@@ -13,7 +13,10 @@ import re
 from dataclasses import replace
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Union
 
-from .formula_builder import build_deontic_formula_record_from_ir
+from .formula_builder import (
+    build_deontic_formula_record_from_ir,
+    build_deontic_formula_records_from_irs,
+)
 from .ir import LegalNormIR
 
 
@@ -172,11 +175,12 @@ def parser_elements_with_ir_export_readiness(
     resolution.
     """
 
+    copied_elements = [dict(element) for element in elements]
+    norms = [LegalNormIR.from_parser_element(element) for element in copied_elements]
+    formula_records = build_deontic_formula_records_from_irs(norms)
+
     aligned: List[Dict[str, Any]] = []
-    for element in elements:
-        copied = dict(element)
-        norm = LegalNormIR.from_parser_element(copied)
-        formula_record = build_deontic_formula_record_from_ir(norm)
+    for copied, formula_record in zip(copied_elements, formula_records):
         deterministic_resolution = formula_record.get("deterministic_resolution") or {}
 
         export_readiness = dict(copied.get("export_readiness") or {})

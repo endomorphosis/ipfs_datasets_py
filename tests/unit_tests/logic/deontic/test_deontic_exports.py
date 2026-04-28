@@ -976,6 +976,60 @@ def test_export_tables_keep_absent_section_context_reference_in_repair_queue():
     assert "cross_reference_requires_resolution" in tables["repair_queue"][0]["reasons"]
 
 
+def test_parser_element_readiness_resolves_same_document_reference_exception_from_section_context():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited_element = extract_normative_elements("The agency shall keep records.")[0]
+    cited_element = dict(cited_element)
+    cited_element["canonical_citation"] = ""
+    cited_element["section_context"] = {"section": "552"}
+
+    aligned = parser_elements_with_ir_export_readiness(
+        [reference_element, cited_element]
+    )
+
+    assert reference_element["promotable_to_theorem"] is False
+    assert aligned[0]["promotable_to_theorem"] is False
+    assert aligned[0]["export_readiness"]["parser_proof_ready"] is False
+    assert aligned[0]["export_readiness"]["formula_proof_ready"] is True
+    assert aligned[0]["export_readiness"]["proof_ready"] is True
+    assert aligned[0]["export_readiness"]["requires_validation"] is False
+    assert aligned[0]["export_readiness"]["repair_required"] is False
+    assert aligned[0]["export_readiness"]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert aligned[0]["export_readiness"]["deterministic_resolution"]["references"] == [
+        "section 552"
+    ]
+    assert aligned[0]["llm_repair"]["required"] is False
+    assert aligned[0]["llm_repair"]["allow_llm_repair"] is False
+    assert aligned[0]["llm_repair"]["deterministically_resolved"] is True
+
+
+def test_parser_element_readiness_keeps_mismatched_section_context_reference_blocked():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited_element = extract_normative_elements("The agency shall keep records.")[0]
+    cited_element = dict(cited_element)
+    cited_element["canonical_citation"] = ""
+    cited_element["section_context"] = {"section": "553"}
+
+    aligned = parser_elements_with_ir_export_readiness(
+        [reference_element, cited_element]
+    )
+
+    assert aligned[0]["promotable_to_theorem"] is False
+    assert aligned[0]["export_readiness"]["formula_proof_ready"] is False
+    assert aligned[0]["export_readiness"]["proof_ready"] is False
+    assert aligned[0]["export_readiness"]["requires_validation"] is True
+    assert aligned[0]["export_readiness"]["repair_required"] is True
+    assert aligned[0]["export_readiness"]["deterministic_resolution"] == {}
+    assert aligned[0]["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in aligned[0]["llm_repair"]["reasons"]
+
+
 def test_validate_export_tables_reports_missing_and_duplicate_keys():
     element = extract_normative_elements("The tenant must pay rent monthly.")[0]
     norm = LegalNormIR.from_parser_element(element)
