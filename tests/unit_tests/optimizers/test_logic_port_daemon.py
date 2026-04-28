@@ -296,7 +296,7 @@ def test_daemon_marks_valid_checkbox_task_complete_and_reports_changed_files(tmp
     python_logic_dir.mkdir(parents=True)
     target = docs_dir / "fixture.md"
     target.write_text("old\n", encoding="utf-8")
-    plan.write_text("- [ ] Add usable parity fixture\n- [ ] Implement next feature\n", encoding="utf-8")
+    plan.write_text("- [ ] Record accepted work docs\n- [ ] Implement next feature\n", encoding="utf-8")
     status.write_text("| ZKP | partial |\n", encoding="utf-8")
 
     response = json.dumps(
@@ -321,10 +321,165 @@ def test_daemon_marks_valid_checkbox_task_complete_and_reports_changed_files(tmp
     LogicPortDaemonOptimizer(config)._update_task_board([result])
 
     updated = plan.read_text(encoding="utf-8")
-    assert "- [x] Add usable parity fixture" in updated
+    assert "- [x] Record accepted work docs" in updated
     assert "Current target: `Task checkbox-2: Implement next feature`" in updated
     assert "- Accepted changed files: `docs/fixture.md`" in updated
     assert result["artifact"]["changed_files"] == ["docs/fixture.md"]
+
+
+def test_preflight_rejects_non_runtime_only_change_for_implementation_task(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    docs_dir = tmp_path / "docs"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    docs_dir.mkdir(parents=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port every TDFOL inference rule\n", encoding="utf-8")
+    status.write_text("| TDFOL | partial |\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "Docs only",
+            "files": [{"path": "docs/notes.md", "content": "not enough\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="implementation-guard")
+
+    assert result["valid"] is False
+    assert result["artifact"]["changed_files"] == []
+    assert not (docs_dir / "notes.md").exists()
+    assert "does not change any runtime TypeScript file" in result["artifact"]["errors"][0]
+
+
+def test_preflight_rejects_fixture_without_test_update(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    parity_dir = logic_dir / "parity"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    parity_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Add Python parity fixtures\n", encoding="utf-8")
+    status.write_text("| parity | partial |\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "Fixture without test",
+            "files": [{"path": "src/lib/logic/parity/python-parity-fixtures.json", "content": "[]\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="fixture-guard")
+
+    assert result["valid"] is False
+    assert not (parity_dir / "python-parity-fixtures.json").exists()
+    assert "must update a src/lib/logic/*.test.ts file" in result["artifact"]["errors"][0]
+
+
+def test_accepted_work_log_records_valid_changed_files(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "docs" / "accepted.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("old\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "Runtime feature",
+            "impact": "Feature is imported by the logic runtime.",
+            "files": [{"path": "src/lib/logic/feature.ts", "content": "new\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        accepted_work_log_path=log_path,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="accepted-log")
+    LogicPortDaemonOptimizer(config)._append_accepted_work_log([result])
+
+    accepted = log_path.read_text(encoding="utf-8")
+    assert "Runtime feature" in accepted
+    assert "`src/lib/logic/feature.ts`" in accepted
+    assert "Feature is imported by the logic runtime." in accepted
+
+
+def test_file_edit_mode_rejects_noop_file_replacements(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    docs_dir = tmp_path / "docs"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    docs_dir.mkdir(parents=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = docs_dir / "fixture.md"
+    target.write_text("same\n", encoding="utf-8")
+    plan.write_text("- [ ] Record accepted work docs\n", encoding="utf-8")
+    status.write_text("| docs | partial |\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "No-op docs",
+            "files": [{"path": "docs/fixture.md", "content": "same\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="noop")
+
+    assert result["valid"] is False
+    assert result["artifact"]["changed_files"] == []
+    assert "made no content changes" in result["artifact"]["errors"][0]
 
 
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):

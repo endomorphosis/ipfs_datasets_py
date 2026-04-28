@@ -77,6 +77,8 @@ class LegalParserDaemonConfig:
     target_score: float = 0.98
     min_score_improvement: float = 0.001
     apply_patches: bool = False
+    commit_accepted_patches: bool = False
+    require_clean_touched_files: bool = True
     run_tests: bool = True
     test_command: Tuple[str, ...] = ("pytest", "tests/unit_tests/logic/deontic")
     llm_max_tokens: int = 6000
@@ -518,6 +520,15 @@ class LegalParserOptimizerDaemon:
         changed_files = _paths_from_unified_diff(proposal.unified_diff)
         patch_stats = _unified_diff_stats(proposal.unified_diff)
         proposal_quality = self._assess_proposal_quality(proposal, changed_files)
+        dirty_touched_files = self._dirty_touched_files(changed_files)
+        if self.config.require_clean_touched_files and dirty_touched_files:
+            proposal_quality = {
+                **proposal_quality,
+                "valid": False,
+                "reasons": list(proposal_quality.get("reasons", []))
+                + [f"patch touches files with pre-existing uncommitted changes: {', '.join(dirty_touched_files)}"],
+                "dirty_touched_files": dirty_touched_files,
+            }
         if patch_check.get("valid") and not proposal_quality.get("valid"):
             patch_check = {
                 **patch_check,
@@ -530,6 +541,12 @@ class LegalParserOptimizerDaemon:
         apply_result: Dict[str, Any] = {"applied": False, "reason": "apply_patches_disabled"}
         tests_result: Dict[str, Any] = {"valid": True, "skipped": True}
         post_evaluation: Dict[str, Any] = {}
+        retained_change: Dict[str, Any] = {
+            "has_retained_changes": False,
+            "changed_files": [],
+            "reason": "patch_not_applied",
+        }
+        commit_result: Dict[str, Any] = {"committed": False, "reason": "commit_accepted_patches_disabled"}
 
         if self.config.apply_patches and patch_check.get("valid"):
             pre_apply_diff = self._working_tree_diff()
@@ -539,12 +556,26 @@ class LegalParserOptimizerDaemon:
                 tests_result = self.optimizer.run_tests()
                 if tests_result.get("valid"):
                     post_evaluation = self.optimizer.evaluate_current_parser()
+                    retained_change = self._retained_change_summary(pre_apply_files)
+                    retained_patch_path = cycle_dir / "retained.patch"
+                    retained_patch_path.write_text(
+                        self._retained_patch_for_paths(pre_apply_files),
+                        encoding="utf-8",
+                    )
+                    retained_change["patch_path"] = str(retained_patch_path)
+                    if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
+                        commit_result = self._commit_retained_change(cycle_index, proposal, retained_change)
                 else:
                     rollback = self._restore_patch_paths(pre_apply_files)
                     if not rollback.get("valid"):
                         rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
                     apply_result["rolled_back"] = True
                     apply_result["rollback"] = rollback
+                    retained_change = {
+                        "has_retained_changes": False,
+                        "changed_files": [],
+                        "reason": "rolled_back_after_failed_tests",
+                    }
         elif self.config.run_tests and not self.config.apply_patches:
             tests_result = self.optimizer.run_tests()
 
@@ -567,6 +598,8 @@ class LegalParserOptimizerDaemon:
             "test_files": _test_files(changed_files),
             "patch_stats": patch_stats,
             "proposal_quality": proposal_quality,
+            "retained_change": retained_change,
+            "commit_result": commit_result,
             "patch_check": patch_check,
             "apply_result": apply_result,
             "tests": tests_result,
@@ -724,6 +757,8 @@ class LegalParserOptimizerDaemon:
             "production_files": cycle_payload.get("production_files", []),
             "test_files": cycle_payload.get("test_files", []),
             "patch_stats": cycle_payload.get("patch_stats", {}),
+            "retained_change": cycle_payload.get("retained_change", {}),
+            "commit_result": cycle_payload.get("commit_result", {}),
             "pre_score": cycle_payload.get("score"),
             "post_score": (cycle_payload.get("post_evaluation") or {}).get("metrics", {}).get("parity_score"),
             "tests": cycle_payload.get("tests", {}),
@@ -799,6 +834,13 @@ class LegalParserOptimizerDaemon:
             "total_cycles": len(cycles),
             "latest_cycle_index": latest_cycle.get("cycle_index"),
             "accepted_patch_count": len(accepted_cycles),
+            "retained_accepted_patch_count": sum(
+                1
+                for cycle in accepted_cycles
+                if (cycle.get("retained_change") or {"has_retained_changes": True}).get(
+                    "has_retained_changes", True
+                )
+            ),
             "rolled_back_count": len(rolled_back),
             "rejected_patch_count": len(rejected),
             "current_score": current_score,
@@ -810,6 +852,7 @@ class LegalParserOptimizerDaemon:
             ),
             "current_feedback": current_feedback,
             "stalled_metric_cycles": unchanged_tail,
+            "git_retained_work": self._git_retained_work_snapshot(),
             "accepted_change_summaries": accepted_summaries,
             "latest_cycle": {
                 "cycle_index": latest_cycle.get("cycle_index"),
@@ -817,6 +860,8 @@ class LegalParserOptimizerDaemon:
                 "changed_files": latest_cycle.get("changed_files", []),
                 "patch_valid": (latest_cycle.get("patch_check") or {}).get("valid"),
                 "proposal_quality": latest_cycle.get("proposal_quality", {}),
+                "retained_change": latest_cycle.get("retained_change", {}),
+                "commit_result": latest_cycle.get("commit_result", {}),
                 "applied": (latest_cycle.get("apply_result") or {}).get("applied"),
                 "rolled_back": (latest_cycle.get("apply_result") or {}).get("rolled_back", False),
                 "tests_valid": (latest_cycle.get("tests") or {}).get("valid"),
@@ -896,6 +941,124 @@ class LegalParserOptimizerDaemon:
             except OSError as exc:
                 errors.append(f"{rel_path}: {exc}")
         return {"valid": not errors, "restored": restored, "errors": errors}
+
+    def _retained_change_summary(self, snapshots: Dict[str, Optional[str]]) -> Dict[str, Any]:
+        changed_files: List[str] = []
+        deleted_files: List[str] = []
+        created_files: List[str] = []
+        for rel_path, before in snapshots.items():
+            if isinstance(before, str) and before.startswith("__SNAPSHOT_ERROR__:"):
+                continue
+            path = self.config.repo_root / rel_path
+            try:
+                after: Optional[str] = path.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                after = None
+            except OSError:
+                continue
+            if before != after:
+                changed_files.append(rel_path)
+                if before is None and after is not None:
+                    created_files.append(rel_path)
+                elif before is not None and after is None:
+                    deleted_files.append(rel_path)
+        return {
+            "has_retained_changes": bool(changed_files),
+            "changed_files": changed_files,
+            "created_files": created_files,
+            "deleted_files": deleted_files,
+            "reason": "content_changed" if changed_files else "no_file_content_changed_after_apply",
+        }
+
+    def _retained_patch_for_paths(self, snapshots: Dict[str, Optional[str]]) -> str:
+        paths = [path for path in snapshots if path]
+        if not paths:
+            return ""
+        result = _run_command(
+            ["git", "diff", "--binary", "--", *paths],
+            cwd=self.config.repo_root,
+            timeout=60,
+        )
+        return str(result.get("stdout") or "")
+
+    def _dirty_touched_files(self, changed_files: Sequence[str]) -> List[str]:
+        dirty: List[str] = []
+        for rel_path in changed_files:
+            result = _run_command(
+                ["git", "status", "--porcelain", "--", rel_path],
+                cwd=self.config.repo_root,
+                timeout=30,
+            )
+            if str(result.get("stdout") or "").strip():
+                dirty.append(rel_path)
+        return dirty
+
+    def _commit_retained_change(
+        self,
+        cycle_index: int,
+        proposal: LegalParserCycleProposal,
+        retained_change: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        changed_files = [str(path) for path in retained_change.get("changed_files") or []]
+        if not changed_files:
+            return {"committed": False, "reason": "no_retained_changed_files"}
+        add_result = _run_command(["git", "add", "--", *changed_files], cwd=self.config.repo_root, timeout=60)
+        if not add_result.get("valid"):
+            return {"committed": False, "reason": "git_add_failed", "add": add_result}
+        summary = proposal.summary.strip() or "Improve deterministic legal parser"
+        subject = f"legal-parser-daemon: cycle {cycle_index} retained parser improvement"
+        body = "\n".join(
+            [
+                summary,
+                "",
+                f"Focus area: {proposal.focus_area or 'unspecified'}",
+                "Changed files:",
+                *[f"- {path}" for path in changed_files],
+            ]
+        )
+        commit_result = _run_command(
+            ["git", "commit", "-m", subject, "-m", body],
+            cwd=self.config.repo_root,
+            timeout=120,
+        )
+        head_result = _run_command(["git", "rev-parse", "--short", "HEAD"], cwd=self.config.repo_root, timeout=30)
+        return {
+            "committed": bool(commit_result.get("valid")),
+            "commit": str(head_result.get("stdout") or "").strip() if commit_result.get("valid") else "",
+            "changed_files": changed_files,
+            "commit_command": commit_result,
+        }
+
+    def _git_retained_work_snapshot(self) -> Dict[str, Any]:
+        target_paths = [
+            "ipfs_datasets_py/logic/deontic",
+            "tests/unit_tests/logic/deontic",
+            "ipfs_datasets_py/optimizers/logic/deontic",
+        ]
+        head = _run_command(["git", "rev-parse", "--short", "HEAD"], cwd=self.config.repo_root, timeout=30)
+        status = _run_command(["git", "status", "--short", "--", *target_paths], cwd=self.config.repo_root, timeout=30)
+        diff_stat = _run_command(["git", "diff", "--stat", "--", *target_paths], cwd=self.config.repo_root, timeout=30)
+        recent_commits = _run_command(
+            ["git", "log", "--oneline", "-5", "--", *target_paths],
+            cwd=self.config.repo_root,
+            timeout=30,
+        )
+        uncommitted_files = [
+            line.strip()
+            for line in str(status.get("stdout") or "").splitlines()
+            if line.strip()
+        ]
+        return {
+            "head": str(head.get("stdout") or "").strip(),
+            "uncommitted_file_count": len(uncommitted_files),
+            "uncommitted_files": uncommitted_files,
+            "diff_stat": str(diff_stat.get("stdout") or "").strip(),
+            "recent_commits": [
+                line.strip()
+                for line in str(recent_commits.get("stdout") or "").splitlines()
+                if line.strip()
+            ],
+        }
 
 
 def parse_cycle_proposal(raw_response: str) -> LegalParserCycleProposal:
@@ -1024,10 +1187,15 @@ def _unified_diff_stats(unified_diff: str) -> Dict[str, Any]:
 def _cycle_was_kept(cycle_payload: Dict[str, Any]) -> bool:
     apply_result = cycle_payload.get("apply_result") or {}
     tests = cycle_payload.get("tests") or {}
+    retained = cycle_payload.get("retained_change")
+    retained_ok = True
+    if isinstance(retained, dict):
+        retained_ok = bool(retained.get("has_retained_changes"))
     return bool(
         apply_result.get("applied")
         and not apply_result.get("rolled_back", False)
         and tests.get("valid") is True
+        and retained_ok
     )
 
 
@@ -1067,6 +1235,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--target-score", type=float, default=0.98)
     parser.add_argument("--apply-patches", action="store_true", help="Apply LLM-generated patches after git apply --check.")
+    parser.add_argument(
+        "--commit-accepted-patches",
+        action="store_true",
+        help="Commit each retained patch after tests pass, staging only files touched by that patch.",
+    )
+    parser.add_argument(
+        "--allow-dirty-touched-files",
+        action="store_true",
+        help="Allow patches to touch files that already have uncommitted changes.",
+    )
     parser.add_argument("--no-tests", action="store_true", help="Skip pytest validation.")
     parser.add_argument(
         "--test-command",
@@ -1092,6 +1270,8 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         require_production_and_tests=not bool(args.allow_patches_without_tests),
         target_score=float(args.target_score),
         apply_patches=bool(args.apply_patches),
+        commit_accepted_patches=bool(args.commit_accepted_patches),
+        require_clean_touched_files=not bool(args.allow_dirty_touched_files),
         run_tests=not bool(args.no_tests),
         test_command=test_command,
     )

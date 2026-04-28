@@ -77,6 +77,35 @@ ALLOWED_WRITE_PREFIXES = (
     "ipfs_datasets_py/docs/logic/",
 )
 
+NON_RUNTIME_TASK_KEYWORDS = (
+    "fixture",
+    "fixtures",
+    "capture",
+    "captures",
+    "schema",
+    "docs",
+    "document",
+    "documentation",
+    "evaluate",
+    "decide",
+    "track",
+    "record",
+    "plan",
+    "threshold",
+    "acceptance",
+)
+
+FIXTURE_VALIDATION_TASK_KEYWORDS = (
+    "fixture",
+    "fixtures",
+    "capture",
+    "captures",
+    "parity",
+)
+
+RUNTIME_LOGIC_PREFIX = "src/lib/logic/"
+PARITY_FIXTURE_PREFIX = "src/lib/logic/parity/"
+
 
 @dataclass(frozen=True)
 class CommandResult:
@@ -139,6 +168,7 @@ class LogicPortDaemonConfig:
     retry_interval_seconds: float = 300.0
     max_failure_cycles: int = 0
     result_log_path: Optional[Path] = None
+    accepted_work_log_path: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md")
     codex_trace_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/codex-runs")
     failed_patch_dir: Path = Path("ipfs_datasets_py/.daemon/failed-patches")
     patch_repair_attempts: int = 1
@@ -159,6 +189,8 @@ class LogicPortArtifact:
     files: List[Dict[str, str]] = field(default_factory=list)
     validation_commands: List[List[str]] = field(default_factory=list)
     raw_response: str = ""
+    target_task: str = ""
+    impact: str = ""
     applied: bool = False
     dry_run: bool = True
     validation_results: List[CommandResult] = field(default_factory=list)
@@ -172,6 +204,8 @@ class LogicPortArtifact:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "summary": self.summary,
+            "target_task": self.target_task,
+            "impact": self.impact,
             "tasks": self.tasks,
             "has_patch": bool(self.patch.strip()),
             "files": [item.get("path", "") for item in self.files],
@@ -230,6 +264,7 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
 
         return LogicPortArtifact(
             summary=str(parsed.get("summary", "")),
+            impact=str(parsed.get("impact", "")),
             patch=str(parsed.get("patch", "")),
             files=_parse_file_edits(parsed.get("files", [])),
             tasks=[str(item) for item in parsed.get("tasks", []) if isinstance(item, (str, int, float))],
@@ -322,6 +357,41 @@ def _patch_changed_files(patch: str) -> List[str]:
     return paths
 
 
+def _artifact_paths(artifact: LogicPortArtifact) -> List[str]:
+    paths = [edit.get("path", "") for edit in artifact.files if edit.get("path")]
+    paths.extend(_patch_changed_files(artifact.patch))
+    seen = set()
+    ordered: List[str] = []
+    for path in paths:
+        normalized = path.replace("\\", "/")
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            ordered.append(normalized)
+    return ordered
+
+
+def _task_allows_non_runtime_only(task: Optional[PlanTask]) -> bool:
+    if task is None:
+        return False
+    title = task.title.lower()
+    return any(keyword in title for keyword in NON_RUNTIME_TASK_KEYWORDS)
+
+
+def _task_requires_fixture_validation(task: Optional[PlanTask]) -> bool:
+    if task is None:
+        return False
+    title = task.title.lower()
+    return any(keyword in title for keyword in FIXTURE_VALIDATION_TASK_KEYWORDS)
+
+
+def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
+    return any(path.startswith(RUNTIME_LOGIC_PREFIX) and not path.startswith(PARITY_FIXTURE_PREFIX) for path in paths)
+
+
+def _has_logic_test_change(paths: Sequence[str]) -> bool:
+    return any(path.startswith(RUNTIME_LOGIC_PREFIX) and path.endswith(".test.ts") for path in paths)
+
+
 def extract_plan_tasks(markdown: str) -> List[PlanTask]:
     """Extract ordered implementation tasks from the markdown plan."""
 
@@ -401,6 +471,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         response = self._call_llm(prompt)
         artifact = parse_llm_patch_response(response)
         artifact.dry_run = self.daemon_config.dry_run
+        selected_task = self._current_plan_task()
+        artifact.target_task = selected_task.label if selected_task else ""
         return artifact
 
     def critique(self, artifact: LogicPortArtifact, context: OptimizationContext) -> Tuple[float, List[str]]:
@@ -442,7 +514,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             artifact.validation_results = self._run_validation()
             return artifact
 
-        preflight_errors = self._preflight_artifact(artifact)
+        preflight_errors = self._preflight_artifact(artifact, selected_task=self._current_plan_task())
         if preflight_errors:
             artifact.errors.extend(preflight_errors)
             return artifact
@@ -454,7 +526,10 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 artifact.errors.append(str(exc))
                 return artifact
             if not artifact.applied:
-                artifact.errors.append("File edits failed validation and were rolled back.")
+                if not changed_files and all(result.ok for result in artifact.validation_results):
+                    artifact.errors.append("File edits made no content changes.")
+                else:
+                    artifact.errors.append("File edits failed validation and were rolled back.")
             else:
                 artifact.changed_files = changed_files
             return artifact
@@ -621,6 +696,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 component=self.__class__.__name__,
             )
             self._update_task_board(results)
+            self._append_accepted_work_log(results)
         return results
 
     def run_supervised(self, *, cycles: int = 0) -> List[Dict[str, Any]]:
@@ -669,6 +745,51 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             handle.write(json.dumps({"pid": os.getpid(), "results": results}, default=str))
             handle.write("\n")
 
+    def _append_accepted_work_log(self, results: List[Dict[str, Any]]) -> None:
+        if self.daemon_config.accepted_work_log_path is None or not results:
+            return
+        latest = results[-1]
+        if not latest.get("valid"):
+            return
+        artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
+        changed_files = [str(path) for path in artifact.get("changed_files", []) if str(path)]
+        if not changed_files:
+            return
+
+        path = self.daemon_config.resolve(self.daemon_config.accepted_work_log_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            path.write_text(
+                "# Logic Port Daemon Accepted Work\n\n"
+                "This file is append-only daemon evidence for validated work that changed files used by the TypeScript port.\n\n",
+                encoding="utf-8",
+            )
+
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        validation_results = artifact.get("validation_results", [])
+        validation_commands = []
+        for item in validation_results:
+            command = item.get("command") if isinstance(item, dict) else None
+            returncode = item.get("returncode") if isinstance(item, dict) else None
+            if command is not None:
+                validation_commands.append(f"`{' '.join(command)}` -> `{returncode}`")
+        entry = [
+            f"## {timestamp}",
+            "",
+            f"- Target: `{artifact.get('target_task') or 'unknown'}`",
+            f"- Summary: {artifact.get('summary') or 'No summary'}",
+        ]
+        if artifact.get("impact"):
+            entry.append(f"- Impact: {artifact.get('impact')}")
+        entry.append(f"- Changed files: {', '.join(f'`{file}`' for file in changed_files)}")
+        if validation_commands:
+            entry.append(f"- Validation: {', '.join(validation_commands)}")
+        entry.append("")
+
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write("\n".join(entry))
+            handle.write("\n")
+
     def _update_task_board(self, results: List[Dict[str, Any]]) -> None:
         if self.daemon_config.dry_run or not self.daemon_config.update_task_board or self.daemon_config.task_board_doc is None:
             return
@@ -714,6 +835,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         latest_artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
         latest_valid = bool(latest.get("valid"))
         latest_summary = str(latest_artifact.get("summary") or "No summary")
+        latest_impact = str(latest_artifact.get("impact") or "")
         latest_errors = latest_artifact.get("errors") or []
         latest_changed_files = [str(path) for path in latest_artifact.get("changed_files", []) if str(path)]
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -761,6 +883,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 f"- Summary: {latest_summary}",
             ]
         )
+        if latest_impact:
+            lines.append(f"- Impact: {latest_impact}")
         if latest_changed_files:
             lines.append(f"- Accepted changed files: {', '.join(f'`{path}`' for path in latest_changed_files)}")
         if latest_errors:
@@ -772,6 +896,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 "### Required Daemon Behavior",
                 "",
                 "- Work only on the current port-plan target unless the task is already complete in code and tests.",
+                "- For implementation tasks, accepted work must change runtime TypeScript under `src/lib/logic/`; fixture-only work is reserved for fixture/capture/documentation tasks.",
                 "- If a round fails, keep the task marked as needing follow-up and use the validation error as the next-cycle constraint.",
                 "- Mark a task complete only after TypeScript validation and logic-port tests pass for the accepted change.",
                 "- Keep browser runtime changes TypeScript/WASM-native with no server or Python service dependency.",
@@ -807,8 +932,12 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 path.write_text(edit["content"], encoding="utf-8")
             self._format_file_edits(touched)
             validation_results = self._run_validation()
-            changed_files = sorted({str(path.relative_to(self.daemon_config.repo_root)) for path in touched})
-            return all(result.ok for result in validation_results), validation_results, changed_files
+            changed_files = sorted(
+                str(path.relative_to(self.daemon_config.repo_root))
+                for path in originals
+                if (path.read_text(encoding="utf-8") if path.exists() else None) != originals[path]
+            )
+            return all(result.ok for result in validation_results) and bool(changed_files), validation_results, changed_files
         finally:
             validation_results = locals().get("validation_results")
             if not validation_results or not all(result.ok for result in validation_results):
@@ -831,7 +960,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             timeout_seconds=120,
         )
 
-    def _preflight_artifact(self, artifact: LogicPortArtifact) -> List[str]:
+    def _preflight_artifact(self, artifact: LogicPortArtifact, *, selected_task: Optional[PlanTask] = None) -> List[str]:
         errors: List[str] = []
         candidates = [artifact.patch, *(edit.get("content", "") for edit in artifact.files)]
         for snippet in FORBIDDEN_PATCH_SNIPPETS:
@@ -839,7 +968,26 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 errors.append(
                     f"Rejected proposal because it imports {snippet}; logic tests use Jest globals without test-framework imports."
                 )
+        paths = _artifact_paths(artifact)
+        if selected_task and paths and not _task_allows_non_runtime_only(selected_task) and not _has_runtime_logic_change(paths):
+            errors.append(
+                "Rejected proposal because the selected port-plan task appears to require implementation work, "
+                "but the proposal does not change any runtime TypeScript file under src/lib/logic/."
+            )
+        if selected_task and paths and _task_requires_fixture_validation(selected_task) and not _has_logic_test_change(paths):
+            errors.append(
+                "Rejected proposal because fixture/capture/parity work must update a src/lib/logic/*.test.ts file "
+                "that loads or asserts the generated fixture."
+            )
         return errors
+
+    def _current_plan_task(self) -> Optional[PlanTask]:
+        if self.daemon_config.task_board_doc is None:
+            return None
+        path = self.daemon_config.resolve(self.daemon_config.task_board_doc)
+        if not path.exists():
+            return None
+        return self._select_next_plan_task(extract_plan_tasks(path.read_text(encoding="utf-8")))
 
     def _rollback_patch(self, patch: str) -> List[CommandResult]:
         check = run_command(
@@ -1022,6 +1170,10 @@ Hard constraints:
 - Prefer implementation changes under src/lib/logic/ whenever the selected task asks for functionality, not only docs.
 - Fixture-only work is acceptable only when the selected port-plan checkbox explicitly asks for fixtures or generated Python parity captures.
 - For accepted work, the changed files must be directly usable by the TypeScript port validation suite.
+- For implementation tasks, include at least one runtime source change under src/lib/logic/; docs-only, board-only, or parity-fixture-only changes are not acceptable.
+- For fixture/capture tasks, include tests that load and assert the fixture content so the work is used by validation.
+- Fixture/capture/parity proposals that do not update a src/lib/logic/*.test.ts file will be rejected.
+- Explain the concrete impact of the changed files in the JSON impact field.
 - Limit the patch to at most {self.daemon_config.max_patch_lines} changed diff lines.
 - Prefer one implementation file plus one focused test file.
 - Do not include prose inside the patch string.
@@ -1032,6 +1184,7 @@ Hard constraints:
 Return ONLY JSON with this shape:
 {{
   "summary": "short description",
+  "impact": "how the changed files are directly used by the TypeScript port or its validation suite",
   "tasks": ["requirement addressed"],
   "patch": "unified diff string, or empty if using files",
   "files": [

@@ -192,6 +192,11 @@ def test_daemon_writes_accepted_change_ledger_and_progress_summary(tmp_path):
         "production_files": ["ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"],
         "test_files": ["tests/unit_tests/logic/deontic/test_deontic_converter.py"],
         "patch_stats": {"files_changed": 2, "insertions": 3, "deletions": 1},
+        "retained_change": {
+            "has_retained_changes": True,
+            "changed_files": ["ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"],
+        },
+        "commit_result": {"committed": False, "reason": "disabled"},
         "score": 0.5,
         "metrics": {"parity_score": 0.5, "coverage_gaps": ["gap"]},
         "post_evaluation": {"metrics": {"parity_score": 0.6}},
@@ -208,4 +213,52 @@ def test_daemon_writes_accepted_change_ledger_and_progress_summary(tmp_path):
     assert "Improve parser behavior." in ledger.read_text(encoding="utf-8")
     progress_payload = json.loads(progress.read_text(encoding="utf-8"))
     assert progress_payload["accepted_patch_count"] == 1
+    assert progress_payload["retained_accepted_patch_count"] == 1
     assert progress_payload["latest_cycle"]["changed_files"] == cycle["changed_files"]
+    assert progress_payload["latest_cycle"]["retained_change"]["has_retained_changes"] is True
+    assert progress_payload["latest_cycle"]["commit_result"]["committed"] is False
+
+
+def test_retained_change_summary_detects_no_content_change(tmp_path):
+    path = tmp_path / "ipfs_datasets_py/logic/deontic/example.py"
+    path.parent.mkdir(parents=True)
+    path.write_text("same", encoding="utf-8")
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+
+    retained = daemon._retained_change_summary({"ipfs_datasets_py/logic/deontic/example.py": "same"})
+
+    assert retained["has_retained_changes"] is False
+    assert retained["reason"] == "no_file_content_changed_after_apply"
+
+
+def test_retained_change_summary_detects_changed_file(tmp_path):
+    path = tmp_path / "ipfs_datasets_py/logic/deontic/example.py"
+    path.parent.mkdir(parents=True)
+    path.write_text("after", encoding="utf-8")
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+
+    retained = daemon._retained_change_summary({"ipfs_datasets_py/logic/deontic/example.py": "before"})
+
+    assert retained["has_retained_changes"] is True
+    assert retained["changed_files"] == ["ipfs_datasets_py/logic/deontic/example.py"]
+
+
+def test_dirty_touched_files_reports_uncommitted_target_file(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    path = repo / "ipfs_datasets_py/logic/deontic/example.py"
+    path.parent.mkdir(parents=True)
+    path.write_text("before\n", encoding="utf-8")
+    __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    path.write_text("after\n", encoding="utf-8")
+    config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+
+    dirty = daemon._dirty_touched_files(["ipfs_datasets_py/logic/deontic/example.py"])
+
+    assert dirty == ["ipfs_datasets_py/logic/deontic/example.py"]
