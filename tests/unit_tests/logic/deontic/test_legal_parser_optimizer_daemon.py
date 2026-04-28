@@ -262,3 +262,39 @@ def test_dirty_touched_files_reports_uncommitted_target_file(tmp_path):
     dirty = daemon._dirty_touched_files(["ipfs_datasets_py/logic/deontic/example.py"])
 
     assert dirty == ["ipfs_datasets_py/logic/deontic/example.py"]
+
+
+def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    progress = {
+        "updated_at": "2026-04-28T00:00:00+00:00",
+        "run": {"run_id": "run-1", "baseline_head": "abc123"},
+        "total_cycles": 3,
+        "retained_accepted_patch_count": 1,
+        "rolled_back_count": 1,
+        "rejected_patch_count": 1,
+        "current_score": 0.9,
+        "score_delta": 0.1,
+        "current_feedback": ["repair_required_count: 1"],
+        "git_retained_work": {
+            "head": "def456",
+            "commits_since_run_start": ["def456 legal-parser-daemon: cycle 2 retained parser improvement"],
+            "uncommitted_files": ["M ipfs_datasets_py/logic/deontic/formula_builder.py"],
+            "diff_since_run_start_stat": "formula_builder.py | 3 ++-",
+        },
+        "accepted_change_summaries": [
+            {
+                "cycle_index": 2,
+                "summary": "Improve formula export.",
+                "changed_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
+            }
+        ],
+    }
+
+    report = daemon._format_progress_report(progress)
+
+    assert "def456 legal-parser-daemon" in report
+    assert "M ipfs_datasets_py/logic/deontic/formula_builder.py" in report
+    assert "Improve formula export." in report
+    assert "repair_required_count: 1" in report

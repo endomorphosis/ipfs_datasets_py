@@ -455,6 +455,10 @@ class LegalParserOptimizerDaemon:
         self.state_file = self.output_dir / "daemon_state.json"
         self.optimizer = optimizer or LegalParserParityOptimizer(daemon_config=self.config)
         self._state = self._load_state()
+        self.run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        self.run_started_at = _utc_now()
+        self.run_baseline_head = self._current_head()
+        self._write_run_manifest()
         self._sync_progress_from_existing_cycles()
 
     async def run(self) -> Dict[str, Any]:
@@ -713,6 +717,7 @@ class LegalParserOptimizerDaemon:
         progress = self._build_progress_summary(latest_cycle=cycle_payload)
         progress_path = self.output_dir / "progress_summary.json"
         progress_path.write_text(json.dumps(progress, indent=2, default=str), encoding="utf-8")
+        self._write_progress_report(progress)
 
     def _sync_progress_from_existing_cycles(self) -> None:
         cycles = self._read_cycle_summaries()
@@ -734,6 +739,7 @@ class LegalParserOptimizerDaemon:
             json.dumps(progress, indent=2, default=str),
             encoding="utf-8",
         )
+        self._write_progress_report(progress)
 
     def _append_accepted_change(self, cycle_payload: Dict[str, Any]) -> None:
         _append_jsonl(self.output_dir / "accepted_changes.jsonl", self._accepted_change_record(cycle_payload))
@@ -853,6 +859,11 @@ class LegalParserOptimizerDaemon:
             "current_feedback": current_feedback,
             "stalled_metric_cycles": unchanged_tail,
             "git_retained_work": self._git_retained_work_snapshot(),
+            "run": {
+                "run_id": self.run_id,
+                "started_at": self.run_started_at,
+                "baseline_head": self.run_baseline_head,
+            },
             "accepted_change_summaries": accepted_summaries,
             "latest_cycle": {
                 "cycle_index": latest_cycle.get("cycle_index"),
@@ -867,6 +878,89 @@ class LegalParserOptimizerDaemon:
                 "tests_valid": (latest_cycle.get("tests") or {}).get("valid"),
             },
         }
+
+    def _write_run_manifest(self) -> None:
+        manifest = {
+            "run_id": self.run_id,
+            "started_at": self.run_started_at,
+            "baseline_head": self.run_baseline_head,
+            "model_name": self.config.model_name,
+            "provider": self.config.provider,
+            "apply_patches": self.config.apply_patches,
+            "commit_accepted_patches": self.config.commit_accepted_patches,
+            "require_clean_touched_files": self.config.require_clean_touched_files,
+            "test_command": list(self.config.test_command),
+        }
+        (self.output_dir / "current_run.json").write_text(
+            json.dumps(manifest, indent=2, default=str),
+            encoding="utf-8",
+        )
+
+    def _write_progress_report(self, progress: Dict[str, Any]) -> None:
+        (self.output_dir / "PROGRESS.md").write_text(
+            self._format_progress_report(progress),
+            encoding="utf-8",
+        )
+
+    def _format_progress_report(self, progress: Dict[str, Any]) -> str:
+        git_work = progress.get("git_retained_work") or {}
+        run = progress.get("run") or {}
+        commits_since_start = git_work.get("commits_since_run_start") or []
+        uncommitted_files = git_work.get("uncommitted_files") or []
+        visible_status = "visible"
+        if not commits_since_start and not uncommitted_files:
+            visible_status = "no visible parser delta since this daemon run started"
+
+        lines = [
+            "# Legal Parser Optimizer Progress",
+            "",
+            f"- Updated: `{progress.get('updated_at', '')}`",
+            f"- Run ID: `{run.get('run_id', self.run_id)}`",
+            f"- Run baseline: `{run.get('baseline_head', self.run_baseline_head)}`",
+            f"- Current HEAD: `{git_work.get('head', '')}`",
+            f"- Visible work status: `{visible_status}`",
+            f"- Total cycles: `{progress.get('total_cycles', 0)}`",
+            f"- Accepted retained patches: `{progress.get('retained_accepted_patch_count', 0)}`",
+            f"- Rolled back patches: `{progress.get('rolled_back_count', 0)}`",
+            f"- Rejected patches: `{progress.get('rejected_patch_count', 0)}`",
+            f"- Current score: `{progress.get('current_score')}`",
+            f"- Score delta: `{progress.get('score_delta')}`",
+            "",
+            "## Visible Git Work",
+            "",
+        ]
+        if commits_since_start:
+            lines.append("Commits since this daemon run started:")
+            lines.extend(f"- `{commit}`" for commit in commits_since_start)
+        else:
+            lines.append("No deontic parser commits have been created since this daemon run started.")
+        lines.append("")
+        if uncommitted_files:
+            lines.append("Uncommitted deontic parser files:")
+            lines.extend(f"- `{path}`" for path in uncommitted_files)
+        else:
+            lines.append("No uncommitted deontic parser files are currently visible.")
+        diff_stat = str(git_work.get("diff_since_run_start_stat") or git_work.get("diff_stat") or "").strip()
+        if diff_stat:
+            lines.extend(["", "Diff stat:", "", "```text", diff_stat, "```"])
+        lines.extend(["", "## Recent Accepted Changes", ""])
+        accepted = progress.get("accepted_change_summaries") or []
+        if accepted:
+            for item in accepted[-10:]:
+                files = ", ".join(item.get("changed_files") or [])
+                lines.append(f"- Cycle `{item.get('cycle_index')}`: {item.get('summary') or '(no summary)'}")
+                if files:
+                    lines.append(f"  Files: `{files}`")
+        else:
+            lines.append("No accepted retained changes are recorded yet.")
+        lines.extend(["", "## Current Blockers", ""])
+        feedback = progress.get("current_feedback") or []
+        if feedback:
+            lines.extend(f"- `{item}`" for item in feedback)
+        else:
+            lines.append("No current feedback items recorded.")
+        lines.append("")
+        return "\n".join(lines)
 
     def _load_state(self) -> Dict[str, Any]:
         if not self.state_file.exists():
@@ -1043,6 +1137,16 @@ class LegalParserOptimizerDaemon:
             cwd=self.config.repo_root,
             timeout=30,
         )
+        commits_since_run_start = _run_command(
+            ["git", "log", "--oneline", f"{self.run_baseline_head}..HEAD", "--", *target_paths],
+            cwd=self.config.repo_root,
+            timeout=30,
+        )
+        diff_since_run_start = _run_command(
+            ["git", "diff", "--stat", f"{self.run_baseline_head}..HEAD", "--", *target_paths],
+            cwd=self.config.repo_root,
+            timeout=30,
+        )
         uncommitted_files = [
             line.strip()
             for line in str(status.get("stdout") or "").splitlines()
@@ -1053,12 +1157,23 @@ class LegalParserOptimizerDaemon:
             "uncommitted_file_count": len(uncommitted_files),
             "uncommitted_files": uncommitted_files,
             "diff_stat": str(diff_stat.get("stdout") or "").strip(),
+            "run_baseline_head": self.run_baseline_head,
+            "commits_since_run_start": [
+                line.strip()
+                for line in str(commits_since_run_start.get("stdout") or "").splitlines()
+                if line.strip()
+            ],
+            "diff_since_run_start_stat": str(diff_since_run_start.get("stdout") or "").strip(),
             "recent_commits": [
                 line.strip()
                 for line in str(recent_commits.get("stdout") or "").splitlines()
                 if line.strip()
             ],
         }
+
+    def _current_head(self) -> str:
+        result = _run_command(["git", "rev-parse", "--short", "HEAD"], cwd=self.config.repo_root, timeout=30)
+        return str(result.get("stdout") or "").strip()
 
 
 def parse_cycle_proposal(raw_response: str) -> LegalParserCycleProposal:
