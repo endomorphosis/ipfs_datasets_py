@@ -60,6 +60,7 @@ def test_ir_formula_record_carries_proof_ready_provenance():
     assert record["support_span"] == element["support_span"]
     assert record["field_spans"] == element["field_spans"]
     assert record["proof_ready"] is True
+    assert record["repair_required"] is False
     assert record["requires_validation"] is False
     assert record["blockers"] == []
     assert record["parser_warnings"] == []
@@ -78,6 +79,7 @@ def test_ir_formula_record_preserves_blocked_reference_exception_slots():
     assert "Section552" not in record["formula"]
     assert record["proof_ready"] is False
     assert record["requires_validation"] is True
+    assert record["repair_required"] is True
     assert "cross_reference_requires_resolution" in record["parser_warnings"]
     assert "exception_requires_scope_review" in record["parser_warnings"]
     assert "cross_reference_requires_resolution" in record["blockers"]
@@ -97,6 +99,7 @@ def test_simple_substantive_exception_formula_record_is_proof_ready_with_resolut
     assert record["formula"] == "O(∀x (Applicant(x) ∧ ¬ApprovalIsDenied(x) → ObtainPermit(x)))"
     assert record["proof_ready"] is True
     assert record["requires_validation"] is False
+    assert record["repair_required"] is False
     assert record["blockers"] == norm.blockers
     assert record["parser_warnings"] == norm.quality.parser_warnings
     assert record["deterministic_resolution"] == {
@@ -118,9 +121,366 @@ def test_reference_exception_formula_record_remains_blocked():
 
     assert record["proof_ready"] is False
     assert record["requires_validation"] is True
+    assert record["repair_required"] is True
     assert record["deterministic_resolution"] == {}
     assert "cross_reference_requires_resolution" in record["blockers"]
     assert "exception_requires_scope_review" in record["blockers"]
+
+
+def test_local_scope_reference_exception_formula_record_is_proof_ready():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in this section."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "exception_requires_scope_review" in norm.blockers
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "AsProvidedThisSection" not in record["formula"]
+    assert record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in this section"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"] == {
+        "type": "local_scope_reference_exception",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "scopes": ["this section"],
+        "exception_spans": [norm.exceptions[0].get("span", [])],
+        "reason": "local self-reference exception is exported as provenance outside the operative formula",
+    }
+
+
+def test_local_scope_reference_exception_with_otherwise_formula_record_is_proof_ready():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as otherwise provided in this section."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "exception_requires_scope_review" in norm.blockers
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "AsOtherwiseProvidedThisSection" not in record["formula"]
+    assert record["omitted_formula_slots"]["exceptions"][0]["value"] == (
+        "as otherwise provided in this section"
+    )
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"] == {
+        "type": "local_scope_reference_exception",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "scopes": ["this section"],
+        "exception_spans": [norm.exceptions[0].get("span", [])],
+        "reason": "local self-reference exception is exported as provenance outside the operative formula",
+    }
+
+
+def test_local_scope_cross_reference_detail_exception_formula_record_is_proof_ready():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in this section."
+    )[0]
+    element = dict(element)
+    element["cross_reference_details"] = [
+        {
+            "reference_type": "section",
+            "target": "this",
+            "raw_text": "this section",
+            "span": [68, 80],
+        }
+    ]
+    element["resolved_cross_references"] = []
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "exception_requires_scope_review" in norm.blockers
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "ThisSection" not in record["formula"]
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"] == {
+        "type": "local_scope_reference_exception",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "scopes": ["this section"],
+        "exception_spans": [norm.exceptions[0].get("span", [])],
+        "reason": "local self-reference exception is exported as provenance outside the operative formula",
+    }
+
+
+def test_numbered_reference_exception_without_resolution_stays_blocked():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in section 552"
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
+
+
+def test_batch_formula_records_resolve_same_document_numbered_reference_exception():
+    reference_element = extract_normative_elements("The clerk shall maintain the index.")[0]
+    reference_element = dict(reference_element)
+    reference_element["canonical_citation"] = "section 552"
+
+    exception_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    reference_norm = LegalNormIR.from_parser_element(reference_element)
+    exception_norm = LegalNormIR.from_parser_element(exception_element)
+    records = build_deontic_formula_records_from_irs([reference_norm, exception_norm])
+    exception_record = records[1]
+
+    assert exception_norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in exception_norm.blockers
+    assert "exception_requires_scope_review" in exception_norm.blockers
+    assert exception_record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in exception_record["formula"]
+    assert exception_record["omitted_formula_slots"]["exceptions"][0]["value"] == (
+        "as provided in section 552"
+    )
+    assert exception_record["proof_ready"] is True
+    assert exception_record["requires_validation"] is False
+    assert exception_record["repair_required"] is False
+    assert exception_record["deterministic_resolution"] == {
+        "type": "resolved_same_document_reference_exception",
+        "resolved_blockers": sorted(set(exception_norm.blockers)),
+        "references": ["section 552"],
+        "exception_spans": [exception_norm.exceptions[0].get("span", [])],
+        "reason": "reference-only exception is backed by explicit same-document cross-reference resolution",
+    }
+
+
+def test_batch_formula_records_do_not_resolve_absent_numbered_reference_exception():
+    exception_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    exception_norm = LegalNormIR.from_parser_element(exception_element)
+
+    records = build_deontic_formula_records_from_irs([exception_norm])
+    record = records[0]
+
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
+
+
+def test_batch_formula_records_resolve_same_document_numbered_reference_condition():
+    reference_element = extract_normative_elements("The clerk shall maintain the index.")[0]
+    reference_element = dict(reference_element)
+    reference_element["canonical_citation"] = "section 552"
+
+    condition_element = extract_normative_elements(
+        "Subject to section 552, the Secretary shall publish the notice."
+    )[0]
+    condition_element = dict(condition_element)
+    condition_element["condition_details"] = [
+        {"type": "subject_to", "value": "section 552", "span": [11, 22]}
+    ]
+    condition_element["cross_reference_details"] = [
+        {"reference_type": "section", "target": "552", "span": [11, 22]}
+    ]
+    condition_element["resolved_cross_references"] = []
+
+    reference_norm = LegalNormIR.from_parser_element(reference_element)
+    condition_norm = LegalNormIR.from_parser_element(condition_element)
+    records = build_deontic_formula_records_from_irs([reference_norm, condition_norm])
+    condition_record = records[1]
+
+    assert condition_norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in condition_norm.blockers
+    assert condition_record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in condition_record["formula"]
+    assert condition_record["omitted_formula_slots"]["conditions"][0]["value"] == "section 552"
+    assert condition_record["proof_ready"] is True
+    assert condition_record["requires_validation"] is False
+    assert condition_record["repair_required"] is False
+    assert condition_record["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_condition"
+    )
+
+
+def test_numbered_cross_reference_detail_does_not_use_local_scope_resolution():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    element = dict(element)
+    element["cross_reference_details"] = [
+        {
+            "reference_type": "section",
+            "target": "552",
+            "canonical_citation": "section 552",
+            "span": [68, 79],
+        }
+    ]
+    element["resolved_cross_references"] = []
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
+
+
+def test_same_document_reference_exception_uses_canonical_reference_text():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    element = dict(element)
+    element["resolved_cross_references"] = [
+        {
+            "reference_type": "section",
+            "target": "552",
+            "canonical_citation": "section 552",
+            "resolution_scope": "same_document",
+            "source_id": "deontic:resolved-section-552",
+        }
+    ]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.resolved_cross_references[0]["value"] == "section 552"
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"] == {
+        "type": "resolved_same_document_reference_exception",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "references": ["section 552"],
+        "exception_spans": [norm.exceptions[0].get("span", [])],
+        "reason": "reference-only exception is backed by explicit same-document cross-reference resolution",
+    }
+
+
+def test_resolved_same_document_reference_exception_formula_record_is_proof_ready():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    element = dict(element)
+    element["resolved_cross_references"] = [
+        {
+            "reference_type": "section",
+            "canonical_citation": "section 552",
+            "target": "552",
+            "resolution_scope": "same_document",
+            "source_id": "deontic:resolved-section-552",
+        }
+    ]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in norm.blockers
+    assert "exception_requires_scope_review" in norm.blockers
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in section 552"
+    assert record["deterministic_resolution"] == {
+        "type": "resolved_same_document_reference_exception",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "references": ["section 552"],
+        "exception_spans": [norm.exceptions[0].get("span", [])],
+        "reason": "reference-only exception is backed by explicit same-document cross-reference resolution",
+    }
+
+
+def test_same_document_cross_reference_detail_exception_formula_record_is_proof_ready():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    element = dict(element)
+    element["cross_reference_details"] = [
+        {
+            "reference_type": "section",
+            "canonical_citation": "section 552",
+            "target": "552",
+            "resolution_scope": "same_document",
+            "source_id": "deontic:resolved-section-552",
+        }
+    ]
+    element["resolved_cross_references"] = []
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert norm.cross_references[0]["value"] == "section 552"
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"]["type"] == "resolved_same_document_reference_exception"
+    assert record["deterministic_resolution"]["references"] == ["section 552"]
+
+
+def test_external_resolved_reference_exception_formula_record_remains_blocked():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    element = dict(element)
+    element["resolved_cross_references"] = [
+        {
+            "reference_type": "section",
+            "canonical_citation": "section 552",
+            "target": "552",
+            "resolution_scope": "external",
+            "source_id": "external:section-552",
+        }
+    ]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["deterministic_resolution"] == {}
+    assert "cross_reference_requires_resolution" in record["blockers"]
+
+
+def test_mixed_substantive_and_reference_exception_formula_record_remains_blocked():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    element = dict(element)
+    element["exception_details"] = list(element["exception_details"]) + [
+        {"type": "unless", "value": "publication is impossible", "span": [0, 0]}
+    ]
+    element["resolved_cross_references"] = [
+        {"reference_type": "section", "canonical_citation": "section 552", "target": "552", "same_document": True}
+    ]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["deterministic_resolution"] == {}
 
 
 def test_override_with_exception_formula_record_remains_blocked():
@@ -173,7 +533,7 @@ def test_external_applicability_formula_record_remains_blocked():
     assert "cross_reference_requires_resolution" in record["blockers"]
 
 
-def test_ir_formula_record_preserves_override_slots_without_theorem_antecedent():
+def test_pure_override_formula_record_is_proof_ready_with_resolution_note():
     element = extract_normative_elements(
         "Notwithstanding section 5.01.020, the Director may issue a variance."
     )[0]
@@ -183,9 +543,36 @@ def test_ir_formula_record_preserves_override_slots_without_theorem_antecedent()
 
     assert record["formula"] == "P(∀x (Director(x) → IssueVariance(x)))"
     assert "Section501020" not in record["formula"]
+    assert norm.proof_ready is False
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["omitted_formula_slots"]["overrides"][0]["value"] == "section 5.01.020"
+    assert "override_clause_requires_precedence_review" in record["blockers"]
+    assert "cross_reference_requires_resolution" in record["blockers"]
+    assert record["deterministic_resolution"] == {
+        "type": "pure_precedence_override",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "override": "section 5.01.020",
+        "override_span": norm.overrides[0].get("span", []),
+        "reason": (
+            "single source-grounded precedence override is exported as provenance "
+            "outside the operative formula"
+        ),
+    }
+
+
+def test_conditional_override_formula_record_remains_blocked():
+    element = extract_normative_elements(
+        "Notwithstanding section 5.01.020, the Director may issue a variance if hardship is shown."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["formula"] == "P(∀x (Director(x) ∧ HardshipIsShown(x) → IssueVariance(x)))"
     assert record["proof_ready"] is False
     assert record["requires_validation"] is True
-    assert record["omitted_formula_slots"]["overrides"][0]["value"] == "section 5.01.020"
+    assert record["deterministic_resolution"] == {}
     assert "override_clause_requires_precedence_review" in record["blockers"]
 
 
@@ -764,6 +1151,119 @@ def test_reference_condition_filtering_preserves_other_substantive_conditions():
     assert "Section552" not in formula
     assert "cross_reference_requires_resolution" in norm.quality.parser_warnings
     assert norm.proof_ready is False
+
+
+def test_resolved_reference_condition_formula_record_is_proof_ready_without_reference_predicate():
+    text = "Subject to section 552, the Secretary shall publish the notice."
+    element = extract_normative_elements(text)[0]
+    element = dict(element)
+    element["condition_details"] = [
+        {"type": "subject_to", "value": "section 552", "span": [11, 22]}
+    ]
+    element["cross_reference_details"] = [
+        {"reference_type": "section", "target": "552", "span": [11, 22]}
+    ]
+    element["resolved_cross_references"] = [
+        {
+            "reference_type": "section",
+            "canonical_citation": "section 552",
+            "target": "552",
+            "same_document": True,
+            "source_id": "deontic:resolved-section-552",
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in norm.blockers
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["omitted_formula_slots"]["conditions"][0]["value"] == "section 552"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"] == {
+        "type": "resolved_same_document_reference_condition",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "references": ["section 552"],
+        "condition_spans": [norm.conditions[0].get("span", [])],
+        "reason": "reference-only condition is backed by explicit same-document cross-reference resolution",
+    }
+
+
+def test_unresolved_reference_condition_formula_record_stays_blocked():
+    text = "Subject to section 552, the Secretary shall publish the notice."
+    element = extract_normative_elements(text)[0]
+    element = dict(element)
+    element["condition_details"] = [
+        {"type": "subject_to", "value": "section 552", "span": [11, 22]}
+    ]
+    element["cross_reference_details"] = [
+        {"reference_type": "section", "target": "552", "span": [11, 22]}
+    ]
+    element["resolved_cross_references"] = []
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["omitted_formula_slots"]["conditions"][0]["value"] == "section 552"
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
+
+
+def test_batch_formula_records_resolve_reference_exception_from_section_context():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited_element = extract_normative_elements("The agency shall keep records.")[0]
+    cited_element = dict(cited_element)
+    cited_element["canonical_citation"] = ""
+    cited_element["section_context"] = {"section": "552"}
+
+    records = build_deontic_formula_records_from_irs(
+        [
+            LegalNormIR.from_parser_element(reference_element),
+            LegalNormIR.from_parser_element(cited_element),
+        ]
+    )
+
+    assert records[0]["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in records[0]["formula"]
+    assert records[0]["proof_ready"] is True
+    assert records[0]["requires_validation"] is False
+    assert records[0]["repair_required"] is False
+    assert records[0]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert records[0]["deterministic_resolution"]["references"] == ["section 552"]
+
+
+def test_batch_formula_records_do_not_resolve_reference_exception_from_mismatched_section_context():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited_element = extract_normative_elements("The agency shall keep records.")[0]
+    cited_element = dict(cited_element)
+    cited_element["canonical_citation"] = ""
+    cited_element["section_context"] = {"section": "553"}
+
+    records = build_deontic_formula_records_from_irs(
+        [
+            LegalNormIR.from_parser_element(reference_element),
+            LegalNormIR.from_parser_element(cited_element),
+        ]
+    )
+
+    assert records[0]["proof_ready"] is False
+    assert records[0]["requires_validation"] is True
+    assert records[0]["repair_required"] is True
+    assert records[0]["deterministic_resolution"] == {}
 
 
 def test_ir_defined_term_value_alias_prefers_term_field():

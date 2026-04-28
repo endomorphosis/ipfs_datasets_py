@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from ipfs_datasets_py.optimizers.logic_port_daemon import (
+    DEFAULT_PLAN_DOCS,
     LogicPortDaemonConfig,
     LogicPortDaemonOptimizer,
     extract_plan_tasks,
@@ -22,6 +23,10 @@ class FakeRouter:
 class FailingRouter:
     def generate_text(self, prompt, **kwargs):
         raise RuntimeError("no route")
+
+
+def test_default_plan_docs_use_typescript_port_plan():
+    assert DEFAULT_PLAN_DOCS == ("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md",)
 
 
 def test_parse_llm_patch_response_from_json():
@@ -278,6 +283,48 @@ def test_daemon_updates_markdown_task_board_after_round(tmp_path):
     assert "Current target: `Task 0.1: Add Parser Snapshot Fixtures`" in updated
     assert "- [!] `Task 0.1: Add Parser Snapshot Fixtures` - latest daemon round failed validation or preflight" in updated
     assert "- [x] `Task 2.1: Add IR-To-Deontic Exporter` - complete" in updated
+
+
+def test_daemon_marks_valid_checkbox_task_complete_and_reports_changed_files(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    docs_dir = tmp_path / "docs"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    docs_dir.mkdir(parents=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = docs_dir / "fixture.md"
+    target.write_text("old\n", encoding="utf-8")
+    plan.write_text("- [ ] Add usable parity fixture\n- [ ] Implement next feature\n", encoding="utf-8")
+    status.write_text("| ZKP | partial |\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "Update fixture",
+            "files": [{"path": "docs/fixture.md", "content": "new\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="changed-files")
+    LogicPortDaemonOptimizer(config)._update_task_board([result])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "- [x] Add usable parity fixture" in updated
+    assert "Current target: `Task checkbox-2: Implement next feature`" in updated
+    assert "- Accepted changed files: `docs/fixture.md`" in updated
+    assert result["artifact"]["changed_files"] == ["docs/fixture.md"]
 
 
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):

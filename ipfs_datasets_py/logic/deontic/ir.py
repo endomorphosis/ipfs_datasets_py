@@ -80,7 +80,7 @@ def _with_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
     if normalized.get("value"):
         return normalized
 
-    for key in ("normalized_text", "raw_text", "text", "term", "defined_term", "name", "canonical_citation", "citation"):
+    for key in ("canonical_citation", "citation", "normalized_text", "raw_text", "text", "term", "defined_term", "name"):
         value = normalized.get(key)
         if value:
             normalized["value"] = value
@@ -115,6 +115,14 @@ def _reference_value_alias(record: Dict[str, Any]) -> str:
     """Return a canonical human-readable alias for structured legal references."""
 
     reference_type = str(record.get("reference_type") or record.get("type") or "").strip().lower()
+    canonical = str(record.get("canonical_citation") or record.get("citation") or "").strip()
+    if canonical:
+        return canonical
+
+    raw_text = str(record.get("raw_text") or record.get("normalized_text") or "").strip()
+    if raw_text and reference_type and raw_text.lower().startswith(reference_type + " "):
+        return raw_text
+
     target = record.get("target") or record.get("section") or record.get("subsection")
     if not reference_type or not target:
         return ""
@@ -318,6 +326,7 @@ class LegalNormIR:
     field_spans: Dict[str, Any] = field(default_factory=dict)
     formal_terms: Dict[str, Any] = field(default_factory=dict)
     legal_frame: Dict[str, Any] = field(default_factory=dict)
+    section_context: Dict[str, Any] = field(default_factory=dict)
     quality: LegalNormQuality = field(default_factory=LegalNormQuality)
 
     @classmethod
@@ -377,6 +386,7 @@ class LegalNormIR:
             field_spans=dict(element.get("field_spans") or {}),
             formal_terms=dict(element.get("formal_terms") or {}),
             legal_frame=dict(element.get("legal_frame") or {}),
+            section_context=dict(element.get("section_context") or {}),
             quality=LegalNormQuality.from_parser_element(element),
         )
 

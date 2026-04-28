@@ -2,13 +2,19 @@
 
 `ipfs_datasets_py.optimizers.logic_port_daemon` is development tooling for iteratively improving the browser-native TypeScript/WASM port of the Python logic module.
 
-It reads:
+It reads the TypeScript port roadmap as its controlling plan:
+
+- `docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md`
+- `docs/LOGIC_PORT_PARITY.md`
+
+The nested deterministic parser plans are intentionally not the default task source for this daemon. Parser-specific work should be handled by the parser daemon.
+
+Historical context:
 
 - `docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md`
 - `docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md`
-- the outer TypeScript port status docs when run from the Portland site repository
 
-It then calls `ipfs_datasets_py.llm_router.generate_text()` with `model_name="gpt-5.5"` and asks for a conservative unified diff patch. GPT-family models are pinned to the router's `codex_cli` provider unless `--provider` is supplied, so the request flows through `codex exec` rather than local Hugging Face fallback. The daemon disables local Hugging Face fallback by default, because autonomous code changes should fail closed if the configured router cannot reach the requested model. The daemon only applies model output through `git apply`; it does not execute arbitrary commands returned by the model.
+It then calls `ipfs_datasets_py.llm_router.generate_text()` with `model_name="gpt-5.5"` and asks for a conservative TypeScript port improvement. GPT-family models are pinned to the router's `codex_cli` provider unless `--provider` is supplied, so the request flows through `codex exec` rather than local Hugging Face fallback. The daemon disables local Hugging Face fallback by default, because autonomous code changes should fail closed if the configured router cannot reach the requested model. The daemon only applies model output through allowlisted file replacements or `git apply`; it does not execute arbitrary commands returned by the model.
 
 ## Dry Run
 
@@ -67,6 +73,8 @@ On each daemon round it:
 - updates the task board after the round with the current target, checklist state, latest result, and follow-up instructions.
 
 The task board is generated between marker comments, so manual plan prose can stay stable while the daemon rewrites only its own tracking section.
+
+For accepted rounds, the daemon records the concrete changed files in the JSONL artifact and in the task board's latest-round section. Successful checkbox tasks are also marked complete in the source checklist so the next cycle advances to the next unfinished porting task instead of repeating invisible fixture work.
 
 If the system Codex CLI is too old for `gpt-5.5`, install a local CLI and point the router at it:
 

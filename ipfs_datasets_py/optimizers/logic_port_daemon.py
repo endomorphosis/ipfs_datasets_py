@@ -44,12 +44,10 @@ from ipfs_datasets_py.optimizers.common.log_schema_v3 import (
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_PLAN_DOCS = (
-    "ipfs_datasets_py/docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md",
-    "ipfs_datasets_py/docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md",
+    "docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md",
 )
 
 DEFAULT_STATUS_DOCS = (
-    "docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md",
     "docs/LOGIC_PORT_PARITY.md",
 )
 
@@ -165,6 +163,7 @@ class LogicPortArtifact:
     dry_run: bool = True
     validation_results: List[CommandResult] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
+    changed_files: List[str] = field(default_factory=list)
 
     @property
     def validation_passed(self) -> bool:
@@ -181,6 +180,7 @@ class LogicPortArtifact:
             "validation_passed": self.validation_passed,
             "validation_results": [result.compact() for result in self.validation_results],
             "errors": self.errors,
+            "changed_files": self.changed_files,
         }
 
 
@@ -288,6 +288,38 @@ def _status_from_checkbox(mark: str) -> str:
 
 def _clean_checkbox_title(title: str) -> str:
     return re.sub(r"\s+<!--.*?-->\s*$", "", title).strip()
+
+
+def _replace_checkbox_mark(markdown: str, task: PlanTask, mark: str) -> str:
+    if not task.task_id.startswith("checkbox-"):
+        return markdown
+    try:
+        target_index = int(task.task_id.removeprefix("checkbox-"))
+    except ValueError:
+        return markdown
+
+    current_index = 0
+    lines = markdown.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        match = CHECKBOX_TASK_RE.match(line.rstrip("\n"))
+        if not match:
+            continue
+        current_index += 1
+        if current_index == target_index:
+            lines[index] = re.sub(r"^(\s*-\s+\[)[ xX~!](\]\s+)", rf"\g<1>{mark}\2", line, count=1)
+            break
+    return "".join(lines)
+
+
+def _patch_changed_files(patch: str) -> List[str]:
+    paths: List[str] = []
+    seen = set()
+    for match in re.finditer(r"^diff --git a/(.*?) b/(.*?)$", patch, re.MULTILINE):
+        path = match.group(2).strip()
+        if path and path not in seen:
+            seen.add(path)
+            paths.append(path)
+    return paths
 
 
 def extract_plan_tasks(markdown: str) -> List[PlanTask]:
@@ -417,12 +449,14 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
 
         if artifact.files:
             try:
-                artifact.applied, artifact.validation_results = self._apply_file_edits_with_validation(artifact.files)
+                artifact.applied, artifact.validation_results, changed_files = self._apply_file_edits_with_validation(artifact.files)
             except Exception as exc:
                 artifact.errors.append(str(exc))
                 return artifact
             if not artifact.applied:
                 artifact.errors.append("File edits failed validation and were rolled back.")
+            else:
+                artifact.changed_files = changed_files
             return artifact
 
         if not artifact.patch.strip():
@@ -473,6 +507,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 artifact.errors.append("Patch failed validation and was rolled back.")
             else:
                 artifact.errors.append("Patch failed validation and automatic rollback failed.")
+        else:
+            artifact.changed_files = _patch_changed_files(artifact.patch)
         return artifact
 
     def validate(self, artifact: LogicPortArtifact, context: OptimizationContext) -> bool:
@@ -506,7 +542,11 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             LOGGER,
             session_id=session_id,
             domain="logic-port",
-            input_size=sum(len(_read_text(self.daemon_config.resolve(path))) for path in self.daemon_config.plan_docs),
+            input_size=sum(
+                len(_read_text(self.daemon_config.resolve(path)))
+                for path in [*self.daemon_config.plan_docs, *self.daemon_config.status_docs]
+                if self.daemon_config.resolve(path).exists()
+            ),
             config={
                 "model_name": self.daemon_config.model_name,
                 "max_iterations": self.daemon_config.max_iterations,
@@ -638,13 +678,21 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             return
 
         original = path.read_text(encoding="utf-8")
-        tasks = extract_plan_tasks(original)
-        if not tasks:
+        task_text = _strip_daemon_task_board(original)
+        tasks_before = extract_plan_tasks(task_text)
+        if not tasks_before:
             return
 
-        target = self._select_next_plan_task(tasks)
-        board = self._render_task_board(tasks, target=target, results=results)
-        updated = _strip_daemon_task_board(original).rstrip() + "\n\n" + board + "\n"
+        latest = results[-1] if results else {}
+        latest_valid = bool(latest.get("valid"))
+        latest_target = self._select_next_plan_task(tasks_before)
+        if latest_valid and latest_target is not None:
+            task_text = _replace_checkbox_mark(task_text, latest_target, "x")
+
+        tasks_after = extract_plan_tasks(task_text)
+        current_target = self._select_next_plan_task(tasks_after)
+        board = self._render_task_board(tasks_after, current_target=current_target, latest_target=latest_target, results=results)
+        updated = task_text.rstrip() + "\n\n" + board + "\n"
         path.write_text(updated, encoding="utf-8")
 
     def _select_next_plan_task(self, tasks: List[PlanTask]) -> Optional[PlanTask]:
@@ -654,14 +702,23 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                     return task
         return tasks[0] if tasks else None
 
-    def _render_task_board(self, tasks: List[PlanTask], *, target: Optional[PlanTask], results: List[Dict[str, Any]]) -> str:
+    def _render_task_board(
+        self,
+        tasks: List[PlanTask],
+        *,
+        current_target: Optional[PlanTask],
+        latest_target: Optional[PlanTask],
+        results: List[Dict[str, Any]],
+    ) -> str:
         latest = results[-1] if results else {}
         latest_artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
         latest_valid = bool(latest.get("valid"))
         latest_summary = str(latest_artifact.get("summary") or "No summary")
         latest_errors = latest_artifact.get("errors") or []
+        latest_changed_files = [str(path) for path in latest_artifact.get("changed_files", []) if str(path)]
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-        target_label = self._markdown_task_label(target) if target else "none"
+        current_target_label = self._markdown_task_label(current_target) if current_target else "none"
+        latest_target_label = self._markdown_task_label(latest_target) if latest_target else "none"
 
         lines = [
             "<!-- logic-port-daemon-task-board:start -->",
@@ -671,7 +728,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             "",
             "Selection policy: choose the first port-plan checkbox that is not marked complete, keep the daemon scoped to that task, and update this board after every daemon round.",
             "",
-            f"Current target: `{target_label}`",
+            f"Current target: `{current_target_label}`",
             "",
             "Legend: `[ ]` needed, `[~]` in progress, `[x]` complete, `[!]` blocked or failing.",
             "",
@@ -682,7 +739,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         for task in tasks:
             marker = {"complete": "[x]", "in-progress": "[~]", "blocked": "[!]"}.get(task.status, "[ ]")
             note = task.status
-            if target and task.task_id == target.task_id:
+            if latest_target and task.task_id == latest_target.task_id:
                 if latest_valid:
                     marker = "[x]"
                     note = "validated by latest daemon round"
@@ -699,11 +756,13 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 "",
                 "### Latest Round",
                 "",
-                f"- Target: `{target_label}`",
+                f"- Target: `{latest_target_label}`",
                 f"- Result: `{'valid' if latest_valid else 'needs follow-up'}`",
                 f"- Summary: {latest_summary}",
             ]
         )
+        if latest_changed_files:
+            lines.append(f"- Accepted changed files: {', '.join(f'`{path}`' for path in latest_changed_files)}")
         if latest_errors:
             lines.append(f"- Errors: {'; '.join(str(error) for error in latest_errors[:3])}")
 
@@ -732,7 +791,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             raise ValueError(f"File edit path is outside daemon allowlist: {raw_path!r}")
         return self.daemon_config.resolve(Path(normalized))
 
-    def _apply_file_edits_with_validation(self, edits: List[Dict[str, str]]) -> Tuple[bool, List[CommandResult]]:
+    def _apply_file_edits_with_validation(self, edits: List[Dict[str, str]]) -> Tuple[bool, List[CommandResult], List[str]]:
         originals: Dict[Path, Optional[str]] = {}
         touched: List[Path] = []
         for edit in edits:
@@ -748,7 +807,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 path.write_text(edit["content"], encoding="utf-8")
             self._format_file_edits(touched)
             validation_results = self._run_validation()
-            return all(result.ok for result in validation_results), validation_results
+            changed_files = sorted({str(path.relative_to(self.daemon_config.repo_root)) for path in touched})
+            return all(result.ok for result in validation_results), validation_results, changed_files
         finally:
             validation_results = locals().get("validation_results")
             if not validation_results or not all(result.ok for result in validation_results):
@@ -943,7 +1003,7 @@ Original patch:
 
         prompt = f"""You are implementing the browser-native TypeScript/WASM port of ipfs_datasets_py logic.
 
-Use the requirements in the deterministic legal parser plans and the current TypeScript port docs.
+Use the TypeScript port plan as the controlling roadmap. The deterministic parser plans are not this daemon's task ledger.
 Goal: improve parity with the Python logic module while preserving browser-native runtime constraints.
 
 Hard constraints:
@@ -959,6 +1019,9 @@ Hard constraints:
 - Choose one narrow requirement per cycle.
 - The daemon-selected task for this cycle is: {selected_task_text}
 - Work only on that daemon-selected task unless the repository already satisfies it; if it is already satisfied, update docs/tests for that task rather than jumping ahead.
+- Prefer implementation changes under src/lib/logic/ whenever the selected task asks for functionality, not only docs.
+- Fixture-only work is acceptable only when the selected port-plan checkbox explicitly asks for fixtures or generated Python parity captures.
+- For accepted work, the changed files must be directly usable by the TypeScript port validation suite.
 - Limit the patch to at most {self.daemon_config.max_patch_lines} changed diff lines.
 - Prefer one implementation file plus one focused test file.
 - Do not include prose inside the patch string.
