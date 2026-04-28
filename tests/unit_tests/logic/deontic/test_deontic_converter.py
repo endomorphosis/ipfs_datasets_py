@@ -56,6 +56,132 @@ class TestDeonticConverter:
         assert result.status == ConversionStatus.SUCCESS
         assert result.output is not None
         assert result.output.confidence > 0
+
+    def test_conversion_result_exposes_deterministic_parser_ir(self):
+        """Converter metadata should expose source-grounded parser slots."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert("The tenant must pay rent monthly.")
+
+        assert result.success
+        assert result.output is not None
+        assert result.metadata["deterministic_parser"]["enabled"] is True
+        assert result.metadata["deterministic_parser"]["element_count"] == 1
+        assert result.metadata["deterministic_parser"]["ir_count"] == 1
+        assert result.metadata["deterministic_parser"]["formula_record_count"] == 1
+        assert result.metadata["deterministic_parser"]["proof_ready"] is True
+        assert result.metadata["deterministic_parser"]["blockers"] == []
+
+        parser_element = result.metadata["parser_element"]
+        legal_norm_ir = result.metadata["legal_norm_ir"]
+        assert parser_element["source_id"] == legal_norm_ir["source_id"]
+        assert legal_norm_ir["modality"] == "O"
+        assert legal_norm_ir["actor"] == "tenant"
+        assert legal_norm_ir["action"] == "pay rent monthly"
+        assert legal_norm_ir["proof_ready"] is True
+        assert result.metadata["legal_norm_irs"] == [legal_norm_ir]
+        assert result.metadata["legal_formula_records"][0]["source_id"] == parser_element["source_id"]
+        assert result.metadata["legal_formula_records"][0]["proof_ready"] is True
+
+    def test_non_normative_conversion_exposes_empty_parser_metadata(self):
+        """Unparsed text should not pretend to have a legal IR."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert("This section contains historical notes.")
+
+        assert result.success
+        assert result.metadata["parser_elements"] == []
+        assert result.metadata["deterministic_parser"]["element_count"] == 0
+        assert result.metadata["deterministic_parser"]["ir_count"] == 0
+        assert result.metadata["deterministic_parser"]["formula_record_count"] == 0
+        assert result.metadata["legal_norm_irs"] == []
+        assert result.metadata["legal_formula_records"] == []
+        assert "parser_element" not in result.metadata
+        assert "legal_norm_ir" not in result.metadata
+
+    def test_converter_can_expand_enumerated_items_for_formalization(self):
+        """Converter callers can opt into item-level enumerated parser elements."""
+        converter = DeonticConverter(
+            use_ml=False,
+            enable_monitoring=False,
+            expand_enumerations=True,
+        )
+
+        result = converter.convert(
+            "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records."
+        )
+
+        assert result.success
+        assert result.metadata["deterministic_parser"]["element_count"] == 3
+        assert result.metadata["deterministic_parser"]["ir_count"] == 3
+        assert result.metadata["deterministic_parser"]["formula_record_count"] == 3
+        assert [element["action"][0] for element in result.metadata["parser_elements"]] == [
+            "establish procedures",
+            "submit a report",
+            "maintain records",
+        ]
+        assert result.metadata["legal_norm_ir"]["action"] == "establish procedures"
+        assert result.metadata["legal_norm_ir"]["is_enumerated_child"] is True
+        assert result.metadata["legal_norm_ir"]["parent_source_id"]
+        assert result.metadata["legal_norm_ir"]["enumeration_label"] == "1"
+        assert result.metadata["legal_norm_ir"]["enumeration_index"] == 1
+        assert result.output is not None
+        assert result.output.proposition == "∀x (Secretary(x) → EstablishProcedures(x))"
+        assert [norm["action"] for norm in result.metadata["legal_norm_irs"]] == [
+            "establish procedures",
+            "submit a report",
+            "maintain records",
+        ]
+        assert [norm["enumeration_index"] for norm in result.metadata["legal_norm_irs"]] == [1, 2, 3]
+        assert [record["formula"] for record in result.metadata["legal_formula_records"]] == [
+            "O(∀x (Secretary(x) → EstablishProcedures(x)))",
+            "O(∀x (Secretary(x) → SubmitReport(x)))",
+            "O(∀x (Secretary(x) → MaintainRecords(x)))",
+        ]
+        assert [record["proof_ready"] for record in result.metadata["legal_formula_records"]] == [
+            True,
+            True,
+            True,
+        ]
+
+    def test_converter_maps_scope_rules_to_non_obligation_operators(self):
+        """Scope rules should not be exposed as ordinary obligations."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        applicability = converter.convert("This section applies to food carts.")
+        exemption = converter.convert("Emergency repairs are exempt from permit requirements.")
+
+        assert applicability.success
+        assert exemption.success
+        assert applicability.output is not None
+        assert exemption.output is not None
+        assert applicability.output.operator.value == "POW"
+        assert exemption.output.operator.value == "IMM"
+        assert applicability.metadata["legal_norm_ir"]["norm_type"] == "applicability"
+        assert exemption.metadata["legal_norm_ir"]["norm_type"] == "exemption"
+
+    def test_converter_excludes_override_clause_from_formula_but_preserves_ir(self):
+        """Override clauses are precedence provenance, not factual antecedents."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )
+
+        assert result.success
+        assert result.output is not None
+        assert result.output.formula == "P[director](∀x (Director(x) → IssueVariance(x)))"
+        assert "Section501020" not in result.output.formula
+
+        parser_element = result.metadata["parser_element"]
+        legal_norm_ir = result.metadata["legal_norm_ir"]
+        assert legal_norm_ir["overrides"][0]["value"] == "section 5.01.020"
+        assert legal_norm_ir["overrides"][0]["span"] == [16, 32]
+        assert legal_norm_ir["overrides"][0]["clause_span"] == [0, 33]
+        assert parser_element["override_clauses"] == ["section 5.01.020"]
+        assert "override_clause_requires_precedence_review" in legal_norm_ir["quality"]["parser_warnings"]
+        assert result.metadata["deterministic_parser"]["proof_ready"] is False
+        assert "override_clause_requires_precedence_review" in result.metadata["deterministic_parser"]["blockers"]
     
     def test_permission_conversion(self):
         """Test converting a permission statement."""
@@ -253,6 +379,37 @@ class TestDeonticConverter:
             {"label": "2", "text": "submit a report"},
             {"label": "3", "text": "maintain records"},
         ]
+
+    def test_enumerated_items_can_expand_to_child_norms(self):
+        """Formal exporters can opt into one deterministic norm per list item."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        elements = extract_normative_elements(
+            "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records.",
+            expand_enumerations=True,
+        )
+
+        assert len(elements) == 3
+        assert [element["enumeration_label"] for element in elements] == ["1", "2", "3"]
+        assert [element["action"] for element in elements] == [
+            ["establish procedures"],
+            ["submit a report"],
+            ["maintain records"],
+        ]
+        assert [element["subject"] for element in elements] == [
+            ["Secretary"],
+            ["Secretary"],
+            ["Secretary"],
+        ]
+        assert all(element["parent_source_id"] for element in elements)
+        assert len({element["parent_source_id"] for element in elements}) == 1
+        assert len({element["source_id"] for element in elements}) == 3
+        assert all(element["promotable_to_theorem"] for element in elements)
+        assert all("enumerated_clause_requires_item_level_review" not in element["parser_warnings"] for element in elements)
+        assert build_deontic_formula(elements[1]) == "O(∀x (Secretary(x) → SubmitReport(x)))"
 
     def test_scaffold_quality_metadata_guides_theorem_promotion(self):
         """Deterministic parses should expose quality gates for downstream provers."""
@@ -1229,6 +1386,124 @@ The applicant shall obtain a permit."""
             "object": "permit",
         } in elements[0]["kg_relationship_hints"]
 
+    def test_applicability_clause_is_scope_rule_not_obligation(self):
+        """Applicability clauses should produce scope logic, not fake duties."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        elements = extract_normative_elements("This section applies to food carts and mobile vendors.")
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["norm_type"] == "applicability"
+        assert element["deontic_operator"] == "APP"
+        assert element["subject"] == ["this section"]
+        assert element["action"] == ["apply to food carts and mobile vendors"]
+        assert element["legal_frame"]["category"] == "applicability"
+        assert build_deontic_formula(element) == "AppliesTo(ThisSection, FoodCartsAndMobileVendors)"
+        assert {
+            "subject": "law",
+            "predicate": "appliesTo",
+            "object": "this section",
+        } in element["kg_relationship_hints"]
+
+    def test_non_applicability_clause_is_exemption_scope_rule(self):
+        """Non-applicability clauses should become deterministic exemptions."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        elements = extract_normative_elements("This chapter does not apply to emergency work.")
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["norm_type"] == "exemption"
+        assert element["deontic_operator"] == "EXEMPT"
+        assert element["subject"] == ["this chapter"]
+        assert element["action"] == ["not apply to emergency work"]
+        assert element["legal_frame"]["category"] == "exemption"
+        assert build_deontic_formula(element) == "ExemptFrom(ThisChapter, NotApplyEmergencyWork)"
+
+    def test_exempt_from_clause_is_exemption_scope_rule(self):
+        """Direct exempt-from syntax should be parsed without LLM repair."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        elements = extract_normative_elements("Emergency repairs are exempt from permit requirements.")
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["norm_type"] == "exemption"
+        assert element["deontic_operator"] == "EXEMPT"
+        assert element["subject"] == ["Emergency repairs"]
+        assert element["action"] == ["exempt from permit requirements"]
+        assert element["legal_frame"]["category"] == "exemption"
+        assert build_deontic_formula(element) == "ExemptFrom(EmergencyRepairs, PermitRequirements)"
+
+    def test_not_required_permit_clause_is_exemption_scope_rule(self):
+        """Not-required instrument clauses should become explicit exemptions."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        elements = extract_normative_elements("A permit is not required for emergency work.")
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["norm_type"] == "exemption"
+        assert element["deontic_operator"] == "EXEMPT"
+        assert element["subject"] == ["emergency work"]
+        assert element["action"] == ["exempt from permit"]
+        assert element["llm_repair"]["required"] is False
+        assert element["export_readiness"]["proof_ready"] is True
+        assert build_deontic_formula(element) == "ExemptFrom(EmergencyWork, Permit)"
+
+    def test_instrument_validity_clause_is_lifecycle_logic(self):
+        """Instrument duration clauses should not be dropped as non-normative text."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        elements = extract_normative_elements("The license is valid for 30 days.")
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["norm_type"] == "instrument_lifecycle"
+        assert element["deontic_operator"] == "LIFE"
+        assert element["subject"] == ["license"]
+        assert element["action"] == ["valid for 30 days"]
+        assert element["legal_frame"]["category"] == "instrument_lifecycle"
+        assert element["llm_repair"]["required"] is False
+        assert build_deontic_formula(element) == "ValidFor(License, 30Days)"
+
+    def test_instrument_expiration_clause_is_lifecycle_logic(self):
+        """Expiration clauses should become deterministic lifecycle formulas."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        elements = extract_normative_elements("The permit expires one year after issuance.")
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["norm_type"] == "instrument_lifecycle"
+        assert element["subject"] == ["permit"]
+        assert element["action"] == ["expires one year after issuance"]
+        assert {
+            "subject": "law",
+            "predicate": "setsLifecycleFor",
+            "object": "permit",
+        } in element["kg_relationship_hints"]
+        assert build_deontic_formula(element) == "ExpiresAfter(Permit, OneYearAfterIssuance)"
+
     def test_no_person_may_is_prohibition(self):
         """'No person may' is a prohibition even though may is usually permission."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
@@ -1400,6 +1675,31 @@ A violation is punishable by a fine of $500."""
             "span": [84, 125],
         }
 
+    def test_civil_penalty_range_classification_is_structured(self):
+        """Civil/criminal penalty class and modality should be deterministic slots."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_sanction_records,
+            extract_normative_elements,
+        )
+
+        element = extract_normative_elements(
+            "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
+        )[0]
+
+        penalty = element["penalty"]
+        assert penalty["sanction_class"] == "civil"
+        assert penalty["sanction_modality"] == "mandatory"
+        assert penalty["has_range"] is True
+        assert penalty["minimum_amount"]["numeric_value"] == "100"
+        assert penalty["maximum_amount"]["numeric_value"] == "500"
+        assert penalty["recurrence"]["type"] == "per_violation"
+
+        records = build_sanction_records(element)
+        assert records[0]["sanction_class"] == "civil"
+        assert records[0]["sanction_modality"] == "mandatory"
+        assert records[0]["has_range"] is True
+        assert records[0]["recurrence"]["type"] == "per_violation"
+
     def test_penalty_imprisonment_duration_is_normalized(self):
         """Jail/imprisonment sanctions should expose duration atoms."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
@@ -1497,6 +1797,39 @@ A violation is punishable by a fine of $500."""
         assert records[0]["temporal_anchors"][0]["calendar"] == "business"
         assert records[0]["temporal_anchors"][0]["quantity"] == 10
         assert records[0]["actor_id"] == "director"
+
+    def test_procedure_relations_capture_upon_after_and_before_connectors(self):
+        """Procedural connectors should become event-ordering atoms."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_procedure_event_records,
+            extract_normative_elements,
+        )
+
+        element = extract_normative_elements(
+            "Upon receipt of an application, the Bureau shall inspect the premises before approval."
+        )[0]
+
+        assert element["procedure"]["trigger_event"] == "application"
+        assert element["procedure"]["terminal_event"] == "inspection"
+        assert {
+            "event": "inspection",
+            "relation": "triggered_by_receipt_of",
+            "anchor_event": "application",
+            "raw_text": "Upon receipt of an application",
+            "span": [0, 30],
+        } in element["procedure"]["event_relations"]
+        assert any(
+            relation["event"] == "inspection"
+            and relation["relation"] == "before"
+            and relation["anchor_event"] == "issuance"
+            for relation in element["procedure"]["event_relations"]
+        )
+
+        records = build_procedure_event_records(element)
+        inspection_record = next(record for record in records if record["event"] == "inspection")
+        assert "triggered_by_receipt_of" in inspection_record["relation_types"]
+        assert "application" in inspection_record["anchor_events"]
+        assert "issuance" in inspection_record["anchor_events"]
 
     def test_revocation_and_suspension_emit_instrument_relationships(self):
         """Permit enforcement workflows should become KG hints."""

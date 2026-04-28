@@ -2445,7 +2445,9 @@ def _get_hf_inference_api_provider() -> Optional[LLMProvider]:
 
 
 def _get_codex_cli_provider() -> Optional[LLMProvider]:
-    if not shutil.which("codex"):
+    codex_bin = os.getenv("IPFS_DATASETS_PY_CODEX_CLI_BIN", "codex").strip() or "codex"
+    codex_executable = shutil.which(codex_bin) or (codex_bin if os.path.exists(codex_bin) else "")
+    if not codex_executable:
         return None
 
     class _CodexCLIProvider:
@@ -2486,7 +2488,7 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             # when plenty of bytes remain free.
             json_mode = True
 
-            cmd: list[str] = ["codex", "exec"]
+            cmd: list[str] = [codex_executable, "exec"]
             if skip_git_repo_check:
                 cmd.append("--skip-git-repo-check")
             # Some Codex CLI builds do not accept '--sandbox auto'.
@@ -2611,7 +2613,7 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                 if kind == "usage_limit":
                     suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
                     raise LLMRouterError(f"Codex usage limit reached{suffix}")
-                raise LLMRouterError(proc.stderr.strip() or "codex exec failed")
+                raise LLMRouterError((stderr or "").strip() or "codex exec failed")
 
             if proc.returncode == 0 or text_out or (stdout and stdout.strip()):
                 if text_out:
@@ -2625,7 +2627,7 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             if kind == "usage_limit":
                 suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
                 raise LLMRouterError(f"Codex usage limit reached{suffix}")
-            raise LLMRouterError(proc.stderr.strip() or "codex exec failed")
+            raise LLMRouterError((stderr or "").strip() or "codex exec failed")
 
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
             return self._run_codex(prompt, model_name=model_name, **kwargs)
