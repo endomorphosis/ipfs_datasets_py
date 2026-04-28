@@ -3560,6 +3560,30 @@ def normalize_predicate_name(name: str) -> str:
     return "".join(word.capitalize() for word in filtered_words)
 
 
+def parser_elements_with_deterministic_ir_readiness(
+    elements: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Project deterministic IR/formula readiness onto parser elements.
+
+    ``extract_normative_elements`` intentionally returns the conservative raw
+    parser view: parser theorem promotion and legacy repair audit fields stay
+    stable for existing callers. Some parser-boundary consumers, however, need
+    the same source-grounded repair clearance already used by exports, metrics,
+    and converter metadata. This helper provides that explicit opt-in without
+    reparsing text and without invoking any LLM repair lane.
+
+    The returned dictionaries are copies. ``promotable_to_theorem`` remains the
+    parser gate, while ``export_readiness`` and ``llm_repair`` reflect whether
+    the typed IR/formula layer has deterministically resolved stale repair noise
+    such as local applicability, substantive exceptions represented in the
+    formula antecedent, or pure precedence overrides.
+    """
+
+    from ipfs_datasets_py.logic.deontic.exports import parser_elements_with_ir_export_readiness
+
+    return parser_elements_with_ir_export_readiness(elements)
+
+
 def identify_obligations(elements: List[Dict[str, Any]]) -> Dict[str, Any]:
     categorized: Dict[str, Any] = {
         "obligations": [],
