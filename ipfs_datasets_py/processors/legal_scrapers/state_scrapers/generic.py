@@ -215,7 +215,7 @@ class GenericStateScraper(BaseStateScraper):
             return []
         
         statutes = []
-        limit = self._effective_scrape_limit(max_statutes, default=100)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(

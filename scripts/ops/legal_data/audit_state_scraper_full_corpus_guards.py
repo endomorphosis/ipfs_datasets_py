@@ -181,6 +181,25 @@ def _guarded_for_non_full_corpus(source: str, node: ast.AST) -> bool:
     return any(_is_full_corpus_guard(source, item.test) for item in _ancestor_ifs(node))
 
 
+def _safe_unbounded_api_return(source: str, node: ast.Return) -> bool:
+    """Recognize API walks whose max_statutes becomes None in full-corpus mode."""
+    detail = _expr_text(source, node).replace(" ", "")
+    if detail != "returnapi_statutes":
+        return False
+    function = getattr(node, "_parent", None)
+    while function is not None and not isinstance(function, (ast.AsyncFunctionDef, ast.FunctionDef)):
+        function = getattr(function, "_parent", None)
+    if function is None:
+        return False
+    body = _expr_text(source, function).replace(" ", "")
+    return (
+        "limit=self._effective_scrape_limit(" in body
+        and "max_api_statutes=limitiflimitisnotNoneelseNone" in body
+        and "self._scrape_statutes_api(" in body
+        and "max_statutes=max_api_statutes" in body
+    )
+
+
 def _iter_scrape_code_returns(tree: ast.AST) -> Iterable[ast.Return]:
     for node in ast.walk(tree):
         if isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef)) and node.name == "scrape_code":
@@ -221,6 +240,8 @@ def audit_file(*, state: str, path: Path, repo_root: Path) -> list[Finding]:
         if ret.value is None or not _mentions_suspicious_seed(ret.value):
             continue
         if _guarded_for_non_full_corpus(source, ret):
+            continue
+        if _safe_unbounded_api_return(source, ret):
             continue
         detail = _expr_text(source, ret).strip()
         lowered = detail.lower()

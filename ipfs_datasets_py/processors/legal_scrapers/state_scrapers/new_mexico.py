@@ -59,7 +59,7 @@ class NewMexicoScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(120)
+        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
         chapter_sections = await self._scrape_live_chapter_document_pdfs(code_name=code_name, max_statutes=limit)
         if chapter_sections:
             self.logger.info("New Mexico chapter PDF extraction: Scraped %s section(s)", len(chapter_sections))

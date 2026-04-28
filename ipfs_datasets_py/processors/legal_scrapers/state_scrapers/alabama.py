@@ -44,7 +44,7 @@ class AlabamaScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=100)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         statutes = await self._scrape_alison_graphql(code_name, limit or 1000000)
         if statutes:
             return statutes

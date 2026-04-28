@@ -60,7 +60,7 @@ class NewYorkScraper(BaseStateScraper):
             return []
         
         statutes = []
-        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(120)
+        limit = max(1, int(max_statutes)) if max_statutes is not None else self._bounded_return_threshold(160)
         public_law_structured = await self._scrape_public_law_structured(code_name, max_sections=max(10, limit))
         if public_law_structured:
             return public_law_structured[:limit]

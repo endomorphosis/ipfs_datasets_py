@@ -109,7 +109,7 @@ class TexasScraper(BaseStateScraper):
         try:
             lower_name = str(code_name or "").lower()
             lower_url = str(code_url or "").lower()
-            limit = self._effective_scrape_limit(max_statutes, default=120)
+            limit = self._effective_scrape_limit(max_statutes, default=160)
             if "administrative" in lower_name or "readtac" in lower_url:
                 return await self._scrape_texas_admin_code(
                     code_name=code_name,

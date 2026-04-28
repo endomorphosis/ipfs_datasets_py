@@ -46,7 +46,7 @@ class RhodeIslandScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=100)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         max_sections = limit if limit is not None else 1000000
         return await self._custom_scrape_rhode_island(
             code_name,

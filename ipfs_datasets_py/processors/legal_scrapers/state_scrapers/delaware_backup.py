@@ -38,7 +38,7 @@ class ConnecticutScraper(BaseStateScraper):
         Returns:
             List of NormalizedStatute objects
         """
-        limit = self._effective_scrape_limit(max_statutes, default=100)
+        limit = self._effective_scrape_limit(max_statutes, default=160)
         return await self._custom_scrape_connecticut(
             code_name,
             code_url,

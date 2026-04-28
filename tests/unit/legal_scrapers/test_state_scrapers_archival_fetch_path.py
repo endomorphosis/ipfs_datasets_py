@@ -4158,3 +4158,186 @@ def test_generic_get_code_list_records_fetch_analytics(monkeypatch: pytest.Monke
     assert len(codes) >= 1
     analytics = scraper.get_fetch_analytics_snapshot()
     assert int(analytics.get("attempted") or 0) > 0
+
+
+@pytest.mark.anyio
+async def test_alabama_default_run_uses_realistic_graphql_limit(monkeypatch: pytest.MonkeyPatch):
+    requested = {}
+
+    async def _fake_graphql(self, code_name: str, max_sections: int):
+        requested["graphql_max_sections"] = max_sections
+        return []
+
+    async def _fake_custom(self, code_name: str, code_url: str, citation_format: str, max_sections: int):
+        requested["custom_max_sections"] = max_sections
+        return []
+
+    monkeypatch.setattr(AlabamaScraper, "_scrape_alison_graphql", _fake_graphql)
+    monkeypatch.setattr(AlabamaScraper, "_custom_scrape_alabama", _fake_custom)
+
+    scraper = AlabamaScraper("AL", "Alabama")
+    await scraper.scrape_code("Alabama Code", "https://alison.legislature.state.al.us/code-of-alabama")
+
+    assert requested["graphql_max_sections"] == 160
+    assert requested["custom_max_sections"] == 160
+
+
+@pytest.mark.anyio
+async def test_rhode_island_default_run_uses_realistic_custom_limit(monkeypatch: pytest.MonkeyPatch):
+    requested = {}
+
+    async def _fake_custom(self, code_name: str, code_url: str, citation_format: str, max_sections: int):
+        requested["custom_max_sections"] = max_sections
+        return []
+
+    monkeypatch.setattr(RhodeIslandScraper, "_custom_scrape_rhode_island", _fake_custom)
+
+    scraper = RhodeIslandScraper("RI", "Rhode Island")
+    await scraper.scrape_code("Rhode Island General Laws", "https://webserver.rilegislature.gov/Statutes/")
+
+    assert requested["custom_max_sections"] == 160
+
+
+@pytest.mark.anyio
+async def test_texas_default_run_uses_realistic_zip_limit(monkeypatch: pytest.MonkeyPatch):
+    requested = {}
+
+    async def _fake_zip(self, code_name: str, code_url: str, max_statutes: int):
+        requested["zip_max_statutes"] = max_statutes
+        return [
+            NormalizedStatute(
+                state_code="TX",
+                state_name="Texas",
+                statute_id=f"{code_name} § 1.001",
+                code_name=code_name,
+                section_number="1.001",
+                section_name="Texas sample row",
+                full_text="Texas sample statute text. " * 20,
+                source_url="https://statutes.capitol.texas.gov/Docs/GV/htm/GV.1.htm",
+                official_cite="Tex. Gov't Code § 1.001",
+                metadata=StatuteMetadata(),
+            )
+        ]
+
+    monkeypatch.setattr(TexasScraper, "_scrape_statute_html_zip", _fake_zip)
+
+    scraper = TexasScraper("TX", "Texas")
+    statutes = await scraper.scrape_code("Texas Government Code", "https://statutes.capitol.texas.gov/")
+
+    assert requested["zip_max_statutes"] == 160
+    assert len(statutes) == 1
+
+
+@pytest.mark.anyio
+async def test_new_york_default_run_uses_realistic_public_law_limit(monkeypatch: pytest.MonkeyPatch):
+    requested = {}
+
+    async def _fake_public_law(self, code_name: str, max_sections: int):
+        requested["public_law_max_sections"] = max_sections
+        return []
+
+    async def _fake_seed(self, code_name: str, max_statutes: int = 1):
+        requested["seed_max_statutes"] = max_statutes
+        return []
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 30) -> bytes:
+        return b""
+
+    async def _fake_updates(self, code_name: str):
+        requested["updates_called"] = True
+        return []
+
+    monkeypatch.setattr(NewYorkScraper, "_scrape_public_law_structured", _fake_public_law)
+    monkeypatch.setattr(NewYorkScraper, "_scrape_jina_senate_seed_sections", _fake_seed)
+    monkeypatch.setattr(NewYorkScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+    monkeypatch.setattr(NewYorkScraper, "_scrape_public_law_updates", _fake_updates)
+
+    scraper = NewYorkScraper("NY", "New York")
+    await scraper.scrape_code("New York Consolidated Laws", "https://www.nysenate.gov/legislation/laws")
+
+    assert requested["public_law_max_sections"] == 160
+    assert requested["seed_max_statutes"] == 160
+    assert requested["updates_called"] is True
+
+
+@pytest.mark.anyio
+async def test_new_mexico_default_run_uses_realistic_pdf_limit(monkeypatch: pytest.MonkeyPatch):
+    requested = {}
+
+    async def _fake_live(self, code_name: str, max_statutes: int):
+        requested["live_max_statutes"] = max_statutes
+        return []
+
+    async def _fake_nav(self, code_name: str, max_statutes: int):
+        requested["nav_max_statutes"] = max_statutes
+        return []
+
+    async def _fake_index(self, code_name: str):
+        return []
+
+    async def _fake_archival(self, code_name: str, max_statutes: int):
+        requested["archival_max_statutes"] = max_statutes
+        return []
+
+    async def _fake_direct(self, code_name: str, max_statutes: int):
+        requested["direct_max_statutes"] = max_statutes
+        return []
+
+    async def _fake_generic(self, code_name: str, code_url: str, citation_format: str, max_sections: int):
+        requested["generic_max_sections"] = max_sections
+        return []
+
+    monkeypatch.setattr(NewMexicoScraper, "_scrape_live_chapter_document_pdfs", _fake_live)
+    monkeypatch.setattr(NewMexicoScraper, "_scrape_nmonesource_nav_sections", _fake_nav)
+    monkeypatch.setattr(NewMexicoScraper, "_scrape_nmonesource_index", _fake_index)
+    monkeypatch.setattr(NewMexicoScraper, "_scrape_archived_document_pdfs", _fake_archival)
+    monkeypatch.setattr(NewMexicoScraper, "_scrape_direct_document_pdfs", _fake_direct)
+    monkeypatch.setattr(NewMexicoScraper, "_generic_scrape", _fake_generic)
+
+    scraper = NewMexicoScraper("NM", "New Mexico")
+    await scraper.scrape_code("New Mexico Statutes", "https://nmonesource.com/nmos/nmsa/en/nav_date.do")
+
+    assert requested["live_max_statutes"] == 160
+    assert requested["nav_max_statutes"] == 160
+    assert requested["archival_max_statutes"] == 8
+    assert requested["direct_max_statutes"] == 160
+    assert requested["generic_max_sections"] == 160
+
+
+@pytest.mark.anyio
+async def test_minnesota_full_corpus_chapter_budget_tracks_requested_limit(monkeypatch: pytest.MonkeyPatch):
+    requested = {}
+
+    monkeypatch.setattr(MinnesotaScraper, "_full_corpus_enabled", lambda self: True)
+
+    async def _fake_discover(self, max_chapters: int):
+        requested["max_chapters"] = max_chapters
+        return ["https://www.revisor.mn.gov/statutes/cite/1"]
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 35) -> bytes:
+        return b""
+
+    monkeypatch.setattr(MinnesotaScraper, "_discover_chapter_urls", _fake_discover)
+    monkeypatch.setattr(MinnesotaScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = MinnesotaScraper("MN", "Minnesota")
+    await scraper._scrape_chapter_sections("Minnesota Statutes", max_statutes=500)
+
+    assert requested["max_chapters"] == 500
+
+
+@pytest.mark.anyio
+async def test_generic_scrape_code_default_run_uses_realistic_limit(monkeypatch: pytest.MonkeyPatch):
+    html = "<html><body>" + "".join(
+        f"<a href='/code/section-{i}'>Section {i}-1</a>" for i in range(180)
+    ) + "</body></html>"
+
+    async def _fake_fetch(self, url: str, timeout_seconds: int = 30) -> bytes:
+        return html.encode("utf-8")
+
+    monkeypatch.setattr(GenericStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fetch)
+
+    scraper = GenericStateScraper("ZZ", "Test State")
+    statutes = await scraper.scrape_code("Test Code", "https://example.test/code")
+
+    assert len(statutes) == 160

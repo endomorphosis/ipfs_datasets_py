@@ -326,6 +326,14 @@ def _normalize_llm_formula(formula: str) -> str:
     return _compact(text)
 
 
+def _balance_formula_parentheses(formula: str, *, max_added: int = 4) -> str:
+    text = str(formula or "").strip()
+    deficit = text.count("(") - text.count(")")
+    if 0 < deficit <= max_added:
+        return text + (")" * deficit)
+    return text
+
+
 def _looks_like_tdfol(formula: str) -> bool:
     text = _normalize_llm_formula(formula)
     if not text:
@@ -370,6 +378,7 @@ def _llm_assist_tdfol(
     model: str,
     max_chars: int,
     timeout: float,
+    max_tokens: int,
 ) -> Dict[str, Any]:
     source = _compact(text)[:max_chars] if max_chars and max_chars > 0 else _compact(text)
     operator_hints = get_operator_hints_for_text(source)
@@ -380,7 +389,8 @@ def _llm_assist_tdfol(
         operator_hints=operator_hints,
     )
     prompt = (
-        "Return only one valid TDFOL formula. Do not explain. Do not define TDFOL.\n\n"
+        "Return only one valid, fully parenthesized TDFOL formula. "
+        "Close every parenthesis. Do not explain. Do not define TDFOL.\n\n"
         f"{prompt}"
     )
     result: Dict[str, Any] = {
@@ -398,8 +408,8 @@ def _llm_assist_tdfol(
             prompt,
             provider=provider or None,
             model_name=model or None,
-            max_tokens=256,
-            max_new_tokens=128,
+            max_tokens=max_tokens,
+            max_new_tokens=max_tokens,
             temperature=0.1,
             timeout=timeout,
             allow_local_fallback=False,
@@ -408,7 +418,7 @@ def _llm_assist_tdfol(
         candidate_text = raw
         if raw.startswith(prompt):
             candidate_text = raw[len(prompt) :].strip()
-        formula = _normalize_llm_formula(_extract_llm_formula(candidate_text))
+        formula = _balance_formula_parentheses(_normalize_llm_formula(_extract_llm_formula(candidate_text)))
         result.update(
             {
                 "raw_response": raw,
@@ -661,6 +671,7 @@ def _build_row(
     llm_model: str = "",
     llm_max_chars: int = 1800,
     llm_timeout: float = 30.0,
+    llm_max_tokens: int = 768,
     context_artifacts: Optional[LogicContextArtifacts] = None,
 ) -> Dict[str, Any]:
     text = _compact(row.get("text"))
@@ -705,6 +716,7 @@ def _build_row(
             model=llm_model,
             max_chars=llm_max_chars,
             timeout=llm_timeout,
+            max_tokens=llm_max_tokens,
         )
         if llm_payload.get("accepted") and llm_payload.get("formula"):
             tdfol_formula = str(llm_payload["formula"])
@@ -835,6 +847,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-model", default="", help="LLM model name for the selected provider.")
     parser.add_argument("--llm-max-chars", type=int, default=1800, help="Max source text chars sent to the LLM assist prompt.")
     parser.add_argument("--llm-timeout", type=float, default=30.0, help="LLM assist timeout in seconds.")
+    parser.add_argument("--llm-max-tokens", type=int, default=768, help="Max tokens requested from the LLM assist route.")
     parser.add_argument("--checkpoint-every", type=int, default=25, help="Write parquet/manifest checkpoints every N completed rows.")
     parser.add_argument("--no-resume", action="store_true", help="Ignore existing output parquet instead of resuming by ipfs_cid.")
     parser.add_argument("--zkp-backend", default="simulated", choices=["simulated", "groth16"], help="ZKP backend used for proof certificates.")
@@ -960,6 +973,7 @@ def main() -> int:
                 llm_model=str(args.llm_model or ""),
                 llm_max_chars=int(args.llm_max_chars),
                 llm_timeout=float(args.llm_timeout),
+                llm_max_tokens=int(args.llm_max_tokens),
                 context_artifacts=context_artifacts,
             )
             out_rows.append(built)
