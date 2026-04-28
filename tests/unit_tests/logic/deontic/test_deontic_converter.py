@@ -182,6 +182,69 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["proof_ready"] is False
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 1
 
+    def test_converter_parser_metadata_clears_formula_resolved_repair_noise(self):
+        """Converter-facing parser metadata should use deterministic IR readiness."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        examples = [
+            (
+                "This section applies to food carts.",
+                "local_scope_applicability",
+            ),
+            (
+                "The applicant shall obtain a permit unless approval is denied.",
+                "standard_substantive_exception",
+            ),
+            (
+                "Notwithstanding section 5.01.020, the Director may issue a variance.",
+                "pure_precedence_override",
+            ),
+        ]
+
+        for text, resolution_type in examples:
+            result = converter.convert(text)
+
+            assert result.success
+            parser_element = result.metadata["parser_elements"][0]
+            formula_record = result.metadata["legal_formula_records"][0]
+            assert parser_element["promotable_to_theorem"] is False
+            assert parser_element["llm_repair"]["required"] is False
+            assert parser_element["llm_repair"]["allow_llm_repair"] is False
+            assert parser_element["llm_repair"]["deterministically_resolved"] is True
+            assert parser_element["llm_repair"]["deterministic_resolution"]["type"] == resolution_type
+            assert parser_element["export_readiness"]["parser_proof_ready"] is False
+            assert parser_element["export_readiness"]["formula_proof_ready"] is True
+            assert parser_element["export_readiness"]["proof_ready"] is True
+            assert parser_element["export_readiness"]["formula_requires_validation"] is False
+            assert parser_element["export_readiness"]["formula_repair_required"] is False
+            assert parser_element["export_readiness"]["deterministic_resolution"]["type"] == resolution_type
+            assert formula_record["proof_ready"] is True
+            assert formula_record["requires_validation"] is False
+            assert formula_record["deterministic_resolution"]["type"] == resolution_type
+
+    def test_converter_parser_metadata_keeps_unresolved_reference_repair_required(self):
+        """Unresolved numbered cross-reference exceptions must stay blocked."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )
+
+        assert result.success
+        parser_element = result.metadata["parser_elements"][0]
+        formula_record = result.metadata["legal_formula_records"][0]
+        assert parser_element["promotable_to_theorem"] is False
+        assert parser_element["llm_repair"]["required"] is True
+        assert "cross_reference_requires_resolution" in parser_element["llm_repair"]["reasons"]
+        assert parser_element["export_readiness"]["formula_proof_ready"] is False
+        assert parser_element["export_readiness"]["formula_requires_validation"] is True
+        assert parser_element["export_readiness"]["formula_repair_required"] is True
+        assert parser_element["export_readiness"]["deterministic_resolution"] == {}
+        assert formula_record["proof_ready"] is False
+        assert formula_record["requires_validation"] is True
+        assert formula_record["repair_required"] is True
+        assert formula_record["deterministic_resolution"] == {}
+
     def test_converter_exposes_substantive_exception_formula_record_resolution(self):
         """Formula records may resolve simple exceptions while IR stays conservative."""
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)

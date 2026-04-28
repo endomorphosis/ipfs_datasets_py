@@ -24,6 +24,7 @@ from ..types.deontic_types import DeonticFormula, DeonticOperator
 from ..types.common_types import ConfidenceScore
 from .ir import LegalNormIR
 from .formula_builder import build_deontic_formula_records_from_irs
+from .exports import parser_elements_with_ir_export_readiness
 
 # Import existing deontic utilities
 from .utils.deontic_parser import (
@@ -177,6 +178,11 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         legal_norm_irs: List[LegalNormIR] = []
 
         if parser_elements is not None:
+            parser_elements = parser_elements_with_ir_export_readiness(parser_elements)
+            output.parser_elements = parser_elements  # type: ignore[attr-defined]
+            if parser_elements:
+                parser_element = parser_elements[0]
+                output.parser_element = parser_element  # type: ignore[attr-defined]
             result.metadata.setdefault("parser_elements", parser_elements)
             legal_norm_irs = [
                 LegalNormIR.from_parser_element(element)
@@ -193,8 +199,9 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "legal_formula_record_proof_ready_count",
                 sum(1 for record in formula_records if record.get("proof_ready") is True),
             )
-            if legal_norm_ir is None and legal_norm_irs:
+            if legal_norm_irs:
                 legal_norm_ir = legal_norm_irs[0]
+                output.legal_norm_ir = legal_norm_ir  # type: ignore[attr-defined]
         if parser_element is not None:
             result.metadata.setdefault("parser_element", parser_element)
         if legal_norm_ir is not None:
