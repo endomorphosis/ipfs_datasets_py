@@ -51,6 +51,8 @@ Continuous mode runs without user input. If the configured `gpt-5.5` route is un
 
 If a proposed patch fails `git apply --check`, the daemon stores the failed patch under `ipfs_datasets_py/.daemon/failed-patches/` and performs one automatic `gpt-5.5` repair attempt with the exact Git error before giving up on that cycle.
 
+The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. This keeps overnight runs biased toward patches that can be applied and validated unattended.
+
 If the system Codex CLI is too old for `gpt-5.5`, install a local CLI and point the router at it:
 
 ```bash

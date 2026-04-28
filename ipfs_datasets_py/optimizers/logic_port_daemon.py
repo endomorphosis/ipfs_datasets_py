@@ -100,6 +100,7 @@ class LogicPortDaemonConfig:
     dry_run: bool = True
     validation_commands: Tuple[Tuple[str, ...], ...] = DEFAULT_VALIDATION_COMMANDS
     max_prompt_chars: int = 50000
+    max_patch_lines: int = 180
     command_timeout_seconds: int = 600
     max_new_tokens: int = 4096
     temperature: float = 0.1
@@ -630,6 +631,13 @@ Hard constraints:
 - Return a unified diff patch only for files in this repository.
 - Do not include shell commands that mutate files.
 - Use conservative, PR-sized changes.
+- Choose one narrow requirement per cycle.
+- Limit the patch to at most {self.daemon_config.max_patch_lines} changed diff lines.
+- Prefer one implementation file plus one focused test file.
+- Do not include prose inside the patch string.
+- Generate the patch against the exact current file contents shown by repository status and tracked-file inventory.
+- Use valid unified-diff hunk headers and include enough unchanged context for git apply.
+- If you cannot produce a patch that git apply will accept, return an empty patch with a clear summary.
 
 Return ONLY JSON with this shape:
 {{
