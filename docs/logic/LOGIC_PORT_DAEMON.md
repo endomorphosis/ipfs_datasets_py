@@ -51,7 +51,22 @@ Continuous mode runs without user input. If the configured `gpt-5.5` route is un
 
 If a proposed patch fails `git apply --check`, the daemon stores the failed patch under `ipfs_datasets_py/.daemon/failed-patches/` and performs one automatic `gpt-5.5` repair attempt with the exact Git error before giving up on that cycle.
 
-The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. This keeps overnight runs biased toward patches that can be applied and validated unattended.
+The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. It now prefers exact `files` replacements over unified diffs for TypeScript/doc edits. File replacements are path-allowlisted and rolled back automatically if validation fails, which keeps overnight runs biased toward changes that can be applied and validated unattended.
+
+The daemon also encodes local test-harness conventions. Logic tests run under Jest with global `describe`/`it`/`expect`, so proposals importing `vitest` or `@jest/globals` are rejected before any files are written. This avoids failed autonomous cycles that create valid-looking tests for the wrong runner.
+
+## Markdown Task Tracking
+
+The TypeScript port plan is the daemon's task ledger. By default this daemon maintains a generated `Daemon Task Board` inside `docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md`. The nested deterministic parser implementation plan is intentionally left for the parser-specific daemon.
+
+On each daemon round it:
+
+- parses Markdown task checkboxes from the porting plan;
+- treats `[x]` as complete, `[ ]` as needed, `[~]` as in progress, and `[!]` as blocked;
+- selects the first task that is not complete and injects that task into the next LLM prompt;
+- updates the task board after the round with the current target, checklist state, latest result, and follow-up instructions.
+
+The task board is generated between marker comments, so manual plan prose can stay stable while the daemon rewrites only its own tracking section.
 
 If the system Codex CLI is too old for `gpt-5.5`, install a local CLI and point the router at it:
 

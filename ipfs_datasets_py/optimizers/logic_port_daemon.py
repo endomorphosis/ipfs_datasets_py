@@ -24,6 +24,7 @@ import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -59,6 +60,24 @@ DEFAULT_VALIDATION_COMMANDS = (
 
 JSON_BLOCK_RE = re.compile(r"```json\s*([\s\S]*?)\s*```", re.IGNORECASE)
 DIFF_BLOCK_RE = re.compile(r"```(?:diff|patch)\s*([\s\S]*?)\s*```", re.IGNORECASE)
+TASK_HEADING_RE = re.compile(r"^### Task\s+([^:\n]+):\s+(.+)$", re.MULTILINE)
+CHECKBOX_TASK_RE = re.compile(r"^(?P<indent>\s*)-\s+\[(?P<mark>[ xX~!])\]\s+(?P<title>.+)$", re.MULTILINE)
+DAEMON_TASK_BOARD_RE = re.compile(
+    r"\n?<!-- logic-port-daemon-task-board:start -->[\s\S]*?<!-- logic-port-daemon-task-board:end -->\n?",
+    re.MULTILINE,
+)
+FORBIDDEN_PATCH_SNIPPETS = (
+    "from 'vitest'",
+    'from "vitest"',
+    "from '@jest/globals'",
+    'from "@jest/globals"',
+)
+
+ALLOWED_WRITE_PREFIXES = (
+    "src/lib/logic/",
+    "docs/",
+    "ipfs_datasets_py/docs/logic/",
+)
 
 
 @dataclass(frozen=True)
@@ -81,6 +100,19 @@ class CommandResult:
             "stdout": self.stdout[-limit:],
             "stderr": self.stderr[-limit:],
         }
+
+
+@dataclass(frozen=True)
+class PlanTask:
+    """Task extracted from a markdown implementation plan."""
+
+    task_id: str
+    title: str
+    status: str
+
+    @property
+    def label(self) -> str:
+        return f"Task {self.task_id}: {self.title}"
 
 
 @dataclass
@@ -112,6 +144,8 @@ class LogicPortDaemonConfig:
     codex_trace_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/codex-runs")
     failed_patch_dir: Path = Path("ipfs_datasets_py/.daemon/failed-patches")
     patch_repair_attempts: int = 1
+    task_board_doc: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
+    update_task_board: bool = True
 
     def resolve(self, path: Path) -> Path:
         return path if path.is_absolute() else self.repo_root / path
@@ -124,6 +158,7 @@ class LogicPortArtifact:
     summary: str = ""
     patch: str = ""
     tasks: List[str] = field(default_factory=list)
+    files: List[Dict[str, str]] = field(default_factory=list)
     validation_commands: List[List[str]] = field(default_factory=list)
     raw_response: str = ""
     applied: bool = False
@@ -140,6 +175,7 @@ class LogicPortArtifact:
             "summary": self.summary,
             "tasks": self.tasks,
             "has_patch": bool(self.patch.strip()),
+            "files": [item.get("path", "") for item in self.files],
             "applied": self.applied,
             "dry_run": self.dry_run,
             "validation_passed": self.validation_passed,
@@ -195,6 +231,7 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
         return LogicPortArtifact(
             summary=str(parsed.get("summary", "")),
             patch=str(parsed.get("patch", "")),
+            files=_parse_file_edits(parsed.get("files", [])),
             tasks=[str(item) for item in parsed.get("tasks", []) if isinstance(item, (str, int, float))],
             validation_commands=safe_commands,
             raw_response=text,
@@ -205,6 +242,86 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
         return LogicPortArtifact(summary="Patch extracted from fenced diff block.", patch=diff_match.group(1), raw_response=text)
 
     return LogicPortArtifact(raw_response=text, errors=["LLM response did not contain JSON or a fenced diff patch."])
+
+
+def _parse_file_edits(value: Any) -> List[Dict[str, str]]:
+    edits: List[Dict[str, str]] = []
+    if not isinstance(value, list):
+        return edits
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        path = item.get("path")
+        content = item.get("content")
+        if isinstance(path, str) and isinstance(content, str):
+            edits.append({"path": path, "content": content})
+    return edits
+
+
+def _strip_daemon_task_board(text: str) -> str:
+    return DAEMON_TASK_BOARD_RE.sub("\n", text).rstrip() + "\n"
+
+
+def _status_from_task_block(block: str) -> str:
+    status_match = re.search(r"^Status:\s*(.+)$", block, re.MULTILINE)
+    if not status_match:
+        return "needed"
+    status = status_match.group(1).strip().lower()
+    if "implemented" in status and "partially" not in status:
+        return "complete"
+    if "partial" in status or "in progress" in status:
+        return "in-progress"
+    if "blocked" in status:
+        return "blocked"
+    return "needed"
+
+
+def _status_from_checkbox(mark: str) -> str:
+    if mark.lower() == "x":
+        return "complete"
+    if mark == "~":
+        return "in-progress"
+    if mark == "!":
+        return "blocked"
+    return "needed"
+
+
+def _clean_checkbox_title(title: str) -> str:
+    return re.sub(r"\s+<!--.*?-->\s*$", "", title).strip()
+
+
+def extract_plan_tasks(markdown: str) -> List[PlanTask]:
+    """Extract ordered implementation tasks from the markdown plan."""
+
+    text = _strip_daemon_task_board(markdown)
+    matches = list(TASK_HEADING_RE.finditer(text))
+    tasks: List[PlanTask] = []
+    for index, match in enumerate(matches):
+        block_start = match.end()
+        block_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        block = text[block_start:block_end]
+        tasks.append(
+            PlanTask(
+                task_id=match.group(1).strip(),
+                title=match.group(2).strip(),
+                status=_status_from_task_block(block),
+            )
+        )
+    if tasks:
+        return tasks
+
+    for index, match in enumerate(CHECKBOX_TASK_RE.finditer(text), start=1):
+        title = _clean_checkbox_title(match.group("title"))
+        if not title:
+            continue
+        tasks.append(
+            PlanTask(
+                task_id=f"checkbox-{index}",
+                title=title,
+                status=_status_from_checkbox(match.group("mark")),
+            )
+        )
+    return tasks
 
 
 def run_command(
@@ -286,11 +403,29 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         feedback: List[str],
         context: OptimizationContext,
     ) -> LogicPortArtifact:
-        if not artifact.patch.strip():
+        if not artifact.patch.strip() and not artifact.files:
             return artifact
 
         if self.daemon_config.dry_run:
             artifact.validation_results = self._run_validation()
+            return artifact
+
+        preflight_errors = self._preflight_artifact(artifact)
+        if preflight_errors:
+            artifact.errors.extend(preflight_errors)
+            return artifact
+
+        if artifact.files:
+            try:
+                artifact.applied, artifact.validation_results = self._apply_file_edits_with_validation(artifact.files)
+            except Exception as exc:
+                artifact.errors.append(str(exc))
+                return artifact
+            if not artifact.applied:
+                artifact.errors.append("File edits failed validation and were rolled back.")
+            return artifact
+
+        if not artifact.patch.strip():
             return artifact
 
         check = run_command(
@@ -330,11 +465,21 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             return artifact
 
         artifact.validation_results.extend(self._run_validation())
+        if not artifact.validation_passed:
+            rolled_back = self._rollback_patch(artifact.patch)
+            artifact.validation_results.extend(rolled_back)
+            if all(result.ok for result in rolled_back):
+                artifact.applied = False
+                artifact.errors.append("Patch failed validation and was rolled back.")
+            else:
+                artifact.errors.append("Patch failed validation and automatic rollback failed.")
         return artifact
 
     def validate(self, artifact: LogicPortArtifact, context: OptimizationContext) -> bool:
         if artifact.dry_run:
-            return bool(artifact.patch.strip()) and not artifact.errors
+            return (bool(artifact.patch.strip()) or bool(artifact.files)) and not artifact.errors
+        if artifact.files:
+            return artifact.applied and not artifact.errors
         return artifact.applied and artifact.validation_passed and not artifact.errors
 
     def run_once(self, *, session_id: Optional[str] = None) -> Dict[str, Any]:
@@ -435,6 +580,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 execution_time_ms=(time.time() - started) * 1000,
                 component=self.__class__.__name__,
             )
+            self._update_task_board(results)
         return results
 
     def run_supervised(self, *, cycles: int = 0) -> List[Dict[str, Any]]:
@@ -458,7 +604,6 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             cycle_results = self.run_daemon()
             all_results.extend(cycle_results)
             self._append_result_log(cycle_results)
-
             cycle_valid = bool(cycle_results and cycle_results[-1].get("valid"))
             if cycle_valid:
                 failure_cycles = 0
@@ -483,6 +628,178 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps({"pid": os.getpid(), "results": results}, default=str))
             handle.write("\n")
+
+    def _update_task_board(self, results: List[Dict[str, Any]]) -> None:
+        if self.daemon_config.dry_run or not self.daemon_config.update_task_board or self.daemon_config.task_board_doc is None:
+            return
+
+        path = self.daemon_config.resolve(self.daemon_config.task_board_doc)
+        if not path.exists():
+            return
+
+        original = path.read_text(encoding="utf-8")
+        tasks = extract_plan_tasks(original)
+        if not tasks:
+            return
+
+        target = self._select_next_plan_task(tasks)
+        board = self._render_task_board(tasks, target=target, results=results)
+        updated = _strip_daemon_task_board(original).rstrip() + "\n\n" + board + "\n"
+        path.write_text(updated, encoding="utf-8")
+
+    def _select_next_plan_task(self, tasks: List[PlanTask]) -> Optional[PlanTask]:
+        for status in ("needed", "in-progress", "blocked"):
+            for task in tasks:
+                if task.status == status:
+                    return task
+        return tasks[0] if tasks else None
+
+    def _render_task_board(self, tasks: List[PlanTask], *, target: Optional[PlanTask], results: List[Dict[str, Any]]) -> str:
+        latest = results[-1] if results else {}
+        latest_artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
+        latest_valid = bool(latest.get("valid"))
+        latest_summary = str(latest_artifact.get("summary") or "No summary")
+        latest_errors = latest_artifact.get("errors") or []
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        target_label = self._markdown_task_label(target) if target else "none"
+
+        lines = [
+            "<!-- logic-port-daemon-task-board:start -->",
+            "## Daemon Task Board",
+            "",
+            f"Last updated: {timestamp}",
+            "",
+            "Selection policy: choose the first port-plan checkbox that is not marked complete, keep the daemon scoped to that task, and update this board after every daemon round.",
+            "",
+            f"Current target: `{target_label}`",
+            "",
+            "Legend: `[ ]` needed, `[~]` in progress, `[x]` complete, `[!]` blocked or failing.",
+            "",
+            "### Checklist",
+            "",
+        ]
+
+        for task in tasks:
+            marker = {"complete": "[x]", "in-progress": "[~]", "blocked": "[!]"}.get(task.status, "[ ]")
+            note = task.status
+            if target and task.task_id == target.task_id:
+                if latest_valid:
+                    marker = "[x]"
+                    note = "validated by latest daemon round"
+                elif latest:
+                    marker = "[!]"
+                    note = "latest daemon round failed validation or preflight"
+                else:
+                    marker = "[~]"
+                    note = "selected for next daemon round"
+            lines.append(f"- {marker} `{self._markdown_task_label(task)}` - {note}")
+
+        lines.extend(
+            [
+                "",
+                "### Latest Round",
+                "",
+                f"- Target: `{target_label}`",
+                f"- Result: `{'valid' if latest_valid else 'needs follow-up'}`",
+                f"- Summary: {latest_summary}",
+            ]
+        )
+        if latest_errors:
+            lines.append(f"- Errors: {'; '.join(str(error) for error in latest_errors[:3])}")
+
+        lines.extend(
+            [
+                "",
+                "### Required Daemon Behavior",
+                "",
+                "- Work only on the current port-plan target unless the task is already complete in code and tests.",
+                "- If a round fails, keep the task marked as needing follow-up and use the validation error as the next-cycle constraint.",
+                "- Mark a task complete only after TypeScript validation and logic-port tests pass for the accepted change.",
+                "- Keep browser runtime changes TypeScript/WASM-native with no server or Python service dependency.",
+                "<!-- logic-port-daemon-task-board:end -->",
+            ]
+        )
+        return "\n".join(lines)
+
+    def _markdown_task_label(self, task: Optional[PlanTask]) -> str:
+        return task.label.replace("`", "'") if task else "none"
+
+    def _safe_edit_path(self, raw_path: str) -> Path:
+        if not raw_path or raw_path.startswith("/") or ".." in Path(raw_path).parts:
+            raise ValueError(f"Unsafe file edit path: {raw_path!r}")
+        normalized = raw_path.replace("\\", "/")
+        if not any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
+            raise ValueError(f"File edit path is outside daemon allowlist: {raw_path!r}")
+        return self.daemon_config.resolve(Path(normalized))
+
+    def _apply_file_edits_with_validation(self, edits: List[Dict[str, str]]) -> Tuple[bool, List[CommandResult]]:
+        originals: Dict[Path, Optional[str]] = {}
+        touched: List[Path] = []
+        for edit in edits:
+            path = self._safe_edit_path(edit["path"])
+            if path not in originals:
+                originals[path] = path.read_text(encoding="utf-8") if path.exists() else None
+            touched.append(path)
+
+        try:
+            for edit in edits:
+                path = self._safe_edit_path(edit["path"])
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(edit["content"], encoding="utf-8")
+            self._format_file_edits(touched)
+            validation_results = self._run_validation()
+            return all(result.ok for result in validation_results), validation_results
+        finally:
+            validation_results = locals().get("validation_results")
+            if not validation_results or not all(result.ok for result in validation_results):
+                for path, original in originals.items():
+                    if original is None:
+                        try:
+                            path.unlink()
+                        except FileNotFoundError:
+                            pass
+                    else:
+                        path.write_text(original, encoding="utf-8")
+
+    def _format_file_edits(self, paths: List[Path]) -> None:
+        ts_paths = [str(path.relative_to(self.daemon_config.repo_root)) for path in paths if path.suffix in {".ts", ".tsx"}]
+        if not ts_paths:
+            return
+        run_command(
+            ("npx", "prettier", "--write", *ts_paths),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=120,
+        )
+
+    def _preflight_artifact(self, artifact: LogicPortArtifact) -> List[str]:
+        errors: List[str] = []
+        candidates = [artifact.patch, *(edit.get("content", "") for edit in artifact.files)]
+        for snippet in FORBIDDEN_PATCH_SNIPPETS:
+            if any(snippet in candidate for candidate in candidates):
+                errors.append(
+                    f"Rejected proposal because it imports {snippet}; logic tests use Jest globals without test-framework imports."
+                )
+        return errors
+
+    def _rollback_patch(self, patch: str) -> List[CommandResult]:
+        check = run_command(
+            ("git", "apply", "-R", "--check", "-"),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=self.daemon_config.command_timeout_seconds,
+            stdin=patch,
+        )
+        results = [check]
+        if not check.ok:
+            return results
+        results.append(
+            run_command(
+                ("git", "apply", "-R", "-"),
+                cwd=self.daemon_config.repo_root,
+                timeout_seconds=self.daemon_config.command_timeout_seconds,
+                stdin=patch,
+            )
+        )
+        return results
 
     def _persist_failed_patch(self, patch: str, result: CommandResult, *, context: OptimizationContext) -> None:
         path = self.daemon_config.resolve(self.daemon_config.failed_patch_dir)
@@ -600,12 +917,18 @@ Original patch:
     def _build_prompt(self, *, input_data: Any, context: OptimizationContext) -> str:
         doc_sections = []
         budget = self.daemon_config.max_prompt_chars
+        plan_tasks: List[PlanTask] = []
         for path in [*self.daemon_config.plan_docs, *self.daemon_config.status_docs]:
             resolved = self.daemon_config.resolve(path)
             if not resolved.exists():
                 continue
             text = _read_text(resolved, limit=max(2000, budget // 4))
             doc_sections.append(f"## {path}\n{text}")
+            if self.daemon_config.task_board_doc is not None and resolved == self.daemon_config.resolve(self.daemon_config.task_board_doc):
+                plan_tasks = extract_plan_tasks(resolved.read_text(encoding="utf-8"))
+
+        selected_task = self._select_next_plan_task(plan_tasks)
+        selected_task_text = selected_task.label if selected_task else "No markdown task could be selected."
 
         git_status = run_command(
             ("git", "status", "--short"),
@@ -628,10 +951,14 @@ Hard constraints:
 - Do not wrap Python services from browser code.
 - Prefer deterministic TypeScript or WASM-compatible implementations.
 - Preserve existing tests and add focused tests for each change.
+- Use the existing Jest test harness. Test files should rely on global describe/it/expect and must not import vitest or @jest/globals.
+- Prefer adding cases to an existing matching *.test.ts file over creating a new test file.
 - Return a unified diff patch only for files in this repository.
 - Do not include shell commands that mutate files.
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
+- The daemon-selected task for this cycle is: {selected_task_text}
+- Work only on that daemon-selected task unless the repository already satisfies it; if it is already satisfied, update docs/tests for that task rather than jumping ahead.
 - Limit the patch to at most {self.daemon_config.max_patch_lines} changed diff lines.
 - Prefer one implementation file plus one focused test file.
 - Do not include prose inside the patch string.
@@ -643,10 +970,15 @@ Return ONLY JSON with this shape:
 {{
   "summary": "short description",
   "tasks": ["requirement addressed"],
-  "patch": "unified diff string, or empty if no safe change is possible",
+  "patch": "unified diff string, or empty if using files",
+  "files": [
+    {{"path": "src/lib/logic/example.ts", "content": "complete replacement file content"}}
+  ],
   "validation_commands": [["npx", "tsc", "--noEmit"], ["npm", "run", "validate:logic-port"]]
 }}
 
+Prefer "files" over "patch" for TypeScript/doc changes. Use complete file contents, not snippets.
+Only use paths under src/lib/logic/, docs/, or ipfs_datasets_py/docs/logic/.
 Session: {context.session_id}
 Model requested by daemon: {self.daemon_config.model_name}
 Provider requested by daemon: {self._resolved_provider() or "auto"}

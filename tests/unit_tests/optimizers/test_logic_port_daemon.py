@@ -4,6 +4,7 @@ from pathlib import Path
 from ipfs_datasets_py.optimizers.logic_port_daemon import (
     LogicPortDaemonConfig,
     LogicPortDaemonOptimizer,
+    extract_plan_tasks,
     parse_llm_patch_response,
 )
 
@@ -43,6 +44,22 @@ def test_parse_llm_patch_response_from_json():
     assert artifact.errors == []
 
 
+def test_parse_llm_patch_response_with_file_edits():
+    response = json.dumps(
+        {
+            "summary": "Edit docs",
+            "tasks": ["small file edit"],
+            "patch": "",
+            "files": [{"path": "docs/example.md", "content": "# Example\n"}],
+        }
+    )
+
+    artifact = parse_llm_patch_response(response)
+
+    assert artifact.patch == ""
+    assert artifact.files == [{"path": "docs/example.md", "content": "# Example\n"}]
+
+
 def test_parse_llm_patch_response_from_fenced_diff():
     artifact = parse_llm_patch_response(
         "Here is the patch:\n```diff\ndiff --git a/a b/a\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-a\n+b\n```\n"
@@ -50,6 +67,51 @@ def test_parse_llm_patch_response_from_fenced_diff():
 
     assert "diff --git" in artifact.patch
     assert artifact.errors == []
+
+
+def test_extract_plan_tasks_reads_status_from_markdown():
+    tasks = extract_plan_tasks(
+        """
+### Task 0.1: Add Parser Snapshot Fixtures
+
+Acceptance:
+- Snapshot test passes.
+
+### Task 2.1: Add IR-To-Deontic Exporter
+
+Status: implemented for deontic/frame formula generation.
+
+### Task 4.1: Applicability And Exemptions
+
+Status: partially implemented in the current parser.
+"""
+    )
+
+    assert [(task.task_id, task.title, task.status) for task in tasks] == [
+        ("0.1", "Add Parser Snapshot Fixtures", "needed"),
+        ("2.1", "Add IR-To-Deontic Exporter", "complete"),
+        ("4.1", "Applicability And Exemptions", "in-progress"),
+    ]
+
+
+def test_extract_plan_tasks_reads_port_plan_checkboxes():
+    tasks = extract_plan_tasks(
+        """
+### Phase 13: Browser-Native ML/NLP Parity
+
+- [x] Port `ml_confidence.py` deterministic fallback scoring.
+- [ ] Replace spaCy extraction with browser-native NLP.
+  - [~] Add local model artifact loading.
+- [!] Remove server fallback calls.
+"""
+    )
+
+    assert [(task.title, task.status) for task in tasks] == [
+        ("Port `ml_confidence.py` deterministic fallback scoring.", "complete"),
+        ("Replace spaCy extraction with browser-native NLP.", "needed"),
+        ("Add local model artifact loading.", "in-progress"),
+        ("Remove server fallback calls.", "blocked"),
+    ]
 
 
 def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
@@ -178,3 +240,157 @@ def test_supervised_mode_appends_jsonl_cycle_results(tmp_path):
     rows = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
     assert len(rows) == 1
     assert rows[0]["results"][0]["valid"] is False
+
+
+def test_daemon_updates_markdown_task_board_after_round(tmp_path):
+    plan = tmp_path / "implementation.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text(
+        "# Plan\n\n"
+        "### Task 0.1: Add Parser Snapshot Fixtures\n\n"
+        "Acceptance:\n- Snapshot test passes.\n\n"
+        "### Task 2.1: Add IR-To-Deontic Exporter\n\n"
+        "Status: implemented for deontic/frame formula generation.\n",
+        encoding="utf-8",
+    )
+    status.write_text("| ZKP | partial |\n", encoding="utf-8")
+
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=FakeRouter(json.dumps({"summary": "No safe change", "patch": ""}))).run_daemon()
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "## Daemon Task Board" in updated
+    assert "Current target: `Task 0.1: Add Parser Snapshot Fixtures`" in updated
+    assert "- [!] `Task 0.1: Add Parser Snapshot Fixtures` - latest daemon round failed validation or preflight" in updated
+    assert "- [x] `Task 2.1: Add IR-To-Deontic Exporter` - complete" in updated
+
+
+def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    docs_dir = tmp_path / "docs"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    docs_dir.mkdir(parents=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port deterministic parser IR\n", encoding="utf-8")
+    status.write_text("| ZKP | partial |\n", encoding="utf-8")
+    target = docs_dir / "example.md"
+    target.write_text("old\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "Edit docs",
+            "tasks": ["small file edit"],
+            "files": [{"path": "docs/example.md", "content": "new\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=(("python3", "-c", "import sys; sys.exit(1)"),),
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="file-edit")
+
+    assert result["valid"] is False
+    assert target.read_text(encoding="utf-8") == "old\n"
+    assert result["artifact"]["files"] == ["docs/example.md"]
+
+
+def test_file_edit_mode_rejects_vitest_imports_before_writing(tmp_path):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port deterministic parser IR\n", encoding="utf-8")
+    status.write_text("| ZKP | partial |\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "Bad test harness",
+            "files": [
+                {
+                    "path": "src/lib/logic/example.test.ts",
+                    "content": "import { describe, expect, it } from 'vitest';\n",
+                }
+            ],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="bad-test-harness")
+
+    assert result["valid"] is False
+    assert not (logic_dir / "example.test.ts").exists()
+    assert "imports from 'vitest'" in result["artifact"]["errors"][0]
+
+
+def test_patch_mode_rolls_back_when_validation_fails(tmp_path):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port deterministic parser IR\n", encoding="utf-8")
+    status.write_text("| ZKP | partial |\n", encoding="utf-8")
+
+    patch = (
+        "diff --git a/generated.txt b/generated.txt\n"
+        "new file mode 100644\n"
+        "--- /dev/null\n"
+        "+++ b/generated.txt\n"
+        "@@ -0,0 +1 @@\n"
+        "+created\n"
+    )
+    response = json.dumps({"summary": "Create file", "patch": patch, "tasks": ["rollback"]})
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=(("python3", "-c", "import sys; sys.exit(1)"),),
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="patch-rollback")
+
+    assert result["valid"] is False
+    assert result["artifact"]["applied"] is False
+    assert not (tmp_path / "generated.txt").exists()
+    assert "Patch failed validation and was rolled back." in result["artifact"]["errors"]
