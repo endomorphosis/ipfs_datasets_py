@@ -994,8 +994,12 @@ def test_parser_element_readiness_resolves_same_document_reference_exception_fro
     assert aligned[0]["export_readiness"]["parser_proof_ready"] is False
     assert aligned[0]["export_readiness"]["formula_proof_ready"] is True
     assert aligned[0]["export_readiness"]["proof_ready"] is True
-    assert aligned[0]["export_readiness"]["requires_validation"] is False
-    assert aligned[0]["export_readiness"]["repair_required"] is False
+    assert aligned[0]["export_readiness"]["formula_requires_validation"] is False
+    assert aligned[0]["export_readiness"]["formula_repair_required"] is False
+    assert aligned[0]["export_readiness"]["export_requires_validation"] is False
+    assert aligned[0]["export_readiness"]["export_repair_required"] is False
+    assert isinstance(aligned[0]["export_readiness"]["requires_validation"], list)
+    assert "llm_router_repair" in aligned[0]["export_readiness"]["requires_validation"]
     assert aligned[0]["export_readiness"]["deterministic_resolution"]["type"] == (
         "resolved_same_document_reference_exception"
     )
@@ -1023,8 +1027,12 @@ def test_parser_element_readiness_keeps_mismatched_section_context_reference_blo
     assert aligned[0]["promotable_to_theorem"] is False
     assert aligned[0]["export_readiness"]["formula_proof_ready"] is False
     assert aligned[0]["export_readiness"]["proof_ready"] is False
-    assert aligned[0]["export_readiness"]["requires_validation"] is True
-    assert aligned[0]["export_readiness"]["repair_required"] is True
+    assert aligned[0]["export_readiness"]["formula_requires_validation"] is True
+    assert aligned[0]["export_readiness"]["formula_repair_required"] is True
+    assert aligned[0]["export_readiness"]["export_requires_validation"] is True
+    assert aligned[0]["export_readiness"]["export_repair_required"] is True
+    assert isinstance(aligned[0]["export_readiness"]["requires_validation"], list)
+    assert "llm_router_repair" in aligned[0]["export_readiness"]["requires_validation"]
     assert aligned[0]["export_readiness"]["deterministic_resolution"] == {}
     assert aligned[0]["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in aligned[0]["llm_repair"]["reasons"]

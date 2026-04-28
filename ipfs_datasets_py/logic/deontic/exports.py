@@ -182,13 +182,28 @@ def parser_elements_with_ir_export_readiness(
     aligned: List[Dict[str, Any]] = []
     for copied, formula_record in zip(copied_elements, formula_records):
         deterministic_resolution = formula_record.get("deterministic_resolution") or {}
+        formula_requires_validation = bool(formula_record.get("requires_validation"))
+        formula_repair_required = bool(formula_record.get("repair_required"))
 
         export_readiness = dict(copied.get("export_readiness") or {})
         export_readiness["parser_proof_ready"] = bool(copied.get("promotable_to_theorem"))
         export_readiness["formula_proof_ready"] = bool(formula_record.get("proof_ready"))
         export_readiness["proof_ready"] = bool(formula_record.get("proof_ready"))
-        export_readiness["requires_validation"] = bool(formula_record.get("requires_validation"))
-        export_readiness["repair_required"] = bool(formula_record.get("repair_required"))
+        export_readiness["formula_requires_validation"] = formula_requires_validation
+        export_readiness["formula_repair_required"] = formula_repair_required
+        export_readiness["export_requires_validation"] = formula_requires_validation
+        export_readiness["export_repair_required"] = formula_repair_required
+        export_readiness["formula_blockers"] = list(formula_record.get("blockers") or [])
+
+        # Legacy parser elements use list-shaped requires_validation values such
+        # as ["llm_router_repair"] for parquet/backward-compatible callers.
+        # Preserve that field shape and publish IR/formula readiness in explicit
+        # formula_* and export_* fields instead. Elements constructed outside the
+        # parser may still use a boolean field, so keep supporting that shape.
+        if not isinstance(export_readiness.get("requires_validation"), list):
+            export_readiness["requires_validation"] = formula_requires_validation
+        if not isinstance(export_readiness.get("repair_required"), list):
+            export_readiness["repair_required"] = formula_repair_required
         export_readiness["deterministic_resolution"] = deterministic_resolution
         copied["export_readiness"] = export_readiness
 
