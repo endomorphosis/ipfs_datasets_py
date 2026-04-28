@@ -69,6 +69,7 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["element_count"] == 1
         assert result.metadata["deterministic_parser"]["ir_count"] == 1
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 1
+        assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 1
         assert result.metadata["deterministic_parser"]["proof_ready"] is True
         assert result.metadata["deterministic_parser"]["blockers"] == []
 
@@ -94,6 +95,7 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["element_count"] == 0
         assert result.metadata["deterministic_parser"]["ir_count"] == 0
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 0
+        assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 0
         assert result.metadata["legal_norm_irs"] == []
         assert result.metadata["legal_formula_records"] == []
         assert "parser_element" not in result.metadata
@@ -115,6 +117,7 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["element_count"] == 3
         assert result.metadata["deterministic_parser"]["ir_count"] == 3
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 3
+        assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 3
         assert [element["action"][0] for element in result.metadata["parser_elements"]] == [
             "establish procedures",
             "submit a report",
@@ -159,6 +162,61 @@ class TestDeonticConverter:
         assert exemption.output.operator.value == "IMM"
         assert applicability.metadata["legal_norm_ir"]["norm_type"] == "applicability"
         assert exemption.metadata["legal_norm_ir"]["norm_type"] == "exemption"
+
+    def test_converter_exposes_local_applicability_formula_record_resolution(self):
+        """Formula records may resolve local self-scope while IR stays conservative."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert("This section applies to food carts.")
+
+        assert result.success
+        norm = result.metadata["legal_norm_ir"]
+        record = result.metadata["legal_formula_records"][0]
+        assert norm["proof_ready"] is False
+        assert "cross_reference_requires_resolution" in norm["blockers"]
+        assert record["formula"] == "AppliesTo(ThisSection, FoodCarts)"
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["deterministic_resolution"]["type"] == "local_scope_applicability"
+        assert "cross_reference_requires_resolution" in record["blockers"]
+        assert result.metadata["deterministic_parser"]["proof_ready"] is False
+        assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 1
+
+    def test_converter_exposes_substantive_exception_formula_record_resolution(self):
+        """Formula records may resolve simple exceptions while IR stays conservative."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert(
+            "The applicant shall obtain a permit unless approval is denied."
+        )
+
+        assert result.success
+        norm = result.metadata["legal_norm_ir"]
+        record = result.metadata["legal_formula_records"][0]
+        assert norm["proof_ready"] is False
+        assert "exception_requires_scope_review" in norm["blockers"]
+        assert record["formula"] == "O(∀x (Applicant(x) ∧ ¬ApprovalIsDenied(x) → ObtainPermit(x)))"
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["deterministic_resolution"]["type"] == "standard_substantive_exception"
+        assert record["deterministic_resolution"]["exception"] == "approval is denied"
+        assert "exception_requires_scope_review" in record["blockers"]
+        assert result.metadata["deterministic_parser"]["proof_ready"] is False
+        assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 1
+
+    def test_converter_keeps_external_applicability_formula_record_blocked(self):
+        """External applicability scopes still require citation resolution."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert("The chapter applies to food carts.")
+
+        assert result.success
+        record = result.metadata["legal_formula_records"][0]
+        assert record["formula"] == "AppliesTo(Chapter, FoodCarts)"
+        assert record["proof_ready"] is False
+        assert record["requires_validation"] is True
+        assert record["deterministic_resolution"] == {}
+        assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 0
 
     def test_converter_excludes_override_clause_from_formula_but_preserves_ir(self):
         """Override clauses are precedence provenance, not factual antecedents."""

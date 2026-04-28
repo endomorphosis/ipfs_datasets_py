@@ -83,6 +83,9 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     parser_warnings = list(norm.quality.parser_warnings)
     blockers = list(norm.blockers)
     omitted_slots = _omitted_formula_slots(norm)
+    deterministic_resolution = _deterministic_formula_resolution(norm, blockers)
+    proof_ready = norm.proof_ready or bool(deterministic_resolution)
+    requires_validation = not proof_ready
 
     return {
         "formula_id": _stable_formula_id(norm.source_id, formula),
@@ -98,11 +101,12 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "norm_type": norm.norm_type,
         "support_span": norm.support_span.to_list(),
         "field_spans": dict(norm.field_spans),
-        "proof_ready": norm.proof_ready,
-        "requires_validation": not norm.proof_ready,
+        "proof_ready": proof_ready,
+        "requires_validation": requires_validation,
         "blockers": blockers,
         "parser_warnings": parser_warnings,
         "omitted_formula_slots": omitted_slots,
+        "deterministic_resolution": deterministic_resolution,
         "schema_version": norm.schema_version,
     }
 
@@ -361,3 +365,106 @@ def _applicability_target(action: str) -> str:
     text = str(action or "").strip()
     text = re.sub(r"^apply\s+to\s+", "", text, flags=re.IGNORECASE)
     return re.sub(r"^apply\s+", "", text, flags=re.IGNORECASE)
+
+
+def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+    """Return a narrow deterministic formula-level resolution when safe.
+
+    Parser-level theorem promotion remains conservative. This helper can mark
+    an exported formula record proof-ready only when all unresolved blockers are
+    addressed by source-grounded IR slots that already appear in the formula.
+
+    Parser-level theorem promotion remains conservative. This helper only
+    promotes the exported frame formula for local applicability clauses where
+    the unresolved reference is the clause's own scope, e.g. ``this section``.
+    External references such as ``the chapter`` or numbered sections stay
+    blocked until a citation resolver supplies source-grounded context.
+    """
+
+    exception_resolution = _standard_exception_formula_resolution(norm, blockers)
+    if exception_resolution:
+        return exception_resolution
+
+    if norm.modality != "APP" or norm.norm_type != "applicability":
+        return {}
+
+    allowed_blockers = {"cross_reference_requires_resolution", "llm_repair_required"}
+    blocker_set = set(blockers)
+    if not blocker_set or not blocker_set.issubset(allowed_blockers):
+        return {}
+
+    actor_text = norm.actor.strip().lower()
+    if not re.match(r"^this\s+(section|chapter|title|article|part)$", actor_text):
+        return {}
+
+    if not norm.action.strip():
+        return {}
+
+    return {
+        "type": "local_scope_applicability",
+        "resolved_blockers": sorted(blocker_set),
+        "scope": norm.actor,
+        "reason": "local self-scope applicability formula is source-grounded",
+    }
+
+
+def _standard_exception_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+    """Resolve simple substantive exceptions at formula-record level.
+
+    A clause like ``The applicant shall obtain a permit unless approval is
+    denied`` already has a deterministic IR exception slot and the formula
+    includes that slot as a negated antecedent.  The record can be proof-ready
+    without changing parser-level blockers when the exception is a single,
+    non-reference phrase and no precedence/citation review is pending.
+    """
+
+    if norm.modality not in {"O", "P", "F"}:
+        return {}
+    if not norm.actor.strip() or not norm.action.strip():
+        return {}
+    if not norm.exceptions:
+        return {}
+    if norm.overrides or norm.cross_references or norm.resolved_cross_references:
+        return {}
+
+    allowed_blockers = {"exception_requires_scope_review", "llm_repair_required"}
+    blocker_set = set(blockers)
+    if not blocker_set or not blocker_set.issubset(allowed_blockers):
+        return {}
+
+    substantive_exceptions = _formula_exception_texts(norm)
+    if len(substantive_exceptions) != 1:
+        return {}
+
+    exception_record = next(
+        (item for item in norm.exceptions if isinstance(item, dict)),
+        {},
+    )
+    exception_text = substantive_exceptions[0].strip()
+    if not exception_text:
+        return {}
+    if _exception_text_needs_external_resolution(exception_text):
+        return {}
+
+    return {
+        "type": "standard_substantive_exception",
+        "resolved_blockers": sorted(blocker_set),
+        "exception": exception_text,
+        "exception_span": exception_record.get("span", []),
+        "reason": "single substantive exception is represented as a negated formula antecedent",
+    }
+
+
+def _exception_text_needs_external_resolution(text: str) -> bool:
+    normalized = text.strip().lower()
+    if not normalized:
+        return True
+    if _LEGAL_REFERENCE_TEXT_RE.search(normalized):
+        return True
+    return normalized.startswith((
+        "as provided",
+        "provided in",
+        "under ",
+        "pursuant to ",
+        "notwithstanding ",
+    ))

@@ -84,6 +84,95 @@ def test_ir_formula_record_preserves_blocked_reference_exception_slots():
     assert record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in section 552"
 
 
+def test_simple_substantive_exception_formula_record_is_proof_ready_with_resolution_note():
+    element = extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "exception_requires_scope_review" in norm.blockers
+    assert record["formula"] == "O(∀x (Applicant(x) ∧ ¬ApprovalIsDenied(x) → ObtainPermit(x)))"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["blockers"] == norm.blockers
+    assert record["parser_warnings"] == norm.quality.parser_warnings
+    assert record["deterministic_resolution"] == {
+        "type": "standard_substantive_exception",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "exception": "approval is denied",
+        "exception_span": norm.exceptions[0].get("span", []),
+        "reason": "single substantive exception is represented as a negated formula antecedent",
+    }
+
+
+def test_reference_exception_formula_record_remains_blocked():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["deterministic_resolution"] == {}
+    assert "cross_reference_requires_resolution" in record["blockers"]
+    assert "exception_requires_scope_review" in record["blockers"]
+
+
+def test_override_with_exception_formula_record_remains_blocked():
+    element = extract_normative_elements(
+        "Notwithstanding section 5.01.020, the applicant shall obtain a permit unless approval is denied."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["deterministic_resolution"] == {}
+    assert "override_clause_requires_precedence_review" in record["blockers"]
+
+
+def test_local_applicability_formula_record_is_proof_ready_with_resolution_note():
+    element = extract_normative_elements("This section applies to food carts.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in norm.blockers
+    assert record["formula"] == "AppliesTo(ThisSection, FoodCarts)"
+    assert record["target_logic"] == "frame_logic"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["blockers"] == norm.blockers
+    assert record["parser_warnings"] == norm.quality.parser_warnings
+    assert record["deterministic_resolution"] == {
+        "type": "local_scope_applicability",
+        "resolved_blockers": sorted(set(norm.blockers)),
+        "scope": "this section",
+        "reason": "local self-scope applicability formula is source-grounded",
+    }
+
+
+def test_external_applicability_formula_record_remains_blocked():
+    element = extract_normative_elements("The chapter applies to food carts.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["formula"] == "AppliesTo(Chapter, FoodCarts)"
+    assert record["target_logic"] == "frame_logic"
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["deterministic_resolution"] == {}
+    assert "cross_reference_requires_resolution" in record["blockers"]
+
+
 def test_ir_formula_record_preserves_override_slots_without_theorem_antecedent():
     element = extract_normative_elements(
         "Notwithstanding section 5.01.020, the Director may issue a variance."

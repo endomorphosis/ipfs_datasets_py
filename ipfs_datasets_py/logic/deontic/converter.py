@@ -188,6 +188,11 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "legal_formula_records",
                 build_deontic_formula_records_from_irs(legal_norm_irs),
             )
+            formula_records = result.metadata.get("legal_formula_records", [])
+            result.metadata.setdefault(
+                "legal_formula_record_proof_ready_count",
+                sum(1 for record in formula_records if record.get("proof_ready") is True),
+            )
             if legal_norm_ir is None and legal_norm_irs:
                 legal_norm_ir = legal_norm_irs[0]
         if parser_element is not None:
@@ -202,6 +207,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "element_count": len(parser_elements or []),
                 "ir_count": len(legal_norm_irs),
                 "formula_record_count": len(result.metadata.get("legal_formula_records", [])),
+                "formula_record_proof_ready_count": result.metadata.get("legal_formula_record_proof_ready_count", 0),
                 "proof_ready": bool(getattr(legal_norm_ir, "proof_ready", False)),
                 "blockers": list(getattr(legal_norm_ir, "blockers", [])),
             },

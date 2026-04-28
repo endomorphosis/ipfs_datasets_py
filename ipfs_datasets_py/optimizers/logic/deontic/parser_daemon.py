@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import traceback
 import os
 import re
 import subprocess
@@ -72,6 +73,7 @@ class LegalParserDaemonConfig:
     provider: str = "codex_cli"
     max_cycles: int = 1
     cycle_interval_seconds: float = 0.0
+    error_backoff_seconds: float = 30.0
     target_score: float = 0.98
     min_score_improvement: float = 0.001
     apply_patches: bool = False
@@ -422,9 +424,16 @@ class LegalParserOptimizerDaemon:
         summaries: List[Dict[str, Any]] = []
         cycles_executed = 0
         while self.config.max_cycles <= 0 or cycles_executed < self.config.max_cycles:
-            cycle = self.run_cycle(cycle_index=int(self._state.get("cycle_index", 0)) + 1)
+            cycle_index = int(self._state.get("cycle_index", 0)) + 1
+            try:
+                cycle = self.run_cycle(cycle_index=cycle_index)
+            except Exception as exc:
+                cycle = self._record_cycle_exception(cycle_index=cycle_index, exc=exc)
             summaries.append(cycle)
             cycles_executed += 1
+            if cycle.get("status") == "cycle_error":
+                await asyncio.sleep(max(0.0, float(self.config.error_backoff_seconds)))
+                continue
             if cycle.get("metrics", {}).get("parity_score", 0.0) >= self.config.target_score:
                 break
             if self.config.max_cycles > 0 and cycles_executed >= self.config.max_cycles:
@@ -516,6 +525,48 @@ class LegalParserOptimizerDaemon:
             {
                 "cycle_index": cycle_index,
                 "latest_score": evaluation.get("metrics", {}).get("parity_score"),
+                "latest_cycle_dir": str(cycle_dir),
+                "updated_at": finished,
+            }
+        )
+        self.state_file.write_text(json.dumps(self._state, indent=2, default=str), encoding="utf-8")
+        self.latest_file.write_text(json.dumps(cycle_payload, indent=2, default=str), encoding="utf-8")
+        return cycle_payload
+
+    def _record_cycle_exception(self, *, cycle_index: int, exc: Exception) -> Dict[str, Any]:
+        finished = _utc_now()
+        cycle_dir = self.cycles_dir / f"cycle_{cycle_index:04d}"
+        cycle_dir.mkdir(parents=True, exist_ok=True)
+        cycle_payload = {
+            "status": "cycle_error",
+            "cycle_index": cycle_index,
+            "started_at": finished,
+            "finished_at": finished,
+            "duration_seconds": 0.0,
+            "model_name": self.config.model_name,
+            "provider": self.config.provider,
+            "apply_patches": self.config.apply_patches,
+            "metrics": {},
+            "score": 0.0,
+            "feedback": [f"{type(exc).__name__}: {exc}"],
+            "patch_check": {"valid": False, "stderr": "cycle failed before patch check"},
+            "apply_result": {"applied": False, "reason": "cycle_exception"},
+            "tests": {"valid": False, "skipped": True, "reason": "cycle_exception"},
+            "post_evaluation": {},
+            "exception": {
+                "type": type(exc).__name__,
+                "message": str(exc),
+                "traceback": traceback.format_exc(),
+            },
+        }
+        (cycle_dir / "cycle_summary.json").write_text(
+            json.dumps(cycle_payload, indent=2, default=str),
+            encoding="utf-8",
+        )
+        self._state.update(
+            {
+                "cycle_index": cycle_index,
+                "latest_score": None,
                 "latest_cycle_dir": str(cycle_dir),
                 "updated_at": finished,
             }
@@ -707,6 +758,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER", "codex_cli"))
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=0.0)
+    parser.add_argument("--error-backoff-seconds", type=float, default=30.0)
     parser.add_argument("--llm-timeout-seconds", type=int, default=900)
     parser.add_argument("--test-timeout-seconds", type=int, default=180)
     parser.add_argument("--target-score", type=float, default=0.98)
@@ -730,6 +782,7 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         provider=str(args.provider),
         max_cycles=int(args.max_cycles),
         cycle_interval_seconds=float(args.cycle_interval_seconds),
+        error_backoff_seconds=float(args.error_backoff_seconds),
         llm_timeout_seconds=int(args.llm_timeout_seconds),
         test_timeout_seconds=int(args.test_timeout_seconds),
         target_score=float(args.target_score),
