@@ -5,6 +5,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
     parser_elements_to_export_tables,
+    parser_elements_with_ir_export_readiness,
     parser_elements_to_ir_aligned_export_tables,
     validate_export_tables,
 )
@@ -211,6 +212,56 @@ def test_document_export_tables_skip_repair_rows_for_formula_resolved_norms():
     assert tables["proof_obligations"][2]["deterministic_resolution"]["type"] == "pure_precedence_override"
     assert tables["repair_queue"][0]["source_id"] == norms[3].source_id
     assert validate_export_tables(tables)["valid"] is True
+
+
+def test_parser_elements_with_ir_export_readiness_clears_formula_resolved_repair_noise():
+    elements = [
+        extract_normative_elements("This section applies to food carts.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+
+    aligned = parser_elements_with_ir_export_readiness(elements)
+
+    assert [element["promotable_to_theorem"] for element in aligned] == [
+        False,
+        False,
+        False,
+        False,
+    ]
+    assert [element["export_readiness"]["proof_ready"] for element in aligned] == [
+        True,
+        True,
+        True,
+        False,
+    ]
+    assert [element["export_readiness"]["repair_required"] for element in aligned] == [
+        False,
+        False,
+        False,
+        True,
+    ]
+    assert [element["export_readiness"]["deterministic_resolution"].get("type") for element in aligned] == [
+        "local_scope_applicability",
+        "standard_substantive_exception",
+        "pure_precedence_override",
+        None,
+    ]
+    assert [element["llm_repair"].get("required") for element in aligned] == [
+        False,
+        False,
+        False,
+        True,
+    ]
+    assert aligned[3]["llm_repair"].get("deterministically_resolved") is not True
+    assert "cross_reference_requires_resolution" in aligned[3]["llm_repair"]["reasons"]
 
 
 def test_document_export_tables_skip_repair_row_for_resolved_reference_exception():

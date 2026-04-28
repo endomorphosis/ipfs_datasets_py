@@ -155,6 +155,56 @@ def parser_elements_to_export_tables(elements: Iterable[Mapping[str, Any]]) -> D
     )
 
 
+def parser_elements_with_ir_export_readiness(
+    elements: Iterable[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Return parser elements annotated with deterministic export readiness.
+
+    Parser elements intentionally keep their original theorem-promotion gate:
+    ``promotable_to_theorem`` still reflects the conservative parser decision.
+    Export and metrics callers also need to know when a blocked parser warning
+    has already been resolved by the typed IR/formula layer, so the repair lane
+    does not stay noisy for source-grounded deterministic resolutions.
+
+    This helper projects formula-record readiness back onto copied parser
+    dictionaries. It never calls an LLM and never clears unresolved numbered or
+    external references unless the formula record has an explicit deterministic
+    resolution.
+    """
+
+    aligned: List[Dict[str, Any]] = []
+    for element in elements:
+        copied = dict(element)
+        norm = LegalNormIR.from_parser_element(copied)
+        formula_record = build_deontic_formula_record_from_ir(norm)
+        deterministic_resolution = formula_record.get("deterministic_resolution") or {}
+
+        export_readiness = dict(copied.get("export_readiness") or {})
+        export_readiness["parser_proof_ready"] = bool(copied.get("promotable_to_theorem"))
+        export_readiness["formula_proof_ready"] = bool(formula_record.get("proof_ready"))
+        export_readiness["proof_ready"] = bool(formula_record.get("proof_ready"))
+        export_readiness["requires_validation"] = bool(formula_record.get("requires_validation"))
+        export_readiness["repair_required"] = bool(formula_record.get("repair_required"))
+        export_readiness["deterministic_resolution"] = deterministic_resolution
+        copied["export_readiness"] = export_readiness
+
+        if deterministic_resolution and formula_record.get("repair_required") is False:
+            llm_repair = dict(copied.get("llm_repair") or {})
+            llm_repair["required"] = False
+            llm_repair["allow_llm_repair"] = False
+            llm_repair["deterministically_resolved"] = True
+            llm_repair["deterministic_resolution"] = deterministic_resolution
+            llm_repair["reasons"] = [
+                reason
+                for reason in llm_repair.get("reasons", [])
+                if reason not in set(formula_record.get("blockers") or [])
+            ]
+            copied["llm_repair"] = llm_repair
+
+        aligned.append(copied)
+    return aligned
+
+
 def parser_elements_to_ir_aligned_export_tables(
     elements: Iterable[Mapping[str, Any]],
     legacy_tables: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
@@ -173,7 +223,8 @@ def parser_elements_to_ir_aligned_export_tables(
     carries every non-core legacy table forward unchanged.
     """
 
-    ir_tables = parser_elements_to_export_tables(elements)
+    aligned_elements = parser_elements_with_ir_export_readiness(elements)
+    ir_tables = parser_elements_to_export_tables(aligned_elements)
     merged: Dict[str, List[Dict[str, Any]]] = {
         name: [dict(row) for row in rows]
         for name, rows in ir_tables.items()
