@@ -23,6 +23,7 @@ import traceback
 import os
 import re
 import subprocess
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -84,6 +85,8 @@ class LegalParserDaemonConfig:
     llm_max_tokens: int = 6000
     llm_temperature: float = 0.1
     llm_timeout_seconds: int = 900
+    llm_proposal_attempts: int = 3
+    heartbeat_interval_seconds: float = 15.0
     test_timeout_seconds: int = 180
     require_production_and_tests: bool = True
     docs: Tuple[str, ...] = (
@@ -269,6 +272,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "provider": self.daemon_config.provider,
                     "model_name": self.daemon_config.model_name,
                     "allow_local_fallback": False,
+                    "disable_model_retry": True,
                     "timeout": self.daemon_config.llm_timeout_seconds,
                 },
             )
@@ -283,6 +287,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 temperature=self.daemon_config.llm_temperature,
                 timeout=self.daemon_config.llm_timeout_seconds,
                 allow_local_fallback=False,
+                disable_model_retry=True,
             )
         return parse_cycle_proposal(raw_response)
 
@@ -459,39 +464,47 @@ class LegalParserOptimizerDaemon:
         self.run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         self.run_started_at = _utc_now()
         self.run_baseline_head = self._current_head()
+        self._status_lock = threading.Lock()
+        self._status_payload: Dict[str, Any] = {}
+        self._heartbeat_stop = threading.Event()
+        self._heartbeat_thread: Optional[threading.Thread] = None
         self._write_run_manifest()
         self._sync_progress_from_existing_cycles()
 
     async def run(self) -> Dict[str, Any]:
         summaries: List[Dict[str, Any]] = []
         cycles_executed = 0
-        while self.config.max_cycles <= 0 or cycles_executed < self.config.max_cycles:
-            cycle_index = int(self._state.get("cycle_index", 0)) + 1
-            try:
-                cycle = self.run_cycle(cycle_index=cycle_index)
-            except KeyboardInterrupt:
-                raise
-            except BaseException as exc:
-                cycle = self._record_cycle_exception(cycle_index=cycle_index, exc=exc)
-            summaries.append(cycle)
-            cycles_executed += 1
-            if cycle.get("status") == "cycle_error":
-                await asyncio.sleep(max(0.0, float(self.config.error_backoff_seconds)))
-                continue
-            if cycle.get("metrics", {}).get("parity_score", 0.0) >= self.config.target_score:
-                break
-            if self.config.max_cycles > 0 and cycles_executed >= self.config.max_cycles:
-                break
-            await asyncio.sleep(max(0.0, float(self.config.cycle_interval_seconds)))
+        self._start_heartbeat()
+        try:
+            while self.config.max_cycles <= 0 or cycles_executed < self.config.max_cycles:
+                cycle_index = int(self._state.get("cycle_index", 0)) + 1
+                try:
+                    cycle = self.run_cycle(cycle_index=cycle_index)
+                except KeyboardInterrupt:
+                    raise
+                except BaseException as exc:
+                    cycle = self._record_cycle_exception(cycle_index=cycle_index, exc=exc)
+                summaries.append(cycle)
+                cycles_executed += 1
+                if cycle.get("status") == "cycle_error":
+                    await asyncio.sleep(max(0.0, float(self.config.error_backoff_seconds)))
+                    continue
+                if cycle.get("metrics", {}).get("parity_score", 0.0) >= self.config.target_score:
+                    break
+                if self.config.max_cycles > 0 and cycles_executed >= self.config.max_cycles:
+                    break
+                await asyncio.sleep(max(0.0, float(self.config.cycle_interval_seconds)))
 
-        summary = {
-            "status": "success",
-            "output_dir": str(self.output_dir),
-            "cycles_executed": cycles_executed,
-            "latest_cycle": summaries[-1] if summaries else None,
-        }
-        self.latest_file.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
-        return summary
+            summary = {
+                "status": "success",
+                "output_dir": str(self.output_dir),
+                "cycles_executed": cycles_executed,
+                "latest_cycle": summaries[-1] if summaries else None,
+            }
+            self.latest_file.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
+            return summary
+        finally:
+            self._stop_heartbeat()
 
     def run_cycle(self, *, cycle_index: int) -> Dict[str, Any]:
         started = _utc_now()
@@ -514,23 +527,54 @@ class LegalParserOptimizerDaemon:
         )
         evaluation = self.optimizer.generate({}, context)
         score, feedback = self.optimizer.critique(evaluation, context)
-        self._write_current_status(
-            status="running",
-            phase="requesting_llm_patch",
-            cycle_index=cycle_index,
-            cycle_dir=cycle_dir,
-            started_at=started,
-            score=score,
-            feedback=feedback,
-        )
-        try:
-            proposal = self.optimizer.optimize(evaluation, score, feedback, context)
-        except Exception as exc:
-            proposal = LegalParserCycleProposal(
-                summary="llm_router proposal failed",
-                raw_response="",
-                parse_error=f"{type(exc).__name__}: {exc}",
+        proposal_attempts: List[Dict[str, Any]] = []
+        proposal = LegalParserCycleProposal(summary="llm_router proposal failed")
+        max_attempts = max(1, int(self.config.llm_proposal_attempts))
+        for attempt_index in range(1, max_attempts + 1):
+            context.metadata["proposal_attempt"] = attempt_index
+            self._write_current_status(
+                status="running",
+                phase="requesting_llm_patch",
+                cycle_index=cycle_index,
+                cycle_dir=cycle_dir,
+                started_at=started,
+                score=score,
+                feedback=feedback,
+                proposal_attempt=attempt_index,
+                proposal_attempts=max_attempts,
             )
+            try:
+                proposal = self.optimizer.optimize(evaluation, score, feedback, context)
+            except Exception as exc:
+                proposal = LegalParserCycleProposal(
+                    summary="llm_router proposal failed",
+                    raw_response="",
+                    parse_error=f"{type(exc).__name__}: {exc}",
+                )
+            retry_reason = self._proposal_retry_reason(proposal)
+            proposal_attempts.append(
+                {
+                    "attempt": attempt_index,
+                    "retry_reason": retry_reason,
+                    "parse_error": proposal.parse_error,
+                    "summary": proposal.summary,
+                    "raw_response_chars": len(proposal.raw_response or ""),
+                    "diff_chars": len(proposal.unified_diff or ""),
+                }
+            )
+            if not retry_reason:
+                break
+            if attempt_index < max_attempts:
+                self._write_current_status(
+                    status="running",
+                    phase="retrying_llm_patch",
+                    cycle_index=cycle_index,
+                    cycle_dir=cycle_dir,
+                    started_at=started,
+                    proposal_attempt=attempt_index,
+                    retry_reason=retry_reason,
+                    last_parse_error=proposal.parse_error,
+                )
 
         proposal_path = cycle_dir / "proposal.json"
         proposal_path.write_text(json.dumps(asdict(proposal), indent=2, default=str), encoding="utf-8")
@@ -664,6 +708,7 @@ class LegalParserOptimizerDaemon:
             "production_files": _production_files(changed_files),
             "test_files": _test_files(changed_files),
             "patch_stats": patch_stats,
+            "proposal_attempts": proposal_attempts,
             "proposal_quality": proposal_quality,
             "retained_change": retained_change,
             "commit_result": commit_result,
@@ -741,9 +786,45 @@ class LegalParserOptimizerDaemon:
             "provider": self.config.provider,
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
+            "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
             **{key: _json_safe(value) for key, value in details.items()},
         }
-        self.status_file.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        with self._status_lock:
+            self._status_payload = dict(payload)
+            self.status_file.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+
+    def _start_heartbeat(self) -> None:
+        interval = float(self.config.heartbeat_interval_seconds)
+        if interval <= 0 or self._heartbeat_thread is not None:
+            return
+        self._heartbeat_stop.clear()
+        self._heartbeat_thread = threading.Thread(
+            target=self._heartbeat_loop,
+            name="legal-parser-daemon-heartbeat",
+            daemon=True,
+        )
+        self._heartbeat_thread.start()
+
+    def _stop_heartbeat(self) -> None:
+        self._heartbeat_stop.set()
+        thread = self._heartbeat_thread
+        if thread is not None:
+            thread.join(timeout=2)
+        self._heartbeat_thread = None
+
+    def _heartbeat_loop(self) -> None:
+        interval = max(0.1, float(self.config.heartbeat_interval_seconds))
+        while not self._heartbeat_stop.wait(interval):
+            with self._status_lock:
+                if not self._status_payload:
+                    continue
+                payload = dict(self._status_payload)
+                payload["updated_at"] = _utc_now()
+                payload["heartbeat_at"] = payload["updated_at"]
+                payload["heartbeat_pid"] = os.getpid()
+                payload["heartbeat_thread"] = "legal-parser-daemon-heartbeat"
+                self._status_payload = payload
+                self.status_file.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
     def _record_cycle_exception(self, *, cycle_index: int, exc: Exception) -> Dict[str, Any]:
         finished = _utc_now()
@@ -805,10 +886,14 @@ class LegalParserOptimizerDaemon:
         reasons: List[str] = []
         production_files = _production_files(changed_files)
         test_files = _test_files(changed_files)
+        if proposal.parse_error:
+            reasons.append(f"proposal parse_error: {proposal.parse_error}")
         if not proposal.summary.strip():
             reasons.append("proposal summary is empty")
         if not proposal.acceptance_criteria:
             reasons.append("proposal omitted acceptance_criteria")
+        if not proposal.unified_diff.strip():
+            reasons.append("proposal unified_diff is empty")
         if self.config.require_production_and_tests:
             if not production_files:
                 reasons.append("patch must touch at least one production deontic parser/export file")
@@ -822,6 +907,19 @@ class LegalParserOptimizerDaemon:
             "production_files": production_files,
             "test_files": test_files,
         }
+
+    def _proposal_retry_reason(self, proposal: LegalParserCycleProposal) -> str:
+        if proposal.parse_error:
+            return f"parse_error: {proposal.parse_error}"
+        if not proposal.raw_response.strip():
+            return "empty_llm_response"
+        if not proposal.summary.strip():
+            return "proposal_summary_empty"
+        if not proposal.acceptance_criteria:
+            return "proposal_acceptance_criteria_empty"
+        if not proposal.unified_diff.strip():
+            return "proposal_unified_diff_empty"
+        return ""
 
     def _record_progress(self, cycle_payload: Dict[str, Any]) -> None:
         accepted = _cycle_was_kept(cycle_payload)
@@ -1465,6 +1563,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cycle-interval-seconds", type=float, default=0.0)
     parser.add_argument("--error-backoff-seconds", type=float, default=30.0)
     parser.add_argument("--llm-timeout-seconds", type=int, default=900)
+    parser.add_argument("--llm-proposal-attempts", type=int, default=3)
+    parser.add_argument("--heartbeat-interval-seconds", type=float, default=15.0)
     parser.add_argument("--test-timeout-seconds", type=int, default=180)
     parser.add_argument(
         "--allow-patches-without-tests",
@@ -1504,6 +1604,8 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         cycle_interval_seconds=float(args.cycle_interval_seconds),
         error_backoff_seconds=float(args.error_backoff_seconds),
         llm_timeout_seconds=int(args.llm_timeout_seconds),
+        llm_proposal_attempts=int(args.llm_proposal_attempts),
+        heartbeat_interval_seconds=float(args.heartbeat_interval_seconds),
         test_timeout_seconds=int(args.test_timeout_seconds),
         require_production_and_tests=not bool(args.allow_patches_without_tests),
         target_score=float(args.target_score),

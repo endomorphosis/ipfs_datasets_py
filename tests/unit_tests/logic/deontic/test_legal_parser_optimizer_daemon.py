@@ -1,6 +1,7 @@
 """Tests for the deterministic legal parser optimizer daemon."""
 
 import json
+import time
 
 from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
     LegalParserDaemonConfig,
@@ -27,6 +28,26 @@ class _FakeRouter:
             }
         )
         return self.response
+
+
+class _SequencedRouter:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def generate(self, prompt, method, max_tokens=2000, temperature=0.7, router_kwargs=None):
+        self.calls.append(
+            {
+                "prompt": prompt,
+                "method": method,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "router_kwargs": router_kwargs or {},
+            }
+        )
+        if len(self.calls) <= len(self.responses):
+            return self.responses[len(self.calls) - 1]
+        return self.responses[-1]
 
 
 class _FailingOptimizer:
@@ -89,6 +110,7 @@ def test_optimizer_builds_gpt55_router_request_without_calling_real_llm(tmp_path
     assert call["router_kwargs"]["provider"] == "openai"
     assert call["router_kwargs"]["model_name"] == "gpt-5.5"
     assert call["router_kwargs"]["allow_local_fallback"] is False
+    assert call["router_kwargs"]["disable_model_retry"] is True
 
 
 def test_daemon_cycle_writes_artifacts_in_patch_only_mode(tmp_path):
@@ -164,6 +186,75 @@ def test_daemon_reports_invalid_patch_as_patch_check_failed(tmp_path):
     status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
     assert status["phase"] == "cycle_completed"
     assert status["apply_result"]["reason"] == "patch_check_failed"
+
+
+def test_daemon_retries_empty_or_unparseable_llm_proposals(tmp_path):
+    fake_router = _SequencedRouter(
+        [
+            '{"type":"thread.started"}\n{"type":"turn.started"}',
+            json.dumps(
+                {
+                    "summary": "Retry produced a patch.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["retry result is recorded"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": "not a valid diff, but no longer empty",
+                }
+            ),
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=False,
+        run_tests=False,
+        require_production_and_tests=False,
+        llm_proposal_attempts=2,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert len(fake_router.calls) == 2
+    assert cycle["proposal_attempts"][0]["retry_reason"].startswith("parse_error:")
+    assert cycle["proposal_attempts"][1]["retry_reason"] == ""
+    assert cycle["proposal_attempts"][1]["summary"] == "Retry produced a patch."
+
+
+def test_daemon_heartbeat_refreshes_current_status_while_blocked(tmp_path):
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        heartbeat_interval_seconds=0.01,
+    )
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    daemon._write_current_status(
+        status="running",
+        phase="requesting_llm_patch",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-04-28T00:00:00+00:00",
+    )
+
+    daemon._start_heartbeat()
+    try:
+        status = {}
+        deadline = time.time() + 1.0
+        while time.time() < deadline:
+            status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+            if "heartbeat_pid" in status:
+                break
+            time.sleep(0.02)
+    finally:
+        daemon._stop_heartbeat()
+
+    assert status["phase"] == "requesting_llm_patch"
+    assert status["heartbeat_pid"] > 0
+    assert status["heartbeat_thread"] == "legal-parser-daemon-heartbeat"
 
 
 def test_daemon_records_cycle_exception_instead_of_exiting(tmp_path):
