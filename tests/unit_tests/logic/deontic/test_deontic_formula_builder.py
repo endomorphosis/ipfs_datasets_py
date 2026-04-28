@@ -213,6 +213,46 @@ def test_local_scope_cross_reference_detail_exception_formula_record_is_proof_re
     }
 
 
+def test_local_scope_reference_condition_formula_record_is_proof_ready():
+    element = extract_normative_elements(
+        "Subject to this section, the Secretary shall publish the notice."
+    )[0]
+    element = dict(element)
+    element["condition_details"] = [
+        {"type": "subject_to", "value": "this section", "span": [11, 23]}
+    ]
+    element["cross_reference_details"] = [
+        {
+            "reference_type": "section",
+            "target": "this",
+            "raw_text": "this section",
+            "span": [11, 23],
+        }
+    ]
+    element["resolved_cross_references"] = []
+    element["parser_warnings"] = ["cross_reference_requires_resolution"]
+    element["export_readiness"] = {"blockers": ["cross_reference_requires_resolution"]}
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in norm.blockers
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "ThisSection" not in record["formula"]
+    assert record["omitted_formula_slots"]["conditions"][0]["value"] == "this section"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"] == {
+        "type": "local_scope_reference_condition",
+        "resolved_blockers": ["cross_reference_requires_resolution"],
+        "scopes": ["this section"],
+        "condition_spans": [norm.conditions[0].get("span", [])],
+        "reason": "local self-reference condition is exported as provenance outside the operative formula",
+    }
+
+
 def test_numbered_reference_exception_without_resolution_stays_blocked():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

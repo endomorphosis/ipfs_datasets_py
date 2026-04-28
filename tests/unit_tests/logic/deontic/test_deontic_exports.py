@@ -898,6 +898,59 @@ def test_local_scope_reference_exception_exports_resolved_local_reference_proven
     assert validate_export_tables(tables) == {"valid": True, "errors": []}
 
 
+def test_local_scope_reference_condition_exports_resolved_local_reference_provenance():
+    element = extract_normative_elements(
+        "Subject to this section, the Secretary shall publish the notice."
+    )[0]
+    element = dict(element)
+    element["condition_details"] = [
+        {"type": "subject_to", "value": "this section", "span": [11, 23]}
+    ]
+    element["cross_reference_details"] = [
+        {
+            "reference_type": "section",
+            "target": "this",
+            "raw_text": "this section",
+            "span": [11, 23],
+        }
+    ]
+    element["resolved_cross_references"] = []
+    element["parser_warnings"] = ["cross_reference_requires_resolution"]
+    element["export_readiness"] = {"blockers": ["cross_reference_requires_resolution"]}
+    norm = LegalNormIR.from_parser_element(element)
+
+    tables = build_document_export_tables_from_ir([norm])
+
+    assert tables["repair_queue"] == []
+    for table_name in ("canonical", "formal_logic", "proof_obligations"):
+        row = tables[table_name][0]
+        assert row["proof_ready"] is True
+        assert row["requires_validation"] is False
+        assert row["cross_reference_count"] == 1
+        assert row["cross_reference_resolution_status"] == "resolved"
+        assert row["unresolved_cross_references"] == []
+        assert row["resolved_cross_references"] == [
+            {
+                "reference_type": "section",
+                "target": "this",
+                "value": "this section",
+                "raw_text": "this section",
+                "span": [11, 23],
+                "resolution_scope": "local_self",
+                "resolved": True,
+                "same_document": True,
+            }
+        ]
+        assert row["deterministic_resolution"] == {
+            "type": "local_scope_reference_condition",
+            "resolved_blockers": ["cross_reference_requires_resolution"],
+            "scopes": ["this section"],
+            "condition_spans": [norm.conditions[0].get("span", [])],
+            "reason": "local self-reference condition is exported as provenance outside the operative formula",
+        }
+    assert validate_export_tables(tables) == {"valid": True, "errors": []}
+
+
 def test_unresolved_reference_exception_exports_repair_provenance():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

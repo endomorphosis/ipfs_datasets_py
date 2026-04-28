@@ -22,6 +22,10 @@ _LOCAL_SCOPE_REFERENCE_EXCEPTION_RE = re.compile(
     r"(section|subsection|chapter|title|article|part)$",
     re.IGNORECASE,
 )
+_LOCAL_SCOPE_REFERENCE_CONDITION_RE = re.compile(
+    r"^(?:this|current)\s+(section|subsection|chapter|title|article|part)$",
+    re.IGNORECASE,
+)
 
 
 def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
@@ -442,6 +446,8 @@ def _is_reference_condition(item: Dict[str, Any], text: str, reference_values: I
         return True
 
     normalized = text.strip().lower()
+    if _is_local_scope_reference_condition_text(normalized):
+        return True
     if reference_values and any(reference and reference in normalized for reference in reference_values):
         return True
     return condition_type == "subject_to" and bool(_LEGAL_REFERENCE_TEXT_RE.search(text))
@@ -539,6 +545,10 @@ def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     local_reference_exception_resolution = _local_scope_reference_exception_formula_resolution(norm, blockers)
     if local_reference_exception_resolution:
         return local_reference_exception_resolution
+
+    local_reference_condition_resolution = _local_scope_reference_condition_formula_resolution(norm, blockers)
+    if local_reference_condition_resolution:
+        return local_reference_condition_resolution
 
     reference_condition_resolution = _resolved_reference_condition_formula_resolution(norm, blockers)
     if reference_condition_resolution:
@@ -800,6 +810,73 @@ def _resolved_reference_condition_formula_resolution(norm: LegalNormIR, blockers
     }
 
 
+def _local_scope_reference_condition_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
+    """Resolve exact local self-reference conditions at formula-record level.
+
+    A clause such as ``Subject to this section, the Secretary shall publish the
+    notice`` carries local provenance, not a factual precondition. The condition
+    remains exported as an omitted source-grounded slot, but the operative
+    formula can be proof-ready when no other unresolved semantic slot is present.
+    Numbered and external references stay blocked by the existing same-document
+    reference resolver.
+    """
+
+    if norm.modality not in {"O", "P", "F"}:
+        return {}
+    if norm.norm_type not in {"obligation", "permission", "prohibition"}:
+        return {}
+    if not norm.actor.strip() or not norm.action.strip():
+        return {}
+    if not norm.conditions:
+        return {}
+    if norm.exceptions or norm.overrides:
+        return {}
+
+    allowed_blockers = {"cross_reference_requires_resolution", "llm_repair_required"}
+    blocker_set = set(blockers)
+    if not blocker_set or not blocker_set.issubset(allowed_blockers):
+        return {}
+    if "cross_reference_requires_resolution" not in blocker_set:
+        return {}
+
+    reference_conditions = [
+        item
+        for item in norm.conditions
+        if isinstance(item, dict)
+        and _is_local_scope_reference_condition_text(_slot_primary_text(item))
+    ]
+    if len(reference_conditions) != len(norm.conditions):
+        return {}
+
+    local_reference_records = _local_scope_reference_records(norm)
+    if (norm.cross_references or norm.resolved_cross_references) and not local_reference_records:
+        return {}
+
+    scopes = []
+    for condition in reference_conditions:
+        match = _LOCAL_SCOPE_REFERENCE_CONDITION_RE.match(_slot_primary_text(condition).strip())
+        if not match:
+            return {}
+        scope = f"this {match.group(1).lower()}"
+        if scope not in scopes:
+            scopes.append(scope)
+
+    for reference in local_reference_records:
+        scope = _local_scope_reference_record_scope(reference)
+        if not scope:
+            return {}
+        if scope.replace("current ", "this ") not in scopes:
+            return {}
+
+    return {
+        "type": "local_scope_reference_condition",
+        "resolved_blockers": sorted(blocker_set),
+        "scopes": scopes,
+        "condition_spans": [item.get("span", []) for item in reference_conditions],
+        "reason": "local self-reference condition is exported as provenance outside the operative formula",
+    }
+
+
 def _local_scope_reference_exception_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:
     """Resolve exact local self-reference exceptions at formula-record level.
 
@@ -970,6 +1047,11 @@ def _is_same_document_resolved_reference(item: Dict[str, Any]) -> bool:
 def _is_local_scope_reference_exception_text(text: str) -> bool:
     normalized = str(text or "").strip().lower()
     return bool(_LOCAL_SCOPE_REFERENCE_EXCEPTION_RE.match(normalized))
+
+
+def _is_local_scope_reference_condition_text(text: str) -> bool:
+    normalized = str(text or "").strip().lower()
+    return bool(_LOCAL_SCOPE_REFERENCE_CONDITION_RE.match(normalized))
 
 
 def _exception_text_needs_external_resolution(text: str) -> bool:
