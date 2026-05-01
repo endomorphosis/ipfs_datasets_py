@@ -168,6 +168,7 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
         formula_antecedent = relation_type in {
             "triggered_by_receipt_of",
             "triggered_by_filing_of",
+            "triggered_by_electronic_filing_of",
             "triggered_by_submission_of",
             "triggered_by_notice_and_hearing",
             "triggered_by_approval_of",
@@ -211,6 +212,7 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
             "triggered_by_mailing_of",
             "triggered_by_certified_mailing_of",
             "triggered_by_delivery_of",
+            "triggered_by_electronic_service_on",
             "triggered_by_transmission_of",
             "triggered_by_receipt_confirmation_of",
             "triggered_by_posting_of",

@@ -6054,3 +6054,67 @@ def test_ir_procedure_event_records_mark_archiving_and_retention_triggers_as_pre
     assert retention_record["is_formula_antecedent"] is True
     assert retention_record["proof_role"] == "prerequisite"
     assert retention_record["relation_record"]["relation"] == "triggered_by_retention_of"
+
+
+def test_ir_procedure_event_records_mark_electronic_filing_and_service_triggers_as_prerequisites():
+    """Electronic procedural triggers can be proof prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Clerk shall docket the appeal after electronic filing of the appeal and after electronic service on the respondent."
+    )[0])
+    element["action"] = [
+        "docket the appeal after electronic filing appeal and after electronic service respondent"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "docketing",
+                "relation": "triggered_by_electronic_filing_of",
+                "anchor_event": "appeal",
+                "raw_text": "after electronic filing of the appeal",
+                "span": [31, 68],
+            },
+            {
+                "event": "docketing",
+                "relation": "triggered_by_electronic_service_on",
+                "anchor_event": "respondent",
+                "raw_text": "after electronic service on the respondent",
+                "span": [73, 114],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    filing_record = records[0]
+    service_record = records[1]
+
+    assert filing_record["event_id"].startswith("event:")
+    assert filing_record["source_id"] == element["source_id"]
+    assert filing_record["event"] == "docketing"
+    assert filing_record["event_symbol"] == "Docketing"
+    assert filing_record["relation"] == "triggered_by_electronic_filing_of"
+    assert filing_record["anchor_event"] == "appeal"
+    assert filing_record["anchor_symbol"] == "Appeal"
+    assert filing_record["raw_text"] == "after electronic filing of the appeal"
+    assert filing_record["span"] == [31, 68]
+    assert filing_record["support_span"] == element["support_span"]
+    assert filing_record["is_formula_antecedent"] is True
+    assert filing_record["proof_role"] == "prerequisite"
+    assert filing_record["relation_record"]["relation"] == "triggered_by_electronic_filing_of"
+
+    assert service_record["event_id"].startswith("event:")
+    assert service_record["source_id"] == element["source_id"]
+    assert service_record["event"] == "docketing"
+    assert service_record["event_symbol"] == "Docketing"
+    assert service_record["relation"] == "triggered_by_electronic_service_on"
+    assert service_record["anchor_event"] == "respondent"
+    assert service_record["anchor_symbol"] == "Respondent"
+    assert service_record["raw_text"] == "after electronic service on the respondent"
+    assert service_record["span"] == [73, 114]
+    assert service_record["support_span"] == element["support_span"]
+    assert service_record["is_formula_antecedent"] is True
+    assert service_record["proof_role"] == "prerequisite"
+    assert service_record["relation_record"]["relation"] == "triggered_by_electronic_service_on"
