@@ -163,6 +163,40 @@ def test_ir_formula_builder_uses_detail_only_actor_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_definition_term_slot():
+    element = dict(extract_normative_elements(
+        'In this section, the term "food cart" means a mobile food vending unit.'
+    )[0])
+    element["subject"] = []
+    element["defined_term_details"] = [
+        {
+            "type": "definition_term",
+            "normalized_text": "food cart",
+            "span": [27, 36],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["defined_term"] = [27, 36]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.norm_type == "definition"
+    assert norm.actor == "food cart"
+    assert norm.to_dict()["actor"] == "food cart"
+    assert formula == "Definition(FoodCart)"
+    assert record["formula"] == formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_preserves_detail_only_recipient_slot():
     element = dict(extract_normative_elements(
         "The Director shall send the notice to the applicant."

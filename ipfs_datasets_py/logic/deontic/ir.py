@@ -66,6 +66,42 @@ def _actor_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _definition_actor_text(element: Dict[str, Any]) -> str:
+    """Return the defined term for detail-only definition parser rows."""
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "definition" and operator != "DEF":
+        return ""
+
+    for key in ("defined_term", "definition_term", "term"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in (
+        "defined_term_details",
+        "definition_details",
+        "defined_term_refs",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "value",
+                "defined_term",
+                "term",
+                "normalized_text",
+                "raw_text",
+                "text",
+                "name",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
 def _actor_entities(element: Dict[str, Any]) -> List[str]:
     """Return all actor labels, including detail-only actor provenance."""
 
@@ -571,7 +607,7 @@ class LegalNormIR:
             support_span=SourceSpan.from_value(element.get("support_span")),
             modality=_modality_from_parser_element(element),
             norm_type=str(element.get("norm_type") or ""),
-            actor=_actor_text(element),
+            actor=_actor_text(element) or _definition_actor_text(element),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
             action=_first_text(element.get("action")),
             mental_state=_mental_state_text(element),
