@@ -401,6 +401,7 @@ def _action_object_text(element: Dict[str, Any]) -> str:
     for detail_key in (
         "action_object_details",
         "object_details",
+        "regulated_object_details",
         "action_details",
     ):
         for record in _list_of_dicts(element.get(detail_key)):

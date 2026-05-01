@@ -167,6 +167,46 @@ def test_ir_formula_builder_uses_detail_only_action_component_records():
     assert record["formula"] == formula
 
 
+def test_ir_formula_builder_uses_detail_only_regulated_object_slot():
+    element = dict(extract_normative_elements(
+        "The inspector shall inspect the premises."
+    )[0])
+    element["action"] = []
+    element["action_verb"] = "inspect"
+    element["action_object"] = ""
+    element["regulated_object_details"] = [
+        {
+            "type": "regulated_object",
+            "normalized_text": "the premises",
+            "span": [28, 40],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["action_verb"] = [20, 27]
+    field_spans["action_object"] = [28, 40]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.action == ""
+    assert norm.action_verb == "inspect"
+    assert norm.action_object == "the premises"
+    assert norm.to_dict()["action_object"] == "the premises"
+    assert formula == "O(∀x (Inspector(x) → InspectPremises(x)))"
+    assert "Inspect(x)" not in formula
+    assert "Action(x)" not in formula
+    assert record["formula"] == formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_actor_slot():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."
