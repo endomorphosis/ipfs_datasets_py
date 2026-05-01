@@ -125,6 +125,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _strip_refrain_action(action_text)
     elif _is_prevention_obligation(norm, action_text):
         action_text = _strip_prevention_action(action_text)
+    elif _is_compliance_obligation(norm, action_text):
+        action_text = _strip_compliance_action(action_text)
     elif _is_direct_gerund_prohibition(norm, action_text):
         action_text = _normalize_refrain_action_head(action_text)
 
@@ -218,6 +220,18 @@ def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
     ))
 
 
+def _is_compliance_obligation(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether a duty to ensure compliance embeds the operative action."""
+
+    if norm.modality != "O":
+        return False
+    return bool(re.match(
+        r"^(?:ensure|secure|maintain)\s+compliance\s+with\s+\S",
+        str(action_text or "").strip(),
+        re.IGNORECASE,
+    ))
+
+
 def _strip_refrain_action(action_text: str) -> str:
     """Remove a restraint wrapper and normalize a narrow gerund action head."""
 
@@ -240,6 +254,18 @@ def _strip_prevention_action(action_text: str) -> str:
         flags=re.IGNORECASE,
     ).strip()
     return _normalize_prevention_action_head(embedded)
+
+
+def _strip_compliance_action(action_text: str) -> str:
+    """Normalize compliance-duty wrappers into the embedded compliance act."""
+
+    embedded = re.sub(
+        r"^(?:ensure|secure|maintain)\s+compliance\s+with\s+",
+        "comply with ",
+        str(action_text or "").strip(),
+        flags=re.IGNORECASE,
+    ).strip()
+    return embedded
 
 
 def _normalize_refrain_action_head(action_text: str) -> str:

@@ -358,6 +358,50 @@ def test_prohibit_bar_and_block_prevention_duties_export_as_prohibition_formulas
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_compliance_duties_export_embedded_compliance_action_formula():
+    examples = [
+        (
+            "The operator shall ensure compliance with the permit.",
+            "ensure compliance with the permit",
+            "O(∀x (Operator(x) → ComplyPermit(x)))",
+            "EnsureCompliancePermit",
+        ),
+        (
+            "The licensee shall secure compliance with safety standards.",
+            "secure compliance with safety standards",
+            "O(∀x (Licensee(x) → ComplySafetyStandards(x)))",
+            "SecureComplianceSafetyStandards",
+        ),
+        (
+            "The contractor shall maintain compliance with reporting requirements.",
+            "maintain compliance with reporting requirements",
+            "O(∀x (Contractor(x) → ComplyReportingRequirements(x)))",
+            "MaintainComplianceReportingRequirements",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."
