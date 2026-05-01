@@ -1835,9 +1835,27 @@ def _normalized_reference_record(reference: Mapping[str, Any]) -> Dict[str, Any]
 
 
 def _reference_display_text(reference: Mapping[str, Any]) -> str:
-    for key in ("value", "canonical_citation", "citation", "normalized_text", "raw_text", "text"):
+    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    value_text = str(reference.get("value") or "").strip()
+    if reference_type == "section" and value_text.lower() in {
+        "this",
+        "this section",
+        "current",
+        "current section",
+    }:
+        return value_text
+
+    for key in ("canonical_citation", "citation", "normalized_text", "raw_text", "text", "value"):
         value = str(reference.get(key) or "").strip()
         if value:
+            if (
+                key == "value"
+                and reference_type == "section"
+                and value.lower() not in {"this", "current"}
+                and not value.lower().startswith("section ")
+                and not re.search(r"\s", value)
+            ):
+                return f"section {value}"
             return value
 
     reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()

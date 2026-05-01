@@ -3988,3 +3988,26 @@ def test_raw_parser_keeps_numbered_reference_exception_repair_active():
     ]
     assert element["llm_repair"]["required"] is True
     assert parser_element_has_active_repair(element) is True
+
+
+def test_raw_parser_same_document_reference_resolution_uses_canonical_reference_text():
+    """Bare resolved section targets still display canonical section provenance."""
+
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    context = extract_normative_elements("The agency shall keep records.")[0]
+    context = dict(context)
+    context["canonical_citation"] = "section 552"
+    context["section_context"] = {
+        "section": "552",
+        "canonical_citation": "section 552",
+    }
+
+    aligned = parser_elements_for_metrics([element, context])[0]
+
+    assert aligned["llm_repair"]["deterministic_resolution"]["references"] == [
+        "section 552"
+    ]
+    assert aligned["resolved_cross_references"][0]["value"] == "552"
+    assert aligned["resolved_cross_references"][0]["normalized_text"] == "section 552"

@@ -535,10 +535,33 @@ def _same_document_reference_values(element: Dict[str, Any]) -> List[str]:
     for ref in element.get("resolved_cross_references") or []:
         if not isinstance(ref, dict) or ref.get("target_exists") is not True:
             continue
-        value = str(ref.get("normalized_text") or ref.get("raw_text") or ref.get("value") or "").strip()
+        value = _same_document_reference_display_text(ref)
         if value and value not in values:
             values.append(value)
     return values
+
+
+def _same_document_reference_display_text(ref: Dict[str, Any]) -> str:
+    """Return canonical display text for same-document reference provenance."""
+
+    for key in ("canonical_citation", "citation", "normalized_text", "raw_text", "text"):
+        value = str(ref.get(key) or "").strip()
+        if value:
+            return value
+
+    reference_type = str(ref.get("reference_type") or ref.get("type") or "").strip().lower()
+    target = str(ref.get("target") or ref.get("section") or ref.get("value") or "").strip()
+    if (
+        reference_type == "section"
+        and target
+        and target.lower() not in {"this", "current"}
+        and not target.lower().startswith("section ")
+        and not re.search(r"\s", target)
+    ):
+        return f"section {target}"
+    if reference_type and target and not target.lower().startswith(reference_type + " "):
+        return f"{reference_type} {target}"
+    return target
 
 
 def _apply_local_applicability_repair_clearance(elements: List[Dict[str, Any]]) -> None:
