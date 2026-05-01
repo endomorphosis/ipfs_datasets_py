@@ -16,7 +16,11 @@ _MENTAL_STATE_TERMS = {
     "recklessly",
     "negligently",
 }
-_LEGAL_REFERENCE_TEXT_RE = re.compile(r"\b(?:section|subsection|chapter|title|article|part)\s+[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*\b", re.IGNORECASE)
+_LEGAL_REFERENCE_TEXT_RE = re.compile(
+    r"(?:\b(?:section|subsection|chapter|title|article|part)\s+|§\s*)"
+    r"([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b",
+    re.IGNORECASE,
+)
 _LOCAL_SCOPE_REFERENCE_EXCEPTION_RE = re.compile(
     r"^(?:as\s+(?:otherwise\s+)?provided\s+in|(?:otherwise\s+)?provided\s+in|under|pursuant\s+to)\s+this\s+"
     r"(section|subsection|chapter|title|article|part)$",
@@ -225,7 +229,10 @@ def _canonical_section_citation(text: str) -> str:
     match = _LEGAL_REFERENCE_TEXT_RE.search(str(text or ""))
     if not match:
         return ""
-    return match.group(0).lower()
+    raw = match.group(0).strip().lower()
+    if raw.startswith("§"):
+        return f"section {match.group(1).lower()}"
+    return raw
 
 
 def _section_context_citations(norm: LegalNormIR) -> List[str]:
@@ -732,7 +739,7 @@ def _resolved_reference_exception_formula_resolution(norm: LegalNormIR, blockers
         exception_text = _slot_primary_text(exception).lower()
         if not exception_text:
             return {}
-        if not any(reference_text and reference_text.lower() in exception_text for reference_text in resolved_texts):
+        if not any(_reference_text_matches_slot(reference_text, exception_text) for reference_text in resolved_texts):
             return {}
 
     return {
@@ -798,7 +805,7 @@ def _resolved_reference_condition_formula_resolution(norm: LegalNormIR, blockers
         condition_text = _slot_primary_text(condition).lower()
         if not condition_text:
             return {}
-        if not any(reference_text and reference_text.lower() in condition_text for reference_text in resolved_texts):
+        if not any(_reference_text_matches_slot(reference_text, condition_text) for reference_text in resolved_texts):
             return {}
 
     return {
@@ -966,6 +973,18 @@ def _same_document_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
         for item in norm.cross_references
         if isinstance(item, dict) and _is_same_document_resolved_reference(item)
     ]
+
+
+def _reference_text_matches_slot(reference_text: str, slot_text: str) -> bool:
+    reference = str(reference_text or "").strip().lower()
+    slot = str(slot_text or "").strip().lower()
+    if not reference or not slot:
+        return False
+    if reference in slot:
+        return True
+    reference_citation = _canonical_section_citation(reference)
+    slot_citation = _canonical_section_citation(slot)
+    return bool(reference_citation and slot_citation and reference_citation == slot_citation)
 
 
 def _local_scope_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:

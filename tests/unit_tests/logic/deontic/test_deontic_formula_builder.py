@@ -1284,6 +1284,57 @@ def test_batch_formula_records_resolve_reference_exception_from_section_context(
     assert records[0]["deterministic_resolution"]["references"] == ["section 552"]
 
 
+def test_batch_formula_records_resolve_section_symbol_reference_exception_from_section_context():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in § 552."
+    )[0]
+    cited_element = extract_normative_elements("The agency shall keep records.")[0]
+    cited_element = dict(cited_element)
+    cited_element["canonical_citation"] = ""
+    cited_element["section_context"] = {"section": "552"}
+
+    records = build_deontic_formula_records_from_irs(
+        [
+            LegalNormIR.from_parser_element(reference_element),
+            LegalNormIR.from_parser_element(cited_element),
+        ]
+    )
+
+    assert records[0]["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in records[0]["formula"]
+    assert records[0]["proof_ready"] is True
+    assert records[0]["requires_validation"] is False
+    assert records[0]["repair_required"] is False
+    assert records[0]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert records[0]["deterministic_resolution"]["references"] == ["section 552"]
+
+
+def test_batch_formula_records_keep_section_symbol_reference_exception_blocked_without_context():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in § 552."
+    )[0]
+    cited_element = extract_normative_elements("The agency shall keep records.")[0]
+    cited_element = dict(cited_element)
+    cited_element["canonical_citation"] = ""
+    cited_element["section_context"] = {"section": "553"}
+
+    records = build_deontic_formula_records_from_irs(
+        [
+            LegalNormIR.from_parser_element(reference_element),
+            LegalNormIR.from_parser_element(cited_element),
+        ]
+    )
+
+    assert records[0]["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in records[0]["formula"]
+    assert records[0]["proof_ready"] is False
+    assert records[0]["requires_validation"] is True
+    assert records[0]["repair_required"] is True
+    assert records[0]["deterministic_resolution"] == {}
+
+
 def test_batch_formula_records_do_not_resolve_reference_exception_from_mismatched_section_context():
     reference_element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

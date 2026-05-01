@@ -11,8 +11,19 @@ TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-180}"
 HEARTBEAT_INTERVAL_SECONDS="${HEARTBEAT_INTERVAL_SECONDS:-10}"
 LLM_PROPOSAL_ATTEMPTS="${LLM_PROPOSAL_ATTEMPTS:-3}"
 DAEMON_DIR="${DAEMON_DIR:-.daemon}"
+SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
 
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
+child_pid=""
+
+stop_child() {
+  if [[ -n "${child_pid:-}" ]] && kill -0 "$child_pid" 2>/dev/null; then
+    kill "$child_pid" 2>/dev/null || true
+    wait "$child_pid" 2>/dev/null || true
+  fi
+}
+
+trap 'stop_child; exit 143' TERM INT
 
 while true; do
   run_id="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -47,8 +58,28 @@ JSON
       --commit-accepted-patches \
       --provider "$PROVIDER" \
       --model-name "$MODEL_NAME"
-  ) >> "$REPO_ROOT/$log_path" 2>&1
+  ) >> "$REPO_ROOT/$log_path" 2>&1 &
+  child_pid=$!
+
+  while kill -0 "$child_pid" 2>/dev/null; do
+    cat > "$REPO_ROOT/$status_path" <<JSON
+{
+  "status": "running",
+  "run_id": "$run_id",
+  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "supervisor_pid": $$,
+  "daemon_pid": $child_pid,
+  "supervisor_heartbeat_seconds": $SUPERVISOR_HEARTBEAT_SECONDS,
+  "log_path": "$log_path",
+  "model_name": "$MODEL_NAME",
+  "provider": "$PROVIDER"
+}
+JSON
+    sleep "$SUPERVISOR_HEARTBEAT_SECONDS"
+  done
+  wait "$child_pid"
   rc=$?
+  child_pid=""
 
   cat > "$REPO_ROOT/$status_path" <<JSON
 {

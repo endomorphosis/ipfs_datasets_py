@@ -2833,6 +2833,7 @@ def extract_cross_reference_details(sentence: str) -> List[Dict[str, Any]]:
     patterns = [
         ("section_range", r"\bsections?\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\s+(?:through|thru|to|-)\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
+        ("section", r"§\s*([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)"),
         ("section", r"\b(this\s+section)\b"),
         ("subsection", r"\bsubsection\s+\(([a-z0-9]+)\)"),
         ("subsection", r"\b(this\s+subsection)\b"),
