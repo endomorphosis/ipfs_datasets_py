@@ -445,20 +445,23 @@ Implementation:
 
 - Add a `validate_ir_with_provers(norm: LegalNormIR, targets=...) -> ProverSyntaxReport` helper.
 - Feed the same `LegalNormIR` used by the encoder/decoder through formal exporters before validation.
-- Support syntax-only validation targets first:
-  - deontic/FOL internal formula parser;
-  - TDFOL bridge/parser where available;
-  - CEC formula/proof-obligation parser where available;
+- Support syntax-only validation for every local theorem-prover target:
+  - frame logic via `ipfs_datasets_py/logic/flogic`;
+  - deontic cognitive event calculus via `ipfs_datasets_py/logic/CEC`;
+  - first-order logic via `ipfs_datasets_py/logic/fol`;
+  - deontic first-order logic via the deontic/FOL export path;
+  - deontic temporal first-order logic via `ipfs_datasets_py/logic/TDFOL` and integration bridges;
   - optional external prover front ends such as Z3, CVC5, SPASS, Vampire, E, Lean, Coq, or Isabelle only behind explicit availability checks.
+- Treat the five local targets as required for proof-ready fixtures once their adapters exist. External prover checks are additive and may skip when binaries are unavailable.
 - Record target name, target version when known, exported formula, parse status, diagnostics, and whether validation was skipped because a prover is unavailable.
 - Treat parser/syntax failures as quality failures for the encoder/exporter path, not as proof failures. Full theorem proving is a later layer.
 
 Acceptance:
 
-- Proof-ready fixture clauses produce syntax-valid formulas for every enabled local target.
+- Proof-ready fixture clauses produce syntax-valid formulas for frame logic, deontic CEC, FOL, deontic FOL, and deontic temporal FOL.
 - Unavailable external provers are reported as skipped, not failed, in default unit tests.
 - Malformed formulas produce structured parse diagnostics with source IDs and target names.
-- A clause cannot be counted as formally valid in encoder/decoder reports unless its exported formula passes syntax validation for at least one enabled target.
+- A clause cannot be counted as formally valid in encoder/decoder reports unless its exported formulas pass syntax validation for all required local targets that apply to that norm type.
 
 ### Task 8.4: Add Round-Trip Fixtures
 
@@ -481,13 +484,13 @@ Implementation:
   - cross reference;
   - penalty or lifecycle clause.
 - Store source text, expected key IR slots, expected decoded normalized text, and expected metric bands.
-- Store expected prover syntax targets and whether each target must pass, skip, or fail with a known diagnostic.
+- Store expected prover syntax targets for frame logic, deontic CEC, FOL, deontic FOL, and deontic temporal FOL, plus whether optional external targets must pass, skip, or fail with a known diagnostic.
 
 Acceptance:
 
 - Fixture tests prove that `text -> encoder -> IR -> decoder -> text` is deterministic.
 - Exact decoded text is stable for controlled examples.
-- Proof-ready fixture formulas pass enabled prover syntax checks.
+- Proof-ready fixture formulas pass all required local prover syntax checks.
 - Metric bands catch lossy parser changes without requiring LLM calls.
 
 ### Task 8.5: Wire Reconstruction And Prover Syntax Into Reports
@@ -503,7 +506,7 @@ Implementation:
 - Add reconstruction summaries to parser metric reports:
   - mean and median cosine similarity;
   - mean cross-entropy;
-  - prover syntax-check pass rate;
+  - prover syntax-check pass rate by local target;
   - prover parse error distribution;
   - worst examples by similarity and loss;
   - ungrounded decoded-token rate;
