@@ -1893,6 +1893,44 @@ def test_raw_parser_clears_active_repair_for_local_scope_reference_exception():
     assert element["export_readiness"]["metric_repair_required"] is False
 
 
+def test_raw_parser_clears_active_repair_for_local_scope_reference_condition():
+    element = extract_normative_elements(
+        "Subject to this section, the Secretary shall publish the notice."
+    )[0]
+
+    assert element["promotable_to_theorem"] is False
+    assert element["parser_warnings"] == ["cross_reference_requires_resolution"]
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["allow_llm_repair"] is False
+    assert element["llm_repair"]["reasons"] == []
+    assert element["llm_repair"]["suggested_router"] == ""
+    assert element["llm_repair"]["prompt_hash"] == ""
+    assert element["llm_repair"]["prompt_context"] == {}
+    assert element["llm_repair"]["deterministically_resolved"] is True
+    assert element["llm_repair"]["deterministic_resolution"] == {
+        "type": "local_scope_reference_condition",
+        "scopes": ["this section"],
+        "reason": "local self-reference condition is exported as provenance outside the operative formula",
+    }
+    assert element["active_repair_required"] is False
+    assert element["repair_required"] is False
+    assert element["active_repair_warnings"] == []
+    assert element["repair_required_warnings"] == []
+    assert element["export_readiness"]["metric_repair_required"] is False
+
+
+def test_raw_parser_keeps_active_repair_for_numbered_reference_condition_without_resolution():
+    element = extract_normative_elements(
+        "Subject to section 552, the Secretary shall publish the notice."
+    )[0]
+
+    assert element["active_repair_required"] is True
+    assert element["repair_required"] is True
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["active_repair_warnings"]
+    assert element["llm_repair"]["prompt_context"]
+
+
 def test_raw_parser_keeps_active_repair_for_numbered_reference_exception_after_local_clearance():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
